@@ -46,7 +46,7 @@ public:
     class Context {
 		
     public:
-      Context(Log_Addr entry) :_sreg(FLAG_DEFAULTS)/*, _pc(entry)*/ {}   
+      Context(Log_Addr entry) :_sreg(FLAG_DEFAULTS), _pc(entry) {}   
 	
 	Context() {}
 
@@ -87,10 +87,10 @@ public:
 	Reg8 _r21;
 	Reg8 _r22;
 	Reg8 _r23;
-	//Reg8 _r24;
-	//Reg8 _r25;
-	//Reg8 _r26;
-	//Reg8 _r27;
+	Reg8 _r24;
+	Reg8 _r25;
+	Reg8 _r26;
+	Reg8 _r27;
 	Reg8 _r28;
 	Reg8 _r29;
 	Reg8 _r30;
@@ -100,7 +100,7 @@ public:
     
     class IO_Registers {
     public:
-      typedef unsigned volatile char IOReg8;
+      typedef unsigned char volatile IOReg8;
     
       IOReg8 twbr;    	// [0x20]
       IOReg8 twsr;    	// [0x21]
