@@ -2,7 +2,7 @@
 
 include		$(EPOS)/makedefs
 
-SUBDIRS := common $(shell find * -maxdepth 0 -type d \! -name common \! -name CVS)
+SUBDIRS := common $(MACH)
 
 all:		$(SUBDIRS)
 
