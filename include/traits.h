@@ -128,7 +128,7 @@ template <> struct Traits<Khomp>: public Traits<void>
     static const unsigned int APPLICATION_HEAP_SIZE = 4096;
 };
 
-template <> struct Traits<AT90S>: public Traits<void>
+template <> struct Traits<AVRMCU>: public Traits<void>
 {
     static const unsigned int BOOT_IMAGE_ADDR = 0x0000;
     static const int INT_BASE = 0x00; 

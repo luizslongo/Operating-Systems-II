@@ -44,8 +44,7 @@ class Khomp;
 class iPAQ;
 class Myrinet;
 class RCX;
-class AT90S;
-class AT86RF;
+class AVRMCU;
 typedef PC Machine;
 
 // Hardware Mediators - Interrupt Controllers
@@ -54,8 +53,7 @@ class Khomp_IC;
 class iPAQ_IC;
 class Myrinet_IC;
 class RCX_IC;
-class AT90S_IC;
-class AT86RF_IC;
+class AVRMCU_IC;
 typedef PC_IC IC;
 
 // Hardware Mediators - Timers
@@ -64,8 +62,7 @@ class Khomp_Timer;
 class iPAQ_Timer;
 class Myrinet_Timer;
 class RCX_Timer;
-class AT90S_Timer;
-class AT86RF_Timer;
+class AVRMCU_Timer;
 typedef PC_Timer Timer;
 
 // Hardware Mediators - Real Time Clocks
@@ -79,14 +76,22 @@ class PC_PCI;
 class Khomp_PCI;
 typedef PC_PCI PCI;
 
+// Hardware Mediators - UARTs
+//class PC_UART;
+//class AVRMCU_UART;
+//typedef AVRMCU_UART UART;
+
+// Hardware Mediators - ADCs
+//class AVRMCU_ADC;
+//typedef AVRMCU_ADC ADC;
+
 // Hardware Mediators - Displays
 class PC_Display;
 class Khomp_Display;
 class iPAQ_Display;
 class Myrinet_Display;
 class RCX_Display;
-class AT90S_Display;
-class AT86RF_Display;
+class AVRMCU_Display;
 typedef PC_Display Display;
 
 // Abstractions
@@ -137,8 +142,7 @@ enum
     IPAQ_ID,
     MYRINET_ID,
     RCX_ID,
-    AT90S_ID,
-    AT86RF_ID,
+    AVRMCU_ID,
 
     IC_ID,
     PC_IC_ID = IC_ID,
@@ -146,8 +150,7 @@ enum
     IPAQ_IC_ID,
     MYRINET_IC_ID,
     RCX_IC_ID,
-    AT90S_IC_ID,
-    AT86RF_IC_ID,
+    AVRMCU_IC_ID,
 
     TIMER_ID,
     PC_TIMER_ID = TIMER_ID,
@@ -155,8 +158,7 @@ enum
     IPAQ_TIMER_ID,
     MYRINET_TIMER_ID,
     RCX_TIMER_ID,
-    AT90S_TIMER_ID,
-    AT86RF_TIMER_ID,
+    AVRMCU_TIMER_ID,
 
     RTC_ID,
     PC_RTC_ID = RTC_ID,
@@ -173,8 +175,7 @@ enum
     IPAQ_DISPLAY_ID,
     MYRINET_DISPLAY_ID,
     RCX_DISPLAY_ID,
-    AT90S_DISPLAY_ID,
-    AT86RF_DISPLAY_ID,
+    AVRMCU_DISPLAY_ID,
 
     THREAD_ID,
 
@@ -226,24 +227,21 @@ template<> struct Type<Khomp> { static const Type_Id TYPE = KHOMP_ID; };
 template<> struct Type<iPAQ> { static const Type_Id TYPE = IPAQ_ID; };
 template<> struct Type<Myrinet> { static const Type_Id TYPE = MYRINET_ID; };
 template<> struct Type<RCX> { static const Type_Id TYPE = RCX_ID; };
-template<> struct Type<AT90S> { static const Type_Id TYPE = AT90S_ID; };
-template<> struct Type<AT86RF> { static const Type_Id TYPE = AT86RF_ID; };
+template<> struct Type<AVRMCU> { static const Type_Id TYPE = AVRMCU_ID; };
 
 template<> struct Type<PC_IC> { static const Type_Id TYPE = PC_IC_ID; };
 template<> struct Type<Khomp_IC> { static const Type_Id TYPE = KHOMP_IC_ID; };
 template<> struct Type<iPAQ_IC> { static const Type_Id TYPE = IPAQ_IC_ID; };
 template<> struct Type<Myrinet_IC> { static const Type_Id TYPE = MYRINET_IC_ID; };
 template<> struct Type<RCX_IC> { static const Type_Id TYPE = RCX_IC_ID; };
-template<> struct Type<AT90S_IC> { static const Type_Id TYPE = AT90S_IC_ID; };
-template<> struct Type<AT86RF_IC> { static const Type_Id TYPE = AT86RF_IC_ID; };
+template<> struct Type<AVRMCU_IC> { static const Type_Id TYPE = AVRMCU_IC_ID; };
 
 template<> struct Type<PC_Timer> { static const Type_Id TYPE = PC_TIMER_ID; };
 template<> struct Type<Khomp_Timer> { static const Type_Id TYPE = KHOMP_TIMER_ID; };
 template<> struct Type<iPAQ_Timer> { static const Type_Id TYPE = IPAQ_TIMER_ID; };
 template<> struct Type<Myrinet_Timer> { static const Type_Id TYPE = MYRINET_TIMER_ID; };
 template<> struct Type<RCX_Timer> { static const Type_Id TYPE = RCX_TIMER_ID; };
-template<> struct Type<AT90S_Timer> { static const Type_Id TYPE = AT90S_TIMER_ID; };
-template<> struct Type<AT86RF_Timer> { static const Type_Id TYPE = AT86RF_TIMER_ID; };
+template<> struct Type<AVRMCU_Timer> { static const Type_Id TYPE = AVRMCU_TIMER_ID; };
 
 template<> struct Type<PC_RTC> { static const Type_Id TYPE = PC_RTC_ID; };
 template<> struct Type<Khomp_RTC> { static const Type_Id TYPE = KHOMP_RTC_ID; };
@@ -252,13 +250,17 @@ template<> struct Type<iPAQ_RTC> { static const Type_Id TYPE = IPAQ_RTC_ID; };
 template<> struct Type<PC_PCI> { static const Type_Id TYPE = PC_PCI_ID; };
 template<> struct Type<Khomp_PCI> { static const Type_Id TYPE = KHOMP_PCI_ID; };
 
+//template<> struct Type<PC_UART> { static const Type_Id TYPE = PC_UART_ID; };
+//template<> struct Type<AVRMCU_UART> { static const Type_Id TYPE = AVRMCU_UART_ID; };
+
+//template<> struct Type<AVRMCU_ADC> { static const Type_Id TYPE = AVRMCU_ADC_ID; };
+
 template<> struct Type<PC_Display> { static const Type_Id TYPE = PC_DISPLAY_ID; };
 template<> struct Type<Khomp_Display> { static const Type_Id TYPE = KHOMP_DISPLAY_ID; };
 template<> struct Type<iPAQ_Display> { static const Type_Id TYPE = IPAQ_DISPLAY_ID; };
 template<> struct Type<Myrinet_Display> { static const Type_Id TYPE = MYRINET_DISPLAY_ID; };
 template<> struct Type<RCX_Display> { static const Type_Id TYPE = RCX_DISPLAY_ID; };
-template<> struct Type<AT90S_Display> { static const Type_Id TYPE = AT90S_DISPLAY_ID; };
-template<> struct Type<AT86RF_Display> { static const Type_Id TYPE = AT86RF_DISPLAY_ID; };
+template<> struct Type<AVRMCU_Display> { static const Type_Id TYPE = AVRMCU_DISPLAY_ID; };
 
 template<> struct Type<Thread> { static const Type_Id TYPE = THREAD_ID; };
 
