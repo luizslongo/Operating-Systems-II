@@ -32,12 +32,26 @@ public:
 public:
     AVRMCU(){};
     ~AVRMCU(){};
-    static Handler int_handler(int index){ return 0; };
-    static void int_handler(int index, const Handler & handler){};
+    
+    static Handler * interrupt_vector;
+
+    static Handler int_handler(int i) {
+	if(i < Traits::INT_VEC_SIZE)
+	    return interrupt_vector[i];
+    }
+    static void int_handler(int i, Handler h) {
+	if(i < Traits::INT_VEC_SIZE)
+	    interrupt_vector[i] = h;
+    }
+    
+    template <Handler h> static void handler_wrapper(){
+    	// Save and restore is done automatically by the stub function,
+	// e.g. __vector_0
+    	h();
+    }    
+    
 
     static int init(System_Info *si);
-
-    template <Handler h> static void handler_wrapper(){}
 
 };
 

@@ -8,7 +8,7 @@ __BEGIN_SYS
 template <class Imp>
 struct Traits
 {
-    static const bool debugged = true;
+    static const bool debugged = false;
 };
 
 class Null_Debug;
@@ -94,6 +94,14 @@ template <> struct Traits<PC_RTC>: public Traits<void>
     static const unsigned int EPOCH_DAYS = 719499;
 };
 
+template <> struct Traits<AVRMCU_RTC>: public Traits<void>
+{
+    static const unsigned int EPOCH_DAY = 1;
+    static const unsigned int EPOCH_MONTH = 1;
+    static const unsigned int EPOCH_YEAR = 1970;
+    static const unsigned int EPOCH_DAYS = 719499;
+};
+
 template <> struct Traits<PC>: public Traits<void>
 {
     static const unsigned int BOOT_IMAGE_ADDR = 0x00008000;
@@ -132,6 +140,7 @@ template <> struct Traits<AVRMCU>: public Traits<void>
 {
     static const unsigned int BOOT_IMAGE_ADDR = 0x0000;
     static const int INT_BASE = 0x00; 
+    static const int INT_VEC_SIZE = 0x00; 
 
     static const unsigned int SYSTEM_STACK_SIZE = 128;
     static const unsigned int SYSTEM_HEAP_SIZE = 64;
@@ -143,6 +152,11 @@ template <> struct Traits<PC_PCI>: public Traits<void>
 {
     static const int MAX_BUS = 0;
     static const int MAX_DEV_FN = 0xff;
+};
+
+template <> struct Traits<AVRMCU_Timer>: public Traits<void>
+{
+    static const int FREQUENCY = 100; // Hz
 };
 
 template <> struct Traits<PC_Timer>: public Traits<void>
