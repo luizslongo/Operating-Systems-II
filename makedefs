@@ -13,8 +13,7 @@ MACH_RCX	= rcx
 MACH_Khomp	= khomp
 MACH_IPAQ	= ipaq
 MACH_LINUX	= linux
-MACH_AT90S  	= at90s
-MACH_AT86RF 	= at86rf
+MACH_AVRMCU  	= avrmcu
 
 # Supported hardware architectures
 ARCH_IA32	= ia32
