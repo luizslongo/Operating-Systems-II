@@ -101,6 +101,11 @@ __bad_interrupt:
 	XJMP	__vector_default
 	.endfunc
 
+	.weak	__setup
+
+
+
+
 	.section .init0,"ax",@progbits
 	.weak	__init
 ;	.func	__init
@@ -128,6 +133,9 @@ __init:
 	out	_SFR_IO_ADDR(SPH), r29
 #endif
 	out	_SFR_IO_ADDR(SPL), r28
+
+	/ * This calls setup to set the memory map */
+	call	__setup
 
 #if BIG_CODE
 	/* Only for >64K devices with RAMPZ, replaces the default code
