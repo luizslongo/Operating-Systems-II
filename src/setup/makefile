@@ -31,17 +31,12 @@ khomp_install:	khomp_setup
 	 	$(OBJCPY) -O binary $< $<.img
 
 
-at90s_setup: FORCE
-		$(TOUCH) $(MACH)_setup
+avrmcu_setup:	$(MACH)_setup.o
+		$(LD) $(LDFLAGS) -L$(CCLIB) -N -Ttext $(SETUP_ADDR) \
+		-e $(SETUP_ADDR) -o $@ $< -l$(LUTIL) -l$(LSYS) \
+		-l$(LINIT) -lgcc -lc -lgcc
 
-at90s_install:  $(MACH)_setup
-		$(TOUCH) $(MACH)_setup.img
-
-
-at86rf_setup: FORCE
-		$(TOUCH) $(MACH)_setup
-
-at86rf_install: $(MACH)_setup
+avrmcu_install: $(MACH)_setup
 		$(TOUCH) $(MACH)_setup.img
 
 
