@@ -205,9 +205,7 @@ public:
 	(*(volatile unsigned char *)(port + 0x20)) = value;
     }
 
-    static volatile IO_Registers * io(){
-	return (AVR8::IO_Registers *)(0x20);
-    }
+    static IO_Registers * io;
     
 private:
     // AVR8 attributes

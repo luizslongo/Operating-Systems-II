@@ -65,9 +65,9 @@ class AVRMCU_ADC: public ADC_Common
 
   AVRMCU_ADC()  {
 	// Defaults: Channel 0, System Reference, Free Running Mode, CLOCK/128
-	AVR8::io()->admux  = 0x00;	// Channel 0, AREF
-	AVR8::io()->sfior  = ADATE;	// Free Running Mode
-	AVR8::io()->adcsra = ADPS2 | ADPS1 |  ADPS0;	// CLOCK/128
+	AVR8::io->admux  = 0x00;	// Channel 0, AREF
+	AVR8::io->sfior  = ADATE;	// Free Running Mode
+	AVR8::io->adcsra = ADPS2 | ADPS1 |  ADPS0;	// CLOCK/128
   }
 
   AVRMCU_ADC(Channel c,Reference r, Trigger t, Hertz f) {
@@ -77,57 +77,56 @@ class AVRMCU_ADC: public ADC_Common
 	frequency(f);
   }
 
-  ~AVRMCU_ADC(){}
-
   int read(){
-	if (data_ready() == 1) {
-      int result = AVR8::io()->adcl;
-      result |= ((int)(AVR8::io()->adch) << 8);
+    if (data_ready() == 1) {
+      int result = AVR8::io->adcl;
+      result |= ((int)(AVR8::io->adch) << 8);
 	  return result;
     }
     return -1;
   }
 
+
   int data_ready(){
-    if (AVR8::io()->adcsra & ADIF)
+    if (AVR8::io->adcsra & ADIF)
       return 1;
     return -1;
   }
 
   int start(){
-    AVR8::io()->adcsra |= ADSC | ADEN;
+    AVR8::io->adcsra |= ADSC | ADEN;
     return 1;
   }
 
   int stop(){
-    AVR8::io()->adcsra &= ~ADSC & ~ADEN;
+    AVR8::io->adcsra &= ~ADSC & ~ADEN;
     return 1;
   }
 
   int trigger(Trigger t){
     if (t == FREE_RUNNING_MODE) {
-	  AVR8::io()->sfior  &= (~ADTS2 & ~ADTS1 & ~ADTS0);
-      AVR8::io()->adcsra |= ADATE;
+	  AVR8::io->sfior  &= (~ADTS2 & ~ADTS1 & ~ADTS0);
+      AVR8::io->adcsra |= ADATE;
     } else if (t == SINGLE_CONVERSION_MODE) {
-	  AVR8::io()->adcsra &= ~ADATE;
+	  AVR8::io->adcsra &= ~ADATE;
     }
     return 1;
   }
 
   int channel(Channel c){
-	AVR8::io()->admux = c | (AVR8::io()->admux & ~MUX4 & ~MUX3 & ~MUX2 & ~MUX1 & ~MUX0);
+	AVR8::io->admux = c | (AVR8::io->admux & ~MUX4 & ~MUX3 & ~MUX2 & ~MUX1 & ~MUX0);
     return 1;
   }
 
   int reference(Reference r)
   {
-    unsigned char mask = AVR8::io()->admux;
+    unsigned char mask = AVR8::io->admux;
     switch (r){
       case SYSTEM_REFERENCE:   mask &= ~REFS1 & ~REFS0; break; 
       case EXTERNAL_REFERENCE: mask = (mask & ~REFS1) | REFS0;  break;
       case INTERNAL_REFERENCE: mask |= REFS1 | REFS0;  break;
     }
-    AVR8::io()->admux = mask;
+    AVR8::io->admux = mask;
     return 1;
   }
 
@@ -158,8 +157,8 @@ class AVRMCU_ADC: public ADC_Common
       ps = 0;
       div = 2;
     }
-    ps |= (AVR8::io()->adcsra & ~ADPS2 & ~ADPS1 & ~ADPS0);
-    AVR8::io()->adcsra = ps;
+    ps |= (AVR8::io->adcsra & ~ADPS2 & ~ADPS1 & ~ADPS0);
+    AVR8::io->adcsra = ps;
     return (Hertz)(CLOCK/div);
   }
   
