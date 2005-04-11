@@ -4,59 +4,64 @@
 
 __BEGIN_SYS
 
-void AVR8::Context::load() const volatile
-{
-        ASM(
-	    "   cli                             \n"
-	    
-	    // this
-            "   out   0x3e,r25          ; this  \n"   
-            "   out   0x3d,r24          ;       \n"   
-	    	    
-	    "   pop   r1                ; sreg  \n"
-            "   pop   r0                ;       \n"
-            "   pop   r2                ;       \n"
-            "   pop   r3                ;       \n"
-            "   pop   r4                ;       \n"
-            "   pop   r5                ;       \n"
-            "   pop   r6                ;       \n"
-            "   pop   r7                ;       \n"
-            "   pop   r8                ;       \n"
-            "   pop   r9                ;       \n"
-            "   pop   r10               ;       \n"
-            "   pop   r11               ;       \n"
-            "   pop   r12               ;       \n"
-            "   pop   r13               ;       \n"
-            "   pop   r14               ;       \n"
-            "   pop   r15               ;       \n"
-            "   pop   r16               ;       \n"
-            "   pop   r17               ;       \n"
-            "   pop   r18               ;       \n"
-            "   pop   r19               ;       \n"
-            "   pop   r20               ;       \n"
-            "   pop   r21               ;       \n"
-            "   pop   r22               ;       \n"
-            "   pop   r23               ;       \n"
-            "   pop   r24               ;       \n"
-            "   pop   r25               ;       \n"
-            "   pop   r26               ;       \n"
-            "   pop   r27               ;       \n"
-            "   pop   r28               ;       \n"
-            "   pop   r29               ;       \n"
-            "   pop   r30               ;       \n"
-            "   pop   r31               ;       \n"
-            "   out   0x3f,r1           ; sreg  \n"
-	    "   clr   r1 		; r1=0  \n"  
-            "   sei                             \n"	
-	);
-}
+
+asm 
+(
+ "  .text \n"
+ "    .global	_ZNV6System4AVR87Context4loadEv              	\n"
+ "    .type	_ZNV6System4AVR87Context4loadEv, @function   	\n"
+ "   _ZNV6System4AVR87Context4loadEv:                       	\n"		
+ "   cli                     	;    				\n"  
+ "   sbiw  r24,1	     	; *this	-= 1 			\n"
+ "   out   0x3e,r25          	; sp = this 			\n"    
+ "   out   0x3d,r24          	;   				\n" 
+ "   pop   r1                	; sreg 				\n" 
+ "   pop   r0                	;   				\n"    
+ "   pop   r2                	;   				\n"    
+ "   pop   r3                	;   				\n"    
+ "   pop   r4                	;   				\n"    
+ "   pop   r5                	;   				\n"    
+ "   pop   r6                	;   				\n"    
+ "   pop   r7                	;   				\n"    
+ "   pop   r8                	;   				\n"    
+ "   pop   r9                	;   				\n"    
+ "   pop   r10               	;   				\n"    
+ "   pop   r11               	;   				\n"    
+ "   pop   r12               	;   				\n"    
+ "   pop   r13               	;   				\n"    
+ "   pop   r14               	;   				\n"    
+ "   pop   r15               	;   				\n"    
+ "   pop   r16               	;   				\n"    
+ "   pop   r17               	;   				\n"    
+ "   pop   r18               	;   				\n"    
+ "   pop   r19               	;   				\n"    
+ "   pop   r20               	;   				\n"    
+ "   pop   r21               	;   				\n"    
+ "   pop   r22               	;   				\n"     
+ "   pop   r23               	;   				\n"    
+ "   pop   r24               	;   				\n"    
+ "   pop   r25               	;   				\n"    
+ "   pop   r26               	;   				\n"    
+ "   pop   r27               	;   				\n"    
+ "   pop   r28               	;   				\n"    
+ "   pop   r29               	;   				\n"      
+ "   pop   r30               	;   				\n"   
+ "   pop   r31               	;   				\n"
+ "   out   0x3f,r1           	; sreg 				\n" 
+ "   clr   r1 		    	; r1 = 0 			\n"
+ "   sei                        ;                             	\n"
+ "   ret                        ;                             	\n" 
+ "   .size	_ZNV6System4AVR87Context4loadEv, .-_ZNV6System4AVR87Context4loadEv 	\n"
+);
+
+
 
 void AVR8::Context::save() volatile
 {
         ASM(
 	    "   cli                             \n"
-	    "   pop   r27;  \n"
-	    "   pop   r26;  \n"
+	    "   pop   r27;  			\n"
+	    "   pop   r26;  			\n"
 	    "   in    r1,0x3f           ; sreg  \n"
 	    "   push  r31               ;       \n"
             "   push  r30               ;       \n"
@@ -91,8 +96,8 @@ void AVR8::Context::save() volatile
             "   push  r0                ;       \n"
             "   push  r1                ; sreg  \n"	
 	    "   clr   r1		; r1=0  \n"
-	    "   push  r26; \n"
-	    "   push  r27; \n"
+	    "   push  r26; 			\n"
+	    "   push  r27; 			\n"
 	    "   sei                             \n"	
 	);
 }
@@ -147,11 +152,13 @@ void AVR8::switch_context(Context * volatile * o, Context * volatile n) {
             "   in    r24,0x3d          ;       \n" 
 
 	    // old 
-	    "   st    X+,r25            ; old   \n" 
-	    "   st    X,r24             ;       \n"
+	    "   adiw  r24,1		; old	\n"
+	    "   st    X+,r24            ;    	\n" 
+	    "   st    X,r25             ;       \n"
 
 	    // new
-            "   out   0x3e,r27          ; new   \n"   
+	    "   sbiw  r26,1		; new	\n"
+            "   out   0x3e,r27          ;    	\n"   
             "   out   0x3d,r26          ;       \n"   
 		
 	    "   pop   r1                ; sreg  \n"
@@ -188,7 +195,6 @@ void AVR8::switch_context(Context * volatile * o, Context * volatile n) {
             "   pop   r31               ;       \n"
 	    "   out   0x3f,r1           ; sreg  \n"
 	    "   clr   r1		; r1=0  \n"  
-
             "   sei                             \n"	
 	);
 
