@@ -140,12 +140,12 @@ template <> struct Traits<AVRMCU>: public Traits<void>
 {
     static const unsigned int BOOT_IMAGE_ADDR = 0x0000;
     static const int INT_BASE = 0x00; 
-    static const int INT_VEC_SIZE = 0x00; 
+    static const int INT_VEC_SIZE = 24; 
 
-    static const unsigned int SYSTEM_STACK_SIZE = 128;
+    static const unsigned int SYSTEM_STACK_SIZE = 64;
     static const unsigned int SYSTEM_HEAP_SIZE = 64;
     static const unsigned int APPLICATION_STACK_SIZE = 64;
-    static const unsigned int APPLICATION_HEAP_SIZE = 64;
+    static const unsigned int APPLICATION_HEAP_SIZE = 128;
 };
 
 template <> struct Traits<PC_PCI>: public Traits<void>
@@ -156,7 +156,7 @@ template <> struct Traits<PC_PCI>: public Traits<void>
 
 template <> struct Traits<AVRMCU_Timer>: public Traits<void>
 {
-    static const int FREQUENCY = 100; // Hz
+    static const int FREQUENCY = 40; // Hz
 };
 
 template <> struct Traits<PC_Timer>: public Traits<void>
