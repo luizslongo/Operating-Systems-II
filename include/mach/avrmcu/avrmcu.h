@@ -26,7 +26,7 @@ private:
 public:
 	
     enum {
-        INT_TIMER       = 0x0000,	
+        INT_TIMER       = 19,	
     };
 
 public:
