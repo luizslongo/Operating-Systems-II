@@ -32,7 +32,7 @@ struct Memory_Map<AVRMCU>
 	INT_VEC =	0x0000,
 	SYS_PT =	TOP,
 	SYS_PD =	TOP,
-	SYS_INFO =	0x0260,
+	SYS_INFO =	0x0400,
 	SYS_CODE =	0x0000,
 	SYS_DATA =	0x0000,
 	SYS_STACK =	0x03fe,
