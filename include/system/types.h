@@ -69,6 +69,7 @@ typedef PC_Timer Timer;
 class PC_RTC;
 class Khomp_RTC;
 class iPAQ_RTC;
+class AVRMCU_RTC;
 typedef PC_RTC RTC;
 
 // Hardware Mediators - Busses
