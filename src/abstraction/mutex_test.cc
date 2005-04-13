@@ -79,6 +79,11 @@ int main()
 	cout << "Philosopher " << i << " ate " << ret << " times \n";
     }
 
+    for(int i = 0; i < 5; i++)
+	delete chopstick[i];
+    for(int i = 0; i < 5; i++)
+	delete phil[i];
+    
     cout << "The end!\n";
     
     return 0;
