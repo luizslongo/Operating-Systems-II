@@ -63,7 +63,7 @@ public:
 	header(entry, stack_size);
 	Log_Addr sp = _stack + stack_size;
 	sp -= sizeof(int); *static_cast<unsigned int *>(sp) = 
-			       reinterpret_cast<unsigned int>(&exit);
+			       reinterpret_cast<unsigned int>(&implicit_exit);
 	body();
     }
     template<class T1>
@@ -83,7 +83,7 @@ public:
 	Log_Addr sp = _stack + stack_size;
 	sp -= sizeof(T1); *static_cast<T1 *>(sp) = a1;
 	sp -= sizeof(int); *static_cast<unsigned int *>(sp) = 
-			       reinterpret_cast<unsigned int>(&exit);
+			       reinterpret_cast<unsigned int>(&implicit_exit);
 	body();
     }
     template<class T1, class T2>
@@ -104,7 +104,7 @@ public:
 	sp -= sizeof(T2); *static_cast<T2 *>(sp) = a2;
 	sp -= sizeof(T1); *static_cast<T1 *>(sp) = a1;
 	sp -= sizeof(int); *static_cast<unsigned int *>(sp) = 
-			       reinterpret_cast<unsigned int>(&exit);
+			       reinterpret_cast<unsigned int>(&implicit_exit);
 	body();
     }
     template<class T1, class T2, class T3>
@@ -130,6 +130,12 @@ public:
 	body();
     }
     ~Thread() {
+	db<Thread>(TRC) << "~Thread(this=" << this 
+			<< ",state=" << _state
+			<< ",priority=" << _priority
+			<< ",stack={b=" << _stack
+			<< ",context={b=" << _context
+			<< "," << *_context << "})\n";
 	_ready.remove(this);
 	_suspended.remove(this);
 	free(_stack);
