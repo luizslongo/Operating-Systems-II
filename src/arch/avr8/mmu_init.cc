@@ -16,7 +16,7 @@ int AVR8_MMU::init(System_Info * si)
 		      << (void *) si->pmm.app_lo << "\n";
     
     _base = si->pmm.free;
-    _top = si->pmm.free_size;
+    _top = si->pmm.free + si->pmm.free_size;
 
     return 0;
 }
