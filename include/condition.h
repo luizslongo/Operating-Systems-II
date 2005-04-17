@@ -14,38 +14,90 @@ private:
     static const Type_Id TYPE = Type<Condition>::TYPE;
 
 public:
-    Condition() : _not_condition(true), _broadcast(0), _time_stamp(1) {
-	db<Condition>(TRC) << "Condition()\n";
+    Condition() : _wait(0), _signal(0) {
+	db<Condition>(TRC) << "Condition() => " << this << ")\n";
     }
     ~Condition() {
-	db<Condition>(TRC) << "~Condition()\n";
+	db<Condition>(TRC) << "Condition() => " << this << ")\n";
     }
 
     void wait() {
-	db<Condition>(TRC) << "Condition::wait()\n";
-	int ts = inc(_time_stamp);
-	while(tsl(_not_condition) && (ts <= _broadcast))
+	db<Condition>(TRC) << "Condition::wait(this=" << this 
+			   << ",wt=" << _wait
+			   << ",sg=" << _signal << ")\n";
+	int rank = finc(_wait);
+	while(rank >= _signal)
 	    sleep();
     }
     void signal() {
-	db<Condition>(TRC) << "Condition::signal()\n";
-	_not_condition = false;
+	db<Condition>(TRC) << "Condition::signal(this=" << this 
+			   << ",wt=" << _wait
+			   << ",sg=" << _signal << ")\n";
+	finc(_signal);
 	wakeup();
     }
-    void broadcast() {
-	db<Condition>(TRC) << "Condition::broadcast()\n";
-	_broadcast = _time_stamp;
+    void broadcast() { // warning: overflow is not being handled!
+	db<Condition>(TRC) << "Condition::broadcast(this=" << this 
+			   << ",wt=" << _wait
+			   << ",sg=" << _signal << ")\n";
+	_signal = _wait + 1;
 	wakeup_all();
     }
 
-    static int init(System_Info * si);
+static int init(System_Info * si);
 
 private:
-    volatile bool _not_condition;
-    volatile int _broadcast;
-    volatile int _time_stamp;
+    volatile int _wait;
+    volatile int _signal;
 };
+
+// This is an alternative implementation, which does not impose any ordering
+// on threads waiting at "wait". In this case, ordering would be implemented
+// in "sleep" and "wakeup" through ordered queues.
+// class Condition: public Synchronizer_Common
+// {
+// private:
+//     typedef Traits<Condition> Traits;
+//     static const Type_Id TYPE = Type<Condition>::TYPE;
+
+// public:
+//     Condition() : _not_condition(true), _broadcast(0), _time_stamp(1) {
+// 	db<Condition>(TRC) << "Condition() => " << this << ")\n";
+//     }
+//     ~Condition() {
+// 	db<Condition>(TRC) << "Condition() => " << this << ")\n";
+//     }
+
+//     void wait() {
+// 	db<Condition>(TRC) << "Condition::wait(this=" << this 
+// 			   << ",ts=" << _time_stamp << ")\n";
+// 	int ts = finc(_time_stamp);
+// 	while(tsl(_not_condition) && (ts > _broadcast))
+// 	    sleep();
+//     }
+//     void signal() {
+// 	db<Condition>(TRC) << "Condition::signal(this=" << this 
+// 			   << ",ts=" << _time_stamp << ")\n";
+// 	_not_condition = false;
+// 	wakeup();
+//     }
+//     void broadcast() {
+// 	db<Condition>(TRC) << "Condition::broadcast(this=" << this 
+// 			   << ",ts=" << _time_stamp << ")\n";
+// 	_broadcast = finc(_time_stamp);
+// 	wakeup_all();
+//     }
+
+//     static int init(System_Info * si);
+
+// private:
+//     volatile bool _not_condition;
+//     volatile int _broadcast;
+//     volatile int _time_stamp;
+// };
 
 __END_SYS
 
 #endif
+
+
