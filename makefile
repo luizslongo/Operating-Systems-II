@@ -41,7 +41,7 @@ veryclean:
 		find $(IMG) -name "*.app" -exec $(CLEAN) {} \;
 		find $(EPOS) -name "*~" -exec $(CLEAN) {} \; 
 
-distclean:	veryclean
+dist:		veryclean
 		find $(EPOS) -name CVS -type d -print | xargs $(CLEANDIR)
 
 FORCE:
