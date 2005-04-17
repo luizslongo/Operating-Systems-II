@@ -15,7 +15,6 @@ private:
 
 public:
     IA32_TSC() {}
-    ~IA32_TSC() {}
 
     static Hertz frequency() { return __SYS(Traits)<IA32>::CLOCK; }
     static Time_Stamp time_stamp() {

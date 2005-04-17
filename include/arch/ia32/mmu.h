@@ -230,7 +230,6 @@ public:
 
 public:
     IA32_MMU() {}
-    ~IA32_MMU() {}
 
     static void flush_tlb() {
         db<IA32_MMU>(TRC) << "IA32_MMU::flush_tlb()\n";

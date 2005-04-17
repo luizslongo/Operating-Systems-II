@@ -1,4 +1,4 @@
-// EPOS-- IA32 Declarations
+// EPOS-- IA32 CPU Mediator Declarations
 
 #ifndef __ia32_h
 #define __ia32_h
@@ -15,10 +15,6 @@ private:
     static const Type_Id _TYPE = Type<IA32>::TYPE;
 
 public:
-    // I/O ports
-    typedef Reg16 IO_Port;
-    typedef Reg16 IO_Irq;
-
     // CPU Flags
     typedef Reg32 Flags;
     enum {
@@ -309,9 +305,12 @@ public:
 	Reg32 _eip;
     };
 
+    // I/O ports
+    typedef Reg16 IO_Port;
+    typedef Reg16 IO_Irq;
+
 public:
     IA32() {}
-    ~IA32() {}
 
     static Hertz clock() { return _Traits::CLOCK; }
 
@@ -322,16 +321,16 @@ public:
     static void switch_context(Context * volatile * o, Context * volatile n);
 
     static Flags flags() { return eflags(); }
-    static void flags(Flags flags) { eflags(flags); }
+    static void flags(const Flags flags) { eflags(flags); }
 
     static Reg32 sp() { return esp(); }
-    static void sp(Reg32 sp) { esp(sp); }
+    static void sp(const Reg32 sp) { esp(sp); }
 
     static Reg32 fr() { return eax(); }
-    static void fr(Reg32 sp) { eax(sp); }
+    static void fr(const Reg32 sp) { eax(sp); }
 
     static Reg32 pdp() { return cr3() ; }
-    static void pdp(Reg32 pdp) { cr3(pdp); }
+    static void pdp(const Reg32 pdp) { cr3(pdp); }
 
     static Log_Addr ip() { return eip(); }
 
@@ -339,49 +338,50 @@ public:
 	register bool old = 1;
 	ASMV("xchg %0, %2" : "=a"(old) : "a"(old), "m"(lock)); return old;
     }
-    static int finc(volatile int & number) {
+    static int finc(volatile int & value) {
 	register int old = 1;
 	ASMV("lock\n"
-	     "xadd %0, %2" : "=a"(old) : "a"(old), "m"(number)); return old;
+	     "xadd %0, %2" : "=a"(old) : "a"(old), "m"(value)); return old;
     }
-    static int fdec(volatile int & number) {
+    static int fdec(volatile int & value) {
 	register int old = -1;
 	ASMV("lock\n"
-	     "xadd %0, %2" : "=a"(old) : "a"(old), "m"(number)); return old;
+	     "xadd %0, %2" : "=a"(old) : "a"(old), "m"(value)); return old;
     }
 
-    static Reg32 htonl(Reg32 v)	{
+    static Reg32 htonl(const Reg32 v)	{
 	ASMV("bswap %0" : "=r" (v) : "0" (v), "r" (v)); return v;
     }
-    static Reg16 htons(Reg16 v)	{
+    static Reg16 htons(const Reg16 v)	{
 	return htons_lsb(v);
     }
-    static Reg32 ntohl(Reg32 v)	{
+    static Reg32 ntohl(const Reg32 v)	{
 	return htonl(v);
     }
-    static Reg16 ntohs(Reg16 v)	{
+    static Reg16 ntohs(const Reg16 v)	{
 	return htons(v);
     }
 
+    // IA32 specific methods
     static Flags eflags() {
 	Reg32 value; ASMV("pushfl");
 	ASMV("popl %0" : "=r"(value) :); return value;
     }
-    static void eflags(Flags value) {
+    static void eflags(const Flags value) {
 	 ASMV("pushl %0" : : "r"(value)); ASMV("popfl");
     }
 
     static Reg32 esp() {
 	Reg32 value; ASMV("movl %%esp,%0" : "=r"(value) :); return value;
     }
-    static void esp(Reg32 value) {
+    static void esp(const Reg32 value) {
  	ASMV("movl %0,%%esp" : : "r"(value));
     }
 
     static Reg32 eax() {
 	Reg32 value; ASMV("movl %%eax,%0" : "=r"(value) :); return value;
     }
-    static void eax(Reg32 value) {
+    static void eax(const Reg32 value) {
  	ASMV("movl %0,%%eax" : : "r"(value));
     }
 
@@ -396,7 +396,7 @@ public:
     static Reg32 cr0() {
 	Reg32 value; ASMV("movl %%cr0,%0" : "=r"(value) :); return value;
     }
-    static void cr0(Reg32 value) {
+    static void cr0(const Reg32 value) {
 	ASMV("movl %0,%%cr0" : : "r"(value));
     }
 
@@ -407,7 +407,7 @@ public:
     static Reg32 cr3() {
 	Reg32 value; ASMV("movl %%cr3,%0" : "=r"(value) :); return value;
     }
-    static void cr3(Reg32 value) {
+    static void cr3(const Reg32 value) {
 	ASMV("movl %0,%%cr3" : : "r"(value));
     }
 
@@ -417,7 +417,7 @@ public:
 	*limit = *((Reg16 *)&aux[0]);
 	*base = *((Reg32 *)&aux[2]);
     }
-    static void gdtr(Reg16 limit, Reg32 base) {
+    static void gdtr(const Reg16 limit, const Reg32 base) {
 	char aux[6];
 	*((Reg16 *)&aux[0]) = limit;
 	*((Reg32 *)&aux[2]) = base;
@@ -430,7 +430,7 @@ public:
 	*limit = *((Reg16 *)&aux[0]);
 	*base = *((Reg32 *)&aux[2]);
     }
-    static void idtr(Reg16 limit, Reg32 base) {
+    static void idtr(const Reg16 limit, const Reg32 base) {
 	char aux[6];
 	*((Reg16 *)&aux[0]) = limit;
 	*((Reg32 *)&aux[2]) = base;
@@ -456,40 +456,32 @@ public:
 	Reg16 value; ASMV("mov %%gs,%0" : "=r"(value) :); return value;
     }
 
-    static Reg64 time_stamp() {
-	Reg64 ts; ASMV("rdtsc" : "=A" (ts) : ); return ts;
-    }
-
-    static void init_fpu() {
-	ASM("fninit");
-    }
-
-    static Reg8 in8(IO_Port port) {
+    static Reg8 in8(const IO_Port port) {
 	Reg8 value;
 	ASMV("inb %1,%0" : "=a"(value) : "d"(port));
 	return value;
     }
-    static Reg16 in16(IO_Port port) {
+    static Reg16 in16(const IO_Port port) {
 	Reg16 value;
 	ASMV("inw %1,%0" : "=a"(value) : "d"(port));
 	return value;
     }
-    static Reg32 in32(IO_Port port) {
+    static Reg32 in32(const IO_Port port) {
 	Reg32 value;
 	ASMV("inl %1,%0" : "=a"(value) : "d"(port));
 	return value;
     }
-    static void out8(IO_Port port, Reg8 value) {
+    static void out8(const IO_Port port, const Reg8 value) {
 	ASMV("outb %1,%0" : : "d"(port), "a"(value));
     }
-    static void out16(IO_Port port, Reg16 value)	{
+    static void out16(const IO_Port port, const Reg16 value)	{
 	ASMV("outw %1,%0" : : "d"(port), "a"(value));
     }
-    static void out32(IO_Port port, Reg32 value)	{
+    static void out32(const IO_Port port, const Reg32 value)	{
 	ASMV("outl %1,%0" : : "d"(port), "a"(value));
     }
 
-    static void switch_tss(Reg32 tss_selector) {
+    static void switch_tss(const Reg32 tss_selector) {
 	struct {
 	    Reg32 offset;
 	    Reg32 selector;
