@@ -78,7 +78,6 @@ public:
 		   & ~(unsigned char)(mask >> 8));
     }
     static void disable(const Mask & mask = ALL) {
-	IA32 cpu;
 	IA32::out8(MASTER_IMR, IA32::in8(MASTER_IMR) | (unsigned char)mask);
 	IA32::out8(SLAVE_IMR, IA32::in8(SLAVE_IMR) 
 		   | (unsigned char)(mask >> 8));
