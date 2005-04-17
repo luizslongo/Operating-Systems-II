@@ -20,8 +20,8 @@ private:
 protected:
     // Atomic operations
     bool tsl(volatile bool & lock) { return CPU::tsl(lock); }
-    int inc(volatile int & number) { return CPU::finc(number); }
-    int dec(volatile int & number) { return CPU::fdec(number); }
+    int finc(volatile int & number) { return CPU::finc(number); }
+    int fdec(volatile int & number) { return CPU::fdec(number); }
 
     // Thread operations
     void sleep() {
