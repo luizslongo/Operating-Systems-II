@@ -1,9 +1,4 @@
 // EPOS-- AVR8 MMU Mediator Declarations
-// This work is licensed under the Creative Commons 
-// Attribution-NonCommercial-NoDerivs License. To view a copy of this license, 
-// visit http://creativecommons.org/licenses/by-nc-nd/2.0/ or send a letter to 
-// Creative Commons, 559 Nathan Abbott Way, Stanford, California 94305, USA.
-
 
 #ifndef __avr8_mmu_h
 #define __avr8_mmu_h
@@ -27,7 +22,7 @@ private:
 
 public:
     // Page Flags
-    class AVR8_Flags {};
+    typedef MMU_Common::Flags AVR8_Flags;
 
     // Page_Table
     class Page_Table {};
@@ -38,10 +33,10 @@ public:
     public:
         Chunk() {}
         Chunk(unsigned int bytes, Flags flags)
-	    : _phy_addr(alloc(bytes)), _size(bytes), _flags(flags)
+	    : _phy_addr(alloc(bytes)), _size(bytes), _flags(AVR8_Flags(flags))
 	{}
 	Chunk(Phy_Addr phy_addr, unsigned int bytes, Flags flags)
-	    : _phy_addr(phy_addr), _size(bytes), _flags(flags)
+	    : _phy_addr(phy_addr), _size(bytes), _flags(AVR8_Flags(flags))
         {}
 	~Chunk() {
 	    free(_phy_addr, _size);
@@ -51,19 +46,14 @@ public:
 	Flags flags() const { return _flags; }
 	Page_Table * pt() const { return 0; }
 	unsigned int size() const { return _size; }
-	Phy_Addr phy_address() const {
-	    return _phy_addr;
-	}
+	Phy_Addr phy_address() const { return _phy_addr; } // always CT
 
-	int resize(unsigned int amount) {
-	    _size += amount;
-            return _size;
-	}
+	int resize(unsigned int amount) { return 0; } // no resize with CT
 
     private:
         Phy_Addr _phy_addr;
         unsigned int _size;
-        Flags _flags;
+        AVR8_Flags _flags;
     };
 
     // Page Directory
@@ -77,35 +67,28 @@ public:
 	Directory(Page_Directory * pd) {}
 	~Directory() {}
 	
-	Log_Addr attach(const Chunk & chunk) {
-	    return chunk.phy_address();
-	}
+	Log_Addr attach(const Chunk & chunk) { return chunk.phy_address(); }
 	Log_Addr attach(const Chunk & chunk, Log_Addr addr) {
-/*	    if(addr operator==<Log_Addr>(chunk.phy_address)) return addr;
-	    return false;*/
-	    return addr;
+	    return (addr == chunk.phy_address)? addr : false;
 	}
  	void detach(const Chunk & chunk) {}
  	void detach(const Chunk & chunk, Log_Addr addr) {}
 
-	Phy_Addr physical(Log_Addr addr) {
-	    return addr;
-	}
+	Phy_Addr physical(Log_Addr addr) { return addr;	}
     };
 
 public:
     AVR8_MMU() {}
-    ~AVR8_MMU() {}
 
     static void flush_tlb() {}
     static void flush_tlb(Log_Addr addr) {}
 
     static Phy_Addr alloc(unsigned int bytes = 1);
-    static Phy_Addr calloc(unsigned int bytes = 1) { return alloc(bytes); }
+    static Phy_Addr calloc(unsigned int bytes = 1);
     static void free(Phy_Addr addr, int n = 1);
 
     static Page_Directory * volatile current() {
-	return 0;
+	return reinterpret_cast<Page_Directory * volatile>(CPU::pdp());
     }
 
     static Phy_Addr physical(Log_Addr addr) {
@@ -115,8 +98,6 @@ public:
     static int init(System_Info * si);
 
 private:
-    //    #typedef Grouping_List<Chunk> List;
-    //    static List _mem_list;
     static Phy_Addr _base;
     static unsigned int _top;
 };
