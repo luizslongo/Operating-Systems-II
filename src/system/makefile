@@ -22,7 +22,7 @@ $(MACH)_system_builtin: initializer.o system.o $(LIBSYS)
 		$(EPOS)/lib/$(ARCH)_crtn.o \
 		-l$(LINIT) -l$(LSYS) -l$(LUTIL) -lgcc -lc -lgcc
 
-$(MACH)_system_library: initializer.o system.o $(LIBSYS)
+$(MACH)_system_library: first.o initializer.o system.o $(LIBSYS)
 		$(TOUCH) $(MACH)_system
 
 

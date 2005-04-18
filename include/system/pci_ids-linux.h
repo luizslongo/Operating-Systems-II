@@ -4,8 +4,6 @@
 #define linux 1
 #define unix 1
 
-
-
 #define ANALYZE 1
 #define PCI_CLASS_NOT_DEFINED 0x0000
 #define PCI_CLASS_NOT_DEFINED_VGA 0x0001
