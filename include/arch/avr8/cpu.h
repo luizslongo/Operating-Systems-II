@@ -169,7 +169,7 @@ class AVR8: public CPU_Common
   AVR8() {} 
   ~AVR8() {}
  
-  Hertz clock(){  Traits::CLOCK; };
+  Hertz clock(){  return Traits::CLOCK; };
 
   static void int_enable(){ASMV("sei");};
   static void int_disable(){ASMV("cli");};
@@ -181,10 +181,10 @@ class AVR8: public CPU_Common
   static Flags flags() { return sreg(); }
   static void flags(Flags flags) { sreg(flags); }
 
-  static Reg16 sp() { return sph_l(); }
-  static void sp(Reg16 sp) { sph_l(sp); }
+  static Reg16 sp() { return sphl(); }
+  static void sp(Reg16 sp) { sphl(sp); }
 
-  static Reg8 fr() { return r25_24(); }
+  static Reg16 fr() { return r25_24(); }
   static void fr(Reg16 fr) { r25_24(fr); }
 
   static Reg16 pdp() { return 0; }
@@ -231,13 +231,12 @@ class AVR8: public CPU_Common
 
   // AVR8 specific methods
   
-  static Reg16 sph_l() {
-    return (in8(0x3e)<<8) | in8(0x3d);
+  static Reg16 sphl() {
+    return in16(0x3d);
   }
   
-  static void sph_l(Reg16 value) {
-    out8(0x3e,value>>8);
-    out8(0x3d,(Reg8)value);
+  static void sphl(Reg16 value) {
+    out16(0x3d,value);
   }  
   
   static Reg8 sreg(){
@@ -283,13 +282,36 @@ class AVR8: public CPU_Common
     return value;  
   }
     
-  static unsigned char in8(const unsigned char port) {
-    return (*(volatile unsigned char *)(port + 0x20));
+  static Reg8 in8(const unsigned char port) {
+      Reg8 value;
+      ASMV("in	%0,%1"		"\n"
+	   : "=r" (value)
+	   : "I"  (port)
+      );
+      return value;
   }
+  
+  static Reg16 in16(const unsigned char port) {
+      Reg16 value;
+      ASMV("in 	%A0,	%1"	"\n" // Must read low byte first
+      	   "in 	%B0,	(%1)+1"	"\n" 
+	   : "=r" (value)
+	   : "I"   (port)
+      );
+      return value;
+  }  
     
-  static void out8(unsigned char port, unsigned char value) {
+  static void out8(unsigned char port, Reg8 value) {
     (*(volatile unsigned char *)(port + 0x20)) = value;
   }
+  
+  static void out16(unsigned char port, Reg16 value) {
+      ASMV("in 	(%0)+1,	%B1"	"\n" // Must write high byte first
+           "in 	%0,	%A1"	"\n"
+	   : "=I" (port)
+	   : "r" (value)
+      );
+  }  
   
   static int init(System_Info * si);
 
