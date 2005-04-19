@@ -35,7 +35,7 @@ clean:		FORCE
 veryclean:
 		make MAKE:="$(MAKECLEAN)" $(SUBDIRS) img
 		$(CLEAN) $(INCLUDE)/utility/elf-linux.h
-		$(CLEAN) $(INCLUDE)/mediator/pci/pci_ids-linux.h
+		$(CLEAN) $(INCLUDE)/system/pci_ids-linux.h
 		find $(LIB) -maxdepth 1 -type f -exec $(CLEAN) {} \;
 		find $(BIN) -maxdepth 1 -type f -exec $(CLEAN) {} \;
 		find $(IMG) -name "*.app" -exec $(CLEAN) {} \;
