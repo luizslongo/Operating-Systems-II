@@ -14,16 +14,17 @@ private:
     static const Type_Id TYPE = Type<Mutex>::TYPE;
 
 public:
-    Mutex() : _locked(false) { db<Mutex>(TRC) << "Mutex()\n"; }
-    ~Mutex() { db<Mutex>(TRC) << "~Mutex()\n"; }
+    Mutex() : _locked(false) { db<Mutex>(TRC) << "Mutex() => " 
+					      << this << "\n"; }
+    ~Mutex() { db<Mutex>(TRC) << "~Mutex(this=" << this << ")\n"; }
 
     void lock() { 
-	db<Mutex>(TRC) << "Mutex::lock()\n";
+	db<Mutex>(TRC) << "Mutex::lock(this=" << this << ")\n";
 	while(tsl(_locked))
 	    sleep();
     }
     void unlock() { 
-	db<Mutex>(TRC) << "Mutex::unlock()\n";
+	db<Mutex>(TRC) << "Mutex::unlock(this=" << this << ")\n";
 	_locked = false;
 	wakeup(); 
     }

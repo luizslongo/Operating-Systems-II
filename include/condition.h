@@ -15,10 +15,10 @@ private:
 
 public:
     Condition() : _wait(0), _signal(0) {
-	db<Condition>(TRC) << "Condition() => " << this << ")\n";
+	db<Condition>(TRC) << "Condition() => " << this << "\n";
     }
     ~Condition() {
-	db<Condition>(TRC) << "Condition() => " << this << ")\n";
+	db<Condition>(TRC) << "~Condition(this=" << this << ")\n";
     }
 
     void wait() {

@@ -15,19 +15,22 @@ private:
 
 public:
     Semaphore(int v = 1) : _value(v) {
-	db<Semaphore>(TRC) << "Semaphore(value= " << _value << ")\n";
+	db<Semaphore>(TRC) << "Semaphore(value= " << _value << ") => "
+			   << this << "\n";
     }
     ~Semaphore() {
-	db<Semaphore>(TRC) << "~Semaphore()\n";
+	db<Semaphore>(TRC) << "~Semaphore(this=" << this << ")\n";
     }
 
     void p() { 
-	db<Semaphore>(TRC) << "Semaphore::p(value=" << _value << ")\n";
+	db<Semaphore>(TRC) << "Semaphore::p(this=" << this 
+			   << "value=" << _value << ")\n";
 	while(fdec(_value) < 0)
 	    sleep();
     }
     void v() {
-	db<Semaphore>(TRC) << "Semaphore::v(value=" << _value << ")\n";
+	db<Semaphore>(TRC) << "Semaphore::v(this=" << this
+			   << "value=" << _value << ")\n";
 	if(finc(_value) < 1)
 	    wakeup();
     }
