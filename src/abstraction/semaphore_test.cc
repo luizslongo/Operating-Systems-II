@@ -10,7 +10,6 @@ __USING_SYS
 
 const int iterations = 10;
 
-Thread * m;
 Thread * phil[5];
 Semaphore * chopstick[5];
 
