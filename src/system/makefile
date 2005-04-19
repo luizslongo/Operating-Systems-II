@@ -4,20 +4,20 @@ include $(EPOS)/makedefs
 
 all:		install
 
-$(MACH)_system_kernel: initializer.o system.o $(LIBSYS)
+$(MACH)_system_kernel: first.o initializer.o system.o $(LIBSYS)
 		$(LD) $(LDFLAGS) -L$(CCLIB) \
 		-n -Ttext $(SYS_CODE_ADDR) -Tdata $(SYS_DATA_ADDR) \
 		-e $(SYS_CODE_ADDR) -o $(MACH)_system $< -l$(LSYS) \
 		-l$(LUTIL) -lc -lgcc
 
-$(MACH)_system_builtin: initializer.o system.o $(LIBSYS)
+$(MACH)_system_builtin: first.o initializer.o system.o $(LIBSYS)
 		$(LD) $(LDFLAGS) -L$(CCLIB) -n  \
 		--section-start .init=$(SYS_CODE_ADDR) \
 		--section-start .data=$(SYS_DATA_ADDR) \
 		--entry=_init -o $(MACH)_system \
 		$(EPOS)/lib/$(ARCH)_crti.o \
 		$(EPOS)/lib/$(ARCH)_crtbegin.o \
-		initializer.o system.o \
+		first.o	initializer.o system.o \
 		$(EPOS)/lib/$(ARCH)_crtend.o \
 		$(EPOS)/lib/$(ARCH)_crtn.o \
 		-l$(LINIT) -l$(LSYS) -l$(LUTIL) -lgcc -lc -lgcc

@@ -1,9 +1,9 @@
-// EPOS-- INITIALIZER
+// EPOS-- Initializer
 
-// INITIALIZER is responsible for initializing the operating system. It can
-// relly on a basic node configuration carried out by SETUP. What INIT
-// will actually do depends on the OS configuration for  the specific
-// application, but one thing are mandatory: create the first process!
+// Initializer is responsible for initializing the operating system. It
+// relies on a basic node configuration carried out by SETUP. What Initializer
+// will actually do depends on the OS configuration for the specific
+// application.
 
 #include <utility/elf.h>
 #include <utility/debug.h>
@@ -19,8 +19,6 @@
 #include <clock.h>
 #include <chronometer.h>
 #include <thread.h>
-
-extern "C" { void __epos_library_app_entry(void); }
 
 __BEGIN_SYS
 
@@ -43,8 +41,10 @@ Initializer::Initializer(System_Info * si)
 		      << ",log=" <<  (void *)si->iomm[i].log_addr
 		      << ",size=" << si->iomm[i].size << "}\n";
         
-    // Double check if we have a heap
+    // Initialize the system's heap
     sys_heap.free(&_sys_heap, Traits<Machine>::SYSTEM_HEAP_SIZE);
+
+    // Double check if we have a heap
     int * tmp = (int *)kmalloc(sizeof(int));
     if(!tmp) {
 	db<Init>(ERR) << "It won't work: we don't have a heap!\n";
@@ -52,10 +52,6 @@ Initializer::Initializer(System_Info * si)
     } else
 	db<Init>(INF) << "heap=" << (void *)tmp << "\n";
     kfree(tmp);
-
-    if(si->bm.system_off == -1) // EPOS is a library
-	si->lmm.app_entry = 
-	    reinterpret_cast<unsigned int>(__epos_library_app_entry);
 
     // Initialize EPOS abstractions 
     db<Init>(INF) << "Initializing EPOS abstractions: \n";
@@ -68,14 +64,9 @@ Initializer::Initializer(System_Info * si)
 	MMU::alloc(MMU::pages(Traits<Machine>::APPLICATION_HEAP_SIZE)),
 	Traits<Machine>::APPLICATION_HEAP_SIZE);
 
-    // Initialize the Thread abstraction, thus creating the first thread
-    db<Init>(INF) << "Starting first process ...\n";
-    Thread::init(si);
-
-    // This point won't be reached if a member of the Thread family was
-    // selected, since the cooresponding initialization will activate the
-    // first thread
-    reinterpret_cast<Function *>(si->lmm.app_entry)();
+    // The system should now be ready to serve applications.
+    // The initialization of the Thread abstraction, which will consequently 
+    // create the first thread, is carried out by First.
 }
 
 // Global object initializer
