@@ -5,6 +5,8 @@
 
 #include <system/config.h>
 
+__BEGIN_SYS
+
 // Threads are handled latter (they can activate the sched.)
 #define __LAST_INIT (Initializer::Dispatcher *)-1
 #define INIT_TABLE {\
@@ -27,8 +29,6 @@
     &Chronometer::init, \
     __LAST_INIT \
 } 
-
-__BEGIN_SYS
 
 class Initializer
 {
