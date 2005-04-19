@@ -10,10 +10,9 @@ __USING_SYS
 
 const int iterations = 10;
 
-Thread * m;
 Thread * phil[5];
-Condition * chopstick[5];
-Condition * barrier;
+Condition chopstick[5];
+Condition barrier;
 
 OStream cout;
 
@@ -27,20 +26,20 @@ int philosopher(int n, int l, int c)
     int first = (n < 4)? n : 0;
     int second = (n < 4)? n + 1 : 4;
 
-    barrier->wait();
+    barrier.wait();
 
     for(int i = iterations; i > 0; i--) {
 	display.position(l, c);
  	cout << "thinking";
 	Alarm::delay(1000000);
 
-	chopstick[first]->wait();   // get first chopstick
-	chopstick[second]->wait();   // get second chopstick
+	chopstick[first].wait();   // get first chopstick
+	chopstick[second].wait();   // get second chopstick
 	display.position(l, c);
 	cout << " eating ";
 	Alarm::delay(500000);
-	chopstick[first]->signal();   // release first chopstick
-	chopstick[second]->signal();   // release second chopstick
+	chopstick[first].signal();   // release first chopstick
+	chopstick[second].signal();   // release second chopstick
     }
 
     return(iterations);
@@ -53,9 +52,9 @@ int main()
     display.clear();
     cout << "The Philosopher's Dinner:\n";
 
-    for(int i = 0; i < 5; i++)
-	chopstick[i] = new Condition;
-    barrier = new Condition;
+//     for(int i = 0; i < 5; i++)
+// 	chopstick[i] = new Condition;
+//     barrier = new Condition;
     
     phil[0] = new Thread(&philosopher, 0, 5, 32);
     phil[1] = new Thread(&philosopher, 1, 10, 44);
@@ -78,10 +77,10 @@ int main()
     cout << '\\';
 
     Alarm::delay(2000000);
-    barrier->broadcast();
+    barrier.broadcast();
 
     for(int i = 0; i < 5; i++)
-	chopstick[i]->signal();
+	chopstick[i].signal();
 
     for(int i = 0; i < 5; i++) {
 	int ret = phil[i]->join();
@@ -89,8 +88,8 @@ int main()
 	cout << "Philosopher " << i << " ate " << ret << " times \n";
     }
 
-    for(int i = 0; i < 5; i++)
-	delete chopstick[i];
+//     for(int i = 0; i < 5; i++)
+// 	delete chopstick[i];
     for(int i = 0; i < 5; i++)
 	delete phil[i];
     
