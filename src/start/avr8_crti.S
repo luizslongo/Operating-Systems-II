@@ -35,7 +35,8 @@ __epos_library_app_entry:
 	.if (. - __vectors < _VECTORS_SIZE)
 	.weak	\name
 	.set	\name, __bad_interrupt
-	XJMP	\name
+	call	\name
+	//XJMP	\name
 	.endif
 	.endm
 
@@ -44,45 +45,45 @@ __epos_library_app_entry:
 	.func	__vectors
 __vectors:
 	XJMP	__init
-	vector	__vector_1
-	vector	__vector_2
-	vector	__vector_3
-	vector	__vector_4
-	vector	__vector_5
-	vector	__vector_6
-	vector	__vector_7
-	vector	__vector_8
-	vector	__vector_9
-	vector	__vector_10
-	vector	__vector_11
-	vector	__vector_12
-	vector	__vector_13
-	vector	__vector_14
-	vector	__vector_15
-	vector	__vector_16
-	vector	__vector_17
-	vector	__vector_18
-	vector	__vector_19
-	vector	__vector_20
-	vector	__vector_21
-	vector	__vector_22
-	vector	__vector_23
-	vector	__vector_24
-	vector	__vector_25
-	vector	__vector_26
-	vector	__vector_27
-	vector	__vector_28
-	vector	__vector_29
-	vector	__vector_30
-	vector	__vector_31
-	vector	__vector_32
-	vector	__vector_33
-	vector	__vector_34
-	vector	__vector_35
-	vector	__vector_36
-	vector	__vector_37
-	vector	__vector_38
-	vector	__vector_39
+	vector	__vector_handler
+	vector	__vector_handler
+	vector	__vector_handler
+	vector	__vector_handler
+	vector	__vector_handler
+	vector	__vector_handler
+	vector	__vector_handler
+	vector	__vector_handler
+	vector	__vector_handler
+	vector	__vector_handler
+	vector	__vector_handler
+	vector	__vector_handler
+	vector	__vector_handler
+	vector	__vector_handler
+	vector	__vector_handler
+	vector	__vector_handler
+	vector	__vector_handler
+	vector	__vector_handler
+	vector	__vector_handler
+	vector	__vector_handler
+	vector	__vector_handler
+	vector	__vector_handler
+	vector	__vector_handler
+	vector	__vector_handler
+	vector	__vector_handler
+	vector	__vector_handler
+	vector	__vector_handler
+	vector	__vector_handler
+	vector	__vector_handler
+	vector	__vector_handler
+	vector	__vector_handler
+	vector	__vector_handler
+	vector	__vector_handler
+	vector	__vector_handler
+	vector	__vector_handler
+	vector	__vector_handler
+	vector	__vector_handler
+	vector	__vector_handler
+	vector	__vector_handler
 	.endfunc
 
 	/* Handle unexpected interrupts (enabled and no handler), which
@@ -134,7 +135,6 @@ __init:
 #endif
 	out	_SFR_IO_ADDR(SPL), r28
 
-	/ * This calls setup to set the memory map */
 	call	__setup
 
 #if BIG_CODE
