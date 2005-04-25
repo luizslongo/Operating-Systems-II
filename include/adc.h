@@ -42,16 +42,6 @@ class ADC_Common
     SINGLE_CONVERSION_MODE
   };
 
-  int read();
-  int data_ready();
-  int start();
-  int stop();
-  int trigger(Trigger t);
-  int channel(Channel c);
-  int reference(Reference r);
-  Hertz frequency(Hertz f);
-  static int init(System_Info *si);
-
 };
 
 
