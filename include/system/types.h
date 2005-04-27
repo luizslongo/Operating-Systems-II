@@ -10,6 +10,7 @@ class Setup;
 class Init;
 class System;
 class Framework;
+class Heap;
 
 // Hardware Mediators - CPU
 class IA32;
