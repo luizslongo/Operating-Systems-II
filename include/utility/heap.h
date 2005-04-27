@@ -16,17 +16,20 @@ public:
     Heap(void * addr, unsigned int bytes) { free(addr, bytes); }
 
     void * alloc(unsigned int bytes) {
-	char * addr = 0;
-	if(bytes) {
-	    Element * e = search_decrementing(bytes);
-	    if(e)
-		addr = e->object() + e->size();
+	if(!bytes)
+	    return 0;
+	
+	bytes += sizeof(int);
+	Element * e = search_decrementing(bytes);
+	if(!e)
+	    return 0;
+	int * addr = reinterpret_cast<int *>(e->object() + e->size());
 	    
-	    db<System>(TRC) << "Heap::alloc(this=" << this
-			    << ",bytes=" << bytes 
-			    << ") => " << (void *)addr << "\n";
-	}
-	return addr;
+	db<Heap>(TRC) << "Heap::alloc(this=" << this
+		      << ",bytes=" << bytes 
+		      << ") => " << (void *)addr << "\n";
+	addr[0] = bytes;
+	return &addr[1];
     }
     void * calloc(unsigned int bytes) {
 	void * addr = alloc(bytes);
@@ -36,12 +39,13 @@ public:
     void * realloc(void * ptr, unsigned int bytes);
 
     void free(void * ptr) {
-	free(ptr, 4);
+	int * addr = (int *)ptr;
+	free(&addr[-1], addr[-1]);
     }
     void free(void * ptr, unsigned int bytes) {
-        db<System>(TRC) << "Heap::free(this=" << this
-			<< ",ptr=" << ptr
-			<< ",bytes=" << bytes << ")\n";
+        db<Heap>(TRC) << "Heap::free(this=" << this
+		      << ",ptr=" << ptr
+		      << ",bytes=" << bytes << ")\n";
 
 	if(ptr && (bytes >= sizeof(Element))) {
 	    Element * e = new (ptr)
