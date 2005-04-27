@@ -24,14 +24,15 @@ public:
 
     void p() { 
 	db<Semaphore>(TRC) << "Semaphore::p(this=" << this 
-			   << "value=" << _value << ")\n";
-	while(fdec(_value) < 0)
-	    sleep();
+			   << ",value=" << _value << ")\n";
+	if(fdec(_value) < 1)
+	    while(_value < 0)
+		sleep();
     }
     void v() {
 	db<Semaphore>(TRC) << "Semaphore::v(this=" << this
-			   << "value=" << _value << ")\n";
-	if(finc(_value) < 1)
+			   << ",value=" << _value << ")\n";
+	if(finc(_value) < 0)
 	    wakeup();
     }
 
