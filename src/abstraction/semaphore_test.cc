@@ -10,6 +10,7 @@ __USING_SYS
 
 const int iterations = 10;
 
+Display display;
 Thread * phil[5];
 Semaphore * chopstick[5];
 
@@ -17,8 +18,6 @@ OStream cout;
 
 int philosopher(int n, int l, int c)
 {
-    Display display;
-    
 //     cout << "I'm the philosopher " << n << "\n";
 //     cout << "I'll print at " << l << " x " << c << "\n";
  
@@ -44,8 +43,6 @@ int philosopher(int n, int l, int c)
 
 int main()
 {
-    Display display;
-
     display.clear();
     cout << "The Philosopher's Dinner:\n";
 
