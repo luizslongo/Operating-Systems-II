@@ -98,6 +98,8 @@ typedef PC_Display Display;
 
 // Abstractions
 class Thread;
+class Active;
+
 class Segment;
 class Address_Space;
 
