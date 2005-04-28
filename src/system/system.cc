@@ -1,10 +1,9 @@
 // EPOS-- System Scaffold
 
 #include <utility/ostream.h>
+#include <utility/debug.h>
 #include <utility/heap.h>
 #include <thread.h>
-
-extern "C" { void _exit(int s) { __SYS(Thread)::exit(s); for(;;); }}
 
 __BEGIN_SYS
 
@@ -18,5 +17,11 @@ Heap sys_heap;
 char _sys_heap[Traits<Machine>::SYSTEM_HEAP_SIZE];
 
 __END_SYS
+
+__USING_SYS
+
+// LIBC Heritage
+extern "C" { void _exit(int s) { Thread::exit(s); for(;;); }}
+extern "C" { void __cxa_pure_virtual() { db<void>(ERR) << "__cxa_pure_virtual() called!\n"; for(;;); }}
 
 
