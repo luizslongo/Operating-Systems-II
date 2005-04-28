@@ -27,9 +27,10 @@ ARCH_AVR8       = avr8
 # Paths, prefixes and suffixes
 INCLUDE		= $(EPOS)/include
 SRC		= $(EPOS)/src
+APP		= $(EPOS)/app
 BIN		= $(EPOS)/bin
-IMG		= $(EPOS)/img
 LIB		= $(EPOS)/lib
+IMG		= $(EPOS)/img
 CFG		= $(EPOS)/config
 DOC		= $(EPOS)/doc
 LSYSNAME	= system
@@ -55,7 +56,9 @@ LIBUTIL		= $(LIB)/lib$(LUTILNAME)_$(ARCH).a
 LSYS		= $(LSYSNAME)_$(ARCH)
 LINIT		= $(LINITNAME)_$(ARCH)
 LUTIL		= $(LUTILNAME)_$(ARCH)
-DEFAULT_APP	= $(SRC)/loader/$(MACH)_loader.cc
+ifndef APPLICATION
+APPLICATION 	= $(MACH)_app
+endif
 
 # Boot memory map configuration
 BOOT_ADDR	= $($(MACH)_BOOT_ADDR)
@@ -68,16 +71,16 @@ SYS_DATA_ADDR	= $($(MACH)_SYS_DATA_ADDR)
 SED 		= sed
 
 # Tools and flags to compile system tools
-TCC		= gcc -ansi -c
+TCC		= $(TOOLS_PREFIX)gcc -ansi -c
 TCCFLAGS	= -Wall -O2 -I$(INCLUDE) -DANALYZE
 
-TCXX		= g++ -c -ansi -fno-exceptions
+TCXX		= $(TOOLS_PREFIX)g++ -c -ansi -fno-exceptions
 TCXXFLAGS	= -Wall -O2 -I$(INCLUDE) -DANALYZE
 
-TCPP		= gcc -E 
+TCPP		= $(TOOLS_PREFIX)gcc -E 
 TCPPFLAGS	= -I$(INCLUDE) -DANALYZE
 
-TLD		= gcc
+TLD		= $(TOOLS_PREFIX)gcc
 TLDFLAGS	= 
 
 # Tools and flags to compile applications
@@ -156,8 +159,8 @@ lib%.o:		lib%.cc
 
 %_test:		%_test.o
 		$(ALD) $(ALDFLAGS) $< -o $@
-		$(STRIP) $@ -o $(IMG)/$@.app
-#		$(MKBI) $(MKBI_IMG) $(IMG)/$@.app
+		$(STRIP) $@ -o $(IMG)/$@
+#		$(MKBI) $(MKBI_IMG) $(IMG)/$@
 
 %.o:		%.cc
 		$(CXX) $(CXXFLAGS) $<

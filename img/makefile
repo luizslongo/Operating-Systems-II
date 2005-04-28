@@ -9,11 +9,11 @@
 
 include	$(EPOS)/makedefs
 
-all:		$(MACH)_boot $(MACH)_setup $(MACH)_system $(MACH)_loader
-		$(MKBI) $(MKBI_IMG) 
+all:		$(MACH)_boot $(MACH)_setup $(MACH)_system $(APPLICATION)
+		$(MKBI) $(MKBI_IMG) $(APPLICATION)
 
 install:	all
 
 clean		:
-		$(CLEAN) *_boot *_setup *_system *_loader *.img *.o
+		$(CLEAN) *_boot *_setup *_system $(APPLICATION) *.img *.o
 

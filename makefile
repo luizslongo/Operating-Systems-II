@@ -30,7 +30,7 @@ test:		all
 
 clean:		FORCE
 		(cd src && $(MAKECLEAN))
-		find $(LIB) -maxdepth 1 -type f -exec $(CLEAN) {} \;
+		finlsd $(LIB) -maxdepth 1 -type f -exec $(CLEAN) {} \;
 
 veryclean:
 		make MAKE:="$(MAKECLEAN)" $(SUBDIRS) img
@@ -38,10 +38,13 @@ veryclean:
 		$(CLEAN) $(INCLUDE)/system/pci_ids-linux.h
 		find $(LIB) -maxdepth 1 -type f -exec $(CLEAN) {} \;
 		find $(BIN) -maxdepth 1 -type f -exec $(CLEAN) {} \;
-		find $(IMG) -name "*.app" -exec $(CLEAN) {} \;
+		find $(APP) -maxdepth 1 -type f -perm +111 -exec $(CLEAN) {} \;
+		find $(IMG) -maxdepth 1 -type f -perm +111 -exec $(CLEAN) {} \;
 		find $(EPOS) -name "*~" -exec $(CLEAN) {} \; 
 
 dist:		veryclean
 		find $(EPOS) -name CVS -type d -print | xargs $(CLEANDIR)
+		find $(EPOS) -name "*.h" -print | xargs sed -i "1r $(EPOS)/LICENSE" 
+		find $(EPOS) -name "*.cc" -print | xargs sed -i "1r $(EPOS)/LICENSE" 
 
 FORCE:
