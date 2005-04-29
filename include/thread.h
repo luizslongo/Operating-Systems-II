@@ -27,8 +27,6 @@ private:
     typedef CPU::Context Context;
 
 public:
-    enum Self {SELF};
-
     typedef short State;
     enum  {
         RUNNING,
@@ -151,6 +149,7 @@ public:
     void suspend();
     void resume();
 
+    static Thread * volatile  & self() { return _running; }
     static void yield();
     static void exit(int status = 0);
 
