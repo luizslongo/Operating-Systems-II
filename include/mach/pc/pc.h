@@ -3,6 +3,7 @@
 #ifndef __pc_h
 #define __pc_h
 
+#include <utility/handler.h>
 #include <machine.h>
 #include <arch/ia32/cpu.h>
 #include <arch/ia32/mmu.h>
@@ -24,7 +25,7 @@ private:
     static const Type_Id TYPE = Type<PC>::TYPE;
 
     static const int SYSCALL_INT = Traits::SYSCALL_INT;
-
+    
 public:
     // Interrupts
     enum {
@@ -35,21 +36,20 @@ public:
 
 public:
     PC() {}
-    ~PC() {}
   
-    static Handler int_handler(int i) {
+    static Handler::Function * int_handler(int i) {
 	IA32::IDT_Entry * idt = (IA32::IDT_Entry *)Memory_Map<PC>::INT_VEC;
 	if(i < IA32::IDT_ENTRIES)
-	    return (Handler)idt[i].offset();
+	    return (Handler::Function *)idt[i].offset();
     }
-    static void int_handler(int i, Handler h) {
+    static void int_handler(int i, Handler::Function * h) {
 	IA32::IDT_Entry * idt = (IA32::IDT_Entry *)Memory_Map<PC>::INT_VEC;
 	if(i < IA32::IDT_ENTRIES)
 	    idt[i] = IA32::IDT_Entry(IA32::GDT_SYS_CODE,
 				     (IA32::Reg32)h,
 				     IA32::SEG_IDT_ENTRY);
     }
-    template <Handler h> static void handler_wrapper(){
+    template <Handler::Function * h> static void handler_wrapper(){
 	ASM("	cli				\n"
 	    "	pushl	%eax			\n"
 	    "	pushl	%ecx			\n"

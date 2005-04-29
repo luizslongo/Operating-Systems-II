@@ -11,9 +11,6 @@ class Machine_Common
 {
 protected:
     Machine_Common() {}
-
-public:
-    typedef void (* Handler)(void);
 };
 
 __END_SYS

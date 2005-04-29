@@ -19,8 +19,11 @@ int main()
     cout << "I'm the first thread of the first task created in the system.\n";
     cout << "I'll now create two alarms and put myself in a delay ...\n";
 
-    Alarm alarm_a(1000000, &func_a, iterations);
-    Alarm alarm_b(1000000, &func_b, iterations);
+    Handler_Function handler_a(&func_a);
+    Alarm alarm_a(1000000, &handler_a, iterations);
+
+    Handler_Function handler_b(&func_b);
+    Alarm alarm_b(1000000, &handler_b, iterations);
 
     Alarm::delay(1000000 * (iterations * 2 + 1));
 

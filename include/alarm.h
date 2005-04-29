@@ -5,6 +5,7 @@
 
 #include <system/config.h>
 #include <utility/queue.h>
+#include <utility/handler.h>
 #include <tsc.h>
 #include <rtc.h>
 #include <timer.h>
@@ -28,22 +29,20 @@ private:
     typedef Timer::Tick Tick;
 
 public:
-    // An alarm handler
-    typedef void (* Handler)();
-
     // Infinite times (for alarms)
     enum { INFINITE = 0 };
 
 public:
-    Alarm(const Microseconds & time, const Handler & handler, int times = 1);
+    Alarm(const Microseconds & time, Handler * handler, int times = 1);
     ~Alarm();
-    static void master(const Microseconds & time, const Handler & handler);
 
-    static Hertz frequency() {	return _timer.frequency(); }
+    static void master(const Microseconds & time, Handler::Function * handler);
+
+    static Hertz frequency() {return _timer.frequency(); }
 
     static void delay(const Microseconds & time);
 
-    static int init(System_Info *si);
+    static int init(System_Info * si);
 
 private:
     static Microseconds period() { return 1000000 / frequency(); }
@@ -51,13 +50,13 @@ private:
 
 private:
     Tick _ticks;
-    Handler _handler;
+    Handler * _handler;
     int _times;
     Queue::Element _link;
 
     static Timer _timer;
     static volatile Tick _elapsed;
-    static Handler _master;
+    static Handler::Function * _master;
     static Tick _master_ticks;
     static Queue _requests;
 };

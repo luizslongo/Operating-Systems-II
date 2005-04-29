@@ -57,7 +57,6 @@ public:
 
 public:
     PC_IC() {}
-    ~PC_IC() {}
 
     static void remap(unsigned char base = INT_BASE) {
 	// Configure Master PIC
@@ -104,7 +103,7 @@ public:
 	    IA32::out8(SLAVE_CMD, EOI);
     }
 
-    static int init(System_Info *si);
+    static int init(System_Info * si);
 };
 
 __END_SYS

@@ -64,7 +64,6 @@ public:
 
 public:
     PC_Timer(int u = 0) {} // actual initialization is up to init
-    ~PC_Timer() {}
 
     Hertz frequency() { return Timer_Common::frequency(); }
     void frequency(const Hertz & f) {

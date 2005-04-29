@@ -32,8 +32,8 @@ public:
     };
 
     // CPU Context
-    class Context {
-        
+    class Context
+    {
     public:
         Context(Log_Addr entry) :_sreg(FLAG_DEFAULTS),
                                  _pc((entry << 8) | (entry >> 8)){}     
@@ -43,11 +43,10 @@ public:
         void load() volatile;
 
         friend Debug & operator << (Debug & db, const Context & c) {
-        db << "{"
-           << "sp="    << &c
-           << ",sreg=" << c._sreg
-           << "}" ;
-        return db;
+	    db << "{sp="    << &c
+	       << ",sreg=" << c._sreg
+	       << "}" ;
+	    return db;
         }
 
     public:
@@ -89,24 +88,21 @@ public:
 
 public:
     AVR8() {} 
-    ~AVR8() {}
  
-    Hertz clock(){    return Traits::CLOCK; };
+    Hertz clock() { return Traits::CLOCK; };
 
-    static void int_enable(){ASMV("sei");};
-    static void int_disable(){ASMV("cli");};
-    static void halt(){ASMV("sleep");};
+    static void int_enable() { ASMV("sei"); };
+    static void int_disable() { ASMV("cli"); };
+    static void halt() { ASMV("sleep"); };
 
     static void switch_context(Context * volatile * current, 
-                   Context * volatile next);
+			       Context * volatile next);
 
     static Flags flags() { return sreg(); }
     static void flags(Flags flags) { sreg(flags); }
 
-
     static Reg16 sp() { return sphl(); }
     static void sp(Reg16 sp) { sphl(sp); }
-
 
     static Reg16 fr() { return r25_24(); }
     static void fr(Reg16 fr) { r25_24(fr); }
@@ -122,14 +118,12 @@ public:
         int_enable();
         return old;
     }
-        
     static int finc(volatile int & value) {
         int_disable();
         register bool old = CPU_Common::finc(value);
         int_enable();
         return old;
     }
-    
     static int fdec(volatile int & value) {
         int_disable();
         register bool old = CPU_Common::finc(value);
@@ -137,56 +131,34 @@ public:
         return old;
     }
 
-    static Reg32 htonl(Reg32 v) {
-        return htonl_lsb(v);
-    }
+    static Reg32 htonl(Reg32 v) { return htonl_lsb(v); }
     
-    static Reg16 htons(Reg16 v) {
-        return htons_lsb(v);
-    }
+    static Reg16 htons(Reg16 v) { return htons_lsb(v); }
     
-    static Reg32 ntohl(Reg32 v) {
-        return htonl(v);
-    }
+    static Reg32 ntohl(Reg32 v) { return htonl(v); }
     
-    static Reg16 ntohs(Reg16 v) {
-        return htons(v);
-    }
+    static Reg16 ntohs(Reg16 v) { return htons(v); }
 
     // AVR8 specific methods
     
-    static Reg16 sphl() {
-        return in16(0x3d);
-    }
-    
-    static void sphl(Reg16 value) {
-        out16(0x3d,value);
-    }    
-    
-    static Reg8 sreg(){
-        return in8(0x3f);
-    }
-    
-    static void sreg(Reg8 value){
-        out8(0x3f,value);
-    }
+    static Reg16 sphl() { return in16(0x3d); }
+    static void sphl(Reg16 value) { out16(0x3d, value); }    
+    static Reg8 sreg() { return in8(0x3f); }
+    static void sreg(Reg8 value) { out8(0x3f, value); }
     
     static Reg16 r25_24(){
         Reg16 value;
         ASMV("mov     %A0,r24"    "\n"
              "mov     %B0,r25"    "\n"
              : "=r" (value)
-             : 
-        );
+	     :);
         return value;
     }    
-    
     static void r25_24(Reg16 value){
         ASMV("mov     r24,%A0"    "\n"
              "mov     r25,%B0"    "\n"
-             : 
-             : "r" (value)
-        );    
+             :
+	     : "r" (value));    
     }
     
     static Log_Addr pc(){
@@ -201,46 +173,36 @@ public:
              "clr    r1"          "\n"
              "sei"                "\n"
              : "=r" (value)
-             : 
-        );
+             :);
         return value;  
     }
     
     static Reg8 in8(const unsigned char port) {
         Reg8 value;
         ASMV("in    %0,%1"        "\n"
-         : "=r" (value)
-         : "I"  (port)
-        );
+	     : "=r" (value)
+	     : "I"  (port));
         return value;
     }
-  
     static Reg16 in16(const unsigned char port) {
         Reg16 value;
         ASMV("in     %A0,    %1"        "\n" // Must read low byte first
              "in     %B0,    (%1)+1"    "\n" 
              : "=r" (value)
-             : "I"   (port)
-        );
+             : "I"   (port));
         return value;
     }  
-    
     static void out8(unsigned char port, Reg8 value) {
         (*(volatile unsigned char *)(port + 0x20)) = value;
     }
-  
     static void out16(const unsigned char port, Reg16 value) {
         ASMV("out     (%0)+1,    %B1"   "\n" // Must write high byte first
              "out     %0,    %A1"       "\n"
              : 
-             : "I" (port), "r" (value)
-        );
+             : "I" (port), "r" (value));
     }  
   
-    static int init(System_Info * si);
-    
-private:
-
+    sttatic int init(System_Info * si);
 };
 
 __END_SYS
