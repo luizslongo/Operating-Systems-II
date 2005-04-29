@@ -8,12 +8,12 @@ __BEGIN_SYS
 // Class attributes
 Timer Alarm::_timer;
 volatile Alarm::Tick Alarm::_elapsed;
-Alarm::Handler Alarm::_master;
+Handler::Function * Alarm::_master;
 Alarm::Tick Alarm::_master_ticks;
 Alarm::Queue Alarm::_requests;
 
 // Methods
-Alarm::Alarm(const Microseconds & time, const Handler & handler, int times)
+Alarm::Alarm(const Microseconds & time, Handler * handler, int times)
     : _ticks((time + period() / 2) / period()), _handler(handler),
       _times(times), _link(this)
 {
@@ -22,7 +22,7 @@ Alarm::Alarm(const Microseconds & time, const Handler & handler, int times)
     if(_ticks)
 	_requests.insert(&_link, _ticks);
     else
-	handler();
+	(*handler)();
 }
 
 Alarm::~Alarm() {
@@ -30,7 +30,7 @@ Alarm::~Alarm() {
     _requests.remove(this);
 }
 
-void Alarm::master(const Microseconds & time, const Handler & handler)
+void Alarm::master(const Microseconds & time, Handler::Function * handler)
 {
     db<Alarm>(TRC) << "master(t=" << time << ",h="
 		   << (void *)handler << ")\n";
@@ -49,7 +49,7 @@ void Alarm::delay(const Microseconds & time)
 void Alarm::timer_handler(void)
 {
     static Tick next;
-    static Handler handler;
+    static Handler * handler;
 
     _elapsed++;
     
@@ -71,7 +71,7 @@ void Alarm::timer_handler(void)
 	next--;
     if(!next) {
 	if(handler)
-	    handler();
+	    (*handler)();
 	if(_requests.empty())
 	    handler = 0;
 	else {

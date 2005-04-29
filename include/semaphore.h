@@ -3,6 +3,7 @@
 #ifndef __semaphore_h
 #define __semaphore_h
 
+#include <utility/handler.h>
 #include <common/synchronizer.h>
 
 __BEGIN_SYS
@@ -40,6 +41,17 @@ public:
 
 private:
     volatile int _value;
+};
+
+class Handler_Semaphore: public Handler
+{
+public:
+    Handler_Semaphore(Semaphore * h) : _handler(h) {}
+
+    void operator()() { _handler->v(); }
+	
+private:
+    Semaphore * _handler;
 };
 
 __END_SYS

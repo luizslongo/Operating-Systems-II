@@ -6,6 +6,7 @@
 #include <system/config.h>
 #include <utility/queue.h>
 #include <utility/malloc.h>
+#include <utility/handler.h>
 #include <cpu.h>
 #include <mmu.h>
 
@@ -183,8 +184,8 @@ private:
 	    CPU::int_enable();
     }
 
-    static void implicit_exit() { exit(CPU::fr()); }
     static void reschedule() { yield(); }
+    static void implicit_exit() { exit(CPU::fr()); }
     static void idle();
 
 private:
@@ -197,6 +198,17 @@ private:
     static Thread * volatile _running;
     static Queue _ready;
     static Queue _suspended;
+};
+
+class Handler_Thread : public Handler
+{
+public:
+    Handler_Thread(Thread * h) : _handler(h) {}
+
+    void operator()() { _handler->resume(); }
+	
+private:
+    Thread * _handler;
 };
 
 __END_SYS
