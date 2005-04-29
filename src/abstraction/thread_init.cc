@@ -1,8 +1,8 @@
 // EPOS-- Thread Abstraction Initialization
 
+#include <system/kmalloc.h>
 #include <thread.h>
 #include <alarm.h>
-#include <system/kmalloc.h>
 
 __BEGIN_SYS
 
