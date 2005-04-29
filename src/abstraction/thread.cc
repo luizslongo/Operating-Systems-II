@@ -54,24 +54,25 @@ void  Thread::suspend()
     if(Traits::active_scheduler)
 	CPU::int_disable();
 
-    if(_running != this)
-	_ready.remove(this);
     _state = SUSPENDED;
     _suspended.insert(&_link);
 
-    if(!_ready.empty()) {
-	_running = _ready.remove()->object();
-	_running->_state = RUNNING;
+    if(this == _running) {
+	if(!_ready.empty()) {
+	    _running = _ready.remove()->object();
+	    _running->_state = RUNNING;
 
-// 	_context->save(); // can be used to force an update
-	db<Thread>(INF) << "old={" << this << "," 
-			<< *_context << "}\n";
-	db<Thread>(INF) << "new={" << _running << "," 
-			<< *_running->_context << "}\n";
+//          _context->save(); // can be used to force an update
+	    db<Thread>(INF) << "old={" << this << "," 
+			    << *_context << "}\n";
+	    db<Thread>(INF) << "new={" << _running << "," 
+			    << *_running->_context << "}\n";
 
-	CPU::switch_context(&_context, _running->_context);
+	    CPU::switch_context(&_context, _running->_context);
+	} else
+	    idle(); // implicitly re-enables interrupts
     } else
-	idle(); // implicitly re-enables interrupts
+	_ready.remove(this);
 
     if(Traits::active_scheduler)
 	CPU::int_enable();
@@ -79,6 +80,9 @@ void  Thread::suspend()
 
 void  Thread::resume() {
     db<Thread>(TRC) << "Thread::resume(this=" << this << ")\n";
+
+    if(_state != SUSPENDED) 
+	return;
 
     if(Traits::active_scheduler)
 	CPU::int_disable();
