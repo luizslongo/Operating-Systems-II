@@ -20,14 +20,8 @@ private:
     typedef RTC::Microseconds Microseconds;
 
 public:
-//    Chronometer(const Id & id) {}
-//    Chronometer(const Chronometer & obj) {}
     Chronometer() : _start(0), _stop(0) {}
-    ~Chronometer() {}
 
-//    const Id & id();
-//    bool valid();
-    
     Hertz frequency() { return tsc.frequency(); }
 
     void reset() { _start = 0; _stop = 0; }

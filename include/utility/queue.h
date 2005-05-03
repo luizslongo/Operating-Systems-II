@@ -95,7 +95,6 @@ public:
 
 public:
     Relative_Queue() {}
-    ~Relative_Queue() {}
 
     bool empty() const { return List::empty(); }
     unsigned int size() const { return List::size(); }
