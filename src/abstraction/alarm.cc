@@ -77,7 +77,7 @@ void Alarm::timer_handler(void)
 	    Alarm * alarm = e->object();
 	    next = e->rank();
 	    handler = alarm->_handler;
-	    if(alarm->_times != -1)
+	    if(alarm->_times != INFINITE)
 		alarm->_times--;
 	    if(alarm->_times) 
 		_requests.insert(&alarm->_link, alarm->_ticks);

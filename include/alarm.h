@@ -30,7 +30,7 @@ private:
 
 public:
     // Infinite times (for alarms)
-    enum { INFINITE = 0 };
+    enum { INFINITE = -1 };
 
 public:
     Alarm(const Microseconds & time, Handler * handler, int times = 1);
