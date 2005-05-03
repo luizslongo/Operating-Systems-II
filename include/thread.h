@@ -3,7 +3,6 @@
 #ifndef __thread_h
 #define __thread_h
 
-#include <system/config.h>
 #include <utility/queue.h>
 #include <utility/malloc.h>
 #include <utility/handler.h>
@@ -14,7 +13,7 @@ __BEGIN_SYS
 
 class Thread
 {
-private:
+protected:
     typedef Traits<Thread> Traits;
     static const Type_Id TYPE = Type<Thread>::TYPE;
 
@@ -199,6 +198,7 @@ private:
     static Queue _suspended;
 };
 
+// A thread event handler (see handler.h)
 class Handler_Thread : public Handler
 {
 public:
