@@ -48,8 +48,8 @@ void Alarm::delay(const Microseconds & time)
 
 void Alarm::timer_handler(void)
 {
-    static Tick next;
-    static Handler * handler;
+    static Tick next; // counter for next event
+    static Handler * handler; // next event's handler
 
     _elapsed++;
     
@@ -62,21 +62,20 @@ void Alarm::timer_handler(void)
 	display.position(lin, col);
     }
 
-    if(_master_ticks) {
-	if(!(_elapsed % _master_ticks))
-	    _master();
-    }
+    if(_master_ticks && ((_elapsed % _master_ticks) == 0))
+	_master();
 
-    if(next)
-	next--;
-    if(!next) {
-	if(handler)
+    if(next > 0)
+	next--; 
+    else {
+	if(handler) {
 	    (*handler)();
-	if(_requests.empty())
 	    handler = 0;
-	else {
-	    Alarm * alarm = _requests.remove()->object();
-	    next = alarm->_ticks;
+	}
+	if(!_requests.empty()) {
+	    Queue::Element * e = _requests.remove();
+	    Alarm * alarm = e->object();
+	    next = e->rank();
 	    handler = alarm->_handler;
 	    if(alarm->_times != -1)
 		alarm->_times--;
