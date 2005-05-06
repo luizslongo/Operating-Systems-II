@@ -1,7 +1,8 @@
 // EPOS-- Alarm Abstraction Implementation
 
-#include <alarm.h>
 #include <display.h>
+#include <alarm.h>
+#include <thread.h>
 
 __BEGIN_SYS
 
@@ -15,19 +16,25 @@ Alarm::Queue Alarm::_requests;
 // Methods
 Alarm::Alarm(const Microseconds & time, Handler * handler, int times)
     : _ticks((time + period() / 2) / period()), _handler(handler),
-      _times(times), _link(this)
+      _times(times), _link(this, (int)_ticks)
 {
     db<Alarm>(TRC) << "Alarm(t=" << time << ",h=" << (void *)handler
 		   << ",x=" << times << ")\n";
-    if(_ticks)
-	_requests.insert(&_link, _ticks);
-    else
+    if(!_ticks) {
 	(*handler)();
+	return;
+    }
+
+    CPU::int_disable();
+    _requests.insert(&_link);
+    CPU::int_enable();
 }
 
 Alarm::~Alarm() {
     db<Alarm>(TRC) << "~Alarm()\n";
+    CPU::int_disable();
     _requests.remove(this);
+    CPU::int_enable();
 }
 
 void Alarm::master(const Microseconds & time, Handler::Function * handler)
@@ -43,7 +50,9 @@ void Alarm::delay(const Microseconds & time)
 {
     db<Alarm>(TRC) << "delay(t=" << time << ")\n";
     Tick t = _elapsed + time / period();
-    while(_elapsed < t);
+    while(_elapsed < t)
+	if(__SYS(Traits)<Thread>::idle_waiting)
+	    Thread::yield();
 }
 
 void Alarm::timer_handler(void)
@@ -79,8 +88,10 @@ void Alarm::timer_handler(void)
 	    handler = alarm->_handler;
 	    if(alarm->_times != INFINITE)
 		alarm->_times--;
-	    if(alarm->_times) 
-		_requests.insert(&alarm->_link, alarm->_ticks);
+	    if(alarm->_times) {
+		e->rank(alarm->_ticks);
+		_requests.insert(e);
+	    }
 	}
     }
 }
