@@ -17,7 +17,7 @@ protected:
     typedef Traits<Thread> Traits;
     static const Type_Id TYPE = Type<Thread>::TYPE;
 
-    typedef Queue<Thread> Queue;
+    typedef Ordered_Queue<Thread> Queue;
 
     static const unsigned int STACK_SIZE = 
 	__SYS(Traits)<Machine>::APPLICATION_STACK_SIZE;
@@ -55,8 +55,7 @@ public:
 			- sizeof(int) - sizeof(Context))
 		   Context(entry)),
 	  _state(state),
-	  _priority(priority),
-	  _link(this)
+	  _link(this, priority)
     {
 	header(entry, stack_size);
 	Log_Addr sp = _stack + stack_size;
@@ -74,8 +73,7 @@ public:
 			- sizeof(int) - sizeof(Context))
 		   Context(entry)),
 	  _state(state),
-	  _priority(priority),
-	  _link(this)
+	  _link(this, priority)
     {
 	header(entry, stack_size);
 	Log_Addr sp = _stack + stack_size;
@@ -94,8 +92,7 @@ public:
 			- sizeof(int) - sizeof(Context))
 		   Context(entry)),
 	  _state(state),
-	  _priority(priority),
-	  _link(this)
+	  _link(this, priority)
     {
 	header(entry, stack_size);
 	Log_Addr sp = _stack + stack_size;
@@ -115,8 +112,7 @@ public:
 			- sizeof(T1) - sizeof(int) - sizeof(Context))
 		   Context(entry)),
 	  _state(state),
-	  _priority(priority),
-	  _link(this)
+	  _link(this, priority)
     {
 	header(entry, stack_size);
 	Log_Addr sp = _stack + stack_size;
@@ -130,7 +126,7 @@ public:
     ~Thread() {
 	db<Thread>(TRC) << "~Thread(this=" << this 
 			<< ",state=" << _state
-			<< ",priority=" << _priority
+			<< ",priority=" << _link.rank()
 			<< ",stack={b=" << _stack
 			<< ",context={b=" << _context
 			<< "," << *_context << "})\n";
@@ -140,8 +136,8 @@ public:
     }
 
     volatile const State & state() const { return _state; }
-    volatile const Priority & priority() const { return _priority; }
-    void priority(const Priority & priority);
+    Priority priority() const { return _link.rank(); }
+    void priority(const Priority & p) { _link.rank(p); }
 
     int join();
     void pass();
@@ -152,17 +148,17 @@ public:
     static void yield();
     static void exit(int status = 0);
 
-    static Thread * volatile  & running() { return _running; }
-    static void running(Thread * r) { _running = r; }
-
     static int init(System_Info * si);
 
 private:
+    static Thread * volatile  & running() { return _running; }
+    static void running(Thread * r) { _running = r; }
+
     void header(Log_Addr entry, unsigned int stack_size) {
 	db<Thread>(TRC) << "Thread(this=" << this 
 			<< ",entry=" << (void *)entry 
 			<< ",state=" << _state
-			<< ",priority=" << _priority
+			<< ",priority=" << _link.rank()
 			<< ",stack={b=" << _stack
 			<< ",s=" << stack_size
 			<< ",context={b=" << _context
@@ -180,9 +176,15 @@ private:
 
 	if(Traits::active_scheduler)
 	    CPU::int_enable();
+	
+	if(Traits::preemptive)
+	    reschedule();
     }
 
-    static void reschedule() { yield(); }
+    static void reschedule() {
+	if(!_ready.empty() && _ready.head()->rank() < _running->_link.rank())
+	    yield();
+    }
     static void implicit_exit() { exit(CPU::fr()); }
     static void idle();
 
@@ -190,7 +192,6 @@ private:
     Log_Addr _stack;
     Context * volatile _context;
     volatile State _state;
-    volatile Priority _priority;
     Queue::Element _link;
 
     static Thread * volatile _running;
