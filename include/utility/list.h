@@ -136,6 +136,7 @@ public:
 	Element * head() { return _head; }
 	Element * tail() { return _tail; }
 
+	void insert(Element * e) { insert_tail(e); }
 	void insert_head(Element * e) {
 	    if(empty())
 		insert_first(e);
@@ -159,6 +160,7 @@ public:
 	    }
 	}
 
+	Element * remove() { return remove_head(); }
 	Element * remove(Element * e) {
 	    if(last())
 		remove_last();
@@ -272,11 +274,8 @@ public:
 		}
 	    }
 	}
-	void insert(Element * e, unsigned int o) {
-	    e->rank(o);
-	    insert(e);
-	}
 
+	Element * remove() { return remove_head(); }
 	Element * remove(Element * e) {
 	    Algorithm<Element>::remove(e);
 	    if(relative && e->next())
@@ -353,15 +352,16 @@ public:
     };
 };
 
-template <typename T>
+template <typename T, bool ordered = false, bool relative = false,
+	      bool grouping = false>
 class List: public List_Common::Algorithm<
-    List_Common::Element<T, false, false>,
-    false,
-    false,
-    false>
+    List_Common::Element<T, ordered, grouping>,
+    ordered,
+    relative,
+    grouping>
 {
 public:
-    typedef List_Common::Element<T, false, false> Element;
+    typedef typename List_Common::Element<T, ordered, grouping> Element;
 };
 
 template <typename T>
@@ -372,7 +372,7 @@ class Ordered_List: public List_Common::Algorithm<
     false>
 {
 public:
-    typedef List_Common::Element<T, true, false> Element;
+    typedef typename List_Common::Element<T, true, false> Element;
 };
 
 template <typename T>
@@ -383,7 +383,7 @@ class Relative_List: public List_Common::Algorithm<
     false>
 {
 public:
-    typedef List_Common::Element<T, true, false> Element;
+    typedef typename List_Common::Element<T, true, false> Element;
 };
 
 template <typename T>
@@ -394,7 +394,7 @@ class Grouping_List:  public List_Common::Algorithm<
     true>
 {
 public:
-    typedef List_Common::Element<T, false, true> Element;
+    typedef typename List_Common::Element<T, false, true> Element;
 };
 
 __END_SYS
