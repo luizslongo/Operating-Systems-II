@@ -10,6 +10,7 @@ __BEGIN_SYS
 class List_Common
 {
 public:
+    // Element for normal list
     template <typename T, bool ordered = false, bool grouped = false>
     class Element
     {
@@ -31,6 +32,7 @@ public:
 	Element * _next;
     };
 
+    // Element for ordered list
     template <typename T>
     class Element<T, true, false>
     {
@@ -56,6 +58,7 @@ public:
 	Element * _next;
     };
     
+    // Element for unordered grouping list
     template <typename T>
     class Element<T, false, true>
     {
@@ -84,6 +87,7 @@ public:
 	Element * _next;
     };
 
+    // Element for ordered grouping list
     template <typename T>
     class Element<T, true, true>
     {
@@ -115,6 +119,7 @@ public:
 	Element * _next;
     };
 
+    // Algorithm for normal list
     template <typename Element, bool ordering = false, bool relative = false,
 	      bool grouping = false>
     class Algorithm
@@ -234,6 +239,7 @@ public:
 	Element * _tail;
     };
 
+    // Algorithm for ordered (relative or not) list
     template <typename Element, bool relative>
     class Algorithm<Element, true, relative, false>: public Algorithm<Element>
     {
@@ -241,8 +247,7 @@ public:
 	typedef typename Element::Object_Type Object_Type;
 
     public:
-	void insert(Element * e, unsigned int o) {
-	    e->rank(o);
+	void insert(Element * e) {
 	    if(empty())
 		insert_first(e);
 	    else {
@@ -267,6 +272,10 @@ public:
 		}
 	    }
 	}
+	void insert(Element * e, unsigned int o) {
+	    e->rank(o);
+	    insert(e);
+	}
 
 	Element * remove(Element * e) {
 	    Algorithm<Element>::remove(e);
@@ -284,6 +293,7 @@ public:
 	}
     };
 
+    // Algorithm for grouping list
     template <typename Element>
     class Algorithm<Element, false, false, true>: public Algorithm<Element>
     {

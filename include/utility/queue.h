@@ -65,6 +65,7 @@ public:
     Element * head() { return List::head(); }
     Element * tail() { return List::tail(); }
 
+    void insert(Element * e) { List::insert(e);  }
     void insert(Element * e, int order) { List::insert(e, order);  }
 
     Element * remove() { return List::remove_head(); }
