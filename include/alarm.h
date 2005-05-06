@@ -20,7 +20,7 @@ private:
 
     static const int FREQUENCY = __SYS(Traits)<Timer>::FREQUENCY;
 
-    typedef Relative_Queue<Alarm> Queue;
+    typedef Relative_Queue<Alarm, __SYS(Traits)<Thread>::smp> Queue;
 
     typedef TSC::Hertz Hertz;
     typedef TSC::Time_Stamp Time_Stamp;
