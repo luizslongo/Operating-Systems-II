@@ -15,6 +15,7 @@ private:
 
 public:
     Active() : Thread(&entry, this, Thread::SUSPENDED) {}
+    virtual ~Active() {}
 
     virtual int run() = 0;
 
