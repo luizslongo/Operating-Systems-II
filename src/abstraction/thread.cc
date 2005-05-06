@@ -87,12 +87,17 @@ void  Thread::resume() {
     if(Traits::active_scheduler)
 	CPU::int_disable();
 
-    _suspended.remove(this);
-    _state = READY;
-    _ready.insert(&_link);
-
+    if(_suspended.remove(this)) {
+	_state = READY;
+	_ready.insert(&_link);
+    } else // the thread has terminated while suspended (e.g. by delete)
+	db<Thread>(WRN) << "Thread::resume called with defunct thread!\n";
+    
     if(Traits::active_scheduler)
 	CPU::int_enable();
+
+    if(Traits::preemptive)
+	reschedule();
 }
 
 void Thread::yield() {
@@ -113,8 +118,9 @@ void Thread::yield() {
 			<< *old->_context << "}\n";
 	db<Thread>(INF) << "new={" << _running << "," 
 			<< *_running->_context << "}\n";
-
-	CPU::switch_context(&old->_context, _running->_context);
+	
+	if(_running != old)
+	    CPU::switch_context(&old->_context, _running->_context);
     }
 
     if(Traits::active_scheduler)
