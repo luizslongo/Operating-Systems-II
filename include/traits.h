@@ -134,14 +134,15 @@ template <> struct Traits<Alarm>: public Traits<void>
 
 template <> struct Traits<Thread>: public Traits<void>
 {
+    static const bool idle_waiting = true;
     static const bool active_scheduler = true;
     static const unsigned int quantum = 10000; // us
     static const bool preemptive = true;
+    static const bool smp = false;
 };
 
 template <> struct Traits<Synchronizer>: public Traits<void>
 {
-    static const bool idle_waiting = true;
     static const bool strict_ordering = true;
 };
 
