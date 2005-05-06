@@ -92,7 +92,7 @@ private:
     Queue _queue;
 };
 
-typedef Synchronizer_Common_Alternatives<Traits<Synchronizer>::idle_waiting, 
+typedef Synchronizer_Common_Alternatives<Traits<Thread>::idle_waiting, 
 					 Traits<Synchronizer>::strict_ordering>
 					 Synchronizer_Common;
 __END_SYS
