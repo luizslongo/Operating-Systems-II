@@ -17,7 +17,7 @@ protected:
     typedef Traits<Thread> Traits;
     static const Type_Id TYPE = Type<Thread>::TYPE;
 
-    typedef Ordered_Queue<Thread> Queue;
+    typedef Ordered_Queue<Thread, Traits::smp> Queue;
 
     static const unsigned int STACK_SIZE = 
 	__SYS(Traits)<Machine>::APPLICATION_STACK_SIZE;
@@ -154,6 +154,15 @@ private:
     static Thread * volatile  & running() { return _running; }
     static void running(Thread * r) { _running = r; }
 
+    static void prevent_scheduling() {
+	if(Traits::active_scheduler)
+	    CPU::int_disable();
+    }
+    static void allow_scheduling() {
+	if(Traits::active_scheduler)
+	    CPU::int_enable();
+    }
+
     void header(Log_Addr entry, unsigned int stack_size) {
 	db<Thread>(TRC) << "Thread(this=" << this 
 			<< ",entry=" << (void *)entry 
@@ -165,8 +174,7 @@ private:
 			<< "," << *_context << "})\n";
     }
     void body() {
-	if(Traits::active_scheduler)
-	    CPU::int_disable();
+	prevent_scheduling();
 
 	switch(_state) {
 	case RUNNING: break;
@@ -174,15 +182,15 @@ private:
 	default: _ready.insert(&_link);
 	}
 
-	if(Traits::active_scheduler)
-	    CPU::int_enable();
-	
+	allow_scheduling();
+
 	if(Traits::preemptive)
 	    reschedule();
     }
 
     static void reschedule() {
-	if(!_ready.empty() && _ready.head()->rank() < _running->_link.rank())
+	Queue::Element * e = _ready.head();
+	if(e && e->rank() < _running->_link.rank())
 	    yield();
     }
     static void implicit_exit() { exit(CPU::fr()); }

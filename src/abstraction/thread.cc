@@ -24,8 +24,7 @@ int Thread::join() {
 void Thread::pass() {
     db<Thread>(TRC) << "Thread::pass(this=" << this << ")\n";
 
-    if(Traits::active_scheduler)
-	CPU::int_disable();
+    prevent_scheduling();
 
     Thread * old = _running;
     old->_state = READY;
@@ -43,16 +42,14 @@ void Thread::pass() {
 	
     CPU::switch_context(&old->_context, _context);
 
-    if(Traits::active_scheduler)
-	CPU::int_enable();
+    allow_scheduling();
 }
 
 void  Thread::suspend()
 {
     db<Thread>(TRC) << "Thread::suspend(this=" << this << ")\n";
 
-    if(Traits::active_scheduler)
-	CPU::int_disable();
+    prevent_scheduling();
 
     _state = SUSPENDED;
     _suspended.insert(&_link);
@@ -70,12 +67,11 @@ void  Thread::suspend()
 
 	    CPU::switch_context(&_context, _running->_context);
 	} else
-	    idle(); // implicitly re-enables interrupts
+	    idle(); // implicitly reenables scheduling
     } else
 	_ready.remove(this);
 
-    if(Traits::active_scheduler)
-	CPU::int_enable();
+    allow_scheduling();
 }	    
 
 void  Thread::resume() {
@@ -84,8 +80,7 @@ void  Thread::resume() {
     if(_state != SUSPENDED) 
 	return;
 
-    if(Traits::active_scheduler)
-	CPU::int_disable();
+    prevent_scheduling();
 
     if(_suspended.remove(this)) {
 	_state = READY;
@@ -93,8 +88,7 @@ void  Thread::resume() {
     } else // the thread has terminated while suspended (e.g. by delete)
 	db<Thread>(WRN) << "Thread::resume called with defunct thread!\n";
     
-    if(Traits::active_scheduler)
-	CPU::int_enable();
+    allow_scheduling();
 
     if(Traits::preemptive)
 	reschedule();
@@ -102,8 +96,8 @@ void  Thread::resume() {
 
 void Thread::yield() {
     db<Thread>(TRC) << "Thread::yield()\n";
-    if(Traits::active_scheduler)
-	CPU::int_disable();
+
+    prevent_scheduling();
 
     if(!_ready.empty()) {
 	Thread * old = _running;
@@ -123,23 +117,18 @@ void Thread::yield() {
 	    CPU::switch_context(&old->_context, _running->_context);
     }
 
-    if(Traits::active_scheduler)
-	CPU::int_enable();
+    allow_scheduling();
 }
 
 void Thread::exit(int status)
 {
     db<Thread>(TRC) << "Thread::exit(status=" << status << ")\n";
 
-    if(Traits::active_scheduler)
-	CPU::int_disable();
+    prevent_scheduling();
 
     if(_ready.empty() && !_suspended.empty())
-	idle(); // implicitly re-enables interrupts
-
-    if(Traits::active_scheduler)
-	CPU::int_disable();
-
+	idle(); // implicitly reenables scheduling
+    
     if(!_ready.empty()) {
 	Thread * old = _running;
 	old->_state = FINISHING;
@@ -162,8 +151,7 @@ void Thread::exit(int status)
 	CPU::halt(); // this must be turned into a conf-feature (reboot, halt)
     }
 
-    if(Traits::active_scheduler)
-	CPU::int_enable();
+    allow_scheduling();
 }
 
 void Thread::idle()
@@ -173,7 +161,7 @@ void Thread::idle()
     db<Thread>(WRN) << "There are no runnable threads at the moment!\n";
     db<Thread>(WRN) << "Halting the CPU ...\n";
 
-    CPU::int_enable();
+    allow_scheduling();
     CPU::halt();
 }
 
