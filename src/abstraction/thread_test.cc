@@ -20,10 +20,10 @@ int main()
 {
     cout << "Thread test\n";
 
-//    m = new Thread(Thread::SELF);
+    m = Thread::self();
 
-//    cout << "I'm the first thread of the first task created in the system.\n";
-//    cout << "I'll now create two threads and then suspend myself ...\n";
+    cout << "I'm the first thread of the first task created in the system.\n";
+    cout << "I'll now create two threads and then suspend myself ...\n";
 
     a = new Thread(&func_a);
     b = new Thread(&func_b);
@@ -59,8 +59,7 @@ int func_a(void)
 	Thread::yield();
     }
 
-//     Thread self(Thread::SELF);
-//     self.suspend();
+    Thread::self()->suspend();
 
     return 'A';   
 }
@@ -76,8 +75,7 @@ int func_b(void)
 
     m->resume();
 
-//     Thread self(Thread::SELF);
-//     self.suspend();
+    Thread::self()->suspend();
 
     return 'B';   
 }
