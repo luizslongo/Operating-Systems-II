@@ -8,7 +8,7 @@ __BEGIN_SYS
 template <class Imp>
 struct Traits
 {
-    static const bool debugged = false;
+    static const bool debugged = true;
 };
 
 // Utilities
@@ -16,13 +16,12 @@ template <> struct Traits<Debug>
 {
     static const bool error   = true;
     static const bool warning = true;
-    static const bool info    = true;
-    static const bool trace   = true;
+    static const bool info    = false;
+    static const bool trace   = false;
 };
 
 template <> struct Traits<Heap>: public Traits<void>
 {
-    static const bool debugged = false;
 };
 
 
@@ -97,7 +96,10 @@ template <> struct Traits<PC_PCI>: public Traits<void>
 
 template <> struct Traits<PC_Timer>: public Traits<void>
 {
-    static const int FREQUENCY = 100; // Hz
+    // Meaningful values for the PC's timer frequency range from 100 to 
+    // 10000 Hz. The choice must respect the scheduler time-slice, i. e.,
+    // it must be higher than the scheduler invocation frequency.
+    static const int FREQUENCY = 1000; // Hz
 };
 
 template <> struct Traits<PC_Display>: public Traits<void>
