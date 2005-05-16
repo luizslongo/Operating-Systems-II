@@ -151,18 +151,6 @@ public:
     static int init(System_Info * si);
 
 private:
-    static Thread * volatile  & running() { return _running; }
-    static void running(Thread * r) { _running = r; }
-
-    static void prevent_scheduling() {
-	if(Traits::active_scheduler)
-	    CPU::int_disable();
-    }
-    static void allow_scheduling() {
-	if(Traits::active_scheduler)
-	    CPU::int_enable();
-    }
-
     void header(Log_Addr entry, unsigned int stack_size) {
 	db<Thread>(TRC) << "Thread(this=" << this 
 			<< ",entry=" << (void *)entry 
@@ -188,13 +176,57 @@ private:
 	    reschedule();
     }
 
-    static void reschedule() {
-	Queue::Element * e = _ready.head();
-	if(e && e->rank() < _running->_link.rank())
-	    yield();
+    static Thread * volatile  & running() { return _running; }
+    static void running(Thread * r) { _running = r; }
+
+    static void prevent_scheduling() {
+	if(Traits::active_scheduler)
+	    CPU::int_disable();
     }
+    static void allow_scheduling() {
+	if(Traits::active_scheduler)
+	    CPU::int_enable();
+    }
+
+    static void reschedule() { // this is the master alarm handler (int dis.)
+	Queue::Element * e = _ready.head();
+	if(e && e->rank() < _running->_link.rank()) {
+	    _running->_state = READY;
+	    _ready.insert(&_running->_link);
+	    switch_to(_ready.remove()->object());
+	}
+    }
+
     static void implicit_exit() { exit(CPU::fr()); }
-    static void idle();
+
+    static void switch_to(Thread * n) {
+	Thread * o = _running;
+    
+//     o->_context->save(); // can be used to force an update
+	db<Thread>(INF) << "old={" << o << "," << *o->_context << "}\n";
+	db<Thread>(INF) << "new={" << n << "," << *n->_context << "}\n";
+
+	n->_state = RUNNING;
+	_running = n;
+
+	CPU::switch_context(&o->_context, n->_context);
+    }
+
+    static int idle() {
+	while(true) {
+	    CPU::halt();
+
+	    if(!_ready.empty())
+		yield();
+	    else
+		if(_suspended.empty()) { 
+		    db<Thread>(WRN) << "The last thread has exited!\n";
+		    db<Thread>(WRN) << "Halting the CPU ...\n";
+		    CPU::int_disable();
+		}
+	}
+	return 0;
+    }
 
 private:
     Log_Addr _stack;
@@ -203,6 +235,7 @@ private:
     Queue::Element _link;
 
     static Thread * volatile _running;
+    static Thread * _idle;
     static Queue _ready;
     static Queue _suspended;
 };
