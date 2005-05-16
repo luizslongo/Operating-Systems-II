@@ -5,7 +5,7 @@
 
 __USING_SYS
 
-const int iterations = 100;
+const int iterations = 10;
 
 void func_a(void);
 void func_b(void);
@@ -25,7 +25,10 @@ int main()
     Handler_Function handler_b(&func_b);
     Alarm alarm_b(1000000, &handler_b, iterations);
 
-    Alarm::delay(1000000 * (iterations * 2 + 1));
+    // Note that in case of idle-waiting, this thread will go into suspend and
+    // the alarm handlers above will trigger the functions in the context of the
+    // idle thread!
+    Alarm::delay(1000000 * (iterations + 1));
 
     cout << "I'm done, bye!\n";
 
