@@ -10,26 +10,29 @@ __BEGIN_SYS
 class Mutex: public Synchronizer_Common
 {
 private:
-    typedef Traits<Mutex> Traits;
+    typedef Traits<Synchronizer> Traits;
     static const Type_Id TYPE = Type<Mutex>::TYPE;
 
 public:
-    Mutex() : _locked(false) { db<Mutex>(TRC) << "Mutex() => " 
-					      << this << "\n"; }
-    ~Mutex() { db<Mutex>(TRC) << "~Mutex(this=" << this << ")\n"; }
+    Mutex() : _locked(false) {
+	db<Synchronizer>(TRC) << "Mutex() => " << this << "\n"; 
+    }
+    ~Mutex() {
+	db<Synchronizer>(TRC) << "~Mutex(this=" << this << ")\n";
+    }
 
     void lock() { 
-	db<Mutex>(TRC) << "Mutex::lock(this=" << this << ")\n";
+	db<Synchronizer>(TRC) << "Mutex::lock(this=" << this << ")\n";
 	while(tsl(_locked))
 	    sleep();
     }
     void unlock() { 
-	db<Mutex>(TRC) << "Mutex::unlock(this=" << this << ")\n";
+	db<Synchronizer>(TRC) << "Mutex::unlock(this=" << this << ")\n";
 	_locked = false;
 	wakeup(); 
     }
 
-    static int init(System_Info *si);
+    static int init(System_Info * si);
 
 private:
     volatile bool _locked;

@@ -10,36 +10,36 @@ __BEGIN_SYS
 class Condition: public Synchronizer_Common
 {
 private:
-    typedef Traits<Condition> Traits;
+    typedef Traits<Synchronizer> Traits;
     static const Type_Id TYPE = Type<Condition>::TYPE;
 
 public:
     Condition() : _wait(0), _signal(0) {
-	db<Condition>(TRC) << "Condition() => " << this << "\n";
+	db<Synchronizer>(TRC) << "Condition() => " << this << "\n";
     }
     ~Condition() {
-	db<Condition>(TRC) << "~Condition(this=" << this << ")\n";
+	db<Synchronizer>(TRC) << "~Condition(this=" << this << ")\n";
     }
 
     void wait() {
-	db<Condition>(TRC) << "Condition::wait(this=" << this 
-			   << ",wt=" << _wait
-			   << ",sg=" << _signal << ")\n";
+	db<Synchronizer>(TRC) << "Condition::wait(this=" << this 
+			      << ",wt=" << _wait
+			      << ",sg=" << _signal << ")\n";
 	int rank = finc(_wait);
 	while(rank >= _signal)
 	    sleep();
     }
     void signal() {
-	db<Condition>(TRC) << "Condition::signal(this=" << this 
-			   << ",wt=" << _wait
-			   << ",sg=" << _signal << ")\n";
+	db<Synchronizer>(TRC) << "Condition::signal(this=" << this 
+			      << ",wt=" << _wait
+			      << ",sg=" << _signal << ")\n";
 	finc(_signal);
 	wakeup();
     }
     void broadcast() { // warning: overflow is not being handled!
-	db<Condition>(TRC) << "Condition::broadcast(this=" << this 
-			   << ",wt=" << _wait
-			   << ",sg=" << _signal << ")\n";
+	db<Synchronizer>(TRC) << "Condition::broadcast(this=" << this 
+			      << ",wt=" << _wait
+			      << ",sg=" << _signal << ")\n";
 	_signal = _wait + 1;
 	wakeup_all();
     }

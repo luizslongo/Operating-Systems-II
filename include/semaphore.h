@@ -11,33 +11,33 @@ __BEGIN_SYS
 class Semaphore: public Synchronizer_Common
 {
 private:
-    typedef Traits<Semaphore> Traits;
+    typedef Traits<Synchronizer> Traits;
     static const Type_Id TYPE = Type<Semaphore>::TYPE;
 
 public:
     Semaphore(int v = 1) : _value(v) {
-	db<Semaphore>(TRC) << "Semaphore(value= " << _value << ") => "
-			   << this << "\n";
+	db<Synchronizer>(TRC) << "Semaphore(value= " << _value << ") => "
+			      << this << "\n";
     }
     ~Semaphore() {
-	db<Semaphore>(TRC) << "~Semaphore(this=" << this << ")\n";
+	db<Synchronizer>(TRC) << "~Semaphore(this=" << this << ")\n";
     }
 
     void p() { 
-	db<Semaphore>(TRC) << "Semaphore::p(this=" << this 
-			   << ",value=" << _value << ")\n";
+	db<Synchronizer>(TRC) << "Semaphore::p(this=" << this 
+			      << ",value=" << _value << ")\n";
 	if(fdec(_value) < 1)
 	    while(_value < 0)
 		sleep();
     }
     void v() {
-	db<Semaphore>(TRC) << "Semaphore::v(this=" << this
-			   << ",value=" << _value << ")\n";
+	db<Synchronizer>(TRC) << "Semaphore::v(this=" << this
+			      << ",value=" << _value << ")\n";
 	if(finc(_value) < 0)
 	    wakeup();
     }
 
-    static int init(System_Info *si);
+    static int init(System_Info * si);
 
 private:
     volatile int _value;
