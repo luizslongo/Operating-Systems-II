@@ -6,46 +6,47 @@
 __BEGIN_SYS
 
 // Class attributes
+
 Thread * volatile Thread::_running;
+Thread * Thread::_idle;
 Thread::Queue Thread::_ready;
 Thread::Queue Thread::_suspended;
 
+
 // Methods
-int Thread::join() {
+
+int Thread::join()
+{
     db<Thread>(TRC) << "Thread::join(this=" << this
 		    << ",state=" << _state << ")\n";
 
     while(_state != FINISHING)
-	yield();
+	if(Traits::idle_waiting)
+	    yield(); // this should be replaced by an event!!!
+	else
+	    yield();
 
     return *((int *)_stack);
 }
 
-void Thread::pass() {
+void Thread::pass()
+{
     db<Thread>(TRC) << "Thread::pass(this=" << this << ")\n";
 
     prevent_scheduling();
 
-    Thread * old = _running;
-    old->_state = READY;
-    _ready.insert(&old->_link);
-
-    _ready.remove(this);
-    _state = RUNNING;
-    _running = this;
-
-//     old->_context->save(); // can be used to force an update
-    db<Thread>(INF) << "old={" << old << "," 
-		    << *old->_context << "}\n";
-    db<Thread>(INF) << "new={" << _running << "," 
-		    << *_running->_context << "}\n";
-	
-    CPU::switch_context(&old->_context, _context);
+    if(_ready.remove(this)) { // this is ready to receive the CPU
+	_running->_state = READY;
+	_ready.insert(&_running->_link);
+	switch_to(this);
+    } else 
+	db<Thread>(WRN) << "Thread::pass => thread (" << this 
+			<< ") not ready\n";
 
     allow_scheduling();
 }
 
-void  Thread::suspend()
+void Thread::suspend()
 {
     db<Thread>(TRC) << "Thread::suspend(this=" << this << ")\n";
 
@@ -54,27 +55,16 @@ void  Thread::suspend()
     _state = SUSPENDED;
     _suspended.insert(&_link);
 
-    if(this == _running) {
-	if(!_ready.empty()) {
-	    _running = _ready.remove()->object();
-	    _running->_state = RUNNING;
-
-//          _context->save(); // can be used to force an update
-	    db<Thread>(INF) << "old={" << this << "," 
-			    << *_context << "}\n";
-	    db<Thread>(INF) << "new={" << _running << "," 
-			    << *_running->_context << "}\n";
-
-	    CPU::switch_context(&_context, _running->_context);
-	} else
-	    idle(); // implicitly reenables scheduling
-    } else
+    if(this == _running)
+	switch_to(_ready.remove()->object());
+    else
 	_ready.remove(this);
-
+    
     allow_scheduling();
 }	    
 
-void  Thread::resume() {
+void Thread::resume()
+{
     db<Thread>(TRC) << "Thread::resume(this=" << this << ")\n";
 
     if(_state != SUSPENDED) 
@@ -94,27 +84,19 @@ void  Thread::resume() {
 	reschedule();
 }
 
-void Thread::yield() {
-    db<Thread>(TRC) << "Thread::yield()\n";
+
+// Class methods
+
+void Thread::yield()
+{
+//    db<Thread>(TRC) << "Thread::yield()\n";
 
     prevent_scheduling();
 
     if(!_ready.empty()) {
-	Thread * old = _running;
-	old->_state = READY;
-	_ready.insert(&old->_link);
-
-	_running = _ready.remove()->object();
-	_running->_state = RUNNING;
-
-// 	old->_context->save(); // can be used to force an update
-	db<Thread>(INF) << "old={" << old << "," 
-			<< *old->_context << "}\n";
-	db<Thread>(INF) << "new={" << _running << "," 
-			<< *_running->_context << "}\n";
-	
-	if(_running != old)
-	    CPU::switch_context(&old->_context, _running->_context);
+	_running->_state = READY;
+	_ready.insert(&_running->_link);
+	switch_to(_ready.remove()->object());
     }
 
     allow_scheduling();
@@ -126,43 +108,12 @@ void Thread::exit(int status)
 
     prevent_scheduling();
 
-    if(_ready.empty() && !_suspended.empty())
-	idle(); // implicitly reenables scheduling
-    
-    if(!_ready.empty()) {
-	Thread * old = _running;
-	old->_state = FINISHING;
-	*((int *)(void *)old->_stack) = status;
+    *((int *)(void *)_running->_stack) = status;
+    _running->_state = FINISHING;
 
-	_running = _ready.remove()->object();
-	_running->_state = RUNNING;
-
-// 	old->_context->save(); // can be used to force an update
-	db<Thread>(INF) << "old={" << old << "," 
-			<< *old->_context << "}\n";
-	db<Thread>(INF) << "new={" << _running << "," 
-			<< *_running->_context << "}\n";
-
-	CPU::switch_context(&old->_context, _running->_context);
-    } else {
-	db<Thread>(WRN) << "The last thread in the system has exited!\n";
-	db<Thread>(WRN) << "Halting the CPU ...\n";
-    	CPU::int_disable();
-	CPU::halt(); // this must be turned into a conf-feature (reboot, halt)
-    }
+    switch_to(_ready.remove()->object());
 
     allow_scheduling();
-}
-
-void Thread::idle()
-{
-    db<Thread>(TRC) << "Thread::idle()\n";
-
-    db<Thread>(WRN) << "There are no runnable threads at the moment!\n";
-    db<Thread>(WRN) << "Halting the CPU ...\n";
-
-    allow_scheduling();
-    CPU::halt();
 }
 
 __END_SYS
