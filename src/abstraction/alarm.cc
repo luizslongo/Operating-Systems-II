@@ -3,6 +3,7 @@
 #include <display.h>
 #include <alarm.h>
 #include <thread.h>
+#include <system/kmalloc.h>
 
 __BEGIN_SYS
 
@@ -16,9 +17,11 @@ Alarm::Queue Alarm::_requests;
 // Methods
 Alarm::Alarm(const Microseconds & time, Handler * handler, int times)
     : _ticks((time + period() / 2) / period()), _handler(handler),
-      _times(times), _link(this, (int)_ticks)
+      _times(times), _link(this, _ticks)
 {
-    db<Alarm>(TRC) << "Alarm(t=" << time << ",h=" << (void *)handler
+    db<Alarm>(TRC) << "Alarm(t=" << time 
+		   << ",ticks=" << _ticks
+		   << ",h=" << (void *)handler
 		   << ",x=" << times << ")\n";
     if(!_ticks) {
 	(*handler)();
@@ -39,7 +42,7 @@ Alarm::~Alarm() {
 
 void Alarm::master(const Microseconds & time, Handler::Function * handler)
 {
-    db<Alarm>(TRC) << "master(t=" << time << ",h="
+    db<Alarm>(TRC) << "Alarm::master(t=" << time << ",h="
 		   << (void *)handler << ")\n";
 
     _master = handler;
@@ -48,11 +51,15 @@ void Alarm::master(const Microseconds & time, Handler::Function * handler)
 
 void Alarm::delay(const Microseconds & time)
 {
-    db<Alarm>(TRC) << "delay(t=" << time << ")\n";
-    Tick t = _elapsed + time / period();
-    while(_elapsed < t)
-	if(__SYS(Traits)<Thread>::idle_waiting)
-	    Thread::yield();
+    db<Alarm>(TRC) << "Alarm::delay(t=" << time << ")\n";
+    if(__SYS(Traits)<Thread>::idle_waiting) {
+	Handler_Thread handler(Thread::self());
+	Alarm alarm(time, &handler, 1);
+	Thread::self()->suspend();
+    } else {
+	Tick t = _elapsed + time / period();
+	while(_elapsed < t);
+    }
 }
 
 void Alarm::timer_handler(void)
@@ -73,7 +80,7 @@ void Alarm::timer_handler(void)
 
     if(_master_ticks && ((_elapsed % _master_ticks) == 0))
 	_master();
-
+    
     if(next > 0)
 	next--; 
     else {
