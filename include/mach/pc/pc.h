@@ -49,29 +49,37 @@ public:
 				     (IA32::Reg32)h,
 				     IA32::SEG_IDT_ENTRY);
     }
-    template <Handler::Function * h> static void handler_wrapper(){
-	ASM("	cli				\n"
-	    "	pushl	%eax			\n"
-	    "	pushl	%ecx			\n"
-	    "	pushl	%edx			\n"
-	    "	pushl	%ebx			\n"
-	    "	pushl	%esi			\n"
-	    "	pushl	%edi			\n"
-	    "	movb  $0x20, %al		\n"
-	    "	outb  %al, $0x20		\n");
-//	db<PC>(TRC) << "\n\nINT\n\n";
-	ASM("	call  *%0			\n"
-	    "	popl  %%edi			\n"
-	    "	popl  %%esi			\n"
-	    "	popl  %%ebx			\n"
-	    "	popl  %%edx			\n"
-	    "	popl  %%ecx			\n"
-	    "	popl  %%eax			\n"
-	    "	leave			# this may change with GCC \n"
-	    "	sti				\n"
-	    "	iret				\n" : : "r"(h));
+    template <Handler::Function * h> static void handler_wrapper() {
+	ASM("	cli							\n"
+	    "	pushl	%eax						\n"
+	    "	pushl	%ecx						\n"
+	    "	pushl	%edx						\n"
+	    "	pushl	%ebx						\n"
+	    "	pushl	%esi						\n"
+	    "	pushl	%edi						\n");
+	ASM("	call  *%0						\n"
+	    "	movb  $0x20, %%al					\n"
+	    "	outb  %%al, $0x20					\n"
+	    "	popl  %%edi						\n"
+	    "	popl  %%esi						\n"
+	    "	popl  %%ebx						\n"
+	    "	popl  %%edx						\n"
+	    "	popl  %%ecx						\n"
+	    "	popl  %%eax						\n"
+	    "	leave			# this may change with GCC	\n"
+	    "	sti							\n"
+	    "	iret							\n"
+	    :	    : "r"(h));
     }
 
+    static void panic() {
+	CPU::int_disable(); 
+	Display display; 
+	display.position(0, 75); 
+	display.puts("PANIC"); 
+	CPU::halt(); 
+    }
+    
     static int init(System_Info * si);
 
 public:
