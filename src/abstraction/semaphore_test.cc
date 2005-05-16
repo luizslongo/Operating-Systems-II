@@ -49,7 +49,7 @@ int main()
     for(int i = 0; i < 5; i++)
 	chopstick[i] = new Semaphore;
 
-    phil[0] = new Thread(&philosopher, 0, 5, 32);
+    phil[0] = new Thread(&philosopher, 0,  5, 32);
     phil[1] = new Thread(&philosopher, 1, 10, 44);
     phil[2] = new Thread(&philosopher, 2, 16, 39);
     phil[3] = new Thread(&philosopher, 3, 16, 24);
