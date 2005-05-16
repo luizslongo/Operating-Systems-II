@@ -12,10 +12,13 @@ int Thread::init(System_Info * si)
 		  << (void *)si->lmm.app_entry << ")\n";
 
     if(Traits::active_scheduler)
-	Alarm::master(Traits::quantum, &yield);
+	Alarm::master(Traits::quantum, &reschedule);
 
     _running = 	new(malloc(sizeof(Thread))) 
 	Thread(reinterpret_cast<int (*)()>(si->lmm.app_entry), RUNNING);
+
+    _idle = new(malloc(sizeof(Thread))) Thread(&idle, READY, LOW);
+
     _running->_context->load();
 
     return 0;
