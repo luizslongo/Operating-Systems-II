@@ -20,13 +20,16 @@ int Thread::join()
     db<Thread>(TRC) << "Thread::join(this=" << this
 		    << ",state=" << _state << ")\n";
 
-    while(_state != FINISHING)
-	if(Traits::idle_waiting)
-	    yield(); // this should be replaced by an event!!!
-	else
-	    yield();
+    prevent_scheduling();
 
-    return *((int *)_stack);
+    if(_state != FINISHING) {
+	_joining = _running;
+	_joining->suspend(); // implicitly allows scheduling
+    }
+
+    allow_scheduling();
+
+    return *static_cast<int *>(_stack);
 }
 
 void Thread::pass()
@@ -89,7 +92,7 @@ void Thread::resume()
 
 void Thread::yield()
 {
-//    db<Thread>(TRC) << "Thread::yield()\n";
+    db<Thread>(TRC) << "Thread::yield()\n";
 
     prevent_scheduling();
 
@@ -108,12 +111,71 @@ void Thread::exit(int status)
 
     prevent_scheduling();
 
-    *((int *)(void *)_running->_stack) = status;
+    *static_cast<int *>(_running->_stack) = status;
     _running->_state = FINISHING;
+    if(_running->_joining) {
+	Thread * tmp = _running->_joining;
+	_running->_joining = 0;
+	tmp->resume(); // implicitly allows scheduling
+	prevent_scheduling();
+    }
 
     switch_to(_ready.remove()->object());
 
     allow_scheduling();
+}
+
+void Thread::sleep(Queue * q)
+{
+    db<Thread>(TRC) << "Thread::sleep(q=" << q << ")\n";
+
+    prevent_scheduling();
+
+    _running->_state = WAITING;
+    q->insert(&_running->_link);
+    _running->_waiting = q;
+
+    switch_to(_ready.remove()->object());
+    
+    allow_scheduling();
+}
+
+void Thread::wakeup(Queue * q) 
+{
+    db<Thread>(TRC) << "Thread::wakeup(q=" << q << ")\n";
+
+    prevent_scheduling();
+
+    if(!q->empty()) {
+	Thread * t = q->remove()->object();
+	t->_state = READY;
+	t->_waiting = 0;
+	_ready.insert(&t->_link);
+    }
+
+    allow_scheduling();
+
+    if(Traits::preemptive)
+	reschedule();
+}
+
+void Thread::wakeup_all(Queue * q) 
+{
+    db<Thread>(TRC) << "Thread::wakeup_all(q=" << q << ")\n";
+
+    prevent_scheduling();
+
+    while(!q->empty()) {
+	Thread * t = q->remove()->object();
+	t->_state = READY;
+	t->_waiting = 0;
+	_ready.insert(&t->_link);
+    }
+
+    allow_scheduling();
+
+    if(Traits::preemptive)
+	reschedule();
 }
 
 __END_SYS
