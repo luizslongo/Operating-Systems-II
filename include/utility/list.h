@@ -10,9 +10,32 @@ __BEGIN_SYS
 class List_Common
 {
 public:
-    // Element for normal list
-    template <typename T, bool ordered = false, bool grouped = false>
-    class Element
+    // List elements template
+    template <typename T, bool doubly, bool ordered, bool grouped>
+    class Element;
+
+    // Element for singly linked list
+    template <typename T>
+    class Element<T, false, false, false>
+    {
+    public:
+	typedef T Object_Type;
+
+    public:
+	Element(const T * o): _object(o), _next(0) {}
+    
+	T * object() const { return const_cast<T *>(_object); }
+	Element * next() const { return _next; }
+	void next(Element * e) { _next = e; }
+    
+    private:
+	const T * _object;
+	Element * _next;
+    };
+
+    // Element for doubly linked list
+    template <typename T>
+    class Element<T, true, false, false>
     {
     public:
 	typedef T Object_Type;
@@ -34,7 +57,7 @@ public:
 
     // Element for ordered list
     template <typename T>
-    class Element<T, true, false>
+    class Element<T, true, true, false>
     {
     public:
 	typedef T Object_Type;
@@ -58,9 +81,9 @@ public:
 	Element * _next;
     };
     
-    // Element for unordered grouping list
+    // Element for grouping list
     template <typename T>
-    class Element<T, false, true>
+    class Element<T, true, false, true>
     {
     public:
 	typedef T Object_Type;
@@ -89,7 +112,7 @@ public:
 
     // Element for ordered grouping list
     template <typename T>
-    class Element<T, true, true>
+    class Element<T, true, true, true>
     {
     public:
 	typedef T Object_Type;
@@ -119,10 +142,92 @@ public:
 	Element * _next;
     };
 
-    // Algorithm for normal list
-    template <typename Element, bool ordering = false, bool relative = false,
-	      bool grouping = false>
-    class Algorithm
+
+    // List algorithms template
+    template <typename Element, 
+	      bool doubly, bool ordering, bool relative, bool grouping>
+    class Algorithm;
+
+    // Algorithm for singly linked list
+    template <typename Element>
+    class Algorithm<Element, false, false, false, false>
+    {
+    private:
+	typedef typename Element::Object_Type Object_Type;
+
+    public:
+	Algorithm(): _size(0), _head(0), _tail(0) {}
+
+	bool empty() const { return (_size == 0); }
+	unsigned int size() const { return _size; }
+
+	Element * head() { return _head; }
+	Element * tail() { return _tail; }
+
+	void insert(Element * e) { insert_tail(e); }
+	void insert_head(Element * e) {
+	    if(empty())
+		insert_first(e);
+	    else {
+		e->next(_head);
+		_head = e;
+		_size++;
+	    }
+	}
+	void insert_tail(Element * e) {
+	    if(empty())
+		insert_first(e);
+	    else {
+		_tail->next(e);
+		e->next(0);
+		_tail = e;
+		_size++;
+	    }
+	}
+
+	Element * remove() { return remove_head(); }
+	Element * remove_head() {
+	    if(empty())
+		return 0;
+	    if(last())
+		return remove_last();
+	    Element * e = _head;
+	    _head = _head->next();
+	    _size--;
+	    return e;
+	}
+
+	Element * search(const Object_Type * obj) {
+	    Element * e = _head;
+	    for(; e && (e->object() != obj); e = e->next());
+	    return e;
+	}
+
+    protected:
+	bool last() const { return (_size == 1); }
+	void insert_first(Element * e) {
+	    e->next(0);
+	    _head = e;
+	    _tail = e;
+	    _size++;
+	}
+	Element * remove_last() {
+	    Element * e = _head;
+	    _head = 0;
+	    _tail = 0;
+	    _size--;
+	    return e;
+	}
+
+    private:
+	unsigned int _size;
+	Element * _head;
+	Element * _tail;
+    };
+
+    // Algorithm for doubly linked list
+    template <typename Element>
+    class Algorithm<Element, true, false, false, false>
     {
     private:
 	typedef typename Element::Object_Type Object_Type;
@@ -241,9 +346,10 @@ public:
 	Element * _tail;
     };
 
-    // Algorithm for ordered (relative or not) list
+    // Algorithm for (relative) ordered list
     template <typename Element, bool relative>
-    class Algorithm<Element, true, relative, false>: public Algorithm<Element>
+    class Algorithm<Element, true, true, relative, false>:
+	public Algorithm<Element, true, false, false, false>
     {
     private:
 	typedef typename Element::Object_Type Object_Type;
@@ -270,14 +376,15 @@ public:
 		} else {
 		    if(relative)
 			next->rank(next->rank() - e->rank());
-		    Algorithm<Element>::insert(e, next->prev(), next);
+		    Algorithm<Element, true, false, false, false>
+			::insert(e, next->prev(), next);
 		}
 	    }
 	}
 
-	Element * remove() { return remove_head(); }
+ 	Element * remove() { return remove_head(); }
 	Element * remove(Element * e) {
-	    Algorithm<Element>::remove(e);
+	    Algorithm<Element, true, false, false, false>::remove(e);
 	    if(relative && e->next())
 		e->next()->rank(e->next()->rank() + e->rank());
 	    return e;
@@ -294,7 +401,8 @@ public:
 
     // Algorithm for grouping list
     template <typename Element>
-    class Algorithm<Element, false, false, true>: public Algorithm<Element>
+    class Algorithm<Element, true, false, false, true>:
+	public Algorithm<Element, true, false, false, false>
     {
     private:
 	typedef typename Element::Object_Type Object_Type;
@@ -352,50 +460,35 @@ public:
     };
 };
 
-template <typename T, bool ordered = false, bool relative = false,
-	      bool grouping = false>
+template <typename T>
+class Simple_List: public List_Common::Algorithm<
+    List_Common::Element<T, false, false, false>, false, false, false, false>
+{
+public:
+    typedef typename List_Common::Element<T, false, false, false> Element;
+};
+
+template <typename T,
+	  bool ordered = false, bool relative = false, bool grouping = false>
 class List: public List_Common::Algorithm<
-    List_Common::Element<T, ordered, grouping>,
+    List_Common::Element<T, true, ordered, grouping>,
+    true,
     ordered,
     relative,
     grouping>
 {
 public:
-    typedef typename List_Common::Element<T, ordered, grouping> Element;
+    typedef typename List_Common::Element<T, true, ordered, grouping> Element;
 };
 
-template <typename T>
-class Ordered_List: public List_Common::Algorithm<
-    List_Common::Element<T, true, false>,
-    true,
-    false,
-    false>
-{
-public:
-    typedef typename List_Common::Element<T, true, false> Element;
-};
+template <typename T, bool relative = false>
+class Ordered_List: public List<T, true, relative, false> {};
 
 template <typename T>
-class Relative_List: public List_Common::Algorithm<
-    List_Common::Element<T, true, false>,
-    true,
-    true,
-    false>
-{
-public:
-    typedef typename List_Common::Element<T, true, false> Element;
-};
+class Relative_List: public Ordered_List<T, true> {};
 
 template <typename T>
-class Grouping_List:  public List_Common::Algorithm<
-    List_Common::Element<T, false, true>,
-    false,
-    false,
-    true>
-{
-public:
-    typedef typename List_Common::Element<T, false, true> Element;
-};
+class Grouping_List: public List<T, false, false, true> {};
 
 __END_SYS
  

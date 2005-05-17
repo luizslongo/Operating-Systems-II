@@ -47,8 +47,6 @@ public:
     typedef typename List::Element Element;
 
 public:
-    Queue_Common() {}
-
     bool empty() const { return List::empty(); }
     unsigned int size() const { return List::size(); }
 
@@ -74,8 +72,6 @@ public:
     typedef typename List::Element Element;
 
 public:
-    Queue_Common() {}
-
     bool empty() {
 	_lock.acquire(); 
 	bool tmp = List::empty();
