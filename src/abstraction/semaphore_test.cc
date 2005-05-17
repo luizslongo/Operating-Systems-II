@@ -57,7 +57,7 @@ int main()
 
     cout << "Philosophers are alife and hungry!\n";
 
-    cout << "The dinner is served!\n";
+    cout << "The dinner is served ...\n";
     display.position(7, 44);
     cout << '/';
     display.position(13, 44);

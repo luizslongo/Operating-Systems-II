@@ -27,8 +27,7 @@ public:
 	db<Synchronizer>(TRC) << "Semaphore::p(this=" << this 
 			      << ",value=" << _value << ")\n";
 	if(fdec(_value) < 1)
-	    while(_value < 0)
-		sleep();
+	    sleep();
     }
     void v() {
 	db<Synchronizer>(TRC) << "Semaphore::v(this=" << this

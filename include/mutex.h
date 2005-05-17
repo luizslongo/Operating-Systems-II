@@ -23,7 +23,7 @@ public:
 
     void lock() { 
 	db<Synchronizer>(TRC) << "Mutex::lock(this=" << this << ")\n";
-	while(tsl(_locked))
+	if(tsl(_locked))
 	    sleep();
     }
     void unlock() { 
