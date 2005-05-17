@@ -31,6 +31,7 @@ public:
         RUNNING,
         READY,
         SUSPENDED,
+	WAITING,
 	FINISHING
     };
 
@@ -55,6 +56,8 @@ public:
 			- sizeof(int) - sizeof(Context))
 		   Context(entry)),
 	  _state(state),
+	  _waiting(0),
+	  _joining(0),
 	  _link(this, priority)
     {
 	header(entry, stack_size);
@@ -73,6 +76,8 @@ public:
 			- sizeof(int) - sizeof(Context))
 		   Context(entry)),
 	  _state(state),
+	  _waiting(0),
+	  _joining(0),
 	  _link(this, priority)
     {
 	header(entry, stack_size);
@@ -92,6 +97,8 @@ public:
 			- sizeof(int) - sizeof(Context))
 		   Context(entry)),
 	  _state(state),
+	  _waiting(0),
+	  _joining(0),
 	  _link(this, priority)
     {
 	header(entry, stack_size);
@@ -112,6 +119,8 @@ public:
 			- sizeof(T1) - sizeof(int) - sizeof(Context))
 		   Context(entry)),
 	  _state(state),
+	  _waiting(0),
+	  _joining(0),
 	  _link(this, priority)
     {
 	header(entry, stack_size);
@@ -130,8 +139,13 @@ public:
 			<< ",stack={b=" << _stack
 			<< ",context={b=" << _context
 			<< "," << *_context << "})\n";
-	_ready.remove(this);
-	_suspended.remove(this);
+
+	switch(_state) {
+	case READY: _ready.remove(this); break;
+	case SUSPENDED: _suspended.remove(this); break;
+	case WAITING: _waiting->remove(this); break;
+	}
+	
 	free(_stack);
     }
 
@@ -146,6 +160,9 @@ public:
 
     static Thread * volatile  & self() { return _running; }
     static void yield();
+    static void sleep(Queue * q);
+    static void wakeup(Queue * q);
+    static void wakeup_all(Queue * q);
     static void exit(int status = 0);
 
     static int init(System_Info * si);
@@ -202,7 +219,7 @@ private:
     static void switch_to(Thread * n) {
 	Thread * o = _running;
     
-//     o->_context->save(); // can be used to force an update
+// 	o->_context->save(); // can be used to force an update
 	db<Thread>(INF) << "old={" << o << "," << *o->_context << "}\n";
 	db<Thread>(INF) << "new={" << n << "," << *n->_context << "}\n";
 
@@ -232,6 +249,8 @@ private:
     Log_Addr _stack;
     Context * volatile _context;
     volatile State _state;
+    Queue * _waiting;
+    Thread * volatile _joining;
     Queue::Element _link;
 
     static Thread * volatile _running;
