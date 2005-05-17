@@ -7,6 +7,8 @@
 
 __BEGIN_SYS
 
+// This is actually no Condition Variable
+// check http://www.cs.duke.edu/courses/spring01/cps110/slides/sem/sld002.htm
 class Condition: public Synchronizer_Common
 {
 private:
@@ -14,7 +16,7 @@ private:
     static const Type_Id TYPE = Type<Condition>::TYPE;
 
 public:
-    Condition() : _wait(0), _signal(0) {
+    Condition() {
 	db<Synchronizer>(TRC) << "Condition() => " << this << "\n";
     }
     ~Condition() {
@@ -22,34 +24,67 @@ public:
     }
 
     void wait() {
-	db<Synchronizer>(TRC) << "Condition::wait(this=" << this 
-			      << ",wt=" << _wait
-			      << ",sg=" << _signal << ")\n";
-	int rank = finc(_wait);
-	while(rank >= _signal)
-	    sleep();
+	db<Synchronizer>(TRC) << "Condition::wait(this=" << this << ")\n";
+	sleep();
     }
     void signal() {
-	db<Synchronizer>(TRC) << "Condition::signal(this=" << this 
-			      << ",wt=" << _wait
-			      << ",sg=" << _signal << ")\n";
-	finc(_signal);
+	db<Synchronizer>(TRC) << "Condition::signal(this=" << this << ")\n";
 	wakeup();
     }
-    void broadcast() { // warning: overflow is not being handled!
-	db<Synchronizer>(TRC) << "Condition::broadcast(this=" << this 
-			      << ",wt=" << _wait
-			      << ",sg=" << _signal << ")\n";
-	_signal = _wait + 1;
+    void broadcast() {
+	db<Synchronizer>(TRC) << "Condition::broadcast(this=" << this << ")\n";
 	wakeup_all();
     }
 
-static int init(System_Info * si);
-
-private:
-    volatile int _wait;
-    volatile int _signal;
+    static int init(System_Info * si);
 };
+
+// This is an alternative implementation, which does impose ordering
+// on threads waiting at "wait". Nontheless, it's still susceptible to counter
+// overflow
+// class Condition: public Synchronizer_Common
+// {
+// private:
+//     typedef Traits<Synchronizer> Traits;
+//     static const Type_Id TYPE = Type<Condition>::TYPE;
+
+// public:
+//     Condition() : _wait(0), _signal(0) {
+// 	db<Synchronizer>(TRC) << "Condition() => " << this << "\n";
+//     }
+//     ~Condition() {
+// 	db<Synchronizer>(TRC) << "~Condition(this=" << this << ")\n";
+//     }
+
+//     void wait() {
+// 	db<Synchronizer>(TRC) << "Condition::wait(this=" << this 
+// 			      << ",wt=" << _wait
+// 			      << ",sg=" << _signal << ")\n";
+// 	int rank = finc(_wait);
+// 	while(rank >= _signal)
+// 	    sleep();
+//     }
+//     void signal() {
+// 	db<Synchronizer>(TRC) << "Condition::signal(this=" << this 
+// 			      << ",wt=" << _wait
+// 			      << ",sg=" << _signal << ")\n";
+// 	finc(_signal);
+// 	wakeup();
+//     }
+//     void broadcast() { // warning: overflow is not being handled!
+// 	db<Synchronizer>(TRC) << "Condition::broadcast(this=" << this 
+// 			      << ",wt=" << _wait
+// 			      << ",sg=" << _signal << ")\n";
+// 	_signal = _wait + 1;
+// 	wakeup_all();
+//     }
+
+// static int init(System_Info * si);
+
+// private:
+//     volatile int _wait;
+//     volatile int _signal;
+// };
 
 // This is an alternative implementation, which does not impose any ordering
 // on threads waiting at "wait". In this case, ordering would be implemented
