@@ -54,7 +54,3 @@ private:
 __END_SYS
 
 #endif
-
-//    Segment(const Id & id) {}
-//    Segment(const Segment & obj) {}
-//    static Address_Space * current() { return _current; }
