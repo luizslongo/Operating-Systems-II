@@ -6,7 +6,7 @@ all		: install
 
 eposmkbi	: eposmkbi.cc
 		$(TCXX) $(TCXXFLAGS) $<
-		$(TLD) $(TLDFLAGS) -o $@@ eposmkbi.o
+		$(TLD) $(TLDFLAGS) -o $@ eposmkbi.o
 
 install		: eposmkbi
 		$(INSTALL) $^ $(BIN)
