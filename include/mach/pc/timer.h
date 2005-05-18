@@ -96,6 +96,8 @@ private:
     static unsigned short freq2cnt(const Hertz & f) { return CLOCK / f; }
 };
 
+typedef PC_Timer Timer;
+
 __END_SYS
 
 #endif

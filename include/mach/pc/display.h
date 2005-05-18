@@ -91,7 +91,7 @@ public:
 	position(line * columns() + column);
     }
 
-    static int init(System_Info *si);
+    static int init(System_Info * si);
 
 private:
     unsigned int tab_size() { return _Traits::TAB_SIZE; }
@@ -123,6 +123,8 @@ private:
 private:
     unsigned short * _frame_buffer;
 };
+
+typedef PC_Display Display;
 
 __END_SYS
 

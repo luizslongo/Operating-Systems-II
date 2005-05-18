@@ -113,6 +113,8 @@ private:
     }
 };
 
+typedef PC_RTC RTC;
+
 __END_SYS
 
 #endif

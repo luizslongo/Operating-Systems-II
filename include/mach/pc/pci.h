@@ -37,7 +37,6 @@ private:
 
 public:
     PC_PCI() {}
-    ~PC_PCI() {}
 
     void header(const Locator & l, Header * h);
     Locator scan(const Class_Id & c, int order);
@@ -88,6 +87,8 @@ private:
   private:
     static CPU::Reg32 base_address[Region::N];
 };
+
+typedef PC_PCI PCI;
 
 __END_SYS
 

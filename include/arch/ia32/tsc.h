@@ -26,6 +26,8 @@ public:
     static int init(System_Info * si);
 };
 
+typedef IA32_TSC TSC;
+
 __END_SYS
 
 #endif

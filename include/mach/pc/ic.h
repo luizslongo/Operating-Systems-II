@@ -106,6 +106,8 @@ public:
     static int init(System_Info * si);
 };
 
+typedef PC_IC IC;
+
 __END_SYS
 
 #endif

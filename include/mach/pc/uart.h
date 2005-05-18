@@ -27,8 +27,10 @@ public:
     int line_empty();
     int data_ready();
 
-    static int init(System_Info *si);
+    static int init(System_Info * si);
 };
+
+typedef PC_UART UART;
 
 __END_SYS
 
