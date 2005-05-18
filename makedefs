@@ -1,17 +1,77 @@
 # EPOS-- Makefile Definitions
 
 # Supported software architectures
-MODE_KERNEL	= kernel
-MODE_BUILTIN	= builtin
-MODE_LIBRARY	= library
+MODE_KERNEL	:= kernel
+MODE_BUILTIN	:= builtin
+MODE_LIBRARY	:= library
 
 # Supported machines
-MACH_PC		= pc
-MACH_AVRMCU  	= avrmcu
+MACH_PC		:= pc
+MACH_AVRMCU  	:= avrmcu
 
 # Supported hardware architectures
-ARCH_IA32	= ia32
-ARCH_AVR8       = avr8
+ARCH_IA32	:= ia32
+ARCH_AVR8       := avr8
+
+# System configuration
+MODE		:= $(MODE_LIBRARY)
+ARCH		:= $(ARCH_AVR8)
+MACH		:= $(MACH_AVRMCU)
+
+# do not modify anything bellow this line
+###############################################################################
+
+# Compiler prefixes
+$(ARCH_IA32)_COMP_PREFIX	:= /usr/local/cross-ia32/bin/
+$(ARCH_AVR8)_COMP_PREFIX	:= /usr/local/cross-avr/bin/avr-elf-
+COMP_PREFIX			:= $($(ARCH)_COMP_PREFIX)
+
+# Boot memory maps
+$(MACH_PC)_MEM_BASE       	:= 0x00000000
+$(MACH_PC)_MEM_SIZE       	:= 0x02000000
+$(MACH_PC)_BOOT_ADDR       	:= 0x00007c00
+$(MACH_PC)_SETUP_ADDR      	:= 0x00100000
+$(MACH_PC)_INIT_ADDR       	:= 0x00200000
+$(MACH_PC)_SYS_CODE_ADDR	:= 0xaff00000
+$(MACH_PC)_SYS_DATA_ADDR	:= 0xaff40000
+$(MACH_PC)_APP_CODE_ADDR	:= 0x00000000
+$(MACH_PC)_APP_DATA_ADDR	:= 0x00400000
+$(MACH_AVRMCU)_MEM_BASE       	:= 0x00000000
+$(MACH_AVRMCU)_MEM_SIZE       	:= 0x00000400
+$(MACH_AVRMCU)_BOOT_ADDR       	:= 
+$(MACH_AVRMCU)_SETUP_ADDR      	:= 
+$(MACH_AVRMCU)_INIT_ADDR       	:= 
+$(MACH_AVRMCU)_SYS_CODE_ADDR	:= 
+$(MACH_AVRMCU)_SYS_DATA_ADDR	:= 
+$(MACH_AVRMCU)_APP_CODE_ADDR	:= 
+$(MACH_AVRMCU)_APP_DATA_ADDR	:= 
+BOOT_ADDR			= $($(MACH)_BOOT_ADDR)
+SETUP_ADDR			= $($(MACH)_SETUP_ADDR)
+INIT_ADDR			= $($(MACH)_INIT_ADDR)
+SYS_CODE_ADDR			= $($(MACH)_SYS_CODE_ADDR)
+SYS_DATA_ADDR			= $($(MACH)_SYS_DATA_ADDR)
+APP_CODE_ADDR			= $($(MACH)_APP_CODE_ADDR)
+APP_DATA_ADDR			= $($(MACH)_APP_DATA_ADDR)
+MEM_BASE			= $($(MACH)_MEM_BASE)
+MEM_SIZE			= $($(MACH)_MEM_SIZE)
+
+# Architecture specifics
+$(ARCH_IA32)_WORD_SIZE	:= 32
+$(ARCH_IA32)_ENDIANESS	:= little
+$(ARCH_IA32)_CLOCK	:= 2000000000
+$(ARCH_IA32)_CC_FLAGS	:=
+$(ARCH_IA32)_LD_FLAGS	:=
+$(ARCH_AVR8)_WORD_SIZE	:= 8
+$(ARCH_AVR8)_ENDIANESS	:= little
+$(ARCH_AVR8)_CLOCK	:= 4000000
+$(ARCH_AVR8)_CC_FLAGS	:= -mmcu=atmega16
+$(ARCH_AVR8)_LD_FLAGS	:= -m avr5
+ARCH_WORD_SIZE		:= $($(ARCH)_WORD_SIZE)
+ARCH_ENDIANESS		:= $($(ARCH)_ENDIANESS)
+ARCH_CLOCK		:= $($(ARCH)_CLOCK)
+ARCH_CC_FLAGS		:= $($(ARCH)_CC_FLAGS)
+ARCH_LD_FLAGS		:= $($(ARCH)_LD_FLAGS)
+CONF_FLAGS		:= -D __$(ARCH) -D __$(MACH)
 
 # Paths, prefixes and suffixes
 INCLUDE		= $(EPOS)/include
@@ -20,7 +80,7 @@ APP		= $(EPOS)/app
 BIN		= $(EPOS)/bin
 LIB		= $(EPOS)/lib
 IMG		= $(EPOS)/img
-CFG		= $(EPOS)/config
+CFG		= $(EPOS)/cfg
 DOC		= $(EPOS)/doc
 LSYSNAME	= system
 LINITNAME	= init
@@ -35,61 +95,50 @@ ifndef APPLICATION
 APPLICATION 	= $(MACH)_app
 endif
 
-# Boot memory map configuration
-BOOT_ADDR	= $($(MACH)_BOOT_ADDR)
-SETUP_ADDR	= $($(MACH)_SETUP_ADDR)
-INIT_ADDR	= $($(MACH)_INIT_ADDR)
-SYS_CODE_ADDR	= $($(MACH)_SYS_CODE_ADDR)
-SYS_DATA_ADDR	= $($(MACH)_SYS_DATA_ADDR)
-
 # Tools to adapt linux files
 SED 		= sed
 
 # Tools and flags to compile system tools
 TCC		= gcc -ansi -c
-TCCFLAGS	= -Wall -O2 -I$(INCLUDE) $(CC_EXTRA_FLAGS)
+TCCFLAGS	= -Wall -O2 -I$(INCLUDE) $(CONF_FLAGS)
 
 TCXX		= g++ -c -ansi -fno-exceptions
-TCXXFLAGS	= -Wall -O2 -I$(INCLUDE) $(CC_EXTRA_FLAGS)
+TCXXFLAGS	= -Wall -O2 -I$(INCLUDE) $(CONF_FLAGS)
 
 TCPP		= gcc -E 
-TCPPFLAGS	= -I$(INCLUDE) $(CC_EXTRA_FLAGS)
+TCPPFLAGS	= -I$(INCLUDE) $(CONF_FLAGS)
 
 TLD		= gcc
 TLDFLAGS	= 
 
 # Tools and flags to compile applications
-ACC		= eposcc -c -ansi -O2 $(CC_EXTRA_FLAGS)
-ACXX		= eposcc -c -ansi -O2 $(CC_EXTRA_FLAGS)
-AF77		= eposcc -c -ansi -O2 $(CC_EXTRA_FLAGS)
-ALD		= eposcc --$(MODE) $(LD_EXTRA_FLAGS)
+ACC		= eposcc $(ARCH_CC_FLAGS) -c -ansi -O2 $(CONF_FLAGS)
+ACXX		= eposcc $(ARCH_CC_FLAGS) -c -ansi -O2 $(CONF_FLAGS)
+AF77		= eposcc $(ARCH_CC_FLAGS) -c -ansi -O2 $(CONF_FLAGS)
+ALD		= eposcc --$(MODE) $(ARCH_LD_FLAGS) $(ARCH_LD_FLAGS)
 ALDFLAGS	= 
-AANL		= eposcc --analyze
 
 # Tools and flags to compile the system
-AR		= $(TOOLS_PREFIX)ar
+AR		= $(COMP_PREFIX)ar
 ARFLAGS		= rcs
 
-AS		= $(TOOLS_PREFIX)as
-ASFLAGS		= 
+AS		= $(COMP_PREFIX)as
+ASFLAGS		= $(ARCH_CC_FLAGS)
 
-AWK	  	= awk
-AWKFLAGS	= -f
-
-CC		= $(TOOLS_PREFIX)gcc -ansi -c
-CCFLAGS		= $(CC_EXTRA_FLAGS) -O2 -nostdinc -Wall -I$(INCLUDE)
+CC		= $(COMP_PREFIX)gcc -ansi -c
+CCFLAGS		= $(ARCH_CC_FLAGS) -O2 -nostdinc -Wall -I$(INCLUDE) $(CONF_FLAGS)
 CCLIB		= `$(CC) -print-file-name=`
 
-CPP		= $(TOOLS_PREFIX)gcc -E
-CPPFLAGS	= $(CC_EXTRA_FLAGS) -I$(INCLUDE)
+CPP		= $(COMP_PREFIX)gcc -E
+CPPFLAGS	= $(ARCH_CC_FLAGS) -I$(INCLUDE) $(CONF_FLAGS)
 
-CXX		= $(TOOLS_PREFIX)g++ -c --no-exceptions --no-rtti --no-use-cxa-atexit
-CXXFLAGS	= $(CC_EXTRA_FLAGS) -O2 -nostdinc -Wall -Winline -I$(INCLUDE)
+CXX		= $(COMP_PREFIX)g++ -c --no-exceptions --no-rtti --no-use-cxa-atexit
+CXXFLAGS	= $(ARCH_CC_FLAGS) -O2 -nostdinc -Wall -Winline -I$(INCLUDE) $(CONF_FLAGS)
 
-LD		= $(TOOLS_PREFIX)ld
-LDFLAGS		= -L$(LIB) -Bstatic $(LD_EXTRA_FLAGS)
+LD		= $(COMP_PREFIX)ld
+LDFLAGS		= $(ARCH_LD_FLAGS) -L$(LIB) -Bstatic
 
-OBJCPY          = $(TOOLS_PREFIX)objcopy
+OBJCPY          = $(COMP_PREFIX)objcopy
 OBJCPYFLAGS     =
 
 MAKE		= make
@@ -101,12 +150,12 @@ MAKEPRINT	= make print
 #MAKEFLAGS	= -r --no-print-directory -s
 MAKEFLAGS	= -r 
 
-MKBI		= epos-mkbi
+MKBI		= eposmkbi
 MKBI_IMG	= $(IMG)/epos.img
 
 DD		= dd
 
-STRIP		= $(TOOLS_PREFIX)strip -R .note -R .comment
+STRIP		= $(COMP_PREFIX)strip -R .note -R .comment
 
 INSTALL		= cp
 
@@ -170,18 +219,3 @@ lib%.o:		lib%.cc
 		$(EPOSANL) $<
 
 .PRECIOUS:	%.o
-
-# Machine configuration generated by "epos-config"
-MODE				:= $(MODE_LIBRARY)
-ARCH				:= $(ARCH_IA32)
-MACH				:= $(MACH_PC)
-TOOLS_PREFIX			:= /usr/local/cross-ia32/bin/
-CC_EXTRA_FLAGS			:= -D __$(ARCH) -D __$(MACH)
-LD_EXTRA_FLAGS                  := 
-$(MACH_PC)_BOOT_ADDR       	:= 0x00007c00
-$(MACH_PC)_SETUP_ADDR      	:= 0x00100000
-$(MACH_PC)_INIT_ADDR       	:= 0x00200000
-$(MACH_PC)_SYS_CODE_ADDR	:= 0xaff00000
-$(MACH_PC)_SYS_DATA_ADDR	:= 0xaff40000
-$(MACH_PC)_APP_CODE_ADDR	:= 
-$(MACH_PC)_APP_DATA_ADDR	:= 

@@ -2,7 +2,7 @@
 
 include $(EPOS)/makedefs
 
-SUBDIRS := tools src app
+SUBDIRS := cfg tools src app
 
 all:		linux_imports $(SUBDIRS) img
 
