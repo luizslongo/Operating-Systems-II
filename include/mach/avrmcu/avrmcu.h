@@ -7,6 +7,8 @@
 #include <arch/avr8/cpu.h>
 #include <arch/avr8/mmu.h>
 #include <mach/avrmcu/ic.h>
+#include <mach/avrmcu/adc.h>
+#include <mach/avrmcu/uart.h>
 #include <mach/avrmcu/display.h>
 #include <utility/handler.h>
 
