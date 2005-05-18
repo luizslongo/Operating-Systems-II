@@ -331,14 +331,14 @@ bool parse_target(char* tgt_file) {
     token=strtok(line,"=");
     if (strcmp(token,"MEM_BASE") != 0) goto err;
     token=strtok(NULL,"\n");
-    TARGET.mem_base=atoi(token);	
+    TARGET.mem_base=strtol(token, 0, 16);
 
     //Memory Size
     fgets(line,255,f);
     token=strtok(line,"=");
     if (strcmp(token,"MEM_SIZE") != 0) goto err;
     token=strtok(NULL,"\n");
-    TARGET.mem_size=atoi(token);	
+    TARGET.mem_size=strtol(token, 0, 16);
 
     TARGET.cpu_type = 0; //To use in the future
     TARGET.threads  = 8;
