@@ -202,7 +202,7 @@ public:
              : "I" (port), "r" (value));
     }  
   
-    sttatic int init(System_Info * si);
+    static int init(System_Info * si);
 };
 
 __END_SYS
