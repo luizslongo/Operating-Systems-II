@@ -7,6 +7,14 @@
 
 __BEGIN_SYS
 
+// Dummy class for incomplete architectures and machines 
+class Dummy
+{
+public:
+    static int init(System_Info * si) { return 0; }
+};
+
+
 // Threads are handled latter (they can activate the sched.)
 #define __LAST_INIT (Initializer::Dispatcher *)-1
 #define INIT_TABLE {\
@@ -18,6 +26,8 @@ __BEGIN_SYS
     &IC::init, \
     &Timer::init, \
     &RTC::init, \
+    &UART::init, \
+    &ADC::init, \
     &Display::init, \
     &Address_Space::init, \
     &Segment::init, \
