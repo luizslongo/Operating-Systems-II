@@ -5,23 +5,23 @@
 #include <display.h>
 #include <uart.h>
 #include <adc.h>
-#include <arch/avr8/cpu.h>
+#include <cpu.h>
+#include <machine.h>
 
 __USING_SYS
 
 OStream cout;
 
 int main() {
+    unsigned int count = 0;
+    CPU::out8(Machine::DDRB,0xff);
 
-  unsigned int count = 0;
-  AVR8::io->ddrb=0xff;
+    while(1){
+        CPU::out8(Machine::PORTB,~count++);
+	for(unsigned int i = 0; i < 0xffff; i++);
+    }
 
-  while(1){
-    AVR8::io->portb=~count++;
-    for(unsigned int i = 0; i < 0xffff; i++);
-  }
-
-  return 0;
+    return 0;
 
 }
 
