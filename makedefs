@@ -14,9 +14,9 @@ ARCH_IA32	:= ia32
 ARCH_AVR8       := avr8
 
 # System configuration
-MODE		:= $(MODE_LIBRARY)
-ARCH		:= $(ARCH_AVR8)
-MACH		:= $(MACH_AVRMCU)
+MODE		:= $(MODE_BUILTIN)
+ARCH		:= $(ARCH_IA32)
+MACH		:= $(MACH_PC)
 
 # do not modify anything bellow this line
 ###############################################################################
@@ -43,8 +43,8 @@ $(MACH_AVRMCU)_SETUP_ADDR      	:=
 $(MACH_AVRMCU)_INIT_ADDR       	:= 
 $(MACH_AVRMCU)_SYS_CODE_ADDR	:= 
 $(MACH_AVRMCU)_SYS_DATA_ADDR	:= 
-$(MACH_AVRMCU)_APP_CODE_ADDR	:= 
-$(MACH_AVRMCU)_APP_DATA_ADDR	:= 
+$(MACH_AVRMCU)_APP_CODE_ADDR	:= 0x00000000
+$(MACH_AVRMCU)_APP_DATA_ADDR	:= 0x00000000
 BOOT_ADDR			= $($(MACH)_BOOT_ADDR)
 SETUP_ADDR			= $($(MACH)_SETUP_ADDR)
 INIT_ADDR			= $($(MACH)_INIT_ADDR)
@@ -60,16 +60,19 @@ $(ARCH_IA32)_WORD_SIZE	:= 32
 $(ARCH_IA32)_ENDIANESS	:= little
 $(ARCH_IA32)_CLOCK	:= 2000000000
 $(ARCH_IA32)_CC_FLAGS	:=
+$(ARCH_IA32)_AS_FLAGS	:=
 $(ARCH_IA32)_LD_FLAGS	:=
 $(ARCH_AVR8)_WORD_SIZE	:= 8
 $(ARCH_AVR8)_ENDIANESS	:= little
 $(ARCH_AVR8)_CLOCK	:= 4000000
-$(ARCH_AVR8)_CC_FLAGS	:= -mmcu=atmega16
+$(ARCH_AVR8)_CC_FLAGS	:= -mmcu=atmega16 -Wno-inline
+$(ARCH_AVR8)_AS_FLAGS	:= -mmcu=atmega16
 $(ARCH_AVR8)_LD_FLAGS	:= -m avr5
 ARCH_WORD_SIZE		:= $($(ARCH)_WORD_SIZE)
 ARCH_ENDIANESS		:= $($(ARCH)_ENDIANESS)
 ARCH_CLOCK		:= $($(ARCH)_CLOCK)
 ARCH_CC_FLAGS		:= $($(ARCH)_CC_FLAGS)
+ARCH_AS_FLAGS		:= $($(ARCH)_AS_FLAGS)
 ARCH_LD_FLAGS		:= $($(ARCH)_LD_FLAGS)
 CONF_FLAGS		:= -D __$(ARCH) -D __$(MACH)
 
@@ -123,7 +126,7 @@ AR		= $(COMP_PREFIX)ar
 ARFLAGS		= rcs
 
 AS		= $(COMP_PREFIX)as
-ASFLAGS		= $(ARCH_CC_FLAGS)
+ASFLAGS		= $(ARCH_AS_FLAGS)
 
 CC		= $(COMP_PREFIX)gcc -ansi -c
 CCFLAGS		= $(ARCH_CC_FLAGS) -O2 -nostdinc -Wall -I$(INCLUDE) $(CONF_FLAGS)
