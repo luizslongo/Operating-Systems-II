@@ -5,8 +5,7 @@
 __BEGIN_SYS
 
 int AVRMCU::init(System_Info * si){
-  interrupt_vector = (Handler *)si->lmm.int_vec;
-  return 0;
+    return 0;
 }        
     
 
