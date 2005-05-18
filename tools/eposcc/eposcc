@@ -4,6 +4,7 @@
 #
 # Auth: Guto (adapted from mpicc)
 #=========================================================================
+
 source $EPOS/cfg/eposcc.conf
 
 #=========================================================================
@@ -66,6 +67,12 @@ LINUX_LINK_FLGS="-L$EPOS/lib"
 LINUX_LINK_OBJI="$EPOS/lib/init_linux.o $EPOS/lib/system.o"
 LINUX_LINK_OBJN=
 LINUX_LINK_LIBS="util_linux linux_system pthread"
+
+if [ $ARCH = "ia32" ] ; then
+    ARCH=$ARCH
+elif [ $ARCH = "avr8" ] ; then
+    NATIVE_LINK_OBJI_LIBRARY="$NATIVE_LINK_OBJI_LIBRARY $EPOS/src/setup/$MACH""_setup.o"
+fi
 
 #=========================================================================
 # VARIABLES
