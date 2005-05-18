@@ -23,17 +23,16 @@
 
 __BEGIN_SYS
 
+// Dummy class for incomplete architectures and machines 
+class Dummy;
+
 // Architecture configuration
 #if defined (__ia32)
 #define ARCH ia32
 typedef IA32 CPU;
-typedef IA32_TSC TSC;
-typedef IA32_MMU MMU;
 #elif defined (__avr8)
 #define ARCH avr8
 typedef AVR8 CPU;
-typedef AVR8_TSC TSC;
-typedef AVR8_MMU MMU;
 #else
 #error Architecture not selected!
 #endif
@@ -43,18 +42,11 @@ typedef AVR8_MMU MMU;
 #if defined (__pc)
 #define MACH pc
 typedef PC Machine;
-typedef PC_IC IC;
-typedef PC_Timer Timer;
-typedef PC_RTC RTC;
-typedef PC_PCI PCI;
-typedef PC_Display Display;
+typedef Dummy ADC;
 #elif defined (__avrmcu)
 #define MACH avrmcu
 typedef AVRMCU Machine;
-typedef AVRMCU_IC IC;
-typedef AVRMCU_Timer Timer;
-typedef AVRMCU_RTC RTC;
-typedef AVRMCU_Display Display;
+typedef Dummy PCI;
 #else
 #error Machine not selected!
 #endif
