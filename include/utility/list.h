@@ -33,6 +33,31 @@ public:
 	Element * _next;
     };
 
+    // Element for singly linked, grouping list
+    template <typename T>
+    class Element<T, false, false, true>
+    {
+    public:
+	typedef T Object_Type;
+
+    public:
+	Element(const T * o, int s): _object(o), _size(s), _next(0) {}
+
+	T * object() const { return const_cast<T *>(_object); }
+	Element * next() const { return _next; }
+	unsigned int size() const { return _size; }
+	void next(Element * e) { _next = e; }
+	void size(unsigned int l) { _size = l; }
+    
+	void shrink(unsigned int n) { _size -= n; }
+	void expand(unsigned int n) { _size += n; }
+    
+    private:
+	const T * _object;
+	unsigned int _size;
+	Element * _next;
+    };
+
     // Element for doubly linked list
     template <typename T>
     class Element<T, true, false, false>
@@ -186,6 +211,20 @@ public:
 	}
 
 	Element * remove() { return remove_head(); }
+	Element * remove(Element * e) {
+	    if(last())
+		remove_last();
+	    else if(e == _head)
+		remove_head();
+	    else {
+		Element * p = _head;
+		for(; p && p->next() && (p->next() != e); p = p->next());
+		if(p)
+		    p->next(e->next());
+		_size--;
+	    }
+	    return e;
+	}
 	Element * remove_head() {
 	    if(empty())
 		return 0;
@@ -195,6 +234,17 @@ public:
 	    _head = _head->next();
 	    _size--;
 	    return e;
+	}
+	Element * remove_tail() {
+	    if(_tail)
+		return remove(_tail);
+	}
+	Element * remove(const Object_Type * obj) {
+	    Element * e = search(obj);
+	    if(e)
+		return remove(e);
+	    else
+		return 0;
 	}
 
 	Element * search(const Object_Type * obj) {
@@ -223,6 +273,66 @@ public:
 	unsigned int _size;
 	Element * _head;
 	Element * _tail;
+    };
+
+    // Algorithm for singly linked, grouping list
+    template <typename Element>
+    class Algorithm<Element, false, false, false, true>:
+	public Algorithm<Element, false, false, false, false>
+    {
+    private:
+	typedef typename Element::Object_Type Object_Type;
+
+    public:
+	Algorithm(): _grouped_size(0) {}
+
+	unsigned int grouped_size() const { return _grouped_size; }
+
+	Element * search_size(unsigned int s) {
+	    Element * e = head();
+	    for(; e && (e->size() < s); e = e->next());
+	    return e;
+	}
+
+	Element * search_left(const Object_Type * obj) {
+	    Element * e = head();
+	    for(; e && (e->object() + e->size() != obj); e = e->next());
+	    return e;
+	}
+
+	void insert_merging(Element * e, Element ** m1, Element ** m2) {
+	    _grouped_size += e->size();
+	    *m1 = *m2 = 0;
+	    Element * r = search(e->object() + e->size());
+	    Element * l = search_left(e->object());
+	    if(!r && !l)
+		insert_tail(e);
+	    else {
+		if(r) {
+		    e->size(e->size() + r->size());
+		    remove(r);
+		    *m1 = r;
+		}
+		if(l) {
+		    l->size(l->size() + e->size());
+		    *m2 = e;
+		}
+	    }
+	}
+
+	Element * search_decrementing(unsigned int s) {
+	    Element * e = search_size(s);
+	    if(e) {
+		e->shrink(s);
+		_grouped_size -= s;
+		if(!e->size())
+		    remove(e);
+	    }
+	    return e;
+	}
+
+    private:
+	unsigned int _grouped_size;
     };
 
     // Algorithm for doubly linked list
@@ -460,13 +570,20 @@ public:
     };
 };
 
-template <typename T>
+template <typename T, bool grouping = false>
 class Simple_List: public List_Common::Algorithm<
-    List_Common::Element<T, false, false, false>, false, false, false, false>
+    List_Common::Element<T, false, false, grouping>,
+    false, 
+    false,
+    false, 
+    grouping>
 {
 public:
-    typedef typename List_Common::Element<T, false, false, false> Element;
+    typedef typename List_Common::Element<T, false, false, grouping> Element;
 };
+
+template <typename T>
+class Simple_Grouping_List: public Simple_List<T, true> {};
 
 template <typename T,
 	  bool ordered = false, bool relative = false, bool grouping = false>
