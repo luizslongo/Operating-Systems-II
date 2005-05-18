@@ -33,19 +33,11 @@ khomp_install:	khomp_boot
 		$(OBJCPY) -O binary $< $<.img
 
 
-#AT90S
-at90s_boot: FORCE
+#AVRMCU
+avrmcu_boot: FORCE
 		$(TOUCH) $(MACH)_boot
 
-at90s_install:  $(MACH)_boot
-		$(TOUCH) $(MACH)_boot.img
-
-
-#AT86RF
-at86rf_boot: FORCE
-		$(TOUCH) $(MACH)_boot
-
-at86rf_install:	$(MACH)_boot
+avrmcu_install: $(MACH)_boot
 		$(TOUCH) $(MACH)_boot.img
 
 
