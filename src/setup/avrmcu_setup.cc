@@ -1,12 +1,10 @@
 #include <system/config.h>
 #include <mach/avrmcu/avrmcu.h>
+#include <utility/handler.h>
 
 __USING_SYS
 
 extern "C" unsigned __bss_end;
-
-AVRMCU::Handler __iv[Traits<AVRMCU>::INT_VEC_SIZE];
-AVRMCU::Handler * AVRMCU::interrupt_vector = __iv;
 
 extern "C" void __setup() {
 
@@ -21,8 +19,6 @@ extern "C" void __setup() {
 
     __si->pmm.free	= (unsigned)&__bss_end;
     __si->pmm.free_size	= Memory_Map<Machine>::SYS_INFO - (unsigned)&__bss_end;
-
-    __si->lmm.int_vec	= (unsigned)__iv;
 
     return;
     
@@ -76,9 +72,8 @@ extern "C" void __vector_handler(void) {
     );
 
     offset = (offset >> 1) - 1;
-     
-    if(__iv[offset]) 
-        __iv[offset]();
+
+    Machine::int_handler(offset);
 
     ASMV(
         "pop         r31"                "\n"
