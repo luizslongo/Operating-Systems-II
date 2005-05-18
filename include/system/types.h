@@ -45,6 +45,10 @@ class AVRMCU_RTC;
 // Hardware Mediators - Busses
 class PC_PCI;
 
+// Hardware Mediators - UARTs
+class PC_UART;
+class AVRMCU_UART;
+
 // Hardware Mediators - Displays
 class PC_Display;
 class AVRMCU_Display;
