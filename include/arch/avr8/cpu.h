@@ -205,6 +205,8 @@ public:
     static int init(System_Info * si);
 };
 
+typedef AVR8 CPU;
+
 __END_SYS
 
 #endif

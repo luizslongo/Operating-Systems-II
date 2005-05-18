@@ -156,6 +156,8 @@ private:
     
 };
 
+typedef AVRMCU_Timer Timer;
+
 __END_SYS
 
 #endif

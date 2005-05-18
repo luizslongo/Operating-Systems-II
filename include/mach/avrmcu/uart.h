@@ -207,6 +207,8 @@ private:
 
 };
 
+typedef AVRMCU_UART UART;
+
 __END_SYS
 
 #endif

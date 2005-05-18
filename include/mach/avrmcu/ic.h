@@ -334,6 +334,8 @@ private:
         
 };
 
+typedef AVRMCU_IC IC;
+
 __END_SYS
 
 #endif

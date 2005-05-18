@@ -42,6 +42,8 @@ private:
     
 };
 
+typedef AVRMCU_Display Display;
+
 __END_SYS
 
 #endif

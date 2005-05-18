@@ -95,6 +95,8 @@ private:
     } 
 };
 
+typedef AVR8_TSC TSC;
+
 __END_SYS
 
 #endif

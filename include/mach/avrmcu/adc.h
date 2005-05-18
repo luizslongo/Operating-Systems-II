@@ -190,6 +190,7 @@ private:
 
 };
 
+typedef AVRMCU_ADC ADC;
 
 __END_SYS
 
