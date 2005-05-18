@@ -115,7 +115,7 @@ TLDFLAGS	=
 ACC		= eposcc $(ARCH_CC_FLAGS) -c -ansi -O2 $(CONF_FLAGS)
 ACXX		= eposcc $(ARCH_CC_FLAGS) -c -ansi -O2 $(CONF_FLAGS)
 AF77		= eposcc $(ARCH_CC_FLAGS) -c -ansi -O2 $(CONF_FLAGS)
-ALD		= eposcc --$(MODE) $(ARCH_LD_FLAGS) $(ARCH_LD_FLAGS)
+ALD		= eposcc --$(MODE) $(ARCH_LD_FLAGS)
 ALDFLAGS	= 
 
 # Tools and flags to compile the system
