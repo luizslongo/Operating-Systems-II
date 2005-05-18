@@ -50,6 +50,11 @@ template <> struct Traits<IA32>: public Traits<void>
     static const int CLOCK = 797886000;
 };
 
+template <> struct Traits<AVR8>: public Traits<void>
+{
+    static const unsigned long long CLOCK = 4000000;
+};
+
 template <> struct Traits<IA32_MMU>: public Traits<void>
 {
     static const bool fast_log_to_phy = false;
