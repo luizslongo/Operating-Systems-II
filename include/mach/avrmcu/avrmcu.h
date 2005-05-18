@@ -8,6 +8,7 @@
 #include <arch/avr8/mmu.h>
 #include <mach/avrmcu/ic.h>
 #include <mach/avrmcu/display.h>
+#include <utility/handler.h>
 
 __BEGIN_SYS
 
@@ -186,13 +187,19 @@ public:
     	h();
     }
 
+    static void panic() {
+        while(1);
+    }
+
     static int init(System_Info *si);
     
 private:
 
-    static Handler::Function ** interrupt_vector;    
+    static Handler::Function * interrupt_vector[Traits<AVRMCU>::INT_VEC_SIZE];
 
 };
+
+typedef AVRMCU Machine;
 
 __END_SYS
 
