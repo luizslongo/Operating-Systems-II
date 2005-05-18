@@ -14,49 +14,40 @@ class System;
 class Framework;
 class Heap;
 
-// Hardware Mediators - CPU
+// Hardware Mediators - CPUs
 class IA32;
 class AVR8;
-typedef IA32 CPU;
 
 // Hardware Mediators - Time-Stamp Counters
 class IA32_TSC;
 class AVR8_TSC;
-typedef IA32_TSC TSC;
 
 // Hardware Mediators - Memory Management Units
 class IA32_MMU;
 class AVR8_MMU;
-typedef IA32_MMU MMU;
 
 // Hardware Mediators - Machines
 class PC;
 class AVRMCU;
-typedef PC Machine;
 
 // Hardware Mediators - Interrupt Controllers
 class PC_IC;
 class AVRMCU_IC;
-typedef PC_IC IC;
 
 // Hardware Mediators - Timers
 class PC_Timer;
 class AVRMCU_Timer;
-typedef PC_Timer Timer;
 
 // Hardware Mediators - Real Time Clocks
 class PC_RTC;
 class AVRMCU_RTC;
-typedef PC_RTC RTC;
 
 // Hardware Mediators - Busses
 class PC_PCI;
-typedef PC_PCI PCI;
 
 // Hardware Mediators - Displays
 class PC_Display;
 class AVRMCU_Display;
-typedef PC_Display Display;
 
 // Abstractions
 class Thread;
