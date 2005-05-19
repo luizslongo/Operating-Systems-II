@@ -59,7 +59,7 @@ public:
     
     static Hertz frequency() { return Traits<AVR8>::CLOCK / 8; };
     static Time_Stamp time_stamp() {
-	return tcnt1hl() | _ts << (sizeof(long) * 8);
+	return tcnt1hl() | _ts << (sizeof(Reg16) * 8);
     };
 
     static int init(System_Info * si);
