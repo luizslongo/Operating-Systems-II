@@ -4,8 +4,8 @@
 #define __avr8_tsc_h
 
 #include <tsc.h>
-#include <mach/avrmcu/ic.h>
-#include <mach/avrmcu/avrmcu.h>
+#include <cpu.h>
+#include __HEADER_MACH(avrmcu)
 
 __BEGIN_SYS
 
@@ -14,9 +14,9 @@ class AVR8_TSC: public TSC_Common
 private:
     typedef Traits<AVR8_TSC> Traits;
     static const Type_Id TYPE = Type<AVR8_TSC>::TYPE;
-    typedef unsigned char Reg8;
-    typedef unsigned int Reg16;
-    static Time_Stamp _ts;
+
+    typedef CPU::Reg8 Reg8;
+    typedef CPU::Reg16 Reg16;
     
     // Timer1 Registers
     enum {
@@ -56,43 +56,27 @@ private:
 
 public:
     AVR8_TSC(){ /* Actual timer initialization is up to init */ };
-    ~AVR8_TSC(){};
     
-    static Hertz frequency(){ return Traits<AVR8>::CLOCK/8; };
-    static Time_Stamp time_stamp(){ return tcnt1hl() /*(_ts | tcnt1hl())*/; };
+    static Hertz frequency() { return Traits<AVR8>::CLOCK / 8; };
+    static Time_Stamp time_stamp() {
+	return tcnt1hl() | _ts << (sizeof(long) * 8);
+    };
 
-    static int init(System_Info *si);
+    static int init(System_Info * si);
     
 private:
 
-    static Reg8 tccr1a(){
-      return AVR8::in8(TCCR1A);
-    }
-    
-    static void tccr1a(Reg8 value){
-      AVR8::out8(TCCR1A,value);
-    }    
-    
-    static Reg8 tccr1b(){
-      return AVR8::in8(TCCR1B);
-    }
-    
-    static void tccr1b(Reg8 value){
-      AVR8::out8(TCCR1B,value);
-    }       
-    
-    static Reg16 tcnt1hl(){
-      return AVR8::in16(TCNT1L);
-    }
-    
-    static void tcnt1hl(Reg16 value){
-      return AVR8::out16(TCNT1L,value);
-    }      
-    
-    static void timer1_handler(void)
-    {
-    	//_ts += 0x10000;
-    } 
+    static Reg8 tccr1a() { return AVR8::in8(TCCR1A); }
+    static void tccr1a(Reg8 value) { AVR8::out8(TCCR1A, value); }    
+    static Reg8 tccr1b() { return AVR8::in8(TCCR1B); }
+    static void tccr1b(Reg8 value) { AVR8::out8(TCCR1B, value); }       
+    static Reg16 tcnt1hl() { return AVR8::in16(TCNT1L); }
+    static void tcnt1hl(Reg16 value) { return AVR8::out16(TCNT1L, value); }
+
+    static void timer1_handler(void) { _ts++; } 
+
+private:
+    static unsigned long _ts;
 };
 
 typedef AVR8_TSC TSC;
