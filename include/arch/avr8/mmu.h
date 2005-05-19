@@ -24,7 +24,7 @@ private:
 
 public:
     // Page Flags
-    class AVR8_Flags {};
+    typedef MMU_Common<0, 0, 0>::Flags AVR8_Flags;
 
     // Page_Table
     class Page_Table {};
@@ -35,28 +35,18 @@ public:
     public:
         Chunk() {}
         Chunk(unsigned int bytes, Flags flags)
-	    : _phy_addr(alloc(bytes)), _size(bytes), _flags(flags)
-	{}
+	    : _phy_addr(alloc(bytes)), _size(bytes), _flags(flags) {}
 	Chunk(Phy_Addr phy_addr, unsigned int bytes, Flags flags)
-	    : _phy_addr(phy_addr), _size(bytes), _flags(flags)
-        {}
-	~Chunk() {
-	    free(_phy_addr, _size);
-	}
+	    : _phy_addr(phy_addr), _size(bytes), _flags(flags) {}
+	~Chunk() { free(_phy_addr, _size); }
 
 	unsigned int pts() const { return 0; }
 	Flags flags() const { return _flags; }
 	Page_Table * pt() const { return 0; }
 	unsigned int size() const { return _size; }
-	Phy_Addr phy_address() const {
-	    return _phy_addr;
-	}
+	Phy_Addr phy_address() const { return _phy_addr; } // always CT
 
-	int resize(unsigned int amount) {
-	    _size += amount;
-            return _size;
-	}
-
+	int resize(unsigned int amount) { return 0; } // no resize with CT
 
     private:
         Phy_Addr _phy_addr;
@@ -75,40 +65,35 @@ public:
 	Directory(Page_Directory * pd) {}
 	~Directory() {}
 	
-	Log_Addr attach(const Chunk & chunk) {
-	    return chunk.phy_address();
-	}
+	Log_Addr attach(const Chunk & chunk) { return chunk.phy_address(); }
 	Log_Addr attach(const Chunk & chunk, Log_Addr addr) {
-/*	    if(addr operator==<Log_Addr>(chunk.phy_address)) return addr;
-	    return false;*/
-	    return addr;
+	    return (addr == chunk.phy_address) ? addr : false;
 	}
  	void detach(const Chunk & chunk) {}
  	void detach(const Chunk & chunk, Log_Addr addr) {}
 
-	Phy_Addr physical(Log_Addr addr) {
-	    return addr;
-	}
+	Phy_Addr physical(Log_Addr addr) { return addr;	}
     };
 
 public:
     AVR8_MMU() {}
-    ~AVR8_MMU() {}
 
     static void flush_tlb() {}
     static void flush_tlb(Log_Addr addr) {}
 
     static Phy_Addr alloc(unsigned int bytes = 1);
-    static Phy_Addr calloc(unsigned int bytes = 1) { return alloc(bytes); }
+    static Phy_Addr calloc(unsigned int bytes = 1) {
+	Phy_Addr phy = alloc(bytes);
+	memset(phy, bytes, 0);
+	return phy;	
+    }
     static void free(Phy_Addr addr, int n = 1);
 
     static Page_Directory * volatile current() {
-	return 0;
+	return reinterpret_cast<Page_Directory * volatile>(CPU::pdp());
     }
 
-    static Phy_Addr physical(Log_Addr addr) {
-        return addr;
-    }
+    static Phy_Addr physical(Log_Addr addr) { return addr; }
 
     static int init(System_Info * si);
 
