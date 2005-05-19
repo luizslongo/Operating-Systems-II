@@ -1,7 +1,7 @@
 // EPOS-- Realtime Thread Abstraction Declarations
 
 #ifndef __realtime_thread_h
-#define __realtme_thread_h
+#define __realtime_thread_h
 
 #include <utility/handler.h>
 #include <thread.h>
