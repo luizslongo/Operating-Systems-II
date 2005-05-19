@@ -4,5 +4,6 @@
 
 __BEGIN_SYS
 
+unsigned long AVR8_TSC::_ts = 0;
 
 __END_SYS
