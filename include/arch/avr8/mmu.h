@@ -67,7 +67,7 @@ public:
 	
 	Log_Addr attach(const Chunk & chunk) { return chunk.phy_address(); }
 	Log_Addr attach(const Chunk & chunk, Log_Addr addr) {
-	    return (addr == chunk.phy_address) ? addr : false;
+	    return (addr == chunk.phy_address())? addr : Log_Addr(0);
 	}
  	void detach(const Chunk & chunk) {}
  	void detach(const Chunk & chunk, Log_Addr addr) {}
