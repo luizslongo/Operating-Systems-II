@@ -8,16 +8,16 @@ void IA32::Context::save() volatile
 {
     ASM("	pushl	%ebp						\n"
  	"	movl	%esp, %ebp					\n"
-	"	movl    8(%ebp), %esp	# this		 		\n"
-	"	addl    $40, %esp      	# + sizeof(Context)		\n"
-	"	pushl	4(%ebp)		# eip				\n"
+	"	movl    8(%ebp), %esp	# sp = this	 		\n"
+	"	addl    $40, %esp      	# sp += sizeof(Context)		\n"
+	"	pushl	4(%ebp)		# push eip			\n"
 	"	pushfl							\n"
 	"	pushl	%eax						\n"
 	"	pushl	%ecx						\n"
 	"	pushl	%edx						\n"
 	"	pushl	%ebx						\n"
-	"	pushl   %ebp		# esp				\n"
-	"	pushl   (%ebp)		# ebp				\n"
+	"	pushl   %ebp		# push esp			\n"
+	"	pushl   (%ebp)		# push ebp			\n"
 	"	pushl	%esi						\n"
 	"	pushl	%edi						\n"
 	"	movl    %ebp, %esp					\n"
@@ -26,16 +26,16 @@ void IA32::Context::save() volatile
 
 void IA32::Context::load() const volatile
 {
-    // POPA saves an extra "esp" (which is always "this"),
-    // but saves several instruction fetchs
-    ASM("	movl    4(%esp), %esp	# this	\n"
-	"	popal				\n"
- 	"	popfl				\n");
+    // POPA ignores the ESP saved by PUSHA. ESP is just normally incremented. 
+    ASM("	movl    4(%esp), %esp	# sp = this			\n"
+	"	popal							\n"
+ 	"	popfl							\n");
 }
 
 void IA32::switch_context(Context * volatile * o, Context * volatile n)
 {
-    // The same here: one extra push and one extra pop, but several fecths less
+    // PUSHA saves an extra "esp" (which is always "this"),
+    // but saves several instruction fetchs.
     ASM("	pushfl				\n"
 	"	pushal				\n"
 	"	movl    40(%esp), %eax	# old	\n" 
