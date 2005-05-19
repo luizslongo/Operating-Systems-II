@@ -259,9 +259,7 @@ public:
     // CPU Context
     class Context {
     public:
-	Context(Log_Addr entry)
-	    : _edi(6), _esi(5), _ebp(7), _esp((Reg32)this), _ebx(2), _edx(4), 
-	      _ecx(3), _eax(1), _eflags(FLAG_DEFAULTS), _eip(entry) {}
+	Context(Log_Addr entry) : _eflags(FLAG_DEFAULTS), _eip(entry) {}
 	Context(Reg32 eflags, Reg32 eax, Reg32 ebx, Reg32 ecx, Reg32 edx, 
 		Reg32 esi, Reg32 edi, Reg32 ebp, Reg32 esp, Reg32 eip)
 	    : _edi(edi), _esi(esi), _ebp(ebp), _esp(esp), _ebx(ebx), 
@@ -352,15 +350,9 @@ public:
     static Reg32 htonl(const Reg32 v)	{
 	ASMV("bswap %0" : "=r" (v) : "0" (v), "r" (v)); return v;
     }
-    static Reg16 htons(const Reg16 v)	{
-	return htons_lsb(v);
-    }
-    static Reg32 ntohl(const Reg32 v)	{
-	return htonl(v);
-    }
-    static Reg16 ntohs(const Reg16 v)	{
-	return htons(v);
-    }
+    static Reg16 htons(const Reg16 v)	{ return htons_lsb(v); }
+    static Reg32 ntohl(const Reg32 v)	{ return htonl(v); }
+    static Reg16 ntohs(const Reg16 v)	{ return htons(v); }
 
     // IA32 specific methods
 
@@ -376,14 +368,14 @@ public:
 	Reg32 value; ASMV("movl %%esp,%0" : "=r"(value) :); return value;
     }
     static void esp(const Reg32 value) {
- 	ASMV("movl %0,%%esp" : : "r"(value));
+ 	ASMV("movl %0, %%esp" : : "r"(value));
     }
 
     static Reg32 eax() {
 	Reg32 value; ASMV("movl %%eax,%0" : "=r"(value) :); return value;
     }
     static void eax(const Reg32 value) {
- 	ASMV("movl %0,%%eax" : : "r"(value));
+ 	ASMV("movl %0, %%eax" : : "r"(value));
     }
 
     static Log_Addr eip() {
@@ -395,21 +387,21 @@ public:
     }
 
     static Reg32 cr0() {
-	Reg32 value; ASMV("movl %%cr0,%0" : "=r"(value) :); return value;
+	Reg32 value; ASMV("movl %%cr0, %0" : "=r"(value) :); return value;
     }
     static void cr0(const Reg32 value) {
-	ASMV("movl %0,%%cr0" : : "r"(value));
+	ASMV("movl %0, %%cr0" : : "r"(value));
     }
 
     static Reg32 cr2()	{
-	Reg32 value; ASMV("movl %%cr2,%0" : "=r"(value) :); return value;
+	Reg32 value; ASMV("movl %%cr2, %0" : "=r"(value) :); return value;
     }
 
     static Reg32 cr3() {
-	Reg32 value; ASMV("movl %%cr3,%0" : "=r"(value) :); return value;
+	Reg32 value; ASMV("movl %%cr3, %0" : "=r"(value) :); return value;
     }
     static void cr3(const Reg32 value) {
-	ASMV("movl %0,%%cr3" : : "r"(value));
+	ASMV("movl %0, %%cr3" : : "r"(value));
     }
 
     static void gdtr(Reg16 * limit, Reg32 * base) {
@@ -494,7 +486,7 @@ public:
 	ASM("ljmp *%0" : "=o" (address));
     }
 
-    static int init(System_Info *si);
+    static int init(System_Info * si);
 };
 
 typedef IA32 CPU;
