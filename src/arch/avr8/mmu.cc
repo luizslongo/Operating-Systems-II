@@ -12,7 +12,7 @@ AVR8_MMU::Phy_Addr AVR8_MMU::alloc(unsigned int bytes) {
     if(bytes) {
         List::Element * e = _free.search_decrementing(bytes);
 	if(e)
-	    phy = e->object();
+	    phy = e->object() + e->size();
 	else
 	    db<AVR8_MMU>(WRN) << "AVR8_MMU::alloc() failed!\n";
     }
