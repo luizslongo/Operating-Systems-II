@@ -40,7 +40,7 @@ public:
         Context() {}
 
         void save() volatile;
-        void load() volatile;
+        void load() const volatile;
 
         friend Debug & operator << (Debug & db, const Context & c) {
 	    db << "{sp="    << &c
@@ -95,8 +95,7 @@ public:
     static void int_disable() { ASMV("cli"); };
     static void halt() { ASMV("sleep"); };
 
-    static void switch_context(Context * volatile * current, 
-			       Context * volatile next);
+    static void switch_context(Context * volatile * o, Context * volatile n);
 
     static Flags flags() { return sreg(); }
     static void flags(Flags flags) { sreg(flags); }
@@ -108,7 +107,7 @@ public:
     static void fr(Reg16 fr) { r25_24(fr); }
 
     static Reg16 pdp() { return 0; }
-    static void pdp(Reg16 pdp) { }
+    static void pdp(Reg16 pdp) {}
     
     static Log_Addr ip() { return pc(); }    
 
@@ -141,37 +140,35 @@ public:
 
     // AVR8 specific methods
     
-    static Reg16 sphl() { return in16(0x3d); }
-    static void sphl(Reg16 value) { out16(0x3d, value); }    
     static Reg8 sreg() { return in8(0x3f); }
     static void sreg(Reg8 value) { out8(0x3f, value); }
+
+    static Reg16 sphl() { return in16(0x3d); }
+    static void sphl(Reg16 value) { out16(0x3d, value); }    
     
     static Reg16 r25_24(){
         Reg16 value;
-        ASMV("mov     %A0,r24"    "\n"
-             "mov     %B0,r25"    "\n"
+        ASMV("mov	%A0,r24		\n"
+             "mov	%B0,r25		\n"
              : "=r" (value)
 	     :);
         return value;
     }    
     static void r25_24(Reg16 value){
-        ASMV("mov     r24,%A0"    "\n"
-             "mov     r25,%B0"    "\n"
+        ASMV("mov	r24,%A0		\n"
+             "mov	r25,%B0		\n"
              :
 	     : "r" (value));    
     }
     
     static Log_Addr pc(){
         Log_Addr value;
-        ASMV("cli"                "\n"
-             "call 1f"            "\n"
-             "1:"                 "\n"
-             "in     %A0,0x3e"    "\n"
-             "in     %B0,0x3d"    "\n"
-             "pop     r1"         "\n"
-             "pop    r1"          "\n"
-             "clr    r1"          "\n"
-             "sei"                "\n"
+        ASMV("	call	1f		\n"
+             "1:	in	%A0,0x3e	\n"
+             "	in	%B0,0x3d	\n"
+             "	pop	r1		\n"
+             "	pop	r1		\n"
+             "	clr	r1		\n"
              : "=r" (value)
              :);
         return value;  
@@ -179,15 +176,15 @@ public:
     
     static Reg8 in8(const unsigned char port) {
         Reg8 value;
-        ASMV("in    %0,%1"        "\n"
+        ASMV("in	%0,%1		\n"
 	     : "=r" (value)
 	     : "I"  (port));
         return value;
     }
     static Reg16 in16(const unsigned char port) {
         Reg16 value;
-        ASMV("in     %A0,    %1"        "\n" // Must read low byte first
-             "in     %B0,    (%1)+1"    "\n" 
+        ASMV("in	%A0,%1		\n" // Must read low byte first
+             "in	%B0,(%1)+1	\n" 
              : "=r" (value)
              : "I"   (port));
         return value;
@@ -196,8 +193,8 @@ public:
         (*(volatile unsigned char *)(port + 0x20)) = value;
     }
     static void out16(const unsigned char port, Reg16 value) {
-        ASMV("out     (%0)+1,    %B1"   "\n" // Must write high byte first
-             "out     %0,    %A1"       "\n"
+        ASMV("out	(%0)+1,%B1	\n" // Must write high byte first
+             "out	%0,%A1		\n"
              : 
              : "I" (port), "r" (value));
     }  
