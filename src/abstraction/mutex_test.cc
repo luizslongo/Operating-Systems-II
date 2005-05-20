@@ -12,7 +12,7 @@ const int iterations = 10;
 
 Display display;
 Thread * phil[5];
-Mutex * chopstick[5];
+Mutex chopstick[5];
 
 OStream cout;
 
@@ -29,13 +29,13 @@ int philosopher(int n, int l, int c)
  	cout << "thinking";
 	Alarm::delay(1000000);
 
-	chopstick[first]->lock();   // get first chopstick
-	chopstick[second]->lock();   // get second chopstick
+	chopstick[first].lock();   // get first chopstick
+	chopstick[second].lock();   // get second chopstick
 	display.position(l, c);
 	cout << " eating ";
 	Alarm::delay(500000);
-	chopstick[first]->unlock();   // release first chopstick
-	chopstick[second]->unlock();   // release second chopstick
+	chopstick[first].unlock();   // release first chopstick
+	chopstick[second].unlock();   // release second chopstick
     }
 
     return(iterations);
@@ -45,9 +45,6 @@ int main()
 {
     display.clear();
     cout << "The Philosopher's Dinner:\n";
-
-    for(int i = 0; i < 5; i++)
-	chopstick[i] = new Mutex;
 
     phil[0] = new Thread(&philosopher, 0, 5, 32);
     phil[1] = new Thread(&philosopher, 1, 10, 44);
@@ -75,8 +72,6 @@ int main()
 	cout << "Philosopher " << i << " ate " << ret << " times \n";
     }
 
-    for(int i = 0; i < 5; i++)
-	delete chopstick[i];
     for(int i = 0; i < 5; i++)
 	delete phil[i];
     
