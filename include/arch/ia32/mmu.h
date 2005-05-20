@@ -7,6 +7,7 @@
 #include <mmu.h>
 #include <utility/string.h>
 #include <utility/list.h>
+#include <utility/debug.h>
 #include __HEADER_MACH(memory_map)
 
 __BEGIN_SYS
@@ -49,13 +50,13 @@ public:
 	IA32_Flags() {}
 	IA32_Flags(const IA32_Flags & f) : _flags(f._flags) {}
 	IA32_Flags(unsigned int f) : _flags(f) {}
-	IA32_Flags(Flags f) : _flags(PRE |
-				     (f & Flags::RW)  ? RW  : 0 |
-				     (f & Flags::USR) ? USR : 0 |
-				     (f & Flags::CWT) ? PWT : 0 |
-				     (f & Flags::CD)  ? PCD : 0 |
-				     (f & Flags::CT)  ? CT  : 0 |
-				     (f & Flags::IO)  ? PCI : 0 ) {}
+	IA32_Flags(Flags f) : _flags(PRE | ACC |
+				     ((f & Flags::RW)  ? RW  : 0) |
+				     ((f & Flags::USR) ? USR : 0) |
+				     ((f & Flags::CWT) ? PWT : 0) |
+				     ((f & Flags::CD)  ? PCD : 0) |
+				     ((f & Flags::CT)  ? CT  : 0) |
+				     ((f & Flags::IO)  ? PCI : 0) ) {}
 
 	operator unsigned int() const { return _flags; }
 
@@ -75,11 +76,15 @@ public:
 	PT_Entry & operator[](unsigned int i) { return _entry[i]; }
 	
 	void map(int from, int to, IA32_Flags flags) {
-	    for( ; from <= to; from++)
-		_entry[from] = alloc() | flags;
+	    Phy_Addr * addr = alloc(to - from);
+	    if(addr)
+		remap(addr, from, to, flags);
+	    else 
+		for( ; from <= to; from++)
+		    _entry[from] = alloc() | flags;
 	}
 	void map_contiguous(int from, int to, IA32_Flags flags) {
-	    remap(alloc(to - from + 1), from, to, flags);
+	    remap(alloc(to - from), from, to, flags);
 	}
 	void remap(Phy_Addr addr, int from, int to, IA32_Flags flags) {
 	    addr = align_page(addr);
@@ -93,6 +98,19 @@ public:
 		free(_entry[from]);
 		_entry[from] = 0;
 	    }
+	}
+
+	friend Debug & operator << (Debug & db, Page_Table & pt) {
+	    db << "{\n";
+	    int brk = 0;
+	    for(unsigned int i = 0; i < PT_ENTRIES; i++)
+		if(pt[i]) {
+		    db << "[" << i << "]=" << pt[i] << "  ";
+		    if(!(++brk % 4))
+			db << "\n";
+		}
+	    db << "\n}";
+	    return db;
 	}
 	
     private:
@@ -166,10 +184,17 @@ public:
     class Directory 
     {
     public:
-	Directory() : _pd(calloc(1)) {}
+	Directory() : _pd(calloc(1)) {
+	    for(unsigned int i = 0; i < PD_ENTRIES; i++)
+		(*_pd)[i] = (*_master)[i];
+	}
 	Directory(Page_Directory * pd) : _pd(pd) {}
 	~Directory() { free(_pd); }
 	
+	Page_Table * pd() const { return _pd; }
+
+	void activate() { CPU::pdp(reinterpret_cast<CPU::Reg32>(_pd)); }
+
 	Log_Addr attach(const Chunk & chunk) {
 	    for(unsigned int i = 0; i < PD_ENTRIES; i++)
 		if(attach(i, chunk.pt(), chunk.pts(), chunk.flags()))
@@ -214,9 +239,8 @@ public:
 	    for(unsigned int i = from; i < from + n; i++)
 		if((*_pd)[i])
 		    return false;
-	    for(unsigned int i = from; i < from + n; i++)
-		(*_pd)[i] = Phy_Addr(pt + (i * PT_ENTRIES)) | flags;
-
+	    for(unsigned int i = from; i < from + n; i++, pt++)
+		(*_pd)[i] = Phy_Addr(pt) | flags;
 	    return true;
 	}
 	void detach(unsigned int from, const Page_Table * pt, unsigned int n) {
@@ -230,17 +254,6 @@ public:
 
 public:
     IA32_MMU() {}
-
-    static void flush_tlb() {
-        db<IA32_MMU>(TRC) << "IA32_MMU::flush_tlb()\n";
-
-	ASMV("movl %cr3,%eax");
-	ASMV("movl %eax,%cr3");
-    }
-    static void flush_tlb(Log_Addr addr) {
-        db<IA32_MMU>(TRC) << "IA32_MMU::flush_tlb(" << addr << ")\n";
-	ASMV("invlpg %0" : : "m"(addr));
-    }
 
     static Phy_Addr alloc(unsigned int frames = 1) {
 	Phy_Addr phy(false);
@@ -281,6 +294,17 @@ public:
 	return (*pt)[page(addr)] | offset(addr);
     }
 
+    static void flush_tlb() {
+        db<IA32_MMU>(TRC) << "IA32_MMU::flush_tlb()\n";
+
+	ASMV("movl %cr3,%eax");
+	ASMV("movl %eax,%cr3");
+    }
+    static void flush_tlb(Log_Addr addr) {
+        db<IA32_MMU>(TRC) << "IA32_MMU::flush_tlb(" << addr << ")\n";
+	ASMV("invlpg %0" : : "m"(addr));
+    }
+
     static int init(System_Info * si);
 
 private:
@@ -288,6 +312,7 @@ private:
 
 private:
     static List _free;
+    static Page_Directory * _master;
 };
 
 typedef IA32_MMU MMU;

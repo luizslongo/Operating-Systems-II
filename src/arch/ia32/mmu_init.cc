@@ -29,6 +29,11 @@ int IA32_MMU::init(System_Info * si)
 // 		      << ",t=" << (void *)&_free 
 // 		      << ",s=" << sizeof(_free) << "}\n";
     
+    // BIG WARING HERE: INIT (i.e. this program) will be part of the free
+    // after the following is executed, but it will remain alive
+    // This only works because the _free.insert_merging() only
+    // touchs the first page of each chunk and INIT is not there
+
     // Insert all free memory into the _free list
     List::Element * e, * m1, * m2;
     e = new (phy2log(reinterpret_cast<void *>(si->pmm.mach2)))
@@ -41,7 +46,13 @@ int IA32_MMU::init(System_Info * si)
 		      si->pmm.free_size);
     _free.insert_merging(e, &m1, &m2);
 
-    db<IA32_MMU>(INF) << "Free Frames => " << _free.grouped_size() << "\n";
+    db<IA32_MMU>(INF) << "IA32_MMU::Free Frames => "
+		      << _free.grouped_size() << "\n";
+
+    _master = reinterpret_cast<Page_Directory *>(CPU::pdp());
+
+    db<IA32_MMU>(INF) << "IA32_MMU::Master Page Directory => " 
+		      << _master << "\n";
 
     return 0;
 }
