@@ -26,6 +26,7 @@ public:
 	unsigned short n_nodes;    // Number of nodes in SAN 
 	int img_size;              // Boot image size in bytes 
 	int setup_off;             // SETUP offset in the boot image 
+	int init_off;              // INIT offset in the boot image 
 	int system_off;            // OS offset in the boot image 
 	int loader_off;            // LOADER 	offset in the boot image 
 	int app_off;               // APPs offset in the boot image 

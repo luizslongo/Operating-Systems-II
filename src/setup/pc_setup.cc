@@ -55,6 +55,7 @@ void panic();
 __BEGIN_SYS
 
 OStream kout, kerr;
+bool has_init;
 bool has_system;
 
 __END_SYS
@@ -156,6 +157,7 @@ int main(char * setup_addr, unsigned int setup_size, char * bi)
 
     // System_Info is the first thing in the boot image
     System_Info * si = reinterpret_cast<System_Info *>(bi);
+    has_init = (si->bm.init_off != -1);
     has_system = (si->bm.system_off != -1);
     if(!has_system)
 	db<Setup>(WRN) << "No SYSTEM in boot image, assuming EPOS is a library!\n";
@@ -182,6 +184,26 @@ int main(char * setup_addr, unsigned int setup_size, char * bi)
     // if(si->bm.host_id == (unsigned short) -1)
     // get_bootp_info(&si->bm.host_id);
 
+    // Check INIT integrity and get the size of its code+data segment
+    Log_Addr init_entry = 0;
+    unsigned int init_segments = 0;
+    unsigned int init_size = 0;
+    if(has_init) {
+	elf = reinterpret_cast<ELF *>(&bi[si->bm.init_off]);
+	if(!elf->valid()) {
+	    db<Setup>(ERR) << "INIT ELF image is corrupted!\n";
+	    panic();
+	}
+	init_entry = elf->entry();
+	init_segments = elf->segments();
+	init_size = elf->segment_size(0);
+ 	if(init_segments > 1) {
+ 	    db<Setup>(ERR) << "INIT ELF image has more than one segment ("
+ 			   << elf->segments() << ")!\n";
+	    panic();
+	}
+    }
+
     // Check OS integrity and get the size of its code and data segments
     Log_Addr sys_entry = 0;
     unsigned int sys_segments = 0;
@@ -189,20 +211,19 @@ int main(char * setup_addr, unsigned int setup_size, char * bi)
     unsigned int sys_data_size = 0;
     if(has_system) {
 	elf = reinterpret_cast<ELF *>(&bi[si->bm.system_off]);
-	if(elf->valid()) {
-	    sys_entry = elf->entry();
-	    sys_segments = elf->segments();
-	    sys_code_size = elf->segment_size(0);
-	    for(unsigned int i = 1; i < sys_segments; i++)
-		sys_data_size += elf->segment_size(i);
-	} else {
+	if(!elf->valid()) {
 	    db<Setup>(ERR) << "OS ELF image is corrupted!\n";
 	    panic();
 	}
+	sys_entry = elf->entry();
+	sys_segments = elf->segments();
+	sys_code_size = elf->segment_size(0);
+	for(unsigned int i = 1; i < sys_segments; i++)
+	    sys_data_size += elf->segment_size(i);
     }
 
     // Check APP integrity and get the size of all its segments
-    elf = (ELF *) &bi[si->bm.loader_off];
+    elf = reinterpret_cast<ELF *>(&bi[si->bm.loader_off]);
     if(!elf->valid()) {
         db<Setup>(ERR) << "Application ELF image is corrupted!\n";
         panic();
@@ -231,6 +252,7 @@ int main(char * setup_addr, unsigned int setup_size, char * bi)
     kout << "  Tasks:     " << si->bm.n_tasks << " (max)\n";
     kout << "  Threads:   " << si->bm.n_threads << " (max)\n";
     kout << "  Setup:     " << setup_size << " bytes\n";
+    kout << "  Init:      " << init_size << " bytes\n";
     kout << "  OS code:   " << sys_code_size << " bytes";
     kout << "\t\tOS data:   " << sys_data_size << " bytes\n";
     kout << "  APP code:  " << app_code_size << " bytes";
@@ -368,7 +390,16 @@ int main(char * setup_addr, unsigned int setup_size, char * bi)
     MMU mmu;
     mmu.flush_tlb();
 
-    // Load OS (if it exists)
+    // Load INIT
+    if(has_init) {
+	elf = reinterpret_cast<ELF *>(&bi[si->bm.init_off]);
+	if(elf->load_segment(0) < 0) {
+	    db<Setup>(ERR) << "INIT code+data segment was corrupted during SETUP!\n";
+	    panic();
+	}
+    }
+
+    // Load OS
     if(has_system) {
 	elf = reinterpret_cast<ELF *>(&bi[si->bm.system_off]);
 	if(elf->load_segment(0) < 0) {
@@ -408,7 +439,9 @@ int main(char * setup_addr, unsigned int setup_size, char * bi)
     ic.enable();
 
     // SETUP ends here
-    if(has_system) 
+    if(has_init) 
+	call_next(init_entry);
+    else if(has_system) 
 	call_next(sys_entry);
     else 
 	call_next(app_entry);
@@ -608,7 +641,7 @@ void setup_sys_pt(PMM * pmm, int sys_code_size, int sys_data_size)
 		   << ",code_size=" << sys_code_size 
 		   << ",data_size=" << sys_data_size << ")\n";
 
-    // Get the physical address for the System Page Table */
+    // Get the physical address for the System Page Table
     PT_Entry * sys_pt = (PT_Entry *)pmm->sys_pt;
     
     // Clear the System Page Table
@@ -649,9 +682,7 @@ void setup_sys_pt(PMM * pmm, int sys_code_size, int sys_data_size)
     // Set a single page for OS stack (who needs a stack?) 
     sys_pt[MMU::page(MM::SYS_STACK)] = pmm->sys_stack | Flags::SYS;
 
-    for(unsigned int i = 0; i < MMU::PT_ENTRIES; i++)
-	if(sys_pt[i])
-	    db<Setup>(INF) << "SPT[" << i << "]=" << (void *)sys_pt[i] << "\n";
+    db<Setup>(INF) << "SPT=" << *((Page_Table *)sys_pt) << "\n";
 }
 
 //========================================================================
@@ -719,9 +750,7 @@ void setup_sys_pd(PMM * pmm, unsigned int phy_mem_size,
     // Map the system 4M logical address space at the top of the 4Gbytes
     sys_pd[MMU::directory(MM::SYS_CODE)] = pmm->sys_pt | Flags::SYS;
 
-    for(unsigned int i = 0; i < MMU::PT_ENTRIES; i++)
-	if(sys_pd[i])
-	    db<Setup>(INF) << "PD[" << i << "]=" << (void *)sys_pd[i] << "\n";
+    db<Setup>(INF) << "SPD=" << *((Page_Directory *)sys_pd) << "\n";
 }
 
 //========================================================================

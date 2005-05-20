@@ -122,7 +122,7 @@ int main(int argc, char **argv)
     printf("\n  Adding EPOS to => \"%s\".\n\n", argv[1]); 
  
     
-    /* Add the boot strap */
+    /* Add BOOT */
     sprintf(file, "%s/img/%s_boot",epos_home,TARGET.mach);
     printf("  Boot strap \"%s\" ...", file);
     image_size += put_file(fd_out, file);
@@ -136,7 +136,7 @@ int main(int argc, char **argv)
 	while((image_size % MIN_BOOT_LEN != 0))
 	    image_size += pad(fd_out,1);
 	boot_size = image_size;
-	printf(" done. (%d bytes)\n",image_size);
+	printf(" done.\n");
     }
 
     
@@ -157,7 +157,7 @@ int main(int argc, char **argv)
     }
 
     
-    /* Add the setup */
+    /* Add SETUP */
     si->bm.setup_off = image_size - boot_size;
     sprintf(file, "%s/img/%s_setup",epos_home,TARGET.mach);
     printf("  Setup \"%s\" ...", file);
@@ -166,11 +166,19 @@ int main(int argc, char **argv)
 
     
     if (!strcmp("library",TARGET.mode)) {
+	si->bm.init_off = -1;
 	si->bm.system_off = -1;
 	image_size += 0;
     }	  
     else {
-        /* Add the system */
+        /* Add INIT */
+        si->bm.init_off = image_size - boot_size;
+        sprintf(file, "%s/img/%s_init",epos_home,TARGET.mach);
+        printf("  Init \"%s\" ...", file);
+        image_size += put_file(fd_out, file);
+        printf(" done.\n");
+
+        /* Add SYSTEM */
         si->bm.system_off = image_size - boot_size;
         sprintf(file, "%s/img/%s_system",epos_home,TARGET.mach);
         printf("  System \"%s\" ...", file);
@@ -393,6 +401,7 @@ template<typename T> bool add_boot_map (T t, int fd_out, void * _si) {
 	
     if(!put_number(fd_out,(T) si->bm.img_size))     return(false);
     if(!put_number(fd_out,(T) si->bm.setup_off))    return(false);
+    if(!put_number(fd_out,(T) si->bm.init_off))     return(false);
     if(!put_number(fd_out,(T) si->bm.system_off))   return(false);
     if(!put_number(fd_out,(T) si->bm.loader_off))   return(false);
     if(!put_number(fd_out,(T) si->bm.app_off))      return(false);
