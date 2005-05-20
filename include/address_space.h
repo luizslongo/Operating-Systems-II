@@ -9,7 +9,7 @@
 
 __BEGIN_SYS
 
-class Address_Space
+class Address_Space: public MMU::Directory
 {
 private:
     typedef Traits<Address_Space> Traits;
@@ -21,34 +21,49 @@ private:
 
 public:
     Address_Space() {
-	db<Address_Space>(TRC) << "Address_Space(_dir=" << &_dir << ")\n";
+	db<Address_Space>(TRC) << "Address_Space() [Directory::pd=" 
+			       << Directory::pd() << "]\n";
+    }
+    Address_Space(MMU::Page_Directory * pd) : Directory(pd) {
+	db<Address_Space>(TRC) << "Address_Space(pd=" << pd << "\n";
     }
     ~Address_Space() {
-	db<Address_Space>(TRC) << "~Address_Space(_dir=" << &_dir << ")\n";
+	db<Address_Space>(TRC) << "~Address_Space() [Directory::pd=" 
+			       << Directory::pd() << "]\n";
     }
 
+   Log_Addr attach(const Segment & seg) {
+	db<Address_Space>(TRC) << "Address_Space::attach(seg=" << &seg
+			       << ")\n";
 
-    Log_Addr attach(Segment & seg, Log_Addr addr = 0U) {
+	return Directory::attach(seg);
+    }
+    Log_Addr attach(const Segment & seg, Log_Addr addr) {
 	db<Address_Space>(TRC) << "Address_Space::attach(seg=" << &seg
 			       << ",addr=" << addr << ")\n";
 
-	return _dir.attach(seg.chunk(), addr);
+	return Directory::attach(seg, addr);
     }
-    void detach(Segment & seg) {
+    void detach(const Segment & seg) {
 	db<Address_Space>(TRC) << "Address_Space::detach(seg=" << &seg 
 			       << ")\n";
 
-	_dir.detach(seg.chunk());
+	Directory::detach(seg);
+    }
+
+    void activate() {
+	db<Address_Space>(TRC) 
+	    << "Address_Space::activate() [Directory::pd=" 
+	    << Directory::pd() << "]\n";
+
+	Directory::activate();
     }
 
     Phy_Addr physical(Log_Addr address) { 
-	return _dir.physical(address);
+	return Directory::physical(address);
     }
 
     static int init(System_Info * si);
-
-private:
-    Directory _dir;
 };
 
 __END_SYS
