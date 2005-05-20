@@ -20,17 +20,16 @@ private:
     
     // Timer1 Registers
     enum {
-	SFIOR = 0x30,
-	TCCR1A = 0x2f,
-	TCCR1B = 0x2e,
-	TCNT1H = 0x2d,
-	TCNT1L = 0x2c,
-	OCR1AH = 0x2b,
-	OCR1AL = 0x2a,
-	OCR1BH = 0x29,
-	OCR1BL = 0x28,
-	ICR1H = 0x27,
-	ICR1L = 0x26    
+	TCCR1A = Machine::TCCR1A,
+	TCCR1B = Machine::TCCR1B,
+	TCNT1H = Machine::TCNT1H,
+	TCNT1L = Machine::TCNT1L,
+	OCR1AH = Machine::OCR1AH,
+	OCR1AL = Machine::OCR1AL,
+	OCR1BH = Machine::OCR1BH,
+	OCR1BL = Machine::OCR1BL,
+	ICR1H  = Machine::ICR1H,
+	ICR1L  = Machine::ICR1L    
     };
     
     // Timer1 Register Bits
@@ -40,25 +39,25 @@ private:
 	COM1A0 = 0x40,
 	COM1B1 = 0x20,
 	COM1B0 = 0x10,
-	FOC1A = 0x08,
-	FOC1B = 0x04,
-	WGM11 = 0x02,
-	WGM10 = 0x01,
+	FOC1A  = 0x08,
+	FOC1B  = 0x04,
+	WGM11  = 0x02,
+	WGM10  = 0x01,
 	// TCCR1B
-	ICNC1 = 0x80,
-	ICES1 = 0x40,
-	WGM13 = 0x10,
-	WGM12 = 0x08,
-	CS12 = 0x04,
-	CS11 = 0x02,
-	CS10 = 0x01   
+	ICNC1  = 0x80,
+	ICES1  = 0x40,
+	WGM13  = 0x10,
+	WGM12  = 0x08,
+	CS12   = 0x04,
+	CS11   = 0x02,
+	CS10   = 0x01   
     };
 
 public:
     AVR8_TSC(){ /* Actual timer initialization is up to init */ };
     
     static Hertz frequency() { return Traits<AVR8>::CLOCK / 8; };
-    static Time_Stamp time_stamp() {
+    static Time_Stamp time_stamp() {  
 	return tcnt1hl() | _ts << (sizeof(Reg16) * 8);
     };
 
@@ -76,7 +75,7 @@ private:
     static void timer1_handler(void) { _ts++; } 
 
 private:
-    static unsigned long _ts;
+    static volatile unsigned long _ts;
 };
 
 typedef AVR8_TSC TSC;
