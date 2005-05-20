@@ -23,7 +23,7 @@ private:
 public:
 	
     enum {
-    	INT_TIMER1_OVF 	= 9,	
+    	INT_TIMER1_OVF 	= 8,	
 	INT_TIMER 	= 19,	
     };
     
@@ -176,8 +176,10 @@ public:
     AVRMCU(){};
 
     static Handler::Function * int_handler(int i) {
-	if(i < Traits::INT_VEC_SIZE)
+	if((i < Traits::INT_VEC_SIZE) && (interrupt_vector[i]))
 	    return interrupt_vector[i];
+	else
+	    return 0;
     }
     static void int_handler(int i, Handler::Function * h) {
 	if(i < Traits::INT_VEC_SIZE)
