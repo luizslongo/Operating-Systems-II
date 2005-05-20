@@ -65,9 +65,13 @@ public:
 	Directory(Page_Directory * pd) {}
 	~Directory() {}
 	
+	Page_Table * pd() const { return 0; }
+
+	void activate() { }
+
 	Log_Addr attach(const Chunk & chunk) { return chunk.phy_address(); }
 	Log_Addr attach(const Chunk & chunk, Log_Addr addr) {
-	    return (addr == chunk.phy_address())? addr : Log_Addr(0);
+	    return (addr == chunk.phy_address())? addr : Log_Addr(false);
 	}
  	void detach(const Chunk & chunk) {}
  	void detach(const Chunk & chunk, Log_Addr addr) {}
