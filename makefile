@@ -7,7 +7,7 @@ SUBDIRS := cfg tools src app
 all:		linux_imports $(SUBDIRS) img
 
 linux_imports:	FORCE
-		$(TCPP) $(TCPPFLAGS) -dD -P /usr/include/elf.h | \
+		@$(TCPP) $(TCPPFLAGS) -dD -P /usr/include/elf.h | \
 			grep -v __ | $(SED) \
 			-e s/'typedef int int32_t'/'typedef long int32_t'/g \
 			-e s/'typedef unsigned int uint32_t'/'typedef unsigned long uint32_t'/g \
@@ -16,7 +16,7 @@ linux_imports:	FORCE
 			-e s/'typedef int int_fast16_t'/'typedef long int_fast16_t'/g \
 			-e s/'typedef int int_fast32_t'/'typedef long int_fast32_t'/g \
 			-e s/'typedef unsigned int uintptr_t'/'typedef unsigned long uintptr_t'/g >! $(INCLUDE)/utility/elf-linux.h
-		$(TCPP) $(TCPPFLAGS) -dD -P /usr/include/linux/pci_ids.h | \
+		@$(TCPP) $(TCPPFLAGS) -dD -P /usr/include/linux/pci_ids.h | \
 			grep -v __ >! $(INCLUDE)/system/pci_ids-linux.h
 
 $(SUBDIRS):	FORCE
@@ -30,7 +30,7 @@ test:		all
 
 clean:		FORCE
 		(cd src && $(MAKECLEAN))
-		finlsd $(LIB) -maxdepth 1 -type f -exec $(CLEAN) {} \;
+		find $(LIB) -maxdepth 1 -type f -exec $(CLEAN) {} \;
 
 veryclean:
 		make MAKE:="$(MAKECLEAN)" $(SUBDIRS) img
