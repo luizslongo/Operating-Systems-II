@@ -138,12 +138,14 @@ public:
 
     void enable(){
     	// This should be done by the IC!!!
-	AVR8::out8(TIMSK,OCIE0);
+	//IC ic;
+	//ic.enable(IC::TIMER0_COMP);
+	AVR8::out8(TIMSK,AVR8::in8(TIMSK) | OCIE0);
 	
     };
     void disable(){
         // This should be done by the IC!!!
-    	AVR8::out8(TIMSK,0);
+    	AVR8::out8(TIMSK,AVR8::in8(TIMSK) & OCIE0);
     };
 
     static int init(System_Info *si);
