@@ -136,7 +136,7 @@ CPP		= $(COMP_PREFIX)gcc -E
 CPPFLAGS	= $(ARCH_CC_FLAGS) -I$(INCLUDE) $(CONF_FLAGS)
 
 CXX		= $(COMP_PREFIX)g++ -c --no-exceptions --no-rtti --no-use-cxa-atexit
-CXXFLAGS	= $(ARCH_CC_FLAGS) -O2 -nostdinc -Wall -Winline -I$(INCLUDE) $(CONF_FLAGS)
+CXXFLAGS	= $(ARCH_CC_FLAGS) -O2 -nostdinc -Wall -I$(INCLUDE) $(CONF_FLAGS)
 
 LD		= $(COMP_PREFIX)ld
 LDFLAGS		= $(ARCH_LD_FLAGS) -L$(LIB) -Bstatic
