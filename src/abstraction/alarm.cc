@@ -52,14 +52,15 @@ void Alarm::master(const Microseconds & time, Handler::Function * handler)
 void Alarm::delay(const Microseconds & time)
 {
     db<Alarm>(TRC) << "Alarm::delay(t=" << time << ")\n";
-    if(__SYS(Traits)<Thread>::idle_waiting) {
-	Handler_Thread handler(Thread::self());
-	Alarm alarm(time, &handler, 1);
-	Thread::self()->suspend();
-    } else {
-	Tick t = _elapsed + time / period();
-	while(_elapsed < t);
-    }
+    if (time > 0) 
+        if(__SYS(Traits)<Thread>::idle_waiting) {
+	    Handler_Thread handler(Thread::self());
+	    Alarm alarm(time, &handler, 1);
+	    Thread::self()->suspend();
+        } else {
+	    Tick t = _elapsed + time / period();
+	    while(_elapsed < t);
+        }
 }
 
 void Alarm::timer_handler(void)
