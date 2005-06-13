@@ -6,7 +6,7 @@ __BEGIN_SYS
 
 int PC_UART::init(System_Info * si)
 {
-//    db<PC_UART>(TRC) << "PC_UART::init()\n";
+    db<PC_UART>(TRC) << "PC_UART::init()\n";
 
     return 0;
 }

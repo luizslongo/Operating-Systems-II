@@ -9,9 +9,20 @@ int main()
 {
     OStream cout;
 
-    cout << "PC_UART test\n";
+    cout << "PC_UART test\n\n";
 
-//    PC_UART uart;
+    PC_UART uart(115200, 8, 0, 1);
 
+    cout << "Loopback transmission test (conf = 115200 8N1):";
+    uart.loopback(true);
+
+    for(int i = 0; i < 256; i++) {
+	uart.put(i);
+	int c = uart.get();
+	if(c != i)
+	    cout << " failed (" << c << ", should be " << i << ")!\n";
+    }
+    cout << " passed!\n";
+    
     return 0;
 }
