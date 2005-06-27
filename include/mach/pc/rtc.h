@@ -1,4 +1,4 @@
-// EPOS-- PC Real-Time Clock Mediator
+// EPOS-- PC Real-Time Clock Mediator Declarations
 
 #ifndef __pc_rtc_h
 #define __pc_rtc_h
@@ -12,8 +12,8 @@ __BEGIN_SYS
 class PC_RTC: public RTC_Common
 {
 private:
-    typedef Traits<PC_RTC> _Traits;
-//    static const Type_Id _TYPE = Type<PC_RTC>::TYPE;
+    typedef Traits<PC_RTC> Traits;
+    static const Type_Id TYPE = Type<PC_RTC>::TYPE;
 
     // 146818 I/O ports
     enum {
@@ -94,23 +94,38 @@ private:
     };
 
 public:
-    PC_RTC() {}
-    ~PC_RTC() {}
+    PC_RTC() { /* config missing! */ } 
 
-    Seconds read();
-    void write(const Seconds & time);
+    Seconds get();
+    void set(const Seconds & time);
 
-    static int init(System_Info *si);
+    unsigned int hours() { return reg(HOURS); }
+    unsigned int minutes() { return reg(MINUTES); }
+    unsigned int seconds() { return reg(SECONDS); }
+
+    unsigned int day() { return reg(DAY); }
+    unsigned int month() { return reg(MONTH); }
+    unsigned int year() { 
+	unsigned int y = reg(YEAR) + 1900; 
+	if(y < Traits::EPOCH_YEAR)
+	    y += 100;
+	return y;
+    }
+
+    static int init(System_Info * si);
 
 private:
     unsigned char reg(unsigned char a) {
 	IA32::out8(ADDR, a);
-	return IA32::in8(DATA);
+	return bcd2bin(IA32::in8(DATA));
     }
     void reg(unsigned char a, unsigned char v) {
 	IA32::out8(ADDR, a);
-	IA32::out8(DATA, v);
+	IA32::out8(DATA, bin2bcd(v));
     }
+
+    int bcd2bin(int bcd) { return (bcd >> 4) * 10 + (bcd & 0x0f); }
+    int bin2bcd(int bin) { return ((bin / 10) << 4) | (bin % 10); }
 };
 
 typedef PC_RTC RTC;
