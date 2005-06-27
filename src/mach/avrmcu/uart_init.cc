@@ -11,7 +11,7 @@ int AVRMCU_UART::init(System_Info * si)
     
     __ucsrc = 0;
     
-    unsigned long br = (Traits<CPU>::CLOCK / 8 / B9600) - 1;
+    unsigned long br = (Traits<CPU>::CLOCK / 8 / 9600) - 1;
     ubrrh(!URSEL & (br>>8));
     ubrrl(br);       
     
