@@ -8,6 +8,7 @@ MODE_LIBRARY	:= library
 # Supported machines
 MACH_PC		:= pc
 MACH_AVRMCU  	:= avrmcu
+MACH_MICA2  	:= mica2
 
 # Supported hardware architectures
 ARCH_IA32	:= ia32
@@ -45,6 +46,15 @@ $(MACH_AVRMCU)_SYS_CODE_ADDR	:=
 $(MACH_AVRMCU)_SYS_DATA_ADDR	:= 
 $(MACH_AVRMCU)_APP_CODE_ADDR	:= 0x00000000
 $(MACH_AVRMCU)_APP_DATA_ADDR	:= 0x00000000
+$(MACH_MICA2)_MEM_BASE       	:= 0x00000000
+$(MACH_MICA2)_MEM_SIZE       	:= 0x00001000
+$(MACH_MICA2)_BOOT_ADDR       	:= 
+$(MACH_MICA2)_SETUP_ADDR      	:= 
+$(MACH_MICA2)_INIT_ADDR       	:= 
+$(MACH_MICA2)_SYS_CODE_ADDR	:= 
+$(MACH_MICA2)_SYS_DATA_ADDR	:= 
+$(MACH_MICA2)_APP_CODE_ADDR	:= 0x00000000
+$(MACH_MICA2)_APP_DATA_ADDR	:= 0x00000000
 BOOT_ADDR			= $($(MACH)_BOOT_ADDR)
 SETUP_ADDR			= $($(MACH)_SETUP_ADDR)
 INIT_ADDR			= $($(MACH)_INIT_ADDR)
@@ -55,25 +65,30 @@ APP_DATA_ADDR			= $($(MACH)_APP_DATA_ADDR)
 MEM_BASE			= $($(MACH)_MEM_BASE)
 MEM_SIZE			= $($(MACH)_MEM_SIZE)
 
+#Machine specifics
+$(MACH_PC)_CC_FLAGS	:=
+$(MACH_PC)_AS_FLAGS	:=
+$(MACH_PC)_LD_FLAGS	:=
+$(MACH_AVRMCU)_CC_FLAGS	:= -mmcu=atmega16 -Wno-inline
+$(MACH_AVRMCU)_AS_FLAGS	:= -mmcu=atmega16
+$(MACH_AVRMCU)_LD_FLAGS	:= -m avr5
+$(MACH_MICA2)_CC_FLAGS	:= -mmcu=atmega128 -Wno-inline
+$(MACH_MICA2)_AS_FLAGS	:= -mmcu=atmega128
+$(MACH_MICA2)_LD_FLAGS	:= -Tdata 0x800100 -m avr5 -L/usr/local/cross-avr/lib/gcc-lib/avr-elf/3.3.2/avr5
+MACH_CC_FLAGS		:= $($(MACH)_CC_FLAGS)
+MACH_AS_FLAGS		:= $($(MACH)_AS_FLAGS)
+MACH_LD_FLAGS		:= $($(MACH)_LD_FLAGS)
+
 # Architecture specifics
 $(ARCH_IA32)_WORD_SIZE	:= 32
 $(ARCH_IA32)_ENDIANESS	:= little
 $(ARCH_IA32)_CLOCK	:= 2000000000
-$(ARCH_IA32)_CC_FLAGS	:=
-$(ARCH_IA32)_AS_FLAGS	:=
-$(ARCH_IA32)_LD_FLAGS	:=
 $(ARCH_AVR8)_WORD_SIZE	:= 8
 $(ARCH_AVR8)_ENDIANESS	:= little
 $(ARCH_AVR8)_CLOCK	:= 4000000
-$(ARCH_AVR8)_CC_FLAGS	:= -mmcu=atmega16 -Wno-inline
-$(ARCH_AVR8)_AS_FLAGS	:= -mmcu=atmega16
-$(ARCH_AVR8)_LD_FLAGS	:= -m avr5
 ARCH_WORD_SIZE		:= $($(ARCH)_WORD_SIZE)
 ARCH_ENDIANESS		:= $($(ARCH)_ENDIANESS)
 ARCH_CLOCK		:= $($(ARCH)_CLOCK)
-ARCH_CC_FLAGS		:= $($(ARCH)_CC_FLAGS)
-ARCH_AS_FLAGS		:= $($(ARCH)_AS_FLAGS)
-ARCH_LD_FLAGS		:= $($(ARCH)_LD_FLAGS)
 CONF_FLAGS		:= -D __$(ARCH) -D __$(MACH)
 
 # Paths, prefixes and suffixes
@@ -115,10 +130,10 @@ TLD		= gcc
 TLDFLAGS	= 
 
 # Tools and flags to compile applications
-ACC		= eposcc $(ARCH_CC_FLAGS) -c -ansi -O2 $(CONF_FLAGS)
-ACXX		= eposcc $(ARCH_CC_FLAGS) -c -ansi -O2 $(CONF_FLAGS)
-AF77		= eposcc $(ARCH_CC_FLAGS) -c -ansi -O2 $(CONF_FLAGS)
-ALD		= eposcc --$(MODE) $(ARCH_LD_FLAGS)
+ACC		= eposcc $(MACH_CC_FLAGS) -c -ansi -O2 $(CONF_FLAGS)
+ACXX		= eposcc $(MACH_CC_FLAGS) -c -ansi -O2 $(CONF_FLAGS)
+AF77		= eposcc $(MACH_CC_FLAGS) -c -ansi -O2 $(CONF_FLAGS)
+ALD		= eposcc --$(MODE) $(MACH_LD_FLAGS)
 ALDFLAGS	= 
 
 # Tools and flags to compile the system
@@ -126,20 +141,20 @@ AR		= $(COMP_PREFIX)ar
 ARFLAGS		= rcs
 
 AS		= $(COMP_PREFIX)as
-ASFLAGS		= $(ARCH_AS_FLAGS)
+ASFLAGS		= $(MACH_AS_FLAGS)
 
 CC		= $(COMP_PREFIX)gcc -ansi -c
-CCFLAGS		= $(ARCH_CC_FLAGS) -O2 -nostdinc -Wall -I$(INCLUDE) $(CONF_FLAGS)
+CCFLAGS		= $(MACH_CC_FLAGS) -O2 -nostdinc -Wall -I$(INCLUDE) $(CONF_FLAGS)
 CCLIB		= `$(CC) -print-file-name=`
 
 CPP		= $(COMP_PREFIX)gcc -E
-CPPFLAGS	= $(ARCH_CC_FLAGS) -I$(INCLUDE) $(CONF_FLAGS)
+CPPFLAGS	= $(MACH_CC_FLAGS) -I$(INCLUDE) $(CONF_FLAGS)
 
 CXX		= $(COMP_PREFIX)g++ -c --no-exceptions --no-rtti --no-use-cxa-atexit
-CXXFLAGS	= $(ARCH_CC_FLAGS) -O2 -nostdinc -Wall -I$(INCLUDE) $(CONF_FLAGS)
+CXXFLAGS	= $(MACH_CC_FLAGS) -O2 -nostdinc -Wall -I$(INCLUDE) $(CONF_FLAGS)
 
 LD		= $(COMP_PREFIX)ld
-LDFLAGS		= $(ARCH_LD_FLAGS) -L$(LIB) -Bstatic
+LDFLAGS		= $(MACH_LD_FLAGS) -L$(LIB) -Bstatic
 
 OBJCPY          = $(COMP_PREFIX)objcopy
 OBJCPYFLAGS     =
