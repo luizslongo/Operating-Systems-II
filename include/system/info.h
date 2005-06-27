@@ -16,20 +16,25 @@ public:
     // The information we have at boot time (built up by MKBI)
     struct Boot_Map
     {
-	Phy_Addr mem_base;         // Memory base 
-	unsigned int mem_size;     // Memory size (in bytes)
-	int cpu_type;              // Processor type 
-	int cpu_clock;             // Processor clock frequency in Hz 
-	int n_threads;             // Max number of threads 
-	int n_tasks;               // Max number of tasks 
-	unsigned short host_id;    // The local host id (-1 => RARP) 
-	unsigned short n_nodes;    // Number of nodes in SAN 
-	int img_size;              // Boot image size in bytes 
-	int setup_off;             // SETUP offset in the boot image 
-	int init_off;              // INIT offset in the boot image 
-	int system_off;            // OS offset in the boot image 
-	int loader_off;            // LOADER 	offset in the boot image 
-	int app_off;               // APPs offset in the boot image 
+	Phy_Addr mem_base;       // Memory base 
+	unsigned int mem_size;   // Memory size (in bytes)
+// 	struct {
+// 	    unsigned int multiprocessor:1;
+// 	    unsigned int multitasking:1;
+// 	    unsigned int multithreading:1;
+// 	} setup_mode;            // Setup mode
+// 	int cpu_type;            // Processor type 
+// 	int cpu_clock;           // Processor clock frequency in Hz 
+// 	int n_threads;           // Max number of threads 
+// 	int n_tasks;             // Max number of tasks 
+	short node_id;           // Local node id in SAN (-1 => RARP) 
+	short n_nodes;           // Number of nodes in SAN (-1 => dynamic) 
+	unsigned int img_size;   // Boot image size (in bytes)
+	int setup_off;           // Image offsets (-1 => not present) 
+	int init_off; 
+	int system_off; 
+	int loader_off; 
+	int app_off;
     };
 
     // Physical Memory Map (built up by SETUP)
@@ -37,6 +42,8 @@ public:
     {
 	Phy_Addr app_lo;        // Application memory's lowest address
 	Phy_Addr app_hi;        // Application memory's highest address
+ 	Phy_Addr img;           // Extra applications in the Boot Image
+ 	unsigned img_size;      // Extra applications size
 	Phy_Addr int_vec;       // Interrupt Vector
 	Phy_Addr sys_pt;        // System Page Table
 	Phy_Addr sys_pd;        // System Page Directory
@@ -56,25 +63,25 @@ public:
     // Logical Memory Map (built up by MKBI and SETUP)
     struct Logical_Memory_Map
     {
-	Log_Addr base;        // Lowest valid logical address
-	Log_Addr top;         // Highest valid logical address
-	Log_Addr app_lo;      // Application memory lowest address
-	Log_Addr app_entry;   // First application's entry point
-	Log_Addr app_code;    // First application's code base address
-	Log_Addr app_data;    // First application's data base address
-	Log_Addr app_hi;      // Application memory highest address
-	Log_Addr phy_mem;     // Whole physical memory (contiguous)
-	Log_Addr io_mem;      // IO address space 
-	Log_Addr int_vec;     // Interrupt Vector
-	Log_Addr sys_pt;      // System Page Table
-	Log_Addr sys_pd;      // System Page Directory
-	Log_Addr sys_info;    // System Info
-	Log_Addr sys_code;    // OS Code Segment
-	Log_Addr sys_data;    // OS Data Segment
-	Log_Addr sys_stack;   // OS Stack Segment
-	Log_Addr mach1;       // Machine specific entries
-	Log_Addr mach2;
-	Log_Addr mach3;
+// 	Log_Addr base;            // Lowest valid logical address
+// 	Log_Addr top;             // Highest valid logical address
+// 	Log_Addr app_lo;          // Application memory lowest address
+	Log_Addr app_entry;       // First application's entry point
+// 	Log_Addr app_code;        // First application's code segment address
+// 	Log_Addr app_data;        // First application's data segment address
+	Log_Addr app_hi;          // Application memory highest address
+// 	Log_Addr phy_mem;         // Whole physical memory (contiguous)
+// 	Log_Addr io_mem;          // IO address space 
+// 	Log_Addr int_vec;         // Interrupt Vector
+// 	Log_Addr sys_pt;          // System Page Table
+// 	Log_Addr sys_pd;          // System Page Directory
+// 	Log_Addr sys_info;        // System Info
+// 	Log_Addr sys_code;        // OS Code Segment
+// 	Log_Addr sys_data;        // OS Data Segment
+// 	Log_Addr sys_stack;       // OS Stack Segment
+// 	Log_Addr mach1;           // Machine specific entries
+// 	Log_Addr mach2;
+// 	Log_Addr mach3;
     };
 
     // I/O Device mapping information
