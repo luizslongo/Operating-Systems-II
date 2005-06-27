@@ -24,15 +24,6 @@ rcx_install:	rcx_boot
 		$(OBJCPY) -O binary $< $<.img
 
 
-#KHOMP
-khomp_boot:	khomp_boot.o
-		$(LD) $(LDFLAGS) -L$(CCLIB) -N -Ttext $(BOOT_ADDR) -e _start \
-		-o $@ $< -l$(LUTIL) -l$(LSYS) -l$(LINIT) -lc -lgcc  
-
-khomp_install:	khomp_boot
-		$(OBJCPY) -O binary $< $<.img
-
-
 #AVRMCU
 avrmcu_boot: FORCE
 		$(TOUCH) $(MACH)_boot
@@ -55,6 +46,6 @@ install:        $(MACH)_install
 test:
 
 clean:
-		$(CLEAN) *.s *.o $(MACH)_boot *.tmp
+		$(CLEAN) *.s *.o *_boot *.tmp
 
 FORCE:
