@@ -47,6 +47,10 @@ typedef Dummy ADC;
 #define MACH avrmcu
 typedef AVRMCU Machine;
 typedef Dummy PCI;
+#elif defined (__mica2)
+#define MACH mica2
+typedef Mica2 Machine;
+typedef Dummy PCI;
 #else
 #error Machine not selected!
 #endif
