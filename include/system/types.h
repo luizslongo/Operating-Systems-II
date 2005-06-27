@@ -75,6 +75,8 @@ class Clock;
 class Alarm;
 class Chronometer;
 
+class Task;
+
 
 // System Components IDs
 typedef unsigned short Type_Id;

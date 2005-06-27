@@ -19,6 +19,7 @@
 #include <clock.h>
 #include <chronometer.h>
 #include <thread.h>
+#include <task.h>
 
 __BEGIN_SYS
 

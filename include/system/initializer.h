@@ -37,6 +37,7 @@ public:
     &Alarm::init, \
     &Clock::init, \
     &Chronometer::init, \
+    &Task::init, \
     __LAST_INIT \
 } 
 
