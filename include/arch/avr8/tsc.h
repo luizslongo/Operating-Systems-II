@@ -5,7 +5,8 @@
 
 #include <tsc.h>
 #include <cpu.h>
-#include __HEADER_MACH(avrmcu)
+#include <machine.h>
+#include <ic.h>
 
 __BEGIN_SYS
 
@@ -20,16 +21,16 @@ private:
     
     // Timer1 Registers
     enum {
-	TCCR1A = Machine::TCCR1A,
-	TCCR1B = Machine::TCCR1B,
-	TCNT1H = Machine::TCNT1H,
-	TCNT1L = Machine::TCNT1L,
-	OCR1AH = Machine::OCR1AH,
-	OCR1AL = Machine::OCR1AL,
-	OCR1BH = Machine::OCR1BH,
-	OCR1BL = Machine::OCR1BL,
-	ICR1H  = Machine::ICR1H,
-	ICR1L  = Machine::ICR1L    
+	TCCR1A = Machine::IO::TCCR1A,
+	TCCR1B = Machine::IO::TCCR1B,
+	TCNT1H = Machine::IO::TCNT1H,
+	TCNT1L = Machine::IO::TCNT1L,
+	OCR1AH = Machine::IO::OCR1AH,
+	OCR1AL = Machine::IO::OCR1AL,
+	OCR1BH = Machine::IO::OCR1BH,
+	OCR1BL = Machine::IO::OCR1BL,
+	ICR1H  = Machine::IO::ICR1H,
+	ICR1L  = Machine::IO::ICR1L    
     };
     
     // Timer1 Register Bits
