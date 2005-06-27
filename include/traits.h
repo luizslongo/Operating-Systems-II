@@ -52,7 +52,8 @@ template <> struct Traits<IA32>: public Traits<void>
 
 template <> struct Traits<AVR8>: public Traits<void>
 {
-    static const unsigned long long CLOCK = 4000000;
+    static const unsigned long long CLOCK = 7372800; //Mica2
+  //    static const unsigned long long CLOCK = 4000000; //ATMega16
 };
 
 template <> struct Traits<IA32_MMU>: public Traits<void>
@@ -74,6 +75,14 @@ template <> struct Traits<PC_RTC>: public Traits<void>
 };
 
 template <> struct Traits<AVRMCU_RTC>: public Traits<void>
+{
+    static const unsigned int EPOCH_DAY = 1;
+    static const unsigned int EPOCH_MONTH = 1;
+    static const unsigned int EPOCH_YEAR = 1970;
+    static const unsigned int EPOCH_DAYS = 719499;
+};
+
+template <> struct Traits<Mica2_RTC>: public Traits<void>
 {
     static const unsigned int EPOCH_DAY = 1;
     static const unsigned int EPOCH_MONTH = 1;
@@ -127,11 +136,38 @@ template <> struct Traits<AVRMCU>: public Traits<void>
     static const unsigned int APPLICATION_HEAP_SIZE = 128;
 };
 
+template <> struct Traits<Mica2>: public Traits<void>
+{
+    static const unsigned int BOOT_IMAGE_ADDR = 0x0000;
+    static const int INT_BASE = 0x00; 
+    static const int INT_VEC_SIZE = 35; 
+
+    static const unsigned int SYSTEM_STACK_SIZE = 64;
+    static const unsigned int SYSTEM_HEAP_SIZE = 64;
+    static const unsigned int APPLICATION_STACK_SIZE = 64;
+    static const unsigned int APPLICATION_HEAP_SIZE = 512;
+};
+
 template <> struct Traits<AVRMCU_Timer>: public Traits<void>
 {
     static const int FREQUENCY = 40; // Hz
 };
 
+template <> struct Traits<Mica2_Timer>: public Traits<void>
+{
+    // Should be between 28 and 7200 Hz
+    static const int FREQUENCY = 720; // Hz
+    
+};
+
+template <> struct Traits<PC_UART>: public Traits<void>
+{
+    static const int CLOCK = 1843200;
+    static const unsigned short COM1 = 0x3f8;
+    static const unsigned short COM2 = 0x2f8;
+    static const unsigned short COM3 = 0x3e8;
+    static const unsigned short COM4 = 0x2e8;
+};
 
 // Abstractions
 template <> struct Traits<Alarm>: public Traits<void>
