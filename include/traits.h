@@ -116,6 +116,15 @@ template <> struct Traits<PC_Timer>: public Traits<void>
     static const int FREQUENCY = 1000; // Hz
 };
 
+template <> struct Traits<PC_UART>: public Traits<void>
+{
+    static const unsigned int CLOCK = 1843200; // 1.8432 MHz
+    static const unsigned int COM1 = 0x3f8; // to 0x3ff, IRQ4
+    static const unsigned int COM2 = 0x2f8; // to 0x2ff, IRQ3
+    static const unsigned int COM3 = 0x3e8; // to 0x3ef, no IRQ
+    static const unsigned int COM4 = 0x2e8; // to 0x2ef, no IRQ
+};
+
 template <> struct Traits<PC_Display>: public Traits<void>
 {
     static const int COLUMNS = 80;
