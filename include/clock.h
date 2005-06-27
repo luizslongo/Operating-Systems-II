@@ -28,7 +28,7 @@ public:
 
     Microseconds resolution() { return 1000000; }
 
-    Seconds now() { RTC rtc; return rtc.read(); }
+    Seconds now() { RTC rtc; return rtc.get(); }
 
     static int init(System_Info * si);
 };
