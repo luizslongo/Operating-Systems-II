@@ -39,6 +39,14 @@ avrmcu_setup:	$(MACH)_setup.o
 avrmcu_install: $(MACH)_setup
 		$(TOUCH) $(MACH)_setup.img
 
+mica2_setup:	$(MACH)_setup.o
+		$(LD) $(LDFLAGS) -L$(CCLIB) -N -Ttext $(SETUP_ADDR) \
+		-e $(SETUP_ADDR) -o $@ $< -l$(LUTIL) -l$(LSYS) \
+		-l$(LINIT) -lgcc -lc -lgcc
+
+mica2_install: 	$(MACH)_setup
+		$(TOUCH) $(MACH)_setup.img
+
 
 install:        $(MACH)_install
 		$(INSTALL) $(MACH)_setup.img $(IMG)/$(MACH)_setup

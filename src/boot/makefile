@@ -40,6 +40,13 @@ avrmcu_boot: FORCE
 avrmcu_install: $(MACH)_boot
 		$(TOUCH) $(MACH)_boot.img
 
+#Mica2
+mica2_boot: FORCE
+		$(TOUCH) $(MACH)_boot
+
+mica2_install: $(MACH)_boot
+		$(TOUCH) $(MACH)_boot.img
+
 
 install:        $(MACH)_install
 		$(INSTALL) $(MACH)_boot.img $(IMG)/$(MACH)_boot
