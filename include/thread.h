@@ -17,13 +17,12 @@ protected:
     typedef Traits<Thread> Traits;
     static const Type_Id TYPE = Type<Thread>::TYPE;
 
+    typedef CPU::Log_Addr Log_Addr;
+    typedef CPU::Context Context;
     typedef Ordered_Queue<Thread, Traits::smp> Queue;
 
     static const unsigned int STACK_SIZE = 
 	__SYS(Traits)<Machine>::APPLICATION_STACK_SIZE;
-
-    typedef CPU::Log_Addr Log_Addr;
-    typedef CPU::Context Context;
 
 public:
     typedef short State;
