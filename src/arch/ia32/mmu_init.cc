@@ -20,8 +20,8 @@ int IA32_MMU::init(System_Info * si)
     db<IA32_MMU>(INF) << "IA32_MMU:: free chunk = {base=" 
 		      << (void *) si->pmm.free << ",size="
 		      << (void *) si->pmm.free_size << "}\n";
-    db<IA32_MMU>(INF) << "IA32_MMU:: physical memory logical address = "
-		      << (void *) si->lmm.phy_mem << "\n";
+//     db<IA32_MMU>(INF) << "IA32_MMU:: physical memory logical address = "
+// 		      << (void *) si->lmm.phy_mem << "\n";
 
 //     db<IA32_MMU>(INF) << "IA32_MMU::free => {h=" << (void *)_free.head()
 // 		      << ",t=" << (void *)_free.head()
