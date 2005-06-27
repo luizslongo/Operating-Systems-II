@@ -1,10 +1,10 @@
-// EPOS-- PC RTC Mediator
+// EPOS-- PC RTC Mediator Implementation
 
 #include <mach/pc/rtc.h>
 
 __BEGIN_SYS
 
-PC_RTC::Seconds PC_RTC::read()
+PC_RTC::Seconds PC_RTC::get()
 {
     unsigned int Y, M, D, h, m, s;
 
@@ -16,19 +16,19 @@ PC_RTC::Seconds PC_RTC::read()
 	M = reg(MONTH);
 	Y = reg(YEAR);
     } while(s != reg(SECONDS)); // RTC update in between? read again!
-    if ((Y += 1900) < _Traits::EPOCH_YEAR)
+    if ((Y += 1900) < Traits::EPOCH_YEAR)
 	Y += 100;
 
-    return date2offset(_Traits::EPOCH_DAYS, Y, M, D, h, m, s);
+    return date2offset(Traits::EPOCH_DAYS, Y, M, D, h, m, s);
 }
 
-void PC_RTC::write(const PC_RTC::Seconds & time)
+void PC_RTC::set(const PC_RTC::Seconds & time)
 {
     db<PC_RTC>(TRC) << "PC_RTC::write(time= " << time << ")\n";
 
     unsigned int Y, M, D, h, m, s;
 
-    offset2date(time, _Traits::EPOCH_DAYS, &Y, &M, &D, &h, &m, &s);
+    offset2date(time, Traits::EPOCH_DAYS, &Y, &M, &D, &h, &m, &s);
 
     reg(YEAR, Y);
     reg(MONTH, M);
