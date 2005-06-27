@@ -174,29 +174,23 @@ public:
         return value;  
     }
     
+    // We cannot use inline ASM anymore, as some of the extended cores 
+    // IO registers cannot be accessed with in/out instructions.
+    // The compiler is smart enough to generate in/out or ld/st accordingly.
     static Reg8 in8(const unsigned char port) {
-        Reg8 value;
-        ASMV("in	%0,%1		\n"
-	     : "=r" (value)
-	     : "I"  (port));
-        return value;
+	return (*(volatile unsigned char *)(port + 0x20));
     }
     static Reg16 in16(const unsigned char port) {
-        Reg16 value;
-        ASMV("in	%A0,%1		\n" // Must read low byte first
-             "in	%B0,(%1)+1	\n" 
-             : "=r" (value)
-             : "I"   (port));
-        return value;
+        Reg16 value = (*(volatile unsigned char *)(port + 0x20));
+	value |= ((Reg16)(*(volatile unsigned char *)(port + 1 + 0x20)))<<8;
+	return value; 
     }  
     static void out8(unsigned char port, Reg8 value) {
         (*(volatile unsigned char *)(port + 0x20)) = value;
     }
     static void out16(const unsigned char port, Reg16 value) {
-        ASMV("out	(%0)+1,%B1	\n" // Must write high byte first
-             "out	%0,%A1		\n"
-             : 
-             : "I" (port), "r" (value));
+	(*(volatile unsigned char *)(port + 1 + 0x20)) = (Reg8)(value>>8);  // Must write high byte first
+	(*(volatile unsigned char *)(port + 0x20)) = (Reg8)value;
     }  
   
     static int init(System_Info * si);
