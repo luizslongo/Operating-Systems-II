@@ -14,10 +14,10 @@ OStream cout;
 
 int main() {
     unsigned int count = 0;
-    CPU::out8(Machine::DDRB,0xff);
+    CPU::out8(Machine::IO::DDRB,0xff);
 
     while(1){
-        CPU::out8(Machine::PORTB,~count++);
+      CPU::out8(Machine::IO::PORTB,~count++);
 	for(unsigned int i = 0; i < 0xffff; i++);
     }
 

@@ -67,7 +67,7 @@ public:
 
     AVRMCU_UART() { /* Default Initialization is up to init */ }
 
-    AVRMCU_UART(Baud_Rate br, Data_Bits db, Parity p, Stop_Bits sb)  { 
+    AVRMCU_UART(unsigned int br, unsigned int db, unsigned int p, unsigned int sb)  { 
         __ucsrc = 0;
         set_baud_rate(br);
         set_data_bits(db);
@@ -80,34 +80,33 @@ public:
 	stop();
     }
     
-    int set_baud_rate(Baud_Rate baudrate){
+    int set_baud_rate(unsigned int baudrate){
         unsigned long br = (Traits<CPU>::CLOCK / 8 / baudrate) - 1;
 	ubrrh(!URSEL & (br>>8));
 	ubrrl(br);     
         return 1;
     }
 
-    int set_data_bits(Data_Bits databits){
-        if (databits & D5)	__ucsrc &= (!UCSZ1 & !UCSZ0);
-        if (databits & D6)	__ucsrc =  ((__ucsrc & !UCSZ1) | UCSZ0);
-        if (databits & D7)	__ucsrc =  ((__ucsrc & !UCSZ0) | UCSZ1);
-        if (databits & D8)	__ucsrc |= (UCSZ1 | UCSZ0);
+    int set_data_bits(unsigned int databits){
+        if (databits & 5)	__ucsrc &= (!UCSZ1 & !UCSZ0);
+        if (databits & 6)	__ucsrc =  ((__ucsrc & !UCSZ1) | UCSZ0);
+        if (databits & 7)	__ucsrc =  ((__ucsrc & !UCSZ0) | UCSZ1);
+        if (databits & 8)	__ucsrc |= (UCSZ1 | UCSZ0);
 	ucsrc(URSEL|__ucsrc);
         return 1;    
     }
 
-    int set_stop_bits(Stop_Bits stopbits){
-        if (stopbits & ONE_HALF_STOP_BITS)	return -1; 	// unsupported
-        if (stopbits & ONE_STOP_BIT)		__ucsrc &= !USBS;
-        if (stopbits & TWO_STPO_BITS)		__ucsrc |= USBS;
+    int set_stop_bits(unsigned int stopbits){
+        if (stopbits & 1)		__ucsrc &= !USBS;
+        if (stopbits & 2)		__ucsrc |= USBS;
         ucsrc(URSEL|__ucsrc);	
         return 1;
     }
 
-    int set_parity(Parity parity){
-        if (parity & NO_PARITY)		__ucsrc &= (!UPM1 & !UPM0);
-        if (parity & EVEN_PARITY) 	__ucsrc =  ((__ucsrc & !UPM0) | UPM1);
-        if (parity & ODD_PARITY)    	__ucsrc |= (UPM1 | UPM0);
+    int set_parity(unsigned int parity){
+        if (parity & 0)		__ucsrc &= (!UPM1 & !UPM0);
+        if (parity & 1) 	__ucsrc =  ((__ucsrc & !UPM0) | UPM1);
+        if (parity & 2)    	__ucsrc |= (UPM1 | UPM0);
         ucsrc(URSEL|__ucsrc);
         return 1;
     }

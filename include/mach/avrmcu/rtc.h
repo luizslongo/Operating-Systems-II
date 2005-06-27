@@ -17,7 +17,7 @@ private:
 public:
     AVRMCU_RTC() {}
 
-    Seconds read();
+    Seconds get();
     void write(const Seconds & time);
 
     static int init(System_Info * si);
