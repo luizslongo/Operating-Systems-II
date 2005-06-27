@@ -77,7 +77,7 @@ public:
 
     }
 
-    Mica2_UART(Baud_Rate br, Data_Bits db, Parity p, Stop_Bits sb/*,int unit = 0*/) /*: _unit(unit)*/ {
+    Mica2_UART(unsigned int br, unsigned int db, unsigned int p,unsigned int sb/*,int unit = 0*/) /*: _unit(unit)*/ {
         set_baud_rate(br);
         set_data_bits(db);
         set_parity(p);
@@ -90,52 +90,61 @@ public:
     }
     
    
-    int set_baud_rate(Baud_Rate baudrate){
+    int set_baud_rate(unsigned int baudrate){
 	ubrrhl((BASE_CLOCK / baudrate) - 1);
         return 1;
     }
 
-    int set_data_bits(Data_Bits databits){
+    int set_data_bits(unsigned int databits){
 	switch (databits) {
-	case D5: ucsrc(ucsrc() & ~UCSZ1 & ~UCSZ0); break;
-	case D6: ucsrc(ucsrc() & ~UCSZ1 |  UCSZ0); break;
-	case D7: ucsrc(ucsrc() &  UCSZ1 | ~UCSZ0); break;
-	case D8: ucsrc(ucsrc() |  UCSZ1 |  UCSZ0); break;
+	case 5: ucsrc(ucsrc() & ~UCSZ1 & ~UCSZ0); break;
+	case 6: ucsrc(ucsrc() & ~UCSZ1 |  UCSZ0); break;
+	case 7: ucsrc(ucsrc() &  UCSZ1 | ~UCSZ0); break;
+	case 8: ucsrc(ucsrc() |  UCSZ1 |  UCSZ0); break;
 	}
         return 1;    
     }
 
-    int set_stop_bits(Stop_Bits stopbits){
+    int set_stop_bits(unsigned int stopbits){
 	switch(stopbits) {
-	case ONE_HALF_STOP_BITS: return -1;
-	case ONE_STOP_BIT:       ucsrc(ucsrc() & ~USBS); break;
-	case TWO_STPO_BITS:      ucsrc(ucsrc() |  USBS); break;
+	case 1:      ucsrc(ucsrc() & ~USBS); break;
+	case 2:      ucsrc(ucsrc() |  USBS); break;
 	}
 	return 1;
     }
 
-    int set_parity(Parity parity){
+    int set_parity(unsigned int parity){
 	switch(parity){
-	case NO_PARITY:   ucsrc(ucsrc() & ~UPM1 & ~UPM0);
-	case EVEN_PARITY: ucsrc(ucsrc() |  UPM1 & ~UPM0);
-	case ODD_PARITY:  ucsrc(ucsrc() |  UPM1 |  UPM0);
+	case 0: ucsrc(ucsrc() & ~UPM1 & ~UPM0);
+	case 1: ucsrc(ucsrc() |  UPM1 & ~UPM0);
+	case 2: ucsrc(ucsrc() |  UPM1 |  UPM0);
 	}
         return 1;
     }
 
-    int receive_byte(unsigned char *rec_char){
-        if (data_ready() != 1)
-	    return -1;
-        *rec_char = udr();
-        return 1;
+    char get() {
+        while(data_ready() != 1);
+	return udr();
     }
 
-    int send_byte(unsigned char send_char){
-        if (line_empty() != 1) 
-	    return -1;
-	udr(send_char);
-        return 1;
+    void put(char c) {
+        while(line_empty() != 1);
+	udr(c);
     }
+
+/*     int receive_byte(unsigned char *rec_char){ */
+/*         if (data_ready() != 1) */
+/* 	    return -1; */
+/*         *rec_char = udr(); */
+/*         return 1; */
+/*     } */
+
+/*     int send_byte(unsigned char send_char){ */
+/*         if (line_empty() != 1)  */
+/* 	    return -1; */
+/* 	udr(send_char); */
+/*         return 1; */
+/*     } */
 
     int line_empty(){
         if (!(ucsra() & UDRE)) return -1;
