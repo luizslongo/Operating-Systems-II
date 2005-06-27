@@ -23,6 +23,19 @@ int main()
 	    cout << " failed (" << c << ", should be " << i << ")!\n";
     }
     cout << " passed!\n";
+
+    cout << "Link transmission test (conf = 9200 8N1):";
+    uart.config(9600, 8, 0, 1);
+    uart.loopback(false);
+
+    for(int i = 0; i < 256; i++) {
+	uart.put(i);
+        for(int j = 0; j < 0xffffff; j++);
+	int c = uart.get();
+	if(c != i)
+	    cout << " failed (" << c << ", should be " << i << ")!\n";
+    }
+    cout << " passed!\n";
     
     return 0;
 }

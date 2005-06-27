@@ -1,4 +1,4 @@
-// EPOS-- PC UART Mediator
+// EPOS-- PC UART Mediator Implementation
 
 #include <mach/pc/uart.h>
 
