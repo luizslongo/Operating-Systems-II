@@ -244,13 +244,11 @@ int main(char * setup_addr, unsigned int setup_size, char * bi)
     kout << "Setting up this machine as follows: \n";
     kout << "  Processor: IA32\n";
     kout << "  Memory:    " << si->bm.mem_size/1024 << " Kbytes\n";
-    kout << "  Host Id:   ";
-    if(si->bm.host_id != (unsigned short) -1)
-	kout << si->bm.host_id << "\n";
+    kout << "  Node Id:   ";
+    if(si->bm.node_id != -1)
+	kout << si->bm.node_id << "(" << si->bm.n_nodes << ")\n";
     else
 	kout << "will get from the network!\n";
-    kout << "  Tasks:     " << si->bm.n_tasks << " (max)\n";
-    kout << "  Threads:   " << si->bm.n_threads << " (max)\n";
     kout << "  Setup:     " << setup_size << " bytes\n";
     kout << "  Init:      " << init_size << " bytes\n";
     kout << "  OS code:   " << sys_code_size << " bytes";
@@ -324,6 +322,10 @@ int main(char * setup_addr, unsigned int setup_size, char * bi)
     si->pmm.mach3 = MMU::pages(app_data - app_code) - app_code_size;
     si->pmm.free = app_data + app_data_size * sizeof(Page);
     si->pmm.free_size = MMU::pages(si->pmm.app_hi - app_data) - app_data_size;
+    if(si->bm.app_off != -1) {
+	si->pmm.img = Phy_Addr(&bi[si->bm.app_off]); 
+	si->pmm.img_size = si->bm.img_size - si->bm.app_off;
+    }
 
     // Test if we didn't overlap SETUP and the boot image
     if(si->mem_free * sizeof(Page) <= (unsigned int)setup_addr + setup_size) {
@@ -425,9 +427,11 @@ int main(char * setup_addr, unsigned int setup_size, char * bi)
            panic();
         }
 
-    // Setup System Info 
+    // Copy System_Info 
     si = reinterpret_cast<System_Info *>(MM::SYS_INFO);
     copy_sys_info(reinterpret_cast<System_Info *>(bi), si);
+
+    // Setup Logical_Memory_Map 
     setup_lmm(&si->lmm, app_entry, si->pmm.app_hi);
 
     // Startup the FPU 
@@ -763,38 +767,39 @@ void setup_sys_pd(PMM * pmm, unsigned int phy_mem_size,
 //------------------------------------------------------------------------
 void setup_lmm(LMM * lmm, Log_Addr app_entry, Log_Addr app_hi)
 {
-    lmm->int_vec = MM::INT_VEC;
-    lmm->sys_pt = MM::SYS_PT;
-    lmm->sys_pd = MM::SYS_PD;
-    lmm->sys_info = MM::SYS_INFO;
-    lmm->phy_mem = MM::PHY_MEM;
-    lmm->io_mem = MM::IO_MEM;
-    lmm->sys_code = MM::SYS_CODE;
-    lmm->sys_data = MM::SYS_DATA;
-    lmm->sys_stack = MM::SYS_STACK;
-    lmm->app_lo = MM::APP_LO;
+//     lmm->int_vec = MM::INT_VEC;
+//     lmm->sys_pt = MM::SYS_PT;
+//     lmm->sys_pd = MM::SYS_PD;
+//     lmm->sys_info = MM::SYS_INFO;
+//     lmm->phy_mem = MM::PHY_MEM;
+//     lmm->io_mem = MM::IO_MEM;
+//     lmm->sys_code = MM::SYS_CODE;
+//     lmm->sys_data = MM::SYS_DATA;
+//     lmm->sys_stack = MM::SYS_STACK;
+//     lmm->app_lo = MM::APP_LO;
     lmm->app_entry = app_entry;
-    lmm->app_code = MM::APP_CODE;
-    lmm->app_data = MM::APP_DATA;
+//     lmm->app_code = MM::APP_CODE;
+//     lmm->app_data = MM::APP_DATA;
     lmm->app_hi = app_hi;
-    lmm->mach1 = MM::MACH1;
-    lmm->mach2 = MM::MACH2;
-    lmm->mach3 = MM::MACH2;
+//     lmm->mach1 = MM::MACH1;
+//     lmm->mach2 = MM::MACH2;
+//     lmm->mach3 = MM::MACH2;
 
-    db<Setup>(INF) << "lmm={int=" << (void *)lmm->int_vec
-		   << ",gdt="  << (void *)lmm->mach1 
-		   << ",pt="   << (void *)lmm->sys_pt 
-		   << ",pd="   << (void *)lmm->sys_pd
-		   << ",info=" << (void *)lmm->sys_info 
-		   << ",mem="  << (void *)lmm->phy_mem 
-		   << ",io="   << (void *)lmm->io_mem 
-		   << ",cod="  << (void *)lmm->sys_code
-		   << ",dat="  << (void *)lmm->sys_data
-		   << ",stk="  << (void *)lmm->sys_stack 
-		   << ",apl="  << (void *)lmm->app_lo 
+    db<Setup>(INF) << "lmm={"
+// 		   << "int=" << (void *)lmm->int_vec
+// 		   << ",gdt="  << (void *)lmm->mach1 
+// 		   << ",pt="   << (void *)lmm->sys_pt 
+// 		   << ",pd="   << (void *)lmm->sys_pd
+// 		   << ",info=" << (void *)lmm->sys_info 
+// 		   << ",mem="  << (void *)lmm->phy_mem 
+// 		   << ",io="   << (void *)lmm->io_mem 
+// 		   << ",cod="  << (void *)lmm->sys_code
+// 		   << ",dat="  << (void *)lmm->sys_data
+// 		   << ",stk="  << (void *)lmm->sys_stack 
+// 		   << ",apl="  << (void *)lmm->app_lo 
 		   << ",ape="  << (void *)lmm->app_entry
-		   << ",apc="  << (void *)lmm->app_code 
-		   << ",apd="  << (void *)lmm->app_data
+// 		   << ",apc="  << (void *)lmm->app_code 
+// 		   << ",apd="  << (void *)lmm->app_data
 		   << ",aph="  << (void *)lmm->app_hi 
 		   << "})\n";
 }
