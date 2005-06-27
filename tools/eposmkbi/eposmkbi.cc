@@ -19,30 +19,36 @@
 
 #include <system/config.h>
 
-//GENERAL DEFINES
-#define MAX_SI_LEN   512
-#define MAX_BOOT_LEN 512
-#define MIN_BOOT_LEN 128
+// CONSTANTS
+static const unsigned int MAX_SI_LEN = 512;
+static const unsigned int MAX_BOOT_LEN = 512;
+static const unsigned int MIN_BOOT_LEN = 128;
+static const char CFG_FILE[] = "cfg/eposmkbi.conf";
 
-typedef struct Target {
+// TYPES
+
+// Target Machine Description
+struct Configuration
+{
     char	  mode[16];
     char          mach[16];
     char 	  arch[16];
     unsigned int  clock;
     unsigned char word_size;
-    bool 	  endianess; /* little = true - big=false */
+    bool 	  endianess; // true => little, false => big
     unsigned int  mem_base;
     unsigned int  mem_size;
-    unsigned int  cpu_type;
-    unsigned int  threads;
-    unsigned int  tasks;
+    short         node_id;   // node id in SAN (-1 => get from net)
+    short         n_nodes;   // nodes in SAN (-1 => dynamic)
 };
 
+// System_Info
+typedef __SYS(System_Info) System_Info;
 
-//FUNCTIONS PROTOTYPES
-bool parse_target (char *tgt_file);
+// PROTOTYPES
+bool parse_config(FILE * cfg_file, Configuration * cfg);
 void strtolower (char *dst,const char* src);
-bool add_machine_secrets(int  fd_out,unsigned int i_size );
+bool add_machine_secrets(int fd_img, unsigned int i_size, char * mach);
 
 int put_buf(int fd_out, void *buf, int size);
 int put_file(int fd_out, char *file);
@@ -50,317 +56,456 @@ int pad(int fd_out, int size);
 bool lil_endian();
 
 template<typename T> void invert(T &n);
-template<typename T> int put_number(int fd_out, T num);
-template<typename T> bool add_boot_map (T t, int  fd_out,void * _si);
+template<typename T> int put_number(int fd, T num);
+template<typename T> bool add_boot_map(int fd_out, System_Info * si);
 
-//TARGET DATA
-Target TARGET;
+// GLOBALS
+Configuration CONFIG;
 
-//To access System_Info
-typedef __SYS(System_Info) System_Info;
-	
-//MAIN
+//=============================================================================
+// MAIN
+//=============================================================================
 int main(int argc, char **argv)
 {
-    int i, fd_out;
-    unsigned int  image_size,si_size;
-    unsigned int  boot_size = 0;
-    char          *epos_home;
-    char          file[256];
-    char          _si[MAX_SI_LEN];
-    struct stat   file_stat;    
-    bool need_SI  = true;
-    System_Info   *si = (System_Info *) _si;
-
-    //Parse ARGS
-    if(argc < 2) {
-	fprintf(stderr, "Usage: %s <options> <boot image> <app1> <app2> ...\n", argv[0]);
-	return 1;
-    }
-    
-
-    /* Say hello */
+    // Say hello
     printf("\nEPOS bootable image tool\n\n");
-    
-    
-    /* Get EPOS environment variable */
-    epos_home = getenv("EPOS");
-    if(epos_home == NULL) {
+        
+    // Get EPOS environment variable
+    char * epos_home = getenv("EPOS");
+    if(epos_home == 0) {
 	fprintf(stderr, "Error: environment variable EPOS not set!\n");
 	return 1;
     }
-
     
-    //Get the target features
-    sprintf(file,"%s/cfg/eposmkbi.conf",epos_home);
-    if(!(parse_target(file))) { 
-   	fprintf(stderr, "Error: Target features file not found in <%s>\n",file);
-        return(1);    
+    // Read configuration
+    char file[256];
+    sprintf(file, "%s/%s", epos_home, CFG_FILE);
+    FILE * cfg_file = fopen(file, "rb");
+    if(!cfg_file) { 
+   	fprintf(stderr, "Error: can't read configuration file \"%s\"!\n",
+		file);
+        return 1;    
+    } 
+    if(!parse_config(cfg_file, &CONFIG)) { 
+   	fprintf(stderr, "Error: invalid configuration file \"%s\"!\n", file);
+        return 1;    
     } 
 
-    
-    /* Open destination file (rewrite) */
-    fd_out = open(argv[1], O_WRONLY | O_CREAT | O_TRUNC, 00644);
-    if(fd_out < 0) {
-	fprintf(stderr, "Error: can't create boot image file \"%s\"!\n",
-		argv[1]);
+    // Open destination file (rewrite)
+    int fd_img = open(argv[1], O_WRONLY | O_CREAT | O_TRUNC, 00644);
+    if(fd_img < 0) {
+	fprintf(stderr, "Error: can't create boot image \"%s\"!\n", argv[1]);
 	return 1;
     }
-
     
-    /* Show Target features */
-    printf("  EPOS Architecture: %s\n",TARGET.mode);
-    printf("  Machine Target: %s\n",   TARGET.mach);
-    printf("  Processor: %s\n",        TARGET.arch);       
-    printf("  Memory Amount: %d KBytes\n", TARGET.mem_size/1024);
-    printf("  Word Size: %d bits\n",   TARGET.word_size);
-    printf("  Endianess: %s endian\n", TARGET.endianess ? "little" : "big");
-
-
-    /* Add EPOS */
-    image_size = 0; 
-    printf("\n  Adding EPOS to => \"%s\".\n\n", argv[1]); 
- 
+    // Check ARGS
+    if(argc < 2) {
+	fprintf(stderr, 
+		"Usage: %s <options> <boot image> <app1> <app2> ...\n", 
+		argv[0]);
+	return 1;
+    }
+    if(!strcmp(CONFIG.mode, "library") && (argc > 3)) {
+	fprintf(stderr,
+		"Error: library mode supports a single application!\n");
+	return 1;
+    }
     
-    /* Add BOOT */
-    sprintf(file, "%s/img/%s_boot",epos_home,TARGET.mach);
-    printf("  Boot strap \"%s\" ...", file);
-    image_size += put_file(fd_out, file);
+    // Show configuration
+    printf("  EPOS mode: %s\n", CONFIG.mode);
+    printf("  Machine: %s\n", CONFIG.mach);
+    printf("  Processor: %s (%d bits, %s endian)\n", CONFIG.arch,
+	   CONFIG.word_size, CONFIG.endianess ? "little" : "big");
+    printf("  Memory: %d KBytes\n", CONFIG.mem_size/1024);
+    if(CONFIG.node_id == -1)
+	printf("  Node id: will get from the network\n");
+    else
+	printf("  Node id: %d\n", CONFIG.node_id);
+
+    // Create the boot image
+    unsigned int image_size = 0; 
+    printf("\n  Creating EPOS bootable image in \"%s\":\n", argv[1]); 
+     
+    // Add BOOT
+    sprintf(file, "%s/img/%s_boot", epos_home, CONFIG.mach);
+    printf("    Adding boot strap \"%s\":", file);
+    image_size += put_file(fd_img, file);
     if(image_size > MAX_BOOT_LEN) {
 	printf(" failed!\n");
 	fprintf(stderr, "Boot strap \"%s\" is too large! (%d bytes)\n", 
 		file, image_size);
 	return 1;
-    }
-    else {
+    } else {
 	while((image_size % MIN_BOOT_LEN != 0))
-	    image_size += pad(fd_out,1);
-	boot_size = image_size;
+	    image_size += pad(fd_img, 1);
 	printf(" done.\n");
     }
-
+    unsigned int boot_size = image_size; 
     
-    /* Reserve space for Boot_Info if necessary*/
-    if (image_size == 0) {
-	need_SI = false;
-    }
-    else{
-	si_size = sizeof(System_Info);
-	if (si_size > MAX_SI_LEN) {
+    // Reserve space for System_Info if necessary
+    System_Info si;
+    bool need_si = true;
+    if(image_size == 0) {
+	need_si = false;
+    } else
+	if(sizeof(System_Info) > MAX_SI_LEN) {
 	    printf(" failed!\n");
-	    fprintf(stderr, "System Info structure is too large (%d)!\n",si_size);
+	    fprintf(stderr, "System_Info structure is too large (%d)!\n",
+		    sizeof(System_Info));
 	    return 1;
-	}
-	else {	
-	    image_size += pad(fd_out, MAX_SI_LEN);
-	}
-    }
+	} else	
+	    image_size += pad(fd_img, MAX_SI_LEN);
 
-    
-    /* Add SETUP */
-    si->bm.setup_off = image_size - boot_size;
-    sprintf(file, "%s/img/%s_setup",epos_home,TARGET.mach);
-    printf("  Setup \"%s\" ...", file);
-    image_size += put_file(fd_out, file);
-    printf(" done.\n");
+    // Add SETUP
+    si.bm.setup_off = image_size - boot_size;
+    sprintf(file, "%s/img/%s_setup", epos_home, CONFIG.mach);
+    printf("    Adding setup \"%s\":", file);
+    image_size += put_file(fd_img, file);
 
-    
-    if (!strcmp("library",TARGET.mode)) {
-	si->bm.init_off = -1;
-	si->bm.system_off = -1;
-	image_size += 0;
-    }	  
-    else {
-        /* Add INIT */
-        si->bm.init_off = image_size - boot_size;
-        sprintf(file, "%s/img/%s_init",epos_home,TARGET.mach);
-        printf("  Init \"%s\" ...", file);
-        image_size += put_file(fd_out, file);
-        printf(" done.\n");
-
-        /* Add SYSTEM */
-        si->bm.system_off = image_size - boot_size;
-        sprintf(file, "%s/img/%s_system",epos_home,TARGET.mach);
-        printf("  System \"%s\" ...", file);
-        image_size += put_file(fd_out, file);
-        printf(" done.\n");
-    }
-
-    
-    /* Add the loader */
-    si->bm.loader_off = image_size - boot_size;
-    if(argc == 3) { /* Single app */
-	printf("  Single application \"%s\" ...", argv[2]);
-	image_size += put_file(fd_out, argv[2]);
+    // Add INIT and OS (for mode != library only)
+    if(!strcmp(CONFIG.mode, "library")) {
+	si.bm.init_off = -1;
+	si.bm.system_off = -1;
     } else {
-	sprintf(file, "%s/img/%s_loader",epos_home,TARGET.mach);
-	printf("  Loader \"%s\" ...", file);
-	image_size += put_file(fd_out, file);
-    }
-    printf(" done.\n");
+        // Add INIT
+        si.bm.init_off = image_size - boot_size;
+        sprintf(file, "%s/img/%s_init", epos_home, CONFIG.mach);
+        printf("    Adding init \"%s\":", file);
+        image_size += put_file(fd_img, file);
 
-    
-    /* Add applications */
-    if (!strcmp("library",TARGET.mode)) {
-        si->bm.app_off = -1;
-        image_size += 0;
-	if (argc > 3) 
-	    printf("\n  Warning: --library mode just supports one application or remote loading\n");	
+        // Add SYSTEM
+        si.bm.system_off = image_size - boot_size;
+        sprintf(file, "%s/img/%s_system", epos_home, CONFIG.mach);
+        printf("    Adding system \"%s\":", file);
+        image_size += put_file(fd_img, file);
     }
-    else {
-	si->bm.app_off = image_size - boot_size;
-	if(argc > 3) {
-	    printf("Adding applications =>");
-	    for(i = 2; i < argc; i++) {
-		printf("  %s ...", argv[i]);
-		stat(argv[i], &file_stat);
-		image_size += put_number(fd_out, file_stat.st_size);
-		image_size += put_file(fd_out, argv[i]);
-		printf (" done.\n");
-	    }
-	    /* Signalize last application by writing 0 to the size of netx app */
-	    image_size += put_number(fd_out, 0);
+
+    // Add LOADER (if multiple applications) or the single application
+    si.bm.loader_off = image_size - boot_size;
+    if(argc == 3) { // Add Single APP
+	printf("    Adding application \"%s\":", argv[2]);
+	image_size += put_file(fd_img, argv[2]);
+	si.bm.app_off = -1;
+    } else { // Add LOADER
+	sprintf(file, "%s/img/%s_loader", epos_home, CONFIG.mach);
+	printf("    Adding loader \"%s\":", file);
+	image_size += put_file(fd_img, file);
+
+	// Add APPs
+	si.bm.app_off = image_size - boot_size;
+	struct stat file_stat;    
+	for(int i = 2; i < argc; i++) {
+	    printf("    Adding application \"%s\":", argv[i]);
+	    stat(argv[i], &file_stat);
+	    image_size += put_number(fd_img, file_stat.st_size);
+	    image_size += put_file(fd_img, argv[i]);
 	}
+	// Signalize last application by setting its size to 0
+	image_size += put_number(fd_img, 0);
     }
 
+    // Prepare the Boot_Map
+    si.bm.mem_base  = CONFIG.mem_base;
+    si.bm.mem_size  = CONFIG.mem_size;
+    si.bm.img_size  = image_size - boot_size; // Boot not included
 
-    /* Prepare the Boot Map */
-    si->bm.mem_base  = TARGET.mem_base;
-    si->bm.mem_size  = TARGET.mem_size;
-    si->bm.cpu_type  = TARGET.cpu_type;; 
-    si->bm.cpu_clock = TARGET.clock;
-    si->bm.host_id   = (unsigned short)-1; /* get from net */
-    si->bm.n_threads = TARGET.threads;
-    si->bm.n_tasks   = TARGET.tasks;
-    si->bm.img_size  = image_size - boot_size; /* Boot not included */
-
-
-    if (need_SI) {
-        //Add System Info
-        if(lseek(fd_out, boot_size, SEEK_SET) < 0) {
-	    fprintf(stderr, "Error: can not seek the boot image!\n");
+    if(need_si) {
+        // Add System_Info
+        if(lseek(fd_img, boot_size, SEEK_SET) < 0) {
+	    fprintf(stderr, "Error: can't seek the boot image!\n");
 	    return 1;
         }
-        switch (TARGET.word_size) {
-     
-	case (8):	if(!add_boot_map((char)  NULL,fd_out,si)) return(1);
-	    break;			
-	case (16):	if(!add_boot_map((short) NULL,fd_out,si)) return(1);
-	    break;					
-	case (32):	if(!add_boot_map((long)  NULL,fd_out,si)) return(1);
-	    break;
-	case (64):	if(!add_boot_map((long long) NULL,fd_out,si)) return(1);
-	    break;
-	default:	return 1;
+        switch(CONFIG.word_size) {
+     	case  8: if(!add_boot_map<char>(fd_img, &si)) return 1; break;
+	case 16: if(!add_boot_map<short>(fd_img, &si)) return 1; break;
+	case 32: if(!add_boot_map<long>(fd_img, &si)) return 1; break;
+	case 64: if(!add_boot_map<long long>(fd_img, &si)) return 1; break;
+	default: return 1;
 	}
     }
-     
-    
- 
+      
     //Adding ARCH particularities
-    printf("\n  Adding specific boot features of %s!\n",TARGET.mach);
-    if(!(add_machine_secrets(fd_out,image_size))) {
+    printf("\n  Adding specific boot features of \"%s\":", CONFIG.mach);
+    if(!(add_machine_secrets(fd_img, image_size, CONFIG.mach))) {
 	fprintf(stderr, "Error: specific features error!\n");
 	return 1;
     }    
+    printf(" done.\n");
     
     //Finish   
-    close(fd_out);       
-    printf("\n  Image size: %d bytes.\n\n",image_size);
+    close(fd_img);       
+    printf("\n  Image successfully generated (%d bytes)!\n\n", image_size);
     
     return 0;
 }
 
+//=============================================================================
+// PARSE_CONFIG
+//=============================================================================
+bool parse_config(FILE * cfg_file, Configuration * cfg) 
+{
+    char line[256];
+    char * token;
 
-/*=======================================================================*/
-/* PARSE_TARGET                                                          */
-/*                                                                       */
-/* Desc:                                                                 */
-/*                                                                       */
-/* Parm:                                                                 */
-/*                                                                       */
-/* Rtrn:                                                                 */
-/*                                                                       */
-/* Creation date: 15/07/03                                               */
-/* Last Updated : 15/07/03     Author: Fauze                             */
-/*=======================================================================*/
-bool parse_target(char* tgt_file) {
-	
-    char  line[256];
-    char* token;
-    FILE * f = NULL;			
-    if (!(f=fopen(tgt_file,"rb"))) goto err;
+    // EPOS Mode
+    fgets(line, 256, cfg_file);
+    token = strtok(line, "=");
+    if(strcmp(token, "MODE")) return false;
+    token = strtok(NULL, "\n");
+    strtolower(cfg->mode, token);						
+    // Machine
+    fgets(line, 256, cfg_file); 
+    token = strtok(line, "=");
+    if(strcmp(token, "MACH")) return false;
+    token = strtok(NULL, "\n");		
+    strtolower(cfg->mach, token);	
 
-    //Getting EPOS Mode
-    fgets(line,255,f);
-    token=strtok(line,"=");
-    if (strcmp(token,"MODE") != 0) goto err;
-    token=strtok(NULL,"\n");
-    strtolower(TARGET.mode,token);						
-	
-    //Getting Machine
-    fgets(line,255,f); 
-    token=strtok(line,"=");
-    if (strcmp(token,"MACH") != 0) goto err;
-    token=strtok(NULL,"\n");		
-    strtolower(TARGET.mach,token);	
+    // Arch
+    fgets(line, 256, cfg_file);
+    token = strtok(line, "=");
+    if(strcmp(token, "ARCH")) return false;
+    token = strtok(NULL, "\n");
+    strtolower(cfg->arch, token);
 
-    //Getting Arch
-    fgets(line,255,f);
-    token=strtok(line,"=");
-    if (strcmp(token,"ARCH") != 0) goto err;
-    token=strtok(NULL,"\n");
-    strtolower(TARGET.arch,token);
+    // Clock
+    fgets(line, 256, cfg_file);
+    token = strtok(line, "=");
+    if(strcmp(token, "CLOCK")) return false;
+    token = strtok(NULL, "\n");
+    cfg->clock = atoi(token);	
 
-    //Getting Clock
-    fgets(line,255,f);
-    token=strtok(line,"=");
-    if (strcmp(token,"CLOCK") != 0) goto err;
-    token=strtok(NULL,"\n");
-    TARGET.clock=atoi(token);	
-		
-    //Word Size
-    fgets(line,255,f);
-    token=strtok(line,"=");
-    if (strcmp(token,"WORD_SIZE") != 0) goto err;
-    token=strtok(NULL,"\n");
-    TARGET.word_size=atoi(token);
+    // Word Size
+    fgets(line, 256, cfg_file);
+    token = strtok(line, "=");
+    if(strcmp(token, "WORD_SIZE")) return false;
+    token = strtok(NULL, "\n");
+    cfg->word_size = atoi(token);
 
-    //Endianess
-    fgets(line,255,f);
-    token=strtok(line,"=");
-    if (strcmp(token,"ENDIANESS") != 0) goto err;
-    token=strtok(NULL,"\n");
-    if (strcmp(token,"little") == 0) TARGET.endianess = true;
-    else TARGET.endianess = false;
+    // Endianess
+    fgets(line, 256, cfg_file);
+    token = strtok(line, "=");
+    if(strcmp(token, "ENDIANESS")) return false;
+    token = strtok(NULL, "\n");
+    cfg->endianess = !strcmp(token, "little");
 
-    //Memory Base
-    fgets(line,255,f);
-    token=strtok(line,"=");
-    if (strcmp(token,"MEM_BASE") != 0) goto err;
-    token=strtok(NULL,"\n");
-    TARGET.mem_base=strtol(token, 0, 16);
+    // Memory Base
+    fgets(line, 256, cfg_file);
+    token = strtok(line, "=");
+    if(strcmp(token, "MEM_BASE")) return false;
+    token = strtok(NULL, "\n");
+    cfg->mem_base = strtol(token, 0, 16);
 
-    //Memory Size
-    fgets(line,255,f);
-    token=strtok(line,"=");
-    if (strcmp(token,"MEM_SIZE") != 0) goto err;
-    token=strtok(NULL,"\n");
-    TARGET.mem_size=strtol(token, 0, 16);
+    // Memory Size
+    fgets(line, 256, cfg_file);
+    token = strtok(line, "=");
+    if(strcmp(token, "MEM_SIZE")) return false;
+    token = strtok(NULL, "\n");
+    cfg->mem_size=strtol(token, 0, 16);
 
-    TARGET.cpu_type = 0; //To use in the future
-    TARGET.threads  = 8;
-    TARGET.tasks    = 1;
+    // Node Id
+    fgets(line, 256, cfg_file);
+    token = strtok(line, "=");
+    if(!strcmp(token, "NODE_ID")) {
+	token = strtok(NULL, "\n");
+	cfg->node_id = atoi(token);
+    } else
+	cfg->node_id = -1; // get from net
 
-    fclose(f);
-    return(true);
-	
-  err:	
-    if (f) fclose(f);
-    return(false);
+    // Number of Nodes in SAN
+    fgets(line, 256, cfg_file);
+    token = strtok(line, "=");
+    if(!strcmp(token, "N_NODES")) {
+	token = strtok(NULL, "\n");
+	cfg->n_nodes = atoi(token);
+    } else
+	cfg->n_nodes = -1; // dynamic
+
+    return true;
 }
 
+//=============================================================================
+// ADD_BOOT_MAP
+//=============================================================================
+template<typename T> bool add_boot_map(int fd, System_Info * si)
+{
+    pad(fd, (3 * sizeof(T))); // mem_size, mem_free and iomm_size
+	
+    if(!put_number(fd, static_cast<T>(si->bm.mem_base)))
+	return false;
+    if(!put_number(fd, static_cast<T>(si->bm.mem_size)))
+	return false;
+	
+    if(!put_number(fd, si->bm.node_id))
+	return false;
+    if(!put_number(fd, si->bm.n_nodes))
+          return false;
 
+    if(!put_number(fd, static_cast<T>(si->bm.img_size)))
+	return false;
+    if(!put_number(fd, static_cast<T>(si->bm.setup_off)))
+	return false;
+    if(!put_number(fd, static_cast<T>(si->bm.init_off)))
+	return false;
+    if(!put_number(fd, static_cast<T>(si->bm.system_off)))
+	return false;
+    if(!put_number(fd, static_cast<T>(si->bm.loader_off)))
+	return false;
+    if(!put_number(fd, static_cast<T>(si->bm.app_off))) 
+	return false;
+    
+    return true;
+}
+
+//=============================================================================
+// ADD_MACHINE_SCRETS
+//=============================================================================
+bool add_machine_secrets(int fd, unsigned int i_size, char * mach)
+{
+    if (!strcmp(mach, "pc")) { //PC 
+	const unsigned int   floppy_size   = 1474560;
+	const unsigned short count_offset  = 508;
+	const unsigned short master_offset = 510;		
+	const unsigned short boot_id	   = 0xaa55;
+	const unsigned short num_sect	   = ((i_size + 511) / 512);
+
+	// Pad the image to the size of a standard floppy
+	if(lseek(fd, 0, SEEK_END) < 0) {
+	    fprintf(stderr, "Error: can't seek the boot image!\n");
+	    return false;
+	}				
+	pad(fd, (floppy_size  - i_size));		
+			
+	// Write the number of sectors to be read
+	if(lseek(fd, count_offset, SEEK_SET) < 0) {
+	    fprintf(stderr, "Error: can't seek the boot image!\n");
+	    return false;
+	}
+	put_number(fd,num_sect);
+		
+	// Write master boot id
+	if(lseek(fd, master_offset, SEEK_SET) < 0) {
+	    fprintf(stderr, "Error: can't seek the boot image!\n");
+	    return false;
+	}
+	put_number(fd, boot_id);
+    } else if (!strcmp(mach, "rcx")) { // RCX	
+	char * key_string = "Do you byte, when I knock?";
+	const unsigned short key_offset = 128 - (strlen(key_string) + 1);
+		
+	// Write key string to unlock epos
+	if(lseek(fd,key_offset,SEEK_SET) < 0) {
+	    fprintf(stderr, "Error: can't seek the boot image!\n");
+	    return false;
+	}		
+	put_buf(fd, key_string, (strlen(key_string)+1));		
+    }
+
+    return true;
+}
+
+//=============================================================================
+// PUT_FILE
+//=============================================================================
+int put_file(int fd_out, char * file)
+{
+    int fd_in;
+    struct stat stat;
+    char * buffer;
+
+    fd_in = open(file, O_RDONLY);
+    if(fd_in < 0) {
+	printf(" failed! (open)\n");
+	return 0;
+    }
+
+    if(fstat(fd_in, &stat) < 0)  {
+	printf(" failed! (stat)\n");
+	return 0;
+    }
+
+    buffer = (char *) malloc(stat.st_size);
+    if(!buffer) {
+	printf(" failed! (malloc)\n");
+	return 0;
+    }
+    memset(buffer, '\1', stat.st_size);
+
+    if(read(fd_in, buffer, stat.st_size) < 0) {
+	printf(" failed! (read)\n");
+	free(buffer);    
+	return 0;
+    }
+
+    if(write(fd_out, buffer, stat.st_size) < 0) {
+	printf(" failed! (write)\n");
+	free(buffer);    
+	return 0;
+    }
+
+    free(buffer);    
+    close(fd_in);  
+    
+    printf(" done.\n");
+
+    return stat.st_size;
+}
+
+//=============================================================================
+// PUT_BUF
+//=============================================================================
+int put_buf(int fd, void * buf, int size)
+{
+    if(!size)
+	return 0;
+    int written = write(fd, buf, size);
+    if(written < 0) {
+	fprintf(stderr, "Error: can't wirte to file!\n");
+	written = 0;
+    }
+    return written;
+}
+
+//=============================================================================
+// PUT_NUMBER
+//=============================================================================
+template<typename T> int put_number(int fd, T num)
+{
+    if((CONFIG.endianess != lil_endian()) && (sizeof(T) > 1))
+    	invert(num);
+    if(write(fd, &num, sizeof(T)) < 0) {
+	fprintf(stderr, "Error: can't wirte to file!\n");
+	return 0;
+    }
+    return sizeof(T);
+}
+
+//=============================================================================
+// PAD
+//=============================================================================
+int pad(int fd, int size)
+{
+    if(!size)
+	return 0;
+
+    char * buffer = (char *) malloc(size);
+    if(!buffer) {
+	fprintf(stderr, "Error: not enough memory!\n");
+	return 0;
+    }
+
+    memset(buffer, '\1', size);
+    if(write(fd, buffer, size) < 0) {
+	fprintf(stderr, "Error: can't write to the boot image!\n");
+	return 0;
+    }
+
+    free(buffer);    
+    return size;
+}
+
+//=============================================================================
+// STRTOLOWER
+//=============================================================================
 void strtolower(char* dst, const char* src) {
     int i = 0;
     strcpy(dst,src);
@@ -370,242 +515,25 @@ void strtolower(char* dst, const char* src) {
     }
 }
 
-
-/*=======================================================================*/
-/* ADD_BOOT_MAP                                                          */
-/*                                                                       */
-/* Desc:      								 */
-/*                                                                       */
-/* Parm:                                                                 */
-/*                                                                       */
-/* Rtrn:                                                                 */
-/*                                                                       */
-/* Creation date: 15/07/03                                               */
-/* Last Updated : 15/07/03     Author: Fauze                             */
-/*=======================================================================*/
-template<typename T> bool add_boot_map (T t, int fd_out, void * _si) {
-	
-    System_Info * si = (System_Info *) _si;
-	
-    pad(fd_out, (3*sizeof(T))); //Pading for the mem_size, mem_free, iomm_size
-	
-    if(!put_number(fd_out,(T) si->bm.mem_base))     return(false);
-    if(!put_number(fd_out,(T) si->bm.mem_size))     return(false);
-    if(!put_number(fd_out,(T) si->bm.cpu_type))     return(false);
-    if(!put_number(fd_out,(T) si->bm.cpu_clock))    return(false);
-    if(!put_number(fd_out,(T) si->bm.n_threads))    return(false);
-    if(!put_number(fd_out,(T) si->bm.n_tasks))      return(false);
-	
-    if(!put_number(fd_out,si->bm.host_id))          return(false);
-    if(!put_number(fd_out,si->bm.n_nodes))          return(false);
-	
-    if(!put_number(fd_out,(T) si->bm.img_size))     return(false);
-    if(!put_number(fd_out,(T) si->bm.setup_off))    return(false);
-    if(!put_number(fd_out,(T) si->bm.init_off))     return(false);
-    if(!put_number(fd_out,(T) si->bm.system_off))   return(false);
-    if(!put_number(fd_out,(T) si->bm.loader_off))   return(false);
-    if(!put_number(fd_out,(T) si->bm.app_off))      return(false);
-	
-    return(true);
-}
-
-/*=======================================================================*/
-/* ADD_MACHINE_SCRETS                                                    */
-/*                                                                       */
-/* Desc:                                                                 */
-/*                                                                       */
-/* Parm:                                                                 */
-/*                                                                       */
-/* Rtrn:                                                                 */
-/*                                                                       */
-/* Creation date: 15/07/03                                               */
-/* Last Updated : 15/07/03     Author: Fauze                             */
-/*=======================================================================*/
-bool add_machine_secrets(int fd_out, unsigned int i_size) {
-	
-    //PC 
-    if (strcmp("pc",TARGET.mach)  == 0) {
-	const unsigned int   floppy_size   = 1474560;
-	const unsigned short count_offset  = 508;
-	const unsigned short master_offset = 510;		
-	unsigned short 	     boot_id	   = 0xaa55;
-	unsigned short       num_sect	   = ((i_size + 511) / 512);
-
-	/* Pad the image to the size of a standard floppy */
-	if(lseek(fd_out, 0, SEEK_END) < 0) {
-	    fprintf(stderr, "Error: can not seek the boot image!\n");
-	    return false;
-	}				
-	pad(fd_out, (floppy_size  - i_size));		
-			
-	/* write the number of sectors to be read */
-	if(lseek(fd_out, count_offset, SEEK_SET) < 0) {
-	    fprintf(stderr, "Error: can not seek the boot image!\n");
-	    return false;
-	}
-	put_number(fd_out,num_sect);
-		
-	//write master boot id
-	if(lseek(fd_out, master_offset, SEEK_SET) < 0) {
-	    fprintf(stderr, "Error: can not seek the boot image!\n");
-	    return false;
-	}
-	put_number(fd_out, boot_id);    					
-		
-	return(true);
-    }
-
-    //RCX	
-    else if (strcmp("rcx",TARGET.mach) == 0) {	
-	char* key_string = "Do you byte, when I knock?";
-	const unsigned short key_offset = 128 - (strlen(key_string) + 1);
-		
-	//write key string to unlock epos
-	if(lseek(fd_out,key_offset,SEEK_SET) < 0) {
-	    fprintf(stderr, "Error: can not seek the boot image!\n");
-	    return false;
-	}		
-	put_buf(fd_out, key_string, (strlen(key_string)+1));		
-	return(true);		
-    }
-
-    return(true);
-}
-
-
-/*=======================================================================*/
-/* LIL_ENDIAN                                                      	 */
-/*                                                                       */
-/* Desc:                                                                 */
-/*                                                                       */
-/* Parm:                                                                 */
-/*                                                                       */
-/* Rtrn:                                                                 */
-/*                                                                       */
-/* Creation date: 15/07/03                                               */
-/* Last Updated : 15/07/03     Author: Fauze                             */
-/*=======================================================================*/
+//=============================================================================
+// LIL_ENDIAN
+//=============================================================================
 bool lil_endian() {
     int test = 1;
     return (*((char*)&test)) ? true : false;
 }
 
-template<typename T> void invert(T &n) { 	
-    for (int i=0,j=(sizeof(T) - 1); i<((int)(sizeof(T)/2));i++,j--) {
-	char *h = &(((char *)&n)[i]);
-	char *l = &(((char *)&n)[j]);
+//=============================================================================
+// INVERT
+//=============================================================================
+template<typename T> void invert(T & n)
+{ 	
+    for(int i = 0, j = sizeof(T) - 1; i < (int)sizeof(T) / 2; i++, j--) {
+	char * h = &(((char *)&n)[i]);
+	char * l = &(((char *)&n)[j]);
 	*h ^= *l;
 	*l ^= *h;
 	*h ^= *l;
     }
 }
 
-
-/*=======================================================================*/
-/* PUT_FILE                                                              */
-/*                                                                       */
-/* Desc: Copy a file to fd0.                                             */
-/*                                                                       */
-/* Parm: file                                                            */
-/*                                                                       */
-/* Rtrn: number of bytes written.                                        */
-/*                                                                       */
-/* Creation date: 10/14/96                                               */
-/* Last Updated : 10/14/96     Authors: Aboelha Development Team         */
-/*=======================================================================*/
-int put_file(int fd_out, char * file)
-{
-    int fd_in;
-    struct stat stat;
-    char * buffer;
-
-    fd_in = open(file, O_RDONLY);
-    if(fd_in < 0) {
-	fprintf(stderr, "Error: can not open %s!\n", file);
-	return 0;
-    }
-
-    if(fstat(fd_in, &stat) < 0)  {
-	fprintf(stderr, "Error: can not stat %s!\n", file);
-	return 0;
-    }
-
-    buffer = (char *) malloc(stat.st_size);
-    if(buffer == NULL) {
-	fprintf(stderr, "Error: not enough memory!\n");
-	return 0;
-    }
-    memset(buffer, '\1', stat.st_size);
-
-    if(read(fd_in, buffer, stat.st_size) < 0) {
-	fprintf(stderr, "Error: can not read from %s!\n", file);
-	return 0;
-    }
-
-    if(write(fd_out, buffer, stat.st_size) < 0) {
-	fprintf(stderr, "Error: can not write to the boot image!\n");
-	return 0;
-    }
-
-    free(buffer);    
-    close(fd_in);  
-
-    return(stat.st_size);
-}
-
-/*=======================================================================*/
-/* WRITE_NUMBER                                                          */
-/*                                                                       */
-/* Desc: Write a number at a position in fd0.                            */
-/*                                                                       */
-/* Parm: num     -> number to write                                      */
-/*       offset  -> offset in fd0                                        */
-/*                                                                       */
-/* Rtrn: nothing.                                                        */
-/*                                                                       */
-/* Creation date: 10/14/96                                               */
-/* Last Updated : 10/14/96     Authors: Aboelha Development Team         */
-/*=======================================================================*/
-template<typename T> int put_number(int fd_out, T num)
-{
-    if ((lil_endian() != TARGET.endianess) && (sizeof(T) > 1))
-    	invert(num);
-    if(write(fd_out, &num, sizeof(T)) < 0) {
-	fprintf(stderr, "Error: can not wirte to file!\n");
-	return 0;
-    }
-    return sizeof(T);
-}
-
-
-int put_buf(int fd_out, void * buf, int size)
-{
-    int written;
-    if (size == 0) return(0);
-    if((written = write(fd_out, buf, size)) < 0) {
-	fprintf(stderr, "Error: can not wirte to file!\n");
-	return 0;
-    }
-    return written;
-}
-
-
-int pad(int fd_out, int size)
-{
-    char * buffer;
-    if (size == 0) return(0);
-
-    buffer = (char *) malloc(size);
-    if(buffer == NULL) {
-	fprintf(stderr, "Error: not enough memory!\n");
-	return 0;
-    }
-
-    memset(buffer,'\1', size);
-    if(write(fd_out, buffer, size) < 0) {
-	fprintf(stderr, "Error: can not write to the boot image!\n");
-	return 0;
-    }
-    if(buffer != NULL) free(buffer);    
-    return size;
-}
