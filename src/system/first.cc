@@ -17,8 +17,8 @@ First::First(System_Info * si)
 {
     // EPOS is a library?
     if(si->bm.system_off == -1)
-	si->lmm.app_entry = 
-	    reinterpret_cast<unsigned int>(__epos_library_app_entry);
+        si->lmm.app_entry =
+	    reinterpret_cast<unsigned int>(&__epos_library_app_entry);
 
     // Initialize the Thread abstraction, thus creating the first thread
     db<Init>(INF) << "Starting first process ...\n";
