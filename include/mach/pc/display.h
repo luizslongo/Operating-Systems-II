@@ -1,5 +1,4 @@
-// EPOS-- PC_Display (CGA/6845) Declarations
-//
+// EPOS-- PC Display (CGA/6845) Mediator Declarations
 
 #ifndef __pc_display_h
 #define __pc_display_h
@@ -11,8 +10,8 @@ __BEGIN_SYS
 class PC_Display: public Display_Common
 {
 private:
-    typedef Traits<PC_Display> _Traits;
-//    static const Type_Id TYPE = Type<PC_Display>::TYPE;
+    typedef Traits<PC_Display> Traits;
+    static const Type_Id TYPE = Type<PC_Display>::TYPE;
 
     // 6845 Registers
     enum {
@@ -34,9 +33,8 @@ private:
 
 public:
     PC_Display(unsigned short * fb = reinterpret_cast<unsigned short *>(
-		   _Traits::FRAME_BUFFER_ADDRESS))
+		   Traits::FRAME_BUFFER_ADDRESS))
 	: _frame_buffer(fb) {}
-    ~PC_Display() {}
 
     void clear() { 
 	for(unsigned int i = 0; i < lines() * columns(); i++)
@@ -67,8 +65,8 @@ public:
 	    putc(*s++);
     }
 
-    unsigned int lines() { return _Traits::LINES; }
-    unsigned int columns() { return _Traits::COLUMNS; }
+    unsigned int lines() { return Traits::LINES; }
+    unsigned int columns() { return Traits::COLUMNS; }
 
     void position(int * line, int * column) {
 	unsigned int pos = position();
@@ -94,7 +92,7 @@ public:
     static int init(System_Info * si);
 
 private:
-    unsigned int tab_size() { return _Traits::TAB_SIZE; }
+    unsigned int tab_size() { return Traits::TAB_SIZE; }
 
     volatile int position() {
 	IA32 cpu;
