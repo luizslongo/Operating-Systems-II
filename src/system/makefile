@@ -65,6 +65,6 @@ install:        $(MACH)_install_$(MODE)
 test:
 
 clean:
-		$(CLEAN) *.o $(MACH)_init $(MACH)_system
+		$(CLEAN) *.o *_init *_system
 
 FORCE:

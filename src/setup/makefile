@@ -59,6 +59,6 @@ print:
 		$(MACH)_setup.cc
 
 clean:
-		$(CLEAN) *.o $(MACH)_setup
+		$(CLEAN) *.o *_setup
 
 FORCE:
