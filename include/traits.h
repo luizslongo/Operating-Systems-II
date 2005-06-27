@@ -99,7 +99,7 @@ template <> struct Traits<PC>: public Traits<void>
     static const unsigned int SYSTEM_STACK_SIZE = 4096;
     static const unsigned int SYSTEM_HEAP_SIZE = 4096;
     static const unsigned int APPLICATION_STACK_SIZE = 4096;
-    static const unsigned int APPLICATION_HEAP_SIZE = 100 * 4096;
+    static const unsigned int APPLICATION_HEAP_SIZE = 10 * 4096;
 };
 
 template <> struct Traits<PC_PCI>: public Traits<void>
@@ -167,15 +167,6 @@ template <> struct Traits<Mica2_Timer>: public Traits<void>
     // Should be between 28 and 7200 Hz
     static const int FREQUENCY = 720; // Hz
     
-};
-
-template <> struct Traits<PC_UART>: public Traits<void>
-{
-    static const int CLOCK = 1843200;
-    static const unsigned short COM1 = 0x3f8;
-    static const unsigned short COM2 = 0x2f8;
-    static const unsigned short COM3 = 0x3e8;
-    static const unsigned short COM4 = 0x2e8;
 };
 
 // Abstractions
