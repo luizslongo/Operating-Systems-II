@@ -139,7 +139,7 @@ public:
     bool cts() { return true; }
     bool dsr() { return true; }
     bool dcd() { return true; }
-    bool ri()  { return true; }
+    bool ri()  { return false; }
 
     bool overrun_error() { return (ucsra() & (1 << RXC)) ; }
     bool parity_error()  { return (ucsra() & (1 << UPE)) ; }
