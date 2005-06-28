@@ -13,7 +13,8 @@ class Mica2_UART: public UART_Common
 private:
     typedef Traits<Mica2_UART> _Traits;
     static const Type_Id TYPE = Type<Mica2_UART>::TYPE;
-    typedef IO_Map<Machine> IO;
+    typedef IO_Map<Mica2> IO;
+    typedef AVR8::Reg8 Reg8;
 
     enum {
 	//UART0 IO Registers
@@ -32,130 +33,120 @@ private:
         UBRR1H	= IO::UBRR1H
     };
 
-    //UART IO Register Bits
+    //UART IO Register Bit Offsets
     enum {
         //UCSRA
-        RXC	= 0x80,
-        TXC 	= 0x40,
-        UDRE	= 0x20,
-        FE	= 0x10,
-        DOR	= 0x08,
-        UPE	= 0x04,
-        U2X	= 0x02,
-        MPCM	= 0x01,
+        RXC	= 7,
+        TXC 	= 6,
+        UDRE	= 5,
+        FE	= 4,
+        DOR	= 3,
+        UPE	= 2,
+        U2X	= 1,
+        MPCM	= 0,
         //UCSRB
-        RXCIE	= 0x80,
-        TXCIE	= 0x40,
-        UDRIE	= 0x20,
-        RXEN	= 0x10,
-        TXEN	= 0x08,
-        UCS2Z	= 0x04,
-        RXB8	= 0x02,
-        TXB8	= 0x01,
+        RXCIE	= 7,
+        TXCIE	= 6,
+        UDRIE	= 5,
+        RXEN	= 4,
+        TXEN	= 3,
+        UCS2Z	= 2,
+        RXB8	= 1,
+        TXB8	= 0,
         //UCSRC
-        UMSEL	= 0x40,
-        UPM1	= 0x20,
-        UPM0	= 0x10,
-        USBS	= 0x08,
-        UCSZ1	= 0x04,
-        UCSZ0	= 0x02,
-        UCPOL	= 0x01
+        UMSEL	= 6,
+        UPM1	= 5,
+        UPM0	= 4,
+        USBS	= 3,
+        UCSZ1	= 2,
+        UCSZ0	= 1,
+        UCPOL	= 0,
     };
 
-    static const long BASE_CLOCK = __SYS(Traits)<CPU>::CLOCK / 16;
+    static const int BASE_CLOCK = __SYS(Traits)<CPU>::CLOCK / 512;
   
 public:  
 
-    Mica2_UART() { //(int unit = 0) : _unit(unit) { 
-	//set_baud_rate(B9600);
+    Mica2_UART(int unit = 0) : _unit(unit) { 
+	// Default: 9600 8N1
 	ubrrh(0);
 	ubrrl(47);
 	ucsra(0);
-	ucsrc(UCSZ1 | UCSZ0); // 8N1
-	ucsrb(TXEN | RXEN);
-
-
+	ucsrc(1 << UCSZ1 | 1 << UCSZ0);
+	ucsrb(1 << TXEN | 1 << RXEN);
     }
 
-    Mica2_UART(unsigned int br, unsigned int db, unsigned int p,unsigned int sb/*,int unit = 0*/) /*: _unit(unit)*/ {
-        set_baud_rate(br);
-        set_data_bits(db);
-        set_parity(p);
-        set_stop_bits(sb);
-	ucsrb(TXEN | RXEN);
+    Mica2_UART(unsigned int baud, unsigned int data_bits, unsigned int parity,
+	       unsigned int stop_bits, unsigned int unit = 0) : _unit(unit) {
+	config(baud,data_bits,parity,stop_bits);
+	ucsrb(1 << TXEN | 1 << RXEN);
     }
 
     ~Mica2_UART(){ 
-	ucsrb(~TXEN & ~RXEN);  
-    }
-    
-   
-    int set_baud_rate(unsigned int baudrate){
-	ubrrhl((BASE_CLOCK / baudrate) - 1);
-        return 1;
+	ubrrhl(0);
+	ucsrb(0);  
     }
 
-    int set_data_bits(unsigned int databits){
-	switch (databits) {
-	case 5: ucsrc(ucsrc() & ~UCSZ1 & ~UCSZ0); break;
-	case 6: ucsrc(ucsrc() & ~UCSZ1 |  UCSZ0); break;
-	case 7: ucsrc(ucsrc() &  UCSZ1 | ~UCSZ0); break;
-	case 8: ucsrc(ucsrc() |  UCSZ1 |  UCSZ0); break;
-	}
-        return 1;    
+    void config(unsigned int baud, unsigned int data_bits,
+		unsigned int parity, unsigned int stop_bits) {
+	ubrrhl((BASE_CLOCK / (baud>>5)) - 1);
+	
+	unsigned char cfg = ((data_bits - 5) << UCSZ0) | ((stop_bits - 1) << USBS);
+	if (parity) cfg |= (parity + 1) << UPM0;
+	ucsrc(cfg);
+
+	ucsra(0);
     }
 
-    int set_stop_bits(unsigned int stopbits){
-	switch(stopbits) {
-	case 1:      ucsrc(ucsrc() & ~USBS); break;
-	case 2:      ucsrc(ucsrc() |  USBS); break;
-	}
-	return 1;
+    void config(unsigned int * baud, unsigned int * data_bits,
+		unsigned int * parity, unsigned int * stop_bits) {
+
+	*baud = (BASE_CLOCK / (ubrrhl() + 1))<<5;
+
+	unsigned char rc = ucsrc();
+
+	*data_bits = ((rc >> UCSZ0) + 5) & 0x0F;
+	*stop_bits = ((rc >> USBS) + 1) & 0x03;
+
+	*parity = (rc >> USBS) & 0x03;
+	if(*parity) *parity -= 1; 
+
     }
 
-    int set_parity(unsigned int parity){
-	switch(parity){
-	case 0: ucsrc(ucsrc() & ~UPM1 & ~UPM0);
-	case 1: ucsrc(ucsrc() |  UPM1 & ~UPM0);
-	case 2: ucsrc(ucsrc() |  UPM1 |  UPM0);
-	}
-        return 1;
+    Reg8 rxd() { return udr(); }
+    void txd(Reg8 c) { udr(c); }
+
+    void reset() { 
+	unsigned int b, db, p, sb;
+	config(&b, &db, &p, &sb);
+	config(b, db, p, sb);
     }
 
-    char get() {
-        while(data_ready() != 1);
-	return udr();
+    void loopback(bool flag) { }
+
+    void int_enable(bool receive = true, bool send = true,
+		    bool line = true, bool modem = true) {
+	ucsrb( (1 << TXEN) | (1 << RXEN) | 
+	       (receive << RXCIE) | (send << UDRIE) );
     }
+    void int_disable() { ucsrb(1 << TXEN | 1 << RXEN); }
 
-    void put(char c) {
-        while(line_empty() != 1);
-	udr(c);
-    }
+    bool rxd_full() { return (ucsra() & (1 << RXC)); }
+    bool txd_empty() { return (ucsra() & (1 << UDRE)); }
 
-/*     int receive_byte(unsigned char *rec_char){ */
-/*         if (data_ready() != 1) */
-/* 	    return -1; */
-/*         *rec_char = udr(); */
-/*         return 1; */
-/*     } */
+    void dtr() { }
+    void rts() { }
+    bool cts() { return true; }
+    bool dsr() { return true; }
+    bool dcd() { return true; }
+    bool ri()  { return true; }
 
-/*     int send_byte(unsigned char send_char){ */
-/*         if (line_empty() != 1)  */
-/* 	    return -1; */
-/* 	udr(send_char); */
-/*         return 1; */
-/*     } */
+    bool overrun_error() { return (ucsra() & (1 << RXC)) ; }
+    bool parity_error()  { return (ucsra() & (1 << UPE)) ; }
+    bool framing_error() { return (ucsra() & (1 << FE)) ; }
 
-    int line_empty(){
-        if (!(ucsra() & UDRE)) return -1;
-        return 1;
-    }
-
-    int data_ready(){
-        if (ucsra() & RXC)
-            return 1;
-        return -1;
-    }
+    char get() { while(!rxd_full()); return rxd(); }
+    void put(char c) { while(!txd_empty()); txd(c); }
 
     static int init(System_Info *si); 
     
@@ -164,35 +155,19 @@ private:
 
     typedef AVR8::Reg8 Reg8;
     typedef AVR8::Reg16 Reg16;
-    
 
-
-//     Reg8 udr(){ return AVR8::in8((_unit == 0) ? UDR0 : UDR1); }
-//     void udr(Reg8 value){ AVR8::out8(((_unit == 0) ? UDR0 : UDR1),value); }   
-//     Reg8 ucsra(){ return AVR8::in8((_unit == 0) ? UCSR0A : UCSR1A); }
-//     void ucsra(Reg8 value){ AVR8::out8(((_unit == 0) ? UCSR0A : UCSR1A),value); } 
-//     Reg8 ucsrb(){ return AVR8::in8((_unit == 0) ? UCSR0B : UCSR1B); }
-//     void ucsrb(Reg8 value){ AVR8::out8(((_unit == 0) ? UCSR0B : UCSR1B),value); } 
-//     Reg8 ucsrc(){ return AVR8::in8((_unit == 0) ? UCSR0C : UCSR1C); }
-//     void ucsrc(Reg8 value){ AVR8::out8(((_unit == 0) ? UCSR0C : UCSR1C),value); } 
-//     Reg8 ubrrl(){ return AVR8::in8((_unit == 0) ? UBRR0L : UBRR1L); }
-//     void ubrrl(Reg8 value){ AVR8::out8(((_unit == 0) ? UBRR0L : UBRR1L),value); } 
-//     Reg8 ubrrh(){ return AVR8::in8((_unit == 0) ? UBRR0H : UBRR1H); }
-//     void ubrrh(Reg8 value){ AVR8::out8(((_unit == 0) ? UBRR0H : UBRR1H),value); } 
-
-
-    static Reg8 udr(){ return AVR8::in8(UDR0); }
-    static void udr(Reg8 value){ AVR8::out8(UDR0,value); }   
-    static Reg8 ucsra(){ return AVR8::in8(UCSR0A); }
-    static void ucsra(Reg8 value){ AVR8::out8(UCSR0A,value); } 
-    static Reg8 ucsrb(){ return AVR8::in8(UCSR0B); }
-    static void ucsrb(Reg8 value){ AVR8::out8(UCSR0B,value); } 
-    static Reg8 ucsrc(){ return AVR8::in8(UCSR0C); }
-    static void ucsrc(Reg8 value){ AVR8::out8(UCSR0C,value); } 
-    static Reg8 ubrrl(){ return AVR8::in8(UBRR0L); }
-    static void ubrrl(Reg8 value){ AVR8::out8(UBRR0L,value); } 
-    static Reg8 ubrrh(){ return AVR8::in8(UBRR0H); }
-    static void ubrrh(Reg8 value){ AVR8::out8(UBRR0H,value); } 
+    Reg8 udr(){ return AVR8::in8((_unit == 0) ? UDR0 : UDR1); }
+    void udr(Reg8 value){ AVR8::out8(((_unit == 0) ? UDR0 : UDR1),value); }   
+    Reg8 ucsra(){ return AVR8::in8((_unit == 0) ? UCSR0A : UCSR1A); }
+    void ucsra(Reg8 value){ AVR8::out8(((_unit == 0) ? UCSR0A : UCSR1A),value); } 
+    Reg8 ucsrb(){ return AVR8::in8((_unit == 0) ? UCSR0B : UCSR1B); }
+    void ucsrb(Reg8 value){ AVR8::out8(((_unit == 0) ? UCSR0B : UCSR1B),value); } 
+    Reg8 ucsrc(){ return AVR8::in8((_unit == 0) ? UCSR0C : UCSR1C); }
+    void ucsrc(Reg8 value){ AVR8::out8(((_unit == 0) ? UCSR0C : UCSR1C),value); } 
+    Reg8 ubrrl(){ return AVR8::in8((_unit == 0) ? UBRR0L : UBRR1L); }
+    void ubrrl(Reg8 value){ AVR8::out8(((_unit == 0) ? UBRR0L : UBRR1L),value); } 
+    Reg8 ubrrh(){ return AVR8::in8((_unit == 0) ? UBRR0H : UBRR1H); }
+    void ubrrh(Reg8 value){ AVR8::out8(((_unit == 0) ? UBRR0H : UBRR1H),value); } 
 
     Reg16 ubrrhl() { 
 	Reg16 value = ubrrl();
