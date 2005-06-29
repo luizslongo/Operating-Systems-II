@@ -99,7 +99,7 @@ template <> struct Traits<PC>: public Traits<void>
     static const unsigned int SYSTEM_STACK_SIZE = 4096;
     static const unsigned int SYSTEM_HEAP_SIZE = 4096;
     static const unsigned int APPLICATION_STACK_SIZE = 4096;
-    static const unsigned int APPLICATION_HEAP_SIZE = 10 * 4096;
+    static const unsigned int APPLICATION_HEAP_SIZE = 40960;
 };
 
 template <> struct Traits<PC_PCI>: public Traits<void>
@@ -123,6 +123,13 @@ template <> struct Traits<PC_UART>: public Traits<void>
     static const unsigned int COM2 = 0x2f8; // to 0x2ff, IRQ3
     static const unsigned int COM3 = 0x3e8; // to 0x3ef, no IRQ
     static const unsigned int COM4 = 0x2e8; // to 0x2ef, no IRQ
+};
+
+template <> struct Traits<Mica2_Display>: public Traits<void>
+{
+    static const int COLUMNS = 80;
+    static const int LINES = 24;
+    static const int TAB_SIZE = 8;
 };
 
 template <> struct Traits<PC_Display>: public Traits<void>
