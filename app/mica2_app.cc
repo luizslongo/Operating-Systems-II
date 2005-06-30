@@ -10,36 +10,23 @@
 
 __USING_SYS
 
-char * string = "Um caracter por segundo.\n";
-
 int main() {
 
-    UART u;
-
-    char * ptr = string;
-
-    unsigned char c;
-    
-    unsigned int count = 0;
-
-    Timer t;
+    Display disp;
+    unsigned char count = 0;
 
     CPU::out8(Machine::IO::DDRA, 0x07);
     CPU::out8(Machine::IO::PORTA, ~0);
 
+
+    Display d;
+
     while(1) {
+	
+	d.puts("This is EPOS-- for Mica2\n");
+	CPU::out8(Machine::IO::PORTA, ~count++);
+	Alarm::delay(1000000);
 
-	char * ptr = string;
-
-	while(*ptr != '\0'){
-
-	    CPU::out8(Machine::IO::PORTA, ~(count++));
-	    Alarm::delay(1000000);
-	    if(count == 8) count = 0; 
-	    u.put(*ptr++);
-
-	}
-	u.put(0x0d);
-	u.put(0x0a);
     }
+
 }
