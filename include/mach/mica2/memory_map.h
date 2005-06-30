@@ -10,28 +10,28 @@ struct Memory_Map<Mica2>
 {
     enum {
 	MEM_BASE =	0,
-	MEM_SIZE =	1024,
+	MEM_SIZE =	4096,
     };
 
     enum {
-	BASE =		0x0000,
-	TOP =		0xffff,
-	APP_LO =	0x0000,
-	APP_CODE =	0x0000,
-	APP_DATA =	0x0000,
-	APP_HI =	0x10ff,
-	PHY_MEM =	0x0000,
-	IO_MEM =	0x0020,
-	SYS =		0x0000,
-	INT_VEC =	0x0000,
+	BASE =		0x000000,
+	TOP =		0x00ffff,
+	APP_LO =	0x000000,
+	APP_CODE =	0x000000,
+	APP_DATA =	0x800150,
+	APP_HI =	0x00ffff,
+	PHY_MEM =	0x800100,
+	IO_MEM =	0x800020,
+	SYS =		0x000000,
+	INT_VEC =	0x000000,
 	SYS_PT =	TOP,
 	SYS_PD =	TOP,
-	SYS_INFO =	0x0800,
-	SYS_CODE =	0x0000,
-	SYS_DATA =	0x0000,
-	SYS_STACK =	0x10ff,
-	MACH1 =		0x0000,
-	MACH2 =		0x0000,
+	SYS_INFO =	0x000100,
+	SYS_CODE =	0x000000,
+	SYS_DATA =	0x800150,
+	SYS_STACK =	0x8010ff,
+	MACH1 =		0x001000,
+	MACH2 =		0x000000,
 	MACH3 =		TOP,
     };
 };
@@ -280,6 +280,49 @@ template <> struct IO_Map<Mica2>
     };
 };
 
+//
+// Memory Map for Atmega128
+//
+// Code Memory
+//
+// 0x0000 -+- - - - - - - - - - - - -+- 
+//         | 			     |
+//         : Fixed Interrupt Vector  :
+//         |                         |
+//        -+- - - - - - - - - - - - -+- 
+//         | 			     |
+//         : APP/SYS CODE            :
+//         |                         |
+// 0xFFFF -+- - - - - - - - - - - - -+-
+//
+// Data Memory
+//
+// 0x0000 -+- - - - - - - - - - - - -+- BASE
+//         | 			     |
+//         : GP Registers            :
+//         |                         |
+// 0x0020 -+- - - - - - - - - - - - -+- IO_MEM
+//         | 			     |
+//         : IO Registers            :
+//         |                         |
+// 0x0100 -+- - - - - - - - - - - - -+- PHY_MEM, SYS_INFO
+//         | 			     |
+//         : System_Info             :
+//         |                         |
+// 0x0150 -+- - - - - - - - - - - - -+- APP_DATA, SYS_DATA
+//         | 			     |
+//         : APP/SYS DATA            :
+//         |                         |
+//         : Interrupt Vector        :  
+//         |                         |
+// 0x???? -+- - - - - - - - - - - - -+- bss_end, FREE
+//         | 			     |
+//         : APP/SYS                 :
+//         |                         |
+//         : HEAP/STACK              :
+//         |                         |
+// 0x10ff -+- - - - - - - - - - - - -+- RAM End
+//
 
 __END_SYS
 
