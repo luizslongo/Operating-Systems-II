@@ -4,7 +4,6 @@
 #define __mica2_h
 
 #include <machine.h>
-#include <mach/mica2/io_map.h>
 #include <arch/avr8/cpu.h>
 #include <arch/avr8/mmu.h>
 #include <mach/mica2/ic.h>
