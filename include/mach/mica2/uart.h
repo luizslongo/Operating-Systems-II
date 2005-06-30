@@ -4,7 +4,7 @@
 #define __mica2_uart_h
 
 #include <uart.h>
-#include <machine.h>
+#include <mach/mica2/memory_map.h>
 
 __BEGIN_SYS
 
