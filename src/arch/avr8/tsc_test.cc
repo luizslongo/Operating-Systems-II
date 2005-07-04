@@ -5,7 +5,6 @@
 
 #include <utility/ostream.h>
 #include <tsc.h>
-#include <framework.h>
 
 __USING_SYS
 

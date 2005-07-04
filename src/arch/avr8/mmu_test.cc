@@ -12,9 +12,9 @@ int main()
 {
     OStream cout;
 
-    cout << "IA32_MMU test\n";
+    cout << "AVR8_MMU test\n";
 
-    IA32_MMU mmu;
+    AVR8_MMU mmu;
 
     return 0;
 }
