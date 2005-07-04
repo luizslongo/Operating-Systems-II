@@ -23,5 +23,6 @@ __USING_SYS
 
 // LIBC Heritage
 extern "C" { void _exit(int s) { Thread::exit(s); for(;;); } }
+extern "C" { void exit(int s) { Thread::exit(s); for(;;); } }
 extern "C" { void __cxa_pure_virtual() { db<void>(ERR) << "__cxa_pure_virtual() called!\n"; Machine::panic(); }}
 
