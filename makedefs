@@ -69,10 +69,10 @@ MEM_SIZE			= $($(MACH)_MEM_SIZE)
 $(MACH_PC)_CC_FLAGS	:=
 $(MACH_PC)_AS_FLAGS	:=
 $(MACH_PC)_LD_FLAGS	:=
-$(MACH_AVRMCU)_CC_FLAGS	:= -mmcu=atmega16 -fno-nonansi-builtins -Wno-inline
+$(MACH_AVRMCU)_CC_FLAGS	:= -mmcu=atmega16 -Wno-inline
 $(MACH_AVRMCU)_AS_FLAGS	:= -mmcu=atmega16
 $(MACH_AVRMCU)_LD_FLAGS	:= -m avr5 
-$(MACH_MICA2)_CC_FLAGS	:= -mmcu=atmega128 -fno-nonansi-builtins -Wno-inline
+$(MACH_MICA2)_CC_FLAGS	:= -mmcu=atmega128 -Wno-inline
 $(MACH_MICA2)_AS_FLAGS	:= -mmcu=atmega128
 $(MACH_MICA2)_LD_FLAGS	:= -m avr5 -L/usr/local/cross-avr/lib/gcc-lib/avr-elf/3.3.2/avr5
 MACH_CC_FLAGS		:= $($(MACH)_CC_FLAGS)
