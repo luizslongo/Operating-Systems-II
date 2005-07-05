@@ -1,6 +1,8 @@
 #ifndef __types_h
 #define __types_h
 
+inline void * operator new(unsigned int s, void * a) { return a; }
+
 __BEGIN_SYS
 
 // Utilities

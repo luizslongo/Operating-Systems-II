@@ -22,14 +22,6 @@ inline void kfree(void * ptr) {
     sys_heap.free(ptr); 
 }
 
-// C++ alloc operations have generated too much trouble while being differently
-// declared inside and outside the system's namespace and therefore have been
-// disabled. In other words, using new and delete for the system heap is no
-// longer allowed. Use new (kmalloc(sizeof(T))) T instead.
-inline void * operator new(unsigned int bytes);
-inline void * operator new[](unsigned int bytes);
-inline void operator delete(void * object);
-
 __END_SYS
 
 #endif

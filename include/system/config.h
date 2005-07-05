@@ -63,10 +63,6 @@ __END_SYS
 //============================================================================
 // THINGS EVERBODY NEEDS
 //============================================================================
-__BEGIN_SYS
-inline void * operator new(unsigned int s, void * a) { return a; }
-__END_SYS
-
 #include <traits.h>
 #include <system/info.h>
 #include <utility/ostream.h>
