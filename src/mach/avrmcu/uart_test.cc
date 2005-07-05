@@ -2,30 +2,18 @@
 
 //#include <utility/ostream.h>
 #include <uart.h>
-//#include <framework.h>
+
 
 __USING_SYS
 
-
-#define PORTB (*(volatile unsigned char *)(0x38)) 
-#define DDRB  (*(volatile unsigned char *)(0x37)) 
-
 int main()
 {
+    OStream cout;
 
-	UART uart;
-	unsigned char c;
+    cout << "AVRMCU_UART test\n";
 
-	DDRB = 0xff;
-	PORTB = 0x33;
-	
-	while(1);
+    AVRMCU_UART uart;
 
-	while (true)
-		if (uart.receive_byte(&c) == 1)	{
-			uart.send_byte(c);
-			PORTB = ~c;
-		}	
-		
-	return 0;
+    return 0;
+
 }

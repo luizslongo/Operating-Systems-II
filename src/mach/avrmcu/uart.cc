@@ -4,6 +4,6 @@
 
 __BEGIN_SYS
 
-unsigned char AVRMCU_UART::__ucsrc;
+//unsigned char AVRMCU_UART::__ucsrc;
 
 __END_SYS

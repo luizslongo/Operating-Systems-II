@@ -1,4 +1,4 @@
-// EPOS-- Serial Declarations
+// EPOS-- Serial Display Declarations
 
 #ifndef __serial_display_h
 #define __serial_display_h
