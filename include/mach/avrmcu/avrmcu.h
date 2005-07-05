@@ -4,10 +4,11 @@
 #define __avrmcu_h
 
 #include <machine.h>
+#include "../common/avr_machine.h"
 #include <arch/avr8/cpu.h>
 #include <arch/avr8/mmu.h>
 #include <mach/avrmcu/ic.h>
-#include <mach/avrmcu/io_map.h>
+#include <mach/avrmcu/memory_map.h>
 #include <mach/avrmcu/adc.h>
 #include <mach/avrmcu/uart.h>
 #include <mach/avrmcu/display.h>
@@ -15,7 +16,7 @@
 
 __BEGIN_SYS
 
-class AVRMCU: public Machine_Common
+class AVRMCU: public AVR_Machine
 {
 private:
     typedef Traits<AVRMCU> Traits;
@@ -45,14 +46,6 @@ public:
 	    interrupt_vector[i] = h;
     }
     
-    template <Handler::Function * h> static void handler_wrapper(){
-    	// Save and restore is performed by the stub function, __vector_handler
-    	h();
-    }
-
-    static void panic() {
-        while(1);
-    }
 
     static int init(System_Info *si);
     

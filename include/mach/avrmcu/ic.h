@@ -4,11 +4,11 @@
 #define __avrmcu_ic_h
 
 #include <ic.h>
-//#include <machine.h>
+#include "../common/avr_ic.h"
 
 __BEGIN_SYS
 
-class AVRMCU_IC: public IC_Common
+class AVRMCU_IC: public AVR_IC
 {
 private:
     typedef Traits<AVRMCU_IC> Traits;
@@ -126,8 +126,6 @@ public:
     AVRMCU_IC()  {};
     ~AVRMCU_IC() {};
     
-    void map(unsigned char b);
-    
     void enable(const Mask & mask) {
         
         if (IRQ0  	 & mask) gicr(gicr() | INT0);
@@ -206,13 +204,10 @@ public:
     
     Mask pending();
     
-    Mask servicing() {return 0;}
-    
     Mask enabled();
     
     Mask disabled(){ return ~enabled(); };
     
-    void eoi(){};
 
     static int init(System_Info *si);
 
@@ -220,117 +215,34 @@ private:
 
     typedef AVR8::Reg8 Reg8;
 
-    static Reg8 gicr(){
-	return AVR8::in8(GICR);
-    }
-    
-    static void gicr(Reg8 value){
-	AVR8::out8(GICR,value);
-    }    
-    
-    static Reg8 gifr(){
-	return AVR8::in8(GIFR);
-    }
-    
-    static void gifr(Reg8 value){
-	AVR8::out8(GIFR,value);
-    } 
-    
-    static Reg8 timsk(){
-	return AVR8::in8(TIMSK);
-    }
-    
-    static void timsk(Reg8 value){
-	AVR8::out8(TIMSK,value);
-    } 
-    
-    static Reg8 tifr(){
-	return AVR8::in8(TIFR);
-    }
-    
-    static void tifr(Reg8 value){
-	AVR8::out8(TIFR,value);
-    } 
-    
-    static Reg8 twcr(){
-	return AVR8::in8(TWCR);
-    }
-    
-    static void twcr(Reg8 value){
-	AVR8::out8(TWCR,value);
-    } 
-    
-    static Reg8 mcucr(){
-	return AVR8::in8(MCUCR);
-    }
-    
-    static void mcucr(Reg8 value){
-	AVR8::out8(MCUCR,value);
-    } 
-    
-    static Reg8 mcucsr(){
-	return AVR8::in8(MCUCSR);
-    }
-    
-    static void mcucsr(Reg8 value){
-	AVR8::out8(MCUCSR,value);
-    } 
-    
-    static Reg8 eecr(){
-	return AVR8::in8(EECR);
-    }
-    
-    static void eecr(Reg8 value){
-	AVR8::out8(EECR,value);
-    } 
-    
-    static Reg8 spsr(){
-	return AVR8::in8(SPSR);
-    }
-    
-    static void spsr(Reg8 value){
-	AVR8::out8(SPSR,value);
-    } 
-    
-    static Reg8 spcr(){
-	return AVR8::in8(SPCR);
-    }
-    
-    static void spcr(Reg8 value){
-	AVR8::out8(SPCR,value);
-    }                                     
-    
-    static Reg8 ucsra(){
-	return AVR8::in8(UCSRA);
-    }
-    
-    static void ucsra(Reg8 value){
-	AVR8::out8(UCSRA,value);
-    }       
-    
-    static Reg8 ucsrb(){
-	return AVR8::in8(UCSRB);
-    }
-    
-    static void ucsrb(Reg8 value){
-	AVR8::out8(UCSRB,value);
-    }       
-    
-    static Reg8 acsr(){
-	return AVR8::in8(ACSR);
-    }
-    
-    static void acsr(Reg8 value){
-	AVR8::out8(ACSR,value);
-    }          
-    
-    static Reg8 adcsra(){
-	return AVR8::in8(ADCSRA);
-    }
-    
-    static void adcsra(Reg8 value){
-	AVR8::out8(ADCSRA,value);
-    }          
+    static Reg8 gicr(){ return AVR8::in8(GICR);  }
+    static void gicr(Reg8 value){ AVR8::out8(GICR,value); }       
+    static Reg8 gifr(){	return AVR8::in8(GIFR);}
+    static void gifr(Reg8 value){AVR8::out8(GIFR,value); }     
+    static Reg8 timsk(){return AVR8::in8(TIMSK); }
+    static void timsk(Reg8 value){AVR8::out8(TIMSK,value); }    
+    static Reg8 tifr(){	return AVR8::in8(TIFR); } 
+    static void tifr(Reg8 value){AVR8::out8(TIFR,value); }     
+    static Reg8 twcr(){	return AVR8::in8(TWCR); }   
+    static void twcr(Reg8 value){ AVR8::out8(TWCR,value); }  
+    static Reg8 mcucr(){return AVR8::in8(MCUCR); }    
+    static void mcucr(Reg8 value){AVR8::out8(MCUCR,value); }    
+    static Reg8 mcucsr(){return AVR8::in8(MCUCSR); }
+    static void mcucsr(Reg8 value){AVR8::out8(MCUCSR,value); }     
+    static Reg8 eecr(){	return AVR8::in8(EECR); }
+    static void eecr(Reg8 value){AVR8::out8(EECR,value); }  
+    static Reg8 spsr(){	return AVR8::in8(SPSR); }  
+    static void spsr(Reg8 value){AVR8::out8(SPSR,value); } 
+    static Reg8 spcr(){ return AVR8::in8(SPCR); }
+    static void spcr(Reg8 value){AVR8::out8(SPCR,value); }                                     
+    static Reg8 ucsra(){return AVR8::in8(UCSRA);  }
+    static void ucsra(Reg8 value){AVR8::out8(UCSRA,value);  }       
+    static Reg8 ucsrb(){return AVR8::in8(UCSRB); }    
+    static void ucsrb(Reg8 value){AVR8::out8(UCSRB,value); }       
+    static Reg8 acsr(){	return AVR8::in8(ACSR); }  
+    static void acsr(Reg8 value){AVR8::out8(ACSR,value); }             
+    static Reg8 adcsra(){return AVR8::in8(ADCSRA); }
+    static void adcsra(Reg8 value){AVR8::out8(ADCSRA,value); }          
         
 };
 
