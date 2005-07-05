@@ -4,6 +4,7 @@
 #define __mica2_h
 
 #include <machine.h>
+#include "../common/avr_machine.h"
 #include <arch/avr8/cpu.h>
 #include <arch/avr8/mmu.h>
 #include <mach/mica2/ic.h>
@@ -14,7 +15,7 @@
 
 __BEGIN_SYS
 
-class Mica2: public Machine_Common
+class Mica2: public AVR_Machine
 {
 private:
     typedef Traits<Mica2> Traits;
@@ -78,15 +79,6 @@ public:
     static void int_handler(int i, Handler::Function * h) {
 	if(i < Traits::INT_VEC_SIZE)
 	    interrupt_vector[i] = h;
-    }
-    
-    template <Handler::Function * h> static void handler_wrapper(){
-    	// Save and restore is performed by the stub function, __vector_handler
-    	h();
-    }
-
-    static void panic() {
-        while(1);
     }
 
     static int init(System_Info *si);

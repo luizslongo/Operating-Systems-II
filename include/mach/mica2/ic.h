@@ -4,11 +4,11 @@
 #define __mica2_ic_h
 
 #include <ic.h>
-#include <machine.h>
+#include "../common/avr_ic.h"
 
 __BEGIN_SYS
 
-class Mica2_IC: public IC_Common
+class Mica2_IC: public AVR_IC
 {
 private:
     typedef Traits<Mica2_IC> Traits;
@@ -154,8 +154,6 @@ public:
     Mica2_IC()  {};
     ~Mica2_IC() {};
     
-    static void map(unsigned char b);
-    
     static void enable(const Mask & mask) {
 
         if (IRQ0  	 & mask) eimsk(eimsk() | INT0);
@@ -252,14 +250,10 @@ public:
     
     static Mask pending();
     
-    static Mask servicing() {return 0;}
-    
     static Mask enabled();
     
     static Mask disabled(){ return ~enabled(); }
     
-    static void eoi(){}
-
     static int init(System_Info *si);
 
 private:
