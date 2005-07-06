@@ -37,16 +37,15 @@ public:
     ~Alarm();
 
     static void master(const Microseconds & time, Handler::Function * handler);
-
     static Hertz frequency() {return _timer.frequency(); }
-
     static void delay(const Microseconds & time);
+
+    static void timer_isr();
 
     static int init(System_Info * si);
 
 private:
     static Microseconds period() { return 1000000 / frequency(); }
-    static void timer_handler(void);
 
 private:
     Tick _ticks;
