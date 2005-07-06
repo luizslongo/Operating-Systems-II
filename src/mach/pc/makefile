@@ -12,6 +12,9 @@ $(LIBSYS):	$(LIBSYS)($(OBJS))
 
 $(LIBINIT):	$(LIBINIT)($(INITS))
 
+pc.o		: pc.cc
+		$(CXX) $(CXXFLAGS) -fomit-frame-pointer $<
+
 test:		$(TESTS)
 
 clean:
