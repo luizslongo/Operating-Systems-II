@@ -252,7 +252,7 @@ int main(char * setup_addr, unsigned int setup_size, char * bi)
     kout << "  Setup:     " << setup_size << " bytes\n";
     kout << "  Init:      " << init_size << " bytes\n";
     kout << "  OS code:   " << sys_code_size << " bytes";
-    kout << "\t\tOS data:   " << sys_data_size << " bytes\n";
+    kout << "\tOS data:   " << sys_data_size << " bytes\n";
     kout << "  APP code:  " << app_code_size << " bytes";
     kout << "\t\tAPP data:  " << app_data_size << " bytes\n";
 
