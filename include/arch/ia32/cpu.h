@@ -307,6 +307,12 @@ public:
     typedef Reg16 IO_Port;
     typedef Reg16 IO_Irq;
 
+    // Interrupt Service Routines
+    typedef void (ISR)();
+
+    // Falut Service Routines
+    typedef void (FSR)(Reg32 error, Reg32 eip, Reg32 cs, Reg32 eflags);
+
 public:
     IA32() {}
 
@@ -380,9 +386,13 @@ public:
 
     static Log_Addr eip() {
 	Log_Addr value;
-	ASMV("	call	1f			\n"
-	     "1:	movl	(%%esp), %0	\n"
-	     "	addl	$4, %%esp" : "=r"(value) : );
+	ASMV("		push	%%eax					\n"
+	     "		call	1f					\n"
+	     "1:	popl	%%eax		# ret. addr.		\n"
+	     "		movl	%%eax,%0				\n"
+	     "		popl	%%eax					\n" 
+	     : "=o"(value)
+	     : );
 	return value;
     }
 
