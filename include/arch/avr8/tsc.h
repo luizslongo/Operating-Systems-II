@@ -15,22 +15,23 @@ class AVR8_TSC: public TSC_Common
 private:
     typedef Traits<AVR8_TSC> Traits;
     static const Type_Id TYPE = Type<AVR8_TSC>::TYPE;
+    typedef IO_Map<Machine> IO;
 
     typedef CPU::Reg8 Reg8;
     typedef CPU::Reg16 Reg16;
     
     // Timer1 Registers
     enum {
-	TCCR1A = Machine::IO::TCCR1A,
-	TCCR1B = Machine::IO::TCCR1B,
-	TCNT1H = Machine::IO::TCNT1H,
-	TCNT1L = Machine::IO::TCNT1L,
-	OCR1AH = Machine::IO::OCR1AH,
-	OCR1AL = Machine::IO::OCR1AL,
-	OCR1BH = Machine::IO::OCR1BH,
-	OCR1BL = Machine::IO::OCR1BL,
-	ICR1H  = Machine::IO::ICR1H,
-	ICR1L  = Machine::IO::ICR1L    
+	TCCR1A = IO::TCCR1A,
+	TCCR1B = IO::TCCR1B,
+	TCNT1H = IO::TCNT1H,
+	TCNT1L = IO::TCNT1L,
+	OCR1AH = IO::OCR1AH,
+	OCR1AL = IO::OCR1AL,
+	OCR1BH = IO::OCR1BH,
+	OCR1BL = IO::OCR1BL,
+	ICR1H  = IO::ICR1H,
+	ICR1L  = IO::ICR1L    
     };
     
     // Timer1 Register Bits
