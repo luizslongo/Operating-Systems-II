@@ -64,7 +64,7 @@ public:
 
 	while(major >= 10) {
 	    digit = '0';
-	    while(v > major) {
+	    while(v >= major) {
 		digit++;
 		v -= major;
 	    }
