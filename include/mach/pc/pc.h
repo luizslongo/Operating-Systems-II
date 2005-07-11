@@ -14,6 +14,7 @@
 #include "rtc.h"
 #include "display.h"
 #include "uart.h"
+#include "sensor.h"
 
 __BEGIN_SYS
 
