@@ -7,11 +7,12 @@
 #include "../common/avr_machine.h"
 #include <arch/avr8/cpu.h>
 #include <arch/avr8/mmu.h>
-#include <mach/avrmcu/ic.h>
-#include <mach/avrmcu/memory_map.h>
-#include <mach/avrmcu/adc.h>
-#include <mach/avrmcu/uart.h>
-#include <mach/avrmcu/display.h>
+#include "ic.h"
+#include "memory_map.h"
+#include "adc.h"
+#include "uart.h"
+#include "display.h"
+#include "sensor.h"
 #include <utility/handler.h>
 
 __BEGIN_SYS
