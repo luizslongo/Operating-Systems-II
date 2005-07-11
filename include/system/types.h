@@ -61,6 +61,11 @@ class PC_Display;
 class AVRMCU_Display;
 class Mica2_Display;
 
+// Hardware Mediators - Sensors
+class Mica2_Temperature_Sensor;
+class Mica2_Light_Sensor;
+class PC_Sensor;
+
 // Abstractions
 class Thread;
 class Active;
@@ -78,6 +83,9 @@ class Alarm;
 class Chronometer;
 
 class Task;
+
+class Photo_Sentient;
+class Temperature_Sentient;
 
 
 // System Components IDs
@@ -122,6 +130,12 @@ enum
     AVRMCU_DISPLAY_ID,
     MICA2_DISPLAY_ID,
 
+    TEMPERATURE_SENSOR_ID,
+    MICA2_TEMPERATURE_SENSOR_ID = TEMPERATURE_SENSOR_ID,
+
+    LIGHT_SENSOR_ID,
+    MICA2_LIGHT_SENSOR_ID = LIGHT_SENSOR_ID,
+
     THREAD_ID,
 
     SEGMENT_ID,
@@ -137,6 +151,9 @@ enum
     CLOCK_ID = TIMEPIECE_ID,
     ALARM_ID,
     CHRONOMETER_ID,
+
+    TEMPERATURE_SENTIENT_ID,
+    PHOTO_SENTIENT_ID,
 
     UNKNOWN_TYPE,
     LAST_TYPE = UNKNOWN_TYPE - 1,
@@ -175,6 +192,10 @@ template<> struct Type<PC_Display> { static const Type_Id TYPE = PC_DISPLAY_ID; 
 template<> struct Type<AVRMCU_Display> { static const Type_Id TYPE = AVRMCU_DISPLAY_ID; };
 template<> struct Type<Mica2_Display> { static const Type_Id TYPE = MICA2_DISPLAY_ID; };
 
+template<> struct Type<Mica2_Temperature_Sensor> { static const Type_Id TYPE = MICA2_TEMPERATURE_SENSOR_ID; };
+
+template<> struct Type<Mica2_Light_Sensor> { static const Type_Id TYPE = MICA2_LIGHT_SENSOR_ID; };
+
 template<> struct Type<Thread> { static const Type_Id TYPE = THREAD_ID; };
 
 template<> struct Type<Segment> { static const Type_Id TYPE = SEGMENT_ID; };
@@ -188,6 +209,9 @@ template<> struct Type<Condition> { static const Type_Id TYPE = CONDITION_ID; };
 template<> struct Type<Clock> { static const Type_Id TYPE = CLOCK_ID; };
 template<> struct Type<Alarm> { static const Type_Id TYPE = ALARM_ID; };
 template<> struct Type<Chronometer> { static const Type_Id TYPE = CHRONOMETER_ID; };
+
+template<> struct Type<Temperature_Sentient> { static const Type_Id TYPE = TEMPERATURE_SENTIENT_ID; };
+template<> struct Type<Photo_Sentient> { static const Type_Id TYPE = PHOTO_SENTIENT_ID; };
 
 __END_SYS
 

@@ -9,6 +9,7 @@
 #include <arch/avr8/mmu.h>
 #include <mach/mica2/ic.h>
 #include <mach/mica2/adc.h>
+#include <mach/mica2/sensor.h>
 #include <mach/mica2/uart.h>
 #include <mach/mica2/display.h>
 #include <utility/handler.h>
