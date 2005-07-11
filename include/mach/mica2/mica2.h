@@ -82,6 +82,15 @@ public:
 	    interrupt_vector[i] = h;
     }
 
+    template <Handler::Function * h> static void isr_wrapper(){
+    	// Save and restore is performed by the stub function, __vector_handler
+    	h();
+    }
+
+    static void panic() {
+        while(1);
+    }
+
     static int init(System_Info *si);
     
 private:
