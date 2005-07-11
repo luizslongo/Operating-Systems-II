@@ -108,9 +108,9 @@ class AVRMCU_ADC: public ADC_Common
     {
         unsigned char mask = admux();
         switch (r){
-            case SYSTEM_REFERENCE:   mask &= ~REFS1 & ~REFS0; 		break; 
-            case EXTERNAL_REFERENCE: mask = (mask & ~REFS1) | REFS0;    break;
-            case INTERNAL_REFERENCE: mask |= REFS1 | REFS0;    		break;
+            case SYSTEM_REF:   mask &= ~REFS1 & ~REFS0; 		break; 
+            case EXTERNAL_REF: mask = (mask & ~REFS1) | REFS0;    break;
+            case INTERNAL_REF: mask |= REFS1 | REFS0;    		break;
         }
         admux(mask);
         return 1;
