@@ -28,6 +28,8 @@ public:
     &RTC::init, \
     &UART::init, \
     &ADC::init, \
+    &Temperature_Sensor::init, \
+    &Light_Sensor::init, \
     &Display::init, \
     &Address_Space::init, \
     &Segment::init, \
