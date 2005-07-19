@@ -10,15 +10,16 @@
 
 __USING_SYS
 
-OStream cout;
-
 int main() {
     unsigned int count = 0;
     CPU::out8(Machine::IO::DDRB,0xff);
 
+    Display display;
+
     while(1){
       CPU::out8(Machine::IO::PORTB,~count++);
-	for(unsigned int i = 0; i < 0xffff; i++);
+      for(unsigned int i = 0; i < 0xffff; i++);
+      display.puts("EPOS\n");
     }
 
     return 0;
