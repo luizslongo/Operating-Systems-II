@@ -148,7 +148,7 @@ private:
     Reg8 ucsrc(){ return (_unit == 0) ? _ucsr0c : AVR8::in8(IO::UCSR1C); }
     void ucsrc(Reg8 value){ 
 	_ucsr0c = value;
-	AVR8::out8(((_unit == 0) ? IO::UCSR0C : IO::UCSR1C),value);
+	AVR8::out8(((_unit == 0) ? IO::UCSR0C : IO::UCSR1C),(value | 1 << URSEL));
     } 
 
     Reg16 ubrrhl() { 
