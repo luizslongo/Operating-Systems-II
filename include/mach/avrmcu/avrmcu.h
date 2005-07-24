@@ -28,9 +28,30 @@ public:
     typedef IO_Map<AVRMCU> IO;
 
     enum {
-    	INT_TIMER1_OVF 	= 8,
-	INT_TSC   = 100,
-	INT_TIMER 	= 19,	
+	INT_RESET        = 0,
+	INT_IRQ0         = 1,
+	INT_IRQ1         = 2,
+	INT_TIMER2_COMP  = 3,
+	INT_TIMER2_OVF   = 4,
+	INT_TIMER1_CAPT  = 5,
+	INT_TIMER1_COMPA = 6,
+	INT_TIMER1_COMPB = 7,
+	INT_TIMER1_OVF   = 8,
+	INT_TIMER0_OVF   = 9,
+	INT_SPI_STC      = 10,
+	INT_USART0_RXC   = 11,
+	INT_USART0_UDRE  = 12,
+	INT_USART0_TXC   = 13,
+	INT_ADC          = 14,
+	INT_EE_RDY       = 15,
+	INT_ANA_COMP     = 16,
+	INT_TWI          = 17,
+	INT_IRQ2         = 18,
+	INT_TIMER0_COMP  = 19,
+	INT_SPM_RDY      = 20,
+
+    	INT_TSC 	 = 100, //not implemented
+	INT_TIMER 	 = INT_TIMER0_COMP
     };
 
 public:
