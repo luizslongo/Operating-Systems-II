@@ -413,19 +413,105 @@ public:
 
 
 
+
     void put(char c){	
 	tx_mode();
-	_spi.put(c);
+	for (int i = 0; i < 5; i++)
+		_spi.put(~0x55);
+	_spi.put(~0xCC);
+	_spi.put(~0x33);
+	_spi.put(~c);
+	_spi.put(~0x55);
     }
 
     char get() {
 	rx_mode();
-	return _spi.get();
+
+	state = IDLE;
+
+	rx_buf_msb = rx_buf_lsb = 0;
+
+	preamble_count = 0;
+
+	sync_count = 0;
+
+	while(1) {
+
+	    unsigned char d = _spi.get();
+
+	    switch(state) {
+	    case IDLE:
+		if ((d == 0xAA) || (d == 0x55)) {
+		    preamble_count++;
+		    if(preamble_count > 2) {
+			preamble_count = sync_count = 0;
+			rx_bit_offset = 0;
+			state = SYNC;
+		    }
+		} else {
+		    preamble_count = 0;
+		}
+		break;
+	    case SYNC:
+		if ((d == 0xAA) || (d == 0x55)) {
+		    rx_buf_msb = d;
+		}
+		else {
+		    switch(sync_count) {
+		    case 0:
+			rx_buf_lsb = d;
+			break;
+		    case 1:
+		    case 2: {
+			unsigned int tmp = (rx_buf_msb << 8) | rx_buf_lsb;
+			rx_buf_msb = rx_buf_lsb;
+			rx_buf_lsb = d;
+			for (int i = 0; i < 8; i++) {
+			    tmp <<= 1;
+			    if (d & 0x80)
+				tmp |= 0x01;
+			    d <<= 1;
+			    if (tmp == 0xCC33) {
+				state = RECV;
+				rx_bit_offset = 7 - i;
+				break;
+			    }
+			}
+			break;
+		    }
+		    default:
+			preamble_count = 0;
+			state = IDLE;
+			break;
+		    }
+		    sync_count++;
+		}
+		break;
+	    case RECV:
+		rx_buf_msb = rx_buf_lsb;
+		rx_buf_lsb = d;
+		return (0x00ff & ((rx_buf_msb << 8) | rx_buf_lsb) >> rx_bit_offset);
+	    }
+
+	}
     }
 
 protected:
     
     SPI _spi;
+
+    enum STATE {
+	IDLE,
+	SYNC,
+	RECV
+    };
+    
+    STATE state;
+    unsigned char rx_buf_lsb;
+    unsigned char rx_buf_msb;
+    unsigned char preamble_count;
+    unsigned char rx_bit_offset;
+    unsigned char sync_count;
 
 };
 
