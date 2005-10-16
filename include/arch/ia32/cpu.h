@@ -353,12 +353,12 @@ public:
 	     "xadd %0, %2" : "=a"(old) : "a"(old), "m"(value)); return old;
     }
 
-    static Reg32 htonl(const Reg32 v)	{
+    static Reg32 htonl(Reg32 v)	{
 	ASMV("bswap %0" : "=r" (v) : "0" (v), "r" (v)); return v;
     }
-    static Reg16 htons(const Reg16 v)	{ return htons_lsb(v); }
-    static Reg32 ntohl(const Reg32 v)	{ return htonl(v); }
-    static Reg16 ntohs(const Reg16 v)	{ return htons(v); }
+    static Reg16 htons(Reg16 v)	{ return htons_lsb(v); }
+    static Reg32 ntohl(Reg32 v)	{ return htonl(v); }
+    static Reg16 ntohs(Reg16 v)	{ return htons(v); }
 
     // IA32 specific methods
 
