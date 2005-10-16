@@ -38,7 +38,7 @@ typedef Traits<PC> TR;
 // Prototypes
 extern "C" { void _start(); }
 int  main(char *, unsigned int, char *);
-void setup_pci(Phy_Addr *, unsigned int *, System_Info *);
+void setup_pci(Phy_Addr *, unsigned int *);
 void setup_gdt(Phy_Addr);
 void setup_idt(Phy_Addr);
 void setup_sys_pt(PMM *, int, int);
@@ -171,12 +171,11 @@ int main(char * setup_addr, unsigned int setup_size, char * bi)
     ic.disable();
 
     // Setup the PCI bus controller
-    Phy_Addr io_mem_phy_addr;
-    unsigned int io_mem_size;
-    setup_pci(&io_mem_phy_addr, &io_mem_size, si);
+    setup_pci(reinterpret_cast<Phy_Addr *>(&si->pmm.io_mem),
+	      &si->pmm.io_mem_size);
     db<Setup>(INF) << "PCI address space={base="
-		   << (void *)io_mem_phy_addr << ",size="
-		   << (void *)io_mem_size << "}\n";
+		   << (void *)si->pmm.io_mem << ",size="
+		   << (void *)(si->pmm.io_mem_size * sizeof(Page)) << "}\n";
 
     // If we didn't get our node's id in the boot image, we'll to try to
     // get if from an eventual BOOPT reply used to boot up the system before
@@ -257,7 +256,6 @@ int main(char * setup_addr, unsigned int setup_size, char * bi)
     kout << "\t\tAPP data:  " << app_data_size << " bytes\n";
 
     // Align and convert the following sizes to pages 
-    io_mem_size   = MMU::pages(io_mem_size);
     sys_code_size = MMU::pages(sys_code_size);
     sys_data_size = MMU::pages(sys_data_size);
     app_code_size = MMU::pages(app_code_size);
@@ -300,7 +298,8 @@ int main(char * setup_addr, unsigned int setup_size, char * bi)
     // = NP/NPTE_PT * sizeof(Page)
     // NP = size of PCI address space in pages
     // NPTE_PT = number of page table entries per page table
-    si->mem_free -= (io_mem_size + MMU::PT_ENTRIES - 1) / MMU::PT_ENTRIES; 
+    si->mem_free -=
+	(si->pmm.io_mem_size + MMU::PT_ENTRIES - 1) / MMU::PT_ENTRIES; 
     si->pmm.io_mem_pts = si->mem_free * sizeof(Page);
 
     // OS code segment (in pages)
@@ -347,7 +346,7 @@ int main(char * setup_addr, unsigned int setup_size, char * bi)
     setup_sys_pt(&si->pmm, sys_code_size, sys_data_size);
 
     // Setup the System Page Directory and map physical memory
-    setup_sys_pd(&si->pmm, si->mem_size, io_mem_phy_addr, io_mem_size);
+    setup_sys_pd(&si->pmm, si->mem_size, si->pmm.io_mem, si->pmm.io_mem_size);
 
     // Set IDTR (limit = 1 x sizeof(Page))
     cpu.idtr(sizeof(Page) - 1, MM::INT_VEC);
@@ -464,67 +463,41 @@ int main(char * setup_addr, unsigned int setup_size, char * bi)
 // Desc: Calculate the PCI address space apperture.
 //
 // Parm: addr <- PCI address space base
-//       size <- PCI address space size
+//       size <- PCI address space size (in pages)
 //	 si   <- IO map
 //------------------------------------------------------------------------
-void setup_pci(Phy_Addr * addr, unsigned int * size, System_Info * si)
+void setup_pci(Phy_Addr * addr, unsigned int * size)
 {
-    si->iomm_size = 0;
-
     PC_PCI pci;
-    if(pci.init(si)) {
-	db<Setup>(WRN) << "Can't initialize the PCI bus!\n";
-	*addr = (void *)0;
-	*size = 0;
-	return;
-    }
 
     // Scan the PCI bus looking for devices with memory mapped regions
     Phy_Addr base = ~0U;
     Phy_Addr top = (void *)0;
     for(int bus = 0; bus <= Traits<PC_PCI>::MAX_BUS; bus++) {
 	for(int dev_fn = 0; dev_fn <= Traits<PC_PCI>::MAX_DEV_FN; dev_fn++) {
+	    PC_PCI::Locator loc(bus, dev_fn);
 	    PC_PCI::Header hdr;
-	    pci.header(PC_PCI::Locator(bus, dev_fn), &hdr);
+	    pci.header(loc, &hdr);
 	    if(hdr) {
-		db<Setup>(INF) << "PCI[" << bus << ":" << (dev_fn >> 3)
-			       << "." << (dev_fn & 7)
-			       << "]={cls=" << hdr.class_id
-			       << ",vid=" << hdr.vendor_id
-			       << ",did=" << hdr.device_id
-			       << ",rev=" << (int)hdr.revision_id;
-		int i;
-		for(i = 0; i < PC_PCI::Region::N; i++) {
-		    if(hdr.region[i].memory && hdr.region[i].size) {
-			db<Setup>(INF)  << ",reg[" << i << "]={b="
-					<< (void *)hdr.region[i].phy_addr
-					<< ",s=" 
-					<< (void *)hdr.region[i].size << "}";
-			si->iomm[si->iomm_size].locator
-			    = hdr.locator.bus << 8 | hdr.locator.dev_fn;
-			si->iomm[si->iomm_size].phy_addr
-			    = hdr.region[i].phy_addr;
-			si->iomm[si->iomm_size].size
-			    = hdr.region[i].size;
-			si->iomm_size++;
-			if(hdr.region[i].phy_addr < base)
-			    base = hdr.region[i].phy_addr;
-			if((hdr.region[i].phy_addr + hdr.region[i].size) >
-			   top)
-			    top = hdr.region[i].phy_addr
-				+ hdr.region[i].size;
+		db<Setup>(INF) << "PCI" << hdr;
+		for(int i = 0; i < PC_PCI::Region::N; i++) {
+		    PC_PCI::Region * reg = &hdr.region[i];
+		    if(*reg) {
+			db<Setup>(INF)  << ",reg[" << i << "]=" << *reg;
+			if(reg->memory) {
+			    if(reg->phy_addr < base)
+				base = reg->phy_addr;
+			    if((reg->phy_addr + reg->size) > top)
+				top = reg->phy_addr + reg->size;
+			}
 		    }
 		}
-		db<Setup>(INF) << "}\n";
+		db<Setup>(INF) << "\n";
 	    }
 	}
     }
     *addr = base;
-    *size = top - base;
-
-    // Fill the IO_Memory_Map in System_Info
-    for(unsigned int i = 0; i < si->iomm_size; i++)
-	si->iomm[i].log_addr = MM::IO_MEM + (si->iomm[i].phy_addr - base);
+    *size = MMU::pages(top - base);
 }
 
 //========================================================================
@@ -697,8 +670,8 @@ void setup_sys_pt(PMM * pmm, int sys_code_size, int sys_data_size)
 //                                                                      
 // Parm: pmm	          -> physical memory map
 // 	 phy_mem_size     -> size of physical memory in Pages          
-// 	 phy_mem_phy_addr -> PCI address space physical address          
-// 	 io_mem_size     -> size of PCI address space	in Pages
+// 	 io_mem_phy_addr  -> PCI address space physical address          
+// 	 io_mem_size      -> size of PCI address space in Pages
 //------------------------------------------------------------------------
 void setup_sys_pd(PMM * pmm, unsigned int phy_mem_size,
 		  Phy_Addr io_mem_phy_addr, unsigned int io_mem_size)
@@ -815,18 +788,15 @@ void setup_lmm(LMM * lmm, Log_Addr app_entry, Log_Addr app_hi)
 //------------------------------------------------------------------------
 void copy_sys_info(System_Info * from, System_Info * to)
 {
-    unsigned int size = sizeof(System_Info) + from->iomm_size
-	* sizeof(System_Info::IO_Memory_Map);
-
     db<Setup>(TRC) << "copy_sys_info(from=" << (void *)from
 		   << ",to=" << (void *)to 
-		   << ",size=" << size << ")\n";
+		   << ",size=" << sizeof(System_Info) << ")\n";
 
-    if(size > sizeof(Page))
+    if(sizeof(System_Info) > sizeof(Page))
 	db<Setup>(WRN) << "System_Info is bigger than a page ("
-		       << size << ")!\n";
+		       << sizeof(System_Info) << ")!\n";
 
-    memcpy((void *)to, (void *)from, size);
+    memcpy((void *)to, (void *)from, sizeof(System_Info));
 }
 
 //========================================================================

@@ -328,7 +328,7 @@ bool parse_config(FILE * cfg_file, Configuration * cfg)
 //=============================================================================
 template<typename T> bool add_boot_map(int fd, System_Info * si)
 {
-    pad(fd, (3 * sizeof(T))); // mem_size, mem_free and iomm_size
+    pad(fd, (2 * sizeof(T))); // mem_size, mem_free
 	
     if(!put_number(fd, static_cast<T>(si->bm.mem_base)))
 	return false;

@@ -9,15 +9,17 @@ __BEGIN_SYS
 
 class System_Info
 {
-public:
-    typedef unsigned int Log_Addr;
-    typedef unsigned int Phy_Addr;
+private:
+    typedef unsigned int LAddr;
+    typedef unsigned int PAddr;
+    typedef unsigned int Size;
 
+public:
     // The information we have at boot time (built up by MKBI)
     struct Boot_Map
     {
-	Phy_Addr mem_base;       // Memory base 
-	unsigned int mem_size;   // Memory size (in bytes)
+	PAddr mem_base;          // Memory base 
+	Size mem_size;          // Memory size (in bytes)
 // 	struct {
 // 	    unsigned int multiprocessor:1;
 // 	    unsigned int multitasking:1;
@@ -29,7 +31,7 @@ public:
 // 	int n_tasks;             // Max number of tasks 
 	short node_id;           // Local node id in SAN (-1 => RARP) 
 	short n_nodes;           // Number of nodes in SAN (-1 => dynamic) 
-	unsigned int img_size;   // Boot image size (in bytes)
+	Size img_size;           // Boot image size (in bytes)
 	int setup_off;           // Image offsets (-1 => not present) 
 	int init_off; 
 	int system_off; 
@@ -40,67 +42,69 @@ public:
     // Physical Memory Map (built up by SETUP)
     struct Physical_Memory_Map
     {
-	Phy_Addr app_lo;        // Application memory's lowest address
-	Phy_Addr app_hi;        // Application memory's highest address
- 	Phy_Addr img;           // Extra applications in the Boot Image
- 	unsigned img_size;      // Extra applications size
-	Phy_Addr int_vec;       // Interrupt Vector
-	Phy_Addr sys_pt;        // System Page Table
-	Phy_Addr sys_pd;        // System Page Directory
-	Phy_Addr sys_info;      // System Info
-	Phy_Addr phy_mem_pts;   // Page tables to map the whole physical memory
-	Phy_Addr io_mem_pts;    // Page tables to map the IO address space 
-	Phy_Addr sys_code;      // OS Code Segment
-	Phy_Addr sys_data;      // OS Data Segment
-	Phy_Addr sys_stack;     // OS Stack Segment
-	Phy_Addr free;          // Free memory base
-	unsigned int free_size; // Free memory size (in frames)
-	Phy_Addr mach1;         // Machine specific entries
-	Phy_Addr mach2;
-	Phy_Addr mach3;
+	PAddr app_lo;        // Application memory's lowest address
+	PAddr app_hi;        // Application memory's highest address
+ 	PAddr img;           // Extra applications in the Boot Image
+ 	Size img_size;       // Extra applications size
+	PAddr int_vec;       // Interrupt Vector
+	PAddr sys_pt;        // System Page Table
+	PAddr sys_pd;        // System Page Directory
+	PAddr sys_info;      // System Info
+	PAddr phy_mem_pts;   // Page tables to map the whole physical memory
+	PAddr io_mem_pts;    // Page tables to map the I/O address space 
+	PAddr sys_code;      // OS Code Segment
+	PAddr sys_data;      // OS Data Segment
+	PAddr sys_stack;     // OS Stack Segment
+	PAddr free;          // Free memory base
+	Size free_size;      // Free memory size (in frames)
+	PAddr io_mem;        // Memory mapped I/O base address
+	Size io_mem_size;    // Memory mapped I/O size (in frames)
+	PAddr mach1;         // Machine specific entries
+	PAddr mach2;
+	PAddr mach3;
     };
 
     // Logical Memory Map (built up by MKBI and SETUP)
     struct Logical_Memory_Map
     {
-// 	Log_Addr base;            // Lowest valid logical address
-// 	Log_Addr top;             // Highest valid logical address
-// 	Log_Addr app_lo;          // Application memory lowest address
-	Log_Addr app_entry;       // First application's entry point
-// 	Log_Addr app_code;        // First application's code segment address
-// 	Log_Addr app_data;        // First application's data segment address
-	Log_Addr app_hi;          // Application memory highest address
-// 	Log_Addr phy_mem;         // Whole physical memory (contiguous)
-// 	Log_Addr io_mem;          // IO address space 
-// 	Log_Addr int_vec;         // Interrupt Vector
-// 	Log_Addr sys_pt;          // System Page Table
-// 	Log_Addr sys_pd;          // System Page Directory
-// 	Log_Addr sys_info;        // System Info
-// 	Log_Addr sys_code;        // OS Code Segment
-// 	Log_Addr sys_data;        // OS Data Segment
-// 	Log_Addr sys_stack;       // OS Stack Segment
-// 	Log_Addr mach1;           // Machine specific entries
-// 	Log_Addr mach2;
-// 	Log_Addr mach3;
+// 	LAddr base;            // Lowest valid logical address
+// 	LAddr top;             // Highest valid logical address
+// 	LAddr app_lo;          // Application memory lowest address
+	LAddr app_entry;       // First application's entry point
+// 	LAddr app_code;        // First application's code segment address
+// 	LAddr app_data;        // First application's data segment address
+	LAddr app_hi;          // Application memory highest address
+// 	LAddr phy_mem;         // Whole physical memory (contiguous)
+// 	LAddr io_mem;          // IO address space 
+// 	LAddr int_vec;         // Interrupt Vector
+// 	LAddr sys_pt;          // System Page Table
+// 	LAddr sys_pd;          // System Page Directory
+// 	LAddr sys_info;        // System Info
+// 	LAddr sys_code;        // OS Code Segment
+// 	LAddr sys_data;        // OS Data Segment
+// 	LAddr sys_stack;       // OS Stack Segment
+// 	LAddr mach1;           // Machine specific entries
+// 	LAddr mach2;
+// 	LAddr mach3;
     };
 
-    // I/O Device mapping information
-    struct IO_Memory_Map
-    {
-	int locator;
-	Phy_Addr phy_addr;
-	Log_Addr log_addr;
-	unsigned int size;
-    };
+//     // I/O Device mapping information
+//     struct IO_Memory_Map
+//     {
+// 	int locator;
+// 	PAddr phy_addr;
+// 	LAddr log_addr;
+// 	unsigned int size;
+//     };
     
 public:
-    unsigned int mem_size;   // Memory size (in pages)
-    unsigned int mem_free;   // Free memory (in pages)
-    unsigned int iomm_size;
+    Size mem_size;   // Memory size (in pages)
+    Size mem_free;   // Free memory (in pages)
+//    unsigned int iomm_size;
     Boot_Map bm;
     Physical_Memory_Map pmm;
     Logical_Memory_Map lmm;
-    IO_Memory_Map iomm[];
+//    IO_Memory_Map iomm[];
 };
 
 template <class Machine>

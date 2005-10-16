@@ -32,16 +32,7 @@ Initializer::Initializer(System_Info * si)
 {
     db<Init>(INF)  << "si(" << (void *)si << ")={msize=" << si->mem_size 
 		   << ",free=" << si->mem_free << "}\n";
-    
 
-    db<Init>(INF) << "iomm_size = " << (void*)si->iomm_size << "\n";
-    for(unsigned int i = 0; i < si->iomm_size; i++)
-	db<Init>(INF) << "iomm[" << i
-		      << "]={loc=" << (void *)si->iomm[i].locator
-		      << ",phy=" << (void *)si->iomm[i].phy_addr
-		      << ",log=" <<  (void *)si->iomm[i].log_addr
-		      << ",size=" << si->iomm[i].size << "}\n";
-        
     // Initialize the system's heap
     sys_heap.free(&_sys_heap, Traits<Machine>::SYSTEM_HEAP_SIZE);
 
