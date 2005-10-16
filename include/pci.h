@@ -182,11 +182,19 @@ public:
 
 	Locator() {}
 	Locator(Reg8 b, Reg8 d) : bus(b), dev_fn(d) {}
+	Locator(Reg8 b, Reg8 d, Reg8 f) : bus(b), dev_fn((d << 3) | f) {}
 
 	operator bool() { return (bus != INVALID); }
 
+	friend Debug & operator << (Debug & db, const Locator & l) {
+	    db << "{" << l.bus 
+	       << ":" << (l.dev_fn >> 3)
+	       << "." << (l.dev_fn & 0x07) << "}";
+	    return db;
+	}
+
 	Reg8 bus;
-	Reg8 dev_fn;
+	Reg8 dev_fn; // dev = 5 bits, fn = 3 bits
     };
 
     struct Region {
@@ -194,14 +202,32 @@ public:
 
 	operator bool() { return (size != 0); }
 
+	friend Debug & operator << (Debug & db, const Region & r) {
+	    db << "{" << (r.memory ? "mem" : "io")
+	       << ",phy=" << r.phy_addr;
+	    if(r.memory)
+		db << ",log=" << r.log_addr;
+	    db << ",size=" << (void *)r.size << "}";
+	    return db;
+	}
+
 	bool memory;
-	Log_Addr log_addr;
 	Phy_Addr phy_addr;
+	Log_Addr log_addr;
 	Reg32 size;
     };
 
     struct Header {
 	operator bool() { return locator; }
+
+	friend Debug & operator << (Debug & db, const Header & h) {
+	    db << "{loc=" << h.locator
+	       << ",vnd_id=" << h.vendor_id
+	       << ",dev_id=" << h.device_id
+	       << ",cmd=" << h.command
+	       << ",stat=" << h.status << "}";
+	    return db;
+	}
 
 	Locator locator;
 	Vendor_Id vendor_id;
