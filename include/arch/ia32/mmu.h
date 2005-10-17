@@ -43,6 +43,7 @@ public:
 	    IO   = 0x800, // User Def. (0=memory, 1=I/O)
 	    SYS = (PRE | RW  | ACC),
 	    APP = (PRE | RW  | ACC | USR),
+	    DMA = (SYS | PCD | CT),
 	    PCI = (SYS | PCD | IO)
 	};
 
@@ -193,7 +194,7 @@ public:
 	
 	Page_Table * pd() const { return _pd; }
 
-	void activate() { CPU::pdp(reinterpret_cast<CPU::Reg32>(_pd)); }
+	void activate() { IA32::pdp(reinterpret_cast<IA32::Reg32>(_pd)); }
 
 	Log_Addr attach(const Chunk & chunk) {
 	    for(unsigned int i = 0; i < PD_ENTRIES; i++)
@@ -250,6 +251,33 @@ public:
 
     private:
 	Page_Directory * _pd;
+    };
+
+    // DMA_Buffer
+    class DMA_Buffer: public Chunk
+    {
+    public:
+	DMA_Buffer(unsigned int size) 
+	    : Chunk(size, IA32_Flags::DMA),
+	      _size(size),
+	      _phy_addr(phy_address()), 
+	      _log_addr(_phy_addr | PHY_MEM) {}
+	DMA_Buffer(unsigned int size, Log_Addr addr) 
+	    : Chunk(size, IA32_Flags::DMA),
+	      _size(size),
+	      _phy_addr(phy_address()), 
+	      _log_addr(_phy_addr | PHY_MEM) {
+	    memcpy(_log_addr, addr, size);
+	}
+	
+	unsigned int size() { return _size; }
+	Phy_Addr phy_addr() { return _phy_addr; }
+	Log_Addr log_addr() { return _log_addr; }
+	
+    private:
+	unsigned int _size;
+	Phy_Addr _phy_addr;
+	Log_Addr _log_addr;
     };
 
 public:
