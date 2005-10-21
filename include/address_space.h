@@ -20,12 +20,18 @@ private:
     typedef MMU::Directory Directory;
 
 public:
+    // For self reference constructor
+    enum Self { SELF };
+
+public:
     Address_Space() {
 	db<Address_Space>(TRC) << "Address_Space() [Directory::pd=" 
 			       << Directory::pd() << "]\n";
     }
-    Address_Space(MMU::Page_Directory * pd) : Directory(pd) {
-	db<Address_Space>(TRC) << "Address_Space(pd=" << pd << "\n";
+    Address_Space(const Self & s)
+	: Directory(reinterpret_cast<MMU::Page_Table *>(CPU::pdp())) {
+ 	db<Address_Space>(TRC) << "Address_Space(SELF,pd=" << CPU::pdp() 
+			       << ")\n";
     }
     ~Address_Space() {
 	db<Address_Space>(TRC) << "~Address_Space() [Directory::pd=" 
