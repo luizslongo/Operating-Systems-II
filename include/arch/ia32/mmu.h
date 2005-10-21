@@ -21,7 +21,6 @@ private:
     typedef Grouping_List<Frame> List;
 
     static const unsigned int PHY_MEM = Memory_Map<Machine>::PHY_MEM;
-    static const unsigned int SYS_PT  = Memory_Map<Machine>::PHY_MEM;
 
 public:
     // Page Flags
@@ -125,8 +124,7 @@ public:
         Chunk() {}
         Chunk(unsigned int bytes, Flags flags)
 	    : _from(0), _to(pages(bytes)), _pts(page_tables(_to - _from)),
-	      _flags(IA32_Flags(flags)), _pt(calloc(_pts))
-	{
+	      _flags(IA32_Flags(flags)), _pt(calloc(_pts)) {
 	    if(flags & IA32_Flags::CT)
 		_pt->map_contiguous(_from, _to, _flags);
 	    else 
@@ -134,8 +132,7 @@ public:
 	}
 	Chunk(Phy_Addr phy_addr, unsigned int bytes, Flags flags)
 	    : _from(0), _to(pages(bytes)), _pts(page_tables(_to - _from)),
-	      _flags(IA32_Flags(flags)), _pt(calloc(_pts))
-        {
+	      _flags(IA32_Flags(flags)), _pt(calloc(_pts)) {
 	    _pt->remap(phy_addr, _from, _to, flags);
 	}
 	~Chunk() {
@@ -153,7 +150,8 @@ public:
 	Page_Table * pt() const { return _pt; }
 	unsigned int size() const { return (_to - _from) * sizeof(Page); }
 	Phy_Addr phy_address() const {
-	    return (_flags & IA32_Flags::CT) ? (*_pt)[_from] : Phy_Addr(false);
+	    return (_flags & IA32_Flags::CT) ?
+		Phy_Addr(indexes((*_pt)[_from])) : Phy_Addr(false);
 	}
 
 	int resize(unsigned int amount) {
@@ -185,12 +183,12 @@ public:
     class Directory 
     {
     public:
-	Directory() : _pd(calloc(1)) {
+	Directory() : _pd(calloc(1)), _free(true) {
 	    for(unsigned int i = 0; i < PD_ENTRIES; i++)
 		(*_pd)[i] = (*_master)[i];
 	}
-	Directory(Page_Directory * pd) : _pd(pd) {}
-	~Directory() { free(_pd); }
+	Directory(Page_Directory * pd) : _pd(pd), _free(false) {}
+	~Directory() { if(_free) free(_pd); }
 	
 	Page_Table * pd() const { return _pd; }
 
@@ -251,32 +249,25 @@ public:
 
     private:
 	Page_Directory * _pd;
+	bool _free;
     };
 
     // DMA_Buffer
     class DMA_Buffer: public Chunk
     {
     public:
-	DMA_Buffer(unsigned int size) 
-	    : Chunk(size, IA32_Flags::DMA),
-	      _size(size),
-	      _phy_addr(phy_address()), 
-	      _log_addr(_phy_addr | PHY_MEM) {}
-	DMA_Buffer(unsigned int size, Log_Addr addr) 
-	    : Chunk(size, IA32_Flags::DMA),
-	      _size(size),
-	      _phy_addr(phy_address()), 
-	      _log_addr(_phy_addr | PHY_MEM) {
-	    memcpy(_log_addr, addr, size);
+	DMA_Buffer(unsigned int s) : Chunk(s, IA32_Flags::DMA) {
+	    Directory dir(current());
+	    _log_addr = dir.attach(*this);
+	    db<IA32_MMU>(TRC) << "IA32_MMU::DMA_Buffer(phy=" << phy_address()
+			      << ",log=" << log_address()
+			      << ",size=" << size()
+			      << ",flags=" << flags() << ")\n";
 	}
 	
-	unsigned int size() { return _size; }
-	Phy_Addr phy_addr() { return _phy_addr; }
-	Log_Addr log_addr() { return _log_addr; }
-	
+	Log_Addr log_address() const { return _log_addr; }
+
     private:
-	unsigned int _size;
-	Phy_Addr _phy_addr;
 	Log_Addr _log_addr;
     };
 
