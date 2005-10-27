@@ -13,9 +13,9 @@ protected:
     IC_Common() {};
 
 public:
-    // Interrupt Mask
-    typedef unsigned long Mask;
-    enum {ALL = 0xffffffff};
+    // Hardware interrupt number
+    typedef int IRQ;
+    enum {ALL = -1};
 };
 
 __END_SYS

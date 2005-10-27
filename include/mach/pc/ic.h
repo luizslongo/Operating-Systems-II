@@ -13,7 +13,10 @@ private:
     typedef Traits<PC_IC> Traits;
     static const Type_Id TYPE = Type<PC_IC>::TYPE;
 
-    static const unsigned char INT_BASE = __SYS(Traits)<PC>::INT_BASE;
+    static const unsigned int HARD_INT = __SYS(Traits)<PC>::HARD_INT;
+
+    typedef CPU::Reg8 Reg8;
+    typedef CPU::Reg16 Reg16;
 
     // 8259A I/O Ports
     enum {
@@ -34,31 +37,24 @@ private:
 
 public:
     // IRQs
+    static const unsigned int IRQS = 16;
     enum {
-	IRQ0		= 0x1,
-	IRQ1		= 0x2,
-	IRQ2		= 0x4,
-	IRQ3		= 0x8,
-	IRQ4		= 0x10,
-	IRQ5		= 0x20,
-	IRQ6		= 0x40,
-	IRQ7		= 0x80,
-	IRQ8		= 0x100,
-	IRQ9		= 0x200,
-	IRQ10		= 0x400,
-	IRQ11		= 0x800,
-	IRQ12		= 0x1000,
-	IRQ13		= 0x2000,
-	IRQ14		= 0x4000,
-	IRQ15		= 0x8000,
-	IRQ_TIMER	= IRQ0,
-	IRQ_KEYBOARD	= IRQ1
+	IRQ_TIMER	= 0,
+	IRQ_KEYBOARD	= 1,
+	IRQ_CASCADE	= 2
     };
 
 public:
     PC_IC() {}
 
-    static void remap(unsigned char base = INT_BASE) {
+    static void enable() { imr(0); }
+    static void enable(IRQ irq) { imr(imr() & ~(1 << irq)); }
+    static void disable() { imr(0xffff); }
+    static void disable(IRQ irq) { imr(imr() | (1 << irq)); }
+
+    // 8259A specific methods
+
+    static void remap(Reg8 base) { // Reconfigure
 	// Configure Master PIC
 	IA32::out8(MASTER_CMD, ICW1);
 	IA32::out8(MASTER_IMR, base); // ICW2 is the base
@@ -71,36 +67,28 @@ public:
 	IA32::out8(SLAVE_IMR, 0x02);     // ICW3 = cascaded from IRQ1	
 	IA32::out8(SLAVE_IMR, ICW4);  
     }
-    static void enable(const Mask & mask = ALL) {
-	IA32::out8(MASTER_IMR, IA32::in8(MASTER_IMR) & ~(unsigned char)mask);
-	IA32::out8(SLAVE_IMR, IA32::in8(SLAVE_IMR) 
-		   & ~(unsigned char)(mask >> 8));
-    }
-    static void disable(const Mask & mask = ALL) {
-	IA32::out8(MASTER_IMR, IA32::in8(MASTER_IMR) | (unsigned char)mask);
-	IA32::out8(SLAVE_IMR, IA32::in8(SLAVE_IMR) 
-		   | (unsigned char)(mask >> 8));
-    }
-    static Mask pending() { // 8259A IRR
+
+    static Reg16 irr() { // Pending interrupts
 	IA32::out8(MASTER_CMD, SELECT_IRR);
 	IA32::out8(SLAVE_CMD, SELECT_IRR);
 	return IA32::in8(MASTER_CMD) | (IA32::in8(SLAVE_CMD) << 8);
     }
-    static Mask servicing() { // 8259A ISR
+    static Reg16 isr() { // In-service interrupts
 	IA32::out8(MASTER_CMD, SELECT_ISR);
 	IA32::out8(SLAVE_CMD, SELECT_ISR);
 	return IA32::in8(MASTER_CMD) | (IA32::in8(SLAVE_CMD) << 8);
     }
-    static Mask disabled() { // 8259A IMR
+    static Reg16 imr() { // Interrupt mask
 	return IA32::in8(MASTER_IMR) | (IA32::in8(SLAVE_IMR) << 8);
     }
-    static Mask enabled() {
-	return ~disabled();
+    static void imr(Reg16 mask) {
+	IA32::out8(MASTER_IMR, mask);
+	IA32::out8(SLAVE_IMR, mask >> 8);
     }
-    static void eoi() {
-	IA32::out8(MASTER_CMD, EOI); // always send EOI to master
-	if((servicing() & 0x0004) != 0) // was it an slave PIC interrupt?
+    static void eoi() { // End of interrupt
+	if(isr() & 0x0004) // was it an slave PIC interrupt?
 	    IA32::out8(SLAVE_CMD, EOI);
+	IA32::out8(MASTER_CMD, EOI); // always send EOI to master
     }
 
     static int init(System_Info * si);
