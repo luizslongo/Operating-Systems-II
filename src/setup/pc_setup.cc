@@ -50,6 +50,7 @@ void page_fault(Reg32, Reg32, Reg32, Reg32, Reg32, Reg32);
 void gpf(Reg32, Reg32, Reg32, Reg32, Reg32, Reg32);
 void fpu();
 void syscall();
+void hard_int();
 void panic();
 
 __BEGIN_SYS
@@ -167,7 +168,7 @@ int main(char * setup_addr, unsigned int setup_size, char * bi)
     // entries are assigned to internal exceptions in the i[x>1]86
     // We'll remap interrupts to IDT_HARD_INT and then disable them
     PC_IC ic;
-    ic.remap();
+    ic.remap(TR::HARD_INT);
     ic.disable();
 
     // Setup the PCI bus controller
@@ -365,7 +366,7 @@ int main(char * setup_addr, unsigned int setup_size, char * bi)
 
     db<Setup>(INF) << "CR0=" << (void *)cpu.cr0() << "\n";
     db<Setup>(INF) << "CR3=" << (void *)cpu.cr3() << "\n";
-
+    
     // The following relative jump is to break the IA32 pre-fetch queue
     // (in case cr0() was a macro and didn't do it when returning)
     // and also to start using logical addresses
@@ -436,10 +437,9 @@ int main(char * setup_addr, unsigned int setup_size, char * bi)
     // Startup the FPU 
     // cpu.init_fpu();
 
-    // Enable the Interrupt Controller to propagate interrups but keep
-    // them disabled on the CPU
-    cpu.int_disable();
-    ic.enable();
+    // Enable the Interrupt Controller to propagate interrups but the timer
+    ic.enable(~IC::IRQ_TIMER);
+    cpu.int_enable();
 
     // SETUP ends here
     if(has_init) 
@@ -519,6 +519,7 @@ void setup_idt(Phy_Addr addr)
     Log_Addr page_fault_h = (unsigned int)&page_fault | MM::PHY_MEM;
     Log_Addr fpu_h = (unsigned int)&fpu | MM::PHY_MEM;
     Log_Addr syscall_h = (unsigned int)&syscall | MM::PHY_MEM;
+    Log_Addr hard_int_h = (unsigned int)&hard_int | MM::PHY_MEM;
 
     // Map all handlers to panic()
     IDT_Entry * idt = (IDT_Entry *)(unsigned int)addr;
@@ -537,7 +538,11 @@ void setup_idt(Phy_Addr addr)
     idt[Traits<PC>::SYSCALL_INT] = IDT_Entry(CPU::GDT_SYS_CODE, syscall_h,
 					     CPU::SEG_IDT_ENTRY);
 
-    db<Setup>(INF) << "IDT[0]=" << idt[0] << " (" << (void *)&panic << ")\n";
+    // Catch hardware interrupts
+    for(unsigned int i = TR::HARD_INT; i < TR::HARD_INT + PC_IC::IRQS; i++)
+	idt[i] = IDT_Entry(CPU::GDT_SYS_CODE, hard_int_h, CPU::SEG_IDT_ENTRY);
+
+    db<Setup>(INF) << "IDT[0]=" << idt[0] << " (" << panic_h << ")\n";
 }
 
 //========================================================================
@@ -891,11 +896,25 @@ void fpu()
 //========================================================================
 // syscall                                                              
 //                                                                      
-// Desc: FPU exception handler.				   	        
+// Desc: Linux lost syscall handler.
 //------------------------------------------------------------------------
 void syscall()
 {  
     db<Setup>(ERR) << "System call invoked but no OS kernel loaded (yet)!\n";
+
+    panic();
+}
+
+//========================================================================
+// hard_int                                                              
+//                                                                      
+// Desc: Hardware triggered interrupt catcher.
+
+//------------------------------------------------------------------------
+void hard_int()
+{  
+    db<Setup>(ERR) 
+	<< "Hardware interrupt occurred, but no handler was installed!\n";
 
     panic();
 }
