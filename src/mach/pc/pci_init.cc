@@ -13,6 +13,7 @@ int PC_PCI::init(System_Info * si)
     int ret = 0;
 
     IA32::int_disable();
+
     IA32::out8(0xCFB, 0x01);
     Reg32 tmp = IA32::in32(CONFADDR);
     IA32::out32(CONFADDR, 0x80000000);
@@ -20,7 +21,7 @@ int PC_PCI::init(System_Info * si)
 	ret = -1;
     IA32::out32(CONFADDR, tmp);
 
-//    IA32::int_enable();
+    IA32::int_enable();
 
     return ret;
 }
