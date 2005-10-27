@@ -89,6 +89,15 @@ public:
 	return addr >> DIRECTORY_SHIFT;
     }
 
+    static Log_Addr align32(Log_Addr addr) {
+        return (addr + 3) & ~3;
+    }
+    static Log_Addr align64(Log_Addr addr) {
+        return (addr + 7) & ~7;
+    }
+    static Log_Addr align128(Log_Addr addr) {
+        return (addr + 15) & ~15;
+    }
     static Log_Addr align_page(Log_Addr addr) {
         return (addr + sizeof(Page) - 1) & ~(sizeof(Page) - 1);
     }
