@@ -38,7 +38,8 @@ public:
     enum {
 	HIGH = 0,
 	NORMAL = 15,
-	LOW = 31
+	LOW = 30,
+	IDLE = 31
     };
 
 public:

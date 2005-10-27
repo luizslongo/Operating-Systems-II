@@ -17,7 +17,7 @@ int Thread::init(System_Info * si)
     _running = 	new(malloc(sizeof(Thread))) 
 	Thread(reinterpret_cast<int (*)()>(si->lmm.app_entry), RUNNING);
 
-    _idle = new(malloc(sizeof(Thread))) Thread(&idle, READY, LOW);
+    _idle = new(malloc(sizeof(Thread))) Thread(&idle, READY, IDLE);
 
     _running->_context->load();
 
