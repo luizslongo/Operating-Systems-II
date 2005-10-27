@@ -44,6 +44,7 @@ public:
 
     // Exceptions
     enum {
+	EXC_BASE        = 0x00,
 	EXC_DIV0	= 0x00,
 	EXC_DEBUG	= 0x01,
 	EXC_NMI		= 0x02,
@@ -354,7 +355,7 @@ public:
     }
 
     static Reg32 htonl(Reg32 v)	{
-	ASMV("bswap %0" : "=r" (v) : "0" (v), "r" (v)); return v;
+ 	ASMV("bswap %0" : "=r" (v) : "0" (v), "r" (v)); return v;
     }
     static Reg16 htons(Reg16 v)	{ return htons_lsb(v); }
     static Reg32 ntohl(Reg32 v)	{ return htonl(v); }
