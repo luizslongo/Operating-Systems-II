@@ -14,13 +14,15 @@ int Alarm::init(System_Info * si)
 
     CPU::int_disable();
 
-    Machine::int_handler(Machine::INT_TIMER, 
-			 &Machine::isr_wrapper<timer_isr>);
+    Machine::int_handler(Machine::INT_TIMER, &Machine::isr_wrapper<timer_isr>);
 
     _timer.frequency(FREQUENCY);
     _timer.enable();
+    
+    IC::enable(IC::IRQ_TIMER);
 
     CPU::int_enable();
+
     return 0;
 }
 
