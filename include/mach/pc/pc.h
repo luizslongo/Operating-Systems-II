@@ -24,16 +24,17 @@ private:
     typedef Traits<PC> Traits;
     static const Type_Id TYPE = Type<PC>::TYPE;
 
-    static const int SYSCALL_INT = Traits::SYSCALL_INT;
+    static const unsigned int HARD_INT = Traits::HARD_INT;
+    static const unsigned int SYSCALL_INT = Traits::SYSCALL_INT;
     
     typedef IA32::Reg32 Reg32;
     typedef IA32::ISR ISR;
     typedef IA32::FSR FSR;
 
 public:
-    // Interrupts
+    // Hardware Interrupts
     enum {
-   	INT_BASE        = Traits::INT_BASE,
+	INT_BASE        = HARD_INT,
         INT_TIMER       = INT_BASE + 0,
         INT_KEYBOARD    = INT_BASE + 1
     };        
@@ -85,19 +86,27 @@ void PC::isr_wrapper()
 {
     // Flags are implicitly pushed by the CPU's interrupt dispatcher
     // Interrupts are kept enabled (driver can disable it if necessary)
-    ASM("pushal");
-    ASM("call *%0" : : "r"(r));
-    // Send EOI to the PIC (what about the cascaded PIC?
-    ASM("movb	$0x20, %al\n" 
-  	"outb	%al, $0x20\n"); 
-    ASM("popal");
-    ASM("iret");
+    ASM("	pushal			# save regs	\n");
+    ASM("	call	*%0		# call ISR	\n" : : "r"(r));
+    ASM("	movb	$0x0b, %al	# which IRQ?	\n"
+	"	outb	%al, $0x20			\n"
+	"	inb	$0x20, %al	# -> IRQ	\n"
+	"	andb    $4, %al		# IRQ2 (slave)?	\n"
+	"	testb	%al, %al			\n"
+	"	je	.L1				\n"
+	"	movb	$0x20, %al	# EIO		\n" 
+	"	outb	%al, $0xa0	# EOI -> slave	\n" 
+	".L1:	movb	$0x20, %al	# EIO		\n" 
+ 	"	outb	%al, $0x20	# EOI -> master	\n");
+    ASM("	popal			# restore regs	\n"
+	"	iret					\n");
 }
 
 template <PC::FSR * r>
 void PC::fsr_wrapper() {
-    ASM("call *%0" : : "r"(r));
-    ASM("iret");
+    ASM("	call	*%0						\n"
+	"	iret							\n"
+	: : "r"(r));
 }
 
 typedef PC Machine;
