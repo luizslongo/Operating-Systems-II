@@ -15,18 +15,18 @@ int PC::init(System_Info * si)
 {
     db<PC>(TRC) << "PC::init()\n";
 
-    // Set all ISRs to int_not()
-    for(int i = 0; i <= IA32::EXC_LAST; i++)
- 	int_handler(i, PC::isr_wrapper<int_not>);
-
-    // Set all FSRs to panic()
-    for(int i = IA32::EXC_LAST + 1; i < IA32::IDT_ENTRIES; i++)
- 	int_handler(i, PC::fsr_wrapper<exc_not>);
+    // Set all IDT entries to panic()
+    for(int i = 0; i < IA32::IDT_ENTRIES; i++)
+ 	int_handler(i, fsr_wrapper<exc_not>);
     
+    // Set all ISRs to int_not()
+    for(unsigned int i = INT_BASE; i <= INT_BASE + IC::IRQS; i++)
+ 	int_handler(i, isr_wrapper<int_not>);
+
     // Reset some important FSRs
-    int_handler(IA32::EXC_PF,    PC::fsr_wrapper<exc_pf>);
-    int_handler(IA32::EXC_GPF,   PC::fsr_wrapper<exc_gpf>);
-    int_handler(IA32::EXC_NODEV, PC::fsr_wrapper<exc_fpu>);
+    int_handler(IA32::EXC_PF,    fsr_wrapper<exc_pf>);
+    int_handler(IA32::EXC_GPF,   fsr_wrapper<exc_gpf>);
+    int_handler(IA32::EXC_NODEV, fsr_wrapper<exc_fpu>);
 
     return 0;
 }
