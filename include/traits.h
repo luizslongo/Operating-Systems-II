@@ -93,8 +93,8 @@ template <> struct Traits<Mica2_RTC>: public Traits<void>
 template <> struct Traits<PC>: public Traits<void>
 {
     static const unsigned int BOOT_IMAGE_ADDR = 0x00008000;
-    static const int INT_BASE = 0x20;
-    static const int SYSCALL_INT = 0x80;
+    static const unsigned int HARD_INT = 0x20;
+    static const unsigned int SYSCALL_INT = 0x80;
 
     static const unsigned int SYSTEM_STACK_SIZE = 4096;
     static const unsigned int SYSTEM_HEAP_SIZE = 4096;

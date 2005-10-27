@@ -11,7 +11,7 @@ __BEGIN_SYS
 // Explicit template instantiations
 template void Machine::isr_wrapper<Alarm::timer_isr>();
 
-void Alarm::timer_isr(void)
+void Alarm::timer_isr()
 {
     CPU::int_disable();
 
