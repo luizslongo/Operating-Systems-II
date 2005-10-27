@@ -264,6 +264,17 @@ public:
 			      << ",size=" << size()
 			      << ",flags=" << flags() << ")\n";
 	}
+	DMA_Buffer(unsigned int s, const Log_Addr & d)
+	    : Chunk(s, IA32_Flags::DMA) {
+	    Directory dir(current());
+	    _log_addr = dir.attach(*this);
+	    memcpy(_log_addr, d, s);
+	    db<IA32_MMU>(TRC) << "IA32_MMU::DMA_Buffer(phy=" << phy_address()
+			      << ",log=" << log_address()
+			      << ",size=" << size()
+			      << ",flags=" << flags() << ") <= "
+			      << d <<"\n";
+	}
 	
 	Log_Addr log_address() const { return _log_addr; }
 
@@ -293,6 +304,9 @@ public:
 	return phy;	
     }
     static void free(Phy_Addr frame, int n = 1) {
+	// Clean up MMU flags in frame address
+	frame = indexes(frame); 
+
         db<IA32_MMU>(TRC) << "IA32_MMU::free(frame=" << (void *)frame 
 			  << ",n=" << n << ")\n";
 
