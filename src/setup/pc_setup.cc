@@ -166,10 +166,12 @@ int main(char * setup_addr, unsigned int setup_size, char * bi)
     // Setup the interrupt controller
     // The BIOS sets hardware interrupts to 0x08-0x0f, but these IDT
     // entries are assigned to internal exceptions in the i[x>1]86
-    // We'll remap interrupts to IDT_HARD_INT and then disable them
+    // We'll remap interrupts to HARD_INT and then disable them
+    cpu.int_disable();
     PC_IC ic;
     ic.remap(TR::HARD_INT);
     ic.disable();
+    cpu.int_enable();
 
     // Setup the PCI bus controller
     setup_pci(reinterpret_cast<Phy_Addr *>(&si->pmm.io_mem),
@@ -437,8 +439,11 @@ int main(char * setup_addr, unsigned int setup_size, char * bi)
     // Startup the FPU 
     // cpu.init_fpu();
 
-    // Enable the Interrupt Controller to propagate interrups but the timer
-    ic.enable(~IC::IRQ_TIMER);
+    // Enable the Interrupt Controller to propagate interrups 
+    // but keep the timer off
+    cpu.int_disable();
+    ic.enable();
+    ic.disable(IC::IRQ_TIMER);
     cpu.int_enable();
 
     // SETUP ends here
