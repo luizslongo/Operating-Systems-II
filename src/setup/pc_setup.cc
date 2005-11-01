@@ -528,7 +528,7 @@ void setup_idt(Phy_Addr addr)
 
     // Map all handlers to panic()
     IDT_Entry * idt = (IDT_Entry *)(unsigned int)addr;
-    for(int i = 0; i < CPU::IDT_ENTRIES; i++)
+    for(unsigned int i = 0; i < CPU::IDT_ENTRIES; i++)
 	idt[i] = IDT_Entry(CPU::GDT_SYS_CODE, panic_h, CPU::SEG_IDT_ENTRY);
 
     // Catch GPF, PAGE_FAULT and FPU

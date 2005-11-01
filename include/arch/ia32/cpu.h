@@ -212,7 +212,7 @@ public:
 	Reg8  p_dpl_0_d_1_1_0;
 	Reg16 offset_31_16;
     };
-    static const int IDT_ENTRIES = 256;
+    static const unsigned int IDT_ENTRIES = 256;
 
     // TSS no longer used, since software context switch is faster
     // it's left here for reference
