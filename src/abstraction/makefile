@@ -12,9 +12,6 @@ $(LIBSYS):	$(LIBSYS)($(OBJS))
 
 $(LIBINIT):	$(LIBINIT)($(INITS))
 
-alarm_isr.o	: alarm_isr.cc
-		$(CXX) $(CXXFLAGS) -fomit-frame-pointer $<
-
 test:		$(TESTS)
 
 clean:
