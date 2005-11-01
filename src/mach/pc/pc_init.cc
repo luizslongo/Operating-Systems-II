@@ -11,7 +11,7 @@ int PC::init(System_Info * si)
     // Set all IDT entries to proper int_dispatch() offsets
     IA32::IDT_Entry * idt =
 	reinterpret_cast<IA32::IDT_Entry *>(Memory_Map<PC>::INT_VEC);
-    for(int i = 0; i < IA32::IDT_ENTRIES; i++)
+    for(unsigned int i = 0; i < IA32::IDT_ENTRIES; i++)
 	if(i < INT_VECTOR_SIZE)
 	    idt[i] = IA32::IDT_Entry(IA32::GDT_SYS_CODE, 
 				     Log_Addr(int_dispatch) + i * 16,
