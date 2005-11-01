@@ -39,66 +39,66 @@ private:
 public:
     PC_PCI() {}
 
-    Locator scan(const Class_Id & c, int order);
-    Locator scan(const Vendor_Id & v, const Device_Id & d, int order);
+    static Locator scan(const Class_Id & c, int order);
+    static Locator scan(const Vendor_Id & v, const Device_Id & d, int order);
     
-    void header(const Locator & l, Header * h);
-    Reg16 command(const Locator & l) {
+    static void header(const Locator & l, Header * h);
+    static Reg16 command(const Locator & l) {
 	return cfg16(l.bus, l.dev_fn, COMMAND);
     }
-    void  command(const Locator & l, Reg16 v) {
+    static void  command(const Locator & l, Reg16 v) {
 	cfg16(l.bus, l.dev_fn, COMMAND, v);
     }
-    Reg16 status(const Locator & l) {
+    static Reg16 status(const Locator & l) {
 	return cfg16(l.bus, l.dev_fn, STATUS);
     }
-    void  status(const Locator & l, Reg16 v) {
+    static void  status(const Locator & l, Reg16 v) {
 	cfg16(l.bus, l.dev_fn, STATUS, v);
     }
     
     static int init(System_Info * si);
 
 private:
-    int cmd(Reg8 bus, Reg8 dev_fn, Reg8 addr) {
+    static int cmd(Reg8 bus, Reg8 dev_fn, Reg8 addr) {
 	return 0x80000000 | (bus << 16) | (dev_fn << 8) | (addr & ~3);
     }
 
-    Reg8 cfg8(Reg8 bus, Reg8 dev_fn, Reg8 addr) {
+    static Reg8 cfg8(Reg8 bus, Reg8 dev_fn, Reg8 addr) {
 	IA32::out32(CONFADDR, cmd(bus, dev_fn, addr));
 	return IA32::in8(CONFDATA + (addr & 3));
     }
-    Reg16 cfg16(Reg8 bus, Reg8 dev_fn, Reg8 addr) {
+    static Reg16 cfg16(Reg8 bus, Reg8 dev_fn, Reg8 addr) {
 	IA32::out32(CONFADDR, cmd(bus, dev_fn, addr));    
 	return IA32::in16(CONFDATA + (addr & 2));
     }
-    Reg32 cfg32(Reg8 bus, Reg8 dev_fn, Reg8 addr) {
+    static Reg32 cfg32(Reg8 bus, Reg8 dev_fn, Reg8 addr) {
 	IA32::out32(CONFADDR, cmd(bus, dev_fn, addr));
 	return IA32::in32(CONFDATA);
     }
-    void cfg8(Reg8 bus, Reg8 dev_fn, Reg8 addr, Reg8 value) {
+    static void cfg8(Reg8 bus, Reg8 dev_fn, Reg8 addr, Reg8 value) {
 	IA32::out32(CONFADDR, cmd(bus, dev_fn, addr));    
 	IA32::out8(CONFDATA + (addr & 3), value);
     }
-    void cfg16(Reg8 bus, Reg8 dev_fn, Reg8 addr, Reg16 value) {
+    static void cfg16(Reg8 bus, Reg8 dev_fn, Reg8 addr, Reg16 value) {
 	IA32::out32(CONFADDR, cmd(bus, dev_fn, addr));
 	IA32::out16(CONFDATA + (addr & 2), value);
     }
-    void cfg32(Reg8 bus, Reg8 dev_fn, Reg8 addr, Reg32 value) {
+    static void cfg32(Reg8 bus, Reg8 dev_fn, Reg8 addr, Reg32 value) {
 	IA32::out32(CONFADDR, cmd(bus, dev_fn, addr));
 	IA32::out32(CONFDATA, value);
     }
 
-    Reg16 vendor_id(Reg8 bus, Reg8 dev_fn) {
+    static Reg16 vendor_id(Reg8 bus, Reg8 dev_fn) {
 	return cfg16(bus, dev_fn, VENDOR_ID); 
     }
-    Reg16 device_id(Reg8 bus, Reg8 dev_fn) {
+    static Reg16 device_id(Reg8 bus, Reg8 dev_fn) {
 	return cfg16(bus, dev_fn, DEVICE_ID); 
     }
-    Reg16 class_id(Reg8 bus, Reg8 dev_fn) {
+    static Reg16 class_id(Reg8 bus, Reg8 dev_fn) {
 	return cfg16(bus, dev_fn, CLASS_ID); 
     }
 
-    Log_Addr phy2log(const Phy_Addr & addr) {
+    static Log_Addr phy2log(const Phy_Addr & addr) {
 	return LOG_IO_MEM + (addr - _phy_io_mem);
     } 
 
