@@ -9,10 +9,12 @@ int PC_IC::init(System_Info * si)
 {
     db<PC_IC>(TRC) << "PC_IC::init()\n";
 
-    PC_IC ic;
+    IA32::int_disable();
 
-    ic.remap(HARD_INT);
-    ic.disable();
+    remap(HARD_INT);
+    disable();
+
+    IA32::int_enable();
 
     return 0;
 }

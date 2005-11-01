@@ -7,13 +7,10 @@ extern "C" { void _exit(int s); }
 
 __BEGIN_SYS
 
-// Explicit template instantiations
-template void PC::isr_wrapper<PC::int_not>();
-template void PC::fsr_wrapper<PC::exc_not>();
-template void PC::fsr_wrapper<PC::exc_pf>();
-template void PC::fsr_wrapper<PC::exc_gpf>();
-template void PC::fsr_wrapper<PC::exc_fpu>();
+// Class attributes
+PC::int_handler * PC::_int_vector[PC::INT_VECTOR_SIZE];
 
+// Methods
 void PC::panic()
 {
     IA32::int_disable(); 
@@ -23,14 +20,15 @@ void PC::panic()
     IA32::halt();
 }
 
-void PC::int_not()
+void PC::int_not(int i)
 {
-    db<PC>(WRN) << "\nAn interrupt has occurred for which no handler is installed\n";
+    db<PC>(WRN) << "\nInt " << i
+		<< " occurred, but no handler installed\n";
 
     panic();
 }
 
-void PC::exc_not(Reg32 error, Reg32 eip, Reg32 cs, Reg32 eflags)
+void PC::exc_not(int i, Reg32 error, Reg32 eip, Reg32 cs, Reg32 eflags)
 {
     db<PC>(WRN) << "\nAn exception has occurred for which no handler"
 		<< " is installed [err=" << (void *)error
@@ -43,7 +41,7 @@ void PC::exc_not(Reg32 error, Reg32 eip, Reg32 cs, Reg32 eflags)
     _exit(-1);
 }
 
-void PC::exc_pf(Reg32 error, Reg32 eip, Reg32 cs, Reg32 eflags)
+void PC::exc_pf(int i, Reg32 error, Reg32 eip, Reg32 cs, Reg32 eflags)
 {  
     db<PC>(WRN) << "\nPage fault [address=" << (void *)IA32::cr2()
 		<< ",err={";
@@ -64,7 +62,7 @@ void PC::exc_pf(Reg32 error, Reg32 eip, Reg32 cs, Reg32 eflags)
     _exit(-1);
 }
 
-void PC::exc_gpf(Reg32 error, Reg32 eip, Reg32 cs, Reg32 eflags)
+void PC::exc_gpf(int i, Reg32 error, Reg32 eip, Reg32 cs, Reg32 eflags)
 {  
     db<PC>(WRN) << "\nGeneral protection fault [err=" << (void *)error
 		<< ",ctx={cs=" << (void *)cs
@@ -76,7 +74,7 @@ void PC::exc_gpf(Reg32 error, Reg32 eip, Reg32 cs, Reg32 eflags)
     _exit(-1);
 }
 
-void PC::exc_fpu(Reg32 error, Reg32 eip, Reg32 cs, Reg32 eflags) {  
+void PC::exc_fpu(int i, Reg32 error, Reg32 eip, Reg32 cs, Reg32 eflags) {  
     db<PC>(WRN) << "\nFPU fault [err=" << (void *)error
 		<< ",ctx={cs=" << (void *)cs
 		<< ",ip=" << (void *)eip

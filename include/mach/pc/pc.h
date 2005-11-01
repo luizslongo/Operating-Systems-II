@@ -7,14 +7,6 @@
 #include <arch/ia32/cpu.h>
 #include <arch/ia32/mmu.h>
 #include <arch/ia32/tsc.h>
-#include "memory_map.h"
-#include "pci.h"
-#include "ic.h"
-#include "timer.h"
-#include "rtc.h"
-#include "display.h"
-#include "uart.h"
-#include "sensor.h"
 
 __BEGIN_SYS
 
@@ -24,90 +16,47 @@ private:
     typedef Traits<PC> Traits;
     static const Type_Id TYPE = Type<PC>::TYPE;
 
-    static const unsigned int HARD_INT = Traits::HARD_INT;
+    static const unsigned int HARD_INT = Traits::HARDWARE_INT_OFFSET;
     static const unsigned int SYSCALL_INT = Traits::SYSCALL_INT;
+    static const unsigned int INT_VECTOR_SIZE = 64;
     
     typedef IA32::Reg32 Reg32;
-    typedef IA32::ISR ISR;
-    typedef IA32::FSR FSR;
+    typedef IA32::Log_Addr Log_Addr;
 
 public:
-    // Hardware Interrupts
-    enum {
-	INT_BASE        = HARD_INT,
-        INT_TIMER       = INT_BASE + 0,
-        INT_KEYBOARD    = INT_BASE + 1
-    };        
+    typedef void (int_handler)(int);
 
 public:
     PC() {}
   
-    static ISR * int_handler(int i) {
-	IA32::IDT_Entry * idt = 
-	    reinterpret_cast<IA32::IDT_Entry *>(Memory_Map<PC>::INT_VEC);
-	if(i < IA32::IDT_ENTRIES)
-	    return reinterpret_cast<ISR *>(idt[i].offset());
+    static int_handler * int_vector(unsigned int i) {
+	return (i < INT_VECTOR_SIZE) ? _int_vector[i] : 0;
     }
-    static void int_handler(int i, ISR * r) {
-	IA32::IDT_Entry * idt = 
-	    reinterpret_cast<IA32::IDT_Entry *>(Memory_Map<PC>::INT_VEC);
-	if(i < IA32::IDT_ENTRIES)
-	    idt[i] = IA32::IDT_Entry(IA32::GDT_SYS_CODE,
-				     reinterpret_cast<Reg32>(r),
-				     IA32::SEG_IDT_ENTRY);
+    static void int_vector(unsigned int i, int_handler * h) {
+	db<PC>(INF) << "PC::int_vector(int=" << i << ",h=" << h <<")\n";
+	if(i < INT_VECTOR_SIZE) _int_vector[i] = h;
     }
 
     static void panic();
-    static void int_not();
-    static void exc_not(Reg32 error, Reg32 eip, Reg32 cs, Reg32 eflags);
-    static void exc_pf(Reg32 error, Reg32 eip, Reg32 cs, Reg32 eflags);
-    static void exc_gpf(Reg32 error, Reg32 eip, Reg32 cs, Reg32 eflags);
-    static void exc_fpu(Reg32 error, Reg32 eip, Reg32 cs, Reg32 eflags);
 
-    template <ISR * r> static void isr_wrapper();
-    template <FSR * r> static void fsr_wrapper();
-
-
+    // PC specific methods
+    static int irq2int(int i) { return i + HARD_INT; }
+    static int int2irq(int i) { return i - HARD_INT; }
+    
     static int init(System_Info * si);
 
-public:
-    IA32 cpu;
-    IA32_MMU mmu;
-    IA32_TSC tsc;
-    PC_IC ic;
-    PC_PCI pci;
-    PC_Display display;
+private:
+    static void int_dispatch();
+
+    static void int_not(int i);
+    static void exc_not(int i, Reg32 error, Reg32 eip, Reg32 cs, Reg32 eflags);
+    static void exc_pf (int i, Reg32 error, Reg32 eip, Reg32 cs, Reg32 eflags);
+    static void exc_gpf(int i, Reg32 error, Reg32 eip, Reg32 cs, Reg32 eflags);
+    static void exc_fpu(int i, Reg32 error, Reg32 eip, Reg32 cs, Reg32 eflags);
+
+private:
+    static int_handler * _int_vector[INT_VECTOR_SIZE];
 };
-
-// These wrappers must be defined out of class to prevent inlining
-// Units using (instantiating) them must be compiled with -fomit-frame-pointer
-template <PC::ISR * r>
-void PC::isr_wrapper() 
-{
-    // Flags are implicitly pushed by the CPU's interrupt dispatcher
-    // Interrupts are kept enabled (driver can disable it if necessary)
-    ASM("	pushal			# save regs	\n");
-    ASM("	call	*%0		# call ISR	\n" : : "r"(r));
-    ASM("	movb	$0x0b, %al	# which IRQ?	\n"
-	"	outb	%al, $0x20			\n"
-	"	inb	$0x20, %al	# -> IRQ	\n"
-	"	andb    $4, %al		# IRQ2 (slave)?	\n"
-	"	testb	%al, %al			\n"
-	"	je	.L1				\n"
-	"	movb	$0x20, %al	# EIO		\n" 
-	"	outb	%al, $0xa0	# EOI -> slave	\n" 
-	".L1:	movb	$0x20, %al	# EIO		\n" 
- 	"	outb	%al, $0x20	# EOI -> master	\n");
-    ASM("	popal			# restore regs	\n"
-	"	iret					\n");
-}
-
-template <PC::FSR * r>
-void PC::fsr_wrapper() {
-    ASM("	call	*%0						\n"
-	"	iret							\n"
-	: : "r"(r));
-}
 
 typedef PC Machine;
 

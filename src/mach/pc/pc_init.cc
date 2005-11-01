@@ -4,29 +4,31 @@
 
 __BEGIN_SYS
 
-// Prevent implicit template instantiations
-extern template void PC::isr_wrapper<PC::int_not>();
-extern template void PC::fsr_wrapper<PC::exc_not>();
-extern template void PC::fsr_wrapper<PC::exc_pf>();
-extern template void PC::fsr_wrapper<PC::exc_gpf>();
-extern template void PC::fsr_wrapper<PC::exc_fpu>();
-
 int PC::init(System_Info * si)
 {
     db<PC>(TRC) << "PC::init()\n";
 
-    // Set all IDT entries to panic()
+    // Set all IDT entries to proper int_dispatch() offsets
+    IA32::IDT_Entry * idt =
+	reinterpret_cast<IA32::IDT_Entry *>(Memory_Map<PC>::INT_VEC);
     for(int i = 0; i < IA32::IDT_ENTRIES; i++)
- 	int_handler(i, fsr_wrapper<exc_not>);
+	if(i < INT_VECTOR_SIZE)
+	    idt[i] = IA32::IDT_Entry(IA32::GDT_SYS_CODE, 
+				     Log_Addr(int_dispatch) + i * 16,
+				     IA32::SEG_IDT_ENTRY);
+	else
+	    idt[i] = IA32::IDT_Entry(IA32::GDT_SYS_CODE, 
+				     Log_Addr(int_dispatch) + INT_VECTOR_SIZE,
+				     IA32::SEG_IDT_ENTRY);
     
-    // Set all ISRs to int_not()
-    for(unsigned int i = INT_BASE; i <= INT_BASE + IC::IRQS; i++)
- 	int_handler(i, isr_wrapper<int_not>);
+    // Set all interrupt handlers to int_not()
+    for(unsigned int i = 0; i < INT_VECTOR_SIZE; i++)
+ 	_int_vector[i] = int_not;
 
-    // Reset some important FSRs
-    int_handler(IA32::EXC_PF,    fsr_wrapper<exc_pf>);
-    int_handler(IA32::EXC_GPF,   fsr_wrapper<exc_gpf>);
-    int_handler(IA32::EXC_NODEV, fsr_wrapper<exc_fpu>);
+    // Reset some important exception handlers
+    _int_vector[IA32::EXC_PF] = reinterpret_cast<int_handler *>(exc_pf);
+    _int_vector[IA32::EXC_GPF] = reinterpret_cast<int_handler *>(exc_gpf);
+    _int_vector[IA32::EXC_NODEV] = reinterpret_cast<int_handler *>(exc_fpu);
 
     return 0;
 }

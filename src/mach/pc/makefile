@@ -12,7 +12,7 @@ $(LIBSYS):	$(LIBSYS)($(OBJS))
 
 $(LIBINIT):	$(LIBINIT)($(INITS))
 
-pc.o		: pc.cc
+pc_interrupt.o	: pc_interrupt.cc
 		$(CXX) $(CXXFLAGS) -fomit-frame-pointer $<
 
 test:		$(TESTS)
