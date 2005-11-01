@@ -7,6 +7,14 @@
 #include <arch/ia32/cpu.h>
 #include <arch/ia32/mmu.h>
 #include <arch/ia32/tsc.h>
+#include <mach/pc/ic.h>
+#include <mach/pc/pci.h>
+#include <mach/pc/timer.h>
+#include <mach/pc/rtc.h>
+#include <mach/pc/uart.h>
+#include <mach/pc/display.h>
+#include <mach/pc/sensor.h>
+#include <mach/pc/ethernet.h>
 
 __BEGIN_SYS
 
