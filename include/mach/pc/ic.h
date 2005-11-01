@@ -13,7 +13,8 @@ private:
     typedef Traits<PC_IC> Traits;
     static const Type_Id TYPE = Type<PC_IC>::TYPE;
 
-    static const unsigned int HARD_INT = __SYS(Traits)<PC>::HARD_INT;
+    static const unsigned int HARD_INT =
+	__SYS(Traits)<PC>::HARDWARE_INT_OFFSET;
 
     typedef CPU::Reg8 Reg8;
     typedef CPU::Reg16 Reg16;
@@ -49,7 +50,7 @@ public:
 
     static void enable() { imr(0); }
     static void enable(IRQ irq) { imr(imr() & ~(1 << irq)); }
-    static void disable() { imr(0xffff); }
+    static void disable() { imr(~(1 << IRQ_CASCADE)); }
     static void disable(IRQ irq) { imr(imr() | (1 << irq)); }
 
     // 8259A specific methods
@@ -57,8 +58,8 @@ public:
     static void remap(Reg8 base) { // Reconfigure
 	// Configure Master PIC
 	IA32::out8(MASTER_CMD, ICW1);
-	IA32::out8(MASTER_IMR, base); // ICW2 is the base
-	IA32::out8(MASTER_IMR, 0x04); // ICW3 = IRQ2 cascaded
+	IA32::out8(MASTER_IMR, base);              // ICW2 is the base
+	IA32::out8(MASTER_IMR, 1 << IRQ_CASCADE); // ICW3 = IRQ2 cascaded
 	IA32::out8(MASTER_IMR, ICW4);
 
 	// Configure Slave PIC
@@ -73,20 +74,24 @@ public:
 	IA32::out8(SLAVE_CMD, SELECT_IRR);
 	return IA32::in8(MASTER_CMD) | (IA32::in8(SLAVE_CMD) << 8);
     }
+
     static Reg16 isr() { // In-service interrupts
 	IA32::out8(MASTER_CMD, SELECT_ISR);
 	IA32::out8(SLAVE_CMD, SELECT_ISR);
 	return IA32::in8(MASTER_CMD) | (IA32::in8(SLAVE_CMD) << 8);
     }
+
     static Reg16 imr() { // Interrupt mask
 	return IA32::in8(MASTER_IMR) | (IA32::in8(SLAVE_IMR) << 8);
     }
+
     static void imr(Reg16 mask) {
 	IA32::out8(MASTER_IMR, mask);
 	IA32::out8(SLAVE_IMR, mask >> 8);
     }
+
     static void eoi() { // End of interrupt
-	if(isr() & 0x0004) // was it an slave PIC interrupt?
+	if(isr() & (1 << IRQ_CASCADE)) // was it an slave PIC interrupt?
 	    IA32::out8(SLAVE_CMD, EOI);
 	IA32::out8(MASTER_CMD, EOI); // always send EOI to master
     }
