@@ -259,24 +259,27 @@ public:
 	DMA_Buffer(unsigned int s) : Chunk(s, IA32_Flags::DMA) {
 	    Directory dir(current());
 	    _log_addr = dir.attach(*this);
-	    db<IA32_MMU>(TRC) << "IA32_MMU::DMA_Buffer(phy=" << phy_address()
-			      << ",log=" << log_address()
-			      << ",size=" << size()
-			      << ",flags=" << flags() << ")\n";
+	    db<IA32_MMU>(TRC) << "IA32_MMU::DMA_Buffer() => " << *this << "\n";
 	}
 	DMA_Buffer(unsigned int s, const Log_Addr & d)
 	    : Chunk(s, IA32_Flags::DMA) {
 	    Directory dir(current());
 	    _log_addr = dir.attach(*this);
 	    memcpy(_log_addr, d, s);
-	    db<IA32_MMU>(TRC) << "IA32_MMU::DMA_Buffer(phy=" << phy_address()
-			      << ",log=" << log_address()
-			      << ",size=" << size()
-			      << ",flags=" << flags() << ") <= "
-			      << d <<"\n";
+	    db<IA32_MMU>(TRC) << "IA32_MMU::DMA_Buffer(phy=" << *this 
+			      << " <= " << d <<"\n";
 	}
 	
 	Log_Addr log_address() const { return _log_addr; }
+
+	friend Debug & operator << (Debug & db,
+				    const DMA_Buffer & b) {
+	    db << "{phy=" << b.phy_address()
+	       << ",log=" << b.log_address()
+	       << ",size=" << b.size() 
+	       << ",flags=" << b.flags() << "}";
+	    return db;
+	}
 
     private:
 	Log_Addr _log_addr;
