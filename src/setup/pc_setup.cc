@@ -169,7 +169,7 @@ int main(char * setup_addr, unsigned int setup_size, char * bi)
     // We'll remap interrupts to HARD_INT and then disable them
     cpu.int_disable();
     PC_IC ic;
-    ic.remap(TR::HARD_INT);
+    ic.remap(TR::HARDWARE_INT_OFFSET);
     ic.disable();
     cpu.int_enable();
 
@@ -544,7 +544,9 @@ void setup_idt(Phy_Addr addr)
 					     CPU::SEG_IDT_ENTRY);
 
     // Catch hardware interrupts
-    for(unsigned int i = TR::HARD_INT; i < TR::HARD_INT + PC_IC::IRQS; i++)
+    for(unsigned int i = TR::HARDWARE_INT_OFFSET;
+	i < TR::HARDWARE_INT_OFFSET + PC_IC::IRQS;
+	i++)
 	idt[i] = IDT_Entry(CPU::GDT_SYS_CODE, hard_int_h, CPU::SEG_IDT_ENTRY);
 
     db<Setup>(INF) << "IDT[0]=" << idt[0] << " (" << panic_h << ")\n";
