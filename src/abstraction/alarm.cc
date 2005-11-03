@@ -63,7 +63,7 @@ void Alarm::delay(const Microseconds & time)
         }
 }
 
-void Alarm::int_handler(int)
+void Alarm::int_handler(unsigned int)
 {
     CPU::int_disable();
 

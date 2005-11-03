@@ -198,7 +198,7 @@ public:
     };
 
     struct Region {
-	static const int N = 6;
+	static const unsigned int N = 6;
 
 	operator bool() { return (size != 0); }
 
