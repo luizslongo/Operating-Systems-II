@@ -3,18 +3,12 @@
 #ifndef __pc_h
 #define __pc_h
 
-#include <machine.h>
+#include <utility/list.h>
 #include <arch/ia32/cpu.h>
 #include <arch/ia32/mmu.h>
 #include <arch/ia32/tsc.h>
-#include <mach/pc/ic.h>
-#include <mach/pc/pci.h>
-#include <mach/pc/timer.h>
-#include <mach/pc/rtc.h>
-#include <mach/pc/uart.h>
-#include <mach/pc/display.h>
-#include <mach/pc/sensor.h>
-#include <mach/pc/ethernet.h>
+#include <machine.h>
+#include "device.h"
 
 __BEGIN_SYS
 
@@ -32,7 +26,7 @@ private:
     typedef IA32::Log_Addr Log_Addr;
 
 public:
-    typedef void (int_handler)(int);
+    typedef void (int_handler)(unsigned int);
 
 public:
     PC() {}
@@ -45,7 +39,18 @@ public:
 	if(i < INT_VECTOR_SIZE) _int_vector[i] = h;
     }
 
+    template<typename Dev>
+    static Dev * seize(const Type_Id & type, unsigned int unit) { 
+	return reinterpret_cast<Dev *>(PC_Device::seize(type, unit));
+    }
+
+    static void release(const Type_Id & type, unsigned int unit) { 
+	PC_Device::release(type, unit); 
+    }
+
     static void panic();
+    static void reboot();
+    static void poweroff();
 
     // PC specific methods
     static int irq2int(int i) { return i + HARD_INT; }
@@ -56,11 +61,15 @@ public:
 private:
     static void int_dispatch();
 
-    static void int_not(int i);
-    static void exc_not(int i, Reg32 error, Reg32 eip, Reg32 cs, Reg32 eflags);
-    static void exc_pf (int i, Reg32 error, Reg32 eip, Reg32 cs, Reg32 eflags);
-    static void exc_gpf(int i, Reg32 error, Reg32 eip, Reg32 cs, Reg32 eflags);
-    static void exc_fpu(int i, Reg32 error, Reg32 eip, Reg32 cs, Reg32 eflags);
+    static void int_not(unsigned int interrupt);
+    static void exc_not(unsigned int interrupt,
+			Reg32 error, Reg32 eip, Reg32 cs, Reg32 eflags);
+    static void exc_pf (unsigned int interrupt,
+			Reg32 error, Reg32 eip, Reg32 cs, Reg32 eflags);
+    static void exc_gpf(unsigned int interrupt,
+			Reg32 error, Reg32 eip, Reg32 cs, Reg32 eflags);
+    static void exc_fpu(unsigned int interrupt,
+			Reg32 error, Reg32 eip, Reg32 cs, Reg32 eflags);
 
 private:
     static int_handler * _int_vector[INT_VECTOR_SIZE];
@@ -69,5 +78,14 @@ private:
 typedef PC Machine;
 
 __END_SYS
+
+#include "ic.h"
+#include "pci.h"
+#include "timer.h"
+#include "rtc.h"
+#include "uart.h"
+#include "display.h"
+#include "sensor.h"
+#include "nic.h"
 
 #endif
