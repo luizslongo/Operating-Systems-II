@@ -18,6 +18,7 @@
 #include <alarm.h>
 #include <clock.h>
 #include <chronometer.h>
+#include <network.h>
 #include <thread.h>
 #include <task.h>
 
