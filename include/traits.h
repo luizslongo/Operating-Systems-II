@@ -11,6 +11,7 @@ struct Traits
     static const bool debugged = true;
 };
 
+
 // Utilities
 template <> struct Traits<Debug>
 {
@@ -93,7 +94,7 @@ template <> struct Traits<Mica2_RTC>: public Traits<void>
 template <> struct Traits<PC>: public Traits<void>
 {
     static const unsigned int BOOT_IMAGE_ADDR = 0x00008000;
-    static const unsigned int HARD_INT = 0x20;
+    static const unsigned int HARDWARE_INT_OFFSET = 0x20;
     static const unsigned int SYSCALL_INT = 0x80;
 
     static const unsigned int SYSTEM_STACK_SIZE = 4096;
@@ -123,6 +124,13 @@ template <> struct Traits<PC_UART>: public Traits<void>
     static const unsigned int COM2 = 0x2f8; // to 0x2ff, IRQ3
     static const unsigned int COM3 = 0x3e8; // to 0x3ef, no IRQ
     static const unsigned int COM4 = 0x2e8; // to 0x2ef, no IRQ
+};
+
+template <> struct Traits<PC_NIC>: public Traits<void>
+{
+    static const unsigned int PCNET32_UNITS = 1;
+    static const unsigned int PCNET32_SEND_BUFFERS = 8; // per unit
+    static const unsigned int PCNET32_RECEIVE_BUFFERS = 8; // per unit
 };
 
 template <> struct Traits<Mica2_Display>: public Traits<void>
@@ -176,6 +184,7 @@ template <> struct Traits<Mica2_Timer>: public Traits<void>
     
 };
 
+
 // Abstractions
 template <> struct Traits<Alarm>: public Traits<void>
 {
@@ -196,6 +205,10 @@ template <> struct Traits<Synchronizer>: public Traits<void>
     static const bool strict_ordering = true;
 };
 
+template <> struct Traits<Network>: public Traits<void>
+{
+    static const unsigned int EPOS_LIGHT_PROTOCOL = 0x8888;
+};
 
 __END_SYS
 
