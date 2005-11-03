@@ -1,3 +1,5 @@
+// EPOS-- Internal Type Management System
+
 #ifndef __types_h
 #define __types_h
 
@@ -66,8 +68,12 @@ class Mica2_Temperature_Sensor;
 class Mica2_Light_Sensor;
 class PC_Sensor;
 
+// Hardware Mediators - NICs
+class PC_NIC;
+
 // Abstractions
 class Thread;
+class Task;
 class Active;
 
 class Segment;
@@ -82,14 +88,14 @@ class Clock;
 class Alarm;
 class Chronometer;
 
-class Task;
+class Network;
 
 class Photo_Sentient;
 class Temperature_Sentient;
 
 
 // System Components IDs
-typedef unsigned short Type_Id;
+typedef unsigned int Type_Id;
 enum 
 {
     CPU_ID,
@@ -136,6 +142,9 @@ enum
     LIGHT_SENSOR_ID,
     MICA2_LIGHT_SENSOR_ID = LIGHT_SENSOR_ID,
 
+    NIC_ID,
+    PC_NIC_ID = NIC_ID,
+
     THREAD_ID,
 
     SEGMENT_ID,
@@ -152,6 +161,8 @@ enum
     ALARM_ID,
     CHRONOMETER_ID,
 
+    NETWORK_ID,
+    
     TEMPERATURE_SENTIENT_ID,
     PHOTO_SENTIENT_ID,
 
@@ -160,58 +171,109 @@ enum
     ANY_TYPE = 0xffff
 };
 
-// Type IDs for system objects
-template<class T> struct Type { static const Type_Id TYPE = UNKNOWN_TYPE; };
+// System Component Types (type -> id)
+template<class T>
+struct Type
+{
+    enum { TYPE = UNKNOWN_TYPE }; 
+};
 
-template<> struct Type<IA32> { static const Type_Id TYPE = IA32_ID; };
-template<> struct Type<AVR8> { static const Type_Id TYPE = AVR8_ID; };
+template<> struct Type<IA32>
+{ enum { TYPE = IA32_ID }; };
+template<> struct Type<AVR8>
+{ enum { TYPE = AVR8_ID }; };
 
-template<> struct Type<IA32_TSC> { static const Type_Id TYPE = IA32_TSC_ID; };
-template<> struct Type<AVR8_TSC> { static const Type_Id TYPE = AVR8_TSC_ID; };
+template<> struct Type<IA32_TSC>
+{ enum { TYPE = IA32_TSC_ID }; };
+template<> struct Type<AVR8_TSC>
+{ enum { TYPE = AVR8_TSC_ID }; };
 
-template<> struct Type<IA32_MMU> { static const Type_Id TYPE = IA32_MMU_ID; };
-template<> struct Type<AVR8_MMU> { static const Type_Id TYPE = AVR8_MMU_ID; };
+template<> struct Type<IA32_MMU>
+{ enum { TYPE = IA32_MMU_ID }; };
+template<> struct Type<AVR8_MMU>
+{ enum { TYPE = AVR8_MMU_ID }; };
 
-template<> struct Type<PC> { static const Type_Id TYPE = PC_ID; };
-template<> struct Type<AVRMCU> { static const Type_Id TYPE = AVRMCU_ID; };
-template<> struct Type<Mica2> { static const Type_Id TYPE = MICA2_ID; };
 
-template<> struct Type<PC_IC> { static const Type_Id TYPE = PC_IC_ID; };
-template<> struct Type<AVRMCU_IC> { static const Type_Id TYPE = AVRMCU_IC_ID; };
-template<> struct Type<Mica2_IC> { static const Type_Id TYPE = MICA2_IC_ID; };
+template<> struct Type<PC>
+{ enum { TYPE = PC_ID }; };
+template<> struct Type<AVRMCU> 
+{ enum { TYPE = AVRMCU_ID }; };
+template<> struct Type<Mica2> 
+{ enum { TYPE = MICA2_ID }; };
 
-template<> struct Type<PC_Timer> { static const Type_Id TYPE = PC_TIMER_ID; };
-template<> struct Type<AVRMCU_Timer> { static const Type_Id TYPE = AVRMCU_TIMER_ID; };
-template<> struct Type<Mica2_Timer> { static const Type_Id TYPE = MICA2_TIMER_ID; };
+template<> struct Type<PC_IC>
+{ enum { TYPE = PC_IC_ID }; };
+template<> struct Type<AVRMCU_IC>
+{ enum { TYPE = AVRMCU_IC_ID }; };
+template<> struct Type<Mica2_IC> 
+{ enum { TYPE = MICA2_IC_ID }; };
 
-template<> struct Type<PC_RTC> { static const Type_Id TYPE = PC_RTC_ID; };
+template<> struct Type<PC_Timer> 
+{ enum { TYPE = PC_TIMER_ID }; };
+template<> struct Type<AVRMCU_Timer>
+{ enum { TYPE = AVRMCU_TIMER_ID }; };
+template<> struct Type<Mica2_Timer> 
+{ enum { TYPE = MICA2_TIMER_ID }; };
 
-template<> struct Type<PC_PCI> { static const Type_Id TYPE = PC_PCI_ID; };
+template<> struct Type<PC_RTC>
+{ enum { TYPE = PC_RTC_ID }; };
 
-template<> struct Type<PC_Display> { static const Type_Id TYPE = PC_DISPLAY_ID; };
-template<> struct Type<AVRMCU_Display> { static const Type_Id TYPE = AVRMCU_DISPLAY_ID; };
-template<> struct Type<Mica2_Display> { static const Type_Id TYPE = MICA2_DISPLAY_ID; };
+template<> struct Type<PC_PCI>
+{ enum { TYPE = PC_PCI_ID }; };
 
-template<> struct Type<Mica2_Temperature_Sensor> { static const Type_Id TYPE = MICA2_TEMPERATURE_SENSOR_ID; };
+template<> struct Type<PC_Display>
+{ enum { TYPE = PC_DISPLAY_ID }; };
+template<> struct Type<AVRMCU_Display>
+{ enum { TYPE = AVRMCU_DISPLAY_ID }; };
+template<> struct Type<Mica2_Display>
+{ enum { TYPE = MICA2_DISPLAY_ID }; };
 
-template<> struct Type<Mica2_Light_Sensor> { static const Type_Id TYPE = MICA2_LIGHT_SENSOR_ID; };
+template<> struct Type<Mica2_Temperature_Sensor> 
+{ enum { TYPE = MICA2_TEMPERATURE_SENSOR_ID }; };
 
-template<> struct Type<Thread> { static const Type_Id TYPE = THREAD_ID; };
+template<> struct Type<Mica2_Light_Sensor> 
+{ enum { TYPE = MICA2_LIGHT_SENSOR_ID }; };
 
-template<> struct Type<Segment> { static const Type_Id TYPE = SEGMENT_ID; };
+template<> struct Type<PC_NIC>
+{ enum { TYPE = PC_NIC_ID }; };
 
-template<> struct Type<Address_Space> { static const Type_Id TYPE = ADDRESS_SPACE_ID; };
 
-template<> struct Type<Mutex> { static const Type_Id TYPE = MUTEX_ID; };
-template<> struct Type<Semaphore> { static const Type_Id TYPE = SEMAPHORE_ID; };
-template<> struct Type<Condition> { static const Type_Id TYPE = CONDITION_ID; };
+template<> struct Type<Thread>
+{ enum { TYPE = THREAD_ID }; };
 
-template<> struct Type<Clock> { static const Type_Id TYPE = CLOCK_ID; };
-template<> struct Type<Alarm> { static const Type_Id TYPE = ALARM_ID; };
-template<> struct Type<Chronometer> { static const Type_Id TYPE = CHRONOMETER_ID; };
 
-template<> struct Type<Temperature_Sentient> { static const Type_Id TYPE = TEMPERATURE_SENTIENT_ID; };
-template<> struct Type<Photo_Sentient> { static const Type_Id TYPE = PHOTO_SENTIENT_ID; };
+template<> struct Type<Segment>
+{ enum { TYPE = SEGMENT_ID }; };
+
+
+template<> struct Type<Address_Space>
+{ enum { TYPE = ADDRESS_SPACE_ID }; };
+
+
+template<> struct Type<Mutex> 
+{ enum { TYPE = MUTEX_ID }; };
+template<> struct Type<Semaphore>
+{ enum { TYPE = SEMAPHORE_ID }; };
+template<> struct Type<Condition>
+{ enum { TYPE = CONDITION_ID }; };
+
+
+template<> struct Type<Clock> 
+{ enum { TYPE = CLOCK_ID }; };
+template<> struct Type<Alarm> 
+{ enum { TYPE = ALARM_ID }; };
+template<> struct Type<Chronometer> 
+{ enum { TYPE = CHRONOMETER_ID }; };
+
+
+template<> struct Type<Network>
+{ enum { TYPE = NETWORK_ID }; };
+
+
+template<> struct Type<Temperature_Sentient>
+{ enum { TYPE = TEMPERATURE_SENTIENT_ID }; };
+template<> struct Type<Photo_Sentient>
+{ enum { TYPE = PHOTO_SENTIENT_ID }; };
 
 __END_SYS
 
