@@ -40,7 +40,7 @@ public:
     static Hertz frequency() {return _timer.frequency(); }
     static void delay(const Microseconds & time);
 
-    static void int_handler(int irq);
+    static void int_handler(unsigned int irq);
 
     static int init(System_Info * si);
 
