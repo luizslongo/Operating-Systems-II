@@ -10,7 +10,7 @@ __BEGIN_SYS
 // Class attributes
 PC::int_handler * PC::_int_vector[PC::INT_VECTOR_SIZE];
 
-// Methods
+// Class methods
 void PC::panic()
 {
     IA32::int_disable(); 
@@ -20,7 +20,7 @@ void PC::panic()
     IA32::halt();
 }
 
-void PC::int_not(int i)
+void PC::int_not(unsigned int i)
 {
     db<PC>(WRN) << "\nInt " << i
 		<< " occurred, but no handler installed\n";
@@ -28,7 +28,8 @@ void PC::int_not(int i)
     panic();
 }
 
-void PC::exc_not(int i, Reg32 error, Reg32 eip, Reg32 cs, Reg32 eflags)
+void PC::exc_not(unsigned int i,
+		 Reg32 error, Reg32 eip, Reg32 cs, Reg32 eflags)
 {
     db<PC>(WRN) << "\nAn exception has occurred for which no handler"
 		<< " is installed [err=" << (void *)error
@@ -41,7 +42,8 @@ void PC::exc_not(int i, Reg32 error, Reg32 eip, Reg32 cs, Reg32 eflags)
     _exit(-1);
 }
 
-void PC::exc_pf(int i, Reg32 error, Reg32 eip, Reg32 cs, Reg32 eflags)
+void PC::exc_pf(unsigned int i,
+		Reg32 error, Reg32 eip, Reg32 cs, Reg32 eflags)
 {  
     db<PC>(WRN) << "\nPage fault [address=" << (void *)IA32::cr2()
 		<< ",err={";
@@ -62,7 +64,8 @@ void PC::exc_pf(int i, Reg32 error, Reg32 eip, Reg32 cs, Reg32 eflags)
     _exit(-1);
 }
 
-void PC::exc_gpf(int i, Reg32 error, Reg32 eip, Reg32 cs, Reg32 eflags)
+void PC::exc_gpf(unsigned int i,
+		 Reg32 error, Reg32 eip, Reg32 cs, Reg32 eflags)
 {  
     db<PC>(WRN) << "\nGeneral protection fault [err=" << (void *)error
 		<< ",ctx={cs=" << (void *)cs
@@ -74,7 +77,8 @@ void PC::exc_gpf(int i, Reg32 error, Reg32 eip, Reg32 cs, Reg32 eflags)
     _exit(-1);
 }
 
-void PC::exc_fpu(int i, Reg32 error, Reg32 eip, Reg32 cs, Reg32 eflags) {  
+void PC::exc_fpu(unsigned int i,
+		 Reg32 error, Reg32 eip, Reg32 cs, Reg32 eflags) {  
     db<PC>(WRN) << "\nFPU fault [err=" << (void *)error
 		<< ",ctx={cs=" << (void *)cs
 		<< ",ip=" << (void *)eip
