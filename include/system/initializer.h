@@ -19,8 +19,8 @@ public:
 #define __LAST_INIT (Initializer::Dispatcher *)-1
 #define INIT_TABLE {\
     &CPU::init, \
-    &TSC::init, \
     &MMU::init, \
+    &TSC::init, \
     &Machine::init, \
     &PCI::init, \
     &IC::init, \
@@ -30,6 +30,7 @@ public:
     &ADC::init, \
     &Temperature_Sensor::init, \
     &Light_Sensor::init, \
+    &NIC::init, \
     &Display::init, \
     &Address_Space::init, \
     &Segment::init, \
