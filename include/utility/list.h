@@ -507,6 +507,12 @@ public:
 	    else
 		return 0;
 	}
+
+	Element * search_rank(int rank) {
+	    Element * e = _head();
+	    for(; e && (e->rank() != rank); e = e->next());
+	    return e;
+	}
     };
 
     // Algorithm for grouping list
