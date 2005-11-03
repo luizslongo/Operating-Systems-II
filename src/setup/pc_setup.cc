@@ -485,7 +485,7 @@ void setup_pci(Phy_Addr * addr, unsigned int * size)
 	    pci.header(loc, &hdr);
 	    if(hdr) {
 		db<Setup>(INF) << "PCI" << hdr;
-		for(int i = 0; i < PC_PCI::Region::N; i++) {
+		for(unsigned int i = 0; i < PC_PCI::Region::N; i++) {
 		    PC_PCI::Region * reg = &hdr.region[i];
 		    if(*reg) {
 			db<Setup>(INF)  << ",reg[" << i << "]=" << *reg;

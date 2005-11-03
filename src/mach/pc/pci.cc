@@ -30,7 +30,7 @@ void PC_PCI::header(const PC_PCI::Locator & l, PC_PCI::Header * h)
 	h->latency_time = cfg8(l.bus, l.dev_fn, LATENCY_TIMER);
 	h->type = cfg8(l.bus, l.dev_fn, HEADER_TYPE);
 	h->bist = cfg8(l.bus, l.dev_fn, BIST);
-	for(int i = 0; i < Region::N; i++) {
+	for(unsigned int i = 0; i < Region::N; i++) {
 	    cpu.int_disable();
 	    h->region[i].phy_addr = cfg32(l.bus, l.dev_fn, _base_address[i]);
 	    cfg32(l.bus, l.dev_fn, _base_address[i], ~0); 
