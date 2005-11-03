@@ -90,13 +90,13 @@ public:
     }
 
     static Log_Addr align32(Log_Addr addr) {
-        return (addr + 3) & ~3;
+        return (addr + 3) & ~3U;
     }
     static Log_Addr align64(Log_Addr addr) {
-        return (addr + 7) & ~7;
+        return (addr + 7) & ~7U;
     }
     static Log_Addr align128(Log_Addr addr) {
-        return (addr + 15) & ~15;
+        return (addr + 15) & ~15U;
     }
     static Log_Addr align_page(Log_Addr addr) {
         return (addr + sizeof(Page) - 1) & ~(sizeof(Page) - 1);
