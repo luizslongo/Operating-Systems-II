@@ -26,7 +26,7 @@ int main()
 
     cout << "My address space's page directory is located at"
 	 << (void *)CPU::pdp() << "\n";
-    Address_Space self((MMU::Page_Directory *) CPU::pdp());
+    Address_Space self(Address_Space::SELF);
 
     cout << "Creating and attaching segments:\n";
     Segment cs(100000);
