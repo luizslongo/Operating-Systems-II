@@ -32,44 +32,46 @@ class AVR8_MMU;
 
 // Hardware Mediators - Machines
 class PC;
-class AVRMCU;
-class Mica2;
+class ATMega16;
+class ATMega128;
 
 // Hardware Mediators - Interrupt Controllers
 class PC_IC;
-class AVRMCU_IC;
-class Mica2_IC;
+class ATMega16_IC;
+class ATMega128_IC;
 
 // Hardware Mediators - Timers
 class PC_Timer;
-class AVRMCU_Timer;
-class Mica2_Timer;
+class ATMega16_Timer;
+class ATMega128_Timer;
 
 // Hardware Mediators - Real Time Clocks
 class PC_RTC;
-class AVRMCU_RTC;
-class Mica2_RTC;
+class ATMega16_RTC;
+class ATMega128_RTC;
 
 // Hardware Mediators - Busses
 class PC_PCI;
 
 // Hardware Mediators - UARTs
 class PC_UART;
-class AVRMCU_UART;
-class Mica2_UART;
+class ATMega16_UART;
+class ATMega128_UART;
 
 // Hardware Mediators - Displays
 class PC_Display;
-class AVRMCU_Display;
-class Mica2_Display;
+class ATMega16_Display;
+class ATMega128_Display;
 
 // Hardware Mediators - Sensors
-class Mica2_Temperature_Sensor;
-class Mica2_Light_Sensor;
+class ATMega128_Temperature_Sensor;
+class ATMega128_Light_Sensor;
 class PC_Sensor;
 
 // Hardware Mediators - NICs
 class PC_NIC;
+class ATMega16_NIC;
+class ATMega128_NIC;
 
 // Abstractions
 class Thread;
@@ -112,18 +114,18 @@ enum
 
     MACHINE_ID,
     PC_ID = MACHINE_ID,
-    AVRMCU_ID,
-    MICA2_ID,
+    ATMEGA16_ID,
+    ATMEGA128_ID,
 
     IC_ID,
     PC_IC_ID = IC_ID,
-    AVRMCU_IC_ID,
-    MICA2_IC_ID,
+    ATMEGA16_IC_ID,
+    ATMEGA128_IC_ID,
 
     TIMER_ID,
     PC_TIMER_ID = TIMER_ID,
-    AVRMCU_TIMER_ID,
-    MICA2_TIMER_ID,
+    ATMEGA16_TIMER_ID,
+    ATMEGA128_TIMER_ID,
 
     RTC_ID,
     PC_RTC_ID = RTC_ID,
@@ -131,19 +133,26 @@ enum
     PCI_ID,
     PC_PCI_ID = PCI_ID,
 
+    UART_ID,
+    PC_UART_ID = UART_ID,
+    ATMEGA16_UART_ID,
+    ATMEGA128_UART_ID,
+
     DISPLAY_ID,
     PC_DISPLAY_ID = DISPLAY_ID,
-    AVRMCU_DISPLAY_ID,
-    MICA2_DISPLAY_ID,
+    ATMEGA16_DISPLAY_ID,
+    ATMEGA128_DISPLAY_ID,
 
     TEMPERATURE_SENSOR_ID,
-    MICA2_TEMPERATURE_SENSOR_ID = TEMPERATURE_SENSOR_ID,
+    ATMEGA128_TEMPERATURE_SENSOR_ID = TEMPERATURE_SENSOR_ID,
 
     LIGHT_SENSOR_ID,
-    MICA2_LIGHT_SENSOR_ID = LIGHT_SENSOR_ID,
+    ATMEGA128_LIGHT_SENSOR_ID = LIGHT_SENSOR_ID,
 
     NIC_ID,
     PC_NIC_ID = NIC_ID,
+    ATMEGA16_NIC_ID,
+    ATMEGA128_NIC_ID,
 
     THREAD_ID,
 
@@ -196,24 +205,24 @@ template<> struct Type<AVR8_MMU>
 
 template<> struct Type<PC>
 { enum { TYPE = PC_ID }; };
-template<> struct Type<AVRMCU> 
-{ enum { TYPE = AVRMCU_ID }; };
-template<> struct Type<Mica2> 
-{ enum { TYPE = MICA2_ID }; };
+template<> struct Type<ATMega16>
+{ enum { TYPE = ATMEGA16_ID }; };
+template<> struct Type<ATMega128>
+{ enum { TYPE = ATMEGA128_ID }; };
 
 template<> struct Type<PC_IC>
 { enum { TYPE = PC_IC_ID }; };
-template<> struct Type<AVRMCU_IC>
-{ enum { TYPE = AVRMCU_IC_ID }; };
-template<> struct Type<Mica2_IC> 
-{ enum { TYPE = MICA2_IC_ID }; };
+template<> struct Type<ATMega16_IC>
+{ enum { TYPE = ATMEGA16_IC_ID }; };
+template<> struct Type<ATMega128_IC>
+{ enum { TYPE = ATMEGA128_IC_ID }; };
 
 template<> struct Type<PC_Timer> 
 { enum { TYPE = PC_TIMER_ID }; };
-template<> struct Type<AVRMCU_Timer>
-{ enum { TYPE = AVRMCU_TIMER_ID }; };
-template<> struct Type<Mica2_Timer> 
-{ enum { TYPE = MICA2_TIMER_ID }; };
+template<> struct Type<ATMega16_Timer>
+{ enum { TYPE = ATMEGA16_TIMER_ID }; };
+template<> struct Type<ATMega128_Timer>
+{ enum { TYPE = ATMEGA128_TIMER_ID }; };
 
 template<> struct Type<PC_RTC>
 { enum { TYPE = PC_RTC_ID }; };
@@ -221,21 +230,32 @@ template<> struct Type<PC_RTC>
 template<> struct Type<PC_PCI>
 { enum { TYPE = PC_PCI_ID }; };
 
+template<> struct Type<PC_UART>
+{ enum { TYPE = PC_UART_ID }; };
+template<> struct Type<ATMega16_UART>
+{ enum { TYPE = ATMEGA16_UART_ID }; };
+template<> struct Type<ATMega128_UART>
+{ enum { TYPE = ATMEGA128_UART_ID }; };
+
 template<> struct Type<PC_Display>
 { enum { TYPE = PC_DISPLAY_ID }; };
-template<> struct Type<AVRMCU_Display>
-{ enum { TYPE = AVRMCU_DISPLAY_ID }; };
-template<> struct Type<Mica2_Display>
-{ enum { TYPE = MICA2_DISPLAY_ID }; };
+template<> struct Type<ATMega16_Display>
+{ enum { TYPE = ATMEGA16_DISPLAY_ID }; };
+template<> struct Type<ATMega128_Display>
+{ enum { TYPE = ATMEGA128_DISPLAY_ID }; };
 
-template<> struct Type<Mica2_Temperature_Sensor> 
-{ enum { TYPE = MICA2_TEMPERATURE_SENSOR_ID }; };
+template<> struct Type<ATMega128_Temperature_Sensor>
+{ enum { TYPE = ATMEGA128_TEMPERATURE_SENSOR_ID }; };
 
-template<> struct Type<Mica2_Light_Sensor> 
-{ enum { TYPE = MICA2_LIGHT_SENSOR_ID }; };
+template<> struct Type<ATMega128_Light_Sensor>
+{ enum { TYPE = ATMEGA128_LIGHT_SENSOR_ID }; };
 
 template<> struct Type<PC_NIC>
 { enum { TYPE = PC_NIC_ID }; };
+template<> struct Type<ATMega16_NIC>
+{ enum { TYPE = ATMEGA16_NIC_ID }; };
+template<> struct Type<ATMega128_NIC>
+{ enum { TYPE = ATMEGA128_NIC_ID }; };
 
 
 template<> struct Type<Thread>

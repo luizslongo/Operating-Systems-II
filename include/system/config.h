@@ -43,13 +43,13 @@ typedef AVR8 CPU;
 #define MACH pc
 typedef PC Machine;
 typedef Dummy ADC;
-#elif defined (__avrmcu)
-#define MACH avrmcu
-typedef AVRMCU Machine;
+#elif defined (__atmega)
+#define MACH atmega
+typedef ATMega16 Machine;
 typedef Dummy PCI;
-#elif defined (__mica2)
-#define MACH mica2
-typedef Mica2 Machine;
+#elif defined (__atmega128)
+#define MACH atmega128
+typedef ATMega128 Machine;
 typedef Dummy PCI;
 #else
 #error Machine not selected!
