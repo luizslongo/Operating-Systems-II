@@ -9,8 +9,8 @@ __BEGIN_SYS
 
 class AVR_IC: public IC_Common
 {
-
 public:
+    typedef int Mask;
     
     static void remap(unsigned char b) {}
     static Mask servicing() { return 0; }
