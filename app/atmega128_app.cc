@@ -11,22 +11,17 @@
 __USING_SYS
 
 int main() {
-
-    Display disp;
     unsigned char count = 0;
 
-    CPU::out8(Machine::IO::DDRA, 0x07);
+    OStream cout;
+
+    CPU::out8(Machine::IO::DDRA, 0xff);
     CPU::out8(Machine::IO::PORTA, ~0);
 
-
-    Display d;
-
     while(1) {
-	
-	d.puts("This is EPOS-- for Mica2\n");
+        cout << "This is EPOS-- for ATMega128!\n";
 	CPU::out8(Machine::IO::PORTA, ~count++);
-	Alarm::delay(1000000);
-
+	//Alarm::delay(1000000);
+	for(unsigned int i = 0; i < 0xffff;i++);
     }
-
 }

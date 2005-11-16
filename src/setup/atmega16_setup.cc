@@ -1,5 +1,5 @@
 #include <system/config.h>
-#include <mach/avrmcu/avrmcu.h>
+#include <mach/atmega16/atmega16.h>
 #include <utility/handler.h>
 
 __USING_SYS

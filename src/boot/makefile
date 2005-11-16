@@ -24,18 +24,18 @@ rcx_install:	rcx_boot
 		$(OBJCPY) -O binary $< $<.img
 
 
-#AVRMCU
-avrmcu_boot: FORCE
+#ATMega16
+atmega16_boot: FORCE
 		$(TOUCH) $(MACH)_boot
 
-avrmcu_install: $(MACH)_boot
+atmega16_install: $(MACH)_boot
 		$(TOUCH) $(MACH)_boot.img
 
-#Mica2
-mica2_boot: FORCE
+#ATMega128
+atmega128_boot: FORCE
 		$(TOUCH) $(MACH)_boot
 
-mica2_install: $(MACH)_boot
+atmega128_install: $(MACH)_boot
 		$(TOUCH) $(MACH)_boot.img
 
 
