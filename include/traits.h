@@ -53,8 +53,8 @@ template <> struct Traits<IA32>: public Traits<void>
 
 template <> struct Traits<AVR8>: public Traits<void>
 {
-    static const unsigned long long CLOCK = 7372800; //Mica2
-  //    static const unsigned long long CLOCK = 4000000; //ATMega16
+  //    static const unsigned long long CLOCK = 7372800; //Mica2
+    static const unsigned long long CLOCK = 8000000; //ATMega128 / ATMega16
 };
 
 template <> struct Traits<IA32_MMU>: public Traits<void>
@@ -75,7 +75,7 @@ template <> struct Traits<PC_RTC>: public Traits<void>
     static const unsigned int EPOCH_DAYS = 719499;
 };
 
-template <> struct Traits<AVRMCU_RTC>: public Traits<void>
+template <> struct Traits<ATMega16_RTC>: public Traits<void>
 {
     static const unsigned int EPOCH_DAY = 1;
     static const unsigned int EPOCH_MONTH = 1;
@@ -83,7 +83,7 @@ template <> struct Traits<AVRMCU_RTC>: public Traits<void>
     static const unsigned int EPOCH_DAYS = 719499;
 };
 
-template <> struct Traits<Mica2_RTC>: public Traits<void>
+template <> struct Traits<ATMega128_RTC>: public Traits<void>
 {
     static const unsigned int EPOCH_DAY = 1;
     static const unsigned int EPOCH_MONTH = 1;
@@ -103,6 +103,30 @@ template <> struct Traits<PC>: public Traits<void>
     static const unsigned int APPLICATION_HEAP_SIZE = 40960;
 };
 
+template <> struct Traits<ATMega16>: public Traits<void>
+{
+    static const unsigned int BOOT_IMAGE_ADDR = 0x0000;
+    static const int INT_BASE = 0x00; 
+    static const int INT_VEC_SIZE = 24; 
+
+    static const unsigned int SYSTEM_STACK_SIZE = 64;
+    static const unsigned int SYSTEM_HEAP_SIZE = 64;
+    static const unsigned int APPLICATION_STACK_SIZE = 64;
+    static const unsigned int APPLICATION_HEAP_SIZE = 128;
+};
+
+template <> struct Traits<ATMega128>: public Traits<void>
+{
+    static const unsigned int BOOT_IMAGE_ADDR = 0x0000;
+    static const int INT_BASE = 0x00; 
+    static const int INT_VEC_SIZE = 35; 
+
+    static const unsigned int SYSTEM_STACK_SIZE = 64;
+    static const unsigned int SYSTEM_HEAP_SIZE = 64;
+    static const unsigned int APPLICATION_STACK_SIZE = 64;
+    static const unsigned int APPLICATION_HEAP_SIZE = 512;
+};
+
 template <> struct Traits<PC_PCI>: public Traits<void>
 {
     static const int MAX_BUS = 0;
@@ -115,6 +139,18 @@ template <> struct Traits<PC_Timer>: public Traits<void>
     // 10000 Hz. The choice must respect the scheduler time-slice, i. e.,
     // it must be higher than the scheduler invocation frequency.
     static const int FREQUENCY = 1000; // Hz
+};
+
+template <> struct Traits<ATMega16_Timer>: public Traits<void>
+{
+    static const int FREQUENCY = 40; // Hz
+};
+
+template <> struct Traits<ATMega128_Timer>: public Traits<void>
+{
+    // Should be between 28 and 7200 Hz
+    static const int FREQUENCY = 720; // Hz
+    
 };
 
 template <> struct Traits<PC_UART>: public Traits<void>
@@ -133,13 +169,6 @@ template <> struct Traits<PC_NIC>: public Traits<void>
     static const unsigned int PCNET32_RECEIVE_BUFFERS = 8; // per unit
 };
 
-template <> struct Traits<Mica2_Display>: public Traits<void>
-{
-    static const int COLUMNS = 80;
-    static const int LINES = 24;
-    static const int TAB_SIZE = 8;
-};
-
 template <> struct Traits<PC_Display>: public Traits<void>
 {
     static const int COLUMNS = 80;
@@ -148,40 +177,11 @@ template <> struct Traits<PC_Display>: public Traits<void>
     static const unsigned int FRAME_BUFFER_ADDRESS = 0xb8000;
 };
 
-template <> struct Traits<AVRMCU>: public Traits<void>
+template <> struct Traits<ATMega128_Display>: public Traits<void>
 {
-    static const unsigned int BOOT_IMAGE_ADDR = 0x0000;
-    static const int INT_BASE = 0x00; 
-    static const int INT_VEC_SIZE = 24; 
-
-    static const unsigned int SYSTEM_STACK_SIZE = 64;
-    static const unsigned int SYSTEM_HEAP_SIZE = 64;
-    static const unsigned int APPLICATION_STACK_SIZE = 64;
-    static const unsigned int APPLICATION_HEAP_SIZE = 128;
-};
-
-template <> struct Traits<Mica2>: public Traits<void>
-{
-    static const unsigned int BOOT_IMAGE_ADDR = 0x0000;
-    static const int INT_BASE = 0x00; 
-    static const int INT_VEC_SIZE = 35; 
-
-    static const unsigned int SYSTEM_STACK_SIZE = 64;
-    static const unsigned int SYSTEM_HEAP_SIZE = 64;
-    static const unsigned int APPLICATION_STACK_SIZE = 64;
-    static const unsigned int APPLICATION_HEAP_SIZE = 512;
-};
-
-template <> struct Traits<AVRMCU_Timer>: public Traits<void>
-{
-    static const int FREQUENCY = 40; // Hz
-};
-
-template <> struct Traits<Mica2_Timer>: public Traits<void>
-{
-    // Should be between 28 and 7200 Hz
-    static const int FREQUENCY = 720; // Hz
-    
+    static const int COLUMNS = 80;
+    static const int LINES = 24;
+    static const int TAB_SIZE = 8;
 };
 
 
