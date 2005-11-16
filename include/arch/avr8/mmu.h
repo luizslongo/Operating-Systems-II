@@ -23,6 +23,8 @@ private:
     static const unsigned int SYS_PT  = Memory_Map<Machine>::PHY_MEM;
 
 public:
+    //Dummy DMA_Buffer (AVR CPU's does not make DMA)
+    class DMA_Buffer {};
     // Page Flags
     typedef MMU_Common<0, 0, 0>::Flags AVR8_Flags;
 
