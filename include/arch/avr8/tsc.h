@@ -74,7 +74,7 @@ private:
     static Reg16 tcnt1hl() { return AVR8::in16(TCNT1L); }
     static void tcnt1hl(Reg16 value) { return AVR8::out16(TCNT1L, value); }
 
-    static void timer1_handler(void) { _ts++; } 
+    static void timer_handler(int) { _ts++; } 
 
 private:
     static volatile unsigned long _ts;
