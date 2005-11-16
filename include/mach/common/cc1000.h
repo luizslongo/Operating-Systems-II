@@ -26,6 +26,23 @@ public:
     
     ~CC1000() {}
 
+
+
+    //dummy -> Just to compile network
+    //dummy begin
+    typedef CPU::Reg8 Address;
+    typedef CPU::Reg16 MAC_Address;
+    typedef unsigned char Protocol;
+    typedef unsigned int Statistics;
+    static const unsigned char MTU = 1;
+    int send(const Address & dst, const Protocol & prot,
+ 	     const void * data, unsigned int size);
+    int receive(Address * src, Protocol * prot,
+		void * data, unsigned int size);
+    const Statistics & statistics() { return 0; }
+    void reset();
+    //dummy end;
+
 private:
 
     class Registers {
@@ -520,8 +537,3 @@ typedef CC1000 Radio;
 __END_SYS
 
 #endif
-
-
-
-
-
