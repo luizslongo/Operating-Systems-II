@@ -14,7 +14,7 @@ int AVR8_TSC::init(System_Info * si)
 
 //    tccr1b(CS10);
    
-    Machine::int_handler(Machine::INT_TSC,&Machine::handler_wrapper<timer1_handler>);
+    Machine::int_vector(IC::IRQ_TSC, timer_handler);
     
 //     IC ic;
 //     ic.enable(IC::TIMER1_OVF);
