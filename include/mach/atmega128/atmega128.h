@@ -28,7 +28,7 @@ public:
     typedef IO_Map<ATMega128> IO;
 
 public:
-    typedef void (int_handler)(int);
+    typedef void (int_handler)(unsigned int);
 
 public:
     ATMega128(){};
