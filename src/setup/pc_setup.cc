@@ -41,7 +41,7 @@ int  main(char *, unsigned int, char *);
 void setup_pci(Phy_Addr *, unsigned int *);
 void setup_gdt(Phy_Addr);
 void setup_idt(Phy_Addr);
-void setup_sys_pt(PMM *, int, int);
+void setup_sys_pt(PMM *, int, int, int);
 void setup_sys_pd(PMM *, unsigned int, Phy_Addr, unsigned int);
 void setup_lmm(LMM *, Log_Addr, Log_Addr);
 void copy_sys_info(System_Info *, System_Info *);
@@ -209,8 +209,12 @@ int main(char * setup_addr, unsigned int setup_size, char * bi)
     // Check OS integrity and get the size of its code and data segments
     Log_Addr sys_entry = 0;
     unsigned int sys_segments = 0;
+    Log_Addr sys_code = 0;
     unsigned int sys_code_size = 0;
+    Log_Addr sys_data = 0;
     unsigned int sys_data_size = 0;
+    Log_Addr sys_stack = 0;
+    unsigned int sys_stack_size = 0;
     if(has_system) {
 	elf = reinterpret_cast<ELF *>(&bi[si->bm.system_off]);
 	if(!elf->valid()) {
@@ -219,9 +223,46 @@ int main(char * setup_addr, unsigned int setup_size, char * bi)
 	}
 	sys_entry = elf->entry();
 	sys_segments = elf->segments();
+	sys_code = elf->segment_address(0);
 	sys_code_size = elf->segment_size(0);
-	for(unsigned int i = 1; i < sys_segments; i++)
+	sys_data = elf->segment_address(1);
+	for(unsigned int i = 1; i < sys_segments; i++) {
+	    if(elf->segment_address(i) < sys_data)
+		sys_data = elf->segment_address(i);
 	    sys_data_size += elf->segment_size(i);
+	}
+	sys_stack = MM::SYS_STACK;
+	sys_stack_size = TR::SYSTEM_STACK_SIZE;
+
+	if(sys_code != MM::SYS_CODE) {
+	    db<Setup>(ERR) << "OS code segment address do not match "
+			   << "the machine's memory map!\n";
+	    panic();
+	}
+	if(sys_code + sys_code_size > sys_data) {
+	    db<Setup>(ERR) << "OS code segment is too large!\n";
+	    panic();
+	}
+
+	if(sys_data != MM::SYS_DATA) {
+	    db<Setup>(ERR) << "OS code segment address do not match "
+			   << "the machine's memory map!\n";
+	    panic();
+	}
+
+	if(sys_data + sys_data_size > sys_stack) {
+	    db<Setup>(ERR) << "OS data segment is too large!\n";
+	    panic();
+	}
+	if(sys_data + sys_data_size > sys_stack) {
+	    db<Setup>(ERR) << "OS data segment is too large!\n";
+	    panic();
+	}
+	if(MMU::page_tables(MMU::pages(sys_stack - MM::SYS + sys_stack_size))
+	   > 1) {
+	    db<Setup>(ERR) << "OS stack segment is too large!\n";
+	    panic();
+	}
     }
 
     // Check APP integrity and get the size of all its segments
@@ -255,12 +296,14 @@ int main(char * setup_addr, unsigned int setup_size, char * bi)
     kout << "  Init:      " << init_size << " bytes\n";
     kout << "  OS code:   " << sys_code_size << " bytes";
     kout << "\tOS data:   " << sys_data_size << " bytes\n";
+    kout << "\tOS stack:  " << sys_stack_size << " bytes\n";
     kout << "  APP code:  " << app_code_size << " bytes";
     kout << "\t\tAPP data:  " << app_data_size << " bytes\n";
 
     // Align and convert the following sizes to pages 
     sys_code_size = MMU::pages(sys_code_size);
     sys_data_size = MMU::pages(sys_data_size);
+    sys_stack_size = MMU::pages(sys_stack_size);
     app_code_size = MMU::pages(app_code_size);
     app_data_size = MMU::pages(app_data_size);
     si->mem_size  = MMU::pages(si->bm.mem_size);
@@ -313,8 +356,8 @@ int main(char * setup_addr, unsigned int setup_size, char * bi)
     si->mem_free -= sys_data_size;
     si->pmm.sys_data = si->mem_free * sizeof(Page);
 
-    // OS stack segment (1 x sizeof(Page))
-    si->mem_free -= 1;
+    // OS stack segment (in pages, from Traits)
+    si->mem_free -= sys_stack_size;
     si->pmm.sys_stack = si->mem_free * sizeof(Page);
 
     // All memory bolow this is free to applications
@@ -346,7 +389,7 @@ int main(char * setup_addr, unsigned int setup_size, char * bi)
     setup_gdt(si->pmm.mach1);
 
     // Setup the System Page Table
-    setup_sys_pt(&si->pmm, sys_code_size, sys_data_size);
+    setup_sys_pt(&si->pmm, sys_code_size, sys_data_size, sys_stack_size);
 
     // Setup the System Page Directory and map physical memory
     setup_sys_pd(&si->pmm, si->mem_size, si->pmm.io_mem, si->pmm.io_mem_size);
@@ -604,11 +647,13 @@ void setup_gdt(Phy_Addr addr)
 //                                                                      
 // Desc: Setup the System Page Table	                                
 //                                                                      
-// Parm: pmm           -> physical memory map				
-//	 sys_code_size -> system code size in Ix86_Pages		
-//	 sys_data_size -> system data size in Ix86_Pages		
+// Parm: pmm            -> physical memory map				
+//	 sys_code_size  -> system code size in Ix86_Pages		
+//	 sys_data_size  -> system data size in Ix86_Pages		
+//	 sys_stack_size -> system stack size in pages
 //------------------------------------------------------------------------
-void setup_sys_pt(PMM * pmm, int sys_code_size, int sys_data_size)
+void setup_sys_pt(PMM * pmm, int sys_code_size, int sys_data_size, 
+		  int sys_stack_size)
 {
     db<Setup>(TRC) << "setup_sys_pt(pmm={idt=" << (void *)pmm->int_vec
 		   << ",gdt="  << (void *)pmm->mach1 
@@ -628,7 +673,8 @@ void setup_sys_pt(PMM * pmm, int sys_code_size, int sys_data_size)
 		   << ",fr2s=" << (void *)pmm->free_size
 		   << "}"
 		   << ",code_size=" << sys_code_size 
-		   << ",data_size=" << sys_data_size << ")\n";
+		   << ",data_size=" << sys_data_size
+		   << ",stack_size=" << sys_stack_size << ")\n";
 
     // Get the physical address for the System Page Table
     PT_Entry * sys_pt = (PT_Entry *)pmm->sys_pt;
@@ -668,8 +714,12 @@ void setup_sys_pt(PMM * pmm, int sys_code_size, int sys_data_size)
 	sys_pt[MMU::page(MM::SYS_DATA) + i]
 	    = aux | Flags::SYS;
 
-    // Set a single page for OS stack (who needs a stack?) 
-    sys_pt[MMU::page(MM::SYS_STACK)] = pmm->sys_stack | Flags::SYS;
+    // OS stack (who needs a stack?) 
+    for(i = 0, aux = pmm->sys_stack;
+	i < sys_stack_size;
+	i++, aux = aux + sizeof(Page))
+	sys_pt[MMU::page(MM::SYS_STACK) + i]
+	    = aux | Flags::SYS;
 
     db<Setup>(INF) << "SPT=" << *((Page_Table *)sys_pt) << "\n";
 }
