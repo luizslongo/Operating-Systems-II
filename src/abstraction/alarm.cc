@@ -65,6 +65,18 @@ void Alarm::delay(const Microseconds & time)
 
 void Alarm::int_handler(unsigned int)
 {
+    // This is a very special interrupt handler, for the master alarm handler
+    // called at the end might trigger a context switch (e.g. when it is set
+    // to call the thread scheduler). In this case, int_handler won't finish
+    // within the expected time (i.e., it will finish only when the preempted
+    // thread return to the CPU). For this NOT to be an issue, the following
+    // conditions MUST be met:
+    // 1 - The interrupt dispatcher must acknowledge the handling of interrupts
+    //     before invoking the respective handler, thus enabling subsequent
+    //     interrupts to be handled even if a previous didn't come to an end
+    // 2 - Handlers (e.g. master) must be called after incrementing _elapsed
+    // 3 - The manipulation of alarm queue must be guarded (e.g. int_disable)
+
     CPU::int_disable();
 
     static Tick next; // counter for next event
@@ -81,9 +93,6 @@ void Alarm::int_handler(unsigned int)
 	display.position(lin, col);
     }
 
-    if(_master_ticks && ((_elapsed % _master_ticks) == 0))
-	_master();
-    
     if(next > 0)
 	next--; 
     else {
@@ -106,6 +115,9 @@ void Alarm::int_handler(unsigned int)
     }
 
     CPU::int_enable();
+
+    if(_master_ticks && ((_elapsed % _master_ticks) == 0))
+	_master();
 }
 
 __END_SYS
