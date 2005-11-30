@@ -135,9 +135,7 @@ void PCNet32::reset()
 
     // Get MAC address from CSR
     csr(0, CSR0_IDON | CSR0_STOP);
-    Address csr_addr(reinterpret_cast<unsigned short>(csr(PADR0)),
-		     reinterpret_cast<unsigned short>(csr(PADR1)),
-		     reinterpret_cast<unsigned short>(csr(PADR2)));
+    Address csr_addr(csr(PADR0), csr(PADR1), csr(PADR2));
 
     if(_address.q != csr_addr.q) {
         db<PC_NIC>(WRN) << "PCNet32::reset: initialization failed!\n";
