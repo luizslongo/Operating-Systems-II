@@ -189,8 +189,8 @@ private:
 
 	allow_scheduling();
 
-	if(Traits::preemptive)
-	    reschedule();
+ 	if(Traits::preemptive)
+ 	    reschedule();
     }
 
     static Thread * volatile  & running() { return _running; }
@@ -207,7 +207,7 @@ private:
 
     static void reschedule() { // this is the master alarm handler (int dis.)
 	Queue::Element * e = _ready.head();
-	if(e && e->rank() < _running->_link.rank()) {
+	if(e && e->rank() <= _running->_link.rank()) {
 	    _running->_state = READY;
 	    _ready.insert(&_running->_link);
 	    switch_to(_ready.remove()->object());
@@ -226,6 +226,7 @@ private:
 	n->_state = RUNNING;
 	_running = n;
 
+	allow_scheduling(); // seems efectless, but shouldn't!!!
 	CPU::switch_context(&o->_context, n->_context);
     }
 
