@@ -187,9 +187,9 @@ public:
 	operator bool() { return (bus != INVALID); }
 
 	friend Debug & operator << (Debug & db, const Locator & l) {
-	    db << "{" << l.bus 
+	    db << "[" << l.bus 
 	       << ":" << (l.dev_fn >> 3)
-	       << "." << (l.dev_fn & 0x07) << "}";
+	       << "." << (l.dev_fn & 0x07) << "]";
 	    return db;
 	}
 
@@ -221,11 +221,11 @@ public:
 	operator bool() { return locator; }
 
 	friend Debug & operator << (Debug & db, const Header & h) {
-	    db << "{loc=" << h.locator
-	       << ",vnd_id=" << h.vendor_id
-	       << ",dev_id=" << h.device_id
-	       << ",cmd=" << h.command
-	       << ",stat=" << h.status << "}";
+	    db << h.locator
+	       << "={vnd_id=" << (void *)(int)h.vendor_id
+	       << ",dev_id=" << (void *)(int)h.device_id
+	       << ",cmd=" << (void *)(int)h.command
+	       << ",stat=" << (void *)(int)h.status << "}";
 	    return db;
 	}
 

@@ -10,8 +10,6 @@ int IA32_MMU::init(System_Info * si)
 
     db<IA32_MMU>(INF) << "IA32_MMU:: memory size = " 
 		      << si->mem_size << " pages\n";
-    db<IA32_MMU>(INF) << "IA32_MMU:: free memory = " 
-		      << si->mem_free << " pages\n";
     db<IA32_MMU>(INF) << "IA32_MMU:: application's memory base = " 
 		      << (void *) si->pmm.app_lo << "\n";
     db<IA32_MMU>(INF) << "IA32_MMU:: free chunk = {base=" 
@@ -46,12 +44,12 @@ int IA32_MMU::init(System_Info * si)
 		      si->pmm.free_size);
     _free.insert_merging(e, &m1, &m2);
 
-    db<IA32_MMU>(INF) << "IA32_MMU::Free Frames => "
+    db<IA32_MMU>(INF) << "IA32_MMU:: free pages = "
 		      << _free.grouped_size() << "\n";
 
     _master = reinterpret_cast<Page_Directory *>(CPU::pdp());
 
-    db<IA32_MMU>(INF) << "IA32_MMU::Master Page Directory => " 
+    db<IA32_MMU>(INF) << "IA32_MMU:: master page directory = " 
 		      << _master << "\n";
 
     return 0;
