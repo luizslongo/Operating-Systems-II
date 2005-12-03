@@ -15,32 +15,49 @@ Alarm::Tick Alarm::_master_ticks;
 Alarm::Queue Alarm::_requests;
 
 // Methods
-Alarm::Alarm(const Microseconds & time, Handler * handler, int times)
+Alarm::Alarm(const Microsecond & time, Handler * handler, int times)
     : _ticks((time + period() / 2) / period()), _handler(handler),
       _times(times), _link(this, _ticks)
 {
     db<Alarm>(TRC) << "Alarm(t=" << time 
 		   << ",ticks=" << _ticks
 		   << ",h=" << (void *)handler
-		   << ",x=" << times << ")\n";
-    if(!_ticks) {
+		   << ",x=" << times << ") => " << this << "\n";
+    if(_ticks) {
+	CPU::int_disable();
+	_requests.insert(&_link);
+	CPU::int_enable();
+    } else
 	(*handler)();
-	return;
-    }
+}
 
-    CPU::int_disable();
-    _requests.insert(&_link);
-    CPU::int_enable();
+Alarm::Alarm(const Microsecond & time, Handler * handler, int times, 
+	     bool int_enable)
+    : _ticks((time + period() / 2) / period()), _handler(handler),
+      _times(times), _link(this, _ticks)
+{
+    db<Alarm>(TRC) << "Alarm(t=" << time 
+		   << ",ticks=" << _ticks
+		   << ",h=" << (void *)handler
+		   << ",x=" << times << ") => " << this << "\n";
+    if(_ticks) {
+	CPU::int_disable();
+	_requests.insert(&_link);
+	if(int_enable)
+	    CPU::int_enable();
+    } else
+	(*handler)();
 }
 
 Alarm::~Alarm() {
     db<Alarm>(TRC) << "~Alarm()\n";
+
     CPU::int_disable();
     _requests.remove(this);
     CPU::int_enable();
 }
 
-void Alarm::master(const Microseconds & time, Handler::Function * handler)
+void Alarm::master(const Microsecond & time, Handler::Function * handler)
 {
     db<Alarm>(TRC) << "Alarm::master(t=" << time << ",h="
 		   << (void *)handler << ")\n";
@@ -49,16 +66,18 @@ void Alarm::master(const Microseconds & time, Handler::Function * handler)
     _master_ticks = (time + period() / 2) / period();
 }
 
-void Alarm::delay(const Microseconds & time)
+void Alarm::delay(const Microsecond & time)
 {
     db<Alarm>(TRC) << "Alarm::delay(t=" << time << ")\n";
-    if (time > 0) 
+    if(time > 0) 
         if(__SYS(Traits)<Thread>::idle_waiting) {
+	    CPU::int_disable();
 	    Handler_Thread handler(Thread::self());
-	    Alarm alarm(time, &handler, 1);
+	    Alarm alarm(time, &handler, 1, false);
 	    Thread::self()->suspend();
+	    CPU::int_enable();
         } else {
-	    Tick t = _elapsed + time / period();
+	    Tick t = _elapsed + (time + period() / 2) / period();
 	    while(_elapsed < t);
         }
 }
@@ -77,10 +96,13 @@ void Alarm::int_handler(unsigned int)
     // 2 - Handlers (e.g. master) must be called after incrementing _elapsed
     // 3 - The manipulation of alarm queue must be guarded (e.g. int_disable)
 
+    static volatile bool busy = false; // no event to care for
+    static volatile Tick next;         // ticks until next event
+    static Handler * volatile handler; // next event's handler
+
     CPU::int_disable();
 
-    static Tick next; // counter for next event
-    static Handler * handler; // next event's handler
+    Handler * current = 0;
 
     _elapsed++;
     
@@ -93,31 +115,37 @@ void Alarm::int_handler(unsigned int)
 	display.position(lin, col);
     }
 
-    if(next > 0)
-	next--; 
-    else {
-	if(handler) {
-	    (*handler)();
-	    handler = 0;
+    if(busy) {
+	if(next > 0)
+	    next--; 
+	else {
+	    db<Alarm>(TRC) << "Alarm::handler(h=" << handler << ")\n";
+	    current = handler;
+	    busy = false;
 	}
-	if(!_requests.empty()) {
-	    Queue::Element * e = _requests.remove();
-	    Alarm * alarm = e->object();
-	    next = e->rank();
-	    handler = alarm->_handler;
-	    if(alarm->_times != INFINITE)
-		alarm->_times--;
-	    if(alarm->_times) {
-		e->rank(alarm->_ticks);
-		_requests.insert(e);
-	    }
+    }
+
+    if(!busy && !_requests.empty()) {
+	Queue::Element * e = _requests.remove();
+	Alarm * alarm = e->object();
+	next = e->rank();
+	handler = alarm->_handler;
+	if(alarm->_times != INFINITE)
+	    alarm->_times--;
+	if(alarm->_times) {
+	    e->rank(alarm->_ticks);
+	    _requests.insert(e);
 	}
+	busy = true;
     }
 
     CPU::int_enable();
 
-    if(_master_ticks && ((_elapsed % _master_ticks) == 0))
+    if(_master_ticks && ((_elapsed % _master_ticks) == 0)) 
 	_master();
+    
+    if(current) 
+	(*current)();
 }
 
 __END_SYS
