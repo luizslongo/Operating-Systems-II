@@ -17,7 +17,7 @@ private:
 
     typedef TSC::Hertz Hertz;
     typedef TSC::Time_Stamp Time_Stamp;
-    typedef RTC::Microseconds Microseconds;
+    typedef RTC::Microsecond Microsecond;
 
 public:
     Chronometer() : _start(0), _stop(0) {}
@@ -36,7 +36,7 @@ public:
 	    return tsc.time_stamp() - _start;
 	return _stop - _start;
     }
-    Microseconds read() { return ticks() * 1000000 / frequency(); }
+    Microsecond read() { return ticks() * 1000000 / frequency(); }
 
     static int init(System_Info *si);
 

@@ -4,7 +4,7 @@
 
 __BEGIN_SYS
 
-RTC_Common::Seconds RTC_Common::date2offset(unsigned int epoch_days, 
+RTC_Common::Second RTC_Common::date2offset(unsigned int epoch_days, 
     unsigned int Y, unsigned int M, unsigned int D,
     unsigned int h, unsigned int m, unsigned int s)
 {
@@ -18,7 +18,7 @@ RTC_Common::Seconds RTC_Common::date2offset(unsigned int epoch_days,
 }
 
 void RTC_Common::offset2date(
-    RTC_Common::Seconds t, unsigned int epoch_days,
+    RTC_Common::Second t, unsigned int epoch_days,
     unsigned int * Y, unsigned int * M, unsigned int * D,
     unsigned int * h, unsigned int * m, unsigned int * s)
 {

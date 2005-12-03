@@ -14,21 +14,15 @@ private:
     typedef Traits<Clock> Traits;
     static const Type_Id TYPE = Type<Clock>::TYPE;
 
-    typedef RTC::Microseconds Microseconds;
-    typedef RTC::Seconds Seconds;
+    typedef RTC::Microsecond Microsecond;
+    typedef RTC::Second Second;
 
 public:
-//    Clock(const Id & id) {}
-//    Clock(const Clock & obj) {}
     Clock() {}
-    ~Clock() {}
 
-//    const Id & id();
-//    bool valid();
+    Microsecond resolution() { return 1000000; }
 
-    Microseconds resolution() { return 1000000; }
-
-    Seconds now() { RTC rtc; return rtc.get(); }
+    Second now() { RTC rtc; return rtc.get(); }
 
     static int init(System_Info * si);
 };

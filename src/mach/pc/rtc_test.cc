@@ -15,7 +15,7 @@ int main()
     cout << "PC_RTC test\n";
 
     PC_RTC rtc;
-    RTC::Seconds t0 = rtc.get();
+    RTC::Second t0 = rtc.get();
     Display disp;
     unsigned int last_second = rtc.seconds();
     for(int i = 0; i < 2; i++) {

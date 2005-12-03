@@ -4,7 +4,7 @@
 
 __BEGIN_SYS
 
-PC_RTC::Seconds PC_RTC::get()
+PC_RTC::Second PC_RTC::get()
 {
     unsigned int Y, M, D, h, m, s;
 
@@ -22,7 +22,7 @@ PC_RTC::Seconds PC_RTC::get()
     return date2offset(Traits::EPOCH_DAYS, Y, M, D, h, m, s);
 }
 
-void PC_RTC::set(const PC_RTC::Seconds & time)
+void PC_RTC::set(const PC_RTC::Second & time)
 {
     db<PC_RTC>(TRC) << "PC_RTC::write(time= " << time << ")\n";
 

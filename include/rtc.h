@@ -14,15 +14,15 @@ protected:
 
 public:
     // The time (as defined by God Chronos)
-    typedef unsigned long Microseconds;
-    typedef unsigned long Seconds;
+    typedef unsigned long Microsecond;
+    typedef unsigned long Second;
 
 protected:
-    static Seconds date2offset(unsigned int epoch_days,
-			       unsigned int Y, unsigned int M, 
-			       unsigned int D, unsigned int h,
-			       unsigned int m, unsigned int s);
-    static void offset2date(Seconds t,  unsigned int epoch_days,
+    static Second date2offset(unsigned int epoch_days,
+			      unsigned int Y, unsigned int M, 
+			      unsigned int D, unsigned int h,
+			      unsigned int m, unsigned int s);
+    static void offset2date(Second t,  unsigned int epoch_days,
 			    unsigned int * Y, unsigned int * M,
 			    unsigned int * D, unsigned int * h,
 			    unsigned int * m, unsigned int * s);

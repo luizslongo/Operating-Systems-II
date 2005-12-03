@@ -24,8 +24,8 @@ private:
 
     typedef TSC::Hertz Hertz;
     typedef TSC::Time_Stamp Time_Stamp;
-    typedef RTC::Microseconds Microseconds;
-    typedef RTC::Seconds Seconds;
+    typedef RTC::Microsecond Microsecond;
+    typedef RTC::Second Second;
     typedef Timer::Tick Tick;
 
 public:
@@ -33,19 +33,22 @@ public:
     enum { INFINITE = -1 };
 
 public:
-    Alarm(const Microseconds & time, Handler * handler, int times = 1);
+    Alarm(const Microsecond & time, Handler * handler, int times = 1);
     ~Alarm();
 
-    static void master(const Microseconds & time, Handler::Function * handler);
+    static void master(const Microsecond & time, Handler::Function * handler);
     static Hertz frequency() {return _timer.frequency(); }
-    static void delay(const Microseconds & time);
+    static void delay(const Microsecond & time);
 
     static void int_handler(unsigned int irq);
 
     static int init(System_Info * si);
 
 private:
-    static Microseconds period() { return 1000000 / frequency(); }
+    Alarm(const Microsecond & time, Handler * handler, int times,
+	  bool int_enable);
+
+    static Microsecond period() { return 1000000 / frequency(); }
 
 private:
     Tick _ticks;

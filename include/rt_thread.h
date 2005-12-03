@@ -13,7 +13,7 @@ class Periodic_Thread: public Thread
 {
 public:
     Periodic_Thread(int (* entry)(), 
-		    RTC::Microseconds period,
+		    RTC::Microsecond period,
 		    int times = Alarm::INFINITE,
 		    const State & state = READY,
 		    const Priority & priority = NORMAL,
@@ -23,7 +23,7 @@ public:
 	  _alarm(period, &_handler, times) {}
     template<class T1>
     Periodic_Thread(int (* entry)(T1 a1), T1 a1,
-		    RTC::Microseconds period,
+		    RTC::Microsecond period,
 		    int times = Alarm::INFINITE,
 		    const State & state = READY,
 		    const Priority & priority = NORMAL,
@@ -33,7 +33,7 @@ public:
 	  _alarm(period, &_handler, times) {}
     template<class T1, class T2>
     Periodic_Thread(int (* entry)(T1 a1, T2 a2), T1 a1, T2 a2, 
-		    RTC::Microseconds period,
+		    RTC::Microsecond period,
 		    int times = Alarm::INFINITE,
 		    const State & state = READY,
 		    const Priority & priority = NORMAL,
@@ -43,7 +43,7 @@ public:
 	  _alarm(period, &_handler, times) {}
     template<class T1, class T2, class T3>
     Periodic_Thread(int (* entry)(T1 a1, T2 a2, T3 a3), T1 a1, T2 a2, T3 a3,
-		    RTC::Microseconds period,
+		    RTC::Microsecond period,
 		    int times = Alarm::INFINITE,
 		    const State & state = READY,
 		    const Priority & priority = NORMAL,
