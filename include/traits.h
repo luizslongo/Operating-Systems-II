@@ -171,6 +171,7 @@ template <> struct Traits<PC_NIC>: public Traits<void>
 
 template <> struct Traits<PC_Display>: public Traits<void>
 {
+    static const bool on_serial = false;
     static const int COLUMNS = 80;
     static const int LINES = 25;
     static const int TAB_SIZE = 8;
