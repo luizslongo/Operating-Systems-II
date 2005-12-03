@@ -1,7 +1,7 @@
-// EPOS-- Initializer Declarations
+// EPOS-- Init Declarations
 
-#ifndef __initializer_h
-#define __initializer_h
+#ifndef __init_h
+#define __init_h
 
 #include <system/config.h>
 
@@ -16,7 +16,7 @@ public:
 
 
 // Threads are handled latter (they can activate the sched.)
-#define __LAST_INIT (Initializer::Dispatcher *)-1
+#define __LAST_INIT (Init::Dispatcher *)-1
 #define INIT_TABLE {\
     &CPU::init, \
     &MMU::init, \
@@ -30,7 +30,6 @@ public:
     &ADC::init, \
     &Temperature_Sensor::init, \
     &Light_Sensor::init, \
-    &NIC::init, \
     &Display::init, \
     &Address_Space::init, \
     &Segment::init, \
@@ -45,18 +44,7 @@ public:
     __LAST_INIT \
 } 
 
-class Initializer
-{
-private:
-    typedef int (Dispatcher) (System_Info * );
-    typedef void (Function)(void);
-
-public:
-    Initializer(System_Info * si);
-
-private:
-    static Dispatcher * init_table[];
-};
+//    &NIC::init,							\
 
 __END_SYS
 
