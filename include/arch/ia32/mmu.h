@@ -259,7 +259,8 @@ public:
 	DMA_Buffer(unsigned int s) : Chunk(s, IA32_Flags::DMA) {
 	    Directory dir(current());
 	    _log_addr = dir.attach(*this);
-	    db<IA32_MMU>(TRC) << "IA32_MMU::DMA_Buffer() => " << *this << "\n";
+	    db<IA32_MMU>(TRC) << "IA32_MMU::DMA_Buffer() => " 
+			      << *this << "\n";
 	}
 	DMA_Buffer(unsigned int s, const Log_Addr & d)
 	    : Chunk(s, IA32_Flags::DMA) {
