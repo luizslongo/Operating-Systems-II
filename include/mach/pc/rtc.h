@@ -96,8 +96,8 @@ private:
 public:
     PC_RTC() { /* config missing! */ } 
 
-    Seconds get();
-    void set(const Seconds & time);
+    Second get();
+    void set(const Second & time);
 
     unsigned int hours() { return reg(HOURS); }
     unsigned int minutes() { return reg(MINUTES); }
