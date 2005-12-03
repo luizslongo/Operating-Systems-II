@@ -12,13 +12,13 @@ __BEGIN_SYS
 class NS16550AF
 {
 private:
-    typedef IA32::IO_Port IO_Port;
-    typedef IA32::Reg8 Reg8;
-    typedef IA32::Reg16 Reg16;
+    typedef CPU::IO_Port IO_Port;
+    typedef CPU::Reg8 Reg8;
+    typedef CPU::Reg16 Reg16;
 
 public:
     // Register Addresses (relative to base I/O port)
-    typedef IA32::Reg8 Address;
+    typedef CPU::Reg8 Address;
     enum {
 	THR = 0, // Transmit Holding	W,   DLAB = 0
 	RBR = 0, // Receive Buffer 	R,   DLAB = 0
@@ -127,8 +127,8 @@ public:
     bool framing_error() { return reg(LSR) & (1 << 3); }
 
 private:
-    Reg8 reg(Address addr) { return IA32::in8(_port + addr); }
-    void reg(Address addr, Reg8 value) { IA32::out8(_port + addr, value); }
+    Reg8 reg(Address addr) { return CPU::in8(_port + addr); }
+    void reg(Address addr, Reg8 value) { CPU::out8(_port + addr, value); }
 
     void dlab(bool f) { reg(LCR, reg(LCR) & 0x7f | (f << 7)); }
 
@@ -142,9 +142,9 @@ private:
     typedef Traits<PC_UART> Traits;
     static const Type_Id TYPE = Type<PC_UART>::TYPE;
 
-    typedef IA32::IO_Port IO_Port;
-    typedef IA32::Reg8 Reg8;
-    typedef IA32::Reg16 Reg16;
+    typedef CPU::IO_Port IO_Port;
+    typedef CPU::Reg8 Reg8;
+    typedef CPU::Reg16 Reg16;
 
     static const unsigned int CLOCK = Traits::CLOCK / 16;
 
