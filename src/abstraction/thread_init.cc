@@ -14,10 +14,10 @@ int Thread::init(System_Info * si)
     if(Traits::active_scheduler)
 	Alarm::master(Traits::quantum, &reschedule);
 
+    _idle = new(kmalloc(sizeof(Thread))) Thread(&idle, READY, IDLE);
+
     _running = 	new(malloc(sizeof(Thread))) 
 	Thread(reinterpret_cast<int (*)()>(si->lmm.app_entry), RUNNING);
-
-    _idle = new(malloc(sizeof(Thread))) Thread(&idle, READY, IDLE);
 
     _running->_context->load();
 
