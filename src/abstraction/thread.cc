@@ -17,10 +17,10 @@ Thread::Queue Thread::_suspended;
 
 int Thread::join()
 {
+    prevent_scheduling();
+
     db<Thread>(TRC) << "Thread::join(this=" << this
 		    << ",state=" << _state << ")\n";
-
-    prevent_scheduling();
 
     if(_state != FINISHING) {
 	_joining = _running;
@@ -34,9 +34,9 @@ int Thread::join()
 
 void Thread::pass()
 {
-    db<Thread>(TRC) << "Thread::pass(this=" << this << ")\n";
-
     prevent_scheduling();
+
+    db<Thread>(TRC) << "Thread::pass(this=" << this << ")\n";
 
     if(_ready.remove(this)) { // this is ready to receive the CPU
 	_running->_state = READY;
@@ -51,9 +51,9 @@ void Thread::pass()
 
 void Thread::suspend()
 {
-    db<Thread>(TRC) << "Thread::suspend(this=" << this << ")\n";
-
     prevent_scheduling();
+
+    db<Thread>(TRC) << "Thread::suspend(this=" << this << ")\n";
 
     _state = SUSPENDED;
     _suspended.insert(&_link);
@@ -68,12 +68,14 @@ void Thread::suspend()
 
 void Thread::resume()
 {
+    prevent_scheduling();
+
     db<Thread>(TRC) << "Thread::resume(this=" << this << ")\n";
 
-    if(_state != SUSPENDED) 
+    if(_state != SUSPENDED) {
+	allow_scheduling();
 	return;
-
-    prevent_scheduling();
+    }
 
     if(_suspended.remove(this)) {
 	_state = READY;
@@ -92,9 +94,9 @@ void Thread::resume()
 
 void Thread::yield()
 {
-    db<Thread>(TRC) << "Thread::yield()\n";
-
     prevent_scheduling();
+
+    db<Thread>(TRC) << "Thread::yield(running=" << _running << ")\n";
 
     if(!_ready.empty()) {
 	_running->_state = READY;
@@ -107,9 +109,10 @@ void Thread::yield()
 
 void Thread::exit(int status)
 {
-    db<Thread>(TRC) << "Thread::exit(status=" << status << ")\n";
-
     prevent_scheduling();
+
+    db<Thread>(TRC) << "Thread::exit(running=" << _running 
+		    <<",status=" << status << ")\n";
 
     *static_cast<int *>(_running->_stack) = status;
     _running->_state = FINISHING;
@@ -127,9 +130,10 @@ void Thread::exit(int status)
 
 void Thread::sleep(Queue * q)
 {
-    db<Thread>(TRC) << "Thread::sleep(q=" << q << ")\n";
-
     prevent_scheduling();
+
+    db<Thread>(TRC) << "Thread::sleep(running=" << _running
+		    << ",q=" << q << ")\n";
 
     _running->_state = WAITING;
     q->insert(&_running->_link);
@@ -142,9 +146,10 @@ void Thread::sleep(Queue * q)
 
 void Thread::wakeup(Queue * q) 
 {
-    db<Thread>(TRC) << "Thread::wakeup(q=" << q << ")\n";
-
     prevent_scheduling();
+
+    db<Thread>(TRC) << "Thread::wakeup(running=" << _running
+		    << ",q=" << q << ")\n";
 
     if(!q->empty()) {
 	Thread * t = q->remove()->object();
@@ -161,9 +166,10 @@ void Thread::wakeup(Queue * q)
 
 void Thread::wakeup_all(Queue * q) 
 {
-    db<Thread>(TRC) << "Thread::wakeup_all(q=" << q << ")\n";
-
     prevent_scheduling();
+
+    db<Thread>(TRC) << "Thread::wakeup_all(running=" << _running
+		    << ",q=" << q << ")\n";
 
     while(!q->empty()) {
 	Thread * t = q->remove()->object();
@@ -176,6 +182,62 @@ void Thread::wakeup_all(Queue * q)
 
     if(Traits::preemptive)
 	reschedule();
+}
+
+void Thread::reschedule()
+{
+    prevent_scheduling(); 
+
+    Queue::Element * e = _ready.head();
+    if(e && e->rank() <= _running->_link.rank()) {
+	_running->_state = READY;
+	_ready.insert(&_running->_link);
+	switch_to(_ready.remove()->object());
+    }
+}
+
+void Thread::implicit_exit() 
+{
+    exit(CPU::fr()); 
+}
+
+void Thread::switch_to(Thread * n) 
+{
+    // scheduling must be disabled at this point!
+
+    Thread * o = _running;
+    
+    db<Thread>(TRC) << "Thread::switch_to(o=" << o << ",n=" << n << ")\n";
+
+//     o->_context->save(); // can be used to force an update
+//     db<Thread>(INF) << "old={" << o << "," << *o->_context << "}\n";
+//     db<Thread>(INF) << "new={" << n << "," << *n->_context << "}\n";
+
+    n->_state = RUNNING;
+    _running = n;
+
+    if(n == _idle)
+	db<Thread>(TRC) << "Thread::idle()\n";
+
+    CPU::switch_context(&o->_context, n->_context);
+    allow_scheduling();
+}
+
+int Thread::idle()
+{
+    while(true) {
+	CPU::halt();
+	
+	if(!_ready.empty())
+	    yield();
+	else
+	    if(_suspended.empty()) { 
+		db<Thread>(WRN) << "The last thread has exited!\n";
+		db<Thread>(WRN) << "Halting the CPU ...\n";
+		CPU::int_disable();
+	    }
+    }
+    return 0;
 }
 
 __END_SYS
