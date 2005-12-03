@@ -1,7 +1,6 @@
 // EPOS-- PC Mediator Implementation
 
 #include <mach/pc/pc.h>
-#include <mach/pc/display.h>
 
 extern "C" { void _exit(int s); }
 
@@ -13,11 +12,11 @@ PC::int_handler * PC::_int_vector[PC::INT_VECTOR_SIZE];
 // Class methods
 void PC::panic()
 {
-    IA32::int_disable(); 
+    CPU::int_disable(); 
     Display display;
     display.position(24, 73);
     display.puts("PANIC!");
-    IA32::halt();
+    CPU::halt();
 }
 
 void PC::int_not(unsigned int i)
@@ -45,7 +44,7 @@ void PC::exc_not(unsigned int i,
 void PC::exc_pf(unsigned int i,
 		Reg32 error, Reg32 eip, Reg32 cs, Reg32 eflags)
 {  
-    db<PC>(WRN) << "\nPage fault [address=" << (void *)IA32::cr2()
+    db<PC>(WRN) << "\nPage fault [address=" << (void *)CPU::cr2()
 		<< ",err={";
     if(error & (1 << 0))
 	db<PC>(WRN) << "P";

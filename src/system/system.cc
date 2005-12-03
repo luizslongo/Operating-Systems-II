@@ -8,8 +8,11 @@
 
 __BEGIN_SYS
 
-System_Info * si = reinterpret_cast<System_Info *>(
-    Memory_Map<Machine>::SYS_INFO);
+// Global constructros aren't called for system in built-in mode!
+// So don't use them here!
+
+System_Info * si =
+    reinterpret_cast<System_Info *>(Memory_Map<Machine>::SYS_INFO);
 
 OStream kout, kerr;
 
