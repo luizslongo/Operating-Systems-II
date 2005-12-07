@@ -4,7 +4,6 @@
 #define __pc_display_h
 
 #include <display.h>
-#include "uart.h"
 
 __BEGIN_SYS
 
@@ -130,7 +129,7 @@ public:
 	MC6845::position(line * COLUMNS + column);
     }
 
-    void size(int * lines, int * columns) {
+    void geometry(int * lines, int * columns) {
 	*lines = LINES;
 	*columns = COLUMNS;
     }
@@ -149,45 +148,10 @@ private:
     Frame_Buffer _frame_buffer;
 };
 
-class PC_Serial_Display: protected Display_Common
-{
-private:
-    typedef Traits<PC_Display> Traits;
-    static const Type_Id TYPE = Type<PC_Display>::TYPE;
-
-public:
-    PC_Serial_Display() {}
-
-    void clear() {}
-
-    void putc(char c){ _uart.txd(c); }
-
-    void puts(const char * s) {
-	while(*s != '\0')
-	    putc(*s++);
-    }
-
-    void size(int * lines, int * columns) {
-	*lines = Traits::LINES;
-	*columns = Traits::COLUMNS;
-    }
-
-    void position(int * line, int * column) {}
-    void position(int line, int column) {}
-
-    static int init(System_Info * si);
-
-private:
-    PC_UART _uart;
-};
-
-template <bool serial>
-class PC_Select_Display: public PC_Display {};
-
 template <>
-class PC_Select_Display<true>: public PC_Serial_Display {};
+class Select_Display<false>: public PC_Display {};
 
-typedef PC_Select_Display<Traits<PC_Display>::on_serial> Display;
+typedef Select_Display<Traits<PC_Display>::on_serial> Display;
 
 __END_SYS
 
