@@ -180,6 +180,7 @@ template <> struct Traits<PC_Display>: public Traits<void>
 
 template <> struct Traits<ATMega128_Display>: public Traits<void>
 {
+    static const bool on_serial = false;
     static const int COLUMNS = 80;
     static const int LINES = 24;
     static const int TAB_SIZE = 8;
