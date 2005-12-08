@@ -4,7 +4,7 @@
 #define __atmega16_display_h
 
 #include <display.h>
-#include "../common/serial_display.h"
+//#include "../common/serial_display.h"
 
 __BEGIN_SYS
 
