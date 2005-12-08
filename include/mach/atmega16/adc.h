@@ -14,7 +14,7 @@ class ATMega16_ADC: public ADC_Common
     // This should be informed by the MCU
     static const long long CLOCK = Traits<AVR8>::CLOCK;
 
-    typedef Traits<AVRMCU_ADC> _Traits;
+    typedef Traits<ATMega16_ADC> _Traits;
     static const Type_Id TYPE = Type<ATMega16_ADC>::TYPE;
 
     // ADC IO Registers

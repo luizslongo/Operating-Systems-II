@@ -1,6 +1,6 @@
 // EPOS-- ATMega16 Initialization
 
-#include <mach/atmega16/avrmcu.h>
+#include <mach/atmega16/atmega16.h>
 
 __BEGIN_SYS
 
