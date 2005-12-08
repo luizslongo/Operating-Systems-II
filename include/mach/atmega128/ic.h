@@ -194,95 +194,95 @@ public:
     
     static void enable(IRQ irq) {
 
-        if (IRQ_IRQ0  	 == irq) eimsk(eimsk() | INT0);
-        if (IRQ_IRQ1  	 == irq) eimsk(eimsk() | INT1);
-        if (IRQ_IRQ2   	 == irq) eimsk(eimsk() | INT2);
-        if (IRQ_IRQ3   	 == irq) eimsk(eimsk() | INT3);
-        if (IRQ_IRQ4   	 == irq) eimsk(eimsk() | INT4);
-        if (IRQ_IRQ5   	 == irq) eimsk(eimsk() | INT5);
-        if (IRQ_IRQ6   	 == irq) eimsk(eimsk() | INT6);
-        if (IRQ_IRQ7   	 == irq) eimsk(eimsk() | INT7);
+        if (IRQ_IRQ0  	 == irq) { eimsk(eimsk() | INT0); return; }
+        if (IRQ_IRQ1  	 == irq) { eimsk(eimsk() | INT1); return; }
+        if (IRQ_IRQ2   	 == irq) { eimsk(eimsk() | INT2); return; }
+        if (IRQ_IRQ3   	 == irq) { eimsk(eimsk() | INT3); return; }
+        if (IRQ_IRQ4   	 == irq) { eimsk(eimsk() | INT4); return; }
+        if (IRQ_IRQ5   	 == irq) { eimsk(eimsk() | INT5); return; }
+        if (IRQ_IRQ6   	 == irq) { eimsk(eimsk() | INT6); return; }
+        if (IRQ_IRQ7   	 == irq) { eimsk(eimsk() | INT7); return; }
 	
-        if (IRQ_TIMER2_COMP  == irq) timsk(timsk() | OCIE2);
-        if (IRQ_TIMER2_OVF   == irq) timsk(timsk() | TOIE2);
+        if (IRQ_TIMER2_COMP  == irq) { timsk(timsk() | OCIE2); return; }
+        if (IRQ_TIMER2_OVF   == irq) { timsk(timsk() | TOIE2); return; }
 	
-        if (IRQ_TIMER1_CAPT  == irq) timsk(timsk() | TICIE1); 
-        if (IRQ_TIMER1_COMPA == irq) timsk(timsk() | OCIE1A);  
-        if (IRQ_TIMER1_COMPB == irq) timsk(timsk() | OCIE1B); 
-        if (IRQ_TIMER1_OVF   == irq) timsk(timsk() | TOIE1); 
-	if (IRQ_TIMER1_COMPC == irq) etimsk(etimsk() | OCIE1C);
+        if (IRQ_TIMER1_CAPT  == irq) { timsk(timsk() | TICIE1); return; } 
+        if (IRQ_TIMER1_COMPA == irq) { timsk(timsk() | OCIE1A); return; }  
+        if (IRQ_TIMER1_COMPB == irq) { timsk(timsk() | OCIE1B); return; } 
+        if (IRQ_TIMER1_OVF   == irq) { timsk(timsk() | TOIE1); return; } 
+	if (IRQ_TIMER1_COMPC == irq) { etimsk(etimsk() | OCIE1C); return; }
 
-        if (IRQ_TIMER0_OVF   == irq) timsk(timsk() | TOIE0); 
-        if (IRQ_TIMER0_COMP  == irq) timsk(timsk() | OCIE0); 
+        if (IRQ_TIMER0_OVF   == irq) { timsk(timsk() | TOIE0); return; } 
+        if (IRQ_TIMER0_COMP  == irq) { timsk(timsk() | OCIE0); return; } 
 	
-        if (IRQ_SPI_STC      == irq) spcr(spcr() | SPIE);
+        if (IRQ_SPI_STC      == irq) { spcr(spcr() | SPIE); return; }
 	
-        if (IRQ_USART0_RXC   == irq) ucsr0b(ucsr0b() | RXCIEn); 
-        if (IRQ_USART0_UDRE  == irq) ucsr0b(ucsr0b() | UDRIEn); 
-        if (IRQ_USART0_TXC   == irq) ucsr0b(ucsr0b() | TXCIEn); 
+        if (IRQ_USART0_RXC   == irq) { ucsr0b(ucsr0b() | RXCIEn); return; } 
+        if (IRQ_USART0_UDRE  == irq) { ucsr0b(ucsr0b() | UDRIEn); return; } 
+        if (IRQ_USART0_TXC   == irq) { ucsr0b(ucsr0b() | TXCIEn); return; } 
 
-        if (IRQ_USART1_RXC   == irq) ucsr1b(ucsr1b() | RXCIEn); 
-        if (IRQ_USART1_UDRE  == irq) ucsr1b(ucsr1b() | UDRIEn); 
-        if (IRQ_USART1_TXC   == irq) ucsr1b(ucsr1b() | TXCIEn);  
+        if (IRQ_USART1_RXC   == irq) { ucsr1b(ucsr1b() | RXCIEn); return; } 
+        if (IRQ_USART1_UDRE  == irq) { ucsr1b(ucsr1b() | UDRIEn); return; } 
+        if (IRQ_USART1_TXC   == irq) { ucsr1b(ucsr1b() | TXCIEn); return; }  
 
-        if (IRQ_ADC  	     == irq) adcsra(adcsra() | ADIE);
+        if (IRQ_ADC  	     == irq) { adcsra(adcsra() | ADIE); return; }
 	
-        if (IRQ_ANA_COMP     == irq) acsr(acsr() | ACIE);
+        if (IRQ_ANA_COMP     == irq) { acsr(acsr() | ACIE); return; }
 	
-        if (IRQ_EE_RDY       == irq) eecr(eecr() | EERIE);
+        if (IRQ_EE_RDY       == irq) { eecr(eecr() | EERIE); return; }
 
-        if (IRQ_TIMER3_CAPT  == irq) etimsk(etimsk() | TICIE3); 
-        if (IRQ_TIMER3_COMPA == irq) etimsk(etimsk() | OCIE3A);  
-        if (IRQ_TIMER3_COMPB == irq) etimsk(etimsk() | OCIE3B); 
-        if (IRQ_TIMER3_OVF   == irq) etimsk(etimsk() | TOIE3); 
-	if (IRQ_TIMER3_COMPC == irq) etimsk(etimsk() | OCIE3C);
+        if (IRQ_TIMER3_CAPT  == irq) { etimsk(etimsk() | TICIE3); return; } 
+        if (IRQ_TIMER3_COMPA == irq) { etimsk(etimsk() | OCIE3A); return; }  
+        if (IRQ_TIMER3_COMPB == irq) { etimsk(etimsk() | OCIE3B); return; } 
+        if (IRQ_TIMER3_OVF   == irq) { etimsk(etimsk() | TOIE3); return; } 
+	if (IRQ_TIMER3_COMPC == irq) { etimsk(etimsk() | OCIE3C); return; }
     
     }
     
     static void disable(IRQ irq) {
 
-        if (IRQ_IRQ0  	 == irq) eimsk(eimsk() & ~INT0);
-        if (IRQ_IRQ1  	 == irq) eimsk(eimsk() & ~INT1);
-        if (IRQ_IRQ2   	 == irq) eimsk(eimsk() & ~INT2);
-        if (IRQ_IRQ3   	 == irq) eimsk(eimsk() & ~INT3);
-        if (IRQ_IRQ4   	 == irq) eimsk(eimsk() & ~INT4);
-        if (IRQ_IRQ5   	 == irq) eimsk(eimsk() & ~INT5);
-        if (IRQ_IRQ6   	 == irq) eimsk(eimsk() & ~INT6);
-        if (IRQ_IRQ7   	 == irq) eimsk(eimsk() & ~INT7);
+        if (IRQ_IRQ0  	 == irq) { eimsk(eimsk() & ~INT0); return; }
+        if (IRQ_IRQ1  	 == irq) { eimsk(eimsk() & ~INT1); return; }
+        if (IRQ_IRQ2   	 == irq) { eimsk(eimsk() & ~INT2); return; }
+        if (IRQ_IRQ3   	 == irq) { eimsk(eimsk() & ~INT3); return; }
+        if (IRQ_IRQ4   	 == irq) { eimsk(eimsk() & ~INT4); return; }
+        if (IRQ_IRQ5   	 == irq) { eimsk(eimsk() & ~INT5); return; }
+        if (IRQ_IRQ6   	 == irq) { eimsk(eimsk() & ~INT6); return; }
+        if (IRQ_IRQ7   	 == irq) { eimsk(eimsk() & ~INT7); return; }
 	
-        if (IRQ_TIMER2_COMP  == irq) timsk(timsk() & ~OCIE2);
-        if (IRQ_TIMER2_OVF   == irq) timsk(timsk() & ~TOIE2);
+        if (IRQ_TIMER2_COMP  == irq) { timsk(timsk() & ~OCIE2); return; }
+        if (IRQ_TIMER2_OVF   == irq) { timsk(timsk() & ~TOIE2); return; }
 	
-        if (IRQ_TIMER1_CAPT  == irq) timsk(timsk() & ~TICIE1); 
-        if (IRQ_TIMER1_COMPA == irq) timsk(timsk() & ~OCIE1A);  
-        if (IRQ_TIMER1_COMPB == irq) timsk(timsk() & ~OCIE1B); 
-        if (IRQ_TIMER1_OVF   == irq) timsk(timsk() & ~TOIE1); 
-	if (IRQ_TIMER1_COMPC == irq) etimsk(etimsk() & ~OCIE1C);
+        if (IRQ_TIMER1_CAPT  == irq) { timsk(timsk() & ~TICIE1); return; } 
+        if (IRQ_TIMER1_COMPA == irq) { timsk(timsk() & ~OCIE1A); return; }  
+        if (IRQ_TIMER1_COMPB == irq) { timsk(timsk() & ~OCIE1B); return; } 
+        if (IRQ_TIMER1_OVF   == irq) { timsk(timsk() & ~TOIE1); return; } 
+	if (IRQ_TIMER1_COMPC == irq) { etimsk(etimsk() & ~OCIE1C); return; }
 
-        if (IRQ_TIMER0_OVF   == irq) timsk(timsk() & ~TOIE0); 
-        if (IRQ_TIMER0_COMP  == irq) timsk(timsk() & ~OCIE0); 
+        if (IRQ_TIMER0_OVF   == irq) { timsk(timsk() & ~TOIE0); return; } 
+        if (IRQ_TIMER0_COMP  == irq) { timsk(timsk() & ~OCIE0); return; } 
 	
-        if (IRQ_SPI_STC      == irq) spcr(spcr() & ~SPIE);
+        if (IRQ_SPI_STC      == irq) { spcr(spcr() & ~SPIE); return; }
 	
-        if (IRQ_USART0_RXC   == irq) ucsr0b(ucsr0b() & ~RXCIEn); 
-        if (IRQ_USART0_UDRE  == irq) ucsr0b(ucsr0b() & ~UDRIEn); 
-        if (IRQ_USART0_TXC   == irq) ucsr0b(ucsr0b() & ~TXCIEn); 
+        if (IRQ_USART0_RXC   == irq) { ucsr0b(ucsr0b() & ~RXCIEn); return; } 
+        if (IRQ_USART0_UDRE  == irq) { ucsr0b(ucsr0b() & ~UDRIEn); return; } 
+        if (IRQ_USART0_TXC   == irq) { ucsr0b(ucsr0b() & ~TXCIEn); return; } 
 
-        if (IRQ_USART1_RXC   == irq) ucsr1b(ucsr1b() & ~RXCIEn); 
-        if (IRQ_USART1_UDRE  == irq) ucsr1b(ucsr1b() & ~UDRIEn); 
-        if (IRQ_USART1_TXC   == irq) ucsr1b(ucsr1b() & ~TXCIEn);  
+        if (IRQ_USART1_RXC   == irq) { ucsr1b(ucsr1b() & ~RXCIEn); return; } 
+        if (IRQ_USART1_UDRE  == irq) { ucsr1b(ucsr1b() & ~UDRIEn); return; } 
+        if (IRQ_USART1_TXC   == irq) { ucsr1b(ucsr1b() & ~TXCIEn); return; }  
 	
-        if (IRQ_ADC  	     == irq) adcsra(adcsra() & ~ADIE);
+        if (IRQ_ADC  	     == irq) { adcsra(adcsra() & ~ADIE); return; }
 	
-        if (IRQ_ANA_COMP     == irq) acsr(acsr() & ~ACIE);
+        if (IRQ_ANA_COMP     == irq) { acsr(acsr() & ~ACIE); return; }
 	
-        if (IRQ_EE_RDY       == irq) eecr(eecr() & ~EERIE);
+        if (IRQ_EE_RDY       == irq) { eecr(eecr() & ~EERIE); return; }
 
-        if (IRQ_TIMER3_CAPT  == irq) etimsk(etimsk() & ~TICIE3); 
-        if (IRQ_TIMER3_COMPA == irq) etimsk(etimsk() & ~OCIE3A);  
-        if (IRQ_TIMER3_COMPB == irq) etimsk(etimsk() & ~OCIE3B); 
-        if (IRQ_TIMER3_OVF   == irq) etimsk(etimsk() & ~TOIE3); 
-	if (IRQ_TIMER3_COMPC == irq) etimsk(etimsk() & ~OCIE3C);
+        if (IRQ_TIMER3_CAPT  == irq) { etimsk(etimsk() & ~TICIE3); return; } 
+        if (IRQ_TIMER3_COMPA == irq) { etimsk(etimsk() & ~OCIE3A); return; }  
+        if (IRQ_TIMER3_COMPB == irq) { etimsk(etimsk() & ~OCIE3B); return; } 
+        if (IRQ_TIMER3_OVF   == irq) { etimsk(etimsk() & ~TOIE3); return; } 
+	if (IRQ_TIMER3_COMPC == irq) { etimsk(etimsk() & ~OCIE3C); return; }
 
     }
     
