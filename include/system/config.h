@@ -43,8 +43,8 @@ typedef AVR8 CPU;
 #define MACH pc
 typedef PC Machine;
 typedef Dummy ADC;
-#elif defined (__atmega)
-#define MACH atmega
+#elif defined (__atmega16)
+#define MACH atmega16
 typedef ATMega16 Machine;
 typedef Dummy PCI;
 #elif defined (__atmega128)
