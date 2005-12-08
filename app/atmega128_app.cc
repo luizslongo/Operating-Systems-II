@@ -1,4 +1,3 @@
-#include <utility/ostream.h>
 #include <display.h>
 #include <uart.h>
 #include <adc.h>
@@ -13,15 +12,11 @@ __USING_SYS
 int main() {
     unsigned char count = 0;
 
-    OStream cout;
-
     CPU::out8(Machine::IO::DDRA, 0xff);
     CPU::out8(Machine::IO::PORTA, ~0);
 
     while(1) {
-        cout << "This is EPOS-- for ATMega128!\n";
 	CPU::out8(Machine::IO::PORTA, ~count++);
-	//Alarm::delay(1000000);
-	for(unsigned int i = 0; i < 0xffff;i++);
+	Alarm::delay(1000000);
     }
 }
