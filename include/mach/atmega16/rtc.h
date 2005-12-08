@@ -17,8 +17,8 @@ private:
 public:
     ATMega16_RTC() {}
 
-    Seconds get();
-    void write(const Seconds & time);
+    Second get();
+    void write(const Second & time);
 
     static int init(System_Info * si);
 };
