@@ -25,49 +25,35 @@ private:
     
 
 public:
+
     typedef IO_Map<ATMega16> IO;
 
-    enum {
-	INT_RESET        = 0,
-	INT_IRQ0         = 1,
-	INT_IRQ1         = 2,
-	INT_TIMER2_COMP  = 3,
-	INT_TIMER2_OVF   = 4,
-	INT_TIMER1_CAPT  = 5,
-	INT_TIMER1_COMPA = 6,
-	INT_TIMER1_COMPB = 7,
-	INT_TIMER1_OVF   = 8,
-	INT_TIMER0_OVF   = 9,
-	INT_SPI_STC      = 10,
-	INT_USART0_RXC   = 11,
-	INT_USART0_UDRE  = 12,
-	INT_USART0_TXC   = 13,
-	INT_ADC          = 14,
-	INT_EE_RDY       = 15,
-	INT_ANA_COMP     = 16,
-	INT_TWI          = 17,
-	INT_IRQ2         = 18,
-	INT_TIMER0_COMP  = 19,
-	INT_SPM_RDY      = 20,
-
-    	INT_TSC 	 = 100, //not implemented
-	INT_TIMER 	 = INT_TIMER0_COMP
-    };
+public:
+    typedef void (int_handler)(unsigned int);
 
 public:
     ATMega16(){};
 
-    static Handler::Function * int_handler(int i) {
+    static int_handler * int_vector(int i) {
 	if((i < Traits::INT_VEC_SIZE) && (interrupt_vector[i]))
 	    return interrupt_vector[i];
 	else
 	    return 0;
     }
-    static void int_handler(int i, Handler::Function * h) {
+    static void int_vector(int i, int_handler * h) {
 	if(i < Traits::INT_VEC_SIZE)
 	    interrupt_vector[i] = h;
     }
-    
+
+    template<typename Dev>
+    static Dev * seize(const Type_Id & type, unsigned int unit) {
+        //not implemented
+    }
+
+    static void release(const Type_Id & type, unsigned int unit) {
+        //not implemented
+    }
+
     template <Handler::Function * h> static void isr_wrapper(){
     	// Save and restore is performed by the stub function, __vector_handler
     	h();
@@ -77,12 +63,14 @@ public:
         while(1);
     }
 
+    static int irq2int(int i) { return i; }
+    static int int2irq(int i) { return i; }
 
     static int init(System_Info *si);
     
 private:
 
-    static Handler::Function * interrupt_vector[Traits<AVRMCU>::INT_VEC_SIZE];
+    static int_handler * interrupt_vector[Traits<ATMega16>::INT_VEC_SIZE];
 
 };
 
