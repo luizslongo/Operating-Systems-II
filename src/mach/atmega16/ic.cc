@@ -4,7 +4,7 @@
 
 __BEGIN_SYS
 
-IC_Common::Mask ATMega16_IC::enabled() {
+ATMega16_IC::Mask ATMega16_IC::enabled() {
 
     Mask mask = RESET; // Reset always enabled
 
@@ -40,7 +40,7 @@ IC_Common::Mask ATMega16_IC::enabled() {
     return mask;
 };
 
-IC_Common::Mask ATMega16_IC::pending() {
+ATMega16_IC::Mask ATMega16_IC::pending() {
 
     Mask mask = 0; 
 

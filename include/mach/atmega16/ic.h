@@ -123,90 +123,117 @@ public:
 	SPM_RDY		= 0x100000   
     };
 
+    enum {
+	IRQ_RESET        = 0,
+	IRQ_IRQ0         = 1,
+	IRQ_IRQ1         = 2,
+	IRQ_TIMER2_COMP  = 3,
+	IRQ_TIMER2_OVF   = 4,
+	IRQ_TIMER1_CAPT  = 5,
+	IRQ_TIMER1_COMPA = 6,
+	IRQ_TIMER1_COMPB = 7,
+	IRQ_TIMER1_OVF   = 8,
+	IRQ_TIMER0_OVF   = 9,
+	IRQ_SPI_STC      = 10,
+	IRQ_USART0_RXC   = 11,
+	IRQ_USART0_UDRE  = 12,
+	IRQ_USART0_TXC   = 13,
+	IRQ_ADC          = 14,
+	IRQ_EE_RDY       = 15,
+	IRQ_ANA_COMP     = 16,
+	IRQ_TWI          = 17,
+	IRQ_IRQ2         = 18,
+	IRQ_TIMER0_COMP  = 19,
+	IRQ_SPM_RDY      = 20,
+
+    	IRQ_TSC 	 = 100, //not implemented
+	IRQ_TIMER 	 = IRQ_TIMER0_COMP
+    };
+
     ATMega16_IC()  {};
     ~ATMega16_IC() {};
     
-    void enable(const Mask & mask) {
+    static void enable(IRQ irq) {
         
-        if (IRQ0  	 & mask) gicr(gicr() | INT0);
-        if (IRQ1  	 & mask) gicr(gicr() | INT1);
-        if (IRQ2   	 & mask) gicr(gicr() | INT2);
+        if (IRQ_IRQ0  	 == irq) { gicr(gicr() | INT0); return; }
+        if (IRQ_IRQ1  	 == irq) { gicr(gicr() | INT1); return; }
+        if (IRQ_IRQ2   	 == irq) { gicr(gicr() | INT2); return; }
 	
-        if (TIMER2_COMP  & mask) timsk(timsk() | OCIE2);
-        if (TIMER2_OVF   & mask) timsk(timsk() | TOIE2);
+        if (IRQ_TIMER2_COMP  == irq) { timsk(timsk() | OCIE2); return; }
+        if (IRQ_TIMER2_OVF   == irq) { timsk(timsk() | TOIE2); return; }
 	
-        if (TIMER1_CAPT  & mask) timsk(timsk() | TICIE1); 
-        if (TIMER1_COMPA & mask) timsk(timsk() | OCIE1A);  
-        if (TIMER1_COMPB & mask) timsk(timsk() | OCIE1B); 
-        if (TIMER1_OVF   & mask) timsk(timsk() | TOIE1); 
+        if (IRQ_TIMER1_CAPT  == irq) { timsk(timsk() | TICIE1); return; } 
+        if (IRQ_TIMER1_COMPA == irq) { timsk(timsk() | OCIE1A); return; }  
+        if (IRQ_TIMER1_COMPB == irq) { timsk(timsk() | OCIE1B); return; } 
+        if (IRQ_TIMER1_OVF   == irq) { timsk(timsk() | TOIE1); return; } 
 
-        if (TIMER0_OVF 	 & mask) timsk(timsk() | TOIE0); 
-        if (TIMER0_COMP  & mask) timsk(timsk() | OCIE0); 
+        if (IRQ_TIMER0_OVF 	 == irq) { timsk(timsk() | TOIE0); return; } 
+        if (IRQ_TIMER0_COMP  == irq) { timsk(timsk() | OCIE0); return; } 
 	
-        if (SPI_STC 	 & mask) spcr(spcr() | SPIE);
+        if (IRQ_SPI_STC 	 == irq) { spcr(spcr() | SPIE); return; }
 	
-        if (USART_RXC  	 & mask) ucsrb(ucsrb() | RXCIE); 
-        if (USART_UDRE 	 & mask) ucsrb(ucsrb() | UDRIE); 
-        if (USART_TXC 	 & mask) ucsrb(ucsrb() | TXCIE); 
+        if (IRQ_USART0_RXC  	 == irq) { ucsrb(ucsrb() | RXCIE); return; } 
+        if (IRQ_USART0_UDRE 	 == irq) { ucsrb(ucsrb() | UDRIE); return; } 
+        if (IRQ_USART0_TXC 	 == irq) { ucsrb(ucsrb() | TXCIE); return; } 
 	
-        if (ADC  	 & mask) adcsra(adcsra() | ADIE);
+        if (IRQ_ADC  	 == irq) { adcsra(adcsra() | ADIE); return; }
 	
-        if (ANA_COMP   	 & mask) acsr(acsr() | ACIE);
+        if (IRQ_ANA_COMP   	 == irq) { acsr(acsr() | ACIE); return; }
 	
-        if (EE_RDY   	 & mask) eecr(eecr() | EERIE);
+        if (IRQ_EE_RDY   	 == irq) { eecr(eecr() | EERIE); return; }
 	
-        if (TWI   	 & mask) twcr(twcr() | TWIE);
+        if (IRQ_TWI   	 == irq) { twcr(twcr() | TWIE); return; }
 	
-	// if (RESET  & mask);   // Always enabled
-        // if (SPM_RDY  & mask); // Unused  
+	// if (IRQ_RESET  == irq) {return;}   // Always enabled
+        // if (IRQ_SPM_RDY  == irq) {return;} // Unused  
 	
 	return;      
     
     }
     
-    void disable(const Mask & mask) {
+    static void disable(IRQ irq) {
 
-        if (IRQ0  	 & mask) gicr(gicr() & ~INT0);
-        if (IRQ1  	 & mask) gicr(gicr() & ~INT1);
-        if (IRQ2   	 & mask) gicr(gicr() & ~INT2);
+        if (IRQ_IRQ0  	 == irq) { gicr(gicr() & ~INT0); return; }
+        if (IRQ_IRQ1  	 == irq) { gicr(gicr() & ~INT1); return; }
+        if (IRQ_IRQ2   	 == irq) { gicr(gicr() & ~INT2); return; }
 	
-        if (TIMER2_COMP  & mask) timsk(timsk() & ~OCIE2);
-        if (TIMER2_OVF   & mask) timsk(timsk() & ~TOIE2);
+        if (IRQ_TIMER2_COMP  == irq) { timsk(timsk() & ~OCIE2); return; }
+        if (IRQ_TIMER2_OVF   == irq) { timsk(timsk() & ~TOIE2); return; }
 	
-        if (TIMER1_CAPT  & mask) timsk(timsk() & ~TICIE1); 
-        if (TIMER1_COMPA & mask) timsk(timsk() & ~OCIE1A);  
-        if (TIMER1_COMPB & mask) timsk(timsk() & ~OCIE1B); 
-        if (TIMER1_OVF   & mask) timsk(timsk() & ~TOIE1); 
+        if (IRQ_TIMER1_CAPT  == irq) { timsk(timsk() & ~TICIE1); return; } 
+        if (IRQ_TIMER1_COMPA == irq) { timsk(timsk() & ~OCIE1A); return; }  
+        if (IRQ_TIMER1_COMPB == irq) { timsk(timsk() & ~OCIE1B); return; } 
+        if (IRQ_TIMER1_OVF   == irq) { timsk(timsk() & ~TOIE1); return; } 
 
-        if (TIMER0_OVF 	 & mask) timsk(timsk() & ~TOIE0); 
-        if (TIMER0_COMP  & mask) timsk(timsk() & ~OCIE0); 
+        if (IRQ_TIMER0_OVF 	 == irq) { timsk(timsk() & ~TOIE0); return; } 
+        if (IRQ_TIMER0_COMP  == irq) { timsk(timsk() & ~OCIE0); return; } 
 	
-        if (SPI_STC 	 & mask) spcr(spcr() & ~SPIE);
+        if (IRQ_SPI_STC 	 == irq) { spcr(spcr() & ~SPIE); return; }
 	
-        if (USART_RXC  	 & mask) ucsrb(ucsrb() & ~RXCIE); 
-        if (USART_UDRE 	 & mask) ucsrb(ucsrb() & ~UDRIE); 
-        if (USART_TXC 	 & mask) ucsrb(ucsrb() & ~TXCIE); 
+        if (IRQ_USART0_RXC  	 == irq) { ucsrb(ucsrb() & ~RXCIE); return; } 
+        if (IRQ_USART0_UDRE 	 == irq) { ucsrb(ucsrb() & ~UDRIE); return; } 
+        if (IRQ_USART0_TXC 	 == irq) { ucsrb(ucsrb() & ~TXCIE); return; } 
 	
-        if (ADC  	 & mask) adcsra(adcsra() & ~ADIE);
+        if (IRQ_ADC  	 == irq) { adcsra(adcsra() & ~ADIE); return; }
 	
-        if (ANA_COMP   	 & mask) acsr(acsr() & ~ACIE);
+        if (IRQ_ANA_COMP   	 == irq) { acsr(acsr() & ~ACIE); return; }
 	
-        if (EE_RDY   	 & mask) eecr(eecr() & ~EERIE);
+        if (IRQ_EE_RDY   	 == irq) { eecr(eecr() & ~EERIE); return; }
 	
-        if (TWI   	 & mask) twcr(twcr() & ~TWIE);
+        if (IRQ_TWI   	 == irq) { twcr(twcr() & ~TWIE); return; }
 	
-	// if (RESET  & mask);   // Always enabled
-        // if (SPM_RDY  & mask); // Unused        
+	// if (IRQ_RESET  == irq) {return;}   // Always enabled
+        // if (IRQ_SPM_RDY  == irq) {return;} // Unused        
     
 	return;
     
     }
     
-    Mask pending();
+    static Mask pending();
     
-    Mask enabled();
+    static Mask enabled();
     
-    Mask disabled(){ return ~enabled(); };
+    static Mask disabled(){ return ~enabled(); };
     
 
     static int init(System_Info *si);
