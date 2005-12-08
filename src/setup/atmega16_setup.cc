@@ -73,10 +73,10 @@ extern "C" void __vector_handler(void) {
 
     offset = (offset >> 1) - 1;
     
-    Handler::Function * handler = Machine::int_handler(offset);
+    Machine::int_handler * handler = Machine::int_vector(offset);
 
     if (handler != 0)
-	handler();
+	handler(0);
 
     ASMV(
         "pop         r31"                "\n"
