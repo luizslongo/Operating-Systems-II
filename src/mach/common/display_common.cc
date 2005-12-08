@@ -1,6 +1,6 @@
 // EPOS-- PC Display Common Package Implementation
 
-#include <mach/pc/display.h>
+#include <display.h>
 
 __BEGIN_SYS
 
