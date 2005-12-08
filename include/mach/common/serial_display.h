@@ -3,7 +3,7 @@
 #ifndef __serial_display_h
 #define __serial_display_h
 
-#include <display.h>
+//#include <display.h>
 #include <uart.h>
 
 __BEGIN_SYS
