@@ -58,8 +58,8 @@ NATIVE_LINK_LIBS_BUILTIN="util_$ARCH gcc c gcc"
 
 NATIVE_LINKER_LIBRARY=$NATIVE_LINKER
 NATIVE_LINK_FLGS_LIBRARY="-L$EPOS/lib -L`$C_COMPILER -print-file-name=` -static -n --section-start .init=$APP_CODE --section-start .data=$APP_DATA"
-NATIVE_LINK_OBJI_LIBRARY="$EPOS/lib/$ARCH""_crt1.o $EPOS/lib/$ARCH""_crti.o $EPOS/lib/$ARCH""_crtbegin.o $EPOS/src/system/first.o"
-NATIVE_LINK_OBJN_LIBRARY="$EPOS/src/system/initializer.o $EPOS/src/system/system.o $EPOS/lib/$ARCH""_crtend.o $EPOS/lib/$ARCH""_crtn.o"
+NATIVE_LINK_OBJI_LIBRARY="$EPOS/lib/$ARCH""_crt1.o $EPOS/lib/$ARCH""_crti.o $EPOS/lib/$ARCH""_crtbegin.o $EPOS/src/system/init_first.o"
+NATIVE_LINK_OBJN_LIBRARY="$EPOS/src/system/init.o $EPOS/src/system/system.o $EPOS/lib/$ARCH""_crtend.o $EPOS/lib/$ARCH""_crtn.o"
 NATIVE_LINK_LIBS_LIBRARY="system_$ARCH init_$ARCH util_$ARCH system_$ARCH gcc c gcc"
 
 LINUX_LINKER="g++"
