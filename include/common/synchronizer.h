@@ -3,7 +3,6 @@
 #ifndef __synchronizer_h
 #define __synchronizer_h
 
-#include <system/config.h>
 #include <cpu.h>
 #include <thread.h>
 
