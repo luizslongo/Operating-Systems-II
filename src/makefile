@@ -2,8 +2,8 @@
 
 include	$(EPOS)/makedefs
 
-SUBDIRS := utility start arch mach abstraction boot setup system
-INSSUBDIRS := start boot setup system
+SUBDIRS := utility start arch mach abstraction boot setup system init
+INSSUBDIRS := start boot setup system init
 
 all:		$(SUBDIRS)
 
