@@ -6,14 +6,18 @@
 #include <utility/debug.h>
 #include <utility/string.h>
 #include <utility/list.h>
+#include <machine.h>
 
 __BEGIN_SYS
 
-class Heap:  public Grouping_List<char>
+class Heap: public Grouping_List<char>
 {
 public:
-    Heap() {}
-    Heap(void * addr, unsigned int bytes) { free(addr, bytes); }
+    Heap() { db<Heap>(TRC) << "Heap::() => " << this << "\n"; }
+    Heap(void * addr, unsigned int bytes) {
+	db<Heap>(TRC) << "Heap::() => " << this << "\n";  
+	free(addr, bytes); 
+    }
 
     void * alloc(unsigned int bytes) {
 	if(!bytes)
@@ -21,8 +25,11 @@ public:
 	
 	bytes += sizeof(int);
 	Element * e = search_decrementing(bytes);
-	if(!e)
+	if(!e) {
+	    db<Heap>(ERR) << "Heap::alloc: out of memory!\n";
+	    Machine::panic();
 	    return 0;
+	}
 	int * addr = reinterpret_cast<int *>(e->object() + e->size());
 	    
 	db<Heap>(TRC) << "Heap::alloc(this=" << this
