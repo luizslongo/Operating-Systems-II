@@ -8,16 +8,13 @@
 #include <utility/string.h>
 #include <utility/list.h>
 #include <utility/debug.h>
-#include __HEADER_MACH(memory_map)
+#include __MEMORY_MAP_H
 
 __BEGIN_SYS
 
 class IA32_MMU: public MMU_Common<10, 10, 12>
 {
 private:
-    typedef Traits<IA32_MMU> Traits;
-    static const Type_Id _TYPE = Type<IA32_MMU>::TYPE;
-
     typedef Grouping_List<Frame> List;
 
     static const unsigned int PHY_MEM = Memory_Map<Machine>::PHY_MEM;
@@ -351,8 +348,6 @@ private:
     static List _free;
     static Page_Directory * _master;
 };
-
-typedef IA32_MMU MMU;
 
 __END_SYS
 

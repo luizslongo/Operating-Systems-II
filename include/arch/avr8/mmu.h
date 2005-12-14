@@ -7,20 +7,17 @@
 #include <mmu.h>
 #include <utility/string.h>
 #include <utility/list.h>
-#include __HEADER_MACH(memory_map)
+#include <utility/debug.h>
+#include __MEMORY_MAP_H
 
 __BEGIN_SYS
 
 class AVR8_MMU: public MMU_Common<0, 0, 0>
 {
 private:
-    typedef Traits<AVR8_MMU> Traits;
-    static const Type_Id _TYPE = Type<AVR8_MMU>::TYPE;
-
     typedef Simple_Grouping_List<unsigned char> List;
 
     static const unsigned int PHY_MEM = Memory_Map<Machine>::PHY_MEM;
-    static const unsigned int SYS_PT  = Memory_Map<Machine>::PHY_MEM;
 
 public:
     //Dummy DMA_Buffer (AVR CPU's does not make DMA)
@@ -106,8 +103,6 @@ public:
 private:
     static List _free;
 };
-
-typedef AVR8_MMU MMU;
 
 __END_SYS
 
