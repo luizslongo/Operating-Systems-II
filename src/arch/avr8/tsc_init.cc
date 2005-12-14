@@ -1,13 +1,10 @@
-// EPOS AVR8_TSC Initialization
-//
-// Author: fauze
-// Documentation: $EPOS/doc/tsc			Date: 27 Jan 2004
+// EPOS-- AVR8 TSC Mediator Initialization
 
-#include <arch/avr8/tsc.h>
+#include <tsc.h>
+#include <machine.h>
 
 __BEGIN_SYS
 
-// Class initialization
 int AVR8_TSC::init(System_Info * si)
 {
     db<AVR8_TSC>(TRC) << "AVR8_TSC::init()\n";
