@@ -112,6 +112,8 @@ struct Memory_Map {};
 
 __END_SYS
 
-#include __HEADER_MACH(memory_map)
+#ifdef __MEMORY_MAP_H
+#include __MEMORY_MAP_H
+#endif
 
 #endif
