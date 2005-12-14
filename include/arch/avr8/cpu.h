@@ -10,10 +10,8 @@ __BEGIN_SYS
 
 class AVR8: public CPU_Common
 {
-
 private:
-    typedef Traits<AVR8> Traits;
-    static const Type_Id TYPE = Type<AVR8>::TYPE;
+    static const unsigned int CLOCK = Traits<Machine>::CLOCK;
 
 public:
     // CPU Flags
@@ -89,7 +87,7 @@ public:
 public:
     AVR8() {} 
  
-    Hertz clock() { return Traits::CLOCK; };
+    Hertz clock() { return CLOCK; };
 
     static void int_enable() { ASMV("sei"); };
     static void int_disable() { ASMV("cli"); };
@@ -193,10 +191,8 @@ public:
 	(*(volatile unsigned char *)(port + 0x20)) = (Reg8)value;
     }  
   
-    static int init(System_Info * si);
+    static int init(System_Info * si) { return 0; }
 };
-
-typedef AVR8 CPU;
 
 __END_SYS
 
