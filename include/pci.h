@@ -255,6 +255,8 @@ public:
 
 __END_SYS
 
-#include __HEADER_MACH(pci)
+#ifdef __PCI_H
+#include __PCI_H
+#endif
 
 #endif

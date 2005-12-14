@@ -15,6 +15,8 @@ protected:
 
 __END_SYS
 
-#include __HEADER_MACH(uart)
+#ifdef __UART_H
+#include __UART_H
+#endif
 
 #endif

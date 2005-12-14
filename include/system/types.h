@@ -3,20 +3,20 @@
 #ifndef __types_h
 #define __types_h
 
-inline void * operator new(unsigned int s, void * a) { return a; }
-
 __BEGIN_SYS
+
+// System Info
+class System_Info;
 
 // Utilities
 class Debug;
+class Heap;
 
 // System parts
 class Boot;
 class Setup;
 class Init;
 class System;
-class Framework;
-class Heap;
 
 // Hardware Mediators - CPUs
 class IA32;
@@ -30,10 +30,14 @@ class AVR8_TSC;
 class IA32_MMU;
 class AVR8_MMU;
 
+
 // Hardware Mediators - Machines
 class PC;
 class ATMega16;
 class ATMega128;
+
+// Hardware Mediators - Busses
+class PC_PCI;
 
 // Hardware Mediators - Interrupt Controllers
 class PC_IC;
@@ -50,250 +54,116 @@ class PC_RTC;
 class ATMega16_RTC;
 class ATMega128_RTC;
 
-// Hardware Mediators - Busses
-class PC_PCI;
+// Hardware Mediators - EEPROMs
+class PC_EEPROM;
+class ATMega16_EEPROM;
+class ATMega128_EEPROM;
 
 // Hardware Mediators - UARTs
 class PC_UART;
 class ATMega16_UART;
 class ATMega128_UART;
 
+// Hardware Mediators - SPIs
+class PC_SPI;
+class ATMega16_SPI;
+class ATMega128_SPI;
+
 // Hardware Mediators - Displays
+class Serial_Display;
 class PC_Display;
 class ATMega16_Display;
 class ATMega128_Display;
-
-// Hardware Mediators - Sensors
-class ATMega128_Temperature_Sensor;
-class ATMega128_Light_Sensor;
-class PC_Sensor;
 
 // Hardware Mediators - NICs
 class PC_NIC;
 class ATMega16_NIC;
 class ATMega128_NIC;
 
-// Abstractions
+// Hardware Mediators - ADCs
+class ATMega16_ADC;
+class ATMega128_ADC;
+
+// Hardware Mediators - Sensors
+class PC_Sensor;
+class ATMega128_Temperature_Sensor;
+class ATMega128_Light_Sensor;
+
+
+// Abstractions	- Process
 class Thread;
 class Task;
 class Active;
 
+// Abstractions	- Memory
 class Segment;
 class Address_Space;
 
+// Abstractions	- Synchronization
 class Synchronizer;
 class Mutex;
 class Semaphore;
 class Condition;
 
+// Abstractions	- Time
 class Clock;
 class Alarm;
 class Chronometer;
 
+// Abstractions	- Communication
 class Network;
 
+// Abstractions	- Sentients
 class Photo_Sentient;
 class Temperature_Sentient;
 
 
 // System Components IDs
+// The order in this enumeration defines many things in the system (e.g. init)
 typedef unsigned int Type_Id;
 enum 
 {
     CPU_ID,
-    IA32_ID = CPU_ID,
-    AVR8_ID,
-
     TSC_ID,
-    IA32_TSC_ID = TSC_ID,
-    AVR8_TSC_ID,
-
     MMU_ID,
-    IA32_MMU_ID = MMU_ID,
-    AVR8_MMU_ID,
 
     MACHINE_ID,
-    PC_ID = MACHINE_ID,
-    ATMEGA16_ID,
-    ATMEGA128_ID,
-
-    IC_ID,
-    PC_IC_ID = IC_ID,
-    ATMEGA16_IC_ID,
-    ATMEGA128_IC_ID,
-
-    TIMER_ID,
-    PC_TIMER_ID = TIMER_ID,
-    ATMEGA16_TIMER_ID,
-    ATMEGA128_TIMER_ID,
-
-    RTC_ID,
-    PC_RTC_ID = RTC_ID,
-
     PCI_ID,
-    PC_PCI_ID = PCI_ID,
-
+    IC_ID,
+    TIMER_ID,
+    RTC_ID,
+    EEPROM_ID,
     UART_ID,
-    PC_UART_ID = UART_ID,
-    ATMEGA16_UART_ID,
-    ATMEGA128_UART_ID,
-
+    SPI_ID,
     DISPLAY_ID,
-    PC_DISPLAY_ID = DISPLAY_ID,
-    ATMEGA16_DISPLAY_ID,
-    ATMEGA128_DISPLAY_ID,
-
-    TEMPERATURE_SENSOR_ID,
-    ATMEGA128_TEMPERATURE_SENSOR_ID = TEMPERATURE_SENSOR_ID,
-
-    LIGHT_SENSOR_ID,
-    ATMEGA128_LIGHT_SENSOR_ID = LIGHT_SENSOR_ID,
-
     NIC_ID,
-    PC_NIC_ID = NIC_ID,
-    ATMEGA16_NIC_ID,
-    ATMEGA128_NIC_ID,
+    ADC_ID,
+    TEMPERATURE_SENSOR_ID,
+    LIGHT_SENSOR_ID,
 
     THREAD_ID,
+    TASK_ID,
+    ACTIVE_ID,
 
     SEGMENT_ID,
-
     ADDRESS_SPACE_ID,
 
-    SYNCHRONIZER_ID,
-    MUTEX_ID = SYNCHRONIZER_ID,
+    MUTEX_ID,
     SEMAPHORE_ID,
     CONDITION_ID,
 
-    TIMEPIECE_ID,
-    CLOCK_ID = TIMEPIECE_ID,
+    CLOCK_ID,
     ALARM_ID,
     CHRONOMETER_ID,
 
     NETWORK_ID,
-    
-    TEMPERATURE_SENTIENT_ID,
-    PHOTO_SENTIENT_ID,
 
-    UNKNOWN_TYPE,
-    LAST_TYPE = UNKNOWN_TYPE - 1,
-    ANY_TYPE = 0xffff
+//     TEMPERATURE_SENTIENT_ID,
+//     PHOTO_SENTIENT_ID,
+
+    UNKNOWN_TYPE_ID,
+    LAST_TYPE_ID = UNKNOWN_TYPE_ID - 1
 };
-
-// System Component Types (type -> id)
-template<class T>
-struct Type
-{
-    enum { TYPE = UNKNOWN_TYPE }; 
-};
-
-template<> struct Type<IA32>
-{ enum { TYPE = IA32_ID }; };
-template<> struct Type<AVR8>
-{ enum { TYPE = AVR8_ID }; };
-
-template<> struct Type<IA32_TSC>
-{ enum { TYPE = IA32_TSC_ID }; };
-template<> struct Type<AVR8_TSC>
-{ enum { TYPE = AVR8_TSC_ID }; };
-
-template<> struct Type<IA32_MMU>
-{ enum { TYPE = IA32_MMU_ID }; };
-template<> struct Type<AVR8_MMU>
-{ enum { TYPE = AVR8_MMU_ID }; };
-
-
-template<> struct Type<PC>
-{ enum { TYPE = PC_ID }; };
-template<> struct Type<ATMega16>
-{ enum { TYPE = ATMEGA16_ID }; };
-template<> struct Type<ATMega128>
-{ enum { TYPE = ATMEGA128_ID }; };
-
-template<> struct Type<PC_IC>
-{ enum { TYPE = PC_IC_ID }; };
-template<> struct Type<ATMega16_IC>
-{ enum { TYPE = ATMEGA16_IC_ID }; };
-template<> struct Type<ATMega128_IC>
-{ enum { TYPE = ATMEGA128_IC_ID }; };
-
-template<> struct Type<PC_Timer> 
-{ enum { TYPE = PC_TIMER_ID }; };
-template<> struct Type<ATMega16_Timer>
-{ enum { TYPE = ATMEGA16_TIMER_ID }; };
-template<> struct Type<ATMega128_Timer>
-{ enum { TYPE = ATMEGA128_TIMER_ID }; };
-
-template<> struct Type<PC_RTC>
-{ enum { TYPE = PC_RTC_ID }; };
-
-template<> struct Type<PC_PCI>
-{ enum { TYPE = PC_PCI_ID }; };
-
-template<> struct Type<PC_UART>
-{ enum { TYPE = PC_UART_ID }; };
-template<> struct Type<ATMega16_UART>
-{ enum { TYPE = ATMEGA16_UART_ID }; };
-template<> struct Type<ATMega128_UART>
-{ enum { TYPE = ATMEGA128_UART_ID }; };
-
-template<> struct Type<PC_Display>
-{ enum { TYPE = PC_DISPLAY_ID }; };
-template<> struct Type<ATMega16_Display>
-{ enum { TYPE = ATMEGA16_DISPLAY_ID }; };
-template<> struct Type<ATMega128_Display>
-{ enum { TYPE = ATMEGA128_DISPLAY_ID }; };
-
-template<> struct Type<ATMega128_Temperature_Sensor>
-{ enum { TYPE = ATMEGA128_TEMPERATURE_SENSOR_ID }; };
-
-template<> struct Type<ATMega128_Light_Sensor>
-{ enum { TYPE = ATMEGA128_LIGHT_SENSOR_ID }; };
-
-template<> struct Type<PC_NIC>
-{ enum { TYPE = PC_NIC_ID }; };
-template<> struct Type<ATMega16_NIC>
-{ enum { TYPE = ATMEGA16_NIC_ID }; };
-template<> struct Type<ATMega128_NIC>
-{ enum { TYPE = ATMEGA128_NIC_ID }; };
-
-
-template<> struct Type<Thread>
-{ enum { TYPE = THREAD_ID }; };
-
-
-template<> struct Type<Segment>
-{ enum { TYPE = SEGMENT_ID }; };
-
-
-template<> struct Type<Address_Space>
-{ enum { TYPE = ADDRESS_SPACE_ID }; };
-
-
-template<> struct Type<Mutex> 
-{ enum { TYPE = MUTEX_ID }; };
-template<> struct Type<Semaphore>
-{ enum { TYPE = SEMAPHORE_ID }; };
-template<> struct Type<Condition>
-{ enum { TYPE = CONDITION_ID }; };
-
-
-template<> struct Type<Clock> 
-{ enum { TYPE = CLOCK_ID }; };
-template<> struct Type<Alarm> 
-{ enum { TYPE = ALARM_ID }; };
-template<> struct Type<Chronometer> 
-{ enum { TYPE = CHRONOMETER_ID }; };
-
-
-template<> struct Type<Network>
-{ enum { TYPE = NETWORK_ID }; };
-
-
-template<> struct Type<Temperature_Sentient>
-{ enum { TYPE = TEMPERATURE_SENTIENT_ID }; };
-template<> struct Type<Photo_Sentient>
-{ enum { TYPE = PHOTO_SENTIENT_ID }; };
 
 __END_SYS
 

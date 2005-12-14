@@ -10,10 +10,6 @@ __BEGIN_SYS
 
 class Semaphore: public Synchronizer_Common
 {
-private:
-    typedef Traits<Synchronizer> Traits;
-    static const Type_Id TYPE = Type<Semaphore>::TYPE;
-
 public:
     Semaphore(int v = 1) : _value(v) {
 	db<Synchronizer>(TRC) << "Semaphore(value= " << _value << ") => "
@@ -36,7 +32,7 @@ public:
 	    wakeup();
     }
 
-    static int init(System_Info * si);
+    static int init(System_Info * si) { return 0; }
 
 private:
     volatile int _value;

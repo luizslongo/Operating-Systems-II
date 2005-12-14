@@ -11,6 +11,9 @@ __BEGIN_SYS
 
 class NIC_Common
 {
+protected:
+    NIC_Common() {}
+
 public:
     class Address
     {
@@ -63,10 +66,23 @@ public:
     static const unsigned long long BROADCAST = ~0;
 
     typedef unsigned short Protocol;
+
+    struct Statistics {
+	Statistics() : rx_packets(0), tx_packets(0), 
+		       rx_bytes(0), tx_bytes(0) {}
+
+	unsigned int rx_packets;
+	unsigned int tx_packets;
+	unsigned int rx_bytes;
+	unsigned int tx_bytes;
+    };
 };
 
 class Ethernet_NIC: public NIC_Common
 {
+protected:
+    Ethernet_NIC() {}
+
 public:
     static const unsigned int MTU = 1500;
     static const unsigned int HEADER_SIZE = 14;
@@ -118,9 +134,8 @@ public:
     };
 
     // Meaningful statistics for Ethernet
-    struct Statistics {
-	Statistics() : rx_packets(0), tx_packets(0), rx_bytes(0), tx_bytes(0),
-		       rx_overruns(0), tx_overruns(0), frame_errors(0),
+    struct Statistics: public NIC_Common::Statistics {
+	Statistics() : rx_overruns(0), tx_overruns(0), frame_errors(0),
 		       carrier_errors(0), collisions(0) {}
 
 	friend Debug & operator << (Debug & db, const Statistics & s) {
@@ -137,10 +152,6 @@ public:
 	    return db;
 	}
 	
-	unsigned int rx_packets;
-	unsigned int tx_packets;
-	unsigned int rx_bytes;
-	unsigned int tx_bytes;
 	unsigned int rx_overruns;
 	unsigned int tx_overruns;
 	unsigned int frame_errors;
@@ -151,6 +162,8 @@ public:
 
 __END_SYS
 
-#include __HEADER_MACH(nic)
+#ifdef __NIC_H
+#include __NIC_H
+#endif
 
 #endif

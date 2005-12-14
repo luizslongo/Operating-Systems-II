@@ -3,7 +3,6 @@
 #ifndef __address_space_h
 #define __address_space_h
 
-#include <system/config.h>
 #include <mmu.h>
 #include <segment.h>
 
@@ -12,9 +11,6 @@ __BEGIN_SYS
 class Address_Space: public MMU::Directory
 {
 private:
-    typedef Traits<Address_Space> Traits;
-    static const Type_Id TYPE = Type<Address_Space>::TYPE;
-
     typedef CPU::Phy_Addr Phy_Addr;
     typedef CPU::Log_Addr Log_Addr;
     typedef MMU::Directory Directory;
@@ -69,7 +65,7 @@ public:
 	return Directory::physical(address);
     }
 
-    static int init(System_Info * si);
+    static int init(System_Info * si) { return 0; }
 };
 
 __END_SYS

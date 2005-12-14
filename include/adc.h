@@ -9,11 +9,10 @@ __BEGIN_SYS
 
 class ADC_Common
 {
+protected:
+    ADC_Common() {}
 
 public:
-
-    typedef unsigned long Hertz;
-
     enum Channel {
 	SINGLE_ENDED_ADC0 = 0,
 	SINGLE_ENDED_ADC1 = 1,
@@ -35,12 +34,12 @@ public:
 	SINGLE_CONVERSION_MODE = 0,
 	FREE_RUNNING_MODE      = 1,
     };
-
 };
-
 
 __END_SYS
 
-#include __HEADER_MACH(adc)
+#ifdef __ADC_H
+#include __ADC_H
+#endif
 
 #endif

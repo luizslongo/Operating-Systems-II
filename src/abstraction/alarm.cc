@@ -1,9 +1,9 @@
 // EPOS-- Alarm Abstraction Implementation
 
+#include <system/kmalloc.h>
 #include <display.h>
 #include <alarm.h>
 #include <thread.h>
-#include <system/kmalloc.h>
 
 __BEGIN_SYS
 
@@ -78,7 +78,8 @@ void Alarm::delay(const Microsecond & time)
 	    CPU::int_enable();
         } else {
 	    Tick t = _elapsed + (time + period() / 2) / period();
-	    while(_elapsed < t);
+	    while(_elapsed < t)
+		Thread::yield();
         }
 }
 
@@ -106,7 +107,7 @@ void Alarm::int_handler(unsigned int)
 
     _elapsed++;
     
-    if(Traits::visible) {
+    if(visible) {
 	Display display;
 	int lin, col;
 	display.position(&lin, &col);

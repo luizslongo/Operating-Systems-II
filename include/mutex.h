@@ -9,10 +9,6 @@ __BEGIN_SYS
 
 class Mutex: public Synchronizer_Common
 {
-private:
-    typedef Traits<Synchronizer> Traits;
-    static const Type_Id TYPE = Type<Mutex>::TYPE;
-
 public:
     Mutex() : _locked(false) {
 	db<Synchronizer>(TRC) << "Mutex() => " << this << "\n"; 
@@ -32,7 +28,7 @@ public:
 	wakeup(); 
     }
 
-    static int init(System_Info * si);
+    static int init(System_Info * si) { return 0; }
 
 private:
     volatile bool _locked;

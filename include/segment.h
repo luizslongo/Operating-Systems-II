@@ -3,7 +3,6 @@
 #ifndef __segment_h
 #define __segment_h
 
-#include <system/config.h>
 #include <mmu.h>
 
 __BEGIN_SYS
@@ -11,10 +10,9 @@ __BEGIN_SYS
 class Segment: public MMU::Chunk
 {
 private:
-    typedef Traits<Segment> Traits;
-    static const Type_Id TYPE = Type<Segment>::TYPE;
-
     typedef MMU::Chunk Chunk;
+
+public:
     typedef MMU::Flags Flags;
     typedef CPU::Phy_Addr Phy_Addr;
 
@@ -49,7 +47,7 @@ public:
 	return Chunk::resize(amount);
     }
 
-    static int init(System_Info * si);
+    static int init(System_Info * si) { return 0; }
 };
 
 __END_SYS

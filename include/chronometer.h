@@ -3,7 +3,6 @@
 #ifndef __chronometer_h
 #define __chronometer_h
 
-#include <system/config.h>
 #include <tsc.h>
 #include <rtc.h>
 
@@ -11,10 +10,7 @@ __BEGIN_SYS
 
 class Chronometer
 {
-private:
-    typedef Traits<Chronometer> Traits;
-    static const Type_Id TYPE = Type<Chronometer>::TYPE;
-
+public:
     typedef TSC::Hertz Hertz;
     typedef TSC::Time_Stamp Time_Stamp;
     typedef RTC::Microsecond Microsecond;
@@ -26,8 +22,8 @@ public:
 
     void reset() { _start = 0; _stop = 0; }
     void start() { if(_start == 0) _start = tsc.time_stamp(); }
-    void lap()   { if(_start != 0) _stop = tsc.time_stamp(); }
-    void stop()  { lap(); }
+    void lap() { if(_start != 0) _stop = tsc.time_stamp(); }
+    void stop() { lap(); }
 
     Time_Stamp ticks() {
 	if(_start == 0)
@@ -38,7 +34,7 @@ public:
     }
     Microsecond read() { return ticks() * 1000000 / frequency(); }
 
-    static int init(System_Info *si);
+    static int init(System_Info * si) { return 0; }
 
 private:
     TSC tsc;

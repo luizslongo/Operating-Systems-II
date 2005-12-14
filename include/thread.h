@@ -14,15 +14,20 @@ __BEGIN_SYS
 class Thread
 {
 protected:
-    typedef Traits<Thread> Traits;
-    static const Type_Id TYPE = Type<Thread>::TYPE;
-
     typedef CPU::Log_Addr Log_Addr;
     typedef CPU::Context Context;
-    typedef Ordered_Queue<Thread, Traits::smp> Queue;
 
-    static const unsigned int STACK_SIZE = 
-	__SYS(Traits)<Machine>::APPLICATION_STACK_SIZE;
+    typedef Ordered_Queue<Thread, Traits<Thread>::smp> Queue;
+
+    static const unsigned int STACK_SIZE 
+    = Traits<Machine>::APPLICATION_STACK_SIZE;
+
+    static const bool idle_waiting = Traits<Thread>::idle_waiting;
+    static const bool active_scheduler = Traits<Thread>::active_scheduler;
+    static const bool preemptive = Traits<Thread>::preemptive;
+    static const bool smp = Traits<Thread>::smp;
+
+    static const unsigned int QUANTUM = Traits<Thread>::QUANTUM;
 
 public:
     typedef short State;
@@ -190,7 +195,7 @@ private:
 
 	allow_scheduling();
 
- 	if(Traits::preemptive)
+ 	if(preemptive)
  	    reschedule();
     }
 
@@ -198,10 +203,10 @@ private:
     static void running(Thread * r) { _running = r; }
 
     static void prevent_scheduling() {
-	if(Traits::active_scheduler) CPU::int_disable();
+	if(active_scheduler) CPU::int_disable();
     }
     static void allow_scheduling() {
-	if(Traits::active_scheduler) CPU::int_enable();
+	if(active_scheduler) CPU::int_enable();
     }
 
     static void reschedule(); // this is the master alarm handler

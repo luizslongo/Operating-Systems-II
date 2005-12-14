@@ -13,13 +13,13 @@ protected:
     IC_Common() {};
 
 public:
-    // Hardware interrupt number
-    typedef int IRQ;
-    enum {ALL = -1};
+    typedef unsigned int IRQ;
 };
 
 __END_SYS
 
-#include __HEADER_MACH(ic)
+#ifdef __IC_H
+#include __IC_H
+#endif
 
 #endif

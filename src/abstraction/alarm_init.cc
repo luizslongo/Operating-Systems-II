@@ -14,7 +14,6 @@ int Alarm::init(System_Info * si)
     Machine::int_vector(Machine::irq2int(IC::IRQ_TIMER), int_handler);
 
     _timer.frequency(FREQUENCY);
-    _timer.enable();
     
     IC::enable(IC::IRQ_TIMER);
 

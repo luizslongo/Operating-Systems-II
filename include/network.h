@@ -10,10 +10,6 @@ __BEGIN_SYS
 
 class Network
 {
-private:
-    typedef Traits<Network> Traits;
-    static const Type_Id TYPE = Type<Network>::TYPE;
-
 public:
     // A network logical address
     typedef unsigned int Address;
@@ -22,7 +18,7 @@ public:
     // A network protocol number
     typedef NIC::Protocol Protocol;
     enum {
-	ELP  = Traits::EPOS_LIGHT_PROTOCOL,
+	ELP  = Traits<Network>::EPOS_LIGHT_PROTOCOL,
 	IP   = 0x0800,
 	ARP  = 0x0806,
 	RARP = 0x8035
@@ -53,12 +49,12 @@ public:
     Network(unsigned int unit = 0) {
 	db<Network>(TRC) << "Network(unit=" << unit << ")\n";
 	_unit = unit;
-	_dev = Machine::seize<NIC::Device>(Type<NIC>::TYPE, _unit);
+	_dev = Machine::seize<NIC::Device>(Type2Id<NIC>::ID, _unit);
     }
 
     ~Network() {
 	db<Network>(TRC) << "~Network()\n";
-	Machine::release(Type<NIC>::TYPE, _unit);
+	Machine::release(Type2Id<NIC>::ID, _unit);
 	_dev = 0;
     }
 
@@ -99,7 +95,7 @@ public:
 
     void reset() { _dev->reset(); }
 
-    static int init(System_Info * si);
+    static int init(System_Info * si) { return 0; }
 
 private:
     unsigned int _unit;

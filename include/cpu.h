@@ -114,6 +114,8 @@ protected:
 
 __END_SYS
 
-#include __HEADER_ARCH(cpu)
+#ifdef __CPU_H
+#include __CPU_H
+#endif
 
 #endif

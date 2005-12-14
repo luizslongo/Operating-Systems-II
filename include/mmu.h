@@ -110,6 +110,8 @@ public:
 
 __END_SYS
 
-#include __HEADER_ARCH(mmu)
+#ifdef __MMU_H
+#include __MMU_H
+#endif
 
 #endif

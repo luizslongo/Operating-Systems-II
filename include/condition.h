@@ -11,10 +11,6 @@ __BEGIN_SYS
 // check http://www.cs.duke.edu/courses/spring01/cps110/slides/sem/sld002.htm
 class Condition: public Synchronizer_Common
 {
-private:
-    typedef Traits<Synchronizer> Traits;
-    static const Type_Id TYPE = Type<Condition>::TYPE;
-
 public:
     Condition() {
 	db<Synchronizer>(TRC) << "Condition() => " << this << "\n";
@@ -36,7 +32,7 @@ public:
 	wakeup_all();
     }
 
-    static int init(System_Info * si);
+    static int init(System_Info * si) { return 0; }
 };
 
 // This is an alternative implementation, which does impose ordering

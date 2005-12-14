@@ -19,6 +19,8 @@ public:
 
 __END_SYS
 
-#include __HEADER_ARCH(tsc)
+#ifdef __TSC_H
+#include __TSC_H
+#endif
 
 #endif

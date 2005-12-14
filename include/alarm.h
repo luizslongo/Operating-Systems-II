@@ -3,7 +3,6 @@
 #ifndef __alarm_h
 #define __alarm_h
 
-#include <system/config.h>
 #include <utility/queue.h>
 #include <utility/handler.h>
 #include <tsc.h>
@@ -15,20 +14,19 @@ __BEGIN_SYS
 class Alarm
 {
 private:
-    typedef Traits<Alarm> Traits;
-    static const Type_Id TYPE = Type<Alarm>::TYPE;
-
-    static const int FREQUENCY = __SYS(Traits)<Timer>::FREQUENCY;
-
-    typedef Relative_Queue<Alarm, __SYS(Traits)<Thread>::smp> Queue;
-
-    typedef TSC::Hertz Hertz;
     typedef TSC::Time_Stamp Time_Stamp;
-    typedef RTC::Microsecond Microsecond;
-    typedef RTC::Second Second;
     typedef Timer::Tick Tick;
 
+    typedef Relative_Queue<Alarm, Traits<Thread>::smp> Queue;
+
+    static const int FREQUENCY = Traits<Timer>::FREQUENCY;
+
+    static const bool visible = Traits<Alarm>::visible;
+
 public:
+    typedef TSC::Hertz Hertz;
+    typedef RTC::Microsecond Microsecond;
+
     // Infinite times (for alarms)
     enum { INFINITE = -1 };
 

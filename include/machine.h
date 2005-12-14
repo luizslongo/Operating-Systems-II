@@ -15,6 +15,8 @@ protected:
 
 __END_SYS
 
-#include __HEADER_MACH(MACH)
+#ifdef __MACH_H
+#include __MACH_H
+#endif
 
 #endif

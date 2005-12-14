@@ -9,10 +9,6 @@ __BEGIN_SYS
 
 class Active: public Thread
 {
-private:
-    typedef __SYS(Traits)<Active> Traits;
-    static const Type_Id TYPE = Type<Active>::TYPE;
-
 public:
     Active() : Thread(&entry, this, Thread::SUSPENDED) {}
     virtual ~Active() {}
@@ -21,7 +17,7 @@ public:
 
     void start() { resume(); }
 
-    static int init(System_Info * si);
+    static int init(System_Info * si) { return 0; }
 
 private:
     static int entry(Active * runnable) { return runnable->run(); }

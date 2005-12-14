@@ -9,14 +9,26 @@ __BEGIN_SYS
 
 class Sensor_Common
 {
+protected:
+    Sensor_Common() {}
+};
 
-public:
+class Temperature_Sensor_Common: public Sensor_Common
+{
+protected:
+    Temperature_Sensor_Common() {}
+};
 
-
+class Light_Sensor_Common: public Sensor_Common
+{
+protected:
+    Light_Sensor_Common() {}
 };
 
 __END_SYS
 
-#include __HEADER_MACH(sensor)
+#ifdef __SENSOR_H
+#include __SENSOR_H
+#endif
 
 #endif

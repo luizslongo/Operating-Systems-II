@@ -85,7 +85,7 @@ void Thread::resume()
     
     allow_scheduling();
 
-    if(Traits::preemptive)
+    if(preemptive)
 	reschedule();
 }
 
@@ -160,7 +160,7 @@ void Thread::wakeup(Queue * q)
 
     allow_scheduling();
 
-    if(Traits::preemptive)
+    if(preemptive)
 	reschedule();
 }
 
@@ -180,7 +180,7 @@ void Thread::wakeup_all(Queue * q)
 
     allow_scheduling();
 
-    if(Traits::preemptive)
+    if(preemptive)
 	reschedule();
 }
 

@@ -13,15 +13,12 @@ __BEGIN_SYS
 class Task
 {
 private:
-    typedef Traits<Task> Traits;
-    static const Type_Id TYPE = Type<Task>::TYPE;
-
     typedef CPU::Log_Addr Log_Addr;
     typedef CPU::Context Context;
     typedef Queue<Thread> Queue;
 
     static const unsigned int STACK_SIZE = 
-	__SYS(Traits)<Machine>::APPLICATION_STACK_SIZE;
+	Traits<Machine>::APPLICATION_STACK_SIZE;
 
 public:
     Task(const Segment & c, const Segment & d) : _code(c), _data(d) {
