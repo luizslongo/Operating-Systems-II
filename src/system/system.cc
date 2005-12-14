@@ -14,11 +14,12 @@ __BEGIN_SYS
 System_Info * si =
     reinterpret_cast<System_Info *>(Memory_Map<Machine>::SYS_INFO);
 
-OStream kout, kerr;
-
-Heap app_heap;
-Heap sys_heap;
 char _sys_heap[Traits<Machine>::SYSTEM_HEAP_SIZE];
+Heap sys_heap(_sys_heap, Traits<Machine>::SYSTEM_HEAP_SIZE);
+
+Heap app_heap; // sure this should be here????
+
+OStream kout, kerr;
 
 __END_SYS
 
