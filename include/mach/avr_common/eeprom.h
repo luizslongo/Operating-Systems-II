@@ -1,23 +1,26 @@
-// EPOS-- Common Declarations for AVR EEPROMs
-// Author: Arliones
+// EPOS-- AVR EEPROM Mediator Common Declarations
 
 #ifndef __avr_eeprom_h
 #define __avr_eeprom_h
 
-#include <machine.h>
-#include <cpu.h>
+#include <eeprom.h>
 
 __BEGIN_SYS
 
 class AVR_EEPROM
 {
 protected:
-    static const int SIZE = 512; // bytes
+    AVR_EEPROM() {}
 
+private:
     typedef IO_Map<Machine> IO;
     typedef CPU::Reg8 Reg8;
-    typedef CPU::Log_Addr Log_Addr;
+    typedef CPU::Reg16 Reg16;
+    typedef CPU::Reg16 Address;
 
+    static const unsigned int SIZE = Traits<EEPROM>::SIZE; // bytes
+
+public:
     //EEPROM IO Register Bit Offsets
     enum {
         //EEARH
@@ -39,17 +42,12 @@ protected:
     };
 
 public:
-    AVR_EEPROM() {};
+    unsigned char read(const Address & addr);
+    void write(const Address & addr, unsigned char data);
 
-    unsigned char read_byte(Log_Addr addr);
-    void write_byte(Log_Addr addr, unsigned char data);
-    int size() { return SIZE; }
+    int size() const { return SIZE; }
 
 private:
-
-    typedef CPU::Reg8 Reg8;
-    typedef CPU::Reg16 Reg16;
-
     Reg8 eedr() { return CPU::in8(IO::EEDR); }
     void eedr(Reg8 value) { CPU::out8(IO::EEDR,value); }
     Reg8 eecr() { return CPU::in8(IO::EECR); }

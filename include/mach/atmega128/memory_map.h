@@ -1,7 +1,9 @@
-// EPOS--  Memory Map for the ATMega128
+// EPOS-- ATMega128 Memory Map
 
 #ifndef __memory_map_atmega128_h
 #define __memory_map_atmega128_h
+
+#include <system/config.h>
 
 __BEGIN_SYS
 

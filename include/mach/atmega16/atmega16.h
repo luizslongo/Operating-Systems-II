@@ -1,81 +1,65 @@
-// EPOS-- ATMega16 Declarations
+// EPOS-- ATMega16 Mediator Declarations
 
 #ifndef __atmega16_h
 #define __atmega16_h
 
-#include <machine.h>
-#include "../common/avr_machine.h"
-#include <arch/avr8/cpu.h>
-#include <arch/avr8/mmu.h>
-#include "ic.h"
-#include "memory_map.h"
-#include "adc.h"
-#include "uart.h"
-#include "display.h"
-#include "sensor.h"
-#include <utility/handler.h>
+#include "../avr_common/machine.h"
 
 __BEGIN_SYS
 
-class ATMega16: public AVR_Machine
+class ATMega16: public Machine_Common, private AVR_Machine
 {
 private:
-    typedef Traits<ATMega16> Traits;
-    static const Type_Id TYPE = Type<ATMega16>::TYPE;
-    
+    static const unsigned int INT_VECTOR_SIZE = 24;
 
 public:
-
     typedef IO_Map<ATMega16> IO;
 
-public:
     typedef void (int_handler)(unsigned int);
 
 public:
     ATMega16(){};
 
-    static int_handler * int_vector(int i) {
-	if((i < Traits::INT_VEC_SIZE) && (interrupt_vector[i]))
-	    return interrupt_vector[i];
-	else
-	    return 0;
+    static int_handler * int_vector(unsigned int i) {
+	return (i < INT_VECTOR_SIZE) ? _int_vector[i] : 0;
     }
-    static void int_vector(int i, int_handler * h) {
-	if(i < Traits::INT_VEC_SIZE)
-	    interrupt_vector[i] = h;
+    static void int_vector(unsigned int i, int_handler * h) {
+	if(i < INT_VECTOR_SIZE) _int_vector[i] = h;
     }
 
     template<typename Dev>
     static Dev * seize(const Type_Id & type, unsigned int unit) {
         //not implemented
+	return 0;
     }
 
     static void release(const Type_Id & type, unsigned int unit) {
         //not implemented
     }
 
-    template <Handler::Function * h> static void isr_wrapper(){
-    	// Save and restore is performed by the stub function, __vector_handler
-    	h();
-    }
-
-    static void panic() {
-        while(1);
-    }
+    static void panic() { AVR_Machine::panic(); }
+    static void reboot();
+    static void poweroff();
 
     static int irq2int(int i) { return i; }
     static int int2irq(int i) { return i; }
 
-    static int init(System_Info *si);
+    static int init(System_Info * si);
     
 private:
-
-    static int_handler * interrupt_vector[Traits<ATMega16>::INT_VEC_SIZE];
-
+    static int_handler * _int_vector[INT_VECTOR_SIZE];
 };
 
-typedef ATMega16 Machine;
-
 __END_SYS
+
+#include "ic.h"
+#include "timer.h"
+#include "rtc.h"
+#include "eeprom.h"
+#include "uart.h"
+#include "spi.h"
+#include <display.h>
+#include "nic.h"
+#include "adc.h"
 
 #endif

@@ -3,6 +3,7 @@
 #ifndef __atmega16_nic_h
 #define __atmega16_nic_h
 
+#include <mmu.h>
 #include "atmega16.h"
 
 __BEGIN_SYS
@@ -10,14 +11,13 @@ __BEGIN_SYS
 class ATMega16_NIC
 {
 private:
-    typedef Traits<ATMega16_NIC> Traits;
-    static const int TYPE = Type<ATMega16_NIC>::TYPE;
-
+    // Imports
     typedef CPU::Phy_Addr Phy_Addr;
     typedef MMU::DMA_Buffer DMA_Buffer;
 
 public:
     // The actual NIC
+
 public:
     //Dummy stuff
     class Device {
@@ -30,7 +30,7 @@ public:
 		 const void * data, unsigned int size) { return -1; }
 	int receive(Address * src, Protocol * prot,
 		    void * data, unsigned int size) { return -1; }
-	const Statistics & statistics() { return -1; }
+	const Statistics & statistics() { }
 	void reset() { }
     };
     static const unsigned int MTU = 0;
@@ -51,12 +51,12 @@ public:
 
     ATMega16_NIC(unsigned int unit = 0) : _unit(unit) {
 	db<ATMega16_NIC>(TRC) << "ATMega16_NIC(unit=" << unit << ")\n";
-	_dev = Machine::seize<Device>(TYPE, _unit);
+	_dev = Machine::seize<Device>(NIC_ID, _unit);
     }
 
     ~ATMega16_NIC() {
 	db<ATMega16_NIC>(TRC) << "~ATMega16_NIC()\n";
-	Machine::release(TYPE, _unit);
+	Machine::release(NIC_ID, _unit);
 	_dev = 0;
     }
 
@@ -86,8 +86,6 @@ private:
     unsigned int _unit;
     Device * _dev;
 };
-
-typedef ATMega16_NIC NIC;
 
 __END_SYS
 

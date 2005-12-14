@@ -1,21 +1,17 @@
-// EPOS-- ATMega16_IC Declarations
+// EPOS-- ATMega16 Interrupt Controller Mediator Declarations
 
 #ifndef __atmega16_ic_h
 #define __atmega16_ic_h
 
-#include <ic.h>
-#include "../common/avr_ic.h"
+#include "../avr_common/ic.h"
 
 __BEGIN_SYS
 
-class ATMega16_IC: public AVR_IC
+class ATMega16_IC: public IC_Common, private AVR_IC
 {
 private:
-    typedef Traits<ATMega16_IC> Traits;
-    static const Type_Id TYPE	 = Type<ATMega16_IC>::TYPE;
+    typedef AVR8::Reg8 Reg8;
 
-    // ATMega16_IC private imports, types and constants
-    
     // Interrupt IO Registers
     enum {	
 	GICR  	= 0x3b,
@@ -75,7 +71,7 @@ private:
 	// MCUCSR
 	ISC2	 = 0x40,
 	// EECR
-	EERIE	 = 0x80,
+	EERIE	 = 0x40,
 	// SPSR
 	SPIF	 = 0x80,
 	// SPCR
@@ -97,7 +93,6 @@ private:
     };
 
 public:
-
     // IRQs
     enum {
     	RESET		= 0x000001,
@@ -150,9 +145,9 @@ public:
 	IRQ_TIMER 	 = IRQ_TIMER0_COMP
     };
 
-    ATMega16_IC()  {};
-    ~ATMega16_IC() {};
-    
+public:
+    ATMega16_IC() {};
+
     static void enable(IRQ irq) {
         
         if (IRQ_IRQ0  	 == irq) { gicr(gicr() | INT0); return; }
@@ -186,11 +181,29 @@ public:
 	
 	// if (IRQ_RESET  == irq) {return;}   // Always enabled
         // if (IRQ_SPM_RDY  == irq) {return;} // Unused  
-	
-	return;      
-    
     }
     
+    static void disable() {
+        gicr(gicr() & ~(INT0 | INT1 | INT2));
+	
+        timsk(timsk() & ~(OCIE2 | TOIE2));
+	
+        timsk(timsk() & ~(TICIE1 | OCIE1A | OCIE1B | TOIE1)); 
+
+        timsk(timsk() & ~(TOIE0 | OCIE0)); 
+	
+        spcr(spcr() & ~SPIE);
+	
+        ucsrb(ucsrb() & ~(RXCIE | UDRIE | TXCIE)); 
+	
+        adcsra(adcsra() & ~ADIE);
+	
+        acsr(acsr() & ~ACIE);
+	
+        eecr(eecr() & ~EERIE);
+	
+        twcr(twcr() & ~TWIE);
+    }
     static void disable(IRQ irq) {
 
         if (IRQ_IRQ0  	 == irq) { gicr(gicr() & ~INT0); return; }
@@ -224,56 +237,40 @@ public:
 	
 	// if (IRQ_RESET  == irq) {return;}   // Always enabled
         // if (IRQ_SPM_RDY  == irq) {return;} // Unused        
-    
-	return;
-    
     }
     
-    static Mask pending();
-    
-    static Mask enabled();
-    
-    static Mask disabled(){ return ~enabled(); };
-    
-
-    static int init(System_Info *si);
+    static int init(System_Info * si) { return 0; }
 
 private:
-
-    typedef AVR8::Reg8 Reg8;
-
-    static Reg8 gicr(){ return AVR8::in8(GICR);  }
-    static void gicr(Reg8 value){ AVR8::out8(GICR,value); }       
-    static Reg8 gifr(){	return AVR8::in8(GIFR);}
-    static void gifr(Reg8 value){AVR8::out8(GIFR,value); }     
-    static Reg8 timsk(){return AVR8::in8(TIMSK); }
-    static void timsk(Reg8 value){AVR8::out8(TIMSK,value); }    
-    static Reg8 tifr(){	return AVR8::in8(TIFR); } 
-    static void tifr(Reg8 value){AVR8::out8(TIFR,value); }     
-    static Reg8 twcr(){	return AVR8::in8(TWCR); }   
-    static void twcr(Reg8 value){ AVR8::out8(TWCR,value); }  
-    static Reg8 mcucr(){return AVR8::in8(MCUCR); }    
-    static void mcucr(Reg8 value){AVR8::out8(MCUCR,value); }    
-    static Reg8 mcucsr(){return AVR8::in8(MCUCSR); }
-    static void mcucsr(Reg8 value){AVR8::out8(MCUCSR,value); }     
-    static Reg8 eecr(){	return AVR8::in8(EECR); }
-    static void eecr(Reg8 value){AVR8::out8(EECR,value); }  
-    static Reg8 spsr(){	return AVR8::in8(SPSR); }  
-    static void spsr(Reg8 value){AVR8::out8(SPSR,value); } 
-    static Reg8 spcr(){ return AVR8::in8(SPCR); }
-    static void spcr(Reg8 value){AVR8::out8(SPCR,value); }                                     
-    static Reg8 ucsra(){return AVR8::in8(UCSRA);  }
-    static void ucsra(Reg8 value){AVR8::out8(UCSRA,value);  }       
-    static Reg8 ucsrb(){return AVR8::in8(UCSRB); }    
-    static void ucsrb(Reg8 value){AVR8::out8(UCSRB,value); }       
-    static Reg8 acsr(){	return AVR8::in8(ACSR); }  
-    static void acsr(Reg8 value){AVR8::out8(ACSR,value); }             
-    static Reg8 adcsra(){return AVR8::in8(ADCSRA); }
-    static void adcsra(Reg8 value){AVR8::out8(ADCSRA,value); }          
-        
+    static Reg8 gicr() { return AVR8::in8(GICR); }
+    static void gicr(Reg8 value) { AVR8::out8(GICR,value); }       
+    static Reg8 gifr() { return AVR8::in8(GIFR); }
+    static void gifr(Reg8 value) {AVR8::out8(GIFR,value); }     
+    static Reg8 timsk() { return AVR8::in8(TIMSK); }
+    static void timsk(Reg8 value) {AVR8::out8(TIMSK,value); }    
+    static Reg8 tifr() { return AVR8::in8(TIFR); } 
+    static void tifr(Reg8 value) {AVR8::out8(TIFR,value); }     
+    static Reg8 twcr() { return AVR8::in8(TWCR); }   
+    static void twcr(Reg8 value) { AVR8::out8(TWCR,value); }  
+    static Reg8 mcucr() { return AVR8::in8(MCUCR); }    
+    static void mcucr(Reg8 value) {AVR8::out8(MCUCR,value); }    
+    static Reg8 mcucsr() { return AVR8::in8(MCUCSR); }
+    static void mcucsr(Reg8 value) {AVR8::out8(MCUCSR,value); }     
+    static Reg8 eecr() { return AVR8::in8(EECR); }
+    static void eecr(Reg8 value) {AVR8::out8(EECR,value); }  
+    static Reg8 spsr() { return AVR8::in8(SPSR); }  
+    static void spsr(Reg8 value) {AVR8::out8(SPSR,value); } 
+    static Reg8 spcr() { return AVR8::in8(SPCR); }
+    static void spcr(Reg8 value) {AVR8::out8(SPCR,value); }                                     
+    static Reg8 ucsra() { return AVR8::in8(UCSRA); }
+    static void ucsra(Reg8 value) {AVR8::out8(UCSRA,value); }       
+    static Reg8 ucsrb() { return AVR8::in8(UCSRB); }    
+    static void ucsrb(Reg8 value) {AVR8::out8(UCSRB,value); }       
+    static Reg8 acsr() { return AVR8::in8(ACSR); }  
+    static void acsr(Reg8 value) {AVR8::out8(ACSR,value); }             
+    static Reg8 adcsra() { return AVR8::in8(ADCSRA); }
+    static void adcsra(Reg8 value) {AVR8::out8(ADCSRA,value); }          
 };
-
-typedef ATMega16_IC IC;
 
 __END_SYS
 

@@ -1,20 +1,25 @@
-// EPOS-- Common Declarations for AVR UARTs
+// EPOS-- AVR UART Mediator Common Declarations
 
 #ifndef __avr_uart_h
 #define __avr_uart_h
 
 #include <uart.h>
-//#include <machine.h>
 
 __BEGIN_SYS
 
-class AVR_UART: public UART_Common
+class AVR_UART
 {
 protected:
+    AVR_UART() {}
 
+private:
     typedef IO_Map<Machine> IO;
     typedef AVR8::Reg8 Reg8;
+    typedef AVR8::Reg16 Reg16;
 
+    static const unsigned int BASE_CLOCK = Traits<Machine>::CLOCK / 512;
+
+public:
     //UART IO Register Bit Offsets
     enum {
         //UCSRA
@@ -46,21 +51,16 @@ protected:
         UCPOL	= 0,
     };
 
-    static const int BASE_CLOCK = __SYS(Traits)<CPU>::CLOCK / 512;
-  
 public:  
-
     AVR_UART(unsigned int unit = 0) : _unit(unit) {
 	config(9600,8,0,1);
 	ucsrb(1 << TXEN | 1 << RXEN);
     }
-
     AVR_UART(unsigned int baud, unsigned int data_bits, unsigned int parity,
 	     unsigned int stop_bits, unsigned int unit = 0) : _unit(unit) {
 	config(baud,data_bits,parity,stop_bits);
 	ucsrb(1 << TXEN | 1 << RXEN);
     }
-
     ~AVR_UART(){ 
 	ubrrhl(0);
 	ucsrb(0);  
@@ -70,13 +70,13 @@ public:
 		unsigned int parity, unsigned int stop_bits) {
 	ubrrhl((BASE_CLOCK / (baud>>5)) - 1);
 	
-	unsigned char cfg = ((data_bits - 5) << UCSZ0) | ((stop_bits - 1) << USBS);
+	unsigned char cfg =
+	    ((data_bits - 5) << UCSZ0) | ((stop_bits - 1) << USBS);
 	if (parity) cfg |= (parity + 1) << UPM0;
 	ucsrc(cfg);
 
 	ucsra(0);
     }
-
     void config(unsigned int * baud, unsigned int * data_bits,
 		unsigned int * parity, unsigned int * stop_bits) {
 
@@ -113,8 +113,8 @@ public:
     bool rxd_full() { return (ucsra() & (1 << RXC)); }
     bool txd_empty() { return (ucsra() & (1 << UDRE)); }
 
-    void dtr() { }
-    void rts() { }
+    void dtr();
+    void rts();
     bool cts() { return true; }
     bool dsr() { return true; }
     bool dcd() { return true; }
@@ -124,17 +124,7 @@ public:
     bool parity_error()  { return (ucsra() & (1 << UPE)) ; }
     bool framing_error() { return (ucsra() & (1 << FE)) ; }
 
-    char get() { while(!rxd_full()); return rxd(); }
-    void put(char c) { while(!txd_empty()); txd(c); }
-
-    static int init(System_Info *si); 
-    
- 
 private:
-
-    typedef AVR8::Reg8 Reg8;
-    typedef AVR8::Reg16 Reg16;
-
     Reg8 udr(){ return AVR8::in8((_unit == 0) ? IO::UDR0 : IO::UDR1); }
     void udr(Reg8 value){ AVR8::out8(((_unit == 0) ? IO::UDR0 : IO::UDR1),value); }   
     Reg8 ucsra(){ return AVR8::in8((_unit == 0) ? IO::UCSR0A : IO::UCSR1A); }
@@ -156,19 +146,15 @@ private:
 	value |= ((Reg16)ubrrh())<<8;
 	return value;
     }
-
     void ubrrhl(Reg16 value) { 
 	ubrrh((Reg8)(value>>8)); 
 	ubrrl((Reg8)value); 
     }
     
 private:
-
     int _unit;
     Reg8 _ucsr0c;
-
 };
-
 
 __END_SYS
 

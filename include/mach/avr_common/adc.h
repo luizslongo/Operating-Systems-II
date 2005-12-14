@@ -1,17 +1,28 @@
-// EPOS-- Common Declarations for AVR ADCs
+// EPOS-- AVR ADC Common Declarations
+
+#include <tsc.h>
+#include <adc.h>
 
 #ifndef __avr_adc_h
 #define __avr_adc_h
 
-#include <adc.h>
-
 __BEGIN_SYS
 
-class AVR_ADC: public ADC_Common
+class AVR_ADC
 {
-private:
+protected:
+    AVR_ADC() {}
 
+protected:
     typedef IO_Map<Machine> IO;
+
+    typedef AVR8::Reg8 Reg8;
+    typedef AVR8::Reg16 Reg16;
+
+    static const unsigned long CLOCK = Traits<Machine>::CLOCK;
+
+public:
+    typedef TSC::Hertz Hertz;
 
     enum {
         // ADMUX
@@ -35,19 +46,10 @@ private:
     };
 
 public:
-     
-    static const unsigned long CLOCK = Traits<CPU>::CLOCK;
-
-    AVR_ADC() {
-	config(SINGLE_ENDED_ADC0,SYSTEM_REF,
-	       FREE_RUNNING_MODE,CLOCK >> 7);
-    }
-
     AVR_ADC(unsigned char channel, unsigned char reference,
 	    unsigned char trigger, Hertz frequency) {
-	config(channel,reference,trigger,frequency);
+	config(channel, reference, trigger, frequency);
     }
-
     ~AVR_ADC(){ 
 	admux(0);
 	adcsra(0);
@@ -64,7 +66,6 @@ public:
 	adcsra((trigger << ADFR) | (ps << ADPS0));
 
     }
-
     void config(unsigned char * channel, unsigned char * reference,
 		unsigned char * trigger, Hertz * frequency) {
 
@@ -78,41 +79,24 @@ public:
 
     }
 
-    void enable() {
-	adcsra(adcsra() | (1 << ADEN) | (1 << ADSC));
-    }
+    int get() { while (!finished()); return adchl(); }
+    bool finished() { return (adcsra() & (1 << ADIF)); }
 
-    void disable() {
-	adcsra(adcsra() & ~(1 << ADEN) & ~(1 << ADSC));
-    }
+    void enable() { adcsra(adcsra() | (1 << ADEN) | (1 << ADSC)); }
+    void disable() { adcsra(adcsra() & ~(1 << ADEN) & ~(1 << ADSC)); }
 
-    void reset() { }
+    void reset();
 
-    void int_enable() {
-	adcsra(adcsra() | (1 << ADIE));
-    }
-
-    void int_disable() {
-	adcsra(adcsra() & ~(1 << ADIE));
-    }
-
-    bool adc_complete() { return (adcsra() & (1 << ADIF)); }
-
-    int get() { while (!adc_complete()); return adchl();  }
-
+    void int_enable() { adcsra(adcsra() | (1 << ADIE)); }
+    void int_disable() { adcsra(adcsra() & ~(1 << ADIE)); }
 
 private:
-
-    typedef AVR8::Reg8 Reg8;
-    typedef AVR8::Reg16 Reg16;
-
     static Reg8 admux(){ return AVR8::in8(IO::ADMUX); }
     static void admux(Reg8 value){ AVR8::out8(IO::ADMUX,value); }   
     static Reg8 adcsra(){ return AVR8::in8(IO::ADCSRA); }
     static void adcsra(Reg8 value){ AVR8::out8(IO::ADCSRA,value); }       
     static Reg16 adchl(){ return AVR8::in16(IO::ADCL); }
     static void adchl(Reg16 value){ AVR8::out16(IO::ADCL,value); }   
-
 };
 
 __END_SYS

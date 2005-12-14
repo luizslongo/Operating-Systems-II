@@ -1,33 +1,44 @@
-// EPOS-- ATMega16_Timer Declarations
+// EPOS-- ATMega16 Timer Mediator Declarations
 
 #ifndef __atmega16_timer_h
 #define __atmega16_timer_h
 
-#include <timer.h>
-#include "memory_map.h"
-#include "../common/avr_timer.h"
+#include "../avr_common/timer.h"
 
 __BEGIN_SYS
 
-class ATMega16_Timer: public ATmega16_Timer0
+class ATMega16_Timer: public Timer_Common, private AVR_Timer
 {
 private:
-    typedef Traits<ATMega16_Timer> Traits;
-    static const Type_Id TYPE = Type<ATMega16_Timer>::TYPE;
-    
+    static const unsigned int CLOCK = Traits<Machine>::CLOCK >> 10;
+
 public:
+    ATMega16_Timer() {}
 
-    ATMega16_Timer(int unit = 0){};
-    ~ATMega16_Timer(){};
+    ATMega16_Timer(const Hertz & f) {
+	db<PC_Timer>(TRC) << "ATMega16_Timer(f=" << f << ")\n";
+	frequency(f);
+    }
 
-    Hertz frequency(){ return Timer_Common::frequency(); }
-    void frequency(const Hertz & f){ ATmega16_Timer0::frequency(f); }
+    Hertz frequency() const { return count2freq(ocr0()); }
+    void frequency(const Hertz & f) {
+	ocr0(freq2count(f));
+	tccr0(WGM01 | TIMER_PRESCALE_1024);
+    };
 
-    static int init(System_Info *si);
-    
+    void reset() { tcnt0(0); }
+
+    void enable(){ timsk(timsk() | OCIE0); }
+    void disable(){ timsk(timsk() & ~OCIE0); }
+
+    Tick read() { return tcnt0(); }
+
+   static int init(System_Info * si);
+
+protected:
+    static Hertz count2freq(const Count & c) { return CLOCK / c; }
+    static Count freq2count(const Hertz & f) { return CLOCK / f; }
 };
-
-typedef ATMega16_Timer Timer;
 
 __END_SYS
 

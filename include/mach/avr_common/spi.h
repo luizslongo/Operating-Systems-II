@@ -1,17 +1,22 @@
-// EPOS-- Common Declarations for AVR SPI
+// EPOS-- AVR Serial Peripheral Interface Common Declarations
 
 #ifndef __avr_spi_h
 #define __avr_spi_h
+
+#include <spi.h>
 
 __BEGIN_SYS
 
 class AVR_SPI
 {
 protected:
+    AVR_SPI() {	configure(); }
 
+private:
     typedef IO_Map<Machine> IO;
     typedef AVR8::Reg8 Reg8;
 
+public:
     // SPI IO Registers
     enum {
         SPCR     = IO::SPCR,
@@ -44,17 +49,10 @@ protected:
 	MISO_PIN     = 0x08,
     };
 
-
 public:  
-
-    AVR_SPI() {
-	configure();
-    }
-
-    ~AVR_SPI() {}
-
     void configure(unsigned char mode = 0, unsigned char order = 0,
-		   unsigned char clk_polarity = 0, unsigned char clk_phase = 0) {
+		   unsigned char clk_polarity = 0,
+		   unsigned char clk_phase = 0) {
 	ddr(ddr() | MISO_PIN & ~MOSI_PIN &  ~SS_PIN & ~SCK_PIN);
 	spcr(SPE);
     }
@@ -62,11 +60,9 @@ public:
     bool complete() { return (spsr() & SPIF); } 
 
     char get() { while(!complete()); return spdr(); }
-
     void put(char c) { spdr(c);  while(!complete());  }
 
 protected:
-
     static Reg8 spcr(){ return AVR8::in8(SPCR); }
     static void spcr(Reg8 value){ AVR8::out8(SPCR,value); }   
     static Reg8 spsr(){ return AVR8::in8(SPSR); }
@@ -75,11 +71,7 @@ protected:
     static void spdr(Reg8 value){ AVR8::out8(SPDR,value); }    
     static Reg8 ddr(){ return CPU::in8(SPI_PORT_DIR); }
     static void ddr(Reg8 value){ CPU::out8(SPI_PORT_DIR,value); }
-
-
 };
-
-typedef AVR_SPI SPI;
 
 __END_SYS
 

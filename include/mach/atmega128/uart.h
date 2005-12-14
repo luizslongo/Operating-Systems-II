@@ -1,31 +1,37 @@
-// EPOS-- ATMega128_UART Declarations
+// EPOS-- ATMega128 UART Mediator Declarations
 
 #ifndef __atmega128_uart_h
 #define __atmega128_uart_h
 
-#include <uart.h> 
-#include "memory_map.h"
-#include "../common/avr_uart.h"
+#include "../avr_common/uart.h"
 
 __BEGIN_SYS
 
-class ATMega128_UART: public AVR_UART
+class ATMega128_UART: public UART_Common, private AVR_UART
 {
-private:
-    typedef Traits<ATMega128_UART> _Traits;
-    static const Type_Id TYPE = Type<ATMega128_UART>::TYPE; 
-
 public:
-    ATMega128_UART(unsigned int unit = 0) : AVR_UART(9600,8,0,1,unit) {}
-    ATMega128_UART(unsigned int baud, unsigned int data_bits, unsigned int parity,
-	       unsigned int stop_bits, unsigned int unit = 0) 
+    ATMega128_UART(unsigned int unit = 0) : AVR_UART(9600, 8, 0, 1, unit) {}
+    ATMega128_UART(unsigned int baud, unsigned int data_bits, 
+		   unsigned int parity, unsigned int stop_bits,
+		   unsigned int unit = 0) 
 	: AVR_UART(baud, data_bits, parity, stop_bits,unit) {}
 
-    static int init(System_Info *si); 
+    void config(unsigned int baud, unsigned int data_bits,
+		unsigned int parity, unsigned int stop_bits) {
+	AVR_UART::config(baud, data_bits, parity, stop_bits);
+    }
+    void config(unsigned int * baud, unsigned int * data_bits,
+		unsigned int * parity, unsigned int * stop_bits) {
+	AVR_UART::config(*baud, *data_bits, *parity, *stop_bits);
+    }
 
+    char get() { while(!rxd_full()); return rxd(); }
+    void put(char c) { while(!txd_empty()); txd(c); }
+
+    void loopback(bool flag) { AVR_UART::loopback(flag); }
+
+    static int init(System_Info * si) { return 0; }
 };
-
-typedef ATMega128_UART UART;
 
 __END_SYS
 

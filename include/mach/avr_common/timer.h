@@ -1,20 +1,25 @@
-// EPOS-- Common Declarations for AVR Timers
+// EPOS-- AVR Timer Common Declarations
 
 #ifndef __avr_timer_h
 #define __avr_timer_h
 
 #include <timer.h>
-#include <cpu.h>
-
-#include <uart.h>
 
 __BEGIN_SYS
 
-class AVR_Timer: public Timer_Common {
-
+class AVR_Timer
+{
 protected:
+    AVR_Timer() {}
 
+private:
+    // Imports
     typedef IO_Map<Machine> IO;
+    typedef AVR8::Reg8 Reg8;
+
+public:
+    // The timer's counter
+    typedef CPU::Reg16 Count;
 
     // Bit Definitions
     enum {
@@ -111,15 +116,7 @@ protected:
 	TIMER_PRESCALE_1024 = CSn2 | CSn0
     };
 
-
 public:
-
-    
-
-protected:
-
-    typedef AVR8::Reg8 Reg8;
-
     static Reg8 timsk() { return AVR8::in8(IO::TIMSK); }
     static void timsk(Reg8 value) { AVR8::out8(IO::TIMSK,value); }
     static Reg8 etimsk() { return AVR8::in8(IO::ETIMSK); }
@@ -196,107 +193,6 @@ protected:
     static void icr3h(Reg8 value) { AVR8::out8(IO::ICR3H,value); }
     static Reg8 icr3l() { return AVR8::in8(IO::ICR3L); }
     static void icr3l(Reg8 value) { AVR8::out8(IO::ICR3L,value); }
-
-
-
-};
-
-
-
-class ATmega16_Timer0: public AVR_Timer
-{
-
-public:
-
-    static const unsigned int CLOCK = Traits<CPU>::CLOCK >> 10;
-
-    void frequency(const unsigned short & f){
-    	unsigned short count = freq2cnt(f);
-	Timer_Common::frequency(cnt2freq(count));
-	ocr0(count);
-	tccr0(WGM01 | TIMER_PRESCALE_1024);
-    };
-
-    void reset() {  }    
-
-    void enable(){ timsk(timsk() | OCIE0); }
-    void disable(){ timsk(timsk() & ~OCIE0); }
-
-protected:
-
-    static Hertz cnt2freq(unsigned short c) { return CLOCK / c; }
-    static unsigned short freq2cnt(const Hertz & f) { return CLOCK / f; }
-
-};
-
-
-class ATmega128_Timer0: public ATmega16_Timer0
-{
-
-protected:
-
-    // Register Settings
-    enum {
-    	TIMER_PRESCALE_1    = CSn0,
-	TIMER_PRESCALE_8    = CSn1,
-	TIMER_PRESCALE_32   = CSn1 | CSn0,
-	TIMER_PRESCALE_64   = CSn2,
-	TIMER_PRESCALE_128  = CSn2 | CSn0,
-	TIMER_PRESCALE_256  = CSn2 | CSn1,
-	TIMER_PRESCALE_1024 = CSn2 | CSn1 | CSn0
-    };
-
-public:
-
-    void frequency(const unsigned short & f){
-    	unsigned short count = freq2cnt(f);
-	Timer_Common::frequency(cnt2freq(count));
-	ocr0(count);
-	tccr0(WGM01 | TIMER_PRESCALE_1024);
-    };
-
-};
-
-
-
-class AVR_Timer1: public AVR_Timer
-{
-
-protected:
-
-
-public:
-
-
-};
-
-class AVR_Timer2: public AVR_Timer
-{
-
-
-protected:
-
-
-public:
-
-
-
-
-
-
-};
-
-
-class AVR_Timer3: public AVR_Timer
-{
-
-public:
-
-
-protected:
-
-
-
 };
 
 __END_SYS

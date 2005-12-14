@@ -3,11 +3,10 @@
 #ifndef __cc1000_h
 #define __cc1000_h
 
-#include <display.h>
-#include "avr_spi.h"
+#include <nic.h>
+#include <spi.h>
 
 __BEGIN_SYS
-
 
 class CC1000
 {
@@ -20,33 +19,15 @@ private:
     typedef CPU::Reg32 Reg32;
     typedef CPU::Reg64 Reg64;
 
+    enum STATE {
+	IDLE,
+	SYNC,
+	RECV
+    };
+
 public:
-
-    CC1000() { default_init();  }
-    
-    ~CC1000() {}
-
-
-
-    //dummy -> Just to compile network
-    //dummy begin
-    typedef CPU::Reg8 Address;
-    typedef CPU::Reg16 MAC_Address;
-    typedef unsigned char Protocol;
-    typedef unsigned int Statistics;
-    static const unsigned char MTU = 1;
-    int send(const Address & dst, const Protocol & prot,
- 	     const void * data, unsigned int size);
-    int receive(Address * src, Protocol * prot,
-		void * data, unsigned int size);
-    const Statistics & statistics() { return 0; }
-    void reset();
-    //dummy end;
-
-private:
-
-    class Registers {
-
+    class Registers
+    {
     private:
 
 	// CC1000 Microcontroler Interface Registers
@@ -158,7 +139,6 @@ private:
 
 	};
 
-
 	enum Default_Register_Parameters {
 	    // These will be traits
 	    MAIN_DEFAULT       = RX_PD | TX_PD | FS_PD | BIAS_PD,
@@ -182,8 +162,6 @@ private:
 	};
 
     private:
-
-
 
 	// Microcontroler Interface Methods
 
@@ -405,8 +383,9 @@ private:
     }
 
 public:
+    CC1000() { default_init(); }
 
-    static void default_init(){
+    static void default_init() {
 	// CC1000 Datasheet page 29.
 
 	Registers::main(Registers::MAIN_DEFAULT);
@@ -426,19 +405,6 @@ public:
 	//	Registers::prescaler(Registers::PRESCALER_DEFAULT);
 	//	Registers::fsctrl(Registers::FSCTRL_DEFAULT);
 
-    }
-
-
-
-
-    void put(char c){	
-	tx_mode();
-	for (int i = 0; i < 5; i++)
-		_spi.put(~0x55);
-	_spi.put(~0xCC);
-	_spi.put(~0x33);
-	_spi.put(~c);
-	_spi.put(~0x55);
     }
 
     char get() {
@@ -513,16 +479,20 @@ public:
 	}
     }
 
-protected:
-    
+    void put(char c) {	
+	tx_mode();
+	for (int i = 0; i < 5; i++)
+		_spi.put(~0x55);
+	_spi.put(~0xCC);
+	_spi.put(~0x33);
+	_spi.put(~c);
+	_spi.put(~0x55);
+    }
+
+
+private:
     SPI _spi;
 
-    enum STATE {
-	IDLE,
-	SYNC,
-	RECV
-    };
-    
     STATE state;
     unsigned char rx_buf_lsb;
     unsigned char rx_buf_msb;
@@ -532,7 +502,30 @@ protected:
 
 };
 
-typedef CC1000 Radio;
+class Radio: public NIC_Common, private CC1000
+{
+public:
+    Radio() {}
+
+    int send(const Address & dst, const Protocol & prot,
+ 	     const void * data, unsigned int size);
+    int receive(Address * src, Protocol * prot,
+		void * data, unsigned int size);
+
+    void reset();
+
+    const Address & address() { return _address; }
+
+    const Statistics & statistics() { return _statistics; }
+
+    void handle_int();
+
+    static void int_handler(unsigned int interrupt);
+
+private:
+    Address _address;
+    Statistics _statistics;
+};
 
 __END_SYS
 

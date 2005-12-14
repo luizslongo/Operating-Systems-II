@@ -3,38 +3,31 @@
 #ifndef __atmega128_nic_h
 #define __atmega128_nic_h
 
-#include "atmega128.h"
-#include "../common/cc1000.h"
+#include <machine.h>
+#include "../avr_common/cc1000.h"
 
 __BEGIN_SYS
 
-class ATMega128_NIC: public CC1000
+class ATMega128_NIC: public NIC_Common, private CC1000
 {
 private:
-    typedef Traits<ATMega128_NIC> Traits;
-    static const int TYPE = Type<ATMega128_NIC>::TYPE;
-
     typedef CPU::Phy_Addr Phy_Addr;
-    typedef MMU::DMA_Buffer DMA_Buffer;
 
 public:
-    // The actual NIC
-public:
-    typedef CC1000 Device;
+    typedef Radio Device;
 
-    // Transmit and Receive Ring (with buffers) sizes
     static const unsigned int UNITS = 1;
-    static const unsigned int DMA_BUFFER_SIZE = 0;
+    static const unsigned int MTU = 1500;
 
 public:
     ATMega128_NIC(unsigned int unit = 0) : _unit(unit) {
 	db<ATMega128_NIC>(TRC) << "ATMega128_NIC(unit=" << unit << ")\n";
-	_dev = Machine::seize<Device>(TYPE, _unit);
+	_dev = Machine::seize<Device>(NIC_ID, _unit);
     }
 
     ~ATMega128_NIC() {
 	db<ATMega128_NIC>(TRC) << "~ATMega128_NIC()\n";
-	Machine::release(TYPE, _unit);
+	Machine::release(NIC_ID, _unit);
 	_dev = 0;
     }
 
@@ -58,7 +51,7 @@ public:
 
     void reset() { _dev->reset(); }
 
-    static int init(System_Info * si);
+    static int init(System_Info * si) { return 0; }
 
 private:
     unsigned int _unit;

@@ -1,22 +1,17 @@
-// EPOS-- ATMega128_IC Declarations
+// EPOS-- ATMega128 Interrupt Controller Mediator Declarations
 
 #ifndef __atmega128_ic_h
 #define __atmega128_ic_h
 
-#include <ic.h>
-#include "../common/avr_ic.h"
+#include "../avr_common/ic.h"
 
 __BEGIN_SYS
 
-class ATMega128_IC: public AVR_IC
+class ATMega128_IC: public IC_Common, private AVR_IC
 {
 private:
-    typedef Traits<ATMega128_IC> Traits;
-    static const Type_Id TYPE	 = Type<ATMega128_IC>::TYPE;
     typedef IO_Map<Machine> IO;
 
-    // ATMega128_IC private imports, types and constants
-    
     // Interrupt IO Registers
     enum {	
 	EIMSK   = IO::EIMSK,   // Manual Page 89
@@ -114,6 +109,7 @@ private:
     };
 
 public:
+    // IRQs
     enum {
 	IRQ0         = 0x00000002,
 	IRQ1         = 0x00000004,
@@ -189,11 +185,10 @@ public:
 	IRQ_TIMER 	 = IRQ_TIMER0_COMP
     };
 
-    ATMega128_IC()  {};
-    ~ATMega128_IC() {};
+public:
+    ATMega128_IC() {};
     
     static void enable(IRQ irq) {
-
         if (IRQ_IRQ0  	 == irq) { eimsk(eimsk() | INT0); return; }
         if (IRQ_IRQ1  	 == irq) { eimsk(eimsk() | INT1); return; }
         if (IRQ_IRQ2   	 == irq) { eimsk(eimsk() | INT2); return; }
@@ -236,11 +231,36 @@ public:
         if (IRQ_TIMER3_COMPB == irq) { etimsk(etimsk() | OCIE3B); return; } 
         if (IRQ_TIMER3_OVF   == irq) { etimsk(etimsk() | TOIE3); return; } 
 	if (IRQ_TIMER3_COMPC == irq) { etimsk(etimsk() | OCIE3C); return; }
-    
     }
     
-    static void disable(IRQ irq) {
+    static void disable() {
+        eimsk(eimsk() & ~(INT0 | INT1 | INT2 | INT3 |
+			  INT4 | INT5 | INT6 | INT7));
+	
+	timsk(timsk() & ~(OCIE2 | TOIE2 | TICIE1 | OCIE1A 
+			  | OCIE1B | TOIE1 | TOIE0 | OCIE0)); 
 
+	etimsk(etimsk() & ~OCIE1C);
+	
+        spcr(spcr() & ~SPIE);
+	
+        ucsr0b(ucsr0b() & ~(RXCIEn | UDRIEn | TXCIEn)); 
+
+        ucsr1b(ucsr1b() & ~(RXCIEn | UDRIEn | TXCIEn));
+	
+        adcsra(adcsra() & ~ADIE);
+	
+        acsr(acsr() & ~ACIE);
+	
+        eecr(eecr() & ~EERIE);
+
+        etimsk(etimsk() & ~TICIE3); 
+        etimsk(etimsk() & ~OCIE3A);  
+        etimsk(etimsk() & ~OCIE3B); 
+        etimsk(etimsk() & ~TOIE3); 
+	etimsk(etimsk() & ~OCIE3C);
+    }
+    static void disable(IRQ irq) {
         if (IRQ_IRQ0  	 == irq) { eimsk(eimsk() & ~INT0); return; }
         if (IRQ_IRQ1  	 == irq) { eimsk(eimsk() & ~INT1); return; }
         if (IRQ_IRQ2   	 == irq) { eimsk(eimsk() & ~INT2); return; }
@@ -283,16 +303,9 @@ public:
         if (IRQ_TIMER3_COMPB == irq) { etimsk(etimsk() & ~OCIE3B); return; } 
         if (IRQ_TIMER3_OVF   == irq) { etimsk(etimsk() & ~TOIE3); return; } 
 	if (IRQ_TIMER3_COMPC == irq) { etimsk(etimsk() & ~OCIE3C); return; }
-
     }
     
-    static Mask pending();
-    
-    static Mask enabled();
-    
-    static Mask disabled(){ return ~enabled(); }
-    
-    static int init(System_Info *si);
+    static int init(System_Info * si) { return 0; }
 
 private:
 
