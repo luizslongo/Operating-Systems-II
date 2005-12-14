@@ -4,9 +4,9 @@
 
 __BEGIN_SYS
 
-const PC_UART::IO_Port PC_UART::_ports[] = { Traits::COM1, 
-					     Traits::COM2, 
-					     Traits::COM3,
-					     Traits::COM4 };
+const PC_UART::IO_Port PC_UART::_ports[] = { Traits<PC_UART>::COM1, 
+					     Traits<PC_UART>::COM2, 
+					     Traits<PC_UART>::COM3,
+					     Traits<PC_UART>::COM4 };
 
 __END_SYS

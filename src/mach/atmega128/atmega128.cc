@@ -1,9 +1,9 @@
-// EPOS-- ATMega128 Implementation
+// EPOS-- ATMega128 Mediator Implementation
 
 #include <mach/atmega128/atmega128.h>
 
 __BEGIN_SYS
 
-ATMega128::int_handler * ATMega128::interrupt_vector[Traits<ATMega128>::INT_VEC_SIZE];
+ATMega128::int_handler * ATMega128::_int_vector[INT_VECTOR_SIZE];
 
 __END_SYS

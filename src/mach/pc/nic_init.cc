@@ -52,7 +52,7 @@ int PC_NIC::init(System_Info * si)
 	    }
 	    io_port = hdr.region[PCI_REG_IO].phy_addr;
 	    db<PC_NIC>(INF) << "PC_NIC::init: I/O port at " 
-			    << io_port << "\n";
+			    << (void *)(int)io_port << "\n";
 	}
 
 	// Get I/O base address
@@ -86,7 +86,7 @@ int PC_NIC::init(System_Info * si)
 
 	// Register the device to the Machine
 	new (kmalloc(sizeof(PC_Device)))
-	    PC_Device(Type<PC_NIC>::TYPE, i, nic, PC::irq2int(irq));
+	    PC_Device(Type2Id<PC_NIC>::ID, i, nic, PC::irq2int(irq));
 
 	// Install interrupt handler
 	PC::int_vector(PC::irq2int(irq), &Device::int_handler);
