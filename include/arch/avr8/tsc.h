@@ -1,20 +1,16 @@
-// EPOS-- AVR8_TSC Declarations
+// EPOS-- AVR8 TSC Mediator Declarations
 
 #ifndef __avr8_tsc_h
 #define __avr8_tsc_h
 
 #include <tsc.h>
-#include <cpu.h>
-#include <machine.h>
-#include <ic.h>
 
 __BEGIN_SYS
 
 class AVR8_TSC: public TSC_Common
 {
 private:
-    typedef Traits<AVR8_TSC> Traits;
-    static const Type_Id TYPE = Type<AVR8_TSC>::TYPE;
+    // Imports
     typedef IO_Map<Machine> IO;
 
     typedef CPU::Reg8 Reg8;
@@ -56,31 +52,28 @@ private:
     };
 
 public:
-    AVR8_TSC(){ /* Actual timer initialization is up to init */ };
+    AVR8_TSC() { /* Actual timer initialization is up to init */ }
     
-    static Hertz frequency() { return Traits<AVR8>::CLOCK / 8; };
+    static Hertz frequency() { return Traits<Machine>::CLOCK / 8; }
     static Time_Stamp time_stamp() {  
 	return tcnt1hl() | _ts << (sizeof(Reg16) * 8);
-    };
+    }
 
     static int init(System_Info * si);
     
 private:
-
-    static Reg8 tccr1a() { return AVR8::in8(TCCR1A); }
-    static void tccr1a(Reg8 value) { AVR8::out8(TCCR1A, value); }    
-    static Reg8 tccr1b() { return AVR8::in8(TCCR1B); }
-    static void tccr1b(Reg8 value) { AVR8::out8(TCCR1B, value); }       
-    static Reg16 tcnt1hl() { return AVR8::in16(TCNT1L); }
-    static void tcnt1hl(Reg16 value) { return AVR8::out16(TCNT1L, value); }
+    static Reg8 tccr1a() { return CPU::in8(TCCR1A); }
+    static void tccr1a(Reg8 value) { CPU::out8(TCCR1A, value); }    
+    static Reg8 tccr1b() { return CPU::in8(TCCR1B); }
+    static void tccr1b(Reg8 value) { CPU::out8(TCCR1B, value); }       
+    static Reg16 tcnt1hl() { return CPU::in16(TCNT1L); }
+    static void tcnt1hl(Reg16 value) { return CPU::out16(TCNT1L, value); }
 
     static void timer_handler(unsigned int) { _ts++; } 
 
 private:
     static volatile unsigned long _ts;
 };
-
-typedef AVR8_TSC TSC;
 
 __END_SYS
 

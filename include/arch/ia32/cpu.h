@@ -11,8 +11,7 @@ __BEGIN_SYS
 class IA32: public CPU_Common
 {
 private:
-    typedef Traits<IA32> Traits;
-    static const Type_Id TYPE = Type<IA32>::TYPE;
+    static const unsigned int CLOCK = Traits<Machine>::CLOCK;
 
 public:
     // CPU Flags
@@ -317,7 +316,7 @@ public:
 public:
     IA32() {}
 
-    static Hertz clock() { return Traits::CLOCK; }
+    static Hertz clock() { return CLOCK; }
 
     static void int_enable() { ASMV("sti"); }
     static void int_disable() { ASMV("cli"); }
@@ -497,10 +496,8 @@ public:
 	ASM("ljmp *%0" : "=o" (address));
     }
 
-    static int init(System_Info * si);
+    static int init(System_Info * si) { return 0; }
 };
-
-typedef IA32 CPU;
 
 __END_SYS
 
