@@ -26,6 +26,7 @@ __JCR_END__:
 
 	.text
 	.p2align 4,,15
+	.globl	__do_global_ctors_aux
 	.type	__do_global_ctors_aux, @function
 __do_global_ctors_aux:
 	pushl	%ebp
