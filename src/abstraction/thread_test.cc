@@ -2,6 +2,7 @@
 
 #include <utility/ostream.h>
 #include <thread.h>
+#include <alarm.h>
 
 __USING_SYS
 
@@ -23,17 +24,10 @@ int main()
     m = Thread::self();
 
     cout << "I'm the first thread of the first task created in the system.\n";
-    cout << "I'll now create two threads and then suspend myself ...\n";
+    cout << "I'll now create two threads and then wait for them to finish ...\n";
 
     a = new Thread(&func_a);
     b = new Thread(&func_b);
-
-    m->suspend();
-
-    cout << "Both threads are now done and have suspended themselves. I'll now wake them up so they can exit ...\n";
-
-    a->resume();
-    b->resume();
 
     int status_a = a->join();
     int status_b = b->join();
@@ -56,10 +50,8 @@ int func_a(void)
 	for(int i = 0; i < 79; i++)
 	    cout << "a";
 	cout << "\n";
-	Thread::yield();
+	Alarm::delay(500000);
     }
-
-    Thread::self()->suspend();
 
     return 'A';   
 }
@@ -70,12 +62,8 @@ int func_b(void)
 	for(int i = 0; i < 79; i++)
 	    cout << "b";
 	cout << "\n";
-	Thread::yield();
+	Alarm::delay(500000);
     }
-
-    m->resume();
-
-    Thread::self()->suspend();
 
     return 'B';   
 }
