@@ -188,8 +188,8 @@ int main(char * setup_addr, unsigned int setup_size, char * bi)
     unsigned int sys_code_size = 0;
     Log_Addr sys_data = 0;
     unsigned int sys_data_size = 0;
-    Log_Addr sys_stack = 0;
-    unsigned int sys_stack_size = 0;
+    Log_Addr sys_stack = MM::SYS_STACK;
+    unsigned int sys_stack_size = TR::SYSTEM_STACK_SIZE;
     if(has_system) {
 	elf = reinterpret_cast<ELF *>(&bi[si->bm.system_off]);
 	if(!elf->valid()) {
@@ -206,9 +206,6 @@ int main(char * setup_addr, unsigned int setup_size, char * bi)
 		sys_data = elf->segment_address(i);
 	    sys_data_size += elf->segment_size(i);
 	}
-	sys_stack = MM::SYS_STACK;
-	sys_stack_size = TR::SYSTEM_STACK_SIZE;
-
 	if(sys_code != MM::SYS_CODE) {
 	    db<Setup>(ERR) << "OS code segment address do not match "
 			   << "the machine's memory map!\n";
@@ -285,10 +282,7 @@ int main(char * setup_addr, unsigned int setup_size, char * bi)
     // The BIOS sets hardware interrupts to 0x08-0x0f, but these IDT
     // entries are assigned to internal exceptions in the i[x>1]86
     // We'll remap interrupts to HARD_INT and then disable them
-    CPU::int_disable();
-    IC::remap(TR::HARDWARE_INT_OFFSET);
-    IC::disable();
-    CPU::int_enable();
+    IC::init(si);
 
     // Setup the PCI bus controller
     setup_pci(reinterpret_cast<Phy_Addr *>(&si->pmm.io_mem),
@@ -432,6 +426,7 @@ int main(char * setup_addr, unsigned int setup_size, char * bi)
 
     // Load INIT
     if(has_init) {
+	db<Setup>(TRC) << "PC_Setup::load_init()\n";
 	elf = reinterpret_cast<ELF *>(&bi[si->bm.init_off]);
 	if(elf->load_segment(0) < 0) {
 	    db<Setup>(ERR)
@@ -442,6 +437,7 @@ int main(char * setup_addr, unsigned int setup_size, char * bi)
 
     // Load OS
     if(has_system) {
+	db<Setup>(TRC) << "PC_Setup::load_os()\n";
 	elf = reinterpret_cast<ELF *>(&bi[si->bm.system_off]);
 	if(elf->load_segment(0) < 0) {
 	    db<Setup>(ERR)
@@ -458,6 +454,7 @@ int main(char * setup_addr, unsigned int setup_size, char * bi)
 
     // Load APP
     elf = reinterpret_cast<ELF *>(&bi[si->bm.loader_off]);
+    db<Setup>(TRC) << "PC_Setup::load_app()\n";
     if(elf->load_segment(0) < 0) {
         db<Setup>(ERR)
 	    << "Application code segment was corrupted during SETUP!\n";
@@ -480,17 +477,12 @@ int main(char * setup_addr, unsigned int setup_size, char * bi)
     // Startup the FPU
     // CPU::init_fpu();
 
-    // Enable the Interrupt Controller to propagate interrups
-    // but keep the timer off
-    CPU::int_disable();
-    IC::enable();
-    IC::disable(IC::IRQ_TIMER);
-    CPU::int_enable();
-
     // SETUP ends here
-    if(has_init)
+    if(has_init) {
+	db<Setup>(TRC) << "Executing system global constructors ...\n";
+	static_cast<void (*)()>(sys_entry)();
 	call_next(init_entry);
-    else if(has_system)
+    } else if(has_system)
 	call_next(sys_entry);
     else
 	call_next(app_entry);
@@ -877,7 +869,10 @@ void copy_sys_info(System_Info * from, System_Info * to)
 //------------------------------------------------------------------------
 void call_next(Log_Addr entry)
 {
-    db<Setup>(TRC) << "call_next(e=" << (void *)entry << ")\n";
+    db<Setup>(TRC) << "call_next(ip=" << (void *)entry
+		   << ",sp=" << (void *)(MM::SYS_STACK + TR::SYSTEM_STACK_SIZE
+					 - 2 * sizeof(int))
+		   << ")\n";
 
     db<Setup>(INF) << "PC_Setup ends here!\n\n";
 
