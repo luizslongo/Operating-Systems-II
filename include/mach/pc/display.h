@@ -50,16 +50,13 @@ public:
     }
 };
 
-class PC_Display: protected Display_Common, public MC6845
+class PC_Display: public Display_Common, private MC6845
 {
 private:
-    typedef Traits<PC_Display> Traits;
-    static const Type_Id TYPE = Type<PC_Display>::TYPE;
-
-    static const int FBA = Traits::FRAME_BUFFER_ADDRESS;
-    static const int LINES = Traits::LINES;
-    static const int COLUMNS = Traits::COLUMNS;
-    static const int TAB_SIZE = Traits::TAB_SIZE;
+    static const unsigned int FBA = Traits<PC_Display>::FRAME_BUFFER_ADDRESS;
+    static const int LINES = Traits<PC_Display>::LINES;
+    static const int COLUMNS = Traits<PC_Display>::COLUMNS;
+    static const int TAB_SIZE = Traits<PC_Display>::TAB_SIZE;
 
 public:
     // Frame Buffer
@@ -134,7 +131,7 @@ public:
 	*columns = COLUMNS;
     }
 
-    static int init(System_Info * si);
+    static int init(System_Info * si) { return 0; }
 
 private:
     void scroll() {
@@ -147,11 +144,6 @@ private:
 private:
     Frame_Buffer _frame_buffer;
 };
-
-template <>
-class Select_Display<false>: public PC_Display {};
-
-typedef Select_Display<Traits<PC_Display>::on_serial> Display;
 
 __END_SYS
 

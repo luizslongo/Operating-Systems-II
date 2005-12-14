@@ -7,19 +7,15 @@
 
 __BEGIN_SYS
 
-class PC_IC: public IC_Common
+// Intel 8259A Interrupt Controller (master and slave are seen as a unit)
+class i8259A
 {
 private:
-    typedef Traits<PC_IC> Traits;
-    static const Type_Id TYPE = Type<PC_IC>::TYPE;
-
-    static const unsigned int HARD_INT =
-	__SYS(Traits)<PC>::HARDWARE_INT_OFFSET;
-
     typedef CPU::Reg8 Reg8;
     typedef CPU::Reg16 Reg16;
 
-    // 8259A I/O Ports
+public:
+    // I/O Ports
     enum {
 	MASTER_CMD	= 0x20,
 	MASTER_IMR	= 0x21,
@@ -27,7 +23,7 @@ private:
 	SLAVE_IMR	= 0xa1
     };
 
-    // 8259A Commands
+    // Commands
     enum {
 	SELECT_IRR	= 0x0a,
 	SELECT_ISR	= 0x0b,
@@ -36,30 +32,19 @@ private:
 	EOI		= 0x20
     };
 
-public:
-    // IRQs
-    static const unsigned int IRQS = 16;
+    // Cascading
     enum {
-	IRQ_TIMER	= 0,
-	IRQ_KEYBOARD	= 1,
-	IRQ_CASCADE	= 2
+	IRQ_CASCADE = 2
     };
 
 public:
-    PC_IC() {}
-
-    static void enable() { imr(0); }
-    static void enable(IRQ irq) { imr(imr() & ~(1 << irq)); }
-    static void disable() { imr(~(1 << IRQ_CASCADE)); }
-    static void disable(IRQ irq) { imr(imr() | (1 << irq)); }
-
-    // 8259A specific methods
+    i8259A() {}
 
     static void remap(Reg8 base) { // Reconfigure
 	// Configure Master PIC
 	IA32::out8(MASTER_CMD, ICW1);
 	IA32::out8(MASTER_IMR, base);              // ICW2 is the base
-	IA32::out8(MASTER_IMR, 1 << IRQ_CASCADE); // ICW3 = IRQ2 cascaded
+	IA32::out8(MASTER_IMR, 1 << IRQ_CASCADE);  // ICW3 = IRQ2 cascaded
 	IA32::out8(MASTER_IMR, ICW4);
 
 	// Configure Slave PIC
@@ -95,11 +80,31 @@ public:
 	    IA32::out8(SLAVE_CMD, EOI);
 	IA32::out8(MASTER_CMD, EOI); // always send EOI to master
     }
+};
+
+class PC_IC: public IC_Common, private i8259A
+{
+private:
+    static const unsigned int HARD_INT = Traits<PC>::HARDWARE_INT_OFFSET;
+
+public:
+    // IRQs
+    static const unsigned int IRQS = 16;
+    enum {
+	IRQ_TIMER	= 0,
+	IRQ_KEYBOARD	= 1,
+	IRQ_CASCADE	= 2
+    };
+
+public:
+    PC_IC() {}
+
+    static void enable(IRQ irq) { imr(imr() & ~(1 << irq)); }
+    static void disable() { imr(~(1 << IRQ_CASCADE)); }
+    static void disable(IRQ irq) { imr(imr() | (1 << irq)); }
 
     static int init(System_Info * si);
 };
-
-typedef PC_IC IC;
 
 __END_SYS
 

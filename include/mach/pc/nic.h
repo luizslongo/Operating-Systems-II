@@ -5,15 +5,14 @@
 
 #include "pc.h"
 #include "pcnet32.h"
+//#include "i82559.h"
+//#include "c905.h"
 
 __BEGIN_SYS
 
 class PC_NIC: public Ethernet_NIC
 {
 private:
-    typedef Traits<PC_NIC> Traits;
-    static const int TYPE = Type<PC_NIC>::TYPE;
-
     typedef CPU::IO_Port IO_Port;
     typedef CPU::IO_Irq IO_Irq;
     typedef CPU::Phy_Addr Phy_Addr;
@@ -36,12 +35,12 @@ public:
 public:
     PC_NIC(unsigned int unit = 0) : _unit(unit) {
 	db<PC_NIC>(TRC) << "PC_NIC(unit=" << unit << ")\n";
-	_dev = Machine::seize<Device>(TYPE, _unit);
+	_dev = Machine::seize<Device>(NIC_ID, _unit);
     }
 
     ~PC_NIC() {
 	db<PC_NIC>(TRC) << "~PC_NIC()\n";
-	Machine::release(TYPE, _unit);
+	Machine::release(NIC_ID, _unit);
 	_dev = 0;
     }
 
@@ -71,8 +70,6 @@ private:
     unsigned int _unit;
     Device * _dev;
 };
-
-typedef PC_NIC NIC;
 
 __END_SYS
 

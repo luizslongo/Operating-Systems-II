@@ -4,31 +4,31 @@
 #define __pc_timer_h
 
 #include <timer.h>
-#include <ic.h>
 
 __BEGIN_SYS
 
-class PC_Timer:  public Timer_Common
+// Intel 8253 (i82C54) Timer (tree counters, only counter 0 available to OS)
+class i8253
 {
-// The i8253 (i82C54) used in PCs has tree counters, but only counter 0 is
-// available to the OS
 private:
-    typedef Traits<PC_Timer> Traits;
-    static const Type_Id TYPE = Type<PC_Timer>::TYPE;
+    typedef CPU::Reg8 Reg8;
 
 public:
+    // The timer's counter
+    typedef CPU::Reg16 Count;
+
     // Clock input 1.193180 MHz (for all 3 channels)
     static const int CLOCK = 1193180;
 
-    // 8253 I/O Ports
+    // I/O Ports
     enum {
-	CNT_0	= 0x40, // Timekeeper
-	CNT_1	= 0x41, // Memory refresh
-	CNT_2	= 0x42, // Speaker
-	CTL	= 0x43
+	CNT_0		= 0x40, // Timekeeper
+	CNT_1		= 0x41, // Memory refresh
+	CNT_2		= 0x42, // Speaker
+	CTRL		= 0x43  // Control
     };
 
-    // 8253 Control Register Format (8 bits)
+    // Control Register Format (8 bits)
     enum {
 	SELECT_MASK	= 0xc0, // Select Counter (2 bits)
 	SC0		= 0x00, // counter 0
@@ -50,12 +50,12 @@ public:
 	COUNT_MODE_MASK	= 0x01, // 1 bit
 	BINARY		= 0x00, // Binary count
 	BCD		= 0x01, // BCD count
-	DEF_CTL_C0	= SC0	| LMSB	| CSSW	| BINARY, // Counter 0 default
-	DEF_CTL_C1	= SC1	| MSB	| RG	| BINARY, // Counter 1 default
-	DEF_CTL_C2	= SC2	| LMSB	| CSSW	| BINARY  // Counter 2 default
+	DEF_CTRL_C0	= SC0	| LMSB	| CSSW	| BINARY, // Counter 0 default
+	DEF_CTRL_C1	= SC1	| MSB	| RG	| BINARY, // Counter 1 default
+	DEF_CTRL_C2	= SC2	| LMSB	| CSSW	| BINARY  // Counter 2 default
     };
 
-    // 8253 Default Counters as set by the BIOS (16 bits)
+    // Default Counters as set by the BIOS (16 bits)
     enum {
 	DEF_CNT_C0	= 0x0000, // CLOCK/65535 ->     18.2 Hz
 	DEF_CNT_C1	= 0x0012, // CLOCK/18    ->  66287.8 Hz
@@ -63,40 +63,127 @@ public:
     };
 
 public:
-    PC_Timer(int u = 0) {} // actual initialization is up to init
+    i8253() {}
 
-    Hertz frequency() { return Timer_Common::frequency(); }
-    void frequency(const Hertz & f) {
-	unsigned short count = freq2cnt(f);
-	// Convert back to avoid precision lost
-	Timer_Common::frequency(cnt2freq(count));
-	IA32::out8(CTL, DEF_CTL_C0);
-	IA32::out8(CNT_0, count & 0xff);
-	IA32::out8(CNT_0, count >> 8);
-	db<PC_Timer>(INF) << "PC_Timer::resolution(res=" << frequency()
-			  << ",cnt=" << count << ")\n";
+    void config(int channel, Count count, bool interrupt) {
+	if(channel > 2)
+	    return;
+
+	Reg8 cnt, control;
+	switch(channel) {
+	case(1):
+	    cnt = CNT_1;
+	    control = DEF_CTRL_C1;
+	    break;
+	case(2):
+	    cnt = CNT_2;
+	    control = DEF_CTRL_C2;
+	    break;
+	default:
+	    cnt = CNT_0;
+	    control = DEF_CTRL_C0;
+	}
+//	if(interrupt) control |= IOTC;
+
+	CPU::out8(CTRL, control);
+	CPU::out8(cnt, count & 0xff);
+	CPU::out8(cnt, count >> 8);
     }
-    
-    void enable() { PC_IC::enable(PC_IC::IRQ_TIMER); }
-    void disable() { PC_IC::disable(PC_IC::IRQ_TIMER); }
 
-    void reset() {
+    Count read(int channel) {
+	if(channel > 2)
+	    return 0;
+
+	Reg8 cnt, control;
+	switch(channel) {
+	case(1):
+	    cnt = CNT_1;
+	    control = SC1;
+	    break;
+	case(2):
+	    cnt = CNT_2;
+	    control = SC2;
+	    break;
+	default:
+	    cnt = CNT_0;
+	    control = SC0;
+	}
+	control |= LATCH;
+
+	CPU::out8(CTRL, control);
+	Count count = CPU::in8(cnt) | (CPU::in8(cnt) << 8);
+
+	return count;
+    }
+
+    void reset(int channel) {
         // 8253 doesn't feature a reset, but a counter can be reset by writing
         // the corresponding control register
-        IA32::out8(CTL, DEF_CTL_C0);
-	unsigned short count = IA32::in8(CNT_0) | (IA32::in8(CNT_0) << 8);
-        IA32::out8(CNT_0, count & 0xff);
-        IA32::out8(CNT_0, count >> 8);
+
+	if(channel > 2)
+	    return;
+
+	Reg8 cnt, ctrl;
+	switch(channel) {
+	case(1):
+	    cnt = CNT_1;
+	    ctrl = DEF_CTRL_C1;
+	    break;
+	case(2):
+	    cnt = CNT_2;
+	    ctrl = DEF_CTRL_C2;
+	    break;
+	default:
+	    cnt = CNT_0;
+	    ctrl = DEF_CTRL_C0;
+	}
+
+	Reg8 control = CPU::in8(ctrl);
+	Count count = CPU::in8(cnt) | (CPU::in8(cnt) << 8);
+	CPU::out8(ctrl, control);
+        CPU::out8(cnt, count & 0xff);
+        CPU::out8(cnt, count >> 8);
     }
-
-    static int init(System_Info * si);
-
-private:
-    static Hertz cnt2freq(unsigned short c) { return CLOCK / c; }
-    static unsigned short freq2cnt(const Hertz & f) { return CLOCK / f; }
 };
 
-typedef PC_Timer Timer;
+class PC_Timer: public Timer_Common, private i8253
+{
+public:
+    PC_Timer() {}
+
+    PC_Timer(const Hertz & f) {
+	db<PC_Timer>(TRC) << "PC_Timer(f=" << f << ")\n";
+	frequency(f);
+	reset();
+    }
+
+    Hertz frequency() const { return count2freq(_count); }
+    void frequency(const Hertz & f) { 
+	_count = freq2count(f);
+	reset();
+    }
+
+    void reset() {
+	db<PC_Timer>(TRC) << "PC_Timer::reset() => {freq=" << frequency()
+			  << ",count=" << _count << "}\n";
+
+	config(0, _count, true); 
+    }
+   
+    void enable() { }
+    void disable() { }
+
+    Tick read() { return i8253::read(0); }
+
+    static int init(System_Info * si) { return 0; }
+
+private:
+    static Hertz count2freq(const Count & c) { return CLOCK / c; }
+    static Count freq2count(const Hertz & f) { return CLOCK / f; }
+
+private:
+    Count _count;
+};
 
 __END_SYS
 

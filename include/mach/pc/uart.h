@@ -18,7 +18,7 @@ private:
 
 public:
     // Register Addresses (relative to base I/O port)
-    typedef CPU::Reg8 Address;
+    typedef Reg8 Address;
     enum {
 	THR = 0, // Transmit Holding	W,   DLAB = 0
 	RBR = 0, // Receive Buffer 	R,   DLAB = 0
@@ -136,17 +136,14 @@ private:
     IO_Port _port;
 };
 
-class PC_UART: protected UART_Common, public NS16550AF
+class PC_UART: public UART_Common, private NS16550AF
 {
 private:
-    typedef Traits<PC_UART> Traits;
-    static const Type_Id TYPE = Type<PC_UART>::TYPE;
-
     typedef CPU::IO_Port IO_Port;
     typedef CPU::Reg8 Reg8;
     typedef CPU::Reg16 Reg16;
 
-    static const unsigned int CLOCK = Traits::CLOCK / 16;
+    static const unsigned int CLOCK = Traits<PC_UART>::CLOCK / 16;
 
 public:
     PC_UART(unsigned int unit = 0) : NS16550AF(_ports[unit]) {}
@@ -167,13 +164,13 @@ public:
     char get() { while(!rxd_full()); return rxd(); }
     void put(char c) { while(!txd_empty()); txd(c); }
 
-    static int init(System_Info * si);
+    void loopback(bool flag) { NS16550AF::loopback(flag); }
+
+    static int init(System_Info * si) { return 0; }
 
 private:
     static const IO_Port _ports[];
 };
-
-typedef PC_UART UART;
 
 __END_SYS
 

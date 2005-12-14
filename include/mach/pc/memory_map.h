@@ -1,4 +1,4 @@
-// EPOS--  Memory Map for the PC
+// EPOS-- PC Memory Map
 
 #ifndef __memory_map_pc_h
 #define __memory_map_pc_h
@@ -9,8 +9,8 @@ template <>
 struct Memory_Map<PC>
 {
     enum {
-	MEM_BASE =		0,
-	MEM_SIZE =		33554432,
+	MEM_BASE =	0,
+	MEM_SIZE =	32 * 1024 * 1024
     };
 
     enum {

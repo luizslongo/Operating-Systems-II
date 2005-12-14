@@ -10,11 +10,8 @@ __BEGIN_SYS
 class PC_PCI: public PCI_Common
 {
 private:
-    typedef Traits<PC_PCI> Traits;
-    static const Type_Id TYPE = Type<PC_PCI>::TYPE;
-
-    static const int MAX_BUS = Traits::MAX_BUS;
-    static const int MAX_DEV_FN = Traits::MAX_DEV_FN;
+    static const int MAX_BUS = Traits<PC_PCI>::MAX_BUS;
+    static const int MAX_DEV_FN = Traits<PC_PCI>::MAX_DEV_FN;
     static const unsigned long LOG_IO_MEM = Memory_Map<PC>::IO_MEM;
 
     // From Intel 82443BX manual
@@ -46,7 +43,7 @@ public:
     static Reg16 command(const Locator & l) {
 	return cfg16(l.bus, l.dev_fn, COMMAND);
     }
-    static void  command(const Locator & l, Reg16 v) {
+    static void command(const Locator & l, Reg16 v) {
 	cfg16(l.bus, l.dev_fn, COMMAND, v);
     }
     static Reg16 status(const Locator & l) {
@@ -106,8 +103,6 @@ private:
     static Phy_Addr _phy_io_mem;
     static Reg32 _base_address[Region::N];
 };
-
-typedef PC_PCI PCI;
 
 __END_SYS
 

@@ -4,9 +4,9 @@
 #define __pc_h
 
 #include <utility/list.h>
-#include <arch/ia32/cpu.h>
-#include <arch/ia32/mmu.h>
-#include <arch/ia32/tsc.h>
+#include <cpu.h>
+#include <mmu.h>
+#include <tsc.h>
 #include <machine.h>
 #include "device.h"
 
@@ -15,11 +15,8 @@ __BEGIN_SYS
 class PC: public Machine_Common
 {
 private:
-    typedef Traits<PC> Traits;
-    static const Type_Id TYPE = Type<PC>::TYPE;
-
-    static const unsigned int HARD_INT = Traits::HARDWARE_INT_OFFSET;
-    static const unsigned int SYSCALL_INT = Traits::SYSCALL_INT;
+    static const unsigned int HARD_INT = Traits<PC>::HARDWARE_INT_OFFSET;
+    static const unsigned int SYSCALL_INT = Traits<PC>::SYSCALL_INT;
     static const unsigned int INT_VECTOR_SIZE = 64;
     
     typedef IA32::Reg32 Reg32;
@@ -52,7 +49,6 @@ public:
     static void reboot();
     static void poweroff();
 
-    // PC specific methods
     static int irq2int(int i) { return i + HARD_INT; }
     static int int2irq(int i) { return i - HARD_INT; }
     
@@ -75,17 +71,15 @@ private:
     static int_handler * _int_vector[INT_VECTOR_SIZE];
 };
 
-typedef PC Machine;
-
 __END_SYS
 
 #include "ic.h"
 #include "pci.h"
 #include "timer.h"
 #include "rtc.h"
+#include "eeprom.h"
 #include "uart.h"
 #include "display.h"
-#include "sensor.h"
 #include "nic.h"
 
 #endif
