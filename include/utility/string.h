@@ -6,8 +6,8 @@
 int memcmp(void * d, const void * s, unsigned int n);
 void * memcpy(void * d, const void * s, unsigned int n);
 void * memset(void * d, int c, unsigned int n);
-int strcmp(char * d, const char * s);
-int strncmp(char * d, const char * s, unsigned int n);
+int strcmp(const char * d, const char * s);
+int strncmp(const char * d, const char * s, unsigned int n);
 char * strcpy(char * d, const char * s);
 char * strncpy(char * d, const char * s, unsigned int n);
 unsigned int strlen(const char * s);
