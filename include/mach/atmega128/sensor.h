@@ -69,7 +69,7 @@ public:
 
     int get_raw() { return ATMega128_Sensor::get(); }
 
-    static int init(System_Info * si);
+    static int init(System_Info * si) { return 0; }
 };
 
 class ATMega128_Light_Sensor: public ATMega128_Sensor
@@ -92,7 +92,7 @@ public:
 
     int get() { return ATMega128_Sensor::get() / 10; }
 
-    static int init(System_Info * si);
+    static int init(System_Info * si) { return 0; }
 };
 
 __END_SYS
