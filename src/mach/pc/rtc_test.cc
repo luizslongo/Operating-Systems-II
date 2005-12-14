@@ -14,27 +14,32 @@ int main()
 
     cout << "PC_RTC test\n";
 
-    PC_RTC rtc;
-    RTC::Second t0 = rtc.get();
+    RTC rtc;
+    RTC::Second t0 = rtc.seconds_since_epoch();
+
+    cout << "It's now " << t0 << " seconds since epoch.\n";
+
     Display disp;
-    unsigned int last_second = rtc.seconds();
-    for(int i = 0; i < 2; i++) {
-	while(rtc.get() < t0 + TEST_DURATION) {
-	    if(rtc.seconds() != last_second) {
-		last_second = rtc.seconds();
-		disp.position(20, 30);
-		cout << rtc.day() << '/'
-		     << rtc.month() << '/'
-		     << rtc.year() << ' ';
-		disp.position(20, 40);
-		cout << rtc.hours() << ':'
-		     << rtc.minutes() << ':'
-		     << rtc.seconds() << "    ";
-	    }
+    RTC::Date last_date = rtc.date();
+    while(rtc.seconds_since_epoch() < t0 + TEST_DURATION) {
+	if(last_date.second() != rtc.date().second()) {
+	    last_date = rtc.date();
+	    disp.position(20, 30);
+	    cout << last_date.day() << '/'
+		 << last_date.month() << '/'
+		 << last_date.year() << ' ';
+	    disp.position(20, 40);
+	    cout << last_date.hour() << ':'
+		 << last_date.minute() << ':'
+		 << last_date.second() << "    ";
 	}
-	cout << "\n\nSetting the time to its previous value (set(get()).\n";
-// 	rtc.set(rtc.get());
     }
+
+    cout << "\n\nSetting the time to its current value: ";
+    rtc.date(rtc.date());
+    cout << "done!\n";
+
+    cout << "The End!\n";
 
     return 0;
 }
