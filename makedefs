@@ -24,7 +24,7 @@ MACH		:= $(MACH_PC)
 
 # Compiler prefixes
 $(ARCH_IA32)_COMP_PREFIX	:= /usr/local/cross-ia32/bin/
-$(ARCH_AVR8)_COMP_PREFIX	:= /usr/local/cross-avr/bin/avr-elf-
+$(ARCH_AVR8)_COMP_PREFIX	:= /usr/local/avr/gcc/bin/avr-
 COMP_PREFIX			:= $($(ARCH)_COMP_PREFIX)
 
 # Boot memory maps
@@ -43,9 +43,9 @@ $(MACH_ATMEGA16)_BOOT_ADDR     	:= 0x00000000
 $(MACH_ATMEGA16)_SETUP_ADDR    	:= 0x00000000
 $(MACH_ATMEGA16)_INIT_ADDR     	:= 0x00000000
 $(MACH_ATMEGA16)_SYS_CODE_ADDR	:= 0x00000000
-$(MACH_ATMEGA16)_SYS_DATA_ADDR	:= 0x00800060
+$(MACH_ATMEGA16)_SYS_DATA_ADDR	:= 0x00800110
 $(MACH_ATMEGA16)_APP_CODE_ADDR	:= 0x00000000
-$(MACH_ATMEGA16)_APP_DATA_ADDR	:= 0x00800060
+$(MACH_ATMEGA16)_APP_DATA_ADDR	:= 0x00800110
 $(MACH_ATMEGA128)_MEM_BASE     	:= 0x00800100
 $(MACH_ATMEGA128)_MEM_SIZE     	:= 0x00001000
 $(MACH_ATMEGA128)_BOOT_ADDR    	:= 0x00000000
@@ -74,7 +74,7 @@ $(MACH_ATMEGA16)_AS_FLAGS	:= -mmcu=atmega16
 $(MACH_ATMEGA16)_LD_FLAGS	:= -m avr5 
 $(MACH_ATMEGA128)_CC_FLAGS	:= -mmcu=atmega128 -Wno-inline
 $(MACH_ATMEGA128)_AS_FLAGS	:= -mmcu=atmega128
-$(MACH_ATMEGA128)_LD_FLAGS	:= -m avr5 -L/usr/local/cross-avr/lib/gcc-lib/avr-elf/3.3.2/avr5
+$(MACH_ATMEGA128)_LD_FLAGS	:= -m avr5 -L/usr/local/avr/gcc/lib/gcc-lib/avr/3.3.2/avr5
 MACH_CC_FLAGS		:= $($(MACH)_CC_FLAGS)
 MACH_AS_FLAGS		:= $($(MACH)_AS_FLAGS)
 MACH_LD_FLAGS		:= $($(MACH)_LD_FLAGS)
