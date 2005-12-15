@@ -18,7 +18,7 @@ extern "C" void __setup() {
     __si->pmm.sys_info	= (unsigned)&__si;
 
     __si->pmm.free	= (unsigned)&__bss_end;
-    __si->pmm.free_size	= Memory_Map<Machine>::SYS_INFO - (unsigned)&__bss_end;
+    __si->pmm.free_size	= Memory_Map<Machine>::MACH1 - (unsigned)&__bss_end;
 
     return;
     
