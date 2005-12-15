@@ -179,8 +179,8 @@ template <> struct Traits<ATMega16>: public Traits<ATMega16_Common>
 
     static const unsigned int SYSTEM_STACK_SIZE = 64;
     static const unsigned int SYSTEM_HEAP_SIZE = 64;
-    static const unsigned int APPLICATION_STACK_SIZE = 64;
-    static const unsigned int APPLICATION_HEAP_SIZE = 256;
+    static const unsigned int APPLICATION_STACK_SIZE = 256;
+    static const unsigned int APPLICATION_HEAP_SIZE = 600;
 };
 
 template <> struct Traits<ATMega16_Timer>: public Traits<ATMega16_Common>
@@ -228,8 +228,8 @@ template <> struct Traits<ATMega128>: public Traits<ATMega128_Common>
 
     static const unsigned int SYSTEM_STACK_SIZE = 64;
     static const unsigned int SYSTEM_HEAP_SIZE = 64;
-    static const unsigned int APPLICATION_STACK_SIZE = 64;
-    static const unsigned int APPLICATION_HEAP_SIZE = 512;
+    static const unsigned int APPLICATION_STACK_SIZE = 256;
+    static const unsigned int APPLICATION_HEAP_SIZE = 1024;
 };
 
 template <> struct Traits<ATMega128_Timer>: public Traits<ATMega128_Common>
