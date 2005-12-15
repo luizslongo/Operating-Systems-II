@@ -13,27 +13,29 @@ struct Memory_Map<ATMega16>
 	MEM_SIZE =	1024
     };
 
+
     enum {
-	BASE =		0x0000,
-	TOP =		0xffff,
-	APP_LO =	0x0000,
-	APP_CODE =	0x0000,
-	APP_DATA =	0x0000,
-	APP_HI =	0x045f,
-	PHY_MEM =	0x0000,
-	IO_MEM =	0x0020,
-	SYS =		0x0000,
-	INT_VEC =	0x0000,
+	BASE =		0x000000,
+	TOP =		0x00ffff,
+	APP_LO =	0x000000,
+	APP_CODE =	0x000000,
+	APP_DATA =	0x800110,
+	APP_HI =	0x00ffff,
+	PHY_MEM =	0x800060,
+	IO_MEM =	0x800020,
+	SYS =		0x000000,
+	INT_VEC =	0x000000,
 	SYS_PT =	TOP,
 	SYS_PD =	TOP,
-	SYS_INFO =	0x0400,
-	SYS_CODE =	0x0000,
-	SYS_DATA =	0x0000,
-	SYS_STACK =	0x045f,
-	MACH1 =		0x0000,
-	MACH2 =		0x0000,
+	SYS_INFO =	0x000060,
+	SYS_CODE =	0x000000,
+	SYS_DATA =	0x800110,
+	SYS_STACK =	0x80045f,
+	MACH1 =		0x000400,
+	MACH2 =		0x000000,
 	MACH3 =		TOP,
     };
+
 };
 
 template <class Imp> struct IO_Map;
