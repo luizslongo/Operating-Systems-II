@@ -8,8 +8,8 @@ __BEGIN_SYS
 
 int Thread::init(System_Info * si)
 {
-    db<Init>(TRC) << "Thread::init(entry="
-		  << (void *)si->lmm.app_entry << ")\n";
+    db<Init, Thread>(TRC) << "Thread::init(entry="
+			  << (void *)si->lmm.app_entry << ")\n";
 
     prevent_scheduling();
 

@@ -7,7 +7,7 @@ __BEGIN_SYS
 
 int AVR8_TSC::init(System_Info * si)
 {
-    db<AVR8_TSC>(TRC) << "AVR8_TSC::init()\n";
+    db<Init, AVR8_TSC>(TRC) << "AVR8_TSC::init()\n";
 
 //    tccr1b(CS10);
    

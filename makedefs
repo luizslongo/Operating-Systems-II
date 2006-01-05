@@ -23,7 +23,7 @@ MACH		:= $(MACH_PC)
 ###############################################################################
 
 # Compiler prefixes
-$(ARCH_IA32)_COMP_PREFIX	:= /usr/local/cross-ia32/bin/
+$(ARCH_IA32)_COMP_PREFIX	:= 
 $(ARCH_AVR8)_COMP_PREFIX	:= /usr/local/avr/gcc/bin/avr-
 COMP_PREFIX			:= $($(ARCH)_COMP_PREFIX)
 

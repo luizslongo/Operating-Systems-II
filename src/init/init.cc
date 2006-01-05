@@ -32,7 +32,7 @@ __BEGIN_SYS
 extern System_Info * si;
 
 template <int id>
-inline void call_init(System_Info * si)
+inline static void call_init(System_Info * si)
 {
     if(Traits<typename Id2Type<id>::TYPE >::initialize)
 	Id2Type<id>::TYPE::init(si);
@@ -40,14 +40,14 @@ inline void call_init(System_Info * si)
 };
 
 template <> // Thread is initialized in init_first.cc
-inline void call_init<THREAD_ID>(System_Info * si)
+inline static void call_init<THREAD_ID>(System_Info * si)
 {
     if(THREAD_ID != LAST_TYPE_ID)
 	call_init<THREAD_ID + 1>(si);
 };
 
 template <>
-inline void call_init<LAST_TYPE_ID>(System_Info * si)
+inline static void call_init<LAST_TYPE_ID>(System_Info * si)
 { 
     if(Traits<Id2Type<LAST_TYPE_ID>::TYPE >::initialize)
 	Id2Type<LAST_TYPE_ID>::TYPE::init(si);

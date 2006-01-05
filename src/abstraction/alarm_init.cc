@@ -7,7 +7,7 @@ __BEGIN_SYS
 
 int Alarm::init(System_Info * si)
 {
-    db<Alarm>(TRC) << "Alarm::init()\n";
+    db<Init, Alarm>(TRC) << "Alarm::init()\n";
 
     CPU::int_disable();
 

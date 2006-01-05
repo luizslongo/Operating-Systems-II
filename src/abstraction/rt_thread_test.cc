@@ -61,7 +61,7 @@ int func_a()
 	cout << "a";
     }
     cout << "A";
-    return 'a';   
+    return 'A';   
 }
 
 int func_b(void)

@@ -7,7 +7,7 @@ __BEGIN_SYS
 
 int Task::init(System_Info * si)
 {
-    db<Init>(TRC) << "Task::init()\n";
+    db<Init, Task>(TRC) << "Task::init()\n";
 
     if(si->bm.app_off != -1)
 	db<Init>(INF) << "Task:: additional tasks at " << (void *)si->pmm.img 

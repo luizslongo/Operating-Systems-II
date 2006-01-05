@@ -6,7 +6,7 @@ __BEGIN_SYS
 
 int ATMega16_NIC::init(System_Info * si)
 {
-    db<ATMega16_NIC>(TRC) << "ATMega16_NIC::init()\n";
+    db<Init, ATMega16_NIC>(TRC) << "ATMega16_NIC::init()\n";
 
     return 0;
 }
