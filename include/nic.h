@@ -76,6 +76,78 @@ public:
 	unsigned int rx_bytes;
 	unsigned int tx_bytes;
     };
+
+    // Polymorphic (or not) NIC wrapper
+    class NIC_Base
+    {
+    public:
+	NIC_Base(unsigned int unit = 0) {}
+	virtual ~NIC_Base() {}
+    
+	virtual int send(const Address & dst, const Protocol & prot, 
+			 const void * data, unsigned int size) = 0; 
+	virtual int receive(Address * src, Protocol * prot,
+			    void * data, unsigned int size) = 0;
+    
+	virtual void reset() = 0;
+    
+	virtual unsigned int mtu() = 0;
+
+	virtual const Address & address() = 0;
+
+	virtual const Statistics & statistics() = 0;
+    };
+    template<typename NIC, bool polymorphic>
+    class NIC_Wrapper: public NIC_Base, private NIC
+    {
+    public:
+	NIC_Wrapper(unsigned int unit = 0): NIC(unit) {}
+	virtual ~NIC_Wrapper() {}
+
+	virtual int send(const Address & dst, const Protocol & prot, 
+			 const void * data, unsigned int size) {
+	    return NIC::send(dst, prot, data, size); 
+	}
+	virtual int receive(Address * src, Protocol * prot,
+			    void * data, unsigned int size) {
+	    return NIC::receive(src, prot, data, size); 
+	}
+    
+	virtual void reset() { NIC::reset(); }
+    
+	virtual unsigned int mtu() { return NIC::mtu(); }
+
+	virtual const Address & address() { return NIC::address(); }
+
+	virtual const Statistics & statistics() { return NIC::statistics(); }
+    };
+    template<typename NIC>
+    class NIC_Wrapper<NIC, false>: public NIC
+    {
+    public:
+	NIC_Wrapper(unsigned int unit = 0): NIC(unit) {}
+    };
+
+    template<typename NICS>
+    class Meta_NIC
+    {
+    private:
+	static const bool polymorphic = NICS::Polymorphic;
+
+    public:
+	typedef 	
+	typename IF<polymorphic,
+		    NIC_Base, 
+		    typename NICS::template Get<0>::Result>::Result Base;
+
+	template<int Index>
+	struct Get
+	{ 
+	    typedef
+	    NIC_Wrapper<typename NICS::template Get<Index>::Result,
+			polymorphic> Result;
+	};
+    };
 };
 
 class Ethernet_NIC: public NIC_Common

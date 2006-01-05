@@ -41,8 +41,8 @@ public:
 			    FLAG_RF | FLAG_VM | FLAG_AC)
     };
 
-    // Exceptions
-    enum {
+    // Exceptions 
+    enum Exceptions {  // GCC BUG (anonymous enum in templates)
 	EXC_BASE        = 0x00,
 	EXC_DIV0	= 0x00,
 	EXC_DEBUG	= 0x01,
@@ -119,7 +119,7 @@ public:
     };
 
     // GDT Layout 
-    enum {
+    enum GDT_Layout { // GCC BUG (anonymous enum in templates)
 	GDT_NULL      = 0,
 	GDT_FLT_CODE  = 1,
 	GDT_FLT_DATA  = 2,

@@ -16,6 +16,7 @@ public:
 public:
     Handler() {}
 
+    virtual ~Handler() {}
     virtual void operator()() = 0;
 };
 

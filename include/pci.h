@@ -98,7 +98,7 @@ public:
     };
 
     // PCI REGION types, address and size masks	
-    enum {
+    enum PCI_Masks {  // GCC BUG (anonymous enum in templates)
 	BASE_ADDRESS_SPACE_MASK		= 0x01, // 0 = memory, 1 = I/O
 	BASE_ADDRESS_SPACE_MEM		= 0x00,
 	BASE_ADDRESS_SPACE_IO		= 0x01,

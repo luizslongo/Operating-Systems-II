@@ -25,24 +25,10 @@ inline void * operator new(unsigned int s, void * a) { return a; }
 // CONFIGURATION
 //============================================================================
 #include <system/types.h>
+#include <system/meta.h>
 #include <traits.h>
 
 __BEGIN_SYS
-
-// "If" metaprogram
-template<bool condition, typename Then, typename Else>
-struct If { typedef Then Result; };
-
-template<typename Then, typename Else>
-struct If<false, Then, Else> { typedef Else Result; };
-
-// Dummy class for incomplete architectures and machines 
-template<int i>
-class Dummy
-{
-public:
-    static int init(System_Info * si) { return 0; }
-};
 
 // Architecture configuration
 #if defined (__ia32)
@@ -82,7 +68,7 @@ typedef PC_RTC			RTC;
 typedef PC_EEPROM		EEPROM;
 typedef PC_UART			UART;
 typedef Dummy<0>		SPI;
-typedef If<Traits<PC_Display>::on_serial,
+typedef IF<Traits<PC_Display>::on_serial,
 	   Serial_Display,
 	   PC_Display>::Result	Display;
 typedef PC_NIC			NIC;
@@ -111,7 +97,7 @@ typedef ATMega16_EEPROM		EEPROM;
 typedef Dummy<0>		PCI;
 typedef ATMega16_UART		UART;
 typedef ATMega16_SPI		SPI;
-typedef If<Traits<ATMega16_Display>::on_serial,
+typedef IF<Traits<ATMega16_Display>::on_serial,
 	   Serial_Display,
 	   PC_Display>::Result	Display;
 typedef ATMega16_NIC		NIC;
@@ -140,7 +126,7 @@ typedef ATMega128_EEPROM	EEPROM;
 typedef Dummy<0>		PCI;
 typedef ATMega128_UART		UART;
 typedef ATMega128_SPI		SPI;
-typedef If<Traits<ATMega128_Display>::on_serial,
+typedef IF<Traits<ATMega128_Display>::on_serial,
 	   Serial_Display,
 	   PC_Display>::Result	Display;
 typedef ATMega128_NIC		NIC;

@@ -6,7 +6,7 @@ __BEGIN_SYS
 
 int PC::init(System_Info * si)
 {
-    db<PC>(TRC) << "PC::init()\n";
+    db<Init, PC>(TRC) << "PC::init()\n";
 
     // Set all IDT entries to proper int_dispatch() offsets
     IA32::IDT_Entry * idt =

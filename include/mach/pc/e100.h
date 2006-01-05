@@ -27,21 +27,22 @@ private:
 	Traits<PC_NIC>::E100_SEND_BUFFERS;
     static const unsigned int RX_BUFS =
 	Traits<PC_NIC>::E100_RECEIVE_BUFFERS;
-    static const unsigned int DMA_BUFFER_SIZE = 
-	((sizeof(Init_Block) + 15) & ~15U) +
- 	RX_BUFS * ((sizeof(Rx_Desc) + 15) & ~15U) +
- 	TX_BUFS * ((sizeof(Tx_Desc) + 15) & ~15U) +
- 	RX_BUFS * ((sizeof(Frame) + 15) & ~15U) +
- 	TX_BUFS * ((sizeof(Frame) + 15) & ~15U); // GCC mess up MMU::align128
+    static const unsigned int DMA_BUFFER_SIZE = 0; // GCC mess up MMU::align128
 
     // Share control and interrupt dispatiching info
     struct Device
     {
-	PCNet32 * device;
+	E100 * device;
 	unsigned int interrupt;
 	bool in_use;
     };
 	
+public:
+    typedef CPU::Log_Addr Log_Addr;
+    typedef CPU::Phy_Addr Phy_Addr;
+    typedef CPU::IO_Irq IO_Irq;
+    typedef MMU::DMA_Buffer DMA_Buffer;
+
 public:
     E100(unsigned int unit = 0);
     ~E100();
@@ -62,13 +63,13 @@ public:
     static int init(unsigned int unit, System_Info * si);
 
 private:
-    PCNet32(unsigned int unit, Log_Addr io_mem, IO_Irq irq, DMA_Buffer * dma);
+    E100(unsigned int unit, Log_Addr io_mem, IO_Irq irq, DMA_Buffer * dma);
 
     void handle_int();
 
     static void int_handler(unsigned int interrupt);
 
-    static PCNet32 * get(unsigned int interrupt) {
+    static E100 * get(unsigned int interrupt) {
 	for(unsigned int i = 0; i < UNITS; i++)
 	    if(_devices[i].interrupt == interrupt)
 		return _devices[i].device;
@@ -81,6 +82,7 @@ private:
     Address _address;
     Statistics _statistics;
 
+    Log_Addr _io_mem;
     IO_Irq _irq;
     DMA_Buffer * _dma_buf;
 

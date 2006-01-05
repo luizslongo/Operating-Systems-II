@@ -19,11 +19,11 @@ public:
     }
 
     void * entry() { return (void *)((int)e_entry); }
-    int segments() { return e_phnum; }
+    int segments() { return e_phnum - 1; }
     
     void * segment_address(int i) {
 	return (i > segments()) ? 0 :
-	    (char *)((int)(seg(i)->p_vaddr & ~(seg(i)->p_align - 1)));
+	    (void *)((int)(seg(i)->p_vaddr & ~(seg(i)->p_align - 1)));
     }
     int segment_size(int i) {
 	return (i > segments()) ? -1 : (int)(

@@ -61,6 +61,8 @@ bool has_system;
 
 __END_SYS
 
+ASM("jmp _start");
+
 //========================================================================
 // _start	          
 //
@@ -72,8 +74,8 @@ __END_SYS
 //	 somehow have to arrange for this.
 //	 The initial stack pointer is inherited from PC_BOOT (i.e.,
 //	 somewhere below 0x7c00).
-//	 We can't "kprintf" here because the data segment is unreachable
-//	 and "kprintf" has static data.
+//	 We can't "kout" here because the data segment is unreachable
+//	 and "kout" has static data.
 //	 THIS FUNCTION MUST BE RELOCATABLE, because it won't run at the
 //	 address it has been compiled for.
 //------------------------------------------------------------------------
@@ -979,20 +981,28 @@ void hard_int()
 //------------------------------------------------------------------------
 void panic()
 {
-  unsigned short *video;
+    unsigned short * video;
 
-  // Set a pointer to GCA text frame buffer so we can say something
-  video = reinterpret_cast<unsigned short *>(
-      Traits<PC_Display>::FRAME_BUFFER_ADDRESS);
+    //	 Set a pointer to GCA text frame buffer so we can say something
+    video = reinterpret_cast<unsigned short *>(
+	Traits<PC_Display>::FRAME_BUFFER_ADDRESS);
 
-  video [0] = 'P' | 0x1f00;
-  video [1] = 'A' | 0x1f00;
-  video [2] = 'N' | 0x1f00;
-  video [3] = 'I' | 0x1f00;
-  video [4] = 'C' | 0x1f00;
-  video [5] = '!' | 0x1f00;
+    *video++ = 'S' | 0x1f00;
+    *video++ = 'E' | 0x1f00;
+    *video++ = 'T' | 0x1f00;
+    *video++ = 'U' | 0x1f00;
+    *video++ = 'P' | 0x1f00;
+    *video++ = ':' | 0x1f00;
+    *video++ = ':' | 0x1f00;
+    *video++ = 'p' | 0x1f00;
+    *video++ = 'a' | 0x1f00;
+    *video++ = 'n' | 0x1f00;
+    *video++ = 'i' | 0x1f00;
+    *video++ = 'c' | 0x1f00;
+    *video++ = '(' | 0x1f00;
+    *video++ = ')' | 0x1f00;
 
-  ASM("hlt");
+    CPU::halt();
 }
 
 // This might be very useful for debugging!

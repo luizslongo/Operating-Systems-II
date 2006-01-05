@@ -8,7 +8,7 @@ __BEGIN_SYS
 template <class Imp>
 struct Traits
 {
-    static const bool debugged = true;
+    static const bool debugged = false;
     static const bool initialize = true;
 };
 
@@ -18,7 +18,7 @@ template <> struct Traits<Debug>
 {
     static const bool error   = true;
     static const bool warning = true;
-    static const bool info    = false;
+    static const bool info    = true;
     static const bool trace   = true;
 };
 
@@ -30,18 +30,22 @@ template <> struct Traits<Heap>: public Traits<void>
 // System parts
 template <> struct Traits<Boot>: public Traits<void>
 {
+    static const bool debugged = true;
 };
 
 template <> struct Traits<Setup>: public Traits<void>
 {
+    static const bool debugged = true;
 };
 
 template <> struct Traits<Init>: public Traits<void>
 {
+    static const bool debugged = true;
 };
 
 template <> struct Traits<System>: public Traits<void>
 {
+    static const bool debugged = true;
 };
 
 
@@ -157,10 +161,19 @@ template <> struct Traits<PC_Display>: public Traits<void>
 
 template <> struct Traits<PC_NIC>: public Traits<void>
 {
-    static const bool initialize = true;
-    static const unsigned int PCNET32_UNITS = 2;
+    typedef LIST<PCNet32, PCNet32> NICS;
+
+    static const unsigned int PCNET32_UNITS = NICS::Count<PCNet32>::Result;
     static const unsigned int PCNET32_SEND_BUFFERS = 8; // per unit
     static const unsigned int PCNET32_RECEIVE_BUFFERS = 8; // per unit
+
+    static const unsigned int E100_UNITS = NICS::Count<E100>::Result;
+    static const unsigned int E100_SEND_BUFFERS = 8; // per unit
+    static const unsigned int E100_RECEIVE_BUFFERS = 8; // per unit
+
+    static const unsigned int C905_UNITS = NICS::Count<C905>::Result;
+    static const unsigned int C905_SEND_BUFFERS = 8; // per unit
+    static const unsigned int C905_RECEIVE_BUFFERS = 8; // per unit
 };
 #endif
 
@@ -179,8 +192,8 @@ template <> struct Traits<ATMega16>: public Traits<ATMega16_Common>
 
     static const unsigned int SYSTEM_STACK_SIZE = 64;
     static const unsigned int SYSTEM_HEAP_SIZE = 64;
-    static const unsigned int APPLICATION_STACK_SIZE = 256;
-    static const unsigned int APPLICATION_HEAP_SIZE = 600;
+    static const unsigned int APPLICATION_STACK_SIZE = 64;
+    static const unsigned int APPLICATION_HEAP_SIZE = 256;
 };
 
 template <> struct Traits<ATMega16_Timer>: public Traits<ATMega16_Common>
@@ -228,8 +241,8 @@ template <> struct Traits<ATMega128>: public Traits<ATMega128_Common>
 
     static const unsigned int SYSTEM_STACK_SIZE = 64;
     static const unsigned int SYSTEM_HEAP_SIZE = 64;
-    static const unsigned int APPLICATION_STACK_SIZE = 256;
-    static const unsigned int APPLICATION_HEAP_SIZE = 1024;
+    static const unsigned int APPLICATION_STACK_SIZE = 64;
+    static const unsigned int APPLICATION_HEAP_SIZE = 512;
 };
 
 template <> struct Traits<ATMega128_Timer>: public Traits<ATMega128_Common>

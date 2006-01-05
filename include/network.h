@@ -11,11 +11,11 @@ __BEGIN_SYS
 class Network
 {
 public:
-    // A network logical address
+    // Network logical address
     typedef unsigned int Address;
     static const unsigned int BROADCAST = ~0;
 
-    // A network protocol number
+    // Network protocol number
     typedef NIC::Protocol Protocol;
     enum {
 	ELP  = Traits<Network>::EPOS_LIGHT_PROTOCOL,
@@ -28,8 +28,10 @@ public:
     typedef NIC::Statistics Statistics;
 
 private:
+    // Network phisical address
     typedef NIC::Address MAC_Address;
 
+    // Address Resolution Protocol 
     class ARP_Table {
     public:
 	void insert(const Address & log, const MAC_Address & mac) {}
@@ -46,21 +48,22 @@ private:
     };
 
 public:
-    Network(unsigned int unit = 0) {
+    Network() {
+	db<Network>(TRC) << "Network(unit=0)\n";
+    }
+
+    template<unsigned int UNIT>
+    Network(unsigned int unit) : _nic(UNIT) {
 	db<Network>(TRC) << "Network(unit=" << unit << ")\n";
-	_unit = unit;
-	_dev = Machine::seize<NIC::Device>(Type2Id<NIC>::ID, _unit);
     }
 
     ~Network() {
 	db<Network>(TRC) << "~Network()\n";
-	Machine::release(Type2Id<NIC>::ID, _unit);
-	_dev = 0;
     }
 
     int send(const Address & to, const void * data, unsigned int size, 
 	     const Protocol & prot = ELP) {
-	if(size > NIC::MTU)
+	if(size > _nic.mtu())
 	    // Fragmentation will take place here
 	    db<Network>(WRN) << "Network::send: frame size exceeds MTU!\n";
 
@@ -68,17 +71,17 @@ public:
 	if(!dst)
 	    return -1;
 
-	return _dev->send(dst, prot, data, size);
+	return _nic.send(dst, prot, data, size);
     }
 
     int receive(Address * from, void * data, unsigned int size,
 		Protocol * prot) {
-	if(size > NIC::MTU)
+	if(size > _nic.mtu())
 	    // Defragmentation will take place here
 	    db<Network>(WRN) << "Network::receive: frame size exceeds MTU!\n";
 
 	MAC_Address src;
-	int stat = _dev->receive(&src, prot, data, size);
+	int stat = _nic.receive(&src, prot, data, size);
 
 	if(stat > 0)
 	    *from = _arp_tab.rarp(src);
@@ -91,15 +94,14 @@ public:
 	return receive(from, data, size, &p);
     }
 
-    const Statistics & statistics() { return _dev->statistics(); }
+    void reset() { _nic.reset(); }
 
-    void reset() { _dev->reset(); }
+    const Statistics & statistics() { return _nic.statistics(); }
 
     static int init(System_Info * si) { return 0; }
 
 private:
-    unsigned int _unit;
-    NIC::Device * _dev;
+    NIC _nic;
 
     static ARP_Table _arp_tab;
 };

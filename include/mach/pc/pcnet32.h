@@ -1,15 +1,13 @@
 // EPOS-- PC AMD PCNet II (Am79C970A) Ethernet NIC Mediator Declarations
 
-#ifndef __pc_pcnet32_h
-#define __pc_pcnet32_h
+#ifndef __pcnet32_h
+#define __pcnet32_h
 
-#include "pc.h"
-#include "device.h"
 #include <nic.h>
 
 __BEGIN_SYS
 
-struct Am79C970A
+class Am79C970A
 {
 protected:
     typedef CPU::Reg8 Reg8;
@@ -309,63 +307,63 @@ public:
 
 public:
     Reg8 prom(int a) {
-	return IA32::in8(_base + PROM + a);
+	return IA32::in8(_io_port + PROM + a);
     }
     void s_reset() { // pg 96
 	// Assert S_RESET
-	IA32::in16(_base + WIO_RESET);
+	IA32::in16(_io_port + WIO_RESET);
 
 	// Wait for STOP
  	for(int i = 0; (i < 100) && !(csr(CSC) & 0x0004); i++);
     }
 
     Reg16 rap() volatile {
-	return IA32::in16(_base + WIO_RAP);
+	return IA32::in16(_io_port + WIO_RAP);
     }
     void rap(Reg16 v) {
-	IA32::out16(_base + WIO_RAP, v);
+	IA32::out16(_io_port + WIO_RAP, v);
     }
     Reg16 csr(int a) volatile {
-	IA32::out16(_base + WIO_RAP, a);
-	return IA32::in16(_base + WIO_RDP);
+	IA32::out16(_io_port + WIO_RAP, a);
+	return IA32::in16(_io_port + WIO_RDP);
     }
     void csr(int a, Reg16 v) { 
-	IA32::out16(_base + WIO_RAP, a);
-	IA32::out16(_base + WIO_RDP, v);
+	IA32::out16(_io_port + WIO_RAP, a);
+	IA32::out16(_io_port + WIO_RDP, v);
     }
     Reg16 bcr(int a) volatile {
-	IA32::out16(_base + WIO_RAP, a);
-	return IA32::in16(_base + WIO_BDP);
+	IA32::out16(_io_port + WIO_RAP, a);
+	return IA32::in16(_io_port + WIO_BDP);
     }
     void  bcr(int a, Reg16 v) { 
-	IA32::out16(_base + WIO_RAP, a);
-	IA32::out16(_base + WIO_BDP, v);
+	IA32::out16(_io_port + WIO_RAP, a);
+	IA32::out16(_io_port + WIO_BDP, v);
     }
 
     Reg16 dwio_rap() volatile { 
-	return (IA32::in32(_base + DWIO_RAP) & 0xffff);
+	return (IA32::in32(_io_port + DWIO_RAP) & 0xffff);
     }
     void dwio_rap(Reg16 v) { 
-	IA32::out32(_base + DWIO_RAP, v);
+	IA32::out32(_io_port + DWIO_RAP, v);
     }
     void dwio_s_reset() {
-	IA32::in32(_base + DWIO_RESET);
+	IA32::in32(_io_port + DWIO_RESET);
     }
     Reg16 dwio_csr(int a) volatile {
-	IA32::out32(_base + DWIO_RAP, a);
-	return (IA32::in32(_base + DWIO_RDP) & 0xffff);
+	IA32::out32(_io_port + DWIO_RAP, a);
+	return (IA32::in32(_io_port + DWIO_RDP) & 0xffff);
     }
     void dwio_csr(int a, Reg16 v) { 
-	IA32::out32(_base + DWIO_RAP, a);
-	IA32::out32(_base + DWIO_RDP, v);
+	IA32::out32(_io_port + DWIO_RAP, a);
+	IA32::out32(_io_port + DWIO_RDP, v);
     }
     Reg16 dwio_bcr(int a) volatile {
-	IA32::out32(_base + DWIO_RAP, a);
-	return (IA32::in32(_base + DWIO_BDP) & 0xffff);
+	IA32::out32(_io_port + DWIO_RAP, a);
+	return (IA32::in32(_io_port + DWIO_BDP) & 0xffff);
     }
     void dwio_bcr(int a, Reg16 v) volatile { 
-	IA32::out32(_base + DWIO_RAP, a);
-	IA32::out32(_base + DWIO_BDP, v);
+	IA32::out32(_io_port + DWIO_RAP, a);
+	IA32::out32(_io_port + DWIO_BDP, v);
     }
 
     int log2(int n) {
@@ -375,17 +373,16 @@ public:
     }
 
 protected:
-    IO_Port _base;
+    IO_Port _io_port;
 };
 
 class PCNet32: public Ethernet_NIC, private Am79C970A
 {
-public:
+private:
     // PCI ID
     static const unsigned int PCI_VENDOR_ID = 0x1022;
     static const unsigned int PCI_DEVICE_ID = 0x2000;
     static const unsigned int PCI_REG_IO = 0;
-    static const unsigned int PCI_REG_MEM = 7; // not used
 
     // Transmit and Receive Ring (with buffers) sizes
     static const unsigned int UNITS =
@@ -400,9 +397,18 @@ public:
  	TX_BUFS * ((sizeof(Tx_Desc) + 15) & ~15U) +
  	RX_BUFS * ((sizeof(Frame) + 15) & ~15U) +
  	TX_BUFS * ((sizeof(Frame) + 15) & ~15U); // GCC mess up MMU::align128
-    
+
+    // Share control and interrupt dispatiching info
+    struct Device
+    {
+	PCNet32 * device;
+	unsigned int interrupt;
+	bool in_use;
+    };
+	
 public:
-    PCNet32(IO_Port base, Phy_Addr, IO_Irq irq, DMA_Buffer * dma);
+    PCNet32(unsigned int unit = 0);
+    ~PCNet32();
 
     int send(const Address & dst, const Protocol & prot,
  	     const void * data, unsigned int size);
@@ -411,16 +417,33 @@ public:
 
     void reset();
 
+    unsigned int mtu() { return MTU; }
+
     const Address & address() { return _address; }
 
     const Statistics & statistics() { return _statistics; }
+
+    static int init(unsigned int unit, System_Info * si);
+
+private:
+    PCNet32(unsigned int unit, IO_Port io_port, IO_Irq irq, DMA_Buffer * dma);
 
     void handle_int();
 
     static void int_handler(unsigned int interrupt);
 
+    static PCNet32 * get(unsigned int interrupt) {
+	for(unsigned int i = 0; i < UNITS; i++)
+	    if(_devices[i].interrupt == interrupt)
+		return _devices[i].device;
+	return 0;
+    };
+
 private:
+    unsigned int _unit;
+
     Address _address;
+    Statistics _statistics;
 
     IO_Irq _irq;
     DMA_Buffer * _dma_buf;
@@ -439,7 +462,7 @@ private:
     Frame * _rx_buffer[RX_BUFS];
     Frame * _tx_buffer[TX_BUFS];
 
-    Statistics _statistics;
+    static Device _devices[UNITS];
 };
 
 __END_SYS

@@ -342,7 +342,7 @@ public:
     static int init(System_Info * si);
 
 private:
-    static Log_Addr phy2log(Phy_Addr log) { return log | PHY_MEM; }
+    static Log_Addr phy2log(Phy_Addr phy) { return phy | PHY_MEM; }
 
 private:
     static List _free;

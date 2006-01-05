@@ -169,15 +169,16 @@ public:
 
 
     // List algorithms template
-    template <typename Element, 
+    template <typename El, 
 	      bool doubly, bool ordering, bool relative, bool grouping>
     class Algorithm;
 
     // Algorithm for singly linked list
-    template <typename Element>
-    class Algorithm<Element, false, false, false, false>
+    template <typename El>
+    class Algorithm<El, false, false, false, false>
     {
     private:
+	typedef El Element;
 	typedef typename Element::Object_Type Object_Type;
 
     public:
@@ -276,15 +277,18 @@ public:
     };
 
     // Algorithm for singly linked, grouping list
-    template <typename Element>
-    class Algorithm<Element, false, false, false, true>:
-	public Algorithm<Element, false, false, false, false>
+    template <typename El>
+    class Algorithm<El, false, false, false, true>:
+	public Algorithm<El, false, false, false, false>
     {
     private:
+	typedef El Element;
 	typedef typename Element::Object_Type Object_Type;
 
     public:
 	Algorithm(): _grouped_size(0) {}
+
+	using Algorithm<El, false, false, false, false>::head;
 
 	unsigned int grouped_size() const { return _grouped_size; }
 
@@ -336,10 +340,11 @@ public:
     };
 
     // Algorithm for doubly linked list
-    template <typename Element>
-    class Algorithm<Element, true, false, false, false>
+    template <typename El>
+    class Algorithm<El, true, false, false, false>
     {
     private:
+	typedef El Element;
 	typedef typename Element::Object_Type Object_Type;
 
     public:
@@ -457,14 +462,19 @@ public:
     };
 
     // Algorithm for (relative) ordered list
-    template <typename Element, bool relative>
-    class Algorithm<Element, true, true, relative, false>:
-	public Algorithm<Element, true, false, false, false>
+    template <typename El, bool relative>
+    class Algorithm<El, true, true, relative, false>:
+	public Algorithm<El, true, false, false, false>
     {
     private:
+	typedef El Element;
 	typedef typename Element::Object_Type Object_Type;
 
     public:
+	using Algorithm<El, true, false, false, false>::empty;
+	using Algorithm<El, true, false, false, false>::head;
+	using Algorithm<El, true, false, false, false>::remove_head;
+
 	void insert(Element * e) {
 	    if(empty())
 		insert_first(e);
@@ -486,8 +496,8 @@ public:
 		} else {
 		    if(relative)
 			next->rank(next->rank() - e->rank());
-		    Algorithm<Element, true, false, false, false>
-			::insert(e, next->prev(), next);
+		    Algorithm<Element, true, false, false,
+			false>::insert(e, next->prev(), next);
 		}
 	    }
 	}
@@ -509,21 +519,24 @@ public:
 	}
 
 	Element * search_rank(int rank) {
-	    Element * e = _head();
+	    Element * e = head();
 	    for(; e && (e->rank() != rank); e = e->next());
 	    return e;
 	}
     };
 
     // Algorithm for grouping list
-    template <typename Element>
-    class Algorithm<Element, true, false, false, true>:
-	public Algorithm<Element, true, false, false, false>
+    template <typename El>
+    class Algorithm<El, true, false, false, true>:
+	public Algorithm<El, true, false, false, false>
     {
     private:
+	typedef El Element;
 	typedef typename Element::Object_Type Object_Type;
 
     public:
+	using Algorithm<El, true, false, false, false>::head;
+
 	Algorithm(): _grouped_size(0) {}
 
 	unsigned int grouped_size() const { return _grouped_size; }

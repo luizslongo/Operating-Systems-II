@@ -77,6 +77,9 @@ class ATMega128_Display;
 
 // Hardware Mediators - NICs
 class PC_NIC;
+class PCNet32;
+class C905;
+class E100;
 class ATMega16_NIC;
 class ATMega128_NIC;
 
@@ -163,6 +166,15 @@ enum
 
     UNKNOWN_TYPE_ID,
     LAST_TYPE_ID = UNKNOWN_TYPE_ID - 1
+};
+
+
+// Dummy class for incomplete architectures and machines 
+template<int i>
+class Dummy
+{
+public:
+    static int init(System_Info * si) { return 0; }
 };
 
 __END_SYS

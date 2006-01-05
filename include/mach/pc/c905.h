@@ -1,11 +1,11 @@
-// EPOS-- PC 3COM c905 Ethernet NIC Mediator
+// EPOS-- PC 3COM c905 Ethernet NIC Mediator Declarations
 
-#ifndef __pc_c905_h
-#define __pc_c905_h
+#ifndef __c905_h
+#define __c905_h
 
 __BEGIN_SYS
 
-class c905
+class C905
 {
 public:
     typedef volatile unsigned char  Reg8;

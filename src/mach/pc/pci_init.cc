@@ -8,7 +8,8 @@ int PC_PCI::init(System_Info * si)
 {
     _phy_io_mem = si->pmm.io_mem;
 
-    db<PC_PCI>(TRC) << "PC_PCI::init(pmm.io_mem=" << _phy_io_mem << ")\n";
+    db<Init, PC_PCI>(TRC) << "PC_PCI::init(pmm.io_mem=" 
+			  << _phy_io_mem << ")\n";
 
     int ret = 0;
 
