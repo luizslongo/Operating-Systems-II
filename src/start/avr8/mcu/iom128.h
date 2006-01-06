@@ -23,7 +23,6 @@
   ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
   POSSIBILITY OF SUCH DAMAGE. */
 
-/* $Id: iom128.h,v 1.1.1.1 2005-03-30 00:39:42 guto Exp $ */
 
 /* avr/iom128.h - defines for ATmega128 
 

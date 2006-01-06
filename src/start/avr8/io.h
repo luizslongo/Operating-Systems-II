@@ -23,7 +23,6 @@
   ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
   POSSIBILITY OF SUCH DAMAGE. */
 
-/* $Id: io.h,v 1.1.1.1 2005-03-30 00:39:42 guto Exp $ */
 
 /** \defgroup avr_io AVR device-specific IO definitions
     \code #include <avr/io.h> \endcode

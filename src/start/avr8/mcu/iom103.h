@@ -23,7 +23,6 @@
   ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
   POSSIBILITY OF SUCH DAMAGE. */
 
-/* $Id: iom103.h,v 1.1.1.1 2005-03-30 00:39:42 guto Exp $ */
 
 /* avr/iom103.h - definitions for ATmega103 */
 

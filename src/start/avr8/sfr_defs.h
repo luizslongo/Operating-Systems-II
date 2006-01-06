@@ -25,7 +25,6 @@
 
 /* avr/sfr_defs.h - macros for accessing AVR special function registers */
 
-/* $Id: sfr_defs.h,v 1.1.1.1 2005-03-30 00:39:42 guto Exp $ */
 
 #ifndef _AVR_SFR_DEFS_H_
 #define _AVR_SFR_DEFS_H_ 1
