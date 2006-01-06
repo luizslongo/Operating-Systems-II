@@ -82,6 +82,7 @@ class C905;
 class E100;
 class ATMega16_NIC;
 class ATMega128_NIC;
+class Radio;
 
 // Hardware Mediators - ADCs
 class ATMega16_ADC;

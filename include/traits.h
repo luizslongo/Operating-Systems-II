@@ -222,6 +222,13 @@ template <> struct Traits<ATMega16_Display>: public Traits<ATMega16_Common>
 {
     static const bool on_serial = true;
 };
+
+template <> struct Traits<ATMega16_NIC>: public Traits<void>
+{
+    typedef LIST<Radio> NICS;
+
+    static const unsigned int RADIO_UNITS = NICS::Count<Radio>::Result;
+};
 #endif
 
 
@@ -272,6 +279,13 @@ template <> struct Traits<ATMega128_SPI>: public Traits<ATMega128_Common>
 template <> struct Traits<ATMega128_Display>: public Traits<ATMega128_Common>
 {
     static const bool on_serial = true;
+};
+
+template <> struct Traits<ATMega128_NIC>: public Traits<void>
+{
+    typedef LIST<Radio> NICS;
+
+    static const unsigned int RADIO_UNITS = NICS::Count<Radio>::Result;
 };
 #endif
 

@@ -502,31 +502,6 @@ private:
 
 };
 
-class Radio: public NIC_Common, private CC1000
-{
-public:
-    Radio() {}
-
-    int send(const Address & dst, const Protocol & prot,
- 	     const void * data, unsigned int size);
-    int receive(Address * src, Protocol * prot,
-		void * data, unsigned int size);
-
-    void reset();
-
-    const Address & address() { return _address; }
-
-    const Statistics & statistics() { return _statistics; }
-
-    void handle_int();
-
-    static void int_handler(unsigned int interrupt);
-
-private:
-    Address _address;
-    Statistics _statistics;
-};
-
 __END_SYS
 
 #endif
