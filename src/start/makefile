@@ -2,12 +2,14 @@
 
 include $(EPOS)/makedefs
 
-FILES := arch_crt1.o arch_crti.s arch_crti.o arch_crtbegin.o arch_crtend.o arch_crtn.o
+all: 		$(ARCH)_crt1.o $(ARCH)_crti.o $(ARCH)_crtbegin.o \
+		$(ARCH)_crtend.o $(ARCH)_crtn.o
+		$(INSTALL) $^ $(LIB)
 
-all: 		$(subst arch, $(ARCH), $(FILES))
-		$(INSTALL) $(subst arch, $(ARCH), $(FILES)) $(LIB)
+.INTERMEDIATE:	$(ARCH)_crt1.s $(ARCH)_crti.s $(ARCH)_crtbegin.s \
+		$(ARCH)_crtend.s $(ARCH)_crtn.s
 
 test:
 
 clean:
-		$(CLEAN) *_crti.s *.o
+		$(CLEAN) *.o
