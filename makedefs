@@ -15,7 +15,7 @@ ARCH_IA32	:= ia32
 ARCH_AVR8       := avr8
 
 # System configuration
-MODE		:= $(MODE_BUILTIN)
+MODE		:= $(MODE_LIBRARY)
 ARCH		:= $(ARCH_IA32)
 MACH		:= $(MACH_PC)
 
@@ -24,7 +24,7 @@ MACH		:= $(MACH_PC)
 
 # Compiler prefixes
 $(ARCH_IA32)_COMP_PREFIX	:= 
-$(ARCH_AVR8)_COMP_PREFIX	:= /usr/local/avr/gcc/bin/avr-
+$(ARCH_AVR8)_COMP_PREFIX	:= /usr/local/avr/gcc.testing/bin/avr-
 COMP_PREFIX			:= $($(ARCH)_COMP_PREFIX)
 
 # Boot memory maps
@@ -74,7 +74,7 @@ $(MACH_ATMEGA16)_AS_FLAGS	:= -mmcu=atmega16
 $(MACH_ATMEGA16)_LD_FLAGS	:= -m avr5 
 $(MACH_ATMEGA128)_CC_FLAGS	:= -mmcu=atmega128 -Wno-inline
 $(MACH_ATMEGA128)_AS_FLAGS	:= -mmcu=atmega128
-$(MACH_ATMEGA128)_LD_FLAGS	:= -m avr5 -L/usr/local/avr/gcc/lib/gcc-lib/avr/3.3.2/avr5
+$(MACH_ATMEGA128)_LD_FLAGS	:= -m avr5
 MACH_CC_FLAGS		:= $($(MACH)_CC_FLAGS)
 MACH_AS_FLAGS		:= $($(MACH)_AS_FLAGS)
 MACH_LD_FLAGS		:= $($(MACH)_LD_FLAGS)
@@ -145,7 +145,7 @@ ASFLAGS		= $(MACH_AS_FLAGS)
 
 CC		= $(COMP_PREFIX)gcc -ansi -c
 CCFLAGS		= $(MACH_CC_FLAGS) -O2 -nostdinc -Wall -I$(INCLUDE) $(CONF_FLAGS)
-CCLIB		= `$(CC) -print-file-name=`
+CCLIB		= `$(CC) $(MACH_CC_FLAGS) -print-file-name=`
 
 CPP		= $(COMP_PREFIX)gcc -E
 CPPFLAGS	= $(MACH_CC_FLAGS) -I$(INCLUDE) $(CONF_FLAGS)
@@ -215,9 +215,6 @@ lib%.o:		lib%.cc
 
 %.o:		%.s
 		$(AS) $(ASFLAGS) $< -o $@
-
-%.o:		%.S
-		$(CC) $(CCFLAGS) $<
 
 %:		%.cc
 		$(CXX) $(CXXFLAGS) $<
