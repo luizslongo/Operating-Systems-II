@@ -42,7 +42,7 @@ public:
     static int irq2int(int i) { return i; }
     static int int2irq(int i) { return i; }
 
-    static int init(System_Info * si);
+    static int init(System_Info * si) { return 0; }
     
 private:
     static int_handler * _int_vector[INT_VECTOR_SIZE];

@@ -22,7 +22,7 @@ public:
 	return date().to_offset(EPOCH_DAYS); 
     }
 
-    static int init(System_Info * si);
+    static int init(System_Info * si) { return 0; }
 };
 
 __END_SYS
