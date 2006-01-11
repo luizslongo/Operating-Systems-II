@@ -1,7 +1,7 @@
 // EPOS-- ATMega16 Radio (CC1000) NIC Mediator Initialization
 
 #include <system/kmalloc.h>
-#include <mach/atmega16/atmega16.h>
+#include <mach/atmega16/machine.h>
 #include <mach/atmega16/radio.h>
 
 __BEGIN_SYS

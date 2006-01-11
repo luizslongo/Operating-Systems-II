@@ -1,7 +1,6 @@
 // EPOS-- PC Intel PRO/100 (i82559) Ethernet NIC Mediator Implementation
 
-#include <system/kmalloc.h>
-#include <mach/pc/pc.h>
+#include <mach/pc/machine.h>
 #include <mach/pc/e100.h>
 
 __BEGIN_SYS

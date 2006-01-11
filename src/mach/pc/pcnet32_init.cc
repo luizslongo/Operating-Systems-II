@@ -1,7 +1,7 @@
 // EPOS-- PC AMD PCNet II (Am79C970A) Ethernet NIC Mediator Initialization
 
 #include <system/kmalloc.h>
-#include <mach/pc/pc.h>
+#include <mach/pc/machine.h>
 #include <mach/pc/pcnet32.h>
 
 __BEGIN_SYS
@@ -61,7 +61,7 @@ int PCNet32::init(unsigned int unit, System_Info * si)
     _devices[unit].interrupt = Machine::irq2int(irq);
     
     // Install interrupt handler
-    PC::int_vector(PC::irq2int(irq), &int_handler);
+    Machine::int_vector(Machine::irq2int(irq), &int_handler);
 
     // Enable interrupts for device
     IC::enable(irq);

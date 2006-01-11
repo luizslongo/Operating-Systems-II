@@ -1,6 +1,5 @@
 // EPOS-- PC Interrupt Controller Initialization
 
-#include <mach/pc/pc.h>
 #include <mach/pc/ic.h>
 
 __BEGIN_SYS

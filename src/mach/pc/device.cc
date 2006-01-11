@@ -1,6 +1,6 @@
 // EPOS-- PC Device Common Package Implementation
 
-#include <mach/pc/pc.h>
+#include <mach/pc/machine.h>
 #include <mach/pc/device.h>
 
 __BEGIN_SYS

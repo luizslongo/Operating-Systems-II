@@ -1,7 +1,6 @@
 // EPOS-- PC AMD PCNet II (Am79C970A) Ethernet NIC Mediator Implementation
 
-#include <system/kmalloc.h>
-#include <mach/pc/pc.h>
+#include <mach/pc/machine.h>
 #include <mach/pc/pcnet32.h>
 
 __BEGIN_SYS

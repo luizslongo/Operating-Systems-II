@@ -1,7 +1,5 @@
 // EPOS-- PC NIC Mediator Initialization
 
-#include <system/kmalloc.h>
-#include <mach/pc/pc.h>
 #include <mach/pc/nic.h>
 
 __BEGIN_SYS

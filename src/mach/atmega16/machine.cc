@@ -1,6 +1,6 @@
 // EPOS-- ATMega16 Mediator Implementation
 
-#include <mach/atmega16/atmega16.h>
+#include <mach/atmega16/machine.h>
 
 __BEGIN_SYS
 

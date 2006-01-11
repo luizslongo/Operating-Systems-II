@@ -1,6 +1,6 @@
 // EPOS-- PC Mediator Implementation
 
-#include <mach/pc/pc.h>
+#include <mach/pc/machine.h>
 
 extern "C" { void _exit(int s); }
 
