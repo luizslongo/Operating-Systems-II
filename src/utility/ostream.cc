@@ -1,7 +1,7 @@
 // EPOS-- OStream Implementation
 
-#include <display.h>
 #include <utility/ostream.h>
+#include <display.h>
 
 __BEGIN_SYS
 
