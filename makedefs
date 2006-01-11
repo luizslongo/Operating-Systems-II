@@ -5,14 +5,14 @@ MODE_KERNEL	:= kernel
 MODE_BUILTIN	:= builtin
 MODE_LIBRARY	:= library
 
+# Supported hardware architectures
+ARCH_IA32	:= ia32
+ARCH_AVR8       := avr8
+
 # Supported machines
 MACH_PC		:= pc
 MACH_ATMEGA16  	:= atmega16
 MACH_ATMEGA128 	:= atmega128
-
-# Supported hardware architectures
-ARCH_IA32	:= ia32
-ARCH_AVR8       := avr8
 
 # System configuration
 MODE		:= $(MODE_LIBRARY)
@@ -66,18 +66,26 @@ MEM_BASE			= $($(MACH)_MEM_BASE)
 MEM_SIZE			= $($(MACH)_MEM_SIZE)
 
 #Machine specifics
-$(MACH_PC)_CC_FLAGS	:=
-$(MACH_PC)_AS_FLAGS	:=
-$(MACH_PC)_LD_FLAGS	:=
+$(MACH_PC)_CC_FLAGS		:=
+$(MACH_PC)_AS_FLAGS		:=
+$(MACH_PC)_LD_FLAGS		:= 
+$(MACH_PC)_CODE_NAME		:= .hash
+$(MACH_PC)_DATA_NAME		:= .tdata
 $(MACH_ATMEGA16)_CC_FLAGS	:= -mmcu=atmega16 -Wno-inline
 $(MACH_ATMEGA16)_AS_FLAGS	:= -mmcu=atmega16
 $(MACH_ATMEGA16)_LD_FLAGS	:= -m avr5 
+$(MACH_ATMEGA16)_CODE_NAME	:= .hash
+$(MACH_ATMEGA16)_DATA_NAME	:= .data
 $(MACH_ATMEGA128)_CC_FLAGS	:= -mmcu=atmega128 -Wno-inline
 $(MACH_ATMEGA128)_AS_FLAGS	:= -mmcu=atmega128
 $(MACH_ATMEGA128)_LD_FLAGS	:= -m avr5
-MACH_CC_FLAGS		:= $($(MACH)_CC_FLAGS)
-MACH_AS_FLAGS		:= $($(MACH)_AS_FLAGS)
-MACH_LD_FLAGS		:= $($(MACH)_LD_FLAGS)
+$(MACH_ATMEGA128)_CODE_NAME	:= .hash
+$(MACH_ATMEGA128)_DATA_NAME	:= .data
+MACH_CC_FLAGS			:= $($(MACH)_CC_FLAGS)
+MACH_AS_FLAGS			:= $($(MACH)_AS_FLAGS)
+MACH_LD_FLAGS			:= $($(MACH)_LD_FLAGS)
+MACH_CODE_NAME			:= $($(MACH)_CODE_NAME)
+MACH_DATA_NAME			:= $($(MACH)_DATA_NAME)
 
 # Architecture specifics
 $(ARCH_IA32)_WORD_SIZE	:= 32

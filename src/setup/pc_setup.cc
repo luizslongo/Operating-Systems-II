@@ -10,7 +10,7 @@
 #include <utility/string.h>
 #include <utility/ostream.h>
 #include <utility/debug.h>
-#include <mach/pc/pc.h>
+#include <machine.h>
 
 __USING_SYS
 

@@ -6,7 +6,8 @@ all:		install
 
 $(MACH)_setup:	$(MACH)_setup.o 
 		$(LD) $(LDFLAGS) -L$(CCLIB) --omagic \
-		--section-start .text=$(SETUP_ADDR) --entry=$(SETUP_ADDR) \
+		--section-start $(MACH_CODE_NAME)=$(SETUP_ADDR) \
+		--entry=$(SETUP_ADDR) \
 		-o $@ $< -l$(LUTIL) -l$(LSYS) -l$(LINIT) -lgcc -lc -lgcc
 
 $(MACH)_install:$(MACH)_setup

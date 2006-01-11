@@ -1,6 +1,6 @@
-#include <system/config.h>
-#include <mach/atmega128/atmega128.h>
-#include <utility/handler.h>
+// EPOS-- ATMega128 Machine Setup
+
+#include <machine.h>
 
 __USING_SYS
 

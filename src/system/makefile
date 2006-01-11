@@ -6,8 +6,8 @@ all:		install
 
 $(MACH)_system_builtin: system.o $(LIBSYS)
 		$(LD) $(LDFLAGS) -L$(CCLIB) --nmagic \
-		--section-start .init=$(SYS_CODE_ADDR) \
-		--section-start .ctors=$(SYS_DATA_ADDR) \
+		--section-start $(MACH_CODE_NAME)=$(SYS_CODE_ADDR) \
+		--section-start $(MACH_DATA_NAME)=$(SYS_DATA_ADDR) \
 		--entry=__do_global_ctors_aux -o $(MACH)_system \
 		$(EPOS)/lib/$(ARCH)_crti.o \
 		$(EPOS)/lib/$(ARCH)_crtbegin.o \
