@@ -32,7 +32,7 @@ struct Memory_Map<PC>
 	SYS_STACK =	SYS + 0x003c0000,
 	MACH1 =		SYS + 0x00001000,
 	MACH2 =		TOP,
-	MACH3 =		TOP,
+	MACH3 =		TOP
     };
 };
 

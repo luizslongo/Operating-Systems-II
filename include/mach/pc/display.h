@@ -53,7 +53,7 @@ public:
 class PC_Display: public Display_Common, private MC6845
 {
 private:
-    static const unsigned int FBA = Traits<PC_Display>::FRAME_BUFFER_ADDRESS;
+    static const unsigned int FB = Traits<PC_Display>::FRAME_BUFFER_ADDRESS;
     static const int LINES = Traits<PC_Display>::LINES;
     static const int COLUMNS = Traits<PC_Display>::COLUMNS;
     static const int TAB_SIZE = Traits<PC_Display>::TAB_SIZE;
@@ -70,14 +70,8 @@ public:
     };
 
 public:
-    PC_Display(Frame_Buffer fb = reinterpret_cast<Frame_Buffer>(FBA))
+    PC_Display(Frame_Buffer fb = reinterpret_cast<Frame_Buffer>(FB))
 	: _frame_buffer(fb) {}
-
-    void clear() { 
-	for(unsigned int i = 0; i < LINES * COLUMNS; i++)
-	    _frame_buffer[i] = NORMAL | ' ';
-	MC6845::position(0);
-    }
 
     void putc(char c){
 	unsigned int pos = MC6845::position();
@@ -102,6 +96,12 @@ public:
     void puts(const char * s) {
 	while(*s != '\0')
 	    putc(*s++);
+    }
+
+    void clear() { 
+	for(unsigned int i = 0; i < LINES * COLUMNS; i++)
+	    _frame_buffer[i] = NORMAL | ' ';
+	MC6845::position(0);
     }
 
     void position(int * line, int * column) {
