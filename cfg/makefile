@@ -13,6 +13,8 @@ eposcc.conf:
 		@echo "APP_DATA=$(APP_DATA_ADDR)" >> $@
 		@echo "MACH_CC_FLAGS='$(MACH_CC_FLAGS)'" >> $@
 		@echo "MACH_LD_FLAGS='$(MACH_LD_FLAGS)'" >> $@
+		@echo "MACH_CODE_NAME='$(MACH_CODE_NAME)'" >> $@
+		@echo "MACH_DATA_NAME='$(MACH_DATA_NAME)'" >> $@
 
 eposmkbi.conf:	
 		@echo "MODE=$(MODE)" >! $@
