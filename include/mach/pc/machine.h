@@ -36,15 +36,6 @@ public:
 	if(i < INT_VECTOR_SIZE) _int_vector[i] = h;
     }
 
-    template<typename Dev>
-    static Dev * seize(const Type_Id & type, unsigned int unit) { 
-	return reinterpret_cast<Dev *>(PC_Device::seize(type, unit));
-    }
-
-    static void release(const Type_Id & type, unsigned int unit) { 
-	PC_Device::release(type, unit); 
-    }
-
     static void panic();
     static void reboot();
     static void poweroff();
@@ -73,6 +64,7 @@ private:
 
 __END_SYS
 
+#include "memory_map.h"
 #include "ic.h"
 #include "pci.h"
 #include "timer.h"
