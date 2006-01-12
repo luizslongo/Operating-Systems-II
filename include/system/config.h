@@ -75,7 +75,7 @@ typedef PC_NIC			NIC;
 typedef Dummy<1>		ADC;
 typedef Dummy<2>		Temperature_Sensor;
 typedef Dummy<3>		Light_Sensor;
-#define __MACH_H		__HEADER_MACH(pc)
+#define __MACH_H		__HEADER_MACH(machine)
 #define __MEMORY_MAP_H		__HEADER_MACH(memory_map)
 #define __PCI_H			__HEADER_MACH(pci)
 #define __IC_H			__HEADER_MACH(ic)
@@ -104,7 +104,7 @@ typedef ATMega16_NIC		NIC;
 typedef ATMega16_ADC		ADC;
 typedef Dummy<1>		Temperature_Sensor;
 typedef Dummy<2>		Light_Sensor;
-#define __MACH_H		__HEADER_MACH(atmega16)
+#define __MACH_H		__HEADER_MACH(machine)
 #define __MEMORY_MAP_H		__HEADER_MACH(memory_map)
 #define __IC_H			__HEADER_MACH(ic)
 #define __TIMER_H		__HEADER_MACH(timer)
@@ -133,7 +133,7 @@ typedef ATMega128_NIC		NIC;
 typedef ATMega128_ADC		ADC;
 typedef ATMega128_Temperature_Sensor	Temperature_Sensor;
 typedef ATMega128_Light_Sensor	Light_Sensor;
-#define __MACH_H		__HEADER_MACH(atmega128)
+#define __MACH_H		__HEADER_MACH(machine)
 #define __MEMORY_MAP_H		__HEADER_MACH(memory_map)
 #define __IC_H			__HEADER_MACH(ic)
 #define __TIMER_H		__HEADER_MACH(timer)
