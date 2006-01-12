@@ -360,6 +360,54 @@ public:
     static Reg32 ntohl(Reg32 v)	{ return htonl(v); }
     static Reg16 ntohs(Reg16 v)	{ return htons(v); }
 
+    static IA32::Context * IA32::init_stack(
+	Log_Addr stack, unsigned int size, void (* exit)(),
+	int (* entry)()) {
+	Log_Addr sp = stack + size;
+	sp -= sizeof(int);
+	*static_cast<int *>(sp) = reinterpret_cast<int>(exit);
+	sp -= sizeof(Context);
+	return  new (sp) Context(entry);
+    }
+
+    template<typename T1>
+    static IA32::Context * IA32::init_stack(
+	Log_Addr stack, unsigned int size, void (* exit)(),
+	int (* entry)(T1 a1), T1 a1) {
+	Log_Addr sp = stack + size;
+	sp -= sizeof(T1);
+	*static_cast<T1 *>(sp) = a1;
+	sp -= sizeof(int);
+	*static_cast<int *>(sp) = reinterpret_cast<int>(exit);
+	sp -= sizeof(Context);
+	return new (sp) Context(entry);
+    }
+
+    template<typename T1, typename T2>
+    static IA32::Context * IA32::init_stack(
+	Log_Addr stack, unsigned int size, void (* exit)(),
+	int (* entry)(T1 a1, T2 a2), T1 a1, T2 a2) {
+	Log_Addr sp = stack + size;
+	sp -= sizeof(T2); *static_cast<T2 *>(sp) = a2;
+	sp -= sizeof(T1); *static_cast<T1 *>(sp) = a1;
+	sp -= sizeof(int); *static_cast<int *>(sp) = Log_Addr(exit);
+	sp -= sizeof(Context);
+	return new (sp) Context(entry);
+    }
+
+    template<typename T1, typename T2, typename T3>
+    static IA32::Context * IA32::init_stack(
+	Log_Addr stack, unsigned int size, void (* exit)(),
+	int (* entry)(T1 a1, T2 a2, T3 a3), T1 a1, T2 a2, T3 a3) {
+	Log_Addr sp = stack + size;
+	sp -= sizeof(T3); *static_cast<T3 *>(sp) = a3;
+	sp -= sizeof(T2); *static_cast<T2 *>(sp) = a2;
+	sp -= sizeof(T1); *static_cast<T1 *>(sp) = a1;
+	sp -= sizeof(int); *static_cast<int *>(sp) = Log_Addr(exit);
+	sp -= sizeof(Context);
+	return new (sp) Context(entry);
+    }
+
     // IA32 specific methods
 
     static Flags eflags() {

@@ -61,16 +61,12 @@ public:
 	prevent_scheduling();
 
 	_stack = malloc(stack_size);
-	_context = new (_stack + stack_size 
-			- sizeof(int) - sizeof(Context)) Context(entry);
+	_context = CPU::init_stack(_stack, stack_size, &implicit_exit,
+				   entry);
 
-	header(entry, stack_size);
-
-	Log_Addr sp = _stack + stack_size;
-
-	body(state, priority, sp);
+	init_thread(entry, stack_size, state, priority);
     }
-    template<class T1>
+    template<typename T1>
     Thread(int (* entry)(T1 a1), T1 a1,
 	   const State & state = READY,
 	   const Priority & priority = NORMAL,
@@ -79,18 +75,12 @@ public:
 	prevent_scheduling();
 
 	_stack = malloc(stack_size);
-	_context = new (_stack + stack_size
-			- sizeof(T1)
-			- sizeof(int) - sizeof(Context)) Context(entry);
+	_context = CPU::init_stack(_stack, stack_size, &implicit_exit,
+				   entry, a1);
 
-	header(entry, stack_size);
-
-	Log_Addr sp = _stack + stack_size;
-	sp -= sizeof(T1); *static_cast<T1 *>(sp) = a1;
-
-	body(state, priority, sp);
+	init_thread(entry, stack_size, state, priority);
     }
-    template<class T1, class T2>
+    template<typename T1, typename T2>
     Thread(int (* entry)(T1 a1, T2 a2), T1 a1, T2 a2,
 	   const State & state = READY,
 	   const Priority & priority = NORMAL,
@@ -99,19 +89,12 @@ public:
 	prevent_scheduling();
 
 	_stack = malloc(stack_size);
-	_context = new (_stack + stack_size 
-			- sizeof(T2) - sizeof(T1)
-			- sizeof(int) - sizeof(Context)) Context(entry);
+	_context = CPU::init_stack(_stack, stack_size, &implicit_exit,
+				   entry, a1, a2);
 
-	header(entry, stack_size);
-
-	Log_Addr sp = _stack + stack_size;
-	sp -= sizeof(T2); *static_cast<T2 *>(sp) = a2;
-	sp -= sizeof(T1); *static_cast<T1 *>(sp) = a1;
-
-	body(state, priority, sp);
+	init_thread(entry, stack_size, state, priority);
     }
-    template<class T1, class T2, class T3>
+    template<typename T1, typename T2, typename T3>
     Thread(int (* entry)(T1 a1, T2 a2, T3 a3), T1 a1, T2 a2, T3 a3,
 	   const State & state = READY,
 	   const Priority & priority = NORMAL,
@@ -120,18 +103,10 @@ public:
 	prevent_scheduling();
 
 	_stack = malloc(stack_size);
-	_context = new (_stack + stack_size 
-			- sizeof(T3) - sizeof(T2) - sizeof(T1)
-			- sizeof(int) - sizeof(Context)) Context(entry);
+	_context = CPU::init_stack(_stack, stack_size, &implicit_exit,
+				   entry, a1, a2, a3);
 
-	header(entry, stack_size);
-
-	Log_Addr sp = _stack + stack_size;
-	sp -= sizeof(T3); *static_cast<T3 *>(sp) = a3;
-	sp -= sizeof(T2); *static_cast<T2 *>(sp) = a2;
-	sp -= sizeof(T1); *static_cast<T1 *>(sp) = a1;
-
-	body(state, priority, sp);
+	init_thread(entry, stack_size, state, priority);
     }
     ~Thread() {
 	db<Thread>(TRC) << "~Thread(this=" << this 
@@ -169,7 +144,8 @@ public:
     static int init(System_Info * si);
 
 private:
-    void header(Log_Addr entry, unsigned int stack_size) {
+    void init_thread(Log_Addr entry, unsigned int stack_size, State state,
+		     Priority priority) {
 	db<Thread>(TRC) << "Thread(entry=" << (void *)entry 
 			<< ",state=" << _state
 			<< ",priority=" << _link.rank()
@@ -177,15 +153,10 @@ private:
 			<< ",s=" << stack_size
 			<< "},context={b=" << _context
 			<< "," << *_context << "}) => " << this << "\n";
-    }
-    void body(State state, Priority priority, Log_Addr sp) {
+
 	_state = state;
 	_waiting = 0;
 	_joining = 0;
-
-	sp -= sizeof(int); 
-	*static_cast<unsigned int *>(sp) = 
-	    reinterpret_cast<unsigned int>(&implicit_exit);
 
 	switch(state) {
 	case RUNNING: break;
