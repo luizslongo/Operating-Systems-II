@@ -3,7 +3,7 @@
 #ifndef __pc_nic_h
 #define __pc_nic_h
 
-#include "pc.h"
+#include "machine.h"
 #include "pcnet32.h"
 //#include "i82559.h"
 //#include "c905.h"
