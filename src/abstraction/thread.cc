@@ -3,6 +3,9 @@
 #include <thread.h>
 #include <mmu.h>
 
+// LIBC Heritage
+extern "C" { void _exit(int s) { __SYS(Thread)::exit(s); for(;;); } }
+
 __BEGIN_SYS
 
 // Class attributes
