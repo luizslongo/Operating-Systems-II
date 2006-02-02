@@ -8,8 +8,8 @@ __BEGIN_SYS
 template <class Imp>
 struct Traits
 {
-    static const bool debugged = false;
-    static const bool initialize = true;
+    static const bool enabled = true;
+    static const bool debugged = true;
 };
 
 
@@ -18,8 +18,8 @@ template <> struct Traits<Debug>
 {
     static const bool error   = true;
     static const bool warning = true;
-    static const bool info    = true;
-    static const bool trace   = true;
+    static const bool info    = false;
+    static const bool trace   = false;
 };
 
 template <> struct Traits<Heap>: public Traits<void>
@@ -30,22 +30,18 @@ template <> struct Traits<Heap>: public Traits<void>
 // System parts
 template <> struct Traits<Boot>: public Traits<void>
 {
-    static const bool debugged = true;
 };
 
 template <> struct Traits<Setup>: public Traits<void>
 {
-    static const bool debugged = true;
 };
 
 template <> struct Traits<Init>: public Traits<void>
 {
-    static const bool debugged = true;
 };
 
 template <> struct Traits<System>: public Traits<void>
 {
-    static const bool debugged = true;
 };
 
 
@@ -90,7 +86,12 @@ template <> struct Traits<Serial_Display>: public Traits<void>
 
 // Mediators - Machine - PC
 #ifdef __pc
-template <> struct Traits<PC>: public Traits<void>
+class PC_Common;
+template <> struct Traits<PC_Common>: public Traits<void>
+{
+};
+
+template <> struct Traits<PC>: public Traits<PC_Common>
 {
     static const unsigned int CLOCK = 797886000;
 
@@ -105,17 +106,17 @@ template <> struct Traits<PC>: public Traits<void>
     static const unsigned int APPLICATION_HEAP_SIZE = 16 * 1024 * 1024;
 };
 
-template <> struct Traits<PC_PCI>: public Traits<void>
+template <> struct Traits<PC_PCI>: public Traits<PC_Common>
 {
     static const int MAX_BUS = 0;
     static const int MAX_DEV_FN = 0xff;
 };
 
-template <> struct Traits<PC_IC>: public Traits<void>
+template <> struct Traits<PC_IC>: public Traits<PC_Common>
 {
 };
 
-template <> struct Traits<PC_Timer>: public Traits<void>
+template <> struct Traits<PC_Timer>: public Traits<PC_Common>
 {
     // Meaningful values for the PC's timer frequency range from 100 to 
     // 10000 Hz. The choice must respect the scheduler time-slice, i. e.,
@@ -123,7 +124,7 @@ template <> struct Traits<PC_Timer>: public Traits<void>
     static const int FREQUENCY = 1000; // Hz
 };
 
-template <> struct Traits<PC_RTC>: public Traits<void>
+template <> struct Traits<PC_RTC>: public Traits<PC_Common>
 {
     static const unsigned int EPOCH_DAY = 1;
     static const unsigned int EPOCH_MONTH = 1;
@@ -131,12 +132,11 @@ template <> struct Traits<PC_RTC>: public Traits<void>
     static const unsigned int EPOCH_DAYS = 719499;
 };
 
-template <> struct Traits<PC_EEPROM>: public Traits<void>
+template <> struct Traits<PC_EEPROM>: public Traits<PC_Common>
 {
-    static const bool initialize = false;
 };
 
-template <> struct Traits<PC_UART>: public Traits<void>
+template <> struct Traits<PC_UART>: public Traits<PC_Common>
 {
     static const unsigned int CLOCK = 1843200; // 1.8432 MHz
     static const unsigned int COM1 = 0x3f8; // to 0x3ff, IRQ4
@@ -145,12 +145,7 @@ template <> struct Traits<PC_UART>: public Traits<void>
     static const unsigned int COM4 = 0x2e8; // to 0x2ef, no IRQ
 };
 
-template <> struct Traits<PC_SPI>: public Traits<void>
-{
-    static const bool initialize = false;
-};
-
-template <> struct Traits<PC_Display>: public Traits<void>
+template <> struct Traits<PC_Display>: public Traits<PC_Common>
 {
     static const bool on_serial = true;
     static const int COLUMNS = 80;
@@ -159,7 +154,7 @@ template <> struct Traits<PC_Display>: public Traits<void>
     static const unsigned int FRAME_BUFFER_ADDRESS = 0xb8000;
 };
 
-template <> struct Traits<PC_NIC>: public Traits<void>
+template <> struct Traits<PC_NIC>: public Traits<PC_Common>
 {
     typedef LIST<PCNet32, PCNet32> NICS;
 
