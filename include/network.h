@@ -98,8 +98,6 @@ public:
 
     const Statistics & statistics() { return _nic.statistics(); }
 
-    static int init(System_Info * si) { return 0; }
-
 private:
     NIC _nic;
 

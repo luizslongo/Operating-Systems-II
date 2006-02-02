@@ -3,6 +3,7 @@
 #ifndef __pc_ic_h
 #define __pc_ic_h
 
+#include <cpu.h>
 #include <ic.h>
 
 __BEGIN_SYS
@@ -103,7 +104,7 @@ public:
     static void disable() { imr(~(1 << IRQ_CASCADE)); }
     static void disable(IRQ irq) { imr(imr() | (1 << irq)); }
 
-    static int init(System_Info * si);
+    static void init();
 };
 
 __END_SYS

@@ -31,8 +31,6 @@ public:
 	db<Synchronizer>(TRC) << "Condition::broadcast(this=" << this << ")\n";
 	wakeup_all();
     }
-
-    static int init(System_Info * si) { return 0; }
 };
 
 // This is an alternative implementation, which does impose ordering

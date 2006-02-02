@@ -20,8 +20,6 @@ public:
     void write(const Address & a, unsigned char d) { cmos_write(a, d); }
 
     int size() const { return cmos_size(); }
-
-    static int init(System_Info * si) { return 0; }
 };
 
 __END_SYS

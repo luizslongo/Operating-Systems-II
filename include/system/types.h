@@ -3,10 +3,13 @@
 #ifndef __types_h
 #define __types_h
 
+inline void * operator new(unsigned int s, void * a) { return a; }
+
 __BEGIN_SYS
 
-// System Info
-class System_Info;
+// Dummy class for incomplete architectures and machines 
+template<int i>
+class Dummy;
 
 // Utilities
 class Debug;
@@ -162,20 +165,8 @@ enum
 
     NETWORK_ID,
 
-//     TEMPERATURE_SENTIENT_ID,
-//     PHOTO_SENTIENT_ID,
-
     UNKNOWN_TYPE_ID,
     LAST_TYPE_ID = UNKNOWN_TYPE_ID - 1
-};
-
-
-// Dummy class for incomplete architectures and machines 
-template<int i>
-class Dummy
-{
-public:
-    static int init(System_Info * si) { return 0; }
 };
 
 __END_SYS

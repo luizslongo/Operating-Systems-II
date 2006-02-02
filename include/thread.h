@@ -141,7 +141,7 @@ public:
     static void wakeup_all(Queue * q);
     static void exit(int status = 0);
 
-    static int init(System_Info * si);
+    static void init();
 
 private:
     void init_thread(Log_Addr entry, unsigned int stack_size, State state,

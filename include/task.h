@@ -55,7 +55,7 @@ public:
 
 //    static Thread * volatile  & self() { return _running; }
 
-    static int init(System_Info * si);
+    static void init();
 
 private:
     Address_Space _as;

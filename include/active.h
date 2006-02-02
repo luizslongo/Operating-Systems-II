@@ -17,8 +17,6 @@ public:
 
     void start() { resume(); }
 
-    static int init(System_Info * si) { return 0; }
-
 private:
     static int entry(Active * runnable) { return runnable->run(); }
 };

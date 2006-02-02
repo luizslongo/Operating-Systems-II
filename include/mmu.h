@@ -3,7 +3,7 @@
 #ifndef __mmu_h
 #define __mmu_h
 
-#include <system/config.h>
+#include <cpu.h>
 
 __BEGIN_SYS
 

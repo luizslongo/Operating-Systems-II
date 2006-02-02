@@ -40,7 +40,7 @@ public:
 
     static void int_handler(unsigned int irq);
 
-    static int init(System_Info * si);
+    static int init();
 
 private:
     Alarm(const Microsecond & time, Handler * handler, int times,

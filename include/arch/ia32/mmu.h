@@ -3,12 +3,12 @@
 #ifndef __ia32_mmu_h
 #define __ia32_mmu_h
 
-#include <cpu.h>
-#include <mmu.h>
+#include <system/memory_map.h>
 #include <utility/string.h>
 #include <utility/list.h>
 #include <utility/debug.h>
-#include __MEMORY_MAP_H
+#include <cpu.h>
+#include <mmu.h>
 
 __BEGIN_SYS
 
@@ -339,7 +339,7 @@ public:
 	ASMV("invlpg %0" : : "m"(addr));
     }
 
-    static int init(System_Info * si);
+    static void init();
 
 private:
     static Log_Addr phy2log(Phy_Addr phy) { return phy | PHY_MEM; }

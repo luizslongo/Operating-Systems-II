@@ -34,8 +34,6 @@ public:
     }
     Microsecond read() { return ticks() * 1000000 / frequency(); }
 
-    static int init(System_Info * si) { return 0; }
-
 private:
     TSC tsc;
     Time_Stamp _start;

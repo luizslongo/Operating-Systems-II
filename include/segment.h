@@ -46,8 +46,6 @@ public:
 
 	return Chunk::resize(amount);
     }
-
-    static int init(System_Info * si) { return 0; }
 };
 
 __END_SYS

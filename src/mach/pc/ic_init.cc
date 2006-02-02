@@ -1,12 +1,12 @@
 // EPOS-- PC Interrupt Controller Initialization
 
-#include <mach/pc/ic.h>
+#include <ic.h>
 
 __BEGIN_SYS
 
-int PC_IC::init(System_Info * si)
+void PC_IC::init()
 {
-    db<Init, PC_IC>(TRC) << "PC_IC::init() => base=" << HARD_INT << "\n";
+    db<Init, PC_IC>(TRC) << "PC_IC::init(base=" << HARD_INT << ")\n";
 
     CPU::int_disable();
 
@@ -14,8 +14,6 @@ int PC_IC::init(System_Info * si)
     disable();
 
     CPU::int_enable();
-
-    return 0;
 }
 
 __END_SYS

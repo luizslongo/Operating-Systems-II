@@ -3,6 +3,7 @@
 #ifndef __pc_rtc_h
 #define __pc_rtc_h
 
+#include <cpu.h>
 #include <rtc.h>
 
 __BEGIN_SYS
@@ -141,8 +142,6 @@ public:
     static Second seconds_since_epoch() { 
 	return date().to_offset(EPOCH_DAYS); 
     }
-
-    static int init(System_Info * si) { return 0; }
 };
 
 __END_SYS

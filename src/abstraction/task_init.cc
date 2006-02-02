@@ -1,19 +1,21 @@
 // EPOS-- Task Abstraction Initialization
 
 #include <utility/elf.h>
+#include <system.h>
 #include <task.h>
 
 __BEGIN_SYS
 
-int Task::init(System_Info * si)
+void Task::init()
 {
+    System_Info<PC> * si = System::info();
+
     db<Init, Task>(TRC) << "Task::init()\n";
 
-    if(si->bm.app_off != -1)
-	db<Init>(INF) << "Task:: additional tasks at " << (void *)si->pmm.img 
-		      << "( " << si->pmm.img_size << ")\n";
-
-    return 0;
+    if(si->bm.extras_offset != -1)
+	db<Init>(INF) << "Task:: additional tasks at " 
+		      << (void *)si->pmm.ext_base 
+		      << ":" << si->pmm.ext_top << "\n";
 }
 
 __END_SYS

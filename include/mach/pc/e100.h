@@ -60,7 +60,7 @@ public:
 
     const Statistics & statistics() { return _statistics; }
 
-    static int init(unsigned int unit, System_Info * si);
+    static void init(unsigned int unit);
 
 private:
     E100(unsigned int unit, Log_Addr io_mem, IO_Irq irq, DMA_Buffer * dma);

@@ -6,7 +6,7 @@
 
 __BEGIN_SYS
 
-int PCNet32::init(unsigned int unit, System_Info * si)
+void PCNet32::init(unsigned int unit)
 {
     db<Init, PCNet32>(TRC) << "PCNet32::init(unit=" << unit << ")\n";
 
@@ -14,7 +14,7 @@ int PCNet32::init(unsigned int unit, System_Info * si)
     PC_PCI::Locator loc = PC_PCI::scan(PCI_VENDOR_ID, PCI_DEVICE_ID, unit);
     if(!loc) {
 	db<Init, PCNet32>(WRN) << "PCNet32::init: PCI scan failed!\n";
-	return 1;
+	return;
     }
 
     // Try to enable IO regions and bus master
@@ -26,7 +26,7 @@ int PCNet32::init(unsigned int unit, System_Info * si)
     PCI::header(loc, &hdr);
     if(!hdr) {
 	db<Init, PCNet32>(WRN) << "PCNet32::init: PCI header failed!\n";
-	return 1;
+	return;
     }
     db<Init, PCNet32>(INF) << "PCNet32::init: PCI header=" << hdr << "}\n";
     if(!(hdr.command & PC_PCI::COMMAND_IO))
@@ -53,9 +53,7 @@ int PCNet32::init(unsigned int unit, System_Info * si)
     PCNet32 * dev = new (kmalloc(sizeof(PCNet32)))
 	PCNet32(unit, io_port, irq, dma_buf);
 
-	// Register the device
-// 	new (kmalloc(sizeof(PC_Device)))
-// 	    PC_Device(Type2Id<PCNet32>::ID, i, nic, PC::irq2int(irq));
+    // Register the device
     _devices[unit].in_use = false;
     _devices[unit].device = dev;
     _devices[unit].interrupt = Machine::irq2int(irq);
@@ -65,8 +63,6 @@ int PCNet32::init(unsigned int unit, System_Info * si)
 
     // Enable interrupts for device
     IC::enable(irq);
-
-    return 0;
 }
 
 __END_SYS

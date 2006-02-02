@@ -22,8 +22,6 @@ public:
 	ASMV("rdtsc" : "=A" (ts) : ); // must be volatile!
 	return ts;
     }
-
-    static int init(System_Info * si) { return 0; }
 };
 
 __END_SYS

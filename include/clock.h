@@ -23,8 +23,6 @@ public:
 
     Date date() { return RTC::date(); }
     void date(const Date & d) { return RTC::date(d); }
-
-    static int init(System_Info * si) { return 0; }
 };
 
 __END_SYS

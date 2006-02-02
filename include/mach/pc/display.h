@@ -131,8 +131,6 @@ public:
 	*columns = COLUMNS;
     }
 
-    static int init(System_Info * si) { return 0; }
-
 private:
     void scroll() {
 	for(unsigned int i = 0; i < (LINES - 1) * COLUMNS; i++)

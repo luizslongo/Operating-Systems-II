@@ -28,8 +28,6 @@ public:
 	wakeup(); 
     }
 
-    static int init(System_Info * si) { return 0; }
-
 private:
     volatile bool _locked;
 };

@@ -5,7 +5,7 @@
 
 __BEGIN_SYS
 
-int Alarm::init(System_Info * si)
+int Alarm::init()
 {
     db<Init, Alarm>(TRC) << "Alarm::init()\n";
 

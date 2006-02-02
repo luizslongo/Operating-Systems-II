@@ -3,6 +3,7 @@
 #ifndef __pc_timer_h
 #define __pc_timer_h
 
+#include <cpu.h>
 #include <timer.h>
 
 __BEGIN_SYS
@@ -174,8 +175,6 @@ public:
     void disable() { }
 
     Tick read() { return i8253::read(0); }
-
-    static int init(System_Info * si) { return 0; }
 
 private:
     static Hertz count2freq(const Count & c) { return CLOCK / c; }

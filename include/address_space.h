@@ -64,8 +64,6 @@ public:
     Phy_Addr physical(Log_Addr address) { 
 	return Directory::physical(address);
     }
-
-    static int init(System_Info * si) { return 0; }
 };
 
 __END_SYS

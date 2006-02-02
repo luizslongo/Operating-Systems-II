@@ -4,7 +4,6 @@
 #define __ia32_h
 
 #include <cpu.h>
-#include <utility/debug.h>
 
 __BEGIN_SYS
 
@@ -260,6 +259,7 @@ public:
     class Context {
     public:
 	Context(Log_Addr entry) : _eflags(FLAG_DEFAULTS), _eip(entry) {}
+
 	Context(Reg32 eflags, Reg32 eax, Reg32 ebx, Reg32 ecx, Reg32 edx, 
 		Reg32 esi, Reg32 edi, Reg32 ebp, Reg32 esp, Reg32 eip)
 	    : _edi(edi), _esi(esi), _ebp(ebp), _esp(esp), _ebx(ebx), 
@@ -360,31 +360,28 @@ public:
     static Reg32 ntohl(Reg32 v)	{ return htonl(v); }
     static Reg16 ntohs(Reg16 v)	{ return htons(v); }
 
-    static IA32::Context * IA32::init_stack(
+    static Context * init_stack(
 	Log_Addr stack, unsigned int size, void (* exit)(),
 	int (* entry)()) {
 	Log_Addr sp = stack + size;
-	sp -= sizeof(int);
-	*static_cast<int *>(sp) = reinterpret_cast<int>(exit);
+	sp -= sizeof(int); *static_cast<int *>(sp) = Log_Addr(exit);
 	sp -= sizeof(Context);
 	return  new (sp) Context(entry);
     }
 
     template<typename T1>
-    static IA32::Context * IA32::init_stack(
+    static Context * init_stack(
 	Log_Addr stack, unsigned int size, void (* exit)(),
 	int (* entry)(T1 a1), T1 a1) {
 	Log_Addr sp = stack + size;
-	sp -= sizeof(T1);
-	*static_cast<T1 *>(sp) = a1;
-	sp -= sizeof(int);
-	*static_cast<int *>(sp) = reinterpret_cast<int>(exit);
+	sp -= sizeof(T1); *static_cast<T1 *>(sp) = a1;
+	sp -= sizeof(int); *static_cast<int *>(sp) = Log_Addr(exit);
 	sp -= sizeof(Context);
 	return new (sp) Context(entry);
     }
 
     template<typename T1, typename T2>
-    static IA32::Context * IA32::init_stack(
+    static Context * init_stack(
 	Log_Addr stack, unsigned int size, void (* exit)(),
 	int (* entry)(T1 a1, T2 a2), T1 a1, T2 a2) {
 	Log_Addr sp = stack + size;
@@ -396,7 +393,7 @@ public:
     }
 
     template<typename T1, typename T2, typename T3>
-    static IA32::Context * IA32::init_stack(
+    static Context * init_stack(
 	Log_Addr stack, unsigned int size, void (* exit)(),
 	int (* entry)(T1 a1, T2 a2, T3 a3), T1 a1, T2 a2, T3 a3) {
 	Log_Addr sp = stack + size;
@@ -543,8 +540,6 @@ public:
 
 	ASM("ljmp *%0" : "=o" (address));
     }
-
-    static int init(System_Info * si) { return 0; }
 };
 
 __END_SYS

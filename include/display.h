@@ -78,8 +78,6 @@ public:
 	_uart.put('H');	
     }
 
-    static int init(System_Info * si);
-
 private:
     void escape() {
 	_uart.put(ESC);

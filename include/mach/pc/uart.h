@@ -166,8 +166,6 @@ public:
 
     void loopback(bool flag) { NS16550AF::loopback(flag); }
 
-    static int init(System_Info * si) { return 0; }
-
 private:
     static const IO_Port _ports[];
 };
