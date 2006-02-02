@@ -4,13 +4,13 @@ include $(EPOS)/makedefs
 
 all:		install
 
-$(MACH)_setup:	$(MACH)_setup.o 
+pc_setup:	pc_setup_start.o pc_setup.o
 		$(LD) $(LDFLAGS) -L$(CCLIB) --omagic \
 		--section-start $(MACH_CODE_NAME)=$(SETUP_ADDR) \
 		--entry=$(SETUP_ADDR) \
-		-o $@ $< -l$(LUTIL) -l$(LSYS) -l$(LINIT) -lgcc -lc -lgcc
+		-o $@ $^ -l$(LSYS) -l$(LINIT) -l$(LUTIL) -lgcc -lc -lgcc
 
-$(MACH)_install:$(MACH)_setup
+pc_install:	pc_setup
 		$(STRIP) -o $<.img $<
 
 
@@ -19,7 +19,6 @@ install:        $(MACH)_install
 		$(CLEAN) $(MACH)_setup.img
 
 test:
-
 
 clean:
 		$(CLEAN) *.o *_setup
