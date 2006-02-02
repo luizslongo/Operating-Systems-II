@@ -1,10 +1,4 @@
-// PC_SETUP
-//
-// SETUP is responsible for bringing the machine into a usable state. It
-// sets up several IA32 dependent data structures (IDT, GDT, TSSs, etc), a
-// basic memory model (flat), a basic thread model (exclusive task/exclusive
-// thread), the FPU and other selected devices. Note that setup deals with
-// hardware dependent initialization. OS initialization is due to PC_INIT.
+// EPOS-- PC SETUP
 
 #include <utility/elf.h>
 #include <utility/string.h>
@@ -12,384 +6,468 @@
 #include <utility/debug.h>
 #include <machine.h>
 
-__USING_SYS
-
-// IA32 Imports
-typedef CPU::Reg8 Reg8;
-typedef CPU::Reg16 Reg16;
-typedef CPU::Reg32 Reg32;
-typedef CPU::Reg64 Reg64;
-typedef CPU::Phy_Addr Phy_Addr;
-typedef CPU::Log_Addr Log_Addr;
-typedef MMU::Page Page;
-typedef MMU::Page_Table Page_Table;
-typedef MMU::Page_Directory Page_Directory;
-typedef MMU::PT_Entry PT_Entry;
-typedef MMU::PD_Entry PD_Entry;
-typedef MMU::IA32_Flags Flags;
-
-// System_Info Imports
-typedef System_Info::Physical_Memory_Map PMM;
-typedef System_Info::Logical_Memory_Map LMM;
-typedef System_Info::Boot_Map BM;
-typedef Memory_Map<PC> MM;
-typedef Traits<PC> TR;
-
-// Prototypes
-extern "C" { void _start(); }
-int  main(char *, unsigned int, char *);
-void setup_pci(Phy_Addr *, unsigned int *);
-void setup_gdt(Phy_Addr);
-void setup_idt(Phy_Addr);
-void setup_sys_pt(PMM *, int, int, int);
-void setup_sys_pd(PMM *, unsigned int, Phy_Addr, unsigned int);
-void setup_lmm(LMM *, Log_Addr, Log_Addr);
-void copy_sys_info(System_Info *, System_Info *);
-void call_next(Log_Addr);
-void page_fault(Reg32, Reg32, Reg32, Reg32, Reg32, Reg32);
-void gpf(Reg32, Reg32, Reg32, Reg32, Reg32, Reg32);
-void fpu();
-void syscall();
-void hard_int();
-void panic();
-
 __BEGIN_SYS
 
 OStream kout, kerr;
-bool has_init;
-bool has_system;
-
-__END_SYS
-
-ASM("jmp _start");
 
 //========================================================================
-// _start	          
+// PC_Setup
 //
-// Desc: In order to support larger boot images, PC_BOOT uses all memory
-//	 below 640 Kb. In order to have more freedom to setup the system,
-//	 we move PC_SETUP to a more convenient location.
-//	 "_start" MUST BE PC_SETUP's entry point, so, if your compiler
-//	 doesn't assume "_start" to be the entry point (GCC does), you
-//	 somehow have to arrange for this.
-//	 The initial stack pointer is inherited from PC_BOOT (i.e.,
-//	 somewhere below 0x7c00).
-//	 We can't "kout" here because the data segment is unreachable
-//	 and "kout" has static data.
-//	 THIS FUNCTION MUST BE RELOCATABLE, because it won't run at the
-//	 address it has been compiled for.
+// PC_Setup is responsible for bringing the machine into a usable state. It
+// sets up several IA32 data structures (IDT, GDT, etc), builds a basic
+// memory model (flat) and a basic thread model (exclusive task/exclusive
+// thread). 
 //------------------------------------------------------------------------
-void _start()
+class PC_Setup
 {
-    // Set EFLAGS
-    CPU::flags(CPU::flags() & CPU::FLAG_CLEAR);
+private:
+    static const unsigned int HARD_INT = Traits<PC>:: HARDWARE_INT_OFFSET;
+    static const unsigned int BOOT_IMAGE_ADDR = Traits<PC>::BOOT_IMAGE_ADDR;
+    static const unsigned int SYS_STACK_SIZE = Traits<PC>::SYSTEM_STACK_SIZE;
 
-    // The boot strap loaded the boot image at BOOT_IMAGE_ADDR
-    char * bi = reinterpret_cast<char *>(TR::BOOT_IMAGE_ADDR);
+    static const unsigned int SYS_INFO = Memory_Map<PC>::SYS_INFO;
+    static const unsigned int IDT = Memory_Map<PC>::IDT;
+    static const unsigned int GDT = Memory_Map<PC>::GDT;
+    static const unsigned int PHY_MEM = Memory_Map<PC>::PHY_MEM;
+    static const unsigned int IO_MEM = Memory_Map<PC>::IO_MEM;
+    static const unsigned int SYS_PT = Memory_Map<PC>::SYS_PT;
+    static const unsigned int SYS_PD = Memory_Map<PC>::SYS_PD;
+    static const unsigned int SYS = Memory_Map<PC>::SYS;
+    static const unsigned int SYS_DATA = Memory_Map<PC>::SYS_DATA;
+    static const unsigned int SYS_CODE = Memory_Map<PC>::SYS_CODE;
+    static const unsigned int SYS_STACK = Memory_Map<PC>::SYS_STACK;
+    
+    // IA32 Imports
+    typedef CPU::Reg32 Reg32;
+    typedef CPU::Phy_Addr Phy_Addr;
+    typedef CPU::Log_Addr Log_Addr;
+    typedef CPU::GDT_Entry GDT_Entry;
+    typedef CPU::IDT_Entry IDT_Entry;
+    typedef MMU::Page Page;
+    typedef MMU::Page_Table Page_Table;
+    typedef MMU::Page_Directory Page_Directory;
+    typedef MMU::PT_Entry PT_Entry;
+    typedef MMU::IA32_Flags Flags;
 
-    // Get the System_Info  (first thing in the boot image)
-    System_Info * si = reinterpret_cast<System_Info *>(bi);
+    // System_Info Imports
+    typedef System_Info<PC>::Boot_Map BM;
+    typedef System_Info<PC>::Physical_Memory_Map PMM;
+    typedef System_Info<PC>::Logical_Memory_Map LMM;
+    typedef System_Info<PC>::Load_Map LM;
 
-    // Check SETUP integrity and get information about its ELF structure
-    ELF * elf = reinterpret_cast<ELF *>(&bi[si->bm.setup_off]);
-    if(!elf->valid())
- 	panic();
-    char * entry = reinterpret_cast<char *>(elf->entry());
-    if(elf->segments() != 1)
- 	panic();
+public:
+    PC_Setup(char * boot_image) {
 
-    // Test if we can access the address for which SETUP has been compiled
-    *entry = 'G';
-    if(*entry != 'G')
+	// Get boot image loaded by the bootstrap
+ 	bi = reinterpret_cast<char *>(boot_image);
+	si = reinterpret_cast<System_Info<PC> *>(bi);
+
+ 	db<Setup>(TRC) << "PC_Setup(bi=" << (void *)bi
+ 		       << ",sp=" << (void *)CPU::sp() << ")\n";
+
+	// Disable hardware interrupts
+	IC::init();
+  	CPU::int_disable();
+
+	build_lm();
+	build_pmm();
+	build_lmm();
+	get_node_id();
+
+	say_hi();
+
+	activate_paging();
+
+	// Adjust pointers that will still be used to their logical addresses
+	bi = reinterpret_cast<char *>(unsigned(bi) | PHY_MEM);
+	si = reinterpret_cast<System_Info<PC> *>(SYS_INFO);
+
+	load_parts();
+
+	// SETUP ends here, transfer control to next stage (INIT or APP)
+	call_next();
+
+	// SETUP is now part of the free memory and this point should never be
+	// reached, but, just in case ... :-)
 	panic();
+    }
 
-    // Load SETUP considering the address in the ELF header
-    // Check if this wouldn't destroy the boot image
-    register char * addr = reinterpret_cast<char *>(elf->segment_address(0));
-    register int size = elf->segment_size(0);
-    if(addr <= &bi[si->bm.img_size])
-	panic();
-    if(elf->load_segment(0) < 0)
-	panic();
+private:
+    void build_lm();
+    void build_pmm();
+    void build_lmm();
+    void get_node_id();
 
-    // Move the boot image to after SETUP, so there will be nothing else
-    // below SETUP to be preserved
-    // SETUP code + data + stack)
-    register char * dst = entry + size + sizeof(Page);
-    memcpy(dst, bi, si->bm.img_size);
+    void say_hi();
 
-    // Setup a single page stack for SETUP after its data segment
-    // SP = "entry" + "size" + sizeof(Page)
-    // Be carefull: we'll lost our stack, so everything must be in regs!
-    ASM("movl %0, %%esp" : : "r" (dst));
+    void activate_paging();
+    void setup_idt();
+    void setup_gdt();
+    void setup_sys_pt();
+    void setup_sys_pd();
 
-    // Pass the boot image to SETUP
-    ASM("pushl %0" : : "r" (dst));
+    void load_parts();
+    void call_next();
 
-    // Pass SETUP its size
-    ASM("pushl %0" : : "r" (size));
+    void pci_aperture(unsigned int * base, unsigned int * top);
 
-    // Pass SETUP its loading address
-    ASM("pushl %0" : : "r" (addr));
+    static void panic() { Machine::panic(); }
 
-    // Call main() (the assembly is necessary because the compiler generates
-    // relative calls and we need an absolute)
-    ASM("call *%0" : : "r" (&main));
-}
+private:
+    char * bi;
+    System_Info<PC> * si;
+};
 
 //========================================================================
-// main
-//
-// Desc: We have much to do here, you'd better take a look at the remarks
-//	 below. Important for now is that we've got a single-page stack
-//	 and we don't check for overflows, so be careful!
-//
-// Parm: setup_addr -> a pointer to PC_SETUP's loaded image
-//	 setup_size -> PC_SETUP's size in memory
-//	 bi -> a pointer to the image loaded from disk by PC_BOOT
-//------------------------------------------------------------------------
-int main(char * setup_addr, unsigned int setup_size, char * bi)
+void PC_Setup::build_lm()
 {
-    ELF * elf;
+    // Get boot image structure
+    si->lm.has_stp = (si->bm.setup_offset != -1);
+    si->lm.has_ini = (si->bm.init_offset != -1);
+    si->lm.has_sys = (si->bm.system_offset != -1);
+    si->lm.has_app = (si->bm.application_offset != -1);
+    si->lm.has_ext = (si->bm.extras_offset != -1);
 
-    db<Setup>(TRC) << "PC_Setup(stp=" << (void *)setup_addr
-		   << ",stp_sz=" << setup_size
-		   << ",bi=" << (void *)bi << ")\n";
-
-    // System_Info is the first thing in the boot image
-    System_Info * si = reinterpret_cast<System_Info *>(bi);
-    has_init = (si->bm.init_off != -1);
-    has_system = (si->bm.system_off != -1);
-    if(!has_system)
-	db<Setup>(WRN) << "No SYSTEM in boot image, assuming EPOS is a library!\n";
-
-    // Check INIT integrity and get the size of its code+data segment
-    Log_Addr init_entry = 0;
-    unsigned int init_segments = 0;
-    unsigned int init_size = 0;
-    if(has_init) {
-	elf = reinterpret_cast<ELF *>(&bi[si->bm.init_off]);
-	if(!elf->valid()) {
-	    db<Setup>(ERR) << "INIT ELF image is corrupted!\n";
+    // Check SETUP integrity and get the size of its segments
+    si->lm.stp_entry = 0;
+    si->lm.stp_code = 0;
+    si->lm.stp_code_size = 0;
+    si->lm.stp_data = 0;
+    si->lm.stp_data_size = 0;
+    if(si->lm.has_stp) {
+	ELF * stp_elf = reinterpret_cast<ELF *>(&bi[si->bm.setup_offset]);
+	if(!stp_elf->valid()) {
+	    db<Setup>(ERR) << "SETUP ELF image is corrupted!\n";
 	    panic();
 	}
-	init_entry = elf->entry();
-	init_segments = elf->segments();
-	init_size = elf->segment_size(0);
- 	if(init_segments > 1) {
- 	    db<Setup>(ERR) << "INIT ELF image has more than one segment ("
- 			   << elf->segments() << ")!\n";
-	    panic();
+
+	si->lm.stp_entry = stp_elf->entry();
+	si->lm.stp_code = stp_elf->segment_address(0);
+	si->lm.stp_code_size = stp_elf->segment_size(0);
+	if(stp_elf->segments() > 1) {
+	    si->lm.stp_data = stp_elf->segment_address(1);
+	    for(int i = 1; i < stp_elf->segments(); i++) {
+		if(stp_elf->segment_address(i) < si->lm.stp_data)
+		    si->lm.stp_data = stp_elf->segment_address(i);
+		si->lm.stp_data_size += stp_elf->segment_size(i);
+	    }
 	}
     }
 
-    // Check OS integrity and get the size of its code and data segments
-    Log_Addr sys_entry = 0;
-    unsigned int sys_segments = 0;
-    Log_Addr sys_code = 0;
-    unsigned int sys_code_size = 0;
-    Log_Addr sys_data = 0;
-    unsigned int sys_data_size = 0;
-    Log_Addr sys_stack = MM::SYS_STACK;
-    unsigned int sys_stack_size = TR::SYSTEM_STACK_SIZE;
-    if(has_system) {
-	elf = reinterpret_cast<ELF *>(&bi[si->bm.system_off]);
-	if(!elf->valid()) {
+    // Check INIT integrity and get the size of its segments
+    si->lm.ini_entry = 0;
+    si->lm.ini_segments = 0;
+    si->lm.ini_code = 0;
+    si->lm.ini_code_size = 0;
+    si->lm.ini_data = 0;
+    si->lm.ini_data_size = 0;
+    if(si->lm.has_ini) {
+	ELF * ini_elf = reinterpret_cast<ELF *>(&bi[si->bm.init_offset]);
+	if(!ini_elf->valid()) {
+	    db<Setup>(ERR) << "INIT ELF image is corrupted!\n";
+	    panic();
+	}
+
+	si->lm.ini_entry = ini_elf->entry();
+	si->lm.ini_code = ini_elf->segment_address(0);
+	si->lm.ini_code_size = ini_elf->segment_size(0);
+	if(ini_elf->segments() > 1) {
+	    si->lm.ini_data = ini_elf->segment_address(1);
+	    for(int i = 1; i < ini_elf->segments(); i++) {
+		if(ini_elf->segment_address(i) < si->lm.ini_data)
+		    si->lm.ini_data = ini_elf->segment_address(i);
+		si->lm.ini_data_size += ini_elf->segment_size(i);
+	    }
+	}
+    }
+
+    // Check SYSTEM integrity and get the size of its segments
+    si->lm.sys_entry = 0;
+    si->lm.sys_segments = 0;
+    si->lm.sys_code = 0;
+    si->lm.sys_code_size = 0;
+    si->lm.sys_data = 0;
+    si->lm.sys_data_size = 0;
+    si->lm.sys_stack = SYS_STACK;
+    si->lm.sys_stack_size = SYS_STACK_SIZE;
+    if(si->lm.has_sys) {
+	ELF * sys_elf = reinterpret_cast<ELF *>(&bi[si->bm.system_offset]);
+	if(!sys_elf->valid()) {
 	    db<Setup>(ERR) << "OS ELF image is corrupted!\n";
 	    panic();
 	}
-	sys_entry = elf->entry();
-	sys_segments = elf->segments();
-	sys_code = elf->segment_address(0);
-	sys_code_size = elf->segment_size(0);
-	sys_data = elf->segment_address(1);
-	for(unsigned int i = 1; i < sys_segments; i++) {
-	    if(elf->segment_address(i) < sys_data)
-		sys_data = elf->segment_address(i);
-	    sys_data_size += elf->segment_size(i);
+
+	si->lm.sys_entry = sys_elf->entry();
+	si->lm.sys_code = sys_elf->segment_address(0);
+	si->lm.sys_code_size = sys_elf->segment_size(0);
+	if(sys_elf->segments() > 1) {
+	    si->lm.sys_data = sys_elf->segment_address(1);
+	    for(int i = 1; i < sys_elf->segments(); i++) {
+		if(sys_elf->segment_address(i) < si->lm.sys_data)
+		    si->lm.sys_data = sys_elf->segment_address(i);
+		si->lm.sys_data_size += sys_elf->segment_size(i);
+	    }
 	}
-	if(sys_code != MM::SYS_CODE) {
+
+	if(si->lm.sys_code != SYS_CODE) {
 	    db<Setup>(ERR) << "OS code segment address do not match "
 			   << "the machine's memory map!\n";
 	    panic();
 	}
-	if(sys_code + sys_code_size > sys_data) {
+	if(si->lm.sys_code + si->lm.sys_code_size > si->lm.sys_data) {
 	    db<Setup>(ERR) << "OS code segment is too large!\n";
 	    panic();
 	}
-
-	if(sys_data != MM::SYS_DATA) {
+	if(si->lm.sys_data != SYS_DATA) {
 	    db<Setup>(ERR) << "OS code segment address do not match "
 			   << "the machine's memory map!\n";
 	    panic();
 	}
-
-	if(sys_data + sys_data_size > sys_stack) {
+	if(si->lm.sys_data + si->lm.sys_data_size > si->lm.sys_stack) {
 	    db<Setup>(ERR) << "OS data segment is too large!\n";
 	    panic();
 	}
-	if(sys_data + sys_data_size > sys_stack) {
+	if(si->lm.sys_data + si->lm.sys_data_size > si->lm.sys_stack) {
 	    db<Setup>(ERR) << "OS data segment is too large!\n";
 	    panic();
 	}
-	if(MMU::page_tables(MMU::pages(sys_stack - MM::SYS + sys_stack_size))
-	   > 1) {
+	if(MMU::page_tables(MMU::pages(si->lm.sys_stack
+				       - SYS + si->lm.sys_stack_size)) > 1) {
 	    db<Setup>(ERR) << "OS stack segment is too large!\n";
 	    panic();
 	}
     }
 
-    // Check APP integrity and get the size of all its segments
-    elf = reinterpret_cast<ELF *>(&bi[si->bm.loader_off]);
-    if(!elf->valid()) {
-        db<Setup>(ERR) << "Application ELF image is corrupted!\n";
-        panic();
+    // Check APPLICATION integrity and get the size of its segments
+    si->lm.app_entry = 0;
+    si->lm.app_segments = 0;
+    si->lm.app_code = 0;
+    si->lm.app_code_size = 0;
+    si->lm.app_data = 0;
+    si->lm.app_data_size = 0;
+    if(si->lm.has_app) {
+	ELF * app_elf =
+	    reinterpret_cast<ELF *>(&bi[si->bm.application_offset]);
+	if(!app_elf->valid()) {
+	    db<Setup>(ERR) << "Application ELF image is corrupted!\n";
+	    panic();
+	}
+	si->lm.app_entry = app_elf->entry();
+	si->lm.app_code = app_elf->segment_address(0);
+	si->lm.app_code_size = app_elf->segment_size(0);
+	if(app_elf->segments() > 1) {
+	    si->lm.app_data = app_elf->segment_address(1);
+	    si->lm.app_data_size = 0;
+	    for(int i = 1; i < app_elf->segments(); i++) {
+		if(app_elf->segment_address(i) < si->lm.app_data)
+		    si->lm.app_data = app_elf->segment_address(i);
+		si->lm.app_data_size += app_elf->segment_size(i);
+	    }
+	}
     }
-    Log_Addr app_entry = elf->entry();
-    unsigned int app_segments = elf->segments();
-    Log_Addr app_code = elf->segment_address(0);
-    unsigned int app_code_size = elf->segment_size(0);
-    Log_Addr app_data = elf->segment_address(1);
-    unsigned int app_data_size = 0;
-    for(unsigned int i = 1; i < app_segments; i++) {
-	if(elf->segment_address(i) < app_data)
-	    app_data = elf->segment_address(i);
-	app_data_size += elf->segment_size(i);
+
+    // Check for EXTRA data in the boot image		
+    if(si->lm.has_ext) {
+	si->lm.ext = Phy_Addr(&bi[si->bm.extras_offset]);
+	si->lm.ext_size = si->bm.img_size - si->bm.extras_offset;
     }
+}
 
-    // If we didn't get our node's id in the boot image, we'll to try to
-    // get if from an eventual BOOPT reply used to boot up the system before
-    // we allocate more memory
-    // if(si->bm.host_id == (unsigned short) -1)
-    // get_bootp_info(&si->bm.host_id);
-
-    // Say hi! :-)
-    kout << "Setting up this machine as follows: \n";
-    kout << "  Processor: IA32\n";
-    kout << "  Memory:    " << si->bm.mem_size/1024 << " Kbytes\n";
-    kout << "  Node Id:   ";
-    if(si->bm.node_id != -1)
-	kout << si->bm.node_id << " (" << si->bm.n_nodes << ")\n";
-    else
-	kout << "will get from the network!\n";
-    kout << "  Setup:     " << setup_size << " bytes\n";
-    kout << "  Init:      " << init_size << " bytes\n";
-    kout << "  OS code:   " << sys_code_size << " bytes";
-    kout << "\tdata: " << sys_data_size << " bytes";
-    kout << "\tstack: " << sys_stack_size << " bytes\n";
-    kout << "  APP code:  " << app_code_size << " bytes";
-    kout << "\tdata: " << app_data_size << " bytes\n";
-
-    // Setup the interrupt controller
-    // The BIOS sets hardware interrupts to 0x08-0x0f, but these IDT
-    // entries are assigned to internal exceptions in the i[x>1]86
-    // We'll remap interrupts to HARD_INT and then disable them
-    IC::init(si);
-
-    // Setup the PCI bus controller
-    setup_pci(reinterpret_cast<Phy_Addr *>(&si->pmm.io_mem),
-	      &si->pmm.io_mem_size);
-
-    // Align and convert the following sizes to pages
-    sys_code_size = MMU::pages(sys_code_size);
-    sys_data_size = MMU::pages(sys_data_size);
-    sys_stack_size = MMU::pages(sys_stack_size);
-    app_code_size = MMU::pages(app_code_size);
-    app_data_size = MMU::pages(app_data_size);
-    si->mem_size  = MMU::pages(si->bm.mem_size);
-    si->mem_free = si->mem_size;
-
+//========================================================================
+void PC_Setup::build_pmm()
+{
     // Allocate (reserve) memory for all entities we have to setup.
     // We'll start at the highest address to make possible a memory model
     // on which the application's logical and physical address spaces match.
 
+    Phy_Addr top_page = MMU::pages(si->bm.mem_top);
+
     // IDT (1 x sizeof(Page))
-    si->mem_free -= 1;
-    si->pmm.int_vec = si->mem_free * sizeof(Page);
+    top_page -= 1;
+    si->pmm.idt = top_page * sizeof(Page);
 
     // GDT (1 x sizeof(Page))
-    si->mem_free -= 1;
-    si->pmm.mach1 = si->mem_free * sizeof(Page);
+    top_page -= 1;
+    si->pmm.gdt = top_page * sizeof(Page);
 
     // System Page Table (1 x sizeof(Page))
-    si->mem_free -= 1;
-    si->pmm.sys_pt = si->mem_free * sizeof(Page);
+    top_page -= 1;
+    si->pmm.sys_pt = top_page * sizeof(Page);
 
     // System Page Directory (1 x sizeof(Page))
-    si->mem_free -= 1;
-    si->pmm.sys_pd = si->mem_free * sizeof(Page);
+    top_page -= 1;
+    si->pmm.sys_pd = top_page * sizeof(Page);
 
     // System Info (1 x sizeof(Page))
-    si->mem_free -= 1;
-    si->pmm.sys_info = si->mem_free * sizeof(Page);
+    top_page -= 1;
+    si->pmm.sys_info = top_page * sizeof(Page);
 
     // Page tables to map the whole physical memory
     // = NP/NPTE_PT * sizeof(Page)
     //   NP = size of physical memory in pages
     //   NPTE_PT = number of page table entries per page table
-    si->mem_free -= (si->mem_size + MMU::PT_ENTRIES - 1) / MMU::PT_ENTRIES;
-    si->pmm.phy_mem_pts = si->mem_free * sizeof(Page);
+    unsigned int mem_size = MMU::pages(si->bm.mem_top - si->bm.mem_base);
+    top_page -= (mem_size + MMU::PT_ENTRIES - 1) / MMU::PT_ENTRIES;
+    si->pmm.phy_mem_pts = top_page * sizeof(Page);
 
     // Page tables to map the IO address space
     // = NP/NPTE_PT * sizeof(Page)
     // NP = size of PCI address space in pages
     // NPTE_PT = number of page table entries per page table
-    si->mem_free -=
-	(si->pmm.io_mem_size + MMU::PT_ENTRIES - 1) / MMU::PT_ENTRIES;
-    si->pmm.io_mem_pts = si->mem_free * sizeof(Page);
+    pci_aperture(&si->pmm.io_mem_base, &si->pmm.io_mem_top);
+    unsigned int io_mem_size =
+	MMU::pages(si->pmm.io_mem_top - si->pmm.io_mem_base);
+    top_page -= (io_mem_size + MMU::PT_ENTRIES - 1) / MMU::PT_ENTRIES;
+    si->pmm.io_mem_pts = top_page * sizeof(Page);
 
-    // OS code segment (in pages)
-    si->mem_free -= sys_code_size;
-    si->pmm.sys_code = si->mem_free * sizeof(Page);
+    // SYSTEM code segment
+    top_page -= MMU::pages(si->lm.sys_code_size);
+    si->pmm.sys_code = top_page * sizeof(Page);
 
-    // OS data segment (in pages)
-    si->mem_free -= sys_data_size;
-    si->pmm.sys_data = si->mem_free * sizeof(Page);
+    // SYSTEM data segment
+    top_page -= MMU::pages(si->lm.sys_data_size);
+    si->pmm.sys_data = top_page * sizeof(Page);
 
-    // OS stack segment (in pages, from Traits)
-    si->mem_free -= sys_stack_size;
-    si->pmm.sys_stack = si->mem_free * sizeof(Page);
+    // SYSTEM stack segment
+    top_page -= MMU::pages(si->lm.sys_stack_size);
+    si->pmm.sys_stack = top_page * sizeof(Page);
 
-    // All memory bolow this is free to applications
-    si->pmm.app_lo = si->bm.mem_base;
-    si->pmm.app_hi = si->mem_free * sizeof(Page);
-    si->pmm.mach2 = app_code + app_code_size * sizeof(Page);
-    si->pmm.mach3 = MMU::pages(app_data - app_code) - app_code_size;
-    si->pmm.free = app_data + app_data_size * sizeof(Page);
-    si->pmm.free_size = MMU::pages(si->pmm.app_hi - app_data) - app_data_size;
-    if(si->bm.app_off != -1) {
-	si->pmm.img = Phy_Addr(&bi[si->bm.app_off]);
-	si->pmm.img_size = si->bm.img_size - si->bm.app_off;
+    // The memory allocated so far will "disapear" from the system as we
+    // set mem_top as follows:
+    si->pmm.mem_base = si->bm.mem_base;
+    si->pmm.mem_top = top_page * sizeof(Page);
+
+    // Free chuncks (passed to MMU::init)
+    si->pmm.free1_base =
+	MMU::align_page(si->lm.app_code + si->lm.app_code_size);
+    si->pmm.free1_top = MMU::align_page(si->lm.app_data);
+    si->pmm.free2_base =
+	MMU::align_page(si->lm.app_data + si->lm.app_data_size);
+    si->pmm.free2_top = MMU::align_page(si->pmm.mem_top);
+
+    if(si->lm.has_ext) {
+	si->pmm.ext_base = si->lm.ext;
+	si->pmm.ext_top = si->lm.ext + si->lm.ext_size;
+    } else {
+	si->pmm.ext_base = 0;
+	si->pmm.ext_top = 0;
+    }	
+    db<Setup>(TRC) << "setup_sys_pt(pmm={idt=" << (void *)si->pmm.idt
+		   << ",gdt="  << (void *)si->pmm.gdt
+		   << ",pt="   << (void *)si->pmm.sys_pt
+		   << ",pd="   << (void *)si->pmm.sys_pd
+		   << ",info=" << (void *)si->pmm.sys_info
+		   << ",mem="  << (void *)si->pmm.phy_mem_pts
+		   << ",io="   << (void *)si->pmm.io_mem_pts
+		   << ",sysc=" << (void *)si->pmm.sys_code
+		   << ",sysd=" << (void *)si->pmm.sys_data
+		   << ",syss=" << (void *)si->pmm.sys_stack
+		   << ",memb=" << (void *)si->pmm.mem_base
+		   << ",memt=" << (void *)si->pmm.mem_top
+		   << ",fr1b=" << (void *)si->pmm.free1_base
+		   << ",fr1t=" << (void *)si->pmm.free1_top
+		   << ",fr2b=" << (void *)si->pmm.free2_base
+		   << ",fr2t=" << (void *)si->pmm.free2_top
+		   << "}"
+		   << ",code_size=" << MMU::pages(si->lm.sys_code_size)
+		   << ",data_size=" << MMU::pages(si->lm.sys_data_size)
+		   << ",stack_size=" << MMU::pages(si->lm.sys_stack_size)
+		   << ")\n";
+}
+
+//========================================================================
+void PC_Setup::build_lmm()
+{
+    si->lmm.app_entry = si->lm.app_entry;
+}
+
+//========================================================================
+void PC_Setup::get_node_id()
+{
+    // If we didn't get our node's id in the boot image, we'll to try to
+    // get if from an eventual BOOPT reply used to boot up the system before
+    // we allocate more memory
+    // if(si->bm.host_id == (unsigned short) -1)
+    // get_bootp_info(&si->bm.host_id);
+}
+
+//========================================================================
+void PC_Setup::say_hi()
+{
+    if(!si->lm.has_app) {
+	db<Setup>(ERR)
+	    << "No APPLICATION in boot image, you don't need EPOS!\n";
+	panic();
+    }
+    if(!si->lm.has_sys)
+	db<Setup>(WRN) 
+	    << "No SYSTEM in boot image, assuming EPOS is a library!\n";
+
+    kout << "Setting up this machine as follows: \n";
+    kout << "  Processor:    IA32\n";
+    kout << "  Memory:       " << (si->bm.mem_top - si->bm.mem_base) / 1024
+	 << " Kbytes [" << (void *)si->bm.mem_base
+	 << ":" << (void *)si->bm.mem_top << "]\n";
+    kout << "  User memory:  "
+	 << (si->pmm.mem_top - si->pmm.mem_base) / 1024
+	 << " Kbytes [" << (void *)si->pmm.mem_base
+	 << ":" << (void *)si->pmm.mem_top << "]\n";
+    kout << "  PCI aperture: " 
+	 << (si->pmm.io_mem_top - si->pmm.io_mem_base) / 1024
+	 << " Kbytes [" << (void *)si->pmm.io_mem_base 
+	 << ":" << (void *)si->pmm.io_mem_top << "]\n";
+    kout << "  Node Id:      ";
+    if(si->bm.node_id != -1)
+	kout << si->bm.node_id << " (" << si->bm.n_nodes << ")\n";
+    else
+	kout << "will get from the network!\n";
+    if(si->lm.has_stp)
+	kout << "  Setup:        "
+	     << si->lm.stp_code_size + si->lm.stp_data_size << " bytes\n";
+    if(si->lm.has_ini)
+	kout << "  Init:         " 
+	     << si->lm.ini_code_size + si->lm.ini_data_size << " bytes\n";
+    if(si->lm.has_sys) {
+	kout << "  OS code:      " << si->lm.sys_code_size << " bytes";
+	kout << "\tdata: " << si->lm.sys_data_size << " bytes";
+	kout << "\tstack: " << si->lm.sys_stack_size << " bytes\n";
+    }
+    if(si->lm.has_app) {
+	kout << "  APP code:     " << si->lm.app_code_size << " bytes";
+	kout << "\tdata: " << si->lm.app_data_size << " bytes\n";
+    }
+    if(si->lm.has_ext) {
+	kout << "  Extras:       " << si->lm.ext_size << " bytes\n";
     }
 
     // Test if we didn't overlap SETUP and the boot image
-    if(si->mem_free * sizeof(Page) <=
-       reinterpret_cast<unsigned int>(setup_addr) + setup_size) {
-	db<Setup>(ERR) << "SETUP would have been overwritten!\n";
-	panic();
+    if(si->pmm.mem_top
+       <= si->lm.stp_code + si->lm.stp_code_size + si->lm.stp_data_size) {
+  	db<Setup>(ERR) << "SETUP would have been overwritten!\n";
+  	panic();
     }
+}
 
-    // Zero the memory allocated to the system
-    memset(reinterpret_cast<void *>(si->mem_free * sizeof(Page)), 0,
-	   (si->mem_size - si->mem_free) * sizeof(Page));
-
+//========================================================================
+void PC_Setup::activate_paging() 
+{
     // Setup the IDT
-    setup_idt(si->pmm.int_vec);
+    setup_idt();
 
     // Setup the GDT
-    setup_gdt(si->pmm.mach1);
+    setup_gdt();
 
     // Setup the System Page Table
-    setup_sys_pt(&si->pmm, sys_code_size, sys_data_size, sys_stack_size);
+    setup_sys_pt();
 
     // Setup the System Page Directory and map physical memory
-    setup_sys_pd(&si->pmm, si->mem_size, si->pmm.io_mem, si->pmm.io_mem_size);
-
+    setup_sys_pd();
+   
     // Set IDTR (limit = 1 x sizeof(Page))
-    CPU::idtr(sizeof(Page) - 1, MM::INT_VEC);
+    CPU::idtr(sizeof(Page) - 1, IDT);
 
     // Reload GDTR with its linear address (one more absurd from Intel!)
-    CPU::gdtr(sizeof(Page) - 1, MM::MACH1);
+    CPU::gdtr(sizeof(Page) - 1, GDT);
 
     // Set CR3 (PDBR) register
     CPU::cr3(si->pmm.sys_pd);
@@ -406,8 +484,8 @@ int main(char * setup_addr, unsigned int setup_size, char * bi)
     // The following relative jump is to break the IA32 pre-fetch queue
     // (in case cr0() was a macro and didn't do it when returning)
     // and also to start using logical addresses
-    ASM("ljmp %0, %1 + next" : : "i"(CPU::SEL_FLT_CODE), "i"(MM::PHY_MEM));
-    ASM("next:");
+    ASM("ljmp %0, %1 + 1f" : : "i"(CPU::SEL_FLT_CODE), "i"(PHY_MEM));
+    ASM("1:");
 
     // Reload segment registers with GDT_FLT_DATA
     ASM("" : : "a" (CPU::SEL_FLT_DATA));
@@ -418,202 +496,45 @@ int main(char * setup_addr, unsigned int setup_size, char * bi)
     ASM("movw %ax, %ss");
 
     // Set stack pointer to its logical address
-    ASM("orl %0, %%esp" : : "i" (MM::PHY_MEM));
-
-    // Adjust pointers that will still be used to their logical addresses
-    bi = reinterpret_cast<char *>((unsigned int)(bi) | MM::PHY_MEM);
+    ASM("orl %0, %%esp" : : "i" (PHY_MEM));
 
     // Flush TLB to ensure we've got the right memory organization
     MMU::flush_tlb();
-
-    // Load INIT
-    if(has_init) {
-	db<Setup>(TRC) << "PC_Setup::load_init()\n";
-	elf = reinterpret_cast<ELF *>(&bi[si->bm.init_off]);
-	if(elf->load_segment(0) < 0) {
-	    db<Setup>(ERR)
-		<< "INIT code+data segment was corrupted during SETUP!\n";
-	    panic();
-	}
-    }
-
-    // Load OS
-    if(has_system) {
-	db<Setup>(TRC) << "PC_Setup::load_os()\n";
-	elf = reinterpret_cast<ELF *>(&bi[si->bm.system_off]);
-	if(elf->load_segment(0) < 0) {
-	    db<Setup>(ERR)
-		<< "OS code segment was corrupted during SETUP!\n";
-	    panic();
-	}
-	for(unsigned int i = 1; i < sys_segments; i++)
-	    if(elf->load_segment(i) < 0) {
-		db<Setup>(ERR)
-		    << "OS data segment was corrupted during SETUP!\n";
-		panic();
-	    }
-    }
-
-    // Load APP
-    elf = reinterpret_cast<ELF *>(&bi[si->bm.loader_off]);
-    db<Setup>(TRC) << "PC_Setup::load_app()\n";
-    if(elf->load_segment(0) < 0) {
-        db<Setup>(ERR)
-	    << "Application code segment was corrupted during SETUP!\n";
-        panic();
-    }
-    for(unsigned int i = 1; i < app_segments; i++)
-        if(elf->load_segment(i) < 0) {
-           db<Setup>(ERR)
-	       << "Application data segment was corrupted during SETUP!\n";
-           panic();
-        }
-
-    // Copy System_Info
-    si = reinterpret_cast<System_Info *>(MM::SYS_INFO);
-    copy_sys_info(reinterpret_cast<System_Info *>(bi), si);
-
-    // Setup Logical_Memory_Map
-    setup_lmm(&si->lmm, app_entry, si->pmm.app_hi);
-
-    // Startup the FPU
-    // CPU::init_fpu();
-
-    // SETUP ends here
-    if(has_init) {
-	db<Setup>(TRC) << "Executing system global constructors ...\n";
-	static_cast<void (*)()>(sys_entry)();
-	call_next(init_entry);
-    } else if(has_system)
-	call_next(sys_entry);
-    else
-	call_next(app_entry);
-
-    // SETUP is now part of the free memory and this point should never be
-    // reached, but, just for ... :-)
-    panic();
-
-    // Just to avoid the warning
-    return -1;
 }
 
 //========================================================================
-// setup_pci
-//
-// Desc: Calculate the PCI address space apperture.
-//
-// Parm: addr <- PCI address space base
-//       size <- PCI address space size (in pages)
-//	 si   <- IO map
-//------------------------------------------------------------------------
-void setup_pci(Phy_Addr * addr, unsigned int * size)
+void PC_Setup::setup_idt()
 {
-    db<Setup>(TRC) << "setup_pci()\n";
+    db<Setup>(TRC) << "setup_idt(idt=" << (void *)si->pmm.idt << ")\n";
 
-    // Scan the PCI bus looking for devices with memory mapped regions
-    Phy_Addr base = ~0U;
-    Phy_Addr top = (void *)0;
-    for(int bus = 0; bus <= Traits<PCI>::MAX_BUS; bus++) {
-	for(int dev_fn = 0; dev_fn <= Traits<PCI>::MAX_DEV_FN; dev_fn++) {
-	    PCI::Locator loc(bus, dev_fn);
-	    PCI::Header hdr;
-	    PCI::header(loc, &hdr);
-	    if(hdr) {
-		db<Setup>(INF) << "PCI" << hdr << "\n";
-		for(unsigned int i = 0; i < PCI::Region::N; i++) {
-		    PCI::Region * reg = &hdr.region[i];
-		    if(*reg) {
-			db<Setup>(INF)  << "  reg[" << i << "]="
-					<< *reg << "\n";
-			if(reg->memory) {
-			    if(reg->phy_addr < base)
-				base = reg->phy_addr;
-			    if((reg->phy_addr + reg->size) > top)
-				top = reg->phy_addr + reg->size;
-			}
-		    }
-		}
-	    }
-	}
-    }
-    *addr = base;
-    *size = MMU::pages(top - base);
+    // Get the physical address for the IDT
+    IDT_Entry * idt = reinterpret_cast<IDT_Entry *>((void *)si->pmm.idt);
 
-    db<Setup>(INF) << "PCI address space={base=" << *addr
-		   << ",size=" << (void *)(*size * sizeof(Page)) << "}\n";
-}
-
-//========================================================================
-// setup_idt
-//
-// Desc: Setup the IDT with panic for all entries but GPF and page-fault.
-//
-// Parm: addr -> IDT PHYSICAL address
-//------------------------------------------------------------------------
-void setup_idt(Phy_Addr addr)
-{
-    typedef CPU::IDT_Entry IDT_Entry;
-
-    db<Setup>(TRC) << "setup_idt(idt=" << (void *)addr << ")\n";
+    // Clear IDT
+//    memset(idt, 0, sizeof(Page));
 
     // Adjust handler addresses to logical addresses
-    Log_Addr panic_h = Log_Addr(&panic) | MM::PHY_MEM;
-    Log_Addr gpf_h = Log_Addr(&gpf) | MM::PHY_MEM;
-    Log_Addr page_fault_h = Log_Addr(&page_fault) | MM::PHY_MEM;
-    Log_Addr fpu_h = Log_Addr(&fpu) | MM::PHY_MEM;
-    Log_Addr syscall_h = Log_Addr(&syscall) | MM::PHY_MEM;
-    Log_Addr hard_int_h = Log_Addr(&hard_int) | MM::PHY_MEM;
+    Log_Addr panic_h = Log_Addr(&panic) | PHY_MEM;
 
     // Map all handlers to panic()
-    IDT_Entry * idt = reinterpret_cast<IDT_Entry *>((void *)addr);
     for(unsigned int i = 0; i < CPU::IDT_ENTRIES; i++)
 	idt[i] = IDT_Entry(CPU::GDT_SYS_CODE, panic_h, CPU::SEG_IDT_ENTRY);
 
-    // Catch GPF, PAGE_FAULT and FPU
-    idt[CPU::EXC_GPF] = IDT_Entry(CPU::GDT_SYS_CODE, gpf_h,
-				  CPU::SEG_IDT_ENTRY);
-    idt[CPU::EXC_PF] = IDT_Entry(CPU::GDT_SYS_CODE, page_fault_h,
-				 CPU::SEG_IDT_ENTRY);
-    idt[CPU::EXC_NODEV] = IDT_Entry(CPU::GDT_SYS_CODE, fpu_h,
-				    CPU::SEG_IDT_ENTRY);
-
-    // Catch system calls generated by accident
-    idt[Traits<PC>::SYSCALL_INT] = IDT_Entry(CPU::GDT_SYS_CODE, syscall_h,
-					     CPU::SEG_IDT_ENTRY);
-
-    // Catch hardware interrupts
-    for(unsigned int i = TR::HARDWARE_INT_OFFSET;
-	i < TR::HARDWARE_INT_OFFSET + PC_IC::IRQS;
-	i++)
-	idt[i] = IDT_Entry(CPU::GDT_SYS_CODE, hard_int_h,
-			   CPU::SEG_IDT_ENTRY);
-
     db<Setup>(INF) << "IDT[0  ]=" << idt[0]
 		   << " (" << panic_h << ")\n";
-    db<Setup>(INF) << "IDT[GPF=" << CPU::EXC_GPF << "]="
-		   << idt[CPU::EXC_GPF] << " (" << gpf_h << ")\n";
-    db<Setup>(INF) << "IDT[PF =" << CPU::EXC_PF << "]="
-		   << idt[CPU::EXC_PF] << " (" << page_fault_h << ")\n";
-    db<Setup>(INF) << "IDT[SYS=" << Traits<PC>::SYSCALL_INT << "]="
-		   << idt[Traits<PC>::SYSCALL_INT]
-		   << " (" << syscall_h << ")\n";
+
 }
 
 //========================================================================
-// setup_gdt
-//
-// Desc: Setup the GDT, including entries for application and system
-//	 code, data and stack.
-//
-// Parm: addr       -> GDT PHYSICAL address
-//------------------------------------------------------------------------
-void setup_gdt(Phy_Addr addr)
+void PC_Setup::setup_gdt()
 {
-    typedef CPU::GDT_Entry GDT_Entry;
+    db<Setup>(TRC) << "setup_gdt(gdt=" << (void *)si->pmm.gdt << ")\n";
 
-    db<Setup>(TRC) << "setup_gdt(gdt=" << (void *)addr << ")\n";
+    // Get the physical address for the GDT
+    GDT_Entry * gdt = reinterpret_cast<GDT_Entry *>((void *)si->pmm.gdt);
 
-    GDT_Entry * gdt = (GDT_Entry *)(unsigned int)addr;
+    // Clear GDT
+//    memset(gdt, 0, sizeof(Page));
 
     // GDT_Entry(base, limit, {P,DPL,S,TYPE})
     gdt[CPU::GDT_NULL]      = GDT_Entry(0,       0, 0);
@@ -647,372 +568,266 @@ void setup_gdt(Phy_Addr addr)
 }
 
 //========================================================================
-// setup_sys_pt
-//
-// Desc: Setup the System Page Table
-//
-// Parm: pmm            -> physical memory map
-//	 sys_code_size  -> system code size in Ix86_Pages
-//	 sys_data_size  -> system data size in Ix86_Pages
-//	 sys_stack_size -> system stack size in pages
-//------------------------------------------------------------------------
-void setup_sys_pt(PMM * pmm, int sys_code_size, int sys_data_size,
-		  int sys_stack_size)
+void PC_Setup::setup_sys_pt()
 {
-    db<Setup>(TRC) << "setup_sys_pt(pmm={idt=" << (void *)pmm->int_vec
-		   << ",gdt="  << (void *)pmm->mach1
-		   << ",pt="   << (void *)pmm->sys_pt
-		   << ",pd="   << (void *)pmm->sys_pd
-		   << ",info=" << (void *)pmm->sys_info
-		   << ",mem="  << (void *)pmm->phy_mem_pts
-		   << ",io="   << (void *)pmm->io_mem_pts
-		   << ",sysc=" << (void *)pmm->sys_code
-		   << ",sysd=" << (void *)pmm->sys_data
-		   << ",syss=" << (void *)pmm->sys_stack
-		   << ",apl="  << (void *)pmm->app_lo
-		   << ",aph="  << (void *)pmm->app_hi
-		   << ",fr1b=" << (void *)pmm->mach2
-		   << ",fr1s=" << (void *)pmm->mach3
-		   << ",fr2b=" << (void *)pmm->free
-		   << ",fr2s=" << (void *)pmm->free_size
+    db<Setup>(TRC) << "setup_sys_pt(pmm={idt=" << (void *)si->pmm.idt
+		   << ",gdt="  << (void *)si->pmm.gdt
+		   << ",pt="   << (void *)si->pmm.sys_pt
+		   << ",pd="   << (void *)si->pmm.sys_pd
+		   << ",info=" << (void *)si->pmm.sys_info
+		   << ",mem="  << (void *)si->pmm.phy_mem_pts
+		   << ",io="   << (void *)si->pmm.io_mem_pts
+		   << ",sysc=" << (void *)si->pmm.sys_code
+		   << ",sysd=" << (void *)si->pmm.sys_data
+		   << ",syss=" << (void *)si->pmm.sys_stack
+		   << ",memb=" << (void *)si->pmm.mem_base
+		   << ",memt=" << (void *)si->pmm.mem_top
+		   << ",fr1b=" << (void *)si->pmm.free1_base
+		   << ",fr1t=" << (void *)si->pmm.free1_top
+		   << ",fr2b=" << (void *)si->pmm.free2_base
+		   << ",fr2t=" << (void *)si->pmm.free2_top
 		   << "}"
-		   << ",code_size=" << sys_code_size
-		   << ",data_size=" << sys_data_size
-		   << ",stack_size=" << sys_stack_size << ")\n";
+		   << ",code_size=" << MMU::pages(si->lm.sys_code_size)
+		   << ",data_size=" << MMU::pages(si->lm.sys_data_size)
+		   << ",stack_size=" << MMU::pages(si->lm.sys_stack_size)
+		   << ")\n";
 
     // Get the physical address for the System Page Table
-    PT_Entry * sys_pt = reinterpret_cast<PT_Entry *>(pmm->sys_pt);
+    PT_Entry * sys_pt = reinterpret_cast<PT_Entry *>((void *)si->pmm.sys_pt);
 
     // Clear the System Page Table
-    memset(sys_pt, 0, MMU::PT_ENTRIES);
+//    memset(sys_pt, 0, MMU::PT_ENTRIES);
 
     // IDT
-    sys_pt[MMU::page(MM::INT_VEC)] = pmm->int_vec | Flags::SYS;
+    sys_pt[MMU::page(IDT)] = si->pmm.idt | Flags::SYS;
 
     // GDT
-    sys_pt[MMU::page(MM::MACH1)] = pmm->mach1 | Flags::SYS;
+    sys_pt[MMU::page(GDT)] = si->pmm.gdt | Flags::SYS;
 
     // Set an entry to this page table, so the system can access it later
-    sys_pt[MMU::page(MM::SYS_PT)] = pmm->sys_pt | Flags::SYS;
+    sys_pt[MMU::page(SYS_PT)] = si->pmm.sys_pt | Flags::SYS;
 
     // System Page Directory
-    sys_pt[MMU::page(MM::SYS_PD)] = pmm->sys_pd | Flags::SYS;
+    sys_pt[MMU::page(SYS_PD)] = si->pmm.sys_pd | Flags::SYS;
 
     // System Info
-    sys_pt[MMU::page(MM::SYS_INFO)] = pmm->sys_info | Flags::SYS;
+    sys_pt[MMU::page(SYS_INFO)] = si->pmm.sys_info | Flags::SYS;
 
-    int i;
+    unsigned int i;
     PT_Entry aux;
 
     // OS code
-    for(i = 0, aux = pmm->sys_code;
-	i < sys_code_size;
+    for(i = 0, aux = si->pmm.sys_code;
+	i < MMU::pages(si->lm.sys_code_size);
 	i++, aux = aux + sizeof(Page))
-	sys_pt[MMU::page(MM::SYS_CODE) + i] = aux | Flags::SYS;
+	sys_pt[MMU::page(SYS_CODE) + i] = aux | Flags::SYS;
 
     // OS data
-    for(i = 0, aux = pmm->sys_data;
-	i < sys_data_size;
+    for(i = 0, aux = si->pmm.sys_data;
+	i < MMU::pages(si->lm.sys_data_size);
 	i++, aux = aux + sizeof(Page))
-	sys_pt[MMU::page(MM::SYS_DATA) + i] = aux | Flags::SYS;
+	sys_pt[MMU::page(SYS_DATA) + i] = aux | Flags::SYS;
 
     // OS stack (who needs a stack?)
-    for(i = 0, aux = pmm->sys_stack;
-	i < sys_stack_size;
+    for(i = 0, aux = si->pmm.sys_stack;
+	i < MMU::pages(si->lm.sys_stack_size);
 	i++, aux = aux + sizeof(Page))
-	sys_pt[MMU::page(MM::SYS_STACK) + i] = aux | Flags::SYS;
+	sys_pt[MMU::page(SYS_STACK) + i] = aux | Flags::SYS;
 
     db<Setup>(INF) << "SPT=" << *((Page_Table *)sys_pt) << "\n";
 }
 
 //========================================================================
-// setup_sys_pd
-//
-// Desc: Setup the System Page Directory and maps the whole physical
-//	 memory at both MM::PHY_MEM and "pmm->app_lo".
-//
-// Parm: pmm	          -> physical memory map
-// 	 phy_mem_size     -> size of physical memory in Pages
-// 	 io_mem_phy_addr  -> PCI address space physical address
-// 	 io_mem_size      -> size of PCI address space in Pages
-//------------------------------------------------------------------------
-void setup_sys_pd(PMM * pmm, unsigned int phy_mem_size,
-		  Phy_Addr io_mem_phy_addr, unsigned int io_mem_size)
+void PC_Setup::setup_sys_pd()
 {
-    int n_pts;
-    PT_Entry *pts, *sys_pd;
-
-    db<Setup>(TRC) << "setup_sys_pd(pmm={idt=" << (void *)pmm->int_vec
-		   << ",...},mem_sz=" << phy_mem_size * sizeof(Page)
-		   << ",pci=" << (void *)io_mem_phy_addr
-		   << ",pci_sz=" << (void *)(io_mem_size  * sizeof(Page))
+    db<Setup>(TRC) << "setup_sys_pd(pmm={idt=" << (void *)si->pmm.idt
+		   << ",...},mem_base=" << (void *)si->pmm.mem_base
+		   << ",mem_top=" << (void *)si->pmm.mem_top
+		   << ",pci_base=" << (void *)si->pmm.io_mem_base
+		   << ",pci_top=" << (void *)si->pmm.io_mem_top
 		   << ")\n";
 
+    // Get the physical address for the System Page Directory
+    PT_Entry * sys_pd = reinterpret_cast<PT_Entry *>((void *)si->pmm.sys_pd);
+
+    // Clear the System Page Directory
+//    memset(sys_pd, 0, MMU::PT_ENTRIES);
+
     // Calculate the number of page tables needed to map the physical memory
-    n_pts = (phy_mem_size + MMU::PT_ENTRIES - 1) / MMU::PT_ENTRIES;
+    unsigned int mem_size = MMU::pages(si->bm.mem_top - si->bm.mem_base);
+    int n_pts = (mem_size + MMU::PT_ENTRIES - 1) / MMU::PT_ENTRIES;
 
     // Map all physical memory into the page tables pointed by phy_mem_pts
-    // These will be attached at both MM::PHY_MEM and MM::APP_LO thus flags
+    // These will be attached at both PHY_MEM and MEM_BASE thus flags
     // must consider application access
-    pts = reinterpret_cast<PT_Entry *>(pmm->phy_mem_pts);
-    for(unsigned int i = 0; i < phy_mem_size; i++)
+    PT_Entry * pts = reinterpret_cast<PT_Entry *>((void *)si->pmm.phy_mem_pts);
+    for(unsigned int i = MMU::pages(si->pmm.mem_base); i < mem_size; i++)
 	pts[i] = (i * sizeof(Page)) | Flags::APP;
 
-    // Setup the System Page Directory
-    sys_pd = reinterpret_cast<PT_Entry *>(pmm->sys_pd);
-
-    // Attach all physical memory starting at MM::PHY_MEM
+    // Attach all physical memory starting at PHY_MEM
     for(int i = 0; i < n_pts; i++)
-	sys_pd[MMU::directory(MM::PHY_MEM) + i] =
-	    (pmm->phy_mem_pts + i * sizeof(Page)) | Flags::SYS;
+	sys_pd[MMU::directory(PHY_MEM) + i] =
+	    (si->pmm.phy_mem_pts + i * sizeof(Page)) | Flags::SYS;
 
-    // Attach application memory starting at "pmm->app_lo"
+    // Attach memory starting at MEM_BASE
     for(unsigned int i = MMU::directory(
-	    MMU::align_directory(pmm->app_lo));
-	i < MMU::directory(MMU::align_directory(pmm->app_hi));
+	    MMU::align_directory(si->pmm.mem_base));
+	i < MMU::directory(MMU::align_directory(si->pmm.mem_top));
 	i++)
-	sys_pd[i] = (pmm->phy_mem_pts + i * sizeof(Page)) |
-	    Flags::APP;
+	sys_pd[i] = (si->pmm.phy_mem_pts + i * sizeof(Page)) | Flags::APP;
 
     // Calculate the number of page tables needed to map the PCI AS
+    unsigned int io_mem_size =
+	MMU::pages(si->pmm.io_mem_top - si->pmm.io_mem_base);
     n_pts = (io_mem_size + MMU::PT_ENTRIES - 1) / MMU::PT_ENTRIES;
 
     // Map PCI addres space into the page tables pointed by io_mem_pts
-    pts = reinterpret_cast<PT_Entry *>(pmm->io_mem_pts);
+    pts = reinterpret_cast<PT_Entry *>((void *)si->pmm.io_mem_pts);
     for(unsigned int i = 0; i < io_mem_size; i++)
-	pts[i] = (io_mem_phy_addr + i * sizeof(Page)) | Flags::PCI;
+	pts[i] = (si->pmm.io_mem_base + i * sizeof(Page)) | Flags::PCI;
 
-    // Attach PCI devices' memory to MM::IO_MEM
+    // Attach PCI devices' memory to IO_MEM
     for(int i = 0; i < n_pts; i++)
-	sys_pd[MMU::directory(MM::IO_MEM) + i] =
-	    (pmm->io_mem_pts + i * sizeof(Page)) | Flags::PCI;
+	sys_pd[MMU::directory(IO_MEM) + i] =
+	    (si->pmm.io_mem_pts + i * sizeof(Page)) | Flags::PCI;
 
     // Map the system 4M logical address space at the top of the 4Gbytes
-    sys_pd[MMU::directory(MM::SYS_CODE)] = pmm->sys_pt | Flags::SYS;
+    sys_pd[MMU::directory(SYS_CODE)] = si->pmm.sys_pt | Flags::SYS;
 
     db<Setup>(INF) << "SPD=" << *((Page_Directory *)sys_pd) << "\n";
 }
 
 //========================================================================
-// setup_lmm
-//
-// Desc: Setup the Logical_Memory_ap in System_Info.
-//
-// Parm: lmm	-> logical memory map
-//	 app_hi	-> highest logicall RAM address available to applications
-//------------------------------------------------------------------------
-void setup_lmm(LMM * lmm, Log_Addr app_entry, Log_Addr app_hi)
+void PC_Setup::load_parts()
 {
-//     lmm->int_vec = MM::INT_VEC;
-//     lmm->sys_pt = MM::SYS_PT;
-//     lmm->sys_pd = MM::SYS_PD;
-//     lmm->sys_info = MM::SYS_INFO;
-//     lmm->phy_mem = MM::PHY_MEM;
-//     lmm->io_mem = MM::IO_MEM;
-//     lmm->sys_code = MM::SYS_CODE;
-//     lmm->sys_data = MM::SYS_DATA;
-//     lmm->sys_stack = MM::SYS_STACK;
-//     lmm->app_lo = MM::APP_LO;
-    lmm->app_entry = app_entry;
-//     lmm->app_code = MM::APP_CODE;
-//     lmm->app_data = MM::APP_DATA;
-    lmm->app_hi = app_hi;
-//     lmm->mach1 = MM::MACH1;
-//     lmm->mach2 = MM::MACH2;
-//     lmm->mach3 = MM::MACH2;
-
-    db<Setup>(INF) << "lmm={"
-// 		   << "int=" << (void *)lmm->int_vec
-// 		   << ",gdt="  << (void *)lmm->mach1
-// 		   << ",pt="   << (void *)lmm->sys_pt
-// 		   << ",pd="   << (void *)lmm->sys_pd
-// 		   << ",info=" << (void *)lmm->sys_info
-// 		   << ",mem="  << (void *)lmm->phy_mem
-// 		   << ",io="   << (void *)lmm->io_mem
-// 		   << ",cod="  << (void *)lmm->sys_code
-// 		   << ",dat="  << (void *)lmm->sys_data
-// 		   << ",stk="  << (void *)lmm->sys_stack
-// 		   << ",apl="  << (void *)lmm->app_lo
-		   << "ape="  << (void *)lmm->app_entry
-// 		   << ",apc="  << (void *)lmm->app_code
-// 		   << ",apd="  << (void *)lmm->app_data
-		   << ",aph="  << (void *)lmm->app_hi
-		   << "})\n";
-}
-
-//========================================================================
-// copy_sys_info
-//
-// Desc: Copy the system information block, which includes boot info
-//	 and the physical memory map, into its definitive place.
-//
-// Parm: from -> current location
-// 	 to   -> destination
-//------------------------------------------------------------------------
-void copy_sys_info(System_Info * from, System_Info * to)
-{
-    db<Setup>(TRC) << "copy_sys_info(from=" << (void *)from
-		   << ",to=" << (void *)to
-		   << ",size=" << sizeof(System_Info) << ")\n";
-
-    if(sizeof(System_Info) > sizeof(Page))
+    // Relocate System_Info
+    if(sizeof(System_Info<PC>) > sizeof(Page))
 	db<Setup>(WRN) << "System_Info is bigger than a page ("
-		       << sizeof(System_Info) << ")!\n";
+		       << sizeof(System_Info<PC>) << ")!\n";
+    memcpy(reinterpret_cast<void *>(SYS_INFO), bi, sizeof(System_Info<PC>));
+    
+    // Load INIT
+    if(si->lm.has_ini) {
+	db<Setup>(TRC) << "PC_Setup::load_init()\n";
+	ELF * ini_elf = reinterpret_cast<ELF *>(&bi[si->bm.init_offset]);
+	if(ini_elf->load_segment(0) < 0) {
+	    db<Setup>(ERR)
+		<< "INIT code+data segment was corrupted during SETUP!\n";
+	    panic();
+	}
+    }
 
-    memcpy((void *)to, (void *)from, sizeof(System_Info));
+    // Load SYSTEM
+    if(si->lm.has_sys) {
+	db<Setup>(TRC) << "PC_Setup::load_os()\n";
+	ELF * sys_elf = reinterpret_cast<ELF *>(&bi[si->bm.system_offset]);
+	if(sys_elf->load_segment(0) < 0) {
+	    db<Setup>(ERR)
+		<< "OS code segment was corrupted during SETUP!\n";
+	    panic();
+	}
+	for(int i = 1; i < sys_elf->segments(); i++)
+	    if(sys_elf->load_segment(i) < 0) {
+		db<Setup>(ERR)
+		    << "OS data segment was corrupted during SETUP!\n";
+		panic();
+	    }
+    }
+
+    // Load APP
+    if(si->lm.has_app) {
+	ELF * app_elf = reinterpret_cast<ELF *>(&bi[si->bm.application_offset]);
+	db<Setup>(TRC) << "PC_Setup::load_app()\n";
+	if(app_elf->load_segment(0) < 0) {
+	    db<Setup>(ERR)
+		<< "Application code segment was corrupted during SETUP!\n";
+	    panic();
+	}
+	for(int i = 1; i < app_elf->segments(); i++)
+	    if(app_elf->load_segment(i) < 0) {
+		db<Setup>(ERR) << 
+		    "Application data segment was corrupted during SETUP!\n";
+		panic();
+	    }
+    }
 }
 
 //========================================================================
-// call_next
-//
-// Desc: Setup a stack for the next boot stage and call it.
-//
-// Parm: entry -> call target
-//------------------------------------------------------------------------
-void call_next(Log_Addr entry)
+void PC_Setup::call_next()
 {
-    db<Setup>(TRC) << "call_next(ip=" << (void *)entry
-		   << ",sp=" << (void *)(MM::SYS_STACK + TR::SYSTEM_STACK_SIZE
+    // Check for next stage
+    Log_Addr ip;
+    if(si->lm.has_ini) {
+	db<Setup>(TRC) << "Executing system global constructors ...\n";
+	reinterpret_cast<void (*)()>((void *)si->lm.sys_entry)();
+	ip = si->lm.ini_entry;
+    } else if(si->lm.has_sys)
+	ip = si->lm.sys_entry;
+    else
+	ip = si->lm.app_entry;
+
+    db<Setup>(TRC) << "PC_Setup::call_next(ip=" << ip
+		   << ",sp=" << (void *)(SYS_STACK + SYS_STACK_SIZE
 					 - 2 * sizeof(int))
-		   << ")\n";
+		   << ") => ";
+    if(si->lm.has_ini)
+	db<Setup>(TRC) << "INIT\n";
+    else if(si->lm.has_sys)
+	db<Setup>(TRC) << "SYSTEM\n";
+    else
+	db<Setup>(TRC) << "APPLICATION\n";
 
     db<Setup>(INF) << "PC_Setup ends here!\n\n";
 
-    // The following is perfectly correct, but may cause VMware to crash
-    // It must be used on real versions
     // The 2 integers on the stack are ???
     ASM("movl	%0, %%esp	\n"
  	"call	*%%ebx		\n"
- 	: : "i"(MM::SYS_STACK + TR::SYSTEM_STACK_SIZE - 2 * sizeof(int)),
-	    "b"(static_cast<unsigned int>(entry)));
+ 	: : "i"(SYS_STACK + SYS_STACK_SIZE - 2 * sizeof(int)),
+	    "b"(static_cast<unsigned int>(ip)));
 }
 
 //========================================================================
-// page_fault
-//
-// Desc: Page fault exception handler (what a handling! :-)).
-//
-// Parm: exception stack and error code pushed by the CPU
-//------------------------------------------------------------------------
-void page_fault(Reg32 eip, Reg32 cs, Reg32 eflags, Reg32 esp3, Reg32 ss,
-		Reg32 error)
+void PC_Setup::pci_aperture(unsigned int * base, unsigned int * top)
 {
-    db<Setup>(ERR) << "this thread generated an invalid address and will be terminated!\n";
-    db<Setup>(ERR) << "address=" << (void *)CPU::cr2() << "\n";
-    db<Setup>(ERR) << "context={cs=" << cs
-		   << ",ip=" << (void *)eip
-		   << ",flg=" << (void *)eflags
-		   << ",ss=" << (void *)ss
-		   << ",sp=" << (void *)esp3
-		   << ",err=" << (void *)error << "}\n";
+    db<Setup>(TRC) << "PC_Setup::pci_aperture()\n";
 
-    panic();
+    // Scan the PCI bus looking for devices with memory mapped regions
+    *base = ~0U;
+    *top = 0U;
+    for(int bus = 0; bus <= Traits<PCI>::MAX_BUS; bus++) {
+	for(int dev_fn = 0; dev_fn <= Traits<PCI>::MAX_DEV_FN; dev_fn++) {
+	    PCI::Locator loc(bus, dev_fn);
+	    PCI::Header hdr;
+ 	    PCI::header(loc, &hdr);
+	    if(hdr) {
+		db<Setup>(INF) << "PCI" << hdr << "\n";
+		for(unsigned int i = 0; i < PCI::Region::N; i++) {
+		    PCI::Region * reg = &hdr.region[i];
+		    if(*reg) {
+			db<Setup>(INF)  << "  reg[" << i << "]="
+					<< *reg << "\n";
+			if(reg->memory) {
+			    if(reg->phy_addr < *base)
+				*base = reg->phy_addr;
+			    if((reg->phy_addr + reg->size) > *top)
+				*top = reg->phy_addr + reg->size;
+			}
+		    }
+		}
+	    }
+	}
+    }
+
+    db<Setup>(INF) << "PCI address space={base=" << (void *)*base
+		   << ",top=" << (void *)*top << "}\n";
 }
 
-//========================================================================
-// gpf
-//
-// Desc: GPF exception handler (what a handling! :-)).   
-//
-// Parm: exception stack and error code pushed by the CPU
-//------------------------------------------------------------------------
-void gpf(Reg32 eip, Reg32 cs, Reg32 eflags, Reg32 esp3, Reg32 ss, Reg32 error)
+__END_SYS
+
+extern "C" { void setup(char * bi); }
+
+void setup(char * bi) 
 {
-    short ds;
-    ASM("movw %%ds, %0" : "=o" (ds) : );
-
-    db<Setup>(ERR) << "this thread caused a GPF and will be terminated!\n";
-    db<Setup>(ERR) << "context={cs=" << cs
-		   << ",ds=" << ds
-		   << ",ip=" << (void *)eip
-		   << ",flg=" << (void *)eflags
-		   << ",ss=" << (void *)ss
-		   << ",sp=" << (void *)esp3
-		   << ",err=" << (void *)error << "}\n",
-
-    panic();
+    __USING_SYS
+    PC_Setup pc_setup(bi);
 }
-
-//========================================================================
-// fpu
-//
-// Desc: FPU exception handler.				   
-//------------------------------------------------------------------------
-void fpu()
-{
-    db<Setup>(ERR) << "FPU generated an interrupt!\n";
-
-//    ASM("clts");
-
-    panic();
-}
-
-//========================================================================
-// syscall
-//
-// Desc: Linux lost syscall handler.
-//------------------------------------------------------------------------
-void syscall()
-{
-    db<Setup>(ERR) << "System call invoked but no OS kernel loaded (yet)!\n";
-
-    panic();
-}
-
-//========================================================================
-// hard_int
-//
-// Desc: Hardware triggered interrupt catcher.
-
-//------------------------------------------------------------------------
-void hard_int()
-{
-    db<Setup>(ERR)
-	<< "Hardware interrupt occurred, but no handler was installed!\n";
-
-    panic();
-}
-
-//========================================================================
-// panic
-//
-// Desc: This function is called if something goes wrong during setup,
-//	 including uncaught interrupts.
-//------------------------------------------------------------------------
-void panic()
-{
-    unsigned short * video;
-
-    //	 Set a pointer to GCA text frame buffer so we can say something
-    video = reinterpret_cast<unsigned short *>(
-	Traits<PC_Display>::FRAME_BUFFER_ADDRESS);
-
-    *video++ = 'S' | 0x1f00;
-    *video++ = 'E' | 0x1f00;
-    *video++ = 'T' | 0x1f00;
-    *video++ = 'U' | 0x1f00;
-    *video++ = 'P' | 0x1f00;
-    *video++ = ':' | 0x1f00;
-    *video++ = ':' | 0x1f00;
-    *video++ = 'p' | 0x1f00;
-    *video++ = 'a' | 0x1f00;
-    *video++ = 'n' | 0x1f00;
-    *video++ = 'i' | 0x1f00;
-    *video++ = 'c' | 0x1f00;
-    *video++ = '(' | 0x1f00;
-    *video++ = ')' | 0x1f00;
-
-    CPU::halt();
-}
-
-// This might be very useful for debugging!
-//     register int sp;
-//     ASM("movl %%esp, %0" : "=r"(sp) : );
-//     unsigned short * video = (unsigned short *) CGA_FBUF_PHY_ADDR;
-//     video [10] = ((sp >> 12) & 0xf)  | 0x1f30;
-//     video [11] = ((sp >> 8)  & 0xf)  | 0x1f30;
-//     video [12] = ((sp >> 4)  & 0xf)  | 0x1f30;
-//     video [13] =  (sp        & 0xf)  | 0x1f30;
-//     video [14] = 'O' | 0x1f00;
-//     video [15] = 'K' | 0x1f00;
-//     for(;;);
