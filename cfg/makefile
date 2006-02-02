@@ -24,7 +24,7 @@ eposmkbi.conf:
 		@echo "WORD_SIZE=$(ARCH_WORD_SIZE)" >> $@
 		@echo "ENDIANESS=$(ARCH_ENDIANESS)" >> $@
 		@echo "MEM_BASE=$(MEM_BASE)" >> $@
-		@echo "MEM_SIZE=$(MEM_SIZE)" >> $@
+		@echo "MEM_TOP=$(MEM_TOP)" >> $@
 
 clean:
 		$(CLEAN) *.conf
