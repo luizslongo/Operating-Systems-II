@@ -5,23 +5,20 @@
 __BEGIN_SYS
 
 template <int unit>
-inline static int call_init(System_Info * si)
+inline static void call_init()
 {
-    int status = 
-	Traits<PC_NIC>::NICS::template Get<unit>::Result::init(unit, si);
-    status |= call_init<unit + 1>(si);
-    return status;
+    Traits<PC_NIC>::NICS::template Get<unit>::Result::init(unit);
+    call_init<unit + 1>();
 };
 
 template <>
-inline static int call_init<Traits<PC_NIC>::NICS::Length>(System_Info * si) 
+inline static void call_init<Traits<PC_NIC>::NICS::Length>() 
 {
-    return 0;
 };
 
-int PC_NIC::init(System_Info * si)
+void PC_NIC::init()
 {
-    return call_init<0>(si);
+    call_init<0>();
 }
 
 __END_SYS

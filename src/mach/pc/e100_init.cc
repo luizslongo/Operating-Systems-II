@@ -5,7 +5,7 @@
 
 __BEGIN_SYS
 
-int E100::init(unsigned int unit, System_Info * si)
+int E100::init(unsigned int unit)
 {
     db<Init, E100>(TRC) << "E100::init(unit=" << unit << ")\n";
 
