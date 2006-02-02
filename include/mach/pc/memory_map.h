@@ -1,7 +1,9 @@
 // EPOS-- PC Memory Map
 
-#ifndef __memory_map_pc_h
-#define __memory_map_pc_h
+#ifndef __pc_memory_map_h
+#define __pc_memory_map_h
+
+#include <system/memory_map.h>
 
 __BEGIN_SYS
 
@@ -23,16 +25,14 @@ struct Memory_Map<PC>
 	PHY_MEM =	0x80000000,
 	IO_MEM =	0xd0000000,
 	SYS =		0xafc00000,
-	INT_VEC =	SYS + 0x00000000,
+	IDT =		SYS + 0x00000000,
+	GDT =		SYS + 0x00001000,
 	SYS_PT =	SYS + 0x00002000,
 	SYS_PD =	SYS + 0x00003000,
 	SYS_INFO =	SYS + 0x00004000,
 	SYS_CODE =	SYS + 0x00300000,
 	SYS_DATA =	SYS + 0x00340000,
-	SYS_STACK =	SYS + 0x003c0000,
-	MACH1 =		SYS + 0x00001000,
-	MACH2 =		TOP,
-	MACH3 =		TOP
+	SYS_STACK =	SYS + 0x003c0000
     };
 };
 
