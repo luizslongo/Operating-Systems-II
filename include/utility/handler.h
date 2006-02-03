@@ -15,9 +15,14 @@ public:
 
 public:
     Handler() {}
-
     virtual ~Handler() {}
+
     virtual void operator()() = 0;
+
+    // Virtual destructors (as genereated by GCC) implicitly call delete, thus
+    // causing an undesirable dependency to the libc. Since there is nothing
+    // delete here, an empty operator delete was used.
+    void operator delete(void *) { }
 };
 
 class Handler_Function: public Handler
