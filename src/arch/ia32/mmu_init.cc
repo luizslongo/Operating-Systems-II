@@ -46,6 +46,13 @@ void IA32_MMU::init()
 
     db<Init, IA32_MMU>(INF) << "IA32_MMU::master page directory=" 
 			    << _master << "\n";
+
+    // Initialize the System's heap
+    db<Init, IA32_MMU>(INF) << "IA32_MMU::initializing system's heap="
+			    << Traits<Machine>::SYSTEM_HEAP_SIZE 
+			    << " bytes.\n";
+    System::heap()->free(alloc(pages(Traits<Machine>::SYSTEM_HEAP_SIZE)),
+			 Traits<Machine>::SYSTEM_HEAP_SIZE);
 }
 
 __END_SYS
