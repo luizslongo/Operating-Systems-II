@@ -19,7 +19,7 @@ public:
     }
 
     Elf32_Addr entry() { return e_entry; }
-    int segments() { return e_phnum; }
+    int segments() { return e_phnum - 1; }
     
     Elf32_Addr segment_address(int i) {
 	return (i > segments()) ? 0 :
