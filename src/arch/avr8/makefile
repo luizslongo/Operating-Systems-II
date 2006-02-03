@@ -2,11 +2,18 @@
 
 include $(EPOS)/makedefs
 
-OBJS := $(subst .cc,.o,$(shell find *.cc | grep -v test | grep -v init))
+OBJS := $(subst .cc,.o,$(shell find *.cc | grep -v init | grep -v test))
+CRTS := $(subst .S,.o,$(shell find *.S | grep crt))
+CRTSI := $(subst .S,.s,$(shell find *.S | grep crt))
 INITS := $(subst .cc,.o,$(shell find *.cc | grep init))
-TESTS := $(subst .cc,.o,$(shell find *.cc | grep test))
+TESTS := $(subst .cc,,$(shell find *.cc | grep test))
 
-all:		$(LIBSYS) $(LIBINIT)
+all:		crts $(LIBSYS) $(LIBINIT)
+
+crts:		$(CRTS)
+		$(INSTALL) $^ $(LIB)
+
+.INTERMEDIATE:	$(CRTSI)
 
 $(LIBSYS):	$(LIBSYS)($(OBJS))	
 
