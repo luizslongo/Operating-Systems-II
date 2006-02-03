@@ -2,9 +2,21 @@
 
 #include <thread.h>
 #include <mmu.h>
+#include <machine.h>
+
+__USING_SYS
 
 // LIBC Heritage
-extern "C" { void _exit(int s) { __SYS(Thread)::exit(s); for(;;); } }
+
+extern "C" { void _exit(int s) { Thread::exit(s); for(;;); } }
+
+extern "C" { 
+    void __cxa_pure_virtual() { 
+	db<void>(ERR) << "__cxa_pure_virtual() called!\n"; 
+	Machine::panic();
+    }
+}
+
 
 __BEGIN_SYS
 
