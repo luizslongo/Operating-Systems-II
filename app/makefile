@@ -5,16 +5,16 @@ include $(EPOS)/makedefs
 all:		install
 
 
-$(APPLICATION):	$(APPLICATION).o
+$(APPLICATION):	$(APPLICATION).o $(LIB)/*
 		$(ALD) $(ALDFLAGS) -o $@ $<
 
-$(APPLICATION).o: $(APPLICATION).cc $(SRC)/system/$(MACH)_system
+$(APPLICATION).o: $(APPLICATION).cc 
 		$(ACC) $(ACCFLAGS) -o $@ $<
 
 install: 	$(APPLICATION)
-		$(STRIP) -o $(APPLICATION).img $<
-		$(INSTALL) $(APPLICATION).img $(IMG)/$(APPLICATION)
-		$(CLEAN) $(APPLICATION).img
+		$(STRIP) -o $(APPLICATION).tmp $<
+		$(INSTALL) $(APPLICATION).tmp $(IMG)/$(APPLICATION)
+		$(CLEAN) $(APPLICATION).tmp
 
 clean:
 		$(CLEAN) *.o $(APPLICATION)
