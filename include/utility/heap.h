@@ -12,9 +12,9 @@ __BEGIN_SYS
 class Heap: public Grouping_List<char>
 {
 public:
-    Heap() { db<Heap>(TRC) << "Heap::() => " << this << "\n"; }
+    Heap() { db<Init, Heap>(TRC) << "Heap::() => " << this << "\n"; }
     Heap(void * addr, unsigned int bytes) {
-	db<Heap>(TRC) << "Heap::() => " << this << "\n";  
+	db<Init, Heap>(TRC) << "Heap::() => " << this << "\n";  
 	free(addr, bytes); 
     }
 
