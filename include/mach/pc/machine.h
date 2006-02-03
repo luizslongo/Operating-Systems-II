@@ -8,7 +8,6 @@
 #include <mmu.h>
 #include <tsc.h>
 #include <machine.h>
-#include "device.h"
 
 __BEGIN_SYS
 
@@ -43,7 +42,7 @@ public:
     static int irq2int(int i) { return i + HARD_INT; }
     static int int2irq(int i) { return i - HARD_INT; }
     
-    static int init(System_Info * si);
+    static void init();
 
 private:
     static void int_dispatch();
@@ -64,6 +63,7 @@ private:
 
 __END_SYS
 
+#include "info.h"
 #include "memory_map.h"
 #include "ic.h"
 #include "pci.h"
