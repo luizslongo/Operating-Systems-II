@@ -17,7 +17,7 @@
 #include <fcntl.h>
 #include <ctype.h>
 
-#include <system/config.h>
+#include <system/info.h>
 
 // CONSTANTS
 static const unsigned int MAX_SI_LEN = 512;
@@ -37,13 +37,13 @@ struct Configuration
     unsigned char word_size;
     bool 	  endianess; // true => little, false => big
     unsigned int  mem_base;
-    unsigned int  mem_size;
+    unsigned int  mem_top;
     short         node_id;   // node id in SAN (-1 => get from net)
     short         n_nodes;   // nodes in SAN (-1 => dynamic)
 };
 
 // System_Info
-typedef __SYS(System_Info) System_Info;
+typedef __SYS(System_Info)<__SYS(Machine)> System_Info;
 
 // PROTOTYPES
 bool parse_config(FILE * cfg_file, Configuration * cfg);
@@ -116,7 +116,7 @@ int main(int argc, char **argv)
     printf("  Machine: %s\n", CONFIG.mach);
     printf("  Processor: %s (%d bits, %s endian)\n", CONFIG.arch,
 	   CONFIG.word_size, CONFIG.endianess ? "little" : "big");
-    printf("  Memory: %d KBytes\n", CONFIG.mem_size/1024);
+    printf("  Memory: %d KBytes\n", (CONFIG.mem_top - CONFIG.mem_base) / 1024);
     if(CONFIG.node_id == -1)
 	printf("  Node id: will get from the network\n");
     else
@@ -138,7 +138,6 @@ int main(int argc, char **argv)
     } else {
 	while((image_size % MIN_BOOT_LEN != 0))
 	    image_size += pad(fd_img, 1);
-	printf(" done.\n");
     }
     unsigned int boot_size = image_size; 
     
@@ -156,43 +155,47 @@ int main(int argc, char **argv)
 	} else	
 	    image_size += pad(fd_img, MAX_SI_LEN);
 
+    // Node ID
+    si.bm.node_id = CONFIG.node_id;
+    
+
     // Add SETUP
-    si.bm.setup_off = image_size - boot_size;
+    si.bm.setup_offset = image_size - boot_size;
     sprintf(file, "%s/img/%s_setup", epos_home, CONFIG.mach);
     printf("    Adding setup \"%s\":", file);
     image_size += put_file(fd_img, file);
 
     // Add INIT and OS (for mode != library only)
     if(!strcmp(CONFIG.mode, "library")) {
-	si.bm.init_off = -1;
-	si.bm.system_off = -1;
+	si.bm.init_offset = -1;
+	si.bm.system_offset = -1;
     } else {
         // Add INIT
-        si.bm.init_off = image_size - boot_size;
+        si.bm.init_offset = image_size - boot_size;
         sprintf(file, "%s/img/%s_init", epos_home, CONFIG.mach);
         printf("    Adding init \"%s\":", file);
         image_size += put_file(fd_img, file);
 
         // Add SYSTEM
-        si.bm.system_off = image_size - boot_size;
+        si.bm.system_offset = image_size - boot_size;
         sprintf(file, "%s/img/%s_system", epos_home, CONFIG.mach);
         printf("    Adding system \"%s\":", file);
         image_size += put_file(fd_img, file);
     }
 
     // Add LOADER (if multiple applications) or the single application
-    si.bm.loader_off = image_size - boot_size;
+    si.bm.application_offset = image_size - boot_size;
     if(argc == 3) { // Add Single APP
 	printf("    Adding application \"%s\":", argv[2]);
 	image_size += put_file(fd_img, argv[2]);
-	si.bm.app_off = -1;
+	si.bm.extras_offset = -1;
     } else { // Add LOADER
 	sprintf(file, "%s/img/%s_loader", epos_home, CONFIG.mach);
 	printf("    Adding loader \"%s\":", file);
 	image_size += put_file(fd_img, file);
 
 	// Add APPs
-	si.bm.app_off = image_size - boot_size;
+	si.bm.extras_offset = image_size - boot_size;
 	struct stat file_stat;    
 	for(int i = 2; i < argc; i++) {
 	    printf("    Adding application \"%s\":", argv[i]);
@@ -205,8 +208,8 @@ int main(int argc, char **argv)
     }
 
     // Prepare the Boot_Map
-    si.bm.mem_base  = CONFIG.mem_base;
-    si.bm.mem_size  = CONFIG.mem_size;
+    si.bm.mem_base = CONFIG.mem_base;
+    si.bm.mem_top  = CONFIG.mem_top;
     si.bm.img_size  = image_size - boot_size; // Boot not included
 
     if(need_si) {
@@ -295,12 +298,12 @@ bool parse_config(FILE * cfg_file, Configuration * cfg)
     token = strtok(NULL, "\n");
     cfg->mem_base = strtol(token, 0, 16);
 
-    // Memory Size
+    // Memory Top
     fgets(line, 256, cfg_file);
     token = strtok(line, "=");
-    if(strcmp(token, "MEM_SIZE")) return false;
+    if(strcmp(token, "MEM_TOP")) return false;
     token = strtok(NULL, "\n");
-    cfg->mem_size=strtol(token, 0, 16);
+    cfg->mem_top=strtol(token, 0, 16);
 
     // Node Id
     fgets(line, 256, cfg_file);
@@ -328,11 +331,14 @@ bool parse_config(FILE * cfg_file, Configuration * cfg)
 //=============================================================================
 template<typename T> bool add_boot_map(int fd, System_Info * si)
 {
-    pad(fd, (2 * sizeof(T))); // mem_size, mem_free
-	
     if(!put_number(fd, static_cast<T>(si->bm.mem_base)))
 	return false;
-    if(!put_number(fd, static_cast<T>(si->bm.mem_size)))
+    if(!put_number(fd, static_cast<T>(si->bm.mem_top)))
+	return false;
+
+    if(!put_number(fd, static_cast<T>(0)))
+	return false;
+    if(!put_number(fd, static_cast<T>(0)))
 	return false;
 	
     if(!put_number(fd, si->bm.node_id))
@@ -342,15 +348,15 @@ template<typename T> bool add_boot_map(int fd, System_Info * si)
 
     if(!put_number(fd, static_cast<T>(si->bm.img_size)))
 	return false;
-    if(!put_number(fd, static_cast<T>(si->bm.setup_off)))
+    if(!put_number(fd, static_cast<T>(si->bm.setup_offset)))
 	return false;
-    if(!put_number(fd, static_cast<T>(si->bm.init_off)))
+    if(!put_number(fd, static_cast<T>(si->bm.init_offset)))
 	return false;
-    if(!put_number(fd, static_cast<T>(si->bm.system_off)))
+    if(!put_number(fd, static_cast<T>(si->bm.system_offset)))
 	return false;
-    if(!put_number(fd, static_cast<T>(si->bm.loader_off)))
+    if(!put_number(fd, static_cast<T>(si->bm.application_offset)))
 	return false;
-    if(!put_number(fd, static_cast<T>(si->bm.app_off))) 
+    if(!put_number(fd, static_cast<T>(si->bm.extras_offset))) 
 	return false;
     
     return true;
