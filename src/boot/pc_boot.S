@@ -41,8 +41,9 @@ DISK_IMAGE 	= 0x8000 ; = BOOT_IMAGE_PHY_ADDR from memory_map
 DISK_SECT_SIZE =         512     
 
 ; The size of ELF object's header in bytes 
-ELF_HDR_SIZE =           116 (GCC < 3.4 not stripped, GCC 4.x stripped) 
-; ELF_HDR_SIZE =           84
+; ELF_HDR_SIZE =           84 (GCC 2.x)
+; ELF_HDR_SIZE =           116 (GCC < 3.4 not stripped)
+ELF_HDR_SIZE =           128 ; (GCC 4.x stripped) 
 
 ; DISK IMAGE LAYOUT 
 ; -+-----------------------+ DISK_IMAGE_SYS_INFO 
