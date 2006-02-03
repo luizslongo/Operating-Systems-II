@@ -18,7 +18,7 @@ ANL_COMP_FLGS="-DANALYZE"
 
 CONFIGURATOR=eposcfg
 
-COMP_FLGS=
+COMP_FLGS="-include $EPOS/include/utility/malloc.h"
 COMP_HDRS="$EPOS/include"
 
 C_COMPILER="$TOOLS_PREFIX""gcc"
@@ -52,8 +52,8 @@ NATIVE_LINK_LIBS_BUILTIN="util_$ARCH gcc c gcc"
 
 NATIVE_LINKER_LIBRARY=$NATIVE_LINKER
 NATIVE_LINK_FLGS_LIBRARY="-L$EPOS/lib -L`$C_COMPILER $C_COMP_FLGS -print-file-name=` -static --nmagic --section-start $MACH_CODE_NAME=$APP_CODE --section-start $MACH_DATA_NAME=$APP_DATA"
-NATIVE_LINK_OBJI_LIBRARY="$EPOS/lib/$ARCH""_crt1.o $EPOS/lib/$ARCH""_crti.o $EPOS/lib/$ARCH""_crtbegin.o $EPOS/src/init/init_first.o"
-NATIVE_LINK_OBJN_LIBRARY="$EPOS/src/init/init.o $EPOS/src/system/system.o $EPOS/lib/$ARCH""_crtend.o $EPOS/lib/$ARCH""_crtn.o"
+NATIVE_LINK_OBJI_LIBRARY="$EPOS/lib/$ARCH""_crt1.o $EPOS/lib/$ARCH""_crti.o $EPOS/lib/$ARCH""_crtbegin.o $EPOS/lib/$MACH""_init_first.o"
+NATIVE_LINK_OBJN_LIBRARY="-lutil_$ARCH $EPOS/lib/$MACH""_init_system.o $EPOS/lib/$MACH""_system.o $EPOS/lib/$ARCH""_crtend.o $EPOS/lib/$ARCH""_crtn.o"
 NATIVE_LINK_LIBS_LIBRARY="system_$ARCH init_$ARCH util_$ARCH system_$ARCH gcc c gcc"
 
 LINUX_LINKER="g++"
