@@ -5,8 +5,8 @@
 
 #include "machine.h"
 #include "pcnet32.h"
-//#include "i82559.h"
-//#include "c905.h"
+#include "e100.h"
+#include "c905.h"
 
 __BEGIN_SYS
 
@@ -45,7 +45,7 @@ public:
 
     const Statistics & statistics() { return _dev->statistics(); }
 
-    static int init(System_Info * si);
+    static void init();
 
 private:
     Meta_NIC<NICS>::Base * _dev;

@@ -4,6 +4,7 @@
 #define __pc_pci_h
 
 #include <pci.h>
+#include "memory_map.h"
 
 __BEGIN_SYS
 
@@ -53,7 +54,7 @@ public:
 	cfg16(l.bus, l.dev_fn, STATUS, v);
     }
     
-    static int init(System_Info * si);
+    static void init();
 
 private:
     static int cmd(Reg8 bus, Reg8 dev_fn, Reg8 addr) {
