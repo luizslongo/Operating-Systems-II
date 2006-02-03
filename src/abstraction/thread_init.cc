@@ -19,7 +19,7 @@ void Thread::init()
     if(active_scheduler)
 	Alarm::master(QUANTUM, &reschedule);
     
-    _running = new(malloc(sizeof(Thread))) Thread(entry, RUNNING);
+    _running = new(kmalloc(sizeof(Thread))) Thread(entry, RUNNING);
 
     _idle = new(kmalloc(sizeof(Thread))) Thread(&idle, READY, IDLE);
 

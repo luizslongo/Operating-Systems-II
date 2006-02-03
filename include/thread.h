@@ -3,8 +3,8 @@
 #ifndef __thread_h
 #define __thread_h
 
+#include <system/kmalloc.h>
 #include <utility/queue.h>
-#include <utility/malloc.h>
 #include <utility/handler.h>
 #include <cpu.h>
 #include <mmu.h>
@@ -60,7 +60,7 @@ public:
     {
 	prevent_scheduling();
 
-	_stack = malloc(stack_size);
+	_stack = kmalloc(stack_size);
 	_context = CPU::init_stack(_stack, stack_size, &implicit_exit,
 				   entry);
 
@@ -74,7 +74,7 @@ public:
     {
 	prevent_scheduling();
 
-	_stack = malloc(stack_size);
+	_stack = kmalloc(stack_size);
 	_context = CPU::init_stack(_stack, stack_size, &implicit_exit,
 				   entry, a1);
 
@@ -88,7 +88,7 @@ public:
     {
 	prevent_scheduling();
 
-	_stack = malloc(stack_size);
+	_stack = kmalloc(stack_size);
 	_context = CPU::init_stack(_stack, stack_size, &implicit_exit,
 				   entry, a1, a2);
 
@@ -102,7 +102,7 @@ public:
     {
 	prevent_scheduling();
 
-	_stack = malloc(stack_size);
+	_stack = kmalloc(stack_size);
 	_context = CPU::init_stack(_stack, stack_size, &implicit_exit,
 				   entry, a1, a2, a3);
 
@@ -122,7 +122,7 @@ public:
 	case WAITING: _waiting->remove(this); break;
 	}
 	
-	free(_stack);
+	kfree(_stack);
     }
 
     volatile const State & state() const { return _state; }
