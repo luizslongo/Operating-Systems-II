@@ -5,7 +5,7 @@
 
 __BEGIN_SYS
 
-int AVR8_TSC::init(System_Info * si)
+void AVR8_TSC::init()
 {
     db<Init, AVR8_TSC>(TRC) << "AVR8_TSC::init()\n";
 
@@ -15,8 +15,6 @@ int AVR8_TSC::init(System_Info * si)
     
 //     IC ic;
 //     ic.enable(IC::TIMER1_OVF);
-
-    return 0;
 }
 
 __END_SYS
