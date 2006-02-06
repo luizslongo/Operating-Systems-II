@@ -42,31 +42,19 @@ F77_LINK_FLGS=
 F77_LINK_OBJS=
 F77_LINK_LIBS="f2c"
 
-NATIVE_LINKER="$TOOLS_PREFIX""ld"
+LINKER="$TOOLS_PREFIX""ld"
 
-NATIVE_LINKER_BUILTIN=$NATIVE_LINKER
-NATIVE_LINK_FLGS_BUILTIN="-L$EPOS/lib -L`$C_COMPILER $C_COMP_FLGS -print-file-name=` -static --nmagic --section-start $MACH_CODE_NAME=$APP_CODE --section-start $MACH_DATA_NAME=$APP_DATA"
-NATIVE_LINK_OBJI_BUILTIN="$EPOS/lib/$ARCH""_crt1.o $EPOS/lib/$ARCH""_crti.o $EPOS/lib/$ARCH""_crtbegin.o"
-NATIVE_LINK_OBJN_BUILTIN="$EPOS/lib/$ARCH""_crtend.o $EPOS/lib/$ARCH""_crtn.o -R$EPOS/src/system/$MACH""_system"
-NATIVE_LINK_LIBS_BUILTIN="util_$ARCH gcc c gcc"
+LINKER_BUILTIN=$LINKER
+LINK_FLGS_BUILTIN="-L$EPOS/lib -L`$C_COMPILER $C_COMP_FLGS -print-file-name=` -static --nmagic --section-start $MACH_CODE_NAME=$APP_CODE --section-start $MACH_DATA_NAME=$APP_DATA"
+LINK_OBJI_BUILTIN="$EPOS/lib/$ARCH""_crt1.o $EPOS/lib/$ARCH""_crti.o $EPOS/lib/$ARCH""_crtbegin.o"
+LINK_OBJN_BUILTIN="$EPOS/lib/$ARCH""_crtend.o $EPOS/lib/$ARCH""_crtn.o -R$EPOS/src/system/$MACH""_system"
+LINK_LIBS_BUILTIN="util_$ARCH gcc c gcc"
 
-NATIVE_LINKER_LIBRARY=$NATIVE_LINKER
-NATIVE_LINK_FLGS_LIBRARY="-L$EPOS/lib -L`$C_COMPILER $C_COMP_FLGS -print-file-name=` -static --nmagic --section-start $MACH_CODE_NAME=$APP_CODE --section-start $MACH_DATA_NAME=$APP_DATA"
-NATIVE_LINK_OBJI_LIBRARY="$EPOS/lib/$ARCH""_crt1.o $EPOS/lib/$ARCH""_crti.o $EPOS/lib/$ARCH""_crtbegin.o $EPOS/lib/$MACH""_init_first.o"
-NATIVE_LINK_OBJN_LIBRARY="-lutil_$ARCH $EPOS/lib/$MACH""_init_system.o $EPOS/lib/$MACH""_system.o $EPOS/lib/$ARCH""_crtend.o $EPOS/lib/$ARCH""_crtn.o"
-NATIVE_LINK_LIBS_LIBRARY="system_$ARCH init_$ARCH util_$ARCH system_$ARCH gcc c gcc"
-
-LINUX_LINKER="g++"
-LINUX_LINK_FLGS="-L$EPOS/lib"
-LINUX_LINK_OBJI="$EPOS/lib/init_linux.o $EPOS/lib/system.o"
-LINUX_LINK_OBJN=
-LINUX_LINK_LIBS="util_linux linux_system pthread"
-
-if [ $ARCH = "ia32" ] ; then
-    ARCH=$ARCH
-elif [ $ARCH = "avr8" ] ; then
-    NATIVE_LINK_OBJI_LIBRARY="$NATIVE_LINK_OBJI_LIBRARY $EPOS/src/setup/$MACH""_setup.o"
-fi
+LINKER_LIBRARY=$LINKER
+LINK_FLGS_LIBRARY="-L$EPOS/lib -L`$C_COMPILER $C_COMP_FLGS -print-file-name=` -static --nmagic --section-start $MACH_CODE_NAME=$APP_CODE --section-start $MACH_DATA_NAME=$APP_DATA"
+LINK_OBJI_LIBRARY="$EPOS/lib/$ARCH""_crt1.o $EPOS/lib/$ARCH""_crti.o $EPOS/lib/$ARCH""_crtbegin.o $EPOS/lib/$MACH""_init_first.o"
+LINK_OBJN_LIBRARY="-lutil_$ARCH $EPOS/lib/$MACH""_init_system.o $EPOS/lib/$MACH""_system.o $EPOS/lib/$ARCH""_crtend.o $EPOS/lib/$ARCH""_crtn.o"
+LINK_LIBS_LIBRARY="system_$ARCH init_$ARCH util_$ARCH system_$ARCH gcc c gcc"
 
 #=========================================================================
 # VARIABLES
@@ -286,30 +274,24 @@ for hdr in $COMP_HDRS ; do
     compile_flgs="$compile_flgs -I$hdr"
 done
 
-if [ $os_is_linux = 1 ] ; then
-	LINKER=$LINUX_LINKER
-        LINK_FLGS=$LINUX_LINK_FLGS
-        LINK_OBJI=$LINUX_LINK_OBJI
-        LINK_OBJN=$LINUX_LINK_OBJN
-        LINK_LIBS=$LINUX_LINK_LIBS
-    elif [ $os_is_kernel = 1 ] ; then
-        LINKER=$NATIVE_LINKER_KERNEL
-	LINK_FLGS=$NATIVE_LINK_FLGS_KERNEL
-	LINK_OBJI=$NATIVE_LINK_OBJI_KERNEL
-	LINK_OBJN=$NATIVE_LINK_OBJN_KERNEL
-	LINK_LIBS=$NATIVE_LINK_LIBS_KERNEL
+if [ $os_is_kernel = 1 ] ; then
+        LINKER=$LINKER_KERNEL
+	LINK_FLGS=$LINK_FLGS_KERNEL
+	LINK_OBJI=$LINK_OBJI_KERNEL
+	LINK_OBJN=$LINK_OBJN_KERNEL
+	LINK_LIBS=$LINK_LIBS_KERNEL
     elif [ $os_is_library = 1 ] ; then
-	LINKER=$NATIVE_LINKER_LIBRARY
-	LINK_FLGS=$NATIVE_LINK_FLGS_LIBRARY
-	LINK_OBJI=$NATIVE_LINK_OBJI_LIBRARY
-	LINK_OBJN=$NATIVE_LINK_OBJN_LIBRARY
-	LINK_LIBS=$NATIVE_LINK_LIBS_LIBRARY
+	LINKER=$LINKER_LIBRARY
+	LINK_FLGS=$LINK_FLGS_LIBRARY
+	LINK_OBJI=$LINK_OBJI_LIBRARY
+	LINK_OBJN=$LINK_OBJN_LIBRARY
+	LINK_LIBS=$LINK_LIBS_LIBRARY
     elif [ $os_is_builtin = 1 ] ; then
-	LINKER=$NATIVE_LINKER_BUILTIN
-	LINK_FLGS=$NATIVE_LINK_FLGS_BUILTIN
-	LINK_OBJI=$NATIVE_LINK_OBJI_BUILTIN
-	LINK_OBJN=$NATIVE_LINK_OBJN_BUILTIN
-	LINK_LIBS=$NATIVE_LINK_LIBS_BUILTIN
+	LINKER=$LINKER_BUILTIN
+	LINK_FLGS=$LINK_FLGS_BUILTIN
+	LINK_OBJI=$LINK_OBJI_BUILTIN
+	LINK_OBJN=$LINK_OBJN_BUILTIN
+	LINK_LIBS=$LINK_LIBS_BUILTIN
 fi
 	
 linker=$LINKER
