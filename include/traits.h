@@ -239,10 +239,12 @@ template <> struct Traits<ATMega128>: public Traits<ATMega128_Common>
     static const unsigned long long CLOCK = 8000000;
     static const unsigned int BOOT_IMAGE_ADDR = 0x0000;
 
-    static const unsigned int SYSTEM_STACK_SIZE = 64;
-    static const unsigned int SYSTEM_HEAP_SIZE = 256;
     static const unsigned int APPLICATION_STACK_SIZE = 256;
-    static const unsigned int APPLICATION_HEAP_SIZE = 1024;
+    static const unsigned int APPLICATION_HEAP_SIZE = 512;
+
+    static const unsigned int SYSTEM_STACK_SIZE = 64;
+    static const unsigned int SYSTEM_HEAP_SIZE = 4 *  APPLICATION_STACK_SIZE;
+
 };
 
 template <> struct Traits<ATMega128_Timer>: public Traits<ATMega128_Common>
