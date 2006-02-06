@@ -34,8 +34,6 @@ public:
     void disable() { return AVR_ADC::disable(); }
 
     void reset() { return AVR_ADC::reset(); }
-     
-    static int init(System_Info * si) { return 0; }
 };
 
 __END_SYS

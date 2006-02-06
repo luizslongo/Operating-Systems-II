@@ -3,6 +3,8 @@
 #ifndef __atmega128_ic_h
 #define __atmega128_ic_h
 
+#include <system/memory_map.h>
+#include <cpu.h>
 #include "../avr_common/ic.h"
 
 __BEGIN_SYS
@@ -305,8 +307,6 @@ public:
 	if (IRQ_TIMER3_COMPC == irq) { etimsk(etimsk() & ~OCIE3C); return; }
     }
     
-    static int init(System_Info * si) { return 0; }
-
 private:
 
     typedef AVR8::Reg8 Reg8;
