@@ -2,7 +2,7 @@
 
 include $(EPOS)/makedefs
 
-all:		install
+all:		$(MACH)_install
 
 pc_setup:	pc_setup_start.o pc_setup.o
 		$(LD) $(LDFLAGS) -L$(CCLIB) --omagic \
@@ -11,12 +11,14 @@ pc_setup:	pc_setup_start.o pc_setup.o
 		-o $@ $^ -l$(LSYS) -l$(LINIT) -l$(LUTIL) -lgcc -lc -lgcc
 
 pc_install:	pc_setup
-		$(STRIP) -o $<.img $<
+		$(STRIP) -o $<.tmp $<
+		$(INSTALL) $(MACH)_setup.tmp $(IMG)/$(MACH)_setup
+		$(CLEAN) $(MACH)_setup.tmp
 
 
-install:        $(MACH)_install
-		$(INSTALL) $(MACH)_setup.img $(IMG)/$(MACH)_setup
-		$(CLEAN) $(MACH)_setup.img
+atmega16_install:
+atmega128_install:
+
 
 test:
 
