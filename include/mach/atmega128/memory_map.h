@@ -1,9 +1,9 @@
 // EPOS-- ATMega128 Memory Map
 
-#ifndef __memory_map_atmega128_h
-#define __memory_map_atmega128_h
+#ifndef __atmega128_memory_map_h
+#define __atmega128_memory_map_h
 
-#include <system/config.h>
+#include <system/memory_map.h>
 
 __BEGIN_SYS
 
@@ -17,7 +17,7 @@ struct Memory_Map<ATMega128>
 
     enum {
 	BASE =		0x000000,
-	TOP =		0x00ffff,
+	TOP =		0x001000,
 	APP_LO =	0x000000,
 	APP_CODE =	0x000000,
 	APP_DATA =	0x800150,
@@ -26,15 +26,10 @@ struct Memory_Map<ATMega128>
 	IO_MEM =	0x800020,
 	SYS =		0x000000,
 	INT_VEC =	0x000000,
-	SYS_PT =	TOP,
-	SYS_PD =	TOP,
 	SYS_INFO =	0x000100,
 	SYS_CODE =	0x000000,
 	SYS_DATA =	0x800150,
-	SYS_STACK =	0x8010ff,
-	MACH1 =		0x001000,
-	MACH2 =		0x000000,
-	MACH3 =		TOP,
+	SYS_STACK =	0x8010ff
     };
 };
 
