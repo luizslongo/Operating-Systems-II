@@ -6,11 +6,9 @@
 
 __BEGIN_SYS
 
-int Radio::init(unsigned int unit, System_Info * si)
+void Radio::init(unsigned int unit)
 {
     db<Init, Radio>(TRC) << "Radio::init(unit=" << unit << ")\n";
-
-    return 0;
 }
 
 __END_SYS
