@@ -3,12 +3,12 @@
 #ifndef __avr8_mmu_h
 #define __avr8_mmu_h
 
-#include <cpu.h>
-#include <mmu.h>
+#include <system/memory_map.h>
 #include <utility/string.h>
 #include <utility/list.h>
 #include <utility/debug.h>
-#include __MEMORY_MAP_H
+#include <cpu.h>
+#include <mmu.h>
 
 __BEGIN_SYS
 
@@ -22,6 +22,7 @@ private:
 public:
     //Dummy DMA_Buffer (AVR CPU's does not make DMA)
     class DMA_Buffer {};
+
     // Page Flags
     typedef MMU_Common<0, 0, 0>::Flags AVR8_Flags;
 
@@ -34,22 +35,22 @@ public:
     public:
         Chunk() {}
         Chunk(unsigned int bytes, Flags flags)
-	    : _phy_addr(alloc(bytes)), _size(bytes), _flags(flags) {}
+	    : _phy_addr(alloc(bytes)), _bytes(bytes), _flags(flags) {}
 	Chunk(Phy_Addr phy_addr, unsigned int bytes, Flags flags)
-	    : _phy_addr(phy_addr), _size(bytes), _flags(flags) {}
-	~Chunk() { free(_phy_addr, _size); }
+	    : _phy_addr(phy_addr), _bytes(bytes), _flags(flags) {}
+	~Chunk() { free(_phy_addr, _bytes); }
 
 	unsigned int pts() const { return 0; }
 	Flags flags() const { return _flags; }
 	Page_Table * pt() const { return 0; }
-	unsigned int size() const { return _size; }
+	unsigned int size() const { return _bytes; }
 	Phy_Addr phy_address() const { return _phy_addr; } // always CT
 
 	int resize(unsigned int amount) { return 0; } // no resize with CT
 
     private:
         Phy_Addr _phy_addr;
-        unsigned int _size;
+        unsigned int _bytes;
         Flags _flags;
     };
 
@@ -98,7 +99,7 @@ public:
 
     static Phy_Addr physical(Log_Addr addr) { return addr; }
 
-    static int init(System_Info * si);
+    static void init();
 
 private:
     static List _free;

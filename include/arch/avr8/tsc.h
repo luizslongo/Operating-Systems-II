@@ -3,6 +3,8 @@
 #ifndef __avr8_tsc_h
 #define __avr8_tsc_h
 
+#include <system/memory_map.h>
+#include <cpu.h>
 #include <tsc.h>
 
 __BEGIN_SYS
@@ -59,7 +61,7 @@ public:
 	return tcnt1hl() | _ts << (sizeof(Reg16) * 8);
     }
 
-    static int init(System_Info * si);
+    static void init();
     
 private:
     static Reg8 tccr1a() { return CPU::in8(TCCR1A); }

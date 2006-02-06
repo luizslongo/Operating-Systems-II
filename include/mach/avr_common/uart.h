@@ -3,6 +3,8 @@
 #ifndef __avr_uart_h
 #define __avr_uart_h
 
+#include <system/memory_map.h>
+#include <cpu.h>
 #include <uart.h>
 
 __BEGIN_SYS

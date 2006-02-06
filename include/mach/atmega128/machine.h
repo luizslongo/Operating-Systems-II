@@ -3,7 +3,11 @@
 #ifndef __atmega128_h
 #define __atmega128_h
 
+#include <cpu.h>
+#include <mmu.h>
+#include <tsc.h>
 #include "../avr_common/machine.h"
+#include "memory_map.h"
 
 __BEGIN_SYS
 
@@ -42,8 +46,8 @@ public:
     static int irq2int(int i) { return i; }
     static int int2irq(int i) { return i; }
 
-    static int init(System_Info * si) { return 0; }
-    
+    static void init();
+
 private:
     static int_handler * _int_vector[INT_VECTOR_SIZE];
 };
@@ -56,7 +60,6 @@ __END_SYS
 #include "eeprom.h"
 #include "uart.h"
 #include "spi.h"
-#include <display.h>
 #include "nic.h"
 #include "adc.h"
 #include "sensor.h"

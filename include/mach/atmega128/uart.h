@@ -29,8 +29,6 @@ public:
     void put(char c) { while(!txd_empty()); txd(c); }
 
     void loopback(bool flag) { AVR_UART::loopback(flag); }
-
-    static int init(System_Info * si) { return 0; }
 };
 
 __END_SYS

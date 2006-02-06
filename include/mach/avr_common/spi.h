@@ -3,6 +3,8 @@
 #ifndef __avr_spi_h
 #define __avr_spi_h
 
+#include <system/memory_map.h>
+#include <cpu.h>
 #include <spi.h>
 
 __BEGIN_SYS

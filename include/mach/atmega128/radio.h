@@ -38,7 +38,7 @@ public:
 
     const Statistics & statistics() { return _statistics; }
 
-    static int init(unsigned int unit, System_Info * si);
+    static void init(unsigned int unit);
 
 private:
     Radio(unsigned int unit, int io_port, int irq, void * dma);
