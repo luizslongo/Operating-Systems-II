@@ -16,8 +16,8 @@ MACH_ATMEGA128 	:= atmega128
 
 # System configuration
 MODE		:= $(MODE_LIBRARY)
-ARCH		:= $(ARCH_AVR8)
-MACH		:= $(MACH_ATMEGA128)
+ARCH		:= $(ARCH_IA32)
+MACH		:= $(MACH_PC)
 
 # do not modify anything bellow this line
 ###############################################################################
