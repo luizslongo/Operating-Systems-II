@@ -1,6 +1,9 @@
 // EPOS-- PC Mediator Initialization
 
 #include <machine.h>
+#include <system.h>
+
+extern "C" { void __epos_library_app_entry(void); }
 
 __BEGIN_SYS
 
@@ -31,8 +34,19 @@ void PC::init()
     _int_vector[IA32::EXC_GPF] = reinterpret_cast<int_handler *>(exc_gpf);
     _int_vector[IA32::EXC_NODEV] = reinterpret_cast<int_handler *>(exc_fpu);
 
+    // If EPOS is a library then adjust the application entry point (that
+    // was set by SETUP) based on the ELF SYSTEM+APPLICATION image
+    System_Info<PC> * si = System::info();
+    if(!si->lm.has_sys)
+	si->lmm.app_entry =
+	    reinterpret_cast<unsigned int>(&__epos_library_app_entry);
+
     // Initialize the hardware
-    IA32_MMU::init();
+    if(Traits<IA32_MMU>::enabled)
+	IA32_MMU::init();
+    else
+	db<Init, PC>(WRN) << "MMU is disabled by traits!\n";
+	
 
     if(Traits<PC_PCI>::enabled)
 	PC_PCI::init();
