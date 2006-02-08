@@ -132,9 +132,9 @@ void PC_Setup::build_lm()
 
     // Check SETUP integrity and get the size of its segments
     si->lm.stp_entry = 0;
-    si->lm.stp_code = 0;
+    si->lm.stp_code = ~0U;
     si->lm.stp_code_size = 0;
-    si->lm.stp_data = 0;
+    si->lm.stp_data = ~0U;
     si->lm.stp_data_size = 0;
     if(si->lm.has_stp) {
 	ELF * stp_elf = reinterpret_cast<ELF *>(&bi[si->bm.setup_offset]);
@@ -147,8 +147,9 @@ void PC_Setup::build_lm()
 	si->lm.stp_code = stp_elf->segment_address(0);
 	si->lm.stp_code_size = stp_elf->segment_size(0);
 	if(stp_elf->segments() > 1) {
-	    si->lm.stp_data = stp_elf->segment_address(1);
 	    for(int i = 1; i < stp_elf->segments(); i++) {
+		if(stp_elf->segment_type(i) != PT_LOAD)
+		    continue;
 		if(stp_elf->segment_address(i) < si->lm.stp_data)
 		    si->lm.stp_data = stp_elf->segment_address(i);
 		si->lm.stp_data_size += stp_elf->segment_size(i);
@@ -159,9 +160,9 @@ void PC_Setup::build_lm()
     // Check INIT integrity and get the size of its segments
     si->lm.ini_entry = 0;
     si->lm.ini_segments = 0;
-    si->lm.ini_code = 0;
+    si->lm.ini_code = ~0U;
     si->lm.ini_code_size = 0;
-    si->lm.ini_data = 0;
+    si->lm.ini_data = ~0U;
     si->lm.ini_data_size = 0;
     if(si->lm.has_ini) {
 	ELF * ini_elf = reinterpret_cast<ELF *>(&bi[si->bm.init_offset]);
@@ -174,8 +175,9 @@ void PC_Setup::build_lm()
 	si->lm.ini_code = ini_elf->segment_address(0);
 	si->lm.ini_code_size = ini_elf->segment_size(0);
 	if(ini_elf->segments() > 1) {
-	    si->lm.ini_data = ini_elf->segment_address(1);
 	    for(int i = 1; i < ini_elf->segments(); i++) {
+		if(ini_elf->segment_type(i) != PT_LOAD)
+		    continue;
 		if(ini_elf->segment_address(i) < si->lm.ini_data)
 		    si->lm.ini_data = ini_elf->segment_address(i);
 		si->lm.ini_data_size += ini_elf->segment_size(i);
@@ -186,9 +188,9 @@ void PC_Setup::build_lm()
     // Check SYSTEM integrity and get the size of its segments
     si->lm.sys_entry = 0;
     si->lm.sys_segments = 0;
-    si->lm.sys_code = 0;
+    si->lm.sys_code = ~0U;
     si->lm.sys_code_size = 0;
-    si->lm.sys_data = 0;
+    si->lm.sys_data = ~0U;
     si->lm.sys_data_size = 0;
     si->lm.sys_stack = SYS_STACK;
     si->lm.sys_stack_size = SYS_STACK_SIZE;
@@ -203,8 +205,9 @@ void PC_Setup::build_lm()
 	si->lm.sys_code = sys_elf->segment_address(0);
 	si->lm.sys_code_size = sys_elf->segment_size(0);
 	if(sys_elf->segments() > 1) {
-	    si->lm.sys_data = sys_elf->segment_address(1);
 	    for(int i = 1; i < sys_elf->segments(); i++) {
+		if(sys_elf->segment_type(i) != PT_LOAD)
+		    continue;
 		if(sys_elf->segment_address(i) < si->lm.sys_data)
 		    si->lm.sys_data = sys_elf->segment_address(i);
 		si->lm.sys_data_size += sys_elf->segment_size(i);
@@ -243,9 +246,9 @@ void PC_Setup::build_lm()
     // Check APPLICATION integrity and get the size of its segments
     si->lm.app_entry = 0;
     si->lm.app_segments = 0;
-    si->lm.app_code = 0;
+    si->lm.app_code = ~0U;
     si->lm.app_code_size = 0;
-    si->lm.app_data = 0;
+    si->lm.app_data = ~0U;
     si->lm.app_data_size = 0;
     if(si->lm.has_app) {
 	ELF * app_elf =
@@ -258,9 +261,9 @@ void PC_Setup::build_lm()
 	si->lm.app_code = app_elf->segment_address(0);
 	si->lm.app_code_size = app_elf->segment_size(0);
 	if(app_elf->segments() > 1) {
-	    si->lm.app_data = app_elf->segment_address(1);
-	    si->lm.app_data_size = 0;
 	    for(int i = 1; i < app_elf->segments(); i++) {
+		if(app_elf->segment_type(i) != PT_LOAD)
+		    continue;
 		if(app_elf->segment_address(i) < si->lm.app_data)
 		    si->lm.app_data = app_elf->segment_address(i);
 		si->lm.app_data_size += app_elf->segment_size(i);
@@ -354,27 +357,6 @@ void PC_Setup::build_pmm()
 	si->pmm.ext_base = 0;
 	si->pmm.ext_top = 0;
     }	
-    db<Setup>(TRC) << "setup_sys_pt(pmm={idt=" << (void *)si->pmm.idt
-		   << ",gdt="  << (void *)si->pmm.gdt
-		   << ",pt="   << (void *)si->pmm.sys_pt
-		   << ",pd="   << (void *)si->pmm.sys_pd
-		   << ",info=" << (void *)si->pmm.sys_info
-		   << ",mem="  << (void *)si->pmm.phy_mem_pts
-		   << ",io="   << (void *)si->pmm.io_mem_pts
-		   << ",sysc=" << (void *)si->pmm.sys_code
-		   << ",sysd=" << (void *)si->pmm.sys_data
-		   << ",syss=" << (void *)si->pmm.sys_stack
-		   << ",memb=" << (void *)si->pmm.mem_base
-		   << ",memt=" << (void *)si->pmm.mem_top
-		   << ",fr1b=" << (void *)si->pmm.free1_base
-		   << ",fr1t=" << (void *)si->pmm.free1_top
-		   << ",fr2b=" << (void *)si->pmm.free2_base
-		   << ",fr2t=" << (void *)si->pmm.free2_top
-		   << "}"
-		   << ",code_size=" << MMU::pages(si->lm.sys_code_size)
-		   << ",data_size=" << MMU::pages(si->lm.sys_data_size)
-		   << ",stack_size=" << MMU::pages(si->lm.sys_stack_size)
-		   << ")\n";
 }
 
 //========================================================================
@@ -714,9 +696,15 @@ void PC_Setup::load_parts()
 	ELF * ini_elf = reinterpret_cast<ELF *>(&bi[si->bm.init_offset]);
 	if(ini_elf->load_segment(0) < 0) {
 	    db<Setup>(ERR)
-		<< "INIT code+data segment was corrupted during SETUP!\n";
+		<< "INIT code segment was corrupted during SETUP!\n";
 	    panic();
 	}
+	for(int i = 1; i < ini_elf->segments(); i++)
+	    if(ini_elf->load_segment(i) < 0) {
+		db<Setup>(ERR)
+		    << "INIT data segment was corrupted during SETUP!\n";
+		panic();
+	    }
     }
 
     // Load SYSTEM
@@ -862,8 +850,6 @@ void _start()
     if(!elf->valid())
  	Machine::panic();
     char * entry = reinterpret_cast<char *>(elf->entry());
-    if(elf->segments() != 1)
- 	Machine::panic();
 
     // Test if we can access the address for which SETUP has been compiled
     *entry = 'G';

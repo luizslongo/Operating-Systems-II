@@ -19,12 +19,18 @@ public:
     }
 
     Elf32_Addr entry() { return e_entry; }
-    int segments() { return e_phnum - 1; }
-    
+
+    int segments() { return e_phnum; }
+
+    Elf32_Word segment_type(int i) {
+ 	return (i > segments()) ? PT_NULL : seg(i)->p_type;
+    }
+
     Elf32_Addr segment_address(int i) {
 	return (i > segments()) ? 0 :
 	    (seg(i)->p_vaddr & ~(seg(i)->p_align - 1));
     }
+
     int segment_size(int i) {
 	return (i > segments()) ? -1 : (int)(
 	    ((seg(i)->p_offset % seg(i)->p_align)
