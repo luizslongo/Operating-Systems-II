@@ -15,7 +15,8 @@ public:
 	// Initialize the Thread abstraction, thus creating the first thread
 	db<Init>(INF) << "Starting the first thread ...\n";
 	db<Init>(INF) << "Init ends here!\n\n";
-	Thread::init();
+	if(Traits<Thread>::enabled)
+	    Thread::init();
     }
 };
 

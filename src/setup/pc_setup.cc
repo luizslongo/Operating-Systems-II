@@ -774,6 +774,9 @@ void PC_Setup::call_next()
  	"call	*%%ebx		\n"
  	: : "i"(SYS_STACK + SYS_STACK_SIZE - 2 * sizeof(int)),
 	    "b"(static_cast<unsigned int>(ip)));
+
+    // This will only happen when INIT was called and Thread was disabled
+    reinterpret_cast<void (*)()>(si->lm.app_entry)();
 }
 
 //========================================================================
