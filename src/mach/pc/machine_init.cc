@@ -45,9 +45,8 @@ void PC::init()
     if(Traits<IA32_MMU>::enabled)
 	IA32_MMU::init();
     else
-	db<Init, PC>(WRN) << "MMU is disabled by traits!\n";
+	db<Init, PC>(WRN) << "MMU is disabled!\n";
 	
-
     if(Traits<PC_PCI>::enabled)
 	PC_PCI::init();
     if(Traits<PC_IC>::enabled)
