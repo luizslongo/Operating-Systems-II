@@ -7,8 +7,8 @@ __BEGIN_SYS
 
 int ELF::load_segment(int i, Elf32_Addr addr)
 {
-    if((i > segments()) || (seg(i)->p_type != PT_LOAD))
-	return -1;
+    if((i > segments()) || (segment_type(i) != PT_LOAD))
+	return 0;
     
     char * src = (char *)(unsigned(this) + seg(i)->p_offset);
     char * dst = (char *)((addr) ? addr : segment_address(i));
