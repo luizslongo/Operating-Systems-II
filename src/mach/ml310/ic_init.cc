@@ -1,12 +1,11 @@
 // EPOS-- ML310_IC Initialization
 
-#include <mach/ml310/ic.h>
-#include <mach/ml310/machine.h>
+#include <machine.h>
 
 __BEGIN_SYS
 
 // Class initialization
-int ML310_IC::init(System_Info * si)
+void ML310_IC::init()
 {
     db<ML310_IC>(TRC) << "ML310_IC::init()\n";
 
@@ -19,8 +18,6 @@ int ML310_IC::init(System_Info * si)
     disable();
 
     PPC32::int_enable();
-
-    return 0;
 }
 
 __END_SYS

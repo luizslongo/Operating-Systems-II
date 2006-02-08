@@ -3,6 +3,7 @@
 #ifndef __ppc32_tsc_h
 #define __ppc32_tsc_h
 
+#include <cpu.h>
 #include <tsc.h>
 
 __BEGIN_SYS
@@ -32,8 +33,6 @@ public:
 
         return ts;
     }
-
-    static int init(System_Info * si) { return 0; }
 };
 
 __END_SYS

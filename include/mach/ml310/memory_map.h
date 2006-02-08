@@ -1,7 +1,9 @@
-// EPOS--  Memory Map for the ML310
+// EPOS-- Memory Map for the ML310
 
-#ifndef __memory_map_ml310_h
-#define __memory_map_ml310_h
+#ifndef __ml310_memory_map_h
+#define __ml310_memory_map_h
+
+#include <system/memory_map.h>
 
 __BEGIN_SYS
 
@@ -20,19 +22,14 @@ struct Memory_Map<ML310>
         APP_CODE =      0x00000000,
         APP_DATA =      0x00200000,
         APP_HI =        0x03800000,
-        PHY_MEM =       0x04000000,
-        IO_MEM =        0x00000000,
-        SYS =           0x03800000,
-        INT_VEC =       0x03FF0000,
-        SYS_PT =        0x00000000,
-        SYS_PD =        0x00000000,
-        SYS_INFO =      0x03FF4000,
-        SYS_CODE =      0x03800000,
-        SYS_DATA =      0x03A00000,
-        SYS_STACK =     0x03FEFFF8,
-        MACH1 =         TOP,
-        MACH2 =         TOP,
-        MACH3 =         TOP,
+        PHY_MEM =       0x00000000,
+        IO_MEM =        Traits<ML310_PCI>::MEM_SPACE_LIMIT,
+        INT_VEC =       0x03ff0000,
+        SYS_INFO =      0x03ff4000,
+        SYS =           0x03ff5000,
+        SYS_CODE =      0x03ff5000,
+        SYS_DATA =      0x03ff9000,
+        SYS_STACK =     0x03fff000
     };
 };
 

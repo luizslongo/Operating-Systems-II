@@ -6,7 +6,7 @@
 
 __BEGIN_SYS
 
-int E100::init(unsigned int unit, System_Info * si)
+void E100::init(unsigned int unit)
 {
     db<Init, E100>(TRC) << "E100::init(unit=" << unit << ")\n";
 
@@ -14,7 +14,7 @@ int E100::init(unsigned int unit, System_Info * si)
     ML310_PCI::Locator loc = ML310_PCI::scan(PCI_VENDOR_ID, PCI_DEVICE_ID, unit);
     if(!loc) {
 	db<Init, E100>(WRN) << "E100::init: PCI scan failed!\n";
-	return 1;
+	return;
     }
 
     // Try to enable IO regions and bus master
@@ -26,7 +26,7 @@ int E100::init(unsigned int unit, System_Info * si)
     PCI::header(loc, &hdr);
     if(!hdr) {
 	db<Init, E100>(WRN) << "E100::init: PCI header failed!\n";
-	return 1;
+	return;
     }
     db<Init, E100>(INF) << "E100::init: PCI header=" << hdr << "}\n";
     if(!(hdr.command & ML310_PCI::COMMAND_MEMORY))
@@ -65,8 +65,6 @@ int E100::init(unsigned int unit, System_Info * si)
 
     // Enable interrupts for device
     IC::enable(irq);
-
-    return 0;
 }
 
 __END_SYS

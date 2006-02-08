@@ -1,17 +1,12 @@
 // EPOS-- ML310 PCI Mediator
 
-#include <mach/ml310/pci.h>
-#include <mach/ml310/machine.h>
+#include <machine.h>
 
 __BEGIN_SYS
 
-int ML310_PCI::init(System_Info * si)
+void ML310_PCI::init()
 {
-    _phy_io_mem = si->pmm.io_mem;
-
-    db<ML310_PCI>(TRC) << "ML310_PCI::init(_phy_io_mem=" << _phy_io_mem << ")\n";
-
-    int ret = 0;
+    db<ML310_PCI>(TRC) << "ML310_PCI::init()\n";
 
     PPC32::int_disable();
 
@@ -65,8 +60,6 @@ int ML310_PCI::init(System_Info * si)
     autoconfig_bus(0);
 
     PPC32::int_enable();
-
-    return ret;
 }
 
 __END_SYS

@@ -61,7 +61,7 @@ public:
     static void reboot();
     static void poweroff();
 
-    static int init(System_Info * si);
+    static void init();
 
 private:
     static void int_not(unsigned int interrupt);

@@ -1,27 +1,21 @@
-// ML310_BOOT
-//
-// Author: Hugo
-// Documentation: $EPOS/doc/boot                        Date: 04 Dec 2005
+// EPOS-- ML310 Boot Strap
 
-#include <arch/ppc32/cpu.h>
-#include <mach/ml310/memory_map.h>
-#include <utility/string.h>
+#include <utility/elf.h>
+#include <machine.h>
 
 __USING_SYS
 
 // System_Info Imports
+typedef System_Info<ML310> SI;
 typedef Memory_Map<ML310> MM;
-typedef unsigned int (function_type)(int,int);
+typedef void (function_type)();
+
+// Constants
+static const unsigned int BOOT_IMAGE = 9 * 1024;
 
 // Prototypes
 extern "C" { void _start(); }
 
-//========================================================================
-// _start
-//
-// Desc:
-//
-//------------------------------------------------------------------------
 void _start()
 {
     //Disable Interrupts
@@ -44,24 +38,42 @@ void _start()
     unsigned int stack_pointer = MM::SYS_STACK; 
     ASMV("mr 1,%0" : : "r" (stack_pointer));
 
-    // The boot image at BOOT_IMAGE_ADDR
-    char * bi = (char *) (Traits<ML310>::BOOT_IMAGE_ADDR);
+    db<Boot>(TRC) << "BOOT()\n";
 
-    // Get the System_Info, the first thing after boot
-    System_Info * si = ( (System_Info *) bi);
+    // The boot image was loaded by the monitor at BOOT_IMAGE
+    char * tmp = reinterpret_cast<char *>(BOOT_IMAGE);
 
-    //Getting setup entry point and its size
-    register unsigned int addr = (int)Traits<ML310>::SETUP_ADDR;
-    register unsigned int size = (si->bm.loader_off - si->bm.setup_off);
+    // System_Info is the first thing in the boot image
+    SI * si = reinterpret_cast<SI *>(tmp);
 
-    // Skips 84 bytes on bootimage for ELF Header !
-    memcpy((void *)addr, (void *)&(bi[si->bm.setup_off + 84]), (size - 84));
-    //memcpy((void *)addr, (void *)&(bi[si->bm.setup_off]), (size));
+    // And will be moved to the place indicated in Traits
+    char * bi = reinterpret_cast<char *>(Traits<ML310>::BOOT_IMAGE_ADDR);
+    memcpy(bi, tmp, si->bm.img_size);
 
-    // Call setup main()
-    function_type * function = (function_type *) addr;
+    // Reset si to its definitive location
+    si = reinterpret_cast<SI *>(bi);
+
+    // Load SETUP
+    ELF * stp_elf = reinterpret_cast<ELF *>(&bi[si->bm.setup_offset]);
+    if(!stp_elf->valid()) {
+	db<Boot>(ERR) << "SETUP ELF image was corrupted!\n";
+	Machine::panic();
+    }
+    if(stp_elf->load_segment(0) < 0) {
+	db<Boot>(ERR) << "SETUP code segment was corrupted!\n";
+	Machine::panic();
+    }
+    for(int i = 1; i < stp_elf->segments(); i++) {
+	if(stp_elf->load_segment(i) < 0) {
+	    db<Boot>(ERR) << "SETUP data segment was corrupted!\n";
+	    Machine::panic();
+	}
+    }
+
+    // Call setup
+    void (*entry)() = reinterpret_cast<void (*)()>(stp_elf->entry());
 
     *((volatile unsigned int *)(Traits<Machine>::LEDS_BASEADDR)) = 0xFFFFFFFC;
 
-    function(addr,size);
+    entry();
 }

@@ -75,6 +75,21 @@ template <> struct Traits<AVR8_MMU>: public Traits<void>
 };
 #endif
 
+// Mediators - Architecture - PPC32
+#ifdef __ppc32
+template <> struct Traits<PPC32>: public Traits<void>
+{
+};
+
+template <> struct Traits<PPC32_TSC>: public Traits<void>
+{
+};
+
+template <> struct Traits<PPC32_MMU>: public Traits<void>
+{
+};
+#endif
+
 
 // Mediators - Machine - Common
 template <> struct Traits<Serial_Display>: public Traits<void>
@@ -281,6 +296,82 @@ template <> struct Traits<ATMega128_NIC>: public Traits<void>
     typedef LIST<Radio> NICS;
 
     static const unsigned int RADIO_UNITS = NICS::Count<Radio>::Result;
+};
+#endif
+
+// Mediators - Machine - ML310
+#ifdef __ml310
+class ML310_Common;
+template <> struct Traits<ML310_Common>: public Traits<void>
+{
+};
+
+template <> struct Traits<ML310>: public Traits<ML310_Common>
+{
+    static const unsigned int CLOCK = 300000000;
+
+    static const unsigned int BOOT_IMAGE_ADDR = 0x03000000;
+    static const unsigned int SETUP_ADDR = 0x00600000;
+    static const int INT_BASE = 0x03FF0000;
+    static const unsigned int HARDWARE_INT_OFFSET = 0x20; //Verify!!!!!
+    static const int LEDS_BASEADDR = 0x90000000; //GPIO LEDS
+
+    static const unsigned int APPLICATION_STACK_SIZE = 16 * 1024;
+    static const unsigned int APPLICATION_HEAP_SIZE = 16 * 1024 * 1024;
+
+    static const unsigned int SYSTEM_STACK_SIZE = 4 * 1024;
+    static const unsigned int SYSTEM_HEAP_SIZE = 16 * APPLICATION_STACK_SIZE;
+
+};
+
+template <> struct Traits<ML310_PCI>: public Traits<ML310_Common>
+{
+    static const int MAX_BUS = 1;
+    static const int MAX_DEV_FN = 0xff;
+    static const int BASE_ADDRESS = 0x3C000000;
+    static const unsigned int HOST_BRIDGE_DEV = 8;
+    static const unsigned int IO_SPACE_UPPER  = 0x3BFFFFFF;
+    static const unsigned int IO_SPACE_LIMIT  = 0x3BFF0000;
+    static const unsigned int MEM_SPACE_UPPER = 0x37FFFFFF;
+    static const unsigned int MEM_SPACE_LIMIT = 0x20000000;
+};
+
+template <> struct Traits<ML310_IC>: public Traits<ML310_Common>
+{
+    static const int BASE_ADDRESS = 0xD0000FC0;
+};
+
+template <> struct Traits<ML310_Timer>: public Traits<ML310_Common>
+{
+    // Meaningful values for the timer frequency range from 100 to 
+    // 10000 Hz. The choice must respect the scheduler time-slice, i. e.,
+    // it must be higher than the scheduler invocation frequency.
+    static const int FREQUENCY = 1000; // Hz
+};
+
+template <> struct Traits<ML310_RTC>: public Traits<ML310_Common>
+{
+    static const unsigned int EPOCH_DAY = 1;
+    static const unsigned int EPOCH_MONTH = 1;
+    static const unsigned int EPOCH_YEAR = 1970;
+    static const unsigned int EPOCH_DAYS = 719499;
+};
+
+template <> struct Traits<ML310_UART>: public Traits<ML310_Common>
+{
+    static const unsigned int CLOCK = 1843200; // 1.8432 MHz - Verify !
+    static const unsigned int BASE_ADDRESS = 0xA0000000;
+};
+
+template <> struct Traits<ML310_NIC>: public Traits<ML310_Common>
+{
+    static const bool enabled = false;
+    
+    typedef LIST<E100> NICS;
+
+    static const unsigned int E100_UNITS = NICS::Count<E100>::Result;
+    static const unsigned int E100_SEND_BUFFERS = 32; // per unit
+    static const unsigned int E100_RECEIVE_BUFFERS = 32; // per unit
 };
 #endif
 

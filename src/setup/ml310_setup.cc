@@ -1,138 +1,553 @@
-// ML310_SETUP:
-//
-// Author: Hugo
-// Documentation: $EPOS/doc/setup                        Date: 22 Sep 2003
+// EPOS-- PC SETUP
 
 #include <utility/elf.h>
+#include <utility/string.h>
 #include <utility/ostream.h>
 #include <utility/debug.h>
-#include <arch/ppc32/cpu.h>
-#include <mach/ml310/machine.h>
-#include <mach/ml310/timer.h>
-#include <arch/ppc32/mmu.h>
-#include <mach/ml310/ic.h>
-#include <utility/string.h>
+#include <machine.h>
 
-__USING_SYS
-
-// PPC32 Imports
-typedef CPU::Reg8 Reg8;
-typedef CPU::Reg16 Reg16;
-typedef CPU::Phy_Addr Phy_Addr;
-typedef CPU::Log_Addr Log_Addr;
-
-// System_Info Imports
-typedef System_Info::Physical_Memory_Map PMM;
-typedef System_Info::Logical_Memory_Map LMM;
-typedef System_Info::Boot_Map BM;
-typedef Memory_Map<ML310> MM;
-
-extern "C" { int _start(char * setup_addr, int setup_size); };
-
-//Interrupt Handlers Prototype
+// Interrupt Handler Prototypes
 extern "C" { 
-void __critical_int(); 
-void __noncritical_int();
-void __machine_check();
-void __debug_int();
-void __watchdog_int();
-void __insttblmiss_int();
-void __inststor_int();
-void __program_int();
-void __syscall_int();
-void __datatblmiss_int();
-void __datastor_int();
-void __alignment_int();
-void __timer_wrapper1();
-void __timer_wrapper2();
-void __fit_int();
-void __pit_int();
+    void __critical_int(); 
+    void __noncritical_int();
+    void __machine_check();
+    void __debug_int();
+    void __watchdog_int();
+    void __insttblmiss_int();
+    void __inststor_int();
+    void __program_int();
+    void __syscall_int();
+    void __datatblmiss_int();
+    void __datastor_int();
+    void __alignment_int();
+    void __timer_wrapper1();
+    void __timer_wrapper2();
+    void __fit_int();
+    void __pit_int();
 };
-
-void copy_sys_info(System_Info *, System_Info *);
-void setup_lmm(LMM *, Log_Addr, Log_Addr);
-void call_next(register Log_Addr);
-void panic();
-void setup_int();
 
 __BEGIN_SYS
 
-extern OStream kout, kerr;
+OStream kout, kerr;
 
-__END_SYS
+class ML310_Setup
+{
+private:
+    static const unsigned int INT_BASE = Traits<ML310>::INT_BASE;
+    static const unsigned int BOOT_IMAGE_ADDR = Traits<ML310>::BOOT_IMAGE_ADDR;
+    static const unsigned int SYS_STACK_SIZE = Traits<ML310>::SYSTEM_STACK_SIZE;
+
+    static const unsigned int SYS_INFO = Memory_Map<ML310>::SYS_INFO;
+    static const unsigned int PHY_MEM = Memory_Map<ML310>::PHY_MEM;
+    static const unsigned int IO_MEM = Memory_Map<ML310>::IO_MEM;
+    static const unsigned int INT_VEC = Memory_Map<ML310>::INT_VEC;
+    static const unsigned int SYS = Memory_Map<ML310>::SYS;
+    static const unsigned int SYS_DATA = Memory_Map<ML310>::SYS_DATA;
+    static const unsigned int SYS_CODE = Memory_Map<ML310>::SYS_CODE;
+    static const unsigned int SYS_STACK = Memory_Map<ML310>::SYS_STACK;
+    
+    // PPC32 Imports
+    typedef CPU::Reg32 Reg32;
+    typedef CPU::Phy_Addr Phy_Addr;
+    typedef CPU::Log_Addr Log_Addr;
+
+    // System_Info Imports
+    typedef System_Info<ML310>::Boot_Map BM;
+    typedef System_Info<ML310>::Physical_Memory_Map PMM;
+    typedef System_Info<ML310>::Logical_Memory_Map LMM;
+    typedef System_Info<ML310>::Load_Map LM;
+
+public:
+    ML310_Setup(char * boot_image) {
+	*((volatile unsigned int *)(Traits<Machine>::LEDS_BASEADDR)) = 0xFFFFFFF8;
+
+	// Get boot image loaded by the bootstrap
+ 	bi = reinterpret_cast<char *>(boot_image);
+	si = reinterpret_cast<System_Info<ML310> *>(bi);
+
+ 	db<Setup>(TRC) << "ML310_Setup(bi=" << (void *)bi
+ 		       << ",sp=" << (void *)CPU::sp() << ")\n";
+
+	// Disable hardware interrupts
+	IC::init();
+  	CPU::int_disable();
+
+	build_lm();
+	build_pmm();
+	build_lmm();
+	get_node_id();
+
+	say_hi();
+
+	setup_int();
+	setup_pci();
+
+	load_parts();
+
+	// SETUP ends here, transfer control to next stage (INIT or APP)
+	call_next();
+
+	// SETUP is now part of the free memory and this point should never be
+	// reached, but, just in case ... :-)
+	panic();
+    }
+
+private:
+    void build_lm();
+    void build_pmm();
+    void build_lmm();
+    void get_node_id();
+
+    void say_hi();
+
+    void setup_int();
+    void setup_pci();
+
+    void load_parts();
+    void call_next();
+
+    void pci_aperture(unsigned int * base, unsigned int * top);
+
+    static void panic() { Machine::panic(); }
+
+private:
+    char * bi;
+    System_Info<ML310> * si;
+};
 
 //========================================================================
-// copy_sys_info
-//
-// Desc: Copy the system information block, which includes boot info
-//       and the physical memory map, into its definitive place.
-//
-// Parm: from -> current location
-//       to   -> destination
-//------------------------------------------------------------------------
-void copy_sys_info(System_Info * from, System_Info * to)
+void ML310_Setup::build_lm()
 {
-    unsigned int size = sizeof(System_Info);
+    // Get boot image structure
+    si->lm.has_stp = (si->bm.setup_offset != -1);
+    si->lm.has_ini = (si->bm.init_offset != -1);
+    si->lm.has_sys = (si->bm.system_offset != -1);
+    si->lm.has_app = (si->bm.application_offset != -1);
+    si->lm.has_ext = (si->bm.extras_offset != -1);
 
-    db<Setup>(TRC) << "copy_sys_info(from=" << (void *)from
-                   << ",to=" << (void *)to
-                   << ",size=" << size << ")\n";
+    // Check SETUP integrity and get the size of its segments
+    si->lm.stp_entry = 0;
+    si->lm.stp_code = 0;
+    si->lm.stp_code_size = 0;
+    si->lm.stp_data = 0;
+    si->lm.stp_data_size = 0;
+    if(si->lm.has_stp) {
+	ELF * stp_elf = reinterpret_cast<ELF *>(&bi[si->bm.setup_offset]);
+	if(!stp_elf->valid()) {
+	    db<Setup>(ERR) << "SETUP ELF image is corrupted!\n";
+	    panic();
+	}
 
-    if(size > 512)
-        db<Setup>(WRN) << "System_Info is too large (" << size
-                       << ")!\n";
+	si->lm.stp_entry = stp_elf->entry();
+	si->lm.stp_code = stp_elf->segment_address(0);
+	si->lm.stp_code_size = stp_elf->segment_size(0);
+	if(stp_elf->segments() > 1) {
+	    si->lm.stp_data = stp_elf->segment_address(1);
+	    for(int i = 1; i < stp_elf->segments(); i++) {
+		if(stp_elf->segment_address(i) < si->lm.stp_data)
+		    si->lm.stp_data = stp_elf->segment_address(i);
+		si->lm.stp_data_size += stp_elf->segment_size(i);
+	    }
+	}
+    }
 
-    memcpy((void *)to, (void *)from, size);
+    // Check INIT integrity and get the size of its segments
+    si->lm.ini_entry = 0;
+    si->lm.ini_segments = 0;
+    si->lm.ini_code = 0;
+    si->lm.ini_code_size = 0;
+    si->lm.ini_data = 0;
+    si->lm.ini_data_size = 0;
+    if(si->lm.has_ini) {
+	ELF * ini_elf = reinterpret_cast<ELF *>(&bi[si->bm.init_offset]);
+	if(!ini_elf->valid()) {
+	    db<Setup>(ERR) << "INIT ELF image is corrupted!\n";
+	    panic();
+	}
+
+	si->lm.ini_entry = ini_elf->entry();
+	si->lm.ini_code = ini_elf->segment_address(0);
+	si->lm.ini_code_size = ini_elf->segment_size(0);
+	if(ini_elf->segments() > 1) {
+	    si->lm.ini_data = ini_elf->segment_address(1);
+	    for(int i = 1; i < ini_elf->segments(); i++) {
+		if(ini_elf->segment_address(i) < si->lm.ini_data)
+		    si->lm.ini_data = ini_elf->segment_address(i);
+		si->lm.ini_data_size += ini_elf->segment_size(i);
+	    }
+	}
+    }
+
+    // Check SYSTEM integrity and get the size of its segments
+    si->lm.sys_entry = 0;
+    si->lm.sys_segments = 0;
+    si->lm.sys_code = 0;
+    si->lm.sys_code_size = 0;
+    si->lm.sys_data = 0;
+    si->lm.sys_data_size = 0;
+    si->lm.sys_stack = SYS_STACK;
+    si->lm.sys_stack_size = SYS_STACK_SIZE;
+    if(si->lm.has_sys) {
+	ELF * sys_elf = reinterpret_cast<ELF *>(&bi[si->bm.system_offset]);
+	if(!sys_elf->valid()) {
+	    db<Setup>(ERR) << "OS ELF image is corrupted!\n";
+	    panic();
+	}
+
+	si->lm.sys_entry = sys_elf->entry();
+	si->lm.sys_code = sys_elf->segment_address(0);
+	si->lm.sys_code_size = sys_elf->segment_size(0);
+	if(sys_elf->segments() > 1) {
+	    si->lm.sys_data = sys_elf->segment_address(1);
+	    for(int i = 1; i < sys_elf->segments(); i++) {
+		if(sys_elf->segment_address(i) < si->lm.sys_data)
+		    si->lm.sys_data = sys_elf->segment_address(i);
+		si->lm.sys_data_size += sys_elf->segment_size(i);
+	    }
+	}
+
+	if(si->lm.sys_code != SYS_CODE) {
+	    db<Setup>(ERR) << "OS code segment address do not match "
+			   << "the machine's memory map!\n";
+	    panic();
+	}
+	if(si->lm.sys_code + si->lm.sys_code_size > si->lm.sys_data) {
+	    db<Setup>(ERR) << "OS code segment is too large!\n";
+	    panic();
+	}
+	if(si->lm.sys_data != SYS_DATA) {
+	    db<Setup>(ERR) << "OS code segment address do not match "
+			   << "the machine's memory map!\n";
+	    panic();
+	}
+	if(si->lm.sys_data + si->lm.sys_data_size > si->lm.sys_stack) {
+	    db<Setup>(ERR) << "OS data segment is too large!\n";
+	    panic();
+	}
+	if(si->lm.sys_data + si->lm.sys_data_size > si->lm.sys_stack) {
+	    db<Setup>(ERR) << "OS data segment is too large!\n";
+	    panic();
+	}
+	if((si->lm.sys_stack + si->lm.sys_stack_size) > si->pmm.mem_top) {
+	    db<Setup>(ERR) << "OS stack segment is too large!\n";
+	    panic();
+	}
+    }
+
+    // Check APPLICATION integrity and get the size of its segments
+    si->lm.app_entry = 0;
+    si->lm.app_segments = 0;
+    si->lm.app_code = 0;
+    si->lm.app_code_size = 0;
+    si->lm.app_data = 0;
+    si->lm.app_data_size = 0;
+    if(si->lm.has_app) {
+	ELF * app_elf =
+	    reinterpret_cast<ELF *>(&bi[si->bm.application_offset]);
+	if(!app_elf->valid()) {
+	    db<Setup>(ERR) << "Application ELF image is corrupted!\n";
+	    panic();
+	}
+	si->lm.app_entry = app_elf->entry();
+	si->lm.app_code = app_elf->segment_address(0);
+	si->lm.app_code_size = app_elf->segment_size(0);
+	if(app_elf->segments() > 1) {
+	    si->lm.app_data = app_elf->segment_address(1);
+	    si->lm.app_data_size = 0;
+	    for(int i = 1; i < app_elf->segments(); i++) {
+		if(app_elf->segment_address(i) < si->lm.app_data)
+		    si->lm.app_data = app_elf->segment_address(i);
+		si->lm.app_data_size += app_elf->segment_size(i);
+	    }
+	}
+    }
+
+    // Check for EXTRA data in the boot image		
+    if(si->lm.has_ext) {
+	si->lm.ext = Phy_Addr(&bi[si->bm.extras_offset]);
+	si->lm.ext_size = si->bm.img_size - si->bm.extras_offset;
+    }
 }
 
 //========================================================================
-// setup_lmm
-//
-// Desc: Setup the Logical_Memory_Map in System_Info. 
-//
-// Parm: lmm        -> logical memory map
-//         app_hi        -> highest logical RAM address available to applications
-//------------------------------------------------------------------------
-void setup_lmm(LMM * lmm, Log_Addr app_entry, Log_Addr app_hi)
+void ML310_Setup::build_pmm()
 {
-    lmm->app_entry = app_entry;
-    lmm->app_hi = app_hi;
-    db<Setup>(INF) << "lmm={"
-                   << "ape="  << (void *)lmm->app_entry
-                   << ",aph="  << (void *)lmm->app_hi
-                   << "})\n";
+    // Allocate (reserve) memory for all entities we have to setup.
+    // We'll start at the highest address to make possible a memory model
+    // on which the application's logical and physical address spaces match.
+
+    // Interrupt Vector
+    si->pmm.int_vec = INT_VEC;
+
+    // System Info
+    si->pmm.sys_info = SYS_INFO;
+
+    // SYSTEM code segment
+    si->pmm.sys_code = SYS_CODE;
+
+    // SYSTEM data segment
+    si->pmm.sys_data = SYS_DATA;
+
+    // SYSTEM stack segment
+    si->pmm.sys_stack = SYS_STACK;
+
+    // The memory allocated so far will "disapear" from the system as we
+    // set mem_top as follows:
+    si->pmm.mem_base = si->bm.mem_base;
+    si->pmm.mem_top = INT_VEC;
+
+    // Free chuncks (passed to MMU::init)
+    si->pmm.free1_base = si->lm.app_code + si->lm.app_code_size;
+    si->pmm.free1_top = si->lm.app_data;
+    si->pmm.free2_base = si->lm.app_data + si->lm.app_data_size;
+    si->pmm.free2_top = si->pmm.mem_top;
+
+    if(si->lm.has_ext) {
+	si->pmm.ext_base = si->lm.ext;
+	si->pmm.ext_top = si->lm.ext + si->lm.ext_size;
+    } else {
+	si->pmm.ext_base = 0;
+	si->pmm.ext_top = 0;
+    }	
+    db<Setup>(TRC) << "setup_sys_pt(pmm={"
+		   << "int="  << (void *)si->pmm.int_vec
+		   << ",info=" << (void *)si->pmm.sys_info
+		   << ",sysc=" << (void *)si->pmm.sys_code
+		   << ",sysd=" << (void *)si->pmm.sys_data
+		   << ",syss=" << (void *)si->pmm.sys_stack
+		   << ",memb=" << (void *)si->pmm.mem_base
+		   << ",memt=" << (void *)si->pmm.mem_top
+		   << ",fr1b=" << (void *)si->pmm.free1_base
+		   << ",fr1t=" << (void *)si->pmm.free1_top
+		   << ",fr2b=" << (void *)si->pmm.free2_base
+		   << ",fr2t=" << (void *)si->pmm.free2_top
+		   << "}"
+		   << ",code_size=" << MMU::pages(si->lm.sys_code_size)
+		   << ",data_size=" << MMU::pages(si->lm.sys_data_size)
+		   << ",stack_size=" << MMU::pages(si->lm.sys_stack_size)
+		   << ")\n";
 }
 
 //========================================================================
-// call_epos
-//
-// Desc: Setup a stack for EPOS with a pointer to the boot image
-//         and call it.
-//
-// Parm: exception stack and error code pushed by the CPU
-//------------------------------------------------------------------------
-void call_next(register Log_Addr entry)
+void ML310_Setup::build_lmm()
 {
-    db<Setup>(TRC) << "call_next(e=" << (void *)entry << ")\n";
+    si->lmm.app_entry = si->lm.app_entry;
+}
+
+//========================================================================
+void ML310_Setup::get_node_id()
+{
+    // If we didn't get our node's id in the boot image, we'll to try to
+    // get if from an eventual BOOPT reply used to boot up the system before
+    // we allocate more memory
+    // if(si->bm.host_id == (unsigned short) -1)
+    // get_bootp_info(&si->bm.host_id);
+}
+
+//========================================================================
+void ML310_Setup::say_hi()
+{
+    if(!si->lm.has_app) {
+	db<Setup>(ERR)
+	    << "No APPLICATION in boot image, you don't need EPOS!\n";
+	panic();
+    }
+    if(!si->lm.has_sys)
+	db<Setup>(WRN) 
+	    << "No SYSTEM in boot image, assuming EPOS is a library!\n";
+
+    kout << "Setting up this machine as follows: \n";
+    kout << "  Processor:    PPC32\n";
+    kout << "  Memory:       " << (si->bm.mem_top - si->bm.mem_base) / 1024
+	 << " Kbytes [" << (void *)si->bm.mem_base
+	 << ":" << (void *)si->bm.mem_top << "]\n";
+    kout << "  User memory:  "
+	 << (si->pmm.mem_top - si->pmm.mem_base) / 1024
+	 << " Kbytes [" << (void *)si->pmm.mem_base
+	 << ":" << (void *)si->pmm.mem_top << "]\n";
+    kout << "  PCI aperture: " 
+	 << (si->pmm.io_mem_top - si->pmm.io_mem_base) / 1024
+	 << " Kbytes [" << (void *)si->pmm.io_mem_base 
+	 << ":" << (void *)si->pmm.io_mem_top << "]\n";
+    kout << "  Node Id:      ";
+    if(si->bm.node_id != -1)
+	kout << si->bm.node_id << " (" << si->bm.n_nodes << ")\n";
+    else
+	kout << "will get from the network!\n";
+    if(si->lm.has_stp)
+	kout << "  Setup:        "
+	     << si->lm.stp_code_size + si->lm.stp_data_size << " bytes\n";
+    if(si->lm.has_ini)
+	kout << "  Init:         " 
+	     << si->lm.ini_code_size + si->lm.ini_data_size << " bytes\n";
+    if(si->lm.has_sys) {
+	kout << "  OS code:      " << si->lm.sys_code_size << " bytes";
+	kout << "\tdata: " << si->lm.sys_data_size << " bytes";
+	kout << "\tstack: " << si->lm.sys_stack_size << " bytes\n";
+    }
+    if(si->lm.has_app) {
+	kout << "  APP code:     " << si->lm.app_code_size << " bytes";
+	kout << "\tdata: " << si->lm.app_data_size << " bytes\n";
+    }
+    if(si->lm.has_ext) {
+	kout << "  Extras:       " << si->lm.ext_size << " bytes\n";
+    }
+
+    // Test if we didn't overlap SETUP and the boot image
+    if(si->pmm.mem_top
+       <= si->lm.stp_code + si->lm.stp_code_size + si->lm.stp_data_size) {
+  	db<Setup>(ERR) << "SETUP would have been overwritten!\n";
+  	panic();
+    }
+}
+
+//========================================================================
+void ML310_Setup::setup_int()
+{
+    db<Setup>(TRC) << "setup_int()\n";
+
+   //Clear interrupt structures area
+   memset((void *)INT_VEC, 0, 0x6400);
+
+   //Copy handlers routine to apropriate location.
+   unsigned int int_addr;
+   int_addr = INT_VEC + 0x0100;//Critical Interrupt
+   memcpy((void *)int_addr, (void *)__critical_int, 4);
+   int_addr = INT_VEC + 0x0200;//Machine Check
+   memcpy((void *)int_addr, (void *)__machine_check, 148);
+   int_addr = INT_VEC + 0x0300;//Data Storage
+   memcpy((void *)int_addr, (void *)__datastor_int, 152);
+   int_addr = INT_VEC + 0x0400;//Instruction
+   memcpy((void *)int_addr, (void *)__inststor_int, 152);
+   int_addr = INT_VEC + 0x0500;//External
+   memcpy((void *)int_addr, (void *)__noncritical_int, 232);
+   int_addr = INT_VEC + 0x0600;//Alignment
+   memcpy((void *)int_addr, (void *)__alignment_int, 152);
+   int_addr = INT_VEC + 0x0700;//Program
+   memcpy((void *)int_addr, (void *)__program_int, 152);
+   int_addr = INT_VEC + 0x0C00;//System Call
+   memcpy((void *)int_addr, (void *)__syscall_int, 152);
+   int_addr = INT_VEC + 0x1000;//PIT
+   memcpy((void *)int_addr, (void *)__timer_wrapper1, 4);
+   int_addr = INT_VEC + 0x1010;//FIT
+   memcpy((void *)int_addr, (void *)__timer_wrapper2, 4);
+   int_addr = INT_VEC + 0x1020;//WatchDog Timer
+   memcpy((void *)int_addr, (void *)__watchdog_int, 152);
+   int_addr = INT_VEC + 0x1100;//Data TBL Miss
+   memcpy((void *)int_addr, (void *)__datatblmiss_int, 152);
+   int_addr = INT_VEC + 0x1200;//Instruction TBL Miss
+   memcpy((void *)int_addr, (void *)__insttblmiss_int, 152);
+   int_addr = INT_VEC + 0x2000;//Debug
+   memcpy((void *)int_addr, (void *)__debug_int, 152);
+   int_addr = INT_VEC + 0x2100;//Debug
+   memcpy((void *)int_addr, (void *)__pit_int, 220);
+   int_addr = INT_VEC + 0x2210;//Debug
+   memcpy((void *)int_addr, (void *)__fit_int, 152);
+
+   //Set Vector Configuration Address and EVPR
+   ASMV("mtspr %1, %0" : : "r"(INT_VEC), "i"(0x3D6));
+   //Invalidate all instruction cache and sync.
+   ASMV("iccci 0, 1; sync;");//Not portable code!???
+}
+
+//========================================================================
+void ML310_Setup::setup_pci()
+{
+    db<Setup>(TRC) << "setup_pci()\n";
+
+    // Set PCI Memory Region to work on little endian Mode
+    // Set SLER
+    CPU::_mtspr(CPU::SLER, 0x0F000000);
+    // Set SGR
+    CPU::_mtspr(CPU::SGR, 0x0F000000);
+}
+
+//========================================================================
+void ML310_Setup::load_parts()
+{
+    // Relocate System_Info
+    memcpy(reinterpret_cast<void *>(SYS_INFO), si, sizeof(System_Info<ML310>));
+
+    // Load INIT
+    if(si->lm.has_ini) {
+	db<Setup>(TRC) << "ML310_Setup::load_init()\n";
+	ELF * ini_elf = reinterpret_cast<ELF *>(&bi[si->bm.init_offset]);
+	if(ini_elf->load_segment(0) < 0) {
+	    db<Setup>(ERR)
+		<< "INIT code+data segment was corrupted during SETUP!\n";
+	    panic();
+	}
+    }
+
+    // Load SYSTEM
+    if(si->lm.has_sys) {
+	db<Setup>(TRC) << "ML310_Setup::load_sys()\n";
+	ELF * sys_elf = reinterpret_cast<ELF *>(&bi[si->bm.system_offset]);
+	if(sys_elf->load_segment(0) < 0) {
+	    db<Setup>(ERR)
+		<< "OS code segment was corrupted during SETUP!\n";
+	    panic();
+	}
+	for(int i = 1; i < sys_elf->segments(); i++)
+	    if(sys_elf->load_segment(i) < 0) {
+		db<Setup>(ERR)
+		    << "OS data segment was corrupted during SETUP!\n";
+		panic();
+	    }
+    }
+
+    // Load APP
+    if(si->lm.has_app) {
+	ELF * app_elf = reinterpret_cast<ELF *>(&bi[si->bm.application_offset]);
+	db<Setup>(TRC) << "ML310_Setup::load_app()\n";
+	if(app_elf->load_segment(0) < 0) {
+	    db<Setup>(ERR)
+		<< "Application code segment was corrupted during SETUP!\n";
+	    panic();
+	}
+	for(int i = 1; i < app_elf->segments(); i++)
+	    if(app_elf->load_segment(i) < 0) {
+		db<Setup>(ERR) << 
+		    "Application data segment was corrupted during SETUP!\n";
+		panic();
+	    }
+    }
+}
+
+//========================================================================
+void ML310_Setup::call_next()
+{
+    // Check for next stage
+    Log_Addr ip;
+    if(si->lm.has_ini) {
+	db<Setup>(TRC) << "Executing system global constructors ...\n";
+	reinterpret_cast<void (*)()>((void *)si->lm.sys_entry)();
+	ip = si->lm.ini_entry;
+    } else if(si->lm.has_sys)
+	ip = si->lm.sys_entry;
+    else
+	ip = si->lm.app_entry;
+
+    db<Setup>(TRC) << "ML310_Setup::call_next(ip=" << ip
+		   << ",sp=" << (void *)(SYS_STACK + SYS_STACK_SIZE
+					 - 2 * sizeof(int))
+		   << ") => ";
+    if(si->lm.has_ini)
+	db<Setup>(TRC) << "INIT\n";
+    else if(si->lm.has_sys)
+	db<Setup>(TRC) << "SYSTEM\n";
+    else
+	db<Setup>(TRC) << "APPLICATION\n";
+
     db<Setup>(INF) << "ML310_Setup ends here!\n\n";
 
     ASMV("mr    1,%0\n" //setting sys_stack
          "mtctr %1  \n" //setting jump address
-         "bctrl     \n" : : "r"(MM::SYS_STACK),
-                            "r"((unsigned)entry));
+         "bctrl     \n" : : "r"(SYS_STACK),
+                            "r"((unsigned)ip));
 }
 
-//========================================================================
-// panic
-//
-// Desc: This function is called if something goes wrong during setup,
-//         including uncaught interrupts.
-//------------------------------------------------------------------------
-void panic()
-{
-    kerr << "PANIC!\n";
-    for(;;);
-}
+__END_SYS
 
 //========================================================================
 // SETUP of BASIC interrupt handlers
@@ -142,6 +557,8 @@ void panic()
 // for each class is insued here, it means that the Machine::handler() could
 // be the same for critical or non-critical interrupts.
 //------------------------------------------------------------------------
+
+__USING_SYS
 
 void __machine_check() {
 
@@ -768,57 +1185,11 @@ void __critical_int() {
    ASMV("rfci");
 }
 
-//========================================================================
-// Setup Interrupts
-//
-// Desc: This function copy the handlers to effective handler address
-// of PowerPC.
-//
-//------------------------------------------------------------------------
-void setup_int()
+extern "C" { void _start(); }
+
+void _start() 
 {
-
-   //Clear interrupt structures area
-   memset((void *)MM::INT_VEC, 0, 0x6400);
-
-   //Copy handlers routine to apropriate location.
-   unsigned int int_addr;
-   int_addr = MM::INT_VEC + 0x0100;//Critical Interrupt
-   memcpy((void *)int_addr, (void *)__critical_int, 4);
-   int_addr = MM::INT_VEC + 0x0200;//Machine Check
-   memcpy((void *)int_addr, (void *)__machine_check, 148);
-   int_addr = MM::INT_VEC + 0x0300;//Data Storage
-   memcpy((void *)int_addr, (void *)__datastor_int, 152);
-   int_addr = MM::INT_VEC + 0x0400;//Instruction
-   memcpy((void *)int_addr, (void *)__inststor_int, 152);
-   int_addr = MM::INT_VEC + 0x0500;//External
-   memcpy((void *)int_addr, (void *)__noncritical_int, 232);
-   int_addr = MM::INT_VEC + 0x0600;//Alignment
-   memcpy((void *)int_addr, (void *)__alignment_int, 152);
-   int_addr = MM::INT_VEC + 0x0700;//Program
-   memcpy((void *)int_addr, (void *)__program_int, 152);
-   int_addr = MM::INT_VEC + 0x0C00;//System Call
-   memcpy((void *)int_addr, (void *)__syscall_int, 152);
-   int_addr = MM::INT_VEC + 0x1000;//PIT
-   memcpy((void *)int_addr, (void *)__timer_wrapper1, 4);
-   int_addr = MM::INT_VEC + 0x1010;//FIT
-   memcpy((void *)int_addr, (void *)__timer_wrapper2, 4);
-   int_addr = MM::INT_VEC + 0x1020;//WatchDog Timer
-   memcpy((void *)int_addr, (void *)__watchdog_int, 152);
-   int_addr = MM::INT_VEC + 0x1100;//Data TBL Miss
-   memcpy((void *)int_addr, (void *)__datatblmiss_int, 152);
-   int_addr = MM::INT_VEC + 0x1200;//Instruction TBL Miss
-   memcpy((void *)int_addr, (void *)__insttblmiss_int, 152);
-   int_addr = MM::INT_VEC + 0x2000;//Debug
-   memcpy((void *)int_addr, (void *)__debug_int, 152);
-   int_addr = MM::INT_VEC + 0x2100;//Debug
-   memcpy((void *)int_addr, (void *)__pit_int, 220);
-   int_addr = MM::INT_VEC + 0x2210;//Debug
-   memcpy((void *)int_addr, (void *)__fit_int, 152);
-
-   //Set Vector Configuration Address and EVPR
-   ASMV("mtspr %1, %0" : : "r"(MM::INT_VEC), "i"(0x3D6));
-   //Invalidate all instruction cache and sync.
-   ASMV("iccci 0, 1; sync;");//Not portable code!???
-
+    __USING_SYS
+    ML310_Setup ml310_setup(
+	reinterpret_cast<char *>(Traits<ML310>::BOOT_IMAGE_ADDR));
 }

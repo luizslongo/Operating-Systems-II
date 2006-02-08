@@ -3,6 +3,7 @@
 #ifndef __ml310_ic_h
 #define __ml310_ic_h
 
+#include <cpu.h>
 #include <ic.h>
 
 __BEGIN_SYS
@@ -88,7 +89,7 @@ public:
         }
     }
 
-    static int init(System_Info * si);
+    static void init();
 
 private:
     static void sie(const Mask & mask) {

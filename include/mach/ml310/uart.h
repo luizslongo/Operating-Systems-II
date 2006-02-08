@@ -200,7 +200,7 @@ public:
     char get() { while(!rxd_full()); return rxd(); }
     void put(char c) { while(!txd_empty()); txd(c); }
 
-    static int init(System_Info *si); 
+    static void init(); 
 
 private:
     void dlab(bool f) { *lcr = *lcr & 0x7f | (f << 7); }

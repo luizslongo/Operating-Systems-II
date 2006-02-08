@@ -49,6 +49,15 @@ typedef AVR8_TSC		TSC;
 #define __TSC_H			__HEADER_ARCH(tsc)
 #define __MMU_H			__HEADER_ARCH(mmu)
 
+#elif defined (__ppc32)
+
+#define ARCH ppc32
+typedef PPC32                    CPU;
+typedef PPC32_MMU                MMU;
+typedef PPC32_TSC                TSC;
+#define __CPU_H                 __HEADER_ARCH(cpu)
+#define __TSC_H                 __HEADER_ARCH(tsc)
+#define __MMU_H                 __HEADER_ARCH(mmu)
 
 #else
 #error Architecture not selected!
@@ -139,6 +148,30 @@ typedef ATMega128_Light_Sensor	Light_Sensor;
 #define __NIC_H			__HEADER_MACH(nic)
 #define __ADC_H			__HEADER_MACH(adc)
 #define __SENSOR_H		__HEADER_MACH(sensor)
+
+#elif defined (__ml310)
+
+#define MACH                    ml310
+typedef ML310                   Machine;
+typedef ML310_PCI               PCI;
+typedef ML310_IC                IC;
+typedef ML310_Timer             Timer;
+typedef ML310_RTC               RTC;
+typedef Dummy<0>                EEPROM;
+typedef ML310_UART              UART;
+typedef Dummy<1>                SPI;
+typedef Serial_Display          Display;
+typedef ML310_NIC               NIC;
+typedef Dummy<2>                ADC;
+typedef Dummy<3>                Temperature_Sensor;
+typedef Dummy<4>                Light_Sensor;
+#define __MACH_H                __HEADER_MACH(machine)
+#define __PCI_H                 __HEADER_MACH(pci)
+#define __IC_H                  __HEADER_MACH(ic)
+#define __TIMER_H               __HEADER_MACH(timer)
+#define __RTC_H                 __HEADER_MACH(rtc)
+#define __UART_H                __HEADER_MACH(uart)
+#define __NIC_H                 __HEADER_MACH(nic)
 
 #else
 

@@ -43,7 +43,7 @@ public:
 
     const Statistics & statistics() { return _dev->statistics(); }
 
-    static int init(System_Info * si);
+    static void init();
 
 private:
     Meta_NIC<NICS>::Base * _dev;

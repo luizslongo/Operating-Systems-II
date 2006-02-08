@@ -70,7 +70,7 @@ public:
         cfg16(l.bus, l.dev_fn, STATUS, v);
     }
 
-    static int init(System_Info * si);
+    static void init();
 
 //private:
 public:

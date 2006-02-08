@@ -3,8 +3,9 @@
 #ifndef __ml310_timer_h
 #define __ml310_timer_h
 
-#include <timer.h>
+#include <cpu.h>
 #include <ic.h>
+#include <timer.h>
 
 __BEGIN_SYS
 
@@ -57,7 +58,7 @@ public:
         PPC32::_mtspr(SPR_PIT, _count);
     }
 
-    static int init(System_Info * si);
+    static void init();
 
 private:
     // ML310_Timer implementation methods
