@@ -128,8 +128,8 @@ public:
         return old;
     }
 
-    static Reg32 htonl(Reg32 v) { return htonl_lsb(v); }
-    static Reg16 htons(Reg16 v) { return htons_lsb(v); }
+    static Reg32 htonl(Reg32 v) { return swap32(v); }
+    static Reg16 htons(Reg16 v) { return swap16(v); }
     static Reg32 ntohl(Reg32 v) { return htonl(v); }
     static Reg16 ntohs(Reg16 v) { return htons(v); }
 
