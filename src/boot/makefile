@@ -2,7 +2,9 @@
 
 include $(EPOS)/makedefs
 
-all: 		$(MACH)_install
+TARGET := $(if $(shell find $(MACH)*), $(MACH)_install)
+
+all: 		$(TARGET)
 
 pc_boot:        pc_boot.o
 		ld86 -0 -s -T $(BOOT_ADDR) -o $@ $<

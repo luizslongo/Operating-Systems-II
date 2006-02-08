@@ -2,7 +2,10 @@
 
 include $(EPOS)/makedefs
 
-all:		install
+TARGET := $(if $(shell find $(MACH)*), install)
+
+
+all:		$(TARGET)
 
 $(MACH)_setup:	$(MACH)_setup.o
 		$(LD) $(LDFLAGS) -L$(CCLIB) --omagic \
