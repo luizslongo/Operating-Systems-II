@@ -356,7 +356,7 @@ public:
     static Reg32 htonl(Reg32 v)	{
  	ASMV("bswap %0" : "=r" (v) : "0" (v), "r" (v)); return v;
     }
-    static Reg16 htons(Reg16 v)	{ return htons_lsb(v); }
+    static Reg16 htons(Reg16 v)	{ return swap16(v); }
     static Reg32 ntohl(Reg32 v)	{ return htonl(v); }
     static Reg16 ntohs(Reg16 v)	{ return htons(v); }
 
@@ -366,7 +366,7 @@ public:
 	Log_Addr sp = stack + size;
 	sp -= sizeof(int); *static_cast<int *>(sp) = Log_Addr(exit);
 	sp -= sizeof(Context);
-	return  new (sp) Context(entry);
+	return new (sp) Context(entry);
     }
 
     template<typename T1>
