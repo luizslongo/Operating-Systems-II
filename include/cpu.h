@@ -84,32 +84,14 @@ public:
     }
 
 protected:
-    static Reg32 htonl_lsb(Reg32 v) {
-	return (((v << 24) & 0xff000000) | ((v <<  8) & 0x00ff0000) |
-		((v >>  8) & 0x0000ff00) | ((v >> 24) & 0x000000ff));
+    static Reg32 swap32(Reg32 v) {
+        return (((v << 24) & 0xff000000) | ((v <<  8) & 0x00ff0000) |
+                ((v >>  8) & 0x0000ff00) | ((v >> 24) & 0x000000ff));
     }
-    static Reg16 htons_lsb(Reg16 v)	{
-	return ((v << 8) & 0xFF00) | ((v >> 8) & 0x00FF);
-    }
-    static Reg32 ntohl_lsb(Reg32 v) {
-	return htonl_lsb(v);
-    }
-    static Reg16 ntohs_lsb(Reg16 v) {
-	return htons_lsb(v);
+    static Reg16 swap16(Reg16 v)     {
+        return ((v << 8) & 0xFF00) | ((v >> 8) & 0x00FF);
     }
 
-    static Reg32 htonl_msb(Reg32 v) {
-	return v;
-    }
-    static Reg16 htons_msb(Reg16 v) {
-	return v;
-    }
-    static Reg32 ntohl_msb(Reg32 v) {
-	return v;
-    }
-    static Reg16 ntohs_msb(Reg16 v) {
-	return v;
-    }
 };
 
 __END_SYS
