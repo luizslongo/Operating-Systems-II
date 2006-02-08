@@ -28,20 +28,10 @@ void IA32_MMU::init()
     // touchs the first page of each chunk and INIT is not there
 
     // Insert all free memory into the _free list
-    List::Element * e, * m1, * m2;
-    e = new (phy2log(reinterpret_cast<void *>(si->pmm.free1_base)))
-	List::Element(reinterpret_cast<Page *>(si->pmm.free1_base),
-		      pages(si->pmm.free1_top - si->pmm.free1_base));
-    _free.insert_merging(e, &m1, &m2);
+    free(si->pmm.free1_base, pages(si->pmm.free1_top - si->pmm.free1_base));
+    free(si->pmm.free2_base, pages(si->pmm.free2_top - si->pmm.free2_base));
 
-    e = new (phy2log(reinterpret_cast<void *>(si->pmm.free2_base)))
-	List::Element(reinterpret_cast<Page *>(si->pmm.free2_base),
-		      pages(si->pmm.free2_top - si->pmm.free2_base));
-    _free.insert_merging(e, &m1, &m2);
-
-    db<Init, IA32_MMU>(INF) << "IA32_MMU::free pages="
-			    << _free.grouped_size() << "\n";
-
+    // Remeber the master page directory (created during SETUP)
     _master = reinterpret_cast<Page_Directory *>(CPU::pdp());
 
     db<Init, IA32_MMU>(INF) << "IA32_MMU::master page directory=" 
