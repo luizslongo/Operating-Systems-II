@@ -164,6 +164,10 @@ public:
     char get() { while(!rxd_full()); return rxd(); }
     void put(char c) { while(!txd_empty()); txd(c); }
 
+    //Place holder - not implemented
+    void power(unsigned char ps) {}
+    unsigned char power() {}
+
     void loopback(bool flag) { NS16550AF::loopback(flag); }
 
 private:
