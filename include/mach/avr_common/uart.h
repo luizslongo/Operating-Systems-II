@@ -56,44 +56,12 @@ public:
 public:  
     AVR_UART(unsigned int unit = 0) : _unit(unit) {
 	config(9600,8,0,1);
-	ucsrb(0x00);
-	if(_Traits::Reception) {
-	    if(_Traits::Transmission) {
-	        power(FULL);
-	    }
-	    else {
-	      power(LIGHT);
-	    }
-	}
-	else {
-	    if(_Traits::Transmission) {
-	        power(STANDBY);
-	    }
-	    else {
-	        power(OFF);
-	    }
-	}
+	ucsrb(1 << TXEN | 1 << RXEN);
     }
     AVR_UART(unsigned int baud, unsigned int data_bits, unsigned int parity,
 	     unsigned int stop_bits, unsigned int unit = 0) : _unit(unit) {
 	config(baud,data_bits,parity,stop_bits);
-	ucsrb(0x00);
-	if(_Traits::Reception) {
-	    if(_Traits::Transmission) {
-	        power(FULL);
-	    }
-	    else {
-	      power(LIGHT);
-	    }
-	}
-	else {
-	    if(_Traits::Transmission) {
-	        power(STANDBY);
-	    }
-	    else {
-	        power(OFF);
-	    }
-	}
+	ucsrb(1 << TXEN | 1 << RXEN);
     }
     ~AVR_UART(){ 
 	ubrrhl(0);

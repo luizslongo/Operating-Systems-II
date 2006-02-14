@@ -232,62 +232,6 @@ public:
 	(*(volatile unsigned char *)(port + 1 + 0x20)) = (Reg8)(value>>8);  // Must write high byte first
 	(*(volatile unsigned char *)(port + 0x20)) = (Reg8)value;
     }  
-
-    static char power() {
-        return power_state;
-    }
-
-    static void power(char ps) {
-        power_state = ps;
-	sleep(ps);
-    }
-
-    static int init();
-
-private:
-    static void sleep(char ps) {
-        switch(ps) {
-	case IDLE:
-	    out8(MCUCR,in8(MCUCR) & ~((SM0 | SM1 | SM2)));
-	    out8(MCUCR, in8(MCUCR) | SE);
-	    ASMV("sleep");
-	    break;
-	case ADC_NOISE_REDUCTION:	
-	    out8(MCUCR,in8(MCUCR) & ~((SM1 | SM2)));
-	    out8(MCUCR,in8(MCUCR) | SM0);
-	    out8(MCUCR, in8(MCUCR) | SE);
-	    ASMV("sleep");
-	    break;
-	case POWER_DOWN:	
-	    out8(MCUCR,in8(MCUCR) & ~((SM0 | SM2)));
-	    out8(MCUCR,in8(MCUCR) | SM1);
-	    out8(MCUCR, in8(MCUCR) | SE);
-	    ASMV("sleep");
-	    break;
-	case POWER_SAVE:	
-	    out8(MCUCR,in8(MCUCR) & ~(SM2));
-	    out8(MCUCR,in8(MCUCR) | (SM0 | SM1));
-	    out8(MCUCR, in8(MCUCR) | SE);
-	    ASMV("sleep");
-	    break;
-	case NATIVE_STANDBY:	
-	    out8(MCUCR,in8(MCUCR) & ~(SM0));
-	    out8(MCUCR,in8(MCUCR) | (SM1 | SM2));
-	    out8(MCUCR, in8(MCUCR) | SE);
-	    ASMV("sleep");
-	    break;
-	case EXTENDED_STANDBY:	
-	    out8(MCUCR,in8(MCUCR) | (SM0 | SM1 | SM2));
-	    out8(MCUCR, in8(MCUCR) | SE);
-	    ASMV("sleep");
-	    break;
-        default:
-            break;
-	}
-    }
-
-private:
-    static char power_state;
 };
 
 __END_SYS
