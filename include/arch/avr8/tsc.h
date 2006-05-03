@@ -19,17 +19,12 @@ private:
     typedef CPU::Reg16 Reg16;
     
     // Timer1 Registers
-    enum {
-	TCCR1A = IO::TCCR1A,
-	TCCR1B = IO::TCCR1B,
-	TCNT1H = IO::TCNT1H,
-	TCNT1L = IO::TCNT1L,
-	OCR1AH = IO::OCR1AH,
-	OCR1AL = IO::OCR1AL,
-	OCR1BH = IO::OCR1BH,
-	OCR1BL = IO::OCR1BL,
-	ICR1H  = IO::ICR1H,
-	ICR1L  = IO::ICR1L    
+    enum {  
+	TCNT1L	= 0x2C,
+	TCNT1H	= 0x2D,
+	TCCR1B	= 0x2E,
+	TCCR1A	= 0x2F,
+	TIMSK	= 0x37,
     };
     
     // Timer1 Register Bits
@@ -50,7 +45,9 @@ private:
 	WGM12  = 0x08,
 	CS12   = 0x04,
 	CS11   = 0x02,
-	CS10   = 0x01   
+	CS10   = 0x01,
+	// TIMSK
+	TOIE1  = 0x04
     };
 
 public:
@@ -64,6 +61,12 @@ public:
     static void init();
     
 private:
+
+    static void enable() { timsk(timsk() | TOIE1); }
+    static void disable() { timsk(timsk() & ~TOIE1); }
+
+    static Reg8 timsk() { return AVR8::in8(IO::TIMSK); }
+    static void timsk(Reg8 value) { AVR8::out8(IO::TIMSK,value); }
     static Reg8 tccr1a() { return CPU::in8(TCCR1A); }
     static void tccr1a(Reg8 value) { CPU::out8(TCCR1A, value); }    
     static Reg8 tccr1b() { return CPU::in8(TCCR1B); }
@@ -71,9 +74,7 @@ private:
     static Reg16 tcnt1hl() { return CPU::in16(TCNT1L); }
     static void tcnt1hl(Reg16 value) { return CPU::out16(TCNT1L, value); }
 
-    static void timer_handler(unsigned int) { _ts++; } 
-
-private:
+public:
     static volatile unsigned long _ts;
 };
 
