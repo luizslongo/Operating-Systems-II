@@ -2,6 +2,7 @@
 
 #include <tsc.h>
 #include <machine.h>
+#include <ic.h>
 
 __BEGIN_SYS
 
@@ -9,12 +10,12 @@ void AVR8_TSC::init()
 {
     db<Init, AVR8_TSC>(TRC) << "AVR8_TSC::init()\n";
 
-//    tccr1b(CS10);
+    tccr1b(CS12 | CS10);
+
+    _ts = 0;
    
-    Machine::int_vector(IC::IRQ_TSC, timer_handler);
+    enable();
     
-//     IC ic;
-//     ic.enable(IC::TIMER1_OVF);
 }
 
 __END_SYS
