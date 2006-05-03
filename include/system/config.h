@@ -81,7 +81,8 @@ typedef IF<Traits<PC_Display>::on_serial,
 typedef PC_NIC			NIC;
 typedef Dummy<1>		ADC;
 typedef Dummy<2>		Temperature_Sensor;
-typedef Dummy<3>		Light_Sensor;
+typedef Dummy<3>		Photo_Sensor;
+typedef Dummy<4>		Accelerometer;
 #define __MACH_H		__HEADER_MACH(machine)
 #define __PCI_H			__HEADER_MACH(pci)
 #define __IC_H			__HEADER_MACH(ic)
@@ -109,7 +110,8 @@ typedef IF<Traits<ATMega16_Display>::on_serial,
 typedef ATMega16_NIC		NIC;
 typedef ATMega16_ADC		ADC;
 typedef Dummy<1>		Temperature_Sensor;
-typedef Dummy<2>		Light_Sensor;
+typedef Dummy<2>		Photo_Sensor;
+typedef Dummy<3>		Accelerometer;
 #define __MACH_H		__HEADER_MACH(machine)
 #define __IC_H			__HEADER_MACH(ic)
 #define __TIMER_H		__HEADER_MACH(timer)
@@ -165,7 +167,8 @@ typedef Serial_Display          Display;
 typedef ML310_NIC               NIC;
 typedef Dummy<2>                ADC;
 typedef Dummy<3>                Temperature_Sensor;
-typedef Dummy<4>                Light_Sensor;
+typedef Dummy<4>                Photo_Sensor;
+typedef Dummy<5>		Accelerometer;
 #define __MACH_H                __HEADER_MACH(machine)
 #define __PCI_H                 __HEADER_MACH(pci)
 #define __IC_H                  __HEADER_MACH(ic)
