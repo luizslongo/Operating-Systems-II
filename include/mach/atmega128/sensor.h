@@ -4,93 +4,174 @@
 #define __atmega128_sensor_h
 
 #include <sensor.h>
-#include "../avr_common/adc.h"
+#include "mts300.h"
+#include "adxl202.h"
 
 __BEGIN_SYS
 
-class ATMega128_Sensor
+
+class ATMega128_Temperature_Sensor: public Temperature_Sensor_Common
 {
-protected:
-    typedef IO_Map<Machine> IO;
-    typedef AVR8::Reg8 Reg8;
-
-    static const unsigned long CLOCK = Traits<Machine>::CLOCK;
-
-    enum {
-	CHANNEL  = 1,
-	PORT     = IO::PORTE,
-	DDR      = IO::DDRE,
-	LIGHT_EN = 0x20,
-	TEMP_EN  = 0x40,
-    };
-
-protected:
-    ATMega128_Sensor() : _adc(CHANNEL, CLOCK >> 7) {}
+private:
+    typedef Traits<ATMega128_Temperature_Sensor>::SENSORS SENSORS;
+    static const unsigned int UNITS = SENSORS::Length;
 
 public:
-    void enable() { _adc.enable();  }
-    void disable() { _adc.disable(); }
+    ATMega128_Temperature_Sensor() {
+	_dev = new Meta_Temperature_Sensor<SENSORS>::Get<0>::Result;
+    }
+    template<unsigned int UNIT>
+    ATMega128_Temperature_Sensor(unsigned int u) {
+	_dev = new typename Meta_Temperature_Sensor<SENSORS>::Get<UNIT>::Result(UNIT);
+    }
 
-    int get() { return _adc.get(); }
+    ~ATMega128_Temperature_Sensor() {
+	delete _dev;
+    }
 
-    bool data_ready() { return _adc.finished(); }
+    int sample() {
+	return _dev->sample();
+    }
 
-    Reg8 port(){ return AVR8::in8(PORT); }
-    void port(Reg8 value){ AVR8::out8(PORT,value); }   
-    Reg8 ddr(){ return AVR8::in8(DDR); }
-    void ddr(Reg8 value){ AVR8::out8(DDR,value); }   
+    int get() {
+	return _dev->get();
+    }
+
+    bool enable() {
+	return _dev->enable();
+    }
+
+    void disable() {
+	_dev->disable();
+    }
+
+    bool data_ready() {
+	return _dev->data_ready();
+    }
+
+    static void init();
 
 private:
-    ADC _adc;
+    Meta_Temperature_Sensor<SENSORS>::Base * _dev;
 };
 
-class ATMega128_Temperature_Sensor: public Temperature_Sensor_Common,
-				 private ATMega128_Sensor
-{
-public:
-    ATMega128_Temperature_Sensor() {}
-    ~ATMega128_Temperature_Sensor() { disable(); }
 
-    void enable() {
-	ddr(ddr() | TEMP_EN & ~LIGHT_EN);
-	port(port() | TEMP_EN & ~LIGHT_EN);
-	ATMega128_Sensor::enable();
+class ATMega128_Photo_Sensor: public Photo_Sensor_Common
+{
+private:
+    typedef Traits<ATMega128_Photo_Sensor>::SENSORS SENSORS;
+    static const unsigned int UNITS = SENSORS::Length;
+
+public:
+    ATMega128_Photo_Sensor() {
+	_dev = new Meta_Photo_Sensor<SENSORS>::Get<0>::Result;
+    }
+    template<unsigned int UNIT>
+    ATMega128_Photo_Sensor(unsigned int u) {
+	_dev = new typename Meta_Photo_Sensor<SENSORS>::Get<UNIT>::Result(UNIT);
+    }
+
+    ~ATMega128_Photo_Sensor() {
+	delete _dev;
+    }
+
+    int sample() {
+	return _dev->sample();
+    }
+
+    int get() {
+	return _dev->get();
+    }
+
+    bool enable() {
+	return _dev->enable();
     }
 
     void disable() {
-	port(port() & ~TEMP_EN);
-	ddr(ddr() & ~TEMP_EN);
-	ATMega128_Sensor::disable();
+	_dev->disable();
     }
 
-    // This is a very rough approximation funcion, but it works fine
-    // in the range of 0-50 Celsius Degrees.
-    int get() { return ((ATMega128_Sensor::get() >> 2) - 51) / 3; }
+    bool data_ready() {
+	return _dev->data_ready();
+    }
 
-    int get_raw() { return ATMega128_Sensor::get(); }
+    static void init();
+
+private:
+    Meta_Photo_Sensor<SENSORS>::Base * _dev;
 };
 
-class ATMega128_Light_Sensor: public ATMega128_Sensor
+
+class ATMega128_Accelerometer: public Accelerometer_Common
 {
+private:
+    typedef Traits<ATMega128_Accelerometer>::SENSORS SENSORS;
+    static const unsigned int UNITS = SENSORS::Length;
+
 public:
-    ATMega128_Light_Sensor() {}
-    ~ATMega128_Light_Sensor() { disable(); }
-
-    void enable() {
-	ddr(ddr() | LIGHT_EN & ~TEMP_EN);
-	port(port() | LIGHT_EN & ~TEMP_EN);
-	ATMega128_Sensor::enable();
+    ATMega128_Accelerometer() {
+	_dev = new Meta_Accelerometer<SENSORS>::Get<0>::Result;
+    }
+    template<unsigned int UNIT>
+    ATMega128_Accelerometer(unsigned int u) {
+	_dev = new typename Meta_Accelerometer<SENSORS>::Get<UNIT>::Result(UNIT);
     }
 
-    void disable() {
-	port(port() & ~LIGHT_EN);
-	ddr(ddr() & ~LIGHT_EN);
-	ATMega128_Sensor::disable();
+    ~ATMega128_Accelerometer() {
+	delete _dev;
     }
 
-    int get() { return ATMega128_Sensor::get() / 10; }
+    int sample_x() {
+	return _dev->sample_x();
+    }
+
+    int get_x() {
+	return _dev->get_x();
+    }
+
+    bool enable_x() {
+	return _dev->enable_x();
+    }
+
+    void disable_x() {
+	_dev->disable_x();
+    }
+
+    bool data_ready_x() {
+	return _dev->data_ready_x();
+    }
+
+    int sample_y() {
+	return _dev->sample_y();
+    }
+
+    int get_y() {
+	return _dev->get_y();
+    }
+
+    bool enable_y() {
+	return _dev->enable_y();
+    }
+
+    void disable_y() {
+	_dev->disable_y();
+    }
+
+    bool data_ready_y() {
+	return _dev->data_ready_y();
+    }
+
+    static void init();
+
+private:
+    Meta_Accelerometer<SENSORS>::Base * _dev;
 };
+
 
 __END_SYS
+
+
+
+
 
 #endif
