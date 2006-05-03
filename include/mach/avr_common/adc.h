@@ -58,32 +58,48 @@ public:
     void config(unsigned char channel, unsigned char reference,
 		unsigned char trigger, Hertz frequency) {
 
-	admux((channel << MUX0) | (reference << REFS0));
+	_admux = (channel << MUX0) | (reference << REFS0);
 
 	unsigned char ps = 7;
 	while(((CLOCK >> ps) < frequency) && (ps > 0)) ps--;
 
-	adcsra((trigger << ADFR) | (ps << ADPS0));
+	_adcsra = (trigger << ADFR) | (ps << ADPS0);
 
     }
     void config(unsigned char * channel, unsigned char * reference,
 		unsigned char * trigger, Hertz * frequency) {
-
-	unsigned char mux = admux();
-	*channel = (mux >> MUX0) & 0x07;
-	*reference = (mux >> REFS0) & 0x03;
-	
-	unsigned char sra = adcsra();
-	*trigger = (sra >> ADFR) & 0x01;
-	*frequency = CLOCK << ((sra >> ADPS0) & 0x07);
-
+	*channel = (_admux >> MUX0) & 0x07;
+	*reference = (_admux >> REFS0) & 0x03;
+	*trigger = (_adcsra >> ADFR) & 0x01;
+	*frequency = CLOCK << ((_adcsra >> ADPS0) & 0x07);
     }
 
-    int get() { while (!finished()); return adchl(); }
+    int sample() { 
+	while (!enable());
+	while (!finished()); 
+	int result = adchl();
+	disable();
+	return result;
+    }
+
+    int get() {
+	return adchl(); 
+    }
+
     bool finished() { return (adcsra() & (1 << ADIF)); }
 
-    void enable() { adcsra(adcsra() | (1 << ADEN) | (1 << ADSC)); }
-    void disable() { adcsra(adcsra() & ~(1 << ADEN) & ~(1 << ADSC)); }
+    bool enable() {
+	if(_in_use) return false;
+	_in_use = true;
+	config();
+	adcsra(adcsra() | (1 << ADEN) | (1 << ADSC)); 
+	return true;
+    }
+    
+    void disable() { 
+	_in_use = false;
+	adcsra(adcsra() & ~(1 << ADEN) & ~(1 << ADSC)); 
+    }
 
     void reset();
 
@@ -96,7 +112,18 @@ private:
     static Reg8 adcsra(){ return AVR8::in8(IO::ADCSRA); }
     static void adcsra(Reg8 value){ AVR8::out8(IO::ADCSRA,value); }       
     static Reg16 adchl(){ return AVR8::in16(IO::ADCL); }
-    static void adchl(Reg16 value){ AVR8::out16(IO::ADCL,value); }   
+    static void adchl(Reg16 value){ AVR8::out16(IO::ADCL,value); } 
+
+    void config() {
+	admux(_admux);
+	adcsra(_adcsra);
+    }
+
+private:
+    Reg8 _admux;
+    Reg8 _adcsra;
+    static bool _in_use;
+
 };
 
 __END_SYS
