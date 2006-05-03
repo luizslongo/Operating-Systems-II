@@ -14,6 +14,9 @@ public:
 
     char get() { return AVR_SPI::get(); }
     void put(char c) { AVR_SPI::put(c); }
+    void int_enable() { AVR_SPI::int_enable(); }
+    void int_disable() { AVR_SPI::int_disable(); }
+    
 };
 
 __END_SYS

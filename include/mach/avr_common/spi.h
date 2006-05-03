@@ -61,6 +61,9 @@ public:
 
     bool complete() { return (spsr() & SPIF); } 
 
+    void int_enable() { spcr(spcr() | SPIE); }
+    void int_disable() { spcr(spcr() & ~SPIE); }
+
     char get() { while(!complete()); return spdr(); }
     void put(char c) { spdr(c);  while(!complete());  }
 
