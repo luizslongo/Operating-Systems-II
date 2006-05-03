@@ -96,6 +96,7 @@ class ATMega16_NIC;
 class ATMega128_NIC;
 class Radio;
 class ML310_NIC;
+class CMAC;
 
 // Hardware Mediators - ADCs
 class ATMega16_ADC;
@@ -104,7 +105,13 @@ class ATMega128_ADC;
 // Hardware Mediators - Sensors
 class PC_Sensor;
 class ATMega128_Temperature_Sensor;
-class ATMega128_Light_Sensor;
+class ATMega128_Photo_Sensor;
+class ATMega128_Accelerometer;
+class MTS300;
+class MTS300_Temperature;
+class MTS300_Photo;
+class ADXL202;
+class Dummy_Accel;
 
 
 // Abstractions	- Process
@@ -156,7 +163,8 @@ enum
     NIC_ID,
     ADC_ID,
     TEMPERATURE_SENSOR_ID,
-    LIGHT_SENSOR_ID,
+    PHOTO_SENSOR_ID,
+    ACCELEROMETER_ID,
 
     THREAD_ID,
     TASK_ID,
