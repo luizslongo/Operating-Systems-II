@@ -137,7 +137,8 @@ typedef IF<Traits<ATMega128_Display>::on_serial,
 typedef ATMega128_NIC		NIC;
 typedef ATMega128_ADC		ADC;
 typedef ATMega128_Temperature_Sensor	Temperature_Sensor;
-typedef ATMega128_Light_Sensor	Light_Sensor;
+typedef ATMega128_Photo_Sensor	Photo_Sensor;
+typedef ATMega128_Accelerometer	Accelerometer;
 #define __MACH_H		__HEADER_MACH(machine)
 #define __IC_H			__HEADER_MACH(ic)
 #define __TIMER_H		__HEADER_MACH(timer)

@@ -27,7 +27,7 @@ template<> struct Type2Id<Display>	{ enum { ID = DISPLAY_ID }; };
 template<> struct Type2Id<NIC>		{ enum { ID = NIC_ID }; };
 template<> struct Type2Id<ADC>		{ enum { ID = ADC_ID }; };
 template<> struct Type2Id<Temperature_Sensor>{ enum { ID = TEMPERATURE_SENSOR_ID }; };
-template<> struct Type2Id<Light_Sensor>	{ enum { ID = LIGHT_SENSOR_ID }; };
+template<> struct Type2Id<Photo_Sensor>	{ enum { ID = PHOTO_SENSOR_ID }; };
 
 
 template<> struct Type2Id<Thread>	{ enum { ID = THREAD_ID }; };
@@ -72,7 +72,8 @@ template<> struct Id2Type<DISPLAY_ID>	{ typedef Display TYPE; };
 template<> struct Id2Type<NIC_ID>	{ typedef NIC TYPE; };
 template<> struct Id2Type<ADC_ID>	{ typedef ADC TYPE; };
 template<> struct Id2Type<TEMPERATURE_SENSOR_ID> { typedef Temperature_Sensor TYPE; };
-template<> struct Id2Type<LIGHT_SENSOR_ID> { typedef Light_Sensor TYPE; };
+template<> struct Id2Type<PHOTO_SENSOR_ID> { typedef Photo_Sensor TYPE; };
+template<> struct Id2Type<ACCELEROMETER_ID> { typedef Accelerometer TYPE; };
 
 
 template<> struct Id2Type<THREAD_ID>	{ typedef Thread TYPE; };
@@ -91,9 +92,6 @@ template<> struct Id2Type<ALARM_ID>	{ typedef Alarm TYPE; };
 template<> struct Id2Type<CHRONOMETER_ID>{ typedef Chronometer TYPE; };
 
 template<> struct Id2Type<NETWORK_ID>	{ typedef Network TYPE; };
-
-// template<> struct Id2Type<TEMPERATURE_SENTIENT_ID>{ typedef Temperature_Sentient TYPE; };
-// template<> struct Id2Type<PHOTO_SENTIENT_ID>{ typedef Photo_Sentient TYPE; };
 
 __END_SYS
 
