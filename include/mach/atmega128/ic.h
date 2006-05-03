@@ -111,41 +111,6 @@ private:
     };
 
 public:
-    // IRQs
-    enum {
-	IRQ0         = 0x00000002,
-	IRQ1         = 0x00000004,
-	IRQ2         = 0x00000008,
-	IRQ3         = 0x00000010,
-	IRQ4         = 0x00000020,
-	IRQ5         = 0x00000040,
-	IRQ6         = 0x00000080,
-	IRQ7         = 0x00000100,
-	TIMER2_COMP  = 0x00000200,
-	TIMER2_OVF   = 0x00000400,
-	TIMER1_CAPT  = 0x00000800,
-	TIMER1_COMPA = 0x00001000,
-	TIMER1_COMPB = 0x00002000,
-	TIMER1_OVF   = 0x00004000,
-	TIMER0_COMP  = 0x00008000,
-	TIMER0_OVF   = 0x00010000,
-	SPI_STC      = 0x00020000,
-	USART0_RXC   = 0x00040000,
-	USART0_UDRE  = 0x00080000,
-	USART0_TXC   = 0x00100000,
-	ADC          = 0x00200000,
-	EE_RDY       = 0x00400000,
-	ANA_COMP     = 0x00800000,
-	TIMER1_COMPC = 0x01000000,
-	TIMER3_CAPT  = 0x02000000,
-	TIMER3_COMPA = 0x04000000,
-	TIMER3_COMPB = 0x08000000,
-	TIMER3_COMPC = 0x10000000,
-	TIMER3_OVF   = 0x20000000,
-	USART1_RXC   = 0x40000000,
-	USART1_UDRE  = 0x80000000,
-	USART1_TXC   = 0x00000001,
-    };
 
     enum {
 	IRQ_RESET        = 0,
@@ -191,120 +156,86 @@ public:
     ATMega128_IC() {};
     
     static void enable(IRQ irq) {
-        if (IRQ_IRQ0  	 == irq) { eimsk(eimsk() | INT0); return; }
-        if (IRQ_IRQ1  	 == irq) { eimsk(eimsk() | INT1); return; }
-        if (IRQ_IRQ2   	 == irq) { eimsk(eimsk() | INT2); return; }
-        if (IRQ_IRQ3   	 == irq) { eimsk(eimsk() | INT3); return; }
-        if (IRQ_IRQ4   	 == irq) { eimsk(eimsk() | INT4); return; }
-        if (IRQ_IRQ5   	 == irq) { eimsk(eimsk() | INT5); return; }
-        if (IRQ_IRQ6   	 == irq) { eimsk(eimsk() | INT6); return; }
-        if (IRQ_IRQ7   	 == irq) { eimsk(eimsk() | INT7); return; }
-	
-        if (IRQ_TIMER2_COMP  == irq) { timsk(timsk() | OCIE2); return; }
-        if (IRQ_TIMER2_OVF   == irq) { timsk(timsk() | TOIE2); return; }
-	
-        if (IRQ_TIMER1_CAPT  == irq) { timsk(timsk() | TICIE1); return; } 
-        if (IRQ_TIMER1_COMPA == irq) { timsk(timsk() | OCIE1A); return; }  
-        if (IRQ_TIMER1_COMPB == irq) { timsk(timsk() | OCIE1B); return; } 
-        if (IRQ_TIMER1_OVF   == irq) { timsk(timsk() | TOIE1); return; } 
-	if (IRQ_TIMER1_COMPC == irq) { etimsk(etimsk() | OCIE1C); return; }
 
-        if (IRQ_TIMER0_OVF   == irq) { timsk(timsk() | TOIE0); return; } 
-        if (IRQ_TIMER0_COMP  == irq) { timsk(timsk() | OCIE0); return; } 
-	
-        if (IRQ_SPI_STC      == irq) { spcr(spcr() | SPIE); return; }
-	
-        if (IRQ_USART0_RXC   == irq) { ucsr0b(ucsr0b() | RXCIEn); return; } 
-        if (IRQ_USART0_UDRE  == irq) { ucsr0b(ucsr0b() | UDRIEn); return; } 
-        if (IRQ_USART0_TXC   == irq) { ucsr0b(ucsr0b() | TXCIEn); return; } 
+	if(irq <= IRQ_IRQ7) {
+	    eimsk(eimsk() | 1 << (irq - 1));
+	    return;
+	}
 
-        if (IRQ_USART1_RXC   == irq) { ucsr1b(ucsr1b() | RXCIEn); return; } 
-        if (IRQ_USART1_UDRE  == irq) { ucsr1b(ucsr1b() | UDRIEn); return; } 
-        if (IRQ_USART1_TXC   == irq) { ucsr1b(ucsr1b() | TXCIEn); return; }  
+	if(irq <= IRQ_TIMER0_OVF) {
+	    timsk(timsk() | 1 << -(irq - 16)); 
+	    return;
+	}
 
-        if (IRQ_ADC  	     == irq) { adcsra(adcsra() | ADIE); return; }
+	/* There is no linear relation between UART0, UART1 and Timer3
+	   Interrupts and their respective register bits :-( */
 	
-        if (IRQ_ANA_COMP     == irq) { acsr(acsr() | ACIE); return; }
-	
-        if (IRQ_EE_RDY       == irq) { eecr(eecr() | EERIE); return; }
+	switch(irq) {
+	    case IRQ_SPI_STC:         spcr(spcr()     | SPIE)  ; break;
+	    case IRQ_USART0_RXC:      ucsr0b(ucsr0b() | RXCIEn); break;
+	    case IRQ_USART0_UDRE:     ucsr0b(ucsr0b() | UDRIEn); break;
+	    case IRQ_USART0_TXC:      ucsr0b(ucsr0b() | TXCIEn); break;
+	    case IRQ_ADC:             adcsra(adcsra() | ADIE)  ; break;
+	    case IRQ_EE_RDY:          eecr(eecr()     | EERIE) ; break;
+	    case IRQ_ANA_COMP:        acsr(acsr()     | ACIE)  ; break;
+	    case IRQ_TIMER1_COMPC:    etimsk(etimsk() | OCIE1C); break;
+	    case IRQ_TIMER3_CAPT:     etimsk(etimsk() | TICIE3); break;
+	    case IRQ_TIMER3_COMPA:    etimsk(etimsk() | OCIE3A); break;
+	    case IRQ_TIMER3_COMPB:    etimsk(etimsk() | OCIE3B); break;
+	    case IRQ_TIMER3_COMPC:    etimsk(etimsk() | OCIE3C); break;
+	    case IRQ_TIMER3_OVF:      etimsk(etimsk() | TOIE3) ; break;
+	    case IRQ_USART1_RXC:      ucsr1b(ucsr1b() | RXCIEn); break;
+	    case IRQ_USART1_UDRE:     ucsr1b(ucsr1b() | UDRIEn); break;
+	    case IRQ_USART1_TXC:      ucsr1b(ucsr1b() | TXCIEn); break;
+	}
 
-        if (IRQ_TIMER3_CAPT  == irq) { etimsk(etimsk() | TICIE3); return; } 
-        if (IRQ_TIMER3_COMPA == irq) { etimsk(etimsk() | OCIE3A); return; }  
-        if (IRQ_TIMER3_COMPB == irq) { etimsk(etimsk() | OCIE3B); return; } 
-        if (IRQ_TIMER3_OVF   == irq) { etimsk(etimsk() | TOIE3); return; } 
-	if (IRQ_TIMER3_COMPC == irq) { etimsk(etimsk() | OCIE3C); return; }
     }
     
     static void disable() {
-        eimsk(eimsk() & ~(INT0 | INT1 | INT2 | INT3 |
-			  INT4 | INT5 | INT6 | INT7));
-	
-	timsk(timsk() & ~(OCIE2 | TOIE2 | TICIE1 | OCIE1A 
-			  | OCIE1B | TOIE1 | TOIE0 | OCIE0)); 
-
-	etimsk(etimsk() & ~OCIE1C);
-	
+        eimsk(0);
+	timsk(0); 
+	etimsk(0);
         spcr(spcr() & ~SPIE);
-	
         ucsr0b(ucsr0b() & ~(RXCIEn | UDRIEn | TXCIEn)); 
-
         ucsr1b(ucsr1b() & ~(RXCIEn | UDRIEn | TXCIEn));
-	
         adcsra(adcsra() & ~ADIE);
-	
         acsr(acsr() & ~ACIE);
-	
         eecr(eecr() & ~EERIE);
-
-        etimsk(etimsk() & ~TICIE3); 
-        etimsk(etimsk() & ~OCIE3A);  
-        etimsk(etimsk() & ~OCIE3B); 
-        etimsk(etimsk() & ~TOIE3); 
-	etimsk(etimsk() & ~OCIE3C);
     }
     static void disable(IRQ irq) {
-        if (IRQ_IRQ0  	 == irq) { eimsk(eimsk() & ~INT0); return; }
-        if (IRQ_IRQ1  	 == irq) { eimsk(eimsk() & ~INT1); return; }
-        if (IRQ_IRQ2   	 == irq) { eimsk(eimsk() & ~INT2); return; }
-        if (IRQ_IRQ3   	 == irq) { eimsk(eimsk() & ~INT3); return; }
-        if (IRQ_IRQ4   	 == irq) { eimsk(eimsk() & ~INT4); return; }
-        if (IRQ_IRQ5   	 == irq) { eimsk(eimsk() & ~INT5); return; }
-        if (IRQ_IRQ6   	 == irq) { eimsk(eimsk() & ~INT6); return; }
-        if (IRQ_IRQ7   	 == irq) { eimsk(eimsk() & ~INT7); return; }
-	
-        if (IRQ_TIMER2_COMP  == irq) { timsk(timsk() & ~OCIE2); return; }
-        if (IRQ_TIMER2_OVF   == irq) { timsk(timsk() & ~TOIE2); return; }
-	
-        if (IRQ_TIMER1_CAPT  == irq) { timsk(timsk() & ~TICIE1); return; } 
-        if (IRQ_TIMER1_COMPA == irq) { timsk(timsk() & ~OCIE1A); return; }  
-        if (IRQ_TIMER1_COMPB == irq) { timsk(timsk() & ~OCIE1B); return; } 
-        if (IRQ_TIMER1_OVF   == irq) { timsk(timsk() & ~TOIE1); return; } 
-	if (IRQ_TIMER1_COMPC == irq) { etimsk(etimsk() & ~OCIE1C); return; }
 
-        if (IRQ_TIMER0_OVF   == irq) { timsk(timsk() & ~TOIE0); return; } 
-        if (IRQ_TIMER0_COMP  == irq) { timsk(timsk() & ~OCIE0); return; } 
-	
-        if (IRQ_SPI_STC      == irq) { spcr(spcr() & ~SPIE); return; }
-	
-        if (IRQ_USART0_RXC   == irq) { ucsr0b(ucsr0b() & ~RXCIEn); return; } 
-        if (IRQ_USART0_UDRE  == irq) { ucsr0b(ucsr0b() & ~UDRIEn); return; } 
-        if (IRQ_USART0_TXC   == irq) { ucsr0b(ucsr0b() & ~TXCIEn); return; } 
+	if(irq <= IRQ_IRQ7) {
+	    eimsk(eimsk() & ~(1 << (irq - 1)));
+	    return;
+	}
 
-        if (IRQ_USART1_RXC   == irq) { ucsr1b(ucsr1b() & ~RXCIEn); return; } 
-        if (IRQ_USART1_UDRE  == irq) { ucsr1b(ucsr1b() & ~UDRIEn); return; } 
-        if (IRQ_USART1_TXC   == irq) { ucsr1b(ucsr1b() & ~TXCIEn); return; }  
-	
-        if (IRQ_ADC  	     == irq) { adcsra(adcsra() & ~ADIE); return; }
-	
-        if (IRQ_ANA_COMP     == irq) { acsr(acsr() & ~ACIE); return; }
-	
-        if (IRQ_EE_RDY       == irq) { eecr(eecr() & ~EERIE); return; }
+	if(irq <= IRQ_TIMER0_OVF) {
+	    timsk(timsk() & ~( 1 << -(irq - 16))); 
+	    return;
+	}
 
-        if (IRQ_TIMER3_CAPT  == irq) { etimsk(etimsk() & ~TICIE3); return; } 
-        if (IRQ_TIMER3_COMPA == irq) { etimsk(etimsk() & ~OCIE3A); return; }  
-        if (IRQ_TIMER3_COMPB == irq) { etimsk(etimsk() & ~OCIE3B); return; } 
-        if (IRQ_TIMER3_OVF   == irq) { etimsk(etimsk() & ~TOIE3); return; } 
-	if (IRQ_TIMER3_COMPC == irq) { etimsk(etimsk() & ~OCIE3C); return; }
+	/* There is no linear relation between UART0, UART1 and Timer3
+	   Interrupts and their respective register bits :-( */
+	
+	switch(irq) {
+	    case IRQ_SPI_STC:         spcr(spcr()     & ~SPIE)  ; break;
+	    case IRQ_USART0_RXC:      ucsr0b(ucsr0b() & ~RXCIEn); break;
+	    case IRQ_USART0_UDRE:     ucsr0b(ucsr0b() & ~UDRIEn); break;
+	    case IRQ_USART0_TXC:      ucsr0b(ucsr0b() & ~TXCIEn); break;
+	    case IRQ_ADC:             adcsra(adcsra() & ~ADIE)  ; break;
+	    case IRQ_EE_RDY:          eecr(eecr()     & ~EERIE) ; break;
+	    case IRQ_ANA_COMP:        acsr(acsr()     & ~ACIE)  ; break;
+	    case IRQ_TIMER1_COMPC:    etimsk(etimsk() & ~OCIE1C); break;
+	    case IRQ_TIMER3_CAPT:     etimsk(etimsk() & ~TICIE3); break;
+	    case IRQ_TIMER3_COMPA:    etimsk(etimsk() & ~OCIE3A); break;
+	    case IRQ_TIMER3_COMPB:    etimsk(etimsk() & ~OCIE3B); break;
+	    case IRQ_TIMER3_COMPC:    etimsk(etimsk() & ~OCIE3C); break;
+	    case IRQ_TIMER3_OVF:      etimsk(etimsk() & ~TOIE3) ; break;
+	    case IRQ_USART1_RXC:      ucsr1b(ucsr1b() & ~RXCIEn); break;
+	    case IRQ_USART1_UDRE:     ucsr1b(ucsr1b() & ~UDRIEn); break;
+	    case IRQ_USART1_TXC:      ucsr1b(ucsr1b() & ~TXCIEn); break; 
+	}
+
     }
     
 private:
