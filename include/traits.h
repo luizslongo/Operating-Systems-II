@@ -250,8 +250,8 @@ template <> struct Traits<ATMega128_Common>: public Traits<void>
 
 template <> struct Traits<ATMega128>: public Traits<ATMega128_Common>
 {
-  //    static const unsigned long long CLOCK = 7372800; //Mica2
-    static const unsigned long long CLOCK = 8000000;
+    static const unsigned long long CLOCK = 7372800; //Mica2
+    /*static const unsigned long long CLOCK = 8000000;*/
     static const unsigned int BOOT_IMAGE_ADDR = 0x0000;
 
     static const unsigned int APPLICATION_STACK_SIZE = 256;
@@ -264,7 +264,7 @@ template <> struct Traits<ATMega128>: public Traits<ATMega128_Common>
 
 template <> struct Traits<ATMega128_Timer>: public Traits<ATMega128_Common>
 {
-    // Should be between 28 and 7200 Hz
+    // Should be between 30 and 7200 Hz
     static const int FREQUENCY = 720; // Hz
     
 };
@@ -293,10 +293,33 @@ template <> struct Traits<ATMega128_Display>: public Traits<ATMega128_Common>
 
 template <> struct Traits<ATMega128_NIC>: public Traits<void>
 {
-    typedef LIST<Radio> NICS;
+    typedef LIST<CMAC> NICS;
 
     static const unsigned int RADIO_UNITS = NICS::Count<Radio>::Result;
 };
+
+template <> struct Traits<CMAC>: public Traits<void>
+{
+    static const unsigned int FREQUENCY = 0;
+    static const unsigned int POWER = 5;
+};
+
+template <> struct Traits<ATMega128_Temperature_Sensor>: public Traits<void>
+{
+    typedef LIST<MTS300_Temperature> SENSORS;
+};
+
+template <> struct Traits<ATMega128_Photo_Sensor>: public Traits<void>
+{
+    typedef LIST<MTS300_Photo> SENSORS;
+};
+
+template <> struct Traits<ATMega128_Accelerometer>: public Traits<void>
+{
+    typedef LIST<ADXL202> SENSORS;
+};
+
+
 #endif
 
 // Mediators - Machine - ML310
