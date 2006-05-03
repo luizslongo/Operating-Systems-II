@@ -20,6 +20,8 @@ void ATMega128::init()
     si->lmm.app_entry =
 	reinterpret_cast<unsigned int>(&__epos_library_app_entry);
 
+    IC::disable();
+
     // Initialize the hardware
     if(Traits<AVR8_MMU>::enabled)
 	AVR8_MMU::init();
