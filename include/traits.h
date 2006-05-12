@@ -64,6 +64,7 @@ template <> struct Traits<IA32_MMU>: public Traits<void>
 #ifdef __avr8
 template <> struct Traits<AVR8>: public Traits<void>
 {
+    static const bool Power_Management = false;
 };
 
 template <> struct Traits<AVR8_TSC>: public Traits<void>
@@ -199,15 +200,16 @@ template <> struct Traits<ATMega16>: public Traits<ATMega16_Common>
     static const unsigned long long CLOCK = 8000000;
     static const unsigned int BOOT_IMAGE_ADDR = 0x0000;
 
-    static const unsigned int SYSTEM_STACK_SIZE = 64;
-    static const unsigned int SYSTEM_HEAP_SIZE = 64;
-    static const unsigned int APPLICATION_STACK_SIZE = 64;
+    static const unsigned int APPLICATION_STACK_SIZE = 128;
     static const unsigned int APPLICATION_HEAP_SIZE = 256;
+
+    static const unsigned int SYSTEM_STACK_SIZE = 64;
+    static const unsigned int SYSTEM_HEAP_SIZE = 4 *  APPLICATION_STACK_SIZE;
 };
 
 template <> struct Traits<ATMega16_Timer>: public Traits<ATMega16_Common>
 {
-    static const int FREQUENCY = 40; // Hz
+    static const int FREQUENCY = 800; // Hz
 };
 
 template <> struct Traits<ATMega16_RTC>: public Traits<ATMega16_Common>
@@ -223,6 +225,21 @@ template <> struct Traits<ATMega16_EEPROM>: public Traits<ATMega16_Common>
     static const unsigned int SIZE = 512; // bytes
 };
 
+template <> struct Traits<ATMega16_UART>: public Traits<void>
+{
+    enum {
+        FULL                = 0,//Tx AND Rx enabled
+	LIGHT               = 1,//Only Tx enabled
+	STANDBY             = 2,//Only Rx enabled
+	OFF                 = 3 //Tx AND Rx disabled
+    };
+    static const char Power_Management = FULL;
+};
+
+template <> struct Traits<ATMega16_ADC>: public Traits<void>
+{
+};
+
 template <> struct Traits<ATMega16_SPI>: public Traits<ATMega16_Common>
 {
 };
@@ -234,6 +251,8 @@ template <> struct Traits<ATMega16_Display>: public Traits<ATMega16_Common>
 
 template <> struct Traits<ATMega16_NIC>: public Traits<void>
 {
+    static const bool enabled = false;
+
     typedef LIST<Radio> NICS;
 
     static const unsigned int RADIO_UNITS = NICS::Count<Radio>::Result;
@@ -280,6 +299,21 @@ template <> struct Traits<ATMega128_RTC>: public Traits<ATMega128_Common>
 template <> struct Traits<ATMega128_EEPROM>: public Traits<ATMega128_Common>
 {
     static const unsigned int SIZE = 4096; // bytes
+};
+
+template <> struct Traits<ATMega128_UART>: public Traits<void>
+{
+    enum {
+        FULL                = 0,//Tx AND Rx enabled
+	LIGHT               = 1,//Only Tx enabled
+	STANDBY             = 2,//Only Rx enabled
+	OFF                 = 3 //Tx AND Rx disabled
+    };
+    static const char Power_Management = FULL;
+};
+
+template <> struct Traits<ATMega128_ADC>: public Traits<void>
+{
 };
 
 template <> struct Traits<ATMega128_SPI>: public Traits<ATMega128_Common>
