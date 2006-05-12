@@ -19,8 +19,6 @@ public:
     void write(const Address & a, unsigned char d) { AVR_EEPROM::write(a, d); }
 
     int size() const { return AVR_EEPROM::size(); }
-     
-    static int init(System_Info * si) { return 0; }
 };
 
 __END_SYS

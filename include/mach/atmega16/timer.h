@@ -33,8 +33,6 @@ public:
 
     Tick read() { return tcnt0(); }
 
-    static int init(System_Info * si) { return 0; }
-
 protected:
     static Hertz count2freq(const Count & c) { return CLOCK / c; }
     static Count freq2count(const Hertz & f) { return CLOCK / f; }

@@ -93,30 +93,6 @@ private:
     };
 
 public:
-    // IRQs
-    enum {
-    	RESET		= 0x000001,
-	IRQ0 		= 0x000002,
-	IRQ1		= 0x000004,
-	TIMER2_COMP	= 0x000008,
-	TIMER2_OVF	= 0x000010,
-	TIMER1_CAPT	= 0x000020,
-	TIMER1_COMPA	= 0x000040,
-	TIMER1_COMPB	= 0x000080,
-	TIMER1_OVF	= 0x000100,
-	TIMER0_OVF	= 0x000200,
-	SPI_STC		= 0x000400,
-	USART_RXC	= 0x000800,
-	USART_UDRE	= 0x001000,
-	USART_TXC	= 0x002000,
-	ADC		= 0x004000,
-	EE_RDY		= 0x008000,
-	ANA_COMP	= 0x010000,
-	TWI		= 0x020000,
-	IRQ2		= 0x040000,
-	TIMER0_COMP	= 0x080000,
-	SPM_RDY		= 0x100000   
-    };
 
     enum {
 	IRQ_RESET        = 0,
@@ -239,8 +215,6 @@ public:
         // if (IRQ_SPM_RDY  == irq) {return;} // Unused        
     }
     
-    static int init(System_Info * si) { return 0; }
-
 private:
     static Reg8 gicr() { return AVR8::in8(GICR); }
     static void gicr(Reg8 value) { AVR8::out8(GICR,value); }       

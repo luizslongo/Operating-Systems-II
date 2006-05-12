@@ -21,8 +21,6 @@ public:
     static Second seconds_since_epoch() { 
 	return date().to_offset(EPOCH_DAYS); 
     }
-
-    static int init(System_Info * si) { return 0; }
 };
 
 __END_SYS
