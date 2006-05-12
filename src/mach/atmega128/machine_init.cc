@@ -23,6 +23,8 @@ void ATMega128::init()
     IC::disable();
 
     // Initialize the hardware
+    if(Traits<AVR8>::enabled)
+	AVR8::init();
     if(Traits<AVR8_MMU>::enabled)
 	AVR8_MMU::init();
     if(Traits<AVR8_TSC>::enabled)
