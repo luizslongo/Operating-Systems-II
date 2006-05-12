@@ -166,6 +166,16 @@ public:
 
     void loopback(bool flag) { NS16550AF::loopback(flag); }
 
+    //Place Holder to allow compilation of abstractions
+    enum {
+        FULL = 0,
+	LIGHT = 1,
+	STANDBY = 2,
+	OFF = 3
+    };
+    void power(unsigned char ps) {}
+    unsigned char power() { return 0; }
+
 private:
     static const IO_Port _ports[];
 };
