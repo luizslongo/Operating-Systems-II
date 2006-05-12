@@ -11,6 +11,8 @@ __BEGIN_SYS
 class AVR8: public CPU_Common
 {
 private:
+    typedef Traits<CPU> _Traits;
+
     static const unsigned int CLOCK = Traits<Machine>::CLOCK;
 
 public:
@@ -27,6 +29,36 @@ public:
         FLAG_INTERRUPT       = 0x80,
         FLAG_DEFAULTS        = FLAG_INTERRUPT, 
         FLAG_CLEAR           = ~FLAG_DEFAULTS
+    };
+
+    //Power Management
+private:
+    enum {
+        MCUCR = 0x35,
+#if defined (__atmega128)
+	SE    = 0x20,
+	SM0   = 0x08,
+	SM1   = 0x10,
+	SM2   = 0x04
+#elif defined (__atmega16)
+	SE    = 0x40,
+	SM0   = 0x10,
+	SM1   = 0x20,
+	SM2   = 0x80
+#endif
+    };
+public:
+    enum {
+        FULL                = 0,
+	IDLE                = 1,
+	ADC_NOISE_REDUCTION = 2,
+	POWER_DOWN          = 3,
+	POWER_SAVE          = 4,
+	NATIVE_STANDBY      = 5, //For this mode an external oscilator is needed
+	EXTENDED_STANDBY    = 6, //For this mode an external oscilator is needed
+	LIGHT               = IDLE,
+	STANDBY             = POWER_SAVE,
+	OFF                 = POWER_DOWN
     };
 
     // CPU Context
@@ -91,7 +123,7 @@ public:
 
     static void int_enable() { ASMV("sei"); };
     static void int_disable() { ASMV("cli"); };
-    static void halt() { ASMV("sleep"); };
+    static void halt() { power(OFF); }
 
     static void switch_context(Context * volatile * o, Context * volatile n);
 
@@ -232,6 +264,56 @@ public:
 	(*(volatile unsigned char *)(port + 1 + 0x20)) = (Reg8)(value>>8);  // Must write high byte first
 	(*(volatile unsigned char *)(port + 0x20)) = (Reg8)value;
     }  
+
+    static char power() {
+        return _power_state;
+    }
+
+    static void power(char ps) {
+        _power_state = ps;
+	sleep(ps);
+    }
+
+    static void init();
+
+private:
+    static void sleep(char ps) {
+        switch(ps) {
+	case IDLE:
+	    out8(MCUCR,in8(MCUCR) & ~((SM0 | SM1 | SM2)));
+	    ASMV("sleep");
+	    break;
+	case ADC_NOISE_REDUCTION:	
+	    out8(MCUCR,in8(MCUCR) & ~((SM1 | SM2)));
+	    out8(MCUCR,in8(MCUCR) | SM0);
+	    ASMV("sleep");
+	    break;
+	case POWER_DOWN:	
+	    out8(MCUCR,in8(MCUCR) & ~((SM0 | SM2)));
+	    out8(MCUCR,in8(MCUCR) | SM1);
+	    ASMV("sleep");
+	    break;
+	case POWER_SAVE:	
+	    out8(MCUCR,in8(MCUCR) & ~(SM2));
+	    out8(MCUCR,in8(MCUCR) | (SM0 | SM1));
+	    ASMV("sleep");
+	    break;
+	case NATIVE_STANDBY:	
+	    out8(MCUCR,in8(MCUCR) & ~(SM0));
+	    out8(MCUCR,in8(MCUCR) | (SM1 | SM2));
+	    ASMV("sleep");
+	    break;
+	case EXTENDED_STANDBY:	
+	    out8(MCUCR,in8(MCUCR) | (SM0 | SM1 | SM2));
+	    ASMV("sleep");
+	    break;
+        default:
+            break;
+	}
+    }
+
+private:
+    static char _power_state;
 };
 
 __END_SYS

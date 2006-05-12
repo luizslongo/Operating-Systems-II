@@ -29,7 +29,18 @@ private:
     };
 
 public:
-    Serial_Display() : _line(0), _column(0) {}
+    //Power Management
+    enum {
+        FULL                = UART::LIGHT,//Display only sends data
+	OFF                 = UART::OFF, //Disabled
+	LIGHT               = OFF,
+	STANDBY             = OFF
+    };
+
+public:
+    Serial_Display() : _line(0), _column(0) {
+        _uart.power(FULL);
+    }
 
     void clear(){
 	escape();
@@ -78,6 +89,11 @@ public:
 	_uart.put('H');	
     }
 
+    char power() { return _uart.power(); }
+    void power(char ps) {
+	_uart.power(ps);
+    }
+
 private:
     void escape() {
 	_uart.put(ESC);
@@ -102,11 +118,11 @@ private:
 	_uart.put('0' + value);
     }
 
-   void scroll() {
+    void scroll() {
 	_uart.put(CR);
 	_uart.put(LF);
 	_column = 0;
-   }
+    }
 
 private:
     UART _uart;

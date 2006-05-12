@@ -24,6 +24,14 @@ protected:
 public:
     typedef TSC::Hertz Hertz;
 
+    //Power Management
+    enum {
+        FULL                = 0,//Turned On
+	OFF                 = 1,//Turned Off
+	LIGHT               = FULL,
+	STANDBY             = FULL
+    };
+
     enum {
         // ADMUX
         REFS1 = 7,
@@ -106,6 +114,17 @@ public:
     void int_enable() { adcsra(adcsra() | (1 << ADIE)); }
     void int_disable() { adcsra(adcsra() & ~(1 << ADIE)); }
 
+    char power() { return _power_state; }
+    void power(char ps) {
+        _power_state = ps;
+	if(ps == OFF) {
+	    disable();
+	}
+	else {
+	    enable();
+	}
+    }
+
 private:
     static Reg8 admux(){ return AVR8::in8(IO::ADMUX); }
     static void admux(Reg8 value){ AVR8::out8(IO::ADMUX,value); }   
@@ -123,7 +142,7 @@ private:
     Reg8 _admux;
     Reg8 _adcsra;
     static bool _in_use;
-
+    char _power_state;
 };
 
 __END_SYS

@@ -10,6 +10,14 @@ __BEGIN_SYS
 class ATMega128_ADC: public ADC_Common, private AVR_ADC
 {
 public:
+    //Power Management
+    enum {
+        FULL                = AVR_ADC::FULL,
+	OFF                 = AVR_ADC::OFF,
+	LIGHT               = AVR_ADC::LIGHT,
+	STANDBY             = AVR_ADC::STANDBY
+    };
+public:
     ATMega128_ADC() : AVR_ADC(SINGLE_ENDED_ADC0, SYSTEM_REF,
 			      SINGLE_CONVERSION_MODE, CLOCK >> 7) {}
     ATMega128_ADC(unsigned char channel, Hertz frequency) 
@@ -35,6 +43,9 @@ public:
     void disable() { return AVR_ADC::disable(); }
 
     void reset() { return AVR_ADC::reset(); }
+
+    char power() { return AVR_ADC::power(); }
+    void power(char ps) { AVR_ADC::power(ps); }
 };
 
 __END_SYS
