@@ -80,7 +80,7 @@ ML310_PCI::Locator ML310_PCI::scan(const ML310_PCI::Class_Id & c, int order)
     for(int bus = 0 ; bus <= MAX_BUS; bus++)
         for(int dfn = 0; dfn <= MAX_DEV_FN; dfn++)
             if(class_id(bus, dfn) == c){
-                kout << "";
+                db<ML310_PCI>(TRC) << "";
                 if(!order--)
                     return Locator(bus, dfn);
             }
@@ -97,7 +97,7 @@ ML310_PCI::Locator ML310_PCI::scan(const ML310_PCI::Vendor_Id & v,
     for(int bus = 0 ; bus <= MAX_BUS; bus++)
         for(int dfn = 0; dfn <= MAX_DEV_FN; dfn++)
             if((vendor_id(bus, dfn) == v) && (device_id(bus, dfn) == d)) {
-                kout << ""; //Totally Nasty. Verify latter!
+                db<ML310_PCI>(TRC) << ""; //Totally Nasty. Verify latter!
                 if(!order--)
                     return Locator(bus, dfn);
             }
