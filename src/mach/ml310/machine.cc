@@ -11,7 +11,7 @@ __BEGIN_SYS
 // Class methods
 void ML310::panic()
 {
-    kout << "PANIC!\n";
+    db<ML310>(ERR) << "PANIC!\n";
     CPU::int_disable(); 
     CPU::halt();
 }
