@@ -25,6 +25,8 @@ eposmkbi.conf:
 		@echo "ENDIANESS=$(ARCH_ENDIANESS)" >> $@
 		@echo "MEM_BASE=$(MEM_BASE)" >> $@
 		@echo "MEM_TOP=$(MEM_TOP)" >> $@
+		@echo "BOOT_LENGTH_MIN=$(BOOT_LENGTH_MIN)" >> $@
+		@echo "BOOT_LENGTH_MAX=$(BOOT_LENGTH_MAX)" >> $@
 
 clean:
 		$(CLEAN) *.conf

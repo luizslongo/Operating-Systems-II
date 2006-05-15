@@ -21,8 +21,6 @@
 
 // CONSTANTS
 static const unsigned int MAX_SI_LEN = 512;
-static const unsigned int MAX_BOOT_LEN = 512;
-static const unsigned int MIN_BOOT_LEN = 128;
 static const char CFG_FILE[] = "cfg/eposmkbi.conf";
 
 // TYPES
@@ -38,6 +36,8 @@ struct Configuration
     bool 	  endianess; // true => little, false => big
     unsigned int  mem_base;
     unsigned int  mem_top;
+    unsigned int  boot_length_min;
+    unsigned int  boot_length_max;
     short         node_id;   // node id in SAN (-1 => get from net)
     short         n_nodes;   // nodes in SAN (-1 => dynamic)
 };
@@ -117,6 +117,7 @@ int main(int argc, char **argv)
     printf("  Processor: %s (%d bits, %s endian)\n", CONFIG.arch,
 	   CONFIG.word_size, CONFIG.endianess ? "little" : "big");
     printf("  Memory: %d KBytes\n", (CONFIG.mem_top - CONFIG.mem_base) / 1024);
+    printf("  Boot Length: %d - %d (min - max) KBytes\n", CONFIG.boot_length_min, CONFIG.boot_length_max);
     if(CONFIG.node_id == -1)
 	printf("  Node id: will get from the network\n");
     else
@@ -130,13 +131,13 @@ int main(int argc, char **argv)
     sprintf(file, "%s/img/%s_boot", epos_home, CONFIG.mach);
     printf("    Adding boot strap \"%s\":", file);
     image_size += put_file(fd_img, file);
-    if(image_size > MAX_BOOT_LEN) {
+    if(image_size > CONFIG.boot_length_max) {
 	printf(" failed!\n");
 	fprintf(stderr, "Boot strap \"%s\" is too large! (%d bytes)\n", 
 		file, image_size);
 	return 1;
     } else {
-	while((image_size % MIN_BOOT_LEN != 0))
+	while((image_size % CONFIG.boot_length_min != 0))
 	    image_size += pad(fd_img, 1);
     }
     unsigned int boot_size = image_size; 
@@ -304,6 +305,20 @@ bool parse_config(FILE * cfg_file, Configuration * cfg)
     if(strcmp(token, "MEM_TOP")) return false;
     token = strtok(NULL, "\n");
     cfg->mem_top=strtol(token, 0, 16);
+
+    // Boot Lenght Min
+    fgets(line, 256, cfg_file);
+    token = strtok(line, "=");
+    if(strcmp(token, "BOOT_LENGTH_MIN")) return false;
+    token = strtok(NULL, "\n");
+    cfg->boot_length_min=atoi(token);
+
+    // Boot Lenght Max
+    fgets(line, 256, cfg_file);
+    token = strtok(line, "=");
+    if(strcmp(token, "BOOT_LENGTH_MAX")) return false;
+    token = strtok(NULL, "\n");
+    cfg->boot_length_max=atoi(token);
 
     // Node Id
     fgets(line, 256, cfg_file);
