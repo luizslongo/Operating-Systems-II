@@ -1,6 +1,7 @@
 // EPOS-- PC Intel PRO/100 (i82559) Ethernet NIC Mediator Initialization
 
 #include <system/kmalloc.h>
+#include <mach/pc/machine.h>
 #include <mach/pc/e100.h>
 
 __BEGIN_SYS
@@ -58,7 +59,7 @@ void E100::init(unsigned int unit)
     _devices[unit].in_use = false;
     _devices[unit].device = dev;
     _devices[unit].interrupt = Machine::irq2int(irq);
-    
+
     // Install interrupt handler
     PC::int_vector(PC::irq2int(irq), &int_handler);
 
