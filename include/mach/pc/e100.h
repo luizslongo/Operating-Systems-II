@@ -5,12 +5,13 @@
 
 #include <nic.h>
 #include <tsc.h>
-#include <utility/spin.h>
+//#include <utility/spin.h>
 
 __BEGIN_SYS
 
-struct i82559
+class i82559
 {
+
 protected:
     typedef CPU::Reg8 Reg8;
     typedef CPU::Reg16 Reg16;
@@ -22,8 +23,45 @@ protected:
     typedef MMU::DMA_Buffer DMA_Buffer;
 
 public:
-   
-    #define FRAME_SIZE 1520
+
+    #define FRAME_SIZE 1520 //Verify if neeeded
+
+    #define offsetof(TYPE, MEMBER) ((Reg32) &((TYPE *)0)->MEMBER)
+    #define write32(b,addr) (*(volatile unsigned int *) (addr) = (b))
+    #define read32(addr) (*(volatile unsigned int *) (addr))
+    #define MII_LED_CONTROL 0x1B
+    #define ETH_ALEN 6
+    #define i82559_WAIT_SCB_TIMEOUT 20000
+    #define i82559_WAIT_SCB_FAST 20
+    #define i82559_WAIT_SCB_TIMEOUT_TRY 20
+    #define i82559_WAIT_SCB_FAST_TRY 4
+
+    //  EEPROM_Ctrl bits.
+    #define EE_SHIFT_CLK    0x01            // EEPROM shift clock.
+    #define EE_CS           0x02            // EEPROM chip select.
+    #define EE_DATA_WRITE   0x04            // EEPROM chip data in.
+    #define EE_DATA_READ    0x08            // EEPROM chip data out.
+    #define EE_ENB          (0x4800 | EE_CS)
+
+    // The EEPROM commands include the always-set leading bit.
+    #define EE_WRITE_CMD(a)     (5 << (a))
+    #define EE_READ_CMD(a)      (6 << (a))
+    #define EE_ERASE_CMD(a)     (7 << (a))
+    #define EE_WRITE_EN_CMD(a)  (19 << ((a) - 2))
+    #define EE_WRITE_DIS_CMD(a) (16 << ((a) - 2))
+    #define EE_ERASE_ALL_CMD(a) (18 << ((a) - 2))
+    #define EE_TOP_CMD_BIT(a)      ((a) + 2) // Counts down to zero
+    #define EE_TOP_DATA_BIT        (15)    // Counts down to zero
+    #define EEPROM_ENABLE_DELAY (1000)//(10) // Delay at chip select
+    #define EEPROM_SK_DELAY  (1000) // Delay between clock edges *and* data read or transition; 3 of these per bit.
+    #define EEPROM_DONE_DELAY (1000) // Delay when all done
+
+    enum eeprom_ctrl_lo {
+        eesk = 0x01, //EEPROM Data Output (Flash Address[15])
+        eecs = 0x02, //EEPROM Chip Select
+        eedi = 0x04, //EEPROM Data Input
+        eedo = 0x08, //EEPROM Data Output (Flash Address[14])
+    };
 
     /* CSR (Control/Status Registers) */
     typedef struct csr {
@@ -46,37 +84,6 @@ public:
         SOFTWARE_RESET  = 0x0000,
         SELFTEST        = 0x0001,
         SELECTIVE_RESET = 0x0002,
-    };
-
-    //  EEPROM_Ctrl bits.
-    #define EE_SHIFT_CLK    0x01            // EEPROM shift clock.
-    #define EE_CS           0x02            // EEPROM chip select.
-    #define EE_DATA_WRITE   0x04            // EEPROM chip data in.
-    #define EE_DATA_READ    0x08            // EEPROM chip data out.
-    #define EE_ENB          (0x4800 | EE_CS)
-
-    // The EEPROM commands include the always-set leading bit.
-    #define EE_WRITE_CMD(a)     (5 << (a))
-    #define EE_READ_CMD(a)      (6 << (a))
-    #define EE_ERASE_CMD(a)     (7 << (a))
-    #define EE_WRITE_EN_CMD(a)  (19 << ((a) - 2))
-    #define EE_WRITE_DIS_CMD(a) (16 << ((a) - 2))
-    #define EE_ERASE_ALL_CMD(a) (18 << ((a) - 2))
-
-    #define EE_TOP_CMD_BIT(a)      ((a) + 2) // Counts down to zero
-    #define EE_TOP_DATA_BIT        (15)    // Counts down to zero
-
-    #define EEPROM_ENABLE_DELAY (1000)//(10) // Delay at chip select
-
-    #define EEPROM_SK_DELAY  (1000) // Delay between clock edges *and* data
-                                 // read or transition; 3 of these per bit.
-    #define EEPROM_DONE_DELAY (1000) // Delay when all done
-
-    enum eeprom_ctrl_lo {
-        eesk = 0x01, //EEPROM Data Output (Flash Address[15])
-        eecs = 0x02, //EEPROM Chip Select
-        eedi = 0x04, //EEPROM Data Input
-        eedo = 0x08, //EEPROM Data Output (Flash Address[14])
     };
 
     enum scb_status {
@@ -172,60 +179,47 @@ public:
         cuc_dump_reset = 0x70,
     };
 
-    #define i82559_WAIT_SCB_TIMEOUT 20000
-    #define i82559_WAIT_SCB_FAST 20
-    #define i82559_WAIT_SCB_TIMEOUT_TRY 20
-    #define i82559_WAIT_SCB_FAST_TRY 4
+
 
     struct config {
     /*0*/   Reg8 byte_count:6, pad0:2;
     /*1*/   Reg8 rx_fifo_limit:4, tx_fifo_limit:3, pad1:1;
     /*2*/   Reg8 adaptive_ifs;
-    /*3*/   Reg8 mwi_enable:1, type_enable:1, read_align_enable:1,
-            term_write_cache_line:1, pad3:4;
+    /*3*/   Reg8 mwi_enable:1, type_enable:1, read_align_enable:1,term_write_cache_line:1, pad3:4;
     /*4*/   Reg8 rx_dma_max_count:7, pad4:1;
     /*5*/   Reg8 tx_dma_max_count:7, dma_max_count_enable:1;
-    /*6*/   Reg8 pad6:1, direct_rx_dma:1,
-            tco_statistics:1, ci_intr:1, standard_tcb:1, standard_stat_counter:1,
-            rx_discard_overruns:1, rx_save_bad_frames:1;
-    /*7*/   Reg8 rx_discard_short_frames:1, tx_underrun_retry:2,
-            pad7:3, tx_two_frames_in_fifo:1, tx_dynamic_tbd:1;
+    /*6*/   Reg8 pad6:1, direct_rx_dma:1, tco_statistics:1, ci_intr:1, standard_tcb:1, standard_stat_counter:1,
+                 rx_discard_overruns:1, rx_save_bad_frames:1;
+    /*7*/   Reg8 rx_discard_short_frames:1, tx_underrun_retry:2, pad7:3, tx_two_frames_in_fifo:1, tx_dynamic_tbd:1;
     /*8*/   Reg8 mii_mode:1, pad8:6, csma_disabled:1;
-    /*9*/   Reg8 rx_tcpudp_checksum:1, pad9_1:3, vlan_arp_tco:1,
-            link_status_wake:1, pad9_2:2;
-    /*10*/  Reg8 pad10:3, no_source_addr_insertion:1, preamble_length:2,
-            loopback:2;
+    /*9*/   Reg8 rx_tcpudp_checksum:1, pad9_1:3, vlan_arp_tco:1, link_status_wake:1, pad9_2:2;
+    /*10*/  Reg8 pad10:3, no_source_addr_insertion:1, preamble_length:2, loopback:2;
     /*11*/  Reg8 pad11:8;
     /*12*/  Reg8 pad12_0:1, pad12_1:3, ifs:4;
     /*13*/  Reg8 ip_addr_lo;
     /*14*/  Reg8 ip_addr_hi;
-    /*15*/  Reg8 promiscuous_mode:1, broadcast_disabled:1,
-            wait_after_win:1, pad15_1:1, ignore_ul_bit:1, crc_16_bit:1,
-            pad15_2:1, crs_or_cdt:1;
+    /*15*/  Reg8 promiscuous_mode:1, broadcast_disabled:1, wait_after_win:1, 
+                 pad15_1:1, ignore_ul_bit:1, crc_16_bit:1, pad15_2:1, crs_or_cdt:1;
     /*16*/  Reg8 fc_delay_lo;
     /*17*/  Reg8 fc_delay_hi;
-    /*18*/  Reg8 rx_stripping:1, tx_padding:1, rx_crc_transfer:1,
-            rx_long_ok:1, fc_priority_threshold:3, pad18:1;
-    /*19*/  Reg8 pad19:1, magic_packet_disable:1,
-            fc_disable:1, fc_restop:1, fc_restart:1, fc_reject:1,
-            full_duplex_force:1, full_duplex_pin:1;
+    /*18*/  Reg8 rx_stripping:1, tx_padding:1, rx_crc_transfer:1, rx_long_ok:1, fc_priority_threshold:3, pad18:1;
+    /*19*/  Reg8 pad19:1, magic_packet_disable:1, fc_disable:1, fc_restop:1, 
+                 fc_restart:1, fc_reject:1, full_duplex_force:1, full_duplex_pin:1;
     /*20*/  Reg8 pad20_1:5, fc_priority_location:1, multi_ia:1, pad20_2:1;
     /*21*/  Reg8 pad21_1:3, multicast_all:1, pad21_2:4;
     };
 
     struct stats {
         Reg32 tx_good_frames, tx_max_collisions, tx_late_collisions,
-            tx_underruns, tx_lost_crs, tx_deferred, tx_single_collisions,
-            tx_multiple_collisions, tx_total_collisions;
+              tx_underruns, tx_lost_crs, tx_deferred, tx_single_collisions,
+              tx_multiple_collisions, tx_total_collisions;
         Reg32 rx_good_frames, rx_crc_errors, rx_alignment_errors,
-            rx_resource_errors, rx_overrun_errors, rx_cdt_errors,
-            rx_short_frame_errors;
+              rx_resource_errors, rx_overrun_errors, rx_cdt_errors,
+              rx_short_frame_errors;
         Reg32 fc_xmt_pause, fc_rcv_pause, fc_rcv_unsupported;
         Reg16 xmt_tco_frames, rcv_tco_frames;
         Reg32 complete;
     };
-
-    #define offsetof(TYPE, MEMBER) ((Reg32) &((TYPE *)0)->MEMBER)
 
     enum cb_command {
         cb_nop    = 0x0000,
@@ -256,16 +250,14 @@ public:
         led_on_557 = 0x07,
     };
 
-#define MII_LED_CONTROL 0x1B
-
-struct mem {
-    struct {
-        volatile Reg32 signature;
-        volatile Reg32 result;
-    } selftest;
-    struct stats stats;
-    Reg8 dump_buf[596];
-};
+    struct mem {
+        struct {
+            volatile Reg32 signature;
+            volatile Reg32 result;
+        } selftest;
+        struct stats stats;
+        Reg8 dump_buf[596];
+    };
 
     struct Control {
         volatile Reg16 status;
@@ -277,10 +269,8 @@ struct mem {
         struct config config;
     };
 
-    #define ETH_ALEN 6
     struct MACaddrCB: public Control {
-                               // set command cb_iaaddr
-        Reg8 iaaddr[ETH_ALEN]; // copy mac to it <-
+        Reg8 iaaddr[ETH_ALEN];
     };
 
     // Transmit and Receive Descriptors (in the Receive Ring Buffer)
@@ -306,7 +296,6 @@ struct mem {
 
 
 public:
-
     int log2(int n) {
         int log2_n = 0;
         for(; n > 1; n >>= 1, log2_n++);
@@ -377,6 +366,7 @@ private:
     void handle_int();
 
     static void int_handler(unsigned int interrupt);
+    static void int_nullhandler(unsigned int interrupt) { } //NastyHandler for int39!
 
     bool verifyPendingInterrupts(void);
 
@@ -384,34 +374,16 @@ private:
     unsigned char eeprom_mac_address(Reg16 addr);
 
     int exec_command(Reg8 cmd, Reg32 dma_addr);
-    int try_exec_command(Reg8 cmd, Reg32 dma_addr);
 
-    void udelay(long long d)
-    {
+    void i82559_flush() { read8(&csr->scb.status); }
+    void i82559_disable_irq() { write8(irq_mask_all, &csr->scb.cmd_hi); }
+    void i82559_enable_irq() { write8(irq_mask_none, &csr->scb.cmd_hi); }
+    void udelay(long long d) {
         TSC::Time_Stamp end;
         d *= TSC::frequency() / 1000000;
         end = TSC::time_stamp() + d;
-        // microseconds
         while(end > TSC::time_stamp());
     }
-
-    #define write32(b,addr) (*(volatile unsigned int *) (addr) = (b))
-    #define read32(addr) (*(volatile unsigned int *) (addr))
-
-    void i82559_flush() {
-        read8(&csr->scb.status);
-    }
-
-    void i82559_disable_irq()
-    {
-        write8(irq_mask_all, &csr->scb.cmd_hi);
-    }
-
-    void i82559_enable_irq()
-    {
-        write8(irq_mask_none, &csr->scb.cmd_hi);
-    }
-
     int self_test() {
         Reg32 dma_addr = _dmadump_phy + offsetof(struct mem, selftest);
 
@@ -429,102 +401,78 @@ private:
             db<E100>(WRN)  << "Self-test failed: result = " << dmadump->selftest.result << "\n";
             return -1;
         }
+
         if(dmadump->selftest.signature == 0) {
             db<E100>(WRN)  << "Self-test failed: timed out\n";
             return -1;
         }
 
         db<E100>(INF) << "YES, I'M HERE!\n";
-
         return 0;
     }
 
     void software_reset() {
         write32(SELECTIVE_RESET, &csr->port);
         i82559_flush(); udelay(20 * 1000);
-
         write32(SOFTWARE_RESET, &csr->port);
         i82559_flush(); udelay(20 * 1000);
-
         // disable IRQs 
         i82559_disable_irq();
         i82559_flush(); udelay(1000);
     }
 
-    static inline unsigned char read8(const volatile void *addr)
-    {
-        return *((volatile unsigned char*) addr);
-    };
-
-    static inline void write8(unsigned char b, volatile void *addr)
-    {
-        *((volatile unsigned char*) addr) = b;
-    };
-
-    static inline unsigned short read16(const volatile void *addr)
-    {
-        return *((volatile unsigned short*) addr);
-    };
-
-    static inline void write16(unsigned short b, volatile void *addr)
-    {
-        *((volatile unsigned short*) addr) = b;
-    };
+    static inline unsigned char read8(const volatile void *addr) { return *((volatile unsigned char*) addr); };
+    static inline void write8(unsigned char b, volatile void *addr) { *((volatile unsigned char*) addr) = b; };
+    static inline unsigned short read16(const volatile void *addr) { return *((volatile unsigned short*) addr); };
+    static inline void write16(unsigned short b, volatile void *addr) { *((volatile unsigned short*) addr) = b; };
 
     void i82559_configure(void)
     {
-
         configCB->command = cb_config;
-
         memset(&(configCB->config), 0, sizeof(struct config));
-
-        configCB->config.byte_count = 0x16;      /* bytes in this struct */
-        configCB->config.rx_fifo_limit = 0x8;  /* bytes in FIFO before DMA */
-        configCB->config.direct_rx_dma = 0x1;        /* reserved */
-        configCB->config.standard_tcb = 0x1; /* 1=standard, 0=extended */
-        configCB->config.standard_stat_counter = 0x1; /* 1=standard, 0=extended */
+        configCB->config.byte_count = 0x16;              /* bytes in this struct */
+        configCB->config.rx_fifo_limit = 0x8;            /* bytes in FIFO before DMA */
+        configCB->config.direct_rx_dma = 0x1;            /* reserved */
+        configCB->config.standard_tcb = 0x1;             /* 1=standard, 0=extended */
+        configCB->config.standard_stat_counter = 0x1;    /* 1=standard, 0=extended */
         // zero => recommended in promiscuous mode - FIXME - padding is enabled
         configCB->config.rx_discard_short_frames = 0x0;  /* 1=discard, 0=pass */
-        configCB->config.tx_underrun_retry = 0x3;    /* 3 underrun retries */
-        configCB->config.tx_dynamic_tbd = 0x0;  /* 1=yes, 0=no FIXME */
-        configCB->config.mii_mode = 0x1;         /* 1=MII mode, 0=503 mode */
-        configCB->config.rx_tcpudp_checksum = 0x0;  /* 1=yes 0=no */
-        configCB->config.link_status_wake = 0x1;  /* 1=yes 0=no */
+        configCB->config.tx_underrun_retry = 0x3;        /* 3 underrun retries */
+        configCB->config.tx_dynamic_tbd = 0x0;           /* 1=yes, 0=no FIXME */
+        configCB->config.mii_mode = 0x1;                 /* 1=MII mode, 0=503 mode */
+        configCB->config.rx_tcpudp_checksum = 0x0;       /* 1=yes 0=no */
+        configCB->config.link_status_wake = 0x1;         /* 1=yes 0=no */
         configCB->config.pad10 = 0x6;
         // if you comment the next line it won't work anymore
         configCB->config.no_source_addr_insertion = 0x1; /* 1=no, 0=yes */
-        configCB->config.preamble_length = 0x2;  /* 0=1, 1=3, 2=7, 3=15 bytes */
-        configCB->config.ifs = 0x6;          /* x16 = inter frame spacing */
-        configCB->config.ip_addr_hi = 0xF2;      /* ARP IP filter - not used */
+        configCB->config.preamble_length = 0x2;          /* 0=1, 1=3, 2=7, 3=15 bytes */
+        configCB->config.ifs = 0x6;                      /* x16 = inter frame spacing */
+        configCB->config.ip_addr_hi = 0xF2;              /* ARP IP filter - not used */
         configCB->config.pad15_1 = 0x1;
         configCB->config.pad15_2 = 0x1;
-        configCB->config.crs_or_cdt = 0x0;       /* 0=CRS only, 1=CRS or CDT */
-        //configCB->config.fc_delay_hi = 0x40;     /* time delay for fc frame */
-        configCB->config.rx_stripping = 0x1;       /* 1=strip long frames */
-        configCB->config.tx_padding = 0x1;       /* 1=pad short frames */
-        configCB->config.fc_priority_threshold = 0x7; /* 7=priority fc disabled */
+        configCB->config.crs_or_cdt = 0x0;               /* 0=CRS only, 1=CRS or CDT */
+        //configCB->config.fc_delay_hi = 0x40;           /* time delay for fc frame */
+        configCB->config.rx_stripping = 0x1;             /* 1=strip long frames */
+        configCB->config.tx_padding = 0x1;               /* 1=pad short frames */
+        configCB->config.fc_priority_threshold = 0x7;    /* 7=priority fc disabled */
         configCB->config.pad18 = 0x1;
         configCB->config.pad20_1 = 0x1F;
-        configCB->config.fc_priority_location = 0x1; /* 1=byte#31, 0=byte#19 */
+        configCB->config.fc_priority_location = 0x1;     /* 1=byte#31, 0=byte#19 */
         configCB->config.multi_ia = 0x1;
         configCB->config.pad21_1 = 0x5;
-        configCB->config.full_duplex_pin = 0x1;      /* 1=examine FDX# pin */
-        configCB->config.full_duplex_force = 0x0;    /* 1=force, 0=auto */
-
+        configCB->config.full_duplex_pin = 0x1;          /* 1=examine FDX# pin */
+        configCB->config.full_duplex_force = 0x0;        /* 1=force, 0=auto */
         // specially for promiscuous mode
-        configCB->config.rx_save_bad_frames = 0x1;   /* 1=save, 0=discard */
-        configCB->config.pad12_0 = 0x1;   /* 1=yes, 0=no */
-        configCB->config.promiscuous_mode = 0x1;     /* 1=on, 0=off */
-        configCB->config.wait_after_win = 0x1;     /* 1=on, 0=off */
-
-        configCB->config.multicast_all = 0x0;        /* 1=accept, 0=no */
-
-        configCB->config.magic_packet_disable = 0x0; /* 1=off, 0=on */
-
-        configCB->config.fc_disable = 0x0;   /* 1=Tx fc off, 0=Tx fc on */
-        configCB->config.mwi_enable = 0x1;   /* 1=enable, 0=disable */
-        configCB->config.rx_long_ok = 0x0;   /* 1=VLANs ok, 0=standard */
-        configCB->config.tco_statistics = 0x1;     /* TCO stats enable */
+        configCB->config.rx_save_bad_frames = 0x1;       /* 1=save, 0=discard */
+        configCB->config.pad12_0 = 0x1;                  /* 1=yes, 0=no */
+        configCB->config.promiscuous_mode = 0x1;         /* 1=on, 0=off */
+        configCB->config.wait_after_win = 0x1;           /* 1=on, 0=off */
+        configCB->config.multicast_all = 0x0;            /* 1=accept, 0=no */
+        configCB->config.magic_packet_disable = 0x0;     /* 1=off, 0=on */
+        configCB->config.fc_disable = 0x0;               /* 1=Tx fc off, 0=Tx fc on */
+        configCB->config.mwi_enable = 0x1;               /* 1=enable, 0=disable */
+        configCB->config.rx_long_ok = 0x0;               /* 1=VLANs ok, 0=standard */
+        configCB->config.tco_statistics = 0x1;           /* TCO stats enable */
     };
 
     static E100 * get(unsigned int interrupt) {
@@ -568,9 +516,7 @@ private:
 
     unsigned int _tx_frames_sent;
 
-    Spin _int_lock;
-    Spin _cuc_lock;
-    Spin _exec_command_lock;
+    //Spin _int_lock;
 
     static Device _devices[UNITS];
 };

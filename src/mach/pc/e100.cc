@@ -28,8 +28,7 @@ E100::E100(unsigned int unit)
 
     // Share control
     if(unit >= UNITS) {
-	db<E100>(WRN) << "E100: requested unit (" << unit 
-			 << ") does not exist!\n";
+	db<E100>(WRN) << "E100: requested unit (" << unit << ") does not exist!\n";
 	return;
     }
 
@@ -132,48 +131,15 @@ E100::E100(unsigned int unit,
     reset();
 }
 
-int E100::try_exec_command(Reg8 cmd, Reg32 dma_addr)
-{
-    unsigned int i;
-
-    db<E100> (INF) << "Starting try_exec_command!\n";
-
-    //_int_lock.acquire();
-
-    // previous command is accepted when SCB clears
-    for(i = 0; i < i82559_WAIT_SCB_TIMEOUT_TRY; i++) {
-        if(!read8(&csr->scb.cmd_lo))
-            break;
-        udelay(5);
-        if(i > i82559_WAIT_SCB_FAST_TRY)
-            udelay(10);
-    }
-    if(cmd != cuc_resume && cmd != ruc_resume)
-        write32(dma_addr, &csr->scb.gen_ptr);
-
-    if(i == i82559_WAIT_SCB_TIMEOUT_TRY)
-        return 1;
-
-    write8(cmd, &csr->scb.cmd_lo);
-
-    //_int_lock.release();
-
-    db<E100> (INF) << "Finishing try_exec_command!\n";
-
-    return 0;
-}
-
 int E100::exec_command(Reg8 cmd, Reg32 dma_addr)
 {
     unsigned int i;
-
-    //_int_lock.acquire();
 
     // previous command is accepted when SCB clears
     for(i = 0; i < i82559_WAIT_SCB_TIMEOUT; i++) {
         if(!read8(&csr->scb.cmd_lo))
             break;
-        udelay(10);
+        udelay(5);
         if(i > i82559_WAIT_SCB_FAST)
             udelay(10);
     }
@@ -184,8 +150,6 @@ int E100::exec_command(Reg8 cmd, Reg32 dma_addr)
         return 1;
 
     write8(cmd, &csr->scb.cmd_lo);
-
-    //_int_lock.release();
 
     return 0;
 }
@@ -198,22 +162,15 @@ void E100::reset()
     // Reset the device
     software_reset();
 
-    db<E100>(INF) << "RESET FINESHED!!!\n";
-
-    db<E100>(INF) << "SELF TEST STARTED!!!\n";
-
     // Do a self-test on the device
     self_test();
 
-    db<E100>(INF) << "SELF TEST DONE!!!\n";
-
     // Get MAC address from EEPROM
     _address = Address(eeprom_mac_address(0), eeprom_mac_address(1), eeprom_mac_address(2), eeprom_mac_address(3), eeprom_mac_address(4), eeprom_mac_address(5));
-    db<E100>(TRC) << "E100::reset():MAC=" << _address << "\n";
+    db<E100>(INF) << "E100::reset():MAC=" << _address << "\n";
 
     // load zero on NIC's internal CU
     while(exec_command(cuc_load_base, 0));
-
     // load zero on NIC's internal RU
     while(exec_command(ruc_load_base, 0));
 
@@ -259,12 +216,11 @@ int E100::send(const Address & dst, const Protocol & prot,
 {
     // wait for a free TxCB
     while(!(_tx_ring[_tx_cur].status & cb_complete)) {
-        db <E100> (INF) << "i";
         if (_tx_cuc_suspended) {
-            _int_lock.acquire();
+            //_int_lock.acquire();
             _tx_cuc_suspended = 0;
             while(exec_command(cuc_resume, 0));
-            _int_lock.release();
+            //_int_lock.release();
         }
     }
 
@@ -281,7 +237,7 @@ int E100::send(const Address & dst, const Protocol & prot,
     ++_tx_prev %= TX_BUFS;
 
     // we have no guarantee that this command will be accepted by the adapter
-    try_exec_command(cuc_resume, 0);
+    exec_command(cuc_resume, 0);
 
     ++_tx_cur %= TX_BUFS;
 
@@ -296,7 +252,7 @@ bool E100::verifyPendingInterrupts(void)
     if (_rx_ruc_no_more_resources) {
         unsigned short i;
 
-        _int_lock.acquire();
+        //_int_lock.acquire();
 
         _rx_ruc_no_more_resources--;
         for (i = (_rx_cur + 1) % RX_BUFS; i != _rx_cur; ++i %= RX_BUFS) {
@@ -314,7 +270,7 @@ bool E100::verifyPendingInterrupts(void)
 
         while(exec_command(ruc_start, _rx_ring_phy + _rx_cur * sizeof(Rx_Desc)));
 
-        _int_lock.release();
+        //_int_lock.release();
 
         return true;
     }
@@ -358,8 +314,8 @@ int E100::receive(Address * src, Protocol * prot,
     return size;
 }
 
-unsigned short E100::eeprom_read(unsigned short *addr_len, unsigned short addr)
-{   
+unsigned short E100::eeprom_read(unsigned short *addr_len, unsigned short addr) {
+
     unsigned long cmd_addr_data;
     cmd_addr_data = (EE_READ_CMD(*addr_len) | addr) << 16;
 
@@ -388,7 +344,6 @@ unsigned short E100::eeprom_read(unsigned short *addr_len, unsigned short addr)
         data = (data << 1) | (ctrl & eedo ? 1 : 0);
     }
 
-    // chip deselect 
     csr->eeprom_ctrl_lo = 0;
     i82559_flush();
     udelay(200);
@@ -396,8 +351,7 @@ unsigned short E100::eeprom_read(unsigned short *addr_len, unsigned short addr)
     return data;
 }
 
-unsigned char E100::eeprom_mac_address(Reg16 addr)
-{
+unsigned char E100::eeprom_mac_address(Reg16 addr) {
     Reg16 eeprom_wc, addr_len = 8;
     Reg16 two_words; // two words of 8 bits (one EEPROM word)
     Reg8 which_word; // first or second word of 8 bits
@@ -417,11 +371,9 @@ unsigned char E100::eeprom_mac_address(Reg16 addr)
         return (two_words & 0x00FF);
 }
 
-void E100::handle_int()
-{
+void E100::handle_int() {
 
-    _int_lock.acquire();
-
+    //_int_lock.acquire();
     CPU::int_disable();
 
     Reg8 stat_ack = read8(&csr->scb.stat_ack);
@@ -463,8 +415,7 @@ void E100::handle_int()
     }
 
     CPU::int_enable();
-
-    _int_lock.release();
+    //_int_lock.release();
 }
 
 __END_SYS

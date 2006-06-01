@@ -62,6 +62,7 @@ void E100::init(unsigned int unit)
 
     // Install interrupt handler
     PC::int_vector(PC::irq2int(irq), &int_handler);
+    PC::int_vector(39, &int_nullhandler);
 
     // Enable interrupts for device
     IC::enable(irq);
