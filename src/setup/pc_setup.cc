@@ -38,7 +38,7 @@ private:
     static const unsigned int SYS_DATA = Memory_Map<PC>::SYS_DATA;
     static const unsigned int SYS_CODE = Memory_Map<PC>::SYS_CODE;
     static const unsigned int SYS_STACK = Memory_Map<PC>::SYS_STACK;
-    
+
     // IA32 Imports
     typedef CPU::Reg32 Reg32;
     typedef CPU::Phy_Addr Phy_Addr;
@@ -518,7 +518,7 @@ void PC_Setup::setup_gdt()
     GDT_Entry * gdt = reinterpret_cast<GDT_Entry *>((void *)si->pmm.gdt);
 
     // Clear GDT
-//    memset(gdt, 0, sizeof(Page));
+    // memset(gdt, 0, sizeof(Page));
 
     // GDT_Entry(base, limit, {P,DPL,S,TYPE})
     gdt[CPU::GDT_NULL]      = GDT_Entry(0,       0, 0);
@@ -580,7 +580,7 @@ void PC_Setup::setup_sys_pt()
     PT_Entry * sys_pt = reinterpret_cast<PT_Entry *>((void *)si->pmm.sys_pt);
 
     // Clear the System Page Table
-//    memset(sys_pt, 0, MMU::PT_ENTRIES);
+    // memset(sys_pt, 0, MMU::PT_ENTRIES);
 
     // IDT
     sys_pt[MMU::page(IDT)] = si->pmm.idt | Flags::SYS;
@@ -635,7 +635,7 @@ void PC_Setup::setup_sys_pd()
     PT_Entry * sys_pd = reinterpret_cast<PT_Entry *>((void *)si->pmm.sys_pd);
 
     // Clear the System Page Directory
-//    memset(sys_pd, 0, MMU::PT_ENTRIES);
+    memset(sys_pd, 0, MMU::PT_ENTRIES); //Verify latter why was commented ...(hugo/arliones)
 
     // Calculate the number of page tables needed to map the physical memory
     unsigned int mem_size = MMU::pages(si->bm.mem_top - si->bm.mem_base);
@@ -689,7 +689,7 @@ void PC_Setup::load_parts()
 	db<Setup>(WRN) << "System_Info is bigger than a page ("
 		       << sizeof(System_Info<PC>) << ")!\n";
     memcpy(reinterpret_cast<void *>(SYS_INFO), bi, sizeof(System_Info<PC>));
-    
+
     // Load INIT
     if(si->lm.has_ini) {
 	db<Setup>(TRC) << "PC_Setup::load_init()\n";
