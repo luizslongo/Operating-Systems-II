@@ -131,7 +131,7 @@ private:
     static Reg8 adcsra(){ return AVR8::in8(IO::ADCSRA); }
     static void adcsra(Reg8 value){ AVR8::out8(IO::ADCSRA,value); }       
     static Reg16 adchl(){ return AVR8::in16(IO::ADCL); }
-    static void adchl(Reg16 value){ AVR8::out16(IO::ADCL,value); }   
+    static void adchl(Reg16 value){ AVR8::out16(IO::ADCL,value); } 
 
     void config() {
 	admux(_admux);
@@ -142,6 +142,7 @@ private:
     Reg8 _admux;
     Reg8 _adcsra;
     static bool _in_use;
+    char _power_state;
 };
 
 __END_SYS

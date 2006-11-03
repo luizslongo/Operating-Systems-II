@@ -7,7 +7,7 @@
 
 __BEGIN_SYS
 
-class ATMega16_UART: public UART_Common, public AVR_UART
+class ATMega16_UART: public UART_Common, private AVR_UART
 {
 public:
     enum {
@@ -36,6 +36,9 @@ public:
     void put(char c) { while(!txd_empty()); txd(c); }
 
     void loopback(bool flag) { AVR_UART::loopback(flag); }
+
+    char power() { return AVR_UART::power(); }
+    void power(char ps) { AVR_UART::power(ps); }
 };
 
 __END_SYS
