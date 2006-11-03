@@ -65,12 +65,12 @@ public:
 public:  
     AVR_UART(unsigned int unit = 0) : _unit(unit) {
 	config(9600,8,0,1);
-	ucsrb(ucsrb() | (1 << TXEN) | (1 << RXEN));
+	power(_Traits::Power_Management);
     }
     AVR_UART(unsigned int baud, unsigned int data_bits, unsigned int parity,
 	     unsigned int stop_bits, unsigned int unit = 0) : _unit(unit) {
 	config(baud,data_bits,parity,stop_bits);
-	ucsrb(ucsrb() | (1 << TXEN) | (1 << RXEN));
+	power(_Traits::Power_Management);
     }
     ~AVR_UART(){ 
 	ubrrhl(0);
@@ -135,7 +135,30 @@ public:
     bool parity_error()  { return (ucsra() & (1 << UPE)) ; }
     bool framing_error() { return (ucsra() & (1 << FE)) ; }
 
-public:
+    char power() { return _power_state; }
+    void power(char ps) {
+        _power_state = ps;
+        switch(ps) {
+	case FULL:
+	    ucsrb(ucsrb() | (1 << TXEN) | (1 << RXEN));
+	    break;
+	case LIGHT:
+	    ucsrb(ucsrb() & ~(1 << RXEN));
+	    //When using the FIFO buffer, it has to be flushed at this
+	    //point to avoid loss of data.
+	    ucsrb(ucsrb() | (1 << TXEN));
+	    break;
+	case STANDBY:
+	    ucsrb(ucsrb() & ~(1 << TXEN));
+	    ucsrb(ucsrb() | (1 << RXEN));
+	    break;
+	case OFF:
+	    ucsrb(ucsrb() & ~((1 << TXEN) | (1 << RXEN)));
+	    break;
+	}
+    }
+
+private:
     Reg8 udr(){ return AVR8::in8((_unit == 0) ? IO::UDR0 : IO::UDR1); }
     void udr(Reg8 value){ AVR8::out8(((_unit == 0) ? IO::UDR0 : IO::UDR1),value); }   
     Reg8 ucsra(){ return AVR8::in8((_unit == 0) ? IO::UCSR0A : IO::UCSR1A); }
