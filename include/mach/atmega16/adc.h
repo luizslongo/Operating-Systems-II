@@ -7,7 +7,7 @@
 
 __BEGIN_SYS
 
-class ATMega16_ADC: public ADC_Common, private AVR_ADC
+class ATMega16_ADC: public ADC_Common, public AVR_ADC
 {
 public:
     //Power Management
@@ -43,9 +43,6 @@ public:
     void disable() { return AVR_ADC::disable(); }
 
     void reset() { return AVR_ADC::reset(); }
-
-    char power() { return AVR_ADC::power(); }
-    void power(char ps) { AVR_ADC::power(ps); }
 };
 
 __END_SYS
