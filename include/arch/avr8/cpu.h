@@ -123,7 +123,7 @@ public:
 
     static void int_enable() { ASMV("sei"); };
     static void int_disable() { ASMV("cli"); };
-    static void halt() { }
+    static void halt() { power(OFF); }
 
     static void switch_context(Context * volatile * o, Context * volatile n);
 
@@ -265,38 +265,20 @@ public:
 	(*(volatile unsigned char *)(port + 0x20)) = (Reg8)value;
     }  
 
+    static char power() {
+        return _power_state;
+    }
+
+    static void power(char ps) {
+        _power_state = ps;
+	sleep(ps);
+    }
+
     static void init();
 
 private:
-    //Sleep
-    enum {
-        MCUCR = 0x35,
-#if defined (__atmega128)
-	SE    = 0x20,
-	SM0   = 0x08,
-	SM1   = 0x10,
-	SM2   = 0x04
-#elif defined (__atmega16)
-	SE    = 0x40,
-	SM0   = 0x10,
-	SM1   = 0x20,
-	SM2   = 0x80
-#endif
-    };
-
-    enum {
-        FULL                = 0,
-	IDLE                = 1,
-	ADC_NOISE_REDUCTION = 2,
-	POWER_DOWN          = 3,
-	POWER_SAVE          = 4,
-	NATIVE_STANDBY      = 5,//For this mode an external oscilator is needed
-	EXTENDED_STANDBY    = 6 //For this mode an external oscilator is needed
-    };
-
-public:
-    static void sleep(char mode) {
-        switch(mode) {
+    static void sleep(char ps) {
+        switch(ps) {
 	case IDLE:
 	    out8(MCUCR,in8(MCUCR) & ~((SM0 | SM1 | SM2)));
 	    ASMV("sleep");
@@ -329,6 +311,9 @@ public:
             break;
 	}
     }
+
+private:
+    static char _power_state;
 };
 
 __END_SYS
