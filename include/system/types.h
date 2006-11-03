@@ -7,6 +7,9 @@ inline void * operator new(unsigned int s, void * a) { return a; }
 
 __BEGIN_SYS
 
+template<typename>
+class Power;
+
 // Dummy class for incomplete architectures and machines 
 template<int i>
 class Dummy;
