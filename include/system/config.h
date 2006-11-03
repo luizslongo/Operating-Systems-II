@@ -25,7 +25,6 @@
 #include <system/types.h>
 #include <system/meta.h>
 #include <traits.h>
-#include <utility/power_manager.h>
 
 __BEGIN_SYS
 
@@ -43,7 +42,7 @@ typedef IA32_TSC		TSC;
 #elif defined (__avr8)
 
 #define ARCH avr8
-typedef Power<AVR8>			CPU;
+typedef AVR8			CPU;
 typedef AVR8_MMU		MMU;
 typedef AVR8_TSC		TSC;
 #define __CPU_H			__HEADER_ARCH(cpu)
@@ -132,13 +131,13 @@ typedef ATMega128_Timer		Timer;
 typedef ATMega128_RTC		RTC;
 typedef ATMega128_EEPROM	EEPROM;
 typedef Dummy<0>		PCI;
-typedef Power<ATMega128_UART>		UART;
+typedef ATMega128_UART		UART;
 typedef ATMega128_SPI		SPI;
 typedef IF<Traits<ATMega128_Display>::on_serial,
 	   Serial_Display,
 	   PC_Display>::Result	Display;
 typedef ATMega128_NIC		NIC;
-typedef Power<ATMega128_ADC>		ADC;
+typedef ATMega128_ADC		ADC;
 typedef ATMega128_Temperature_Sensor	Temperature_Sensor;
 typedef ATMega128_Photo_Sensor	Photo_Sensor;
 typedef ATMega128_Accelerometer	Accelerometer;
