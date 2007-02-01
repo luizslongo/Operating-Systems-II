@@ -97,13 +97,9 @@ void Alarm::int_handler(unsigned int)
     // 2 - Handlers (e.g. master) must be called after incrementing _elapsed
     // 3 - The manipulation of alarm queue must be guarded (e.g. int_disable)
 
-    static volatile bool busy = false; // no event to care for
-    static volatile Tick next;         // ticks until next event
-    static Handler * volatile handler; // next event's handler
-
     CPU::int_disable();
 
-    Handler * current = 0;
+    Handler * handler = 0;
 
     _elapsed++;
     
@@ -116,28 +112,24 @@ void Alarm::int_handler(unsigned int)
 	display.position(lin, col);
     }
 
-    if(busy) {
-	if(next > 0)
-	    next--; 
-	else {
-	    db<Alarm>(TRC) << "Alarm::handler(h=" << handler << ")\n";
-	    current = handler;
-	    busy = false;
-	}
-    }
+    if(!_requests.empty()) {
+	// rank can be negative whenever multiple handlers get created for the
+	// same time tick
+	if(_requests.head()->dec_rank() <= 0) {
+	    Queue::Element * e = _requests.remove();
+	    Alarm * alarm = e->object();
 
-    if(!busy && !_requests.empty()) {
-	Queue::Element * e = _requests.remove();
-	Alarm * alarm = e->object();
-	next = e->rank();
-	handler = alarm->_handler;
-	if(alarm->_times != INFINITE)
-	    alarm->_times--;
-	if(alarm->_times) {
-	    e->rank(alarm->_ticks);
-	    _requests.insert(e);
+	    if(alarm->_times != INFINITE)
+		alarm->_times--;
+	    if(alarm->_times) {
+		e->rank(alarm->_ticks);
+		_requests.insert(e);
+	    }
+
+	    handler = alarm->_handler;
+
+	    db<Alarm>(TRC) << "Alarm::handler(h=" << alarm->_handler << ")\n";
 	}
-	busy = true;
     }
 
     CPU::int_enable();
@@ -145,8 +137,8 @@ void Alarm::int_handler(unsigned int)
     if(_master_ticks && ((_elapsed % _master_ticks) == 0)) 
 	_master();
     
-    if(current) 
-	(*current)();
+    if(handler) 
+	(*handler)();
 }
 
 __END_SYS
