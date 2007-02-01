@@ -72,8 +72,8 @@ private:
     int ptoa(const void * p, char * s);
 
 private:
-    static const char OStream::dec_digits[];
-    static const char OStream::hex_digits[];
+    static const char dec_digits[];
+    static const char hex_digits[];
 }; 
 
 extern OStream kout, kerr;
