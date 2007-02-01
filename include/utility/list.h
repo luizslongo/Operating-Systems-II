@@ -98,6 +98,8 @@ public:
 	void prev(Element * e) { _prev = e; }
 	void next(Element * e) { _next = e; }
 	void rank(int r) { _rank = r; }
+	int inc_rank() { return ++_rank; }
+	int dec_rank() { return --_rank; }
     
     private:
 	const T * _object;
