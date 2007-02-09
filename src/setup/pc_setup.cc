@@ -495,7 +495,7 @@ void PC_Setup::setup_idt()
     IDT_Entry * idt = reinterpret_cast<IDT_Entry *>((void *)si->pmm.idt);
 
     // Clear IDT
-//    memset(idt, 0, sizeof(Page));
+    memset(idt, 0, sizeof(Page));
 
     // Adjust handler addresses to logical addresses
     Log_Addr panic_h = Log_Addr(&panic) | PHY_MEM;
@@ -518,7 +518,7 @@ void PC_Setup::setup_gdt()
     GDT_Entry * gdt = reinterpret_cast<GDT_Entry *>((void *)si->pmm.gdt);
 
     // Clear GDT
-    // memset(gdt, 0, sizeof(Page));
+    memset(gdt, 0, sizeof(Page));
 
     // GDT_Entry(base, limit, {P,DPL,S,TYPE})
     gdt[CPU::GDT_NULL]      = GDT_Entry(0,       0, 0);
@@ -580,7 +580,7 @@ void PC_Setup::setup_sys_pt()
     PT_Entry * sys_pt = reinterpret_cast<PT_Entry *>((void *)si->pmm.sys_pt);
 
     // Clear the System Page Table
-    // memset(sys_pt, 0, MMU::PT_ENTRIES);
+    memset(sys_pt, 0, MMU::PT_ENTRIES);
 
     // IDT
     sys_pt[MMU::page(IDT)] = si->pmm.idt | Flags::SYS;
@@ -635,7 +635,7 @@ void PC_Setup::setup_sys_pd()
     PT_Entry * sys_pd = reinterpret_cast<PT_Entry *>((void *)si->pmm.sys_pd);
 
     // Clear the System Page Directory
-    memset(sys_pd, 0, MMU::PT_ENTRIES); //Verify latter why was commented ...(hugo/arliones)
+    memset(sys_pd, 0, MMU::PT_ENTRIES);
 
     // Calculate the number of page tables needed to map the physical memory
     unsigned int mem_size = MMU::pages(si->bm.mem_top - si->bm.mem_base);
