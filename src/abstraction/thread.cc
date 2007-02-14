@@ -115,8 +115,9 @@ void Thread::yield()
 
     if(!_ready.empty()) {
 	_running->_state = READY;
+	Thread * next = _ready.remove()->object();
 	_ready.insert(&_running->_link);
-	switch_to(_ready.remove()->object());
+	switch_to(next); 
     }
 
     allow_scheduling();
