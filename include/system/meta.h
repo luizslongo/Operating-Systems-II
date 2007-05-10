@@ -1,5 +1,9 @@
-// EPOS-- Metaprograms
-
+/*! @file
+ *  @brief EPOS Metaprograms
+ *
+ *  CVS Log for this file:
+ *  \verbinclude include/system/meta_h.log
+ */
 #ifndef __meta_h
 #define __meta_h
 
@@ -37,9 +41,9 @@ private:
 public:
     enum { Length = Tail::Length + 1 };
 
-template<int Index, int Current = 0>
+    template<int Index, int Current = 0, bool Stop = (Index == Current)>
     struct Get
-    { typedef typename Tail::Get<Index, Current + 1>::Result Result; };
+    { typedef typename Get<Index, Current + 1>::Result Result; };
 
     template<int Index, int Current>
     struct Get<Index, Current, true>
