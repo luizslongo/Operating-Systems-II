@@ -7,7 +7,7 @@ __BEGIN_SYS
 
 // IF metaprogram
 template<bool condition, typename Then, typename Else>
-struct IF 
+struct IF
 { typedef Then Result; };
 
 template<typename Then, typename Else>
@@ -17,7 +17,7 @@ struct IF<false, Then, Else>
 
 // EQUAL metaprogram
 template<typename T1, typename T2>
-struct EQUAL 
+struct EQUAL
 { enum { Result = false }; };
 
 template<typename T>
@@ -37,9 +37,9 @@ private:
 public:
     enum { Length = Tail::Length + 1 };
 
-    template<int Index, int Current = 0, bool Stop = (Index == Current)>
+template<int Index, int Current = 0>
     struct Get
-    { typedef typename Get<Index, Current + 1>::Result Result; };
+    { typedef typename Tail::Get<Index, Current + 1>::Result Result; };
 
     template<int Index, int Current>
     struct Get<Index, Current, true>
@@ -55,8 +55,8 @@ public:
 
 template <>
 struct LIST<void, void, void, void, void, void>
-{ 
-    enum { Length = 0 }; 
+{
+    enum { Length = 0 };
 
     template<int Index, int Current = 0>
     struct Get
