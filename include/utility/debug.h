@@ -10,17 +10,40 @@ __BEGIN_SYS
 class Debug
 {
 public:
-    Debug & operator<<(int i)   { kerr << i; return *this; }
-    Debug & operator<<(short s) { return operator<<((int)s); }
-    Debug & operator<<(long l)  { return operator<<((int)l); }
+    Debug & operator<<(int i) {
+	kerr << i; return *this; 
+    }
+    Debug & operator<<(short s) {
+	return operator<<(static_cast<int>(s)); 
+    }
+    Debug & operator<<(long l) {
+	return operator<<(static_cast<int>(l));
+    }
+    Debug & operator<<(long long l) {
+	kerr << l; return *this;
+    }
 
-    Debug & operator<<(unsigned int u)   { kerr << u; return *this; }
-    Debug & operator<<(unsigned short s) { return operator<<((unsigned)s); }
-    Debug & operator<<(unsigned long l)  { return operator<<((unsigned)l); }
+    Debug & operator<<(unsigned int u) {
+	kerr << u; return *this;
+    }
+    Debug & operator<<(unsigned short s) {
+	return operator<<(static_cast<unsigned int>(s));
+    }
+    Debug & operator<<(unsigned long l) {
+	return operator<<(static_cast<unsigned int>(l)); 
+    }
+    Debug & operator<<(unsigned long long l) {
+	kerr << l; return *this;
+    }
 
-    Debug & operator<<(const void * p) { kerr << p; return *this; }
 
-    Debug & operator<<(const char * s) { kerr << s; return *this; }
+    Debug & operator<<(const void * p) {
+	kerr << p; return *this;
+    }
+
+    Debug & operator<<(const char * s) {
+	kerr << s; return *this; 
+    }
 }; 
 
 class Null_Debug
