@@ -115,7 +115,7 @@ void Alarm::int_handler(unsigned int)
     if(!_requests.empty()) {
 	// rank can be negative whenever multiple handlers get created for the
 	// same time tick
-	if(_requests.head()->dec_rank() <= 0) {
+	if(_requests.head()->promote() <= 0) {
 	    Queue::Element * e = _requests.remove();
 	    Alarm * alarm = e->object();
 
