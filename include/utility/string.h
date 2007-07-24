@@ -3,11 +3,11 @@
 #ifndef __string_h
 #define __string_h
 
-int memcmp(void * d, const void * s, unsigned int n);
+int memcmp(const void * s1, const void * s2, unsigned int n);
 void * memcpy(void * d, const void * s, unsigned int n);
 void * memset(void * d, int c, unsigned int n);
-int strcmp(const char * d, const char * s);
-int strncmp(const char * d, const char * s, unsigned int n);
+int strcmp(const char * s1, const char * s2);
+int strncmp(const char * s1, const char * s2, unsigned int n);
 char * strcpy(char * d, const char * s);
 char * strncpy(char * d, const char * s, unsigned int n);
 unsigned int strlen(const char * s);
