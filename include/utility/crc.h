@@ -1,28 +1,31 @@
+// EPOS-- CRC Utility Declarations
+
 #ifndef __crc_h
 #define __crc_h
 
+#include <system/config.h>
+
 __BEGIN_SYS
 
-class CRC {
-
+class CRC
+{
 public:
 
-    static unsigned short crc16(char *ptr, int count){
-	unsigned short crc;
-	char i;
+    static unsigned short crc16(char * ptr, int size) {
+	unsigned short crc = 0;
 
-	crc = 0;
-	while (--count >= 0){
-	    crc = crc ^ (int) *ptr++ << 8;
-	    i = 8;
+	while(--size >= 0) {
+	    crc ^= reinterpret_cast<int>(*ptr++) << 8;
+	    int i = 8;
 	    do{
-		if (crc & 0x8000)
-		    crc = crc << 1 ^ 0x1021;
+		if(crc & 0x8000)
+		    crc = (crc << 1) ^ 0x1021;
 		else
 		    crc = crc << 1;
 	    } while(--i);
 	}
-	return (crc);
+	
+	return crc;
     }
 
 };
