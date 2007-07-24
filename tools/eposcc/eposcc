@@ -54,7 +54,7 @@ LINKER_LIBRARY=$LINKER
 LINK_FLGS_LIBRARY="-L$EPOS/lib -L`$C_COMPILER $C_COMP_FLGS -print-file-name=` -static --nmagic --section-start $MACH_CODE_NAME=$APP_CODE --section-start $MACH_DATA_NAME=$APP_DATA"
 LINK_OBJI_LIBRARY="$EPOS/lib/$ARCH""_crt1.o $EPOS/lib/$ARCH""_crti.o $EPOS/lib/$ARCH""_crtbegin.o $EPOS/lib/$MACH""_init_first.o"
 LINK_OBJN_LIBRARY="-lutil_$ARCH $EPOS/lib/$MACH""_init_system.o $EPOS/lib/$MACH""_system.o $EPOS/lib/$ARCH""_crtend.o $EPOS/lib/$ARCH""_crtn.o"
-LINK_LIBS_LIBRARY="system_$ARCH init_$ARCH util_$ARCH system_$ARCH gcc c gcc"
+LINK_LIBS_LIBRARY="util_$ARCH init_$ARCH system_$ARCH util_$ARCH gcc c gcc"
 
 #=========================================================================
 # VARIABLES
