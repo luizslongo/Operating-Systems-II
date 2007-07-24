@@ -1,9 +1,9 @@
 // EPOS-- Queue Utility Declarations
 
-// Queue<T, false, false> is a traditional queue, with insertions at the tail
+// Queue is a traditional queue, with insertions at the tail
 // and removals either from the head or from specific objects 
 
-// Queue<T, true, false> is an ordered queue, i.e. objects are inserted
+// Ordered_Queue is an ordered queue, i.e. objects are inserted
 // in-order based on the integral value of "element.rank". Note that "rank"
 // implies an order, but does not necessarily need to be "the absolute order"
 // in the queue; it could, for instance, be a priority information or a 
@@ -17,7 +17,7 @@
 // |ord|		| 4 |<--| 7 |<--| 9 |
 // +---+ 		+---+	+---+	+---+
 
-// Queue<T, true, true> is an ordered queue, i.e. objects are inserted
+// Relative Queue is an ordered queue, i.e. objects are inserted
 // in-order based on the integral value of "element.rank" just like above.
 // But differently from that, a Relative Queue handles "rank" as relative 
 // offsets. This is very useful for alarm queues. Elements of Relative Queue
@@ -37,13 +37,12 @@
 
 __BEGIN_SYS
 
-template <typename T, bool ordered, bool relative, bool atomic>
-class Queue_Common: private List<T, ordered, relative>
+// Wrapper for non-atomic queues  
+template <typename List, bool atomic>
+class Queue_Common: private List
 {
-private:
-    typedef List<T, ordered, relative> List;
-
 public:
+    typedef typename List::Object_Type Object_Type;
     typedef typename List::Element Element;
 
 public:
@@ -56,19 +55,18 @@ public:
     void insert(Element * e) { List::insert(e); }
 
     Element * remove() { return List::remove(); }
-    Element * remove(const T * obj) { return List::remove(obj); }
+    Element * remove(const Object_Type * obj) { return List::remove(obj); }
 
-    Element * search(const T * obj) { return List::search(obj); }
+    Element * search(const Object_Type * obj) { return List::search(obj); }
 };
 
-template <typename T, bool ordered, bool relative>
-class Queue_Common<T, ordered, relative, true>
-    : private List<T, ordered, relative>
-{
-private:
-    typedef List<T, ordered, relative> List;
 
+// Wrapper for atomic queues  
+template <typename List>
+class Queue_Common<List, true>: private List
+{
 public:
+    typedef typename List::Object_Type Object_Type;
     typedef typename List::Element Element;
 
 public:
@@ -110,14 +108,14 @@ public:
 	_lock.release();
 	return tmp;
     }
-    Element * remove(const T * obj) {
+    Element * remove(const Object_Type * obj) {
 	_lock.acquire(); 
 	Element * tmp = List::remove(obj); 
 	_lock.release();
 	return tmp;
     }
 
-    Element * search(const T * obj) {
+    Element * search(const Object_Type * obj) {
 	_lock.acquire(); 
 	Element * tmp = List::search(obj);
 	_lock.release();
@@ -128,17 +126,20 @@ private:
     Spin _lock;
 };
 
-template <typename T, bool atomic = true>
-class Queue: public Queue_Common<T, false, false, atomic>
-{};
 
-template <typename T, bool atomic = true>
-class Ordered_Queue: public Queue_Common<T, true, false, atomic>
-{};
+// Queue
+template <typename T, bool atomic = false>
+class Queue: public Queue_Common<List<T>, atomic> {};
 
-template <typename T, bool atomic = true>
-class Relative_Queue: public Queue_Common<T, true, true, atomic>
-{};
+
+// Ordered Queue
+template <typename T, bool atomic = false>
+class Ordered_Queue: public Queue_Common<Ordered_List<T>, atomic> {};
+
+
+// Relatively-Ordered Queue
+template <typename T, bool atomic = false>
+class Relative_Queue: public Queue_Common<Relative_List<T>, atomic> {};
 
 __END_SYS
  
