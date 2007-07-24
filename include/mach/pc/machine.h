@@ -31,7 +31,8 @@ public:
 	return (i < INT_VECTOR_SIZE) ? _int_vector[i] : 0;
     }
     static void int_vector(unsigned int i, int_handler * h) {
-	db<PC>(INF) << "PC::int_vector(int=" << i << ",h=" << h <<")\n";
+	db<PC>(INF) << "PC::int_vector(int=" << i << ",h=" 
+		    << (void *)h <<")\n";
 	if(i < INT_VECTOR_SIZE) _int_vector[i] = h;
     }
 
