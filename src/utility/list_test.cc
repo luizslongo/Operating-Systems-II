@@ -1,8 +1,8 @@
 // EPOS-- List Utility Test Program
 
 #include <utility/ostream.h>
-#include <utility/list.h>
 #include <utility/malloc.h>
+#include <utility/list.h>
 
 __USING_SYS;
 
@@ -29,12 +29,14 @@ int main()
     test_grouping_list();
     test_simple_grouping_list();
 
+    cout << "\nDone!\n";
+
     return 0;
 }
 
 void test_simple_list ()
 {
-    cout << "\nThis is a singly linked list of integers:\n";
+    cout << "\nThis is a singly-linked list of integers:\n";
     Simple_List<int> l;
     int o[N];
     Simple_List<int>::Element * e[N];
@@ -57,7 +59,7 @@ void test_simple_list ()
 	 << *l.remove(&o[N/4])->object() << "\n";
     cout << "Removing the list's tail => " << *l.remove_tail()->object()
 	 << "\n";
-    cout << "Trying to remove an element that is not in the list => " 
+    cout << "Trying to remove an element that is not on the list => " 
 	 << l.remove(&o[N+1]) << "\n";
     cout << "Removing all remaining elements => ";
     while(l.size() > 0) {
@@ -73,7 +75,7 @@ void test_simple_list ()
 
 void test_list ()
 {
-    cout << "\nThis is a doubly linked list of integers:\n";
+    cout << "\nThis is a doubly-linked list of integers:\n";
     List<int> l;
     int o[N];
     List<int>::Element * e[N];
@@ -96,7 +98,7 @@ void test_list ()
 	 << *l.remove(&o[N/4])->object() << "\n";
     cout << "Removing the list's tail => " << *l.remove_tail()->object()
 	 << "\n";
-    cout << "Trying to remove an element that is not in the list => " 
+    cout << "Trying to remove an element that is not on the list => " 
 	 << l.remove(&o[N+1]) << "\n";
     cout << "Removing all remaining elements => ";
     while(l.size() > 0) {
@@ -112,7 +114,7 @@ void test_list ()
 
 void test_ordered_list ()
 {
-    cout << "\nThis is an ordered linked list of integers:\n";
+    cout << "\nThis is an ordered, linked list of integers:\n";
     Ordered_List<int> l;
     int o[N];
     Ordered_List<int>::Element * e[N];
@@ -135,7 +137,7 @@ void test_ordered_list ()
 	 << *l.remove(&o[N/4])->object() << "\n";
     cout << "Removing the list's tail => " << *l.remove_tail()->object()
 	 << "\n";
-    cout << "Trying to remove an element that is not in the list => " 
+    cout << "Trying to remove an element that is not on the list => " 
 	 << l.remove(&o[N+1]) << "\n";
     cout << "Removing all remaining elements => ";
     while(l.size() > 0) {
@@ -151,7 +153,7 @@ void test_ordered_list ()
 
 void test_relative_list ()
 {
-    cout << "\nThis is an ordered linked list of integers:\n";
+    cout << "\nThis is a realtive ordered, linked list of integers:\n";
     Relative_List<int> l;
     int o[N];
     Relative_List<int>::Element * e[N];
@@ -174,7 +176,7 @@ void test_relative_list ()
 	 << *l.remove(&o[N/4])->object() << "\n";
     cout << "Removing the list's tail => " << *l.remove_tail()->object()
 	 << "\n";
-    cout << "Trying to remove an element that is not in the list => " 
+    cout << "Trying to remove an element that is not on the list => " 
 	 << l.remove(&o[N+1]) << "\n";
     cout << "Removing all remaining elements => ";
     while(l.size() > 0) {
@@ -281,7 +283,7 @@ void test_grouping_list()
 
 void test_simple_grouping_list() 
 {
-    cout << "\nThis is a grouping list of integers:\n";
+    cout << "\nThis is a simple grouping list of integers:\n";
     Simple_Grouping_List<int> l;
     int o[N * 2];
     Simple_Grouping_List<int>::Element * e[N * 2];
