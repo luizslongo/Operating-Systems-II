@@ -1,9 +1,5 @@
-/*! @file
- *  @brief EPOS Metaprograms
- *
- *  CVS Log for this file:
- *  \verbinclude include/system/meta_h.log
- */
+// EPOS-- Metaprograms
+
 #ifndef __meta_h
 #define __meta_h
 
@@ -11,7 +7,7 @@ __BEGIN_SYS
 
 // IF metaprogram
 template<bool condition, typename Then, typename Else>
-struct IF
+struct IF 
 { typedef Then Result; };
 
 template<typename Then, typename Else>
@@ -21,7 +17,7 @@ struct IF<false, Then, Else>
 
 // EQUAL metaprogram
 template<typename T1, typename T2>
-struct EQUAL
+struct EQUAL 
 { enum { Result = false }; };
 
 template<typename T>
@@ -43,7 +39,8 @@ public:
 
     template<int Index, int Current = 0, bool Stop = (Index == Current)>
     struct Get
-    { typedef typename Get<Index, Current + 1>::Result Result; };
+    { typedef typename Tail::template Get<Index, Current + 1>::Result
+      Result; };
 
     template<int Index, int Current>
     struct Get<Index, Current, true>
@@ -59,8 +56,8 @@ public:
 
 template <>
 struct LIST<void, void, void, void, void, void>
-{
-    enum { Length = 0 };
+{ 
+    enum { Length = 0 }; 
 
     template<int Index, int Current = 0>
     struct Get
@@ -76,5 +73,3 @@ struct LIST<void, void, void, void, void, void>
 __END_SYS
 
 #endif
-
-
