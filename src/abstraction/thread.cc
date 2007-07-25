@@ -26,7 +26,7 @@ Thread * volatile Thread::_running;
 Thread * Thread::_idle;
 Thread::Queue Thread::_ready;
 Thread::Queue Thread::_suspended;
-
+unsigned int Thread::_thread_count = 0;
 
 // Methods
 
@@ -139,6 +139,7 @@ void Thread::exit(int status)
 	prevent_scheduling();
     }
 
+    _thread_count--;
     switch_to(_ready.remove()->object());
 
     allow_scheduling();
@@ -247,7 +248,7 @@ int Thread::idle()
 	if(!_ready.empty())
 	    yield();
 	else
-	    if(_suspended.empty()) { 
+	    if(_suspended.empty() && _thread_count == 1) { 
 		db<Thread>(WRN) << "The last thread has exited!\n";
 		db<Thread>(WRN) << "Halting the CPU ...\n";
 		CPU::int_disable();

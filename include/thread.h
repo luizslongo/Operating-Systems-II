@@ -59,7 +59,8 @@ public:
 
     {
 	prevent_scheduling();
-
+	
+	_thread_count++;
 	_stack = kmalloc(stack_size);
 	_context = CPU::init_stack(_stack, stack_size, &implicit_exit,
 				   entry);
@@ -74,6 +75,7 @@ public:
     {
 	prevent_scheduling();
 
+	_thread_count++;
 	_stack = kmalloc(stack_size);
 	_context = CPU::init_stack(_stack, stack_size, &implicit_exit,
 				   entry, a1);
@@ -88,6 +90,7 @@ public:
     {
 	prevent_scheduling();
 
+	_thread_count++;
 	_stack = kmalloc(stack_size);
 	_context = CPU::init_stack(_stack, stack_size, &implicit_exit,
 				   entry, a1, a2);
@@ -102,6 +105,7 @@ public:
     {
 	prevent_scheduling();
 
+	_thread_count++;
 	_stack = kmalloc(stack_size);
 	_context = CPU::init_stack(_stack, stack_size, &implicit_exit,
 				   entry, a1, a2, a3);
@@ -196,6 +200,7 @@ private:
     Thread * volatile _joining;
     Queue::Element _link;
 
+    static unsigned int _thread_count;
     static Thread * volatile _running;
     static Thread * _idle;
     static Queue _ready;
