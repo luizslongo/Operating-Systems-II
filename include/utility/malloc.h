@@ -2,40 +2,32 @@
 
 #pragma interface
 
-#include <system/config.h>
-#include <utility/heap.h>
+#include <application.h>
 
 #ifndef __malloc_h
 #define __malloc_h
 
-__BEGIN_SYS
-extern Heap app_heap;
-__END_SYS
-
 inline void * malloc(unsigned int bytes) { 
-    return __SYS(app_heap).alloc(bytes);
+    return __SYS(Application)::heap()->alloc(bytes);
 }
 inline void * calloc(unsigned int n, unsigned int bytes) {
-    return __SYS(app_heap).calloc(n * bytes); 
+    return __SYS(Application)::heap()->calloc(n * bytes); 
 }
-// inline void * realloc(void * ptr, unsigned int bytes) {
-//     return __SYS(app_heap).realloc(ptr, bytes);
-// }
 inline void free(void * ptr) {
-    __SYS(app_heap).free(ptr); 
+    __SYS(Application)::heap()->free(ptr); 
 }
 
 inline void * operator new(unsigned int bytes) {
-    return __SYS(app_heap).alloc(bytes);
+    return malloc(bytes);
 }
 inline void * operator new[](unsigned int bytes) { 
-    return __SYS(app_heap).alloc(bytes); 
+    return malloc(bytes); 
 }
 inline void operator delete(void * object) {
-    __SYS(app_heap).free(object);
+    free(object);
 }
 inline void operator delete[](void * object) {
-    __SYS(app_heap).free(object);
+    free(object);
 }
 
 #endif
