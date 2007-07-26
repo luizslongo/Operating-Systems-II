@@ -8,8 +8,6 @@
 
 __BEGIN_SYS
 
-extern Heap sys_heap;
-
 inline void * kmalloc(unsigned int bytes) { 
     return System::heap()->alloc(bytes);
 }
