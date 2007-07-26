@@ -409,7 +409,10 @@ public:
 	return new (sp) Context(entry);
     }
 
+    static void init();
+
     // IA32 specific methods
+public:
 
     static Flags eflags() {
 	Reg32 value; ASMV("pushfl");
