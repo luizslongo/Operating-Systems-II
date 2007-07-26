@@ -130,14 +130,15 @@ ARCH_CLOCK		:= $($(ARCH)_CLOCK)
 CONF_FLAGS		:= -D __$(ARCH) -D __$(MACH)
 
 # Paths, prefixes and suffixes
-INCLUDE		= $(EPOS)/include
-SRC		= $(EPOS)/src
-APP		= $(EPOS)/app
-BIN		= $(EPOS)/bin
-LIB		= $(EPOS)/lib
-IMG		= $(EPOS)/img
-CFG		= $(EPOS)/cfg
-DOC		= $(EPOS)/doc
+TOP		= $(EPOS)
+INCLUDE		= $(TOP)/include
+SRC		= $(TOP)/src
+APP		= $(TOP)/app
+BIN		= $(TOP)/bin
+LIB		= $(TOP)/lib
+IMG		= $(TOP)/img
+CFG		= $(TOP)/cfg
+DOC		= $(TOP)/doc
 LSYSNAME	= system
 LINITNAME	= init
 LUTILNAME	= util

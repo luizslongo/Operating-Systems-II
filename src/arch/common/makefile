@@ -1,6 +1,6 @@
 # EPOS-- Architecture Common Packages Makefile
 
-include $(EPOS)/makedefs
+include ../../../makedefs
 
 OBJS := $(subst .cc,.o,$(shell find *.cc))
 

@@ -1,6 +1,6 @@
 # EPOS-- Source Makefile
 
-include	$(EPOS)/makedefs
+include	../makedefs
 
 SUBDIRS := utility arch mach abstraction boot setup system init
 

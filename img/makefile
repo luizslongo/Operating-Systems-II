@@ -1,6 +1,6 @@
 # EPOS-- Image Makefile
 
-include	$(EPOS)/makedefs
+include	../makedefs
 
 all:		epos.img
 

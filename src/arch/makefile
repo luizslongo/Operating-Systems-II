@@ -1,6 +1,6 @@
 # EPOS-- Architecture Mediators Makefile
 
-include		$(EPOS)/makedefs
+include	../../makedefs
 
 SUBDIRS := common $(ARCH)
 

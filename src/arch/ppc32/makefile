@@ -1,6 +1,6 @@
 # EPOS-- PPC32 Architecture Makefile
 
-include $(EPOS)/makedefs
+include ../../../makedefs
 
 OBJS := $(subst .cc,.o,$(shell find *.cc | grep -v init | grep -v test))
 CRTS := $(subst .S,.o,$(shell find *.S | grep crt))

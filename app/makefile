@@ -1,6 +1,6 @@
 # EPOS-- Application Makefile
 
-include $(EPOS)/makedefs
+include ../makedefs
 
 all:		install
 

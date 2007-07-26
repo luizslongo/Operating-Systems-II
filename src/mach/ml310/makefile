@@ -1,6 +1,6 @@
 # EPOS-- ML310 Machine Makefile
 
-include $(EPOS)/makedefs
+include ../../../makedefs
 
 OBJS := $(subst .cc,.o,$(shell find *.cc | grep -v test | grep -v init))
 INITS := $(subst .cc,.o,$(shell find *.cc | grep init))
@@ -11,9 +11,6 @@ all:		$(LIBSYS) $(LIBINIT)
 $(LIBSYS):	$(LIBSYS)($(OBJS))	
 
 $(LIBINIT):	$(LIBINIT)($(INITS))
-
-#pc_interrupt.o	: pc_interrupt.cc
-#		$(CXX) $(CXXFLAGS) -fomit-frame-pointer $<
 
 test:		$(TESTS)
 

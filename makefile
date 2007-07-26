@@ -1,6 +1,6 @@
 # EPOS-- Main Makefile
 
-include $(EPOS)/makedefs
+include makedefs
 
 SUBDIRS := cfg tools src app
 
@@ -25,7 +25,7 @@ $(SUBDIRS):	FORCE
 img:		FORCE
 		(cd $@ && $(MAKE))
 
-test:		all
+test:		linux_imports $(SUBDIRS)
 		(cd src && $(MAKETEST))
 
 clean:		FORCE
@@ -40,11 +40,11 @@ veryclean:
 		find $(BIN) -maxdepth 1 -type f -exec $(CLEAN) {} \;
 		find $(APP) -maxdepth 1 -type f -perm +111 -exec $(CLEAN) {} \;
 		find $(IMG) -maxdepth 1 -type f -perm +111 -exec $(CLEAN) {} \;
-		find $(EPOS) -name "*~" -exec $(CLEAN) {} \; 
+		find $(TOP) -name "*~" -exec $(CLEAN) {} \; 
 
 dist:		veryclean
-		find $(EPOS) -name CVS -type d -print | xargs $(CLEANDIR)
-		find $(EPOS) -name "*.h" -print | xargs sed -i "1r $(EPOS)/LICENSE" 
-		find $(EPOS) -name "*.cc" -print | xargs sed -i "1r $(EPOS)/LICENSE" 
+		find $(TOP) -name CVS -type d -print | xargs $(CLEANDIR)
+		find $(TOP) -name "*.h" -print | xargs sed -i "1r $(TOP)/LICENSE" 
+		find $(TOP) -name "*.cc" -print | xargs sed -i "1r $(TOP)/LICENSE" 
 
 FORCE:

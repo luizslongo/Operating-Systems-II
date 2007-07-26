@@ -1,6 +1,6 @@
 # EPOS-- Machine Mediators Makefile
 
-include		$(EPOS)/makedefs
+include	../../makedefs
 
 SUBDIRS := common $(MACH)
 

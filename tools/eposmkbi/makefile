@@ -1,6 +1,6 @@
 # eposmkbi Makefile
 
-include	$(EPOS)/makedefs
+include	../../makedefs
 
 all		: install
 

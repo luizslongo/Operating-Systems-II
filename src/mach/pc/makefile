@@ -1,6 +1,6 @@
 # EPOS-- PC Machine Makefile
 
-include $(EPOS)/makedefs
+include ../../../makedefs
 
 OBJS := $(subst .cc,.o,$(shell find *.cc | grep -v test | grep -v init))
 INITS := $(subst .cc,.o,$(shell find *.cc | grep init))

@@ -1,6 +1,6 @@
 # EPOS-- Setup Makefile
 
-include $(EPOS)/makedefs
+include ../..//makedefs
 
 TARGET := $(if $(shell find $(MACH)*), install)
 

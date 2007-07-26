@@ -1,6 +1,6 @@
 # EPOS-- Boot Makefile
 
-include $(EPOS)/makedefs
+include ../../makedefs
 
 TARGET := $(if $(shell find $(MACH)*), $(MACH)_install)
 

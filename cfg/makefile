@@ -1,9 +1,8 @@
 # EPOS-- Configuration Makefile
 
-include $(EPOS)/makedefs
+include ../makedefs
 
 all:		eposcc.conf eposmkbi.conf
-
 
 eposcc.conf:	
 		@echo "ARCH=$(ARCH)" >! $@
