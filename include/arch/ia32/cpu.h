@@ -369,6 +369,10 @@ public:
 	return new (sp) Context(entry);
     }
 
+    // The int left on the stack between thread's arguments and its context
+    // is due to the fact that the thread's function believes it's a normal
+    // function that will be invoked with a call, which pushes the return
+    // address on the stack
     template<typename T1>
     static Context * init_stack(
 	Log_Addr stack, unsigned int size, void (* exit)(),
