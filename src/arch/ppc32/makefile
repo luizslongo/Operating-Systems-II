@@ -1,4 +1,4 @@
-# EPOS-- PPC32 Architecture Makefile
+# EPOS-- IA32 Architecture Makefile
 
 include ../../../makedefs
 
@@ -8,14 +8,14 @@ CRTSI := $(subst .S,.s,$(shell find *.S | grep crt))
 INITS := $(subst .cc,.o,$(shell find *.cc | grep init))
 TESTS := $(subst .cc,,$(shell find *.cc | grep test))
 
-all:		crts $(LIBSYS) $(LIBINIT)
+all:		crts $(LIBARCH) $(LIBINIT)
 
 crts:		$(CRTS)
 		$(INSTALL) $^ $(LIB)
 
 .INTERMEDIATE:	$(CRTSI)
 
-$(LIBSYS):	$(LIBSYS)($(OBJS))	
+$(LIBARCH):	$(LIBARCH)($(OBJS))	
 
 $(LIBINIT):	$(LIBINIT)($(INITS))
 
