@@ -40,6 +40,7 @@ class Handler_Semaphore: public Handler
 {
 public:
     Handler_Semaphore(Semaphore * h) : _handler(h) {}
+    ~Handler_Semaphore() {}
 
     void operator()() { _handler->v(); }
 	

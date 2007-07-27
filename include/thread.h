@@ -212,6 +212,7 @@ class Handler_Thread : public Handler
 {
 public:
     Handler_Thread(Thread * h) : _handler(h) {}
+    ~Handler_Thread() {}
 
     void operator()() { _handler->resume(); }
 	
