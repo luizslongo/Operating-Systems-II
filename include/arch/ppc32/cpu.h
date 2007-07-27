@@ -387,6 +387,8 @@ public:
         ASMV("eieio");
     }
 
+    static void init();
+
 private:
     // PPC32 implementation methods
     static Reg32 r1(){
