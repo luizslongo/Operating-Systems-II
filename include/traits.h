@@ -365,13 +365,13 @@ template <> struct Traits<ML310_Common>: public Traits<void>
 
 template <> struct Traits<ML310>: public Traits<ML310_Common>
 {
-    static const unsigned int CLOCK = 300000000;
+    static const unsigned int CLOCK = 200000000;
 
     static const unsigned int BOOT_IMAGE_ADDR = 0x03000000;
     static const unsigned int SETUP_ADDR = 0x00600000;
     static const int INT_BASE = 0x03FF0000;
     static const unsigned int HARDWARE_INT_OFFSET = 0x20; //Verify!!!!!
-    static const int LEDS_BASEADDR = 0x90000000; //GPIO LEDS
+    static const int LEDS_BASEADDR = 0x40040000; //GPIO LEDS
 
     static const unsigned int APPLICATION_STACK_SIZE = 16 * 1024;
     static const unsigned int APPLICATION_HEAP_SIZE = 16 * 1024 * 1024;
@@ -383,6 +383,8 @@ template <> struct Traits<ML310>: public Traits<ML310_Common>
 
 template <> struct Traits<ML310_PCI>: public Traits<ML310_Common>
 {
+    static const bool enabled = false;
+
     static const int MAX_BUS = 1;
     static const int MAX_DEV_FN = 0xff;
     static const int BASE_ADDRESS = 0x3C000000;
@@ -395,7 +397,7 @@ template <> struct Traits<ML310_PCI>: public Traits<ML310_Common>
 
 template <> struct Traits<ML310_IC>: public Traits<ML310_Common>
 {
-    static const int BASE_ADDRESS = 0xD0000FC0;
+    static const int BASE_ADDRESS = 0x41200000;
 };
 
 template <> struct Traits<ML310_Timer>: public Traits<ML310_Common>
@@ -417,7 +419,7 @@ template <> struct Traits<ML310_RTC>: public Traits<ML310_Common>
 template <> struct Traits<ML310_UART>: public Traits<ML310_Common>
 {
     static const unsigned int CLOCK = 1843200; // 1.8432 MHz - Verify !
-    static const unsigned int BASE_ADDRESS = 0xA0000000;
+    static const unsigned int BASE_ADDRESS = 0x40400000;
 };
 
 template <> struct Traits<ML310_NIC>: public Traits<ML310_Common>
