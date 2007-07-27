@@ -8,6 +8,22 @@
 
 ASMV("jmp _start");
 
+// LIBC Heritage
+
+__USING_SYS
+
+extern "C" {
+    void _exit(int s) { 
+	db<Setup>(ERR) << "_exit(" << s << ") called!\n"; 
+	Machine::panic(); for(;;);
+    }
+
+    void __cxa_pure_virtual() { 
+	db<Setup>(ERR) << "__cxa_pure_virtual() called!\n"; 
+	Machine::panic();
+    }
+}
+
 __BEGIN_SYS
 
 OStream kout, kerr;
