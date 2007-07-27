@@ -16,7 +16,9 @@ $(MACH)_system_builtin: $(OBJS) $(LIBSYS)
 		system_scaffold.o \
 		$(LIB)/$(ARCH)_crtend.o \
 		$(LIB)/$(ARCH)_crtn.o \
-		--whole-archive -l$(LSYS) --no-whole-archive \
+		--whole-archive \
+		-l$(LSYS) -l$(LMACH) -l$(LARCH) \
+		--no-whole-archive \
 		-l$(LUTIL) -lgcc -lc -lgcc
 		$(INSTALL) application_scaffold.o $(MACH)_application.o
 

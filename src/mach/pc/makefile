@@ -6,9 +6,9 @@ OBJS := $(subst .cc,.o,$(shell find *.cc | grep -v test | grep -v init))
 INITS := $(subst .cc,.o,$(shell find *.cc | grep init))
 TESTS := $(subst .cc,,$(shell find *.cc | grep test))
 
-all:		$(LIBSYS) $(LIBINIT)
+all:		$(LIBMACH) $(LIBINIT)
 
-$(LIBSYS):	$(LIBSYS)($(OBJS))	
+$(LIBMACH):	$(LIBMACH)($(OBJS))	
 
 $(LIBINIT):	$(LIBINIT)($(INITS))
 
