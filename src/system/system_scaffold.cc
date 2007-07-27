@@ -3,7 +3,23 @@
 #include <utility/ostream.h>
 #include <utility/heap.h>
 #include <machine.h>
+#include <thread.h>
 #include <system.h>
+
+// LIBC Heritage
+
+__USING_SYS
+
+extern "C" { 
+    void _exit(int s) {
+	Thread::exit(s); for(;;);
+    }
+
+    void __cxa_pure_virtual() { 
+	db<void>(ERR) << "__cxa_pure_virtual() called!\n"; 
+	Machine::panic();
+    }
+}
 
 __BEGIN_SYS
 
