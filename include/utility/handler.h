@@ -18,12 +18,14 @@ public:
     virtual ~Handler() {}
 
     virtual void operator()() = 0;
+    void operator delete(void * object) {}
 };
 
 class Handler_Function: public Handler
 {
 public:
     Handler_Function(Function * h) : _handler(h) {}
+    ~Handler_Function() {}
 
     void operator()() { _handler(); }
 	
