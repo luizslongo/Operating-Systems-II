@@ -66,6 +66,7 @@ public:
 
     // Load Map (built up by SETUP)
     struct Load_Map {
+	bool  has_sys;
 	bool  has_ext;
 	LAddr app_entry;
 	Size  app_segments;
