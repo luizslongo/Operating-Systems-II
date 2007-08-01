@@ -15,7 +15,7 @@ public:
 	unsigned short crc = 0;
 
 	while(--size >= 0) {
-	    crc ^= /*reinterpret_cast<int>*/(int)(*ptr++) << 8;
+	    crc ^= reinterpret_cast<unsigned short>(*ptr++) << 8;
 	    int i = 8;
 	    do{
 		if(crc & 0x8000)
