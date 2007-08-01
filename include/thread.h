@@ -17,7 +17,7 @@ protected:
     typedef CPU::Log_Addr Log_Addr;
     typedef CPU::Context Context;
 
-    typedef Ordered_Queue<Thread, Traits<Thread>::smp> Queue;
+    typedef Ordered_Queue<Thread, int, Traits<Thread>::smp> Queue;
 
     static const unsigned int STACK_SIZE 
     = Traits<Machine>::APPLICATION_STACK_SIZE;

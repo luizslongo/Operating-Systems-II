@@ -17,7 +17,7 @@ private:
     typedef TSC::Time_Stamp Time_Stamp;
     typedef Timer::Tick Tick;
 
-    typedef Relative_Queue<Alarm, Traits<Thread>::smp> Queue;
+    typedef Relative_Queue<Alarm, int, Traits<Thread>::smp> Queue;
 
     static const int FREQUENCY = Traits<Timer>::FREQUENCY;
 

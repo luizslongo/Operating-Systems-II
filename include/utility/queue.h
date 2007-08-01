@@ -29,6 +29,10 @@
 // |ord|		| 4 |<--| 3 |<--| 2 |
 // +---+ 		+---+	+---+	+---+
 
+// Scheduling Queue is an ordered queue whose ordering criterion is externally
+// definable and for which selecting methods are defined (e.g. choose). This
+// utility is most useful for schedulers, such as CPU or I/O.
+
 #ifndef __queue_h
 #define	__queue_h
 
@@ -39,31 +43,26 @@ __BEGIN_SYS
 
 // Wrapper for non-atomic queues  
 template <typename List, bool atomic>
-class Queue_Common: private List
+class Queue_Wrapper: private List
 {
 public:
     typedef typename List::Object_Type Object_Type;
     typedef typename List::Element Element;
 
 public:
-    bool empty() const { return List::empty(); }
-    unsigned int size() const { return List::size(); }
-
-    Element * head() { return List::head(); }
-    Element * tail() { return List::tail(); }
-
-    void insert(Element * e) { List::insert(e); }
-
-    Element * remove() { return List::remove(); }
-    Element * remove(const Object_Type * obj) { return List::remove(obj); }
-
-    Element * search(const Object_Type * obj) { return List::search(obj); }
+    using List::empty;
+    using List::size;
+    using List::head;
+    using List::tail;
+    using List::insert;
+    using List::remove;
+    using List::search;
 };
 
 
 // Wrapper for atomic queues  
 template <typename List>
-class Queue_Common<List, true>: private List
+class Queue_Wrapper<List, true>: private List
 {
 public:
     typedef typename List::Object_Type Object_Type;
@@ -128,18 +127,142 @@ private:
 
 
 // Queue
-template <typename T, bool atomic = false>
-class Queue: public Queue_Common<List<T>, atomic> {};
+template <typename T,
+	  bool atomic = false,
+	  typename El = List_Elements::Doubly_Linked<T> >
+class Queue: public Queue_Wrapper<List<T, El>, atomic> {};
 
 
 // Ordered Queue
-template <typename T, bool atomic = false>
-class Ordered_Queue: public Queue_Common<Ordered_List<T>, atomic> {};
+template <typename T, 
+	  typename R = List_Element_Rank, 
+	  bool atomic = false,
+	  typename El = List_Elements::Doubly_Linked_Ordered<T, R> >
+class Ordered_Queue: public Queue_Wrapper<Ordered_List<T, R, El>, atomic> {};
 
 
 // Relatively-Ordered Queue
-template <typename T, bool atomic = false>
-class Relative_Queue: public Queue_Common<Relative_List<T>, atomic> {};
+template <typename T, 
+	  typename R = List_Element_Rank, 
+	  bool atomic = false,
+	  typename El = List_Elements::Doubly_Linked_Ordered<T, R> >
+class Relative_Queue: public Queue_Wrapper<Relative_List<T, R, El>, atomic> {};
+
+
+// Scheduling Queue (non-atomic)
+template <class T,
+	  typename R = List_Element_Rank, 
+	  typename S = List_Element_State, 
+	  bool atomic = false,
+	  typename El  = List_Elements::Doubly_Linked_Scheduling<T, R, S> >
+class Scheduling_Queue: private Scheduling_List<T, R, S, El>
+{
+private:
+    typedef Scheduling_List<T, R, S, El> Base;
+
+public:
+    typedef typename Base::Object_Type Object_Type;
+    typedef typename Base::Element Element;
+
+public:
+    using Base::empty;
+    using Base::size;
+    using Base::schedulables;
+    using Base::head;
+    using Base::tail;
+    using Base::chosen;
+    using Base::insert;
+    using Base::remove;
+    using Base::choose;
+    using Base::choose_another;
+};
+
+// Scheduling Queue (atomic)
+template <class T, typename R, typename S, typename El>
+class Scheduling_Queue<T, R, S, true, El>: private Scheduling_List<T, R, S, El>
+{
+private:
+    typedef Scheduling_List<T, R, S, El> Base;
+
+public:
+    typedef typename Base::Object_Type Object_Type;
+    typedef typename Base::Element Element;
+
+public:
+    bool empty() {
+	_lock.acquire(); 
+	bool tmp = Base::empty();
+	_lock.release();
+	return tmp;
+    }
+    unsigned int size() {
+	_lock.acquire(); 
+	unsigned int tmp = Base::size();
+	_lock.release();
+	return tmp;
+    }
+    unsigned int schedulables() {
+	_lock.acquire(); 
+	unsigned int tmp = Base::schedulables();
+	_lock.release();
+	return tmp;
+    }
+
+    Element * head() { 
+	_lock.acquire(); 
+	Element * tmp = Base::head();
+	_lock.release();
+	return tmp;
+    }
+    Element * tail() { 
+	_lock.acquire(); 
+	Element * tmp = Base::tail();
+	_lock.release();
+	return tmp;
+    }
+
+    Element * chosen() { 
+	_lock.acquire(); 
+	Element * tmp = Base::chosen();
+	_lock.release();
+	return tmp;
+    }
+
+    void insert(Element * e) { 
+	_lock.acquire(); 
+	Base::insert(e);
+	_lock.release();
+    }
+
+    Element * remove(Element * e) {
+	_lock.acquire(); 
+	Element * tmp = Base::remove(e); 
+	_lock.release();
+	return tmp;
+    }
+
+    Element * choose() { 
+	_lock.acquire(); 
+	Element * tmp = Base::choose();
+	_lock.release();
+	return tmp;
+    }
+    Element * choose_another() { 
+	_lock.acquire(); 
+	Element * tmp = Base::choose_another();
+	_lock.release();
+	return tmp;
+    }
+    Element * choose(Element * e) {
+	_lock.acquire(); 
+	Element * tmp = Base::choose(e);
+	_lock.release();
+	return tmp;
+    }
+
+private:
+    Spin _lock;
+};
 
 __END_SYS
  

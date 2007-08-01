@@ -10,13 +10,13 @@ __BEGIN_SYS
 
 // Hash Table with a single Synonym List
 // In order to change the hash function, simply redefine the operator % for
-// objects of type T and int.
-template <typename T, unsigned int SIZE>
+// objects of type T and Key.
+template <typename T, unsigned int SIZE, typename Key = int>
 class Simple_Hash
 {
 public:
     typedef T Object_Type;
-    typedef typename List_Elements::Singly_Linked_Ordered<T> Element;
+    typedef typename List_Elements::Singly_Linked_Ordered<T, Key> Element;
 
 public:
     Simple_Hash() {}
@@ -52,14 +52,14 @@ public:
 	return _synonyms.search(obj);
     }
     
-    Element * search_key(int key) {
+    Element * search_key(const Key & key) {
 	Element * e = _vector.get(key % SIZE);
 	if(e && (e->key() == key))
 	    return e;
 	return _synonyms.search_rank(key);
     }
     
-    Element * remove_key(int key) {
+    Element * remove_key(const Key & key) {
 	Element * e = _vector.get(key % SIZE);
 	if(e && (e->key() == key))
 	    return _vector.remove(key % SIZE);
@@ -68,17 +68,17 @@ public:
 
 private:
     Vector<T, SIZE, Element> _vector;
-    Simple_Ordered_List<T, Element> _synonyms;
+    Simple_Ordered_List<T, Key, Element> _synonyms;
 };
 
 
 // Hash Table with a Synonym List for each Key
-template <typename T, unsigned int SIZE>
+template <typename T, unsigned int SIZE, typename Key = int>
 class Hash
 {
 public:
     typedef T Object_Type;
-    typedef typename List_Elements::Singly_Linked_Ordered<T> Element;
+    typedef typename List_Elements::Singly_Linked_Ordered<T, Key> Element;
 
 public:
     Hash() {}
@@ -122,7 +122,7 @@ public:
 	return 0;
     }
     
-    Element * search_key(int key) {
+    Element * search_key(const Key & key) {
 	return _table[key % SIZE].search_rank(key);
     }
     
@@ -132,7 +132,7 @@ public:
     }
 
 private:
-    Simple_Ordered_List<T, Element> _table[SIZE];
+    Simple_Ordered_List<T, Key, Element> _table[SIZE];
 };
 
 __END_SYS
