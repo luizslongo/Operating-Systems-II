@@ -18,19 +18,7 @@ void ML310::init()
     //Install Processor Exception Handlers
     int_vector(ML310_IC::INT_PROGRAM, exc_program);
 
-    // If EPOS is a library then adjust the application entry point (that
-    // was set by SETUP) based on the ELF SYSTEM+APPLICATION image
-    System_Info<ML310> * si = System::info();
-    if(!si->lm.has_sys)
-	si->lmm.app_entry =
-	    reinterpret_cast<unsigned int>(&__epos_library_app_entry);
-
     // Initialize the hardware
-    if(Traits<PPC32_MMU>::enabled)
-	PPC32_MMU::init();
-    else
-	db<Init, ML310>(WRN) << "MMU is disabled by traits!\n";
-
     if(Traits<ML310_PCI>::enabled)
 	ML310_PCI::init();
     if(Traits<ML310_IC>::enabled)
@@ -41,8 +29,6 @@ void ML310::init()
 	ML310_UART::init();
     if(Traits<ML310_NIC>::enabled)
 	ML310_NIC::init();
-
-
 
 }
 
