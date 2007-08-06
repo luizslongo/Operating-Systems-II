@@ -25,4 +25,4 @@ cpu.o		: cpu.cc
 test:		$(TESTS)
 
 clean:
-		$(CLEAN) *.o *_test
+		$(CLEAN) *.o *.s *_test
