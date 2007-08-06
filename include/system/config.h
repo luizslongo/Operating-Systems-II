@@ -59,6 +59,16 @@ typedef PPC32_TSC                TSC;
 #define __TSC_H                 __HEADER_ARCH(tsc)
 #define __MMU_H                 __HEADER_ARCH(mmu)
 
+#elif defined (__mips32)
+
+#define ARCH mips32
+typedef MIPS32                  CPU;
+typedef MIPS32_MMU              MMU;
+typedef MIPS32_TSC              TSC;
+#define __CPU_H                 __HEADER_ARCH(cpu)
+#define __TSC_H                 __HEADER_ARCH(tsc)
+#define __MMU_H                 __HEADER_ARCH(mmu)
+
 #else
 #error Architecture not selected!
 #endif
@@ -177,10 +187,34 @@ typedef Dummy<5>		Accelerometer;
 #define __UART_H                __HEADER_MACH(uart)
 #define __NIC_H                 __HEADER_MACH(nic)
 
+#elif defined (__plasma)
+
+#define MACH                    plasma
+typedef PLASMA                  Machine;
+typedef Dummy<0>                PCI;
+typedef PLASMA_IC               IC;
+typedef PLASMA_Timer            Timer;
+typedef PLASMA_RTC              RTC;
+typedef Dummy<1>                EEPROM;
+typedef PLASMA_UART             UART;
+typedef Dummy<2>                SPI;
+typedef Serial_Display          Display;
+typedef PLASMA_NIC              NIC;
+typedef Dummy<3>                ADC;
+typedef Dummy<4>                Temperature_Sensor;
+typedef Dummy<5>                Photo_Sensor;
+typedef Dummy<6>                Accelerometer;
+#define __MACH_H                __HEADER_MACH(machine)
+#define __PCI_H                 __HEADER_MACH(pci)
+#define __IC_H                  __HEADER_MACH(ic)
+#define __TIMER_H               __HEADER_MACH(timer)
+#define __RTC_H                 __HEADER_MACH(rtc)
+#define __UART_H                __HEADER_MACH(uart)
+#define __NIC_H                 __HEADER_MACH(nic)
+#define __RTC_H                 __HEADER_MACH(rtc)
+
 #else
-
 #error Machine not selected!
-
 #endif
 
 __END_SYS

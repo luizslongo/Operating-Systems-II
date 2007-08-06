@@ -9,12 +9,14 @@ MODE_LIBRARY	:= library
 ARCH_IA32	:= ia32
 ARCH_AVR8       := avr8
 ARCH_PPC32      := ppc32
+ARCH_MIPS32     := mips32
 
 # Supported machines
 MACH_PC		:= pc
 MACH_ATMEGA16  	:= atmega16
 MACH_ATMEGA128 	:= atmega128
 MACH_ML310      := ml310
+MACH_PLASMA     := plasma
 
 # System configuration
 MODE		:= $(MODE_LIBRARY)
@@ -28,6 +30,7 @@ MACH		:= $(MACH_PC)
 $(ARCH_IA32)_COMP_PREFIX	:= /usr/local/ia32/gcc/bin/ia32-
 $(ARCH_AVR8)_COMP_PREFIX	:= /usr/local/avr/gcc.testing/bin/avr-
 $(ARCH_PPC32)_COMP_PREFIX       := /usr/local/ppc32/gcc/bin/ppc32-
+$(ARCH_MIPS32)_COMP_PREFIX      := /usr/local/mips/gcc/bin/mips-
 COMP_PREFIX			:= $($(ARCH)_COMP_PREFIX)
 
 # Boot memory maps
@@ -75,6 +78,17 @@ $(MACH_ML310)_APP_CODE_ADDR          := 0x00000000
 $(MACH_ML310)_APP_DATA_ADDR          := 0x00200000
 $(MACH_ML310)_BOOT_LENGTH_MIN        := 2048
 $(MACH_ML310)_BOOT_LENGTH_MAX        := 2048
+$(MACH_PLASMA)_MEM_BASE              := 0x10000000
+$(MACH_PLASMA)_MEM_TOP               := 0x10100000
+$(MACH_PLASMA)_BOOT_ADDR             := 0x00000000
+$(MACH_PLASMA)_SETUP_ADDR            := 0x00000000
+$(MACH_PLASMA)_INIT_ADDR             := 0x00000000
+$(MACH_PLASMA)_SYS_DATA_ADDR         := 0x100A2000
+$(MACH_PLASMA)_SYS_CODE_ADDR         := 0x100A0000
+$(MACH_PLASMA)_APP_DATA_ADDR         := 0x10080000
+$(MACH_PLASMA)_APP_CODE_ADDR         := 0x10000000
+$(MACH_PLASMA)_BOOT_LENGTH_MIN       := 128
+$(MACH_PLASMA)_BOOT_LENGTH_MAX       := 512
 BOOT_ADDR			     = $($(MACH)_BOOT_ADDR)
 SETUP_ADDR			     = $($(MACH)_SETUP_ADDR)
 INIT_ADDR			     = $($(MACH)_INIT_ADDR)
@@ -108,6 +122,11 @@ $(MACH_ML310)_AS_FLAGS          :=
 $(MACH_ML310)_LD_FLAGS          :=
 $(MACH_ML310)_CODE_NAME		:= .hash
 $(MACH_ML310)_DATA_NAME		:= .tdata
+$(MACH_PLASMA)_CC_FLAGS         := -march=mips1 -EB -msoft-float -mno-check-zero-division
+$(MACH_PLASMA)_AS_FLAGS         :=
+$(MACH_PLASMA)_LD_FLAGS         :=
+$(MACH_PLASMA)_CODE_NAME        := .hash
+$(MACH_PLASMA)_DATA_NAME        := .tdata
 MACH_CC_FLAGS			:= $($(MACH)_CC_FLAGS)
 MACH_AS_FLAGS			:= $($(MACH)_AS_FLAGS)
 MACH_LD_FLAGS			:= $($(MACH)_LD_FLAGS)
@@ -124,6 +143,9 @@ $(ARCH_AVR8)_CLOCK	:= 4000000
 $(ARCH_PPC32)_WORD_SIZE := 32
 $(ARCH_PPC32)_ENDIANESS := big
 $(ARCH_PPC32)_CLOCK     := 300000000
+$(ARCH_MIPS32)_WORD_SIZE:= 32
+$(ARCH_MIPS32)_ENDIANESS:= big
+$(ARCH_MIPS32)_CLOCK    := 25000000
 ARCH_WORD_SIZE		:= $($(ARCH)_WORD_SIZE)
 ARCH_ENDIANESS		:= $($(ARCH)_ENDIANESS)
 ARCH_CLOCK		:= $($(ARCH)_CLOCK)

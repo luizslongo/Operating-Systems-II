@@ -25,23 +25,26 @@ class System;
 class IA32;
 class AVR8;
 class PPC32;
+class MIPS32;
 
 // Hardware Mediators - Time-Stamp Counters
 class IA32_TSC;
 class AVR8_TSC;
 class PPC32_TSC;
+class MIPS32_TSC;
 
 // Hardware Mediators - Memory Management Units
 class IA32_MMU;
 class AVR8_MMU;
 class PPC32_MMU;
-
+class MIPS32_MMU;
 
 // Hardware Mediators - Machines
 class PC;
 class ATMega16;
 class ATMega128;
 class ML310;
+class PLASMA;
 
 // Hardware Mediators - Busses
 class PC_PCI;
@@ -52,18 +55,21 @@ class PC_IC;
 class ATMega16_IC;
 class ATMega128_IC;
 class ML310_IC;
+class PLASMA_IC;
 
 // Hardware Mediators - Timers
 class PC_Timer;
 class ATMega16_Timer;
 class ATMega128_Timer;
 class ML310_Timer;
+class PLASMA_Timer;
 
 // Hardware Mediators - Real Time Clocks
 class PC_RTC;
 class ATMega16_RTC;
 class ATMega128_RTC;
 class ML310_RTC;
+class PLASMA_RTC;
 
 // Hardware Mediators - EEPROMs
 class PC_EEPROM;
@@ -75,6 +81,7 @@ class PC_UART;
 class ATMega16_UART;
 class ATMega128_UART;
 class ML310_UART;
+class PLASMA_UART;
 
 // Hardware Mediators - SPIs
 class PC_SPI;
@@ -97,6 +104,7 @@ class ATMega128_NIC;
 class Radio;
 class ML310_NIC;
 class CMAC;
+class PLASMA_NIC;
 
 // Hardware Mediators - ADCs
 class ATMega16_ADC;
