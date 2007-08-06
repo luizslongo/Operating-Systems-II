@@ -248,7 +248,6 @@ public:
     //Entry Wrappers for passing parameters through registers...
     static void entry_wrapper(){
         Log_Addr sp = static_cast<Log_Addr>(CPU::sp());
-        //Destroys this Function Frame Stack since it's useless on this context :)
         sp = *((Log_Addr *)sp);
         sp += 8; //(Frame Header)
         Log_Addr entry_point = *static_cast<unsigned int *>(sp);
@@ -264,7 +263,6 @@ public:
     template<class T1>
     static void entry_wrapper(T1 a1){
         Log_Addr sp = static_cast<Log_Addr>(CPU::sp());
-        //Destroys this Function Frame Stack since it's useless on this context :)
         sp = *((Log_Addr *)sp);
         sp += 8; //(Frame Header)
         Log_Addr entry_point = *static_cast<unsigned int *>(sp);
@@ -282,7 +280,6 @@ public:
     template<class T1, class T2>
     static void entry_wrapper(T1 a1, T2 a2){
         Log_Addr sp = static_cast<Log_Addr>(CPU::sp());
-        //Destroys this Function Frame Stack since it's useless on this context :)
         sp = *((Log_Addr *)sp);
         sp += 8; //(Frame Header)
         Log_Addr entry_point = *static_cast<unsigned int *>(sp);
@@ -302,7 +299,6 @@ public:
     template<class T1, class T2, class T3>
     static void entry_wrapper(T1 a1, T2 a2, T3 a3){
         Log_Addr sp = static_cast<Log_Addr>(CPU::sp());
-        //Destroys this Function Frame Stack since it's useless on this context :)
         sp = *((Log_Addr *)sp);
         sp += 8; //(Frame Header)
         Log_Addr entry_point = *static_cast<unsigned int *>(sp);
@@ -321,99 +317,95 @@ public:
         (*ret_addr)();
     }
 
-    static Reg32 fr(){ return r3(); }
-    static void fr(const Reg32 fr) { r3(fr); }
+    static Reg32 fr(){ return reg<3>(); }
+    static void fr(const Reg32 fr) { reg<3>(fr); }
 
-    static Reg32 sp() { return r1(); }
-    static void sp(const Reg32 sp) { r1(sp); }
+    static Reg32 sp() { return reg<1>(); }
+    static void sp(const Reg32 sp) { reg<1>(sp); }
 
     //Not Implemented ... 
     static Reg32 pdp() { return 0; }
     static void pdp(Reg32 pdp) {}
 
+    static void init();
+
+// PPC32 specific *Public* methods.
+public:
+    // SPR are used by specific Machine Mediators (e.g Timer)
+    static Reg32 _mfspr(const unsigned int reg){
+      Reg32 value;
+      ASMV("mfspr %0,%1" :"=r" ( value ): "i" ( reg ) );
+      return value;
+    };
+    static void _mtspr(const unsigned int reg, unsigned int value) {
+      ASMV("mtspr %0,%1" :: "i" ( reg ), "r" ( value ) );
+    };
+    //Included for ML310_PCI mediator !
+    static void sync_io(){
+        ASMV("eieio");
+    }
+
+// PPC32 implementation methods
+private:
+    template <unsigned int REG> static Reg32 reg() {
+        Reg32 value;
+	ASMV("addi %0, 0, %1" : "=r"(value) : "i"(REG));
+	return value;
+    }
+    template <unsigned int REG> static void reg(Reg32 value) {
+	ASMV("addi %1, %0, 0" : : "r"(value), "i"(REG));
+    }
+/*    static Reg32 r1(){
+      Reg32 value;
+      ASM( "addi %0, 1, 0  \n" : "=r"(value) ); // move r1 contents to value
+      return value;
+    };
+    static void r1( Reg32 value ){
+      ASM( "addi 1, %0, 0 \n" : : "r"(value) ); // move value contents to r1
+    };
+    static Reg32 r3(){
+      Reg32 value;
+      ASM( "addi %0, 3, 0  \n" : "=r"(value) ); // move r3 contents to value
+      return value;
+    };
+    static void r3( Reg32 value ){
+      ASM( "addi 3, %0, 0 \n" : : "r"(value) ); // move value contents to r3
+    };*/
+    static Reg32 lr(){
+      Reg32 value;
+      ASM( "mflr %0" : "=r"(value) );
+      return value;
+    };
+    static void lr( Reg32 value ){
+      ASM( "mtlr %0" : : "r"(value) );
+    };
+    static void _mtdcr( const unsigned int reg, unsigned int value ) {
+      ASMV("mtdcr %0,%1" :: "i" ( reg ), "r" ( value ) );
+    };
+    static void _mfdcr( const unsigned int reg, unsigned int value ) {
+      ASMV("mfdcr %0,%1" :"=r" ( value ): "i" ( reg ) );
+    };
     static inline void int_critical_enable(){
       volatile Reg32 value;
       ASMV("mfmsr %0; sync" : "=r" (value) : );
       value |= 0x00020000;
       ASMV("mtmsr %0; sync" :: "r" (value) );
     };
-
     static inline void int_critical_disable(){
       volatile Reg32 value;
       ASMV("mfmsr %0; sync" : "=r" (value) : );
       value &= ~0x00020000;
       ASMV("mtmsr %0; sync" :: "r" (value) );
     };
-
     static inline void int_nonCritical_enable(){
       ASMV("wrteei 1");
     };
-
     static inline void int_nonCritical_disable(){
       ASMV("wrteei 0");
     };
 
-    //PowerPC Especific Methods.
-    static void _mtdcr( const unsigned int reg, unsigned int value ) {
-      ASMV("mtdcr %0,%1" :: "i" ( reg ), "r" ( value ) );
-    };
-
-    static void _mfdcr( const unsigned int reg, unsigned int value ) {
-      ASMV("mfdcr %0,%1" :"=r" ( value ): "i" ( reg ) );
-    };
-
-    static Reg32 _mfspr(const unsigned int reg){
-      Reg32 value;
-      ASMV("mfspr %0,%1" :"=r" ( value ): "i" ( reg ) );
-      return value;
-    };
-
-    static void _mtspr(const unsigned int reg, unsigned int value) {
-      ASMV("mtspr %0,%1" :: "i" ( reg ), "r" ( value ) );
-    };
-
-    static Reg32 lr(){
-      Reg32 value;
-      ASM( "mflr %0" : "=r"(value) );
-      return value;
-    };
-
-    static void lr( Reg32 value ){
-      ASM( "mtlr %0" : : "r"(value) );
-    };
-
-    //Included for ML310_PCI mediator !
-    static void sync_io(){
-        ASMV("eieio");
-    }
-
-    static void init();
-
-private:
-    // PPC32 implementation methods
-    static Reg32 r1(){
-      Reg32 value;
-      ASM( "addi %0, 1, 0  \n" : "=r"(value) ); // move r1 contents to value
-      return value;
-    };
-
-    static void r1( Reg32 value ){
-      ASM( "addi 1, %0, 0 \n" : : "r"(value) ); // move value contents to r1
-    };
-
-    static Reg32 r3(){
-      Reg32 value;
-      ASM( "addi %0, 3, 0  \n" : "=r"(value) ); // move r3 contents to value
-      return value;
-    };
-
-    static void r3( Reg32 value ){
-      ASM( "addi 3, %0, 0 \n" : : "r"(value) ); // move value contents to r3
-    };
-
 private:
     // PPC32 attributes
-
 
 };
 
