@@ -11,7 +11,7 @@ __BEGIN_SYS
 class Synchronizer_Common
 {
 private:
-    typedef Ordered_Queue<Thread, int, Traits<Thread>::smp> Queue;
+    typedef Thread::Queue Queue;
 
 protected:
     Synchronizer_Common() {}
