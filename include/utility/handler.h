@@ -24,7 +24,7 @@ public:
 class Handler_Function: public Handler
 {
 public:
-    Handler_Function(Function * h) : _handler(h) {}
+    Handler_Function(Function * h): _handler(h) {}
     ~Handler_Function() {}
 
     void operator()() { _handler(); }
