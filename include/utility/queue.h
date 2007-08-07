@@ -151,14 +151,13 @@ class Relative_Queue: public Queue_Wrapper<Relative_List<T, R, El>, atomic> {};
 
 // Scheduling Queue (non-atomic)
 template <class T,
-	  typename R = List_Element_Rank, 
-	  typename S = List_Element_State, 
+	  typename R = List_Element_Rank,  
 	  bool atomic = false,
-	  typename El  = List_Elements::Doubly_Linked_Scheduling<T, R, S> >
-class Scheduling_Queue: private Scheduling_List<T, R, S, El>
+	  typename El  = List_Elements::Doubly_Linked_Ordered<T, R> >
+class Scheduling_Queue: private Scheduling_List<T, R, El>
 {
 private:
-    typedef Scheduling_List<T, R, S, El> Base;
+    typedef Scheduling_List<T, R, El> Base;
 
 public:
     typedef typename Base::Object_Type Object_Type;
@@ -167,7 +166,6 @@ public:
 public:
     using Base::empty;
     using Base::size;
-    using Base::schedulables;
     using Base::head;
     using Base::tail;
     using Base::chosen;
@@ -178,11 +176,11 @@ public:
 };
 
 // Scheduling Queue (atomic)
-template <class T, typename R, typename S, typename El>
-class Scheduling_Queue<T, R, S, true, El>: private Scheduling_List<T, R, S, El>
+template <class T, typename R, typename El>
+class Scheduling_Queue<T, R, true, El>: private Scheduling_List<T, R, El>
 {
 private:
-    typedef Scheduling_List<T, R, S, El> Base;
+    typedef Scheduling_List<T, R, El> Base;
 
 public:
     typedef typename Base::Object_Type Object_Type;
@@ -201,12 +199,6 @@ public:
 	_lock.release();
 	return tmp;
     }
-    unsigned int schedulables() {
-	_lock.acquire(); 
-	unsigned int tmp = Base::schedulables();
-	_lock.release();
-	return tmp;
-    }
 
     Element * head() { 
 	_lock.acquire(); 
@@ -221,9 +213,9 @@ public:
 	return tmp;
     }
 
-    Element * chosen() { 
+    Element * volatile & chosen() { 
 	_lock.acquire(); 
-	Element * tmp = Base::chosen();
+	Element * volatile & tmp = Base::chosen();
 	_lock.release();
 	return tmp;
     }
@@ -237,6 +229,12 @@ public:
     Element * remove(Element * e) {
 	_lock.acquire(); 
 	Element * tmp = Base::remove(e); 
+	_lock.release();
+	return tmp;
+    }
+    Element * remove(const Object_Type * obj) {
+	_lock.acquire(); 
+	Element * tmp = Base::remove(obj); 
 	_lock.release();
 	return tmp;
     }
@@ -256,6 +254,12 @@ public:
     Element * choose(Element * e) {
 	_lock.acquire(); 
 	Element * tmp = Base::choose(e);
+	_lock.release();
+	return tmp;
+    }
+    Element * choose(const Object_Type * obj) {
+	_lock.acquire(); 
+	Element * tmp = Base::choose(obj);
 	_lock.release();
 	return tmp;
     }

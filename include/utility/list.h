@@ -20,30 +20,10 @@ protected:
 };
 
 
-// List Element State (for scheduling lists)
-class List_Element_State
-{
-public:
-    enum {
-	CHOSEN,
-	READY
-    };
-
-public:
-    List_Element_State(int s = READY): _state(s) {}
-
-    operator  int() const { return _state; }
-
-protected:
-    int _state;
-};
-
-
 // List Elements
 namespace List_Elements
 {
     typedef List_Element_Rank Rank;
-    typedef List_Element_State State;
 
     // Vector Element
     template <typename T>
@@ -223,20 +203,18 @@ namespace List_Elements
 	Element * _next;
     };
     
-    // Scheduling Queue Element
-    template <typename T, typename R = Rank, typename S = List_Element_State>
+    // Scheduling List Element
+    template <typename T, typename R = Rank>
     class Doubly_Linked_Scheduling
     {
     public:
 	typedef T Object_Type;
-	typedef R Rank_Type;
-	typedef S State_Type;
+	typedef Rank Rank_Type;
 	typedef Doubly_Linked_Scheduling Element;
 
     public:
-	Doubly_Linked_Scheduling(const T * o,
-				 const R & r = 0, const S & s = 0):
-	    _object(o), _rank(r), _state(s), _prev(0), _next(0) {}
+	Doubly_Linked_Scheduling(const T * o,  const R & r = 0):
+	    _object(o), _rank(r), _prev(0), _next(0) {}
     
 	T * object() const { return const_cast<T *>(_object); }
 
@@ -250,16 +228,13 @@ namespace List_Elements
 	int promote(const R & n = 1) { _rank -= n; return _rank; }
 	int demote(const R & n = 1) { _rank += n; return _rank; }
 
-	const S & state() const { return _state; }
-	void state(const S & s) { _state = s; }
-
     private:
 	const T * _object;
-	R _rank;
-	S _state;
+ 	R _rank;
 	Element * _prev;
 	Element * _next;
     };
+
 
     // Grouping List Element
     template <typename T>
@@ -455,8 +430,7 @@ public:
 	Element * e = search(obj);
 	if(e)
 	    return remove(e);
-	else
-	    return 0;
+	return 0;
     }
     
     Element * search(const Object_Type * obj) {
@@ -732,8 +706,7 @@ public:
 	Element * e = search(obj);
 	if(e)
 	    return remove(e);
-	else
-	    return 0;
+	return 0;
     }
     
     Element * search(const Object_Type * obj) {
@@ -762,8 +735,8 @@ protected:
 	Element * e = _head;
 	_head = 0;
 	_tail = 0;
-	    _size--;
-	    return e;
+	_size--;
+	return e;
     }
     
 private:
@@ -832,8 +805,7 @@ public:
 	Element * e = search(obj);
 	if(e)
 	    return remove(e);
-	else
-	    return 0;
+	return 0;
     }
     
     Element * search_rank(int rank) {
@@ -845,8 +817,7 @@ public:
 	Element * e = search_rank(rank);
 	if(e)
 	    return remove(e);
-	else
-	    return 0;
+	return 0;
     }
 };
 
@@ -861,27 +832,20 @@ class Relative_List: public Ordered_List<T, R, El, true> {};
 // Doubly-Linked, Scheduling List
 template <typename T,
 	  typename R = List_Element_Rank, 
-	  typename S = List_Element_State, 
-	  typename El = List_Elements::Doubly_Linked_Scheduling<T, S, R> >
+	  typename El = List_Elements::Doubly_Linked_Scheduling<T, R> >
 class Scheduling_List: private Ordered_List<T, R, El>
 {
 private:
     typedef Ordered_List<T, R, El> Base;
 
-    enum {
-	CHOSEN = S::CHOSEN,
-	READY = S::READY
-    };
-
 public:
     typedef T Object_Type;
     typedef R Rank_Type;
-    typedef S State_Type;
     typedef El Element;
     typedef typename Base::Iterator Iterator;
 
 public:
-    Scheduling_List() {}
+    Scheduling_List(): _chosen(0) {}
 
     using Base::empty;
     using Base::size;
@@ -890,79 +854,67 @@ public:
     using Base::begin;
     using Base::end;
 
-    unsigned int schedulables() { return (_chosen) ? size() - 1 : size(); }
-
-    Element * chosen() { return _chosen; }
+    Element * volatile & chosen() { return _chosen; }
 
     void insert(Element * e) {
-	if((e->state() == CHOSEN) && !_chosen)
-	    _chosen = e;
-
-	e->state(READY);
 	Base::insert(e);
+  	if(!_chosen)
+ 	    _chosen = Base::head();
     }
 
     Element * remove(Element * e) {
 	Base::remove(e);
-	if(e == _chosen) {
+	if(e == _chosen)
 	    _chosen = Base::head();
-	    _chosen->state(CHOSEN);
-	}
 	return e;
+    }
+    Element * remove(const Object_Type * obj) {
+	Element * e = search(obj);
+	if(e)
+	    return remove(e);
+	else
+	    return 0;
     }
 
     Element * choose() {
-	if(empty())
-	    return 0;
-
-	if(_chosen)
-	    ready(_chosen);
-
-	_chosen = Base::head();
-	_chosen->state(CHOSEN);
-	
+	if(!empty()) {
+	    reorder();
+	    _chosen = Base::head();
+	}
 	return _chosen;
     }
     Element * choose_another() {
-	if(empty())
-	    return 0;
-
-	if(size() == 1)
-	    return _chosen;
-
-	Base::remove(_chosen);
-	Element * next = Base::head();
-	_chosen->state(READY);
-	Base::insert(_chosen);
-
-	_chosen = next;
-	_chosen->state(CHOSEN);
-
+	if(size() > 1) {
+	    Element * tmp = _chosen;
+	    Base::remove(tmp);
+	    _chosen = Base::head();
+	    Base::insert(tmp);
+	}
 	return _chosen;
     }
     Element * choose(Element * e) {
-	if(_chosen) 
-	    ready(_chosen);
-
-	_chosen = Base::remove(e);
-	if(_chosen) { // was "e" on the list?
-	    _chosen->state(CHOSEN);
-	    Base::insert(_chosen);
-	}
-
+	if(_chosen)
+	    reorder();
+	_chosen = e;
 	return _chosen;
+    }
+    Element * choose(const Object_Type * obj) {
+	Element * e = search(obj);
+	if(e)
+	    return choose(e);
+	else
+	    return 0;
     }
 
 private:
-    void ready(Element * e) {
+    void reorder() {
 	// Rank might have changed, so remove and insert to reorder
-	Base::remove(e);
-	e->state(READY);
-	Base::insert(e);
+	Base::remove(_chosen);
+	Base::insert(_chosen);
     }
     
 private:
-    Element * _chosen;
+    Element * volatile _chosen;
 };
 
 
