@@ -500,11 +500,16 @@ template <> struct Traits<PLASMA_NIC>: public Traits<void>
 // Abstractions
 template <> struct Traits<Thread>: public Traits<void>
 {
+    typedef Scheduling_Criteria::Priority Criterion;
     static const bool idle_waiting = true;
     static const bool active_scheduler = true;
     static const bool preemptive = true;
     static const bool smp = false;
     static const unsigned int QUANTUM = 10000; // us
+};
+
+template <> struct Traits<Scheduler<Thread> >: public Traits<void>
+{
 };
 
 template <> struct Traits<Alarm>: public Traits<void>

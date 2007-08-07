@@ -37,12 +37,12 @@ public:
     const Segment & data() const { return _data; }
 
     Thread * create_thread(int (* entry)(), 
-	   const Thread::State & state = Thread::READY,
-	   const Thread::Priority & priority = Thread::NORMAL,
-	   unsigned int stack_size = STACK_SIZE) {
+        const Thread::State & state = Thread::READY,
+	const Thread::Criterion & criterion = Thread::NORMAL,
+	unsigned int stack_size = STACK_SIZE) {
 	_as.activate();
 	Thread * t = new(malloc(sizeof(Thread)))
-	    Thread(entry, state, priority);
+	    Thread(entry, state, criterion);
 	Queue::Element * e = new(malloc(sizeof(Queue::Element))) Queue::Element(t);
 	_threads.insert(e);
 	return t;

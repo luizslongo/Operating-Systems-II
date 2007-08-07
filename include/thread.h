@@ -7,18 +7,15 @@
 #include <utility/queue.h>
 #include <utility/handler.h>
 #include <cpu.h>
-#include <mmu.h>
+#include <scheduler.h>
 
 __BEGIN_SYS
 
 class Thread
 {
+    friend class Scheduler<Thread>;
+
 protected:
-    typedef CPU::Log_Addr Log_Addr;
-    typedef CPU::Context Context;
-
-    typedef Ordered_Queue<Thread, int, Traits<Thread>::smp> Queue;
-
     static const unsigned int STACK_SIZE 
     = Traits<Machine>::APPLICATION_STACK_SIZE;
 
@@ -29,116 +26,108 @@ protected:
 
     static const unsigned int QUANTUM = Traits<Thread>::QUANTUM;
 
+    typedef CPU::Log_Addr Log_Addr;
+    typedef CPU::Context Context;
+
 public:
-    typedef short State;
-    enum  {
-        RUNNING,
-        READY,
-        SUSPENDED,
+    // Thread State
+    enum State {
+	BEGINNING,
+	READY,
+	RUNNING,
+	SUSPENDED,
 	WAITING,
 	FINISHING
     };
 
-    typedef short Priority;
+    // Thread Priority
+    typedef Scheduling_Criteria::Priority Priority;
+    
+    // Thread Scheduling Criterion
+    typedef Traits<Thread>::Criterion Criterion;
     enum {
-	HIGH = 0,
-	NORMAL = 15,
-	LOW = 30,
-	IDLE = 31
+	NORMAL = Criterion::NORMAL,
+	MAIN = Criterion::MAIN,
+	IDLE = Criterion::IDLE
     };
 
+    typedef
+    Ordered_Queue<Thread, Criterion, smp, Scheduler<Thread>::Element> Queue;
+
 public:
-    // The int left on the stack between thread's arguments and its context
-    // is due to the fact that the thread's function believes it's a normal
-    // function that will be invoked with a call, which pushes the return
-    // address on the stack
     Thread(int (* entry)(), 
 	   const State & state = READY,
-	   const Priority & priority = NORMAL,
-	   unsigned int stack_size = STACK_SIZE) : _link(this, priority)
+	   const Criterion & criterion = NORMAL,
+	   unsigned int stack_size = STACK_SIZE)
+	: _state(state), _waiting(0), _joining(0), _link(this, criterion)
 
     {
 	prevent_scheduling();
 	
-	_thread_count++;
 	_stack = kmalloc(stack_size);
-	_context = CPU::init_stack(_stack, stack_size, &implicit_exit,
-				   entry);
+	_context = CPU::init_stack(_stack, stack_size, &implicit_exit, entry);
 
-	init_thread(entry, stack_size, state, priority);
+	common_constructor(entry, stack_size);
     }
     template<typename T1>
     Thread(int (* entry)(T1 a1), T1 a1,
 	   const State & state = READY,
-	   const Priority & priority = NORMAL,
-	   unsigned int stack_size = STACK_SIZE) : _link(this, priority)
+	   const Criterion & criterion = NORMAL,
+	   unsigned int stack_size = STACK_SIZE)
+	: _state(state), _waiting(0), _joining(0), _link(this, criterion)
     {
 	prevent_scheduling();
 
-	_thread_count++;
 	_stack = kmalloc(stack_size);
-	_context = CPU::init_stack(_stack, stack_size, &implicit_exit,
-				   entry, a1);
+	_context = CPU::init_stack(_stack, stack_size, &implicit_exit, entry, 
+				   a1);
 
-	init_thread(entry, stack_size, state, priority);
+	common_constructor(entry, stack_size);
     }
     template<typename T1, typename T2>
     Thread(int (* entry)(T1 a1, T2 a2), T1 a1, T2 a2,
 	   const State & state = READY,
-	   const Priority & priority = NORMAL,
-	   unsigned int stack_size = STACK_SIZE) : _link(this, priority)
+	   const Criterion & criterion = NORMAL,
+	   unsigned int stack_size = STACK_SIZE)
+	: _state(state), _waiting(0), _joining(0), _link(this, criterion)
     {
 	prevent_scheduling();
 
-	_thread_count++;
 	_stack = kmalloc(stack_size);
-	_context = CPU::init_stack(_stack, stack_size, &implicit_exit,
-				   entry, a1, a2);
+	_context = CPU::init_stack(_stack, stack_size, &implicit_exit, entry,
+				   a1, a2);
 
-	init_thread(entry, stack_size, state, priority);
+	common_constructor(entry, stack_size);
     }
     template<typename T1, typename T2, typename T3>
     Thread(int (* entry)(T1 a1, T2 a2, T3 a3), T1 a1, T2 a2, T3 a3,
 	   const State & state = READY,
-	   const Priority & priority = NORMAL,
-	   unsigned int stack_size = STACK_SIZE) : _link(this, priority)
+	   const Criterion & criterion = NORMAL,
+	   unsigned int stack_size = STACK_SIZE)
+	: _state(state), _waiting(0), _joining(0), _link(this, criterion)
     {
 	prevent_scheduling();
 
-	_thread_count++;
 	_stack = kmalloc(stack_size);
-	_context = CPU::init_stack(_stack, stack_size, &implicit_exit,
-				   entry, a1, a2, a3);
+	_context = CPU::init_stack(_stack, stack_size, &implicit_exit, entry, 
+				   a1, a2, a3);
 
-	init_thread(entry, stack_size, state, priority);
+	common_constructor(entry, stack_size);
     }
-    ~Thread() {
-	db<Thread>(TRC) << "~Thread(this=" << this 
-			<< ",state=" << _state
-			<< ",priority=" << _link.rank()
-			<< ",stack={b=" << _stack
-			<< ",context={b=" << _context
-			<< "," << *_context << "})\n";
+    ~Thread();
 
-	switch(_state) {
-	case READY: _ready.remove(this); break;
-	case SUSPENDED: _suspended.remove(this); break;
-	case WAITING: _waiting->remove(this); break;
-	}
-	
-	kfree(_stack);
-    }
+    const volatile State & state() const { return _state; }
+    const volatile Criterion & criterion() const { return _link.rank(); }
 
-    volatile const State & state() const { return _state; }
-    Priority priority() const { return _link.rank(); }
-    void priority(const Priority & p) { _link.rank(p); }
+    Priority  priority() const { return int(_link.rank()); }
+    void priority(const Priority & p);    
 
     int join();
     void pass();
     void suspend();
     void resume();
 
-    static Thread * volatile  & self() { return _running; }
+    static Thread * self() { return running(); }
     static void yield();
     static void sleep(Queue * q);
     static void wakeup(Queue * q);
@@ -147,64 +136,41 @@ public:
 
     static void init();
 
-private:
-    void init_thread(Log_Addr entry, unsigned int stack_size, State state,
-		     Priority priority) {
-	db<Thread>(TRC) << "Thread(entry=" << (void *)entry 
-			<< ",state=" << _state
-			<< ",priority=" << _link.rank()
-			<< ",stack={b=" << _stack
-			<< ",s=" << stack_size
-			<< "},context={b=" << _context
-			<< "," << *_context << "}) => " << this << "\n";
+protected:
+    void common_constructor(Log_Addr entry, unsigned int stack_size);
 
-	_state = state;
-	_waiting = 0;
-	_joining = 0;
+    static Thread * volatile running() { return _scheduler.chosen(); }
 
-	switch(state) {
-	case RUNNING: break;
-	case SUSPENDED: _suspended.insert(&_link); break;
-	default: _ready.insert(&_link);
-	}
-
-	allow_scheduling();
-
- 	if(preemptive)
- 	    reschedule();
-    }
-
-    static Thread * volatile  & running() { return _running; }
-    static void running(Thread * r) { _running = r; }
+    Queue::Element * link() { return &_link; }
 
     static void prevent_scheduling() {
-	if(active_scheduler) CPU::int_disable();
+	if(active_scheduler)
+	    CPU::int_disable();
     }
     static void allow_scheduling() {
-	if(active_scheduler) CPU::int_enable();
+	if(active_scheduler)
+	    CPU::int_enable();
     }
 
-    static void reschedule(); // this is the master alarm handler
+    static void reschedule();
+    static void time_reschedule(); // this is the master alarm handler
 
     static void implicit_exit();
 
-    static void switch_to(Thread * n);
+    static void switch_threads(Thread * prev, Thread * next);
 
     static int idle();
 
-private:
+protected:
     Log_Addr _stack;
     Context * volatile _context;
-    volatile State _state;
+    volatile State _state; 
     Queue * _waiting;
     Thread * volatile _joining;
     Queue::Element _link;
 
     static unsigned int _thread_count;
-    static Thread * volatile _running;
-    static Thread * _idle;
-    static Queue _ready;
-    static Queue _suspended;
+    static Scheduler<Thread> _scheduler;
 };
 
 // A thread event handler (see handler.h)
