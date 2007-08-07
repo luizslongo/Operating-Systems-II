@@ -17,13 +17,17 @@ void Thread::init()
     prevent_scheduling();
 
     if(active_scheduler)
-	Alarm::master(QUANTUM, &reschedule);
+	Alarm::master(QUANTUM, &time_reschedule);
     
-    _running = new(kmalloc(sizeof(Thread))) Thread(entry, RUNNING);
+    // Creates the application's main thread
+    // It won't start running because reschedule will find prev == next
+    new(kmalloc(sizeof(Thread))) Thread(entry, RUNNING, MAIN);
 
-    _idle = new(kmalloc(sizeof(Thread))) Thread(&idle, READY, IDLE);
+    // Creates the system's idle thread
+    new(kmalloc(sizeof(Thread))) Thread(&idle, READY, IDLE);
 
-    _running->_context->load();
+    // Loads the first thread's context and go running it
+    running()->_context->load();
 
     allow_scheduling();
 }
