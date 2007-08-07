@@ -326,8 +326,7 @@ void test_scheduling_list ()
     cout << "Inserting the following integers into the list ";
     for(int i = 0; i < N; i++) {
 	o[i] = i;
-	e[i] = new Scheduling_List<int>::Element(&o[i], 
-                       Scheduling_List<int>::State_Type::READY, N - i - 1);
+	e[i] = new Scheduling_List<int>::Element(&o[i], N - i - 1);
 	l.insert(e[i]);
 	cout << i << "(" << N - i - 1 << ")";
 	if(i != N - 1)
