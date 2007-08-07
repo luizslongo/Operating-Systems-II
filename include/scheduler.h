@@ -18,11 +18,11 @@ namespace Scheduling_Criteria
     {
     public:
 	enum {
-	    HIGH = 0,
-	    MAIN = 127,
-	    NORMAL = 128,
-	    LOW = 254,
-	    IDLE = 255
+	    MAIN   = 0,
+	    HIGH   = 1,
+	    NORMAL =  (unsigned(1) << (sizeof(int) * 8 - 1)) -3,
+	    LOW    =  (unsigned(1) << (sizeof(int) * 8 - 1)) -2,
+	    IDLE   = (unsigned(1) << (sizeof(int) * 8 - 1)) -1
 	};
 
     public:
@@ -42,9 +42,9 @@ namespace Scheduling_Criteria
 
     public:
 	enum {
-	    MAIN = 0,
+	    MAIN   = 0,
 	    NORMAL = (unsigned(1) << (sizeof(int) * 8 - 1)) -2,
-	    IDLE = (unsigned(1) << (sizeof(int) * 8 - 1)) -1
+	    IDLE   = (unsigned(1) << (sizeof(int) * 8 - 1)) -1
 	};
 
     public:
