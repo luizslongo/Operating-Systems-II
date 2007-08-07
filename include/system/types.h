@@ -127,6 +127,14 @@ class Thread;
 class Task;
 class Active;
 
+// Abstractions - Scheduler
+template <typename> class Scheduler;
+namespace Scheduling_Criteria
+{
+    class Priority;
+    class EDF;
+};
+
 // Abstractions	- Memory
 class Segment;
 class Address_Space;
