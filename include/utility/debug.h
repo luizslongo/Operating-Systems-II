@@ -51,6 +51,9 @@ class Null_Debug
 public:
     template<class T>
     Null_Debug & operator<<(const T & o) { return *this; }
+
+    template<class T>
+    Null_Debug & operator<<(const T * o) { return *this; }
 };
 
 template <bool debugged>
