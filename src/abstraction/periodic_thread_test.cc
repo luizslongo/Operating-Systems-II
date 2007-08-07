@@ -1,7 +1,7 @@
 // EPOS-- Periodic Thread Abstraction Test Program
 
 #include <utility/ostream.h>
-#include <rt_thread.h>
+#include <periodic_thread.h>
 #include <chronometer.h>
 
 __USING_SYS
@@ -9,7 +9,7 @@ __USING_SYS
 const int iterations = 100;
 const int period_a = 100; // ms
 const int period_b = 200; // ms
-const int period_c = 300; // ms
+const int period_c = 400; // ms
 
 int func_a(void);
 int func_b(void);
@@ -20,7 +20,7 @@ OStream cout;
 
 int main()
 {
-    cout << "Event Handler Utility Test\n";
+    cout << "Periodic Thread Abstraction Test\n";
 
     cout << "\nThis test consists in creating three periodic threads as follows:\n";
     cout << "  Thread 1 prints \"a\" every " << period_a << " ms;\n";
@@ -44,7 +44,7 @@ int main()
 
     cout << "\n\nThread A exited with status " << status_a 
   	 << ", thread B exited with status " << status_b
-  	 << " and thread C exited with status " << status_c << "\n";
+  	 << " and thread C exited with status " << status_c << ".\n";
 
     cout << "\nThe estimated time to run the test was " << max(period_a, period_b, period_c) * iterations << " ms. The measured time was " << chrono.read() / 1000 <<" ms!\n";
 
