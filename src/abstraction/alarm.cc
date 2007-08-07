@@ -10,14 +10,13 @@ __BEGIN_SYS
 // Class attributes
 Timer Alarm::_timer;
 volatile Alarm::Tick Alarm::_elapsed;
-Handler::Function * Alarm::_master;
-Alarm::Tick Alarm::_master_ticks;
+Alarm::Master Alarm::_master;
 Alarm::Queue Alarm::_requests;
 
 // Methods
 Alarm::Alarm(const Microsecond & time, Handler * handler, int times)
-    : _ticks((time + period() / 2) / period()), _handler(handler),
-      _times(times), _link(this, _ticks)
+    : _ticks(ticks(time)), _handler(handler), _times(times), 
+      _link(this, _ticks)
 {
     db<Alarm>(TRC) << "Alarm(t=" << time 
 		   << ",ticks=" << _ticks
@@ -33,8 +32,8 @@ Alarm::Alarm(const Microsecond & time, Handler * handler, int times)
 
 Alarm::Alarm(const Microsecond & time, Handler * handler, int times, 
 	     bool int_enable)
-    : _ticks((time + period() / 2) / period()), _handler(handler),
-      _times(times), _link(this, _ticks)
+    : _ticks(ticks(time)), _handler(handler), _times(times), 
+      _link(this, _ticks)
 {
     db<Alarm>(TRC) << "Alarm(t=" << time 
 		   << ",ticks=" << _ticks
@@ -62,8 +61,9 @@ void Alarm::master(const Microsecond & time, Handler::Function * handler)
     db<Alarm>(TRC) << "Alarm::master(t=" << time << ",h="
 		   << (void *)handler << ")\n";
 
-    _master = handler;
-    _master_ticks = (time + period() / 2) / period();
+    CPU::int_disable();
+    _master = Master(time, handler);
+    CPU::int_enable();
 }
 
 void Alarm::delay(const Microsecond & time)
@@ -134,9 +134,8 @@ void Alarm::int_handler(unsigned int)
 
     CPU::int_enable();
 
-    if(_master_ticks && ((_elapsed % _master_ticks) == 0)) 
-	_master();
-    
+    _master();	
+        
     if(handler) 
 	(*handler)();
 }

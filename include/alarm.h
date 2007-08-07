@@ -13,7 +13,7 @@ __BEGIN_SYS
 
 class Alarm
 {
-private:
+protected:
     typedef TSC::Time_Stamp Time_Stamp;
     typedef Timer::Tick Tick;
 
@@ -30,13 +30,41 @@ public:
     // Infinite times (for alarms)
     enum { INFINITE = -1 };
 
+    class Master
+    {
+    public:
+	Master() {}
+	Master(const Microsecond & time, Handler::Function * handler)
+	    : _ticks(ticks(time)), _to_go(_ticks), _handler(handler) {}
+
+	void operator()() { 
+	    if(_ticks && (_to_go-- <= 0)) {
+		_to_go = _ticks;
+		_handler(); 
+	    }
+	}
+
+	int reset() {
+	    Tick percentage = _to_go * 100 / _ticks;
+	    _to_go = _ticks; 
+	    return percentage;
+	}
+
+    private:
+	Tick _ticks;
+	volatile Tick _to_go;
+	Handler::Function * _handler;
+    };
+
 public:
     Alarm(const Microsecond & time, Handler * handler, int times = 1);
     ~Alarm();
 
-    static void master(const Microsecond & time, Handler::Function * handler);
     static Hertz frequency() {return _timer.frequency(); }
     static void delay(const Microsecond & time);
+
+    static void master(const Microsecond & time, Handler::Function * handler);
+    static int reset_master() { return _master.reset(); }
 
     static void int_handler(unsigned int irq);
 
@@ -44,9 +72,15 @@ public:
 
 private:
     Alarm(const Microsecond & time, Handler * handler, int times,
-	  bool int_enable);
+          bool int_enable);
 
-    static Microsecond period() { return 1000000 / frequency(); }
+    static Microsecond period() { 
+	return 1000000 / frequency();
+    }
+
+    static Tick ticks(const Microsecond & time) {
+	return (time + period() / 2) / period();
+    }
 
 private:
     Tick _ticks;
@@ -56,8 +90,7 @@ private:
 
     static Timer _timer;
     static volatile Tick _elapsed;
-    static Handler::Function * _master;
-    static Tick _master_ticks;
+    static Master _master;
     static Queue _requests;
 };
 
