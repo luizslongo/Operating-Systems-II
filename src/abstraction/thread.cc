@@ -1,20 +1,80 @@
 // EPOS-- Thread Abstraction Implementation
 
+#include <system/kmalloc.h>
 #include <thread.h>
-#include <mmu.h>
+#include <alarm.h>
 #include <machine.h>
 
 __BEGIN_SYS
 
 // Class attributes
-
-Thread * volatile Thread::_running;
-Thread * Thread::_idle;
-Thread::Queue Thread::_ready;
-Thread::Queue Thread::_suspended;
 unsigned int Thread::_thread_count = 0;
+Scheduler<Thread> Thread::_scheduler;
 
 // Methods
+void Thread::common_constructor(Log_Addr entry, unsigned int stack_size) 
+{
+    db<Thread>(TRC) << "Thread(entry=" << (void *)entry 
+		    << ",state=" << _state
+		    << ",rank=" << _link.rank()
+		    << ",stack={b=" << _stack
+		    << ",s=" << stack_size
+		    << "},context={b=" << _context
+		    << "," << *_context << "}) => " << this << "\n";
+    
+    _thread_count++;
+    
+    _scheduler.insert(this);
+    if((_state != READY) && (_state != RUNNING))
+	_scheduler.suspend(this);
+
+    if(preemptive)
+	reschedule();
+
+    allow_scheduling();
+}
+
+Thread::~Thread()
+{
+    prevent_scheduling();
+
+    db<Thread>(TRC) << "~Thread(this=" << this 
+		    << ",state=" << _state
+		    << ",rank=" << _link.rank()
+		    << ",stack={b=" << _stack
+		    << ",context={b=" << _context
+		    << "," << *_context << "})\n";
+
+    switch(_state) {
+    case BEGINNING:  _scheduler.resume(this); break;
+    case RUNNING: exit(-1); break; // Self deleted itself!
+    case READY: break;
+    case SUSPENDED: _scheduler.resume(this); break;
+    case WAITING: _waiting->remove(this); _scheduler.resume(this); break;
+    case FINISHING: break;
+    }
+    
+    _scheduler.remove(this);
+    
+    allow_scheduling();
+
+    kfree(_stack);
+}
+
+void Thread::priority(const Priority & p)
+{
+    prevent_scheduling();
+
+    db<Thread>(TRC) << "Thread::priority(this=" << this
+		    << ",prio=" << p << ")\n";
+
+    _link.rank(int(p));
+
+    if(preemptive)
+	reschedule();
+
+    allow_scheduling();
+}
 
 int Thread::join()
 {
@@ -24,7 +84,7 @@ int Thread::join()
 		    << ",state=" << _state << ")\n";
 
     if(_state != FINISHING) {
-	_joining = _running;
+	_joining = running();
 	_joining->suspend(); // implicitly allows scheduling
     }
 
@@ -39,13 +99,14 @@ void Thread::pass()
 
     db<Thread>(TRC) << "Thread::pass(this=" << this << ")\n";
 
-    if(_ready.remove(this)) { // this is ready to receive the CPU
-	_running->_state = READY;
-	_ready.insert(&_running->_link);
-	switch_to(this);
-    } else 
-	db<Thread>(WRN) << "Thread::pass => thread (" << this 
-			<< ") not ready\n";
+    Thread * prev = running();
+
+    Thread * next = _scheduler.choose(this);
+    if(next)
+	switch_threads(prev, next);
+    else
+ 	db<Thread>(WRN) << "Thread::pass => thread (" << this 
+ 			<< ") not ready\n";
 
     allow_scheduling();
 }
@@ -56,14 +117,15 @@ void Thread::suspend()
 
     db<Thread>(TRC) << "Thread::suspend(this=" << this << ")\n";
 
-    _state = SUSPENDED;
-    _suspended.insert(&_link);
+    Thread * prev = running();
 
-    if(this == _running)
-	switch_to(_ready.remove()->object());
-    else
-	_ready.remove(this);
-    
+    _scheduler.suspend(this);
+    _state = SUSPENDED;
+
+    Thread * next = running();
+
+    switch_threads(prev, next); // null if this != running() at the begin
+
     allow_scheduling();
 }	    
 
@@ -73,21 +135,16 @@ void Thread::resume()
 
     db<Thread>(TRC) << "Thread::resume(this=" << this << ")\n";
 
-    if(_state != SUSPENDED) {
-	allow_scheduling();
-	return;
-    }
-
-    if(_suspended.remove(this)) {
+    if(_state == SUSPENDED) {
 	_state = READY;
-	_ready.insert(&_link);
-    } else // the thread has terminated while suspended (e.g. by delete)
-	db<Thread>(WRN) << "Thread::resume called with defunct thread!\n";
-    
-    allow_scheduling();
+	_scheduler.resume(this);
+    } else
+	db<Thread>(WRN) << "Resume called for unsuspended object!\n";
 
     if(preemptive)
 	reschedule();
+
+    allow_scheduling();
 }
 
 
@@ -97,14 +154,9 @@ void Thread::yield()
 {
     prevent_scheduling();
 
-    db<Thread>(TRC) << "Thread::yield(running=" << _running << ")\n";
+    db<Thread>(TRC) << "Thread::yield(running=" << running() << ")\n";
 
-    if(!_ready.empty()) {
-	_running->_state = READY;
-	Thread * next = _ready.remove()->object();
-	_ready.insert(&_running->_link);
-	switch_to(next); 
-    }
+    switch_threads(running(), _scheduler.choose_another());
 
     allow_scheduling();
 }
@@ -113,20 +165,23 @@ void Thread::exit(int status)
 {
     prevent_scheduling();
 
-    db<Thread>(TRC) << "Thread::exit(running=" << _running 
+    db<Thread>(TRC) << "Thread::exit(running=" << running() 
 		    <<",status=" << status << ")\n";
 
-    *static_cast<int *>(_running->_stack) = status;
-    _running->_state = FINISHING;
-    if(_running->_joining) {
-	Thread * tmp = _running->_joining;
-	_running->_joining = 0;
-	tmp->resume(); // implicitly allows scheduling
-	prevent_scheduling();
-    }
+    Thread * thr = running();
+    _scheduler.remove(thr);
+    *static_cast<int *>(thr->_stack) = status;
+    thr->_state = FINISHING;
 
     _thread_count--;
-    switch_to(_ready.remove()->object());
+
+    if(thr->_joining) {
+	thr->_joining->_state = READY;
+	_scheduler.resume(thr->_joining);
+	thr->_joining = 0;
+    }
+
+    switch_threads(thr, _scheduler.choose());
 
     allow_scheduling();
 }
@@ -135,14 +190,17 @@ void Thread::sleep(Queue * q)
 {
     prevent_scheduling();
 
-    db<Thread>(TRC) << "Thread::sleep(running=" << _running
+    db<Thread>(TRC) << "Thread::sleep(running=" << running()
 		    << ",q=" << q << ")\n";
 
-    _running->_state = WAITING;
-    q->insert(&_running->_link);
-    _running->_waiting = q;
+    Thread * thr = running();
 
-    switch_to(_ready.remove()->object());
+    _scheduler.suspend(thr);
+    thr->_state = WAITING;
+    q->insert(&thr->_link);
+    thr->_waiting = q;
+
+    switch_threads(thr, _scheduler.chosen());
     
     allow_scheduling();
 }
@@ -151,52 +209,67 @@ void Thread::wakeup(Queue * q)
 {
     prevent_scheduling();
 
-    db<Thread>(TRC) << "Thread::wakeup(running=" << _running
+    db<Thread>(TRC) << "Thread::wakeup(running=" << running()
 		    << ",q=" << q << ")\n";
 
     if(!q->empty()) {
 	Thread * t = q->remove()->object();
 	t->_state = READY;
 	t->_waiting = 0;
-	_ready.insert(&t->_link);
+	_scheduler.resume(t);
     }
-
-    allow_scheduling();
 
     if(preemptive)
 	reschedule();
+
+    allow_scheduling();
 }
 
 void Thread::wakeup_all(Queue * q) 
 {
     prevent_scheduling();
 
-    db<Thread>(TRC) << "Thread::wakeup_all(running=" << _running
+    db<Thread>(TRC) << "Thread::wakeup_all(running=" << running()
 		    << ",q=" << q << ")\n";
 
     while(!q->empty()) {
 	Thread * t = q->remove()->object();
 	t->_state = READY;
 	t->_waiting = 0;
-	_ready.insert(&t->_link);
+	_scheduler.resume(t);
     }
-
-    allow_scheduling();
 
     if(preemptive)
 	reschedule();
+
+    allow_scheduling();
+}
+
+void Thread::time_reschedule()
+{
+    // timer invokes the master handler with interrupts enabled!
+
+    prevent_scheduling(); 
+
+    switch_threads(running(), _scheduler.choose());
+
+    // scheduling will be reenabled by switch_threads
 }
 
 void Thread::reschedule()
 {
-    prevent_scheduling(); 
+    // scheduling must be disabled at this point
 
-    Queue::Element * e = _ready.head();
-    if(e && e->rank() <= _running->_link.rank()) {
-	_running->_state = READY;
-	_ready.insert(&_running->_link);
-	switch_to(_ready.remove()->object());
-    }
+    Alarm::reset_master();
+
+    Thread * prev = running();
+    Thread * next = _scheduler.choose();
+
+    switch_threads(prev, next);
+
+//     switch_threads(running(), _scheduler.choose());
+
+    // scheduling will be reenabled by switch_threads
 }
 
 void Thread::implicit_exit() 
@@ -204,42 +277,39 @@ void Thread::implicit_exit()
     exit(CPU::fr()); 
 }
 
-void Thread::switch_to(Thread * n) 
+void Thread::switch_threads(Thread * prev, Thread * next) 
 {
     // scheduling must be disabled at this point!
 
-    Thread * o = _running;
-    
-    db<Thread>(TRC) << "Thread::switch_to(o=" << o << ",n=" << n << ")\n";
+    if(next != prev) {
+	if(prev->_state == RUNNING)
+	    prev->_state = READY;
+	next->_state = RUNNING;
+	db<Thread>(TRC) << "Thread::switch_threads(prev=" << prev
+			<< ",next=" << next << ")\n";
+	CPU::switch_context(&prev->_context, next->_context);
+    }
 
-//     o->_context->save(); // can be used to force an update
-//     db<Thread>(INF) << "old={" << o << "," << *o->_context << "}\n";
-//     db<Thread>(INF) << "new={" << n << "," << *n->_context << "}\n";
-
-    n->_state = RUNNING;
-    _running = n;
-
-    if(n == _idle)
-	db<Thread>(TRC) << "Thread::idle()\n";
-
-    CPU::switch_context(&o->_context, n->_context);
     allow_scheduling();
 }
 
 int Thread::idle()
 {
     while(true) {
-	CPU::halt();
-	
-	if(!_ready.empty())
-	    yield();
-	else
-	    if(_suspended.empty() && _thread_count == 1) { 
-		db<Thread>(WRN) << "The last thread has exited!\n";
-		db<Thread>(WRN) << "Halting the CPU ...\n";
-		CPU::int_disable();
-	    }
+	db<Thread>(TRC) << "Thread::idle()\n";
+
+	if(_thread_count <= 1) { 
+	    db<Thread>(WRN) << "The last thread has exited!\n";
+	    db<Thread>(WRN) << "Halting the CPU ...\n";
+	    CPU::int_disable();
+	}
+
+ 	CPU::halt();
+
+	if(_scheduler.schedulables() > 1)
+            yield();
     }
+
     return 0;
 }
 
