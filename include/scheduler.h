@@ -5,6 +5,7 @@
 
 #include <utility/queue.h>
 #include <rtc.h>
+#include <tsc.h>
 
 __BEGIN_SYS
 
@@ -34,28 +35,73 @@ namespace Scheduling_Criteria
 	volatile int _priority;
     };
 
-    // Priority
-    class EDF
+    // Round-Robin
+    class Round_Robin: public Priority
     {
-    protected:
-	typedef RTC::Microsecond Microsecond;
-
     public:
 	enum {
 	    MAIN   = 0,
-	    NORMAL = (unsigned(1) << (sizeof(int) * 8 - 1)) -2,
+	    NORMAL = 1,
 	    IDLE   = (unsigned(1) << (sizeof(int) * 8 - 1)) -1
 	};
 
     public:
-	EDF(int p): _deadline(0), _priority(p) {}
-	EDF(const Microsecond & d): _deadline(d), _priority(d >> 8) {}
+	Round_Robin(int p = NORMAL): Priority(p) {}
+    };
 
-	operator const volatile int() const volatile { return _priority; }
+    // First-Come, First-Served (FIFO)
+    class FCFS: public Priority
+    {
+    public:
+	enum {
+	    MAIN   = 0,
+	    NORMAL = 1,
+	    IDLE   = (unsigned(1) << (sizeof(int) * 8 - 1)) -1
+	};
 
-    protected:
+    public:
+	FCFS(int p = NORMAL)
+	    : Priority((p == IDLE) ? IDLE : TSC::time_stamp()) {}
+    };
+
+    // Rate Monotonic
+    class RM: public Priority
+    {
+    public:
+	enum {
+	    MAIN      = 0,
+	    PERIODIC  = 1,
+	    APERIODIC = (unsigned(1) << (sizeof(int) * 8 - 1)) -2,
+	    NORMAL    = APERIODIC,
+	    IDLE      = (unsigned(1) << (sizeof(int) * 8 - 1)) -1
+	};
+
+    public:
+	RM(int p): Priority(p), _deadline(0) {} // Aperiodic
+	RM(const RTC::Microsecond & d): Priority(PERIODIC), _deadline(d) {}
+
+    private:
 	RTC::Microsecond _deadline;
-	int _priority;
+    };
+
+    // Earliest Deadline First
+    class EDF: public Priority
+    {
+    public:
+	enum {
+	    MAIN      = 0,
+	    PERIODIC  = 1,
+	    APERIODIC = (unsigned(1) << (sizeof(int) * 8 - 1)) -2,
+	    NORMAL    = APERIODIC,
+	    IDLE      = (unsigned(1) << (sizeof(int) * 8 - 1)) -1
+	};
+
+    public:
+	EDF(int p): Priority(p), _deadline(0) {} // Aperiodic
+	EDF(const RTC::Microsecond & d): Priority(d >> 8), _deadline(d) {}
+
+    private:
+	RTC::Microsecond _deadline;
     };
 };
 

@@ -132,6 +132,9 @@ template <typename> class Scheduler;
 namespace Scheduling_Criteria
 {
     class Priority;
+    class FCFS;
+    class RR;
+    class RM;
     class EDF;
 };
 
