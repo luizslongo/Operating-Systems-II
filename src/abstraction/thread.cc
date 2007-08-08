@@ -124,6 +124,7 @@ void Thread::suspend()
 
     Thread * next = running();
 
+    Alarm::reset_master();
     switch_threads(prev, next); // null if this != running() at the begin
 
     allow_scheduling();
@@ -156,6 +157,7 @@ void Thread::yield()
 
     db<Thread>(TRC) << "Thread::yield(running=" << running() << ")\n";
 
+    Alarm::reset_master();
     switch_threads(running(), _scheduler.choose_another());
 
     allow_scheduling();
@@ -181,6 +183,7 @@ void Thread::exit(int status)
 	thr->_joining = 0;
     }
 
+    Alarm::reset_master();
     switch_threads(thr, _scheduler.choose());
 
     allow_scheduling();
@@ -200,6 +203,7 @@ void Thread::sleep(Queue * q)
     q->insert(&thr->_link);
     thr->_waiting = q;
 
+    Alarm::reset_master();
     switch_threads(thr, _scheduler.chosen());
     
     allow_scheduling();
@@ -260,11 +264,10 @@ void Thread::reschedule()
 {
     // scheduling must be disabled at this point
 
-    Alarm::reset_master();
-
     Thread * prev = running();
     Thread * next = _scheduler.choose();
 
+    Alarm::reset_master();
     switch_threads(prev, next);
 
 //     switch_threads(running(), _scheduler.choose());
@@ -275,22 +278,6 @@ void Thread::reschedule()
 void Thread::implicit_exit() 
 {
     exit(CPU::fr()); 
-}
-
-void Thread::switch_threads(Thread * prev, Thread * next) 
-{
-    // scheduling must be disabled at this point!
-
-    if(next != prev) {
-	if(prev->_state == RUNNING)
-	    prev->_state = READY;
-	next->_state = RUNNING;
-	db<Thread>(TRC) << "Thread::switch_threads(prev=" << prev
-			<< ",next=" << next << ")\n";
-	CPU::switch_context(&prev->_context, next->_context);
-    }
-
-    allow_scheduling();
 }
 
 int Thread::idle()
