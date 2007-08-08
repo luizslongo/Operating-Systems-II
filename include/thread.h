@@ -157,7 +157,18 @@ protected:
 
     static void implicit_exit();
 
-    static void switch_threads(Thread * prev, Thread * next);
+    static void switch_threads(Thread * prev, Thread * next) {
+	// scheduling must be disabled at this point!
+	if(next != prev) {
+	    if(prev->_state == RUNNING)
+		prev->_state = READY;
+	    next->_state = RUNNING;
+	    db<Thread>(TRC) << "Thread::switch_threads(prev=" << prev
+			    << ",next=" << next << ")\n";
+	    CPU::switch_context(&prev->_context, next->_context);
+	}
+	allow_scheduling();
+    }
 
     static int idle();
 
