@@ -14,7 +14,7 @@ private:
     static const unsigned int CLOCK = Traits<Machine>::CLOCK;
 
 public:
-    //IO Ports, inherited from IA32, verify later ... !
+    //IO Ports
     typedef unsigned int IO_Port;
     typedef unsigned int IO_Irq;
 
@@ -57,40 +57,8 @@ public:
 
     class Context 
     {
-      public:
-        Reg32 _r0;      // General Purpose Register 0
-        Reg32 _r1;      // General Purpose Register 1 --> stack
-        Reg32 _r2;      // General Purpose Register x -->
-        Reg32 _r3;      // General Purpose Register x --> 
-        Reg32 _r4;      // General Purpose Register x --> 
-        Reg32 _r5;      // General Purpose Register x --> 
-        Reg32 _r6;      // General Purpose Register x -->
-        Reg32 _r7;      // General Purpose Register x --> 
-        Reg32 _r8;      // General Purpose Register x --> 
-        Reg32 _r9;      // General Purpose Register x --> 
-        Reg32 _r10;     // General Purpose Register x --> 
-        Reg32 _r11;     // General Purpose Register x --> 
-        Reg32 _r12;     // General Purpose Register x --> 
-        Reg32 _r13;     // General Purpose Register x --> 
-        Reg32 _r14;     // General Purpose Register x --> 
-        Reg32 _r15;     // General Purpose Register x --> 
-        Reg32 _r16;     // General Purpose Register x --> 
-        Reg32 _r17;     // General Purpose Register x --> 
-        Reg32 _r18;     // General Purpose Register x --> 
-        Reg32 _r19;     // General Purpose Register x --> 
-        Reg32 _r20;     // General Purpose Register x --> 
-        Reg32 _r21;     // General Purpose Register x --> 
-        Reg32 _r22;     // General Purpose Register x --> 
-        Reg32 _r23;     // General Purpose Register x --> 
-        Reg32 _r24;     // General Purpose Register x --> 
-        Reg32 _r25;     // General Purpose Register x --> 
-        Reg32 _r26;     // General Purpose Register x --> 
-        Reg32 _r27;     // General Purpose Register x --> 
-        Reg32 _r28;     // General Purpose Register x --> 
-        Reg32 _r29;     // General Purpose Register x --> 
-        Reg32 _r30;     // General Purpose Register x --> 
-        Reg32 _r31;     // General Purpose Register x --> 
-
+      private:
+        Reg32 _regs[32];
         Reg32 _msr;     // Machine State Register
         Reg32 _lr;      // Link Register
         Reg32 _ctr;     // Counter Register
@@ -101,12 +69,9 @@ public:
         Reg32 _srr2;    // Save/Restore Register 2
         Reg32 _srr3;    // Save/Restore Register 3
 
-        Reg32 _GAP1;    //Temporary ....
-        Reg32 _GAP2;    //Temporary ....
-
       public:
         Context(Log_Addr entry) : _lr(entry) {
-             _msr = 0x00028000; //Default Machine State (Interrupts Enabled).
+             _msr = MSR_DEFAULT; //(Interrupts Enabled).
              _ctr = 0;
              _xer = 0;
              _srr0 = 0;
@@ -132,9 +97,7 @@ public:
 
         void save() volatile;
         void load() const volatile;
-
-      };
-    /* --------- end CONTEXT */
+    };
 
 public:
     PPC32() {}
@@ -199,6 +162,8 @@ public:
 	Log_Addr sp = stack + size;
 	sp -= sizeof(int); *static_cast<int *>(sp) = Log_Addr(exit);
         sp -= sizeof(int); *static_cast<int *>(sp) = Log_Addr(entry);
+        sp -= sizeof(int); //Frame Header Space
+        sp -= sizeof(int); //Frame Header Space
 	sp -= sizeof(Context);
 	return  new (sp) Context(wrapper);
     }
@@ -212,6 +177,8 @@ public:
 	sp -= sizeof(T1); *static_cast<T1 *>(sp) = a1;
 	sp -= sizeof(int); *static_cast<int *>(sp) = Log_Addr(exit);
         sp -= sizeof(int); *static_cast<int *>(sp) = Log_Addr(entry);
+        sp -= sizeof(int); //Frame Header Space
+        sp -= sizeof(int); //Frame Header Space
 	sp -= sizeof(Context);
 	return new (sp) Context(wrapper);
     }
@@ -226,6 +193,8 @@ public:
 	sp -= sizeof(T1); *static_cast<T1 *>(sp) = a1;
 	sp -= sizeof(int); *static_cast<int *>(sp) = Log_Addr(exit);
         sp -= sizeof(int); *static_cast<int *>(sp) = Log_Addr(entry);
+        sp -= sizeof(int); //Frame Header Space
+        sp -= sizeof(int); //Frame Header Space
 	sp -= sizeof(Context);
 	return new (sp) Context(wrapper);
     }
@@ -241,6 +210,8 @@ public:
 	sp -= sizeof(T1); *static_cast<T1 *>(sp) = a1;
 	sp -= sizeof(int); *static_cast<int *>(sp) = Log_Addr(exit);
         sp -= sizeof(int); *static_cast<int *>(sp) = Log_Addr(entry);
+        sp -= sizeof(int); //Frame Header Space
+        sp -= sizeof(int); //Frame Header Space
 	sp -= sizeof(Context);
 	return new (sp) Context(wrapper);
     }
@@ -249,7 +220,7 @@ public:
     static void entry_wrapper(){
         Log_Addr sp = static_cast<Log_Addr>(CPU::sp());
         sp = *((Log_Addr *)sp);
-        sp += 8; //(Frame Header)
+        sp += 8; // Frame Header Space
         Log_Addr entry_point = *static_cast<unsigned int *>(sp);
         sp += sizeof(int);
         Log_Addr implicit_exit = *static_cast<unsigned int *>(sp);
@@ -264,7 +235,7 @@ public:
     static void entry_wrapper(T1 a1){
         Log_Addr sp = static_cast<Log_Addr>(CPU::sp());
         sp = *((Log_Addr *)sp);
-        sp += 8; //(Frame Header)
+        sp += 8; // Frame Header Space
         Log_Addr entry_point = *static_cast<unsigned int *>(sp);
         sp += sizeof(int);
         Log_Addr implicit_exit = *static_cast<unsigned int *>(sp);
@@ -281,7 +252,7 @@ public:
     static void entry_wrapper(T1 a1, T2 a2){
         Log_Addr sp = static_cast<Log_Addr>(CPU::sp());
         sp = *((Log_Addr *)sp);
-        sp += 8; //(Frame Header)
+        sp += 8; // Frame Header Space
         Log_Addr entry_point = *static_cast<unsigned int *>(sp);
         sp += sizeof(int);
         Log_Addr implicit_exit = *static_cast<unsigned int *>(sp);
@@ -300,7 +271,7 @@ public:
     static void entry_wrapper(T1 a1, T2 a2, T3 a3){
         Log_Addr sp = static_cast<Log_Addr>(CPU::sp());
         sp = *((Log_Addr *)sp);
-        sp += 8; //(Frame Header)
+        sp += 8; // Frame Header Space
         Log_Addr entry_point = *static_cast<unsigned int *>(sp);
         sp += sizeof(int);
         Log_Addr implicit_exit = *static_cast<unsigned int *>(sp);
@@ -349,35 +320,19 @@ public:
 private:
     template <unsigned int REG> static Reg32 reg() {
         Reg32 value;
-	ASMV("addi %0, 0, %1" : "=r"(value) : "i"(REG));
+	ASMV("addi %0, %1, 0" : "=r"(value) : "i"(REG));
 	return value;
     }
     template <unsigned int REG> static void reg(Reg32 value) {
 	ASMV("addi %1, %0, 0" : : "r"(value), "i"(REG));
     }
-/*    static Reg32 r1(){
-      Reg32 value;
-      ASM( "addi %0, 1, 0  \n" : "=r"(value) ); // move r1 contents to value
-      return value;
-    };
-    static void r1( Reg32 value ){
-      ASM( "addi 1, %0, 0 \n" : : "r"(value) ); // move value contents to r1
-    };
-    static Reg32 r3(){
-      Reg32 value;
-      ASM( "addi %0, 3, 0  \n" : "=r"(value) ); // move r3 contents to value
-      return value;
-    };
-    static void r3( Reg32 value ){
-      ASM( "addi 3, %0, 0 \n" : : "r"(value) ); // move value contents to r3
-    };*/
     static Reg32 lr(){
       Reg32 value;
-      ASM( "mflr %0" : "=r"(value) );
+      ASMV( "mflr %0" : "=r"(value) );
       return value;
     };
     static void lr( Reg32 value ){
-      ASM( "mtlr %0" : : "r"(value) );
+      ASMV( "mtlr %0" : : "r"(value) );
     };
     static void _mtdcr( const unsigned int reg, unsigned int value ) {
       ASMV("mtdcr %0,%1" :: "i" ( reg ), "r" ( value ) );
