@@ -156,9 +156,12 @@ void Thread::yield()
     prevent_scheduling();
 
     db<Thread>(TRC) << "Thread::yield(running=" << running() << ")\n";
-
+	
+	Thread * prev = running();
+	Thread * next = _scheduler.choose_another();
+    
     Alarm::reset_master();
-    switch_threads(running(), _scheduler.choose_another());
+	switch_threads(prev, next);
 
     allow_scheduling();
 }
@@ -254,8 +257,11 @@ void Thread::time_reschedule()
     // timer invokes the master handler with interrupts enabled!
 
     prevent_scheduling(); 
-
-    switch_threads(running(), _scheduler.choose());
+	
+	Thread * prev = running();
+	Thread * next = _scheduler.choose();
+    
+	switch_threads(prev, next);
 
     // scheduling will be reenabled by switch_threads
 }
@@ -269,8 +275,6 @@ void Thread::reschedule()
 
     Alarm::reset_master();
     switch_threads(prev, next);
-
-//     switch_threads(running(), _scheduler.choose());
 
     // scheduling will be reenabled by switch_threads
 }
