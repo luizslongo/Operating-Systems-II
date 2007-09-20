@@ -188,6 +188,8 @@ template <> struct Traits<PC_NIC>: public Traits<PC_Common>
 {
     typedef LIST<PCNet32, PCNet32> NICS;
 
+    static const bool INT_ON_RECEIVE = true;
+
     static const unsigned int PCNET32_UNITS = NICS::Count<PCNet32>::Result;
     static const unsigned int PCNET32_SEND_BUFFERS = 8; // per unit
     static const unsigned int PCNET32_RECEIVE_BUFFERS = 8; // per unit
@@ -526,6 +528,18 @@ template <> struct Traits<Network>: public Traits<void>
 {
     static const unsigned int EPOS_LIGHT_PROTOCOL = 0x8888;
 };
+
+template <> struct Traits<ARP>: public Traits<void>{
+        static const unsigned int TRIES = 3; // # of attempts for an ARP query
+        static const unsigned int TIMEOUT = 1000000; // 1s
+};
+
+template <> struct Traits<IP>: public Traits<void>{
+        static const unsigned int ADDRESS = 0xc0a80a01;   // 192.168.10.1
+        static const unsigned int NETMASK = 0xffffff00;   // 255.255.255.0
+        static const unsigned int BROADCAST = 0; // 0= Default Broadcast Address
+};
+
 
 __END_SYS
 
