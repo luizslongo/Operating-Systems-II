@@ -428,6 +428,9 @@ public:
 private:
     PCNet32(unsigned int unit, IO_Port io_port, IO_Irq irq, DMA_Buffer * dma);
 
+    inline void receive_common(Address &src, Protocol &prot, unsigned int &size, 
+			void *buffer, unsigned int buf_len);
+
     void handle_int();
 
     static void int_handler(unsigned int interrupt);

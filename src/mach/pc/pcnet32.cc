@@ -132,7 +132,10 @@ void PCNet32::reset()
     bcr(9, BCR9_FDEN);
 
     // Disable INIT interrupt and transmit stop on underflow
-    csr(3, CSR3_RINTM | CSR3_TINTM | CSR3_IDONM | CSR3_DXSUFLO);
+    if(Traits<PC_NIC>::INT_ON_RECEIVE)
+    	csr(3, /* CSR3_RINTM | */  CSR3_TINTM | CSR3_IDONM | CSR3_DXSUFLO);
+    else
+    	csr(3,    CSR3_RINTM |     CSR3_TINTM | CSR3_IDONM | CSR3_DXSUFLO);
 
     // Enable auto padding of frames
     csr(4, CSR4_DMAPLUS | CSR4_APAD_XMT);
@@ -216,26 +219,17 @@ int PCNet32::send(const Address & dst, const Protocol & prot,
     return size;
 }
 
-int PCNet32::receive(Address * src, Protocol * prot,
-		     void * data, unsigned int size)
-{
-    // Wait for a frame in the ring buffer
-    while(_rx_ring[_rx_cur].status & Rx_Desc::OWN);
+void PCNet32::receive_common(Address &src, Protocol &prot, unsigned int &size, 
+			void *buffer, unsigned int buf_len){
 
     // Disassemble the Ethernet frame
     Frame * frame = _rx_buffer[_rx_cur];
-    *src = frame->_src;
-    *prot = CPU::ntohs(frame->_prot);
+    src = frame->_src;
+    prot = CPU::ntohs(frame->_prot);
     size = (_rx_ring[_rx_cur].misc & 0x00000fff) - HEADER_SIZE;
 
-    db<PCNet32>(TRC) << "PCNet32::receive(src=" << *src
-		    << ",prot=" << *prot
-		    << ",data=" << data
-		    << ",size=" << size
-		    << ")\n";
-
-    memcpy(data, frame->_data, size);
-
+    memcpy(buffer, frame->_data, buf_len);
+ 
     // Release the buffer to the NIC
     _rx_ring[_rx_cur].status = Rx_Desc::OWN;
 
@@ -244,7 +238,23 @@ int PCNet32::receive(Address * src, Protocol * prot,
 
     ++_rx_cur %= RX_BUFS;
 
-    return 0;
+    db<PCNet32>(TRC) << "PCNet32::receive(src=" << src
+		    << ",prot=" << prot
+		    << ",data=" << buffer
+		    << ",size=" << size
+		    << ")\n";
+}
+
+int PCNet32::receive(Address * src, Protocol * prot,
+		     void * data, unsigned int size)
+{
+    // Wait for a frame in the ring buffer
+    while(_rx_ring[_rx_cur].status & Rx_Desc::OWN);
+
+    unsigned int s;
+    receive_common(*src, *prot, s, data, size);
+
+    return s;
 }
 
 void PCNet32::handle_int()
@@ -279,35 +289,47 @@ void PCNet32::handle_int()
 
 	// This is done via polling!
 // 	// Receive?
-// 	if(csr0 & CSR0_RINT) {
-// 	    db<PCNet32>(INF) << "Receive Interrupt\n";
-// 	    //    rxProcess();
-// 	}
+/////////////////////////////////////
+	if(Traits<PC_NIC>::INT_ON_RECEIVE)
+ 	if(csr0 & CSR0_RINT) {
+ 	    db<PCNet32>(INF) << "Receive Interrupt\n";
+	    Address src; Protocol prot;
+	    char data[1500];
+	    unsigned int size;
+
+ 	    receive_common(src, prot, size, data, 1500);
+
+ 	    CPU::int_enable();
+
+            notify(prot, data, size);
+            return;  	    
+ 	}
+/////////////////////////////////////
 
         // Error?
 	if(csr0 & CSR0_ERR) {
-	    db<PCNet32>(INF) << "Error Interrupt\n";
+	    db<PCNet32>(INF) << "Error Interrupt: ";
 
 	    // Memory Error?
 	    if(csr0 & CSR0_MERR) {
-		db<PCNet32>(WRN) << "Memory Error\n";
+		db<PCNet32>(WRN) << " Memory Error\n";
 	    }
 	    
 	    // Missed Frame
 	    if(csr0 & CSR0_MISS) {
-		db<PCNet32>(WRN) << "Missed Frame\n";
+		db<PCNet32>(WRN) << " Missed Frame\n";
 		_statistics.rx_overruns++;
 	    }
 
 	    // Collision?
 	    if(csr0 & CSR0_CERR) {
-		db<PCNet32>(INF) << "Collision Error\n";
+		db<PCNet32>(INF) << " Collision Error\n";
 		_statistics.collisions++;
 	    }
 
 	    // Bable transmitter time-out?
 	    if(csr0 & CSR0_BABL) {
-		db<PCNet32>(INF) << "Bable transmitter time-out\n";
+		db<PCNet32>(INF) << " Bable transmitter time-out\n";
 		_statistics.tx_overruns++;
 	    }
 	}
