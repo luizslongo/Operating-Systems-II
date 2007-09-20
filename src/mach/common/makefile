@@ -4,9 +4,9 @@ include ../../../makedefs
 
 OBJS := $(subst .cc,.o,$(shell find *.cc))
 
-all:		$(LIBSYS)
+all:		$(LIBMACH)
 
-$(LIBSYS):	$(LIBSYS)($(OBJS))	
+$(LIBMACH):	$(LIBMACH)($(OBJS))	
 
 test:		
 
