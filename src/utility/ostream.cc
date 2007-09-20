@@ -91,15 +91,30 @@ int OStream::llutoa(unsigned long long int v, char * s)
 
 int OStream::ptoa(const void * p, char * s)
 {
-    unsigned int j, v = (unsigned int)p;
+	unsigned int j, v = (unsigned int)p;
+	bool zero_left = true; // true to discard zeroes at left
 
-    s[0] = '0';
-    s[1] = 'x';
-    for(j = 0; j < sizeof(void *) * 2; j++, v >>= 4)
-	s[2 + sizeof(void *) * 2 - 1 - j]
-	    = hex_digits[v & 0xf];
+	s[0] = '0';
+	s[1] = 'x';
 
-    return j + 2;
+	if(zero_left){
+		bool started = false; unsigned int i = 2;
+		for(j=sizeof(void*)*2; j != 0; j--){
+			unsigned char value = (v>>((j-1)*4))&0xf;
+			if(value || started) {
+				s[i++] = hex_digits[value];
+				started = true;
+			}
+		}
+		if(!started) s[i++] = hex_digits[0];
+		return i;
+	}
+
+	for(j = 0; j < sizeof(void *) * 2; j++, v >>= 4)
+		s[2 + sizeof(void *) * 2 - 1 - j]
+			= hex_digits[v & 0xf];
+
+	return j + 2;
 }    
 
 
