@@ -155,6 +155,11 @@ class Chronometer;
 
 // Abstractions	- Communication
 class Network;
+class IP;
+class ARP;
+class UDP;
+template <typename> class Channel;
+typedef Channel<UDP> UDP_Channel;
 
 // Abstractions	- Sentients
 class Photo_Sentient;
@@ -201,6 +206,9 @@ enum
     CHRONOMETER_ID,
 
     NETWORK_ID,
+    IP_ID,
+    ARP_ID,
+    UDP_ID,
 
     UNKNOWN_TYPE_ID,
     LAST_TYPE_ID = UNKNOWN_TYPE_ID - 1

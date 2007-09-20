@@ -46,6 +46,9 @@ template<> struct Type2Id<Alarm>	{ enum { ID = ALARM_ID }; };
 template<> struct Type2Id<Chronometer>	{ enum { ID = CHRONOMETER_ID }; };
 
 template<> struct Type2Id<Network>	{ enum { ID = NETWORK_ID }; };
+template<> struct Type2Id<IP>		{ enum { ID = IP_ID }; };
+template<> struct Type2Id<ARP>		{ enum { ID = ARP_ID }; };
+template<> struct Type2Id<UDP>		{ enum { ID = UDP_ID }; };
 
 // template<> struct Type2Id<Temperature_Sentient>{ enum { ID = TEMPERATURE_SENTIENT_ID }; };
 // template<> struct Type2Id<Photo_Sentient>{ enum { ID = PHOTO_SENTIENT_ID }; };
@@ -92,6 +95,9 @@ template<> struct Id2Type<ALARM_ID>	{ typedef Alarm TYPE; };
 template<> struct Id2Type<CHRONOMETER_ID>{ typedef Chronometer TYPE; };
 
 template<> struct Id2Type<NETWORK_ID>	{ typedef Network TYPE; };
+template<> struct Id2Type<IP_ID>	{ typedef IP TYPE; };
+template<> struct Id2Type<ARP_ID>	{ typedef ARP TYPE; };
+template<> struct Id2Type<UDP_ID>	{ typedef UDP TYPE; };
 
 __END_SYS
 
