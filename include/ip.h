@@ -159,7 +159,11 @@ public:
 
 	private:
 		Header _header;
+#ifndef __avr8_h
 		u8 _data[MTU - sizeof(Header)];
+#else
+		u8 _data[256];
+#endif
 	};
 
 	// Abstract class to be implemented by IP's observers

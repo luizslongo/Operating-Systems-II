@@ -83,12 +83,20 @@ public:
 		u16 opcode()  { return CPU::ntohs(_opcode); }
 		HAddress sha(){ 
 			char *h = (char*)&_sha;
+#ifndef __avr8_h
 			HAddress haddr(h[0],h[1],h[2],h[3],h[4],h[5]);
+#else
+			HAddress haddr(0);
+#endif
 			return haddr;
 		}
 		HAddress tha(){ 
 			char *h = (char*)&_tha;
+#ifndef __avr8_h
 			HAddress haddr(h[0],h[1],h[2],h[3],h[4],h[5]);
+#else
+			HAddress haddr(0);
+#endif
 			return haddr;
 		}
 		LAddress sla(){ return *((LAddress*)&_sla); }

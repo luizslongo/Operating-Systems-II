@@ -4,8 +4,13 @@ __BEGIN_SYS
 
 
 ARP::ARP_Table ARP::_arp_tab;
+#ifndef __avr8_h
 ARP::HAddress  ARP::BCAST(0xff,0xff,0xff,0xff,0xff,0xff);
 ARP::HAddress  ARP::NULL_ADDR(0,0,0,0,0,0);
+#else
+ARP::HAddress  ARP::BCAST(0);
+ARP::HAddress  ARP::NULL_ADDR(0);
+#endif
 
 ARP::ARP(NIC &nic, LAddress me) : _nic(nic), 
 				  _hmyself(_nic.address()), 

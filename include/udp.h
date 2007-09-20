@@ -101,7 +101,11 @@ public:
 		void calculate_checksum();
 		IP::Header _ip_header;
 		UDP::Header _udp_header;
+#ifndef __avr8_h
 		u8 _data[IP::MTU - sizeof(UDP::Header) - sizeof(IP::Header)];
+#else
+		u8 _data[256];
+#endif
 	};
 
 	UDP() : _semaph(0), _self(_port++) { constructor_common(); }
