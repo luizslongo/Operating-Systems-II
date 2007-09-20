@@ -6,6 +6,8 @@
 #include <system/config.h>
 #include <utility/debug.h>
 #include <utility/string.h>
+#include <cpu.h>		// For Reg[8|16|32|64]
+#include <utility/list.h>	// For Observer's List
 
 __BEGIN_SYS
 
@@ -42,12 +44,12 @@ public:
 	}
 	Address(unsigned long long a) : q(a) {}
 
-	operator bool() const { return q; }
+	operator unsigned long long() const { return q; }
 
 	friend Debug & operator << (Debug & db, const Address & a) {
 	    db << "{";
 	    for(int i = 0; i < 8; i++) {
-		db << a.b[i];
+		db << (void*)a.b[i];
 		if(i < 7)
 		    db << ":";
 	    }
@@ -148,6 +150,52 @@ public:
 			polymorphic> Result;
 	};
     };
+//==============================================================================
+   public:
+   	// Abstract class to be implemented by NIC's observers
+   	class Observer{
+	public:
+		virtual void received(void *data, unsigned int size) = 0;
+		virtual ~Observer() {}
+	};
+
+   private:
+	class Entry{
+	public:
+		Entry(const Protocol &prot, Observer &obs) : 
+			_prot(prot), _o(obs), _link(this) {}
+		Protocol _prot;
+		Observer &_o;
+		Simple_List<Entry>::Element _link;
+	};
+
+	static Simple_List<Entry> _nic_observers;
+
+   public:
+	// Method to be called when a NIC Observer wants to subscribe itself
+	// to receive packets sent to some protocol number (e.g. IP, ARP)
+	static void attach(const Protocol &prot, Observer &o){ 
+		_nic_observers.insert(&(new Entry(prot,o))->_link);
+		db<NIC_Common>(INF) << "NIC_Common: Observer Attached ";
+		db<NIC_Common>(INF) << "Protocol: " << prot << "\n";
+	}
+
+	// To be called by the NIC when a packet is received.
+	// This method demultiplex the message according to the protocol number, 
+	// delivering it to the right Observer.
+	static void notify(const Protocol &prot, void *data, int size){
+		Simple_List<Entry>::Element *e = _nic_observers.head();
+		unsigned char calls = 0;
+		for(;e;e=e->next())
+			if(e->object()->_prot == prot) {
+				calls++;
+				e->object()->_o.received(data, size);
+			}
+		db<NIC_Common>(INF) << "NIC::Commom::notify() " << calls 
+			<< " handler(s) called for protocol " << prot << "\n";	
+	}
+//==============================================================================
+
 };
 
 class Ethernet_NIC: public NIC_Common
@@ -307,6 +355,14 @@ public:
 	unsigned int dropped_packets;
     };
 
+};
+
+class Protocol_Common{
+public:
+    typedef CPU::Reg8  u8;
+    typedef CPU::Reg16 u16;
+    typedef CPU::Reg32 u32;
+    typedef CPU::Reg64 u64;
 };
 
 __END_SYS
