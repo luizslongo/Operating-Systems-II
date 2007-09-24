@@ -47,13 +47,13 @@ public:
 	operator unsigned long long() const { return q; }
 
 	friend Debug & operator << (Debug & db, const Address & a) {
-	    db << "{";
+	    db << hex;
 	    for(int i = 0; i < 8; i++) {
-		db << (void*)a.b[i];
+		db << a.b[i];
 		if(i < 7)
 		    db << ":";
 	    }
-	    db << "}";
+	    db << dec;
 	    return db;
 	}
 
