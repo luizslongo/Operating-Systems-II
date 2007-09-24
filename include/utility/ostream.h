@@ -10,6 +10,39 @@ __BEGIN_SYS
 class OStream
 {
 public:
+    struct Endl {};
+    struct Hex {};
+    struct Dec {};
+    struct Oct {};
+    struct Bin {};
+    
+public:
+    OStream(): _base(10) {}
+
+    OStream & operator<<(const Endl & endl) {
+	print("\n");
+	_base = 10;
+	flush();
+	return *this;
+    }
+
+    OStream & operator<<(const Hex & hex) {
+	_base = 16;
+	return *this;
+    }
+    OStream & operator<<(const Dec & dec) {
+	_base = 10;
+	return *this;
+    }
+    OStream & operator<<(const Oct & oct) {
+	_base = 8;
+	return *this;
+    }
+    OStream & operator<<(const Bin & bin) {
+	_base = 2;
+	return *this;
+    }
+
     OStream & operator<<(char c) {
 	char buf[2];
 	buf[0] = c;
@@ -17,7 +50,9 @@ public:
 	print(buf);
 	return *this;
     }
-    OStream & operator<<(unsigned char c) { return operator<<((char)c); }
+    OStream & operator<<(unsigned char c) { 
+	return operator<<(static_cast<char>(c));
+    }
 
     OStream & operator<<(int i) {
 	char buf[64];
@@ -25,8 +60,12 @@ public:
 	print(buf);
 	return *this;
     }
-    OStream & operator<<(short s) { return operator<<((int)s); }
-    OStream & operator<<(long l) { return operator<<((int)l); }
+    OStream & operator<<(short s) {
+	return operator<<(static_cast<int>(s));
+    }
+    OStream & operator<<(long l) {
+	return operator<<(static_cast<int>(l));
+    }
 
     OStream & operator<<(unsigned int u) {
 	char buf[64];
@@ -34,8 +73,12 @@ public:
 	print(buf);
 	return *this;
     }
-    OStream & operator<<(unsigned short s) { return operator<<((unsigned)s); }
-    OStream & operator<<(unsigned long l) { return operator<<((unsigned)l); }
+    OStream & operator<<(unsigned short s) { 
+	return operator<<(static_cast<unsigned int>(s));
+    }
+    OStream & operator<<(unsigned long l) {
+	return operator<<(static_cast<unsigned int>(l));
+    }
 
     OStream & operator<<(long long int u) {
 	char buf[64];
@@ -65,17 +108,24 @@ public:
 
 private:
     void print(const char * s);
-    int itoa(int i, char * s);
-    int utoa(unsigned int u, char * s);
-    int llitoa(long long int i, char * s);
-    int llutoa(unsigned long long int u, char * s);
+    void flush() {}
+    int itoa(int v, char * s);
+    int utoa(unsigned int v, char * s, unsigned int i = 0);
+    int llitoa(long long int v, char * s);
+    int llutoa(unsigned long long int v, char * s, unsigned int i = 0);
     int ptoa(const void * p, char * s);
 
 private:
-    static const char dec_digits[];
-    static const char hex_digits[];
+    int _base;
+
+    static const char _digits[];
 }; 
 
+extern OStream::Endl endl;
+extern OStream::Hex hex;
+extern OStream::Dec dec;
+extern OStream::Oct oct;
+extern OStream::Bin bin;
 extern OStream kout, kerr;
 
 __END_SYS

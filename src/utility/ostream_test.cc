@@ -12,15 +12,18 @@ int main()
     cout << "This is a char:\t\t\t" << 'A' << "\n";
     cout << "This is a negative char:\t" << '\377' << "\n";
     cout << "This is an unsigned char:\t" << 'A' << "\n";
-    cout << "This is an int:\t\t\t" << 1 << "\n";
-    cout << "This is a negative int:\t\t" << -1 << "\n";
-    cout << "This is an unsigned int:\t" << 1 << "\n";
-    cout << "This is a short:\t\t" << 1 << "\n";
-    cout << "This is a negative short:\t" << -1 << "\n";
-    cout << "This is an unsigned short:\t" << 1 << "\n";
-    cout << "This is a long:\t\t\t" << 100000 << "\n";
-    cout << "This is a negative long:\t" << -100000 << "\n";
-    cout << "This is an unsigned long:\t" << 100000 << "\n";
+    cout << "This is an int:\t\t\t" 
+	 << (1 << sizeof(int) * 8 - 1) - 1 << "\n" 
+	 << "\t\t\t\t" << hex << (1 << sizeof(int) * 8 - 1) - 1 << "(hex)\n"
+	 << "\t\t\t\t" << dec << (1 << sizeof(int) * 8 - 1) - 1 << "(dec)\n"
+	 << "\t\t\t\t" << oct << (1 << sizeof(int) * 8 - 1) - 1 << "(oct)\n"
+	 << "\t\t\t\t" << bin << (1 << sizeof(int) * 8 - 1) - 1 << "(bin) " <<  endl;
+    cout << "This is a negative int:\t\t" 
+	 << (1 << sizeof(int) * 8 - 1) << "\n" 
+	 << "\t\t\t\t" << hex << (1 << sizeof(int) * 8 - 1) << "(hex)\n"
+	 << "\t\t\t\t" << dec << (1 << sizeof(int) * 8 - 1) << "(dec)\n"
+	 << "\t\t\t\t" << oct << (1 << sizeof(int) * 8 - 1) << "(oct)\n"
+	 << "\t\t\t\t" << bin << (1 << sizeof(int) * 8 - 1) << "(bin) " <<  endl;
     cout << "This is a string:\t\t" << "string" << "\n";
     cout << "This is a pointer:\t\t" << &cout << "\n";
 
