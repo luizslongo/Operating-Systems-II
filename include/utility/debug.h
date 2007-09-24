@@ -10,6 +10,21 @@ __BEGIN_SYS
 class Debug
 {
 public:
+    Debug & operator<<(OStream::Endl &endl){
+    	kerr << endl; return *this;
+    }
+    Debug & operator<<(OStream::Hex &hex){
+    	kerr << hex; return *this;
+    }
+    Debug & operator<<(OStream::Dec &dec){
+    	kerr << dec; return *this;
+    }
+    Debug & operator<<(OStream::Oct &oct){
+    	kerr << oct; return *this;
+    }
+    Debug & operator<<(OStream::Bin &bin){
+    	kerr << bin; return *this;
+    }
     Debug & operator<<(int i) {
 	kerr << i; return *this; 
     }
