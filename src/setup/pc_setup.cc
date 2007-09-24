@@ -26,6 +26,8 @@ extern "C" {
 
 __BEGIN_SYS
 
+// SETUP does not handle global constructors, so kout and kerr must be
+// manually initialized before use (at setup())
 OStream kout, kerr;
 
 //========================================================================
@@ -907,5 +909,7 @@ void _start()
 
 void setup(char * bi) 
 {
+    kerr << endl;
+    kout << endl;
     PC_Setup pc_setup(bi);
 }
