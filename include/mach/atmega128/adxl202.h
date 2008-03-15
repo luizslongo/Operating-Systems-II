@@ -93,14 +93,14 @@ public:
 
 	int adc_1g, adc_minus_1g;
 
-	CPU::out8(Machine::IO::DDRA, 0xFF);
+	//CPU::out8(Machine::IO::DDRA, 0xFF);
 
 	// X
 	enable_x();
 
 	// Sensor (X,Y) = (0,0)
 	
-	CPU::out8(Machine::IO::PORTA, ~1);
+	//CPU::out8(Machine::IO::PORTA, ~1);
 
 	for(unsigned int i = 0; i < 0xffff; i++)
 	    for(unsigned char j = 0; j < 0xff; j++);
@@ -110,7 +110,7 @@ public:
 
 	// Sensor (X,Y) = (1,0)
 	
-	CPU::out8(Machine::IO::PORTA, ~2);
+	//CPU::out8(Machine::IO::PORTA, ~2);
 
 	for(unsigned int i = 0; i < 0xffff; i++)
 	    for(unsigned char j = 0; j < 0xff; j++);	
@@ -120,7 +120,7 @@ public:
 
 	// Sensor (X,Y) = (-1,0)
 	
-	CPU::out8(Machine::IO::PORTA, ~4);
+	//CPU::out8(Machine::IO::PORTA, ~4);
 
 	for(unsigned int i = 0; i < 0xffff; i++)
 	    for(unsigned char j = 0; j < 0xff; j++);
