@@ -149,13 +149,13 @@ public:
     }
     static int finc(volatile int & value) {
         int_disable();
-        register bool old = CPU_Common::finc(value);
+        register int old = CPU_Common::finc(value);
         int_enable();
         return old;
     }
     static int fdec(volatile int & value) {
         int_disable();
-        register bool old = CPU_Common::finc(value);
+        register int old = CPU_Common::fdec(value);
         int_enable();
         return old;
     }
@@ -166,23 +166,35 @@ public:
     static Reg16 ntohs(Reg16 v) { return htons(v); }
 
     static Context * init_stack(
-	Log_Addr stack, unsigned int size, void (* exit)(),
-	int (* entry)()) {
+	Log_Addr stack, unsigned int size, 
+	void (* exit)(), int (* entry)()) {
+	Log_Addr fp = stack;
 	Log_Addr sp = stack + size;
-	sp -= sizeof(int); *static_cast<int *>(sp) = Log_Addr(exit);
+	sp -= sizeof(int); 
+	*static_cast<int *>(sp) = swap16(Log_Addr(exit));
 	sp -= sizeof(Context);
-	return new (sp) Context(entry);
+	Context * ctx = new (sp) Context(entry);
+	ctx->_r28 = static_cast<Reg8>(fp);
+ 	ctx->_r29 = static_cast<Reg8>(fp >> 8);
+	return ctx;
     }
 
     template<typename T1>
     static Context * init_stack(
-	Log_Addr stack, unsigned int size, void (* exit)(),
-	int (* entry)(T1 a1), T1 a1) {
+	Log_Addr stack, unsigned int size,
+	void (* exit)(), int (* entry)(T1 a1), T1 a1) {
 	Log_Addr sp = stack + size;
-	sp -= sizeof(T1); *static_cast<T1 *>(sp) = a1;
-	sp -= sizeof(int); *static_cast<int *>(sp) = Log_Addr(exit);
+	sp -= sizeof(int); 
+	*static_cast<int *>(sp) = swap16(Log_Addr(exit));
 	sp -= sizeof(Context);
-	return new (sp) Context(entry);
+	Context * ctx = new (sp) Context(entry);
+
+	unsigned char arg_size = (sizeof(T1) % 2) ? 
+	    sizeof(T1) + 1 : sizeof(T1);
+	unsigned char * ctx_reg = &(ctx->_r26) - arg_size;
+	*reinterpret_cast<T1 *>(ctx_reg) = a1;
+
+	return ctx;
     }
 
     template<typename T1, typename T2>
@@ -190,24 +202,52 @@ public:
 	Log_Addr stack, unsigned int size, void (* exit)(),
 	int (* entry)(T1 a1, T2 a2), T1 a1, T2 a2) {
 	Log_Addr sp = stack + size;
-	sp -= sizeof(T2); *static_cast<T2 *>(sp) = a2;
-	sp -= sizeof(T1); *static_cast<T1 *>(sp) = a1;
-	sp -= sizeof(int); *static_cast<int *>(sp) = Log_Addr(exit);
+	sp -= sizeof(int); 
+	*static_cast<int *>(sp) = swap16(Log_Addr(exit));
 	sp -= sizeof(Context);
-	return new (sp) Context(entry);
+	Context * ctx = new (sp) Context(entry);
+
+	unsigned char arg_size = (sizeof(T1) % 2) ? 
+	    sizeof(T1) + 1 : sizeof(T1);
+	unsigned char * ctx_reg = &(ctx->_r26) - arg_size;
+	*reinterpret_cast<T1 *>(ctx_reg) = a1;
+	
+	arg_size = (sizeof(T2) % 2) ? 
+	    sizeof(T2) + 1 : sizeof(T2);
+	ctx_reg -= arg_size;
+	*reinterpret_cast<T2 *>(ctx_reg) = a2;
+
+
+	return ctx;
     }
+
 
     template<typename T1, typename T2, typename T3>
     static Context * init_stack(
 	Log_Addr stack, unsigned int size, void (* exit)(),
 	int (* entry)(T1 a1, T2 a2, T3 a3), T1 a1, T2 a2, T3 a3) {
 	Log_Addr sp = stack + size;
-	sp -= sizeof(T3); *static_cast<T3 *>(sp) = a3;
-	sp -= sizeof(T2); *static_cast<T2 *>(sp) = a2;
-	sp -= sizeof(T1); *static_cast<T1 *>(sp) = a1;
-	sp -= sizeof(int); *static_cast<int *>(sp) = Log_Addr(exit);
+	sp -= sizeof(int); 
+	*static_cast<int *>(sp) = swap16(Log_Addr(exit));
 	sp -= sizeof(Context);
-	return new (sp) Context(entry);
+	Context * ctx = new (sp) Context(entry);
+
+	unsigned char arg_size = (sizeof(T1) % 2) ? 
+	    sizeof(T1) + 1 : sizeof(T1);
+	unsigned char * ctx_reg = &(ctx->_r26) - arg_size;
+	*reinterpret_cast<T1 *>(ctx_reg) = a1;
+	
+	arg_size = (sizeof(T2) % 2) ? 
+	    sizeof(T2) + 1 : sizeof(T2);
+	ctx_reg -= arg_size;
+	*reinterpret_cast<T2 *>(ctx_reg) = a2;
+
+	arg_size = (sizeof(T3) % 2) ? 
+	    sizeof(T3) + 1 : sizeof(T3);
+	ctx_reg -= arg_size;
+	*reinterpret_cast<T3 *>(ctx_reg) = a3;
+
+	return ctx;
     }
 
     // AVR8 specific methods
