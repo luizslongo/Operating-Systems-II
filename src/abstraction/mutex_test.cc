@@ -13,6 +13,7 @@ const int iterations = 10;
 Display display;
 Thread * phil[5];
 Mutex chopstick[5];
+Mutex display_mutex;
 
 OStream cout;
 
@@ -25,24 +26,34 @@ int philosopher(int n, int l, int c)
     int second = (n < 4)? n + 1 : 4;
 
     for(int i = iterations; i > 0; i--) {
+	display_mutex.lock();
 	display.position(l, c);
  	cout << "thinking";
+	display_mutex.unlock();
 	Alarm::delay(1000000);
 
 	chopstick[first].lock();   // get first chopstick
 	chopstick[second].lock();   // get second chopstick
+	display_mutex.lock();
 	display.position(l, c);
 	cout << " eating ";
+	display_mutex.unlock();
 	Alarm::delay(500000);
 	chopstick[first].unlock();   // release first chopstick
 	chopstick[second].unlock();   // release second chopstick
     }
+
+    display_mutex.lock();
+    display.position(l, c);
+    cout << "  done  ";
+    display_mutex.unlock();
 
     return(iterations);
 }
 
 int main()
 {
+    display_mutex.lock();
     display.clear();
     cout << "The Philosopher's Dinner:\n";
 
@@ -52,7 +63,7 @@ int main()
     phil[3] = new Thread(&philosopher, 3, 16, 24);
     phil[4] = new Thread(&philosopher, 4, 10, 20);
 
-    cout << "Philosophers are alife and hungry!\n";
+    cout << "Philosophers are alive and hungry!\n";
 
     cout << "The dinner is served ...\n";
     display.position(7, 44);
@@ -65,11 +76,15 @@ int main()
     cout << '/';
     display.position(7, 27);
     cout << '\\';
+    display_mutex.unlock();
+
 
     for(int i = 0; i < 5; i++) {
 	int ret = phil[i]->join();
+	display_mutex.lock();
 	display.position(20 + i, 0);
 	cout << "Philosopher " << i << " ate " << ret << " times \n";
+	display_mutex.unlock();
     }
 
     for(int i = 0; i < 5; i++)
