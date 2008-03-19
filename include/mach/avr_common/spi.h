@@ -64,8 +64,8 @@ public:
     void int_enable() { spcr(spcr() | SPIE); }
     void int_disable() { spcr(spcr() & ~SPIE); }
 
-    char get() { while(!complete()); return spdr(); }
-    void put(char c) { spdr(c);  while(!complete());  }
+    char get() { /* while(!complete()); */ return spdr(); }
+    void put(char c) { spdr(c);  /* while(!complete());  */ }
 
 protected:
     static Reg8 spcr(){ return AVR8::in8(SPCR); }
