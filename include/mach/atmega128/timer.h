@@ -50,20 +50,11 @@ protected:
     static Count freq2count(const Hertz & f) { return CLOCK / f; }
 };
 
+
 class ATMega128_Timer_2: public Timer_Common, private AVR_Timer
 {
 private:
-    static const unsigned int CLOCK = Traits<Machine>::CLOCK >> 9;
-
-public:
-    // Register Settings
-    enum {
-    	TIMER_PRESCALE_1    = CSn0,
-	TIMER_PRESCALE_8    = CSn1,
-	TIMER_PRESCALE_64   = CSn1 | CSn0,
-	TIMER_PRESCALE_256  = CSn2,
-	TIMER_PRESCALE_1024 = CSn2 | CSn0
-    };
+    static const unsigned int CLOCK = Traits<Machine>::CLOCK >> 10;
 
 public:
     ATMega128_Timer_2() {}
@@ -88,6 +79,38 @@ public:
 protected:
     static Hertz count2freq(const Count & c) { return CLOCK / c; }
     static Count freq2count(const Hertz & f) { return CLOCK / f; }
+};
+
+
+
+class ATMega128_Timer_3: public Timer_Common, private AVR_Timer
+{
+private:
+    static const unsigned int CLOCK = Traits<Machine>::CLOCK >> 10;
+
+public:
+    ATMega128_Timer_3() {}
+
+    ATMega128_Timer_3(const Hertz & f) {
+	frequency(f);
+    }
+
+    void enable(){ etimsk(etimsk() | OCIE3A); }
+    void disable(){etimsk(etimsk() & ~OCIE3A);}
+
+    Hertz frequency() const { return count2freq(ocr3a());}
+    void frequency(const Hertz & f) {
+	ocr3a(freq2count(f));
+	tccr3b(TIMER_PRESCALE_1024|WGMn2);
+    };
+
+    void reset() { tcnt3(0); }
+    Tick read() { return tcnt3(); }
+
+protected:
+    static Hertz count2freq(const Count & c) { return CLOCK / c; }
+    static Count freq2count(const Hertz & f) { return CLOCK / f; }
+
 };
 
 
