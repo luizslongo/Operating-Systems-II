@@ -16,6 +16,7 @@ private:
     // Imports
     typedef IO_Map<Machine> IO;
     typedef AVR8::Reg8 Reg8;
+    typedef AVR8::Reg16 Reg16;
 
 public:
     // The timer's counter
@@ -177,22 +178,32 @@ public:
     static void tcnt3h(Reg8 value) { AVR8::out8(IO::TCNT3H,value); }
     static Reg8 tcnt3l() { return AVR8::in8(IO::TCNT3L); }
     static void tcnt3l(Reg8 value) { AVR8::out8(IO::TCNT3L,value); }
+    static Reg16 tcnt3() { return AVR8::in16(IO::TCNT3L); }
+    static void tcnt3(Reg16 value) { AVR8::out16(IO::TCNT3L,value); }
     static Reg8 ocr3ah() { return AVR8::in8(IO::OCR3AH); }
     static void ocr3ah(Reg8 value) { AVR8::out8(IO::OCR3AH,value); }
     static Reg8 ocr3al() { return AVR8::in8(IO::OCR3AL); }
     static void ocr3al(Reg8 value) { AVR8::out8(IO::OCR3AL,value); }
+    static Reg16 ocr3a (){ return AVR8::in16(IO::OCR3AL);}
+    static void ocr3a(Reg16 value) { AVR8::out16(IO::OCR3AL,value);}
     static Reg8 ocr3bh() { return AVR8::in8(IO::OCR3BH); }
     static void ocr3bh(Reg8 value) { AVR8::out8(IO::OCR3BH,value); }
     static Reg8 ocr3bl() { return AVR8::in8(IO::OCR3BL); }
     static void ocr3bl(Reg8 value) { AVR8::out8(IO::OCR3BL,value); }
+    static Reg16 ocr3b (){ return AVR8::in16(IO::OCR3BL);}
+    static void ocr3b(Reg16 value) { AVR8::out16(IO::OCR3BL,value);}
     static Reg8 ocr3ch() { return AVR8::in8(IO::OCR3CH); }
     static void ocr3ch(Reg8 value) { AVR8::out8(IO::OCR3CH,value); }
     static Reg8 ocr3cl() { return AVR8::in8(IO::OCR3CL); }
     static void ocr3cl(Reg8 value) { AVR8::out8(IO::OCR3CL,value); }
+    static Reg16 ocr3c (){ return AVR8::in16(IO::OCR3CL);}
+    static void ocr3c(Reg16 value) { AVR8::out16(IO::OCR3CL,value);}
     static Reg8 icr3h() { return AVR8::in8(IO::ICR3H); }
     static void icr3h(Reg8 value) { AVR8::out8(IO::ICR3H,value); }
     static Reg8 icr3l() { return AVR8::in8(IO::ICR3L); }
     static void icr3l(Reg8 value) { AVR8::out8(IO::ICR3L,value); }
+    static Reg16 icr3() { return AVR8::in16(IO::ICR3L); }
+    static void icr3(Reg8 value) { AVR8::out16(IO::ICR3L,value); }
 };
 
 __END_SYS
