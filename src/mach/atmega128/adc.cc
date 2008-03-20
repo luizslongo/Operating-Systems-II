@@ -4,7 +4,7 @@
 
 __BEGIN_SYS
 
-bool AVR_ADC::_in_use;
+bool AVR_ADC::_in_use = false;
 
 __END_SYS
 
