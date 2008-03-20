@@ -8,6 +8,7 @@
 #include <utility/string.h>
 #include <cpu.h>		// For Reg[8|16|32|64]
 #include <utility/list.h>	// For Observer's List
+#include <utility/crc.h>
 
 __BEGIN_SYS
 
@@ -210,6 +211,7 @@ public:
     // The Ethernet Frame (RFC 894)
     class Frame {
     public:
+
 	Frame(const Address & dst, const Address & src,
 	      const Protocol & prot) {
 	    header(dst.b, src.b, prot);
@@ -295,6 +297,7 @@ public:
 
     class Frame {
     public:
+	Frame(){}
 	Frame(const Address & dst, const Address & src,
 	      const Protocol & prot, const unsigned char & size) {
 	    header(dst, src, prot, size);
@@ -303,8 +306,19 @@ public:
 	      const Protocol & prot, const void * data, const unsigned char & size) {
 	    header(dst, src, prot, size);
 	    memcpy(_data, data, size);
+	    _crc = CRC::crc16((char*)this, sizeof(Frame)-2);
 	}
 	
+	Frame(const Address & dst, const Address & src,
+	      const Protocol & prot, const void * data, const unsigned char & size, 
+	      const char & tx_pow, const char & rss) {
+	    header(dst, src, prot, size);
+	    memcpy(_data, data, size);
+	    _tx_pow = tx_pow;
+	    _rss = rss;
+	    _crc = CRC::crc16((char*)this, sizeof(Frame)-2);
+	}
+
 	friend Debug & operator << (Debug & db, const Frame & f) {
 	    db << "{" << Address(f._dst)
 	       << "," << Address(f._src)
