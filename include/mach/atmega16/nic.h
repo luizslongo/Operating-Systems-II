@@ -3,49 +3,42 @@
 #ifndef __atmega16_nic_h
 #define __atmega16_nic_h
 
-#include "radio.h"
+#include <nic.h>
 
 __BEGIN_SYS
 
-class ATMega16_NIC: public NIC_Common
+class ATMega16_NIC: public Low_Power_Radio
 {
-private:
-    typedef Traits<ATMega16_NIC>::NICS NICS;
-    static const unsigned int UNITS = NICS::Length;
 
 public:
-    ATMega16_NIC() {
-	_dev = new Meta_NIC<NICS>::Get<0>::Result;
-    }
-    template<unsigned int UNIT>
-    ATMega16_NIC(unsigned int u) {
-	_dev = new typename Meta_NIC<NICS>::Get<UNIT>::Result(UNIT);
-    }
-    ~ATMega16_NIC() {
-	delete _dev;
-    }
+    ATMega16_NIC() {    }
+    ATMega16_NIC(unsigned int u) {    }
+    ~ATMega16_NIC() {    }
     
     int send(const Address & dst, const Protocol & prot, 
 	     const void * data, unsigned int size) {
-	return _dev->send(dst, prot, data, size); 
+	return 0;
     }
     int receive(Address * src, Protocol * prot,
 		void * data, unsigned int size) {
-	return _dev->receive(src, prot, data, size); 
+	return 0;
     }
     
-    void reset() { _dev->reset(); }
+    void reset() { }
 
-    unsigned int mtu() const { return _dev->mtu(); }
+    unsigned int mtu() const {return 0; }
     
-    const Address & address() { return _dev->address(); }
+    const Address & address() { return _addr; }
 
-    const Statistics & statistics() { return _dev->statistics(); }
+    const Statistics & statistics() { return _stats; }
 
     static void init();
 
-private:
-    Meta_NIC<NICS>::Base * _dev;
+ private:
+
+    Address _addr;
+    Statistics _stats;
+
 };
 
 __END_SYS
