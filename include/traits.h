@@ -9,7 +9,7 @@ template <class Imp>
 struct Traits
 {
     static const bool enabled = true;
-    static const bool debugged = true;
+    static const bool debugged = false;
 };
 
 
@@ -293,7 +293,7 @@ template <> struct Traits<ATMega128>: public Traits<ATMega128_Common>
     static const unsigned int APPLICATION_HEAP_SIZE = 512;
 
     static const unsigned int SYSTEM_STACK_SIZE = 64;
-    static const unsigned int SYSTEM_HEAP_SIZE = 4 *  APPLICATION_STACK_SIZE;
+    static const unsigned int SYSTEM_HEAP_SIZE = 8 *  APPLICATION_STACK_SIZE;
 
 };
 
