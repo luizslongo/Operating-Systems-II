@@ -38,14 +38,12 @@ public:
     };
 
 public:
-    Serial_Display() : _line(0), _column(0) {
-        _uart.power(FULL);
-    }
+    Serial_Display() : _line(0), _column(0) { }
 
     void clear(){
 	escape();
-	_uart.put('2');
-	_uart.put('J');
+	put('2');
+	put('J');
     };
 
     void putc(char c) {
@@ -55,12 +53,12 @@ public:
 	    _line++;
 	    break;
 	case '\t':
-	    _uart.put(TAB);
+	    put(TAB);
 	    _column += TAB_SIZE;
 	    break;
 	default:
 	    _column++;
-	    _uart.put(c);
+	    put(c);
 	    if(_column >= COLUMNS) scroll();
 	}
     };
@@ -84,20 +82,25 @@ public:
 	_column = column;
 	escape();
 	puti(_line);
-	_uart.put(';');
+	put(';');
 	puti(_column);
-	_uart.put('H');	
+	put('H');	
     }
 
-    char power() { return _uart.power(); }
+    char power() { return power(); }
     void power(char ps) {
-	_uart.power(ps);
+	power(ps);
     }
 
 private:
+
+    void put(char c) {
+	_uart.put(c);
+    }
+
     void escape() {
-	_uart.put(ESC);
-	_uart.put('[');
+	put(ESC);
+	put('[');
     }
 
     void puti(unsigned char value) {
@@ -106,21 +109,21 @@ private:
 	    digit++;     
 	    value -= 100;
 	}
-	_uart.put(digit);
+	put(digit);
     
 	digit = '0';
 	while(value >= 10) {
 	    digit++; 
 	    value -= 10;
 	}
-	_uart.put(digit);
+	put(digit);
 
-	_uart.put('0' + value);
+	put('0' + value);
     }
 
     void scroll() {
-	_uart.put(CR);
-	_uart.put(LF);
+	put(CR);
+	put(LF);
 	_column = 0;
     }
 
