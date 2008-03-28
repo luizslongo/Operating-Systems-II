@@ -3,6 +3,8 @@
 #include <mmu.h>
 #include <system.h>
 
+extern "C" unsigned __bss_end;
+
 __BEGIN_SYS
 
 void AVR8_MMU::init()
@@ -20,14 +22,8 @@ void AVR8_MMU::init()
 			    << (si->pmm.free_top - si->pmm.free_base) / 1024
 			    << "KB}\n";
     
-    AVR8_MMU::free(si->pmm.free_base, si->pmm.free_top - si->pmm.free_base);
-
-    // Initialize the System's heap
-    db<Init, AVR8_MMU>(INF) << "AVR8_MMU::initializing system's heap="
-			    << Traits<Machine>::SYSTEM_HEAP_SIZE 
-			    << " bytes.\n";
-    System::heap()->free(alloc(pages(Traits<Machine>::SYSTEM_HEAP_SIZE)),
-			 Traits<Machine>::SYSTEM_HEAP_SIZE);
+    unsigned int base = (unsigned)&__bss_end+1;
+    AVR8_MMU::free(base, Memory_Map<Machine>::TOP - base);
 
 }
 
