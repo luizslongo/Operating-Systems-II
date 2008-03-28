@@ -16,7 +16,7 @@ struct Memory_Map<ATMega16>
 
     enum {
 	BASE =		0x000000,
-	TOP =		0x00ffff,
+	TOP =		0x000400,
 	APP_LO =	0x000000,
 	APP_CODE =	0x000000,
 	APP_DATA =	0x800110,
