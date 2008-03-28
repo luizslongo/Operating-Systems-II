@@ -20,16 +20,16 @@ struct Memory_Map<ATMega128>
 	TOP =		0x001000,
 	APP_LO =	0x000000,
 	APP_CODE =	0x000000,
-	APP_DATA =	0x800150,
+	APP_DATA =	0x000100,
 	APP_HI =	0x00ffff,
-	PHY_MEM =	0x800100,
-	IO_MEM =	0x800020,
+	PHY_MEM =	0x000100,
+	IO_MEM =	0x000020,
 	SYS =		0x000000,
 	INT_VEC =	0x000000,
-	SYS_INFO =	0x000100,
+	SYS_INFO =	0x001000,
 	SYS_CODE =	0x000000,
-	SYS_DATA =	0x800150,
-	SYS_STACK =	0x8010ff
+	SYS_DATA =	0x000150,
+	SYS_STACK =	0x0010ff
     };
 };
 
@@ -302,11 +302,7 @@ template <> struct IO_Map<ATMega128>
 //         | 			     |
 //         : IO Registers            :
 //         |                         |
-// 0x0100 -+- - - - - - - - - - - - -+- PHY_MEM, SYS_INFO
-//         | 			     |
-//         : System_Info             :
-//         |                         |
-// 0x0150 -+- - - - - - - - - - - - -+- APP_DATA, SYS_DATA
+// 0x0100 -+- - - - - - - - - - - - -+- PHY_MEM, APP_DATA, SYS_DATA
 //         | 			     |
 //         : APP/SYS DATA            :
 //         |                         |
@@ -318,7 +314,16 @@ template <> struct IO_Map<ATMega128>
 //         |                         |
 //         : HEAP/STACK              :
 //         |                         |
+// 0x1000 -+- - - - - - - - - - - - -+- TOP, SYS_INFO
+//         | 			     |
+//         : System_Info             :
+//         |                         |
+//         : GCC Stack               :
+//         |                         |
 // 0x10ff -+- - - - - - - - - - - - -+- RAM End
+//
+//
+// The area between TOP and RAM End is freed in __epos_library_app_entry
 //
 
 __END_SYS
