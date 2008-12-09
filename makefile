@@ -4,7 +4,7 @@ include makedefs
 
 SUBDIRS := cfg tools src app
 
-all:		linux_imports $(SUBDIRS) img
+all:		$(SUBDIRS) img
 
 linux_imports:	FORCE
 		@$(TCPP) $(TCPPFLAGS) -dD -P /usr/include/elf.h | \
@@ -34,8 +34,6 @@ clean:		FORCE
 
 veryclean:
 		make MAKE:="$(MAKECLEAN)" $(SUBDIRS) img
-		$(CLEAN) $(INCLUDE)/utility/elf-linux.h
-		$(CLEAN) $(INCLUDE)/system/pci_ids-linux.h
 		find $(LIB) -maxdepth 1 -type f -exec $(CLEAN) {} \;
 		find $(BIN) -maxdepth 1 -type f -exec $(CLEAN) {} \;
 		find $(APP) -maxdepth 1 -type f -perm +111 -exec $(CLEAN) {} \;
