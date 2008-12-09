@@ -25,7 +25,7 @@ $(SUBDIRS):	FORCE
 img:		FORCE
 		(cd $@ && $(MAKE))
 
-test:		linux_imports $(SUBDIRS)
+test:		$(SUBDIRS)
 		(cd src && $(MAKETEST))
 
 clean:		FORCE
