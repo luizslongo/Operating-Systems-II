@@ -352,6 +352,13 @@ public:
 	ASMV("lock\n"
 	     "xadd %0, %2" : "=a"(old) : "a"(old), "m"(value)); return old;
     }
+    static bool cas(volatile int & value, int cmp, int rep) {
+	register bool ret;
+	ASMV("lock\n"
+	     "cmpxchgl %2, %1\n"
+	     "setz %0" : "=q"(ret) : "m"(value), "r"(rep), "a"(cmp));
+	return ret;
+    }
 
     static Reg32 htonl(Reg32 v)	{
  	ASMV("bswap %0" : "=r" (v) : "0" (v), "r" (v)); return v;
