@@ -1,7 +1,6 @@
 // EPOS-- PC Mediator Initialization
 
 #include <machine.h>
-#include <system.h>
 
 __BEGIN_SYS
 
