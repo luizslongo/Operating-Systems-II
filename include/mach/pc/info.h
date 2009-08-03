@@ -17,25 +17,20 @@ private:
 
 public:
     // The information we have at boot time (built up by MKBI)
+    // Modifications to this map requires adjustments at MKBI
     struct Boot_Map
     {
-// 	struct {
-// 	    unsigned int multiprocessor:1;
-// 	    unsigned int multitasking:1;
-// 	    unsigned int multithreading:1;
-// 	} setup_mode;            // Setup mode
-// 	int cpu_type;            // Processor type 
-// 	int cpu_clock;           // Processor clock frequency in Hz 
+	unsigned int n_cpus;     // Number of CPUs in SMPs
 	PAddr mem_base;          // Memory base address
 	PAddr mem_top;           // Memory top address
 	PAddr io_mem_base;       // I/O Memory base address
 	PAddr io_mem_top;        // I/O Memory top address
-	short node_id;           // Local node id in SAN (-1 => RARP) 
-	short n_nodes;           // Number of nodes in SAN (-1 => dynamic) 
+	short node_id;           // Local node id in SAN (-1 => RARP)
+	short n_nodes;           // Number of nodes in SAN (-1 => dynamic)
 	Size img_size;           // Boot image size (in bytes)
-	int setup_offset;        // Image offsets (-1 => not present) 
-	int init_offset; 
-	int system_offset; 
+	int setup_offset;        // Image offsets (-1 => not present)
+	int init_offset;
+	int system_offset;
 	int application_offset;
 	int extras_offset;
     };
@@ -53,9 +48,10 @@ public:
 	PAddr gdt;           // GDT
 	PAddr sys_pt;        // System Page Table
 	PAddr sys_pd;        // System Page Directory
+	PAddr apic_pt;       // APIC shared address space
 	PAddr sys_info;      // System Info
 	PAddr phy_mem_pts;   // Page tables to map the whole physical memory
-	PAddr io_mem_pts;    // Page tables to map the I/O address space 
+	PAddr io_mem_pts;    // Page tables to map the I/O address space
 	PAddr sys_code;      // OS Code Segment
 	PAddr sys_data;      // OS Data Segment
 	PAddr sys_stack;     // OS Stack Segment
