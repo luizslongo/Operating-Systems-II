@@ -346,6 +346,8 @@ bool parse_config(FILE * cfg_file, Configuration * cfg)
 //=============================================================================
 template<typename T> bool add_boot_map(int fd, System_Info * si)
 {
+    if(!put_number(fd, static_cast<T>(si->bm.n_cpus)))
+	return false;
     if(!put_number(fd, static_cast<T>(si->bm.mem_base)))
 	return false;
     if(!put_number(fd, static_cast<T>(si->bm.mem_top)))
@@ -410,7 +412,7 @@ bool add_machine_secrets(int fd, unsigned int i_size, char * mach)
 	}
 	put_number(fd, boot_id);
     } else if (!strcmp(mach, "rcx")) { // RCX	
-	char * key_string = "Do you byte, when I knock?";
+	char key_string[] = "Do you byte, when I knock?";
 	const unsigned short key_offset = 128 - (strlen(key_string) + 1);
 		
 	// Write key string to unlock epos
