@@ -24,6 +24,7 @@ struct Memory_Map<PC>
 	APP_HI =	0x0fffffff,
 	PHY_MEM =	0x10000000,
 	IO_MEM =	0x20000000,
+	APIC_MEM =	0x2f400000,
 	SYS =		0x1f400000,
 	IDT =		SYS + 0x00000000,
 	GDT =		SYS + 0x00001000,
