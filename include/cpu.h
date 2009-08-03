@@ -8,7 +8,7 @@
 __BEGIN_SYS
 
 class CPU_Common
-{
+{	
 protected:
     CPU_Common() {}
 
@@ -82,6 +82,13 @@ public:
 	number--;
 	return old;
     }
+    static bool cas(volatile int & number, int cmp, int rep) {
+	if(number == cmp) {
+	    number = rep;
+	    return true;
+	} else
+	    return false;
+    }
 
 protected:
     static Reg32 swap32(Reg32 v) {
@@ -91,7 +98,7 @@ protected:
     static Reg16 swap16(Reg16 v)     {
         return ((v << 8) & 0xFF00) | ((v >> 8) & 0x00FF);
     }
-
+    
 };
 
 __END_SYS
