@@ -37,10 +37,11 @@ public:
 	    EX   = 0x200, // User Def. (0=non-executeable, 1=executeable)
 	    CT   = 0x400, // User Def. (0=non-contiguous, 1=contiguous)
 	    IO   = 0x800, // User Def. (0=memory, 1=I/O)
-	    SYS = (PRE | RW  | ACC),
-	    APP = (PRE | RW  | ACC | USR),
-	    DMA = (SYS | PCD | CT),
-	    PCI = (SYS | PCD | IO)
+	    SYS  = (PRE | RW  | ACC),
+	    APIC = (SYS | PCD),
+	    APP  = (PRE | RW  | ACC | USR),
+	    DMA  = (SYS | PCD | CT),
+	    PCI  = (SYS | PCD | IO)
 	};
 
     public:
