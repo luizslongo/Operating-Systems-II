@@ -23,7 +23,29 @@ extern "C" {
 
 __BEGIN_SYS
 
+// This class purpose is simply to define a well-known entry point for 
+// the system. It must be declared as the first global object in
+// system_scaffold.cc
+class First_Object
+{
+public:
+    First_Object() {
+	Display::remap();
+
+ 	if(Traits<Machine>::SMP) {
+	    System_Info<Machine> * si =
+		reinterpret_cast<System_Info<Machine> *>(
+		    Memory_Map<Machine>::SYS_INFO);
+
+	    Machine::smp_init(si->bm.n_cpus);
+	}
+    }
+};
+
 // Global objects
+// These objects might be reconstructed several times in SMP configurations,
+// so their constructors must be stateless!
+First_Object __entry;
 OStream kout;
 OStream kerr;
 
