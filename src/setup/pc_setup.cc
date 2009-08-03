@@ -6,12 +6,11 @@
 #include <utility/debug.h>
 #include <machine.h>
 
+// PC_BOOT assumes offset "0" to be the entry point of PC_SETUP
 ASMV("jmp _start");
 
 // LIBC Heritage
-
 __USING_SYS
-
 extern "C" {
     void _exit(int s) { 
 	db<Setup>(ERR) << "_exit(" << s << ") called!\n"; 
@@ -30,6 +29,13 @@ __BEGIN_SYS
 // manually initialized before use (at setup())
 OStream kout, kerr;
 
+// "_start" Synchronization Globals
+volatile char * Stacks;
+volatile bool Stacks_Ready = false;
+
+// PC_Setup Synchronization Globals
+volatile bool Paging_Ready = false;
+
 //========================================================================
 // PC_Setup
 //
@@ -44,12 +50,14 @@ private:
     static const unsigned int HARD_INT = Traits<PC>:: HARDWARE_INT_OFFSET;
     static const unsigned int BOOT_IMAGE_ADDR = Traits<PC>::BOOT_IMAGE_ADDR;
     static const unsigned int SYS_STACK_SIZE = Traits<PC>::SYSTEM_STACK_SIZE;
+    static const unsigned int SYS_STACK_SIZE_AP = 512;
 
     static const unsigned int SYS_INFO = Memory_Map<PC>::SYS_INFO;
     static const unsigned int IDT = Memory_Map<PC>::IDT;
     static const unsigned int GDT = Memory_Map<PC>::GDT;
     static const unsigned int PHY_MEM = Memory_Map<PC>::PHY_MEM;
     static const unsigned int IO_MEM = Memory_Map<PC>::IO_MEM;
+    static const unsigned int APIC_MEM = Memory_Map<PC>::APIC_MEM;
     static const unsigned int SYS_PT = Memory_Map<PC>::SYS_PT;
     static const unsigned int SYS_PD = Memory_Map<PC>::SYS_PD;
     static const unsigned int SYS = Memory_Map<PC>::SYS;
@@ -76,41 +84,7 @@ private:
     typedef System_Info<PC>::Load_Map LM;
 
 public:
-    PC_Setup(char * boot_image) {
-
-	// Get boot image loaded by the bootstrap
- 	bi = reinterpret_cast<char *>(boot_image);
-	si = reinterpret_cast<System_Info<PC> *>(bi);
-
- 	db<Setup>(TRC) << "PC_Setup(bi=" << (void *)bi
- 		       << ",sp=" << (void *)CPU::sp() << ")\n";
-
-	// Disable hardware interrupts
-	IC::init();
-  	CPU::int_disable();
-
-	build_lm();
-	build_pmm();
-	build_lmm();
-	get_node_id();
-
-	say_hi();
-
-	activate_paging();
-
-	// Adjust pointers that will still be used to their logical addresses
-	bi = reinterpret_cast<char *>(unsigned(bi) | PHY_MEM);
-	si = reinterpret_cast<System_Info<PC> *>(SYS_INFO);
-
-	load_parts();
-
-	// SETUP ends here, transfer control to next stage (INIT or APP)
-	call_next();
-
-	// SETUP is now part of the free memory and this point should never be
-	// reached, but, just in case ... :-)
-	panic();
-    }
+    PC_Setup(char * boot_image);
 
 private:
     void build_lm();
@@ -120,11 +94,12 @@ private:
 
     void say_hi();
 
-    void activate_paging();
     void setup_idt();
     void setup_gdt();
     void setup_sys_pt();
+    void setup_apic_pt();
     void setup_sys_pd();
+    void enable_paging();
 
     void load_parts();
     void call_next();
@@ -137,6 +112,78 @@ private:
     char * bi;
     System_Info<PC> * si;
 };
+
+//========================================================================
+PC_Setup::PC_Setup(char * boot_image)
+{
+    // Get boot image loaded by the bootstrap
+    bi = reinterpret_cast<char *>(boot_image);
+    si = reinterpret_cast<System_Info<PC> *>(bi);
+
+    Display::remap();
+
+    // SMP conditional start up
+    int cpu_id = Machine::cpu_id();
+
+    db<Setup>(TRC) << "PC_Setup(CPU=" << cpu_id << "/" << si->bm.n_cpus
+		   << ",bi=" << (void *)bi
+		   << ",sp=" << (void *)CPU::sp() << ")\n";
+
+    Machine::smp_barrier(si->bm.n_cpus);
+    if(cpu_id == 0) { // Boot strap CPU (BSP)
+
+	// Disable hardware interrupt triggering at PIC
+	IC::init();
+
+    	// Build the memory model
+	build_lm();
+	build_pmm();
+	build_lmm();
+
+	// Try to obtain a node id for this machine
+	get_node_id();
+
+	// Print basic facts about this EPOS instance
+	say_hi();
+
+	// Configure the memory model defined above
+	setup_idt();
+	setup_gdt();
+	setup_sys_pt();
+	setup_apic_pt();
+	setup_sys_pd();
+   
+	// Enable paging 
+	enable_paging();
+
+	// Adjust pointers that will still be used to their logical addresses
+	bi = reinterpret_cast<char *>(unsigned(bi) | PHY_MEM);
+	si = reinterpret_cast<System_Info<PC> *>(SYS_INFO);
+	Display::remap();
+ 	APIC::remap();
+
+	// Load EPOS parts (e.g. INIT, SYSTEM, APP)
+	load_parts();
+
+	// Signalize other CPUs that paging is up
+	Paging_Ready = true;
+
+    } else { // Additional CPUs (APs)
+
+	// Wait for the Boot CPU to setup page tables
+	while(!Paging_Ready);
+
+	// Enable paging 
+	enable_paging();
+    }
+
+    // SETUP ends here, transfer control to next stage (INIT or APP)
+    call_next();
+
+    // SETUP is now part of the free memory and this point should never be
+    // reached, but, just in case ... :-)
+    panic();
+}
 
 //========================================================================
 void PC_Setup::build_lm()
@@ -211,7 +258,8 @@ void PC_Setup::build_lm()
     si->lm.sys_data = ~0U;
     si->lm.sys_data_size = 0;
     si->lm.sys_stack = SYS_STACK;
-    si->lm.sys_stack_size = SYS_STACK_SIZE;
+    si->lm.sys_stack_size = SYS_STACK_SIZE
+	+ (si->bm.n_cpus - 1) * SYS_STACK_SIZE_AP;
     if(si->lm.has_sys) {
 	ELF * sys_elf = reinterpret_cast<ELF *>(&bi[si->bm.system_offset]);
 	if(!sys_elf->valid()) {
@@ -316,10 +364,14 @@ void PC_Setup::build_pmm()
     // System Page Table (1 x sizeof(Page))
     top_page -= 1;
     si->pmm.sys_pt = top_page * sizeof(Page);
-
+    
     // System Page Directory (1 x sizeof(Page))
     top_page -= 1;
     si->pmm.sys_pd = top_page * sizeof(Page);
+
+    // Page table to map APIC's address space
+    top_page -= 1;
+    si->pmm.apic_pt = top_page * sizeof(Page);
 
     // System Info (1 x sizeof(Page))
     top_page -= 1;
@@ -419,6 +471,7 @@ void PC_Setup::say_hi()
 	 << " Kbytes [" << (void *)si->pmm.io_mem_base 
 	 << ":" << (void *)si->pmm.io_mem_top << "]\n";
     kout << "  Node Id:      ";
+
     if(si->bm.node_id != -1)
 	kout << si->bm.node_id << " (" << si->bm.n_nodes << ")\n";
     else
@@ -451,20 +504,8 @@ void PC_Setup::say_hi()
 }
 
 //========================================================================
-void PC_Setup::activate_paging() 
+void PC_Setup::enable_paging() 
 {
-    // Setup the IDT
-    setup_idt();
-
-    // Setup the GDT
-    setup_gdt();
-
-    // Setup the System Page Table
-    setup_sys_pt();
-
-    // Setup the System Page Directory and map physical memory
-    setup_sys_pd();
-   
     // Set IDTR (limit = 1 x sizeof(Page))
     CPU::idtr(sizeof(Page) - 1, IDT);
 
@@ -525,6 +566,8 @@ void PC_Setup::setup_idt()
     db<Setup>(INF) << "IDT[0  ]=" << idt[0]
 		   << " (" << panic_h << ")\n";
 
+    db<Setup>(INF) << "IDT[255]=" << idt[255]
+		   << " (" << panic_h << ")\n";
 }
 
 //========================================================================
@@ -576,6 +619,7 @@ void PC_Setup::setup_sys_pt()
 		   << ",gdt="  << (void *)si->pmm.gdt
 		   << ",pt="   << (void *)si->pmm.sys_pt
 		   << ",pd="   << (void *)si->pmm.sys_pd
+		   << ",apic=" << (void *)si->pmm.apic_pt
 		   << ",info=" << (void *)si->pmm.sys_info
 		   << ",mem="  << (void *)si->pmm.phy_mem_pts
 		   << ",io="   << (void *)si->pmm.io_mem_pts
@@ -618,25 +662,44 @@ void PC_Setup::setup_sys_pt()
     unsigned int i;
     PT_Entry aux;
 
-    // OS code
+    // SYSTEM code
     for(i = 0, aux = si->pmm.sys_code;
 	i < MMU::pages(si->lm.sys_code_size);
 	i++, aux = aux + sizeof(Page))
 	sys_pt[MMU::page(SYS_CODE) + i] = aux | Flags::SYS;
 
-    // OS data
+    // SYSTEM data
     for(i = 0, aux = si->pmm.sys_data;
 	i < MMU::pages(si->lm.sys_data_size);
 	i++, aux = aux + sizeof(Page))
 	sys_pt[MMU::page(SYS_DATA) + i] = aux | Flags::SYS;
 
-    // OS stack (who needs a stack?)
+    // SYSTEM stack (used only during init)
     for(i = 0, aux = si->pmm.sys_stack;
 	i < MMU::pages(si->lm.sys_stack_size);
 	i++, aux = aux + sizeof(Page))
 	sys_pt[MMU::page(SYS_STACK) + i] = aux | Flags::SYS;
 
     db<Setup>(INF) << "SPT=" << *((Page_Table *)sys_pt) << "\n";
+}
+
+//========================================================================
+void PC_Setup::setup_apic_pt()
+{
+    db<Setup>(TRC) << "setup_apic_pt(apic=" << (void *)si->pmm.apic_pt
+		   << ")\n";
+
+    // Get the physical address for the APIC Page Table
+    PT_Entry * apic_pt = 
+	reinterpret_cast<PT_Entry *>((void *)si->pmm.apic_pt);
+
+    // Clear the APIC Page Table
+    memset(apic_pt, 0, MMU::PT_ENTRIES);
+
+    // Map the Local APIC at offset "0"
+    apic_pt[0] = APIC::LOCAL_APIC_PHY_ADDR | Flags::APIC;
+
+    db<Setup>(INF) << "APT=" << *((Page_Table *)apic_pt) << "\n";
 }
 
 //========================================================================
@@ -693,6 +756,9 @@ void PC_Setup::setup_sys_pd()
 	sys_pd[MMU::directory(IO_MEM) + i] =
 	    (si->pmm.io_mem_pts + i * sizeof(Page)) | Flags::PCI;
 
+    // Attach APIC's address space to APIC_MEM
+    sys_pd[MMU::directory(APIC_MEM)] = si->pmm.apic_pt | Flags::APIC;
+
     // Map the system 4M logical address space at the top of the 4Gbytes
     sys_pd[MMU::directory(SYS_CODE)] = si->pmm.sys_pt | Flags::SYS;
 
@@ -744,7 +810,8 @@ void PC_Setup::load_parts()
 
     // Load APP
     if(si->lm.has_app) {
-	ELF * app_elf = reinterpret_cast<ELF *>(&bi[si->bm.application_offset]);
+	ELF * app_elf =
+	    reinterpret_cast<ELF *>(&bi[si->bm.application_offset]);
 	db<Setup>(TRC) << "PC_Setup::load_app()\n";
 	if(app_elf->load_segment(0) < 0) {
 	    db<Setup>(ERR)
@@ -763,8 +830,10 @@ void PC_Setup::load_parts()
 //========================================================================
 void PC_Setup::call_next()
 {
-    // Check for next stage
-    Log_Addr ip;
+    int cpu_id = Machine::cpu_id();
+
+    // Check for next stage and obtain the entry point
+    register Log_Addr ip;
     if(si->lm.has_ini) {
 	db<Setup>(TRC) << "Executing system global constructors ...\n";
 	reinterpret_cast<void (*)()>((void *)si->lm.sys_entry)();
@@ -774,10 +843,19 @@ void PC_Setup::call_next()
     else
 	ip = si->lm.app_entry;
 
-    db<Setup>(TRC) << "PC_Setup::call_next(ip=" << ip
-		   << ",sp=" << (void *)(SYS_STACK + SYS_STACK_SIZE
-					 - 2 * sizeof(int))
-		   << ") => ";
+    // Arrange a stack for each CPU to support stage transition
+    // Boot CPU uses a full stack, while non-boot get reduced ones
+    // The 2 integers on the stacks are room for return addresses used
+    // in some EPOS architecures
+    register int sp;
+    if(cpu_id == 0) // Boot strap CPU (BSP)
+	sp = SYS_STACK + si->lm.sys_stack_size - 2 * sizeof(int);
+    else
+	sp = SYS_STACK + SYS_STACK_SIZE_AP * cpu_id - 2 * sizeof(int);
+
+    db<Setup>(TRC) << "PC_Setup::call_next(CPU=" << cpu_id 
+		   << ",ip=" << ip
+		   << ",sp=" << (void *)sp << ") => ";
     if(si->lm.has_ini)
 	db<Setup>(TRC) << "INIT\n";
     else if(si->lm.has_sys)
@@ -785,16 +863,18 @@ void PC_Setup::call_next()
     else
 	db<Setup>(TRC) << "APPLICATION\n";
 
-    db<Setup>(INF) << "PC_Setup ends here!\n\n";
+    db<Setup>(INF) << "Setup ends here!\n\n";
 
-    // The 2 integers on the stack are ???
-    ASM("movl	%0, %%esp	\n"
- 	"call	*%%ebx		\n"
- 	: : "i"(SYS_STACK + SYS_STACK_SIZE - 2 * sizeof(int)),
-	    "b"(static_cast<unsigned int>(ip)));
+    // Set SP and call next stage
+    Machine::smp_barrier(si->bm.n_cpus);
+    CPU::sp(sp);
+    static_cast<void (*)()>(ip)();
 
-    // This will only happen when INIT was called and Thread was disabled
-    reinterpret_cast<void (*)()>(si->lm.app_entry)();
+    if(Machine::cpu_id() == 0) { // Boot strap CPU (BSP)
+	// This will only happen when INIT was called and Thread was disabled
+	// Note we don't have the original stack here anymore!
+	reinterpret_cast<void (*)()>(si->lm.app_entry)();
+    }
 }
 
 //========================================================================
@@ -841,24 +921,37 @@ extern "C" { void _start(); }
 extern "C" { void setup(char * bi); }
 
 //========================================================================
-// _start	          
+// _start		  
 //
-// In order to support larger boot images, PC_BOOT uses all memory
-// below 640 Kb. In order to have more freedom to setup the system,
-// we move PC_SETUP to a more convenient location.
 // "_start" MUST BE PC_SETUP's first function, since PC_BOOT assumes 
-// offset 0 to be the entry point.
+// offset "0" to be the entry point. It is a kind of bridge between the 
+// assembly world of PC_BOOT and the C++ world of PC_SETUP. It's main
+// tasks are:
+//
+// - reload PC_SETUP from its ELF header (to the address it was compiled
+//   for);
+// - setup a stack for PC_SETUP (one for each CPU)
+// - direct non-boot CPUs into the trampoline code inside PC_BOOT
+//
 // The initial stack pointer is inherited from PC_BOOT (i.e.,
 // somewhere below 0x7c00).
+//
 // We can't "kout" here because the data segment is unreachable
 // and "kout" has static data.
+//
 // THIS FUNCTION MUST BE RELOCATABLE, because it won't run at the
 // address it has been compiled for.
 //------------------------------------------------------------------------
 void _start()
 {
-    // Set EFLAGS (disable interrupts)
+    // Set EFLAGS
     CPU::flags(CPU::flags() & CPU::FLAG_CLEAR);
+
+    // Disable interrupts
+    CPU::int_disable();
+
+    // Initialize the APIC (if present)
+    APIC::init(APIC::LOCAL_APIC_PHY_ADDR);
 
     // The boot strap loaded the boot image at BOOT_IMAGE_ADDR
     char * bi = reinterpret_cast<char *>(Traits<PC>::BOOT_IMAGE_ADDR);
@@ -866,40 +959,77 @@ void _start()
     // Get the System_Info  (first thing in the boot image)
     System_Info<PC> * si = reinterpret_cast<System_Info<PC> *>(bi);
 
-    // Check SETUP integrity and get information about its ELF structure
-    ELF * elf = reinterpret_cast<ELF *>(&bi[si->bm.setup_offset]);
-    if(!elf->valid())
- 	Machine::panic();
-    char * entry = reinterpret_cast<char *>(elf->entry());
+    // SMP conditional start up
+    if(APIC::id() == 0) { // Boot strap CPU (BSP)
 
-    // Test if we can access the address for which SETUP has been compiled
-    *entry = 'G';
-    if(*entry != 'G')
-	Machine::panic();
+	// Initialize shared CPU counter
+	si->bm.n_cpus = 1;
 
-    // Load SETUP considering the address in the ELF header
-    // Check if this wouldn't destroy the boot image
-    char * addr = reinterpret_cast<char *>(elf->segment_address(0));
-    int size = elf->segment_size(0);
-    if(addr <= &bi[si->bm.img_size])
-	Machine::panic();
-    if(elf->load_segment(0) < 0)
-	Machine::panic();
+	// Broadcast INIT IPI to all APs excluding self
+	APIC::ipi_init();
 
-    // Move the boot image to after SETUP, so there will be nothing else
-    // below SETUP to be preserved
-    // SETUP code + data + stack)
-    register char * dst =
-	MMU::align_page(entry + size + sizeof(MMU::Page));
-    memcpy(dst, bi, si->bm.img_size);
+	// Broadcast STARTUP IPI to all APs excluding self
+	// Non-boot CPUs will run a simplified boot strap just to
+	// trampoline them into protected mode
+	// PC_BOOT arranged for this code and stored it at 0x3000
+ 	APIC::ipi_start(0x3000);
+
+	// Check SETUP integrity and get information about its ELF structure
+	ELF * elf = reinterpret_cast<ELF *>(&bi[si->bm.setup_offset]);
+	if(!elf->valid())
+	    Machine::panic();
+	char * entry = reinterpret_cast<char *>(elf->entry());
+
+	// Test if we can access the address for which SETUP has been compiled
+	*entry = 'G';
+	if(*entry != 'G')
+	    Machine::panic();
+
+	// Load SETUP considering the address in the ELF header
+	// Be careful: by reloading SETUP, global variables have been reset to
+	// the values stored in the ELF data segment 
+	// Also check if this wouldn't destroy the boot image
+	char * addr = reinterpret_cast<char *>(elf->segment_address(0));
+	int size = elf->segment_size(0);
+
+	if(addr <= &bi[si->bm.img_size])
+	    Machine::panic();
+	if(elf->load_segment(0) < 0)
+	    Machine::panic();
+	APIC::remap(APIC::LOCAL_APIC_PHY_ADDR);
+
+	// Move the boot image to after SETUP, so there will be nothing else
+	// below SETUP to be preserved
+	// SETUP code + data + 1 stack per CPU)
+	register char * dst =
+	    MMU::align_page(entry + size + si->bm.n_cpus * sizeof(MMU::Page));
+	memcpy(dst, bi, si->bm.img_size);
+
+	// Passes a pointer to the just allocated stack pool to other CPUs
+	Stacks = dst;
+	Stacks_Ready = true;
+	
+    } else { // Additional CPUs (APs)
+
+	// Each AP increments the CPU counter
+	CPU::finc(reinterpret_cast<volatile int &>(si->bm.n_cpus));
+
+	// Wait for the boot strap CPU to get us a stack
+	while(!Stacks_Ready);
+
+    }
 
     // Setup a single page stack for SETUP after its data segment
-    // SP = "entry" + "size" + sizeof(Page)
-    // Be carefull: we'll lost our stack, so everything must be in regs!
-    ASM("movl %0, %%esp" : : "r" (dst));
+    // Boot strap CPU gets the highest address stack
+    // SP = "entry" + "size" + #CPU * sizeof(Page)
+    // Be careful: we'll loose our old stack now, so everything we still
+    // need to reach PC_Setup() must be in regs or globals!
+    register char * sp = 
+	const_cast<char *>(Stacks) - sizeof(MMU::Page) * APIC::id();
+    ASM("movl %0, %%esp" : : "r" (sp));
 
     // Pass the boot image to SETUP
-    ASM("pushl %0" : : "r" (dst));
+    ASM("pushl %0" : : "r" (Stacks));
 
     // Call setup()
     // the assembly is necessary because the compiler generates
@@ -911,5 +1041,6 @@ void setup(char * bi)
 {
     kerr << endl;
     kout << endl;
+
     PC_Setup pc_setup(bi);
 }
