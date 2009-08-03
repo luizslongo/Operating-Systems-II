@@ -123,6 +123,8 @@ template <> struct Traits<PC_Common>: public Traits<void>
 
 template <> struct Traits<PC>: public Traits<PC_Common>
 {
+    static const bool SMP = false;
+
     static const unsigned int CLOCK = 797886000;
 
     static const unsigned int BOOT_IMAGE_ADDR = 0x00008000;
