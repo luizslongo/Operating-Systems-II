@@ -11,7 +11,15 @@ class Init_System
 {
 public:
     Init_System() {
-	db<Init>(TRC) << "\nInit_System()\n";
+	db<Init>(TRC) << "\nInit_System(CPU=" << Machine::cpu_id() << ")\n";
+
+
+	// Only the boot CPU runs INIT
+ 	if(Traits<Machine>::SMP) {
+	    Machine::smp_barrier();
+	    if(Machine::cpu_id() != 0)
+		return;
+	}
 
 	// Initialize the processor
 	db<Init>(INF) << "Initializing the CPU: \n";
@@ -46,7 +54,7 @@ public:
     }
 };
 
-// Global object "init_system"  must be constructed first.
+// Global object "init_system" must be constructed first.
 Init_System init_system;
 
 __END_SYS

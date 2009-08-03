@@ -2,6 +2,7 @@
 
 #include <utility/heap.h>
 #include <mmu.h>
+#include <machine.h>
 #include <application.h>
 
 __BEGIN_SYS
@@ -10,7 +11,15 @@ class Init_Application
 {
 public:
     Init_Application() {
-	db<Init>(TRC) << "\nInit_Application()\n";
+	db<Init>(TRC) << "\nInit_Application(CPU="
+		      << Machine::cpu_id() << ")\n";
+
+	// Only the boot CPU runs INIT
+ 	if(Traits<Machine>::SMP) {
+	    Machine::smp_barrier();
+	    if(Machine::cpu_id() != 0)
+		return;
+	}
 
 	// Initialize Application's heap
 	db<Init>(INF) << "Initializing application's heap \n";
