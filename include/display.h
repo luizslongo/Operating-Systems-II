@@ -31,22 +31,34 @@ private:
 public:
     //Power Management
     enum {
-        FULL                = UART::LIGHT,//Display only sends data
-	OFF                 = UART::OFF, //Disabled
+        FULL                = UART::LIGHT, // Display doesn't need RxD
+	OFF                 = UART::OFF,
 	LIGHT               = OFF,
 	STANDBY             = OFF
     };
 
 public:
-    Serial_Display() : _line(0), _column(0) { }
+    Serial_Display() {}
 
-    void clear(){
+    static void remap() {
+	// Display must be on very early in the boot process, so it is
+	// subject to memory remappings. We also cannot be sure about 
+	// global constructors, so _uart is manually reconstructed here
+	new (&_uart) UART;
+
+	_line = 0;
+	_column = 0;
+    }
+
+    static void clear() {
+	_line = 0;
+	_column = 0;
 	escape();
 	put('2');
 	put('J');
     };
 
-    void putc(char c) {
+    static void putc(char c) {
 	switch(c) {
 	case '\n':
 	    scroll();
@@ -63,21 +75,21 @@ public:
 	}
     };
 
-    void puts(const char * s) {
+    static void puts(const char * s) {
 	while(*s != '\0')
 	    putc(*s++);
     }
 
-    void geometry(int * lines, int * columns) {
+    static void geometry(int * lines, int * columns) {
 	*lines = LINES;
 	*columns = COLUMNS;
     }
 
-    void position(int * line, int * column) {
+    static void position(int * line, int * column) {
 	*line = _line;
 	*column = _column;
     }
-    void position(int line, int column) {
+    static void position(int line, int column) {
 	_line = line;
 	_column = column;
 	escape();
@@ -87,23 +99,21 @@ public:
 	put('H');	
     }
 
-    char power() { return power(); }
-    void power(char ps) {
-	power(ps);
-    }
+    static char power() { return power(); }
+    static void power(char ps) { power(ps); }
 
 private:
 
-    void put(char c) {
+    static void put(char c) {
 	_uart.put(c);
     }
 
-    void escape() {
+    static void escape() {
 	put(ESC);
 	put('[');
     }
 
-    void puti(unsigned char value) {
+    static void puti(unsigned char value) {
 	unsigned char digit = '0';
 	while(value >= 100) {
 	    digit++;     
@@ -121,16 +131,16 @@ private:
 	put('0' + value);
     }
 
-    void scroll() {
+    static void scroll() {
 	put(CR);
 	put(LF);
 	_column = 0;
     }
 
 private:
-    UART _uart;
-    int _line;
-    int _column;
+    static UART _uart;
+    static int _line;
+    static int _column;
 };
 
 __END_SYS
