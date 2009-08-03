@@ -184,16 +184,22 @@ public:
 	// subject to memory remappings. We also cannot be sure about 
 	// global constructors here
 	remap(addr);
-	clear();
-	enable();
-	connect();
+	if(Traits<PC>::SMP) {
+	    clear();
+	    enable();
+	    connect();
+	} else
+	    disable();
     }
 
     static void init() {
 	remap();
-	clear();
-	enable();
-	connect();
+	if(Traits<PC>::SMP) {
+	    clear();
+	    enable();
+	    connect();
+	} else
+	    disable();
     }
 
 private:
