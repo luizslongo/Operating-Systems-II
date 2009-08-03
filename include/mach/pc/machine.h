@@ -8,6 +8,7 @@
 #include <mmu.h>
 #include <tsc.h>
 #include <machine.h>
+#include "apic.h"
 
 __BEGIN_SYS
 
@@ -43,6 +44,33 @@ public:
     static int irq2int(int i) { return i + HARD_INT; }
     static int int2irq(int i) { return i - HARD_INT; }
     
+    static unsigned int n_cpus() { return _n_cpus; }
+    static unsigned int cpu_id() { return APIC::id(); }
+
+    static void smp_init(unsigned int n_cpus) {
+	_n_cpus = n_cpus;
+	APIC::remap(); 
+    };
+
+    static void smp_barrier(unsigned int n_cpus = _n_cpus) {
+	_bp_finished = false;
+	if(cpu_id() == 0) { // Boot strap CPU (BSP)
+ 	    db<Machine>(TRC) << "CPU=" << cpu_id() << "/" << n_cpus << "\n";
+	    // Wait for other CPUs to finish SETUP
+	    while(_ap_finished < (n_cpus - 1));
+
+	    // Signalize other CPUs they can preceed to the next stage
+	    _bp_finished = true;
+	    _ap_finished = 0;
+	} else { // Additional CPUs (APs)
+ 	    db<Machine>(TRC) << "CPU=" << cpu_id() << "/" << n_cpus << "\n";
+	    // Signalize the Boot CPU that this CPU is finished with SETUP
+	    CPU::finc(reinterpret_cast<volatile int &>(_ap_finished));
+    
+	    while(!_bp_finished);
+	}
+    }
+
     static void init();
 
 private:
@@ -59,6 +87,9 @@ private:
 			Reg32 error, Reg32 eip, Reg32 cs, Reg32 eflags);
 
 private:
+    static volatile unsigned int  _n_cpus;
+    static volatile bool _bp_finished;
+    static volatile unsigned int  _ap_finished;
     static int_handler * _int_vector[INT_VECTOR_SIZE];
 };
 
