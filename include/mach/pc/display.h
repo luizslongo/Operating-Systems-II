@@ -35,14 +35,14 @@ public:
 public:
     MC6845() {}
 
-    volatile int position() {
+    static volatile int position() {
 	CPU::out8(ADDR_REG, ADDR_CUR_POS_LO);
 	int pos = CPU::in8(DATA_REG);
 	CPU::out8(ADDR_REG, ADDR_CUR_POS_HI);
 	pos |= CPU::in8(DATA_REG) << 8;
 	return pos;
     }
-    void position(int pos) {
+    static void position(int pos) {
 	CPU::out8(ADDR_REG, ADDR_CUR_POS_LO);
 	CPU::out8(DATA_REG, pos & 0xff);
 	CPU::out8(ADDR_REG, ADDR_CUR_POS_HI);
@@ -70,10 +70,13 @@ public:
     };
 
 public:
-    PC_Display(Frame_Buffer fb = reinterpret_cast<Frame_Buffer>(FB))
-	: _frame_buffer(fb) {}
+    PC_Display() {}
 
-    void putc(char c){
+    static void remap(Frame_Buffer fb = reinterpret_cast<Frame_Buffer>(FB)) {
+	_frame_buffer = fb; 
+    }
+
+    static void putc(char c) {
 	unsigned int pos = MC6845::position();
 
 	switch(c) {
@@ -93,24 +96,24 @@ public:
 	MC6845::position(pos);
     }
 
-    void puts(const char * s) {
+    static void puts(const char * s) {
 	while(*s != '\0')
 	    putc(*s++);
     }
 
-    void clear() { 
+    static void clear() { 
 	for(unsigned int i = 0; i < LINES * COLUMNS; i++)
 	    _frame_buffer[i] = NORMAL | ' ';
 	MC6845::position(0);
     }
 
-    void position(int * line, int * column) {
+    static void position(int * line, int * column) {
 	unsigned int pos = MC6845::position();
 	*column = pos % COLUMNS;
 	*line = pos / COLUMNS;
     }
 
-    void position(int line, int column) {
+    static void position(int line, int column) {
 	if(line > LINES)
 	    line = LINES;
 	if(column > COLUMNS)
@@ -126,13 +129,13 @@ public:
 	MC6845::position(line * COLUMNS + column);
     }
 
-    void geometry(int * lines, int * columns) {
+    static void geometry(int * lines, int * columns) {
 	*lines = LINES;
 	*columns = COLUMNS;
     }
 
 private:
-    void scroll() {
+    static void scroll() {
 	for(unsigned int i = 0; i < (LINES - 1) * COLUMNS; i++)
 	    _frame_buffer[i] = _frame_buffer[i + COLUMNS];
 	for(unsigned int i = (LINES - 1) * COLUMNS; i < LINES * COLUMNS; i++)
@@ -140,7 +143,7 @@ private:
     }
 
 private:
-    Frame_Buffer _frame_buffer;
+    static Frame_Buffer _frame_buffer;
 };
 
 __END_SYS
