@@ -7,16 +7,32 @@
 
 __BEGIN_SYS
 
+// Forwarder to the running thread id
+namespace This_Thread
+{
+    unsigned int id();
+}
+
+// Recursive Spin Lock
 class Spin
 {
 public:
-    Spin(): _lock(false) {}
+    Spin(): _level(0), _owner(-1) {}
 
-    void acquire() { while(CPU::tsl(_lock)); }
-    void release() { _lock = false; }
+    void acquire() {
+	int id = This_Thread::id();
+
+	while(CPU::cas(_owner, -1, id));
+	_level++;
+    }
+
+    void release() {
+    	if(!--_level) _owner = -1;
+    }
 
 private:
-    volatile bool _lock;
+    volatile unsigned int _level;
+    volatile int _owner;
 };
 
 __END_SYS
