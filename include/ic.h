@@ -10,10 +10,11 @@ __BEGIN_SYS
 class IC_Common
 {
 protected:
-    IC_Common() {};
+    IC_Common() {}
 
 public:
-    typedef unsigned int IRQ;
+    typedef unsigned int Interrupt_Id;
+    typedef void (* Interrupt_Handler)(Interrupt_Id);
 };
 
 __END_SYS
