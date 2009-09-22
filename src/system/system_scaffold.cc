@@ -32,7 +32,7 @@ public:
     First_Object() {
 	Display::remap();
 
- 	if(Traits<Machine>::SMP) {
+ 	if(Traits<Thread>::smp) {
 	    System_Info<Machine> * si =
 		reinterpret_cast<System_Info<Machine> *>(
 		    Memory_Map<Machine>::SYS_INFO);
