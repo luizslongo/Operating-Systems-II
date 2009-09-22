@@ -47,7 +47,6 @@ volatile bool Paging_Ready = false;
 class PC_Setup
 {
 private:
-    static const unsigned int HARD_INT = Traits<PC>:: HARDWARE_INT_OFFSET;
     static const unsigned int BOOT_IMAGE_ADDR = Traits<PC>::BOOT_IMAGE_ADDR;
     static const unsigned int SYS_STACK_SIZE = Traits<PC>::SYSTEM_STACK_SIZE;
     static const unsigned int SYS_STACK_SIZE_AP = 512;
@@ -133,7 +132,7 @@ PC_Setup::PC_Setup(char * boot_image)
     if(cpu_id == 0) { // Boot strap CPU (BSP)
 
 	// Disable hardware interrupt triggering at PIC
-	IC::init();
+	i8259A::reset();
 
     	// Build the memory model
 	build_lm();
@@ -865,10 +864,17 @@ void PC_Setup::call_next()
 
     db<Setup>(INF) << "Setup ends here!\n\n";
 
-    // Set SP and call next stage
     Machine::smp_barrier(si->bm.n_cpus);
-    CPU::sp(sp);
-    static_cast<void (*)()>(ip)();
+
+    // Set SP and call next stage
+    if(!Traits<Thread>::smp && (cpu_id != 0)) { // Non-boot strap CPU (AP)
+	db<Setup>(INF) << "SMP disable by config, halting this CPU ("
+		       << cpu_id << ")!\n\n";
+	CPU::halt();
+    } else {
+	CPU::sp(sp);
+	static_cast<void (*)()>(ip)();
+    }
 
     if(Machine::cpu_id() == 0) { // Boot strap CPU (BSP)
 	// This will only happen when INIT was called and Thread was disabled
@@ -951,7 +957,7 @@ void _start()
     CPU::int_disable();
 
     // Initialize the APIC (if present)
-    APIC::init(APIC::LOCAL_APIC_PHY_ADDR);
+    APIC::reset(APIC::LOCAL_APIC_PHY_ADDR);
 
     // The boot strap loaded the boot image at BOOT_IMAGE_ADDR
     char * bi = reinterpret_cast<char *>(Traits<PC>::BOOT_IMAGE_ADDR);
