@@ -4,6 +4,7 @@
 #define __pc_timer_h
 
 #include <cpu.h>
+#include <ic.h>
 #include <timer.h>
 
 __BEGIN_SYS
@@ -66,7 +67,8 @@ public:
 public:
     i8253() {}
 
-    void config(int channel, Count count, bool interrupt) {
+    void config(int channel, Count count, 
+		bool interrupt = true, bool periodic = true) {
 	if(channel > 2)
 	    return;
 
@@ -84,7 +86,6 @@ public:
 	    cnt = CNT_0;
 	    control = DEF_CTRL_C0;
 	}
-//	if(interrupt) control |= IOTC;
 
 	CPU::out8(CTRL, control);
 	CPU::out8(cnt, count & 0xff);
@@ -117,6 +118,9 @@ public:
 	return count;
     }
 
+    void enable(int channel) {} // Is there a way to disable counting?
+    void disable(int channel) {}
+
     void reset(int channel) {
         // 8253 doesn't feature a reset, but a counter can be reset by writing
         // the corresponding control register
@@ -147,8 +151,38 @@ public:
     }
 };
 
-class PC_Timer: public Timer_Common, private i8253
+// APIC Timer (Local to each CPU on MP configurations)
+class APIC_Timer
 {
+public:
+    // The timer's counter
+    typedef CPU::Reg32 Count;
+
+    static const unsigned int CLOCK = Traits<PC>::BUS_CLOCK / 16;
+
+public:
+    APIC_Timer() {}
+
+    void config(int channel, Count count,
+		bool interrupt = true, bool periodic = true) {
+	APIC::config_timer(count, interrupt, periodic);
+    }
+
+    void enable(int channel) { APIC::enable_timer(); }
+    void disable(int channel) { APIC::disable_timer(); }
+
+    Count read(int channel) { return APIC::read_timer(); }
+    
+    void reset(int channel) { APIC::reset_timer(); }
+};
+
+// PC_Timer uses i8253 on single-processor machines and the APIC timer on MPs
+class PC_Timer: public Timer_Common,
+		private IF<Traits<Thread>::smp, APIC_Timer, i8253>::Result
+{
+private:
+    typedef IF<Traits<Thread>::smp, APIC_Timer, i8253>::Result Base;
+
 public:
     PC_Timer() {}
 
@@ -164,18 +198,18 @@ public:
 	reset();
     }
 
+    void enable() { Base::enable(0); }
+    void disable() { Base::disable(0); }
+
+    Tick read() { return Base::read(0); }
+
     void reset() {
 	db<PC_Timer>(TRC) << "PC_Timer::reset() => {freq=" << frequency()
 			  << ",count=" << _count << "}\n";
 
-	config(0, _count, true); 
+	config(0, _count); 
     }
    
-    void enable() { }
-    void disable() { }
-
-    Tick read() { return i8253::read(0); }
-
 private:
     static Hertz count2freq(const Count & c) { return CLOCK / c; }
     static Count freq2count(const Hertz & f) { return CLOCK / f; }
