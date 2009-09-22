@@ -6,6 +6,7 @@
 #include <utility/debug.h>
 #include <utility/string.h>
 #include <utility/list.h>
+#include <utility/spin.h>
 
 __BEGIN_SYS
 
@@ -31,10 +32,13 @@ public:
     void * realloc(void * ptr, unsigned int bytes);
 
     void free(void * ptr) {
-	int * addr = (int *)ptr;
+	int * addr = reinterpret_cast<int *>(ptr);
 	free(&addr[-1], addr[-1]);
     }
     void free(void * ptr, unsigned int bytes);
+
+private:
+    Spin _lock;
 };
 
 __END_SYS
