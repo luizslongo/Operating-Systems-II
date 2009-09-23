@@ -9,8 +9,11 @@ const char OStream::_digits[] = "0123456789abcdef";
 
 void OStream::print(const char * s)
 {
-    Display _display;
-    _display.puts(s); 
+    static volatile bool lock = false;
+
+    if(Traits<Thread>::smp) while(CPU::tsl(lock));
+    Display::puts(s); 
+    if(Traits<Thread>::smp) lock = false;
 }
 
 int OStream::itoa(int v, char * s)
