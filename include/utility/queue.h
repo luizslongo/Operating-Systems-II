@@ -57,6 +57,9 @@ public:
     using List::insert;
     using List::remove;
     using List::search;
+    using List::chosen;
+    using List::choose;
+    using List::choose_another;
 };
 
 
@@ -121,6 +124,38 @@ public:
 	return tmp;
     }
 
+    Element * volatile & chosen() { 
+	_lock.acquire(); 
+	Element * volatile & tmp = List::chosen();
+	_lock.release();
+	return tmp;
+    }
+
+    Element * choose() { 
+	_lock.acquire(); 
+	Element * tmp = List::choose();
+	_lock.release();
+	return tmp;
+    }
+    Element * choose_another() { 
+	_lock.acquire(); 
+	Element * tmp = List::choose_another();
+	_lock.release();
+	return tmp;
+    }
+    Element * choose(Element * e) {
+	_lock.acquire(); 
+	Element * tmp = List::choose(e);
+	_lock.release();
+	return tmp;
+    }
+    Element * choose(const Object_Type * obj) {
+	_lock.acquire(); 
+	Element * tmp = List::choose(obj);
+	_lock.release();
+	return tmp;
+    }
+
 private:
     Spin _lock;
 };
@@ -128,145 +163,34 @@ private:
 
 // Queue
 template <typename T,
-	  bool atomic = false,
 	  typename El = List_Elements::Doubly_Linked<T> >
-class Queue: public Queue_Wrapper<List<T, El>, atomic> {};
+class Queue: public Queue_Wrapper<List<T, El>, 
+				  Traits<Thread>::smp> {};
 
 
 // Ordered Queue
 template <typename T, 
 	  typename R = List_Element_Rank, 
-	  bool atomic = false,
 	  typename El = List_Elements::Doubly_Linked_Ordered<T, R> >
-class Ordered_Queue: public Queue_Wrapper<Ordered_List<T, R, El>, atomic> {};
+class Ordered_Queue: public Queue_Wrapper<Ordered_List<T, R, El>, 
+					  Traits<Thread>::smp> {};
 
 
 // Relatively-Ordered Queue
 template <typename T, 
 	  typename R = List_Element_Rank, 
-	  bool atomic = false,
 	  typename El = List_Elements::Doubly_Linked_Ordered<T, R> >
-class Relative_Queue: public Queue_Wrapper<Relative_List<T, R, El>, atomic> {};
+class Relative_Queue: public Queue_Wrapper<Relative_List<T, R, El>, 
+					   Traits<Thread>::smp> {};
 
 
-// Scheduling Queue (non-atomic)
+// Scheduling Queue
 template <class T,
 	  typename R = List_Element_Rank,  
 	  bool atomic = false,
 	  typename El  = List_Elements::Doubly_Linked_Ordered<T, R> >
-class Scheduling_Queue: private Scheduling_List<T, R, El>
-{
-private:
-    typedef Scheduling_List<T, R, El> Base;
-
-public:
-    typedef typename Base::Object_Type Object_Type;
-    typedef typename Base::Element Element;
-
-public:
-    using Base::empty;
-    using Base::size;
-    using Base::head;
-    using Base::tail;
-    using Base::chosen;
-    using Base::insert;
-    using Base::remove;
-    using Base::choose;
-    using Base::choose_another;
-};
-
-// Scheduling Queue (atomic)
-template <class T, typename R, typename El>
-class Scheduling_Queue<T, R, true, El>: private Scheduling_List<T, R, El>
-{
-private:
-    typedef Scheduling_List<T, R, El> Base;
-
-public:
-    typedef typename Base::Object_Type Object_Type;
-    typedef typename Base::Element Element;
-
-public:
-    bool empty() {
-	_lock.acquire(); 
-	bool tmp = Base::empty();
-	_lock.release();
-	return tmp;
-    }
-    unsigned int size() {
-	_lock.acquire(); 
-	unsigned int tmp = Base::size();
-	_lock.release();
-	return tmp;
-    }
-
-    Element * head() { 
-	_lock.acquire(); 
-	Element * tmp = Base::head();
-	_lock.release();
-	return tmp;
-    }
-    Element * tail() { 
-	_lock.acquire(); 
-	Element * tmp = Base::tail();
-	_lock.release();
-	return tmp;
-    }
-
-    Element * volatile & chosen() { 
-	_lock.acquire(); 
-	Element * volatile & tmp = Base::chosen();
-	_lock.release();
-	return tmp;
-    }
-
-    void insert(Element * e) { 
-	_lock.acquire(); 
-	Base::insert(e);
-	_lock.release();
-    }
-
-    Element * remove(Element * e) {
-	_lock.acquire(); 
-	Element * tmp = Base::remove(e); 
-	_lock.release();
-	return tmp;
-    }
-    Element * remove(const Object_Type * obj) {
-	_lock.acquire(); 
-	Element * tmp = Base::remove(obj); 
-	_lock.release();
-	return tmp;
-    }
-
-    Element * choose() { 
-	_lock.acquire(); 
-	Element * tmp = Base::choose();
-	_lock.release();
-	return tmp;
-    }
-    Element * choose_another() { 
-	_lock.acquire(); 
-	Element * tmp = Base::choose_another();
-	_lock.release();
-	return tmp;
-    }
-    Element * choose(Element * e) {
-	_lock.acquire(); 
-	Element * tmp = Base::choose(e);
-	_lock.release();
-	return tmp;
-    }
-    Element * choose(const Object_Type * obj) {
-	_lock.acquire(); 
-	Element * tmp = Base::choose(obj);
-	_lock.release();
-	return tmp;
-    }
-
-private:
-    Spin _lock;
-};
+class Scheduling_Queue: public Queue_Wrapper<Scheduling_List<T, R, El>, 
+					     Traits<Thread>::smp> {};
 
 __END_SYS
  
