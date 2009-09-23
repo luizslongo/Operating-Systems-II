@@ -2,7 +2,6 @@
 
 #include <utility/heap.h>
 #include <mmu.h>
-#include <machine.h>
 #include <thread.h>
 
 __BEGIN_SYS
@@ -14,7 +13,7 @@ public:
 
 	db<Init>(TRC) << "Init_First(CPU=" << Machine::cpu_id() << ")\n";
 
- 	if(Traits<Machine>::SMP)
+ 	if(Traits<Thread>::smp)
 	    Machine::smp_barrier();
 
 	// Initialize the Thread abstraction,

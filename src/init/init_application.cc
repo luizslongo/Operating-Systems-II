@@ -15,7 +15,7 @@ public:
 		      << Machine::cpu_id() << ")\n";
 
 	// Only the boot CPU runs INIT
- 	if(Traits<Machine>::SMP) {
+ 	if(Traits<Thread>::smp) {
 	    Machine::smp_barrier();
 	    if(Machine::cpu_id() != 0)
 		return;
