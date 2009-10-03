@@ -98,9 +98,7 @@ public:
     Heap_Wrapper() {}
 
     Heap_Wrapper(void * addr, unsigned int bytes): Heap_Common(addr, bytes) {
-	_lock.acquire();
 	free(addr, bytes); 
-	_lock.release();
     }
 
     void * alloc(unsigned int bytes) {
