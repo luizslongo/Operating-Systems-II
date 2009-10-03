@@ -430,15 +430,24 @@ public:
     static Interrupt_Handler int_vector(Interrupt_Id i) {
 	return (i < INTS) ? _int_vector[i] : 0;
     }
+
     static void int_vector(Interrupt_Id i, Interrupt_Handler h) {
-	db<PC>(INF) << "IC::int_vector(int=" << i << ",h=" 
+	db<IC>(INF) << "IC::int_vector(int=" << i << ",h=" 
 		    << (void *)h <<")\n";
 	if(i < INTS) _int_vector[i] = h;
     }
 
-    using Base::enable;
-    using Base::disable;
+    static void enable(int i = 0) {
+	db<IC>(INF) << "IC::enable(int=" << i << ")\n";
+	Base::enable(i);
+    }
 
+    static void disable(int i = 0) {
+	db<IC>(INF) << "IC::disable(int=" << i << ")\n";
+	Base::disable(i);
+    }
+
+    using Base::eoi;
     using Base::irq2int;
     using Base::int2irq;
 
