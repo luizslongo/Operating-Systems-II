@@ -1,10 +1,10 @@
 // EPOS-- PC Interrupt Dispatcher
 
-#include <mach/pc/machine.h>
+#include <mach/pc/ic.h>
 
 __BEGIN_SYS
 
-void PC::int_dispatch()
+void PC_IC::int_dispatch()
 {
     // id must be static because we don't have a stack frame
     static int id; 
@@ -778,23 +778,16 @@ void PC::int_dispatch()
 // 	"	movl	$255, %0				\n"
 	".L1:							\n"
         "	pushal						\n"
-	"	movb	$0x0b, %%al	# which IRQ?		\n"
-	"	outb	%%al, $0x20				\n"
-	"	inb	$0x20, %%al	# -> IRQ		\n"
-	"	andb    $4, %%al	# IRQ2 (slave)?		\n"
-	"	testb	%%al, %%al				\n"
-	"	je	.L2					\n"
-	"	movb	$0x20, %%al	# EIO			\n" 
-	"	outb	%%al, $0xa0	# EOI -> slave		\n" 
-	".L2:	movb	$0x20, %%al	# EIO			\n" 
- 	"	outb	%%al, $0x20	# EOI -> master		\n"
+ 	: : "m"(id));
+
+    ASM("	call	*%2					\n"
         "	movl    %0, %%eax				\n"
         "	pushl   %%eax					\n"
         "	call    *%1(,%%eax,4)				\n"
  	"	popl	%%eax					\n"
  	"	popal						\n"
 	"	iret						\n"
-	: : "m"(id), "m"(_int_vector[0]));
+ 	: : "m"(id), "m"(_int_vector[0]), "r"(PC_IC::eoi));
 }
 
 __END_SYS
