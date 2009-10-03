@@ -184,6 +184,8 @@ protected:
     typedef IF<Traits<Thread>::smp, APIC_Timer, i8253>::Result Engine;
     typedef Engine::Count Count;
 
+    static const unsigned int CHANNELS = 3;
+
     static const unsigned int FREQUENCY = Traits<PC_Timer>::FREQUENCY;
     static const unsigned int CLOCK = Engine::CLOCK;
     static const unsigned int COUNT = CLOCK / FREQUENCY;
