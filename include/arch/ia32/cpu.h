@@ -340,25 +340,38 @@ public:
 
     static bool tsl(volatile bool & lock) {
 	register bool old = 1;
-	ASMV("xchg %0, %2" : "=a"(old) : "a"(old), "m"(lock)); return old;
+	ASMV("lock xchg %0, %2"
+	     : "=a"(old) 
+	     : "a"(old), "m"(lock) 
+	     : "memory"); 
+	return old;
     }
+
     static int finc(volatile int & value) {
 	register int old = 1;
-	ASMV("lock\n"
-	     "xadd %0, %2" : "=a"(old) : "a"(old), "m"(value)); return old;
+	ASMV("lock xadd %0, %2"
+	     : "=a"(old)
+	     : "a"(old), "m"(value)
+	     : "memory"); 
+	return old;
     }
+
     static int fdec(volatile int & value) {
 	register int old = -1;
-	ASMV("lock\n"
-	     "xadd %0, %2" : "=a"(old) : "a"(old), "m"(value)); return old;
+	ASMV("lock xadd %0, %2"
+	     : "=a"(old)
+	     : "a"(old), "m"(value)
+	     : "memory"); 
+	return old;
     }
-    static bool cas(volatile int & value, int cmp, int rep) {
-	register bool ret;
-	ASMV("lock\n"
-	     "cmpxchgl %2, %1\n"
-	     "setz %0" : "=q"(ret) : "m"(value), "r"(rep), "a"(cmp));
-	return ret;
-    }
+
+    static int cas(volatile int & value, int compare, int replacement) {
+	ASMV("lock cmpxchgl %2, %3\n" 
+	     : "=a"(compare) 
+	     : "a"(compare), "r"(replacement), "m"(value)
+	     : "memory");
+	return compare;
+   }
 
     static Reg32 htonl(Reg32 v)	{
  	ASMV("bswap %0" : "=r" (v) : "0" (v), "r" (v)); return v;
