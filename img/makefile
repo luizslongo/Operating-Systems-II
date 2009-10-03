@@ -2,14 +2,15 @@
 
 include	../makedefs
 
-all:		epos.img
+all:		$(APPLICATION).img
 
-epos.img:	FORCE
+$(APPLICATION).img: $(APPLICATION)
 		$(MKBI) $@ $(APPLICATION)
 
-install:	all
+run:		$(APPLICATION).img
+		$(QEMU) -fda $(APPLICATION).img | tee $(APPLICATION).out
 
 clean		:
-		$(CLEAN) *_boot *_setup *_system $(APPLICATION) *.img *.o
+		$(CLEAN) *_boot *_setup *_system $(APPLICATION) *.o
 
 FORCE:
