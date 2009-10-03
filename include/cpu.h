@@ -72,22 +72,25 @@ public:
 	lock = 1;
 	return old;
     }
-    static int finc(volatile int & number) {
-	int old = number;
-	number++;
+
+    static int finc(volatile int & value) {
+	int old = value;
+	value++;
 	return old;
     }
-    static int fdec(volatile int & number) {
-	int old = number;
-	number--;
+
+    static int fdec(volatile int & value) {
+	int old = value;
+	value--;
 	return old;
     }
-    static bool cas(volatile int & number, int cmp, int rep) {
-	if(number == cmp) {
-	    number = rep;
-	    return true;
-	} else
-	    return false;
+
+    static int cas(volatile int & value, int compare, int replacement) {
+	int old = value;
+	if(value == compare) {
+	    value = replacement;
+	}
+	return old;
     }
 
 protected:
@@ -95,6 +98,7 @@ protected:
         return (((v << 24) & 0xff000000) | ((v <<  8) & 0x00ff0000) |
                 ((v >>  8) & 0x0000ff00) | ((v >> 24) & 0x000000ff));
     }
+
     static Reg16 swap16(Reg16 v)     {
         return ((v << 8) & 0xFF00) | ((v >> 8) & 0x00FF);
     }
