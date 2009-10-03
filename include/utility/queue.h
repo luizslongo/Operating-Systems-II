@@ -36,6 +36,7 @@
 #ifndef __queue_h
 #define	__queue_h
 
+#include <cpu.h>
 #include "list.h"
 #include "spin.h"
 
@@ -50,110 +51,144 @@ public:
     typedef typename List::Element Element;
 
 public:
-    using List::empty;
-    using List::size;
-    using List::head;
-    using List::tail;
-    using List::insert;
-    using List::remove;
-    using List::search;
-    using List::chosen;
-    using List::choose;
-    using List::choose_another;
-};
+    void lock() { }
+    void unlock() { }
 
+    bool empty() { return List::empty(); }
+    unsigned int size() { return List::size(); }
+
+    Element * head() { return List::head(); }
+    Element * tail() { return List::tail(); }
+
+    void insert(Element * e) { List::insert(e); }
+
+    Element * remove() { return List::remove(); }
+    Element * remove(Element * e) { return List::remove(e); }
+    Element * remove(const Object_Type * obj) { return List::remove(obj); }
+
+    Element * search(const Object_Type * obj) {	return List::search(obj); }
+
+    Element * volatile & chosen() { return List::chosen(); }
+
+    Element * choose() { return List::choose(); }
+    Element * choose_another() { return List::choose_another(); }
+    Element * choose(Element * e) { return List::choose(e); }
+    Element * choose(const Object_Type * obj) {	return List::choose(obj); }
+};
 
 // Wrapper for atomic queues  
 template <typename List>
 class Queue_Wrapper<List, true>: private List
 {
+private:
+    static const bool smp = Traits<Thread>::smp;
+
 public:
     typedef typename List::Object_Type Object_Type;
     typedef typename List::Element Element;
 
 public:
+    void lock() { _lock.acquire(); }
+    void unlock() { _lock.release(); }
+
     bool empty() {
-	_lock.acquire(); 
+	enter();
 	bool tmp = List::empty();
-	_lock.release();
+	leave();
 	return tmp;
     }
+
     unsigned int size() {
-	_lock.acquire(); 
+	enter(); 
 	unsigned int tmp = List::size();
-	_lock.release();
+	leave();
 	return tmp;
     }
 
     Element * head() { 
-	_lock.acquire(); 
+	enter(); 
 	Element * tmp = List::head();
-	_lock.release();
+	leave();
 	return tmp;
     }
+
     Element * tail() { 
-	_lock.acquire(); 
+	enter(); 
 	Element * tmp = List::tail();
-	_lock.release();
+	leave();
 	return tmp;
     }
 
     void insert(Element * e) { 
-	_lock.acquire(); 
+	enter(); 
 	List::insert(e);
-	_lock.release();
+	leave();
     }
 
     Element * remove() { 
-	_lock.acquire(); 
+	enter(); 
 	Element * tmp = List::remove();
-	_lock.release();
+	leave();
 	return tmp;
     }
+
     Element * remove(const Object_Type * obj) {
-	_lock.acquire(); 
+	enter(); 
 	Element * tmp = List::remove(obj); 
-	_lock.release();
+	leave();
 	return tmp;
     }
 
     Element * search(const Object_Type * obj) {
-	_lock.acquire(); 
+	enter(); 
 	Element * tmp = List::search(obj);
-	_lock.release();
+	leave();
 	return tmp;
     }
 
     Element * volatile & chosen() { 
-	_lock.acquire(); 
+	enter(); 
 	Element * volatile & tmp = List::chosen();
-	_lock.release();
+	leave();
 	return tmp;
     }
 
     Element * choose() { 
-	_lock.acquire(); 
+	enter(); 
 	Element * tmp = List::choose();
-	_lock.release();
+	leave();
 	return tmp;
     }
+
     Element * choose_another() { 
-	_lock.acquire(); 
+	enter(); 
 	Element * tmp = List::choose_another();
-	_lock.release();
+	leave();
 	return tmp;
     }
     Element * choose(Element * e) {
-	_lock.acquire(); 
+	enter(); 
 	Element * tmp = List::choose(e);
-	_lock.release();
+	leave();
 	return tmp;
     }
+
     Element * choose(const Object_Type * obj) {
-	_lock.acquire(); 
+	enter(); 
 	Element * tmp = List::choose(obj);
-	_lock.release();
+	leave();
 	return tmp;
+    }
+
+private:
+    void enter() {
+	CPU::int_disable();
+	if(smp) _lock.acquire(); 
+    }
+
+    void leave() {
+	if(smp) _lock.release();
+	CPU::int_disable();
     }
 
 private:
@@ -163,25 +198,27 @@ private:
 
 // Queue
 template <typename T,
+	  bool atomic = false,
 	  typename El = List_Elements::Doubly_Linked<T> >
-class Queue: public Queue_Wrapper<List<T, El>, 
-				  Traits<Thread>::smp> {};
+class Queue: public Queue_Wrapper<List<T, El>, atomic> {};
 
 
 // Ordered Queue
 template <typename T, 
 	  typename R = List_Element_Rank, 
+	  bool atomic = false,
 	  typename El = List_Elements::Doubly_Linked_Ordered<T, R> >
-class Ordered_Queue: public Queue_Wrapper<Ordered_List<T, R, El>, 
-					  Traits<Thread>::smp> {};
+class Ordered_Queue:
+    public Queue_Wrapper<Ordered_List<T, R, El>, atomic> {};
 
 
 // Relatively-Ordered Queue
 template <typename T, 
 	  typename R = List_Element_Rank, 
+	  bool atomic = false,
 	  typename El = List_Elements::Doubly_Linked_Ordered<T, R> >
-class Relative_Queue: public Queue_Wrapper<Relative_List<T, R, El>, 
-					   Traits<Thread>::smp> {};
+class Relative_Queue:
+    public Queue_Wrapper<Relative_List<T, R, El>, atomic> {};
 
 
 // Scheduling Queue
@@ -189,8 +226,8 @@ template <class T,
 	  typename R = List_Element_Rank,  
 	  bool atomic = false,
 	  typename El  = List_Elements::Doubly_Linked_Ordered<T, R> >
-class Scheduling_Queue: public Queue_Wrapper<Scheduling_List<T, R, El>, 
-					     Traits<Thread>::smp> {};
+class Scheduling_Queue: 
+    public Queue_Wrapper<Scheduling_List<T, R, El>, atomic> {};
 
 __END_SYS
  
