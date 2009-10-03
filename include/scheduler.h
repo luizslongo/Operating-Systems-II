@@ -5,7 +5,6 @@
 
 #include <utility/queue.h>
 #include <rtc.h>
-#include <tsc.h>
 
 __BEGIN_SYS
 
@@ -26,6 +25,10 @@ namespace Scheduling_Criteria
 	    IDLE   = (unsigned(1) << (sizeof(int) * 8 - 1)) -1
 	};
 
+	static const bool timed = false;
+	static const bool preemptive = true;
+	static const bool energy_aware = false;
+
     public:
 	Priority(int p = NORMAL): _priority(p) {}
 
@@ -45,6 +48,10 @@ namespace Scheduling_Criteria
 	    IDLE   = (unsigned(1) << (sizeof(int) * 8 - 1)) -1
 	};
 
+	static const bool timed = true;
+	static const bool preemptive = true;
+	static const bool energy_aware = false;
+
     public:
 	Round_Robin(int p = NORMAL): Priority(p) {}
     };
@@ -58,6 +65,10 @@ namespace Scheduling_Criteria
 	    NORMAL = 1,
 	    IDLE   = (unsigned(1) << (sizeof(int) * 8 - 1)) -1
 	};
+
+	static const bool timed = false;
+	static const bool preemptive = false;
+	static const bool energy_aware = false;
 
     public:
 	FCFS(int p = NORMAL)
@@ -75,6 +86,10 @@ namespace Scheduling_Criteria
 	    NORMAL    = APERIODIC,
 	    IDLE      = (unsigned(1) << (sizeof(int) * 8 - 1)) -1
 	};
+
+	static const bool timed = true;
+	static const bool preemptive = true;
+	static const bool energy_aware = false;
 
     public:
 	RM(int p): Priority(p), _deadline(0) {} // Aperiodic
@@ -96,6 +111,10 @@ namespace Scheduling_Criteria
 	    IDLE      = (unsigned(1) << (sizeof(int) * 8 - 1)) -1
 	};
 
+	static const bool timed = false;
+	static const bool preemptive = true;
+	static const bool energy_aware = false;
+
     public:
 	EDF(int p): Priority(p), _deadline(0) {} // Aperiodic
 	EDF(const RTC::Microsecond & d): Priority(d >> 8), _deadline(d) {}
@@ -113,16 +132,18 @@ template <typename T>
 class Scheduler
 {
 protected:
+    typedef typename T::Criterion Policy;
     typedef typename T::Criterion Rank_Type;
+    typedef Scheduling_Queue<T, Rank_Type> Queue;
 
-    static const bool smp = Traits<Thread>::smp;
-
-    typedef Scheduling_Queue<T, Rank_Type, smp> Queue;
+    static const bool timed = Policy::timed;
+    static const bool preemptive = Policy::preemptive;
+    static const bool energy_aware = Policy::energy_aware;
 
 public:
     typedef T Object_Type;
     typedef typename Queue::Element Element;
-
+ 
 public:
     Scheduler() {}
 
@@ -135,18 +156,23 @@ public:
     void insert(T * obj) {
 	db<Scheduler>(TRC) << "Scheduler[chosen=" << chosen()
 			   << "]::insert(" << obj << ")\n";
+
 	_ready.insert(obj->link()); 
     }
 
     T * remove(T * obj) {
 	db<Scheduler>(TRC) << "Scheduler[chosen=" << chosen()
 			   << "]::remove(" << obj << ")\n";
-	return _ready.remove(obj) ? obj : 0;
+
+	Element * e = _ready.remove(obj->link());
+
+	return e ? obj : 0;
     }
 
     void suspend(T * obj) {
 	db<Scheduler>(TRC) << "Scheduler[chosen=" << chosen()
 			   << "]::suspend(" << obj << ")\n";
+
 	_ready.remove(obj);
 // 	_suspend.insert(obj->link());
     }
@@ -154,6 +180,7 @@ public:
     void resume(T * obj) {
 	db<Scheduler>(TRC) << "Scheduler[chosen=" << chosen() 
 			   << "]::resume(" << obj << ")\n";
+
 // 	_suspended.remove(obj->link());
 	_ready.insert(obj->link());
     }
@@ -161,31 +188,40 @@ public:
     T * choose() {
 	db<Scheduler>(TRC) << "Scheduler[chosen=" << chosen()
 			   << "]::choose() => ";
+
 	T * obj = _ready.choose()->object();
+
 	db<Scheduler>(TRC) << obj << "\n";
+	
 	return obj;
     }
 
     T * choose_another() {
 	db<Scheduler>(TRC) << "Scheduler[chosen=" << chosen()
 			   << "]::choose_another() => ";
+
 	T * obj = _ready.choose_another()->object();
+
 	db<Scheduler>(TRC) << obj << "\n";
+
 	return obj;
     }
 
     T * choose(T * obj) {
 	db<Scheduler>(TRC) << "Scheduler[chosen=" << chosen() 
 			   << "]::choose(" << obj;
+
 	if(!_ready.choose(obj))
 	    obj = 0;
-	db<Scheduler>(TRC) << ") => " << obj << "\n";
+
+	db<Scheduler>(TRC) << obj << "\n";
+	
 	return obj;
     }
 
 private:
-    Scheduling_Queue<Object_Type, Rank_Type, smp> _ready;
-//     Queue<Object_Type, smp, Element> _suspended;
+    Scheduling_Queue<Object_Type, Rank_Type> _ready;
+//     Queue<Object_Type, Element> _suspended;
 };
 
 __END_SYS
