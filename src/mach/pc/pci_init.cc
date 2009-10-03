@@ -9,7 +9,7 @@ void PC_PCI::init()
 {
     _phy_io_mem = System::info()->pmm.io_mem_base;
 
-    db<Init, PC_PCI>(TRC) << "PC_PCI::init(pmm.io_mem=" << _phy_io_mem 
+    db<Init, PCI>(TRC) << "PCI::init(pmm.io_mem=" << _phy_io_mem 
 			  << ")\n";
 
     CPU::int_disable();

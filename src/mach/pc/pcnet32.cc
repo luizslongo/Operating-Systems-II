@@ -13,8 +13,8 @@ void PCNet32::int_handler(unsigned int interrupt)
 {
     PCNet32 * dev = get(interrupt);
 
-    db<PC_NIC>(TRC) << "PCNet32::int_handler(int=" << interrupt
-		    << ",dev=" << dev << ")\n";
+    db<NIC>(TRC) << "PCNet32::int_handler(int=" << interrupt
+		 << ",dev=" << dev << ")\n";
     if(!dev)
 	db<PC>(WRN) << "PCNet32::int_handler: handler not found\n";
     else 

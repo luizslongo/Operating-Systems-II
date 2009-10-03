@@ -68,8 +68,8 @@ void PC_PCI::header(const PC_PCI::Locator & l, PC_PCI::Header * h)
 
 PC_PCI::Locator PC_PCI::scan(const PC_PCI::Class_Id & c, int order)
 {
-    db<PC_PCI>(TRC) << "PC_PCI::scan(class=" << c
-		    << ",order=" << order << ")\n";
+    db<PCI>(TRC) << "PCI::scan(class=" << c
+		 << ",order=" << order << ")\n";
 
     for(int bus = 0 ; bus <= MAX_BUS; bus++)
 	for(int dfn = 0; dfn <= MAX_DEV_FN; dfn++)
@@ -83,9 +83,9 @@ PC_PCI::Locator PC_PCI::scan(const PC_PCI::Class_Id & c, int order)
 PC_PCI::Locator PC_PCI::scan(const PC_PCI::Vendor_Id & v, 
 			     const PC_PCI::Device_Id & d, int order)
 {
-    db<PC_PCI>(TRC) << "PC_PCI::scan(vend=" << v
-		    << ",dev=" << d
-		    << ",order=" << order << ")\n";
+    db<PCI>(TRC) << "PCI::scan(vend=" << v
+		 << ",dev=" << d
+		 << ",order=" << order << ")\n";
 
     for(int bus = 0 ; bus <= MAX_BUS; bus++)
 	for(int dfn = 0; dfn <= MAX_DEV_FN; dfn++)
