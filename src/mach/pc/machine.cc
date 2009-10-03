@@ -6,8 +6,6 @@ __BEGIN_SYS
 
 // Class attributes
 volatile unsigned int PC::_n_cpus;
-volatile bool PC::_bp_finished;
-volatile unsigned int PC::_ap_finished;
 
 // Class methods
 void PC::panic()
