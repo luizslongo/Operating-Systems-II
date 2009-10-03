@@ -49,7 +49,6 @@ class PC_Setup
 private:
     static const unsigned int BOOT_IMAGE_ADDR = Traits<PC>::BOOT_IMAGE_ADDR;
     static const unsigned int SYS_STACK_SIZE = Traits<PC>::SYSTEM_STACK_SIZE;
-    static const unsigned int SYS_STACK_SIZE_AP = 512;
 
     static const unsigned int SYS_INFO = Memory_Map<PC>::SYS_INFO;
     static const unsigned int IDT = Memory_Map<PC>::IDT;
@@ -257,8 +256,7 @@ void PC_Setup::build_lm()
     si->lm.sys_data = ~0U;
     si->lm.sys_data_size = 0;
     si->lm.sys_stack = SYS_STACK;
-    si->lm.sys_stack_size = SYS_STACK_SIZE
-	+ (si->bm.n_cpus - 1) * SYS_STACK_SIZE_AP;
+    si->lm.sys_stack_size = SYS_STACK_SIZE * si->bm.n_cpus;
     if(si->lm.has_sys) {
 	ELF * sys_elf = reinterpret_cast<ELF *>(&bi[si->bm.system_offset]);
 	if(!sys_elf->valid()) {
@@ -846,11 +844,8 @@ void PC_Setup::call_next()
     // Boot CPU uses a full stack, while non-boot get reduced ones
     // The 2 integers on the stacks are room for return addresses used
     // in some EPOS architecures
-    register int sp;
-    if(cpu_id == 0) // Boot strap CPU (BSP)
-	sp = SYS_STACK + si->lm.sys_stack_size - 2 * sizeof(int);
-    else
-	sp = SYS_STACK + SYS_STACK_SIZE_AP * cpu_id - 2 * sizeof(int);
+    register int sp =
+	SYS_STACK + SYS_STACK_SIZE * (cpu_id + 1) - 2 * sizeof(int);
 
     db<Setup>(TRC) << "PC_Setup::call_next(CPU=" << cpu_id 
 		   << ",ip=" << ip
