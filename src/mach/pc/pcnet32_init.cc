@@ -56,10 +56,10 @@ void PCNet32::init(unsigned int unit)
     // Register the device
     _devices[unit].in_use = false;
     _devices[unit].device = dev;
-    _devices[unit].interrupt = Machine::irq2int(irq);
+    _devices[unit].interrupt = IC::irq2int(irq);
     
     // Install interrupt handler
-    Machine::int_vector(Machine::irq2int(irq), &int_handler);
+    IC::int_vector(IC::irq2int(irq), &int_handler);
 
     // Enable interrupts for device
     IC::enable(irq);

@@ -58,11 +58,11 @@ void E100::init(unsigned int unit)
     // Register the device
     _devices[unit].in_use = false;
     _devices[unit].device = dev;
-    _devices[unit].interrupt = Machine::irq2int(irq);
+    _devices[unit].interrupt = IC::irq2int(irq);
 
     // Install interrupt handler
-    PC::int_vector(PC::irq2int(irq), &int_handler);
-    PC::int_vector(39, &int_nullhandler);
+    IC::int_vector(IC::irq2int(irq), &int_handler);
+    IC::int_vector(39, &int_nullhandler);
 
     // Enable interrupts for device
     IC::enable(irq);
