@@ -40,26 +40,21 @@ public:
 	}
     };
 
-    static void smp_barrier(unsigned int n_cpus = _n_cpus) {
-	if(smp) {
-	    _bp_finished = false;
-	    if(cpu_id() == 0) { // Boot strap CPU (BSP)
-		db<Machine>(TRC) << "CPU=" << cpu_id() 
-				 << "/" << n_cpus << "\n";
-		// Wait for other CPUs to finish SETUP
-		while(_ap_finished < (n_cpus - 1));
+    static void smp_barrier(int n_cpus = _n_cpus) {
+	static volatile int ready[2];
+	static volatile int i;
 
-		// Signalize other CPUs they can preceed to the next stage
-		_bp_finished = true;
-		_ap_finished = 0;
-	    } else { // Additional CPUs (APs)
-		db<Machine>(TRC) << "CPU=" << cpu_id()
-				 << "/" << n_cpus << "\n";
-		// Signalize the Boot CPU that this CPU is finished with SETUP
-		CPU::finc(reinterpret_cast<volatile int &>(_ap_finished));
-    
-		while(!_bp_finished);
-	    }
+	if(smp) {
+	    int j = i;
+
+	    CPU::finc(ready[j]);
+
+	    if(cpu_id() == 0) {
+		while(ready[j] < n_cpus); // wait for all CPUs to be ready
+		i = !i;                   // toggle ready
+		ready[j] = 0;             // signalizes waiting CPUs
+	    } else
+		while(ready[j]);          // wait for CPU[0] signal
 	}
     }
 
@@ -67,8 +62,6 @@ public:
 
 private:
     static volatile unsigned int  _n_cpus;
-    static volatile bool _bp_finished;
-    static volatile unsigned int  _ap_finished;
 };
 
 __END_SYS
