@@ -13,7 +13,7 @@ pc_boot.o:      pc_boot.s
 		as86 -0 -o $@ $<
 
 pc_install:	pc_boot
-		$(DD) if=$< of=$<.tmp ibs=32 skip=1 obs=512
+		$(DD) if=$< of=$<.tmp ibs=32 skip=1 obs=512 >& /dev/null
 		$(INSTALL) $(MACH)_boot.tmp $(IMG)/$(MACH)_boot
 		$(CLEAN) $(MACH)_boot.tmp
 
