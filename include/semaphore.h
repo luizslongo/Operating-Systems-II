@@ -4,7 +4,7 @@
 #define __semaphore_h
 
 #include <utility/handler.h>
-#include <common/synchronizer.h>
+#include <synchronizer.h>
 
 __BEGIN_SYS
 
@@ -36,11 +36,13 @@ private:
     volatile int _value;
 };
 
-class Handler_Semaphore: public Handler
+
+// An event handler that triggers a semaphore (see handler.h)
+class Semaphore_Handler: public Handler
 {
 public:
-    Handler_Semaphore(Semaphore * h) : _handler(h) {}
-    ~Handler_Semaphore() {}
+    Semaphore_Handler(Semaphore * h) : _handler(h) {}
+    ~Semaphore_Handler() {}
 
     void operator()() { _handler->v(); }
 	
