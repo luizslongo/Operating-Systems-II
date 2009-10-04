@@ -79,7 +79,7 @@ public:
     static void wait_next() { self()->suspend(); }
 
 private:
-    Handler_Thread _handler;
+    Thread_Handler _handler;
     Alarm _alarm;
 };
 

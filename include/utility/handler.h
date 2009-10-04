@@ -21,11 +21,11 @@ public:
     void operator delete(void * object) {}
 };
 
-class Handler_Function: public Handler
+class Function_Handler: public Handler
 {
 public:
-    Handler_Function(Function * h): _handler(h) {}
-    ~Handler_Function() {}
+    Function_Handler(Function * h): _handler(h) {}
+    ~Function_Handler() {}
 
     void operator()() { _handler(); }
 	
