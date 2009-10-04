@@ -1,15 +1,21 @@
 // EPOS-- Thread Abstraction Implementation
 
 #include <system/kmalloc.h>
-#include <thread.h>
-#include <alarm.h>
 #include <machine.h>
+#include <thread.h>
+#include <scheduler.h>
+#include <alarm.h>
 
 __BEGIN_SYS
 
 // Class attributes
-unsigned int Thread::_thread_count = 0;
+Spin Thread::_lock;
+unsigned int Thread::_thread_count;
 Scheduler<Thread> Thread::_scheduler;
+Scheduler_Timer * Thread::_timer;
+
+// This_Thread class attributes
+bool This_Thread::_not_booting;
 
 // Methods
 void Thread::common_constructor(Log_Addr entry, unsigned int stack_size) 
@@ -21,22 +27,19 @@ void Thread::common_constructor(Log_Addr entry, unsigned int stack_size)
 		    << ",s=" << stack_size
 		    << "},context={b=" << _context
 		    << "," << *_context << "}) => " << this << "\n";
-    
+
     _thread_count++;
-    
+
     _scheduler.insert(this);
     if((_state != READY) && (_state != RUNNING))
 	_scheduler.suspend(this);
 
-    if(preemptive)
-	reschedule();
-
-    allow_scheduling();
+    reschedule();
 }
 
 Thread::~Thread()
 {
-    prevent_scheduling();
+    lock();
 
     db<Thread>(TRC) << "~Thread(this=" << this 
 		    << ",state=" << _state
@@ -46,74 +49,91 @@ Thread::~Thread()
 		    << "," << *_context << "})\n";
 
     switch(_state) {
-    case BEGINNING:  _scheduler.resume(this); break;
-    case RUNNING: exit(-1); break; // Self deleted itself!
-    case READY: break;
-    case SUSPENDED: _scheduler.resume(this); break;
-    case WAITING: _waiting->remove(this); _scheduler.resume(this); break;
-    case FINISHING: break;
+    case BEGINNING:
+	_scheduler.resume(this);
+	_thread_count--;
+	break;
+    case RUNNING:  // Self deleted itself!
+	exit(-1); 
+	break;
+    case READY:
+	_thread_count--;
+	break;
+    case SUSPENDED: 
+	_scheduler.resume(this);
+	_thread_count--;
+	break;
+    case WAITING:
+	_waiting->remove(this);
+	_scheduler.resume(this);
+	_thread_count--;
+	break;
+    case FINISHING: // Already called exit()
+	break;
     }
     
     _scheduler.remove(this);
     
-    allow_scheduling();
+    if(smp)
+	_lock.release();
+    if(active_scheduler)
+	CPU::int_enable();
 
     kfree(_stack);
 }
 
 void Thread::priority(const Priority & p)
 {
-    prevent_scheduling();
+    lock();
 
     db<Thread>(TRC) << "Thread::priority(this=" << this
 		    << ",prio=" << p << ")\n";
 
+    _scheduler.remove(this);
     _link.rank(int(p));
+    _scheduler.insert(this);
 
-    if(preemptive)
-	reschedule();
-
-    allow_scheduling();
+    reschedule();
 }
 
 int Thread::join()
 {
-    prevent_scheduling();
+    lock();
 
     db<Thread>(TRC) << "Thread::join(this=" << this
 		    << ",state=" << _state << ")\n";
 
     if(_state != FINISHING) {
 	_joining = running();
-	_joining->suspend(); // implicitly allows scheduling
-    }
-
-    allow_scheduling();
+	_joining->suspend(true);
+    } else
+	unlock();
 
     return *static_cast<int *>(_stack);
 }
 
 void Thread::pass()
 {
-    prevent_scheduling();
+    lock();
 
     db<Thread>(TRC) << "Thread::pass(this=" << this << ")\n";
 
     Thread * prev = running();
-
     Thread * next = _scheduler.choose(this);
+
     if(next)
-	switch_threads(prev, next);
-    else
+	dispatch(prev, next, false);
+    else {
  	db<Thread>(WRN) << "Thread::pass => thread (" << this 
  			<< ") not ready\n";
-
-    allow_scheduling();
+	unlock();
+    }
 }
 
-void Thread::suspend()
+void Thread::suspend(bool locked)
 {
-    prevent_scheduling();
+    if(!locked)
+	lock();
 
     db<Thread>(TRC) << "Thread::suspend(this=" << this << ")\n";
 
@@ -124,15 +144,13 @@ void Thread::suspend()
 
     Thread * next = running();
 
-    Alarm::reset_master();
-    switch_threads(prev, next); // null if this != running() at the begin
+    dispatch(prev, next);
 
-    allow_scheduling();
 }	    
 
 void Thread::resume()
 {
-    prevent_scheduling();
+    lock();
 
     db<Thread>(TRC) << "Thread::resume(this=" << this << ")\n";
 
@@ -142,10 +160,7 @@ void Thread::resume()
     } else
 	db<Thread>(WRN) << "Resume called for unsuspended object!\n";
 
-    if(preemptive)
-	reschedule();
-
-    allow_scheduling();
+    reschedule();
 }
 
 
@@ -153,22 +168,19 @@ void Thread::resume()
 
 void Thread::yield()
 {
-    prevent_scheduling();
+    lock();
 
     db<Thread>(TRC) << "Thread::yield(running=" << running() << ")\n";
 	
-	Thread * prev = running();
-	Thread * next = _scheduler.choose_another();
-    
-    Alarm::reset_master();
-	switch_threads(prev, next);
+    Thread * prev = running();
+    Thread * next = _scheduler.choose_another();
 
-    allow_scheduling();
+    dispatch(prev, next);
 }
 
 void Thread::exit(int status)
 {
-    prevent_scheduling();
+    lock();
 
     db<Thread>(TRC) << "Thread::exit(running=" << running() 
 		    <<",status=" << status << ")\n";
@@ -186,15 +198,12 @@ void Thread::exit(int status)
 	thr->_joining = 0;
     }
 
-    Alarm::reset_master();
-    switch_threads(thr, _scheduler.choose());
-
-    allow_scheduling();
+    dispatch(thr, _scheduler.choose());
 }
 
 void Thread::sleep(Queue * q)
 {
-    prevent_scheduling();
+    lock();
 
     db<Thread>(TRC) << "Thread::sleep(running=" << running()
 		    << ",q=" << q << ")\n";
@@ -206,15 +215,12 @@ void Thread::sleep(Queue * q)
     q->insert(&thr->_link);
     thr->_waiting = q;
 
-    Alarm::reset_master();
-    switch_threads(thr, _scheduler.chosen());
-    
-    allow_scheduling();
+    dispatch(thr, _scheduler.chosen());
 }
 
 void Thread::wakeup(Queue * q) 
 {
-    prevent_scheduling();
+    lock();
 
     db<Thread>(TRC) << "Thread::wakeup(running=" << running()
 		    << ",q=" << q << ")\n";
@@ -226,15 +232,12 @@ void Thread::wakeup(Queue * q)
 	_scheduler.resume(t);
     }
 
-    if(preemptive)
-	reschedule();
-
-    allow_scheduling();
+    reschedule();
 }
 
 void Thread::wakeup_all(Queue * q) 
 {
-    prevent_scheduling();
+    lock();
 
     db<Thread>(TRC) << "Thread::wakeup_all(running=" << running()
 		    << ",q=" << q << ")\n";
@@ -246,37 +249,27 @@ void Thread::wakeup_all(Queue * q)
 	_scheduler.resume(t);
     }
 
-    if(preemptive)
-	reschedule();
-
-    allow_scheduling();
+    reschedule();
 }
 
-void Thread::time_reschedule()
+void Thread::reschedule(bool preempt)
 {
-    // timer invokes the master handler with interrupts enabled!
-
-    prevent_scheduling(); 
-	
+    if(preempt) {
+	db<Thread>(TRC) << "Thread::reschedule()\n";
+    
 	Thread * prev = running();
 	Thread * next = _scheduler.choose();
-    
-	switch_threads(prev, next);
-
-    // scheduling will be reenabled by switch_threads
+	
+	dispatch(prev, next);
+    } else 
+	unlock();
 }
 
-void Thread::reschedule()
+void Thread::time_slicer() 
 {
-    // scheduling must be disabled at this point
+    lock();
 
-    Thread * prev = running();
-    Thread * next = _scheduler.choose();
-
-    Alarm::reset_master();
-    switch_threads(prev, next);
-
-    // scheduling will be reenabled by switch_threads
+    reschedule(true);
 }
 
 void Thread::implicit_exit() 
@@ -302,6 +295,14 @@ int Thread::idle()
     }
 
     return 0;
+}
+
+// Id forwarder to the spin lock
+unsigned int This_Thread::id() 
+{ 
+    return _not_booting ?
+	reinterpret_cast<unsigned int>(Thread::self()) :
+	Machine::cpu_id() + 1;
 }
 
 __END_SYS
