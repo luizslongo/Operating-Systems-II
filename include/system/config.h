@@ -20,6 +20,41 @@
 #define __HEADER_MACH(X)        <mach/MACH/X.h>
 
 //============================================================================
+// ARCHITECTURE AND MACHINE SELECTION
+//============================================================================
+// Architecture selection
+#if defined (__ia32)
+#define ARCH ia32
+#elif defined (__avr8)
+#define ARCH avr8
+#elif defined (__ppc32)
+#define ARCH ppc32
+#elif defined (__mips32)
+#define ARCH mips32
+#else
+#error Architecture not selected!
+#endif
+
+#define __ARCH_TRAITS_H         __HEADER_ARCH(traits)
+
+// Machine selection
+#if defined (__pc)
+#define MACH pc
+#elif defined (__atmega16)
+#define MACH atmega16
+#elif defined (__atmega128)
+#define MACH atmega128
+#elif defined (__ml310)
+#define MACH ml310
+#elif defined (__plasma)
+#define MACH plasma
+#else
+#error Machine not selected!
+#endif
+
+#define __MACH_TRAITS_H         __HEADER_MACH(traits)
+
+//============================================================================
 // CONFIGURATION
 //============================================================================
 #include <system/types.h>
@@ -28,55 +63,42 @@
 
 __BEGIN_SYS
 
-// Architecture configuration
 #if defined (__ia32)
 
-#define ARCH ia32
 typedef IA32			CPU;
 typedef IA32_MMU		MMU;
 typedef IA32_TSC		TSC;
-#define __CPU_H			__HEADER_ARCH(cpu)
-#define __TSC_H			__HEADER_ARCH(tsc)
-#define __MMU_H			__HEADER_ARCH(mmu)
 
 #elif defined (__avr8)
 
-#define ARCH avr8
 typedef AVR8			CPU;
 typedef AVR8_MMU		MMU;
 typedef AVR8_TSC		TSC;
-#define __CPU_H			__HEADER_ARCH(cpu)
-#define __TSC_H			__HEADER_ARCH(tsc)
-#define __MMU_H			__HEADER_ARCH(mmu)
 
 #elif defined (__ppc32)
 
-#define ARCH ppc32
 typedef PPC32                    CPU;
 typedef PPC32_MMU                MMU;
 typedef PPC32_TSC                TSC;
-#define __CPU_H                 __HEADER_ARCH(cpu)
-#define __TSC_H                 __HEADER_ARCH(tsc)
-#define __MMU_H                 __HEADER_ARCH(mmu)
 
 #elif defined (__mips32)
 
-#define ARCH mips32
 typedef MIPS32                  CPU;
 typedef MIPS32_MMU              MMU;
 typedef MIPS32_TSC              TSC;
-#define __CPU_H                 __HEADER_ARCH(cpu)
-#define __TSC_H                 __HEADER_ARCH(tsc)
-#define __MMU_H                 __HEADER_ARCH(mmu)
 
 #else
 #error Architecture not selected!
 #endif
 
+#define __CPU_H			__HEADER_ARCH(cpu)
+#define __TSC_H			__HEADER_ARCH(tsc)
+#define __MMU_H			__HEADER_ARCH(mmu)
+
+
 // Machine configuration
 #if defined (__pc)
 
-#define MACH			pc
 typedef PC			Machine;
 typedef PC_PCI			PCI;
 typedef PC_IC			IC;
@@ -93,19 +115,13 @@ typedef Dummy<1>		ADC;
 typedef Dummy<2>		Temperature_Sensor;
 typedef Dummy<3>		Photo_Sensor;
 typedef Dummy<4>		Accelerometer;
-#define __MACH_H		__HEADER_MACH(machine)
 #define __PCI_H			__HEADER_MACH(pci)
-#define __IC_H			__HEADER_MACH(ic)
-#define __TIMER_H		__HEADER_MACH(timer)
 #define __RTC_H			__HEADER_MACH(rtc)
 #define __EEPROM_H		__HEADER_MACH(eeprom)
-#define __UART_H		__HEADER_MACH(uart)
-#define __DISPLAY_H		__HEADER_MACH(display)
 #define __NIC_H			__HEADER_MACH(nic)
 
 #elif defined (__atmega16)
 
-#define MACH atmega16
 typedef ATMega16		Machine;
 typedef ATMega16_IC		IC;
 typedef ATMega16_Timer		Timer;
@@ -122,19 +138,15 @@ typedef ATMega16_ADC		ADC;
 typedef Dummy<1>		Temperature_Sensor;
 typedef Dummy<2>		Photo_Sensor;
 typedef Dummy<3>		Accelerometer;
-#define __MACH_H		__HEADER_MACH(machine)
-#define __IC_H			__HEADER_MACH(ic)
-#define __TIMER_H		__HEADER_MACH(timer)
 #define __RTC_H			__HEADER_MACH(rtc)
 #define __EEPROM_H		__HEADER_MACH(eeprom)
-#define __UART_H		__HEADER_MACH(uart)
 #define __SPI_H			__HEADER_MACH(spi)
 #define __NIC_H			__HEADER_MACH(nic)
 #define __ADC_H			__HEADER_MACH(adc)
+#define __SENSOR_H		__HEADER_MACH(sensor)
 
 #elif defined (__atmega128)
 
-#define MACH atmega128
 typedef ATMega128		Machine;
 typedef ATMega128_IC		IC;
 typedef ATMega128_Timer		Timer;
@@ -151,12 +163,8 @@ typedef ATMega128_ADC		ADC;
 typedef ATMega128_Temperature_Sensor	Temperature_Sensor;
 typedef ATMega128_Photo_Sensor	Photo_Sensor;
 typedef ATMega128_Accelerometer	Accelerometer;
-#define __MACH_H		__HEADER_MACH(machine)
-#define __IC_H			__HEADER_MACH(ic)
-#define __TIMER_H		__HEADER_MACH(timer)
 #define __RTC_H			__HEADER_MACH(rtc)
 #define __EEPROM_H		__HEADER_MACH(eeprom)
-#define __UART_H		__HEADER_MACH(uart)
 #define __SPI_H			__HEADER_MACH(spi)
 #define __NIC_H			__HEADER_MACH(nic)
 #define __ADC_H			__HEADER_MACH(adc)
@@ -164,7 +172,6 @@ typedef ATMega128_Accelerometer	Accelerometer;
 
 #elif defined (__ml310)
 
-#define MACH                    ml310
 typedef ML310                   Machine;
 typedef ML310_PCI               PCI;
 typedef ML310_IC                IC;
@@ -179,17 +186,11 @@ typedef Dummy<2>                ADC;
 typedef Dummy<3>                Temperature_Sensor;
 typedef Dummy<4>                Photo_Sensor;
 typedef Dummy<5>		Accelerometer;
-#define __MACH_H                __HEADER_MACH(machine)
-#define __PCI_H                 __HEADER_MACH(pci)
-#define __IC_H                  __HEADER_MACH(ic)
-#define __TIMER_H               __HEADER_MACH(timer)
 #define __RTC_H                 __HEADER_MACH(rtc)
-#define __UART_H                __HEADER_MACH(uart)
 #define __NIC_H                 __HEADER_MACH(nic)
 
 #elif defined (__plasma)
 
-#define MACH                    plasma
 typedef PLASMA                  Machine;
 typedef Dummy<0>                PCI;
 typedef PLASMA_IC               IC;
@@ -204,18 +205,16 @@ typedef Dummy<3>                ADC;
 typedef Dummy<4>                Temperature_Sensor;
 typedef Dummy<5>                Photo_Sensor;
 typedef Dummy<6>                Accelerometer;
-#define __MACH_H                __HEADER_MACH(machine)
-#define __PCI_H                 __HEADER_MACH(pci)
-#define __IC_H                  __HEADER_MACH(ic)
-#define __TIMER_H               __HEADER_MACH(timer)
-#define __RTC_H                 __HEADER_MACH(rtc)
-#define __UART_H                __HEADER_MACH(uart)
-#define __NIC_H                 __HEADER_MACH(nic)
-#define __RTC_H                 __HEADER_MACH(rtc)
 
 #else
 #error Machine not selected!
 #endif
+
+#define __MACH_H		__HEADER_MACH(machine)
+#define __IC_H			__HEADER_MACH(ic)
+#define __TIMER_H		__HEADER_MACH(timer)
+#define __UART_H		__HEADER_MACH(uart)
+#define __DISPLAY_H		__HEADER_MACH(display)
 
 __END_SYS
 
@@ -229,5 +228,3 @@ __END_SYS
 #include <utility/debug.h>
 
 #endif
-
-
