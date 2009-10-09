@@ -16,7 +16,7 @@ Alarm::Queue Alarm::_requests;
 // Methods
 Alarm::Alarm(const Microsecond & time, Handler * handler, int times):
     _ticks(ticks(time)), _handler(handler),
-    _times(times), _private_timer(false), _link(this, _ticks)
+    _times(times), _link(this, _ticks)
 {
     lock();
 
