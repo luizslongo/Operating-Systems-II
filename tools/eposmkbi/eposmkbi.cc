@@ -21,7 +21,7 @@
 
 // CONSTANTS
 static const unsigned int MAX_SI_LEN = 512;
-static const char CFG_FILE[] = "cfg/eposmkbi.conf";
+static const char CFG_FILE[] = "etc/eposmkbi.conf";
 
 // TYPES
 
