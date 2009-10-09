@@ -10,7 +10,6 @@ __USING_SYS
 
 const int iterations = 10;
 
-Display display;
 Semaphore sem_display;
 
 Thread * phil[5];
@@ -27,27 +26,28 @@ int philosopher(int n, int l, int c)
     for(int i = iterations; i > 0; i--) {
 
 	sem_display.p();
-	display.position(l, c);
+	Display::position(l, c);
  	cout << "thinking";
 	sem_display.v();
 
-	Alarm::delay(100000);
+	Delay thinking(100000);
 
 	chopstick[first]->p();   // get first chopstick
 	chopstick[second]->p();   // get second chopstick
 
 	sem_display.p();
-	display.position(l, c);
+	Display::position(l, c);
 	cout << " eating ";
 	sem_display.v();
 
-	Alarm::delay(500000);
+	Delay eating(500000);
+
 	chopstick[first]->v();   // release first chopstick
 	chopstick[second]->v();   // release second chopstick
     }
 
     sem_display.p();
-    display.position(l, c);
+    Display::position(l, c);
     cout << "  done  ";
     sem_display.v();
 
@@ -57,7 +57,7 @@ int philosopher(int n, int l, int c)
 int main()
 {
     sem_display.p();
-    display.clear();
+    Display::clear();
     cout << "The Philosopher's Dinner:\n";
 	
     for(int i = 0; i < 5; i++)
@@ -72,15 +72,15 @@ int main()
     cout << "Philosophers are alife and hungry!\n";
 	
     cout << "The dinner is served ...\n";
-    display.position(7, 44);
+    Display::position(7, 44);
     cout << '/';
-    display.position(13, 44);
+    Display::position(13, 44);
     cout << '\\';
-    display.position(16, 35);
+    Display::position(16, 35);
     cout << '|';
-    display.position(13, 27);
+    Display::position(13, 27);
     cout << '/';
-    display.position(7, 27);
+    Display::position(7, 27);
     cout << '\\';
     sem_display.v();
 
@@ -88,7 +88,7 @@ int main()
     for(int i = 0; i < 5; i++) {
 	int ret = phil[i]->join();
 	sem_display.p();
-	display.position(20 + i, 0);
+	Display::position(20 + i, 0);
 	cout << "Philosopher " << i << " ate " << ret << " times \n";
 	sem_display.v();
     }

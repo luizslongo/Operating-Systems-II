@@ -10,7 +10,6 @@ __USING_SYS
 
 const int iterations = 10;
 
-Display display;
 Thread * phil[5];
 Mutex chopstick[5];
 Mutex display_mutex;
@@ -27,24 +26,24 @@ int philosopher(int n, int l, int c)
 
     for(int i = iterations; i > 0; i--) {
 	display_mutex.lock();
-	display.position(l, c);
+	Display::position(l, c);
  	cout << "thinking";
 	display_mutex.unlock();
-	Alarm::delay(1000000);
+	Delay thinking (1000000);
 
 	chopstick[first].lock();   // get first chopstick
 	chopstick[second].lock();   // get second chopstick
 	display_mutex.lock();
-	display.position(l, c);
+	Display::position(l, c);
 	cout << " eating ";
 	display_mutex.unlock();
-	Alarm::delay(500000);
+	Delay eating(500000);
 	chopstick[first].unlock();   // release first chopstick
 	chopstick[second].unlock();   // release second chopstick
     }
 
     display_mutex.lock();
-    display.position(l, c);
+    Display::position(l, c);
     cout << "  done  ";
     display_mutex.unlock();
 
@@ -54,7 +53,7 @@ int philosopher(int n, int l, int c)
 int main()
 {
     display_mutex.lock();
-    display.clear();
+    Display::clear();
     cout << "The Philosopher's Dinner:\n";
 
     phil[0] = new Thread(&philosopher, 0, 5, 32);
@@ -66,15 +65,15 @@ int main()
     cout << "Philosophers are alive and hungry!\n";
 
     cout << "The dinner is served ...\n";
-    display.position(7, 44);
+    Display::position(7, 44);
     cout << '/';
-    display.position(13, 44);
+    Display::position(13, 44);
     cout << '\\';
-    display.position(16, 35);
+    Display::position(16, 35);
     cout << '|';
-    display.position(13, 27);
+    Display::position(13, 27);
     cout << '/';
-    display.position(7, 27);
+    Display::position(7, 27);
     cout << '\\';
     display_mutex.unlock();
 
@@ -82,7 +81,7 @@ int main()
     for(int i = 0; i < 5; i++) {
 	int ret = phil[i]->join();
 	display_mutex.lock();
-	display.position(20 + i, 0);
+	Display::position(20 + i, 0);
 	cout << "Philosopher " << i << " ate " << ret << " times \n";
 	display_mutex.unlock();
     }
