@@ -17,23 +17,6 @@ public:
     typedef TSC::Hertz Hertz;
     typedef TSC::Hertz Tick;
     typedef Handler::Function Handler;
-    typedef int Channel;
-    enum {
-	SCHEDULER,
-	ALARM,
-	USER_FIRST,
-	USER = USER_FIRST
-    };
-};
-
-class Dummy_Timer: public Timer_Common
-{
-public:
-    Dummy_Timer(const Hertz & frequency,
-		const Handler * handler,
-		const Channel & channel) {}
-    
-    int reset() { return 0; }
 };
 
 __END_SYS
