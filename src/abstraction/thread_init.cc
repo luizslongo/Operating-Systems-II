@@ -12,24 +12,33 @@ void Thread::init()
     int (* entry)() =
 	reinterpret_cast<int (*)()>(System::info()->lmm.app_entry);
 
-    db<Init, Thread>(TRC) << "Thread::init(entry="  << (void *)entry << ")\n";
+    db<Init, Thread>(TRC) << "Thread::init(entry=" << (void *)entry << ")\n";
 
-    prevent_scheduling();
+    Machine::smp_barrier();
 
-    if(active_scheduler)
-	Alarm::master(QUANTUM, &time_reschedule);
-    
-    // Creates the application's main thread
-    // It won't start running because reschedule will find prev == next
-    new(kmalloc(sizeof(Thread))) Thread(entry, RUNNING, MAIN);
+    Thread * first;
+    if(Machine::cpu_id() == 0) {
+	// Create the application's main thread
+	// This must preceed idle, thus avoiding implicit rescheduling
+	first = new(kmalloc(sizeof(Thread))) Thread(entry, RUNNING, MAIN);
+	new(kmalloc(sizeof(Thread))) Thread(&idle, READY, IDLE);
+    } else 
+	first = new(kmalloc(sizeof(Thread))) Thread(&idle, READY, IDLE);
 
-    // Creates the system's idle thread
-    new(kmalloc(sizeof(Thread))) Thread(&idle, READY, IDLE);
+    Machine::smp_barrier();
 
-    // Loads the first thread's context and go running it
-    running()->_context->load();
+    if(Machine::cpu_id() == 0) {
+	if(active_scheduler)
+	    _timer = new (kmalloc(sizeof(Scheduler_Timer))) 
+		Scheduler_Timer(QUANTUM, &time_slicer);
+    } 
 
-    allow_scheduling();
+    db<Init, Thread>(INF) << "Dispatching the first thread: " << first
+			  << "\n";
+
+    This_Thread::not_booting();
+
+    first->_context->load();
 }
 
 __END_SYS
