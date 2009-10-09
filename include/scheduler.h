@@ -164,7 +164,9 @@ public:
 	db<Scheduler>(TRC) << "Scheduler[chosen=" << chosen()
 			   << "]::remove(" << obj << ")\n";
 
-	Element * e = _ready.remove(obj->link());
+	// removing obj instead of obj->link() forces a search and makes
+	// the removal of inexistent objects harmless
+	Element * e = _ready.remove(obj);
 
 	return e ? obj : 0;
     }
