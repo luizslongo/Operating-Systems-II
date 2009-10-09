@@ -13,6 +13,8 @@ class Dummy;
 
 // Utilities
 class Debug;
+class Lists;
+class Spin;
 class Heap;
 
 // System parts
