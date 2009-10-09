@@ -39,9 +39,9 @@ int main()
 
     cout << "Threads B and C have been created!\n";
 
-    Handler_Function handler_a(&func_a);
-    Handler_Thread handler_b(thread_b);
-    Handler_Semaphore handler_c(&sem_c);
+    Function_Handler handler_a(&func_a);
+    Thread_Handler handler_b(thread_b);
+    Semaphore_Handler handler_c(&sem_c);
     
     cout << "Now the alarms will be created, along with a chronometer to keep track of the total execution time. I'll then wait for the threads to finish...\n\n";
 
