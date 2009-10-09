@@ -25,13 +25,17 @@ public:
 		    const State & state = READY,
 		    unsigned int stack_size = STACK_SIZE)
 	: Thread(entry, BEGINNING, period, stack_size),
-	  _handler(this),
+	  _semaphore(0),
+	  _handler(&_semaphore),
 	  _alarm(period, &_handler, times)
     {
-	_state = state;
-	if(state == READY)
-	    _scheduler.resume(this); 
+	if((state == READY) || (state == RUNNING)) {
+	    _state = SUSPENDED;
+	    resume();
+	} else
+	    _state = state;
     }
+
     template<class T1>
     Periodic_Thread(int (* entry)(T1 a1), T1 a1,
 		    const Microsecond & period,
@@ -39,13 +43,17 @@ public:
 		    const State & state = READY,
 		    unsigned int stack_size = STACK_SIZE)
 	: Thread(entry, a1, BEGINNING, period, stack_size),
-	  _handler(this),
+	  _semaphore(0),
+	  _handler(&_semaphore),
 	  _alarm(period, &_handler, times) 
     {
-	_state = state;
-	if(state == READY)
-	    _scheduler.resume(this); 
+	if((state == READY) || (state == RUNNING)) {
+	    _state = SUSPENDED;
+	    resume();
+	} else
+	    _state = state;
     }
+
     template<class T1, class T2>
     Periodic_Thread(int (* entry)(T1 a1, T2 a2), T1 a1, T2 a2, 
 		    const Microsecond & period,
@@ -53,14 +61,18 @@ public:
 		    const State & state = READY,
 		    unsigned int stack_size = STACK_SIZE)
 	: Thread(entry, a1, a2, BEGINNING, period, stack_size),
-	  _handler(this),
+	  _semaphore(0),
+	  _handler(&_semaphore),
 	  _alarm(period, &_handler, times)
 
     {
-	_state = state;
-	if(state == READY)
-	    _scheduler.resume(this); 
+	if((state == READY) || (state == RUNNING)) {
+	    _state = SUSPENDED;
+	    resume();
+	} else
+	    _state = state;
     }
+
     template<class T1, class T2, class T3>
     Periodic_Thread(int (* entry)(T1 a1, T2 a2, T3 a3), T1 a1, T2 a2, T3 a3,
 		    const Microsecond & period,
@@ -68,18 +80,24 @@ public:
 		    const State & state = READY,
 		    unsigned int stack_size = STACK_SIZE)
 	: Thread(entry, a1, a2, a3, BEGINNING, period, stack_size),
-	  _handler(this),
+	  _semaphore(0),
+	  _handler(&_semaphore),
 	  _alarm(period, &_handler, times)
     {
-	_state = state;
-	if(state == READY)
-	    _scheduler.resume(this); 
+	if((state == READY) || (state == RUNNING)) {
+	    _state = SUSPENDED;
+	    resume();
+	} else
+	    _state = state;
     }
 
-    static void wait_next() { self()->suspend(); }
+    static void wait_next() {
+	reinterpret_cast<Periodic_Thread *>(self())->_semaphore.p();
+    }
 
 private:
-    Thread_Handler _handler;
+    Semaphore _semaphore;
+    Semaphore_Handler _handler;
     Alarm _alarm;
 };
 
