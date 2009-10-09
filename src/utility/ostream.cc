@@ -11,9 +11,9 @@ void OStream::print(const char * s)
 {
     static volatile bool lock = false;
 
-    if(Traits<Thread>::smp) while(CPU::tsl(lock));
+//     if(Traits<Thread>::smp) while(CPU::tsl(lock));
     Display::puts(s); 
-    if(Traits<Thread>::smp) lock = false;
+//     if(Traits<Thread>::smp) lock = false;
 }
 
 int OStream::itoa(int v, char * s)
