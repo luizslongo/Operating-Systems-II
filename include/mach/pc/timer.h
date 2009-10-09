@@ -184,24 +184,23 @@ protected:
     typedef IF<Traits<Thread>::smp, APIC_Timer, i8253>::Result Engine;
     typedef Engine::Count Count;
 
-    static const unsigned int CHANNELS = 3;
+    static const unsigned int CHANNELS = 2;
 
     static const unsigned int FREQUENCY = Traits<PC_Timer>::FREQUENCY;
     static const unsigned int CLOCK = Engine::CLOCK;
     static const unsigned int COUNT = CLOCK / FREQUENCY;
 
-public:
+    typedef int Channel;
     enum {
-	USER_LAST = USER_FIRST
+	SCHEDULER,
+	ALARM,
+	USER
     };
 
-public:
     PC_Timer(const Hertz & frequency,
 	     const Handler * handler,
-	     const Channel & channel = USER_FIRST,
-	     bool enabled = true):
-	_enabled(enabled), _channel(channel),
-	_initial(FREQUENCY / frequency),
+	     const Channel & channel):
+	_channel(channel), _initial(FREQUENCY / frequency),
 	_current(_initial), _handler(handler)
     {
 	db<Timer>(TRC) << "Timer(f=" << frequency
@@ -209,9 +208,28 @@ public:
 		       << ",ch=" << channel 
 		       << ") => {count=" << _initial << "}\n";
 
-	if(_initial && (unsigned(channel) < CHANNELS) && !_channels[channel]) {
+	if(_initial && !_channels[channel]) 
 	    _channels[channel] = this;
-	} else
+	else
+	    db<Timer>(ERR) << "Timer not installed!\n";
+    }
+
+public:
+    PC_Timer(const Hertz & frequency,
+	     const Handler * handler,
+	     const Channel & channel,
+	     bool retrigger):
+	_channel(channel), _initial(FREQUENCY / frequency),
+	_current(_initial), _handler(handler)
+    {
+	db<Timer>(TRC) << "Timer(f=" << frequency
+		       << ",h=" << handler
+		       << ",ch=" << channel 
+		       << ") => {count=" << _initial << "}\n";
+
+	if(_initial && (unsigned(channel) < CHANNELS) && !_channels[channel])
+	    _channels[channel] = this;
+	else
 	    db<Timer>(WRN) << "Timer not installed!\n";
     }
 
@@ -226,9 +244,6 @@ public:
 
     Hertz frequency() const { return (FREQUENCY / _initial); }
     void frequency(const Hertz & f) { _initial = FREQUENCY / f; reset(); }
-
-    void pause() { _enabled = true; }
-    void resume() { _enabled = false; }
 
     Tick read() { return _current; }
 
@@ -257,7 +272,6 @@ private:
     static void int_handler(unsigned int irq);
 
 protected:
-    bool _enabled;
     unsigned int _channel;
     Count _initial;
     volatile Count _current;
@@ -268,31 +282,27 @@ protected:
 };
 
 
-class Alarm_Timer: public Timer
+// Timer used by Alarm
+class Alarm_Timer: public PC_Timer
 {
 public:
     static const unsigned int FREQUENCY = Timer::FREQUENCY;
 
 public:
     Alarm_Timer(const Handler * handler):
-	Timer(FREQUENCY, handler, ALARM) {}
-
+	PC_Timer(FREQUENCY, handler, ALARM) {}
 };
 
 
-class Scheduler_Timer: public Timer
+// Timer used by Thread::Scheduler
+class Scheduler_Timer: public PC_Timer
 {
 private:
     typedef RTC::Microsecond Microsecond;
 
 public:
     Scheduler_Timer(const Microsecond & quantum, const Handler * handler): 
-	Timer(1000000 / quantum, handler, SCHEDULER)
-    {
-	if(!_initial)
-	    db<Timer>(ERR) << "Scheduler_Timer not installed!\n";
-    }
-
+	PC_Timer(1000000 / quantum, handler, SCHEDULER) {}
 };
 
 __END_SYS
