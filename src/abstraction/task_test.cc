@@ -1,6 +1,7 @@
 // EPOS-- Task Test Program
 
 #include <utility/ostream.h>
+#include <alarm.h>
 #include <task.h>
 
 __USING_SYS
@@ -24,7 +25,7 @@ int main()
 
     cout << "I'll try to clone myself:\n";
 
-    cout << "My address space's page directory is located at"
+    cout << "My address space's page directory is located at "
 	 << (void *)CPU::pdp() << "\n";
     Address_Space self(Address_Space::SELF);
 
@@ -53,7 +54,9 @@ int main()
 
     m->suspend();
 
-    cout << "Both threads are now done and have suspended themselves. I'll now wake them up so they can exit ...\n";
+    cout << "Both threads are now done and have suspended themselves. I'll now wait for 1 second and then wake them up so they can exit ...\n";
+
+    Alarm::delay(1000000);
 
     a->resume();
     b->resume();
