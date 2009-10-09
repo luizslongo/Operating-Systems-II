@@ -16,15 +16,14 @@ class Thread
     friend class Scheduler<Thread>;
 
 protected:
-    static const unsigned int STACK_SIZE 
-    = Traits<Machine>::APPLICATION_STACK_SIZE;
-
-    static const bool idle_waiting = Traits<Thread>::idle_waiting;
-    static const bool active_scheduler = Traits<Thread>::active_scheduler;
-    static const bool preemptive = Traits<Thread>::preemptive;
+    static const bool active_scheduler = Traits<Thread>::Criterion::timed;
+    static const bool preemptive = Traits<Thread>::Criterion::preemptive;
     static const bool smp = Traits<Thread>::smp;
 
+    static const unsigned int CPUS = Traits<Machine>::CPUS;
     static const unsigned int QUANTUM = Traits<Thread>::QUANTUM;
+    static const unsigned int STACK_SIZE =
+	Traits<Machine>::APPLICATION_STACK_SIZE;
 
     typedef CPU::Log_Addr Log_Addr;
     typedef CPU::Context Context;
@@ -51,8 +50,9 @@ public:
 	IDLE = Criterion::IDLE
     };
 
-    typedef
-    Ordered_Queue<Thread, Criterion, smp, Scheduler<Thread>::Element> Queue;
+    // Thread Queue
+    typedef Ordered_Queue<Thread, Criterion, 
+			  false, Scheduler<Thread>::Element> Queue;
 
 public:
     Thread(int (* entry)(), 
@@ -62,13 +62,14 @@ public:
 	: _state(state), _waiting(0), _joining(0), _link(this, criterion)
 
     {
-	prevent_scheduling();
+	lock();
 	
 	_stack = kmalloc(stack_size);
 	_context = CPU::init_stack(_stack, stack_size, &implicit_exit, entry);
 
 	common_constructor(entry, stack_size);
     }
+
     template<typename T1>
     Thread(int (* entry)(T1 a1), T1 a1,
 	   const State & state = READY,
@@ -76,7 +77,7 @@ public:
 	   unsigned int stack_size = STACK_SIZE)
 	: _state(state), _waiting(0), _joining(0), _link(this, criterion)
     {
-	prevent_scheduling();
+	lock();
 
 	_stack = kmalloc(stack_size);
 	_context = CPU::init_stack(_stack, stack_size, &implicit_exit, entry, 
@@ -84,6 +85,7 @@ public:
 
 	common_constructor(entry, stack_size);
     }
+
     template<typename T1, typename T2>
     Thread(int (* entry)(T1 a1, T2 a2), T1 a1, T2 a2,
 	   const State & state = READY,
@@ -91,7 +93,7 @@ public:
 	   unsigned int stack_size = STACK_SIZE)
 	: _state(state), _waiting(0), _joining(0), _link(this, criterion)
     {
-	prevent_scheduling();
+	lock();
 
 	_stack = kmalloc(stack_size);
 	_context = CPU::init_stack(_stack, stack_size, &implicit_exit, entry,
@@ -99,6 +101,7 @@ public:
 
 	common_constructor(entry, stack_size);
     }
+
     template<typename T1, typename T2, typename T3>
     Thread(int (* entry)(T1 a1, T2 a2, T3 a3), T1 a1, T2 a2, T3 a3,
 	   const State & state = READY,
@@ -106,7 +109,7 @@ public:
 	   unsigned int stack_size = STACK_SIZE)
 	: _state(state), _waiting(0), _joining(0), _link(this, criterion)
     {
-	prevent_scheduling();
+	lock();
 
 	_stack = kmalloc(stack_size);
 	_context = CPU::init_stack(_stack, stack_size, &implicit_exit, entry, 
@@ -114,6 +117,7 @@ public:
 
 	common_constructor(entry, stack_size);
     }
+
     ~Thread();
 
     const volatile State & state() const { return _state; }
@@ -124,7 +128,7 @@ public:
 
     int join();
     void pass();
-    void suspend();
+    void suspend() { suspend(false); }
     void resume();
 
     static Thread * self() { return running(); }
@@ -143,31 +147,47 @@ protected:
 
     Queue::Element * link() { return &_link; }
 
-    static void prevent_scheduling() {
-	if(active_scheduler)
-	    CPU::int_disable();
-    }
-    static void allow_scheduling() {
-	if(active_scheduler)
-	    CPU::int_enable();
+    static void lock() {
+	CPU::int_disable();
+	if(smp)
+	    _lock.acquire();
     }
 
-    static void reschedule();
-    static void time_reschedule(); // this is the master alarm handler
+    static void unlock() {
+	if(smp)
+	    _lock.release();
+	CPU::int_enable();
+    }
+
+    void suspend(bool locked);
+
+    static void reschedule(bool preempt = preemptive);
+
+    static void time_slicer();
 
     static void implicit_exit();
 
-    static void switch_threads(Thread * prev, Thread * next) {
-	// scheduling must be disabled at this point!
-	if(next != prev) {
+    static void dispatch(Thread * prev, Thread * next, bool charge = true) {
+//	if(charge)
+//  	    if(active_scheduler)
+//  		_timer->reset();
+
+	if(prev != next) {
 	    if(prev->_state == RUNNING)
 		prev->_state = READY;
 	    next->_state = RUNNING;
-	    db<Thread>(TRC) << "Thread::switch_threads(prev=" << prev
+
+	    db<Thread>(TRC) << "Thread::dispatch(prev=" << prev
 			    << ",next=" << next << ")\n";
+
+	    if(smp)
+		_lock.release();
 	    CPU::switch_context(&prev->_context, next->_context);
-	}
-	allow_scheduling();
+	} else
+	    if(smp)
+		_lock.release();
+
+	CPU::int_enable();
     }
 
     static int idle();
@@ -180,16 +200,18 @@ protected:
     Thread * volatile _joining;
     Queue::Element _link;
 
+    static Spin _lock;
+    static Scheduler_Timer * _timer;
     static unsigned int _thread_count;
     static Scheduler<Thread> _scheduler;
 };
 
-// A thread event handler (see handler.h)
-class Handler_Thread : public Handler
+// An event handler that triggers a thread (see handler.h)
+class Thread_Handler : public Handler
 {
 public:
-    Handler_Thread(Thread * h) : _handler(h) {}
-    ~Handler_Thread() {}
+    Thread_Handler(Thread * h) : _handler(h) {}
+    ~Thread_Handler() {}
 
     void operator()() { _handler->resume(); }
 	
