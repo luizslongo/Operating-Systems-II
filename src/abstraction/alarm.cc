@@ -1,123 +1,86 @@
 // EPOS-- Alarm Abstraction Implementation
 
 #include <system/kmalloc.h>
-#include <display.h>
+#include <semaphore.h>
 #include <alarm.h>
-#include <thread.h>
 
 __BEGIN_SYS
 
 // Class attributes
-Timer Alarm::_timer;
+Spin Alarm::_lock;
+Alarm_Timer * Alarm::_timer;
 volatile Alarm::Tick Alarm::_elapsed;
-Alarm::Master Alarm::_master;
 Alarm::Queue Alarm::_requests;
 
+
 // Methods
-Alarm::Alarm(const Microsecond & time, Handler * handler, int times)
-    : _ticks(ticks(time)), _handler(handler), _times(times), 
-      _link(this, _ticks)
+Alarm::Alarm(const Microsecond & time, Handler * handler, int times):
+    _ticks(ticks(time)), _handler(handler),
+    _times(times), _private_timer(false), _link(this, _ticks)
 {
-    db<Alarm>(TRC) << "Alarm(t=" << time 
-		   << ",ticks=" << _ticks
+    lock();
+
+    db<Alarm>(TRC) << "Alarm(t=" << time
+		   << ",tk=" << _ticks
 		   << ",h=" << (void *)handler
 		   << ",x=" << times << ") => " << this << "\n";
+    
     if(_ticks) {
-	CPU::int_disable();
 	_requests.insert(&_link);
-	CPU::int_enable();
-    } else
+	unlock();
+    } else {
+	unlock();
 	(*handler)();
+    }
 }
 
-Alarm::Alarm(const Microsecond & time, Handler * handler, int times, 
-	     bool int_enable)
-    : _ticks(ticks(time)), _handler(handler), _times(times), 
-      _link(this, _ticks)
+Alarm::~Alarm()
 {
-    db<Alarm>(TRC) << "Alarm(t=" << time 
-		   << ",ticks=" << _ticks
-		   << ",h=" << (void *)handler
-		   << ",x=" << times << ") => " << this << "\n";
-    if(_ticks) {
-	CPU::int_disable();
-	_requests.insert(&_link);
-	if(int_enable)
-	    CPU::int_enable();
-    } else
-	(*handler)();
-}
-
-Alarm::~Alarm() {
+    lock();
+ 
     db<Alarm>(TRC) << "~Alarm()\n";
-
-    CPU::int_disable();
+    
     _requests.remove(this);
-    CPU::int_enable();
+    
+    unlock();
 }
 
-void Alarm::master(const Microsecond & time, Handler::Function * handler)
-{
-    db<Alarm>(TRC) << "Alarm::master(t=" << time << ",h="
-		   << (void *)handler << ")\n";
-
-    CPU::int_disable();
-    _master = Master(time, handler);
-    CPU::int_enable();
-}
-
+// Class methods
 void Alarm::delay(const Microsecond & time)
 {
-    db<Alarm>(TRC) << "Alarm::delay(t=" << time << ")\n";
-    if(time > 0) 
-        if(__SYS(Traits)<Thread>::idle_waiting) {
-	    CPU::int_disable();
-	    Handler_Thread handler(Thread::self());
-	    Alarm alarm(time, &handler, 1, false);
-	    Thread::self()->suspend();
-	    CPU::int_enable();
-        } else {
-	    Tick t = _elapsed + (time + period() / 2) / period();
-	    while(_elapsed < t)
-		Thread::yield();
-        }
+    db<Alarm>(TRC) << "Alarm::delay(time=" << time << ")\n";
+
+    if(idle_waiting) {
+
+	Semaphore semaphore(0);
+	Semaphore_Handler handler(&semaphore);
+	Alarm alarm(time, &handler, 1); // if time < tick trigger v()
+	semaphore.p();
+
+    } else {
+
+	Tick t = _elapsed + ticks(time);
+	while(_elapsed < t);
+
+    }
 }
 
-void Alarm::int_handler(unsigned int)
+void Alarm::handler()
 {
-    // This is a very special interrupt handler, for the master alarm handler
-    // called at the end might trigger a context switch (e.g. when it is set
-    // to call the thread scheduler). In this case, int_handler won't finish
-    // within the expected time (i.e., it will finish only when the preempted
-    // thread return to the CPU). For this NOT to be an issue, the following
-    // conditions MUST be met:
-    // 1 - The interrupt dispatcher must acknowledge the handling of interrupts
-    //     before invoking the respective handler, thus enabling subsequent
-    //     interrupts to be handled even if a previous didn't come to an end
-    // 2 - Handlers (e.g. master) must be called after incrementing _elapsed
-    // 3 - The manipulation of alarm queue must be guarded (e.g. int_disable)
-
     CPU::int_disable();
-
-    Handler * handler = 0;
+    // lock(); this handler is meant to be called obly by CPU[0] 
 
     _elapsed++;
-    
-    if(visible) {
-	Display display;
-	int lin, col;
-	display.position(&lin, &col);
-	display.position(0, 79);
-	display.putc(_elapsed);
-	display.position(lin, col);
-    }
+
+    Alarm * alarm = 0;
 
     if(!_requests.empty()) {
 	// rank can be negative whenever multiple handlers get created for the
 	// same time tick
 	if(_requests.head()->promote() <= 0) {
+
 	    Queue::Element * e = _requests.remove();
-	    Alarm * alarm = e->object();
+	    alarm = e->object();
 
 	    if(alarm->_times != INFINITE)
 		alarm->_times--;
@@ -125,19 +88,16 @@ void Alarm::int_handler(unsigned int)
 		e->rank(alarm->_ticks);
 		_requests.insert(e);
 	    }
-
-	    handler = alarm->_handler;
-
-	    db<Alarm>(TRC) << "Alarm::handler(h=" << alarm->_handler << ")\n";
 	}
     }
 
+    // unlock();
     CPU::int_enable();
 
-    _master();	
-        
-    if(handler) 
-	(*handler)();
+    if(alarm) {
+ 	db<Alarm>(TRC) << "Alarm::handler(h=" << alarm->handler << ")\n";
+ 	(*alarm->_handler)();
+    }
 }
 
 __END_SYS
