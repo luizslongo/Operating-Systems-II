@@ -74,10 +74,7 @@ Thread::~Thread()
     
     _scheduler.remove(this);
     
-    if(smp)
-	_lock.release();
-    if(active_scheduler)
-	CPU::int_enable();
+    unlock();
 
     kfree(_stack);
 }
@@ -284,14 +281,14 @@ int Thread::idle()
 
 	if(_thread_count <= 1) { 
 	    db<Thread>(WRN) << "The last thread has exited!\n";
-	    db<Thread>(WRN) << "Halting the CPU ...\n";
-	    CPU::int_disable();
+	    db<Thread>(WRN) << "Rebooting the machine ...\n";
+	    Machine::reboot();
 	}
 
  	CPU::halt();
 
-	if(_scheduler.schedulables() > 1)
-            yield();
+ 	if(_scheduler.schedulables() > 1)
+	    yield();
     }
 
     return 0;
