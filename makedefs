@@ -159,7 +159,7 @@ APP		= $(TOP)/app
 BIN		= $(TOP)/bin
 LIB		= $(TOP)/lib
 IMG		= $(TOP)/img
-CFG		= $(TOP)/cfg
+ETC		= $(TOP)/etc
 DOC		= $(TOP)/doc
 LARCHNAME	= arch
 LMACHNAME	= mach
@@ -231,9 +231,7 @@ MAKEALL		= make all
 MAKEINSTALL	= make install
 MAKECLEAN	= make -i clean
 MAKETEST	= make test
-MAKEPRINT	= make print
-#MAKEFLAGS	= -r --no-print-directory -s
-MAKEFLAGS	= -r 
+MAKEFLAGS	= --no-builtin-rules --silent --print-directory
 
 MKBI		= eposmkbi
 
@@ -245,14 +243,16 @@ INSTALL		= cp
 
 SHELL		= tcsh
 
-PRINT		= a2ps -2 --medium=A4 --tabsize=8 --landscape --pretty-print=cpp --borders=off --header --left-footer --footer --right-footer
-
 CLEAN		= rm -f
 CLEANDIR	= rm -rf
 
 RET2IRET	= sed -e 's/ret/iret/'
 
 TOUCH		= touch
+
+TEE		= tee
+
+QEMU		= qemu -no-reboot -no-kqemu -serial stdio -fda
 
 
 # Rules
@@ -268,7 +268,12 @@ lib%.o:		lib%.cc
 %_test:		%_test.o
 		$(ALD) $(ALDFLAGS) $< -o $@
 		$(STRIP) $@ -o $(IMG)/$@
-#		$(MKBI) $(MKBI_IMG) $(IMG)/$@
+
+%.img:		%
+		$(MKBI) $@ $<
+
+%.out:		%.img
+		$(QEMU) $< | $(TEE) $@
 
 %.o:		%.cc
 		$(CXX) $(CXXFLAGS) $<
