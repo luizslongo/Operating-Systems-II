@@ -8,26 +8,41 @@
 __BEGIN_SYS
 
 // Forwarder to the running thread id
-namespace This_Thread
+class This_Thread
 {
-    unsigned int id();
-}
+public:
+    static unsigned int id();
+    static void not_booting() { _not_booting = true; }
+
+private:
+    static bool _not_booting; 
+};
 
 // Recursive Spin Lock
 class Spin
 {
 public:
-    Spin(): _level(0), _owner(-1) {}
+    Spin(): _level(0), _owner(0) {}
 
     void acquire() {
-	int id = This_Thread::id();
+	int me = This_Thread::id();
 
-	while(CPU::cas(_owner, -1, id));
+	while(CPU::cas(_owner, 0, me) != me);
 	_level++;
+
+	db<Spin>(TRC) << "Spin::acquire[SPIN=" << this
+		      << ",ID=" << me
+		      << "]() => {owner=" << _owner 
+		      << ",level=" << _level << "}\n";
     }
 
     void release() {
-    	if(!--_level) _owner = -1;
+    	if(--_level <= 0)
+	    _owner = 0;
+
+	db<Spin>(TRC) << "Spin::release[SPIN=" << this
+		      << "]() => {owner=" << _owner 
+		      << ",level=" << _level << "}\n";
     }
 
 private:
