@@ -180,6 +180,13 @@ public:
 // PC_Timer
 class PC_Timer: public Timer_Common
 {
+public:
+    typedef int Channel;
+    enum {
+	SCHEDULER,
+	ALARM
+    };
+
 protected:
     typedef IF<Traits<Thread>::smp, APIC_Timer, i8253>::Result Engine;
     typedef Engine::Count Count;
@@ -189,13 +196,6 @@ protected:
     static const unsigned int FREQUENCY = Traits<PC_Timer>::FREQUENCY;
     static const unsigned int CLOCK = Engine::CLOCK;
     static const unsigned int COUNT = CLOCK / FREQUENCY;
-
-    typedef int Channel;
-    enum {
-	SCHEDULER,
-	ALARM,
-	USER
-    };
 
     PC_Timer(const Hertz & frequency,
 	     const Handler * handler,
