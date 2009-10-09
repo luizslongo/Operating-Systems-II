@@ -377,6 +377,7 @@ public:
     Iterator end() { return Iterator(_tail->next()); }
 
     void insert(Element * e) { insert_tail(e); }
+
     void insert_head(Element * e) {
 	if(empty())
 	    insert_first(e);
@@ -386,6 +387,7 @@ public:
 	    _size++;
 	}
     }
+
     void insert_tail(Element * e) {
 	if(empty())
 	    insert_first(e);
@@ -398,6 +400,7 @@ public:
     }
     
     Element * remove() { return remove_head(); }
+
     Element * remove(Element * e) {
 	if(last())
 	    remove_last();
@@ -412,6 +415,7 @@ public:
 	    }
 	return e;
     }
+
     Element * remove_head() {
 	if(empty())
 	    return 0;
@@ -422,10 +426,12 @@ public:
 	_size--;
 	return e;
     }
+
     Element * remove_tail() {
 	if(_tail)
 		return remove(_tail);
     }
+
     Element * remove(const Object_Type * obj) {
 	Element * e = search(obj);
 	if(e)
@@ -441,17 +447,20 @@ public:
     
 protected:
     bool last() const { return (_size == 1); }
+
     void insert(Element * e, Element * p,  Element * n) {
 	p->next(e);
 	e->next(n);
 	_size++;
     }
+
     void insert_first(Element * e) {
 	e->next(0);
 	_head = e;
 	_tail = e;
 	_size++;
     }
+
     Element * remove_last() {
 	Element * e = _head;
 	_head = 0;
@@ -474,6 +483,9 @@ template <typename T,
 	  bool relative = false>
 class Simple_Ordered_List: public Simple_List<T, El>
 {
+private:
+    typedef Simple_List<T, El> Base;
+
 public:
     typedef T Object_Type;
     typedef R Rank_Type;
@@ -481,12 +493,12 @@ public:
     typedef List_Iterators::Forward<El> Iterator;
 
 public:
-    using Simple_List<T, El>::empty;
-    using Simple_List<T, El>::size;
-    using Simple_List<T, El>::head;
-    using Simple_List<T, El>::begin;
-    using Simple_List<T, El>::end;
-    using Simple_List<T, El>::remove_head;
+    using Base::empty;
+    using Base::size;
+    using Base::head;
+    using Base::begin;
+    using Base::end;
+    using Base::remove_head;
     
     void insert(Element * e) {
 	if(empty())
@@ -509,18 +521,20 @@ public:
 	    } else {
 		if(relative)
 		    next->rank(next->rank() - e->rank());
-		Simple_List<T, El>::insert(e, prev, next);
+		Base::insert(e, prev, next);
 	    }
 	}
     }
     
     Element * remove() { return remove_head(); }
+
     Element * remove(Element * e) {
-	Simple_List<T, El>::remove(e);
+	Base::remove(e);
 	if(relative && e->next())
 	    e->next()->rank(e->next()->rank() + e->rank());
 	return e;
     }
+
     Element * remove(const Object_Type * obj) {
 	Element * e = search(obj);
 	if(e)
@@ -533,6 +547,7 @@ public:
 	for(; e && (e->rank() != rank); e = e->next());
 	return e;
     }
+
     Element * remove_rank(int rank) {
 	Element * e = search_rank(rank);
 	if(e)
@@ -554,6 +569,9 @@ template <typename T,
 	  typename El = List_Elements::Singly_Linked_Grouping<T> >
 class Simple_Grouping_List: public Simple_List<T, El>
 {
+private:
+    typedef Simple_List<T, El> Base;
+
 public:
     typedef T Object_Type;
     typedef El Element;
@@ -562,12 +580,12 @@ public:
 public:
     Simple_Grouping_List(): _grouped_size(0) {}
 
-    using Simple_List<T, El>::empty;
-    using Simple_List<T, El>::size;
-    using Simple_List<T, El>::head;
-    using Simple_List<T, El>::tail;
-    using Simple_List<T, El>::begin;
-    using Simple_List<T, El>::end;
+    using Base::empty;
+    using Base::size;
+    using Base::head;
+    using Base::tail;
+    using Base::begin;
+    using Base::end;
 
     unsigned int grouped_size() const { return _grouped_size; }
 
@@ -588,19 +606,16 @@ public:
 	*m1 = *m2 = 0;
 	Element * r = search(e->object() + e->size());
 	Element * l = search_left(e->object());
-	if(!r && !l)
-	    insert_tail(e);
-	else {
-	    if(r) {
-		e->size(e->size() + r->size());
-		remove(r);
-		*m1 = r;
-	    }
-	    if(l) {
-		l->size(l->size() + e->size());
-		*m2 = e;
-	    }
+	if(r) {
+	    e->size(e->size() + r->size());
+	    remove(r);
+	    *m1 = r;
 	}
+	if(l) {
+	    l->size(l->size() + e->size());
+	    *m2 = e;
+	} else
+	    insert_tail(e);
     }
     
     Element * search_decrementing(unsigned int s) {
@@ -642,7 +657,17 @@ public:
     Iterator end() { return Iterator(_tail->next()); }
 
     void insert(Element * e) { insert_tail(e); }
+
     void insert_head(Element * e) {
+	db<Lists>(TRC) << "List::insert_head(e=" << e 
+		      << ") => {p=" << (e ? e->prev() : (void *) -1)
+		      << ",o=" << (e ? e->object() : (void *) -1)
+		      << ",n=" << (e ? e->next() : (void *) -1)
+		      << "}\n";
+
+	print_head();
+	print_tail();
+
 	if(empty())
 	    insert_first(e);
 	else {
@@ -652,8 +677,21 @@ public:
 	    _head = e;
 	    _size++;
 	}
+
+	print_head();
+	print_tail();
     }
+
     void insert_tail(Element * e) {
+	db<Lists>(TRC) << "List::insert_tail(e=" << e 
+		      << ") => {p=" << (e ? e->prev() : (void *) -1)
+		      << ",o=" << (e ? e->object() : (void *) -1)
+		      << ",n=" << (e ? e->next() : (void *) -1)
+		      << "}\n";
+
+	print_head();
+	print_tail();
+
 	if(empty())
 	    insert_first(e);
 	else {
@@ -663,10 +701,23 @@ public:
 	    _tail = e;
 	    _size++;
 	}
+
+	print_head();
+	print_tail();
     }
     
     Element * remove() { return remove_head(); }
+
     Element * remove(Element * e) {
+	db<Lists>(TRC) << "List::remove(e=" << e 
+		      << ") => {p=" << (e ? e->prev() : (void *) -1)
+		      << ",o=" << (e ? e->object() : (void *) -1)
+		      << ",n=" << (e ? e->next() : (void *) -1)
+		      << "}\n";
+
+	print_head();
+	print_tail();
+
 	if(last())
 	    remove_last();
 	else if(!e->prev())
@@ -678,9 +729,19 @@ public:
 	    e->next()->prev(e->prev());
 	    _size--;
 	}
+
+	print_head();
+	print_tail();
+
 	return e;
     }
+
     Element * remove_head() {
+	db<Lists>(TRC) << "List::remove_head()\n";
+
+	print_head();
+	print_tail();
+
 	if(empty())
 	    return 0;
 	if(last())
@@ -689,9 +750,19 @@ public:
 	_head = _head->next();
 	_head->prev(0);
 	_size--;
+
+	print_head();
+	print_tail();
+
 	return e;
     }
+
     Element * remove_tail() {
+	db<Lists>(TRC) << "List::remove_tail()\n";
+
+	print_head();
+	print_tail();
+
 	if(empty())
 	    return 0;
 	if(last())
@@ -700,8 +771,13 @@ public:
 	_tail = _tail->prev();
 	_tail->next(0);
 	_size--;
+
+	print_head();
+	print_tail();
+
 	return e;
     }
+
     Element * remove(const Object_Type * obj) {
 	Element * e = search(obj);
 	if(e)
@@ -717,28 +793,86 @@ public:
     
 protected:
     bool last() const { return (_size == 1); }
+
     void insert(Element * e, Element * p,  Element * n) {
+	db<Lists>(TRC) << "List::insert(e=" << e << ",p=" << p << ",n=" << n
+		      << ") => {p=" << (e ? e->prev() : (void *) -1)
+		      << ",o=" << (e ? e->object() : (void *) -1)
+		      << ",n=" << (e ? e->next() : (void *) -1)
+		      << "},{p=" << (p ? p->prev() : (void *) -1)
+		      << ",o=" << (p ? p->object() : (void *) -1)
+		      << ",n=" << (p ? p->next() : (void *) -1)
+		      << "},{p=" << (n ? n->prev() : (void *) -1)
+		      << ",o=" << (n ? n->object() : (void *) -1)
+		      << ",n=" << (n ? n->next() : (void *) -1)
+		      << "}\n";
+
+	print_head();
+	print_tail();
+
 	p->next(e);
 	n->prev(e);
 	e->prev(p);
 	e->next(n);
 	_size++;
+
+	print_head();
+	print_tail();
     }
+
     void insert_first(Element * e) {
+	db<Lists>(TRC) << "List::insert_first(e=" << e 
+		      << ") => {p=" << (e ? e->prev() : (void *) -1)
+		      << ",o=" << (e ? e->object() : (void *) -1)
+		      << ",n=" << (e ? e->next() : (void *) -1)
+		      << "}\n";
+
+	print_head();
+	print_tail();
+
 	e->prev(0);
 	e->next(0);
 	_head = e;
 	_tail = e;
 	_size++;
+
+	print_head();
+	print_tail();
     }
+
     Element * remove_last() {
+	db<Lists>(TRC) << "List::remove_last()\n";
+
+	print_head();
+	print_tail();
+
 	Element * e = _head;
 	_head = 0;
 	_tail = 0;
 	_size--;
+
+	print_head();
+	print_tail();
+
 	return e;
     }
-    
+
+    void print_head() {
+	db<Lists>(INF) << "List[" << this << "]::head=" << head() 
+		      << " => {p=" << (head() ? head()->prev() : (void *) -1)
+		      << ",o=" << (head() ? head()->object() : (void *) -1)
+		      << ",n=" << (head() ? head()->next() : (void *) -1)
+		      << "}\n";
+    }
+
+    void print_tail() {
+	db<Lists>(INF) << "List[" << this << "]::tail=" << tail() 
+		       << " => {p=" << (tail() ? tail()->prev() : (void *) -1)
+		       << ",o=" << (tail() ? tail()->object() : (void *) -1)
+		       << ",n=" << (tail() ? tail()->next() : (void *) -1)
+		       << "}\n";
+    }
+
 private:
     unsigned int _size;
     Element * _head;
@@ -753,6 +887,9 @@ template <typename T,
 	  bool relative = false>
 class Ordered_List: public List<T, El>
 {
+private:
+    typedef List<T, El> Base;
+
 public:
     typedef T Object_Type;
     typedef R Rank_Type;
@@ -760,18 +897,23 @@ public:
     typedef List_Iterators::Bidirecional<El> Iterator;
 
 public:
-    using List<T, El>::empty;
-    using List<T, El>::size;
-    using List<T, El>::head;
-    using List<T, El>::tail;
-    using List<T, El>::begin;
-    using List<T, El>::end;
-    using List<T, El>::remove_head;
-    
+    using Base::empty;
+    using Base::size;
+    using Base::head;
+    using Base::tail;
+    using Base::begin;
+    using Base::end;
+
     void insert(Element * e) {
-	if(empty())
+	db<Lists>(TRC) << "Ordered_List::insert(e=" << e 
+		      << ") => {p=" << (e ? e->prev() : (void *) -1)
+		      << ",o=" << (e ? e->object() : (void *) -1)
+		      << ",n=" << (e ? e->next() : (void *) -1)
+		      << "}\n";
+
+	if(empty()){
 	    insert_first(e);
-	else {
+	} else {
 	    Element * next;
 	    for(next = head();
 		(next->rank() <= e->rank()) && next->next();
@@ -786,21 +928,30 @@ public:
 		if(relative)
 		    next->rank(next->rank() - e->rank());
 		insert_head(e);
-		} else {
+	    } else {
 		if(relative)
 		    next->rank(next->rank() - e->rank());
-		List<T, El>::insert(e, next->prev(), next);
+		Base::insert(e, next->prev(), next);
 	    }
 	}
     }
     
-    Element * remove() { return remove_head(); }
+    Element * remove() { return Base::remove_head(); }
+
     Element * remove(Element * e) {
-	List<T, El>::remove(e);
+	db<Lists>(TRC) << "Ordered_List::remove(e=" << e 
+		      << ") => {p=" << (e ? e->prev() : (void *) -1)
+		      << ",o=" << (e ? e->object() : (void *) -1)
+		      << ",n=" << (e ? e->next() : (void *) -1)
+		      << "}\n";
+
+	Base::remove(e);
 	if(relative && e->next())
 	    e->next()->rank(e->next()->rank() + e->rank());
+
 	return e;
     }
+
     Element * remove(const Object_Type * obj) {
 	Element * e = search(obj);
 	if(e)
@@ -857,17 +1008,31 @@ public:
     Element * volatile & chosen() { return _chosen; }
 
     void insert(Element * e) {
+	db<Lists>(TRC) << "Scheduling_List::insert(e=" << e 
+		      << ") => {p=" << (e ? e->prev() : (void *) -1)
+		      << ",o=" << (e ? e->object() : (void *) -1)
+		      << ",n=" << (e ? e->next() : (void *) -1)
+		      << "}\n";
+
 	Base::insert(e);
   	if(!_chosen)
- 	    _chosen = Base::head();
+ 	    _chosen = head();
     }
 
     Element * remove(Element * e) {
+	db<Lists>(TRC) << "Scheduling_List::remove(e=" << e 
+		      << ") => {p=" << (e ? e->prev() : (void *) -1)
+		      << ",o=" << (e ? e->object() : (void *) -1)
+		      << ",n=" << (e ? e->next() : (void *) -1)
+		      << "}\n";
+
 	Base::remove(e);
 	if(e == _chosen)
-	    _chosen = Base::head();
+	    _chosen = head();
+
 	return e;
     }
+
     Element * remove(const Object_Type * obj) {
 	Element * e = search(obj);
 	if(e)
@@ -877,27 +1042,43 @@ public:
     }
 
     Element * choose() {
+	db<Lists>(TRC) << "Scheduling_List::choose()\n";
+
 	if(!empty()) {
 	    reorder();
-	    _chosen = Base::head();
+	    _chosen = head();
 	}
+
 	return _chosen;
     }
+
     Element * choose_another() {
+	db<Lists>(TRC) << "Scheduling_List::choose_another()\n";
+
 	if(size() > 1) {
 	    Element * tmp = _chosen;
 	    Base::remove(tmp);
 	    _chosen = Base::head();
 	    Base::insert(tmp);
 	}
+
 	return _chosen;
     }
+
     Element * choose(Element * e) {
+	db<Lists>(TRC) << "Scheduling_List::choose(e=" << e 
+		      << ") => {p=" << (e ? e->prev() : (void *) -1)
+		      << ",o=" << (e ? e->object() : (void *) -1)
+		      << ",n=" << (e ? e->next() : (void *) -1)
+		      << "}\n";
+
 	if(_chosen)
 	    reorder();
 	_chosen = e;
+
 	return _chosen;
     }
+
     Element * choose(const Object_Type * obj) {
 	Element * e = search(obj);
 	if(e)
@@ -923,6 +1104,9 @@ template <typename T,
 	  typename El = List_Elements::Doubly_Linked_Grouping<T> >
 class Grouping_List: public List<T, El>
 {
+private:
+    typedef List<T, El> Base;
+
 public:
     typedef T Object_Type;
     typedef El Element;
@@ -931,12 +1115,12 @@ public:
 public:
     Grouping_List(): _grouped_size(0) {}
 
-    using List<T, El>::empty;
-    using List<T, El>::size;
-    using List<T, El>::head;
-    using List<T, El>::tail;
-    using List<T, El>::begin;
-    using List<T, El>::end;
+    using Base::empty;
+    using Base::size;
+    using Base::head;
+    using Base::tail;
+    using Base::begin;
+    using Base::end;
 
     unsigned int grouped_size() const { return _grouped_size; }
     
@@ -953,6 +1137,9 @@ public:
     }
     
     void insert_merging(Element * e, Element ** m1, Element ** m2) {
+	db<Lists>(TRC) << "Grouping_List::insert_merging(e=" << e 
+		       << ")	\n";
+
 	_grouped_size += e->size();
 	*m1 = *m2 = 0;
 	Element * r = search(e->object() + e->size());
@@ -973,6 +1160,9 @@ public:
     }
     
     Element * search_decrementing(unsigned int s) {
+	db<Lists>(TRC) << "Grouping_List::search_decrementing(s=" 
+		       << s << ")\n";
+
 	Element * e = search_size(s);
 	if(e) {
 	    e->shrink(s);
@@ -980,6 +1170,7 @@ public:
 	    if(!e->size())
 		remove(e);
 	}
+
 	return e;
     }
     
