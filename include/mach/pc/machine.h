@@ -18,7 +18,6 @@ class PC: public Machine_Common
 {
 private:
     static const bool smp = Traits<Thread>::smp;
-    static const unsigned int SYSCALL_INT = Traits<PC>::SYSCALL_INT;
     
     typedef IA32::Reg32 Reg32;
     typedef IA32::Log_Addr Log_Addr;
