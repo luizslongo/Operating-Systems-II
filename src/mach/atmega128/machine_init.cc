@@ -20,6 +20,8 @@ void ATMega128::init()
     if(Traits<ATMega128_NIC>::enabled)
 	ATMega128_NIC::init();
 
+    Timer::init();
+
     return;
 
 }
