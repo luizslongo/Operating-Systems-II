@@ -5,6 +5,7 @@
 #include <machine.h>
 #include <thread.h>
 #include <system.h>
+#include <display.h>
 
 // LIBC Heritage
 
