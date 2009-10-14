@@ -13,22 +13,12 @@ __BEGIN_SYS
 
 class ATMega128: public Machine_Common, private AVR_Machine
 {
-private:
-    static const unsigned int INT_VECTOR_SIZE = 35;
-
 public:
     typedef IO_Map<ATMega128> IO;
 
     typedef void (int_handler)(unsigned int);
 
 public:
-    static int_handler * int_vector(unsigned int i) {
-	return (i < INT_VECTOR_SIZE) ? _int_vector[i] : 0;
-    }
-    static void int_vector(unsigned int i, int_handler * h) {
-	if(i < INT_VECTOR_SIZE) _int_vector[i] = h;
-    }
-
     template<typename Dev>
     static Dev * seize(const Type_Id & type, unsigned int unit) {
         //not implemented
@@ -40,16 +30,18 @@ public:
     }
 
     static void panic() { AVR_Machine::panic(); }
-    static void reboot();
+    static void reboot() { CPU::reboot(); }
     static void poweroff();
+
+    static unsigned int n_cpus() { return 0; }
+    static unsigned int cpu_id() { return 0; }
+    static void smp_init(unsigned int n_cpus) { }
+    static void smp_barrier(int n_cpus = 0) { }
 
     static int irq2int(int i) { return i; }
     static int int2irq(int i) { return i; }
 
     static void init();
-
-private:
-    static int_handler * _int_vector[INT_VECTOR_SIZE];
 };
 
 __END_SYS
