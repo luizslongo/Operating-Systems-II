@@ -1137,26 +1137,24 @@ public:
     }
     
     void insert_merging(Element * e, Element ** m1, Element ** m2) {
-	db<Lists>(TRC) << "Grouping_List::insert_merging(e=" << e 
-		       << ")	\n";
-
-	_grouped_size += e->size();
-	*m1 = *m2 = 0;
-	Element * r = search(e->object() + e->size());
-	Element * l = search_left(e->object());
-	if(!r && !l)
-	    insert_tail(e);
-	else {
-	    if(r) {
-		e->size(e->size() + r->size());
-		remove(r);
-		*m1 = r;
-	    }
-	    if(l) {
-		l->size(l->size() + e->size());
-		*m2 = e;
-	    }
-	}
+    db<Lists>(TRC) << "Grouping_List::insert_merging(e=" << e 
+               << ")    \n";
+    _grouped_size += e->size();
+    *m1 = *m2 = 0;
+    Element * r = search(e->object() + e->size());
+    Element * l = search_left(e->object());
+    if(!l) {
+        insert_tail(e);
+    }
+    if(r) {
+        e->size(e->size() + r->size());
+        remove(r);
+        *m1 = r;
+    }
+    if(l) {
+        l->size(l->size() + e->size());
+        *m2 = e;
+    }
     }
     
     Element * search_decrementing(unsigned int s) {
