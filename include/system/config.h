@@ -119,6 +119,7 @@ typedef Dummy<4>		Accelerometer;
 #define __RTC_H			__HEADER_MACH(rtc)
 #define __EEPROM_H		__HEADER_MACH(eeprom)
 #define __NIC_H			__HEADER_MACH(nic)
+#define __DISPLAY_H     __HEADER_MACH(display)
 
 #elif defined (__atmega16)
 
@@ -147,12 +148,14 @@ typedef Dummy<3>		Accelerometer;
 
 #elif defined (__atmega128)
 
-typedef ATMega128		Machine;
+typedef ATMega128		    Machine;
 typedef ATMega128_IC		IC;
-typedef ATMega128_Timer		Timer;
+typedef ATMega128_Timer	    Timer;
+typedef ATMega128_Timer_1   Scheduler_Timer;
+typedef ATMega128_Timer_3   Alarm_Timer;
 typedef ATMega128_RTC		RTC;
 typedef ATMega128_EEPROM	EEPROM;
-typedef Dummy<0>		PCI;
+typedef Dummy<1>		    PCI;
 typedef ATMega128_UART		UART;
 typedef ATMega128_SPI		SPI;
 typedef IF<Traits<ATMega128_Display>::on_serial,
@@ -214,7 +217,6 @@ typedef Dummy<6>                Accelerometer;
 #define __IC_H			__HEADER_MACH(ic)
 #define __TIMER_H		__HEADER_MACH(timer)
 #define __UART_H		__HEADER_MACH(uart)
-#define __DISPLAY_H		__HEADER_MACH(display)
 
 __END_SYS
 
