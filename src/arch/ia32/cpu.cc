@@ -4,6 +4,11 @@
 
 __BEGIN_SYS
 
+// Class attributes
+unsigned int IA32::_cpu_clock;
+unsigned int IA32::_bus_clock;
+
+// Class methods
 void IA32::Context::save() volatile
 {
     ASM("	pushl	%ebp						\n"
