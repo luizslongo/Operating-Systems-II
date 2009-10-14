@@ -11,6 +11,8 @@ __BEGIN_SYS
 
 class ATMega128_IC: public IC_Common, private AVR_IC
 {
+public:
+    static const unsigned int INTS = 35;
 private:
     typedef IO_Map<Machine> IO;
 
@@ -154,8 +156,18 @@ public:
 
 public:
     ATMega128_IC() {};
-    
-    static void enable(IRQ irq) {
+
+    static Interrupt_Handler int_vector(Interrupt_Id i) {
+    return (i < INTS) ? _int_vector[i] : 0;
+    }
+
+    static void int_vector(Interrupt_Id i, Interrupt_Handler h) {
+    db<IC>(INF) << "PC_IC::int_vector(int=" << i << ",h=" 
+            << (void *)h <<")\n";
+    if(i < INTS) _int_vector[i] = h;
+    }
+
+    static void enable(Interrupt_Id irq) {
 
 	if(irq <= IRQ_IRQ7) {
 	    eimsk(eimsk() | 1 << (irq - 1));
@@ -202,7 +214,7 @@ public:
         acsr(acsr() & ~ACIE);
         eecr(eecr() & ~EERIE);
     }
-    static void disable(IRQ irq) {
+    static void disable(Interrupt_Id irq) {
 
 	if(irq <= IRQ_IRQ7) {
 	    eimsk(eimsk() & ~(1 << (irq - 1)));
@@ -271,8 +283,10 @@ private:
     static Reg8 ucsr1a() { return AVR8::in8(UCSR1A); }
     static void ucsr1a(Reg8 value) { AVR8::out8(UCSR1A,value); } 
     static Reg8 ucsr1b() { return AVR8::in8(UCSR1B); }
-    static void ucsr1b(Reg8 value) { AVR8::out8(UCSR1B,value); } 
-        
+    static void ucsr1b(Reg8 value) { AVR8::out8(UCSR1B,value); }
+
+private:
+    static Interrupt_Handler _int_vector[INTS]; 
 };
 
 typedef ATMega128_IC IC;
