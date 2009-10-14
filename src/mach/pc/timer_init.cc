@@ -11,7 +11,7 @@ int PC_Timer::init()
 
     CPU::int_disable();
     
-    _engine.config(0, COUNT);
+    Engine::config(0, Engine::clock() / FREQUENCY);
 
     IC::int_vector(IC::INT_TIMER, int_handler);
     IC::enable(IC::INT_TIMER);
