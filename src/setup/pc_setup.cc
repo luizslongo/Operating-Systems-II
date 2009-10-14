@@ -103,6 +103,7 @@ private:
     void call_next();
 
     void pci_aperture(unsigned int * base, unsigned int * top);
+    void calibrate_timers();
 
     static void panic() { Machine::panic(); }
 
@@ -132,6 +133,10 @@ PC_Setup::PC_Setup(char * boot_image)
 
 	// Disable hardware interrupt triggering at PIC
 	i8259A::reset();
+
+	// Calibrate timers
+	calibrate_timers();
+	calibrate_timers();
 
     	// Build the memory model
 	build_lm();
@@ -455,7 +460,8 @@ void PC_Setup::say_hi()
 	    << "No SYSTEM in boot image, assuming EPOS is a library!\n";
 
     kout << "Setting up this machine as follows: \n";
-    kout << "  Processor:    IA32\n";
+    kout << "  Processor:    IA32 at " << si->tm.cpu_clock / 1000000
+	 << " MHz (BUS clock = " << si->tm.bus_clock / 1000000 << " MHz)\n";
     kout << "  Memory:       " << (si->bm.mem_top - si->bm.mem_base) / 1024
 	 << " Kbytes [" << (void *)si->bm.mem_base
 	 << ":" << (void *)si->bm.mem_top << "]\n";
@@ -912,6 +918,60 @@ void PC_Setup::pci_aperture(unsigned int * base, unsigned int * top)
 
     db<Setup>(INF) << "PCI address space={base=" << (void *)*base
 		   << ",top=" << (void *)*top << "}\n";
+}
+
+//========================================================================
+void PC_Setup::calibrate_timers()
+{
+    db<Setup>(TRC) << "PC_Setup::calibrate_timers()\n";
+
+    // Disable speaker so we can use channel 2 of i8253
+    i8255::port_b(i8255::port_b() & ~(i8255::SPEAKER | i8255::I8253_GATE2));
+
+    // Program i8253 channel 2 to count 100 ms
+    i8253::config(2, i8253::CLOCK/100, false, false);
+
+    // Enable i8253 channel 2 counting
+    i8255::port_b(i8255::port_b() | i8255::I8253_GATE2);
+
+    // Read CPU clock counter
+    TSC::Time_Stamp t0 = TSC::time_stamp();
+
+    // Wait for i8253 counting to finish
+    while(!(i8255::port_b() & i8255::I8253_OUT2));
+
+    // Read CPU clock counter again
+    TSC::Time_Stamp t1 = TSC::time_stamp(); // ascending
+
+    si->tm.cpu_clock = (t1 - t0) * 100;
+    db<Setup>(INF) << "PC_Setup::calibrate_timers:CPU clock="
+		   << si->tm.cpu_clock << " Hz\n";
+
+
+    // Disable speaker so we can use channel 2 of i8253
+    i8255::port_b(i8255::port_b() & ~(i8255::SPEAKER | i8255::I8253_GATE2));
+
+    // Program i8253 channel 2 to count 100 ms
+    i8253::config(2, i8253::CLOCK/100, false, false);
+
+    // Program APIC_Timer to count as long as it can
+    APIC_Timer::config(0, APIC_Timer::Count(-1), false, false);
+
+    // Enable i8253 channel 2 counting
+    i8255::port_b(i8255::port_b() | i8255::I8253_GATE2);
+
+    // Read APIC_Timer counter
+    APIC_Timer::Count t3 = APIC_Timer::read(0); // descending
+
+    // Wait for i8253 counting to finish
+    while(!(i8255::port_b() & i8255::I8253_OUT2));
+
+    // Read APIC_Timer counter again
+    APIC_Timer::Count t2 = APIC_Timer::read(0);
+
+    si->tm.bus_clock = (t3 - t2) * 100 * 16; // APIC_Timer is prescaled by 16
+    db<Setup>(INF) << "PC_Setup::calibrate_timers:BUS clock="
+		   << si->tm.bus_clock << " Hz\n";
 }
 
 __END_SYS
