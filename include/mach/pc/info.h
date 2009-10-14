@@ -16,7 +16,7 @@ private:
     typedef unsigned int Size;
 
 public:
-    // The information we have at boot time (built up by MKBI)
+    // The information we have at boot time (built by MKBI)
     // Modifications to this map requires adjustments at MKBI
     struct Boot_Map
     {
@@ -35,7 +35,7 @@ public:
 	int extras_offset;
     };
 
-    // Physical Memory Map (built up by SETUP)
+    // Physical Memory Map (built by SETUP)
     struct Physical_Memory_Map
     {
 	PAddr mem_base;      // Memory base address
@@ -61,13 +61,13 @@ public:
 	PAddr free2_top;     // Second free memory chunk top address
     };
 
-    // Logical Memory Map (built up by SETUP)
+    // Logical Memory Map (built by SETUP)
     struct Logical_Memory_Map
     {
 	LAddr app_entry;       // First application's entry point
     };
 
-    // Load Map (built up by SETUP)
+    // Load Map (built by SETUP)
     struct Load_Map {
 	bool  has_stp;
 	bool  has_ini;
@@ -104,11 +104,18 @@ public:
 	Size  ext_size;
     };
 
+    // Time Map (built by SETUP)
+    struct Time_Map {
+	unsigned int cpu_clock;
+	unsigned int bus_clock;
+    };
+	
 public:
     Boot_Map bm;
     Physical_Memory_Map pmm;
     Logical_Memory_Map lmm;
     Load_Map lm;
+    Time_Map tm;
 };
 
 __END_SYS
