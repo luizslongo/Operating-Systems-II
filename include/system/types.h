@@ -63,6 +63,9 @@ class PLASMA_IC;
 class PC_Timer;
 class ATMega16_Timer;
 class ATMega128_Timer;
+class ATMega128_Timer_1;
+class ATMega128_Timer_2;
+class ATMega128_Timer_3;
 class ML310_Timer;
 class PLASMA_Timer;
 
