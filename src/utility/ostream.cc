@@ -9,7 +9,7 @@ const char OStream::_digits[] = "0123456789abcdef";
 
 void OStream::print(const char * s)
 {
-    static volatile bool lock = false;
+//     static volatile bool lock = false;
 
 //     if(Traits<Thread>::smp) while(CPU::tsl(lock));
     Display::puts(s); 
