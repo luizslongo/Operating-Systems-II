@@ -314,6 +314,8 @@ public:
 	sleep(ps);
     }
 
+    static void reboot() { ASM("jmp 0"); }
+
     static void init();
 
 private:
