@@ -295,21 +295,7 @@ public:
  	while((read(ICR0_31) & ICR_PENDING));
     }
 
-    static void ipi_start(Log_Addr entry) {
-	unsigned int vector = (entry >> 12) & 0xff;
-
-	// Broadcast STARTUP IPI to all APs excluding self twice
- 	write(ICR0_31, ICR_OTHERS | ICR_LEVEL
-	      | ICR_ASSERT | ICR_STARTUP | vector);
- 	while((read(ICR0_31) & ICR_PENDING));
-  	for(int i = 0; i < 0x100000; i++); // ***
- 	write(ICR0_31, ICR_OTHERS | ICR_LEVEL
-	      | ICR_ASSERT | ICR_STARTUP | vector);
- 	while((read(ICR0_31) & ICR_PENDING));
-
-	// Give other CPUs a time to wake up (> 10ms)
- 	for(int i = 0; i < 0x4000000; i++); // ***
-    };
+    static void ipi_start(Log_Addr entry);
 
     static void reset(Log_Addr addr = LOCAL_APIC_LOG_ADDR) {
 	// APIC must be on very early in the boot process, so it is
@@ -332,7 +318,7 @@ public:
 	Reg32 v = INT_TIMER;
 	v |= (interrupt) ? 0 : TIMER_MASKED;
 	v |= (periodic) ? TIMER_PERIODIC : 0;
-	write(TIMER_INITIAL, count);
+	write(TIMER_INITIAL, count / 16);
 	write(TIMER_PRESCALE, TIMER_PRESCALE_BY_16);
 	write(LVT_TIMER, v);
     }
