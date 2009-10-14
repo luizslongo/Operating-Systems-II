@@ -60,7 +60,7 @@ public:
     static void init();
 
 private:
-    static volatile unsigned int  _n_cpus;
+    static volatile unsigned int _n_cpus;
 };
 
 __END_SYS

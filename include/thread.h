@@ -20,7 +20,6 @@ protected:
     static const bool preemptive = Traits<Thread>::Criterion::preemptive;
     static const bool smp = Traits<Thread>::smp;
 
-    static const unsigned int CPUS = Traits<Machine>::CPUS;
     static const unsigned int QUANTUM = Traits<Thread>::QUANTUM;
     static const unsigned int STACK_SIZE =
 	Traits<Machine>::APPLICATION_STACK_SIZE;
