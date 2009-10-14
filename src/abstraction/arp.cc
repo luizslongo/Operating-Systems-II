@@ -43,7 +43,7 @@ const ARP::HAddress& ARP::arp(ARP::LAddress laddr_dst){
 	unsigned int tries = 0;
 	Alarm *a = 0;
 	Handler_Condition *h = 0;
-	Condition *c;
+	Condition *c = 0;
 	do {
 		if(_arp_tab.get(laddr_dst, haddr)){
 			db<ARP>(INF) << "ARP Translation Found in local Table: "
