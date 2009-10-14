@@ -8,7 +8,9 @@ __BEGIN_SYS
 template <int unit>
 inline static void call_init()
 {
-    Traits<ATMega128_NIC>::NICS::template Get<unit>::Result::init(unit);
+    typedef typename Traits<ATMega128_NIC>::NICS::template Get<unit>::Result NIC;
+    if(Traits<NIC>::enabled)
+        NIC::init(unit);
     call_init<unit + 1>();
 };
 
