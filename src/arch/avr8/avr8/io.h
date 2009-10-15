@@ -160,6 +160,8 @@
 #  include "mcu/io86r401.h"
 #elif defined (__AVR_ATmega128__)
 #  include "mcu/iom128.h"
+#elif defined (__AVR_ATmega1281__)
+#  include "mcu/iom1281.h"
 #elif defined (__AVR_ATmega64__)
 #  include "mcu/iom64.h"
 #elif defined (__AVR_ATmega103__)
