@@ -44,6 +44,8 @@
 #define MACH atmega16
 #elif defined (__atmega128)
 #define MACH atmega128
+#elif defined (__atmega1281)
+#define MACH atmega1281
 #elif defined (__ml310)
 #define MACH ml310
 #elif defined (__plasma)
@@ -152,6 +154,7 @@ typedef ATMega128		    Machine;
 typedef ATMega128_IC		IC;
 typedef ATMega128_Timer	    Timer;
 typedef ATMega128_Timer_1   Scheduler_Timer;
+typedef ATMega128_Timer_2   Timer_2;
 typedef ATMega128_Timer_3   Alarm_Timer;
 typedef ATMega128_RTC		RTC;
 typedef ATMega128_EEPROM	EEPROM;
@@ -172,6 +175,37 @@ typedef ATMega128_Accelerometer	Accelerometer;
 #define __NIC_H			__HEADER_MACH(nic)
 #define __ADC_H			__HEADER_MACH(adc)
 #define __SENSOR_H		__HEADER_MACH(sensor)
+
+#elif defined (__atmega1281)
+
+#define MACH atmega1281
+typedef ATMega1281          Machine;
+typedef ATMega1281_IC       IC;
+typedef ATMega1281_Timer    Timer;
+typedef ATMega1281_Timer_2  Scheduler_Timer;
+typedef ATMega1281_Timer_1  Timer_2;
+typedef ATMega1281_Timer_3  Alarm_Timer;
+typedef ATMega1281_RTC      RTC;
+typedef ATMega1281_EEPROM   EEPROM;
+typedef Dummy<0>        PCI;
+typedef ATMega1281_UART     UART;
+typedef ATMega1281_SPI      SPI;
+typedef IF<Traits<ATMega1281_Display>::on_serial,
+       Serial_Display,
+       PC_Display>::Result  Display;
+typedef ATMega1281_NIC      NIC;
+typedef ATMega1281_ADC      ADC;
+typedef ATMega1281_Temperature_Sensor   Temperature_Sensor;
+typedef Dummy<1>        Photo_Sensor;
+typedef Dummy<2>        Accelerometer;
+typedef ATMega1281_Humidity_Sensor Humidity_Sensor;
+#define __RTC_H         __HEADER_MACH(rtc)
+#define __EEPROM_H      __HEADER_MACH(eeprom)
+#define __SPI_H         __HEADER_MACH(spi)
+#define __NIC_H         __HEADER_MACH(nic)
+#define __ADC_H         __HEADER_MACH(adc)
+#define __SENSOR_H      __HEADER_MACH(sensor)
+
 
 #elif defined (__ml310)
 

@@ -45,6 +45,7 @@ class MIPS32_MMU;
 class PC;
 class ATMega16;
 class ATMega128;
+class ATMega1281;
 class ML310;
 class PLASMA;
 
@@ -56,6 +57,7 @@ class ML310_PCI;
 class PC_IC;
 class ATMega16_IC;
 class ATMega128_IC;
+class ATMega1281_IC;
 class ML310_IC;
 class PLASMA_IC;
 
@@ -66,6 +68,10 @@ class ATMega128_Timer;
 class ATMega128_Timer_1;
 class ATMega128_Timer_2;
 class ATMega128_Timer_3;
+class ATMega1281_Timer;
+class ATMega1281_Timer_1;
+class ATMega1281_Timer_2;
+class ATMega1281_Timer_3;
 class ML310_Timer;
 class PLASMA_Timer;
 
@@ -73,6 +79,7 @@ class PLASMA_Timer;
 class PC_RTC;
 class ATMega16_RTC;
 class ATMega128_RTC;
+class ATMega1281_RTC;
 class ML310_RTC;
 class PLASMA_RTC;
 
@@ -80,11 +87,13 @@ class PLASMA_RTC;
 class PC_EEPROM;
 class ATMega16_EEPROM;
 class ATMega128_EEPROM;
+class ATMega1281_EEPROM;
 
 // Hardware Mediators - UARTs
 class PC_UART;
 class ATMega16_UART;
 class ATMega128_UART;
+class ATMega1281_UART;
 class ML310_UART;
 class PLASMA_UART;
 
@@ -92,12 +101,14 @@ class PLASMA_UART;
 class PC_SPI;
 class ATMega16_SPI;
 class ATMega128_SPI;
+class ATMega1281_SPI;
 
 // Hardware Mediators - Displays
 class Serial_Display;
 class PC_Display;
 class ATMega16_Display;
 class ATMega128_Display;
+class ATMega1281_Display;
 
 // Hardware Mediators - NICs
 class PC_NIC;
@@ -106,6 +117,7 @@ class C905;
 class E100;
 class ATMega16_NIC;
 class ATMega128_NIC;
+class ATMega1281_NIC;
 class Radio;
 class ML310_NIC;
 class CMAC;
@@ -114,18 +126,23 @@ class PLASMA_NIC;
 // Hardware Mediators - ADCs
 class ATMega16_ADC;
 class ATMega128_ADC;
+class ATMega1281_ADC;
 
 // Hardware Mediators - Sensors
 class PC_Sensor;
 class ATMega128_Temperature_Sensor;
 class ATMega128_Photo_Sensor;
 class ATMega128_Accelerometer;
+class ATMega1281_Temperature_Sensor;
+class ATMega1281_Humidity_Sensor;
 class MTS300;
 class MTS300_Temperature;
 class MTS300_Photo;
 class ADXL202;
 class Dummy_Accel;
-
+class SHT11;
+class SHT11_Temperature;
+class SHT11_Humidity;
 
 // Abstractions	- Process
 class Thread;
