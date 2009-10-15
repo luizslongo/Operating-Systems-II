@@ -5,7 +5,7 @@
  *      Author: tiago
  */
 
-#include <mach/common/at86rf230/at86rf230_hal.h>
+#include <mach/atmega1281/at86rf230/at86rf230_hal.h>
 #include <ic.h>
 #include <machine.h>
 #include <cpu.h>
