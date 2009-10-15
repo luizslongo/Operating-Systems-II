@@ -5,7 +5,7 @@
 #include <nic.h>
 #include <cpu.h>
 #include <utility/crc.h>
-#include <mach/atmega128/timer.h>
+#include <timer.h>
 
 
 __BEGIN_SYS 
@@ -113,7 +113,7 @@ private:
     static volatile unsigned char   _rx_data_count;
     static volatile unsigned char   _rx_tries;
 
-    static ATMega128_Timer_2        _timer;
+    static Timer_2        _timer;
 
 };
 

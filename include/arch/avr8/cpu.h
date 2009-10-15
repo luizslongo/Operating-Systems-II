@@ -34,13 +34,22 @@ public:
     //Power Management
 private:
     enum {
-        MCUCR = 0x35,
 #if defined (__atmega128)
+    MCUCR = 0x35,
 	SE    = 0x20,
 	SM0   = 0x08,
 	SM1   = 0x10,
 	SM2   = 0x04
+#elif defined (__atmega1281)
+    SMCR  = 0x33,
+    // on atmega1281 this bits are in SMCR
+    SM2   = 0x08,
+    SM1   = 0x04,
+    SM0   = 0x02,
+    SE    = 0x01,
+    MCUCR = SMCR
 #elif defined (__atmega16)
+    MCUCR = 0x35,
 	SE    = 0x40,
 	SM0   = 0x10,
 	SM1   = 0x20,

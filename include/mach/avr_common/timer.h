@@ -22,90 +22,221 @@ public:
     // The timer's counter
     typedef CPU::Reg16 Count;
 
-    // Bit Definitions
+// Bit Definitions
     enum {
-	// TIMSK
-	OCIE2  = 0x80,
-	TOIE2  = 0x40,
-	TICIE1 = 0x20,
-	OCIE1A = 0x10,
-	OCIE1B = 0x08,
-	TOIE1  = 0x04,
-	OCIE0  = 0x02,
-	TOIE0  = 0x01,
-	// ETIMSK
-	TICIE3 = 0x20,
-	OCIE3A = 0x10,
-	OCIE3B = 0x08,
-	TOIE3  = 0x04,
-	OCIE3C = 0x02,
-	OCIE1C = 0x01,
-	// TIFR
-	OCF2   = 0x80,
-	TOV2   = 0x40,
-	ICF1   = 0x20,
-	OCF1A  = 0x10,
-	OCF1B  = 0x08,
-	TOV1   = 0x04,
-	OCF0   = 0x02,
-	TOV0   = 0x01,
-	// ETIFR
-	ICF3   = 0x20,
-	OCF3A  = 0x10,
-	OCF3B  = 0x08,
-	TOV3   = 0x04,
-	OCF3C  = 0x02,
-	OCF1C  = 0x01,
-	// SFIOR
-	TSM    = 0x80,
-	ACME   = 0x08,
-	PUD    = 0x04,
-	PSR0   = 0x02,
-	PSR321 = 0x01,
-	// TCCR0 
-	FOC0   = 0x80,
-	WGM00  = 0x40,
-	COM01  = 0x20,
-	COM00  = 0x10,
-	WGM01  = 0x08,
-	CS02   = 0x04,
-	CS01   = 0x02,
-	CS00   = 0x01,
-	// ASSR
-	AS0    = 0x08,
-	TCN0UB = 0x04,
-	OCR0UB = 0x02,
-	TCR0UB = 0x01,
-	// TCCR1A, TCCR3A
-	COMnA1 = 0x80,
-	COMnA0 = 0x40,
-	COMnB1 = 0x20,
-	COMnB0 = 0x10,
-	COMnC1 = 0x08,
-	COMnC0 = 0x04,
-	WGMn1  = 0x02,
-	WGMn0  = 0x01,
-	// TCCR1B, TCCR3B
-	ICnC1  = 0x80,
-	ICESn  = 0x40,
-	WGMn3  = 0x10,
-	WGMn2  = 0x08,
-	CSn2   = 0x04,
-	CSn1   = 0x02,
-	CSn0   = 0x01,
-	// TCCR1C, TCCR3C
-	FOCnA  = 0x80,
-	FOCnB  = 0x40,
-	FOCnC  = 0x10,
-	// TCCR2
-	FOC2   = 0x80,
-	WGM20  = 0x40,
-	COM21  = 0x20,
-	COM20  = 0x10,
-	WGM21  = 0x08,
-	CS22   = 0x04,
-	CS21   = 0x02,
-	CS20   = 0x01,
+#if defined (__atmega1281)
+        // TIMSK0
+        OCIE0B   = 0x04,
+        OCIE0A   = 0x02,
+        TOIE0    = 0x01,
+        // TIMSK1
+        ICIE1    = 0x20,
+        OCIE1C   = 0x08,
+        OCIE1B   = 0x04,
+        OCIE1A   = 0x02,
+        TOIE1    = 0x01,
+    // TIMSK2
+        OCIE2B   = 0x04,
+        OCIE2A   = 0x02,
+    TOIE2    = 0x01,
+        // TIMSK3
+        ICIE3    = 0x20,
+        OCIE3C   = 0x08,
+        OCIE3B   = 0x04,
+        OCIE3A   = 0x02,
+        TOIE3    = 0x01,
+        // TIMSK4
+        ICIE4    = 0x20,
+        OCIE4C   = 0x08,
+        OCIE4B   = 0x04,
+        OCIE4A   = 0x02,
+        TOIE4    = 0x01,
+        // TIMSK5
+        ICIE5    = 0x20,
+        OCIE5C   = 0x08,
+        OCIE5B   = 0x04,
+        OCIE5A   = 0x02,
+        TOIE5    = 0x01,
+        // TIFR0
+        OCF0B    = 0x04,
+        OCF0A    = 0x02,
+        TOV0     = 0x01,
+        // TIFR1
+        ICF1     = 0x20,
+        OCF1C    = 0x08,
+        OCF1B    = 0x04,
+        OCF1A    = 0x02,
+        TOV1     = 0x01,
+        // TIFR2
+        OCF2B    = 0x04,
+        OCF2A    = 0x02,
+        TOV2     = 0x01,
+        // TIFR3
+        ICF3     = 0x20,
+        OCF3C    = 0x08,
+        OCF3B    = 0x04,
+        OCF3A    = 0x02,
+        TOV3     = 0x01,
+        // TIFR4
+        ICF4     = 0x20,
+        OCF4C    = 0x08,
+        OCF4B    = 0x04,
+        OCF4A    = 0x02,
+        TOV4     = 0x01,
+        // TIFR5
+        ICF5     = 0x20,
+        OCF5C    = 0x08,
+        OCF5B    = 0x04,
+        OCF5A    = 0x02,
+        TOV5     = 0x01,
+        // GTCCR
+    TSM     = 0x80,
+    PSRASY  = 0x02,
+    PSRSYNC = 0x01,
+        // ADCSRB
+    ACME   = 0x40,
+        // MCUCR
+    PUD    = 0x10,
+    // TCCR0B 
+    FOC0A  = 0x80,
+    FOC0B  = 0x40,
+    WGM02  = 0x08,
+    CS02   = 0x04,
+    CS01   = 0x02,
+    CS00   = 0x01,
+        // TCCR0A
+    COM0A1 = 0x80,
+    COM0A0 = 0x40,
+    COM0B1 = 0x20,
+    COM0B0 = 0x10,
+    WGM01  = 0x02,
+    WGM00  = 0x01,
+    // ASSR
+    AS2     = 0x20,
+    TCN2UB  = 0x10,
+    OCR2AUB = 0x08,
+    OCR2BUB = 0x04,
+    TCR2AUB = 0x02,
+    TCR2BUB = 0x01,
+    // TCCR1A, TCCR3A
+    COMnA1 = 0x80,
+    COMnA0 = 0x40,
+    COMnB1 = 0x20,
+    COMnB0 = 0x10,
+    COMnC1 = 0x08,
+    COMnC0 = 0x04,
+    WGMn1  = 0x02,
+    WGMn0  = 0x01,
+    // TCCR1B, TCCR3B
+    ICNCn  = 0x80,
+    ICESn  = 0x40,
+    WGMn3  = 0x10,
+    WGMn2  = 0x08,
+    CSn2   = 0x04,
+    CSn1   = 0x02,
+    CSn0   = 0x01,
+    // TCCR1C, TCCR3C
+    FOCnA  = 0x80,
+    FOCnB  = 0x40,
+    FOCnC  = 0x20,
+    // TCCR2B
+    FOC2A  = 0x80,
+    FOC2B  = 0x40,
+    WGM22  = 0x08,
+    CS22   = 0x04,
+    CS21   = 0x02,
+    CS20   = 0x01,
+    // TCCR2A
+        COM2A1 = 0x80,
+        COM2A0 = 0x40,
+        COM2B1 = 0x20,
+        COM2B0 = 0x10,
+        WGM21  = 0x02,
+        WGM20  = 0x01
+#else
+    // TIMSK
+    OCIE2  = 0x80,
+    TOIE2  = 0x40,
+    TICIE1 = 0x20,
+    OCIE1A = 0x10,
+    OCIE1B = 0x08,
+    TOIE1  = 0x04,
+    OCIE0  = 0x02,
+    TOIE0  = 0x01,
+    // ETIMSK
+    TICIE3 = 0x20,
+    OCIE3A = 0x10,
+    OCIE3B = 0x08,
+    TOIE3  = 0x04,
+    OCIE3C = 0x02,
+    OCIE1C = 0x01,
+    // TIFR
+    OCF2   = 0x80,
+    TOV2   = 0x40,
+    ICF1   = 0x20,
+    OCF1A  = 0x10,
+    OCF1B  = 0x08,
+    TOV1   = 0x04,
+    OCF0   = 0x02,
+    TOV0   = 0x01,
+    // ETIFR
+    ICF3   = 0x20,
+    OCF3A  = 0x10,
+    OCF3B  = 0x08,
+    TOV3   = 0x04,
+    OCF3C  = 0x02,
+    OCF1C  = 0x01,
+    // SFIOR
+    TSM    = 0x80,
+    ACME   = 0x08,
+    PUD    = 0x04,
+    PSR0   = 0x02,
+    PSR321 = 0x01,
+    // TCCR0 
+    FOC0   = 0x80,
+    WGM00  = 0x40,
+    COM01  = 0x20,
+    COM00  = 0x10,
+    WGM01  = 0x08,
+    CS02   = 0x04,
+    CS01   = 0x02,
+    CS00   = 0x01,
+    // ASSR
+    AS0    = 0x08,
+    TCN0UB = 0x04,
+    OCR0UB = 0x02,
+    TCR0UB = 0x01,
+    // TCCR1A, TCCR3A
+    COMnA1 = 0x80,
+    COMnA0 = 0x40,
+    COMnB1 = 0x20,
+    COMnB0 = 0x10,
+    COMnC1 = 0x08,
+    COMnC0 = 0x04,
+    WGMn1  = 0x02,
+    WGMn0  = 0x01,
+    // TCCR1B, TCCR3B
+    ICnC1  = 0x80,
+    ICESn  = 0x40,
+    WGMn3  = 0x10,
+    WGMn2  = 0x08,
+    CSn2   = 0x04,
+    CSn1   = 0x02,
+    CSn0   = 0x01,
+    // TCCR1C, TCCR3C
+    FOCnA  = 0x80,
+    FOCnB  = 0x40,
+    FOCnC  = 0x10,
+    // TCCR2
+    FOC2   = 0x80,
+    WGM20  = 0x40,
+    COM21  = 0x20,
+    COM20  = 0x10,
+    WGM21  = 0x08,
+    CS22   = 0x04,
+    CS21   = 0x02,
+    CS20   = 0x01,
+#endif
     };
 
     // Register Settings
@@ -118,6 +249,54 @@ public:
     };
 
 public:
+#if defined (__atmega1281)
+    static Reg8 timsk0() { return AVR8::in8(IO::TIMSK0); }
+    static void timsk0(Reg8 value) { AVR8::out8(IO::TIMSK0,value); } 
+    static Reg8 timsk1() { return AVR8::in8(IO::TIMSK1); }
+    static void timsk1(Reg8 value) { AVR8::out8(IO::TIMSK1,value); } 
+    static Reg8 timsk2() { return AVR8::in8(IO::TIMSK2); }
+    static void timsk2(Reg8 value) { AVR8::out8(IO::TIMSK2,value); } 
+    static Reg8 timsk3() { return AVR8::in8(IO::TIMSK3); }
+    static void timsk3(Reg8 value) { AVR8::out8(IO::TIMSK3,value); } 
+    static Reg8 timsk4() { return AVR8::in8(IO::TIMSK4); }
+    static void timsk4(Reg8 value) { AVR8::out8(IO::TIMSK4,value); } 
+    static Reg8 timsk5() { return AVR8::in8(IO::TIMSK5); }
+    static void timsk5(Reg8 value) { AVR8::out8(IO::TIMSK5,value); } 
+    static Reg8 tifr0() { return AVR8::in8(IO::TIFR0); }
+    static void tifr0(Reg8 value) { AVR8::out8(IO::TIFR0,value); } 
+    static Reg8 tifr1() { return AVR8::in8(IO::TIFR1); }
+    static void tifr1(Reg8 value) { AVR8::out8(IO::TIFR1,value); } 
+    static Reg8 tifr2() { return AVR8::in8(IO::TIFR2); }
+    static void tifr2(Reg8 value) { AVR8::out8(IO::TIFR2,value); } 
+    static Reg8 tifr3() { return AVR8::in8(IO::TIFR3); }
+    static void tifr3(Reg8 value) { AVR8::out8(IO::TIFR3,value); } 
+    static Reg8 tifr4() { return AVR8::in8(IO::TIFR4); }
+    static void tifr4(Reg8 value) { AVR8::out8(IO::TIFR4,value); } 
+    static Reg8 tifr5() { return AVR8::in8(IO::TIFR5); }
+    static void tifr5(Reg8 value) { AVR8::out8(IO::TIFR5,value); } 
+    static Reg8 gtccr() { return AVR8::in8(IO::GTCCR); }
+    static void gtccr(Reg8 value) { AVR8::out8(IO::GTCCR,value); }
+    static Reg8 adcsrb() { return AVR8::in8(IO::ADCSRB); }
+    static void adcsrb(Reg8 value) { AVR8::out8(IO::ADCSRB,value); }
+    static Reg8 mcucr() { return AVR8::in8(IO::MCUCR); }
+    static void mcucr(Reg8 value) { AVR8::out8(IO::MCUCR,value); }
+    static Reg8 tccr0b() { return AVR8::in8(IO::TCCR0B); }
+    static void tccr0b(Reg8 value) { AVR8::out8(IO::TCCR0B,value); }
+    static Reg8 tccr0a() { return AVR8::in8(IO::TCCR0A); }
+    static void tccr0a(Reg8 value) { AVR8::out8(IO::TCCR0A,value); }
+    static Reg8 ocr0b() { return AVR8::in8(IO::OCR0B); }
+    static void ocr0b(Reg8 value) { AVR8::out8(IO::OCR0B,value); }
+    static Reg8 ocr0a() { return AVR8::in8(IO::OCR0A); }
+    static void ocr0a(Reg8 value) { AVR8::out8(IO::OCR0A,value); }
+    static Reg8 tccr2b() { return AVR8::in8(IO::TCCR2B); }
+    static void tccr2b(Reg8 value) { AVR8::out8(IO::TCCR2B,value); }
+    static Reg8 tccr2a() { return AVR8::in8(IO::TCCR2A); }
+    static void tccr2a(Reg8 value) { AVR8::out8(IO::TCCR2A,value); }
+    static Reg8 ocr2b() { return AVR8::in8(IO::OCR2B); }
+    static void ocr2b(Reg8 value) { AVR8::out8(IO::OCR2B,value); }
+    static Reg8 ocr2a() { return AVR8::in8(IO::OCR2A); }
+    static void ocr2a(Reg8 value) { AVR8::out8(IO::OCR2A,value); }
+#else
     static Reg8 timsk() { return AVR8::in8(IO::TIMSK); }
     static void timsk(Reg8 value) { AVR8::out8(IO::TIMSK,value); }
     static Reg8 etimsk() { return AVR8::in8(IO::ETIMSK); }
@@ -130,10 +309,17 @@ public:
     static void sfior(Reg8 value) { AVR8::out8(IO::SFIOR,value); }
     static Reg8 tccr0() { return AVR8::in8(IO::TCCR0); }
     static void tccr0(Reg8 value) { AVR8::out8(IO::TCCR0,value); }
-    static Reg8 tcnt0() { return AVR8::in8(IO::TCNT0); }
-    static void tcnt0(Reg8 value) { AVR8::out8(IO::TCNT0,value); }
     static Reg8 ocr0() { return AVR8::in8(IO::OCR0); }
     static void ocr0(Reg8 value) { AVR8::out8(IO::OCR0,value); }
+    static Reg8 tccr2() { return AVR8::in8(IO::TCCR2); }
+    static void tccr2(Reg8 value) { AVR8::out8(IO::TCCR2,value); }
+    static Reg8 ocr2() { return AVR8::in8(IO::OCR2); }
+    static void ocr2(Reg8 value) { AVR8::out8(IO::OCR2,value); }
+#endif
+    static Reg8 tcnt0() { return AVR8::in8(IO::TCNT0); }
+    static void tcnt0(Reg8 value) { AVR8::out8(IO::TCNT0,value); }
+    static Reg8 tcnt2() { return AVR8::in8(IO::TCNT2); }
+    static void tcnt2(Reg8 value) { AVR8::out8(IO::TCNT2,value); }
     static Reg8 assr() { return AVR8::in8(IO::ASSR); }
     static void assr(Reg8 value) { AVR8::out8(IO::ASSR,value); }
     static Reg8 tccr1a() { return AVR8::in8(IO::TCCR1A); }
@@ -162,12 +348,6 @@ public:
     static void icr1h(Reg8 value) { AVR8::out8(IO::ICR1H,value); }
     static Reg8 icr1l() { return AVR8::in8(IO::ICR1L); }
     static void icr1l(Reg8 value) { AVR8::out8(IO::ICR1L,value); }
-    static Reg8 tccr2() { return AVR8::in8(IO::TCCR2); }
-    static void tccr2(Reg8 value) { AVR8::out8(IO::TCCR2,value); }
-    static Reg8 tcnt2() { return AVR8::in8(IO::TCNT2); }
-    static void tcnt2(Reg8 value) { AVR8::out8(IO::TCNT2,value); }
-    static Reg8 ocr2() { return AVR8::in8(IO::OCR2); }
-    static void ocr2(Reg8 value) { AVR8::out8(IO::OCR2,value); }
     static Reg8 tccr3a() { return AVR8::in8(IO::TCCR3A); }
     static void tccr3a(Reg8 value) { AVR8::out8(IO::TCCR3A,value); }
     static Reg8 tccr3b() { return AVR8::in8(IO::TCCR3B); }

@@ -295,6 +295,88 @@ class Accelerometer_Common: public Sensor_Common
 
 };
 
+class Humidity_Sensor_Common: public Sensor_Common
+{
+
+
+    class Humidity_Sensor_Base
+    {
+    public:
+    Humidity_Sensor_Base(unsigned int unit = 0) {}
+
+    virtual ~Humidity_Sensor_Base() {}
+
+    virtual int sample() = 0;
+
+    virtual int get() = 0;
+
+    virtual bool enable() = 0;
+
+    virtual void disable() = 0;
+
+    virtual bool data_ready() = 0;
+
+    
+    };
+    template<typename Humidity_Sensor, bool polymorphic>
+    class Humidity_Sensor_Wrapper: public Humidity_Sensor_Base, private Humidity_Sensor
+    {
+    public:
+
+    Humidity_Sensor_Wrapper(unsigned int unit = 0) : Humidity_Sensor(unit) {}
+
+    virtual ~Humidity_Sensor_Wrapper() {}
+
+    virtual int sample() {
+        return Humidity_Sensor::sample();
+    }
+
+    virtual int get() {
+        return Humidity_Sensor::get();
+    }
+
+    virtual bool enable() {
+        return Humidity_Sensor::enable();
+    }
+
+    virtual void disable() {
+        Humidity_Sensor::disable();
+    }
+
+    virtual bool data_ready() {
+        return Humidity_Sensor::data_ready();
+    }
+
+    };
+    template<typename Humidity_Sensor>
+    class Humidity_Sensor_Wrapper<Humidity_Sensor, false>: public Humidity_Sensor
+    {
+    public:
+    Humidity_Sensor_Wrapper(unsigned int unit = 0) : Humidity_Sensor(unit) {}
+    };
+
+    template<typename Humidity_Sensors>
+    class Meta_Humidity_Sensor
+    {
+    private:
+    static const bool polymorphic = Humidity_Sensors::Polymorphic;
+
+    public:
+    typedef     
+    typename IF<polymorphic,
+            Humidity_Sensor_Base, 
+            typename Humidity_Sensors::template Get<0>::Result>::Result Base;
+
+    template<int Index>
+    struct Get
+    { 
+        typedef
+        Humidity_Sensor_Wrapper<typename Humidity_Sensors::template Get<Index>::Result,
+                       polymorphic> Result;
+    };
+    };
+};
+
 
 /*
 
