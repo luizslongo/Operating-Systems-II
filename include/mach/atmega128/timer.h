@@ -68,7 +68,6 @@ public:
     Hertz frequency() const { return count2freq(ocr0()); }
     void frequency(const Hertz & f) {
 	ocr0(freq2count(f));
-	tccr0(WGM01 | TIMER_PRESCALE_1024);
     clock(CLOCK);
     };
 
@@ -102,6 +101,8 @@ public:
 private:
     static const Hertz MACHINE_CLOCK = Traits<Machine>::CLOCK;
     static const unsigned int CLOCK = Traits<Machine>::CLOCK >> 10;
+
+    typedef RTC::Microsecond Microsecond;
 
 public:
     ATMega128_Timer_2() {}
@@ -167,6 +168,8 @@ private:
     static const Hertz MACHINE_CLOCK = Traits<Machine>::CLOCK;
     static const unsigned int CLOCK = Traits<Machine>::CLOCK >> 8;
 
+    typedef RTC::Microsecond Microsecond;
+
 public:
     ATMega128_Timer_3() {}
 
@@ -199,7 +202,6 @@ public:
     Hertz frequency() const { return count2freq(ocr3a());}
     void frequency(const Hertz & f) {
 	ocr3a(freq2count(f));
-	tccr3b(TIMER_PRESCALE_1024|WGMn2);
     clock(CLOCK);
     };
 
