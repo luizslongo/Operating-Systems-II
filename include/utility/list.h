@@ -911,9 +911,9 @@ public:
 		      << ",n=" << (e ? e->next() : (void *) -1)
 		      << "}\n";
 
-	if(empty()){
+	if(empty())
 	    insert_first(e);
-	} else {
+	else {
 	    Element * next;
 	    for(next = head();
 		(next->rank() <= e->rank()) && next->next();
@@ -936,7 +936,11 @@ public:
 	}
     }
     
-    Element * remove() { return Base::remove_head(); }
+    Element * remove() { 
+	db<Lists>(TRC) << "Ordered_List::remove()\n";
+
+	return Base::remove_head();
+    }
 
     Element * remove(Element * e) {
 	db<Lists>(TRC) << "Ordered_List::remove(e=" << e 
@@ -953,6 +957,8 @@ public:
     }
 
     Element * remove(const Object_Type * obj) {
+	db<Lists>(TRC) << "Ordered_List::remove(o=" << obj << ")\n";
+
 	Element * e = search(obj);
 	if(e)
 	    return remove(e);
@@ -964,7 +970,10 @@ public:
 	for(; e && (e->rank() != rank); e = e->next());
 	return e;
     }
+
     Element * remove_rank(int rank) {
+	db<Lists>(TRC) << "Ordered_List::remove_rank(r=" << rank << ")\n";
+
 	Element * e = search_rank(rank);
 	if(e)
 	    return remove(e);
