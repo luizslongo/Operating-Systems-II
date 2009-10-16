@@ -269,7 +269,7 @@ TOUCH		= touch
 
 TEE		= tee
 
-QEMU		= qemu -no-reboot -no-kqemu -serial stdio -fda
+QEMU		= qemu -no-reboot -serial stdio -fda
 
 
 # Rules
