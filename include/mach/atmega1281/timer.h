@@ -75,7 +75,7 @@ public:
     Hertz frequency() const { return count2freq(ocr2a()); }
     void frequency(const Hertz & f) {
 	ocr2a(freq2count(f));
-	clock(f);
+	clock(CLOCK);
     };
 
     void reset() { tcnt2(0); }
@@ -147,7 +147,7 @@ public:
     Hertz frequency() const { return count2freq(ocr0a()); }
     void frequency(const Hertz & f) {
 	ocr0a(freq2count(f));
-	clock(f);
+	clock(CLOCK);
     };
 
     void reset() { tcnt0(0); }
@@ -218,7 +218,7 @@ public:
     Hertz frequency() const { return count2freq(ocr3a());}
     void frequency(const Hertz & f) {
 	ocr3a(freq2count(f));
-	clock(f);
+	clock(CLOCK);
     };
 
     void reset() { tcnt3(0); }
