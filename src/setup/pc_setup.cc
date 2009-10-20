@@ -943,7 +943,7 @@ void PC_Setup::calibrate_timers()
     TSC::Time_Stamp t1 = TSC::time_stamp(); // ascending
 
     si->tm.cpu_clock = (t1 - t0) * 10;
-    db<Setup>(WRN) << "PC_Setup::calibrate_timers:CPU clock="
+    db<Setup>(INF) << "PC_Setup::calibrate_timers:CPU clock="
 		   << si->tm.cpu_clock << " Hz\n";
 
 
@@ -969,7 +969,7 @@ void PC_Setup::calibrate_timers()
     APIC_Timer::Count t2 = APIC_Timer::read(0);
 
     si->tm.bus_clock = (t3 - t2) * 10 * 16; // APIC_Timer is prescaled by 16
-    db<Setup>(WRN) << "PC_Setup::calibrate_timers:BUS clock="
+    db<Setup>(INF) << "PC_Setup::calibrate_timers:BUS clock="
 		   << si->tm.bus_clock << " Hz\n";
 }
 
