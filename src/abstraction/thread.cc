@@ -11,7 +11,7 @@ __BEGIN_SYS
 // Class attributes
 Spin Thread::_lock;
 unsigned int Thread::_thread_count;
-Scheduler<Thread> Thread::_scheduler;
+Scheduler<Thread, Thread::Criterion> Thread::_scheduler;
 Scheduler_Timer * Thread::_timer;
 
 // This_Thread class attributes
@@ -279,10 +279,14 @@ int Thread::idle()
     while(true) {
 	db<Thread>(TRC) << "Thread::idle()\n";
 
-	if(_thread_count <= 1) { 
+	if(_thread_count <= Machine::n_cpus()) {
+	    CPU::int_disable();
 	    db<Thread>(WRN) << "The last thread has exited!\n";
-	    db<Thread>(WRN) << "Rebooting the machine ...\n";
-	    Machine::reboot();
+	    if(Machine::cpu_id() == 0) {
+		db<Thread>(WRN) << "Rebooting the machine ...\n";
+		Machine::reboot();
+	    } else
+		CPU::halt();
 	}
 
  	CPU::halt();

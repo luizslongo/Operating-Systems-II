@@ -72,10 +72,6 @@ template <> struct Traits<Thread>: public Traits<void>
     static const unsigned int QUANTUM = 10000; // us
 };
 
-template <> struct Traits<Scheduler<Thread> >: public Traits<void>
-{
-};
-
 template <> struct Traits<Alarm>: public Traits<void>
 {
     static const bool idle_waiting = true;

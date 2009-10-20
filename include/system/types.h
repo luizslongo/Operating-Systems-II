@@ -150,7 +150,7 @@ class Task;
 class Active;
 
 // Abstractions - Scheduler
-template <typename> class Scheduler;
+template <typename, typename> class Scheduler;
 namespace Scheduling_Criteria
 {
     class Priority;
@@ -158,6 +158,7 @@ namespace Scheduling_Criteria
     class Round_Robin;
     class RM;
     class EDF;
+    class CPU_Affinity;
 };
 
 // Abstractions	- Memory

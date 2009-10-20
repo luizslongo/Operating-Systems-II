@@ -13,7 +13,7 @@ __BEGIN_SYS
 
 class Thread
 {
-    friend class Scheduler<Thread>;
+    template <typename T, typename C> friend class Scheduler;
 
 protected:
     static const bool active_scheduler = Traits<Thread>::Criterion::timed;
@@ -50,8 +50,8 @@ public:
     };
 
     // Thread Queue
-    typedef Ordered_Queue<Thread, Criterion, 
-			  false, Scheduler<Thread>::Element> Queue;
+    typedef Ordered_Queue<Thread, Criterion, false, 
+			  Scheduler<Thread, Criterion>::Element> Queue;
 
 public:
     Thread(int (* entry)(), 
@@ -202,7 +202,7 @@ protected:
     static Spin _lock;
     static Scheduler_Timer * _timer;
     static unsigned int _thread_count;
-    static Scheduler<Thread> _scheduler;
+    static Scheduler<Thread, Criterion> _scheduler;
 };
 
 // An event handler that triggers a thread (see handler.h)
