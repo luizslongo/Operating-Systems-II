@@ -88,13 +88,13 @@ void APIC::ipi_start(Log_Addr entry)
     // Broadcast STARTUP IPI to all APs excluding self twice
     write(ICR0_31, ICR_OTHERS | ICR_LEVEL | ICR_ASSERT | ICR_STARTUP | vector);
     while((read(ICR0_31) & ICR_PENDING));
-    i8255::delay(35); // ~ 1ms delay
+    i8255::ms_delay(10); // ~ 10ms delay
 
     write(ICR0_31, ICR_OTHERS | ICR_LEVEL | ICR_ASSERT | ICR_STARTUP | vector);
     while((read(ICR0_31) & ICR_PENDING));
 
-    // Give other CPUs a time to wake up (> 10ms)
-    i8255::delay(400);
+    // Give other CPUs a time to wake up (> 100ms)
+    i8255::ms_delay(100);
 };
 
 __END_SYS

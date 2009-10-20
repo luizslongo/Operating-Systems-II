@@ -136,7 +136,6 @@ PC_Setup::PC_Setup(char * boot_image)
 
 	// Calibrate timers
 	calibrate_timers();
-	calibrate_timers();
 
     	// Build the memory model
 	build_lm();
@@ -929,7 +928,7 @@ void PC_Setup::calibrate_timers()
     i8255::port_b(i8255::port_b() & ~(i8255::SPEAKER | i8255::I8253_GATE2));
 
     // Program i8253 channel 2 to count 100 ms
-    i8253::config(2, i8253::CLOCK/100, false, false);
+    i8253::config(2, i8253::CLOCK/10, false, false);
 
     // Enable i8253 channel 2 counting
     i8255::port_b(i8255::port_b() | i8255::I8253_GATE2);
@@ -943,8 +942,8 @@ void PC_Setup::calibrate_timers()
     // Read CPU clock counter again
     TSC::Time_Stamp t1 = TSC::time_stamp(); // ascending
 
-    si->tm.cpu_clock = (t1 - t0) * 100;
-    db<Setup>(INF) << "PC_Setup::calibrate_timers:CPU clock="
+    si->tm.cpu_clock = (t1 - t0) * 10;
+    db<Setup>(WRN) << "PC_Setup::calibrate_timers:CPU clock="
 		   << si->tm.cpu_clock << " Hz\n";
 
 
@@ -952,7 +951,7 @@ void PC_Setup::calibrate_timers()
     i8255::port_b(i8255::port_b() & ~(i8255::SPEAKER | i8255::I8253_GATE2));
 
     // Program i8253 channel 2 to count 100 ms
-    i8253::config(2, i8253::CLOCK/100, false, false);
+    i8253::config(2, i8253::CLOCK/10, false, false);
 
     // Program APIC_Timer to count as long as it can
     APIC_Timer::config(0, APIC_Timer::Count(-1), false, false);
@@ -969,8 +968,8 @@ void PC_Setup::calibrate_timers()
     // Read APIC_Timer counter again
     APIC_Timer::Count t2 = APIC_Timer::read(0);
 
-    si->tm.bus_clock = (t3 - t2) * 100 * 16; // APIC_Timer is prescaled by 16
-    db<Setup>(INF) << "PC_Setup::calibrate_timers:BUS clock="
+    si->tm.bus_clock = (t3 - t2) * 10 * 16; // APIC_Timer is prescaled by 16
+    db<Setup>(WRN) << "PC_Setup::calibrate_timers:BUS clock="
 		   << si->tm.bus_clock << " Hz\n";
 }
 
