@@ -220,15 +220,6 @@ template <typename T,
 class Relative_Queue:
     public Queue_Wrapper<Relative_List<T, R, El>, atomic> {};
 
-
-// Scheduling Queue
-template <class T,
-	  typename R = List_Element_Rank,  
-	  bool atomic = false,
-	  typename El  = List_Elements::Doubly_Linked_Ordered<T, R> >
-class Scheduling_Queue: 
-    public Queue_Wrapper<Scheduling_List<T, R, El>, atomic> {};
-
 __END_SYS
  
 #endif
