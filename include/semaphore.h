@@ -12,7 +12,7 @@ class Semaphore: public Synchronizer_Common
 {
 public:
     Semaphore(int v = 1) : _value(v) {
-	db<Synchronizer>(TRC) << "Semaphore(value= " << _value << ") => "
+	db<Synchronizer>(TRC) << "Semaphore(value=" << _value << ") => "
 			      << this << "\n";
     }
     ~Semaphore() {
