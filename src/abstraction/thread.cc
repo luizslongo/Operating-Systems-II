@@ -281,8 +281,8 @@ int Thread::idle()
 
 	if(_thread_count <= Machine::n_cpus()) {
 	    CPU::int_disable();
-	    db<Thread>(WRN) << "The last thread has exited!\n";
 	    if(Machine::cpu_id() == 0) {
+		db<Thread>(WRN) << "The last thread has exited!\n";
 		db<Thread>(WRN) << "Rebooting the machine ...\n";
 		Machine::reboot();
 	    } else
