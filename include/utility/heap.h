@@ -80,14 +80,7 @@ private:
 
 // Wrapper for non-atomic heap  
 template <bool atomic>
-class Heap_Wrapper: public Heap_Common {
-public:
-    Heap_Wrapper() {}
-
-    Heap_Wrapper(void * addr, unsigned int bytes): Heap_Common(addr, bytes) {
-	free(addr, bytes); 
-    }
-};
+class Heap_Wrapper: public Heap_Common {};
 
 
 // Wrapper for atomic heap
