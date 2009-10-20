@@ -29,7 +29,7 @@ public:
     static void reboot();
     static void poweroff();
 
-    static unsigned int n_cpus() { return smp ? _n_cpus : 0; }
+    static unsigned int n_cpus() { return smp ? _n_cpus : 1; }
     static unsigned int cpu_id() { return smp ? APIC::id() : 0; }
 
     static void smp_init(unsigned int n_cpus) {
