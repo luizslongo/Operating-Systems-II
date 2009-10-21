@@ -90,6 +90,32 @@ private:
     Microsecond _time;
 };
 
+
+template<typename Timer>
+class Private_Alarm: private Timer
+{
+public:
+    typedef TSC::Hertz Hertz;
+    typedef RTC::Microsecond Microsecond;
+
+public:
+    Private_Alarm(const Microsecond & time, 
+		  Handler * handler, 
+		  bool retrigger = true): 
+	Timer(1000000 / time, handler, retrigger)
+    {
+	db<Alarm>(TRC) << "Alarm(t=" << time
+		       << ",h=" << (void *)handler
+		       << ",r=" << retrigger << ") => " << this << "\n";
+    }
+
+    ~Private_Alarm() {
+	db<Alarm>(TRC) << "~Alarm()\n";
+    }
+
+    static Hertz resolution() { return Timer::FREQUENCY; }
+};
+
 __END_SYS
 
 #endif
