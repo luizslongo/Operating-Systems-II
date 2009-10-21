@@ -11,7 +11,7 @@ __BEGIN_SYS
 // Class attributes
 Spin Thread::_lock;
 unsigned int Thread::_thread_count;
-Scheduler<Thread, Thread::Criterion> Thread::_scheduler;
+Scheduler<Thread> Thread::_scheduler;
 Scheduler_Timer * Thread::_timer;
 
 // This_Thread class attributes

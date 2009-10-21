@@ -3,8 +3,9 @@
 #ifndef __scheduler_h
 #define __scheduler_h
 
-#include <utility/queue.h>
-#include <rtc.h>
+#include <utility/list.h>
+#include <cpu.h>
+#include <machine.h>
 
 __BEGIN_SYS
 
@@ -28,6 +29,8 @@ namespace Scheduling_Criteria
 	static const bool timed = false;
 	static const bool preemptive = true;
 	static const bool energy_aware = false;
+
+	static const unsigned int QUEUES = 1;
 
     public:
 	Priority(int p = NORMAL): _priority(p) {}
@@ -127,74 +130,158 @@ namespace Scheduling_Criteria
     class CPU_Affinity: public Priority
     {
     public:
-	CPU_Affinity(int p = NORMAL, int a = 0): Priority(p), _affinity(a) {}
+	static const unsigned int QUEUES = Traits<Machine>::MAX_CPUS;
+  
+    public:
+	CPU_Affinity(int p = NORMAL): Priority(p),
+	     _affinity(((p == IDLE) || (p == MAIN)) ? Machine::cpu_id()
+		       : ++_next_cpu %= Machine::n_cpus()) {}
 
-	const volatile int & affinity() const volatile { return _affinity; }
-	void affinity(int a) { _affinity = a; }
+	CPU_Affinity(int p = NORMAL, int a): Priority(p), _affinity(a) {}
 
-    protected:
+	const volatile int & queue() const volatile { return _affinity; }
+
+	static int current() { return Machine::cpu_id(); }
+
+    private:
 	volatile int _affinity;
+
+	static int _next_cpu;
     };
 };
 
 
-// Objects subject to scheduling by Scheduler must define a "link" method 
-// to access the list element pointing to the object being manipulated.
-template <typename T, typename C>
-class Scheduler
+// Scheduling_Queue
+template <typename T, unsigned int Q>
+class Scheduling_Queue
 {
+private:
+    typedef typename T::Criterion Criterion;
+    typedef Scheduling_List<T, Criterion> Queue;
+
 public:
-    typedef Scheduling_List<T, C> Queue;
+    typedef typename Queue::Element Element;
+
+public:
+    Scheduling_Queue() {}
+
+    unsigned int size() { return _ready[Criterion::current()].size(); }
+
+    Element * volatile & chosen() { 
+	return _ready[Criterion::current()].chosen();
+    }
+
+    void insert(Element * e) {
+	_ready[e->rank().queue()].insert(e); 
+    }
+
+    Element * remove(Element * e) {
+	// removing object instead of element forces a search and renders
+	// removing inexistent objects harmless
+	return _ready[e->rank().queue()].remove(e->object());
+    }
+
+    Element * choose() {
+	return _ready[Criterion::current()].choose();
+    }
+
+    Element * choose_another() {
+	return _ready[Criterion::current()].choose_another();
+    }
+
+    Element * choose(Element * e) {
+	return _ready[e->rank().queue()].choose(e->object());
+    }
+
+private:
+    Queue _ready[Q];
+};
+
+// Specialization for single-queue
+template <typename T>
+class Scheduling_Queue<T, 1>: public Scheduling_List<T, typename T::Criterion>
+{
+private:
+    typedef Scheduling_List<T, typename T::Criterion> Base;
+
+public:
+    typedef typename Base::Element Element;
+
+public:
+    Element * remove(Element * e) {
+	// removing object instead of element forces a search and renders
+	// removing inexistent objects harmless
+	return Base::remove(e->object());
+    }
+
+    Element * choose() {
+	return Base::choose();
+    }
+
+    Element * choose(Element * e) {
+	return Base::choose(e->object());
+    }
+};
+
+
+// Scheduler
+// Objects subject to scheduling by Scheduler must declare a type "Criterion"
+// that will be used as the scheduling queue sorting criterion (viz, through 
+// operators <, >, and ==) and must also define a method "link" to export the
+// list element pointing to the object being handled.
+template <typename T>
+class Scheduler: public Scheduling_Queue<T, T::Criterion::QUEUES>
+{
+private:
+    typedef Scheduling_Queue<T, T::Criterion::QUEUES> Base;
+
+public:
+    typedef typename T::Criterion Criterion;
+    typedef Scheduling_List<T, Criterion> Queue;
     typedef typename Queue::Element Element;
 
 public:
     Scheduler() {}
 
-    unsigned int schedulables() { return _ready.size(); }
+    unsigned int schedulables() { return Base::size(); }
 
     T * volatile chosen() { 
-	return const_cast<T * volatile>(_ready.chosen()->object()); 
+	return const_cast<T * volatile>(Base::chosen()->object()); 
     }
 
     void insert(T * obj) {
 	db<Scheduler>(TRC) << "Scheduler[chosen=" << chosen()
 			   << "]::insert(" << obj << ")\n";
 
-	_ready.insert(obj->link()); 
+	Base::insert(obj->link()); 
     }
 
     T * remove(T * obj) {
 	db<Scheduler>(TRC) << "Scheduler[chosen=" << chosen()
 			   << "]::remove(" << obj << ")\n";
 
-	// removing obj instead of obj->link() forces a search and renders
-	// removing inexistent objects harmless
-	Element * e = _ready.remove(obj);
-
-	return e ? obj : 0;
+	return Base::remove(obj->link()) ? obj : 0;
     }
 
     void suspend(T * obj) {
 	db<Scheduler>(TRC) << "Scheduler[chosen=" << chosen()
 			   << "]::suspend(" << obj << ")\n";
 
-	_ready.remove(obj);
-// 	_suspend.insert(obj->link());
+	Base::remove(obj->link());
     }
 
     void resume(T * obj) {
 	db<Scheduler>(TRC) << "Scheduler[chosen=" << chosen() 
 			   << "]::resume(" << obj << ")\n";
 
-// 	_suspended.remove(obj->link());
-	_ready.insert(obj->link());
+	Base::insert(obj->link());
     }
 
     T * choose() {
 	db<Scheduler>(TRC) << "Scheduler[chosen=" << chosen()
 			   << "]::choose() => ";
 
-	T * obj = _ready.choose()->object();
+	T * obj = Base::choose()->object();
 
 	db<Scheduler>(TRC) << obj << "\n";
 	
@@ -205,7 +292,7 @@ public:
 	db<Scheduler>(TRC) << "Scheduler[chosen=" << chosen()
 			   << "]::choose_another() => ";
 
-	T * obj = _ready.choose_another()->object();
+	T * obj = Base::choose_another()->object();
 
 	db<Scheduler>(TRC) << obj << "\n";
 
@@ -216,116 +303,13 @@ public:
 	db<Scheduler>(TRC) << "Scheduler[chosen=" << chosen() 
 			   << "]::choose(" << obj;
 
-	if(!_ready.choose(obj))
+	if(!Base::choose(obj->link()))
 	    obj = 0;
 
 	db<Scheduler>(TRC) << obj << "\n";
 	
 	return obj;
     }
-
-private:
-    Queue _ready;
-//     Queue _suspended;
-};
-
-// Specialization for CPU_Affinity (SMP)
-template <typename T>
-class Scheduler<T, Scheduling_Criteria::CPU_Affinity>
-{
-public:
-    typedef Scheduling_Criteria::CPU_Affinity Affinity;
-    typedef Scheduling_List<T, Affinity> Queue;
-    typedef typename Queue::Element Element;
-
-public:
-    Scheduler(): _next_cpu(0) {}
-
-    unsigned int schedulables() { return _ready[Machine::cpu_id()].size(); }
-
-    T * volatile chosen() { 
-	return const_cast<T * volatile>
-	    (_ready[Machine::cpu_id()].chosen()->object()); 
-    }
-
-    void insert(T * obj) {
-	int queue;
-	if((obj->link()->rank() == Affinity::IDLE) 
-	   || (obj->link()->rank() == Affinity::MAIN))
-	    queue = Machine::cpu_id();
-	else {
-	    _next_cpu = (_next_cpu + 1) % Machine::n_cpus();
-	    queue = _next_cpu;
-	}
-
-	db<Scheduler>(TRC) << "Scheduler[chosen=" << chosen()
-			   << "]::insert(" << obj << ")\n";
-
-	obj->link()->rank(Affinity(obj->link()->rank(), queue));
-
-	_ready[queue].insert(obj->link()); 
-    }
-
-    T * remove(T * obj) {
-	db<Scheduler>(TRC) << "Scheduler[chosen=" << chosen()
-			   << "]::remove(" << obj << ")\n";
-
-	Element * e = _ready[obj->link()->rank().affinity()].remove(obj);
-
-	return e ? obj : 0;
-    }
-
-    void suspend(T * obj) {
-	db<Scheduler>(TRC) << "Scheduler[chosen=" << chosen()
-			   << "]::suspend(" << obj << ")\n";
-
-	_ready[obj->link()->rank().affinity()].remove(obj);
-    }
-
-    void resume(T * obj) {
-	db<Scheduler>(TRC) << "Scheduler[chosen=" << chosen() 
-			   << "]::resume(" << obj << ")\n";
-
-	_ready[obj->link()->rank().affinity()].insert(obj->link());
-    }
-
-    T * choose() {
-	db<Scheduler>(TRC) << "Scheduler[chosen=" << chosen()
-			   << "]::choose() => ";
-
-	T * obj = _ready[Machine::cpu_id()].choose()->object();
-
-	db<Scheduler>(TRC) << obj << "\n";
-	
-	return obj;
-    }
-
-    T * choose_another() {
-	db<Scheduler>(TRC) << "Scheduler[chosen=" << chosen()
-			   << "]::choose_another() => ";
-
-	T * obj = _ready[Machine::cpu_id()].choose_another()->object();
-
-	db<Scheduler>(TRC) << obj << "\n";
-
-	return obj;
-    }
-
-    T * choose(T * obj) {
-	db<Scheduler>(TRC) << "Scheduler[chosen=" << chosen() 
-			   << "]::choose(" << obj;
-
-	if(!_ready[obj->link()->rank().affinity()].choose(obj))
-	    obj = 0;
-
-	db<Scheduler>(TRC) << obj << "\n";
-	
-	return obj;
-    }
-
-private:
-    int _next_cpu;
-    Queue _ready[8];
 };
 
 __END_SYS

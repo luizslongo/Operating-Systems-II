@@ -4,11 +4,12 @@
 #define __types_h
 
 inline void * operator new(unsigned int s, void * a) { return a; }
+inline void * operator new[](unsigned int s, void * a) { return a; }
 
 __BEGIN_SYS
 
 // Dummy class for incomplete architectures and machines 
-template<int i>
+template<int>
 class Dummy;
 
 // Utilities
@@ -150,7 +151,7 @@ class Task;
 class Active;
 
 // Abstractions - Scheduler
-template <typename, typename> class Scheduler;
+template <typename> class Scheduler;
 namespace Scheduling_Criteria
 {
     class Priority;
