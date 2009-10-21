@@ -10,6 +10,8 @@ template <> struct Traits<PC_Common>: public Traits<void>
 
 template <> struct Traits<PC>: public Traits<PC_Common>
 {
+    static const unsigned int MAX_CPUS = 8;
+
     static const unsigned int BOOT_IMAGE_ADDR = 0x00008000;
 
     static const unsigned int APPLICATION_STACK_SIZE = 16 * 1024;
