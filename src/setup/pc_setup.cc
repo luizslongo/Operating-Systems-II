@@ -28,6 +28,7 @@ __BEGIN_SYS
 // SETUP does not handle global constructors, so kout and kerr must be
 // manually initialized before use (at setup())
 OStream kout, kerr;
+OStream::Endl endl;
 
 // "_start" Synchronization Globals
 volatile char * Stacks;
@@ -867,14 +868,8 @@ void PC_Setup::call_next()
     Machine::smp_barrier(si->bm.n_cpus);
 
     // Set SP and call next stage
-    if(!Traits<Thread>::smp && (cpu_id != 0)) { // Non-boot strap CPU (AP)
-	db<Setup>(INF) << "SMP disable by config, halting this CPU ("
-		       << cpu_id << ")!\n\n";
-	CPU::halt();
-    } else {
-	CPU::sp(sp);
-	static_cast<void (*)()>(ip)();
-    }
+    CPU::sp(sp);
+    static_cast<void (*)()>(ip)();
 
     if(Machine::cpu_id() == 0) { // Boot strap CPU (BSP)
 	// This will only happen when INIT was called and Thread was disabled
@@ -927,8 +922,8 @@ void PC_Setup::calibrate_timers()
     // Disable speaker so we can use channel 2 of i8253
     i8255::port_b(i8255::port_b() & ~(i8255::SPEAKER | i8255::I8253_GATE2));
 
-    // Program i8253 channel 2 to count 100 ms
-    i8253::config(2, i8253::CLOCK/10, false, false);
+    // Program i8253 channel 2 to count 50 ms
+    i8253::config(2, i8253::CLOCK/20, false, false);
 
     // Enable i8253 channel 2 counting
     i8255::port_b(i8255::port_b() | i8255::I8253_GATE2);
@@ -942,16 +937,16 @@ void PC_Setup::calibrate_timers()
     // Read CPU clock counter again
     TSC::Time_Stamp t1 = TSC::time_stamp(); // ascending
 
-    si->tm.cpu_clock = (t1 - t0) * 10;
+    si->tm.cpu_clock = (t1 - t0) * 20;
     db<Setup>(INF) << "PC_Setup::calibrate_timers:CPU clock="
-		   << si->tm.cpu_clock << " Hz\n";
+		   << si->tm.cpu_clock / 1000000 << " MHz\n";
 
 
     // Disable speaker so we can use channel 2 of i8253
     i8255::port_b(i8255::port_b() & ~(i8255::SPEAKER | i8255::I8253_GATE2));
 
-    // Program i8253 channel 2 to count 100 ms
-    i8253::config(2, i8253::CLOCK/10, false, false);
+    // Program i8253 channel 2 to count 50 ms
+    i8253::config(2, i8253::CLOCK/20, false, false);
 
     // Program APIC_Timer to count as long as it can
     APIC_Timer::config(0, APIC_Timer::Count(-1), false, false);
@@ -968,9 +963,9 @@ void PC_Setup::calibrate_timers()
     // Read APIC_Timer counter again
     APIC_Timer::Count t2 = APIC_Timer::read(0);
 
-    si->tm.bus_clock = (t3 - t2) * 10 * 16; // APIC_Timer is prescaled by 16
+    si->tm.bus_clock = (t3 - t2) * 20 * 16; // APIC_Timer is prescaled by 16
     db<Setup>(INF) << "PC_Setup::calibrate_timers:BUS clock="
-		   << si->tm.bus_clock << " Hz\n";
+		   << si->tm.bus_clock / 1000000 << " MHz\n";
 }
 
 __END_SYS
@@ -1101,6 +1096,29 @@ void setup(char * bi)
 {
     kerr << endl;
     kout << endl;
+
+    // SMP sanity check
+    if(!Traits<Thread>::smp && (APIC::id() != 0)) {
+	db<Setup>(WRN) << "SMP disable by config, halting this CPU ("
+		       << APIC::id() << ")!\n";
+
+	CPU::int_disable();
+	CPU::halt();
+    }
+
+    System_Info<PC> * si = reinterpret_cast<System_Info<PC> *>(bi);
+    if(si->bm.n_cpus > Traits<PC>::MAX_CPUS)
+	si->bm.n_cpus = Traits<PC>::MAX_CPUS;
+
+    if(APIC::id() >= int(Traits<PC>::MAX_CPUS)) {
+	db<Setup>(WRN) << "More CPUs were detected than the current "
+		       << "configuration supports (" << Traits<PC>::MAX_CPUS 
+		       << ").\n";
+	db<Setup>(WRN) << "Disabling CPU " << APIC::id() << "!\n";
+
+ 	CPU::int_disable();
+ 	CPU::halt();
+    }
 
     PC_Setup pc_setup(bi);
 }
