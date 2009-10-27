@@ -10,7 +10,7 @@ template <> struct Traits<ATMega128_Common>: public Traits<void>
 
 template <> struct Traits<ATMega128>: public Traits<ATMega128_Common>
 {
-    static const unsigned int CPUS = 1;
+    static const unsigned int MAX_CPUS = 1;
     //static const unsigned long long CLOCK = 7372800; //Mica2
     static const unsigned long long CLOCK = 8000000;
     static const unsigned int BOOT_IMAGE_ADDR = 0x0000;
