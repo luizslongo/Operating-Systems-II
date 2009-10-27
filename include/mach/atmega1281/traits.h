@@ -70,11 +70,6 @@ template <> struct Traits<ATMega1281_SPI>: public Traits<ATMega1281_Common>
 {
 };
 
-template <> struct Traits<ATMega1281_Display>: public Traits<ATMega1281_Common>
-{
-    static const bool on_serial = true;
-};
-
 template <> struct Traits<ATMega1281_NIC>: public Traits<void>
 {
     typedef LIST<CMAC> NICS;

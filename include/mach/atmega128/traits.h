@@ -76,11 +76,6 @@ template <> struct Traits<ATMega128_SPI>: public Traits<ATMega128_Common>
 {
 };
 
-template <> struct Traits<ATMega128_Display>: public Traits<ATMega128_Common>
-{
-    static const bool on_serial = true;
-};
-
 template <> struct Traits<ATMega128_NIC>: public Traits<void>
 {
     static const bool enabled = false;

@@ -58,6 +58,7 @@ template <> struct Traits<System>: public Traits<void>
 // Common Mediators 
 template <> struct Traits<Serial_Display>: public Traits<void>
 {
+    static const bool enabled = false;
     static const int COLUMNS = 80;
     static const int LINES = 24;
     static const int TAB_SIZE = 8;
