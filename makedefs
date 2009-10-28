@@ -269,7 +269,7 @@ TOUCH		= touch
 
 TEE		= tee
 
-QEMU		= qemu -no-reboot -serial stdio -fda
+QEMU		= qemu -no-reboot -serial stdio -net nic,model=pcnet -fda
 
 
 # Rules
