@@ -31,22 +31,6 @@ private:
     // Network phisical address
     typedef NIC::Address MAC_Address;
 
-    // Address Resolution Protocol 
-    class ARP_Table {
-    public:
-	void insert(const Address & log, const MAC_Address & mac) {}
-	void remove(const Address & log) {}
-	void remove(const MAC_Address & mac) {}
-	void remove(const Address & log, const MAC_Address & mac) {}
-
-	const MAC_Address & arp(const Address & log) const { 
-	    // to be implemented
-	}
-	const Address & rarp(const MAC_Address & mac) const {
-	    // to be implemented
-	}
-    };
-
 public:
     Network() {
 	db<Network>(TRC) << "Network(unit=0)\n";
@@ -67,9 +51,11 @@ public:
 	    // Fragmentation will take place here
 	    db<Network>(WRN) << "Network::send: frame size exceeds MTU!\n";
 
-	MAC_Address dst = _arp_tab.arp(to);
-	if(!dst)
-	    return -1;
+// 	MAC_Address dst = arp(to);
+// 	if(!dst)
+// 	    return -1;
+
+ 	MAC_Address dst = NIC::BROADCAST;
 
 	return _nic.send(dst, prot, data, size);
     }
@@ -83,9 +69,11 @@ public:
 	MAC_Address src;
 	int stat = _nic.receive(&src, prot, data, size);
 
-	if(stat > 0)
-	    *from = _arp_tab.rarp(src);
+// 	if(stat > 0)
+// 	    *from = rarp(src);
 
+	*from = BROADCAST;
+	
 	return stat;
     }
 
@@ -100,8 +88,6 @@ public:
 
 private:
     NIC _nic;
-
-    static ARP_Table _arp_tab;
 };
 
 __END_SYS

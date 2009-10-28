@@ -18,8 +18,8 @@ template <> struct Traits<Debug>
 {
     static const bool error   = true;
     static const bool warning = true;
-    static const bool info    = false;
-    static const bool trace   = false;
+    static const bool info    = true;
+    static const bool trace   = true;
 };
 
 template <> struct Traits<Lists>: public Traits<void>
@@ -58,7 +58,7 @@ template <> struct Traits<System>: public Traits<void>
 // Common Mediators 
 template <> struct Traits<Serial_Display>: public Traits<void>
 {
-    static const bool enabled = false;
+    static const bool enabled = true;
     static const int COLUMNS = 80;
     static const int LINES = 24;
     static const int TAB_SIZE = 8;

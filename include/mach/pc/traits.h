@@ -70,8 +70,6 @@ template <> struct Traits<PC_Display>: public Traits<PC_Common>
 
 template <> struct Traits<PC_NIC>: public Traits<PC_Common>
 {
-    static const bool enabled = false;
-    
     typedef LIST<PCNet32> NICS;
 
     static const bool INT_ON_RECEIVE = true;
