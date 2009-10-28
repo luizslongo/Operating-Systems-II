@@ -15,8 +15,6 @@ void PC_IC::int_not(unsigned int i)
 {
     db<PC>(WRN) << "\nInt " << i
 		<< " occurred, but no handler installed\n";
-
-    Machine::panic();
 }
 
 void PC_IC::exc_not(unsigned int i,
