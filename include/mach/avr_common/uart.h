@@ -82,7 +82,7 @@ public:
 	ubrrhl((BASE_CLOCK / (baud>>5)) - 1);
 	
 	unsigned char cfg =
-	    ((data_bits - 5) << UCSZ0) | ((stop_bits - 1) << USBS);
+        ((data_bits - 5) << UCSZ0) | ((stop_bits - 1) << USBS  ) | (1 << URSEL);
 	if (parity) cfg |= (parity + 1) << UPM0;
 	ucsrc(cfg);
 
