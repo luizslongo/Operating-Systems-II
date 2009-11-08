@@ -6,6 +6,7 @@ __BEGIN_SYS
 class PC_Common;
 template <> struct Traits<PC_Common>: public Traits<void>
 {
+//     static const bool debugged = true;
 };
 
 template <> struct Traits<PC>: public Traits<PC_Common>
@@ -68,23 +69,30 @@ template <> struct Traits<PC_Display>: public Traits<PC_Common>
     static const unsigned int FRAME_BUFFER_ADDRESS = 0xb8000;
 };
 
-template <> struct Traits<PC_NIC>: public Traits<PC_Common>
+template <> struct Traits<PC_Ethernet>: public Traits<PC_Common>
 {
     typedef LIST<PCNet32> NICS;
+};
 
-    static const bool INT_ON_RECEIVE = true;
+template <> struct Traits<PCNet32>: public Traits<PC_Ethernet>
+{
+    static const unsigned int UNITS = NICS::Count<PCNet32>::Result;
+    static const unsigned int SEND_BUFFERS = 8; // per unit
+    static const unsigned int RECEIVE_BUFFERS = 8; // per unit
+};
 
-    static const unsigned int PCNET32_UNITS = NICS::Count<PCNet32>::Result;
-    static const unsigned int PCNET32_SEND_BUFFERS = 8; // per unit
-    static const unsigned int PCNET32_RECEIVE_BUFFERS = 8; // per unit
+template <> struct Traits<E100>: public Traits<PC_Ethernet>
+{
+    static const unsigned int UNITS = NICS::Count<E100>::Result;
+    static const unsigned int SEND_BUFFERS = 8; // per unit
+    static const unsigned int RECEIVE_BUFFERS = 8; // per unit
+};
 
-    static const unsigned int E100_UNITS = NICS::Count<E100>::Result;
-    static const unsigned int E100_SEND_BUFFERS = 8; // per unit
-    static const unsigned int E100_RECEIVE_BUFFERS = 8; // per unit
-
-    static const unsigned int C905_UNITS = NICS::Count<C905>::Result;
-    static const unsigned int C905_SEND_BUFFERS = 8; // per unit
-    static const unsigned int C905_RECEIVE_BUFFERS = 8; // per unit
+template <> struct Traits<C905>: public Traits<PC_Ethernet>
+{
+    static const unsigned int UNITS = NICS::Count<C905>::Result;
+    static const unsigned int SEND_BUFFERS = 8; // per unit
+    static const unsigned int RECEIVE_BUFFERS = 8; // per unit
 };
 
 __END_SYS
