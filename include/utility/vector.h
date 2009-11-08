@@ -18,7 +18,7 @@ public:
 
 public:
     Vector(): _size(0) {
-	for(int i = 0; i < SIZE; i++)
+	for(unsigned int i = 0; i < SIZE; i++)
 	    _vector[i] = 0;
     }
 
