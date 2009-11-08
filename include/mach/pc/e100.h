@@ -3,9 +3,7 @@
 #ifndef __e100_h
 #define __e100_h
 
-#include <nic.h>
-#include <tsc.h>
-//#include <utility/spin.h>
+#include <ethernet.h>
 
 __BEGIN_SYS
 
@@ -21,6 +19,7 @@ protected:
     typedef CPU::IO_Port IO_Port;
     typedef CPU::IO_Irq IO_Irq;
     typedef MMU::DMA_Buffer DMA_Buffer;
+    typedef Ethernet::Address MAC_Address;
 
 public:
 
@@ -50,11 +49,11 @@ public:
     #define EE_WRITE_EN_CMD(a)  (19 << ((a) - 2))
     #define EE_WRITE_DIS_CMD(a) (16 << ((a) - 2))
     #define EE_ERASE_ALL_CMD(a) (18 << ((a) - 2))
-    #define EE_TOP_CMD_BIT(a)      ((a) + 2) // Counts down to zero
-    #define EE_TOP_DATA_BIT        (15)    // Counts down to zero
-    #define EEPROM_ENABLE_DELAY (1000)//(10) // Delay at chip select
-    #define EEPROM_SK_DELAY  (1000) // Delay between clock edges *and* data read or transition; 3 of these per bit.
-    #define EEPROM_DONE_DELAY (1000) // Delay when all done
+    #define EE_TOP_CMD_BIT(a)   ((a) + 2) // Counts down to zero
+    #define EE_TOP_DATA_BIT     (15)      // Counts down to zero
+    #define EEPROM_ENABLE_DELAY (1000)    //(10) // Delay at chip select
+    #define EEPROM_SK_DELAY     (1000)    // Delay between clock edges *and* data read or transition; 3 of these per bit.
+    #define EEPROM_DONE_DELAY   (1000)    // Delay when all done
 
     enum eeprom_ctrl_lo {
         eesk = 0x01, //EEPROM Data Output (Flash Address[15])
@@ -270,7 +269,7 @@ public:
     };
 
     struct MACaddrCB: public Control {
-        Reg8 iaaddr[ETH_ALEN];
+	MAC_Address iaaddr;
     };
 
     // Transmit and Receive Descriptors (in the Receive Ring Buffer)
@@ -304,7 +303,7 @@ public:
 
 };
 
-class E100: public Ethernet_NIC, private i82559
+class E100: public Ethernet, private i82559
 {
 private:
     // PCI ID
@@ -314,12 +313,9 @@ private:
     static const unsigned int PCI_REG_MEM = 0;
 
     // Transmit and Receive Ring Bbuffer sizes
-    static const unsigned int UNITS =
-	Traits<PC_NIC>::E100_UNITS;
-    static const unsigned int TX_BUFS =
-	Traits<PC_NIC>::E100_SEND_BUFFERS;
-    static const unsigned int RX_BUFS =
-	Traits<PC_NIC>::E100_RECEIVE_BUFFERS;
+    static const unsigned int UNITS = Traits<E100>::UNITS;
+    static const unsigned int TX_BUFS =	Traits<E100>::SEND_BUFFERS;
+    static const unsigned int RX_BUFS =	Traits<E100>::RECEIVE_BUFFERS;
     static const unsigned int DMA_BUFFER_SIZE = 
         ((sizeof(ConfigureCB) + 15) & ~15U) +
         ((sizeof(MACaddrCB) + 15) & ~15U) +
@@ -343,10 +339,12 @@ public:
 
 public:
     E100(unsigned int unit = 0);
+
     ~E100();
 
     int send(const Address & dst, const Protocol & prot,
  	     const void * data, unsigned int size);
+
     int receive(Address * src, Protocol * prot,
 		void * data, unsigned int size);
 
@@ -366,7 +364,6 @@ private:
     void handle_int();
 
     static void int_handler(unsigned int interrupt);
-    static void int_nullhandler(unsigned int interrupt) { } //NastyHandler for int39!
 
     bool verifyPendingInterrupts(void);
 
@@ -378,38 +375,15 @@ private:
     void i82559_flush() { read8(&csr->scb.status); }
     void i82559_disable_irq() { write8(irq_mask_all, &csr->scb.cmd_hi); }
     void i82559_enable_irq() { write8(irq_mask_none, &csr->scb.cmd_hi); }
+
     void udelay(long long d) {
         TSC::Time_Stamp end;
         d *= TSC::frequency() / 1000000;
         end = TSC::time_stamp() + d;
         while(end > TSC::time_stamp());
     }
-    int self_test() {
-        Reg32 dma_addr = _dmadump_phy + offsetof(struct mem, selftest);
 
-        dmadump->selftest.signature = 0;
-        dmadump->selftest.result = 0xFFFFFFFF;
-
-        write32(SELFTEST | dma_addr, &csr->port);
-        i82559_flush();
-        udelay(20 * 1000); // wait for 10 miliseconds
-
-        i82559_disable_irq();
-
-        // Check results of self-test 
-        if(dmadump->selftest.result != 0) {
-            db<E100>(WRN)  << "Self-test failed: result = " << dmadump->selftest.result << "\n";
-            return -1;
-        }
-
-        if(dmadump->selftest.signature == 0) {
-            db<E100>(WRN)  << "Self-test failed: timed out\n";
-            return -1;
-        }
-
-        db<E100>(INF) << "YES, I'M HERE!\n";
-        return 0;
-    }
+    int self_test();
 
     void software_reset() {
         write32(SELECTIVE_RESET, &csr->port);
@@ -421,59 +395,23 @@ private:
         i82559_flush(); udelay(1000);
     }
 
-    static inline unsigned char read8(const volatile void *addr) { return *((volatile unsigned char*) addr); };
-    static inline void write8(unsigned char b, volatile void *addr) { *((volatile unsigned char*) addr) = b; };
-    static inline unsigned short read16(const volatile void *addr) { return *((volatile unsigned short*) addr); };
-    static inline void write16(unsigned short b, volatile void *addr) { *((volatile unsigned short*) addr) = b; };
-
-    void i82559_configure(void)
-    {
-        configCB->command = cb_config;
-        memset(&(configCB->config), 0, sizeof(struct config));
-        configCB->config.byte_count = 0x16;              /* bytes in this struct */
-        configCB->config.rx_fifo_limit = 0x8;            /* bytes in FIFO before DMA */
-        configCB->config.direct_rx_dma = 0x1;            /* reserved */
-        configCB->config.standard_tcb = 0x1;             /* 1=standard, 0=extended */
-        configCB->config.standard_stat_counter = 0x1;    /* 1=standard, 0=extended */
-        // zero => recommended in promiscuous mode - FIXME - padding is enabled
-        configCB->config.rx_discard_short_frames = 0x0;  /* 1=discard, 0=pass */
-        configCB->config.tx_underrun_retry = 0x3;        /* 3 underrun retries */
-        configCB->config.tx_dynamic_tbd = 0x0;           /* 1=yes, 0=no FIXME */
-        configCB->config.mii_mode = 0x1;                 /* 1=MII mode, 0=503 mode */
-        configCB->config.rx_tcpudp_checksum = 0x0;       /* 1=yes 0=no */
-        configCB->config.link_status_wake = 0x1;         /* 1=yes 0=no */
-        configCB->config.pad10 = 0x6;
-        // if you comment the next line it won't work anymore
-        configCB->config.no_source_addr_insertion = 0x1; /* 1=no, 0=yes */
-        configCB->config.preamble_length = 0x2;          /* 0=1, 1=3, 2=7, 3=15 bytes */
-        configCB->config.ifs = 0x6;                      /* x16 = inter frame spacing */
-        configCB->config.ip_addr_hi = 0xF2;              /* ARP IP filter - not used */
-        configCB->config.pad15_1 = 0x1;
-        configCB->config.pad15_2 = 0x1;
-        configCB->config.crs_or_cdt = 0x0;               /* 0=CRS only, 1=CRS or CDT */
-        //configCB->config.fc_delay_hi = 0x40;           /* time delay for fc frame */
-        configCB->config.rx_stripping = 0x1;             /* 1=strip long frames */
-        configCB->config.tx_padding = 0x1;               /* 1=pad short frames */
-        configCB->config.fc_priority_threshold = 0x7;    /* 7=priority fc disabled */
-        configCB->config.pad18 = 0x1;
-        configCB->config.pad20_1 = 0x1F;
-        configCB->config.fc_priority_location = 0x1;     /* 1=byte#31, 0=byte#19 */
-        configCB->config.multi_ia = 0x1;
-        configCB->config.pad21_1 = 0x5;
-        configCB->config.full_duplex_pin = 0x1;          /* 1=examine FDX# pin */
-        configCB->config.full_duplex_force = 0x0;        /* 1=force, 0=auto */
-        // specially for promiscuous mode
-        configCB->config.rx_save_bad_frames = 0x1;       /* 1=save, 0=discard */
-        configCB->config.pad12_0 = 0x1;                  /* 1=yes, 0=no */
-        configCB->config.promiscuous_mode = 0x1;         /* 1=on, 0=off */
-        configCB->config.wait_after_win = 0x1;           /* 1=on, 0=off */
-        configCB->config.multicast_all = 0x0;            /* 1=accept, 0=no */
-        configCB->config.magic_packet_disable = 0x0;     /* 1=off, 0=on */
-        configCB->config.fc_disable = 0x0;               /* 1=Tx fc off, 0=Tx fc on */
-        configCB->config.mwi_enable = 0x1;               /* 1=enable, 0=disable */
-        configCB->config.rx_long_ok = 0x0;               /* 1=VLANs ok, 0=standard */
-        configCB->config.tco_statistics = 0x1;           /* TCO stats enable */
+    static inline unsigned char read8(const volatile void *addr) {
+	return *((volatile unsigned char*) addr);
     };
+
+    static inline void write8(unsigned char b, volatile void *addr) {
+	*((volatile unsigned char*) addr) = b;
+    };
+
+    static inline unsigned short read16(const volatile void *addr) {
+	return *((volatile unsigned short*) addr);
+    };
+
+    static inline void write16(unsigned short b, volatile void *addr) {
+	*((volatile unsigned short*) addr) = b;
+    };
+
+    void i82559_configure(void);
 
     static E100 * get(unsigned int interrupt) {
 	for(unsigned int i = 0; i < UNITS; i++)
@@ -515,8 +453,6 @@ private:
     Phy_Addr _tx_ring_phy;
 
     unsigned int _tx_frames_sent;
-
-    //Spin _int_lock;
 
     static Device _devices[UNITS];
 };
