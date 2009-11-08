@@ -2,6 +2,7 @@
 
 #include <mach/pc/machine.h>
 #include <mach/pc/pcnet32.h>
+#include <utility/malloc.h>
 
 __BEGIN_SYS
 
@@ -13,10 +14,10 @@ void PCNet32::int_handler(unsigned int interrupt)
 {
     PCNet32 * dev = get(interrupt);
 
-    db<NIC>(TRC) << "PCNet32::int_handler(int=" << interrupt
-		 << ",dev=" << dev << ")\n";
+    db<PCNet32>(TRC) << "PCNet32::int_handler(int=" << interrupt
+		     << ",dev=" << dev << ")\n";
     if(!dev)
-	db<PC>(WRN) << "PCNet32::int_handler: handler not found\n";
+	db<PCNet32>(WRN) << "PCNet32::int_handler: handler not found!\n";
     else 
 	dev->handle_int();
 }
@@ -132,10 +133,7 @@ void PCNet32::reset()
     bcr(9, BCR9_FDEN);
 
     // Disable INIT interrupt and transmit stop on underflow
-    if(Traits<PC_NIC>::INT_ON_RECEIVE)
-    	csr(3, /* CSR3_RINTM | */  CSR3_TINTM | CSR3_IDONM | CSR3_DXSUFLO);
-    else
-    	csr(3,    CSR3_RINTM |     CSR3_TINTM | CSR3_IDONM | CSR3_DXSUFLO);
+    csr(3, CSR3_TINTM | CSR3_IDONM | CSR3_DXSUFLO);
 
     // Enable auto padding of frames
     csr(4, CSR4_DMAPLUS | CSR4_APAD_XMT);
@@ -157,8 +155,7 @@ void PCNet32::reset()
     _iblock->mode = 0x0000;
     _iblock->rlen = log2(RX_BUFS) << 4;
     _iblock->tlen = log2(TX_BUFS) << 4;
-    for(int i = 0; i < 6; i++)
-	_iblock->mac_addr[i] = _address.b[i];        
+    _iblock->mac_addr = _address;        
     _iblock->filter1 = 0;             
     _iblock->filter2 = 0;             
     _iblock->rx_ring = _rx_ring_phy;
@@ -176,7 +173,7 @@ void PCNet32::reset()
     csr(0, CSR0_IDON | CSR0_STOP);
     Address csr_addr(csr(PADR0), csr(PADR1), csr(PADR2));
 
-    if(_address.q != csr_addr.q) {
+    if(_address != csr_addr) {
         db<PCNet32>(WRN) << "PCNet32::reset: initialization failed!\n";
         db<PCNet32>(WRN) << "PCNet32::reset: MAC(ROM)=" << _address << "\n";
         db<PCNet32>(WRN) << "PCNet32::reset: MAC(CSR)=" << csr_addr << "\n";
@@ -189,11 +186,11 @@ void PCNet32::reset()
 int PCNet32::send(const Address & dst, const Protocol & prot,
 		  const void * data, unsigned int size)
 {
-    db<PCNet32>(TRC) << "PCNet32::send(src=" << _address
-		     << ",dst=" << dst
-		     << ",prot=" << prot
-		     << ",data=" << data
-		     << ",size=" << size
+    db<PCNet32>(TRC) << "PCNet32::send(s=" << _address
+		     << ",d=" << dst
+		     << ",p=" << hex << prot << dec
+		     << ",dt=" << data
+		     << ",sz=" << size
 		     << ")\n";
 
     // Wait for a free buffer
@@ -219,40 +216,34 @@ int PCNet32::send(const Address & dst, const Protocol & prot,
     return size;
 }
 
-void PCNet32::receive_common(Address &src, Protocol &prot, unsigned int &size, 
-			void *buffer, unsigned int buf_len){
+int PCNet32::receive(Address * src, Protocol * prot,
+		     void * data, unsigned int size)
+{
+    // Wait for a frame in the ring buffer
+//     while(_rx_ring[_rx_cur].status & Rx_Desc::OWN);
 
     // Disassemble the Ethernet frame
     Frame * frame = _rx_buffer[_rx_cur];
-    src = frame->_src;
-    prot = CPU::ntohs(frame->_prot);
-    size = (_rx_ring[_rx_cur].misc & 0x00000fff) - HEADER_SIZE;
+    *src = frame->_src;
+    *prot = CPU::ntohs(frame->_prot);
+    unsigned int s = (_rx_ring[_rx_cur].misc & 0x00000fff) - HEADER_SIZE;
 
-    memcpy(buffer, frame->_data, buf_len);
+    // Copy data
+    memcpy(data, frame->_data, (s > size) ? size : s);
  
     // Release the buffer to the NIC
     _rx_ring[_rx_cur].status = Rx_Desc::OWN;
 
     _statistics.rx_packets++;
-    _statistics.rx_bytes += size;
+    _statistics.rx_bytes += s;
 
     ++_rx_cur %= RX_BUFS;
 
-    db<PCNet32>(TRC) << "PCNet32::receive(src=" << src
-		    << ",prot=" << prot
-		    << ",data=" << buffer
-		    << ",size=" << size
-		    << ")\n";
-}
-
-int PCNet32::receive(Address * src, Protocol * prot,
-		     void * data, unsigned int size)
-{
-    // Wait for a frame in the ring buffer
-    while(_rx_ring[_rx_cur].status & Rx_Desc::OWN);
-
-    unsigned int s;
-    receive_common(*src, *prot, s, data, size);
+    db<PCNet32>(TRC) << "PCNet32::receive(s=" << *src
+		     << ",p=" << hex << *prot << dec
+		     << ",dt=" << data
+		     << ",sz=" << s
+		     << ")\n";
 
     return s;
 }
@@ -281,30 +272,17 @@ void PCNet32::handle_int()
 	    reset();
 	}
 
-	// This is done via polling!
-// 	// Transmition?
-// 	if(csr0 & CSR0_TINT) {
-// 	    db<PCNet32>(INF) << "Transmition Interrupt\n";
-// 	}
+	// Transmition?
+	if(csr0 & CSR0_TINT) {
+	    db<PCNet32>(INF) << "Transmition Interrupt\n";
+	}
 
-	// This is done via polling!
-// 	// Receive?
-/////////////////////////////////////
-	if(Traits<PC_NIC>::INT_ON_RECEIVE)
+ 	// Receive?
  	if(csr0 & CSR0_RINT) {
  	    db<PCNet32>(INF) << "Receive Interrupt\n";
-	    Address src; Protocol prot;
-	    char data[1500];
-	    unsigned int size;
-
- 	    receive_common(src, prot, size, data, 1500);
-
- 	    CPU::int_enable();
-
-            notify(prot, data, size);
-            return;  	    
+ 	    notify(CPU::ntohs(_rx_buffer[_rx_cur]->_prot));
+ 	    db<PCNet32>(INF) << "Received!\n";
  	}
-/////////////////////////////////////
 
         // Error?
 	if(csr0 & CSR0_ERR) {
