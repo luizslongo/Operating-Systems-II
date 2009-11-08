@@ -13,10 +13,10 @@ void E100::int_handler(unsigned int interrupt)
 {
     E100 * dev = get(interrupt);
 
-    db<PC_NIC>(TRC) << "E100::int_handler(int=" << interrupt
-		    << ",dev=" << dev << ")\n";
+    db<E100>(TRC) << "E100::int_handler(int=" << interrupt
+		  << ",dev=" << dev << ")\n";
     if(!dev)
-	db<PC>(WRN) << "E100::int_handler: handler not found\n";
+	db<E100>(WRN) << "E100::int_handler: handler not found\n";
     else 
 	dev->handle_int();
 }
@@ -28,7 +28,8 @@ E100::E100(unsigned int unit)
 
     // Share control
     if(unit >= UNITS) {
-	db<E100>(WRN) << "E100: requested unit (" << unit << ") does not exist!\n";
+	db<E100>(WRN) << "E100: requested unit (" << unit 
+		      << ") does not exist!\n";
 	return;
     }
 
@@ -154,7 +155,6 @@ int E100::exec_command(Reg8 cmd, Reg32 dma_addr)
     return 0;
 }
 
-
 void E100::reset()
 {
     db<E100>(TRC) << "E100::reset (software reset and self-test)\n";
@@ -183,7 +183,7 @@ void E100::reset()
     macAddrCB->command = cb_iaaddr;
     macAddrCB->command &= ~cb_s;
     macAddrCB->command |= cb_el;
-    memcpy(&macAddrCB->iaaddr, _address.b, 6);
+    macAddrCB->iaaddr = _address;
 
     i82559_disable_irq();
 
@@ -212,7 +212,7 @@ void E100::reset()
 }
 
 int E100::send(const Address & dst, const Protocol & prot,
-                  const void * data, unsigned int size)
+	       const void * data, unsigned int size)
 {
     // wait for a free TxCB
     while(!(_tx_ring[_tx_cur].status & cb_complete)) {
@@ -279,7 +279,7 @@ bool E100::verifyPendingInterrupts(void)
 }
 
 int E100::receive(Address * src, Protocol * prot,
-                     void * data, unsigned int size)
+		  void * data, unsigned int size)
 {
     // wait until the RFD is filled up by the device
     while(!(_rx_ring[_rx_cur].status & cb_complete))
@@ -415,7 +415,83 @@ void E100::handle_int() {
     }
 
     CPU::int_enable();
-    //_int_lock.release();
+}
+
+void E100::i82559_configure(void)
+{
+    configCB->command = cb_config;
+    memset(&(configCB->config), 0, sizeof(struct config));
+    configCB->config.byte_count = 0x16;              /* bytes in this struct */
+    configCB->config.rx_fifo_limit = 0x8;            /* bytes in FIFO before DMA */
+    configCB->config.direct_rx_dma = 0x1;            /* reserved */
+    configCB->config.standard_tcb = 0x1;             /* 1=standard, 0=extended */
+    configCB->config.standard_stat_counter = 0x1;    /* 1=standard, 0=extended */
+    // zero => recommended in promiscuous mode - FIXME - padding is enabled
+    configCB->config.rx_discard_short_frames = 0x0;  /* 1=discard, 0=pass */
+    configCB->config.tx_underrun_retry = 0x3;        /* 3 underrun retries */
+    configCB->config.tx_dynamic_tbd = 0x0;           /* 1=yes, 0=no FIXME */
+    configCB->config.mii_mode = 0x1;                 /* 1=MII mode, 0=503 mode */
+    configCB->config.rx_tcpudp_checksum = 0x0;       /* 1=yes 0=no */
+    configCB->config.link_status_wake = 0x1;         /* 1=yes 0=no */
+    configCB->config.pad10 = 0x6;
+    // if you comment the next line it won't work anymore
+    configCB->config.no_source_addr_insertion = 0x1; /* 1=no, 0=yes */
+    configCB->config.preamble_length = 0x2;          /* 0=1, 1=3, 2=7, 3=15 bytes */
+    configCB->config.ifs = 0x6;                      /* x16 = inter frame spacing */
+    configCB->config.ip_addr_hi = 0xF2;              /* ARP IP filter - not used */
+    configCB->config.pad15_1 = 0x1;
+    configCB->config.pad15_2 = 0x1;
+    configCB->config.crs_or_cdt = 0x0;               /* 0=CRS only, 1=CRS or CDT */
+    //configCB->config.fc_delay_hi = 0x40;           /* time delay for fc frame */
+    configCB->config.rx_stripping = 0x1;             /* 1=strip long frames */
+    configCB->config.tx_padding = 0x1;               /* 1=pad short frames */
+    configCB->config.fc_priority_threshold = 0x7;    /* 7=priority fc disabled */
+    configCB->config.pad18 = 0x1;
+    configCB->config.pad20_1 = 0x1F;
+    configCB->config.fc_priority_location = 0x1;     /* 1=byte#31, 0=byte#19 */
+    configCB->config.multi_ia = 0x1;
+    configCB->config.pad21_1 = 0x5;
+    configCB->config.full_duplex_pin = 0x1;          /* 1=examine FDX# pin */
+    configCB->config.full_duplex_force = 0x0;        /* 1=force, 0=auto */
+    // specially for promiscuous mode
+    configCB->config.rx_save_bad_frames = 0x1;       /* 1=save, 0=discard */
+    configCB->config.pad12_0 = 0x1;                  /* 1=yes, 0=no */
+    configCB->config.promiscuous_mode = 0x1;         /* 1=on, 0=off */
+    configCB->config.wait_after_win = 0x1;           /* 1=on, 0=off */
+    configCB->config.multicast_all = 0x0;            /* 1=accept, 0=no */
+    configCB->config.magic_packet_disable = 0x0;     /* 1=off, 0=on */
+    configCB->config.fc_disable = 0x0;               /* 1=Tx fc off, 0=Tx fc on */
+    configCB->config.mwi_enable = 0x1;               /* 1=enable, 0=disable */
+    configCB->config.rx_long_ok = 0x0;               /* 1=VLANs ok, 0=standard */
+    configCB->config.tco_statistics = 0x1;           /* TCO stats enable */
+}
+
+int E100::self_test()
+{
+    Reg32 dma_addr = _dmadump_phy + offsetof(struct mem, selftest);
+
+    dmadump->selftest.signature = 0;
+    dmadump->selftest.result = 0xFFFFFFFF;
+
+    write32(SELFTEST | dma_addr, &csr->port);
+    i82559_flush();
+    udelay(20 * 1000); // wait for 10 miliseconds
+
+    i82559_disable_irq();
+
+    // Check results of self-test 
+    if(dmadump->selftest.result != 0) {
+	db<E100>(WRN)  << "Self-test failed: result = " << dmadump->selftest.result << "\n";
+	return -1;
+    }
+
+    if(dmadump->selftest.signature == 0) {
+	db<E100>(WRN)  << "Self-test failed: timed out\n";
+	return -1;
+    }
+
+    db<E100>(INF) << "YES, I'M HERE!\n";
+    return 0;
 }
 
 __END_SYS
