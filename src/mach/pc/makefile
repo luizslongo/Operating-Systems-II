@@ -2,9 +2,9 @@
 
 include ../../../makedefs
 
-OBJS := $(subst .cc,.o,$(shell find *.cc | grep -v test | grep -v init))
-INITS := $(subst .cc,.o,$(shell find *.cc | grep init))
-TESTS := $(subst .cc,,$(shell find *.cc | grep test))
+OBJS := $(subst .cc,.o,$(shell find *.cc | grep -v _test | grep -v _init))
+INITS := $(subst .cc,.o,$(shell find *.cc | grep _init))
+TESTS := $(subst .cc,,$(shell find *.cc | grep _test))
 
 all:		$(LIBMACH) $(LIBINIT)
 

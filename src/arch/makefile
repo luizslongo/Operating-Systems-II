@@ -2,7 +2,7 @@
 
 include	../../makedefs
 
-SUBDIRS := common $(ARCH)
+SUBDIRS := $(ARCH)
 
 all:		$(SUBDIRS)
 

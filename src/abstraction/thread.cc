@@ -277,7 +277,8 @@ void Thread::implicit_exit()
 int Thread::idle()
 {
     while(true) {
-	db<Thread>(TRC) << "Thread::idle()\n";
+	if(Traits<Thread>::trace_idle)
+	    db<Thread>(TRC) << "Thread::idle()\n";
 
 	if(_thread_count <= Machine::n_cpus()) {
 	    CPU::int_disable();
