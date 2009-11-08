@@ -264,16 +264,19 @@ public:
 	_base = addr;
     }
 
-    static void enable(int i = 0) {
+    static void enable() {
 	Reg32 v = read(SVR);
 	v |= SVR_APIC_ENABLED;
 	write(SVR, v);
     }
-    static void disable(int i = 0) {
+    static void enable(int i) { enable(); }
+
+    static void disable() {
 	Reg32 v  = read(SVR);
 	v &= ~SVR_APIC_ENABLED;
 	write(SVR, v);
     }
+    static void disable(int i) { disable(); }
 
     static Reg32 read(unsigned int reg) {
 	return *static_cast<volatile Reg32 *>(_base + reg);
@@ -423,12 +426,22 @@ public:
 	if(i < INTS) _int_vector[i] = h;
     }
 
-    static void enable(int i = 0) {
+    static void enable() {
+	db<IC>(INF) << "IC::enable()\n";
+	Base::enable();
+    }
+
+    static void enable(int i) {
 	db<IC>(INF) << "IC::enable(int=" << i << ")\n";
 	Base::enable(i);
     }
 
-    static void disable(int i = 0) {
+    static void disable() {
+	db<IC>(INF) << "IC::disable()\n";
+	Base::disable();
+    }
+
+    static void disable(int i) {
 	db<IC>(INF) << "IC::disable(int=" << i << ")\n";
 	Base::disable(i);
     }
