@@ -37,10 +37,12 @@ int OStream::utoa(unsigned int v, char * s, unsigned int i)
 	return i;
     }
 
-    if(_base == 8 || _base == 16)
-	s[i++] = '0';
-    if(_base == 16)
-	s[i++] = 'x';
+    if(v > 256) {
+	if(_base == 8 || _base == 16)
+	    s[i++] = '0';
+	if(_base == 16)
+	    s[i++] = 'x';
+    }
 
     for(j = v; j != 0; i++, j /= _base);
     for(j = 0; v != 0; j++, v /= _base)
@@ -70,10 +72,12 @@ int OStream::llutoa(unsigned long long int v, char * s, unsigned int i)
 	return i;
     }
 
-    if(_base == 8 || _base == 16)
-	s[i++] = '0';
-    if(_base == 16)
-	s[i++] = 'x';
+    if(v > 256) {
+	if(_base == 8 || _base == 16)
+	    s[i++] = '0';
+	if(_base == 16)
+	    s[i++] = 'x';
+    }
 
     for(j = v; j != 0; i++, j /= _base);
     for(j = 0; v != 0; j++, v /= _base)
