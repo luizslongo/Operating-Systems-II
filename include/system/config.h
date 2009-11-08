@@ -112,7 +112,7 @@ typedef Dummy<0>			SPI;
 typedef IF<Traits<Serial_Display>::enabled,
 	   Serial_Display,
 	   PC_Display>::Result		Display;
-typedef PC_NIC				NIC;
+typedef PC_Ethernet			NIC;
 typedef Dummy<1>			ADC;
 typedef Dummy<2>			Temperature_Sensor;
 typedef Dummy<3>			Photo_Sensor;
@@ -120,7 +120,7 @@ typedef Dummy<4>			Accelerometer;
 #define __PCI_H				__HEADER_MACH(pci)
 #define __RTC_H				__HEADER_MACH(rtc)
 #define __EEPROM_H			__HEADER_MACH(eeprom)
-#define __NIC_H				__HEADER_MACH(nic)
+#define __NIC_H				__HEADER_MACH(ethernet)
 #define __DISPLAY_H			__HEADER_MACH(display)
 
 #elif defined (__atmega16)
@@ -142,7 +142,7 @@ typedef Dummy<3>			Accelerometer;
 #define __RTC_H				__HEADER_MACH(rtc)
 #define __EEPROM_H			__HEADER_MACH(eeprom)
 #define __SPI_H				__HEADER_MACH(spi)
-#define __NIC_H				__HEADER_MACH(nic)
+#define __NIC_H				__HEADER_MACH(radio)
 #define __ADC_H				__HEADER_MACH(adc)
 #define __SENSOR_H			__HEADER_MACH(sensor)
 
@@ -168,7 +168,7 @@ typedef ATMega128_Accelerometer		Accelerometer;
 #define __RTC_H				__HEADER_MACH(rtc)
 #define __EEPROM_H			__HEADER_MACH(eeprom)
 #define __SPI_H				__HEADER_MACH(spi)
-#define __NIC_H				__HEADER_MACH(nic)
+#define __NIC_H				__HEADER_MACH(radio)
 #define __ADC_H				__HEADER_MACH(adc)
 #define __SENSOR_H			__HEADER_MACH(sensor)
 
@@ -196,7 +196,7 @@ typedef ATMega1281_Humidity_Sensor	Humidity_Sensor;
 #define __RTC_H				__HEADER_MACH(rtc)
 #define __EEPROM_H			__HEADER_MACH(eeprom)
 #define __SPI_H				__HEADER_MACH(spi)
-#define __NIC_H				__HEADER_MACH(nic)
+#define __NIC_H				__HEADER_MACH(radio)
 #define __ADC_H				__HEADER_MACH(adc)
 #define __SENSOR_H			__HEADER_MACH(sensor)
 
