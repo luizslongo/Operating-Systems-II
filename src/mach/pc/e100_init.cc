@@ -61,11 +61,10 @@ void E100::init(unsigned int unit)
     _devices[unit].interrupt = IC::irq2int(irq);
 
     // Install interrupt handler
-    IC::int_vector(IC::irq2int(irq), &int_handler);
-    IC::int_vector(39, &int_nullhandler);
+    IC::int_vector(_devices[unit].interrupt, &int_handler);
 
     // Enable interrupts for device
-    IC::enable(irq);
+    IC::enable(_devices[unit].interrupt);
 }
 
 __END_SYS
