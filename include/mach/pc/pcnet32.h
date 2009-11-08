@@ -3,7 +3,7 @@
 #ifndef __pcnet32_h
 #define __pcnet32_h
 
-#include <nic.h>
+#include <ethernet.h>
 
 __BEGIN_SYS
 
@@ -18,6 +18,7 @@ protected:
     typedef CPU::IO_Port IO_Port;
     typedef CPU::IO_Irq IO_Irq;
     typedef MMU::DMA_Buffer DMA_Buffer;
+    typedef Ethernet::Address MAC_Address;
 
 public:
     // Offsets from base I/O address
@@ -256,15 +257,15 @@ public:
    
     // Initialization block (pg 156)
     struct Init_Block {
-	Reg16 mode;        // (pg 120)
-	Reg8  rlen;        // log2(n buf), e.g. 4 -> 16 Rx_Desc
-	Reg8  tlen;        // log2(n buf), e.g. 3 ->  8 Tx_Desc
-	Reg8  mac_addr[6]; // MAC address
+	Reg16 mode;		// (pg 120)
+	Reg8 rlen;		// log2(n buf), e.g. 4 -> 16 Rx_Desc
+	Reg8 tlen;		// log2(n buf), e.g. 3 ->  8 Tx_Desc
+	MAC_Address  mac_addr;	// MAC address
 	Reg16 reserved;
 	Reg32 filter1;
 	Reg32 filter2;
-	Reg32 rx_ring;     // Tx Ring DMA physical address
-	Reg32 tx_ring;     // Rx Ring DMA physical address
+	Reg32 rx_ring;		// Tx Ring DMA physical address
+	Reg32 tx_ring;		// Rx Ring DMA physical address
     };
 
     // Transmit and Receive Descriptors (in the Receive Ring Buffer)
@@ -376,7 +377,7 @@ protected:
     IO_Port _io_port;
 };
 
-class PCNet32: public Ethernet_NIC, private Am79C970A
+class PCNet32: public Ethernet, private Am79C970A
 {
 private:
     // PCI ID
@@ -385,12 +386,9 @@ private:
     static const unsigned int PCI_REG_IO = 0;
 
     // Transmit and Receive Ring (with buffers) sizes
-    static const unsigned int UNITS =
-	Traits<PC_NIC>::PCNET32_UNITS;
-    static const unsigned int TX_BUFS =
-	Traits<PC_NIC>::PCNET32_SEND_BUFFERS;
-    static const unsigned int RX_BUFS =
-	Traits<PC_NIC>::PCNET32_RECEIVE_BUFFERS;
+    static const unsigned int UNITS = Traits<PCNet32>::UNITS;
+    static const unsigned int TX_BUFS = Traits<PCNet32>::SEND_BUFFERS;
+    static const unsigned int RX_BUFS =	Traits<PCNet32>::RECEIVE_BUFFERS;
     static const unsigned int DMA_BUFFER_SIZE = 
 	((sizeof(Init_Block) + 15) & ~15U) +
  	RX_BUFS * ((sizeof(Rx_Desc) + 15) & ~15U) +
@@ -408,10 +406,12 @@ private:
 	
 public:
     PCNet32(unsigned int unit = 0);
+
     ~PCNet32();
 
     int send(const Address & dst, const Protocol & prot,
  	     const void * data, unsigned int size);
+
     int receive(Address * src, Protocol * prot,
 		void * data, unsigned int size);
 
@@ -428,9 +428,6 @@ public:
 private:
     PCNet32(unsigned int unit, IO_Port io_port, IO_Irq irq, DMA_Buffer * dma);
 
-    inline void receive_common(Address &src, Protocol &prot, unsigned int &size, 
-			void *buffer, unsigned int buf_len);
-
     void handle_int();
 
     static void int_handler(unsigned int interrupt);
@@ -439,6 +436,7 @@ private:
 	for(unsigned int i = 0; i < UNITS; i++)
 	    if(_devices[i].interrupt == interrupt)
 		return _devices[i].device;
+
 	return 0;
     };
 
