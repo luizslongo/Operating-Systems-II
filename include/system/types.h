@@ -112,7 +112,7 @@ class ATMega128_Display;
 class ATMega1281_Display;
 
 // Hardware Mediators - NICs
-class PC_NIC;
+class PC_Ethernet;
 class PCNet32;
 class C905;
 class E100;
@@ -178,9 +178,10 @@ class Alarm;
 class Chronometer;
 
 // Abstractions	- Communication
+class Ethernet;
+template <typename, typename> class ARP;
 class Network;
 class IP;
-class ARP;
 class UDP;
 template <typename> class Channel;
 typedef Channel<UDP> UDP_Channel;

@@ -9,12 +9,13 @@ OStream cout;
 int main()
 {
     Network net;
-    Network::Address to, from;
+    Network::Address to(10,0,1,1);
+    Network::Address from;
     Network::Protocol prot;
     char data[1500];
 
     for(int i = 0; i < 10; i++)
-	net.send(Network::BROADCAST, "alguem ai?\n", 12);
+	net.send(to, "alguem ai?\n", 12);
     for(int i = 0; i < 10; i++) 
 	net.receive(&from, data, 1500);
 

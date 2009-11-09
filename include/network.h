@@ -5,35 +5,53 @@
 
 #include <machine.h>
 #include <nic.h>
+#include <arp.h>
 
 __BEGIN_SYS
 
-class Network
+class Network: public NIC::Observer
 {
 public:
     // Network logical address
-    typedef unsigned int Address;
-    static const unsigned int BROADCAST = ~0;
+    class Address: public NIC_Common::Address<4> {
+    public:
+	Address() {}
+	Address(int a) { *reinterpret_cast<int *>(this) = a; }
+	Address(unsigned char a0, unsigned char a1 = 0,
+		unsigned char a2 = 0, unsigned char a3 = 0)
+	    : NIC_Common::Address<4>(a0, a1, a2, a3) {}
 
-    // Network protocol number
-    typedef NIC::Protocol Protocol;
+	operator int() { return *reinterpret_cast<int *>(this); }
+	operator int() const { return *reinterpret_cast<const int *>(this); }
+    };
+    static const Address BROADCAST;
+
+    // Network phisical address
+    typedef NIC::Address MAC_Address;
+
+    // Network protocol numbers
+    typedef unsigned short Protocol;
     enum {
-	ELP  = Traits<Network>::EPOS_LIGHT_PROTOCOL,
-	IP   = 0x0800,
-	ARP  = 0x0806,
-	RARP = 0x8035
+	PROT_ELP  = NIC::ELP,
+	PROT_IP   = NIC::IP,
+	PROT_ARP  = NIC::ARP,
+	PROT_RARP = NIC::RARP
     };
 
     // Network statistics
     typedef NIC::Statistics Statistics;
 
-private:
-    // Network phisical address
-    typedef NIC::Address MAC_Address;
-
+    // ARP
+    typedef ARP<NIC, Network> ARP;
+    
 public:
     Network() {
 	db<Network>(TRC) << "Network(unit=0)\n";
+
+	_arpt.update(BROADCAST, NIC::BROADCAST);
+	_nic.attach(this, PROT_ARP);
+	_nic.attach(this, PROT_RARP);
+	_address = rarp(_nic.address());
     }
 
     template<unsigned int UNIT>
@@ -45,49 +63,26 @@ public:
 	db<Network>(TRC) << "~Network()\n";
     }
 
-    int send(const Address & to, const void * data, unsigned int size, 
-	     const Protocol & prot = ELP) {
-	if(size > _nic.mtu())
-	    // Fragmentation will take place here
-	    db<Network>(WRN) << "Network::send: frame size exceeds MTU!\n";
+    int send(const Address & to, const void * data, unsigned int size);
 
-// 	MAC_Address dst = arp(to);
-// 	if(!dst)
-// 	    return -1;
+    int receive(Address * from, void * data, unsigned int size);
 
- 	MAC_Address dst = NIC::BROADCAST;
+    MAC_Address arp(const Address & addr);
+    Address rarp(const MAC_Address & addr);
 
-	return _nic.send(dst, prot, data, size);
-    }
-
-    int receive(Address * from, void * data, unsigned int size,
-		Protocol * prot) {
-	if(size > _nic.mtu())
-	    // Defragmentation will take place here
-	    db<Network>(WRN) << "Network::receive: frame size exceeds MTU!\n";
-
-	MAC_Address src;
-	int stat = _nic.receive(&src, prot, data, size);
-
-// 	if(stat > 0)
-// 	    *from = rarp(src);
-
-	*from = BROADCAST;
-	
-	return stat;
-    }
-
-    int receive(Address * from, void * data, unsigned int size) {
-	Protocol p;
-	return receive(from, data, size, &p);
-    }
+    void update(NIC::Observed * o, int p);
 
     void reset() { _nic.reset(); }
+
+    const Address & address() { return _address; }
 
     const Statistics & statistics() { return _nic.statistics(); }
 
 private:
     NIC _nic;
+    Address _address;
+
+    static ARP::Table _arpt;
 };
 
 __END_SYS

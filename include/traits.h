@@ -18,8 +18,8 @@ template <> struct Traits<Debug>
 {
     static const bool error   = true;
     static const bool warning = true;
-    static const bool info    = false;
-    static const bool trace   = false;
+    static const bool info    = true;
+    static const bool trace   = true;
 };
 
 template <> struct Traits<Lists>: public Traits<void>
@@ -70,6 +70,7 @@ template <> struct Traits<Thread>: public Traits<void>
 {
     typedef Scheduling_Criteria::Priority Criterion;
     static const bool smp = false;
+    static const bool trace_idle = false;
     static const unsigned int QUANTUM = 10000; // us
 };
 
@@ -84,18 +85,15 @@ template <> struct Traits<Synchronizer>: public Traits<void>
 
 template <> struct Traits<Network>: public Traits<void>
 {
-    static const unsigned int EPOS_LIGHT_PROTOCOL = 0x8888;
-};
-
-template <> struct Traits<ARP>: public Traits<void>{
-        static const unsigned int TRIES = 3; // # of attempts for an ARP query
-        static const unsigned int TIMEOUT = 1000000; // 1s
+    static const unsigned int ELP = 0x8888;
+    static const unsigned int ARP_TRIES = 3;
+    static const unsigned int ARP_TIMEOUT = 1000000; // 1s
 };
 
 template <> struct Traits<IP>: public Traits<void>{
-        static const unsigned int ADDRESS = 0xc0a80a01;   // 192.168.10.1
-        static const unsigned int NETMASK = 0xffffff00;   // 255.255.255.0
-        static const unsigned int BROADCAST = 0; // 0= Default Broadcast Address
+    static const unsigned int ADDRESS = 0xc0a80a01;   // 192.168.10.1
+    static const unsigned int NETMASK = 0xffffff00;   // 255.255.255.0
+    static const unsigned int BROADCAST = 0; // 0= Default Broadcast Address
 };
 
 __END_SYS

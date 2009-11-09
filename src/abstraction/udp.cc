@@ -12,7 +12,7 @@ void UDP::PDU::calculate_checksum(){
 		phdr.src_ip = _ip_header.src_ip();
 		phdr.dst_ip = _ip_header.dst_ip();
 		phdr.zero = 0;
-		phdr.protocol = ID;
+		phdr.protocol = PROT_IP;
 		phdr.length = CPU::htons(size());
 
 		unsigned int sum = 0;
