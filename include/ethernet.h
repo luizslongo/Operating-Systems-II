@@ -27,7 +27,8 @@ public:
     enum {
 	IP   = 0x0800,
 	ARP  = 0x0806,
-	RARP = 0x8035
+	RARP = 0x8035,
+	ELP  = Traits<Network>::ELP
     };
 
     // The Ethernet Frame (RFC 894)
