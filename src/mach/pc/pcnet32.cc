@@ -220,7 +220,7 @@ int PCNet32::receive(Address * src, Protocol * prot,
 		     void * data, unsigned int size)
 {
     // Wait for a frame in the ring buffer
-//     while(_rx_ring[_rx_cur].status & Rx_Desc::OWN);
+    while(_rx_ring[_rx_cur].status & Rx_Desc::OWN);
 
     // Disassemble the Ethernet frame
     Frame * frame = _rx_buffer[_rx_cur];
@@ -268,58 +268,57 @@ void PCNet32::handle_int()
 	    // and all the initialization is conctrolled via polling, so if
 	    // we are here, it must be due to a hardware induced reset.
 	    // All we can do is to try to reset the nic!
-	    db<PCNet32>(WRN) << "Initialization done!\n";
+	    db<PCNet32>(WRN) << "PCNet32::handle_int: initialization done!\n";
 	    reset();
 	}
 
 	// Transmition?
 	if(csr0 & CSR0_TINT) {
-	    db<PCNet32>(INF) << "Transmition Interrupt\n";
+	    db<PCNet32>(INF) << "PCNet32::handle_int: transmition\n";
 	}
 
  	// Receive?
  	if(csr0 & CSR0_RINT) {
- 	    db<PCNet32>(INF) << "Receive Interrupt\n";
+ 	    db<PCNet32>(INF) << "PCNet32::handle_int: receive\n";
  	    notify(CPU::ntohs(_rx_buffer[_rx_cur]->_prot));
- 	    db<PCNet32>(INF) << "Received!\n";
  	}
 
         // Error?
 	if(csr0 & CSR0_ERR) {
-	    db<PCNet32>(INF) << "Error Interrupt: ";
+	    db<PCNet32>(INF) << "PCNet32::handle_int: ";
 
 	    // Memory Error?
 	    if(csr0 & CSR0_MERR) {
-		db<PCNet32>(WRN) << " Memory Error\n";
+		db<PCNet32>(WRN) << " memory error\n";
 	    }
 	    
 	    // Missed Frame
 	    if(csr0 & CSR0_MISS) {
-		db<PCNet32>(WRN) << " Missed Frame\n";
+		db<PCNet32>(WRN) << " missed frame\n";
 		_statistics.rx_overruns++;
 	    }
 
 	    // Collision?
 	    if(csr0 & CSR0_CERR) {
-		db<PCNet32>(INF) << " Collision Error\n";
+		db<PCNet32>(INF) << " collision error\n";
 		_statistics.collisions++;
 	    }
 
 	    // Bable transmitter time-out?
 	    if(csr0 & CSR0_BABL) {
-		db<PCNet32>(INF) << " Bable transmitter time-out\n";
+		db<PCNet32>(INF) << " transmitter time-out\n";
 		_statistics.tx_overruns++;
 	    }
 	}
 
 	// Missed frame counter overflow?
 	if(csr4 & CSR4_MFCO) {
-	    db<PCNet32>(INF) << "Missed Frame Counter Overflow\n";
+	    db<PCNet32>(INF) << "PCNet32::handle_int: missed frame counter overflow\n";
 	}
 
 	// User interrupt?
 	if(csr4 & CSR4_UINT) {
-	    db<PCNet32>(INF) << "User Interrupt\n";
+	    db<PCNet32>(INF) << "PCNet32::handle_int: user interrupt\n";
 	}
 
 	// Receive collision counter overflow?
@@ -329,32 +328,32 @@ void PCNet32::handle_int()
 
 	// Transmit start?
 	if(csr4 & CSR4_TXSTRT) {
-	    db<PCNet32>(INF) << "Transmit Start\n";
+	    db<PCNet32>(INF) << "PCNet32::handle_int: transmit start\n";
 	}
 
 	// Jabber error?
 	if(csr4 & CSR4_JAB) {
-	    db<PCNet32>(INF) << "Jabber Error\n";
+	    db<PCNet32>(INF) << "PCNet32::handle_int: jabber error\n";
 	}
 
 	// System interrupt?
 	if(csr5 & CSR5_SINT) {
-	    db<PCNet32>(INF) << "System Interrupt\n";
+	    db<PCNet32>(INF) << "PCNet32::handle_int: system interrupt\n";
 	}
 
 	// Sleep interrupt?
 	if(csr5 & CSR5_SLPINT) {
-	    db<PCNet32>(INF) << "Sleep Interrupt\n";
+	    db<PCNet32>(INF) << "PCNet32::handle_int: sleep\n";
 	}
 
 	// Excessive deferral?
 	if(csr5 & CSR5_EXDINT){
-	    db<PCNet32>(INF) << "Excessive Deferral Interrupt\n";
+	    db<PCNet32>(INF) << "PCNet32::handle_int: excessive deferral\n";
 	}
 
 	// Magic Packet interrupt?
 	if(csr5 & CSR5_MPINT) {
-	    db<PCNet32>(INF) << "Magic Packet Interrupt\n";
+	    db<PCNet32>(INF) << "PCNet32::handle_int: magic packet\n";
 	}
     }
 
