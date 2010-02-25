@@ -6,10 +6,11 @@
 #include <machine.h>
 #include <nic.h>
 #include <arp.h>
+#include <ethernet.h>
 
 __BEGIN_SYS
 
-class Network: public NIC::Observer
+class Network: public NIC_Common::Observer
 {
 public:
     // Network logical address
@@ -30,12 +31,12 @@ public:
     typedef NIC::Address MAC_Address;
 
     // Network protocol numbers
-    typedef unsigned short Protocol;
+    typedef unsigned char Protocol;
     enum {
-	PROT_ELP  = NIC::ELP,
-	PROT_IP   = NIC::IP,
-	PROT_ARP  = NIC::ARP,
-	PROT_RARP = NIC::RARP
+	PROT_ELP  = Ethernet::ELP,
+	PROT_IP   = Ethernet::IP,
+	PROT_ARP  = Ethernet::ARP,
+	PROT_RARP = Ethernet::RARP
     };
 
     // Network statistics
@@ -70,7 +71,7 @@ public:
     MAC_Address arp(const Address & addr);
     Address rarp(const MAC_Address & addr);
 
-    void update(NIC::Observed * o, int p);
+    void update(NIC_Common::Observed * o, int p);
 
     void reset() { _nic.reset(); }
 

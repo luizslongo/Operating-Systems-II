@@ -5,10 +5,11 @@
 #include <utility/debug.h>
 #include <cpu.h>
 #include <nic.h>
+#include <ethernet.h>
 
 __BEGIN_SYS
 
-class IP: public NIC::Observer
+class IP: public NIC_Common::Observer
 {
 public:
     typedef unsigned char u8;
@@ -35,20 +36,20 @@ public:
     static const Address BROADCAST;
 
     // Network phisical address
-    typedef NIC::Address MAC_Address;
+    typedef NIC_Common::Address<6> MAC_Address;
 
     // Network protocol numbers
     typedef unsigned char Protocol;
     enum {
 	PROT_ANY  = 0x3f,
-	PROT_ELP  = NIC::ELP,
-	PROT_IP   = NIC::IP,
-	PROT_ARP  = NIC::ARP,
-	PROT_RARP = NIC::RARP
+	PROT_ELP  = Ethernet::ELP,
+	PROT_IP   = Ethernet::IP,
+	PROT_ARP  = Ethernet::ARP,
+	PROT_RARP = Ethernet::RARP
     };
 
     // Network statistics
-    typedef NIC::Statistics Statistics;
+    typedef NIC_Common::Statistics Statistics;
 
     // ARP
     typedef ARP<NIC, IP> ARP;
@@ -190,7 +191,7 @@ public:
     static Address self(){ return _self; }
 
     // Inserts an IP Observer to observer's list
-    static void attach(u16 protocol, Observer &ipo);
+    static void attach(Observer &ipo, u16 protocol);
 	
     // As this class is scenario independent, it doesn't send the data. 
     // So, it offers this function do mount each fragment to be sent by 
@@ -205,7 +206,10 @@ public:
     IP(){
 	// In order to guarantee that NIC::attach will be called just once
 	// for IP protocol. Inspired by the Singleton Design Pattern.
-	if(!_instance) _nic.attach((_instance = this), PROT_IP);
+#ifndef __avr8_h
+    _instance = this;
+	if(!_instance) _nic.attach(_instance, PROT_IP);
+#endif
     }
 
 private:

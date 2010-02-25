@@ -5,6 +5,8 @@
 #ifndef __ethernet_h
 #define __ethernet_h
 
+#include <utility/string.h>
+
 __BEGIN_SYS
 
 class Ethernet: private NIC_Common

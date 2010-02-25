@@ -74,7 +74,7 @@ public:
     };
 
     // NIC protocol id
-    typedef unsigned short Protocol;
+    typedef unsigned char Protocol;
 
     // NIC statistics
     struct Statistics {
