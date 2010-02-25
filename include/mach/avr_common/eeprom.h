@@ -23,6 +23,16 @@ private:
 public:
     //EEPROM IO Register Bit Offsets
     enum {
+#if defined (__atmega1281)
+	//EECR
+        EEPM1 = 5,
+        EEPM0 = 4,
+#endif
+	//EECR
+	EERIE = 3,
+	EEMWE = 2, // EEMPE on atmega1281
+	EEWE  = 1, // EEPE  on atmega1281
+	EERE  = 0,
         //EEARH
         EEAR8 = 1,
 	//EEARL
@@ -34,16 +44,26 @@ public:
         EEAR2 = 2,
         EEAR1 = 1,
         EEAR0 = 0,
-	//EECR
-	EERIE = 3,
-	EEMWE = 2,
-	EEWE  = 1,
-	EERE  = 0
     };
 
 public:
-    unsigned char read(const Address & addr);
-    void write(const Address & addr, unsigned char data);
+    unsigned char read(const Address & addr) {
+        // wait for completion of previous write
+        while (eecr() & (1 << EEWE));
+        eearhl(addr);
+        eecr(eecr() | (1 << EERE));
+
+        return eedr();
+    }
+
+    void write(const Address & addr, unsigned char data) {
+        // wait for completion of previous write
+        while (eecr() & (1 << EEWE));
+        eearhl(addr);
+        eedr(data);
+        eecr(eecr() | 0x4);
+        eecr(eecr() | 0x2);
+    }
 
     int size() const { return SIZE; }
 
@@ -70,3 +90,4 @@ private:
 __END_SYS
 
 #endif
+
