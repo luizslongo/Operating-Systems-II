@@ -13,12 +13,22 @@ __BEGIN_SYS
 // as X1 = (X0 << 1) xor C
 class Pseudo_Random
 {
+private:
+	static const unsigned long int A = 1103515245;
+	static const unsigned long int C = 12345;
+	static const unsigned long int M = 4294967295;
+
 public:
     Pseudo_Random() {}
 	
-    static unsigned long int random(unsigned long int n) { 
-	_seed = (_seed << 1) ^ n;
-	return _seed;
+    static unsigned long int random() {
+	    //_seed = (_seed << 1) ^ n;
+    	_seed = ((_seed*A)+C) % M;
+	    return _seed;
+    }
+
+    static void seed(unsigned long int value){
+    	_seed = value;
     }
 
 private:
@@ -26,4 +36,5 @@ private:
 };
 
 __END_SYS
+
 #endif
