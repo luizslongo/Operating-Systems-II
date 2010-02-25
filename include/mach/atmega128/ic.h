@@ -13,6 +13,7 @@ class ATMega128_IC: public IC_Common, private AVR_IC
 {
 public:
     static const unsigned int INTS = 35;
+    typedef void (* Interrupt_Handler)();
 private:
     typedef IO_Map<Machine> IO;
 
@@ -162,7 +163,7 @@ public:
     }
 
     static void int_vector(Interrupt_Id i, Interrupt_Handler h) {
-    db<IC>(INF) << "PC_IC::int_vector(int=" << i << ",h=" 
+    db<IC>(INF) << "ATMega128::int_vector(int=" << i << ",h="
             << (void *)h <<")\n";
     if(i < INTS) _int_vector[i] = h;
     }

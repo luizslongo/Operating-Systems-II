@@ -16,8 +16,6 @@ class ATMega1281: public Machine_Common, private AVR_Machine
 public:
     typedef IO_Map<ATMega1281> IO;
 
-    typedef void (int_handler)(unsigned int);
-
 public:
     template<typename Dev>
     static Dev * seize(const Type_Id & type, unsigned int unit) {
@@ -55,6 +53,7 @@ __END_SYS
 #include "nic.h"
 #include "adc.h"
 #include "sensor.h"
+#include "transceiver.h"
 
 #endif
 

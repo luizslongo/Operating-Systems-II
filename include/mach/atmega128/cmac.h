@@ -1,11 +1,12 @@
 #ifndef __cmac_h
 #define __cmac_h
 
-#include "cc1000/cc1000.h"
+#include "../avr_common/cc1000/cc1000.h"
 #include <nic.h>
 #include <cpu.h>
 #include <utility/crc.h>
 #include <timer.h>
+#include <radio.h>
 
 
 __BEGIN_SYS 
@@ -60,8 +61,8 @@ public:
 
     static void init(unsigned int n);
 
-    static void timer_handler(unsigned int unit);
-    static void spi_handler(unsigned int unit);
+    static void timer_handler();
+    static void spi_handler();
 
 private:
 

@@ -9,13 +9,6 @@
 
 __BEGIN_SYS
 
-class ATMega1281_Timer: public Timer_Common, private AVR_Timer
-{
-public:
-    static int init();
-};
-
-
 class ATMega1281_Timer_1: public Timer_Common, private AVR_Timer
 {
 public:
@@ -29,13 +22,11 @@ private:
 public:
     // Register Settings
     enum {
-    	TIMER_PRESCALE_1    = CSn0,
+    TIMER_PRESCALE_1    = CSn0,
 	TIMER_PRESCALE_8    = CSn1,
-	TIMER_PRESCALE_32   = CSn1 | CSn0,
-	TIMER_PRESCALE_64   = CSn2,
-	TIMER_PRESCALE_128  = CSn2 | CSn0,
-	TIMER_PRESCALE_256  = CSn2 | CSn1,
-	TIMER_PRESCALE_1024 = CSn2 | CSn1 | CSn0
+	TIMER_PRESCALE_64   = CSn1 | CSn0,
+	TIMER_PRESCALE_256  = CSn2,
+	TIMER_PRESCALE_1024 = CSn2 | CSn0
     };
 
 public:
@@ -48,13 +39,15 @@ public:
 
     ATMega1281_Timer_1(const Handler * handler) {
     frequency(FREQUENCY);
-    _handler = handler;
+    IC::int_vector(IC::IRQ_TIMER2_COMPA, handler);
+    IC::enable(IC::IRQ_TIMER2_COMPA);
     enable();
     }
 
     ATMega1281_Timer_1(const Microsecond & quantum, const Handler * handler) {
     frequency(1000000 / quantum);
-    _handler = handler;
+    IC::int_vector(IC::IRQ_TIMER2_COMPA, handler);
+    IC::enable(IC::IRQ_TIMER2_COMPA);
     enable();
     }
 
@@ -85,19 +78,11 @@ public:
 
     Tick read() { return tcnt2(); }
 
-    void handler(Handler * handler) { _handler = handler; }
-
     static int init();
-
-private:
-    static void int_handler(unsigned int irq);
 
 protected:
     static Hertz count2freq(const Count & c) { return CLOCK / c; }
     static Count freq2count(const Hertz & f) { return CLOCK / f; }
-
-protected:
-    static Handler * _handler;
 };
 
 
@@ -110,6 +95,15 @@ private:
     static const unsigned int CLOCK = Traits<Machine>::CLOCK >> 10;
 
     typedef RTC::Microsecond Microsecond;
+public:
+    // Register Settings
+    enum {
+    TIMER_PRESCALE_1    = CSn0,
+    TIMER_PRESCALE_8    = CSn1,
+    TIMER_PRESCALE_64   = CSn1 | CSn0,
+    TIMER_PRESCALE_256  = CSn2,
+    TIMER_PRESCALE_1024 = CSn2 | CSn0
+    };
 
 public:
     ATMega1281_Timer_2() {}
@@ -120,13 +114,15 @@ public:
 
     ATMega1281_Timer_2(const Handler * handler) {
     frequency(FREQUENCY);
-    _handler = handler;
+    IC::int_vector(IC::IRQ_TIMER, handler);
+    IC::enable(IC::IRQ_TIMER);
     enable();
     }
 
     ATMega1281_Timer_2(const Microsecond & quantum, const Handler * handler) {
     frequency(1000000 / quantum);
-    _handler = handler;
+    IC::int_vector(IC::IRQ_TIMER, handler);
+    IC::enable(IC::IRQ_TIMER);
     enable();
     }
 
@@ -157,23 +153,13 @@ public:
 
     Tick read() { return tcnt0(); }
 
-    void handler(Handler * handler) { _handler = handler; }
-
     static int init();
-
-private:
-    static void int_handler(unsigned int irq);
 
 protected:
     static Hertz count2freq(const Count & c) { return CLOCK / c; }
     static Count freq2count(const Hertz & f) { return CLOCK / f; }
 
-protected:
-    static Handler * _handler;
-
 };
-
-
 
 class ATMega1281_Timer_3: public Timer_Common, private AVR_Timer
 {
@@ -187,6 +173,16 @@ private:
     typedef RTC::Microsecond Microsecond;
 
 public:
+    // Register Settings
+    enum {
+    TIMER_PRESCALE_1    = CSn0,
+    TIMER_PRESCALE_8    = CSn1,
+    TIMER_PRESCALE_64   = CSn1 | CSn0,
+    TIMER_PRESCALE_256  = CSn2,
+    TIMER_PRESCALE_1024 = CSn2 | CSn0
+    };
+
+public:
     ATMega1281_Timer_3() {}
 
     ATMega1281_Timer_3(const Hertz & f) {
@@ -195,7 +191,8 @@ public:
 
     ATMega1281_Timer_3(const Handler * handler) {
     frequency(FREQUENCY);
-    _handler = handler;
+    IC::int_vector(IC::IRQ_TIMER3_COMPA, handler);
+    IC::enable(IC::IRQ_TIMER3_COMPA);
     enable();
     }
 
@@ -224,19 +221,11 @@ public:
     void reset() { tcnt3(0); }
     Tick read() { return tcnt3(); }
 
-    void handler(Handler * handler) { _handler = handler; }
-
     static int init();
-
-private:
-    static void int_handler(unsigned int irq);
 
 protected:
     static Hertz count2freq(const Count & c) { return CLOCK / c; }
     static Count freq2count(const Hertz & f) { return CLOCK / f; }
-
-protected:
-    static Handler * _handler;
 
 };
 

@@ -4,10 +4,11 @@
 #define __cc1000_nic_h
 
 #include "../avr_common/cc1000.h"
+#include <radio.h>
 
 __BEGIN_SYS
 
-class Radio: public Ethernet_NIC, private CC1000
+class Radio: public Low_Power_Radio, private CC1000
 {
 private:
     static const unsigned int UNITS =

@@ -24,7 +24,98 @@ public:
 
 // Bit Definitions
     enum {
-#if defined (__atmega1281)
+#if defined (__at90can128)
+    // TIMSK0
+    OCIE0A   = 0x02,
+    TOIE0    = 0x01,
+    // TIMSK1
+    ICIE1    = 0x20,
+    OCIE1C   = 0x08,
+    OCIE1B   = 0x04,
+    OCIE1A   = 0x02,
+    TOIE1    = 0x01,
+    // TIMSK2
+    OCIE2A   = 0x02,
+    TOIE2    = 0x01,
+    // TIMSK3
+    ICIE3    = 0x20,
+    OCIE3C   = 0x08,
+    OCIE3B   = 0x04,
+    OCIE3A   = 0x02,
+    TOIE3    = 0x01,
+    // TIFR0
+    OCF0A    = 0x02,
+    TOV0     = 0x01,
+    // TIFR1
+    ICF1     = 0x20,
+    OCF1C    = 0x08,
+    OCF1B    = 0x04,
+    OCF1A    = 0x02,
+    TOV1     = 0x01,
+    // TIFR2
+    OCF2A    = 0x02,
+    TOV2     = 0x01,
+    // TIFR3
+    ICF3     = 0x20,
+    OCF3C    = 0x08,
+    OCF3B    = 0x04,
+    OCF3A    = 0x02,
+    TOV3     = 0x01,
+    // GTCCR
+    TSM      = 0x80,
+    PSR2     = 0x02,
+    PSR310   = 0x01,
+    // ADCSRB
+    ACME     = 0x40,
+    // MCUCR
+    PUD      = 0x10,
+    // TCCR0A
+    FOC0A   = 0x80,
+    WGM00   = 0x40,
+    COM0A1  = 0x20,
+    COM0A0  = 0x10,
+    WGM01   = 0x08,
+    CS02    = 0x04,
+    CS01    = 0x02,
+    CS00    = 0x01,
+    // ASSR
+    EXCLK   = 0x10,
+    AS2     = 0x08,
+    TCN2UB  = 0x04,
+    OCR2UB  = 0x02,
+    TCR2UB  = 0x01,
+    // TCCR1A, TCCR3A
+    COMnA1 = 0x80,
+    COMnA0 = 0x40,
+    COMnB1 = 0x20,
+    COMnB0 = 0x10,
+    COMnC1 = 0x08,
+    COMnC0 = 0x04,
+    WGMn1  = 0x02,
+    WGMn0  = 0x01,
+    // TCCR1B, TCCR3B
+    ICNCn  = 0x80,
+    ICESn  = 0x40,
+    WGMn3  = 0x10,
+    WGMn2  = 0x08,
+    CSn2   = 0x04,
+    CSn1   = 0x02,
+    CSn0   = 0x01,
+    // TCCR1C, TCCR3C
+    FOCnA  = 0x80,
+    FOCnB  = 0x40,
+    FOCnC  = 0x20,
+    // TCCR2A
+    FOC2A  = 0x80,
+    WGM20  = 0x40,
+    COM2A1 = 0x20,
+    COM2A0 = 0x10,
+    WGM21  = 0x08,
+    CS22   = 0x04,
+    CS21   = 0x02,
+    CS20   = 0x01
+
+#elif defined (__atmega1281)
         // TIMSK0
         OCIE0B   = 0x04,
         OCIE0A   = 0x02,
@@ -249,7 +340,38 @@ public:
     };
 
 public:
-#if defined (__atmega1281)
+#if defined (__at90can128)
+    static Reg8 timsk0() { return AVR8::in8(IO::TIMSK0); }
+    static void timsk0(Reg8 value) { AVR8::out8(IO::TIMSK0,value); } 
+    static Reg8 timsk1() { return AVR8::in8(IO::TIMSK1); }
+    static void timsk1(Reg8 value) { AVR8::out8(IO::TIMSK1,value); } 
+    static Reg8 timsk2() { return AVR8::in8(IO::TIMSK2); }
+    static void timsk2(Reg8 value) { AVR8::out8(IO::TIMSK2,value); } 
+    static Reg8 timsk3() { return AVR8::in8(IO::TIMSK3); }
+    static void timsk3(Reg8 value) { AVR8::out8(IO::TIMSK3,value); } 
+    static Reg8 tifr0() { return AVR8::in8(IO::TIFR0); }
+    static void tifr0(Reg8 value) { AVR8::out8(IO::TIFR0,value); } 
+    static Reg8 tifr1() { return AVR8::in8(IO::TIFR1); }
+    static void tifr1(Reg8 value) { AVR8::out8(IO::TIFR1,value); } 
+    static Reg8 tifr2() { return AVR8::in8(IO::TIFR2); }
+    static void tifr2(Reg8 value) { AVR8::out8(IO::TIFR2,value); } 
+    static Reg8 tifr3() { return AVR8::in8(IO::TIFR3); }
+    static void tifr3(Reg8 value) { AVR8::out8(IO::TIFR3,value); } 
+    static Reg8 gtccr() { return AVR8::in8(IO::GTCCR); }
+    static void gtccr(Reg8 value) { AVR8::out8(IO::GTCCR,value); }
+    static Reg8 adcsrb() { return AVR8::in8(IO::ADCSRB); }
+    static void adcsrb(Reg8 value) { AVR8::out8(IO::ADCSRB,value); }
+    static Reg8 mcucr() { return AVR8::in8(IO::MCUCR); }
+    static void mcucr(Reg8 value) { AVR8::out8(IO::MCUCR,value); }
+    static Reg8 tccr0a() { return AVR8::in8(IO::TCCR0A); }
+    static void tccr0a(Reg8 value) { AVR8::out8(IO::TCCR0A,value); }
+    static Reg8 ocr0a() { return AVR8::in8(IO::OCR0A); }
+    static void ocr0a(Reg8 value) { AVR8::out8(IO::OCR0A,value); }
+    static Reg8 tccr2a() { return AVR8::in8(IO::TCCR2A); }
+    static void tccr2a(Reg8 value) { AVR8::out8(IO::TCCR2A,value); }
+    static Reg8 ocr2a() { return AVR8::in8(IO::OCR2A); }
+    static void ocr2a(Reg8 value) { AVR8::out8(IO::OCR2A,value); }
+#elif defined (__atmega1281)
     static Reg8 timsk0() { return AVR8::in8(IO::TIMSK0); }
     static void timsk0(Reg8 value) { AVR8::out8(IO::TIMSK0,value); } 
     static Reg8 timsk1() { return AVR8::in8(IO::TIMSK1); }
@@ -328,12 +450,16 @@ public:
     static void tccr1b(Reg8 value) { AVR8::out8(IO::TCCR1B,value); }
     static Reg8 tccr1c() { return AVR8::in8(IO::TCCR1C); }
     static void tccr1c(Reg8 value) { AVR8::out8(IO::TCCR1C,value); }
+    static Reg16 tcnt1() { return AVR8::in16(IO::TCNT1L); }
+    static void tcnt1(Reg16 value) { AVR8::out16(IO::TCNT1L,value); }
     static Reg8 tcnt1h() { return AVR8::in8(IO::TCNT1H); }
     static void tcnt1h(Reg8 value) { AVR8::out8(IO::TCNT1H,value); }
     static Reg8 tcnt1l() { return AVR8::in8(IO::TCNT1L); }
     static void tcnt1l(Reg8 value) { AVR8::out8(IO::TCNT1L,value); }
     static Reg8 ocr1ah() { return AVR8::in8(IO::OCR1AH); }
     static void ocr1ah(Reg8 value) { AVR8::out8(IO::OCR1AH,value); }
+    static Reg16 ocr1a() { return AVR8::in16(IO::OCR1AL); }
+    static void ocr1a(Reg16 value) { return AVR8::out16(IO::OCR1AL, value); }
     static Reg8 ocr1al() { return AVR8::in8(IO::OCR1AL); }
     static void ocr1al(Reg8 value) { AVR8::out8(IO::OCR1AL,value); }
     static Reg8 ocr1bh() { return AVR8::in8(IO::OCR1BH); }

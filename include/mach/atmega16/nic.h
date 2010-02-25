@@ -3,7 +3,7 @@
 #ifndef __atmega16_nic_h
 #define __atmega16_nic_h
 
-#include <nic.h>
+#include <radio.h>
 
 __BEGIN_SYS
 

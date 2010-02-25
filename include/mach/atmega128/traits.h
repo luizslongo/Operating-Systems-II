@@ -11,8 +11,8 @@ template <> struct Traits<ATMega128_Common>: public Traits<void>
 template <> struct Traits<ATMega128>: public Traits<ATMega128_Common>
 {
     static const unsigned int MAX_CPUS = 1;
-    //static const unsigned long long CLOCK = 7372800; //Mica2
-    static const unsigned long long CLOCK = 8000000;
+    static const unsigned long long CLOCK = 7372800; //Mica2
+    //static const unsigned long long CLOCK = 8000000;
     static const unsigned int BOOT_IMAGE_ADDR = 0x0000;
 
     static const unsigned int APPLICATION_STACK_SIZE = 256;
@@ -40,7 +40,7 @@ template <> struct Traits<ATMega128_Timer_2>: public Traits<ATMega128_Common>
 template <> struct Traits<ATMega128_Timer_3>: public Traits<ATMega128_Common>
 {
     // Should be between 30 and 7200 Hz
-    static const int FREQUENCY = 720; // Hz
+    static const int FREQUENCY = 7200; // Hz
 
 };
 
@@ -78,7 +78,7 @@ template <> struct Traits<ATMega128_SPI>: public Traits<ATMega128_Common>
 
 template <> struct Traits<ATMega128_NIC>: public Traits<void>
 {
-    static const bool enabled = false;
+    static const bool enabled = true;
 
     typedef LIST<CMAC> NICS;
 
@@ -87,7 +87,7 @@ template <> struct Traits<ATMega128_NIC>: public Traits<void>
 
 template <> struct Traits<CMAC>: public Traits<void>
 {
-    static const bool enabled = false;
+    static const bool enabled = true;
     static const unsigned int FREQUENCY = 0;
     static const unsigned int POWER = 5;
 };

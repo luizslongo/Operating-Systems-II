@@ -13,6 +13,7 @@ class ATMega1281_IC: public IC_Common, private AVR_IC
 {
 public:
     static const unsigned int INTS = 57;
+    typedef void (* Interrupt_Handler)();
 private:
     typedef IO_Map<Machine> IO;
 

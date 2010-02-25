@@ -3,12 +3,16 @@
 #ifndef __atmega16_ic_h
 #define __atmega16_ic_h
 
+#include <cpu.h>
 #include "../avr_common/ic.h"
 
 __BEGIN_SYS
 
 class ATMega16_IC: public IC_Common, private AVR_IC
 {
+public:
+    static const unsigned int INTS = 24;
+    typedef void (* Interrupt_Handler)();
 private:
     typedef AVR8::Reg8 Reg8;
 
@@ -124,7 +128,17 @@ public:
 public:
     ATMega16_IC() {};
 
-    static void enable(IRQ irq) {
+    static Interrupt_Handler int_vector(Interrupt_Id i) {
+    return (i < INTS) ? _int_vector[i] : 0;
+    }
+
+    static void int_vector(Interrupt_Id i, Interrupt_Handler h) {
+    db<IC>(INF) << "ATMega16::int_vector(int=" << i << ",h="
+            << (void *)h <<")\n";
+    if(i < INTS) _int_vector[i] = h;
+    }
+
+    static void enable(Interrupt_Id irq) {
         
         if (IRQ_IRQ0  	 == irq) { gicr(gicr() | INT0); return; }
         if (IRQ_IRQ1  	 == irq) { gicr(gicr() | INT1); return; }
@@ -180,7 +194,7 @@ public:
 	
         twcr(twcr() & ~TWIE);
     }
-    static void disable(IRQ irq) {
+    static void disable(Interrupt_Id irq) {
 
         if (IRQ_IRQ0  	 == irq) { gicr(gicr() & ~INT0); return; }
         if (IRQ_IRQ1  	 == irq) { gicr(gicr() & ~INT1); return; }
@@ -243,7 +257,10 @@ private:
     static Reg8 acsr() { return AVR8::in8(ACSR); }  
     static void acsr(Reg8 value) {AVR8::out8(ACSR,value); }             
     static Reg8 adcsra() { return AVR8::in8(ADCSRA); }
-    static void adcsra(Reg8 value) {AVR8::out8(ADCSRA,value); }          
+    static void adcsra(Reg8 value) {AVR8::out8(ADCSRA,value); }
+
+private:
+    static Interrupt_Handler _int_vector[INTS];           
 };
 
 __END_SYS

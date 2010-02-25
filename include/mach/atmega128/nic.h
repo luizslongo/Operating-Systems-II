@@ -3,7 +3,7 @@
 #ifndef __atmega128_nic_h
 #define __atmega128_nic_h
 
-#include "../avr_common/cmac.h"
+#include "cmac.h"
 
 __BEGIN_SYS
 
@@ -14,6 +14,7 @@ private:
     static const unsigned int UNITS = NICS::Length;
 
 public:
+
     ATMega128_NIC() {
 	_dev = new Meta_NIC<NICS>::Get<0>::Result;
     }

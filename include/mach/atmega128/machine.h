@@ -16,8 +16,6 @@ class ATMega128: public Machine_Common, private AVR_Machine
 public:
     typedef IO_Map<ATMega128> IO;
 
-    typedef void (int_handler)(unsigned int);
-
 public:
     template<typename Dev>
     static Dev * seize(const Type_Id & type, unsigned int unit) {
