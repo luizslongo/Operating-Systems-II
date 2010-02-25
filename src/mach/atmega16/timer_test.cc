@@ -17,7 +17,7 @@ int main()
 
     cout << "ATMega16_Timer test\n";
 
-    ATMega16_Timer timer;
+    ATMega16_Timer_1 timer;
 
     return 0;
 }
