@@ -30,6 +30,12 @@ class AVR8;
 class PPC32;
 class MIPS32;
 
+/*
+namespace Cpu {
+    template<bool, bool>
+    class AVR8_CPU;
+};*/
+
 // Hardware Mediators - Time-Stamp Counters
 class IA32_TSC;
 class AVR8_TSC;
@@ -47,6 +53,7 @@ class PC;
 class ATMega16;
 class ATMega128;
 class ATMega1281;
+class AT90CAN128;
 class ML310;
 class PLASMA;
 
@@ -59,28 +66,36 @@ class PC_IC;
 class ATMega16_IC;
 class ATMega128_IC;
 class ATMega1281_IC;
+class AT90CAN128_IC;
 class ML310_IC;
 class PLASMA_IC;
 
 // Hardware Mediators - Timers
 class PC_Timer;
-class ATMega16_Timer;
-class ATMega128_Timer;
+class ATMega16_Timer_1;
+class ATMega16_Timer_2;
+class ATMega16_Timer_3;
 class ATMega128_Timer_1;
 class ATMega128_Timer_2;
 class ATMega128_Timer_3;
-class ATMega1281_Timer;
 class ATMega1281_Timer_1;
 class ATMega1281_Timer_2;
 class ATMega1281_Timer_3;
+class AT90CAN128_Timer_1;
+class AT90CAN128_Timer_2;
+class AT90CAN128_Timer_3;
 class ML310_Timer;
 class PLASMA_Timer;
+
+// Hardware Mediators - CAN
+class AT90CAN128_CAN;
 
 // Hardware Mediators - Real Time Clocks
 class PC_RTC;
 class ATMega16_RTC;
 class ATMega128_RTC;
 class ATMega1281_RTC;
+class AT90CAN128_RTC;
 class ML310_RTC;
 class PLASMA_RTC;
 
@@ -95,6 +110,7 @@ class PC_UART;
 class ATMega16_UART;
 class ATMega128_UART;
 class ATMega1281_UART;
+class AT90CAN128_UART;
 class ML310_UART;
 class PLASMA_UART;
 
@@ -110,6 +126,7 @@ class PC_Display;
 class ATMega16_Display;
 class ATMega128_Display;
 class ATMega1281_Display;
+class AT90CAN128_Display;
 
 // Hardware Mediators - NICs
 class PC_Ethernet;
@@ -118,11 +135,39 @@ class C905;
 class E100;
 class ATMega16_NIC;
 class ATMega128_NIC;
+class AT90CAN128_NIC;
 class ATMega1281_NIC;
+class ATMega1281_Transceiver;
 class Radio;
 class ML310_NIC;
-class CMAC;
 class PLASMA_NIC;
+class CMAC;
+namespace CMAC_States
+{
+    class Empty;
+    class Sync_Empty;
+    class Pack_Empty;
+    class Contention_Empty;
+    class Tx_Empty;
+    class Ack_Rx_Empty;
+    class Lpl_Empty;
+    class Rx_Empty;
+    class Unpack_Empty;
+    class Ack_Tx_Empty;
+
+    class Generic_Sync;
+    class Generic_Tx;
+    class Generic_Rx;
+    class Generic_Lpl;
+    class Unslotted_CSMA_Contention;
+
+    class IEEE802154_Beacon_Sync;
+    class IEEE802154_Pack;
+    class IEEE802154_Unpack;
+    class IEEE802154_Ack_Rx;
+    class IEEE802154_Ack_Tx;
+    class IEEE802154_Slotted_CSMA_Contention;
+};
 
 // Hardware Mediators - ADCs
 class ATMega16_ADC;
@@ -234,6 +279,7 @@ enum
     IP_ID,
     ARP_ID,
     UDP_ID,
+    CAN_ID,
 
     UNKNOWN_TYPE_ID,
     LAST_TYPE_ID = UNKNOWN_TYPE_ID - 1
