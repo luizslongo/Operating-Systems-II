@@ -2,7 +2,7 @@
 
 #include <machine.h>
 #include <nic.h>
-#include <mach/avr_common/cmac.h>
+#include <mach/atmega128/cmac.h>
 #include <utility/ostream.h>
 
 __BEGIN_SYS
@@ -218,7 +218,7 @@ void CMAC::rx_giveup(){
 /* ----------- Handlers ----------- */
 
 // Triggered each CC1000 data tick
-void CMAC::spi_handler(unsigned int unit){
+void CMAC::spi_handler(){
     switch(_state) {
     case RX:
 	rx_state_machine();
@@ -230,7 +230,7 @@ void CMAC::spi_handler(unsigned int unit){
 }
 
 // Triggered after sleeping
-void CMAC::timer_handler(unsigned int unit){
+void CMAC::timer_handler(){
 
     if(!_tx_available) {
 	_cc1000.enable();

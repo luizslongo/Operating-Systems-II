@@ -11,7 +11,7 @@ int main()
 
     cout << "ATMega128_Timer test\n";
 
-    ATMega128_Timer timer;
+    ATMega128_Timer_3 timer;
 
     return 0;
 }

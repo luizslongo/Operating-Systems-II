@@ -17,5 +17,5 @@ extern "C" void __epos_call_handler(char offset) {
     IC::Interrupt_Handler handler = IC::int_vector(offset);
 
     if (handler != 0)
-    handler(0);
+    handler();
 }

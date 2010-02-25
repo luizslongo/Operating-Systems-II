@@ -5,12 +5,11 @@
  *      Author: tiago
  */
 
-#include <mach/atmega1281/at86rf230/at86rf230_hal.h>
+#include <mach/atmega1281/at86rf230_hal.h>
 #include <ic.h>
 #include <machine.h>
 #include <cpu.h>
 #include <traits.h>
-#include <alarm.h>
 
 namespace System {
 
@@ -84,12 +83,9 @@ bool AT86RF230_init_ok = false;
 
 void AT86RF230_HAL::init(){
 
-	if(AT86RF230_init_ok)
-		return;
-
-	AT86RF230_init_ok = true;
-
-	Alarm::delay(500000); //time to enter state P_ON
+	//time to enter state P_ON
+	//Alarm::delay(500000);
+	for (unsigned int var = 0; var < 0xFFFF; var++) {	}
 
 	/*IO Specific Initialization.*/
 	AVR8::out8(IO::DDRB, AVR8::in8(IO::DDRB) | (1 << SLP_TR)); //Enable SLP_TR as output.
@@ -106,9 +102,14 @@ void AT86RF230_HAL::init(){
 	AVR8::out8(IO::SPSR, (1 << SPI2X)); //Enable doubled SPI speed in master mode.
 
 	/*reset the radio*/
+	hw_reset();
+}
+
+void AT86RF230_HAL::hw_reset(){
 	setRSTlow();
 	setSLP_TRlow();
-	Alarm::delay(500000); //time to reset
+	//Alarm::delay(500000); //time to reset
+	for (unsigned int var = 0; var < 0xFFFF; var++) {	}
 	setRSThigh();
 
 }
@@ -213,14 +214,8 @@ void enable_external_int(irqNumber_t irqNumber, irqMode_t irqMode){
 	CPU::out8(IO::EIFR, CPU::in8(IO::EIFR) & ~(1 << irqNumber));
 }
 
-bool AT86RF230_init_interrupts_ok = false;
 
 void AT86RF230_HAL::initInterrupts(){
-
-	if(AT86RF230_init_interrupts_ok)
-		return;
-
-	AT86RF230_init_interrupts_ok = true;
 
 	enable_external_int(IRQ_5, IRQ_RISING_EDGE);
 	interruptEnable();
@@ -228,13 +223,14 @@ void AT86RF230_HAL::initInterrupts(){
 
 void AT86RF230_HAL::interruptEnable(){
 	AVR8::out8(IO::EIMSK, CPU::in8(IO::EIMSK) | (1 << IRQ_5));
+	AT86RF230_HAL::readRegister(AT86RF230_HAL::IRQ_STATUS_REG);//Reset Interrupt Reg
 }
 
 void AT86RF230_HAL::interruptDisable(){
 	AVR8::out8(IO::EIMSK, CPU::in8(IO::EIMSK) & ~(1 << IRQ_5));
 }
 
-void AT86RF230_HAL::setInterruptHandler(Machine::int_handler handler){
+void AT86RF230_HAL::setInterruptHandler(IC::Interrupt_Handler handler){
 	IC::int_vector(IC::IRQ_IRQ5, handler);
 }
 

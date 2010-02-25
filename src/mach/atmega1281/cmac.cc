@@ -1,294 +1,374 @@
 // EPOS-- CMAC Implementation
-
 #include <machine.h>
-#include <nic.h>
-#include <mach/avr_common/cmac.h>
-#include <utility/ostream.h>
+#include <mach/atmega1281/nic.h>
+#include <mach/atmega1281/transceiver.h>
+#include <mach/atmega1281/cmac.h>
+#include <semaphore.h>
 
 __BEGIN_SYS
 
+OStream print;
+
+template <class Sync, 
+	  class Pack, class Contention, class Tx, class Ack_Rx,
+	  class Lpl, class Rx, class Unpack, class Ack_Tx> 
+CMAC::CMAC_STATE_TRANSITION CMAC::state_machine() {
+
+	CMAC_STATE_TRANSITION result = TIMER_INT;
+	_state = SYNC;
+
+	db<CMAC>(TRC) << "CMAC::state_machine - starting state machine\n";
+
+	//unsigned long gambi_latency = alarm_ticks_ms;//TODO remove this
+
+	while (_state != OFF) {
+		switch (_state) {
+		case SYNC:
+			result = Sync::execute(result);
+			if(result == SYNC_END)
+				_state = OFF;
+			else if(result == RX_PENDING)
+				_state = LPL;
+			else if(result == TX_PENDING)
+				_state = PACK;
+			break;
+		case PACK: //first TX state
+			if (Traits<CMAC>::TIME_TRIGGERED)
+				_last_sm_exec_tx = true;
+			result = Pack::execute(result);
+			if(result == PACK_OK)
+				_state = CONTENTION;
+			else if(result == PACK_FAILED)
+				_state = OFF;
+			break;
+		case CONTENTION:
+			result = Contention::execute(result);
+			if(result == CHANNEL_IDLE)
+				_state = TX;
+			else if((result == CHANNEL_BUSY) || (result == TIMEOUT))
+				_state = OFF;
+			break;
+		case TX:
+			result = Tx::execute(result);
+			if(result == TX_END)
+				_state = ACK_RX;
+			else if(result == TX_ERROR)
+				_state = OFF;
+			break;
+		case ACK_RX:
+			result = Ack_Rx::execute(result);
+			if(result == TX_PENDING)
+				_state = PACK;
+			else
+				_state = OFF;
+			break;
+		case LPL: //first RX state
+			if (Traits<CMAC>::TIME_TRIGGERED)
+				_last_sm_exec_rx = true;
+			result = Lpl::execute(result);
+			if(result == TIMEOUT)
+				_state = OFF;
+			else if(result == PREAMBLE_DETECTED)
+				_state = RX;
+			break;
+		case RX:
+			result = Rx::execute(result);
+			if(result == RX_END)
+				_state = UNPACK;
+			else if(result == RX_ERROR)
+				_state = OFF;
+			break;
+		case UNPACK:
+			result = Unpack::execute(result);
+			if(result == UNPACK_FAILED)
+				_state = LPL;
+			else if(result == UNPACK_OK)
+				_state = ACK_TX;
+			break;
+		case ACK_TX:
+			result = Ack_Tx::execute(result);
+			_state = OFF;
+			break;
+		case OFF:
+			break;
+		}
+	}
+
+	//TODO remove this
+	//if(_tx_pending || _rx_pending){
+	//	kout << alarm_ticks_ms - gambi_latency << "\n";
+	//}
+
+	//GAMBI - radio HW bug handling - GAMBI
+	if((result == TIMEOUT) || (result == TX_FAILED) || (result == CHANNEL_BUSY) ||
+	   (result == TX_ERROR) || (result == RX_ERROR)){
+		++_consecutive_failures;
+		if(_consecutive_failures >= 5){
+			db<CMAC>(WRN) << "CMAC::state_machine - Operation failed 5 times in a row, reseting radio\n";
+			_consecutive_failures = 0;
+			radio.hardware_reset();
+			radio.forceValidState();
+		}
+	}
+	else{
+		_consecutive_failures = 0;
+	}
+
+
+	db<CMAC>(TRC) << "CMAC::state_machine - state machine finished executing\n";
+
+	return result;
+}
+
 int CMAC::send(const Address & dst, const Protocol & prot,
-	       const void *data, unsigned int size) {
+		const void *data, unsigned int size) {
 
-    if(_tx_available){
-	_tx_available = false;
-	Frame * _frame  = new((void *)&_tx_frame) 
-	    Frame(dst,_addr,prot,data,size,0,0);
-	_tx_frame_ptr= (unsigned char *) _frame;
-	_tx_data_count = 0;
-	_tx_preamble_count = 0;
-	return size;
-    } 
-    return 0;
-	
-}
-
-int CMAC::receive(Address * src, Protocol * prot, 
-		  void * data, unsigned int size) {
-    if(!_rx_available)
-	return 0;
-
-    *src = _rx_frame._src;
-    *prot = _rx_frame._prot;
-    memcpy(data, (void*)&_rx_frame._data, size);
-    CPU::int_disable();
-    _rx_available = false;
-    CPU::int_enable();
-
-    return size;
-}
-
-/* -------------- TX -------------- */
-
-void CMAC::tx_state_machine() {
-
-    switch (_tx_state) {
-    case TX_BACKOFF:
-	for(unsigned int i = 0; i < 0xff; i++);
-	_tx_state = TX_PREAMBLE;
-	break;
-
-    case TX_PREAMBLE:
-	if(tx_preamble())
-	    _tx_state = TX_DATA;
-	break;
-
-    case TX_DATA:
-	if(tx_data()) {
-	    _tx_state = TX_DONE;
-	    tx_handle();
+	if (Traits<CMAC>::TIME_TRIGGERED){
+		if(_tx_pending || (size > mtu())){
+			db<CMAC>(WRN) << "CMAC::send - another TX pending or data size > MTU\n";
+			return -1;
+		}
 	}
-	break;
-    }
-
-}
-
-
-bool CMAC::tx_preamble(){
-    if (_tx_preamble_count++ < PREAMBLE_LENGTH){
-	_cc1000.put(~0x55);
-	return false;
-    } else if (_tx_preamble_count++ == PREAMBLE_LENGTH+1){
-	_cc1000.put(~PREAMBLE_KEY>>8);
-	return false;	
-    } else{
-	_cc1000.put(~(unsigned char)PREAMBLE_KEY);
-	_tx_preamble_count = 0;
-	return true;
-    }
-}
-
-bool CMAC::tx_data(){
-    if (_tx_data_count++ < sizeof(Frame)){
-	_cc1000.put(~*_tx_frame_ptr++);
-	return false;
-    } else {
-	_cc1000.put(~0x55);
-	return true;
-    }
-}
-
-
-void CMAC::tx_handle(){
-    _cc1000.int_disable();
-    _cc1000.disable();
-    _stats.tx_bytes += sizeof(Frame);
-    _stats.tx_packets++;
-    _tx_available = true;
-    _timer.enable();
-}
-
-/* -------------- RX -------------- */
-
-void CMAC::rx_state_machine() {
-
-    _rx_data_byte = _cc1000.get();
-
-    switch (_rx_state) {
-    case RX_IDLE:
-	if(rx_preamble())
-	    _rx_state = RX_SYNC;
-	break;
-
-    case RX_SYNC:
-	if(rx_sync())
-	    _rx_state = RX_DATA;
-	break;
-				
-    case RX_DATA:
-	if(rx_data()) {
-	    _rx_state = RX_DONE;
-	    rx_handle();
-	} 
-	break;
-    }
-
-}
-
-
-bool CMAC::rx_preamble(){
-    if ((_rx_data_byte == 0xAA) || (_rx_data_byte == 0x55)) {
-	if (++_rx_preamble_count > 2) {
-	    _rx_preamble_count = _rx_sync_count = 0;
-	    _rx_bit_offset = 0;
-	    return true;
-	} 
-    } 
-    return false;
-}
-
-bool CMAC::rx_sync(){
-
-    if ((_rx_data_byte == 0xAA) || (_rx_data_byte == 0x55)) {
-	_rx_data_word.msb = _rx_data_byte;
-    } else {
-	switch(_rx_sync_count){
-	case 0:
-	    _rx_data_word.lsb = _rx_data_byte;
-	    break;
-	case 1:
-	case 2:
-	    unsigned int tmp = _rx_data_word.word;
-	    _rx_data_word.msb = _rx_data_word.lsb;
-	    _rx_data_word.lsb = _rx_data_byte;
-	    for (int i = 0; i < 8; i++) {
-		tmp <<= 1;					
-		if (_rx_data_byte & 0x80)
-		    tmp |= 0x01;				
-		_rx_data_byte <<= 1;
-		if (tmp == PREAMBLE_KEY) {
-		    _rx_bit_offset = 7 - i;
-		    return true;
-		}				
-	    }
-	    break;
-	default:
-	    _rx_preamble_count = 0;
-	    rx_giveup();
-	    break;
+	else{
+		if(_tx_pending || _rx_pending || (size > mtu())){
+			db<CMAC>(WRN) << "CMAC::send - another TX or RX pending or data size > MTU\n";
+			return -1;
+		}
 	}
-	_rx_sync_count++;
-    }
-    return false;
+
+	if(size == 0){
+		db<CMAC>(ERR) << "CMAC::send - data size = 0\n";
+		return 0;
+	}
+
+	CMAC_STATE_TRANSITION result;
+
+	_tx_data = data;
+	_tx_data_size = size;
+	_tx_dst_address = dst;
+	_tx_pending = true;
+
+	unsigned long start_time = alarm_ticks_ms;
+
+	if (Traits<CMAC>::TIME_TRIGGERED){
+		db<CMAC>(INF) << "CMAC::send - waiting for TX handling\n";
+		_sem_tx.p();
+		result = _state_machine_result;
+	}
+	else{
+		db<CMAC>(TRC) << "CMAC::send - calling state machine\n";
+		result = state_machine<
+				Traits<CMAC>::Sync_State,
+				Traits<CMAC>::Pack_State,
+				Traits<CMAC>::Contention_State,
+				Traits<CMAC>::Tx_State,
+				Traits<CMAC>::Ack_Rx_State,
+				Traits<CMAC>::Lpl_State,
+				Traits<CMAC>::Rx_State,
+				Traits<CMAC>::Unpack_State,
+				Traits<CMAC>::Ack_Tx_State
+				>();
+	}
+
+	if(result == TX_OK){
+		_stats.tx_packets += 1;
+		_stats.tx_bytes += size;
+	}
+	_stats.tx_time += alarm_ticks_ms - start_time;
+
+	_tx_pending = false;
+
+	return result;
 }
 
-bool CMAC::rx_data(){
+int CMAC::receive(Address * src, Protocol * prot,
+		void * data, unsigned int size) {
 
-    _rx_data_word.msb = _rx_data_word.lsb;
-    _rx_data_word.lsb = _rx_data_byte;
-	    
-    *_rx_frame_ptr++ = 0x00ff & _rx_data_word.word >> _rx_bit_offset;
-		
-    if (++_rx_data_count == sizeof(Frame)) 
-	return true;
+	if (Traits<CMAC>::TIME_TRIGGERED){
+		if(_rx_pending || (size > mtu())){
+			db<CMAC>(WRN) << "CMAC::receive - another RX pending or buffer size > MTU\n";
+			return -1;
+		}
+	}
+	else{
+		if(_rx_pending || _tx_pending || (size > mtu())){
+			db<CMAC>(WRN) << "CMAC::receive - another RX or TX pending or buffer size > MTU\n";
+			return -1;
+		}
+	}
 
-    return false;
-	
+	CMAC_STATE_TRANSITION result;
+
+	_rx_data = data;
+	_rx_data_size = size;
+	_rx_pending = true;
+
+	unsigned long start_time = alarm_ticks_ms;
+
+	if (Traits<CMAC>::TIME_TRIGGERED){
+		db<CMAC>(INF) << "CMAC::receive - waiting for RX handling\n";
+		_sem_rx.p();
+		result = _state_machine_result;
+	}
+	else{
+		db<CMAC>(TRC) << "CMAC::receive - calling state machine\n";
+		result = state_machine<
+				Traits<CMAC>::Sync_State,
+				Traits<CMAC>::Pack_State,
+				Traits<CMAC>::Contention_State,
+				Traits<CMAC>::Tx_State,
+				Traits<CMAC>::Ack_Rx_State,
+				Traits<CMAC>::Lpl_State,
+				Traits<CMAC>::Rx_State,
+				Traits<CMAC>::Unpack_State,
+				Traits<CMAC>::Ack_Tx_State
+				>();
+	}
+
+	if(result == RX_OK){
+		_stats.rx_packets += 1;
+		_stats.rx_bytes += _rx_data_size;
+	}
+	_stats.rx_time += alarm_ticks_ms - start_time;
+
+	*src = _rx_src_address;
+	*prot = 0;
+
+	_rx_pending = false;
+
+	if(result == RX_OK)
+		return _rx_data_size;
+	else
+		return result*(-1);
 }
 
-int CMAC::rx_handle() {
+void CMAC::state_machine_handler(){
+	if (Traits<CMAC>::TIME_TRIGGERED){
 
-    rx_giveup();
-						
-    unsigned short crc = 
-	CRC::crc16((char *) &_rx_frame, sizeof(Frame) - 2);
-		
-    _stats.rx_bytes += sizeof(Frame);
-    _stats.rx_packets++;
-			
-    if(crc == _rx_frame._crc) {
+		//alarm_deactivate();
+		_on_active_cycle = true;
+
+		_state_machine_result =
+				state_machine<
+				Traits<CMAC>::Sync_State,
+				Traits<CMAC>::Pack_State,
+				Traits<CMAC>::Contention_State,
+				Traits<CMAC>::Tx_State,
+				Traits<CMAC>::Ack_Rx_State,
+				Traits<CMAC>::Lpl_State,
+				Traits<CMAC>::Rx_State,
+				Traits<CMAC>::Unpack_State,
+				Traits<CMAC>::Ack_Tx_State
+				>();
+
+		//kills the rest of the active cycle
+		if(Traits<CMAC>::TIMEOUT != 0){
+			while(!timeout);
+		}
+
+		alarm_activate(&(CMAC::state_machine_handler), _sleeping_period);
+
+		//in the case of a timeout, try again next time
+		//if(_state_machine_result != TIMEOUT){
+			if(_last_sm_exec_tx){
+				_last_sm_exec_tx = false;
+				_sem_tx.v();
+			}
+			else if(_last_sm_exec_rx){
+				_last_sm_exec_rx = false;
+				_sem_rx.v();
+			}
+		//}
+	}
+}
+
+/*
+void CMAC::alarm_handler_int_handler(unsigned int){
 	CPU::int_disable();
-	_rx_available = true;
+	timer_int.v();
 	CPU::int_enable();
-	return _rx_frame._len;
-    } else {
-	_stats.dropped_packets++;
+}
+
+int CMAC::alarm_thread_entry(){
+	while(true){
+		timer_int.p();
+		alarm_handler_function(0);
+	}
 	return 0;
-    }
-		
+}
+*/
+
+void CMAC::alarm_handler_function(){
+
+	CPU::int_disable();
+
+	//increment in 2 ms //see cmac_init
+	//alarm_ticks_ms = (alarm_ticks_ms >= 0xFFFFFFFC) ? 0 : (alarm_ticks_ms + 2);
+	alarm_ticks_ms += 2;
+
+	CPU::int_enable();
+
+	//db<CMAC>(INF) << alarm_ticks_ms << "\n";
+
+	if((alarm_ev_handler != 0) && (alarm_ticks_ms >= alarm_event_time_ms)){
+		db<CMAC>(INF) << "CMAC::alarm_handler_function - calling alarm_ev_handler\n";
+		event_handler *tmp = alarm_ev_handler;
+		alarm_ev_handler = 0;
+		(tmp());
+	}
 }
 
-void CMAC::rx_giveup(){
-    _cc1000.int_disable();
-    _cc1000.disable();
-    _rx_state = RX_IDLE;
-    _timer.enable();
+void CMAC::sm_step_int_handler(){
+	sm_step_next_step = true;
 }
 
-/* ----------- Handlers ----------- */
+volatile bool CMAC::sm_step_next_step = false;
 
-// Triggered each CC1000 data tick
-void CMAC::spi_handler(unsigned int unit){
-    switch(_state) {
-    case RX:
-	rx_state_machine();
-	break;
-    case TX:
-	tx_state_machine();
-	break;
-    }
-}
 
-// Triggered after sleeping
-void CMAC::timer_handler(unsigned int unit){
+Transceiver CMAC::radio;
 
-    if(!_tx_available) {
-	_cc1000.enable();
-	_timer.disable();
+CMAC::Address CMAC::_addr = Traits<CMAC>::ADDRESS;
 
-	_state = TX;
-	_tx_state = TX_BACKOFF;
-
-	_cc1000.tx_mode();
-
-	_cc1000.int_enable();
-
-    } else if (!_rx_available) {
-	_cc1000.enable();
-	_timer.disable();
-
-	_cc1000.rx_mode();
-	_rx_frame_ptr= (unsigned char *) &_rx_frame;
-	_rx_data_count = 0;   
-	_rx_sync_count = 0;
-	_rx_sync_tries = 0;
-	_state = RX;
-	_rx_state = RX_IDLE;
-
-	_cc1000.int_enable();
-    }
-
-}
-
-// Static Class Members
-
-CC1000                    CMAC::_cc1000;
-CMAC::Address             CMAC::_addr;
+volatile CMAC::CMAC_STATE CMAC::_state = CMAC::OFF;
 volatile CMAC::Statistics CMAC::_stats;
 
-volatile CMAC::CMAC_STATE CMAC::_state;
+//used only when TIME_TRIGGERED = true
+Semaphore CMAC::_sem_rx(0);
+Semaphore CMAC::_sem_tx(0);
+CMAC::CMAC_STATE_TRANSITION CMAC::_state_machine_result = CMAC::UNPACK_FAILED;
+volatile bool CMAC::_last_sm_exec_tx = false;
+volatile bool CMAC::_last_sm_exec_rx = false;
+volatile bool CMAC::_on_active_cycle = false;
 
-volatile CMAC::TX_STATE   CMAC::_tx_state;
-volatile CMAC::Frame      CMAC::_tx_frame;
-volatile unsigned char *  CMAC::_tx_frame_ptr;
-volatile bool             CMAC::_tx_available = true;
-volatile unsigned char    CMAC::_tx_preamble_count = 0;
-volatile unsigned char    CMAC::_tx_data_count = 0;
+unsigned char CMAC::_frame_buffer[FRAME_BUFFER_SIZE];
+unsigned int CMAC::_frame_buffer_size = 0;
 
-volatile CMAC::RX_STATE   CMAC::_rx_state;
-volatile CMAC::Frame      CMAC::_rx_frame;
-volatile unsigned char *  CMAC::_rx_frame_ptr;
-volatile bool             CMAC::_rx_available = false;
-volatile unsigned char    CMAC::_rx_preamble_count = 0;
-volatile unsigned char    CMAC::_rx_sync_count = 0;
-volatile unsigned char    CMAC::_rx_sync_tries = 0;
-volatile unsigned char    CMAC::_rx_bit_offset;
-volatile unsigned char    CMAC::_rx_data_byte;
-volatile CMAC::data_word  CMAC::_rx_data_word;
-volatile unsigned char    CMAC::_rx_data_count = 0;
-volatile unsigned char    CMAC::_rx_tries = 0;
+void* CMAC::_rx_data = 0;
+const void* CMAC::_tx_data = 0;
+unsigned int CMAC::_rx_data_size = 0;
+unsigned int CMAC::_tx_data_size = 0;
+CMAC::Address CMAC::_tx_dst_address = 0;
+CMAC::Address CMAC::_rx_src_address = 0;
+volatile bool CMAC::_rx_pending = false;
+volatile bool CMAC::_tx_pending = false;
+int CMAC::_transmission_count = 0;
 
-Timer_2 CMAC::_timer;
+unsigned char CMAC::_data_sequence_number = 0;
 
- __END_SYS
+
+//CMAC states static variables
+volatile bool CMAC::timeout = false;
+//Semaphore CMAC_States::Generic_Lpl::listen_sem(0);
+volatile bool CMAC_States::Generic_Lpl::_frame_received = false;
+
+//IEEE802.15.4 specific variables
+//bool CMAC_States::IEEE802154_Beacon_Sync::_coordinator = false;
+//bool CMAC_States::IEEE802154_Beacon_Sync::_first_execution = true;
+unsigned char CMAC_States::IEEE802154_Beacon_Sync::_beacon_order =  CMAC_States::IEEE802154_Beacon_Sync::MAX_BEACON_ORDER;
+unsigned char CMAC_States::IEEE802154_Beacon_Sync::_superframe_order = CMAC_States::IEEE802154_Beacon_Sync::MAX_SUPERFRAME_ORDER;
+unsigned char CMAC_States::IEEE802154_Beacon_Sync::_beacon_sequence_n = 0;
+
+int CMAC::_consecutive_failures = 0;
+
+__END_SYS
 

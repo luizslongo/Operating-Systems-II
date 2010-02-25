@@ -14,10 +14,10 @@ void Radio::int_handler(unsigned int interrupt)
 {
     Radio * dev = get(interrupt);
 
-    db<PC_NIC>(TRC) << "Radio::int_handler(int=" << interrupt
+    db<Radio>(TRC) << "Radio::int_handler(int=" << interrupt
 		    << ",dev=" << dev << ")\n";
     if(!dev)
-	db<PC>(WRN) << "Radio::int_handler: handler not found\n";
+	db<Radio>(WRN) << "Radio::int_handler: handler not found\n";
     else 
 	dev->handle_int();
 }
