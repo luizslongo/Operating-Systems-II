@@ -3,6 +3,7 @@
 #ifndef __atmega16_timer_h
 #define __atmega16_timer_h
 
+#include <ic.h>
 #include "../avr_common/timer.h"
 #include <rtc.h>
 
