@@ -44,7 +44,7 @@ Debug& operator<< (Debug &db, const IP::Header &h) {
 }
 
 // IP
-void IP::attach(u16 protocol, Observer &ipo){
+void IP::attach(Observer &ipo, u16 protocol){
     _ip_observers.insert(&(new Protocol_Entry(protocol, ipo))->_link);
 }
 

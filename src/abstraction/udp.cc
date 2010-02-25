@@ -66,7 +66,7 @@ void UDP::constructor_common(){
 
 	_link = new Ports_List::Element(this, _self.port());
 
-	IP::attach(ID_UDP, *this);
+	IP::attach(*this, ID_UDP);
 	_busy_ports.insert(_link);
 
 	db<UDP>(TRC) << "UDP::UDP() self= " << _self << "\n";

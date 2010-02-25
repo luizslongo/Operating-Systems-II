@@ -98,15 +98,15 @@ Network::Address Network::rarp(const MAC_Address & pa)
     return 0;
 }
 
-void Network::update(NIC::Observed * o, int p)
+void Network::update(NIC_Common::Observed * o, int p)
 {
     db<Network>(TRC) << "Network::update(o=" << o 
 		     << ",p=" << hex << p << dec << ")\n";
 
     NIC::Address src;
     NIC::Protocol prot;
-    NIC::PDU data;
-    int size = _nic.receive(&src, &prot, data, sizeof(NIC::PDU));
+    Ethernet::PDU data;
+    int size = _nic.receive(&src, &prot, data, sizeof(Ethernet::PDU));
     if(!size)
 	return;
 
