@@ -19,8 +19,14 @@ private:
     typedef CPU::Reg16 Reg16;
 
     // Timer1 Registers
-    enum {  
-#if defined (__atmega1281)
+    enum {
+#if defined (__at90can128)
+    TCNT1L  = 0x64,
+    TCNT1H  = 0x65,
+    TCCR1B  = 0x61,
+    TCCR1A  = 0x60,
+    TIMSK1  = 0x4F
+#elif defined (__atmega1281)
     TCNT1L  = 0x64,
     TCNT1H  = 0x65,
     TCCR1B  = 0x61,
@@ -45,7 +51,23 @@ private:
     CS12   = 0x04,
     CS11   = 0x02,
     CS10   = 0x01,
-#if defined (__atmega1281)
+#if defined (__at90can128)
+    // TCCR1A, TCCR3A
+    COMnA1 = 0x80,
+    COMnA0 = 0x40,
+    COMnB1 = 0x20,
+    COMnB0 = 0x10,
+    COMnC1 = 0x08,
+    COMnC0 = 0x04,
+    WGMn1  = 0x02,
+    WGMn0  = 0x01,
+    // TCCR1C, TCCR3C
+    FOCnA  = 0x80,
+    FOCnB  = 0x40,
+    FOCnC  = 0x20,
+    // TIMSK1
+    TOIE1  = 0x01
+#elif defined (__atmega1281)
     // TCCR1A
     COM1A1 = 0x80,
     COM1A0 = 0x40,
@@ -92,7 +114,12 @@ public:
     
 private:
 
-    #if defined (__atmega1281)
+#if defined (__at90can128)
+    static void enable() { timsk1(timsk1() | TOIE1); }
+    static void disable() { timsk1(timsk1() & ~TOIE1); }
+    static Reg8 timsk1() { return AVR8::in8(IO::TIMSK1); }
+    static void timsk1(Reg8 value) { AVR8::out8(IO::TIMSK1,value); }
+#elif defined (__atmega1281)
     static void enable() { timsk1(timsk1() | TOIE1); }
     static void disable() { timsk1(timsk1() & ~TOIE1); }
     static Reg8 timsk1() { return AVR8::in8(IO::TIMSK1); }

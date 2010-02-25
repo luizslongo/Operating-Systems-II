@@ -23,7 +23,7 @@ public:
         FLAG_ZERO            = 0x02,
         FLAG_NEGATIVE        = 0x04,
         FLAG_TWO_COMPL_OF    = 0x08,
-        FLAG_SIGN            = 0x10,     
+        FLAG_SIGN            = 0x10,
         FLAG_HALFCARRY       = 0x20,
         FLAG_BIT_COPY_ST     = 0x40,
         FLAG_INTERRUPT       = 0x80,
@@ -40,6 +40,14 @@ private:
 	SM0   = 0x08,
 	SM1   = 0x10,
 	SM2   = 0x04
+#elif defined (__at90can128)
+    SMCR  = 0x33,
+    // on at90can128 this bits are in SMCR
+    SE    = 0x01,
+    SM0   = 0x02,
+    SM1   = 0x04,
+    SM2   = 0x08,
+    MCUCR = SMCR
 #elif defined (__atmega1281)
     SMCR  = 0x33,
     // on atmega1281 this bits are in SMCR
