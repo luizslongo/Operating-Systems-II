@@ -49,6 +49,11 @@ template <> struct Traits<ATMega1281_EEPROM>: public Traits<ATMega1281_Common>
     static const unsigned int SIZE = 4096; // bytes
 };
 
+template <> struct Traits<ATMega1281_Flash>: public Traits<ATMega1281_Common>
+{
+    static const unsigned int PAGE_SIZE = 256; // bytes
+};
+
 template <> struct Traits<ATMega1281_UART>: public Traits<void>
 {
     enum {

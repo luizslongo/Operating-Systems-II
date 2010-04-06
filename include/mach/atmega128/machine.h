@@ -48,6 +48,7 @@ __END_SYS
 #include "timer.h"
 #include "rtc.h"
 #include "eeprom.h"
+#include "flash.h"
 #include "uart.h"
 #include "spi.h"
 #include "nic.h"

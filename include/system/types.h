@@ -105,6 +105,10 @@ class ATMega16_EEPROM;
 class ATMega128_EEPROM;
 class ATMega1281_EEPROM;
 
+// Hardware Mediators - FLASHs
+class ATMega128_Flash;
+class ATMega1281_Flash;
+
 // Hardware Mediators - UARTs
 class PC_UART;
 class ATMega16_UART;
@@ -251,6 +255,7 @@ enum
     TIMER_ID,
     RTC_ID,
     EEPROM_ID,
+    FLASH_ID,
     UART_ID,
     SPI_ID,
     DISPLAY_ID,
