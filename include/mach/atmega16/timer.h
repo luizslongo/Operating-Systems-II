@@ -33,7 +33,7 @@ public:
     ATMega16_Timer_1() {}
 
     ATMega16_Timer_1(const Hertz & f) {
-	db<PC_Timer>(TRC) << "ATMega16_Timer(f=" << f << ")\n";
+	db<ATMega16_Timer_1>(TRC) << "ATMega16_Timer(f=" << f << ")\n";
 	frequency(f);
     }
 
@@ -102,7 +102,7 @@ public:
     ATMega16_Timer_2() {}
 
     ATMega16_Timer_2(const Hertz & f) {
-    db<PC_Timer>(TRC) << "ATMega16_Timer(f=" << f << ")\n";
+    db<ATMega16_Timer_2>(TRC) << "ATMega16_Timer_2(f=" << f << ")\n";
     frequency(f);
     }
 
@@ -178,7 +178,7 @@ public:
     ATMega16_Timer_3() {}
 
     ATMega16_Timer_3(const Hertz & f) {
-    db<PC_Timer>(TRC) << "ATMega16_Timer(f=" << f << ")\n";
+    db<ATMega16_Timer_3>(TRC) << "ATMega16_Timer_3(f=" << f << ")\n";
     frequency(f);
     }
 
