@@ -33,7 +33,7 @@ public:
     ATMega1281_Timer_1() {}
 
     ATMega1281_Timer_1(const Hertz & f) {
-	db<PC_Timer>(TRC) << "ATMega1281_Timer(f=" << f << ")\n";
+	db<ATMega1281_Timer_1>(TRC) << "ATMega1281_Timer(f=" << f << ")\n";
 	frequency(f);
     }
 
