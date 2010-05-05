@@ -35,7 +35,7 @@ public:
     AT90CAN128_Timer_1() {}
 
     AT90CAN128_Timer_1(const Hertz & f) {
-    db<PC_Timer>(TRC) << "AT90CAN128_Timer_1(f=" << f << ")\n";
+    db<AT90CAN128_Timer_1>(TRC) << "AT90CAN128_Timer_1(f=" << f << ")\n";
     frequency(f);
     }
 
@@ -113,7 +113,7 @@ public:
     AT90CAN128_Timer_2() {}
 
     AT90CAN128_Timer_2(const Hertz & f) {
-    db<PC_Timer>(TRC) << "AT90CAN128_Timer_2(f=" << f << ")\n";
+    db<AT90CAN128_Timer_2>(TRC) << "AT90CAN128_Timer_2(f=" << f << ")\n";
     frequency(f);
     }
 
@@ -192,7 +192,7 @@ public:
     AT90CAN128_Timer_3() {}
 
     AT90CAN128_Timer_3(const Hertz & f) {
-    db<PC_Timer>(TRC) << "AT90CAN128_Timer_3(f=" << f << ")\n";
+    db<AT90CAN128_Timer_3>(TRC) << "AT90CAN128_Timer_3(f=" << f << ")\n";
     frequency(f);
     }
 
