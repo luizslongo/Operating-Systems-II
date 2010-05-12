@@ -59,6 +59,8 @@ void CMAC::tx_state_machine() {
 	    tx_handle();
 	}
 	break;
+    default:
+    	break;
     }
 
 }
@@ -121,6 +123,8 @@ void CMAC::rx_state_machine() {
 	    rx_handle();
 	} 
 	break;
+    default:
+    	break;
     }
 
 }
@@ -226,6 +230,8 @@ void CMAC::spi_handler(){
     case TX:
 	tx_state_machine();
 	break;
+    default:
+    	break;
     }
 }
 
