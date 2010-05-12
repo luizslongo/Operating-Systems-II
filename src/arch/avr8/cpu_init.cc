@@ -10,7 +10,7 @@ void AVR8::init()
 {
     db<Init, AVR8>(TRC) << "AVR8::init()\n";
 
-    if(_Traits::Power_Management) {
+    if(_Traits::power_management) {
         //Enable sleep modes
         out8(MCUCR, in8(MCUCR) | SE);
 	db<AVR8>(INF) << "AVR8:: Power Management Enabled\n";

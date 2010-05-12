@@ -4,8 +4,6 @@
 
 __BEGIN_SYS
 
-char AVR8::_power_state;
-
 void AVR8::Context::save() volatile
 {
     ASM("	pop	r27		;				\n"

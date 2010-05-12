@@ -31,8 +31,8 @@ public:
         FLAG_CLEAR           = ~FLAG_DEFAULTS
     };
 
-    //Power Management
 private:
+    //Sleep register
     enum {
 #if defined (__atmega128)
     MCUCR = 0x35,
@@ -41,16 +41,16 @@ private:
 	SM1   = 0x10,
 	SM2   = 0x04
 #elif defined (__at90can128)
+    // on at90can128 these bits are in SMCR
     SMCR  = 0x33,
-    // on at90can128 this bits are in SMCR
     SE    = 0x01,
     SM0   = 0x02,
     SM1   = 0x04,
     SM2   = 0x08,
     MCUCR = SMCR
 #elif defined (__atmega1281)
+    // on atmega1281 these bits are in SMCR
     SMCR  = 0x33,
-    // on atmega1281 this bits are in SMCR
     SM2   = 0x08,
     SM1   = 0x04,
     SM0   = 0x02,
@@ -65,19 +65,6 @@ private:
 #endif
     };
 public:
-    enum {
-        FULL                = 0,
-	IDLE                = 1,
-	ADC_NOISE_REDUCTION = 2,
-	POWER_DOWN          = 3,
-	POWER_SAVE          = 4,
-	NATIVE_STANDBY      = 5, //For this mode an external oscilator is needed
-	EXTENDED_STANDBY    = 6, //For this mode an external oscilator is needed
-	LIGHT               = IDLE,
-	STANDBY             = POWER_SAVE,
-	OFF                 = POWER_DOWN
-    };
-
     // CPU Context
     class Context
     {
@@ -140,7 +127,7 @@ public:
 
     static void int_enable() { ASMV("sei"); };
     static void int_disable() { ASMV("cli"); };
-    static void halt() { power(OFF); }
+    static void halt() { power(_Traits::IDLE); }
 
     static void switch_context(Context * volatile * o, Context * volatile n);
 
@@ -322,57 +309,41 @@ public:
 	(*(volatile unsigned char *)(port + 0x20)) = (Reg8)value;
     }  
 
-    static char power() {
-        return _power_state;
-    }
-
-    static void power(char ps) {
-        _power_state = ps;
-	sleep(ps);
-    }
-
     static void reboot() { ASM("jmp 0"); }
 
     static void init();
 
-private:
-    static void sleep(char ps) {
-        switch(ps) {
-	case IDLE:
-	    out8(MCUCR,in8(MCUCR) & ~((SM0 | SM1 | SM2)));
-	    ASMV("sleep");
-	    break;
-	case ADC_NOISE_REDUCTION:	
-	    out8(MCUCR,in8(MCUCR) & ~((SM1 | SM2)));
-	    out8(MCUCR,in8(MCUCR) | SM0);
-	    ASMV("sleep");
-	    break;
-	case POWER_DOWN:	
-	    out8(MCUCR,in8(MCUCR) & ~((SM0 | SM2)));
-	    out8(MCUCR,in8(MCUCR) | SM1);
-	    ASMV("sleep");
-	    break;
-	case POWER_SAVE:	
-	    out8(MCUCR,in8(MCUCR) & ~(SM2));
-	    out8(MCUCR,in8(MCUCR) | (SM0 | SM1));
-	    ASMV("sleep");
-	    break;
-	case NATIVE_STANDBY:	
-	    out8(MCUCR,in8(MCUCR) & ~(SM0));
-	    out8(MCUCR,in8(MCUCR) | (SM1 | SM2));
-	    ASMV("sleep");
-	    break;
-	case EXTENDED_STANDBY:	
-	    out8(MCUCR,in8(MCUCR) | (SM0 | SM1 | SM2));
-	    ASMV("sleep");
-	    break;
-        default:
-            break;
+    static void power(char mode) {
+        switch(mode) {
+	    case _Traits::IDLE:
+	        out8(MCUCR,in8(MCUCR) & ~((SM0 | SM1 | SM2)));
+	        break;
+	    case _Traits::ADC_NOISE_REDUCTION:
+	        out8(MCUCR,in8(MCUCR) & ~((SM1 | SM2)));
+	        out8(MCUCR,in8(MCUCR) | SM0);
+	        break;
+		case _Traits::POWER_DOWN:
+			out8(MCUCR,in8(MCUCR) & ~((SM0 | SM2)));
+			out8(MCUCR,in8(MCUCR) | SM1);
+			break;
+		case _Traits::POWER_SAVE:
+			out8(MCUCR,in8(MCUCR) & ~(SM2));
+			out8(MCUCR,in8(MCUCR) | (SM0 | SM1));
+			break;
+		case _Traits::NATIVE_STANDBY:
+			out8(MCUCR,in8(MCUCR) & ~(SM0));
+			out8(MCUCR,in8(MCUCR) | (SM1 | SM2));
+			break;
+		case _Traits::EXTENDED_STANDBY:
+			out8(MCUCR,in8(MCUCR) | (SM0 | SM1 | SM2));
+			break;
+		case _Traits::FULL: //if running it is already at FULL
+		default:
+			return;
+		}
+		ASMV("sleep");
 	}
-    }
 
-private:
-    static char _power_state;
 };
 
 __END_SYS
