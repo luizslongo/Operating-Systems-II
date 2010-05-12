@@ -69,7 +69,7 @@ int main()
     phil[3] = new Thread(&philosopher, 3, 16, 24);
     phil[4] = new Thread(&philosopher, 4, 10, 20);
 
-    cout << "Philosophers are alife and hungry!\n";
+    cout << "Philosophers are alive and hungry!\n";
 	
     cout << "The dinner is served ...\n";
     Display::position(7, 44);
