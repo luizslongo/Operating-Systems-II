@@ -249,79 +249,80 @@ int main(int argc, char **argv)
 bool parse_config(FILE * cfg_file, Configuration * cfg) 
 {
     char line[256];
+    char * ret;
     char * token;
 
     // EPOS Mode
-    fgets(line, 256, cfg_file);
+    ret = fgets(line, 256, cfg_file);
     token = strtok(line, "=");
     if(strcmp(token, "MODE")) return false;
     token = strtok(NULL, "\n");
     strtolower(cfg->mode, token);						
     // Machine
-    fgets(line, 256, cfg_file); 
+    ret = fgets(line, 256, cfg_file);
     token = strtok(line, "=");
     if(strcmp(token, "MACH")) return false;
     token = strtok(NULL, "\n");		
     strtolower(cfg->mach, token);	
 
     // Arch
-    fgets(line, 256, cfg_file);
+    ret = fgets(line, 256, cfg_file);
     token = strtok(line, "=");
     if(strcmp(token, "ARCH")) return false;
     token = strtok(NULL, "\n");
     strtolower(cfg->arch, token);
 
     // Clock
-    fgets(line, 256, cfg_file);
+    ret = fgets(line, 256, cfg_file);
     token = strtok(line, "=");
     if(strcmp(token, "CLOCK")) return false;
     token = strtok(NULL, "\n");
     cfg->clock = atoi(token);	
 
     // Word Size
-    fgets(line, 256, cfg_file);
+    ret = fgets(line, 256, cfg_file);
     token = strtok(line, "=");
     if(strcmp(token, "WORD_SIZE")) return false;
     token = strtok(NULL, "\n");
     cfg->word_size = atoi(token);
 
     // Endianess
-    fgets(line, 256, cfg_file);
+    ret = fgets(line, 256, cfg_file);
     token = strtok(line, "=");
     if(strcmp(token, "ENDIANESS")) return false;
     token = strtok(NULL, "\n");
     cfg->endianess = !strcmp(token, "little");
 
     // Memory Base
-    fgets(line, 256, cfg_file);
+    ret = fgets(line, 256, cfg_file);
     token = strtok(line, "=");
     if(strcmp(token, "MEM_BASE")) return false;
     token = strtok(NULL, "\n");
     cfg->mem_base = strtol(token, 0, 16);
 
     // Memory Top
-    fgets(line, 256, cfg_file);
+    ret = fgets(line, 256, cfg_file);
     token = strtok(line, "=");
     if(strcmp(token, "MEM_TOP")) return false;
     token = strtok(NULL, "\n");
     cfg->mem_top=strtol(token, 0, 16);
 
     // Boot Lenght Min
-    fgets(line, 256, cfg_file);
+    ret = fgets(line, 256, cfg_file);
     token = strtok(line, "=");
     if(strcmp(token, "BOOT_LENGTH_MIN")) return false;
     token = strtok(NULL, "\n");
     cfg->boot_length_min=atoi(token);
 
     // Boot Lenght Max
-    fgets(line, 256, cfg_file);
+    ret = fgets(line, 256, cfg_file);
     token = strtok(line, "=");
     if(strcmp(token, "BOOT_LENGTH_MAX")) return false;
     token = strtok(NULL, "\n");
     cfg->boot_length_max=atoi(token);
 
     // Node Id
-    fgets(line, 256, cfg_file);
+    ret = fgets(line, 256, cfg_file);
     token = strtok(line, "=");
     if(!strcmp(token, "NODE_ID")) {
 	token = strtok(NULL, "\n");
@@ -330,7 +331,7 @@ bool parse_config(FILE * cfg_file, Configuration * cfg)
 	cfg->node_id = -1; // get from net
 
     // Number of Nodes in SAN
-    fgets(line, 256, cfg_file);
+    ret = fgets(line, 256, cfg_file);
     token = strtok(line, "=");
     if(!strcmp(token, "N_NODES")) {
 	token = strtok(NULL, "\n");
