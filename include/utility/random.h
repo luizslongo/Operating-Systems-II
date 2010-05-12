@@ -16,7 +16,7 @@ class Pseudo_Random
 private:
 	static const unsigned long int A = 1103515245;
 	static const unsigned long int C = 12345;
-	static const unsigned long int M = 4294967295;
+	static const unsigned long int M = 4294967295U;
 
 public:
     Pseudo_Random() {}
