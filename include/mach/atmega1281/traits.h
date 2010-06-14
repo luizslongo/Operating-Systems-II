@@ -1,14 +1,16 @@
 #ifndef __atmega1281_traits_h
 #define __atmega1281_traits_h
 
+#include "../avr_common/traits.h"
+
 __BEGIN_SYS
 
 class ATMega1281_Common;
-template <> struct Traits<ATMega1281_Common>: public Traits<void>
+template <> struct Traits<ATMega1281_Common>: public Traits<AVR_Common>
 {
 };
 
-template <> struct Traits<ATMega1281>: public Traits<ATMega1281_Common>
+template <> struct Traits<ATMega1281>: public Traits<ATMega1281_Common>, public Traits<AVR_Machine>
 {
     static const unsigned int MAX_CPUS = 1;
     static const unsigned long long CLOCK     = 1000000;
@@ -54,20 +56,12 @@ template <> struct Traits<ATMega1281_Flash>: public Traits<ATMega1281_Common>
     static const unsigned int PAGE_SIZE = 256; // bytes
 };
 
-template <> struct Traits<ATMega1281_UART>: public Traits<void>
+template <> struct Traits<ATMega1281_UART>: public Traits<ATMega1281_Common>, public Traits<AVR_UART>
 {
-    enum {
-        FULL    = 0, // Tx AND Rx enabled
-    LIGHT   = 1, // Only Tx enabled
-    STANDBY = 2, // Only Rx enabled
-    OFF     = 3  // Tx AND Rx disabled
-    };
-
-    static const char Power_Management = FULL;
     static const unsigned int DEFAULT_UNIT = 1;
 };
 
-template <> struct Traits<ATMega1281_ADC>: public Traits<void>
+template <> struct Traits<ATMega1281_ADC>: public Traits<ATMega1281_Common>, public Traits<AVR_ADC>
 {
 };
 

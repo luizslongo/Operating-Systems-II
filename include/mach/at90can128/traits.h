@@ -1,14 +1,16 @@
 #ifndef __at90can128_traits_h
 #define __at90can128_traits_h
 
+#include "../avr_common/traits.h"
+
 __BEGIN_SYS
 
 class AT90CAN128_Common;
-template <> struct Traits<AT90CAN128_Common>: public Traits<void>
+template <> struct Traits<AT90CAN128_Common>: public Traits<AVR_Common>
 {
 };
 
-template <> struct Traits<AT90CAN128>: public Traits<AT90CAN128_Common>
+template <> struct Traits<AT90CAN128>: public Traits<AT90CAN128_Common>, public Traits<AVR_Machine>
 {
     static const unsigned int MAX_CPUS = 1;
     static const unsigned long long CLOCK = 8000000;
@@ -48,15 +50,8 @@ template <> struct Traits<AT90CAN128_RTC>: public Traits<AT90CAN128_Common>
     static const unsigned int EPOCH_DAYS = 719499;
 };
 
-template <> struct Traits<AT90CAN128_UART>: public Traits<void>
+template <> struct Traits<AT90CAN128_UART>: public Traits<AT90CAN128_Common>, public Traits<AVR_UART>
 {
-    enum {
-    FULL                = 0,//Tx AND Rx enabled
-    LIGHT               = 1,//Only Tx enabled
-    STANDBY             = 2,//Only Rx enabled
-    OFF                 = 3 //Tx AND Rx disabled
-    };
-    static const char Power_Management = FULL;
     static const bool enabled = false;
 };
 

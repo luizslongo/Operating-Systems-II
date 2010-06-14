@@ -1,14 +1,16 @@
 #ifndef __atmega16_traits_h
 #define __atmega16_traits_h
 
+#include "../avr_common/traits.h"
+
 __BEGIN_SYS
 
 class ATMega16_Common;
-template <> struct Traits<ATMega16_Common>: public Traits<void>
+template <> struct Traits<ATMega16_Common>: public Traits<AVR_Common>
 {
 };
 
-template <> struct Traits<ATMega16>: public Traits<ATMega16_Common>
+template <> struct Traits<ATMega16>: public Traits<ATMega16_Common>, public Traits<AVR_Machine>
 {
     static const unsigned int MAX_CPUS = 1;
     static const unsigned long long CLOCK = 8000000;
@@ -50,18 +52,11 @@ template <> struct Traits<ATMega16_EEPROM>: public Traits<ATMega16_Common>
     static const unsigned int SIZE = 512; // bytes
 };
 
-template <> struct Traits<ATMega16_UART>: public Traits<void>
+template <> struct Traits<ATMega16_UART>: public Traits<ATMega16_Common>, public Traits<AVR_UART>
 {
-    enum {
-        FULL                = 0,//Tx AND Rx enabled
-    LIGHT               = 1,//Only Tx enabled
-    STANDBY             = 2,//Only Rx enabled
-    OFF                 = 3 //Tx AND Rx disabled
-    };
-    static const char Power_Management = FULL;
 };
 
-template <> struct Traits<ATMega16_ADC>: public Traits<void>
+template <> struct Traits<ATMega16_ADC>: public Traits<ATMega16_Common>, public Traits<AVR_ADC>
 {
 };
 
