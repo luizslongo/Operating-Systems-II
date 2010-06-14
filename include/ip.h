@@ -35,7 +35,7 @@ public:
     };
     static const Address BROADCAST;
 
-    // Network phisical address
+    // Network physical address
     typedef NIC_Common::Address<6> MAC_Address;
 
     // Network protocol numbers
