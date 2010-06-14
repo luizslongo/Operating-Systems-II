@@ -313,7 +313,7 @@ public:
 
     static void init();
 
-    static void power(char mode) {
+    static void power(Traits<CPU>::Power_Modes mode) {
         switch(mode) {
 	    case _Traits::IDLE:
 	        out8(MCUCR,in8(MCUCR) & ~((SM0 | SM1 | SM2)));
