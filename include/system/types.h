@@ -174,6 +174,7 @@ namespace CMAC_States
 };
 
 // Hardware Mediators - ADCs
+class AT90CAN128_ADC;
 class ATMega16_ADC;
 class ATMega128_ADC;
 class ATMega1281_ADC;

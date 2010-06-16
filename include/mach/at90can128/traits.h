@@ -50,6 +50,10 @@ template <> struct Traits<AT90CAN128_RTC>: public Traits<AT90CAN128_Common>
     static const unsigned int EPOCH_DAYS = 719499;
 };
 
+template <> struct Traits<AT90CAN128_ADC>: public Traits<AT90CAN128_Common>, public Traits<AVR_ADC>
+{
+};
+
 template <> struct Traits<AT90CAN128_UART>: public Traits<AT90CAN128_Common>, public Traits<AVR_UART>
 {
     static const bool enabled = false;

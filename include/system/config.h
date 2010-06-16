@@ -231,7 +231,7 @@ typedef Serial_Display      		Display;
 typedef AT90CAN128_UART     		UART;
 typedef AT90CAN128_NIC      		NIC;
 typedef Dummy<0>            		PCI;
-typedef Dummy<1>            		ADC;
+typedef AT90CAN128_ADC         		ADC;
 typedef Dummy<2>            		EEPROM;
 typedef Dummy<3>            		SPI;
 typedef Dummy<4>            		Photo_Sensor;
