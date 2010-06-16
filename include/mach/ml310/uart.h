@@ -200,16 +200,6 @@ public:
     char get() { while(!rxd_full()); return rxd(); }
     void put(char c) { while(!txd_empty()); txd(c); }
 
-    //Place Holder to allow compilation of abstractions
-    enum {
-        FULL = 0,
-	LIGHT = 1,
-	STANDBY = 2,
-	OFF = 3
-    };
-    void power(unsigned char ps) {}
-    unsigned char power() { return 0; }
-
     static void init(); 
 
 private:

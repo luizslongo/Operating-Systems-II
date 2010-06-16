@@ -25,14 +25,6 @@ public:
 	UART_DATA_AVALIABLE  = 0x01
     };
 
-    //Place Holder to allow compilation of abstractions
-    enum {
-        FULL = 0,
-        LIGHT = 1,
-        STANDBY = 2,
-        OFF = 3
-    };
-
 public:
     PLASMA_UART(unsigned int unit = 0) : _unit(unit) {
     }
@@ -59,11 +51,6 @@ public:
 
     void int_disable() {
     }
-
-    void power(unsigned char ps) {
-    }
-
-    unsigned char power() { return 0; }
 
     static void int_handler(unsigned int interrupt);
 
