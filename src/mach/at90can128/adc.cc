@@ -4,10 +4,7 @@
 
 __BEGIN_SYS
 
-bool AVR_ADC::_in_use;
+bool AVR_ADC::_in_use = false;
 Traits<AVR_ADC>::Power_Modes AVR_ADC::_op_mode;
 
 __END_SYS
-
-
-
