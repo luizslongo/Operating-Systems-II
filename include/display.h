@@ -29,15 +29,6 @@ private:
     };
 
 public:
-    //Power Management
-    enum {
-        FULL                = UART::LIGHT, // Display doesn't need RxD
-	OFF                 = UART::OFF,
-	LIGHT               = OFF,
-	STANDBY             = OFF
-    };
-
-public:
     Serial_Display() {}
 
     static void remap() {
@@ -98,9 +89,6 @@ public:
 	puti(_column);
 	put('H');	
     }
-
-    static char power() { return power(); }
-    static void power(char ps) { power(ps); }
 
 private:
 
