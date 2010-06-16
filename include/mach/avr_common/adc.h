@@ -2,6 +2,7 @@
 
 #include <tsc.h>
 #include <adc.h>
+#include <traits.h>
 
 #ifndef __avr_adc_h
 #define __avr_adc_h
@@ -19,18 +20,12 @@ protected:
     typedef AVR8::Reg8 Reg8;
     typedef AVR8::Reg16 Reg16;
 
+    typedef Traits<AVR_ADC> _Traits;
+
     static const unsigned long CLOCK = Traits<Machine>::CLOCK;
 
 public:
     typedef TSC::Hertz Hertz;
-
-    //Power Management
-    enum {
-        FULL                = 0,//Turned On
-	OFF                 = 1,//Turned Off
-	LIGHT               = FULL,
-	STANDBY             = FULL
-    };
 
     enum {
         // ADMUX
@@ -55,77 +50,115 @@ public:
 
 public:
     AVR_ADC(unsigned char channel, unsigned char reference,
-	    unsigned char trigger, Hertz frequency) {
-	config(channel, reference, trigger, frequency);
+	    unsigned char trigger, Hertz frequency)
+    {
+    	if(!_in_use) _op_mode = _Traits::OFF;
+    	config(channel, reference, trigger, frequency);
+//    	if(!_in_use) power(_Traits::FULL);
     }
-    ~AVR_ADC(){ 
-	admux(0);
-	adcsra(0);
+
+    ~AVR_ADC()
+    {
+    	if(!_in_use) power(_Traits::OFF);
+		admux(0);
+		adcsra(0);
     }
 
     void config(unsigned char channel, unsigned char reference,
-		unsigned char trigger, Hertz frequency) {
+		unsigned char trigger, Hertz frequency)
+    {
+    	_admux = (channel << MUX0) | (reference << REFS0);
 
-	_admux = (channel << MUX0) | (reference << REFS0);
+    	unsigned char ps = 7;
+    	while(((CLOCK >> ps) < frequency) && (ps > 0)) ps--;
 
-	unsigned char ps = 7;
-	while(((CLOCK >> ps) < frequency) && (ps > 0)) ps--;
-
-	_adcsra = (trigger << ADFR) | (ps << ADPS0);
-
+    	_adcsra = (trigger << ADFR) | (ps << ADPS0);
     }
+
     void config(unsigned char * channel, unsigned char * reference,
-		unsigned char * trigger, Hertz * frequency) {
-	*channel = (_admux >> MUX0) & 0x07;
-	*reference = (_admux >> REFS0) & 0x03;
-	*trigger = (_adcsra >> ADFR) & 0x01;
-	*frequency = CLOCK << ((_adcsra >> ADPS0) & 0x07);
+		unsigned char * trigger, Hertz * frequency)
+    {
+		*channel = (_admux >> MUX0) & 0x07;
+		*reference = (_admux >> REFS0) & 0x03;
+		*trigger = (_adcsra >> ADFR) & 0x01;
+		*frequency = CLOCK << ((_adcsra >> ADPS0) & 0x07);
     }
 
-    int sample() { 
-	while (!enable());
-	while (!finished()); 
-	int result = adchl();
-	disable();
-	return result;
+    int sample()
+    {
+		while (!enable());
+		while (!finished());
+		int result = adchl();
+		disable();
+		return result;
     }
 
-    int get() {
-	return adchl(); 
-    }
+    int get() { return adchl(); }
 
     bool finished() { return (adcsra() & (1 << ADIF)); }
-
-    bool enable() {
-	if(_in_use) return false;
-	_in_use = true;
-	config();
-	adcsra(adcsra() | (1 << ADEN) | (1 << ADSC)); 
-	return true;
-    }
-    
-    void disable() { 
-	_in_use = false;
-	adcsra(adcsra() & ~(1 << ADEN) & ~(1 << ADSC)); 
-    }
 
     void reset();
 
     void int_enable() { adcsra(adcsra() | (1 << ADIE)); }
     void int_disable() { adcsra(adcsra() & ~(1 << ADIE)); }
 
-    char power() { return _power_state; }
-    void power(char ps) {
-        _power_state = ps;
-	if(ps == OFF) {
-	    disable();
-	}
-	else {
-	    enable();
-	}
+    bool power(Traits<ADC>::Power_Modes mode)
+    {
+    	return do_power(this, mode);
     }
 
 private:
+
+    static bool do_power(AVR_ADC * target, Traits<ADC>::Power_Modes mode)
+    {
+//    	static bool interrupts_on = false;
+
+    	switch(mode)
+    	{
+    	case _Traits::OFF:
+    		if(_op_mode == _Traits::OFF) return true;
+    	case _Traits::STANDBY:
+    		if(_op_mode == _Traits::STANDBY)
+			{
+    			if(mode == _Traits::OFF) _op_mode = mode;
+    			return true;
+			}
+//    		interrupts_on = adcsra() & (1 << ADIE);
+//    		if(interrupts_on) int_disable();
+    		target->disable();
+    		break;
+
+    	case _Traits::LIGHT:
+    		if(_op_mode == _Traits::LIGHT) return true;
+    	case _Traits::FULL:
+    		if(_op_mode == _Traits::FULL)
+			{
+    			if(mode == _Traits::LIGHT) _op_mode = mode;
+    			return true;
+			}
+    		if(!target->enable()) return false;
+//    		if(interrupts_on) int_enable();
+    		break;
+    	}
+    	_op_mode = mode;
+    	return true;
+    }
+
+    bool enable()
+    {
+		if(_in_use) return false;
+		_in_use = true;
+		config();
+		adcsra(adcsra() | (1 << ADEN) | (1 << ADSC));
+		return true;
+    }
+    
+    void disable()
+    {
+		_in_use = false;
+		adcsra(adcsra() & ~(1 << ADEN) & ~(1 << ADSC));
+    }
+
     static Reg8 admux(){ return AVR8::in8(IO::ADMUX); }
     static void admux(Reg8 value){ AVR8::out8(IO::ADMUX,value); }   
     static Reg8 adcsra(){ return AVR8::in8(IO::ADCSRA); }
@@ -133,16 +166,16 @@ private:
     static Reg16 adchl(){ return AVR8::in16(IO::ADCL); }
     static void adchl(Reg16 value){ AVR8::out16(IO::ADCL,value); } 
 
-    void config() {
-	admux(_admux);
-	adcsra(_adcsra);
+    void config()
+    {
+		admux(_admux);
+		adcsra(_adcsra);
     }
 
-private:
     Reg8 _admux;
     Reg8 _adcsra;
     static bool _in_use;
-    char _power_state;
+	static _Traits::Power_Modes _op_mode;
 };
 
 __END_SYS

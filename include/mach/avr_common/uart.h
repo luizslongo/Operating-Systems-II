@@ -23,14 +23,6 @@ private:
     static const unsigned int BASE_CLOCK = Traits<Machine>::CLOCK / 512;
 
 public:
-    //Power Management
-    enum {
-        FULL                = 0,//Tx AND Rx enabled
-	LIGHT               = 1,//Only Tx enabled
-	STANDBY             = 2,//Only Rx enabled
-	OFF                 = 3 //Tx AND Rx disabled
-    };
-
     //UART IO Register Bit Offsets
     enum {
         //UCSRA
@@ -63,61 +55,68 @@ public:
     };
 
 public:  
-    AVR_UART(unsigned int unit = 0) : _unit(unit) {
-	config(9600,8,0,1);
-	power(_Traits::Power_Management);
+    AVR_UART(unsigned int unit = 0) : _unit(unit)
+    {
+		config(9600,8,0,1);
+		power(_Traits::FULL);
     }
     AVR_UART(unsigned int baud, unsigned int data_bits, unsigned int parity,
-	     unsigned int stop_bits, unsigned int unit = 0) : _unit(unit) {
-	config(baud,data_bits,parity,stop_bits);
-	power(_Traits::Power_Management);
+	     unsigned int stop_bits, unsigned int unit = 0) : _unit(unit)
+    {
+    	config(baud,data_bits,parity,stop_bits);
+		power(_Traits::FULL);
     }
     ~AVR_UART(){ 
-	ubrrhl(0);
-	ucsrb(0);  
+		ubrrhl(0);
+		ucsrb(0);
     }
 
     void config(unsigned int baud, unsigned int data_bits,
-		unsigned int parity, unsigned int stop_bits) {
-	ubrrhl((BASE_CLOCK / (baud>>5)) - 1);
+		unsigned int parity, unsigned int stop_bits)
+    {
+		ubrrhl((BASE_CLOCK / (baud>>5)) - 1);
+
+		unsigned char cfg =
+			((data_bits - 5) << UCSZ0) | ((stop_bits - 1) << USBS  ) | (1 << URSEL);
+		if (parity) cfg |= (parity + 1) << UPM0;
+		ucsrc(cfg);
 	
-	unsigned char cfg =
-        ((data_bits - 5) << UCSZ0) | ((stop_bits - 1) << USBS  ) | (1 << URSEL);
-	if (parity) cfg |= (parity + 1) << UPM0;
-	ucsrc(cfg);
+		ucsra(0);
+	}
 
-	ucsra(0);
-    }
     void config(unsigned int * baud, unsigned int * data_bits,
-		unsigned int * parity, unsigned int * stop_bits) {
+		unsigned int * parity, unsigned int * stop_bits)
+    {
 
-	*baud = (BASE_CLOCK / (ubrrhl() + 1))<<5;
+		*baud = (BASE_CLOCK / (ubrrhl() + 1))<<5;
 
-	unsigned char rc = ucsrc();
+		unsigned char rc = ucsrc();
 
-	*data_bits = ((rc >> UCSZ0) + 5) & 0x0F;
-	*stop_bits = ((rc >> USBS) + 1) & 0x03;
+		*data_bits = ((rc >> UCSZ0) + 5) & 0x0F;
+		*stop_bits = ((rc >> USBS) + 1) & 0x03;
 
-	*parity = (rc >> USBS) & 0x03;
-	if(*parity) *parity -= 1; 
+		*parity = (rc >> USBS) & 0x03;
+		if(*parity) *parity -= 1;
 
     }
 
     Reg8 rxd() { return udr(); }
     void txd(Reg8 c) { udr(c); }
 
-    void reset() { 
-	unsigned int b, db, p, sb;
-	config(&b, &db, &p, &sb);
-	config(b, db, p, sb);
+    void reset()
+    {
+		unsigned int b, db, p, sb;
+		config(&b, &db, &p, &sb);
+		config(b, db, p, sb);
     }
 
     void loopback(bool flag) { }
 
     void int_enable(bool receive = true, bool send = true,
-		    bool line = true, bool modem = true) {
-	ucsrb( (1 << TXEN) | (1 << RXEN) | 
-	       (receive << RXCIE) | (send << UDRIE) );
+		    bool line = true, bool modem = true)
+    {
+		ucsrb( (1 << TXEN) | (1 << RXEN) |
+			   (receive << RXCIE) | (send << UDRIE) );
     }
     void int_disable() { ucsrb(1 << TXEN | 1 << RXEN); }
 
@@ -135,27 +134,26 @@ public:
     bool parity_error()  { return (ucsra() & (1 << UPE)) ; }
     bool framing_error() { return (ucsra() & (1 << FE)) ; }
 
-    char power() { return _power_state; }
-    void power(char ps) {
-        _power_state = ps;
-        switch(ps) {
-	case FULL:
-	    ucsrb(ucsrb() | (1 << TXEN) | (1 << RXEN));
-	    break;
-	case LIGHT:
-	    ucsrb(ucsrb() & ~(1 << RXEN));
-	    //When using the FIFO buffer, it has to be flushed at this
-	    //point to avoid loss of data.
-	    ucsrb(ucsrb() | (1 << TXEN));
-	    break;
-	case STANDBY:
-	    ucsrb(ucsrb() & ~(1 << TXEN));
-	    ucsrb(ucsrb() | (1 << RXEN));
-	    break;
-	case OFF:
-	    ucsrb(ucsrb() & ~((1 << TXEN) | (1 << RXEN)));
-	    break;
-	}
+    void power(Traits<UART>::Power_Modes mode) {
+        switch(mode)
+        {
+        case _Traits::FULL:
+			ucsrb(ucsrb() | (1 << TXEN) | (1 << RXEN));
+			break;
+		case _Traits::LIGHT:
+			ucsrb(ucsrb() & ~(1 << RXEN));
+			//When using the FIFO buffer, it has to be flushed at this
+			//point to avoid loss of data.
+			ucsrb(ucsrb() | (1 << TXEN));
+			break;
+		case _Traits::STANDBY:
+			ucsrb(ucsrb() & ~(1 << TXEN));
+			ucsrb(ucsrb() | (1 << RXEN));
+			break;
+		case _Traits::OFF:
+			ucsrb(ucsrb() & ~((1 << TXEN) | (1 << RXEN)));
+			break;
+        }
     }
 
 private:
@@ -170,25 +168,27 @@ private:
     Reg8 ubrrh(){ return AVR8::in8((_unit == 0) ? IO::UBRR0H : IO::UBRR1H); }
     void ubrrh(Reg8 value){ AVR8::out8(((_unit == 0) ? IO::UBRR0H : IO::UBRR1H),value); } 
     Reg8 ucsrc(){ return (_unit == 0) ? _ucsr0c : AVR8::in8(IO::UCSR1C); }
-    void ucsrc(Reg8 value){ 
-	_ucsr0c = value;
-	AVR8::out8(((_unit == 0) ? IO::UCSR0C : IO::UCSR1C),(value | 1 << URSEL));
+    void ucsrc(Reg8 value)
+    {
+		_ucsr0c = value;
+		AVR8::out8(((_unit == 0) ? IO::UCSR0C : IO::UCSR1C),(value | 1 << URSEL));
     } 
 
-    Reg16 ubrrhl() { 
-	Reg16 value = ubrrl();
-	value |= ((Reg16)ubrrh())<<8;
-	return value;
+    Reg16 ubrrhl()
+    {
+		Reg16 value = ubrrl();
+		value |= ((Reg16)ubrrh())<<8;
+		return value;
     }
-    void ubrrhl(Reg16 value) { 
-	ubrrh((Reg8)(value>>8)); 
-	ubrrl((Reg8)value); 
+    void ubrrhl(Reg16 value)
+    {
+		ubrrh((Reg8)(value>>8));
+		ubrrl((Reg8)value);
     }
-    
+
 private:
     int _unit;
     Reg8 _ucsr0c;
-    char _power_state;
 };
 
 __END_SYS
