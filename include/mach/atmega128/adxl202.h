@@ -44,13 +44,13 @@ public:
 
 
     bool enable_y() {
-	enable_sensor();
-	return _adc_y.enable();  
+		enable_sensor();
+		return _adc_y.power(Traits<ADC>::FULL);
     }
     
     void disable_y() { 
-	enable_sensor();
-	_adc_y.disable(); 
+		enable_sensor();
+		_adc_y.power(Traits<ADC>::OFF);
     }
 
 
@@ -68,12 +68,12 @@ public:
 
     bool enable_x() {
 	enable_sensor();
-	return _adc_x.enable();  
+	return _adc_x.power(Traits<ADC>::FULL);
     }
     
     void disable_x() { 
 	enable_sensor();
-	_adc_x.disable(); 
+	_adc_x.power(Traits<ADC>::OFF);
     }
 
 

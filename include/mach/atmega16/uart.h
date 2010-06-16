@@ -10,13 +10,6 @@ __BEGIN_SYS
 class ATMega16_UART: public UART_Common, private AVR_UART
 {
 public:
-    enum {
-        FULL                = AVR_UART::FULL,
-	LIGHT               = AVR_UART::LIGHT,
-	STANDBY             = AVR_UART::STANDBY,
-	OFF                 = AVR_UART::OFF
-    };
-public:
     ATMega16_UART(unsigned int unit = 0) : AVR_UART(9600, 8, 0, 1, unit) {}
     ATMega16_UART(unsigned int baud, unsigned int data_bits, 
 		  unsigned int parity, unsigned int stop_bits,
@@ -36,9 +29,6 @@ public:
     void put(char c) { while(!txd_empty()); txd(c); }
 
     void loopback(bool flag) { AVR_UART::loopback(flag); }
-
-    char power() { return AVR_UART::power(); }
-    void power(char ps) { AVR_UART::power(ps); }
 };
 
 __END_SYS

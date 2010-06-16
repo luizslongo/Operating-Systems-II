@@ -22,8 +22,8 @@ public:
     CC1000_RSSI() : _adc(CHANNEL, CLOCK >> 7) {}
 
 public:
-    bool enable() { return _adc.enable();  }
-    void disable() { _adc.disable(); }
+    bool enable() { return _adc.power(Traits<ADC>::FULL);  }
+    void disable() { _adc.power(Traits<ADC>::OFF);; }
 
     bool data_ready() { return _adc.finished(); }
 

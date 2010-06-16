@@ -27,8 +27,8 @@ protected:
     MTS300() : _adc(CHANNEL, CLOCK >> 7) {}
 
 public:
-    bool enable() { return _adc.enable();  }
-    void disable() { _adc.disable(); }
+    bool enable() { return _adc.power(Traits<ADC>::FULL);  }
+    void disable() { _adc.power(Traits<ADC>::OFF); }
 
     int sample() { return _adc.sample(); }
 
