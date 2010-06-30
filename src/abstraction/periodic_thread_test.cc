@@ -6,15 +6,15 @@
 
 __USING_SYS
 
-const int iterations = 100;
-const int period_a = 100; // ms
-const int period_b = 200; // ms
-const int period_c = 400; // ms
+const int iterations = 10;
+const long period_a = 100; // ms
+const long period_b = 200; // ms
+const long period_c = 400; // ms
 
 int func_a(void);
 int func_b(void);
 int func_c(void);
-int max(int a, int b, int c) { return ((a >= b) && (a >= c)) ? a : ((b >= a) && (b >= c) ? b : c); }
+long max(long a, long b, long c) { return ((a >= b) && (a >= c)) ? a : ((b >= a) && (b >= c) ? b : c); }
 
 OStream cout;
 
@@ -25,7 +25,7 @@ int main()
     cout << "\nThis test consists in creating three periodic threads as follows:\n";
     cout << "  Thread 1 prints \"a\" every " << period_a << " ms;\n";
     cout << "  Thread 2 prints \"b\" every " << period_b << " ms;\n";
-    cout << "  Thread 3 prints \"c\" every " << period_c << "ms.\n";
+    cout << "  Thread 3 prints \"c\" every " << period_c << " ms.\n";
 
     Periodic_Thread thread_a(&func_a, period_a * 1000, iterations);
     Periodic_Thread thread_b(&func_b, period_b * 1000, iterations);
