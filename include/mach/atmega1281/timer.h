@@ -114,15 +114,15 @@ public:
 
     ATMega1281_Timer_2(const Handler * handler) {
     frequency(FREQUENCY);
-    IC::int_vector(IC::IRQ_TIMER, handler);
-    IC::enable(IC::IRQ_TIMER);
+    IC::int_vector(IC::IRQ_TIMER0_COMPA, handler);
+    IC::enable(IC::IRQ_TIMER0_COMPA);
     enable();
     }
 
     ATMega1281_Timer_2(const Microsecond & quantum, const Handler * handler) {
     frequency(1000000 / quantum);
-    IC::int_vector(IC::IRQ_TIMER, handler);
-    IC::enable(IC::IRQ_TIMER);
+    IC::int_vector(IC::IRQ_TIMER0_COMPA, handler);
+    IC::enable(IC::IRQ_TIMER0_COMPA);
     enable();
     }
 
