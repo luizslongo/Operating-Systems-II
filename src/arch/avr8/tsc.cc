@@ -10,7 +10,17 @@ __END_SYS
 
 __USING_SYS
 
-#if defined (__atmega128)
+#if defined (__atmega1281)
+
+extern "C" void __vector_21(void) __attribute__ ((signal));
+
+extern "C" void __vector_21(void) {
+
+    TSC::_ts++;
+
+}
+
+#elif defined (__atmega128)
 
 extern "C" void __vector_14(void) __attribute__ ((signal));
 
