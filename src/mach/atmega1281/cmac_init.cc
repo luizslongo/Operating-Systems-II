@@ -10,7 +10,7 @@ CMAC::event_handler* CMAC::alarm_ev_handler = 0;
 volatile unsigned long CMAC::alarm_ticks_ms = 0;
 unsigned long CMAC::alarm_event_time_ms = 0;
 //Alarm CMAC::alarm(100000, &(CMAC::alarm_handler), -1); //min resolution is 10 ms
-Timer_2 CMAC::timer;
+Timer_2 CMAC::timer(CMAC::alarm_handler_function);
 //Semaphore CMAC::timer_int(0);
 
 unsigned int CMAC::_sleeping_period = Traits<CMAC>::SLEEPING_PERIOD;
@@ -22,8 +22,8 @@ void CMAC::init(unsigned int n) {
 		alarm_activate(&(CMAC::state_machine_handler), _sleeping_period);
 	}
 
-	IC::int_vector(Machine::irq2int(IC::IRQ_TIMER3_COMPA), alarm_handler_function);
-	timer.frequency(500); //1 ms period(resolution)
+//	IC::int_vector(Machine::irq2int(IC::IRQ_TIMER2_COMPA), alarm_handler_function);
+	timer.frequency(1000); //1 ms period(resolution)
 	timer.reset();
 	timer.enable();
 
