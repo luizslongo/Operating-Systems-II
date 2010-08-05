@@ -188,8 +188,8 @@ typedef Dummy<2>                	CAN;
 #define MACH atmega1281
 typedef ATMega1281			Machine;
 typedef ATMega1281_IC   		IC;
-typedef ATMega1281_Timer_1		Scheduler_Timer;
-typedef ATMega1281_Timer_2		Timer_2;
+typedef ATMega1281_Timer_1		Timer_1;
+typedef ATMega1281_Timer_2		Scheduler_Timer;
 typedef ATMega1281_Timer_3		Alarm_Timer;
 typedef Alarm_Timer    		        Timer;
 typedef ATMega1281_RTC			RTC;
