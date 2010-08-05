@@ -90,7 +90,7 @@ private://timing control
 	static volatile unsigned long alarm_ticks_ms;
 	static unsigned long alarm_event_time_ms;
 	//static Alarm alarm;
-	static Timer_2 timer;
+	static Timer_1 timer;
 	//static Semaphore timer_int;
 	static volatile bool timeout;
 
