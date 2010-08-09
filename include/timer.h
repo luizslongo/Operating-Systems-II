@@ -16,7 +16,7 @@ protected:
 public:
     typedef TSC::Hertz Hertz;
     typedef TSC::Hertz Tick;
-    typedef Handler::Function Handler;
+    typedef void (Handler)();
 };
 
 __END_SYS
