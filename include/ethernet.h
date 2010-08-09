@@ -19,7 +19,7 @@ public:
     static const unsigned int HEADER_SIZE = 14;
 
     typedef NIC_Common::Address<6> Address;
-    typedef NIC_Common::Protocol Protocol;
+    typedef unsigned short Protocol;
     typedef NIC_Common::Observer Observer;
     typedef NIC_Common::Observed Observed;
     typedef char PDU[MTU];
@@ -37,11 +37,11 @@ public:
     class Frame {
     public:
 	Frame(const Address & src, const Address & dst,
-	      const Protocol & prot): _src(src), _dst(dst), _prot(prot) { }
+	      const Protocol & prot): _dst(dst), _src(src), _prot(prot) { }
 
 	Frame(const Address & src, const Address & dst,
 	      const Protocol & prot, const void * data, unsigned int size)
-	    : _src(src), _dst(dst), _prot(prot)
+	    : _dst(dst), _src(src), _prot(prot)
 	{
 	    memcpy(_data, data, size);
 	}
@@ -55,8 +55,8 @@ public:
 	}
 	
     public:
-	Address _src;
 	Address _dst;
+	Address _src;
 	Protocol _prot;
 	PDU _data;
 	CRC _crc;
