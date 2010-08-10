@@ -31,7 +31,7 @@ public:
     typedef NIC::Address MAC_Address;
 
     // Network protocol numbers
-    typedef unsigned char Protocol;
+    typedef NIC::Protocol Protocol;
     enum {
 	PROT_ELP  = Ethernet::ELP,
 	PROT_IP   = Ethernet::IP,
