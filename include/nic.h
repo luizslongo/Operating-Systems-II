@@ -40,9 +40,9 @@ public:
 		unsigned int i;
 		for (i=0;i<LENGTH;++i) {
 			if (_address[i] != 0)
-				return false;
+				return true;
 		}
-		return true;
+		return false;
 	}
 
 	bool operator ==(const Address & a) const { 
