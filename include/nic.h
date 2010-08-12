@@ -37,25 +37,21 @@ public:
 	}
 
 	operator bool() { 
-	    return _address[0] 
-		|| (LENGTH > 1) ? _address[1] : 0
-		|| (LENGTH > 2) ? _address[2] : 0
-		|| (LENGTH > 3) ? _address[3] : 0
-		|| (LENGTH > 4) ? _address[4] : 0
-		|| (LENGTH > 5) ? _address[5] : 0
-		|| (LENGTH > 6) ? _address[6] : 0
-		|| (LENGTH > 7) ? _address[7] : 0;
+		unsigned int i;
+		for (i=0;i<LENGTH;++i) {
+			if (_address[i] != 0)
+				return false;
+		}
+		return true;
 	}
 
 	bool operator ==(const Address & a) const { 
-	    return (_address[0] == a._address[0])
-		&& (LENGTH > 1) ? (_address[1] == a._address[1]) : true
-		&& (LENGTH > 2) ? (_address[2] == a._address[2]) : true
-		&& (LENGTH > 3) ? (_address[3] == a._address[3]) : true
-		&& (LENGTH > 4) ? (_address[4] == a._address[4]) : true
-		&& (LENGTH > 5) ? (_address[5] == a._address[5]) : true
-		&& (LENGTH > 6) ? (_address[6] == a._address[6]) : true
-		&& (LENGTH > 7) ? (_address[7] == a._address[7]) : true;
+		unsigned int i;
+		for (i=0;i<LENGTH;++i) {
+			if (_address[i] != a._address[i])
+				return false;
+		}
+		return true;
 	}
 
 	friend Debug & operator << (Debug & db, const Address & a) {
