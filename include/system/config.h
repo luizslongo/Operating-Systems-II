@@ -199,7 +199,6 @@ typedef ATMega1281_UART			UART;
 typedef ATMega1281_SPI			SPI;
 typedef Serial_Display			Display;
 typedef ATMega1281_NIC			NIC;
-typedef ATMega1281_Transceiver  	Transceiver;
 typedef ATMega1281_ADC			ADC;
 typedef ATMega1281_Temperature_Sensor	Temperature_Sensor;
 typedef Dummy<0>			PCI;
@@ -214,7 +213,6 @@ typedef Dummy<3>            		CAN;
 #define __NIC_H				__HEADER_MACH(nic)
 #define __ADC_H				__HEADER_MACH(adc)
 #define __SENSOR_H			__HEADER_MACH(sensor)
-#define __TRANSCEIVER_H     		__HEADER_MACH(transceiver)
 
 #elif defined (__at90can128)
 

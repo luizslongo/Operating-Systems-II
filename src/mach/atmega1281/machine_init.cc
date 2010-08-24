@@ -16,14 +16,13 @@ void ATMega1281::init()
 
     IC::disable();
 
-    ATMega1281_Transceiver::init();
+    AT86RF230::init();
 
     // Initialize the hardware
     if(Traits<ATMega1281_NIC>::enabled)
 	ATMega1281_NIC::init();
 
     return;
-
 }
 
 __END_SYS

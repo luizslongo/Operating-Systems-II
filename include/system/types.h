@@ -141,7 +141,6 @@ class ATMega16_NIC;
 class ATMega128_NIC;
 class AT90CAN128_NIC;
 class ATMega1281_NIC;
-class ATMega1281_Transceiver;
 class Radio;
 class ML310_NIC;
 class PLASMA_NIC;

@@ -54,7 +54,6 @@ __END_SYS
 #include "nic.h"
 #include "adc.h"
 #include "sensor.h"
-#include "transceiver.h"
 
 #endif
 

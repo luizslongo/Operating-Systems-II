@@ -1,14 +1,14 @@
-// EPOS-- ATMega1281 Radio (CC1000) NIC Mediator Declarations
+// EPOS-- ATMega1281 Radio (AT86RF230) NIC Mediator Declarations
 
-#ifndef __cc1000_nic_h
-#define __cc1000_nic_h
+#ifndef __at86rf230_nic_h
+#define __at86rf230_nic_h
 
-#include "../avr_common/cc1000.h"
+//#include "../avr_common/cc1000.h"
 #include <radio.h>
 
 __BEGIN_SYS
 
-class Radio: public Low_Power_Radio, private CC1000
+class Radio: public Low_Power_Radio//, private CC1000
 {
 private:
     static const unsigned int UNITS =
