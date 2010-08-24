@@ -22,8 +22,8 @@ MACH_PLASMA     := plasma
 
 # System configuration
 MODE		:= $(MODE_LIBRARY)
-ARCH		:= $(ARCH_IA32)
-MACH		:= $(MACH_PC)
+ARCH		:= $(ARCH_AVR8)
+MACH		:= $(MACH_ATMEGA1281)
 
 # do not modify anything bellow this line
 ###############################################################################
@@ -126,7 +126,7 @@ BOOT_LENGTH_MIN       		     = $($(MACH)_BOOT_LENGTH_MIN)
 BOOT_LENGTH_MAX        		     = $($(MACH)_BOOT_LENGTH_MAX)
 
 #Machine specifics
-$(MACH_PC)_CC_FLAGS		:=
+$(MACH_PC)_CC_FLAGS		:= -Xassembler --32
 $(MACH_PC)_AS_FLAGS		:=
 $(MACH_PC)_LD_FLAGS		:= 
 $(MACH_PC)_CODE_NAME		:= .hash
@@ -265,7 +265,7 @@ MAKEALL		= make all
 MAKEINSTALL	= make install
 MAKECLEAN	= make -i clean
 MAKETEST	= make test
-MAKEFLAGS	= --no-builtin-rules --silent --print-directory
+MAKEFLAGS	= --no-builtin-rules --print-directory
 
 MKBI		= eposmkbi
 

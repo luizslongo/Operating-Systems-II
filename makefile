@@ -37,5 +37,7 @@ dist:		veryclean
 		find $(TOP) -name CVS -type d -print | xargs $(CLEANDIR)
 		find $(TOP) -name "*.h" -print | xargs sed -i "1r $(TOP)/LICENSE" 
 		find $(TOP) -name "*.cc" -print | xargs sed -i "1r $(TOP)/LICENSE" 
+		find $(TOP) -name "makedefs" -print | xargs sed -i "1r $(TOP)/LICENSE_Mk" 
+		find $(TOP) -name "makefile" -print | xargs sed -i "1r $(TOP)/LICENSE_Mk" 
 
 FORCE:
