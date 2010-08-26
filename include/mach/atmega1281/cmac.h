@@ -373,7 +373,6 @@ namespace CMAC_States
 	     */
 	    int result;
 
-//	    CMAC::radio.reset_state_machine();
 	    db<CMAC>(TRC) << "CMAC_States::Generic_Rx - receiving\n";
 	    result = CMAC::radio.receive(&(CMAC::_frame_buffer[0]));
 
@@ -936,12 +935,11 @@ class IEEE802154_Ack_Rx {
 	    CMAC::CMAC_STATE_TRANSITION result = CMAC::RX_PENDING;
 
 	    unsigned char * aux;
-	    unsigned int size = CMAC::_tx_data_size;
+	    unsigned int size = CMAC::_frame_buffer_size;
 
-	    memcpy(aux, CMAC::_tx_data, size);
+	    memcpy(aux, CMAC::_frame_buffer, size);
 
 	    while (result != CMAC::UNPACK_OK) {
-//		kout << "while\n";
 		wait(100);
 		result = CMAC_States::Generic_Lpl::execute(result, ACK_TIMEOUT);
 		if (result == CMAC::TIMEOUT) {
@@ -953,9 +951,8 @@ class IEEE802154_Ack_Rx {
 
 			} else {
 			    db<CMAC>(WRN) << "CMAC_States::IEEE802154_Ack_Rx - Retransmitting\n";
-			    CMAC::_tx_data_size = size;
-			    CMAC::_tx_data = aux;
-//			    memcpy(CMAC::_tx_data, aux, size);
+			    CMAC::_frame_buffer_size = size;
+			    memcpy(CMAC::_frame_buffer, aux, size);
 
 			    return CMAC::TX_PENDING;
 			}
