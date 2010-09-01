@@ -431,7 +431,12 @@ namespace CMAC_States
 	}
 
     private:
+	static void wait(unsigned int us) {
+	    for (unsigned int i = 0; i <= us * (Traits<Machine>::CLOCK / 1000000UL); i++); 
+	}
+
 	static void _event_handler(AT86RF230::Event event) {
+	    wait(250);
 	    if (event == AT86RF230::SFD_DETECTED) {
 		CMAC::radio.reset_state_machine();
 		while (!_frame_received) _frame_received = true; // no excuses now
@@ -816,76 +821,85 @@ class IEEE802154_Pack {
 
 	    db<CMAC>(TRC) << "CMAC_States::IEEE802154_Pack - Creating frame\n";
 
-	    IEEE802154_Frame::data_frame_header_t *header_ptr =
-		reinterpret_cast<IEEE802154_Frame::data_frame_header_t*>(CMAC::_frame_buffer);
+	IEEE802154_Frame::data_frame_header_t *header_ptr =
+	    reinterpret_cast<IEEE802154_Frame::data_frame_header_t*>(CMAC::_frame_buffer);
 
-	    unsigned char *payload_ptr = &(CMAC::_frame_buffer[sizeof(IEEE802154_Frame::data_frame_header_t)]);
+	unsigned char *payload_ptr = &(CMAC::_frame_buffer[sizeof(IEEE802154_Frame::data_frame_header_t)]);
 
-	    unsigned short *crc_ptr =
-		reinterpret_cast<unsigned short*>
-		(&(CMAC::_frame_buffer[sizeof(IEEE802154_Frame::data_frame_header_t)+CMAC::_tx_data_size]));
+	unsigned short *crc_ptr =
+	    reinterpret_cast<unsigned short*>
+	    (&(CMAC::_frame_buffer[sizeof(IEEE802154_Frame::data_frame_header_t)+CMAC::_tx_data_size]));
 
-	    CMAC::_frame_buffer_size = sizeof(IEEE802154_Frame::data_frame_header_t) + CMAC::_tx_data_size + 2;
+	CMAC::_frame_buffer_size = sizeof(IEEE802154_Frame::data_frame_header_t) + CMAC::_tx_data_size + 2;
 
-	    header_ptr->frame_control.frameType = IEEE802154_Frame::FRAME_TYPE_DATA;
-	    header_ptr->frame_control.intraPan = IEEE802154_Frame::INTRA_PAN_SAME_PAN;
-	    header_ptr->frame_control.destinationAddressingMode = IEEE802154_Frame::ADDRESSING_MODE_SHORT_ADDRESS;
-	    header_ptr->frame_control.sourceAddressingMode = IEEE802154_Frame::ADDRESSING_MODE_SHORT_ADDRESS;
+	header_ptr->frame_control.frameType = IEEE802154_Frame::FRAME_TYPE_DATA;
+	header_ptr->frame_control.intraPan = IEEE802154_Frame::INTRA_PAN_SAME_PAN;
+	header_ptr->frame_control.destinationAddressingMode = IEEE802154_Frame::ADDRESSING_MODE_SHORT_ADDRESS;
+	header_ptr->frame_control.sourceAddressingMode = IEEE802154_Frame::ADDRESSING_MODE_SHORT_ADDRESS;
 
-	    header_ptr->source_address = CMAC::_addr;
-	    header_ptr->destination_address = CMAC::_tx_dst_address;
-	    CMAC::_data_sequence_number = (CMAC::_data_sequence_number < 255) ? (CMAC::_data_sequence_number+1) : 0;
-	    header_ptr->data_sequence_n = CMAC::_data_sequence_number;
+	header_ptr->source_address = CMAC::_addr;
+	header_ptr->destination_address = CMAC::_tx_dst_address;
+	CMAC::_data_sequence_number = (CMAC::_data_sequence_number < 255) ? (CMAC::_data_sequence_number+1) : 0;
+	header_ptr->data_sequence_n = CMAC::_data_sequence_number;
 
-	    const unsigned char *aux = reinterpret_cast<const unsigned char*>(CMAC::_tx_data);
-	    for (unsigned int i = 0; i < CMAC::_tx_data_size; ++i) {
-		payload_ptr[i] = aux[i];
-	    }
-
-	    *crc_ptr = CRC::crc16(reinterpret_cast<char*>(CMAC::_frame_buffer), CMAC::_frame_buffer_size - 2);
-
-	    db<CMAC>(INF) << "CMAC_States::IEEE802154_Pack - Frame created:\n"
-		<< *header_ptr
-		<< "payload_size: " << CMAC::_tx_data_size << "\n"
-		<< "CRC: " << *crc_ptr << "\n";
-
-	    db<CMAC>(TRC) << "CMAC_States::IEEE802154_Pack - PACK_OK\n";
-
-	    CMAC::_transmission_count += 1;
-
-	    CMAC::_stats.total_tx_packets += 1;
-
-	    return CMAC::PACK_OK;
+	const unsigned char *aux = reinterpret_cast<const unsigned char*>(CMAC::_tx_data);
+	for (unsigned int i = 0; i < CMAC::_tx_data_size; ++i) {
+	    payload_ptr[i] = aux[i];
 	}
+
+	*crc_ptr = CRC::crc16(reinterpret_cast<char*>(CMAC::_frame_buffer), CMAC::_frame_buffer_size - 2);
+
+	db<CMAC>(INF) << "CMAC_States::IEEE802154_Pack - Frame created:\n"
+	    << *header_ptr
+	    << "payload_size: " << CMAC::_tx_data_size << "\n"
+	    << "CRC: " << *crc_ptr << "\n";
+
+	/*
+	kout << "frameType: " << header_ptr->frame_control.frameType << "\n"
+	    << "data_seq_n: " << header_ptr->data_sequence_n << "\n"
+	    << "src_addr: " << header_ptr->source_address << "\n"
+	    << "dst_addr: " << header_ptr->destination_address << "\n"
+	    << "payload_size: " << CMAC::_rx_data_size << "\n"
+	    << "CRC: " << *crc_ptr << "\n";
+	    */
+
+	db<CMAC>(TRC) << "CMAC_States::IEEE802154_Pack - PACK_OK\n";
+
+	CMAC::_transmission_count += 1;
+
+	CMAC::_stats.total_tx_packets += 1;
+
+	return CMAC::PACK_OK;
+    }
 };
 
 class IEEE802154_Unpack {
-    public:
-	static CMAC::CMAC_STATE_TRANSITION execute(CMAC::CMAC_STATE_TRANSITION input) {
-	    if (CMAC::_frame_buffer_size == 0) {
-		db<CMAC>(ERR) << "CMAC_States::IEEE802154_Unpack - UNPACK_FAILED - Frame size == 0\n";
-		return CMAC::UNPACK_FAILED;
-	    }
+public:
+    static CMAC::CMAC_STATE_TRANSITION execute(CMAC::CMAC_STATE_TRANSITION input) {
+	if (CMAC::_frame_buffer_size == 0) {
+	    db<CMAC>(ERR) << "CMAC_States::IEEE802154_Unpack - UNPACK_FAILED - Frame size == 0\n";
+	    return CMAC::UNPACK_FAILED;
+	}
 
-	    db<CMAC>(TRC) << "CMAC_States::IEEE802154_Unpack - Decoding frame\n";
+	db<CMAC>(TRC) << "CMAC_States::IEEE802154_Unpack - Decoding frame\n";
 
-	    IEEE802154_Frame::data_frame_header_t *header_ptr =
-		reinterpret_cast<IEEE802154_Frame::data_frame_header_t*>(CMAC::_frame_buffer);
+	IEEE802154_Frame::data_frame_header_t *header_ptr =
+	    reinterpret_cast<IEEE802154_Frame::data_frame_header_t*>(CMAC::_frame_buffer);
 
-	    unsigned char *payload_ptr = &(CMAC::_frame_buffer[sizeof(IEEE802154_Frame::data_frame_header_t)]);
+	unsigned char *payload_ptr = &(CMAC::_frame_buffer[sizeof(IEEE802154_Frame::data_frame_header_t)]);
 
-	    unsigned short *crc_ptr =
-		reinterpret_cast<unsigned short*>(&(CMAC::_frame_buffer[CMAC::_frame_buffer_size - 2]));
+	unsigned short *crc_ptr =
+	    reinterpret_cast<unsigned short*>(&(CMAC::_frame_buffer[CMAC::_frame_buffer_size - 2]));
 
-	    CMAC::_rx_data_size = CMAC::_frame_buffer_size - sizeof(IEEE802154_Frame::data_frame_header_t) - 2; // 16bit crc
+	CMAC::_rx_data_size = CMAC::_frame_buffer_size - sizeof(IEEE802154_Frame::data_frame_header_t) - 2; // 16bit crc
 
-	    db<CMAC>(INF) << "CMAC_States::IEEE802154_Unpack - Frame decoded:\n"
-		<< *header_ptr
-		<< "payload_size: " << CMAC::_rx_data_size << "\n"
-		<< "CRC: " << *crc_ptr << "\n";
+	db<CMAC>(INF) << "CMAC_States::IEEE802154_Unpack - Frame decoded:\n"
+	    << *header_ptr
+	    << "payload_size: " << CMAC::_rx_data_size << "\n"
+	    << "CRC: " << *crc_ptr << "\n";
 
-	    /*
-	    kout << "frameType: " << header_ptr->frame_control.frameType << "\n"
+	/*
+	kout << "frameType: " << header_ptr->frame_control.frameType << "\n"
 		<< "data_seq_n: " << header_ptr->data_sequence_n << "\n"
 		<< "src_addr: " << header_ptr->source_address << "\n"
 		<< "dst_addr: " << header_ptr->destination_address << "\n"
@@ -906,7 +920,7 @@ class IEEE802154_Unpack {
 		return CMAC::UNPACK_FAILED;
 	    }
 
-	    if (header_ptr->destination_address != CMAC::_addr) {
+	    if ((header_ptr->destination_address != CMAC::_addr) && (header_ptr->destination_address != (0xFF & CMAC::BROADCAST))) {
 		db<CMAC>(INF) << "CMAC_States::IEEE802154_Unpack - UNPACK_FAILED - Wrong address\n";
 		return CMAC::UNPACK_FAILED;
 	    }
@@ -934,16 +948,15 @@ class IEEE802154_Ack_Rx {
 	static CMAC::CMAC_STATE_TRANSITION execute(CMAC::CMAC_STATE_TRANSITION input) {
 	    CMAC::CMAC_STATE_TRANSITION result = CMAC::RX_PENDING;
 
-	    unsigned char * aux;
 	    unsigned int size = CMAC::_frame_buffer_size;
+	    unsigned char aux[size];
 
 	    memcpy(aux, CMAC::_frame_buffer, size);
 
 	    while (result != CMAC::UNPACK_OK) {
-		wait(100);
+		wait(250);
 		result = CMAC_States::Generic_Lpl::execute(result, ACK_TIMEOUT);
 		if (result == CMAC::TIMEOUT) {
-		    db<CMAC>(WRN) << "CMAC_States::IEEE802154_Ack_Rx - Timeout\n";
 		    if (CMAC::_transmission_count < MAX_TRANSMISSION_COUNT) {
 			if (CMAC::timeout) {
 			    db<CMAC>(WRN) << "CMAC_States::IEEE802154_Ack_Rx - TIMEOUT\n";
@@ -1021,9 +1034,7 @@ class IEEE802154_Ack_Tx {
 
 	    result = pack_ack(result);
 	    CMAC::radio.reset_state_machine();
-	    result = CMAC_States::Generic_Lpl::execute(result);
 	    result = CMAC_States::Generic_Tx::execute(result);
-//	    kout << "ack send result = " << result << "\n";
 	    wait(100);
 	    CMAC::radio.reset_state_machine();
 

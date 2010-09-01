@@ -88,9 +88,9 @@ template <> struct Traits<CMAC>: public Traits<void>
     static const bool          TIME_TRIGGERED  = false;
     static const bool          COORDINATOR     = false;
     static const unsigned int  SLEEPING_PERIOD = 1000; //ms
-    static const unsigned long TIMEOUT         = 0; //ms //0 = no timeout
+    static const unsigned long TIMEOUT         = 1000; //ms
     static const unsigned int  ADDRESS         = 0x0001;
-    static const unsigned int  MTU             = 64; 
+    static const unsigned int  MTU             = 118; 
 
     typedef CMAC_States::Generic_Sync		Sync_State;
     typedef CMAC_States::IEEE802154_Pack	Pack_State;
