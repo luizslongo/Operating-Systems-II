@@ -1134,51 +1134,51 @@ public:
     unsigned int grouped_size() const { return _grouped_size; }
     
     Element * search_size(unsigned int s) {
-	Element * e = head();
-	for(; e && (e->size() < s); e = e->next());
-	return e;
+        Element * e = head();
+        for(; e && (e->size() < sizeof(Element) + s) && (e->size() != s); e = e->next());
+        return e;
     }
     
     Element * search_left(const Object_Type * obj) {
-	Element * e = head();
-	for(; e && (e->object() + e->size() != obj); e = e->next());
-	return e;
+        Element * e = head();
+        for(; e && (e->object() + e->size() != obj); e = e->next());
+        return e;
     }
     
     void insert_merging(Element * e, Element ** m1, Element ** m2) {
-    db<Lists>(TRC) << "Grouping_List::insert_merging(e=" << e 
-               << ")    \n";
-    _grouped_size += e->size();
-    *m1 = *m2 = 0;
-    Element * r = search(e->object() + e->size());
-    Element * l = search_left(e->object());
-    if(!l) {
-        insert_tail(e);
-    }
-    if(r) {
-        e->size(e->size() + r->size());
-        remove(r);
-        *m1 = r;
-    }
-    if(l) {
-        l->size(l->size() + e->size());
-        *m2 = e;
-    }
+        db<Lists>(TRC) << "Grouping_List::insert_merging(e=" << e 
+            << ")    \n";
+        _grouped_size += e->size();
+        *m1 = *m2 = 0;
+        Element * r = search(e->object() + e->size());
+        Element * l = search_left(e->object());
+        if(!l) {
+            insert_tail(e);
+        }
+        if(r) {
+            e->size(e->size() + r->size());
+            remove(r);
+            *m1 = r;
+        }
+        if(l) {
+            l->size(l->size() + e->size());
+            *m2 = e;
+        }
     }
     
     Element * search_decrementing(unsigned int s) {
-	db<Lists>(TRC) << "Grouping_List::search_decrementing(s=" 
-		       << s << ")\n";
+        db<Lists>(TRC) << "Grouping_List::search_decrementing(s=" 
+            << s << ")\n";
 
-	Element * e = search_size(s);
-	if(e) {
-	    e->shrink(s);
-	    _grouped_size -= s;
-	    if(!e->size())
-		remove(e);
-	}
+        Element * e = search_size(s);
+        if(e) {
+            e->shrink(s);
+            _grouped_size -= s;
+            if(!e->size())
+                remove(e);
+        }
 
-	return e;
+        return e;
     }
     
 private:
