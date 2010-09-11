@@ -21,9 +21,10 @@ MACH_ML310      := ml310
 MACH_PLASMA     := plasma
 
 # System configuration
+EPOS		:= /usr/local/openepos
 MODE		:= $(MODE_LIBRARY)
-ARCH		:= $(ARCH_AVR8)
-MACH		:= $(MACH_ATMEGA1281)
+ARCH		:= $(ARCH_IA32)
+MACH		:= $(MACH_PC)
 
 # do not modify anything bellow this line
 ###############################################################################
@@ -89,8 +90,8 @@ $(MACH_AT90CAN128)_SYS_CODE_ADDR     := 0x00000000
 $(MACH_AT90CAN128)_SYS_DATA_ADDR     := 0x00800100
 $(MACH_AT90CAN128)_APP_CODE_ADDR     := 0x00000000
 $(MACH_AT90CAN128)_APP_DATA_ADDR     := 0x00800100
-$(MACH_AT90CAN128)_BOOT_LENGTH_MIN    := 128
-$(MACH_AT90CAN128)_BOOT_LENGTH_MAX    := 512
+$(MACH_AT90CAN128)_BOOT_LENGTH_MIN   := 128
+$(MACH_AT90CAN128)_BOOT_LENGTH_MAX   := 512
 $(MACH_ML310)_MEM_BASE               := 0x00000000
 $(MACH_ML310)_MEM_TOP                := 0x04000000
 $(MACH_ML310)_BOOT_ADDR              := 0x00000000
@@ -126,8 +127,8 @@ BOOT_LENGTH_MIN       		     = $($(MACH)_BOOT_LENGTH_MIN)
 BOOT_LENGTH_MAX        		     = $($(MACH)_BOOT_LENGTH_MAX)
 
 #Machine specifics
-$(MACH_PC)_CC_FLAGS		:= -Xassembler --32
-$(MACH_PC)_AS_FLAGS		:=
+$(MACH_PC)_CC_FLAGS		:= 
+$(MACH_PC)_AS_FLAGS		:= --32
 $(MACH_PC)_LD_FLAGS		:= 
 $(MACH_PC)_CODE_NAME		:= .hash
 $(MACH_PC)_DATA_NAME		:= .tdata
@@ -141,16 +142,16 @@ $(MACH_ATMEGA128)_AS_FLAGS	:= -mmcu=atmega128
 $(MACH_ATMEGA128)_LD_FLAGS	:= -m avr5
 $(MACH_ATMEGA128)_CODE_NAME	:= .hash
 $(MACH_ATMEGA128)_DATA_NAME	:= .data
-$(MACH_ATMEGA1281)_CC_FLAGS := -mmcu=atmega1281 -Wno-inline
-$(MACH_ATMEGA1281)_AS_FLAGS := -mmcu=atmega1281
-$(MACH_ATMEGA1281)_LD_FLAGS := -m avr5
+$(MACH_ATMEGA1281)_CC_FLAGS	:= -mmcu=atmega1281 -Wno-inline
+$(MACH_ATMEGA1281)_AS_FLAGS	:= -mmcu=atmega1281
+$(MACH_ATMEGA1281)_LD_FLAGS	:= -m avr5
 $(MACH_ATMEGA1281)_CODE_NAME    := .hash
 $(MACH_ATMEGA1281)_DATA_NAME    := .data
-$(MACH_AT90CAN128)_CC_FLAGS  := -mmcu=at90can128 -Wno-inline
-$(MACH_AT90CAN128)_AS_FLAGS  := -mmcu=at90can128
-$(MACH_AT90CAN128)_LD_FLAGS  := -m avr5
-$(MACH_AT90CAN128)_CODE_NAME := .hash
-$(MACH_AT90CAN128)_DATA_NAME := .data
+$(MACH_AT90CAN128)_CC_FLAGS	:= -mmcu=at90can128 -Wno-inline
+$(MACH_AT90CAN128)_AS_FLAGS	:= -mmcu=at90can128
+$(MACH_AT90CAN128)_LD_FLAGS	:= -m avr5
+$(MACH_AT90CAN128)_CODE_NAME	:= .hash
+$(MACH_AT90CAN128)_DATA_NAME	:= .data
 $(MACH_ML310)_CC_FLAGS          := -mcpu=405 -Wa,-m405 -mstrict-align
 $(MACH_ML310)_AS_FLAGS          :=
 $(MACH_ML310)_LD_FLAGS          :=
@@ -231,10 +232,10 @@ TLD		= gcc
 TLDFLAGS	= -m32
 
 # Tools and flags to compile applications
-ACC		= eposcc $(MACH_CC_FLAGS) -c -ansi -O2 $(CONF_FLAGS)
-ACXX		= eposcc $(MACH_CC_FLAGS) -c -ansi -O2 $(CONF_FLAGS)
-AF77		= eposcc $(MACH_CC_FLAGS) -c -ansi -O2 $(CONF_FLAGS)
-ALD		= eposcc --$(MODE) $(MACH_LD_FLAGS)
+ACC		= $(BIN)/eposcc $(MACH_CC_FLAGS) -c -ansi -O2 $(CONF_FLAGS)
+ACXX		= $(BIN)/eposcc $(MACH_CC_FLAGS) -c -ansi -O2 $(CONF_FLAGS)
+AF77		= $(BIN)/eposcc $(MACH_CC_FLAGS) -c -ansi -O2 $(CONF_FLAGS)
+ALD		= $(BIN)/eposcc --$(MODE) $(MACH_LD_FLAGS)
 ALDFLAGS	= 
 
 # Tools and flags to compile the system
@@ -267,7 +268,7 @@ MAKECLEAN	= make -i clean
 MAKETEST	= make test
 MAKEFLAGS	= --no-builtin-rules --print-directory
 
-MKBI		= eposmkbi
+MKBI		= $(BIN)/eposmkbi $(EPOS)
 
 DD		= dd
 
