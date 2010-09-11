@@ -137,7 +137,7 @@ namespace Scheduling_Criteria
 	     _affinity(((p == IDLE) || (p == MAIN)) ? Machine::cpu_id()
 		       : ++_next_cpu %= Machine::n_cpus()) {}
 
-	CPU_Affinity(int p = NORMAL, int a): Priority(p), _affinity(a) {}
+	CPU_Affinity(int p, int a): Priority(p), _affinity(a) {}
 
 	const volatile int & queue() const volatile { return _affinity; }
 

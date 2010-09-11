@@ -48,7 +48,7 @@ public:
     class Header{
     public:
 	Header(){}
-	Header(u16 src_port=0, u16 dst_port, u16 data_size) :
+	Header(u16 src_port, u16 dst_port, u16 data_size) :
 	    _src_port(CPU::htons(src_port)), 
 	    _dst_port(CPU::htons(dst_port)), 
 	    _length(CPU::htons(sizeof(UDP::Header) + data_size)),
