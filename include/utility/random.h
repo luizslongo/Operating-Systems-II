@@ -11,6 +11,7 @@ __BEGIN_SYS
 // with A = 2 and variable C on a simplification of:
 // X1 = aX0 + c
 // as X1 = (X0 << 1) xor C
+
 class Pseudo_Random
 {
 private:
@@ -23,11 +24,11 @@ public:
 	
     static unsigned long int random() {
 	    //_seed = (_seed << 1) ^ n;
-    	_seed = ((_seed*A)+C) % M;
+    	_seed = ((_seed * A) + C) % M;
 	    return _seed;
     }
 
-    static void seed(unsigned long int value){
+    static void seed(unsigned long int value) {
     	_seed = value;
     }
 
