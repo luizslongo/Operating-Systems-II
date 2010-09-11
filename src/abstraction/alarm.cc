@@ -12,19 +12,18 @@ Alarm_Timer * Alarm::_timer;
 volatile Alarm::Tick Alarm::_elapsed;
 Alarm::Queue Alarm::_requests;
 
-
 // Methods
 Alarm::Alarm(const Microsecond & time, Handler * handler, int times):
-    _ticks(ticks(time)), _handler(handler),
-    _times(times), _link(this, _ticks)
+_ticks(ticks(time)), _handler(handler),
+_times(times), _link(this, _ticks)
 {
     lock();
 
     db<Alarm>(TRC) << "Alarm(t=" << time
-		   << ",tk=" << _ticks
-		   << ",h=" << (void *)handler
-		   << ",x=" << times << ") => " << this << "\n";
-    
+    << ",tk=" << _ticks
+    << ",h=" << (void *)handler
+    << ",x=" << times << ") => " << this << "\n";
+
     if(_ticks) {
 	_requests.insert(&_link);
 	unlock();
@@ -37,11 +36,11 @@ Alarm::Alarm(const Microsecond & time, Handler * handler, int times):
 Alarm::~Alarm()
 {
     lock();
- 
+
     db<Alarm>(TRC) << "~Alarm()\n";
-    
+
     _requests.remove(this);
-    
+
     unlock();
 }
 
@@ -68,15 +67,14 @@ void Alarm::delay(const Microsecond & time)
 void Alarm::handler()
 {
     CPU::int_disable();
-    // lock(); this handler is meant to be called obly by CPU[0] 
+    // lock(); this handler is meant to be called obly by CPU[0]
 
     _elapsed++;
 
     Alarm * alarm = 0;
 
     if(!_requests.empty()) {
-	// rank can be negative whenever multiple handlers get created for the
-	// same time tick
+	// rank can be negative whenever multiple handlers get created for the same time tick
 	if(_requests.head()->promote() <= 0) {
 
 	    Queue::Element * e = _requests.remove();
@@ -95,8 +93,8 @@ void Alarm::handler()
     CPU::int_enable();
 
     if(alarm) {
- 	db<Alarm>(TRC) << "Alarm::handler(h=" << alarm->handler << ")\n";
- 	(*alarm->_handler)();
+	db<Alarm>(TRC) << "Alarm::handler(h=" << reinterpret_cast<void*>(alarm->handler) << ")\n";
+	(*alarm->_handler)();
     }
 }
 
