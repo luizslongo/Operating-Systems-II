@@ -14,7 +14,7 @@ inline static void call_init()
 };
 
 template <>
-inline static void call_init<Traits<PC_Ethernet>::NICS::Length>() 
+inline void call_init<Traits<PC_Ethernet>::NICS::Length>()
 {
 };
 
