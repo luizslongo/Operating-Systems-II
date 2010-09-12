@@ -21,13 +21,14 @@ MACH_ML310      := ml310
 MACH_PLASMA     := plasma
 
 # System configuration
-EPOS		:= /usr/local/openepos
 MODE		:= $(MODE_LIBRARY)
 ARCH		:= $(ARCH_IA32)
 MACH		:= $(MACH_PC)
 
 # do not modify anything bellow this line
 ###############################################################################
+# Path to EPOS root directory 
+EPOS		:= $(abspath $(dir $(filter %makedefs, $(MAKEFILE_LIST))))
 
 # Compiler prefixes
 $(ARCH_IA32)_COMP_PREFIX	:= /usr/local/ia32/gcc/bin/ia32-
@@ -274,14 +275,12 @@ DD		= dd
 
 STRIP		= $(COMP_PREFIX)strip -R .note -R .comment
 
-INSTALL		= cp
+INSTALL		= install
 
-SHELL		= tcsh
+SHELL		= bash
 
 CLEAN		= rm -f
 CLEANDIR	= rm -rf
-
-RET2IRET	= sed -e 's/ret/iret/'
 
 TOUCH		= touch
 
