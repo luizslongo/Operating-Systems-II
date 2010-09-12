@@ -19,7 +19,7 @@ template <> struct Traits<PC>: public Traits<PC_Common>
     static const unsigned int APPLICATION_HEAP_SIZE = 16 * 1024 * 1024;
 
     static const unsigned int SYSTEM_STACK_SIZE = 4096;
-    static const unsigned int SYSTEM_HEAP_SIZE = 16 * APPLICATION_STACK_SIZE;
+    static const unsigned int SYSTEM_HEAP_SIZE = 128 * APPLICATION_STACK_SIZE;
 };
 
 template <> struct Traits<PC_PCI>: public Traits<PC_Common>
