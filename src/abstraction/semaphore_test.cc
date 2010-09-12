@@ -1,4 +1,4 @@
-// EPOS-- Semaphore Test Program
+// EPOS-- Semaphore Abstraction Test Program
 
 #include <utility/ostream.h>
 #include <thread.h>
@@ -19,7 +19,6 @@ OStream cout;
 
 int philosopher(int n, int l, int c)
 {
-
     int first = (n < 4)? n : 0;
     int second = (n < 4)? n + 1 : 4;
 
@@ -83,7 +82,6 @@ int main()
     Display::position(7, 27);
     cout << '\\';
     sem_display.v();
-
 
     for(int i = 0; i < 5; i++) {
 	int ret = phil[i]->join();

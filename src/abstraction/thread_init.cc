@@ -19,7 +19,7 @@ void Thread::init()
     Thread * first;
     if(Machine::cpu_id() == 0) {
 	// Create the application's main thread
-	// This must preceed idle, thus avoiding implicit rescheduling
+	// This must precede idle, thus avoiding implicit rescheduling
 	first = new(kmalloc(sizeof(Thread))) Thread(entry, RUNNING, MAIN);
 	new(kmalloc(sizeof(Thread))) Thread(&idle, READY, IDLE);
     } else 
