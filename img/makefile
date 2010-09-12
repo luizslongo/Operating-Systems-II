@@ -5,7 +5,7 @@ include	../makedefs
 IMAGE := $(addsuffix .img,$(APPLICATION))
 OUTPUT := $(addsuffix .out,$(APPLICATION))
 
-TESTS := $(shell find *_test)
+TESTS := $(shell find *_test 2> /dev/null)
 TEST_IMAGES := $(addsuffix .img,$(TESTS))
 TEST_OUTPUTS := $(addsuffix .out,$(TESTS))
 
@@ -17,7 +17,5 @@ run:		$(OUTPUT)
 
 runtest:	$(TEST_OUTPUTS)
 
-clean		:
+clean:
 		$(CLEAN) *_boot *_setup *_init *_system $(APPLICATION) $(TESTS)
-
-FORCE:
