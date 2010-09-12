@@ -70,16 +70,9 @@ int main(int argc, char **argv)
     // Say hello
     printf("\nEPOS bootable image tool\n\n");
         
-    // Get EPOS environment variable
-    char * epos_home = getenv("EPOS");
-    if(epos_home == 0) {
-	fprintf(stderr, "Error: environment variable EPOS not set!\n");
-	return 1;
-    }
-    
     // Read configuration
     char file[256];
-    sprintf(file, "%s/%s", epos_home, CFG_FILE);
+    sprintf(file, "%s/%s", argv[1], CFG_FILE);
     FILE * cfg_file = fopen(file, "rb");
     if(!cfg_file) { 
    	fprintf(stderr, "Error: can't read configuration file \"%s\"!\n",
@@ -92,20 +85,20 @@ int main(int argc, char **argv)
     } 
 
     // Open destination file (rewrite)
-    int fd_img = open(argv[1], O_WRONLY | O_CREAT | O_TRUNC, 00644);
+    int fd_img = open(argv[2], O_WRONLY | O_CREAT | O_TRUNC, 00644);
     if(fd_img < 0) {
-	fprintf(stderr, "Error: can't create boot image \"%s\"!\n", argv[1]);
+	fprintf(stderr, "Error: can't create boot image \"%s\"!\n", argv[2]);
 	return 1;
     }
     
     // Check ARGS
-    if(argc < 2) {
+    if(argc < 3) {
 	fprintf(stderr, 
-		"Usage: %s <options> <boot image> <app1> <app2> ...\n", 
+		"Usage: %s <options> <EPOS root> <boot image> <app1> <app2> ...\n", 
 		argv[0]);
 	return 1;
     }
-    if(!strcmp(CONFIG.mode, "library") && (argc > 3)) {
+    if(!strcmp(CONFIG.mode, "library") && (argc > 4)) {
 	fprintf(stderr,
 		"Error: library mode supports a single application!\n");
 	return 1;
@@ -125,10 +118,10 @@ int main(int argc, char **argv)
 
     // Create the boot image
     unsigned int image_size = 0; 
-    printf("\n  Creating EPOS bootable image in \"%s\":\n", argv[1]); 
+    printf("\n  Creating EPOS bootable image in \"%s\":\n", argv[2]); 
      
     // Add BOOT
-    sprintf(file, "%s/img/%s_boot", epos_home, CONFIG.mach);
+    sprintf(file, "%s/img/%s_boot", argv[1], CONFIG.mach);
     printf("    Adding boot strap \"%s\":", file);
     image_size += put_file(fd_img, file);
     if(image_size > CONFIG.boot_length_max) {
@@ -162,7 +155,7 @@ int main(int argc, char **argv)
 
     // Add SETUP
     si.bm.setup_offset = image_size - boot_size;
-    sprintf(file, "%s/img/%s_setup", epos_home, CONFIG.mach);
+    sprintf(file, "%s/img/%s_setup", argv[1], CONFIG.mach);
     printf("    Adding setup \"%s\":", file);
     image_size += put_file(fd_img, file);
 
@@ -173,32 +166,32 @@ int main(int argc, char **argv)
     } else {
         // Add INIT
         si.bm.init_offset = image_size - boot_size;
-        sprintf(file, "%s/img/%s_init", epos_home, CONFIG.mach);
+        sprintf(file, "%s/img/%s_init", argv[1], CONFIG.mach);
         printf("    Adding init \"%s\":", file);
         image_size += put_file(fd_img, file);
 
         // Add SYSTEM
         si.bm.system_offset = image_size - boot_size;
-        sprintf(file, "%s/img/%s_system", epos_home, CONFIG.mach);
+        sprintf(file, "%s/img/%s_system", argv[1], CONFIG.mach);
         printf("    Adding system \"%s\":", file);
         image_size += put_file(fd_img, file);
     }
 
     // Add LOADER (if multiple applications) or the single application
     si.bm.application_offset = image_size - boot_size;
-    if(argc == 3) { // Add Single APP
-	printf("    Adding application \"%s\":", argv[2]);
-	image_size += put_file(fd_img, argv[2]);
+    if(argc == 4) { // Add Single APP
+	printf("    Adding application \"%s\":", argv[3]);
+	image_size += put_file(fd_img, argv[3]);
 	si.bm.extras_offset = -1;
     } else { // Add LOADER
-	sprintf(file, "%s/img/%s_loader", epos_home, CONFIG.mach);
+	sprintf(file, "%s/img/%s_app", argv[1], CONFIG.mach);
 	printf("    Adding loader \"%s\":", file);
 	image_size += put_file(fd_img, file);
 
 	// Add APPs
 	si.bm.extras_offset = image_size - boot_size;
 	struct stat file_stat;    
-	for(int i = 2; i < argc; i++) {
+	for(int i = 3; i < argc; i++) {
 	    printf("    Adding application \"%s\":", argv[i]);
 	    stat(argv[i], &file_stat);
 	    image_size += put_number(fd_img, file_stat.st_size);
