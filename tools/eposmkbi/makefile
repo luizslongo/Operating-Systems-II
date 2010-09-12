@@ -8,7 +8,7 @@ eposmkbi: eposmkbi.cc
 		$(TCXX) $(TCXXFLAGS) $<
 		$(TLD) $(TLDFLAGS) -o $@ eposmkbi.o
 
-install: eposmkbi eposmkbi.conf
+install: eposmkbi
 		$(INSTALL) -m 775 eposmkbi $(BIN)
 
 clean:
