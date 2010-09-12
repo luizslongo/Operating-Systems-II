@@ -22,40 +22,10 @@
 //============================================================================
 // ARCHITECTURE AND MACHINE SELECTION
 //============================================================================
-// Architecture selection
-#if defined (__ia32)
 #define ARCH ia32
-#elif defined (__avr8)
-#define ARCH avr8
-#elif defined (__ppc32)
-#define ARCH ppc32
-#elif defined (__mips32)
-#define ARCH mips32
-#else
-#error Architecture not selected!
-#endif
-
 #define __ARCH_TRAITS_H	 __HEADER_ARCH(traits)
 
-// Machine selection
-#if defined (__pc)
 #define MACH pc
-#elif defined (__atmega16)
-#define MACH atmega16
-#elif defined (__atmega128)
-#define MACH atmega128
-#elif defined (__atmega1281)
-#define MACH atmega1281
-#elif defined (__at90can128)
-#define MACH at90can128
-#elif defined (__ml310)
-#define MACH ml310
-#elif defined (__plasma)
-#define MACH plasma
-#else
-#error Machine not selected!
-#endif
-
 #define __MACH_TRAITS_H	 __HEADER_MACH(traits)
 
 //============================================================================
@@ -67,25 +37,25 @@
 
 __BEGIN_SYS
 
-#if defined (__ia32)
+#if ARCH == ia32
 
 typedef IA32 		CPU;
 typedef IA32_MMU	MMU;
 typedef IA32_TSC	TSC;
 
-#elif defined (__avr8)
+#elif ARCH == avr8
 
 typedef AVR8            CPU;
 typedef AVR8_MMU	MMU;
 typedef AVR8_TSC	TSC;
 
-#elif defined (__ppc32)
+#elif ARCH == ppc32
 
 typedef PPC32		CPU;
 typedef PPC32_MMU	MMU;
 typedef PPC32_TSC	TSC;
 
-#elif defined (__mips32)
+#elif ARCH == mips32
 
 typedef MIPS32		CPU;
 typedef MIPS32_MMU	MMU;
@@ -101,7 +71,7 @@ typedef MIPS32_TSC	TSC;
 
 
 // Machine configuration
-#if defined (__pc)
+#if MACH == pc
 
 typedef PC				Machine;
 typedef PC_PCI				PCI;
@@ -127,7 +97,7 @@ typedef Dummy<6>			Flash;
 #define __NIC_H				__HEADER_MACH(ethernet)
 #define __DISPLAY_H			__HEADER_MACH(display)
 
-#elif defined (__atmega16)
+#elif MACH == atmega16
 
 typedef ATMega16			Machine;
 typedef ATMega16_IC			IC;
@@ -154,7 +124,7 @@ typedef Dummy<5>            		Flash;
 #define __NIC_H				__HEADER_MACH(nic)
 #define __ADC_H				__HEADER_MACH(adc)
 
-#elif defined (__atmega128)
+#elif MACH == atmega128
 
 typedef ATMega128			Machine;
 typedef ATMega128_IC			IC;
@@ -183,9 +153,9 @@ typedef Dummy<2>                	CAN;
 #define __ADC_H				__HEADER_MACH(adc)
 #define __SENSOR_H			__HEADER_MACH(sensor)
 
-#elif defined (__atmega1281)
+#elif MACH == atmega1281
 
-#define MACH atmega1281
+#define MACH pc
 typedef ATMega1281			Machine;
 typedef ATMega1281_IC   		IC;
 typedef ATMega1281_Timer_1		Timer_1;
@@ -214,9 +184,9 @@ typedef Dummy<3>            		CAN;
 #define __ADC_H				__HEADER_MACH(adc)
 #define __SENSOR_H			__HEADER_MACH(sensor)
 
-#elif defined (__at90can128)
+#elif MACH == at90can128
 
-#define MACH at90can128
+#define MACH pc
 typedef AT90CAN128          		Machine;
 typedef AT90CAN128_IC       		IC;
 typedef AT90CAN128_RTC      		RTC;
@@ -241,7 +211,7 @@ typedef Dummy<8>            		Flash;
 #define __CAN_H             		__HEADER_MACH(can)
 #define __NIC_H             		__HEADER_MACH(nic)
 
-#elif defined (__ml310)
+#elif MACH == ml310
 
 typedef ML310				Machine;
 typedef ML310_PCI			PCI;
@@ -262,7 +232,7 @@ typedef Dummy<7>			Flash;
 #define __RTC_H				__HEADER_MACH(rtc)
 #define __NIC_H				__HEADER_MACH(nic)
 
-#elif defined (__plasma)
+#elif MACH == plasma
 
 typedef PLASMA				Machine;
 typedef Dummy<0>			PCI;

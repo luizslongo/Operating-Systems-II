@@ -2,7 +2,7 @@
 
 include makedefs
 
-SUBDIRS := tools src app img
+SUBDIRS := etc tools src app img
 
 all:	$(SUBDIRS)
 
@@ -27,7 +27,6 @@ veryclean:
 		make MAKE:="$(MAKECLEAN)" $(SUBDIRS)
 		find $(LIB) -maxdepth 1 -type f -exec $(CLEAN) {} \;
 		find $(BIN) -maxdepth 1 -type f -exec $(CLEAN) {} \;
-		find $(ETC) -maxdepth 1 -type f -exec $(CLEAN) {} \;
 		find $(APP) -maxdepth 1 -type f -perm +111 -exec $(CLEAN) {} \;
 		find $(IMG) -name "*.img" -exec $(CLEAN) {} \;
 		find $(IMG) -name "*.out" -exec $(CLEAN) {} \;

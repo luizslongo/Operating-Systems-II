@@ -185,7 +185,6 @@ $(ARCH_MIPS32)_CLOCK    := 25000000
 ARCH_WORD_SIZE		:= $($(ARCH)_WORD_SIZE)
 ARCH_ENDIANESS		:= $($(ARCH)_ENDIANESS)
 ARCH_CLOCK		:= $($(ARCH)_CLOCK)
-CONF_FLAGS		:= -D __$(ARCH) -D __$(MACH)
 
 # Paths, prefixes and suffixes
 TOP		= $(EPOS)
@@ -221,21 +220,21 @@ SED 		= sed
 
 # Tools and flags to compile system tools
 TCC		= gcc -ansi -c
-TCCFLAGS	= -m32 -Wall -O2 -I$(INCLUDE) $(CONF_FLAGS)
+TCCFLAGS	= -m32 -Wall -O2 -I$(INCLUDE)
 
 TCXX		= g++ -c -ansi -fno-exceptions
-TCXXFLAGS	= -m32 -Wall -O2 -I$(INCLUDE) $(CONF_FLAGS)
+TCXXFLAGS	= -m32 -Wall -O2 -I$(INCLUDE)
 
 TCPP		= gcc -E 
-TCPPFLAGS	= -I$(INCLUDE) $(CONF_FLAGS)
+TCPPFLAGS	= -I$(INCLUDE)
 
 TLD		= gcc
 TLDFLAGS	= -m32
 
 # Tools and flags to compile applications
-ACC		= $(BIN)/eposcc $(MACH_CC_FLAGS) -c -ansi -O2 $(CONF_FLAGS)
-ACXX		= $(BIN)/eposcc $(MACH_CC_FLAGS) -c -ansi -O2 $(CONF_FLAGS)
-AF77		= $(BIN)/eposcc $(MACH_CC_FLAGS) -c -ansi -O2 $(CONF_FLAGS)
+ACC		= $(BIN)/eposcc $(MACH_CC_FLAGS) -c -ansi -O2
+ACXX		= $(BIN)/eposcc $(MACH_CC_FLAGS) -c -ansi -O2
+AF77		= $(BIN)/eposcc $(MACH_CC_FLAGS) -c -ansi -O2
 ALD		= $(BIN)/eposcc --$(MODE) $(MACH_LD_FLAGS)
 ALDFLAGS	= 
 
@@ -247,14 +246,14 @@ AS		= $(COMP_PREFIX)as
 ASFLAGS		= $(MACH_AS_FLAGS)
 
 CC		= $(COMP_PREFIX)gcc -ansi -c
-CCFLAGS		= $(MACH_CC_FLAGS) -O2 -nostdinc -Wall -I$(INCLUDE) $(CONF_FLAGS)
+CCFLAGS		= $(MACH_CC_FLAGS) -O2 -nostdinc -Wall -I$(INCLUDE)
 CCLIB		= `$(CC) $(MACH_CC_FLAGS) -print-file-name=`
 
 CPP		= $(COMP_PREFIX)gcc -E
-CPPFLAGS	= $(MACH_CC_FLAGS) -I$(INCLUDE) $(CONF_FLAGS)
+CPPFLAGS	= $(MACH_CC_FLAGS) -I$(INCLUDE)
 
 CXX		= $(COMP_PREFIX)g++ -c --no-exceptions --no-rtti --no-use-cxa-atexit 
-CXXFLAGS	= $(MACH_CC_FLAGS) -O2 -nostdinc -Wall -I$(INCLUDE) $(CONF_FLAGS)
+CXXFLAGS	= $(MACH_CC_FLAGS) -O2 -nostdinc -Wall -I$(INCLUDE)
 
 LD		= $(COMP_PREFIX)ld
 LDFLAGS		= $(MACH_LD_FLAGS) -L$(LIB) -Bstatic
