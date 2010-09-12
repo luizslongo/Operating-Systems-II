@@ -3,7 +3,6 @@
 #ifndef __pci_h
 #define __pci_h
 
-#include <system/pci_ids-linux.h>
 #include <cpu.h>
 
 __BEGIN_SYS
