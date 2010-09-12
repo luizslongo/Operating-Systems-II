@@ -9,27 +9,36 @@ __BEGIN_SYS
 
 // This is actually no Condition Variable
 // check http://www.cs.duke.edu/courses/spring01/cps110/slides/sem/sld002.htm
-class Condition: public Synchronizer_Common
+class Condition: protected Synchronizer_Common
 {
 public:
     Condition() {
 	db<Synchronizer>(TRC) << "Condition() => " << this << "\n";
     }
+
     ~Condition() {
 	db<Synchronizer>(TRC) << "~Condition(this=" << this << ")\n";
     }
 
     void wait() {
 	db<Synchronizer>(TRC) << "Condition::wait(this=" << this << ")\n";
-	sleep();
+
+	begin_atomic();
+	sleep(); // implicit end_atomic()
     }
+
     void signal() {
 	db<Synchronizer>(TRC) << "Condition::signal(this=" << this << ")\n";
-	wakeup();
+
+	begin_atomic();
+	wakeup(); // implicit end_atomic()
     }
+
     void broadcast() {
 	db<Synchronizer>(TRC) << "Condition::broadcast(this=" << this << ")\n";
-	wakeup_all();
+
+	begin_atomic();
+	wakeup_all(); // implicit end_atomic()
     }
 };
 

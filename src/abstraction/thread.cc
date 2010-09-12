@@ -200,8 +200,6 @@ void Thread::exit(int status)
 
 void Thread::sleep(Queue * q)
 {
-    lock();
-
     db<Thread>(TRC) << "Thread::sleep(running=" << running()
 		    << ",q=" << q << ")\n";
 
@@ -217,8 +215,6 @@ void Thread::sleep(Queue * q)
 
 void Thread::wakeup(Queue * q) 
 {
-    lock();
-
     db<Thread>(TRC) << "Thread::wakeup(running=" << running()
 		    << ",q=" << q << ")\n";
 
@@ -234,8 +230,6 @@ void Thread::wakeup(Queue * q)
 
 void Thread::wakeup_all(Queue * q) 
 {
-    lock();
-
     db<Thread>(TRC) << "Thread::wakeup_all(running=" << running()
 		    << ",q=" << q << ")\n";
 

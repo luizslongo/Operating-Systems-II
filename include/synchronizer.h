@@ -15,7 +15,7 @@ private:
 
 protected:
     Synchronizer_Common() {}
-    ~Synchronizer_Common() { wakeup_all(); }
+    ~Synchronizer_Common() { begin_atomic(); wakeup_all(); }
 
     bool tsl(volatile bool & lock) { return CPU::tsl(lock); }
     int finc(volatile int & number) { return CPU::finc(number); }
@@ -24,6 +24,9 @@ protected:
     void sleep() { Thread::sleep(&_queue); }
     void wakeup() { Thread::wakeup(&_queue); }
     void wakeup_all() { Thread::wakeup_all(&_queue); }
+
+    void begin_atomic() { Thread::lock(); }
+    void end_atomic() { Thread::unlock(); }
 
 private:
     Queue _queue;

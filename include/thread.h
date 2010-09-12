@@ -14,6 +14,7 @@ __BEGIN_SYS
 class Thread
 {
     friend class Scheduler<Thread>;
+    friend class Synchronizer_Common;
 
 protected:
     static const bool active_scheduler = Traits<Thread>::Criterion::timed;
@@ -132,9 +133,6 @@ public:
 
     static Thread * self() { return running(); }
     static void yield();
-    static void sleep(Queue * q);
-    static void wakeup(Queue * q);
-    static void wakeup_all(Queue * q);
     static void exit(int status = 0);
 
     static void init();
@@ -159,6 +157,9 @@ protected:
     }
 
     void suspend(bool locked);
+    static void sleep(Queue * q);
+    static void wakeup(Queue * q);
+    static void wakeup_all(Queue * q);
 
     static void reschedule(bool preempt = preemptive);
 
