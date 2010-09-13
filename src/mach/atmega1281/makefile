@@ -1,4 +1,4 @@
-# EPOS-- ATMega1281 Machine Makefile
+# EPOS ATMega1281 Machine Makefile
 
 include ../../../makedefs
 

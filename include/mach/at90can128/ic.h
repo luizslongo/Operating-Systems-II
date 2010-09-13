@@ -1,4 +1,4 @@
-// EPOS-- AT90CAN128_IC Declarations
+// EPOS AT90CAN128_IC Declarations
 
 #ifndef __at90can128_ic_h
 #define __at90can128_ic_h

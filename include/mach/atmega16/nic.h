@@ -1,4 +1,4 @@
-// EPOS-- ATMega16 NIC Mediator Declarations
+// EPOS ATMega16 NIC Mediator Declarations
 
 #ifndef __atmega16_nic_h
 #define __atmega16_nic_h

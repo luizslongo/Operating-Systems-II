@@ -1,4 +1,4 @@
-// EPOS-- ML310 Boot Strap
+// EPOS ML310 Boot Strap
 
 #include <utility/elf.h>
 #include <machine.h>

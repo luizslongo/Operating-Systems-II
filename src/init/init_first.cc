@@ -1,4 +1,4 @@
-// EPOS-- First Thread Initializer
+// EPOS First Thread Initializer
 
 #include <utility/heap.h>
 #include <mmu.h>

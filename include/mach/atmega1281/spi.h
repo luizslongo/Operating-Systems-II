@@ -1,4 +1,4 @@
-// EPOS-- ATMega1281 SPI Mediator Declarations
+// EPOS ATMega1281 SPI Mediator Declarations
 
 #ifndef __atmega1281_spi_h
 #define __atmega1281_spi_h

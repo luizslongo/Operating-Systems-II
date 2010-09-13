@@ -1,4 +1,4 @@
-// EPOS-- AVRMCU_LOADER
+// EPOS AVRMCU_LOADER
 
 
 #include <utility/ostream.h>

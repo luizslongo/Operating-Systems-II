@@ -1,4 +1,4 @@
-// EPOS-- ML310 NIC Mediator Declarations
+// EPOS ML310 NIC Mediator Declarations
 
 #ifndef __ml310_nic_h
 #define __ml310_nic_h

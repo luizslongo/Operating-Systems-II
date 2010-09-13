@@ -1,4 +1,4 @@
-// EPOS-- System Abstraction Initialization
+// EPOS System Abstraction Initialization
 
 #include <system.h>
 #include <alarm.h>

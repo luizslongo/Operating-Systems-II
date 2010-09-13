@@ -1,4 +1,4 @@
-// EPOS-- System-level Dynamic Memory Declarations
+// EPOS System-level Dynamic Memory Declarations
 
 #ifndef __kmalloc_h
 #define __kmalloc_h

@@ -1,4 +1,4 @@
-// EPOS-- List Utility Test Program
+// EPOS List Utility Test Program
 
 #include <utility/ostream.h>
 #include <utility/malloc.h>

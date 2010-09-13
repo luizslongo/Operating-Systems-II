@@ -1,4 +1,4 @@
-// EPOS-- ATMega1281 RTC Mediator Declarations
+// EPOS ATMega1281 RTC Mediator Declarations
 
 #ifndef __atmega1281_rtc_h
 #define __atmega1281_rtc_h

@@ -1,4 +1,4 @@
-// EPOS-- ATMega128_IC Test Program
+// EPOS ATMega128_IC Test Program
 
 #include <utility/ostream.h>
 #include <ic.h>

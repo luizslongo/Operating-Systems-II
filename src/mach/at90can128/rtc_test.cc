@@ -1,4 +1,4 @@
-// EPOS-- AT90CAN128_Timer Test Program
+// EPOS AT90CAN128_Timer Test Program
 
 #include <utility/ostream.h>
 #include <rtc.h>

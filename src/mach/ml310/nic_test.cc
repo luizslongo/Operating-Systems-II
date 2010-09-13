@@ -1,4 +1,4 @@
-// EPOS-- ML310 NIC Mediator Test
+// EPOS ML310 NIC Mediator Test
 
 #include <nic.h>
 

@@ -1,4 +1,4 @@
-// EPOS-- PLASMA NULL NIC Mediator Declarations
+// EPOS PLASMA NULL NIC Mediator Declarations
 
 #ifndef __plasma_nic_h
 #define __plasma_nic_h

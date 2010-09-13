@@ -1,4 +1,4 @@
-// EPOS-- PC Mediator Declarations
+// EPOS PC Mediator Declarations
 
 #ifndef __pc_h
 #define __pc_h

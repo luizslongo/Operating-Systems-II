@@ -1,4 +1,4 @@
-// EPOS-- ML310 UART Mediator Initialization
+// EPOS ML310 UART Mediator Initialization
 
 #include <machine.h>
 

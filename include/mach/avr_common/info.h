@@ -1,4 +1,4 @@
-// EPOS-- AVR Run-Time System Information
+// EPOS AVR Run-Time System Information
 
 #ifndef __avr_info_h
 #define __avr_info_h

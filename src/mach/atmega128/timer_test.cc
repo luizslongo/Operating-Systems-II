@@ -1,4 +1,4 @@
-// EPOS-- ATMega128_Timer Test Program
+// EPOS ATMega128_Timer Test Program
 
 #include <utility/ostream.h>
 #include <timer.h>

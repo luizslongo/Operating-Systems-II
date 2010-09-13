@@ -1,4 +1,4 @@
-// EPOS-- RTC Mediator Common Package
+// EPOS RTC Mediator Common Package
 
 #ifndef __rtc_h
 #define __rtc_h

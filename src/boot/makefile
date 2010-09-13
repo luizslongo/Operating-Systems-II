@@ -1,4 +1,4 @@
-# EPOS-- Boot Makefile
+# EPOS Boot Makefile
 
 include ../../makedefs
 

@@ -1,4 +1,4 @@
-// EPOS-- MMU Mediator Common Package Implementation
+// EPOS MMU Mediator Common Package Implementation
 
 #include <mmu.h>
 

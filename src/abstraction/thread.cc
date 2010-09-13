@@ -1,4 +1,4 @@
-// EPOS-- Thread Abstraction Implementation
+// EPOS Thread Abstraction Implementation
 
 #include <system/kmalloc.h>
 #include <machine.h>

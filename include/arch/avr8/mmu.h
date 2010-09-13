@@ -1,4 +1,4 @@
-// EPOS-- AVR8 MMU Mediator Declarations
+// EPOS AVR8 MMU Mediator Declarations
 
 #ifndef __avr8_mmu_h
 #define __avr8_mmu_h

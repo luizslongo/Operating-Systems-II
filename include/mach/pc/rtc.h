@@ -1,4 +1,4 @@
-// EPOS-- PC Real-Time Clock Mediator Declarations
+// EPOS PC Real-Time Clock Mediator Declarations
 
 #ifndef __pc_rtc_h
 #define __pc_rtc_h

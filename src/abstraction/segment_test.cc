@@ -1,4 +1,4 @@
-// EPOS-- Segment Test Program
+// EPOS Segment Test Program
 
 #include <utility/ostream.h>
 #include <segment.h>

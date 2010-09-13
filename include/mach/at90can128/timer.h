@@ -1,4 +1,4 @@
-// EPOS-- Mica2_Timer Declarations
+// EPOS Mica2_Timer Declarations
 
 #ifndef __at90can128_timer_h
 #define __at90can128_timer_h

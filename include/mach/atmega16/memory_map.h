@@ -1,4 +1,4 @@
-// EPOS-- ATMega16 Memory Map
+// EPOS ATMega16 Memory Map
 
 #ifndef __memory_map_atmega16_h
 #define __memory_map_atmega16_h

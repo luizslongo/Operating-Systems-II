@@ -1,4 +1,4 @@
-// EPOS--  Memory Map for the AT90CAN128
+// EPOS  Memory Map for the AT90CAN128
 
 #ifndef __at90can128_memory_map_h
 #define __at90can128_memory_map_h

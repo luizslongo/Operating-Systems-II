@@ -1,4 +1,4 @@
-// EPOS-- Sensor Mediator Common Package
+// EPOS Sensor Mediator Common Package
 
 #ifndef __sensor_h
 #define __sensor_h

@@ -1,4 +1,4 @@
-// EPOS-- ML310_RTC Declarations
+// EPOS ML310_RTC Declarations
 
 #ifndef __ml310_rtc_h
 #define __ml310_rtc_h

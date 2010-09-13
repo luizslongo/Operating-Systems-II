@@ -1,4 +1,4 @@
-// EPOS-- PC Intel PRO/100 (i82559) Ethernet NIC Mediator Initialization
+// EPOS PC Intel PRO/100 (i82559) Ethernet NIC Mediator Initialization
 
 #include <system/kmalloc.h>
 #include <mach/pc/machine.h>

@@ -1,5 +1,5 @@
 
-// EPOS-- Hash Utility Test Program
+// EPOS Hash Utility Test Program
 
 #include <utility/ostream.h>
 #include <utility/malloc.h>

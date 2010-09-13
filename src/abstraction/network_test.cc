@@ -1,4 +1,4 @@
-// EPOS-- PC Network Abstraction Test
+// EPOS PC Network Abstraction Test
 
 #include <network.h>
 

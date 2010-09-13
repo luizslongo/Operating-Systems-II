@@ -1,4 +1,4 @@
-// EPOS-- CC1000 RSSI Sensor Mediator
+// EPOS CC1000 RSSI Sensor Mediator
 
 #ifndef __cc1000_rssi_h
 #define __cc1000_rssi_h

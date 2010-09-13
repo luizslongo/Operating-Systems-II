@@ -1,4 +1,4 @@
-// EPOS-- CMAC Implementation
+// EPOS CMAC Implementation
 
 #include <machine.h>
 #include <mach/atmega1281/nic.h>

@@ -1,4 +1,4 @@
-// EPOS-- MTS3o0 Sensopr Board Implementation
+// EPOS MTS3o0 Sensopr Board Implementation
 
 #include <mach/atmega128/mts300.h>
 

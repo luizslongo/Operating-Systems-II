@@ -1,4 +1,4 @@
-// EPOS-- ATMega128 Interrupt Controller Mediator Declarations
+// EPOS ATMega128 Interrupt Controller Mediator Declarations
 
 #ifndef __atmega128_ic_h
 #define __atmega128_ic_h

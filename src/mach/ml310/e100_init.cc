@@ -1,4 +1,4 @@
-// EPOS-- ML310 Intel PRO/100 (i82559) Ethernet NIC Mediator Initialization
+// EPOS ML310 Intel PRO/100 (i82559) Ethernet NIC Mediator Initialization
 
 #include <system/kmalloc.h>
 #include <mach/ml310/machine.h>

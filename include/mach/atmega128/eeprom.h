@@ -1,4 +1,4 @@
-// EPOS-- ATMega128 EEPROM Mediator Declarations
+// EPOS ATMega128 EEPROM Mediator Declarations
 
 #ifndef __atmega128_eeprom_h
 #define __atmega128_eeprom_h

@@ -1,4 +1,4 @@
-// EPOS-- MIPS CPU Mediator Implementation
+// EPOS MIPS CPU Mediator Implementation
 
 #include <arch/mips32/cpu.h>
 

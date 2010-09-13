@@ -1,4 +1,4 @@
-# EPOS-- Tools Makefile
+# EPOS Tools Makefile
 
 include	../makedefs
 

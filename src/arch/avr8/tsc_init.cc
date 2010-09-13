@@ -1,4 +1,4 @@
-// EPOS-- AVR8 TSC Mediator Initialization
+// EPOS AVR8 TSC Mediator Initialization
 
 #include <tsc.h>
 #include <machine.h>

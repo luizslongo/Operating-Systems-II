@@ -1,4 +1,4 @@
-// EPOS-- SHT11 Sensor Mediator Declarations
+// EPOS SHT11 Sensor Mediator Declarations
 
 #ifndef __sht11_h
 #define __sht11_h

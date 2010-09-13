@@ -1,4 +1,4 @@
-# EPOS-- Machine Common Packages Makefile
+# EPOS Machine Common Packages Makefile
 
 include ../../../makedefs
 

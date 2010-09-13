@@ -1,4 +1,4 @@
-// EPOS-- PC Display Mediator Declarations
+// EPOS PC Display Mediator Declarations
 
 #ifndef __pc_display_h
 #define __pc_display_h

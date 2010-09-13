@@ -1,4 +1,4 @@
-// EPOS-- ML310 PCI Test Program
+// EPOS ML310 PCI Test Program
 
 #include <utility/ostream.h>
 #include <pci.h>

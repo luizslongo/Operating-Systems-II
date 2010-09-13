@@ -1,4 +1,4 @@
-// EPOS-- ATMega16 UART Mediator Declarations
+// EPOS ATMega16 UART Mediator Declarations
 
 #ifndef __atmega16_uart_h
 #define __atmega16_uart_h

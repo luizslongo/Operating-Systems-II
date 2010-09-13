@@ -1,4 +1,4 @@
-// EPOS-- Chronometer Abstraction Declarations
+// EPOS Chronometer Abstraction Declarations
 
 #ifndef __chronometer_h
 #define __chronometer_h

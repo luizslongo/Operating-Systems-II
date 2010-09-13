@@ -1,4 +1,4 @@
-// EPOS-- ATMega1281 ADC Mediator Declarations
+// EPOS ATMega1281 ADC Mediator Declarations
 
 #ifndef __atmega1281_adc_h
 #define __atmega1281_adc_h

@@ -1,4 +1,4 @@
-// EPOS-- ML310 UART Mediator Declarations
+// EPOS ML310 UART Mediator Declarations
 
 #ifndef __ml310_uart_h
 #define __ml310_uart_h

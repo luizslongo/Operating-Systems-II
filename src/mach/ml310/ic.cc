@@ -1,4 +1,4 @@
-// EPOS-- ML310_IC Implementation
+// EPOS ML310_IC Implementation
 
 #include <mach/ml310/ic.h>
 

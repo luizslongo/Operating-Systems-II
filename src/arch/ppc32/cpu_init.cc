@@ -1,4 +1,4 @@
-// EPOS-- PPC32 CPU Mediator Initialization
+// EPOS PPC32 CPU Mediator Initialization
 
 #include <cpu.h>
 #include <mmu.h>

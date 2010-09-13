@@ -1,4 +1,4 @@
-// EPOS-- TSC Mediator Common Package
+// EPOS TSC Mediator Common Package
 
 #ifndef __tsc_h
 #define __tsc_h

@@ -1,4 +1,4 @@
-// EPOS-- PC Interrupt Dispatcher
+// EPOS PC Interrupt Dispatcher
 
 #include <mach/pc/ic.h>
 

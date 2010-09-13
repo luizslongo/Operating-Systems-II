@@ -1,4 +1,4 @@
-# EPOS-- Architecture Common Packages Makefile
+# EPOS Architecture Common Packages Makefile
 
 include ../../../makedefs
 

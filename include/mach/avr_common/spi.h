@@ -1,4 +1,4 @@
-// EPOS-- AVR Serial Peripheral Interface Common Declarations
+// EPOS AVR Serial Peripheral Interface Common Declarations
 
 #ifndef __avr_spi_h
 #define __avr_spi_h

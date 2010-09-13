@@ -1,4 +1,4 @@
-// EPOS-- Mutex Abstraction Test Program
+// EPOS Mutex Abstraction Test Program
 
 #include <utility/ostream.h>
 #include <thread.h>

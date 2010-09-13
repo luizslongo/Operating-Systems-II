@@ -1,4 +1,4 @@
-// EPOS-- Alarm Abstraction Test Program
+// EPOS Alarm Abstraction Test Program
 
 #include <utility/ostream.h>
 #include <alarm.h>

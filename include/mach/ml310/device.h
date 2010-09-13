@@ -1,4 +1,4 @@
-// EPOS-- ML310 Device Common Package Declarations
+// EPOS ML310 Device Common Package Declarations
 
 #ifndef __ml310_device_h
 #define __ml310_device_h

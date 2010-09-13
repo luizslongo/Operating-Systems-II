@@ -1,4 +1,4 @@
-// EPOS-- Memory Map for the ML310
+// EPOS Memory Map for the ML310
 
 #ifndef __ml310_memory_map_h
 #define __ml310_memory_map_h

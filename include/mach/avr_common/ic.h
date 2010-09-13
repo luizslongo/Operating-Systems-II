@@ -1,4 +1,4 @@
-// EPOS-- AVR Interrupt Controller Mediator Common Declarations
+// EPOS AVR Interrupt Controller Mediator Common Declarations
 
 #ifndef __avr_ic_h
 #define __avr_ic_h

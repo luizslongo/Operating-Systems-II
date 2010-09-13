@@ -1,4 +1,4 @@
-// EPOS-- PC Interrupt Controller Mediator Declarations
+// EPOS PC Interrupt Controller Mediator Declarations
 
 #ifndef __pc_ic_h
 #define __pc_ic_h

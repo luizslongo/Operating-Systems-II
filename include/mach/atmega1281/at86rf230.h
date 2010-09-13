@@ -1,4 +1,4 @@
-// EPOS-- AT86RF230 Transceiver Mediator
+// EPOS AT86RF230 Transceiver Mediator
 
 #ifndef __at86rf230_h
 #define __at86rf230_h

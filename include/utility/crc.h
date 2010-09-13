@@ -1,4 +1,4 @@
-// EPOS-- CRC Utility Declarations
+// EPOS CRC Utility Declarations
 
 #ifndef __crc_h
 #define __crc_h

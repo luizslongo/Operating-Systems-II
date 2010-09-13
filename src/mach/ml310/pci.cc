@@ -1,4 +1,4 @@
-// EPOS-- ML310 PCI Mediator
+// EPOS ML310 PCI Mediator
 
 #include <mach/ml310/pci.h>
 

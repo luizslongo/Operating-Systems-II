@@ -1,4 +1,4 @@
-// EPOS-- AVR8 CPU Mediator Initialization
+// EPOS AVR8 CPU Mediator Initialization
 
 #include <cpu.h>
 #include <mmu.h>

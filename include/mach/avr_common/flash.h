@@ -1,4 +1,4 @@
-// EPOS-- AVR Flash Mediator Common Declarations
+// EPOS AVR Flash Mediator Common Declarations
 
 #ifndef __avr_flash_h
 #define __avr_flash_h

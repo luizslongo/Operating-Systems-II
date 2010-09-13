@@ -1,4 +1,4 @@
-// EPOS-- PC Memory Map
+// EPOS PC Memory Map
 
 #ifndef __pc_memory_map_h
 #define __pc_memory_map_h

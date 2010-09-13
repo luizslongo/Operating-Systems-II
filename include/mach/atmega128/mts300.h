@@ -1,4 +1,4 @@
-// EPOS-- MTS300 Sensor Board Mediator Declarations
+// EPOS MTS300 Sensor Board Mediator Declarations
 
 #ifndef __mts300_h
 #define __mts300_h

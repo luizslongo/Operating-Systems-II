@@ -1,4 +1,4 @@
-// EPOS-- ATMega1281 Radio (CC1000) NIC Mediator Implementation
+// EPOS ATMega1281 Radio (CC1000) NIC Mediator Implementation
 
 #include <system/kmalloc.h>
 #include <mach/atmega1281/machine.h>

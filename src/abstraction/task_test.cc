@@ -1,4 +1,4 @@
-// EPOS-- Task Test Program
+// EPOS Task Test Program
 
 #include <utility/ostream.h>
 #include <alarm.h>

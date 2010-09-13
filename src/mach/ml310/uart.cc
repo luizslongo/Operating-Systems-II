@@ -1,4 +1,4 @@
-// EPOS-- ML310 UART Mediator Implementation
+// EPOS ML310 UART Mediator Implementation
 
 #include <mach/ml310/uart.h>
 

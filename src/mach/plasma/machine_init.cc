@@ -1,4 +1,4 @@
-// EPOS-- PLASMA Mediator Initialization
+// EPOS PLASMA Mediator Initialization
 
 #include <machine.h>
 #include <system.h>

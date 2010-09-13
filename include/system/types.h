@@ -1,4 +1,4 @@
-// EPOS-- Internal Type Management System
+// EPOS Internal Type Management System
 
 #ifndef __types_h
 #define __types_h

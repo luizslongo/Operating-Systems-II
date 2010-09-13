@@ -1,4 +1,4 @@
-// EPOS-- PC EEPROM Mediator Common Declarations
+// EPOS PC EEPROM Mediator Common Declarations
 
 #ifndef __pc_eeprom_h
 #define __pc_eeprom_h

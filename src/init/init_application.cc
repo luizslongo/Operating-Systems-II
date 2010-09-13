@@ -1,4 +1,4 @@
-// EPOS-- Application Initializer
+// EPOS Application Initializer
 
 #include <utility/heap.h>
 #include <mmu.h>

@@ -1,4 +1,4 @@
-// EPOS-- ML310_Timer Test Program
+// EPOS ML310_Timer Test Program
 
 #include <utility/ostream.h>
 #include <machine.h>

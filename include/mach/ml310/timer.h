@@ -1,4 +1,4 @@
-// EPOS-- ML310 Timer Mediator Declarations
+// EPOS ML310 Timer Mediator Declarations
 
 #ifndef __ml310_timer_h
 #define __ml310_timer_h

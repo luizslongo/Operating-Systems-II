@@ -1,4 +1,4 @@
-// EPOS-- Event Handler Utility Test Program
+// EPOS Event Handler Utility Test Program
 
 #include <utility/ostream.h>
 #include <utility/handler.h>

@@ -1,4 +1,4 @@
-// EPOS-- AVR Timer Common Declarations
+// EPOS AVR Timer Common Declarations
 
 #ifndef __avr_timer_h
 #define __avr_timer_h

@@ -1,4 +1,4 @@
-// EPOS-- PLASMA Device Common Package Declarations
+// EPOS PLASMA Device Common Package Declarations
 
 #ifndef __plasma_device_h
 #define __plasma_device_h

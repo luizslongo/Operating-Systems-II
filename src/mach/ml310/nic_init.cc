@@ -1,4 +1,4 @@
-// EPOS-- ML310 NIC Mediator Initialization
+// EPOS ML310 NIC Mediator Initialization
 
 #include <system/kmalloc.h>
 #include <mach/ml310/machine.h>

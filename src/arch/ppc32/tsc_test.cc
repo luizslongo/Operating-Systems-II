@@ -1,4 +1,4 @@
-// EPOS-- PPC32_TSC Test Program
+// EPOS PPC32_TSC Test Program
 
 #include <utility/ostream.h>
 #include <tsc.h>

@@ -1,4 +1,4 @@
-// EPOS-- Periodic Thread Abstraction Declarations
+// EPOS Periodic Thread Abstraction Declarations
 
 #ifndef __periodic_thread_h
 #define __periodic_thread_h

@@ -1,4 +1,4 @@
-// EPOS-- AT90CAN128_RTC Declarations
+// EPOS AT90CAN128_RTC Declarations
 
 #ifndef __at90can128_rtc_h
 #define __at90can128_rtc_h

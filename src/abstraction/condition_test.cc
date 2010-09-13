@@ -1,4 +1,4 @@
-// EPOS-- Condition Variable Abstracion Test Program
+// EPOS Condition Variable Abstracion Test Program
 
 #include <utility/ostream.h>
 #include <thread.h>

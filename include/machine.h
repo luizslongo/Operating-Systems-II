@@ -1,4 +1,4 @@
-// EPOS-- Machine Mediator Common Package
+// EPOS Machine Mediator Common Package
 
 #ifndef __machine_h
 #define __machine_h

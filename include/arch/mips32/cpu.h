@@ -1,4 +1,4 @@
-// EPOS-- MIPS32 CPU Mediator Declarations
+// EPOS MIPS32 CPU Mediator Declarations
 
 #ifndef __mips32_h
 #define __mips32_h

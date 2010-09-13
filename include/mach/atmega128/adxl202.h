@@ -1,4 +1,4 @@
-// EPOS-- ADXL202 Accelerometer Mediator Declarations
+// EPOS ADXL202 Accelerometer Mediator Declarations
 
 #ifndef __adxl202_h
 #define __adxl202_h

@@ -1,4 +1,4 @@
-// EPOS-- AT90CAN128_IC Initialization
+// EPOS AT90CAN128_IC Initialization
 
 #include <mach/at90can128/ic.h>
 

@@ -1,4 +1,4 @@
-// EPOS-- IA32 MMU Mediator Declarations
+// EPOS IA32 MMU Mediator Declarations
 
 #ifndef __ia32_mmu_h
 #define __ia32_mmu_h

@@ -1,4 +1,4 @@
-// EPOS-- ATMega128 NIC Mediator Test
+// EPOS ATMega128 NIC Mediator Test
 
 #include <nic.h>
 

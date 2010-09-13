@@ -1,4 +1,4 @@
-// EPOS-- PPC32_TSC Declarations
+// EPOS PPC32_TSC Declarations
 
 #ifndef __ppc32_tsc_h
 #define __ppc32_tsc_h

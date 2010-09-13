@@ -1,4 +1,4 @@
-// EPOS-- PLASMA Timer Mediator
+// EPOS PLASMA Timer Mediator
 
 #include <timer.h>
 

@@ -1,4 +1,4 @@
-// EPOS-- ATMega128 Memory Map
+// EPOS ATMega128 Memory Map
 
 #ifndef __atmega128_memory_map_h
 #define __atmega128_memory_map_h

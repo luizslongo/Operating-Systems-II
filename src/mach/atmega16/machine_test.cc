@@ -1,4 +1,4 @@
-// EPOS-- ATMega16 Test Program
+// EPOS ATMega16 Test Program
 
 #include <utility/ostream.h>
 #include <machine.h>

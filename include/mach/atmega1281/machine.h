@@ -1,4 +1,4 @@
-// EPOS-- ATMega1281 Mediator Declarations
+// EPOS ATMega1281 Mediator Declarations
 
 #ifndef __atmega1281_h
 #define __atmega1281_h

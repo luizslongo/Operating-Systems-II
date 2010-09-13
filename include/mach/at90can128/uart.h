@@ -1,4 +1,4 @@
-// EPOS-- AT90CAN128_UART Declarations
+// EPOS AT90CAN128_UART Declarations
 
 #ifndef __at90can128_uart_h
 #define __at90can128_uart_h

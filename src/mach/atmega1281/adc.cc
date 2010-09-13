@@ -1,4 +1,4 @@
-// EPOS-- AVR_ADC Mediator Implementation
+// EPOS AVR_ADC Mediator Implementation
 
 #include <mach/avr_common/adc.h>
 

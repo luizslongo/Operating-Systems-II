@@ -1,4 +1,4 @@
-// EPOS-- ATMega128 Radio (CC1000) NIC Mediator Declarations
+// EPOS ATMega128 Radio (CC1000) NIC Mediator Declarations
 
 #ifndef __cc1000_nic_h
 #define __cc1000_nic_h

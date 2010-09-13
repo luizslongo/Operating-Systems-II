@@ -1,4 +1,4 @@
-// EPOS-- AT86RF230 Mediator Implementation
+// EPOS AT86RF230 Mediator Implementation
 
 #include <machine.h>
 

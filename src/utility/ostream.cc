@@ -1,4 +1,4 @@
-// EPOS-- OStream Implementation
+// EPOS OStream Implementation
 
 #include <utility/ostream.h>
 #include <display.h>

@@ -1,4 +1,4 @@
-// EPOS-- ML310 Run-Time System Information
+// EPOS ML310 Run-Time System Information
 
 #ifndef __ml310_info_h
 #define __ml310_info_h

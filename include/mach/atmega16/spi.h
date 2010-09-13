@@ -1,4 +1,4 @@
-// EPOS-- ATMega16 SPI Mediator Declarations
+// EPOS ATMega16 SPI Mediator Declarations
 
 #ifndef __atmega16_spi_h
 #define __atmega16_spi_h

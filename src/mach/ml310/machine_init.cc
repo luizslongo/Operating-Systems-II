@@ -1,4 +1,4 @@
-// EPOS-- ML310 Mediator Initialization
+// EPOS ML310 Mediator Initialization
 
 #include <machine.h>
 #include <system.h>

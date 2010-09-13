@@ -1,4 +1,4 @@
-// EPOS-- Application-level Dynamic Memory Utility Declarations
+// EPOS Application-level Dynamic Memory Utility Declarations
 
 #pragma interface
 
@@ -20,7 +20,7 @@ inline void free(void * ptr) {
 inline void * operator new(unsigned int bytes) {
     return malloc(bytes);
 }
-inline void * operator new[](unsigned int bytes) { 
+inline void * operator new[](unsigned int bytes) {
     return malloc(bytes); 
 }
 inline void operator delete(void * object) {

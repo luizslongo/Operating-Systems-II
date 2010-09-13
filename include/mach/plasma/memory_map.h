@@ -1,4 +1,4 @@
-// EPOS-- Memory Map for the PLASMA
+// EPOS Memory Map for the PLASMA
 
 #ifndef __plasma_memory_map_h
 #define __plasma_memory_map_h

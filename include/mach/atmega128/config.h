@@ -1,4 +1,4 @@
-// EPOS-- ATMega128 Mediators Configuration
+// EPOS ATMega128 Mediators Configuration
 
 #ifndef __atmega128_config_h
 #define __atmega128_config_h

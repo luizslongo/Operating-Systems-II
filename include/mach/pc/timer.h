@@ -1,4 +1,4 @@
-// EPOS-- PC Timer Mediator Declarations
+// EPOS PC Timer Mediator Declarations
 
 #ifndef __pc_timer_h
 #define __pc_timer_h

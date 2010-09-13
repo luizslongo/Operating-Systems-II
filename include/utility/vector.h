@@ -1,4 +1,4 @@
-// EPOS-- Vector Utility Declarations
+// EPOS Vector Utility Declarations
 
 #ifndef __vector_h
 #define	__vector_h

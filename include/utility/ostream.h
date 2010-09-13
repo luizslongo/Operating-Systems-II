@@ -1,4 +1,4 @@
-// EPOS-- OStream Interface
+// EPOS OStream Interface
 
 #include <system/config.h>
 

@@ -1,4 +1,4 @@
-// EPOS-- IA32 Time-Stamp Counter Mediator Declarations
+// EPOS IA32 Time-Stamp Counter Mediator Declarations
 
 #ifndef __ia32_tsc_h
 #define __ia32_tsc_h

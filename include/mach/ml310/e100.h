@@ -1,4 +1,4 @@
-// EPOS-- ML310 Intel PRO/100 (i82559) Ethernet NIC Mediator Declarations
+// EPOS ML310 Intel PRO/100 (i82559) Ethernet NIC Mediator Declarations
 
 #ifndef __e100_h
 #define __e100_h

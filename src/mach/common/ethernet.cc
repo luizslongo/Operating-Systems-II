@@ -1,4 +1,4 @@
-// EPOS-- Ethernet Mediator Common Package Implementation
+// EPOS Ethernet Mediator Common Package Implementation
 
 #include <ethernet.h>
 

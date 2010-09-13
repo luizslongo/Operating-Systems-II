@@ -1,4 +1,4 @@
-// EPOS-- AVR UART Mediator Common Declarations
+// EPOS AVR UART Mediator Common Declarations
 
 #ifndef __avr_uart_h
 #define __avr_uart_h

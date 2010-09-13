@@ -1,4 +1,4 @@
-// EPOS-- ATMega128 IC Mediator Implementation
+// EPOS ATMega128 IC Mediator Implementation
 
 #include <mach/atmega128/ic.h>
 

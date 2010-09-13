@@ -1,4 +1,4 @@
-// EPOS-- AVR8 CPU Mediator Implementation
+// EPOS AVR8 CPU Mediator Implementation
 
 #include <arch/avr8/cpu.h>
 

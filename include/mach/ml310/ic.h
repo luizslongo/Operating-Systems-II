@@ -1,4 +1,4 @@
-// EPOS-- ML310 Interrupt Controller Mediator Declarations
+// EPOS ML310 Interrupt Controller Mediator Declarations
 
 #ifndef __ml310_ic_h
 #define __ml310_ic_h

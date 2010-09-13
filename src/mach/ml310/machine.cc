@@ -1,4 +1,4 @@
-// EPOS-- ML310 Mediator Implementation
+// EPOS ML310 Mediator Implementation
 
 #include <mach/ml310/machine.h>
 

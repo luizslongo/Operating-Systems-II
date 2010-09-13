@@ -1,4 +1,4 @@
-// EPOS-- RTC Mediator Common Package Implementation
+// EPOS RTC Mediator Common Package Implementation
 
 #include <rtc.h>
 

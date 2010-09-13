@@ -1,4 +1,4 @@
-// EPOS-- PC Mediators Configuration
+// EPOS PC Mediators Configuration
 
 #ifndef __pc_config_h
 #define __pc_config_h

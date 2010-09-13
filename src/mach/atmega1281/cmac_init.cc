@@ -1,4 +1,4 @@
-// EPOS-- CMAC Init
+// EPOS CMAC Init
 #include <machine.h>
 #include <mach/atmega1281/cmac.h>
 #include <alarm.h>

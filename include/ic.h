@@ -1,4 +1,4 @@
-// EPOS-- IC Mediator Common Package
+// EPOS IC Mediator Common Package
 
 #ifndef __ic_h
 #define __ic_h

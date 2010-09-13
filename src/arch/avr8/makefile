@@ -1,4 +1,4 @@
-# EPOS-- AVR8 Architecture Makefile
+# EPOS AVR8 Architecture Makefile
 
 include ../../../makedefs
 

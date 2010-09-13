@@ -1,4 +1,4 @@
-// EPOS-- Spin Lock Utility Declarations
+// EPOS Spin Lock Utility Declarations
 
 #ifndef __spin_h
 #define __spin_h

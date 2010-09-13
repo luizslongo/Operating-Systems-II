@@ -1,4 +1,4 @@
-// EPOS-- PPC32 CPU Mediator Implementation
+// EPOS PPC32 CPU Mediator Implementation
 
 #include <arch/ppc32/cpu.h>
 

@@ -1,4 +1,4 @@
-// EPOS-- Display Mediator Common Package
+// EPOS Display Mediator Common Package
 
 #ifndef __display_h
 #define __display_h

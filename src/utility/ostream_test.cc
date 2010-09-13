@@ -1,4 +1,4 @@
-// EPOS-- OStream Utility Test Program
+// EPOS OStream Utility Test Program
 
 #include <utility/ostream.h>
 

@@ -1,4 +1,4 @@
-// EPOS-- AT90CAN128 Mediators Configuration
+// EPOS AT90CAN128 Mediators Configuration
 
 #ifndef __at90can128_config_h
 #define __at90can128_config_h

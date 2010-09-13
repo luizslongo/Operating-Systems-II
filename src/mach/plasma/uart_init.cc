@@ -1,4 +1,4 @@
-// EPOS-- PLASMA UART Mediator Initialization
+// EPOS PLASMA UART Mediator Initialization
 
 #include <machine.h>
 

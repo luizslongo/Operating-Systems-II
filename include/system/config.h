@@ -1,4 +1,4 @@
-// EPOS-- Configuration Engine
+// EPOS Configuration Engine
 
 #ifndef __config_h
 #define __config_h

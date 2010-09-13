@@ -1,4 +1,4 @@
-// EPOS-- ATMega128 Timer Mediator Declarations
+// EPOS ATMega128 Timer Mediator Declarations
 
 #ifndef __atmega128_timer_h
 #define __atmega128_timer_h

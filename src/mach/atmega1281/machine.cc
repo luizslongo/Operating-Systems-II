@@ -1,4 +1,4 @@
-// EPOS-- ATMega1281 Mediator Implementation
+// EPOS ATMega1281 Mediator Implementation
 
 #include <mach/atmega1281/machine.h>
 

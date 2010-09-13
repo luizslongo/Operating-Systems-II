@@ -1,4 +1,4 @@
-// EPOS-- AVR8 MMU Mediator Implementation
+// EPOS AVR8 MMU Mediator Implementation
 
 #include <mmu.h>
 

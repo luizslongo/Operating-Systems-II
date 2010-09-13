@@ -1,4 +1,4 @@
-// EPOS-- Observer Utility Declarations
+// EPOS Observer Utility Declarations
 
 #ifndef __observer_h
 #define	__observer_h

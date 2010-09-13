@@ -1,4 +1,4 @@
-# EPOS-- Init Makefile
+# EPOS Init Makefile
 
 include ../../makedefs
 

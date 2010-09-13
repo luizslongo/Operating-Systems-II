@@ -1,4 +1,4 @@
-// EPOS-- ATMega128 Sensor Mediator Declarations
+// EPOS ATMega128 Sensor Mediator Declarations
 
 #ifndef __atmega128_sensor_h
 #define __atmega128_sensor_h

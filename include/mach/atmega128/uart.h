@@ -1,4 +1,4 @@
-// EPOS-- ATMega128 UART Mediator Declarations
+// EPOS ATMega128 UART Mediator Declarations
 
 #ifndef __atmega128_uart_h
 #define __atmega128_uart_h

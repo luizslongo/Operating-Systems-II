@@ -1,4 +1,4 @@
-// EPOS-- PC PCI Mediator
+// EPOS PC PCI Mediator
 
 #ifndef __pc_pci_h
 #define __pc_pci_h

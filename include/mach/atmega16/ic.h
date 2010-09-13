@@ -1,4 +1,4 @@
-// EPOS-- ATMega16 Interrupt Controller Mediator Declarations
+// EPOS ATMega16 Interrupt Controller Mediator Declarations
 
 #ifndef __atmega16_ic_h
 #define __atmega16_ic_h

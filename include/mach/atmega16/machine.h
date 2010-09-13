@@ -1,4 +1,4 @@
-// EPOS-- ATMega16 Mediator Declarations
+// EPOS ATMega16 Mediator Declarations
 
 #ifndef __atmega16_h
 #define __atmega16_h

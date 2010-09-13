@@ -1,4 +1,4 @@
-// EPOS-- IA32 Test Program
+// EPOS IA32 Test Program
 
 #include <utility/ostream.h>
 #include <cpu.h>

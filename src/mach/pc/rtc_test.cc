@@ -1,4 +1,4 @@
-// EPOS-- PC_RTC Test Program
+// EPOS PC_RTC Test Program
 
 #include <utility/ostream.h>
 #include <display.h>

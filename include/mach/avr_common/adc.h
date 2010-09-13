@@ -1,4 +1,4 @@
-// EPOS-- AVR ADC Common Declarations
+// EPOS AVR ADC Common Declarations
 
 #include <tsc.h>
 #include <adc.h>

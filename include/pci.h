@@ -1,4 +1,4 @@
-// EPOS-- PCI Mediator Common Package
+// EPOS PCI Mediator Common Package
 
 #ifndef __pci_h
 #define __pci_h

@@ -1,4 +1,4 @@
-// EPOS-- PC Mediator Implementation
+// EPOS PC Mediator Implementation
 
 #include <mach/pc/machine.h>
 

@@ -1,4 +1,4 @@
-// EPOS-- ATMega1281 NIC Mediator Initialization
+// EPOS ATMega1281 NIC Mediator Initialization
 
 #include <system/kmalloc.h>
 #include <mach/atmega1281/machine.h>

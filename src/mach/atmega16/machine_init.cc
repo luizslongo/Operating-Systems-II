@@ -1,4 +1,4 @@
-// EPOS-- ATMega16 Mediator Initialization
+// EPOS ATMega16 Mediator Initialization
 
 #include <machine.h>
 #include <system.h>

@@ -1,4 +1,4 @@
-// EPOS-- Heap Utility Implementation
+// EPOS Heap Utility Implementation
 
 #include <utility/heap.h>
 #include <machine.h>

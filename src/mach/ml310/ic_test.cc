@@ -1,4 +1,4 @@
-// EPOS-- ML310_IC Test Program
+// EPOS ML310_IC Test Program
 
 #include <utility/ostream.h>
 #include <ic.h>

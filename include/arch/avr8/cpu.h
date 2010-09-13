@@ -1,4 +1,4 @@
-// EPOS-- AVR8 CPU Mediator Declarations 
+// EPOS AVR8 CPU Mediator Declarations 
 
 #ifndef __avr8_h
 #define __avr8_h

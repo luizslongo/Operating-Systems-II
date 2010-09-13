@@ -1,4 +1,4 @@
-// EPOS-- ATMega1281 Test Program
+// EPOS ATMega1281 Test Program
 
 #include <utility/ostream.h>
 #include <machine.h>

@@ -1,4 +1,4 @@
-// EPOS-- Global Application Abstraction Declarations
+// EPOS Global Application Abstraction Declarations
 
 #ifndef __application_h
 #define __application_h

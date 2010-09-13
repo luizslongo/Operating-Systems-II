@@ -1,4 +1,4 @@
-// EPOS-- PC Interrupt Controller Initialization
+// EPOS PC Interrupt Controller Initialization
 
 #include <cpu.h>
 #include <ic.h>

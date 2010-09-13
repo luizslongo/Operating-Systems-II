@@ -1,4 +1,4 @@
-// EPOS-- PLASMA_IC Implementation
+// EPOS PLASMA_IC Implementation
 
 #include <mach/plasma/machine.h>
 #include <mach/plasma/ic.h>

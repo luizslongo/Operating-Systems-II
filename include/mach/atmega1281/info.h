@@ -1,4 +1,4 @@
-// EPOS-- ATMega1281 Run-Time System Information
+// EPOS ATMega1281 Run-Time System Information
 
 #ifndef __atmega1281_info_h
 #define __atmega1281_info_h

@@ -1,4 +1,4 @@
-// EPOS-- ATMega16 NIC Mediator Declarations
+// EPOS ATMega16 NIC Mediator Declarations
 
 #ifndef __at90can128_nic_h
 #define __at90can128_nic_h

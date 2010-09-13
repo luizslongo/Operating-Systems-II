@@ -1,4 +1,4 @@
-// EPOS-- Flash Mediator Common Package
+// EPOS Flash Mediator Common Package
 
 #ifndef __flash
 #define __flash

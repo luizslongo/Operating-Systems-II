@@ -1,4 +1,4 @@
-// EPOS-- CAN Mediator Common Package
+// EPOS CAN Mediator Common Package
 
 #ifndef __can_h
 #define __can_h

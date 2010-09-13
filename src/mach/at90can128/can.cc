@@ -1,4 +1,4 @@
-// EPOS-- AT90CAN128_CAN Implementation
+// EPOS AT90CAN128_CAN Implementation
 
 
 #include <machine.h>

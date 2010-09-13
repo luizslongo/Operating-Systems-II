@@ -1,4 +1,4 @@
-# EPOS-- Architecture Mediators Makefile
+# EPOS Architecture Mediators Makefile
 
 include	../../makedefs
 

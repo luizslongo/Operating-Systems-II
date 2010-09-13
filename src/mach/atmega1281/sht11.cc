@@ -1,4 +1,4 @@
-// EPOS-- SHT11 Sensor Implementation
+// EPOS SHT11 Sensor Implementation
 
 #include <mach/atmega1281/sht11.h>
 #include <alarm.h>

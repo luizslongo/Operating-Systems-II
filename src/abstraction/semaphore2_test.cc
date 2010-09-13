@@ -1,4 +1,4 @@
-// EPOS-- Semaphore Abstraction Test Program 2
+// EPOS Semaphore Abstraction Test Program 2
 
 #include <utility/ostream.h>
 #include <utility/random.h>

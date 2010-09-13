@@ -1,4 +1,4 @@
-// EPOS-- CPU Mediator Common Package
+// EPOS CPU Mediator Common Package
 
 #ifndef __cpu_h
 #define __cpu_h

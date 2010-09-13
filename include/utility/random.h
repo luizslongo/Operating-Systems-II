@@ -1,4 +1,4 @@
-// EPOS-- Random Number Generator Utility Declarations
+// EPOS Random Number Generator Utility Declarations
 
 #ifndef __random_h
 #define __random_h

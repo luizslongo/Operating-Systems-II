@@ -1,4 +1,4 @@
-// EPOS-- PC_Timer Test Program
+// EPOS PC_Timer Test Program
 
 #include <utility/ostream.h>
 #include <machine.h>

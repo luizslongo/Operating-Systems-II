@@ -1,4 +1,4 @@
-// EPOS-- CC1000 Mediator Implementation
+// EPOS CC1000 Mediator Implementation
 
 #include <mach/avr_common/cc1000/cc1000.h>
 

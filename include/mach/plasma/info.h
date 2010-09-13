@@ -1,4 +1,4 @@
-// EPOS-- PLASMA Run-Time System Information
+// EPOS PLASMA Run-Time System Information
 // Cancian
 
 #ifndef __plasma_info_h

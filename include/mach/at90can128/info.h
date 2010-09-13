@@ -1,4 +1,4 @@
-// EPOS-- ATMega128 Run-Time System Information
+// EPOS ATMega128 Run-Time System Information
 
 #ifndef __at90can128_info_h
 #define __at90can128_info_h

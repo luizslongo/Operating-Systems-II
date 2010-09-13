@@ -1,4 +1,4 @@
-// EPOS-- AT90CAN128_UART Implementation
+// EPOS AT90CAN128_UART Implementation
 
 #include <mach/at90can128/uart.h>
 

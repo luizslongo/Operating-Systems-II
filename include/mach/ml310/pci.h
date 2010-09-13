@@ -1,4 +1,4 @@
-// EPOS-- ML310 PCI Mediator
+// EPOS ML310 PCI Mediator
 
 #ifndef __ml310_pci_h
 #define __ml310_pci_h

@@ -1,4 +1,4 @@
-// EPOS-- Vector Utility Test Program
+// EPOS Vector Utility Test Program
 
 #include <utility/ostream.h>
 #include <utility/malloc.h>

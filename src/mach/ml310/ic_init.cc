@@ -1,4 +1,4 @@
-// EPOS-- ML310_IC Initialization
+// EPOS ML310_IC Initialization
 
 #include <machine.h>
 

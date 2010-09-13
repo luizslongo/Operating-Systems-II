@@ -1,4 +1,4 @@
-// EPOS-- ML310 Test Program
+// EPOS ML310 Test Program
 
 #include <utility/ostream.h>
 #include <machine.h>

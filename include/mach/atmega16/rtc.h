@@ -1,4 +1,4 @@
-// EPOS-- ATMega16 RTC Mediator Declarations
+// EPOS ATMega16 RTC Mediator Declarations
 
 #ifndef __atmega16_rtc_h
 #define __atmega16_rtc_h

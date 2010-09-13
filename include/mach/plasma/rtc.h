@@ -1,4 +1,4 @@
-// EPOS-- PLASMA_RTC Declarations
+// EPOS PLASMA_RTC Declarations
 
 #ifndef __plasma_rtc_h
 #define __plasma_rtc_h

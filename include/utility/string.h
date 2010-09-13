@@ -1,4 +1,4 @@
-// EPOS-- String Utility Declarations
+// EPOS String Utility Declarations
 
 #ifndef __string_h
 #define __string_h

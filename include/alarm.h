@@ -1,4 +1,4 @@
-// EPOS-- Alarm Abstraction Declarations
+// EPOS Alarm Abstraction Declarations
 
 #ifndef __alarm_h
 #define __alarm_h

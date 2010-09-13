@@ -1,4 +1,4 @@
-// EPOS-- ATMega16 Timer Mediator Declarations
+// EPOS ATMega16 Timer Mediator Declarations
 
 #ifndef __atmega16_timer_h
 #define __atmega16_timer_h

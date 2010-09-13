@@ -1,4 +1,4 @@
-// EPOS-- Periodic Thread Abstraction Test Program
+// EPOS Periodic Thread Abstraction Test Program
 
 #include <utility/ostream.h>
 #include <periodic_thread.h>

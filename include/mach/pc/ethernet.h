@@ -1,4 +1,4 @@
-// EPOS-- PC NIC Mediator Declarations
+// EPOS PC NIC Mediator Declarations
 
 #ifndef __pc_nic_h
 #define __pc_nic_h

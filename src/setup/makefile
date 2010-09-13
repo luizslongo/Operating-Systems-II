@@ -1,4 +1,4 @@
-# EPOS-- Setup Makefile
+# EPOS Setup Makefile
 
 include ../../makedefs
 

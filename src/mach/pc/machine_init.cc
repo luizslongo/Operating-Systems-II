@@ -1,4 +1,4 @@
-// EPOS-- PC Mediator Initialization
+// EPOS PC Mediator Initialization
 
 #include <machine.h>
 

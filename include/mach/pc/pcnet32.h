@@ -1,4 +1,4 @@
-// EPOS-- PC AMD PCNet II (Am79C970A) Ethernet NIC Mediator Declarations
+// EPOS PC AMD PCNet II (Am79C970A) Ethernet NIC Mediator Declarations
 
 #ifndef __pcnet32_h
 #define __pcnet32_h

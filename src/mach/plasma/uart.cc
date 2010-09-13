@@ -1,4 +1,4 @@
-// EPOS-- PLASMA UART Mediator Implementation
+// EPOS PLASMA UART Mediator Implementation
 
 #include <mach/plasma/uart.h>
 

@@ -1,4 +1,4 @@
-// EPOS-- Queue Utility Declarations
+// EPOS Queue Utility Declarations
 
 // Queue is a traditional queue, with insertions at the tail
 // and removals either from the head or from specific objects 

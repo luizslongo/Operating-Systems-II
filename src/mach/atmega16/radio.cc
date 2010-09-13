@@ -1,3 +1,3 @@
-// EPOS-- ATMega16 Radio (CC1000) NIC Mediator Implementation
+// EPOS ATMega16 Radio (CC1000) NIC Mediator Implementation
 
 

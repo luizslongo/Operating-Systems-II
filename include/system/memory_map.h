@@ -1,4 +1,4 @@
-// EPOS-- Memory Map
+// EPOS Memory Map
 
 #ifndef __memory_map_h
 #define __memory_map_h

@@ -1,4 +1,4 @@
-// EPOS-- Queue Utility Test Program
+// EPOS Queue Utility Test Program
 
 #include <utility/ostream.h>
 #include <utility/queue.h>

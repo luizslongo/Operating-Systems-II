@@ -1,4 +1,4 @@
-// EPOS-- ML310 Timer Mediator Implementation
+// EPOS ML310 Timer Mediator Implementation
 
 #include <mach/ml310/timer.h>
 

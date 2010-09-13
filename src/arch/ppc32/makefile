@@ -1,4 +1,4 @@
-# EPOS-- PPC32 Architecture Makefile
+# EPOS PPC32 Architecture Makefile
 
 include ../../../makedefs
 

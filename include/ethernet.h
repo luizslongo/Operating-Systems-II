@@ -1,4 +1,4 @@
-// EPOS-- Ethernet Mediator Common Package
+// EPOS Ethernet Mediator Common Package
 
 #include <nic.h>
 

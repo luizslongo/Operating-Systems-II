@@ -1,4 +1,4 @@
-// EPOS-- PPC32 MMU Mediator Implementation
+// EPOS PPC32 MMU Mediator Implementation
 
 #include <arch/ppc32/mmu.h>
 

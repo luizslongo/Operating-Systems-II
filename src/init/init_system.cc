@@ -1,4 +1,4 @@
-// EPOS-- System Initializer
+// EPOS System Initializer
 
 #include <machine.h>
 #include <system.h>

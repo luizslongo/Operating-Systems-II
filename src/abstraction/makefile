@@ -1,4 +1,4 @@
-# EPOS-- Abstractions Makefile
+# EPOS Abstractions Makefile
 
 include ../../makedefs
 

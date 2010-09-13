@@ -1,4 +1,4 @@
-// EPOS-- PC AMD PCNet II (Am79C970A) Ethernet NIC Mediator Initialization
+// EPOS PC AMD PCNet II (Am79C970A) Ethernet NIC Mediator Initialization
 
 #include <system/kmalloc.h>
 #include <mach/pc/machine.h>

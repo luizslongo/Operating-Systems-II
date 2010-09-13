@@ -1,4 +1,4 @@
-// EPOS-- PLASMA UART Mediator Declarations
+// EPOS PLASMA UART Mediator Declarations
 
 #ifndef __plasma_uart_h
 #define __plasma_uart_h

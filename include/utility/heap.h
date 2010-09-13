@@ -1,4 +1,4 @@
-// EPOS-- Heap Utility Declarations
+// EPOS Heap Utility Declarations
 
 #ifndef __heap_h
 #define __heap_h

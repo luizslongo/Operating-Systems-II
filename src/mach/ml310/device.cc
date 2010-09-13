@@ -1,4 +1,4 @@
-// EPOS-- ML310 Device Common Package Implementation
+// EPOS ML310 Device Common Package Implementation
 
 #include <mach/ml310/machine.h>
 #include <mach/ml310/device.h>

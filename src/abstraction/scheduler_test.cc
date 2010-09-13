@@ -1,4 +1,4 @@
-// EPOS-- Scheduler Test Program
+// EPOS Scheduler Test Program
 
 #include <utility/ostream.h>
 #include <machine.h>

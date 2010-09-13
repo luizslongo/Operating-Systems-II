@@ -1,4 +1,4 @@
-// EPOS-- PC Device Common Package Implementation
+// EPOS PC Device Common Package Implementation
 
 #include <mach/pc/machine.h>
 #include <mach/pc/device.h>

@@ -1,4 +1,4 @@
-// EPOS-- ELF Declarations from GCC/Linux
+// EPOS ELF Declarations from GCC/Linux
 
 #ifndef __elf_linux_h
 #define	__elf_linux_h

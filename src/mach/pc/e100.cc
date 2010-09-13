@@ -1,4 +1,4 @@
-// EPOS-- PC Intel PRO/100 (i82559) Ethernet NIC Mediator Implementation
+// EPOS PC Intel PRO/100 (i82559) Ethernet NIC Mediator Implementation
 
 #include <mach/pc/machine.h>
 #include <mach/pc/e100.h>

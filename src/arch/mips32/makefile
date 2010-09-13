@@ -1,4 +1,4 @@
-# EPOS-- MIPS32 Architecture Makefile
+# EPOS MIPS32 Architecture Makefile
 
 include ../../../makedefs
 

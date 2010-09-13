@@ -1,4 +1,4 @@
-// EPOS-- PC SETUP
+// EPOS PC SETUP
 
 #include <utility/elf.h>
 #include <utility/string.h>

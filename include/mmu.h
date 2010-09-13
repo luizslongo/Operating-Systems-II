@@ -1,4 +1,4 @@
-// EPOS-- MMU Mediator Common Package
+// EPOS MMU Mediator Common Package
 
 #ifndef __mmu_h
 #define __mmu_h

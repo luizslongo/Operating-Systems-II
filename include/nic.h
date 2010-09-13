@@ -1,4 +1,4 @@
-// EPOS-- Network Interface Mediator Common Package
+// EPOS Network Interface Mediator Common Package
 
 #ifndef __nic_h
 #define __nic_h

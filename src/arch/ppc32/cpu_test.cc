@@ -1,4 +1,4 @@
-// EPOS-- PPC32 Test Program
+// EPOS PPC32 Test Program
 
 #include <utility/ostream.h>
 #include <cpu.h>

@@ -1,4 +1,4 @@
-// EPOS-- PC PCI Mediator
+// EPOS PC PCI Mediator
 
 #include <pci.h>
 #include <system.h>

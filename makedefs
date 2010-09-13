@@ -1,4 +1,4 @@
-# EPOS-- Makefile Definitions
+# EPOS Makefile Definitions
 
 # Supported software architectures
 MODE_KERNEL	:= kernel
@@ -285,6 +285,7 @@ TOUCH		= touch
 
 TEE		= tee
 
+#QEMU		= qemu -nographic -smp 8 -no-reboot -net none -fda
 QEMU		= qemu -no-reboot -serial stdio -net nic,model=pcnet -fda
 
 # Rules

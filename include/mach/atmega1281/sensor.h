@@ -1,4 +1,4 @@
-// EPOS-- ATMega1281 Sensor Mediator Declarations
+// EPOS ATMega1281 Sensor Mediator Declarations
 
 #ifndef __atmega1281_sensor_h
 #define __atmega1281_sensor_h

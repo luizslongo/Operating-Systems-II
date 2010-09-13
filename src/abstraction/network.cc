@@ -1,4 +1,4 @@
-// EPOS-- Network Abstraction Implementation
+// EPOS Network Abstraction Implementation
 
 #include <nic.h>
 #include <network.h>

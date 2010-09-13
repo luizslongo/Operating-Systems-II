@@ -1,4 +1,4 @@
-// EPOS-- PLASMA_IC Initialization
+// EPOS PLASMA_IC Initialization
 
 #include <machine.h>
 

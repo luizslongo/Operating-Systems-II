@@ -1,4 +1,4 @@
-// EPOS-- IA32 MMU Mediator Implementation
+// EPOS IA32 MMU Mediator Implementation
 
 #include <arch/ia32/mmu.h>
 

@@ -1,4 +1,4 @@
-// EPOS-- Thread Test Program
+// EPOS Thread Test Program
 
 #include <utility/ostream.h>
 #include <thread.h>

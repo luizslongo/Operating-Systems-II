@@ -1,4 +1,4 @@
-# EPOS-- Image Makefile
+# EPOS Image Makefile
 
 include	../makedefs
 

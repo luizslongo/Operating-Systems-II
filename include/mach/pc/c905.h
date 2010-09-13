@@ -1,4 +1,4 @@
-// EPOS-- PC 3COM c905 Ethernet NIC Mediator Declarations
+// EPOS PC 3COM c905 Ethernet NIC Mediator Declarations
 
 #ifndef __c905_h
 #define __c905_h

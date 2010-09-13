@@ -1,4 +1,4 @@
-// EPOS-- Low-power Radio Mediator Common Package
+// EPOS Low-power Radio Mediator Common Package
 
 #include <nic.h>
 #include <utility/string.h>

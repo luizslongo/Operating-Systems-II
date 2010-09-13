@@ -1,4 +1,4 @@
-# EPOS-- AT90CAN128 Machine Makefile
+# EPOS AT90CAN128 Machine Makefile
 
 include ../../../makedefs
 

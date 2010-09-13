@@ -1,4 +1,4 @@
-// EPOS-- PC NIC Mediator Initialization
+// EPOS PC NIC Mediator Initialization
 
 #include <mach/pc/nic.h>
 

@@ -1,4 +1,4 @@
-// EPOS-- AT90CAN128_Sensor Declarations
+// EPOS AT90CAN128_Sensor Declarations
 
 #ifndef __at90can128_sensor_h
 #define __at90can128_sensor_h

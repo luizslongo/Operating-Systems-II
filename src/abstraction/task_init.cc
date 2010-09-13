@@ -1,4 +1,4 @@
-// EPOS-- Task Abstraction Initialization
+// EPOS Task Abstraction Initialization
 
 #include <utility/elf.h>
 #include <system.h>

@@ -1,4 +1,4 @@
-// EPOS-- ATMega128 ADC Mediator Declarations
+// EPOS ATMega128 ADC Mediator Declarations
 
 #ifndef __atmega128_adc_h
 #define __atmega128_adc_h

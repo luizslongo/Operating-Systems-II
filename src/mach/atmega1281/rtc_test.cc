@@ -1,4 +1,4 @@
-// EPOS-- ATMega1281_Timer Test Program
+// EPOS ATMega1281_Timer Test Program
 
 #include <utility/ostream.h>
 #include <rtc.h>

@@ -1,4 +1,4 @@
-// EPOS-- Run-Time System Information
+// EPOS Run-Time System Information
 
 #ifndef __info_h
 #define __info_h

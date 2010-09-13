@@ -1,4 +1,4 @@
-// EPOS-- PC UART Mediator Test Program
+// EPOS PC UART Mediator Test Program
 
 #include <utility/ostream.h>
 #include <uart.h>

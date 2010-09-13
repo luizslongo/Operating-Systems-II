@@ -1,4 +1,4 @@
-// EPOS-- PLASMA Interrupt Controller Mediator Declarations
+// EPOS PLASMA Interrupt Controller Mediator Declarations
 
 #ifndef __plasma_ic_h
 #define __plasma_ic_h

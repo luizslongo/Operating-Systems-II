@@ -1,4 +1,4 @@
-// EPOS-- ATMega16_IC Test Program
+// EPOS ATMega16_IC Test Program
 
 #include <utility/ostream.h>
 #include <rtc.h>

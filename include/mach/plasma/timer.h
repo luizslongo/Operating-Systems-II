@@ -1,4 +1,4 @@
-// EPOS-- PLASMA Timer Mediator Declarations
+// EPOS PLASMA Timer Mediator Declarations
 
 #ifndef __plasma_timer_h
 #define __plasma_timer_h

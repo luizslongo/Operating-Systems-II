@@ -1,4 +1,4 @@
-// EPOS-- AT90CAN128_IC Test Program
+// EPOS AT90CAN128_IC Test Program
 
 #include <utility/ostream.h>
 #include <ic.h>

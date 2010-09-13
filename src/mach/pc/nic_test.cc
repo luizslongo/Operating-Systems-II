@@ -1,4 +1,4 @@
-// EPOS-- PC NIC Mediator Test
+// EPOS PC NIC Mediator Test
 
 #include <nic.h>
 

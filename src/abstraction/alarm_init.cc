@@ -1,4 +1,4 @@
-// EPOS-- Alarm Abstraction Initialization
+// EPOS Alarm Abstraction Initialization
 
 #include <system/kmalloc.h>
 #include <alarm.h>

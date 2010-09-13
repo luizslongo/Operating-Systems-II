@@ -1,4 +1,4 @@
-// EPOS-- CC1000 Radio Tranceiver Mediator
+// EPOS CC1000 Radio Tranceiver Mediator
 
 #ifndef __cc1000_h
 #define __cc1000_h

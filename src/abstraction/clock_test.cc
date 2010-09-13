@@ -1,4 +1,4 @@
-// EPOS-- Clock Abstraction Test Program
+// EPOS Clock Abstraction Test Program
 
 #include <utility/ostream.h>
 #include <clock.h>

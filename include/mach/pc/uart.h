@@ -1,4 +1,4 @@
-// EPOS-- PC UART Mediator Declarations
+// EPOS PC UART Mediator Declarations
 
 #ifndef __pc_uart_h
 #define __pc_uart_h

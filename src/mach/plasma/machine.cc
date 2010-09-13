@@ -1,5 +1,5 @@
 
-// EPOS-- PLASMA Mediator Implementation
+// EPOS PLASMA Mediator Implementation
 
 #include <mach/plasma/machine.h>
 

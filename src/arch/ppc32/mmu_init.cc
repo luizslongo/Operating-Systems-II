@@ -1,4 +1,4 @@
-// EPOS-- PPC32 MMU Mediator Initialization
+// EPOS PPC32 MMU Mediator Initialization
 
 #include <mmu.h>
 #include <system.h>

@@ -1,4 +1,4 @@
-// EPOS-- Serial Display Mediator Implementation
+// EPOS Serial Display Mediator Implementation
 
 #include <display.h>
 

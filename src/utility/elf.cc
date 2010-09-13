@@ -1,4 +1,4 @@
-// EPOS-- ELF Utility Implementation
+// EPOS ELF Utility Implementation
 
 #include <utility/elf.h>
 #include <utility/string.h>

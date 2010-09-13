@@ -1,4 +1,4 @@
-// EPOS-- AVR EEPROM Mediator Common Declarations
+// EPOS AVR EEPROM Mediator Common Declarations
 
 #ifndef __avr_eeprom_h
 #define __avr_eeprom_h

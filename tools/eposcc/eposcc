@@ -318,7 +318,7 @@ if [ $need_compile = 1 -a ! -f "$key_file" ] ; then
     need_analyze=1
 fi
 
-# disabled for EPOS--
+# disabled for EPOS
 if [ $need_analyze = 5 ] ; then
     analyze_flgs=$compile_flgs
 

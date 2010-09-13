@@ -1,4 +1,4 @@
-// EPOS-- PLASMA Mediators Configuration
+// EPOS PLASMA Mediators Configuration
 
 #ifndef __plasma_config_h
 #define __plasma_config_h

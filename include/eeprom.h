@@ -1,4 +1,4 @@
-// EPOS-- EEPROM Mediator Common Package
+// EPOS EEPROM Mediator Common Package
 
 #ifndef __eeprom_h
 #define __eeprom_h

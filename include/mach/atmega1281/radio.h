@@ -1,4 +1,4 @@
-// EPOS-- ATMega1281 Radio (AT86RF230) NIC Mediator Declarations
+// EPOS ATMega1281 Radio (AT86RF230) NIC Mediator Declarations
 
 #ifndef __at86rf230_nic_h
 #define __at86rf230_nic_h

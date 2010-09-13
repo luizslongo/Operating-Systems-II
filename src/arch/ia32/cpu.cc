@@ -1,4 +1,4 @@
-// EPOS-- IA32 CPU Mediator Implementation
+// EPOS IA32 CPU Mediator Implementation
 
 #include <arch/ia32/cpu.h>
 

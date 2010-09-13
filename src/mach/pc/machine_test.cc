@@ -1,4 +1,4 @@
-// EPOS-- PC Test Program
+// EPOS PC Test Program
 
 #include <utility/ostream.h>
 #include <machine.h>

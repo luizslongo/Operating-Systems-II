@@ -1,4 +1,4 @@
-// EPOS-- PPC32 MMU Mediator Declarations
+// EPOS PPC32 MMU Mediator Declarations
 
 #ifndef __ppc32_mmu_h
 #define __ppc32_mmu_h

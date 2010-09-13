@@ -1,4 +1,4 @@
-// EPOS-- Observer Utility Implementation
+// EPOS Observer Utility Implementation
 
 #include <utility/debug.h>
 #include <utility/malloc.h>

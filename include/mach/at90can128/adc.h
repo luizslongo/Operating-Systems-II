@@ -1,4 +1,4 @@
-// EPOS-- ATMega1281 ADC Mediator Declarations
+// EPOS ATMega1281 ADC Mediator Declarations
 
 #ifndef __at90can128_adc_h
 #define __at90can128_adc_h

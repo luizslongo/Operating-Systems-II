@@ -1,4 +1,4 @@
-// EPOS-- PLASMA NULL NIC Mediator Initialization
+// EPOS PLASMA NULL NIC Mediator Initialization
 
 #include <system/kmalloc.h>
 #include <mach/plasma/machine.h>

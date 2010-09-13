@@ -1,4 +1,4 @@
-// EPOS-- AVR8 TSC Mediator Declarations
+// EPOS AVR8 TSC Mediator Declarations
 
 #ifndef __avr8_tsc_h
 #define __avr8_tsc_h

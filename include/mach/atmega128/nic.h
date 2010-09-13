@@ -1,4 +1,4 @@
-// EPOS-- ATMega128 NIC Mediator Declarations
+// EPOS ATMega128 NIC Mediator Declarations
 
 #ifndef __atmega128_nic_h
 #define __atmega128_nic_h

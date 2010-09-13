@@ -1,4 +1,4 @@
-// EPOS-- UART Mediator Common Package
+// EPOS UART Mediator Common Package
 
 #ifndef __uart_h
 #define __uart_h

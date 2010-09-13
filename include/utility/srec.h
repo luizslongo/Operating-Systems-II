@@ -1,4 +1,4 @@
-// EPOS-- SREC Utility Declarations
+// EPOS SREC Utility Declarations
 
 #ifndef __srec_h
 #define	__srec_h 1

@@ -1,4 +1,4 @@
-# EPOS-- Utilities Makefile
+# EPOS Utilities Makefile
 
 include ../..//makedefs
 

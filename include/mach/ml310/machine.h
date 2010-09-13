@@ -1,4 +1,4 @@
-// EPOS-- ML310 Mediator Declarations
+// EPOS ML310 Mediator Declarations
 
 #ifndef __ml310_h
 #define __ml310_h

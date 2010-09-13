@@ -1,4 +1,4 @@
-// EPOS-- ATMega16_Timer Test Program
+// EPOS ATMega16_Timer Test Program
 
 // This work is licensed under the Creative Commons 
 // Attribution-NonCommercial-NoDerivs License. To view a copy of this license, 

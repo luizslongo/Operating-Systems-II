@@ -1,4 +1,4 @@
-// EPOS-- ATMega16 Run-Time System Information
+// EPOS ATMega16 Run-Time System Information
 
 #ifndef __atmega16_info_h
 #define __atmega16_info_h

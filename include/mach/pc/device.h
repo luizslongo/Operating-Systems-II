@@ -1,4 +1,4 @@
-// EPOS-- PC Device Common Package Declarations
+// EPOS PC Device Common Package Declarations
 
 #ifndef __pc_device_h
 #define __pc_device_h

@@ -1,4 +1,4 @@
-// EPOS-- IA32 CPU Mediator Declarations
+// EPOS IA32 CPU Mediator Declarations
 
 #ifndef __ia32_h
 #define __ia32_h

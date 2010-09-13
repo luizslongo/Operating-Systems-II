@@ -1,4 +1,4 @@
-// EPOS-- PC RTC Mediator Implementation
+// EPOS PC RTC Mediator Implementation
 
 #include <mach/pc/rtc.h>
 

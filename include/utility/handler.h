@@ -1,4 +1,4 @@
-// EPOS-- Handler Utility Declarations
+// EPOS Handler Utility Declarations
 
 #ifndef __handler_h
 #define __handler_h

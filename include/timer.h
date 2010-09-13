@@ -1,4 +1,4 @@
-// EPOS-- Timer Mediator Common Package
+// EPOS Timer Mediator Common Package
 
 #ifndef __timer_h
 #define __timer_h

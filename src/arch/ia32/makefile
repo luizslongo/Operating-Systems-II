@@ -1,4 +1,4 @@
-# EPOS-- IA32 Architecture Makefile
+# EPOS IA32 Architecture Makefile
 
 include ../../../makedefs
 

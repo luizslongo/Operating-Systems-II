@@ -1,4 +1,4 @@
-// EPOS-- PC Timer Mediator Implementation
+// EPOS PC Timer Mediator Implementation
 
 #include <machine.h>
 #include <timer.h>

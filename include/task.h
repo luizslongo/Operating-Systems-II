@@ -1,4 +1,4 @@
-// EPOS-- Task Abstraction Declarations
+// EPOS Task Abstraction Declarations
 
 #ifndef __task_h
 #define __task_h

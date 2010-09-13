@@ -1,4 +1,4 @@
-// EPOS-- AT90CAN128 Test Program
+// EPOS AT90CAN128 Test Program
 
 #include <utility/ostream.h>
 #include <machine.h>

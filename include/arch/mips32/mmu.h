@@ -1,4 +1,4 @@
-// EPOS-- MIPS32 MMU Mediator Declarations
+// EPOS MIPS32 MMU Mediator Declarations
 
 #ifndef __mips32_mmu_h
 #define __mips32_mmu_h

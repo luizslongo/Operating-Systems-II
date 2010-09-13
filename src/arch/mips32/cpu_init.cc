@@ -1,4 +1,4 @@
-// EPOS-- MIPS32 CPU Mediator Initialization
+// EPOS MIPS32 CPU Mediator Initialization
 
 #include <cpu.h>
 #include <mmu.h>

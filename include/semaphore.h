@@ -1,4 +1,4 @@
-// EPOS-- Semaphore Abstraction Declarations
+// EPOS Semaphore Abstraction Declarations
 
 #ifndef __semaphore_h
 #define __semaphore_h

@@ -1,4 +1,4 @@
-// EPOS-- Hash Utility Declarations
+// EPOS Hash Utility Declarations
 
 #ifndef __hash_h
 #define	__hash_h

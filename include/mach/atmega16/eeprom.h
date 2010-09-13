@@ -1,4 +1,4 @@
-// EPOS-- ATMega16 EEPROM Mediator Declarations
+// EPOS ATMega16 EEPROM Mediator Declarations
 
 #ifndef __atmega16_eeprom_h
 #define __atmega16_eeprom_h

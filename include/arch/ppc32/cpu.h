@@ -1,4 +1,4 @@
-// EPOS-- PPC32 CPU Mediator Declarations
+// EPOS PPC32 CPU Mediator Declarations
 
 #ifndef __ppc32_h
 #define __ppc32_h

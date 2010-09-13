@@ -1,4 +1,4 @@
-// EPOS-- AT90CAN128 Initialization
+// EPOS AT90CAN128 Initialization
 
 #include <machine.h>
 #include <system.h>

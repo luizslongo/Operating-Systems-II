@@ -1,4 +1,4 @@
-// EPOS-- SPI Mediator Common Package
+// EPOS SPI Mediator Common Package
 
 #ifndef __spi_h
 #define __spi_h

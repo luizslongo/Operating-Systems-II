@@ -1,4 +1,4 @@
-// EPOS-- ELF Utility Declarations
+// EPOS ELF Utility Declarations
 
 #ifndef __elf_h
 #define	__elf_h

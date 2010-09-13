@@ -1,4 +1,4 @@
-// EPOS-- PLASMA Timer Mediator Implementation
+// EPOS PLASMA Timer Mediator Implementation
 
 #include <mach/plasma/timer.h>
 

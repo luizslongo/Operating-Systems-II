@@ -1,4 +1,4 @@
-// EPOS-- PLASMA Mediator Declarations
+// EPOS PLASMA Mediator Declarations
 
 #ifndef __plasma_h
 #define __plasma_h

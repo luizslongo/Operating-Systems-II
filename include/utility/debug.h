@@ -1,4 +1,4 @@
-// EPOS-- Debug Utility Declarations
+// EPOS Debug Utility Declarations
 
 #ifndef __debug_h
 #define __debug_h 

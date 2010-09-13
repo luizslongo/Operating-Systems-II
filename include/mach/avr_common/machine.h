@@ -1,4 +1,4 @@
-// EPOS-- AVR Machine Common Declarations
+// EPOS AVR Machine Common Declarations
 
 #ifndef __avr_machine_h
 #define __avr_machine_h

@@ -1,4 +1,4 @@
-# EPOS-- ATMega16 Machine Makefile
+# EPOS ATMega16 Machine Makefile
 
 include ../../../makedefs
 

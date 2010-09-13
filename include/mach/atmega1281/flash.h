@@ -1,4 +1,4 @@
-// EPOS-- ATMega1281 Flash Mediator Declarations
+// EPOS ATMega1281 Flash Mediator Declarations
 
 #ifndef __atmega1281_flash_h
 #define __atmega1281_flash_h

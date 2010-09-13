@@ -1,4 +1,4 @@
-// EPOS-- IA32_TSC Test Program
+// EPOS IA32_TSC Test Program
 
 #include <utility/ostream.h>
 #include <tsc.h>

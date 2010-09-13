@@ -1,4 +1,4 @@
-// EPOS-- MIPS_TSC Declarations
+// EPOS MIPS_TSC Declarations
 
 #ifndef __mips32_tsc_h
 #define __mips32_tsc_h
