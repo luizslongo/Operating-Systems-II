@@ -1,10 +1,17 @@
 // EPOS Internal Type Management System
 
+#define GCC_VERSION (__GNUC__ * 10000 + __GNUC_MINOR__ * 100 + __GNUC_PATCHLEVEL__)
+#if !defined(__size_t) && GCC_VERSION < 40400
+typedef unsigned int size_t;
+#elif !defined(__size_t) && GCC_VERSION >= 40400
+typedef unsigned long size_t;
+#endif
+
 #ifndef __types_h
 #define __types_h
 
-inline void * operator new(unsigned int s, void * a) { return a; }
-inline void * operator new[](unsigned int s, void * a) { return a; }
+inline void * operator new(size_t s, void * a) { return a; }
+inline void * operator new[](size_t s, void * a) { return a; }
 
 __BEGIN_SYS
 

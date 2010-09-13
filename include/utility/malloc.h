@@ -17,10 +17,10 @@ inline void free(void * ptr) {
     __SYS(Application)::heap()->free(ptr); 
 }
 
-inline void * operator new(unsigned int bytes) {
+inline void * operator new(size_t bytes) {
     return malloc(bytes);
 }
-inline void * operator new[](unsigned int bytes) {
+inline void * operator new[](size_t bytes) {
     return malloc(bytes); 
 }
 inline void operator delete(void * object) {
