@@ -485,28 +485,40 @@ public:
     }
 
     static void gdtr(Reg16 * limit, Reg32 * base) {
-	char aux[6];
+	volatile Reg8 aux[6];
+	volatile Reg16 * l = reinterpret_cast<volatile Reg16 *>(&aux[0]);
+	volatile Reg32 * b = reinterpret_cast<volatile Reg32 *>(&aux[2]);
+
 	ASMV("sgdt %0" : "=m"(aux[0]) :);
-	*limit = *((Reg16 *)&aux[0]);
-	*base = *((Reg32 *)&aux[2]);
+	*limit = *l;
+	*base = *b;
     }
     static void gdtr(const Reg16 limit, const Reg32 base) {
-	char aux[6];
-	*((Reg16 *)&aux[0]) = limit;
-	*((Reg32 *)&aux[2]) = base;
-	ASMV("lgdt %0" : : "m" (aux[0]));
+	volatile Reg8 aux[6];
+	volatile Reg16 * l = reinterpret_cast<volatile Reg16 *>(&aux[0]);
+	volatile Reg32 * b = reinterpret_cast<volatile Reg32 *>(&aux[2]);
+
+	*l = limit;
+	*b = base;
+	ASMV("lgdt %0" : : "m"(aux[0]));
     }
  
     static void idtr(Reg16 * limit, Reg32 * base) {
-	char aux[6];
+	volatile Reg8 aux[6];
+	volatile Reg16 * l = reinterpret_cast<volatile Reg16 *>(&aux[0]);
+	volatile Reg32 * b = reinterpret_cast<volatile Reg32 *>(&aux[2]);
+
 	ASMV("sidt %0" : "=m"(aux[0]) :);
-	*limit = *((Reg16 *)&aux[0]);
-	*base = *((Reg32 *)&aux[2]);
+	*limit = *l;
+	*base = *b;
     }
     static void idtr(const Reg16 limit, const Reg32 base) {
-	char aux[6];
-	*((Reg16 *)&aux[0]) = limit;
-	*((Reg32 *)&aux[2]) = base;
+	volatile Reg8 aux[6];
+	volatile Reg16 * l = reinterpret_cast<volatile Reg16 *>(&aux[0]);
+	volatile Reg32 * b = reinterpret_cast<volatile Reg32 *>(&aux[2]);
+
+	*l = limit;
+	*b = base;
 	ASMV("lidt %0" : : "m" (aux[0]));
     }
 
