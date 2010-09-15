@@ -50,7 +50,7 @@ void UDP::constructor_common(){
                         i = even ? -j>>1 : (j+1)>>1; 
                         if(!even && !max && desired+i > 0xffff) max = true; 
                         if( even && !min && desired+i < 0)      min = true; 
-                } while((even && min || !even && max) && !(min && max)); 
+                } while(((even && min) || (!even && max)) && !(min && max));
  
                 if(max && min) {  
 			db<UDP>(ERR) << "No ports available. Inconsistent State.\n";
