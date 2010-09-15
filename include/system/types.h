@@ -1,10 +1,9 @@
 // EPOS Internal Type Management System
 
-#define GCC_VERSION (__GNUC__ * 10000 + __GNUC_MINOR__ * 100 + __GNUC_PATCHLEVEL__)
-#if !defined(__size_t) && GCC_VERSION < 40400
-typedef unsigned int size_t;
-#elif !defined(__size_t) && GCC_VERSION >= 40400
+#if defined(__newlib)
 typedef unsigned long size_t;
+#else
+typedef unsigned int size_t;
 #endif
 
 #ifndef __types_h
