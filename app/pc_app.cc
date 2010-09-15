@@ -1,38 +1,48 @@
-// PC_LOADER
-//
-// Desc: LOADER is created by INIT as the first process when the system
-//	 is configured to support multiple tasks. It creates all
-//	 application tasks from the image received in ??? and then waits
-//	 wait for them to finish.
-//
-// Author: guto
-// Documentation: $EPOS/doc/loader			Date: 22 May 2003
-
 #include <utility/ostream.h>
-#include <display.h>
+#include <thread.h>
+#include <semaphore.h>
+#include <alarm.h>
 
 __USING_SYS
 
-int main() 
+const int iterations = 100;
+
+OStream cout;
+
+const int BUF_SIZE = 16;
+char buffer[BUF_SIZE];
+Semaphore empty(BUF_SIZE);
+Semaphore full(0);
+
+int consumer()
 {
-    OStream cout;
+    int out = 0;
+    for(int i = 0; i < iterations; i++) {
+	full.p();
+	cout << buffer[out];
+	out = (out + 1) % BUF_SIZE;
+ 	Alarm::delay(1000 * out);
+	empty.v();
+    }
+}
 
-    cout << "I'm just a dummy test application.\n";
-    cout << "Since I have nothing better to do, I'll start an ubound memory test (that is, I'll even test the memory your computer doesn't have :-)!!\n";
-     cout << "Testing memory: ";
+int main()
+{
+    Thread * cons = new Thread(&consumer);
 
-     Display disp;
-     for(char * ptr = (char *)(1024*1024);
-	 ptr < (char *)0xffffffff;
-	 ptr+= 64) {
-	 disp.position(-1, 16);
-	 cout << (void *)ptr;
-	 *ptr = 'G';
-	 if(*ptr != 'G') {
-	     cout << "\nLast memory position at " << ptr << "!\n";
-	     break;
-	 }
-     }
+    // producer
+    int in = 0;
+    for(int i = 0; i < iterations; i++) {
+	empty.p();
+ 	cout << "P";
+ 	Alarm::delay(1000 * in);
+	buffer[in] = 'a' + in;
+	in = (in + 1) % BUF_SIZE;
+	full.v();
+    }
+    cons->join();
+
+    delete cons;
 
     return 0;
 }
