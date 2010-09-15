@@ -31,7 +31,7 @@ ANL_COMP_FLGS="-DANALYZE"
 
 CONFIGURATOR=eposcfg
 
-COMP_FLGS="-include $INC/utility/malloc.h"
+COMP_FLGS="-include $INC/application.h"
 COMP_HDRS="$INC"
 
 C_COMPILER="$TOOLS_PREFIX""gcc"
@@ -61,13 +61,13 @@ LINKER_BUILTIN=$LINKER
 LINK_FLGS_BUILTIN="-L$LIB -L`$C_COMPILER $C_COMP_FLGS -print-file-name=` -static --nmagic --section-start $MACH_CODE_NAME=$APP_CODE --section-start $MACH_DATA_NAME=$APP_DATA"
 LINK_OBJI_BUILTIN="$LIB/$ARCH""_crt1.o $LIB/$ARCH""_crti.o $LIB/$ARCH""_crtbegin.o $LIB/$MACH""_init_application.o  $LIB/$MACH""_application.o"
 LINK_OBJN_BUILTIN="$LIB/$ARCH""_crtend.o $LIB/$ARCH""_crtn.o -R$SRC/system/$MACH""_system"
-LINK_LIBS_BUILTIN="util_$ARCH gcc c gcc"
+LINK_LIBS_BUILTIN="util_$ARCH gcc"
 
 LINKER_LIBRARY=$LINKER
 LINK_FLGS_LIBRARY="-L$LIB -L`$C_COMPILER $C_COMP_FLGS -print-file-name=` -static --nmagic --section-start $MACH_CODE_NAME=$APP_CODE --section-start $MACH_DATA_NAME=$APP_DATA"
 LINK_OBJI_LIBRARY="$LIB/$ARCH""_crt1.o $LIB/$ARCH""_crti.o $LIB/$ARCH""_crtbegin.o $LIB/$MACH""_init_first.o $LIB/$MACH""_init_application.o $LIB/$MACH""_application.o"
 LINK_OBJN_LIBRARY="$LIB/$MACH""_init_system.o $LIB/$MACH""_system.o $LIB/$ARCH""_crtend.o $LIB/$ARCH""_crtn.o"
-LINK_LIBS_LIBRARY="util_$ARCH init_$ARCH system_$ARCH mach_$ARCH arch_$ARCH util_$ARCH gcc c gcc"
+LINK_LIBS_LIBRARY="util_$ARCH init_$ARCH system_$ARCH mach_$ARCH arch_$ARCH util_$ARCH gcc"
 
 #=========================================================================
 # VARIABLES
