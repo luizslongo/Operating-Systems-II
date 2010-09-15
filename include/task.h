@@ -15,7 +15,7 @@ class Task
 private:
     typedef CPU::Log_Addr Log_Addr;
     typedef CPU::Context Context;
-    typedef Queue<Thread> Queue;
+    typedef class Queue<Thread> Queue;
 
     static const unsigned int STACK_SIZE = 
 	Traits<Machine>::APPLICATION_STACK_SIZE;
@@ -41,9 +41,9 @@ public:
 	const Thread::Criterion & criterion = Thread::NORMAL,
 	unsigned int stack_size = STACK_SIZE) {
 	_as.activate();
-	Thread * t = new(malloc(sizeof(Thread)))
+	Thread * t = new(kmalloc(sizeof(Thread)))
 	    Thread(entry, state, criterion);
-	Queue::Element * e = new(malloc(sizeof(Queue::Element))) Queue::Element(t);
+	Queue::Element * e = new(kmalloc(sizeof(Queue::Element))) Queue::Element(t);
 	_threads.insert(e);
 	return t;
     }
