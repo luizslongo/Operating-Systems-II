@@ -20,4 +20,6 @@ private:
 
 __END_SYS
 
+#include <utility/malloc.h>
+
 #endif
