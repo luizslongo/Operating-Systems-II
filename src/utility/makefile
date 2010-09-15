@@ -1,6 +1,6 @@
 # EPOS Utilities Makefile
 
-include ../..//makedefs
+include ../../makedefs
 
 OBJS := $(subst .cc,.o,$(shell find *.cc | grep -v test))
 TESTS := $(subst .cc,,$(shell find *.cc | grep test))

@@ -1,8 +1,6 @@
 // EPOS Application Scaffold and Application Abstraction Implementation
 
 #include <utility/ostream.h>
-#include <utility/heap.h>
-#include <machine.h>
 #include <application.h>
 
 __BEGIN_SYS
