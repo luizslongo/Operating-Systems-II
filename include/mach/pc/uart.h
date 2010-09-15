@@ -130,7 +130,7 @@ private:
     Reg8 reg(Address addr) { return CPU::in8(_port + addr); }
     void reg(Address addr, Reg8 value) { CPU::out8(_port + addr, value); }
 
-    void dlab(bool f) { reg(LCR, reg(LCR) & 0x7f | (f << 7)); }
+    void dlab(bool f) { reg(LCR, (reg(LCR) & 0x7f) | (f << 7)); }
 
 private:
     IO_Port _port;

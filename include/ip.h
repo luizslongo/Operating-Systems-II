@@ -52,7 +52,7 @@ public:
     typedef NIC_Common::Statistics Statistics;
 
     // ARP
-    typedef ARP<NIC, IP> ARP;
+    typedef class ARP<NIC, IP> ARP;
 
     // IP datagram header
     class Header {

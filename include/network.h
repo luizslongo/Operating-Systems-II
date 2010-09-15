@@ -43,7 +43,7 @@ public:
     typedef NIC::Statistics Statistics;
 
     // ARP
-    typedef ARP<NIC, Network> ARP;
+    typedef class ARP<NIC, Network> ARP;
     
 public:
     Network() {

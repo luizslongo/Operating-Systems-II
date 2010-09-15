@@ -134,12 +134,13 @@ public:
 	    _pt->remap(phy_addr, _from, _to, flags);
 	}
 	~Chunk() {
-	    if(!(_flags & IA32_Flags::IO))
+	    if(!(_flags & IA32_Flags::IO)) {
 		if(_flags & IA32_Flags::CT)
 		    free((*_pt)[_from], _to - _from);
 		else
 		    for(unsigned int i = _from; i < _to; i++)
 			free((*_pt)[i]);
+	    }
 	    free(_pt, _pts);
 	}
 

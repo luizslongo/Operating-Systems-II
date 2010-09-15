@@ -261,7 +261,7 @@ protected:
 	_current(_initial), _handler(handler)
     {
 	db<Timer>(TRC) << "Timer(f=" << frequency
-		       << ",h=" << handler
+		       << ",h=" << reinterpret_cast<void*>(handler)
 		       << ",ch=" << channel 
 		       << ") => {count=" << _initial << "}\n";
 
@@ -280,7 +280,7 @@ public:
 	_current(_initial), _handler(handler)
     {
 	db<Timer>(TRC) << "Timer(f=" << frequency
-		       << ",h=" << handler
+		       << ",h=" << reinterpret_cast<void*>(handler)
 		       << ",ch=" << channel 
 		       << ") => {count=" << _initial << "}\n";
 
@@ -292,7 +292,7 @@ public:
 
     ~PC_Timer() {
 	db<Timer>(TRC) << "~Timer(f=" << frequency()
-		       << ",h=" << _handler
+		       << ",h=" << reinterpret_cast<void*>(_handler)
 		       << ",ch=" << _channel 
 		       << ") => {count=" << _initial << "}\n";
 
@@ -306,7 +306,7 @@ public:
 
     int reset() {
 	db<Timer>(TRC) << "Timer::reset() => {f=" << frequency()
-		       << ",h=" << _handler
+		       << ",h=" << reinterpret_cast<void*>(_handler)
 		       << ",count=" << _current << "}\n";
 
 	int percentage = _current * 100 / _initial;
