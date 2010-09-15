@@ -45,16 +45,8 @@ DISK_IMAGE 	 = 0x8000 ; = BOOT_IMAGE_PHY_ADDR from memory_map
 DISK_SECT_SIZE =         512     
 
 ; The size of ELF object's header in bytes (GCC dependent)
-#define GCC_VERSION (__GNUC__ * 10000 + __GNUC_MINOR__ * 100 + __GNUC_PATCHLEVEL__)
-#if   GCC_VERSION < 30000
-ELF_HDR_SIZE =           84 ; (GCC 2.x)
-#elif GCC_VERSION < 40000
-ELF_HDR_SIZE =           116; (GCC < 3.4 not stripped)
-#elif GCC_VERSION < 40400
-ELF_HDR_SIZE =           128; (GCC 4.x stripped)
-#else
-ELF_HDR_SIZE =           96 ; (GCC 4.4.x stripped) 
-#endif
+; Can be determined with objdump -p $(EPOS)/src/setup/pc_setup | sed -n -e 's/^ *LOAD off *\(0x.*\) vaddr.*$/\1/ p' | head -1
+ELF_HDR_SIZE =           128
 
 ; DISK IMAGE LAYOUT 
 ; -+-----------------------+ DISK_IMAGE_SYS_INFO 

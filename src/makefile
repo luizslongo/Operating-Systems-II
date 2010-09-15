@@ -2,7 +2,7 @@
 
 include	../makedefs
 
-SUBDIRS := utility arch mach abstraction boot setup system init
+SUBDIRS := utility arch mach abstraction setup boot system init
 
 all:		$(SUBDIRS)
 
