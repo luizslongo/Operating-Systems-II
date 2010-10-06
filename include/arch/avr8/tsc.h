@@ -20,13 +20,13 @@ private:
 
     // Timer1 Registers
     enum {
-#if defined (__at90can128)
+#if defined (__AVR_AT90CAN128__)
     TCNT1L  = 0x64,
     TCNT1H  = 0x65,
     TCCR1B  = 0x61,
     TCCR1A  = 0x60,
     TIMSK1  = 0x4F
-#elif defined (__atmega1281)
+#elif defined (__AVR_ATmega1281__)
     TCNT1L  = 0x64,
     TCNT1H  = 0x65,
     TCCR1B  = 0x61,
@@ -51,7 +51,7 @@ private:
     CS12   = 0x04,
     CS11   = 0x02,
     CS10   = 0x01,
-#if defined (__at90can128)
+#if defined (__AVR_AT90CAN128__)
     // TCCR1A, TCCR3A
     COMnA1 = 0x80,
     COMnA0 = 0x40,
@@ -67,7 +67,7 @@ private:
     FOCnC  = 0x20,
     // TIMSK1
     TOIE1  = 0x01
-#elif defined (__atmega1281)
+#elif defined (__AVR_ATmega1281__)
     // TCCR1A
     COM1A1 = 0x80,
     COM1A0 = 0x40,
@@ -101,7 +101,7 @@ private:
 public:
     AVR8_TSC() { /* Actual timer initialization is up to init */ }
     
-    #if defined (__atmega1281)
+#if defined (__AVR_ATmega1281__)
     static Hertz frequency() { return Traits<Machine>::CLOCK >> 9; }
 #else
     static Hertz frequency() { return Traits<Machine>::CLOCK / 8; }
@@ -114,12 +114,12 @@ public:
     
 private:
 
-#if defined (__at90can128)
+#if defined (__AVR_AT90CAN128__)
     static void enable() { timsk1(timsk1() | TOIE1); }
     static void disable() { timsk1(timsk1() & ~TOIE1); }
     static Reg8 timsk1() { return AVR8::in8(IO::TIMSK1); }
     static void timsk1(Reg8 value) { AVR8::out8(IO::TIMSK1,value); }
-#elif defined (__atmega1281)
+#elif defined (__AVR_ATmega1281__)
     static void enable() { timsk1(timsk1() | TOIE1); }
     static void disable() { timsk1(timsk1() & ~TOIE1); }
     static Reg8 timsk1() { return AVR8::in8(IO::TIMSK1); }
