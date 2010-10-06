@@ -13,7 +13,7 @@ class AVR8: public CPU_Common
 private:
     typedef Traits<CPU> _Traits;
 
-    static const unsigned int CLOCK = Traits<Machine>::CLOCK;
+    static const unsigned long CLOCK = Traits<Machine>::CLOCK;
 
 public:
     // CPU Flags

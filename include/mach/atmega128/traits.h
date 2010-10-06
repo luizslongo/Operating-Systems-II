@@ -13,7 +13,6 @@ template <> struct Traits<ATMega128_Common>: public Traits<AVR_Common>
 template <> struct Traits<ATMega128>: public Traits<ATMega128_Common>, public Traits<AVR_Machine>
 {
     static const unsigned long long CLOCK = 7372800; //Mica2
-    //static const unsigned long long CLOCK = 8000000;
     static const unsigned int BOOT_IMAGE_ADDR = 0x0000;
 
     static const unsigned int APPLICATION_STACK_SIZE = 256;
@@ -50,7 +49,7 @@ template <> struct Traits<ATMega128_RTC>: public Traits<ATMega128_Common>
     static const unsigned int EPOCH_DAY = 1;
     static const unsigned int EPOCH_MONTH = 1;
     static const unsigned int EPOCH_YEAR = 1970;
-    static const unsigned int EPOCH_DAYS = 719499;
+    static const unsigned long EPOCH_DAYS = 719499;
 };
 
 template <> struct Traits<ATMega128_EEPROM>: public Traits<ATMega128_Common>
