@@ -4,7 +4,7 @@
 
 __BEGIN_SYS
 
-RTC_Common::Date::Date(const Second & seconds, unsigned int epoch_days)
+RTC_Common::Date::Date(const Second & seconds, unsigned long epoch_days)
 {
     static int days_per_month[12] = {31,28,31,30,31,30,31,31,30,31,30,31};
 
@@ -29,7 +29,7 @@ RTC_Common::Date::Date(const Second & seconds, unsigned int epoch_days)
     _D = tmp;
 }
 
-RTC_Common::Second RTC_Common::Date::to_offset(unsigned int epoch_days) const
+RTC_Common::Second RTC_Common::Date::to_offset(unsigned long epoch_days) const
 {
     Date tmp(*this);
 
