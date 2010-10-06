@@ -21,6 +21,7 @@ public:
 
     typedef unsigned char Address;
     typedef unsigned char Protocol;
+    typedef char PDU[MTU];
 
     class Frame {
     public:
@@ -89,6 +90,9 @@ public:
     // Frame types
     enum {
     EPOS_LP = 0x01,
+    IP,
+    ARP,
+    RARP
     };
 
     struct Statistics: public NIC_Common::Statistics {
