@@ -151,7 +151,7 @@ bool CMAC::rx_sync(){
 	    _rx_data_word.lsb = _rx_data_byte;
 	    break;
 	case 1:
-	case 2:
+	case 2: {
 	    unsigned int tmp = _rx_data_word.word;
 	    _rx_data_word.msb = _rx_data_word.lsb;
 	    _rx_data_word.lsb = _rx_data_byte;
@@ -166,6 +166,7 @@ bool CMAC::rx_sync(){
 		}				
 	    }
 	    break;
+	}
 	default:
 	    _rx_preamble_count = 0;
 	    rx_giveup();
