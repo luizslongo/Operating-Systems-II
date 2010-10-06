@@ -48,7 +48,7 @@ private:
     SM1   = 0x04,
     SM2   = 0x08,
     MCUCR = SMCR
-#elif defined (__AVR_ATmega128__)
+#elif defined (__AVR_ATmega1281__)
     // on atmega1281 these bits are in SMCR
     SMCR  = 0x33,
     SM2   = 0x08,
