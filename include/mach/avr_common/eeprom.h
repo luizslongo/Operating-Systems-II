@@ -23,7 +23,7 @@ private:
 public:
     //EEPROM IO Register Bit Offsets
     enum {
-#if defined (__atmega1281)
+#if defined (__AVR_ATmega1281__)
 	//EECR
         EEPM1 = 5,
         EEPM0 = 4,

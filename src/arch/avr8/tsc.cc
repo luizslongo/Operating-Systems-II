@@ -10,7 +10,7 @@ __END_SYS
 
 __USING_SYS
 
-#if defined (__atmega1281)
+#if defined (__AVR_ATmega1281__)
 
 extern "C" void __vector_21(void) __attribute__ ((signal));
 
@@ -20,7 +20,7 @@ extern "C" void __vector_21(void) {
 
 }
 
-#elif defined (__atmega128)
+#elif defined (__AVR_ATmega128__)
 
 extern "C" void __vector_14(void) __attribute__ ((signal));
 
@@ -30,7 +30,7 @@ extern "C" void __vector_14(void) {
 
 }
 
-#elif defined (__atmega16)
+#elif defined (__AVR_ATmega16__)
 
 extern "C" void __vector_8(void) __attribute__ ((signal));
 

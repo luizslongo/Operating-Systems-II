@@ -24,7 +24,7 @@ public:
 
 // Bit Definitions
     enum {
-#if defined (__at90can128)
+#if defined (__AVR_AT90CAN128__)
     // TIMSK0
     OCIE0A   = 0x02,
     TOIE0    = 0x01,
@@ -115,7 +115,7 @@ public:
     CS21   = 0x02,
     CS20   = 0x01
 
-#elif defined (__atmega1281)
+#elif defined (__AVR_ATmega1281__)
         // TIMSK0
         OCIE0B   = 0x04,
         OCIE0A   = 0x02,
@@ -340,7 +340,7 @@ public:
     };
 
 public:
-#if defined (__at90can128)
+#if defined (__AVR_AT90CAN128__)
     static Reg8 timsk0() { return AVR8::in8(IO::TIMSK0); }
     static void timsk0(Reg8 value) { AVR8::out8(IO::TIMSK0,value); } 
     static Reg8 timsk1() { return AVR8::in8(IO::TIMSK1); }
@@ -371,7 +371,7 @@ public:
     static void tccr2a(Reg8 value) { AVR8::out8(IO::TCCR2A,value); }
     static Reg8 ocr2a() { return AVR8::in8(IO::OCR2A); }
     static void ocr2a(Reg8 value) { AVR8::out8(IO::OCR2A,value); }
-#elif defined (__atmega1281)
+#elif defined (__AVR_ATmega1281__)
     static Reg8 timsk0() { return AVR8::in8(IO::TIMSK0); }
     static void timsk0(Reg8 value) { AVR8::out8(IO::TIMSK0,value); } 
     static Reg8 timsk1() { return AVR8::in8(IO::TIMSK1); }
