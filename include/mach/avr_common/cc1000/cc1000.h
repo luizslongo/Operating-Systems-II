@@ -18,7 +18,7 @@ private:
     typedef CC1000_RSSI RSSI;
     typedef unsigned int Microseconds;
 
-    static const int CLOCK = Traits<Machine>::CLOCK;
+    static const unsigned long CLOCK = Traits<Machine>::CLOCK;
 
 public:
 
