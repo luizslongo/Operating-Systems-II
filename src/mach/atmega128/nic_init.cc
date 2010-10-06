@@ -6,7 +6,7 @@
 __BEGIN_SYS
 
 template <int unit>
-inline static void call_init()
+inline void call_init()
 {
     typedef typename Traits<ATMega128_NIC>::NICS::template Get<unit>::Result NIC;
     if(Traits<NIC>::enabled)
@@ -15,7 +15,7 @@ inline static void call_init()
 };
 
 template <> 
-inline static void call_init<Traits<ATMega128_NIC>::NICS::Length>() {};
+inline void call_init<Traits<ATMega128_NIC>::NICS::Length>() {};
 
 void ATMega128_NIC::init()
 {
