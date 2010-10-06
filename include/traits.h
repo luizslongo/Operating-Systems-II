@@ -88,15 +88,15 @@ template <> struct Traits<Synchronizer>: public Traits<void>
 
 template <> struct Traits<Network>: public Traits<void>
 {
-    static const unsigned int ELP = 0x8888;
-    static const unsigned int ARP_TRIES = 3;
-    static const unsigned int ARP_TIMEOUT = 1000000; // 1s
+    static const unsigned short ELP = 0x8888;
+    static const unsigned int   ARP_TRIES = 3;
+    static const unsigned long  ARP_TIMEOUT = 1000000; // 1s
 };
 
 template <> struct Traits<IP>: public Traits<void>{
-    static const unsigned int ADDRESS = 0xc0a80a01;   // 192.168.10.1
-    static const unsigned int NETMASK = 0xffffff00;   // 255.255.255.0
-    static const unsigned int BROADCAST = 0; // 0= Default Broadcast Address
+    static const unsigned long ADDRESS = 0xc0a80a01;   // 192.168.10.1
+    static const unsigned long NETMASK = 0xffffff00;   // 255.255.255.0
+    static const unsigned long BROADCAST = 0; // 0= Default Broadcast Address
 };
 
 __END_SYS
