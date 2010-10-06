@@ -34,13 +34,13 @@ public:
 private:
     //Sleep register
     enum {
-#if defined (__atmega128)
+#if defined (__AVR_ATmega128__)
     MCUCR = 0x35,
 	SE    = 0x20,
 	SM0   = 0x08,
 	SM1   = 0x10,
 	SM2   = 0x04
-#elif defined (__at90can128)
+#elif defined (__AVR_AT90CAN128__)
     // on at90can128 these bits are in SMCR
     SMCR  = 0x33,
     SE    = 0x01,
@@ -48,7 +48,7 @@ private:
     SM1   = 0x04,
     SM2   = 0x08,
     MCUCR = SMCR
-#elif defined (__atmega1281)
+#elif defined (__AVR_ATmega128__)
     // on atmega1281 these bits are in SMCR
     SMCR  = 0x33,
     SM2   = 0x08,
@@ -56,7 +56,7 @@ private:
     SM0   = 0x02,
     SE    = 0x01,
     MCUCR = SMCR
-#elif defined (__atmega16)
+#elif defined (__AVR_ATmega16__)
     MCUCR = 0x35,
 	SE    = 0x40,
 	SM0   = 0x10,
