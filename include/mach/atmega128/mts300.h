@@ -83,8 +83,8 @@ public:
 private:
     
     static void enable_sensor() {
-	ddr(ddr() | TEMP_EN & ~LIGHT_EN);
-	port(port() | TEMP_EN & ~LIGHT_EN);
+	ddr(ddr() | (TEMP_EN & ~LIGHT_EN));
+	port(port() | (TEMP_EN & ~LIGHT_EN));
     }
 
     static void disable_sensor() {
@@ -127,8 +127,8 @@ public:
 private:
     
     static void enable_sensor() {
-	ddr(ddr() | LIGHT_EN & ~TEMP_EN);
-	port(port() | LIGHT_EN & ~TEMP_EN);
+	ddr(ddr() | (LIGHT_EN & ~TEMP_EN));
+	port(port() | (LIGHT_EN & ~TEMP_EN));
     }
 
     static void disable_sensor() {

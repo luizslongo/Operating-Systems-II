@@ -55,7 +55,7 @@ public:
     void configure(unsigned char mode = 0, unsigned char order = 0,
 		   unsigned char clk_polarity = 0,
 		   unsigned char clk_phase = 0) {
-	ddr(ddr() | MISO_PIN & ~MOSI_PIN &  ~SS_PIN & ~SCK_PIN);
+	ddr(ddr() | (MISO_PIN & ~MOSI_PIN &  ~SS_PIN & ~SCK_PIN));
 	spcr(SPE);
     }
 
