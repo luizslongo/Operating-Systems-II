@@ -100,5 +100,11 @@ int OStream::ptoa(const void * p, char * s)
     return j + 2;
 }    
 
+void StringStream::print(const char * s) {
+    while (*s && _size) { 
+        *_str++ = *s++;
+        _written++; _size--;
+    }
+}
 
 __END_SYS

@@ -107,7 +107,7 @@ public:
     }
 
 private:
-    void print(const char * s);
+    virtual void print(const char * s);
     void flush() {}
     int itoa(int v, char * s);
     int utoa(unsigned int v, char * s, unsigned int i = 0);
@@ -119,6 +119,20 @@ private:
     int _base;
 
     static const char _digits[];
+};
+
+class StringStream : public OStream {
+private:
+    char * _str;
+    int _size;
+    int _written;
+    
+    virtual void print(const char * s);
+    
+public:
+    StringStream(char * s,int l) : _str(s), _size(l), _written(0) {}
+    int written() { return _written; }
+    void end() { if (_size) *_str = '\0'; }
 }; 
 
 extern OStream::Endl endl;
