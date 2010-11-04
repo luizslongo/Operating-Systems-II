@@ -14,7 +14,8 @@ extern "C"
     int strncmp(const char * s1, const char * s2, size_t n) __attribute__ ((weak));
     char * strcpy(char *d, const char *s) __attribute__ ((weak));
     char * strncpy(char *d, const char *s, size_t n) __attribute__ ((weak));
-    char *strchr(const char * s, int c) __attribute__ ((weak));
+    char * strchr(const char * s, int c) __attribute__ ((weak));
+    char * strrchr (const char * s, int c) __attribute__ ((weak));
     size_t strlen(const char * s) __attribute__ ((weak));
 
     int memcmp(const void * m1, const void * m2, size_t n)
@@ -378,5 +379,16 @@ extern "C"
 	while(*str)
 	    str++;
 	return str - start;
+    }
+    
+    char * strrchr (const char *s, int c)
+    {
+        char *rtnval = 0;
+
+        do {
+           if (*s == c)
+               rtnval = (char*) s;
+        } while (*s++);
+        return (rtnval);
     }
 }
