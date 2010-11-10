@@ -15,7 +15,7 @@ void UDP::PDU::calculate_checksum(){
 		phdr.protocol = PROT_IP;
 		phdr.length = CPU::htons(size());
 
-		unsigned int sum = 0;
+		unsigned long sum = 0;
 
 		u16 * ptr = reinterpret_cast<u16 *>(this);
 		for(unsigned int i = 0; i < size() / sizeof(u16); i++)
