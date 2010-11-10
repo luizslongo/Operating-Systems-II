@@ -28,14 +28,14 @@
   ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
   POSSIBILITY OF SUCH DAMAGE. */
 
-/* $Id: iom1281.h,v 1.1 2009-10-15 19:25:28 giovani Exp $ */
+/* $Id: iom1281.h,v 1.2 2010-11-10 12:58:09 arliones Exp $ */
 
 /* avr/iom1281.h - definitions for ATmega1281 */
 
 #ifndef _AVR_IOM1281_H_
 #define _AVR_IOM1281_H_ 1
 
-#include <avr/iomxx0_1.h>
+#include "iomxx0_1.h"
 
 /* Constants */
 #define SPM_PAGESIZE    256
