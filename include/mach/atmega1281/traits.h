@@ -40,10 +40,10 @@ template <> struct Traits<ATMega1281_Timer_3>: public Traits<ATMega1281_Common>
 
 template <> struct Traits<ATMega1281_RTC>: public Traits<ATMega1281_Common>
 {
-    static const unsigned int EPOCH_DAY   = 1;
-    static const unsigned int EPOCH_MONTH = 1;
-    static const unsigned int EPOCH_YEAR  = 1970;
-    static const unsigned int EPOCH_DAYS  = 719499;
+    static const unsigned long EPOCH_DAY   = 1;
+    static const unsigned long EPOCH_MONTH = 1;
+    static const unsigned long EPOCH_YEAR  = 1970;
+    static const unsigned long EPOCH_DAYS  = 719499;
 };
 
 template <> struct Traits<ATMega1281_EEPROM>: public Traits<ATMega1281_Common>

@@ -10,7 +10,7 @@ __BEGIN_SYS
 class ATMega1281_RTC: public RTC_Common
 {
 private:
-    static const unsigned int EPOCH_DAYS = Traits<ATMega1281_RTC>::EPOCH_DAYS;
+    static const unsigned long EPOCH_DAYS = Traits<ATMega1281_RTC>::EPOCH_DAYS;
 
 public:
     ATMega1281_RTC() {}
