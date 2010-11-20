@@ -19,6 +19,8 @@ public:
 public:
     OStream(): _base(10) {}
 
+    virtual ~OStream() {}
+
     OStream & operator<<(const Endl & endl) {
 	print("\n");
 	_base = 10;
