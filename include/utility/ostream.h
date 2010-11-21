@@ -19,8 +19,6 @@ public:
 public:
     OStream(): _base(10) {}
 
-    virtual ~OStream() {}
-
     OStream & operator<<(const Endl & endl) {
 	print("\n");
 	_base = 10;
@@ -133,6 +131,7 @@ private:
     
 public:
     StringStream(char * s,int l) : _str(s), _size(l), _written(0) {}
+
     int written() { return _written; }
     void end() { if (_size) *_str = '\0'; }
 }; 
