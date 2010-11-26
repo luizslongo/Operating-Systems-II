@@ -228,8 +228,6 @@ public:
 	IRQ_USART3_RXC   = 54,
 	IRQ_USART3_UDRE  = 55,
 	IRQ_USART3_TXC   = 56,
-   	IRQ_TSC 	 = IRQ_TIMER1_OVF,	
-	IRQ_TIMER 	 = IRQ_TIMER0_COMPA
     };
 
 public:

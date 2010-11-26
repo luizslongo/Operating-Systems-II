@@ -25,7 +25,7 @@ template <> struct Traits<ATMega1281>: public Traits<ATMega1281_Common>, public 
 
 template <> struct Traits<ATMega1281_Timer_1>: public Traits<ATMega1281_Common>
 {
-    static const int FREQUENCY = 1000; // Hz
+    static const int FREQUENCY = 15; // Hz
 };
 
 template <> struct Traits<ATMega1281_Timer_2>: public Traits<ATMega1281_Common>

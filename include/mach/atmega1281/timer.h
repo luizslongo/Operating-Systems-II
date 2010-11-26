@@ -39,44 +39,44 @@ public:
 
     ATMega1281_Timer_1(const Handler * handler) {
 	frequency(FREQUENCY);
-	IC::int_vector(IC::IRQ_TIMER0_COMPA, handler);
-	IC::enable(IC::IRQ_TIMER0_COMPA);
+	IC::int_vector(IC::IRQ_TIMER1_COMPA, handler);
+	IC::enable(IC::IRQ_TIMER1_COMPA);
 	enable();
     }
 
     ATMega1281_Timer_1(const Microsecond & quantum, const Handler * handler) {
 	frequency(1000000 / quantum);
-	IC::int_vector(IC::IRQ_TIMER0_COMPA, handler);
-	IC::enable(IC::IRQ_TIMER0_COMPA);
+	IC::int_vector(IC::IRQ_TIMER1_COMPA, handler);
+	IC::enable(IC::IRQ_TIMER1_COMPA);
 	enable();
     }
 
     const void clock(const Hertz clock) {
-	tccr0a(WGM01);
+	tccr1a(WGM01);
 	if(clock == MACHINE_CLOCK)
-	    tccr0b(TIMER_PRESCALE_1);
+	    tccr1b(TIMER_PRESCALE_1);
 	else if (clock == (MACHINE_CLOCK >> 3))
-	    tccr0b(TIMER_PRESCALE_8);
+	    tccr1b(TIMER_PRESCALE_8);
 	else if (clock == (MACHINE_CLOCK >> 6))
-	    tccr0b(TIMER_PRESCALE_64);
+	    tccr1b(TIMER_PRESCALE_64);
 	else if (clock == (MACHINE_CLOCK >> 8))
-	    tccr0b(TIMER_PRESCALE_256);
+	    tccr1b(TIMER_PRESCALE_256);
 	else
-	    tccr0b(TIMER_PRESCALE_1024);
+	    tccr1b(TIMER_PRESCALE_1024);
     }
 
-    Hertz frequency() const { return count2freq(ocr0a()); }
+    Hertz frequency() const { return count2freq(ocr1a()); }
     void frequency(const Hertz & f) {
-	ocr0a(freq2count(f));
+	ocr1a(freq2count(f));
 	clock(CLOCK);
     };
 
-    void reset() { tcnt0(0); }
+    void reset() { tcnt1(0); }
 
-    void enable(){ timsk0(timsk0() | OCIE0A); }
-    void disable(){ timsk0(timsk0() & ~OCIE0A); }
+    void enable(){ timsk1(timsk1() | OCIE1A); }
+    void disable(){ timsk1(timsk1() & ~OCIE1A); }
 
-    Tick read() { return tcnt0(); }
+    Tick read() { return tcnt1(); }
 
     static int init();
 
@@ -191,6 +191,13 @@ public:
 
     ATMega1281_Timer_3(const Handler * handler) {
 	frequency(FREQUENCY);
+	IC::int_vector(IC::IRQ_TIMER3_COMPA, handler);
+	IC::enable(IC::IRQ_TIMER3_COMPA);
+	enable();
+    }
+
+    ATMega1281_Timer_3(const Microsecond & quantum, const Handler * handler) {
+	frequency(1000000 / quantum);
 	IC::int_vector(IC::IRQ_TIMER3_COMPA, handler);
 	IC::enable(IC::IRQ_TIMER3_COMPA);
 	enable();
