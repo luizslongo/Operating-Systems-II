@@ -124,6 +124,9 @@ class AT90CAN128_UART;
 class ML310_UART;
 class PLASMA_UART;
 
+// Hardware Mediators - USARTs
+class ATMega1281_USART;
+
 // Hardware Mediators - SPIs
 class PC_SPI;
 class ATMega16_SPI;
@@ -263,6 +266,7 @@ enum
     EEPROM_ID,
     FLASH_ID,
     UART_ID,
+    USART_ID,
     SPI_ID,
     DISPLAY_ID,
     NIC_ID,

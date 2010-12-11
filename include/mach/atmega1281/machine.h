@@ -50,6 +50,7 @@ __END_SYS
 #include "eeprom.h"
 #include "flash.h"
 #include "uart.h"
+#include "usart.h"
 #include "spi.h"
 #include "nic.h"
 #include "adc.h"

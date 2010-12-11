@@ -11,6 +11,7 @@
 #define __IC_H				__HEADER_MACH(ic)
 #define __TIMER_H			__HEADER_MACH(timer)
 #define __UART_H			__HEADER_MACH(uart)
+#define __USART_H			__HEADER_MACH(usart)
 #define __RTC_H				__HEADER_MACH(rtc)
 #define __EEPROM_H			__HEADER_MACH(eeprom)
 #define __FLASH_H			__HEADER_MACH(flash)
@@ -35,6 +36,7 @@ typedef ATMega1281_RTC			RTC;
 typedef ATMega1281_EEPROM		EEPROM;
 typedef ATMega1281_Flash		Flash;
 typedef ATMega1281_UART			UART;
+typedef ATMega1281_USART		USART;
 typedef ATMega1281_SPI			SPI;
 typedef Serial_Display			Display;
 typedef ATMega1281_NIC			NIC;
