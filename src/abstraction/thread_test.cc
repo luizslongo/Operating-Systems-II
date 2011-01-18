@@ -39,7 +39,7 @@ int main()
     delete b;
     delete m;
     
-    cout << "I'm also done, bye!\n";
+    cout << "It should not be shown on the display!\n";
 
     return 0;
 }
