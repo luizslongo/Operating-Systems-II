@@ -217,6 +217,8 @@ namespace Scheduling_Criteria
     class Round_Robin;
     class RM;
     class EDF;
+    class EARM;
+    class EAEDF;
     class CPU_Affinity;
 };
 

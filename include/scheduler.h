@@ -102,6 +102,28 @@ namespace Scheduling_Criteria
 	RTC::Microsecond _deadline;
     };
 
+    // Energy-aware Rate Monotonic
+    class EARM: public RM
+    {
+    public:
+	enum {
+	    MAIN	= 0,
+	    PERIODIC	= 1,
+	    APERIODIC	= (unsigned(1) << (sizeof(int) * 8 - 2)) - 1,
+	    IDLE	= (unsigned(1) << (sizeof(int) * 8 - 2)),
+	    BEST_EFFORT	= (unsigned(1) << (sizeof(int) * 8 - 2)) + 1,
+	    NORMAL	= APERIODIC
+	};
+
+	static const bool timed = true;
+	static const bool preemptive = true;
+	static const bool energy_aware = true;
+
+    public:
+	EARM(int p): RM(p) {}
+	EARM(const RTC::Microsecond & d): RM(d) {}
+    };
+
     // Earliest Deadline First
     class EDF: public Priority
     {

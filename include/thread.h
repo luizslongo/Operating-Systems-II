@@ -19,6 +19,7 @@ class Thread
 protected:
     static const bool active_scheduler = Traits<Thread>::Criterion::timed;
     static const bool preemptive = Traits<Thread>::Criterion::preemptive;
+    static const bool energy_aware = Traits<Thread>::Criterion::energy_aware;
     static const bool smp = Traits<Thread>::smp;
 
     static const unsigned int QUANTUM = Traits<Thread>::QUANTUM;
@@ -168,9 +169,12 @@ protected:
     static void implicit_exit();
 
     static void dispatch(Thread * prev, Thread * next, bool charge = true) {
-//	if(charge)
+//	if(charge) {
 //  	    if(active_scheduler)
 //  		_timer->reset();
+//  	    if(energy_aware)
+//  		account_energy();
+//	}
 
 	if(prev != next) {
 	    if(prev->_state == RUNNING)

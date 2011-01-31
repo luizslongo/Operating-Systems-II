@@ -284,10 +284,16 @@ int Thread::idle()
 		CPU::halt();
 	}
 
- 	CPU::halt();
-
- 	if(_scheduler.schedulables() > 1)
-	    yield();
+	if(energy_aware)
+	    if((_scheduler.schedulables() > 1) /* && enough_energy()*/)
+		yield();
+	    else
+		CPU::halt();
+	else {
+	    CPU::halt();
+	    if(_scheduler.schedulables() > 1)
+		yield();
+	}
     }
 
     return 0;
