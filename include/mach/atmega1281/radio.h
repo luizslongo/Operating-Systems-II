@@ -3,68 +3,48 @@
 #ifndef __at86rf230_nic_h
 #define __at86rf230_nic_h
 
-//#include "../avr_common/cc1000.h"
-#include <radio.h>
+#include "at86rf230.h"
 
 __BEGIN_SYS
 
-class Radio: public Low_Power_Radio//, private CC1000
+class ATMega1281_Radio
 {
-private:
-    static const unsigned int UNITS =
-	Traits<ATMega1281_NIC>::RADIO_UNITS;
-
-    // Share control and interrupt dispatiching info
-    struct Device
-    {
-	Radio * device;
-	unsigned int interrupt;
-	bool in_use;
-    };
-	
 public:
-    Radio(unsigned int unit = 0);
-    ~Radio();
+    static const int FRAME_BUFFER_SIZE = AT86RF230::FRAME_MAX_LENGTH;
 
-    int send(const Address & dst, const Protocol & prot,
- 	     const void * data, unsigned int size);
-    int receive(Address * src, Protocol * prot,
-		void * data, unsigned int size);
+    enum Event {
+	SFD_DETECTED,
+	FRAME_END
+    };
+
+    typedef AT86RF230::Event Event;
+    typedef unsigned char Address;
+
+    ATMega1281_Radio() {}
+    ~ATMega1281_Radio() {}
+
+    static void init();
+
+    static void set_event_handler(AT86RF230::event_handler * handler);
+
+    int send(unsigned char * data, unsigned int size);
+
+    int receive(unsigned char * data);
+
+    void on();
+
+    void off();
+
+    void sleep();
+
+    void listen();
 
     void reset();
 
-    unsigned int mtu() { return MTU; }
-
-    const Address & address() { return _address; }
-
-    const Statistics & statistics() { return _statistics; }
-
-    static void init(unsigned int unit);
+    bool cca();
 
 private:
-    Radio(unsigned int unit, int io_port, int irq, void * dma);
-
-    void handle_int();
-
-    static void int_handler(unsigned int interrupt);
-
-    static Radio * get(unsigned int interrupt) {
-	for(unsigned int i = 0; i < UNITS; i++)
-	    if(_devices[i].interrupt == interrupt)
-		return _devices[i].device;
-	return 0;
-    };
-
-private:
-    unsigned int _unit;
-
-    Address _address;
-    Statistics _statistics;
-
-    int _irq;
-    void * _dma_buf;
-
-    static Device _devices[UNITS];
+    static AT86RF230 * device;
 };
 
 __END_SYS

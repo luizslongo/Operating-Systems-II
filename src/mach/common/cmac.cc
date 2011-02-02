@@ -1,9 +1,9 @@
 // EPOS CMAC Implementation
 
 #include <machine.h>
-#include <mach/atmega1281/nic.h>
-#include <mach/atmega1281/cmac.h>
 #include <semaphore.h>
+
+#ifdef __cmac_h
 
 __BEGIN_SYS
 
@@ -56,9 +56,12 @@ CMAC::CMAC_STATE_TRANSITION CMAC::state_machine() {
 	    case TX:
 		result = Tx::execute(result);
 
-		if (result == TX_END)
-		    _state = ACK_RX;
-		else if (result == TX_ERROR)
+		if (result == TX_END) {
+            if (_tx_dst_address == BROADCAST)
+                _state = OFF;
+            else 
+                _state = ACK_RX;
+        } else if (result == TX_ERROR)
 		    _state = OFF;
 
 		break;
@@ -101,8 +104,12 @@ CMAC::CMAC_STATE_TRANSITION CMAC::state_machine() {
 
 		if (result == UNPACK_FAILED)
 		    _state = LPL;
-		else if (result == UNPACK_OK)
-		    _state = ACK_TX;
+		else if (result == UNPACK_OK) {
+            if (_tx_dst_address == BROADCAST)
+                _state = OFF;
+            else 
+                _state = ACK_TX;
+        }
 
 		break;
 
@@ -124,7 +131,7 @@ CMAC::CMAC_STATE_TRANSITION CMAC::state_machine() {
 		db<CMAC>(WRN) << "CMAC::state_machine - Operation failed 5 times in a row, reseting radio\n";
 		_consecutive_failures = 0;
 		radio.reset();
-		radio.reset_state_machine();
+		radio.off();
 	    }
 	} else {
 	    _consecutive_failures = 0;
@@ -310,15 +317,9 @@ void CMAC::alarm_handler_function() {
     }
 }
 
-void CMAC::sm_step_int_handler() {
-    sm_step_next_step = true;
-}
+Radio CMAC::radio;
 
-volatile bool CMAC::sm_step_next_step = false;
-
-AT86RF230 CMAC::radio;
-
-CMAC::Address CMAC::_addr = Traits<CMAC>::ADDRESS;
+CMAC::Address CMAC::_addr = Address(Traits<CMAC>::ADDRESS);
 
 volatile CMAC::CMAC_STATE CMAC::_state = CMAC::OFF;
 volatile CMAC::Statistics CMAC::_stats;
@@ -359,3 +360,4 @@ int CMAC::_consecutive_failures = 0;
 
 __END_SYS
 
+#endif

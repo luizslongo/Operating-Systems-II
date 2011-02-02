@@ -150,7 +150,8 @@ class ATMega16_NIC;
 class ATMega128_NIC;
 class AT90CAN128_NIC;
 class ATMega1281_NIC;
-class Radio;
+class ATMega128_Radio;
+class ATMega1281_Radio;
 class ML310_NIC;
 class PLASMA_NIC;
 class CMAC;
@@ -272,6 +273,7 @@ enum
     SPI_ID,
     DISPLAY_ID,
     NIC_ID,
+    RADIO_ID,
     ADC_ID,
     TEMPERATURE_SENSOR_ID,
     PHOTO_SENSOR_ID,

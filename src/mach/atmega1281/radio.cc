@@ -1,101 +1,43 @@
-// EPOS ATMega1281 Radio (CC1000) NIC Mediator Implementation
+// EPOS-- ATMega1281 Radio (AT86RF230) NIC Mediator Implementation
 
-#include <system/kmalloc.h>
+#include <utility/malloc.h>
 #include <mach/atmega1281/machine.h>
 #include <mach/atmega1281/radio.h>
 
 __BEGIN_SYS
 
-// Class attributes
-Radio::Device Radio::_devices[UNITS];
+AT86RF230 * Radio::device = new AT86RF230();
 
-// Class Methods
-void Radio::int_handler(unsigned int interrupt)
-{
-    Radio * dev = get(interrupt);
-
-    db<Radio>(TRC) << "Radio::int_handler(int=" << interrupt
-		    << ",dev=" << dev << ")\n";
-    if(!dev)
-	db<Radio>(WRN) << "Radio::int_handler: handler not found\n";
-    else 
-	dev->handle_int();
+void Radio::init() {
+    AT86RF230::init();
 }
 
-// Methods
-Radio::Radio(unsigned int unit)
-{
-    db<Radio>(TRC) << "Radio(unit=" << unit << ")\n";
-
-    // Share control
-    if(unit >= UNITS) {
-	db<Radio>(WRN) << "Radio: requested unit (" << unit 
-			 << ") does not exist!\n";
-	return;
-    }
-
-    // Share control
-    if(_devices[unit].in_use) {
-	db<Radio>(WRN) << "Radio: device already in use!\n";
-	return;
-    }
-    
-    *this = *_devices[unit].device;
-
-    // Lock device
-    _devices[unit].in_use = true;
+void Radio::set_event_handler(AT86RF230::event_handler * handler) {
+    device->set_event_handler(handler);
 }
 
-Radio::~Radio()
-{
-    db<Radio>(TRC) << "~Radio(unit=" << _unit << ")\n";
-
-    // Unlock device
-    _devices[_unit].in_use = false;
+int Radio::send(unsigned char * data, unsigned int size) {
+    return device->send(data, size);
 }
 
-Radio::Radio(unsigned int unit, 
-		 int io_port, int irq, void * dma_buf)
-{
-    db<Radio>(TRC) << "Radio(unit=" << unit << ",io=" << io_port 
-		     << ",irq=" << irq << ",dma=" << dma_buf << ")\n";
-
+int Radio::receive(unsigned char * data) {
+    return device->receive(data);
 }
 
-void Radio::reset()
-{
+void Radio::off() {
+    device->reset_state_machine();
 }
 
-int Radio::send(const Address & dst, const Protocol & prot,
-		  const void * data, unsigned int size)
-{
-    db<Radio>(TRC) << "Radio::send(src=" << _address
-		     << ",dst=" << dst
-		     << ",prot=" << prot
-		     << ",data=" << data
-		     << ",size=" << size
-		     << ")\n";
-
-    return size;
+void Radio::listen() {
+    device->set_state(AT86RF230::RX_ON);
 }
 
-int Radio::receive(Address * src, Protocol * prot,
-		     void * data, unsigned int size)
-{
-    db<Radio>(TRC) << "Radio::receive(src=" << *src
-		    << ",prot=" << *prot
-		    << ",data=" << data
-		    << ",size=" << size
-		    << ")\n";
-
-    return 0;
+void Radio::reset() {
+    device->reset();
 }
 
-void Radio::handle_int()
-{
-    CPU::int_disable();
-
-    CPU::int_enable();
+bool Radio::cca() {
+    return device->cca_measurement(AT86RF230::ENERGY_ABOVE_THRESHOLD, 0);
 }
 
 __END_SYS

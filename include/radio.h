@@ -1,4 +1,4 @@
-// EPOS Low-power Radio Mediator Common Package
+// EPOS Radio Mediator Common Package
 
 #include <nic.h>
 #include <utility/string.h>
@@ -8,10 +8,10 @@
 
 __BEGIN_SYS
 
-class Low_Power_Radio: private NIC_Common
+class Radio_Common: private NIC_Common
 {
 protected:
-    Low_Power_Radio() {}
+    Radio_Common() {}
 
 public:
     static const unsigned int MTU = 24;  
@@ -19,7 +19,7 @@ public:
     static const unsigned int TRAILER_SIZE = 2;
     static const unsigned short BROADCAST = ~0;
 
-    typedef unsigned char Address;
+    typedef NIC_Common::Address<1> Address;
     typedef unsigned char Protocol;
     typedef char PDU[MTU];
 
@@ -63,7 +63,7 @@ public:
     }
     
     private:
-    void header(const unsigned char & dst, const unsigned char & src,
+    void header(const Address & dst, const Address & src,
             const unsigned char & prot, const unsigned char & len)
     {
         _src = src;
@@ -73,8 +73,8 @@ public:
     }
 
     public:
-    unsigned char _src;
-    unsigned char _dst;
+    Address _src;
+    Address _dst;
     unsigned char _prot;
     unsigned char _len;
     unsigned char _tx_pow;
@@ -133,5 +133,9 @@ public:
 };
 
 __END_SYS
+
+#ifdef __RADIO_H
+#include __RADIO_H
+#endif
 
 #endif

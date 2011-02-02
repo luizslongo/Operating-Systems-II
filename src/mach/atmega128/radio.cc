@@ -7,36 +7,36 @@
 __BEGIN_SYS
 
 // Class attributes
-Radio::Device Radio::_devices[UNITS];
+ATMega128_Radio::Device ATMega128_Radio::_devices[UNITS];
 
 // Class Methods
-void Radio::int_handler(unsigned int interrupt)
+void ATMega128_Radio::int_handler(unsigned int interrupt)
 {
-    Radio * dev = get(interrupt);
+    ATMega128_Radio * dev = get(interrupt);
 
-    db<Radio>(TRC) << "Radio::int_handler(int=" << interrupt
+    db<ATMega128_Radio>(TRC) << "ATMega128_Radio::int_handler(int=" << interrupt
 		    << ",dev=" << dev << ")\n";
     if(!dev)
-	db<Radio>(WRN) << "Radio::int_handler: handler not found\n";
+	db<ATMega128_Radio>(WRN) << "ATMega128_Radio::int_handler: handler not found\n";
     else 
 	dev->handle_int();
 }
 
 // Methods
-Radio::Radio(unsigned int unit)
+ATMega128_Radio::ATMega128_Radio(unsigned int unit)
 {
-    db<Radio>(TRC) << "Radio(unit=" << unit << ")\n";
+    db<ATMega128_Radio>(TRC) << "ATMega128_Radio(unit=" << unit << ")\n";
 
     // Share control
     if(unit >= UNITS) {
-	db<Radio>(WRN) << "Radio: requested unit (" << unit 
+	db<ATMega128_Radio>(WRN) << "ATMega128_Radio: requested unit (" << unit 
 			 << ") does not exist!\n";
 	return;
     }
 
     // Share control
     if(_devices[unit].in_use) {
-	db<Radio>(WRN) << "Radio: device already in use!\n";
+	db<ATMega128_Radio>(WRN) << "ATMega128_Radio: device already in use!\n";
 	return;
     }
     
@@ -46,30 +46,30 @@ Radio::Radio(unsigned int unit)
     _devices[unit].in_use = true;
 }
 
-Radio::~Radio()
+ATMega128_Radio::~ATMega128_Radio()
 {
-    db<Radio>(TRC) << "~Radio(unit=" << _unit << ")\n";
+    db<ATMega128_Radio>(TRC) << "~ATMega128_Radio(unit=" << _unit << ")\n";
 
     // Unlock device
     _devices[_unit].in_use = false;
 }
 
-Radio::Radio(unsigned int unit, 
+ATMega128_Radio::ATMega128_Radio(unsigned int unit, 
 		 int io_port, int irq, void * dma_buf)
 {
-    db<Radio>(TRC) << "Radio(unit=" << unit << ",io=" << io_port 
+    db<ATMega128_Radio>(TRC) << "ATMega128_Radio(unit=" << unit << ",io=" << io_port 
 		     << ",irq=" << irq << ",dma=" << dma_buf << ")\n";
 
 }
 
-void Radio::reset()
+void ATMega128_Radio::reset()
 {
 }
 
-int Radio::send(const Address & dst, const Protocol & prot,
+int ATMega128_Radio::send(const Address & dst, const Protocol & prot,
 		  const void * data, unsigned int size)
 {
-    db<Radio>(TRC) << "Radio::send(src=" << _address
+    db<ATMega128_Radio>(TRC) << "ATMega128_Radio::send(src=" << _address
 		     << ",dst=" << dst
 		     << ",prot=" << prot
 		     << ",data=" << data
@@ -79,10 +79,10 @@ int Radio::send(const Address & dst, const Protocol & prot,
     return size;
 }
 
-int Radio::receive(Address * src, Protocol * prot,
+int ATMega128_Radio::receive(Address * src, Protocol * prot,
 		     void * data, unsigned int size)
 {
-    db<Radio>(TRC) << "Radio::receive(src=" << *src
+    db<ATMega128_Radio>(TRC) << "ATMega128_Radio::receive(src=" << *src
 		    << ",prot=" << *prot
 		    << ",data=" << data
 		    << ",size=" << size
@@ -91,7 +91,7 @@ int Radio::receive(Address * src, Protocol * prot,
     return 0;
 }
 
-void Radio::handle_int()
+void ATMega128_Radio::handle_int()
 {
     CPU::int_disable();
 

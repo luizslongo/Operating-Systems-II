@@ -1,7 +1,6 @@
 #ifndef __cmac_h
 #define __cmac_h
 
-#include "at86rf230.h"
 #include <nic.h>
 #include <radio.h>
 #include <cpu.h>
@@ -11,7 +10,7 @@
 
 __BEGIN_SYS
 
-class CMAC: public Low_Power_Radio {
+class CMAC: public Radio_Common {
 public:
     enum CMAC_STATE {
 	OFF,
@@ -30,7 +29,8 @@ public:
 	RX_PENDING, PREAMBLE_DETECTED, TIMEOUT, RX_END, RX_ERROR, UNPACK_OK, UNPACK_FAILED, RX_OK
     };
 
-    static const int FRAME_BUFFER_SIZE = AT86RF230::FRAME_MAX_LENGTH;
+    static const int FRAME_BUFFER_SIZE = Radio::FRAME_BUFFER_SIZE;
+    static const Address BROADCAST;
 
 public:
     CMAC(int unit = 0) {}
@@ -84,9 +84,9 @@ private:
     static event_handler *alarm_ev_handler;
     static volatile unsigned long alarm_ticks_ms;
     static unsigned long alarm_event_time_ms;
-//    static Timer_1 timer;
-    static Function_Handler func_handler;
-    static Alarm alarm;
+    static Timer_1 timer;
+//    static Function_Handler func_handler;
+//    static Alarm alarm;
     static volatile bool timeout;
 
     static void alarm_handler_function();
@@ -119,24 +119,7 @@ public:
     }
 
 private:
-    /* for debugging */
-    static void sm_step_int_handler();
-
-    static volatile bool sm_step_next_step;
-
-    static void sm_step() {
-	if (Traits<CMAC>::SM_STEP_DEBUG) {
-	    //writes on the leds the next state and waits for a button pressed int
-	    CPU::out8(Machine::IO::PORTB, CPU::in8(Machine::IO::PORTB) & ~(0xE0));
-	    CPU::out8(Machine::IO::PORTB, CPU::in8(Machine::IO::PORTB) | (_state << 5));
-	    while (!sm_step_next_step);
-	    sm_step_next_step = false;
-	    CPU::out8(Machine::IO::PORTB, CPU::in8(Machine::IO::PORTB) & ~(0xE0));
-	}
-    }
-
-private:
-    static AT86RF230 radio;
+    static Radio radio;
 
     /* timer control variables */
     static unsigned int _sleeping_period; // ms
@@ -347,7 +330,7 @@ namespace CMAC_States
 
 		if (result == 0) {
 		    db<CMAC>(WRN) << "CMAC_States::Generic_Tx - Tx failed - Trying again\n";
-		    CMAC::radio.reset_state_machine();
+		    CMAC::radio.off();
 
 		} else
 		    break;
@@ -378,7 +361,7 @@ namespace CMAC_States
 
 	    if (!(result > 0)) {
 		db<CMAC>(ERR) << "CMAC_States::Generic_Rx - RX_ERROR\n";
-		CMAC::radio.reset_state_machine();
+		CMAC::radio.off();
 		return CMAC::RX_ERROR;
 	    }
 
@@ -398,12 +381,10 @@ namespace CMAC_States
 	static CMAC::CMAC_STATE_TRANSITION execute(CMAC::CMAC_STATE_TRANSITION input, unsigned long soft_timeout) {
 	    db<CMAC>(TRC) << "CMAC_States::Generic_Lpl - Listening\n";
 
-	    bool result;
-
 	    CMAC::radio.set_event_handler(&_event_handler);
 
 	    _frame_received = false;
-	    result = CMAC::radio.set_state(AT86RF230::RX_ON);
+	    CMAC::radio.listen();
 
 	    bool timeout;
 	    if (soft_timeout == 0) {
@@ -420,7 +401,7 @@ namespace CMAC_States
 	    CMAC::CMAC_STATE_TRANSITION transition;
 	    if (timeout) {
 		db<CMAC>(WRN) << "CMAC_States::Generic_Lpl - TIMEOUT\n";
-		CMAC::radio.reset_state_machine();
+		CMAC::radio.off();
 		transition = CMAC::TIMEOUT;
 	    } else {
 		db<CMAC>(INF) << "CMAC_States::Generic_Lpl - PREAMBLE_DETECTED\n";
@@ -435,10 +416,10 @@ namespace CMAC_States
 	    for (unsigned int i = 0; i <= us * (Traits<Machine>::CLOCK / 1000000UL); i++); 
 	}
 
-	static void _event_handler(AT86RF230::Event event) {
+	static void _event_handler(Radio::Event event) {
 	    wait(250);
-	    if (event == AT86RF230::SFD_DETECTED) {
-		CMAC::radio.reset_state_machine();
+	    if (event == Radio::SFD_DETECTED) {
+		CMAC::radio.off();
 		while (!_frame_received) _frame_received = true; // no excuses now
 		db<CMAC>(INF) << "CMAC_States::Generic_Lpl::event_handler - FRAME_RECEIVED" << _frame_received << "\n";
 	    }
@@ -469,7 +450,7 @@ namespace CMAC_States
 		CMAC::alarm_busy_delay(delay);
 
 		/* Clear Channel Assesment(CCA) */
-		bool aux = CMAC::radio.cca_measurement(AT86RF230::ENERGY_ABOVE_THRESHOLD, 0);
+		bool aux = CMAC::radio.cca();
 
 		if (aux) {
 		    db<CMAC>(TRC) << "CMAC_States::Unslotted_CSMA_Contention - CHANNEL_IDLE\n";
@@ -534,7 +515,7 @@ namespace CMAC_States
 	    typedef struct {
 		frame_control_t frame_control;
 		unsigned beacon_sequence_n :8;
-		unsigned source_address :16; // Only 16bits addresses suported
+        CMAC::Address source_address; // Only 16bits addresses suported
 		unsigned beacon_order :4;
 		unsigned superframe_order :4;
 		unsigned final_cap_slot :4; //NOT SUPPORTED
@@ -561,8 +542,8 @@ namespace CMAC_States
 		frame_control_t frame_control;
 		unsigned data_sequence_n :8;
 		//only 16 bits addresses without PAN ID's are suported
-		unsigned destination_address :16;
-		unsigned source_address :16;
+        CMAC::Address destination_address;
+		CMAC::Address source_address;
 	    } data_frame_header_t; // 7 bytes
 
 	    friend Debug &operator<< (Debug &out, frame_control_t &fc) {
@@ -621,8 +602,6 @@ class IEEE802154_Beacon_Sync {
 	    db<CMAC>(TRC) << "CMAC_States::IEEE802154_Beacon_Sync - Setting timeout\n";
 
 	    if (Traits<CMAC>::COORDINATOR) {
-		CPU::out8(Machine::IO::PORTB, CPU::in8(Machine::IO::PORTB) & ~(0xE0));
-		CPU::out8(Machine::IO::PORTB, CPU::in8(Machine::IO::PORTB) | (7 << 5)); // all leds on = coordinator
 		//send beacons
 		_beacon_order = DEFAULT_BEACON_ORDER;
 		_superframe_order = DEFAULT_SUPERFRAME_ORDER;
@@ -636,18 +615,11 @@ class IEEE802154_Beacon_Sync {
 		//send_beacon(); highly unstable
 
 	    } else {
-		CPU::out8(Machine::IO::PORTB, CPU::in8(Machine::IO::PORTB) & ~(0xE0));
-		CPU::out8(Machine::IO::PORTB, CPU::in8(Machine::IO::PORTB) | (2 << 5)); // led yellow = trying to sync
-
 		//receive beacons
 		set_time_out();
 		CMAC::CMAC_STATE_TRANSITION result = receive_beacon();
 
 		if (result == CMAC::TIMEOUT) {
-
-		    CPU::out8(Machine::IO::PORTB, CPU::in8(Machine::IO::PORTB) & ~(0xE0));
-		    CPU::out8(Machine::IO::PORTB, CPU::in8(Machine::IO::PORTB) | (1 << 5)); // led red = lost sync
-
 		    int consecutive_failures = 0;
 		    while (result != CMAC::RX_END) {
 			set_time_out();
@@ -660,7 +632,7 @@ class IEEE802154_Beacon_Sync {
 				db<CMAC>(WRN) << "CMAC::IEEE802154_Beacon_Sync - Operation failed 5 times in a row, reseting radio\n";
 				consecutive_failures = 0;
 				CMAC::radio.reset();
-				CMAC::radio.reset_state_machine();
+				CMAC::radio.off();
 			    }
 
 			} else {
@@ -672,9 +644,6 @@ class IEEE802154_Beacon_Sync {
 		set_time_out();
 		set_sleeping_period();
 		db<CMAC>(INF) << "CMAC_States::IEEE802154_Beacon_Sync - Synchronized with coordinator\n";
-
-		CPU::out8(Machine::IO::PORTB, CPU::in8(Machine::IO::PORTB) & ~(0xE0));
-		CPU::out8(Machine::IO::PORTB, CPU::in8(Machine::IO::PORTB) | (4 << 5)); // leds green = synchronized
 	    }
 
 	    if (CMAC::_rx_pending) {
@@ -920,7 +889,7 @@ public:
 		return CMAC::UNPACK_FAILED;
 	    }
 
-	    if ((header_ptr->destination_address != CMAC::_addr) && (header_ptr->destination_address != (0xFF & CMAC::BROADCAST))) {
+	    if (!(header_ptr->destination_address == CMAC::_addr) && !(header_ptr->destination_address == CMAC::BROADCAST)) {
 		db<CMAC>(INF) << "CMAC_States::IEEE802154_Unpack - UNPACK_FAILED - Wrong address\n";
 		return CMAC::UNPACK_FAILED;
 	    }
@@ -931,7 +900,7 @@ public:
 	    for (unsigned int i = 0; i < CMAC::_rx_data_size; ++i) {
 		aux[i] = payload_ptr[i];
 	    }
-	    CMAC::_rx_src_address = header_ptr->source_address;
+	    CMAC::_rx_src_address = CMAC::Address(header_ptr->source_address);
 
 	    db<CMAC>(TRC) << "CMAC_States::IEEE802154_Unpack - UNPACK_OK\n";
 
@@ -1033,10 +1002,10 @@ class IEEE802154_Ack_Tx {
 	    CMAC::CMAC_STATE_TRANSITION result = CMAC::TX_PENDING;
 
 	    result = pack_ack(result);
-	    CMAC::radio.reset_state_machine();
+	    CMAC::radio.off();
 	    result = CMAC_States::Generic_Tx::execute(result);
 	    wait(100);
-	    CMAC::radio.reset_state_machine();
+	    CMAC::radio.off();
 
 	    db<CMAC>(TRC) << "CMAC_States::IEEE802154_Ack_Tx - RX_OK\n";
 	    return CMAC::RX_OK;
@@ -1099,7 +1068,7 @@ public:
 	    CMAC::alarm_busy_delay(delay);
 
 	    //Clear Channel Assesment(CCA)
-	    bool aux = CMAC::radio.cca_measurement(AT86RF230::ENERGY_ABOVE_THRESHOLD, 0);
+	    bool aux = CMAC::radio.cca();
 	    if (aux) {
 		db<CMAC>(TRC) << "CMAC_States::IEEE802154_Slotted_CSMA_Contention - CHANNEL_IDLE\n";
 		return CMAC::CHANNEL_IDLE;

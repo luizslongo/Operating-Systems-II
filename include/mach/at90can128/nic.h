@@ -7,7 +7,7 @@
 
 __BEGIN_SYS
 
-class AT90CAN128_NIC: public Low_Power_Radio
+class AT90CAN128_NIC: public Radio_Common
 {
 
 public:

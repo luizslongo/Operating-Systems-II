@@ -54,6 +54,18 @@ public:
 		return true;
 	}
 
+    friend OStream & operator << (OStream & cout, const Address & a) {
+	    cout << hex;
+	    for(unsigned int i = 0; i < LENGTH; i++) {
+		cout  << a._address[i];
+		if(i < (LENGTH - 1))
+            cout << ":";
+	    }
+	    cout << dec;
+        return cout;
+	}
+
+
 	friend Debug & operator << (Debug & db, const Address & a) {
 	    db << hex;
 	    for(unsigned int i = 0; i < LENGTH; i++) {

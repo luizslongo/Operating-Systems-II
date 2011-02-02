@@ -6,9 +6,9 @@
 
 __BEGIN_SYS
 
-void Radio::init(unsigned int unit)
+void ATMega128_Radio::init(unsigned int unit)
 {
-    db<Init, Radio>(TRC) << "Radio::init(unit=" << unit << ")\n";
+    db<Init, ATMega128_Radio>(TRC) << "ATMega128_Radio::init(unit=" << unit << ")\n";
 }
 
 __END_SYS

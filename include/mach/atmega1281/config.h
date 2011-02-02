@@ -19,6 +19,7 @@
 #define __NIC_H				__HEADER_MACH(nic)
 #define __ADC_H				__HEADER_MACH(adc)
 #define __SENSOR_H			__HEADER_MACH(sensor)
+#define __RADIO_H			__HEADER_MACH(radio)
 
 __BEGIN_SYS
 
@@ -31,7 +32,7 @@ typedef ATMega1281_IC   		IC;
 typedef ATMega1281_Timer_1		Timer_1;
 typedef ATMega1281_Timer_2		Scheduler_Timer;
 typedef ATMega1281_Timer_3		Alarm_Timer;
-typedef Alarm_Timer    		        Timer;
+typedef Alarm_Timer    		    Timer;
 typedef ATMega1281_RTC			RTC;
 typedef ATMega1281_EEPROM		EEPROM;
 typedef ATMega1281_Flash		Flash;
@@ -43,6 +44,7 @@ typedef ATMega1281_NIC			NIC;
 typedef ATMega1281_ADC			ADC;
 typedef ATMega1281_Temperature_Sensor	Temperature_Sensor;
 typedef ATMega1281_Humidity_Sensor	Humidity_Sensor;
+typedef ATMega1281_Radio		Radio;
 
 __END_SYS
 

@@ -1,7 +1,7 @@
 // EPOS CMAC Init
 
 #include <machine.h>
-#include <mach/atmega128/cmac.h>
+#include <mach/atmega128/cmac128.h>
 
 __BEGIN_SYS
 

@@ -7,7 +7,7 @@
 
 __BEGIN_SYS
 
-class ATMega16_NIC: public Low_Power_Radio
+class ATMega16_NIC: public Radio_Common
 {
 
 public:

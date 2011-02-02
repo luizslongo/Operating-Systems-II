@@ -80,7 +80,7 @@ template <> struct Traits<ATMega128_NIC>: public Traits<void>
 
     typedef LIST<CMAC> NICS;
 
-    static const unsigned int RADIO_UNITS = NICS::Count<Radio>::Result;
+    static const unsigned int RADIO_UNITS = NICS::Count<ATMega128_Radio>::Result;
 };
 
 template <> struct Traits<CMAC>: public Traits<void>

@@ -82,7 +82,8 @@ int sink() {
         irqNumber = 6;
     }
 
-    unsigned char src, prot;
+    unsigned char prot;
+    NIC::Address src;
     int i = 0;
 
     cout << "Sink\n";
@@ -104,7 +105,7 @@ void alarm_test()
 
 int main() {
     nic = new NIC;
-//    sensor(2);
+    sensor(2);
 //    sensor(3);
-    sink();
+//    sink();
 }

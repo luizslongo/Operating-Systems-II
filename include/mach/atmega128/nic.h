@@ -3,11 +3,11 @@
 #ifndef __atmega128_nic_h
 #define __atmega128_nic_h
 
-#include "cmac.h"
+#include "cmac128.h"
 
 __BEGIN_SYS
 
-class ATMega128_NIC: public Low_Power_Radio
+class ATMega128_NIC: public Radio_Common
 {
 private:
     typedef Traits<ATMega128_NIC>::NICS NICS;

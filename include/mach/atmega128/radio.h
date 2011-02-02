@@ -8,7 +8,7 @@
 
 __BEGIN_SYS
 
-class Radio: public Low_Power_Radio, private CC1000
+class ATMega128_Radio: public Radio_Common, private CC1000
 {
 private:
     static const unsigned int UNITS =
@@ -20,14 +20,14 @@ private:
     // Share control and interrupt dispatiching info
     struct Device
     {
-	Radio * device;
+	ATMega128_Radio * device;
 	unsigned int interrupt;
 	bool in_use;
     };
 	
 public:
-    Radio(unsigned int unit = 0);
-    ~Radio();
+    ATMega128_Radio(unsigned int unit = 0);
+    ~ATMega128_Radio();
 
     int send(const Address & dst, const Protocol & prot,
  	     const void * data, unsigned int size);
@@ -45,13 +45,13 @@ public:
     static void init(unsigned int unit);
 
 private:
-    Radio(unsigned int unit, int io_port, int irq, void * dma);
+    ATMega128_Radio(unsigned int unit, int io_port, int irq, void * dma);
 
     void handle_int();
 
     static void int_handler(unsigned int interrupt);
 
-    static Radio * get(unsigned int interrupt) {
+    static ATMega128_Radio * get(unsigned int interrupt) {
 	for(unsigned int i = 0; i < UNITS; i++)
 	    if(_devices[i].interrupt == interrupt)
 		return _devices[i].device;

@@ -2,7 +2,7 @@
 
 #include <machine.h>
 #include <nic.h>
-#include <mach/atmega128/cmac.h>
+#include <mach/atmega128/cmac128.h>
 #include <utility/ostream.h>
 
 __BEGIN_SYS
@@ -284,7 +284,7 @@ volatile unsigned char    CMAC::_tx_preamble_count = 0;
 volatile unsigned char    CMAC::_tx_data_count = 0;
 
 volatile CMAC::RX_STATE   CMAC::_rx_state;
-volatile CMAC::Frame      CMAC::_rx_frame;
+CMAC::Frame      CMAC::_rx_frame;
 volatile unsigned char *  CMAC::_rx_frame_ptr;
 volatile bool             CMAC::_rx_available = false;
 volatile unsigned char    CMAC::_rx_preamble_count = 0;
