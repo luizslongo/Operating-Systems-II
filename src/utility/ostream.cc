@@ -5,18 +5,14 @@
 
 __BEGIN_SYS
 
-const char OStream::_digits[] = "0123456789abcdef";
+const char BaseStream::_digits[] = "0123456789abcdef";
 
 void OStream::print(const char * s)
 {
-//     static volatile bool lock = false;
-
-//     if(Traits<Thread>::smp) while(CPU::tsl(lock));
     Display::puts(s); 
-//     if(Traits<Thread>::smp) lock = false;
 }
 
-int OStream::itoa(int v, char * s)
+int BaseStream::itoa(int v, char * s)
 {
     unsigned int i = 0;
 
@@ -28,7 +24,7 @@ int OStream::itoa(int v, char * s)
     return utoa(static_cast<unsigned int>(v), s, i);
 } 
 
-int OStream::utoa(unsigned int v, char * s, unsigned int i)
+int BaseStream::utoa(unsigned int v, char * s, unsigned int i)
 {
     unsigned int j;
 
@@ -51,7 +47,7 @@ int OStream::utoa(unsigned int v, char * s, unsigned int i)
     return i;
 }
 
-int OStream::llitoa(long long int v, char * s)
+int BaseStream::llitoa(long long int v, char * s)
 {
     unsigned int i = 0;
 
@@ -63,7 +59,7 @@ int OStream::llitoa(long long int v, char * s)
     return llutoa(static_cast<unsigned long long int>(v), s, i);
 } 
 
-int OStream::llutoa(unsigned long long int v, char * s, unsigned int i)
+int BaseStream::llutoa(unsigned long long int v, char * s, unsigned int i)
 {
     unsigned int j;
 
@@ -86,7 +82,7 @@ int OStream::llutoa(unsigned long long int v, char * s, unsigned int i)
     return i;
 }
 
-int OStream::ptoa(const void * p, char * s)
+int BaseStream::ptoa(const void * p, char * s)
 {
     unsigned int j, v = reinterpret_cast<unsigned int>(p);
 
