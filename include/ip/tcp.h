@@ -146,8 +146,8 @@ class TCP::Socket : public Data_Observer<TCP::Address> {
 	
 	const Address & remote() { return _remote; }
 	const Address & local()  { return _local; }
- protected:
-	enum { // Connection state
+	
+    enum { // Connection state
 		LISTEN,	    SYN_SENT,
 		SYN_RCVD,   ESTABLISHED,
 		FIN_WAIT1,  FIN_WAIT2,
@@ -174,7 +174,8 @@ class TCP::Socket : public Data_Observer<TCP::Address> {
 	void __RCVING(const Header&,const char*,u16);
 	
 	void (Socket::* state_handler)(const Header&,const char*,u16);
-	
+
+ protected:	
 	bool check_seq(const Header &h,u16 len);
 	void send_ack();
 	void send_fin();
