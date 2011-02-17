@@ -1,111 +1,80 @@
-#include <udp.h>
+#include <ip/udp.h>
 
 __BEGIN_SYS
 
-Simple_List<UDP::Receive_Entry> UDP::_receive_list;
-Simple_Ordered_List<UDP, UDP::u16> UDP::_busy_ports;
-UDP::u16 UDP::_port = 1024;
 
-void UDP::PDU::calculate_checksum(){
-	if(/*Traits<UDP>::checksum*/ true) {
-		Pseudo_Header phdr;
-		phdr.src_ip = _ip_header.src_ip();
-		phdr.dst_ip = _ip_header.dst_ip();
-		phdr.zero = 0;
-		phdr.protocol = PROT_IP;
-		phdr.length = CPU::htons(size());
-
-		unsigned long sum = 0;
-
-		u16 * ptr = reinterpret_cast<u16 *>(this);
-		for(unsigned int i = 0; i < size() / sizeof(u16); i++)
-			sum += ptr[i];
-		if(size() & 1)
-			sum += ptr[size()] << 8;
-
-		ptr = reinterpret_cast<u16 *>(&phdr);
-		for(unsigned int i = 0;
-				i < sizeof(Pseudo_Header) / sizeof(u16); i++)
-			sum += ptr[i];
-
-		while(sum >> 16)
-			sum = (sum & 0xffff) + (sum >> 16);
-
-		_udp_header.checksum(~sum);
-	} else
-		_udp_header.checksum(0);
+void UDP::calculate_checksum() {
+	// BELLOW CODE IS BUGGED, Will be corrected soon
+//	if(false) {
+//		unsigned int len = size();
+//
+//		Pseudo_Header phdr;
+//		phdr.src_ip = _ip_header.src_ip();
+//		phdr.dst_ip = _ip_header.dst_ip();
+//		phdr.zero = 0;
+//		phdr.protocol = ID_UDP;
+//		phdr.length = CPU::htons(len);
+//
+//		unsigned int sum = 0;
+//
+//		u8 * ptr = reinterpret_cast<u8 *>(this);
+//		unsigned int i;
+//
+//		for(i = 0; i < len-1; i+=2)
+//			sum += (((u16)(ptr[i+1]) & 0x00FF) << 8) | ptr[i];
+//		if(len & 1) {
+//			sum += ptr[len-1];
+//		}
+//
+//		ptr = reinterpret_cast<u8 *>(&phdr);
+//		for(i = 0;i < sizeof(Pseudo_Header); i+=2)
+//			sum += (((u16)(ptr[i+1]) & 0x00FF) << 8) | ptr[i];
+//
+//		while(sum >> 16)
+//			sum = (sum & 0xffff) + (sum >> 16);
+//
+//
+//		_udp_header.checksum(~sum);
+//	} else
+//		_udp_header.checksum(0);
 }
 
-void UDP::constructor_common(){
+// Assembles data and sends to IP layer
 
-	// To find an available port
-	// Checks one port above and the next below the desidered port, respecting the limits
-        u16 desired = _self.port(); 
-        int i, j;	i = j = 0; 
-        bool min, max;	min = max = false; 
-        while(_busy_ports.search_rank(desired+i)){ 
-                bool even;       
-                do{ 
-                        even = ++j%2 == 0; 
-                        i = even ? -j>>1 : (j+1)>>1; 
-                        if(!even && !max && desired+i > 0xffff) max = true; 
-                        if( even && !min && desired+i < 0)      min = true; 
-                } while(((even && min) || (!even && max)) && !(min && max));
- 
-                if(max && min) {  
-			db<UDP>(ERR) << "No ports available. Inconsistent State.\n";
-                        break; 
-                }  
-        }
-
-	if(i){ 
-		_self.change_port(desired + i);
-		db<UDP>(ERR) << "Port " << desired << " is busy. Channel created "
-			"on the next available port: " << (desired+i) << "\n";
-	}
-
-	_link = new Ports_List::Element(this, _self.port());
-
-	IP::attach(*this, ID_UDP);
-	_busy_ports.insert(_link);
-
-	db<UDP>(TRC) << "UDP::UDP() self= " << _self << "\n";
+s32 UDP::send(Address _local, Address _remote, SegmentedBuffer * data) {
+	UDP::Header hdr(_local.port(), _remote.port(),
+			data->total_size());
+	SegmentedBuffer sb(&hdr, sizeof(UDP::Header), data);
+	hdr.checksum(0);	//TODO: change calculate_checksum() to accept SegmentedBuffers
+	return _ip->send(_local.ip(), _remote.ip(), &sb, ID_UDP) - 8;	// discard header
 }
 
-void UDP::received(u32 src, void *data, u16  size){
-	size -= sizeof(UDP::Header);
+// Called by IP's notify(...)
 
-	Header &h = *reinterpret_cast<Header*>(data);
-	Simple_List<Receive_Entry>::Element *e = _receive_list.head();
-	bool found = false;
-	for(;e;e=e->next())
-		if(e->object()->_port == h.dst_port()){
-			found = true;
-			Receive_Entry &r = *e->object();
-			r._size = size < r._size ? size : r._size;
-			Address source(src, h.src_port());
-			r._src = source;
-			memcpy(r._data, ((char*)data)+sizeof(UDP::Header), r._size);
-			r._s.v();
-			break;
-		}
+void UDP::update(Data_Observed<IP::Address> *ob, long c, IP::Address src,
+	         IP::Address dst, void *data, unsigned int size)
+{
+	Header& hdr = *reinterpret_cast<Header*>(data);
 
-	if(!found) 
-		db<UDP>(INF) 	<< "INVALID PORT (" << h.dst_port() 
-				<< ") OR RECEIVE NOT CALLED - Packet discarded\n";
+	db<IP>(INF) << "UDP::update: received "<< size <<" bytes from " 
+	            << src << " to " << dst << "\n";
+
+	// TODO: put checksum verification here
+	notify(UDP::Address(src,hdr.src_port()),UDP::Address(dst,hdr.dst_port()),
+	       (int) hdr.dst_port(), &((char*)data)[sizeof(Header)],
+	       size - sizeof(Header));
 }
 
-int UDP::receive(UDP::Address &src, void *data, unsigned int size){
-	Receive_Entry *re;
-	_receive_list.insert(&(re=new Receive_Entry(_self.port(), _semaph, src, data, size))->_link);
-	db<UDP>(INF) << "Port " << re->_port << " has called receive\n";
-	_semaph.p();
-	_receive_list.remove(re);
-	int s = re->_size;
-	delete re;
-	return s;
-}
+// Called by UDP's notify(...)
 
+void UDP::Socket::update(Observed *o, long c, UDP_Address src, UDP_Address dst,
+                         void *data, unsigned int size)
+{
+	db<IP>(TRC) << __PRETTY_FUNCTION__ << "\n";
+	
+	// virtual call
+	received(src,(const char*)data,size);
+}
 
 __END_SYS
 

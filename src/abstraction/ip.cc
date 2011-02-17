@@ -1,146 +1,255 @@
-#include <ip.h>
+#include <ip/ip.h>
 
 __BEGIN_SYS
 
-IP::Address IP::_self(CPU::htonl(Traits<IP>::ADDRESS));
-const IP::Address 
-IP::BROADCAST(CPU::htonl(Traits<IP>::BROADCAST ? Traits<IP>::BROADCAST 
-			 : ~Traits<IP>::NETMASK | Traits<IP>::ADDRESS));
-IP::u16 IP::_next_id = 0;
-Simple_List<IP::Protocol_Entry> IP::_ip_observers;
-Simple_List<IP::Reassembly_Entry> IP::_reassembly_table;
-IP* IP::_instance = 0;
+const IP::Address IP::NULL = IP::Address((u32)0);
+
+u16 IP::Header::pktid = 0; // incremental packet id
 
 // IP::Header
 void IP::Header::calculate_checksum() {
     _checksum = 0;
     u16 * header = reinterpret_cast<u16 *>(this);
     u32 sum = 0;
+
     for(unsigned int i = 0; i < _ihl * sizeof(u16); i++)
-	sum += header[i];
+    	sum += header[i];
+
     while(sum >> 16)
-	sum = (sum & 0xffff) + (sum >> 16);
+    	sum = (sum & 0xffff) + (sum >> 16);
+
     _checksum = ~sum;
 }
 
-Debug& operator<< (Debug &db, const IP::Header &h) {
-    IP::Address ip_src(h._src_ip), ip_dst(h._dst_ip);
-    IP::u16 flags = h.flags();
-
-    db 	<< "{ver=" << h._version
-	<< ",ihl=" << h._ihl
-	<< ",tos=" << h._tos
-	<< ",len=" << CPU::ntohs(h._length)
-	<< ",id="  << CPU::ntohs(h._id)
-	<< ",off=" << h.offset()
-	<< ",flg=" << (flags == IP::Header::DF_FLAG ? "[DF]" : (flags == IP::Header::MF_FLAG ? "[MF]" : "[ ]"))
-	<< ",ttl=" << h._ttl
-	<< ",pro=" << h._protocol
-	<< ",chk=" << (void *)h._checksum
-	<< ",src=" << ip_src
-	<< ",dst=" << ip_dst
-	<< "}";
-    return db;
-}
 
 // IP
-void IP::attach(Observer &ipo, u16 protocol){
-    _ip_observers.insert(&(new Protocol_Entry(protocol, ipo))->_link);
-}
 
-void IP::notify(u16 prot, u32 src, void *data, u16 size){
-    Simple_List<Protocol_Entry>::Element *e = _ip_observers.head();
-    for(;e;e=e->next())
-	if(e->object()->_ip_protocol == prot ||
-	   e->object()->_ip_protocol == PROT_ANY)
-	    e->object()->_o.received(src, data, size);
-}
-
-void IP::received(void *data, unsigned int size)
+IP::IP(unsigned int unit) :
+	_nic(),
+	_self(IP::NULL),
+	_broadcast(255,255,255,255),
+	_thread(0)
 {
-    IP::PDU &pck = *reinterpret_cast<IP::PDU*>(data);
-    Header &pck_h = pck.header();
-    if(pck_h.dst_ip() != _self && pck_h.dst_ip() != BROADCAST){
-	db<IP>(INF) << "IP Packet discarded. I'm not the destination.\n";
+	_arpt.update(_broadcast, NIC::BROADCAST);
+
+	if (Traits<IP>::DYNAMIC == false) {
+		_self = Address(Traits<IP>::ADDRESS);
+		_arpt.update(_self,_nic.address());
+		_broadcast = Address(Traits<IP>::BROADCAST);
+		_arpt.update(_broadcast, NIC::BROADCAST);
+		_netmask = Address(Traits<IP>::NETMASK);
+	}
+
+
+//	_nic.attach(this, NIC::ARP);
+//	_nic.attach(this, NIC::RARP);
+//	_nic.attach(this, NIC::IP);
+
+	if (Traits<IP>::spawn_thread) {
+		_thread = new Thread(IP::thread_main,this);
+	}
+}
+
+IP::~IP() {
+//	_nic.detach(this, NIC::ARP);
+//	_nic.detach(this, NIC::RARP);
+//	_nic.detach(this, NIC::IP);
+	if (Traits<IP>::spawn_thread) {
+		delete _thread;
+	}
+}
+
+void IP::process_ip(char *data, u16 size)
+{
+    Header &pck_h = *reinterpret_cast<Header*>(data);
+    if((u32)_self != (u32)0 && // We MUST accept anything if our IP address is not set
+       (u32)(pck_h.dst_ip()) != (u32)(_self) &&
+       (u32)(pck_h.dst_ip()) != (u32)(_broadcast))
+    {
+	db<IP>(INF) << "IP Packet discarded. dst= " << pck_h.dst_ip() << "\n";
 	return;
-    }else
-	db<IP>(INF) << "IP " << pck << "\n" ;
+    }
+    else {
+	    db<IP>(TRC) << "IP: " << pck_h << "\n" ;
+    }
 
-    if(pck_h.flags() != Header::MF_FLAG && pck_h.offset() == 0){
-	notify(pck_h.protocol(), pck_h.src_ip(), pck.data(), pck_h.length()-pck_h.hlength());
-    } else {
-	u16 id = pck_h.id();
-	Simple_List<Reassembly_Entry>::Element *e = _reassembly_table.head();
-	bool found = false;
-	for(;e;e=e->next()){
-	    if(e->object()->_id == id){
-		found = true;
-		if(new_fragment(*e->object(), pck)){
-		    PDU &pdu = e->object()->_pdu;
-		    Header &pdu_h = pdu.header();
-		    notify(pdu_h.protocol(), pdu_h.src_ip(), pdu.data(), pdu.size());
-		    _reassembly_table.remove(e);
-		    delete e->object();
+    if(pck_h.flags() != Header::MF_FLAG && pck_h.offset() == 0)
+    {
+	    notify(pck_h.src_ip(),pck_h.dst_ip(),(int)pck_h.protocol(),
+		   &data[pck_h.hlength()], pck_h.length());
+    }
+    else {
+	    db<IP>(WRN) << "Fragmented packet discarded" << endl;
+	    // TODO: reasemble fragmented packets
+    }
+}
+
+
+IP::MAC_Address IP::arp(const Address & la)
+{
+    for(unsigned int i = 0; i < Traits<Network>::ARP_TRIES; i++) {
+	MAC_Address pa = _arpt.search(la);
+	if(pa) {
+	    db<IP>(TRC) << "IP::arp(la=" << la << ") => "
+			     << pa << "\n";
+
+	    return pa;
+	}
+
+	Condition * cond = _arpt.insert(la);
+	_ARP::Packet request(_ARP::REQUEST, _nic.address(), address(),
+			    NIC::BROADCAST, la);
+	_nic.send(NIC::BROADCAST, NIC::ARP, &request, sizeof(_ARP::Packet));
+	db<IP>(INF) << "IP::arp:request sent!\n";
+
+	Condition_Handler handler(cond);
+	//Alarm alarm(Traits<Network>::ARP_TIMEOUT, &handler, 1);
+	Alarm alarm(100000, &handler, 1);
+	cond->wait();
+    }
+
+    db<IP>(TRC) << "IP::arp(la=" << la << ") => not found!\n";
+
+    return 0;
+}
+
+IP::Address IP::rarp(const MAC_Address & pa)
+{
+    for(unsigned int i = 0; i < Traits<Network>::ARP_TRIES; i++)
+    {
+		Address la(IP::NULL);
+
+		Condition * cond = _arpt.insert(la);
+		_ARP::Packet request(_ARP::RARP_REQUEST, pa, la, pa, la);
+		_nic.send(NIC::BROADCAST, NIC::ARP, &request, sizeof(_ARP::Packet));
+		db<IP>(INF) << "IP::rarp:request sent!\n";
+
+		Condition_Handler handler(cond);
+		//Alarm alarm(Traits<Network>::ARP_TIMEOUT, &handler, 1);
+		Alarm alarm(100000, &handler, 1);
+		cond->wait();
+
+		if((u32)(la) != (u32)(IP::NULL)) {
+			db<IP>(TRC) << "IP::rarp(pa=" << pa << ") => "
+					 << la << "\n";
+
+			return la;
 		}
-	    }
-	}
-	if(!found){
-	    Reassembly_Entry *e;
-	    _reassembly_table.insert(&(e=new Reassembly_Entry(id))->_link);
-	    new_fragment(*e,pck);
-	}
     }
+
+    db<IP>(TRC) << "IP::rarp(pa=" << pa << ") => not found!\n";
+
+    return IP::NULL;
 }
 
-bool IP::get_fragment(u16 i, u16 mtu, void *pdu_, void *frag_){
-    PDU &pdu = *reinterpret_cast<PDU*>(pdu_), 
-	&frag = *reinterpret_cast<PDU*>(frag_);
-    u16 ps = mtu-pdu.header().hlength()-(mtu-pdu.header().hlength())%8;
-    u16 data_size = pdu.size() - pdu.header().hlength();
-    u16 nf = data_size/ps;
-    u16 r;
-    nf = (r=data_size%ps) == 0 ? nf-1 : nf;
-    if(i>nf) return false;
-    bool last = i == nf;
-    frag.headercpy(pdu);
-    frag.header().set_offset(i*ps/8);
-    frag.header().set_length(pdu.header().hlength() + (last ? r : ps));
-    frag.header().set_flags(last ? 0 : Header::MF_FLAG);
-    frag.set_data_fragment(pdu, i*ps, last ? r : ps);
-    frag.header().calculate_checksum();
-    db<IP>(INF) << "IP Fragment " << frag << "\n";
-    return true;
+/*void IP::update(NIC::Observed * o, int p)
+{
+	db<IP>(TRC) << "IP::update(o=" << o
+		     << ",p=" << hex << p << dec << ")\n";
+
+	//if (_thread) _thread->resume();
+}*/
+
+void IP::kill() {
+	_alive = false;
+	if (_thread) {
+		_thread->resume();
+	}
 }
 
+void IP::process_incoming() {
+	db<IP>(TRC) << __PRETTY_FUNCTION__ << endl;
+	NIC::Address src;
+	NIC::Protocol prot;
+	NIC::PDU data;
+	int size = _nic.receive(&src, &prot, data, sizeof(NIC::PDU));
+	if(size <= 0) {
+		db<IP>(WRN) << "NIC::received error!" << endl;
+		return;
+	}
+	if (prot == NIC::ARP) {
+		_ARP::Packet packet = *reinterpret_cast<_ARP::Packet *>(data);
+		db<IP>(INF) << "IP::update:ARP_Packet=" << packet << "\n";
 
-bool IP::new_fragment(Reassembly_Entry &entry, PDU &fragment) {
-    PDU &pdu = entry._pdu;
-    Reassembly_Entry::List &list = entry._frag_list;
-    Header &frag_h = fragment.header();
-    u16 offset = frag_h.offset() * 8;
-    u16 size   = fragment.size() - frag_h.hlength();
+		if((packet.op() == _ARP::REQUEST) && (packet.tpa() == address())) {
+			_ARP::Packet reply(_ARP::REPLY, _nic.address(), address(),
+					   packet.sha(), packet.spa());
+			db<IP>(INF) << "IP::update: ARP_Packet=" << reply << "\n";
+			_nic.send(packet.sha(), NIC::ARP, &reply, sizeof(_ARP::Packet));
 
-    Reassembly_Entry::Element *m1, *m2, *e = new Reassembly_Entry::Element((char*)offset,size);
-    list.insert_merging(e, &m1, &m2);
-    memcpy(pdu.data()+offset, fragment.data(), size);
+			db<IP>(INF) << "IP::update: ARP request answered!\n";
+		} else if((packet.op() == _ARP::REPLY)
+			&& (packet.tha() == _nic.address())) {
+			db<IP>(INF) << "IP::update: ARP reply received!\n";
 
-    Header &pdu_h = entry._pdu.header();
-    if(frag_h.offset() == 0){
-	pdu_h.set_length(frag_h.hlength());
-	pdu_h.set_src(frag_h.src_ip());
-    }
+			_arpt.update(packet.spa(), packet.sha());
+		}
+	}
+	else if (prot == NIC::IP) {
+		_arpt.update(reinterpret_cast<Header*>(data)->src_ip(), src);
+		process_ip(data, size);
+	}
+	else
+		db<IP>(TRC) << "IP::update:unknown packet type (" << prot << ")\n";
+}
 
-    if(frag_h.flags() == 0) {
-	entry._packet_size = offset + size;
-	pdu_h.set_protocol(frag_h.protocol());
-	pdu_h.set_offset(0);
-	pdu_h.set_length(pdu_h.length()+entry._packet_size);
-    }
+void IP::worker_loop() {
+	_alive = true;
+	_thread = Thread::self();
+	while (_alive) {
+		process_incoming();
+		Thread::yield();
+	}
+}
 
-    if(entry._packet_size == list.grouped_size())
-	return true;
+s32 IP::send(const Address & from,const Address & to,SegmentedBuffer * data,Protocol proto) {
+	Header hdr(from,to,proto,data->total_size());
+	SegmentedBuffer pdu(&hdr,hdr.hlength(),data);
 
-    return false;
+	int size = pdu.total_size();
+	db<IP>(TRC) << "IP::send() " << size << " bytes" << endl;
+
+	//TODO: put fragmentation here
+	char sbuf[size];
+	//TODO: possible stack overflow here, we must change NIC::send to accept SegmentedBuffers
+	pdu.copy_to(sbuf,size);
+
+	MAC_Address mac = NIC::BROADCAST;
+	if (((u32)to & (u32)_netmask) == ((u32)_self & (u32)_netmask))
+		mac = arp(to);
+	else
+		mac = arp(_gateway);
+
+	if (_nic.send(mac,NIC::IP,sbuf,size) >= 0)
+		return size;
+	else
+		return -1;
+
+}
+
+// From http://www.faqs.org/rfcs/rfc1071.html
+u16 IP::calculate_checksum(void* ptr, u16 count)
+{
+	u32 sum = 0;
+
+	unsigned char * _ptr = reinterpret_cast<unsigned char *>(ptr);
+	u16 i;
+
+	for(i = 0; i < count-1; i+=2)
+		sum += (((unsigned short)(_ptr[i+1]) & 0x00FF) << 8) | _ptr[i];
+	if(count & 1) {
+		sum += _ptr[count-1];
+	}
+
+	while(sum >> 16)
+		sum = (sum & 0xffff) + (sum >> 16);
+
+	return ~sum;
+}
+
+int IP::thread_main(IP * thiz) {
+	thiz->worker_loop();
+	return 0;
 }
 
 __END_SYS
