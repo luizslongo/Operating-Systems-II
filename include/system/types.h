@@ -1,10 +1,6 @@
 // EPOS Internal Type Management System
 
-#if defined(__newlib)
-typedef unsigned long size_t;
-#else
-typedef unsigned int size_t;
-#endif
+typedef __SIZE_TYPE__ size_t;
 
 #ifndef __types_h
 #define __types_h
