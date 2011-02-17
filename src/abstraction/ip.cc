@@ -32,7 +32,7 @@ IP::IP(unsigned int unit) :
 {
 	_arpt.update(_broadcast, NIC::BROADCAST);
 
-	if (Traits<IP>::DYNAMIC == false) {
+	if (Traits<IP>::dynamic == false) {
 		_self = Address(Traits<IP>::ADDRESS);
 		_arpt.update(_self,_nic.address());
 		_broadcast = Address(Traits<IP>::BROADCAST);

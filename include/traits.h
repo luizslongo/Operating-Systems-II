@@ -97,6 +97,10 @@ template <> struct Traits<IP>: public Traits<void>{
     static const unsigned long ADDRESS = 0xc0a80a01;   // 192.168.10.1
     static const unsigned long NETMASK = 0xffffff00;   // 255.255.255.0
     static const unsigned long BROADCAST = 0; // 0= Default Broadcast Address
+
+    static const bool dynamic      = false; // true=dhcp false=static
+    static const bool spawn_thread = true;  // automatic creation of IP's worker thread
+    static const bool echo_reply   = true;  // automatic ICMP echo reply
 };
 
 __END_SYS
