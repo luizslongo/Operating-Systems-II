@@ -90,7 +90,7 @@ template <> struct Traits<Network>: public Traits<void>
 {
     static const unsigned short ELP = 0x8888;
     static const unsigned int   ARP_TRIES = 3;
-    static const unsigned long  ARP_TIMEOUT = 1000000; // 1s
+    static const unsigned int   ARP_TIMEOUT = 1000000; // 1s
 };
 
 template <> struct Traits<IP>: public Traits<void>{
