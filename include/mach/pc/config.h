@@ -10,7 +10,7 @@
 #define __PCI_H				__HEADER_MACH(pci)
 #define __RTC_H				__HEADER_MACH(rtc)
 #define __EEPROM_H			__HEADER_MACH(eeprom)
-#define __NIC_H				__HEADER_MACH(ethernet)
+#define __NIC_H				__HEADER_MACH(nic)
 #define __DISPLAY_H			__HEADER_MACH(display)
 #define __MACH_H			__HEADER_MACH(machine)
 #define __IC_H				__HEADER_MACH(ic)
