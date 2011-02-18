@@ -181,7 +181,7 @@ public:
 	
 	static IP* instance(unsigned int unit = 0) { 
 		if (!_instance[unit])
-			_instance[unit] = new NIC(unit);
+			_instance[unit] = new IP(unit);
 		return _instance[unit]; 
 	}
 
