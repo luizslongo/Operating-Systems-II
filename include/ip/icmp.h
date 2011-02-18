@@ -8,6 +8,9 @@ __BEGIN_SYS
 
 class ICMP : public IP::Observer, public Data_Observed<IP::Address> {
 public:
+	typedef Data_Observer<IP::Address> Observer;
+	typedef Data_Observed<IP::Address> Observed;
+	
 	static const unsigned short ICMP_ID = 1; // IP sub-protocol identifier
 
 	typedef unsigned char Code;
@@ -89,6 +92,8 @@ public:
 
 	ICMP(IP* ip);
 	~ICMP();
+	
+	IP * ip() { return _ip; }
 
 	void update(Data_Observed<IP::Address> *ob, long c, IP::Address src,
 		    IP::Address dst, void *data, unsigned int size);

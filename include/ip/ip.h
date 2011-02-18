@@ -8,6 +8,7 @@
 #include <utility/buffer.h>
 #include <thread.h>
 
+// Common aliases
 typedef unsigned char   u8;
 typedef unsigned short u16;
 typedef unsigned long  u32;
@@ -177,6 +178,7 @@ public:
 	const u16 mtu() { return _nic.mtu(); }
 
 	static u16 calculate_checksum(void* ptr, u16 count);
+	static IP* instance(unsigned int unit = 0) { return _instance[unit]; }
 
 	static int thread_main(IP * thiz);
 private:
@@ -205,6 +207,8 @@ private:
 		u8 protocol;
 		u16 length;
 	};
+	
+	static IP* _instance[Traits<NIC>::NICS::Length];
 };
 
 __END_SYS
