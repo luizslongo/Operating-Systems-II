@@ -16,13 +16,11 @@ private:
     static const unsigned int UNITS = NICS::Length;
 
 public:
-    PC_Ethernet() {
-	_dev = new Meta_NIC<NICS>::Get<0>::Result;
-    }
-
-    template<unsigned int UNIT>
-    PC_Ethernet(unsigned int u) {
-	_dev = new typename Meta_NIC<NICS>::Get<UNIT>::Result(UNIT);
+    
+    //TODO: fix multiple NIC support
+    
+    PC_Ethernet(unsigned int u = 0) {
+        _dev = new Meta_NIC<NICS>::Get<0>::Result(u);
     }
 
     ~PC_Ethernet() { delete _dev; }
