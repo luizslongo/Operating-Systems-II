@@ -178,7 +178,12 @@ public:
 	const u16 mtu() { return _nic.mtu(); }
 
 	static u16 calculate_checksum(void* ptr, u16 count);
-	static IP* instance(unsigned int unit = 0) { return _instance[unit]; }
+	
+	static IP* instance(unsigned int unit = 0) { 
+		if (!_instance[unit])
+			_instance[unit] = new NIC(unit);
+		return _instance[unit]; 
+	}
 
 	static int thread_main(IP * thiz);
 private:
