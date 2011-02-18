@@ -2,14 +2,22 @@
 
 __BEGIN_SYS
 
-ICMP::ICMP(IP* ip) : _ip(ip)
+ICMP::ICMP(IP* ip = 0) : _ip(ip)
 {
-	_ip->attach(this, ICMP_ID);
+	// if no IP is given we try to pick a global one
+	if (!_ip)
+		_ip = IP::instance();
+	
+	if (!_ip)
+		db<ICMP>(ERR) << "ICMP::Cannot get default IP object, ICMP will not work\n";
+	else
+		_ip->attach(this, ICMP_ID);
 }
 
 ICMP::~ICMP()
 {
-	_ip->detach(this, ICMP_ID);
+	if (_ip)
+		_ip->detach(this, ICMP_ID);
 }
 
 void ICMP::update(Data_Observed<IP::Address> *ob, long c, IP::Address src,
@@ -17,20 +25,21 @@ void ICMP::update(Data_Observed<IP::Address> *ob, long c, IP::Address src,
 {
 	Packet& packet = *reinterpret_cast<Packet*>(data);
 	if (IP::calculate_checksum(data,size) != 0) {
-		db<IP>(TRC) << "ICMP checksum error\n";
+		db<ICMP>(TRC) << "ICMP::checksum error\n";
 		return;
 	}
 	
 	if (Traits<IP>::echo_reply && (packet.type() == ECHO)) { // PONG
+		db<ICMP>(TRC) << "ICMP::echo sending automatic reply to " << src << endl;
 		Packet reply(ECHO_REPLY,0,packet.id(),packet.sequence(),packet._data);
 		send(dst,src,reply);
 	}
 	
 	if (packet.type() == ECHO_REPLY) {
-		db<IP>(INF) << "Echo reply from " << src << endl;
+		db<ICMP>(TRC) << "ICMP::echo reply from " << src << endl;
 	}
 	
-	notify(src,dst,c,data,size);
+	notify(src,dst,packet.type(),data,size);
 }
 
 ICMP::Packet::Packet(Type type,Code code, unsigned short id,unsigned short seq,
@@ -47,6 +56,9 @@ ICMP::Packet::Packet(Type type,Code code, unsigned short id,unsigned short seq,
 
 void ICMP::send(IP::Address from,IP::Address to,Packet& pkt)
 {
+	if (!_ip)
+		return;
+	
 	// Thou shall not calculate the checksum in ctor body!
 	pkt._checksum = 0;
 	pkt._checksum = IP::calculate_checksum(&pkt, sizeof(pkt));

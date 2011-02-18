@@ -2,6 +2,7 @@
 
 __BEGIN_SYS
 
+IP* IP::_instance[Traits<NIC>::NICS::Length];
 const IP::Address IP::NULL = IP::Address((u32)0);
 
 u16 IP::Header::pktid = 0; // incremental packet id
@@ -25,11 +26,15 @@ void IP::Header::calculate_checksum() {
 // IP
 
 IP::IP(unsigned int unit) :
-	_nic(),
+	_nic(unit),
 	_self(IP::NULL),
 	_broadcast(255,255,255,255),
 	_thread(0)
 {
+	if (_instance[unit])
+	{
+		db<IP>(ERR) << "IP::created IP object twice for the same NIC!";	
+	}
 	_arpt.update(_broadcast, NIC::BROADCAST);
 
 	if (Traits<IP>::dynamic == false) {
@@ -48,6 +53,8 @@ IP::IP(unsigned int unit) :
 	if (Traits<IP>::spawn_thread) {
 		_thread = new Thread(IP::thread_main,this);
 	}
+	
+	_instance[unit] = this;
 }
 
 IP::~IP() {
