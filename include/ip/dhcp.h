@@ -8,7 +8,7 @@ __BEGIN_SYS
 /*
  * Reference:
  * DHCP:         http://www.ietf.org/rfc/rfc2131.txt
- * DHCP options: http://www.ietf.org/rfc/rfc1533.txt
+ * DHCP options: http://www.ietf.org/rfc/rfc2132.txt
  */
 class DHCP {
 public:
@@ -31,9 +31,9 @@ public:
 			u8 op() const { return _op; }
 			u32 xid() const { return _xid; }
 			u16 secs() const { return CPU::ntohs(_secs); }
-			u32 your_address() const { return _yiaddr; }
-			u32 server_address() const { return _siaddr; }
-			u8 * options() const { _options; }
+			u32 your_address() const { return CPU::ntohl(_yiaddr); }
+			u32 server_address() const { return CPU::ntohl(_siaddr); }
+			u8 * options() const { return const_cast<u8 * const>(_options); }
 
 			Packet()
 			{
@@ -128,15 +128,15 @@ public:
 				set_remote(src);
 
 				UDP::Address me(packet->your_address(),68);
-				set_local(me);
-				_udp->ip()->set_address(me.ip());
+			//	set_local(me);
+			//	_udp->ip()->set_address(me.ip());
 
 				_state = REQUEST;
 				db<IP>(INF) << "Server " << src.ip() << " offered IP " << me.ip() << "\n";
+                parse_options(packet);
 
 				DHCP::Request req(_udp->ip(),packet);
 				SegmentedBuffer sb(&req,sizeof(DHCP::Request));
-
 				send(&sb);
 			}
 
@@ -147,8 +147,8 @@ public:
 			if (packet->your_address()) {
 				_ip = IP::Address((u32)packet->your_address());
 
+                parse_options(packet);
 				_state = RENEW;
-
 
 			}
 		}
@@ -173,7 +173,82 @@ public:
 
 	}
 
-	IP::Address ip() { return _ip; }
+    void parse_options(const Packet<255> * packet) {
+        db<IP>(TRC) << "DHCP::Parsing OPTIONS\n";
+    
+        u8 * opt = packet->options();
+        int i;
+
+        for(i=0;i < 255;i++) {
+            switch(opt[i]) {
+            case 0: // padding
+                break;
+            case 1: // netmask
+                ++i;
+                if (opt[i] == 4) // IPv4, good
+                {
+                   _mask = IP::Address(opt[i+1],opt[i+2],opt[i+3],opt[i+4]); 
+                    db<IP>(TRC) << "Found netmask " << _mask << endl;
+                }
+                i += opt[i];
+                break;
+            case 3: // routers
+                ++i;
+                if (opt[i] >= 4) // one or more, let's get the first
+                {
+                   _gw = IP::Address(opt[i+1],opt[i+2],opt[i+3],opt[i+4]); 
+                    db<IP>(TRC) << "Found gateway " << _gw << endl;
+                }
+                i += opt[i];
+                break;
+            case 6: // nameserver
+                ++i;
+                if (opt[i] >= 4) // same logic as routers
+                {
+                   _ns = IP::Address(opt[i+1],opt[i+2],opt[i+3],opt[i+4]); 
+                    db<IP>(TRC) << "Found nameserver " << _ns << endl;
+                }
+                i += opt[i];
+                break;
+            case 28: // broadcast address
+                ++i;
+                if (opt[i] == 4) // IPv4, good
+                {
+                   _bcast = IP::Address(opt[i+1],opt[i+2],opt[i+3],opt[i+4]); 
+                    db<IP>(TRC) << "Found bcast " << _bcast << endl;
+                }
+                i += opt[i];
+                break;
+            case 58: // renew time in secs
+                ++i;
+                if (opt[i] == 4) { // Good size!
+                    _renew_time = (((u32)(opt[i+1]) << 24) & 0xFF000000) |
+                                  (((u32)(opt[i+2]) << 16) & 0x00FF0000) |
+                                  (((u32)(opt[i+3]) << 8 ) & 0x0000FF00) |
+                                  (((u32)(opt[i+4])      ) & 0x000000FF);
+                    db<IP>(TRC) << "Lease time " << _renew_time << endl;
+                }
+                i += opt[i];
+                break;
+            case 255: // end
+                i = 500; // get out of the loop
+                {
+                    db<IP>(TRC) << "End of options " << endl;
+                }
+                break;
+            default:
+                {
+                db<IP>(TRC) << "Skipping code " << (int)opt[i]  << " len: " << opt[i+1] << endl;
+                    i += opt[i+1] + 1;
+                }
+
+            }
+        }
+    }
+
+    unsigned long _renew_time;
+
+	IP::Address address() { return _ip; }
 	IP::Address netmask() { return _mask; }
 	IP::Address gateway() { return _gw; }
 	IP::Address brodcast() { return _bcast; }

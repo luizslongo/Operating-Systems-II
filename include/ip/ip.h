@@ -18,9 +18,9 @@ __BEGIN_SYS
 class IP_Address : public NIC_Common::Address<4> {
 	public:
 		IP_Address() {}
-		IP_Address(u32 a) {
-		*reinterpret_cast<u32 *>(this) = a;
-		}
+        IP_Address(unsigned char addr[4]) 
+            : NIC_Common::Address<4>(addr[0],addr[1],addr[2],addr[3]) {}
+        IP_Address(unsigned long addr) { *reinterpret_cast<u32 *>(this) = CPU::htonl(addr); }
 		IP_Address(u8 a0, u8 a1 = 0,
 		u8 a2 = 0, u8 a3 = 0)
 		: NIC_Common::Address<4>(a0, a1, a2, a3) {}

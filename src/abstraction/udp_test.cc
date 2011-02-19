@@ -20,5 +20,8 @@ int main()
 
     Alarm::delay(5000000);
 
-    cout << "IP Address: " << ip.address() << endl;
+    cout << "IP Addr: " << dhcpc.address() << endl;
+    cout << "Netmask: " << dhcpc.netmask() << endl;
+    cout << "Gateway: " << dhcpc.gateway() << endl;
+    cout << "DNS:     " << dhcpc.nameserver() << endl;
 }
