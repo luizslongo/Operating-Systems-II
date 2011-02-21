@@ -222,7 +222,7 @@ public:
             case 51: // lease time in secs
                 ++i;
                 if (opt[i] == 4) { // Good size!
-                    _renew_time = (((u32)(opt[i+1]) << 24) & 0xFF000000) |
+                    _lease_time = (((u32)(opt[i+1]) << 24) & 0xFF000000) |
                                   (((u32)(opt[i+2]) << 16) & 0x00FF0000) |
                                   (((u32)(opt[i+3]) << 8 ) & 0x0000FF00) |
                                   (((u32)(opt[i+4])      ) & 0x000000FF);
