@@ -411,6 +411,8 @@ public:
 		for(; p && p->next() && (p->next() != e); p = p->next());
 		if(p)
 		    p->next(e->next());
+        if(e == _tail)
+            _tail = p;
 		_size--;
 	    }
 	return e;
