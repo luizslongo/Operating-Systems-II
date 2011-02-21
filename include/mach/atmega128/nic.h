@@ -15,13 +15,15 @@ private:
 
 public:
 
-    ATMega128_NIC() {
-	_dev = new Meta_NIC<NICS>::Get<0>::Result;
+    ATMega128_NIC(unsigned int unit = 0) {
+	_dev = new Meta_NIC<NICS>::Get<0>::Result(unit);
     }
+    /*
     template<unsigned int UNIT>
     ATMega128_NIC(unsigned int u) {
 	_dev = new typename Meta_NIC<NICS>::Get<UNIT>::Result(UNIT);
     }
+    */
     ~ATMega128_NIC() {
 	delete _dev;
     }
