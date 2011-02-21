@@ -15,7 +15,7 @@ inline static void call_init()
 };
 
 template <> 
-inline static void call_init<Traits<ATMega1281_NIC>::NICS::Length>() {};
+inline void call_init<Traits<ATMega1281_NIC>::NICS::Length>() {};
 
 void ATMega1281_NIC::init()
 {
