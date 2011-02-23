@@ -17,6 +17,7 @@ extern "C"
     char * strchr(const char * s, int c) __attribute__ ((weak));
     char * strrchr (const char * s, int c) __attribute__ ((weak));
     size_t strlen(const char * s) __attribute__ ((weak));
+    long atol(const char * s) __attribute__ ((weak));
 
     int memcmp(const void * m1, const void * m2, size_t n)
     {
@@ -390,5 +391,21 @@ extern "C"
                rtnval = (char*) s;
         } while (*s++);
         return (rtnval);
+    }
+
+    long atol(const char *s)
+    {
+        long ret=0; bool neg=false;
+        
+        if (*s == '-') {
+            neg = true;
+            ++s;
+        }
+
+        while ((*s >= '0') && (*s <= '9')) {
+           ret = ret * 10 + *s++ - '0';
+        }
+
+        return neg ? -ret : ret;
     }
 }

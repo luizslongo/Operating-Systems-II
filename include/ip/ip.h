@@ -6,6 +6,7 @@
 #include <utility/malloc.h>
 #include <utility/debug.h>
 #include <utility/buffer.h>
+#include <utility/string.h>
 #include <thread.h>
 
 // Common aliases
@@ -16,43 +17,31 @@ typedef signed   long  s32;
 
 __BEGIN_SYS
 class IP_Address : public NIC_Common::Address<4> {
-	public:
-		IP_Address() {}
-        IP_Address(unsigned char addr[4]) 
-            : NIC_Common::Address<4>(addr[0],addr[1],addr[2],addr[3]) {}
+public:
+	IP_Address() {}
+    IP_Address(unsigned char addr[4]) 
+        : NIC_Common::Address<4>(addr[0],addr[1],addr[2],addr[3]) {}
             
-        IP_Address(unsigned long addr) { *reinterpret_cast<u32 *>(this) = CPU::htonl(addr); }
-		IP_Address(u8 a0, u8 a1 = 0,
-		u8 a2 = 0, u8 a3 = 0)
+    IP_Address(unsigned long addr) { *reinterpret_cast<u32 *>(this) = CPU::htonl(addr); }
+	IP_Address(u8 a0, u8 a1 = 0, u8 a2 = 0, u8 a3 = 0)
 		: NIC_Common::Address<4>(a0, a1, a2, a3) {}
 
-		operator u32() { return *reinterpret_cast<u32 *>(this); }
-		operator u32() const { return *reinterpret_cast<const u32 *>(this); }
+	operator u32() { return *reinterpret_cast<u32 *>(this); }
+	operator u32() const { return *reinterpret_cast<const u32 *>(this); }
 		
-	int strtoint(const char * s) {
-		int res = 0;
-		while (*s) {
-			res = res * 10;
-			res +=  *s++ - '0';
-		}
-		return res;
-	}
 	IP_Address(const char * _addr) {
 		unsigned char addr[4];
 		addr[0] = 0; addr[1] = 0; addr[2] = 0; addr[3] = 0;
 		int i;
 		for(i=0;i<4;++i) {
 			char * sep = strchr(_addr,'.');
-			bool last = !*sep;
-			*sep = '\0';
-			addr[i] = strtoint(_addr);
+			addr[i] = atol(_addr);
+			if (!sep) break;
 			_addr = ++sep;
-			db<IP>(ERR) << "Addr: " << (unsigned int)(addr[i]) << endl;
-			
-			if (last) break;
 		}
 		memcpy(this,addr,sizeof(this));
 	}
+
 };
 
 class IP: public NIC_Common, /*public NIC::Observer,*/ public Data_Observed<IP_Address>

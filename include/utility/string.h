@@ -15,6 +15,7 @@ extern "C" {
     char * strchr(const char * s, int c);
     char * strrchr(const char * s, int c);
     size_t strlen(const char * s);
+    long atol(const char *s);
 }
 
 #endif
