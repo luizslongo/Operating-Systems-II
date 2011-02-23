@@ -11,6 +11,14 @@ class UDP_Address:public IP_Address {
 	UDP_Address(u16 port):IP_Address(IP::NULL), _port(port) { }
 	UDP_Address(u32 ip, u16 port):IP_Address(ip), _port(port) { }
 	UDP_Address(IP_Address ip, u16 port):IP_Address(ip), _port(port) { }
+    UDP_Address(const char *addr) : IP_Address(addr) {
+        char *sep = strchr(addr,':');
+        if (sep) {
+            _port = atol(++sep);
+        } else {
+            _port = 0;
+        }
+    }
 
 	friend Debug & operator <<(Debug & db, const UDP_Address & h) {
 		return print_common(db, h);
@@ -19,6 +27,7 @@ class UDP_Address:public IP_Address {
 	friend OStream & operator <<(OStream & out, const UDP_Address & h) {
 		return print_common(out, h);
 	}
+
 
 	u16 port() const {
 		return _port;
@@ -35,7 +44,7 @@ class UDP_Address:public IP_Address {
 
 	template < typename T >
 	    static T & print_common(T & out, const UDP_Address & h) {
-		out << h << ":" << h._port;
+		out << h.ip() << ":" << h.port();
 		return out;
 	}
 };
