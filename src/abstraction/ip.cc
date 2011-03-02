@@ -10,6 +10,7 @@ u16 IP::Header::pktid = 0; // incremental packet id
 // IP::Header
 void IP::Header::calculate_checksum() {
     _checksum = 0;
+    /*
     u16 * header = reinterpret_cast<u16 *>(this);
     u32 sum = 0;
 
@@ -18,8 +19,9 @@ void IP::Header::calculate_checksum() {
 
     while(sum >> 16)
     	sum = (sum & 0xffff) + (sum >> 16);
-
-    _checksum = ~sum;
+*/
+    _checksum = IP::calculate_checksum(this, hlength());
+    //_checksum = ~sum;
 }
 
 
@@ -83,7 +85,7 @@ void IP::process_ip(char *data, u16 size)
     if(pck_h.flags() != Header::MF_FLAG && pck_h.offset() == 0)
     {
 	    notify(pck_h.src_ip(),pck_h.dst_ip(),(int)pck_h.protocol(),
-		   &data[pck_h.hlength()], pck_h.length());
+		   &data[pck_h.hlength()], pck_h.length() - pck_h.hlength());
     }
     else {
 	    db<IP>(WRN) << "Fragmented packet discarded" << endl;
@@ -175,7 +177,7 @@ void IP::process_incoming() {
 		return;
 	}
 	if (prot == NIC::ARP) {
-		_ARP::Packet packet = *reinterpret_cast<_ARP::Packet *>(data);
+		_ARP::Packet& packet = *reinterpret_cast<_ARP::Packet *>(data);
 		db<IP>(INF) << "IP::update:ARP_Packet=" << packet << "\n";
 
 		if((packet.op() == _ARP::REQUEST) && (packet.tpa() == address())) {
@@ -235,11 +237,11 @@ s32 IP::send(const Address & from,const Address & to,SegmentedBuffer * data,Prot
 }
 
 // From http://www.faqs.org/rfcs/rfc1071.html
-u16 IP::calculate_checksum(void* ptr, u16 count)
+u16 IP::calculate_checksum(const void* ptr, u16 count)
 {
 	u32 sum = 0;
 
-	unsigned char * _ptr = reinterpret_cast<unsigned char *>(ptr);
+	const unsigned char * _ptr = reinterpret_cast<const unsigned char *>(ptr);
 	u16 i;
 
 	for(i = 0; i < count-1; i+=2)
