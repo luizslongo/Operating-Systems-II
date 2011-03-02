@@ -12,11 +12,11 @@
 #include <utility/random.h>
 //#include <system/config.h>
 
-#ifndef MIN
-#define MIN(x,y) ((x) < (y) ? (x) : (y))
-#endif
+//#ifndef MIN
+//#define MIN(x,y) ((x) < (y) ? (x) : (y))
+//#endif
 
-#define CHANGE_STATE(x) { _state = x ; state_handler = &TCP::Socket::__ ## x ; }
+//#define CHANGE_STATE(x) { _state = x ; state_handler = &TCP::Socket::__ ## x ; }
 
 __BEGIN_SYS
 
@@ -31,7 +31,7 @@ public:
 	class ServerSocket;
 	class ClientSocket;
 
-	TCP(IP * ip);
+	TCP(IP * ip = 0);
 	~TCP();
 	
 	IP * ip() { return _ip; }
@@ -52,18 +52,18 @@ class TCP::Header {
 
 	u16 _src_port, _dst_port;
 	u32 _seq_num, _ack_num;
-// little endian
-#if defined(_i386_) || defined(_AVR_)
+#if !defined(i386) && !defined(AVR) 
 	u8  _hdr_off:4, _un1:4;
 	bool  _un3:1, _un2:1;
 	bool  _urg:1, _ack:1, _psh:1, _rst:1, _syn:1, _fin:1;
-// big endian
 #else
 	u8  _un1:4, _hdr_off:4;
 	bool  _fin:1, _syn:1, _rst:1, _psh:1, _ack:1, _urg:1;
 	bool  _un2:1, _un3:1;
 #endif
-	u16 _wnd, _chksum, _urgptr;
+	u16 _wnd;
+    volatile u16 _chksum;
+    u16 _urgptr;
 
 	// getters
 	u16 size() const { return _hdr_off * 4; }
@@ -112,6 +112,8 @@ class TCP::Header {
 class TCP::Socket : public Data_Observer<TCP::Address> {
 	friend class TCP;
  public:
+    typedef void (Socket::* Handler)(const Header&,const char*,u16);
+    
 	enum { // Erros
 		ERR_NOT_CONNECTED,
 		ERR_TIMEOUT,
@@ -144,6 +146,10 @@ class TCP::Socket : public Data_Observer<TCP::Address> {
 	//* Called when the connection is closed
 	virtual void closed() = 0;
 	
+    void close();
+    void send(const char* data,u16 len);
+    void send(SegmentedBuffer * sb);
+    
 	const Address & remote() { return _remote; }
 	const Address & local()  { return _local; }
 	
@@ -156,7 +162,8 @@ class TCP::Socket : public Data_Observer<TCP::Address> {
 		CLOSED,
 	};
 	
-	bool in_state(short s) { return _state == s; }
+	u8 state() { return _state; }
+	void state(u8 s) { _state = s; state_handler = handlers[s]; }
 
 	// state-processing functions
 	void __LISTEN(const Header&,const char*,u16);
@@ -173,14 +180,16 @@ class TCP::Socket : public Data_Observer<TCP::Address> {
 	void __SNDING(const Header&,const char*,u16);
 	void __RCVING(const Header&,const char*,u16);
 	
-	void (Socket::* state_handler)(const Header&,const char*,u16);
+	Handler state_handler;
 
  protected:	
+    // methods
 	bool check_seq(const Header &h,u16 len);
 	void send_ack();
 	void send_fin();
-	s32 send(Header * hdr, SegmentedBuffer * sb);
+	s32 _send(Header * hdr, SegmentedBuffer * sb);
 	
+    // attributes
 	TCP * _tcp;
 	TCP::Address _remote;
 	TCP::Address _local;
@@ -189,172 +198,20 @@ class TCP::Socket : public Data_Observer<TCP::Address> {
 	
 	volatile u32 snd_una, snd_nxt, snd_ini, snd_wnd;
 	volatile u32 rcv_una, rcv_nxt, rcv_ini, rcv_wnd;
+    
+    // class attributes
+    static Handler handlers[13];
 };
 
 class TCP::ClientSocket : public Socket {
  public:
 	ClientSocket(TCP * tcp,const Address &remote,const Address &local);
- protected:
 };
 
 class TCP::ServerSocket : public Socket {
  public:
 	ServerSocket(TCP * tcp,const Address &local);
- protected:
-
 };
-
-//class TCP : public IP::Observer {
-//public:
-//	typedef unsigned char  u8;
-//	typedef unsigned short u16;
-//	typedef unsigned long  u32;
-//
-//	typedef UDP::Address Address;
-//	class Socket;
-//	class Header;
-//	class PDU;
-//
-//	static Socket * connect(const Address &remote); // Factory-like pattern
-//	static Socket * listen(const Address &local);   // idem
-//	static void init();
-//
-//	static const int ERR_NOT_CONNECTED = -1;
-//	static const int ERR_TIMEOUT = -2;
-//	static const int ERR_RESET = -3;
-//	static const int ERR_CLOSING = -4;
-//	static const int ERR_NO_ROUTE = -5;
-//	static const int ERR_NOT_STARTED = -6;
-//	static const int ERR_REFUSED = -7;
-//
-//	/* Daqui em diante todos os elementos são de uso interno */
-//
-//	static const unsigned int ID_TCP = 6;
-//
-//protected:
-//	void received(u32 src, void *data, u16  size);
-//
-//	TCP();
-//	~TCP();
-//
-//	// static stuff here
-//	static TCP* manager;
-//	Mutex _big_lock; // protege os dados compartilhados entre todos os objetos TCP
-//	NIC  *_nic;
-////	ARP  *_arp;
-//	IP   *_ip;
-//	Simple_List<Socket> _busy;
-//
-//	bool busy(int);
-//	u16 get_free_port();
-//};
-//
-
-//class TCP::Socket {
-//	friend class TCP;
-//
-//	public:
-//	void close();
-//	int  read(char *data,unsigned int size);
-//	int  send(const char *data,unsigned int size);
-//	int  status() { return _state; }
-//	~Socket();
-//
-//	protected:
-//	bool connect_helper();
-//	bool listen_helper();
-//
-//	void mac_update();
-//	void send_ack();
-//	void send_fin();
-//	void sendPDU(PDU& pdu,u16 data_len);
-//	void wait();
-//	void signal();
-//	void enter();
-//	void leave();
-//	void set(char* b,u16 s) { buffer=b; buffer_size=s; complete=0;};
-//
-//	Socket(const Address &remote,const Address &local);
-//
-//	// state-processing functions
-//	void __LISTEN(const Header&,const char*,u16);
-//	void __SYN_SENT(const Header&,const char*,u16);
-//	void __SYN_RCVD(const Header&,const char*,u16);
-//	void __ESTABLISHED(const Header&,const char*,u16);
-//	void __FIN_WAIT1(const Header&,const char*,u16);
-//	void __FIN_WAIT2(const Header&,const char*,u16);
-//	void __CLOSE_WAIT(const Header&,const char*,u16);
-//	void __CLOSING(const Header&,const char*,u16);
-//	void __LAST_ACK(const Header&,const char*,u16);
-//	void __TIME_WAIT(const Header&,const char*,u16);
-//	void __CLOSED(const Header&,const char*,u16) {}
-//
-//	void __SNDING(const Header&,const char*,u16);
-//	void __RCVING(const Header&,const char*,u16);
-//	bool check_seq(const Header&,u16);
-//
-//	// atributes
-//	Mutex _lock;
-//	Semaphore _sync;
-//	RTC::Microsecond rtt;
-//	Chronometer _counter;
-//	volatile bool signaled;
-//	volatile int _error;
-//
-//	TCP::Address _remote, _local;
-//	NIC::Address _dst_mac;
-//
-//	char *buffer;
-//	volatile u16 buffer_size, complete;
-//	volatile u32 snd_una, snd_nxt, snd_ini, snd_wnd;
-//	volatile u32 rcv_una, rcv_nxt, rcv_ini, rcv_wnd;
-//
-//	Simple_List<Socket>::Element _link;
-//
-//	//short _state;
-//	enum {
-//		LISTEN,		SYN_SENT,
-//		SYN_RCVD,	ESTABLISHED,
-//		FIN_WAIT1,	FIN_WAIT2,
-//		CLOSE_WAIT,	CLOSING,
-//		LAST_ACK,	TIME_WAIT,
-//		CLOSED,
-//	} volatile _state;
-//
-//	enum {
-//		IDLE,
-//		SNDING,
-//		RCVING
-//	} volatile _transfer;
-//
-//	inline volatile bool in_state(short s) { return _state == s; }
-//
-//	void (Socket::* state_handler)(const Header&,const char*,u16);
-//};
-//
-//
-//
-//class TCP::PDU {
-//	public:
-//	static PDU& grab();
-//	void release();
-//	TCP::Header& getTCP() { return _tcp; }
-//	IP::Header&  getIP() { return _ip; }
-//	char*        getData() { return _data; }
-//
-//	private:
-//	IP::Header _ip;
-//	TCP::Header _tcp;
-//	char _data[512];
-//
-//	static PDU* instance;
-//	static Mutex* mutex;
-//
-//	PDU() {}
-//	~PDU() {}
-//	PDU& operator= (PDU& p);
-//};
-//
 
 __END_SYS
 #endif
