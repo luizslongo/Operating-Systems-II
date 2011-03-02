@@ -22,7 +22,10 @@ public:
     IP_Address(unsigned char addr[4]) 
         : NIC_Common::Address<4>(addr[0],addr[1],addr[2],addr[3]) {}
             
-    IP_Address(unsigned long addr) { *reinterpret_cast<u32 *>(this) = CPU::htonl(addr); }
+    IP_Address(unsigned long addr) { 
+        addr = CPU::htonl(addr);
+        memcpy(this, &addr, sizeof(addr)); 
+    }
 	IP_Address(u8 a0, u8 a1 = 0, u8 a2 = 0, u8 a3 = 0)
 		: NIC_Common::Address<4>(a0, a1, a2, a3) {}
 
@@ -41,6 +44,13 @@ public:
 		}
 		memcpy(this,addr,sizeof(this));
 	}
+	
+	friend Debug& operator<<(Debug& db,const IP_Address& addr) {
+        const u8 * _addr = reinterpret_cast<const u8*>(&addr);
+        db << dec << (int)(_addr[0]) << '.' << (int)(_addr[1]) 
+           << '.' << (int)(_addr[2]) << '.' << (int)(_addr[3]);
+        return db;
+    }
 
 };
 
@@ -146,7 +156,7 @@ public:
 		u16 _flags:3;   // Flags (UN, DF, MF)
 		u8  _ttl;       // Time To Live
 		Protocol  _protocol;  // RFC 1700 (1->ICMP, 6->TCP, 17->UDP)
-		u16 _checksum;  // Header checksum
+		volatile u16 _checksum;  // Header checksum
 		Address _src_ip;    // Source IP address
 		Address _dst_ip;    // Destination IP addres
 	
@@ -192,7 +202,7 @@ public:
 	const int hw_address_len() { return sizeof(MAC_Address); }
 	const u16 mtu() { return _nic.mtu(); }
 
-	static u16 calculate_checksum(void* ptr, u16 count);
+	static u16 calculate_checksum(const void* ptr, u16 count);
 	
 	static IP* instance(unsigned int unit = 0) { 
 		if (!_instance[unit])
