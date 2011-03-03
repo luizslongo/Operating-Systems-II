@@ -10,18 +10,7 @@ u16 IP::Header::pktid = 0; // incremental packet id
 // IP::Header
 void IP::Header::calculate_checksum() {
     _checksum = 0;
-    /*
-    u16 * header = reinterpret_cast<u16 *>(this);
-    u32 sum = 0;
-
-    for(unsigned int i = 0; i < _ihl * sizeof(u16); i++)
-    	sum += header[i];
-
-    while(sum >> 16)
-    	sum = (sum & 0xffff) + (sum >> 16);
-*/
-    _checksum = IP::calculate_checksum(this, hlength());
-    //_checksum = ~sum;
+    _checksum = ~(IP::calculate_checksum(this, hlength()));
 }
 
 
@@ -75,17 +64,21 @@ void IP::process_ip(char *data, u16 size)
        (u32)(pck_h.dst_ip()) != (u32)(_self) &&
        (u32)(pck_h.dst_ip()) != (u32)(_broadcast))
     {
-	db<IP>(INF) << "IP Packet discarded. dst= " << pck_h.dst_ip() << "\n";
-	return;
+        db<IP>(INF) << "IP Packet discarded. dst= " << pck_h.dst_ip() << "\n";
+        return;
     }
     else {
-	    db<IP>(TRC) << "IP: " << pck_h << "\n" ;
+        db<IP>(TRC) << "IP: " << pck_h << "\n" ;
     }
 
     if(pck_h.flags() != Header::MF_FLAG && pck_h.offset() == 0)
     {
-	    notify(pck_h.src_ip(),pck_h.dst_ip(),(int)pck_h.protocol(),
-		   &data[pck_h.hlength()], pck_h.length() - pck_h.hlength());
+        if (calculate_checksum(data,pck_h.hlength()) != 0xFFFF) {
+            db<IP>(TRC) << "IP checksum failed for incoming packet\n";
+        } else {
+            notify(pck_h.src_ip(),pck_h.dst_ip(),(int)pck_h.protocol(),
+               &data[pck_h.hlength()], pck_h.length() - pck_h.hlength());
+        }
     }
     else {
 	    db<IP>(WRN) << "Fragmented packet discarded" << endl;
@@ -253,7 +246,7 @@ u16 IP::calculate_checksum(const void* ptr, u16 count)
 	while(sum >> 16)
 		sum = (sum & 0xffff) + (sum >> 16);
 
-	return ~sum;
+	return sum;
 }
 
 int IP::thread_main(IP * thiz) {

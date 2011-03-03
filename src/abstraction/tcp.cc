@@ -79,24 +79,26 @@ TCP::Header::Header(u32 seq,u32 ack)
 	ack_num(ack);
 }
 
-u16 TCP::Header::_checksum(IP::Address &src,IP::Address &dst,u16 len)
+bool TCP::Header::validate_checksum(IP::Address &src,IP::Address &dst,u16 len)
 {
     db<IP>(TRC) << __PRETTY_FUNCTION__ << endl;
-	len += size();
+    //db<IP>(TRC) << "len = " << len << endl;
+    len += size();
+   // db<IP>(TRC) << "len = " << len << endl;
+    
+    Pseudo_Header phdr((u32)src,(u32)dst,len);
 
-	Pseudo_Header phdr;
-	phdr.src_ip = (u32)src;
-	phdr.dst_ip = (u32)dst;
-	phdr.zero = 0;
-	phdr.protocol = ID_TCP;
-	phdr.length = CPU::htons(len);
+    s32 sum = 0;
 
-	unsigned int sum = 0;
+    sum = IP::calculate_checksum(this, len);
+    //db<IP>(TRC) << "Partial sum = " << sum << endl;
+    sum += IP::calculate_checksum(&phdr, sizeof(phdr));
+   // db<IP>(TRC) << "Partial sum = " << sum << endl;
+    while (sum >> 16)
+        sum = (sum & 0xFFFF) + (sum >> 16);
 
-    sum = ~ IP::calculate_checksum(this, len);
-    sum += ~ IP::calculate_checksum(&phdr, sizeof(phdr));
-	
-    return ~sum;
+    db<IP>(TRC) << "Validate checksum = " << sum << endl;
+    return sum == 0xFFFF;
 }
 
 void TCP::Header::_checksum(IP::Address &src,IP::Address &dst,SegmentedBuffer * sb)
@@ -107,37 +109,32 @@ void TCP::Header::_checksum(IP::Address &src,IP::Address &dst,SegmentedBuffer * 
 
     if (sb) len += sb->total_size();
 
-	Pseudo_Header phdr;
-	phdr.src_ip = (u32)src;
-	phdr.dst_ip = (u32)dst;
-	phdr.zero = 0;
-	phdr.protocol = ID_TCP;
-	phdr.length = CPU::htons(len);
+	Pseudo_Header phdr((u32)src,(u32)dst,len);
 
     _chksum = 0;
 
 	unsigned int sum = 0;
 
-    sum = ~ IP::calculate_checksum(&phdr, sizeof(phdr));
-    sum += ~ IP::calculate_checksum(this, size());
+    sum = IP::calculate_checksum(&phdr, sizeof(phdr));
+    sum += IP::calculate_checksum(this, size());
 
     while (sb) {
-        sum += ~ IP::calculate_checksum(sb->data(), sb->size());
+        sum += IP::calculate_checksum(sb->data(), sb->size());
         sb = sb->next();
     }
 	_chksum = ~sum;
 }
 
-void TCP::Header::checksum(IP::Address &src,IP::Address &dst,u16 len)
+/*void TCP::Header::checksum(IP::Address &src,IP::Address &dst,u16 len)
 {
     _chksum = 0;
 	_chksum = _checksum(src,dst,len);
-}
+}*/
 
-bool TCP::Header::validate_checksum(IP::Address &src,IP::Address &dst,u16 len)
+/*bool TCP::Header::validate_checksum(IP::Address &src,IP::Address &dst,u16 len)
 {
 	return _checksum(src,dst,len) == 0x0000;
-}
+}*/
 
 // Socket stuff
 
@@ -172,6 +169,7 @@ s32 TCP::Socket::_send(Header * hdr, SegmentedBuffer * sb)
 void TCP::Socket::send(const char *data,u16 len)
 {
     Header hdr(snd_nxt,rcv_nxt-1);
+    hdr._ack = true;
     snd_nxt += len;
     SegmentedBuffer sb(data,len);
     _send(&hdr,&sb);

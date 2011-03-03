@@ -93,6 +93,10 @@ class TCP::Header {
         u32 src_ip, dst_ip;
         u8 zero, protocol;
         u16 length;
+        
+        Pseudo_Header(u32 src,u32 dst,u16 len) 
+        : src_ip(src), dst_ip(dst), zero(0), protocol(ID_TCP),
+          length(CPU::htons(len)) {};
     };
 // Compact bitfields istead of using 1 char for each single bit attribute
 } __attribute__((packed)); 

@@ -24,7 +24,7 @@ void ICMP::update(Data_Observed<IP::Address> *ob, long c, IP::Address src,
 		       IP::Address dst, void *data, unsigned int size)
 {
 	Packet& packet = *reinterpret_cast<Packet*>(data);
-	if (IP::calculate_checksum(data,size) != 0) {
+	if (IP::calculate_checksum(data,size) != 0xFFFF) {
 		db<ICMP>(TRC) << "ICMP::checksum error\n";
 		return;
 	}
@@ -61,7 +61,7 @@ void ICMP::send(IP::Address from,IP::Address to,Packet& pkt)
 	
 	// Thou shall not calculate the checksum in ctor body!
 	pkt._checksum = 0;
-	pkt._checksum = IP::calculate_checksum(&pkt, sizeof(pkt));
+	pkt._checksum = ~(IP::calculate_checksum(&pkt, sizeof(pkt)));
 	SegmentedBuffer sb(pkt.raw(),sizeof(pkt));
 	_ip->send(from,to,&sb,ICMP_ID);
 }
