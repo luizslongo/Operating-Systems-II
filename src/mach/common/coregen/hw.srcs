@@ -1,0 +1,38 @@
+
+##################################################
+# IP Sources
+##################################################
+COREGEN_SRCS = $(abspath $(addprefix $(BASE_DIR)/src/mach/common/coregen/, \
+clk_xlnx_100M_diff.xco \
+clk_xlnx_125M_diff.xco \
+))
+
+#####################
+# Compile the cores
+#####################
+
+COREGEN_DIR = $(abspath $(BASE_DIR)/src/mach/common/coregen/)
+
+coregen_generate: \
+clk_xlnx_100M_diff \
+clk_xlnx_125M_diff
+
+clk_xlnx_100M_diff: \
+$(COREGEN_DIR)/clk_xlnx_100M_diff.xco
+	cd $(COREGEN_DIR); \
+	coregen -b clk_xlnx_100M_diff.xco \
+	-p coregen.cgp
+        
+clk_xlnx_125M_diff: \
+$(COREGEN_DIR)/clk_xlnx_125M_diff.xco
+	cd $(COREGEN_DIR); \
+	coregen -b clk_xlnx_125M_diff.xco \
+	-p coregen.cgp
+
+coregen_clean:
+	cd $(COREGEN_DIR); \
+	rm -rf clk_xlnx_100M_diff clk_xlnx_125M_diff; \
+	rm -f coregen.cgc; \
+	rm -rf tmp _xmsgs; \
+	rm -f *.v *.vhd *.ngc *.xise *.gise *.ncf *.tcl *.txt *.ejp *.veo *.log
+
