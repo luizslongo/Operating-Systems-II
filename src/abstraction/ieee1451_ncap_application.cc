@@ -182,7 +182,7 @@ void NCAPApplication::readTemperature(const IP::Address &address, const char *bu
 		for (unsigned int i = 0, j = 0; i < repeats; i++, j += 4)
 		{
 			float value = *((float *)(&buffer[j]));
-			db<NCAPApplication>(INF) << i << "=" << (int) value << ((i != repeats - 1) ? "|" : "");
+			db<NCAPApplication>(INF) << i << "=" << (int) value << ((i != (repeats - 1u)) ? "|" : "");
 		}
 		db<NCAPApplication>(INF) << "\n";
 	}
