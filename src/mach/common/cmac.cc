@@ -55,7 +55,7 @@ CMAC<Radio_Wrapper>::CMAC_STATE_TRANSITION CMAC<Radio_Wrapper>::state_machine() 
                 result = Traits<CMAC<Radio_Wrapper> >::Tx_State::execute(result);
 
                 if (result == TX_END) {
-                    if (_tx_dst_address == BROADCAST)
+                    if (_tx_dst_address == Radio_Common::BROADCAST)
                         _state = OFF;
                     else 
                         _state = ACK_RX;
@@ -103,7 +103,7 @@ CMAC<Radio_Wrapper>::CMAC_STATE_TRANSITION CMAC<Radio_Wrapper>::state_machine() 
                 if (result == UNPACK_FAILED)
                     _state = LPL;
                 else if (result == UNPACK_OK) {
-                    if (_tx_dst_address == BROADCAST)
+                    if (_tx_dst_address == Radio_Common::BROADCAST)
                         _state = OFF;
                     else 
                         _state = ACK_TX;

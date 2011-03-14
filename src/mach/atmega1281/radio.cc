@@ -40,7 +40,5 @@ bool Radio_Wrapper::cca() {
     return device->cca_measurement(AT86RF230::ENERGY_ABOVE_THRESHOLD, 0);
 }
 
-void ATMega1281_Radio::init(unsigned int n) {}
-
 __END_SYS
 

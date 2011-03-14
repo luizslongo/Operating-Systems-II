@@ -59,7 +59,7 @@ public:
 
     ~ATMega1281_Radio() {}
 
-    static void init(unsigned int n);
+    static void init(unsigned int n) {}
 
     int send(const Radio_Common::Address & dst, const Radio_Common::Protocol & prot,
             const void *data, unsigned int size) {

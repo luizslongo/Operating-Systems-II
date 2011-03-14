@@ -6,7 +6,6 @@
 
 __BEGIN_SYS
 
-template<> const CMAC<Radio_Wrapper>::Address CMAC<Radio_Wrapper>::BROADCAST = CMAC<Radio_Wrapper>::Address(Traits<CMAC<Radio_Wrapper> >::BROADCAST);
 template<> CMAC<Radio_Wrapper>::event_handler* CMAC<Radio_Wrapper>::alarm_ev_handler = 0;
 template<> volatile unsigned long CMAC<Radio_Wrapper>::alarm_ticks_ms = 0;
 template<> unsigned long CMAC<Radio_Wrapper>::alarm_event_time_ms     = 0;

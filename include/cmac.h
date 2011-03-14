@@ -29,7 +29,6 @@ public:
     typedef Radio_Common::Protocol Protocol;
     typedef Radio_Common::Statistics Statistics;
     static const int FRAME_BUFFER_SIZE = T::FRAME_BUFFER_SIZE;
-    static const Address BROADCAST;
 
 public:
     CMAC(int unit = 0) {
@@ -1045,7 +1044,7 @@ public:
             return CMAC<T>::UNPACK_FAILED;
         }
 
-        if (!(header_ptr->destination_address == *CMAC<T>::_addr) && !(header_ptr->destination_address == CMAC<T>::BROADCAST)) {
+        if (!(header_ptr->destination_address == *CMAC<T>::_addr) && !(header_ptr->destination_address == Radio_Common::BROADCAST)) {
             db<CMAC<T> >(INF) << "CMAC_States::IEEE802154_Unpack - UNPACK_FAILED - Wrong address\n";
             return CMAC<T>::UNPACK_FAILED;
         }
