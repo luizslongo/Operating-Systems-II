@@ -237,6 +237,7 @@ class Chronometer;
 // Abstractions	- Communication
 class Ethernet;
 template <typename, typename> class ARP;
+template <typename, typename> class ADHOP;
 class Network;
 class IP;
 class UDP;
