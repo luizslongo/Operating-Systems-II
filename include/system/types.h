@@ -31,6 +31,7 @@ class IA32;
 class AVR8;
 class PPC32;
 class MIPS32;
+class ARM7;
 
 /*
 namespace Cpu {
@@ -43,12 +44,14 @@ class IA32_TSC;
 class AVR8_TSC;
 class PPC32_TSC;
 class MIPS32_TSC;
+class ARM7_TSC;
 
 // Hardware Mediators - Memory Management Units
 class IA32_MMU;
 class AVR8_MMU;
 class PPC32_MMU;
 class MIPS32_MMU;
+class ARM7_MMU;
 
 // Hardware Mediators - Machines
 class PC;
@@ -58,6 +61,7 @@ class ATMega1281;
 class AT90CAN128;
 class ML310;
 class PLASMA;
+class MC13224V;
 
 // Hardware Mediators - Busses
 class PC_PCI;
@@ -71,6 +75,7 @@ class ATMega1281_IC;
 class AT90CAN128_IC;
 class ML310_IC;
 class PLASMA_IC;
+class MC13224V_IC;
 
 // Hardware Mediators - Timers
 class PC_Timer;
@@ -88,6 +93,10 @@ class AT90CAN128_Timer_2;
 class AT90CAN128_Timer_3;
 class ML310_Timer;
 class PLASMA_Timer;
+class MC13224V_Timer_0;
+class MC13224V_Timer_1;
+class MC13224V_Timer_2;
+class MC13224V_Timer_3;
 
 // Hardware Mediators - CAN
 class AT90CAN128_CAN;
@@ -100,6 +109,7 @@ class ATMega1281_RTC;
 class AT90CAN128_RTC;
 class ML310_RTC;
 class PLASMA_RTC;
+class MC13224V_RTC;
 
 // Hardware Mediators - EEPROMs
 class PC_EEPROM;
@@ -110,6 +120,7 @@ class ATMega1281_EEPROM;
 // Hardware Mediators - FLASHs
 class ATMega128_Flash;
 class ATMega1281_Flash;
+class MC13224V_Flash;
 
 // Hardware Mediators - UARTs
 class PC_UART;
@@ -119,6 +130,7 @@ class ATMega1281_UART;
 class AT90CAN128_UART;
 class ML310_UART;
 class PLASMA_UART;
+class MC13224V_UART;
 
 // Hardware Mediators - USARTs
 class ATMega1281_USART;
@@ -136,6 +148,7 @@ class ATMega16_Display;
 class ATMega128_Display;
 class ATMega1281_Display;
 class AT90CAN128_Display;
+class MC13224V_Display;
 
 // Hardware Mediators - NICs
 class PC_Ethernet;
@@ -148,11 +161,12 @@ class AT90CAN128_NIC;
 class ATMega1281_NIC;
 class ATMega128_Radio;
 class ATMega1281_Radio;
+class MC13224V_Radio;
 class Radio_Wrapper;
 class ML310_NIC;
 class PLASMA_NIC;
+class MC13224V_NIC;
 template<typename> class CMAC;
-
 template<typename> class CMAC_State;
 template<typename> class Empty;
 template<typename> class Sync_Empty;
@@ -183,6 +197,7 @@ class AT90CAN128_ADC;
 class ATMega16_ADC;
 class ATMega128_ADC;
 class ATMega1281_ADC;
+class MC13224V_ADC;
 
 // Hardware Mediators - Sensors
 class PC_Sensor;
