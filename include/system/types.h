@@ -148,35 +148,35 @@ class AT90CAN128_NIC;
 class ATMega1281_NIC;
 class ATMega128_Radio;
 class ATMega1281_Radio;
+class Radio_Wrapper;
 class ML310_NIC;
 class PLASMA_NIC;
-class CMAC;
-namespace CMAC_States
-{
-    class Empty;
-    class Sync_Empty;
-    class Pack_Empty;
-    class Contention_Empty;
-    class Tx_Empty;
-    class Ack_Rx_Empty;
-    class Lpl_Empty;
-    class Rx_Empty;
-    class Unpack_Empty;
-    class Ack_Tx_Empty;
+template<typename> class CMAC;
 
-    class Generic_Sync;
-    class Generic_Tx;
-    class Generic_Rx;
-    class Generic_Lpl;
-    class Unslotted_CSMA_Contention;
+template<typename> class CMAC_State;
+template<typename> class Empty;
+template<typename> class Sync_Empty;
+template<typename> class Pack_Empty;
+template<typename> class Contention_Empty;
+template<typename> class Tx_Empty;
+template<typename> class Ack_Rx_Empty;
+template<typename> class Lpl_Empty;
+template<typename> class Rx_Empty;
+template<typename> class Unpack_Empty;
+template<typename> class Ack_Tx_Empty;
 
-    class IEEE802154_Beacon_Sync;
-    class IEEE802154_Pack;
-    class IEEE802154_Unpack;
-    class IEEE802154_Ack_Rx;
-    class IEEE802154_Ack_Tx;
-    class IEEE802154_Slotted_CSMA_Contention;
-};
+template<typename> class Generic_Sync;
+template<typename> class Generic_Tx;
+template<typename> class Generic_Rx;
+template<typename> class Generic_Lpl;
+template<typename> class Unslotted_CSMA_Contention;
+
+template<typename> class IEEE802154_Beacon_Sync;
+template<typename> class IEEE802154_Pack;
+template<typename> class IEEE802154_Unpack;
+template<typename> class IEEE802154_Ack_Rx;
+template<typename> class IEEE802154_Ack_Tx;
+template<typename> class IEEE802154_Slotted_CSMA_Contention;
 
 // Hardware Mediators - ADCs
 class AT90CAN128_ADC;

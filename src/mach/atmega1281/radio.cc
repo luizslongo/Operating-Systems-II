@@ -6,39 +6,41 @@
 
 __BEGIN_SYS
 
-AT86RF230 * Radio::device = new AT86RF230();
+AT86RF230 * Radio_Wrapper::device = new AT86RF230();
 
-void Radio::init() {
+void Radio_Wrapper::init() {
     AT86RF230::init();
 }
 
-void Radio::set_event_handler(AT86RF230::event_handler * handler) {
+void Radio_Wrapper::set_event_handler(AT86RF230::event_handler * handler) {
     device->set_event_handler(handler);
 }
 
-int Radio::send(unsigned char * data, unsigned int size) {
+int Radio_Wrapper::send(unsigned char * data, unsigned int size) {
     return device->send(data, size);
 }
 
-int Radio::receive(unsigned char * data) {
+int Radio_Wrapper::receive(unsigned char * data) {
     return device->receive(data);
 }
 
-void Radio::off() {
+void Radio_Wrapper::off() {
     device->reset_state_machine();
 }
 
-void Radio::listen() {
+void Radio_Wrapper::listen() {
     device->set_state(AT86RF230::RX_ON);
 }
 
-void Radio::reset() {
+void Radio_Wrapper::reset() {
     device->reset();
 }
 
-bool Radio::cca() {
+bool Radio_Wrapper::cca() {
     return device->cca_measurement(AT86RF230::ENERGY_ABOVE_THRESHOLD, 0);
 }
+
+void ATMega1281_Radio::init(unsigned int n) {}
 
 __END_SYS
 

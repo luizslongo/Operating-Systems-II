@@ -73,12 +73,12 @@ template <> struct Traits<ATMega1281_NIC>: public Traits<void>
 {
     static const bool enabled = true;
 
-    typedef LIST<CMAC> NICS;
+    typedef LIST<ATMega1281_Radio> NICS;
 
     static const unsigned int RADIO_UNITS = NICS::Count<ATMega1281_Radio>::Result;
 };
 
-template <> struct Traits<CMAC>: public Traits<void>
+template <> struct Traits<CMAC<Radio_Wrapper> >: public Traits<void>
 {
     static const bool debugged      = false;
     static const bool SM_STEP_DEBUG = false;
@@ -90,18 +90,20 @@ template <> struct Traits<CMAC>: public Traits<void>
     static const bool          COORDINATOR     = false;
     static const unsigned int  SLEEPING_PERIOD = 1000; //ms
     static const unsigned long TIMEOUT         = 50; //ms
-    static const unsigned char ADDRESS         = 0x0003;
+    static const unsigned char ADDRESS         = 0x0001;
     static const unsigned int  MTU             = 118; 
 
-    typedef CMAC_States::Generic_Sync		Sync_State;
-    typedef CMAC_States::IEEE802154_Pack	Pack_State;
-    typedef CMAC_States::Unslotted_CSMA_Contention	Contention_State;
-    typedef CMAC_States::Generic_Tx		Tx_State;
-    typedef CMAC_States::IEEE802154_Ack_Rx	Ack_Rx_State;
-    typedef CMAC_States::Generic_Lpl		Lpl_State;
-    typedef CMAC_States::Generic_Rx		Rx_State;
-    typedef CMAC_States::IEEE802154_Unpack	Unpack_State;
-    typedef CMAC_States::IEEE802154_Ack_Tx	Ack_Tx_State;
+    typedef Generic_Sync<Radio_Wrapper>		Sync_State;
+    typedef IEEE802154_Pack<Radio_Wrapper>	Pack_State;
+    typedef Unslotted_CSMA_Contention<Radio_Wrapper>	Contention_State;
+    typedef Generic_Tx<Radio_Wrapper>		Tx_State;
+//    typedef IEEE802154_Ack_Rx<Radio_Wrapper>	Ack_Rx_State;
+    typedef Ack_Rx_Empty<Radio_Wrapper>	    Ack_Rx_State;
+    typedef Generic_Lpl<Radio_Wrapper>		Lpl_State;
+    typedef Generic_Rx<Radio_Wrapper>		Rx_State;
+    typedef IEEE802154_Unpack<Radio_Wrapper>	Unpack_State;
+//    typedef IEEE802154_Ack_Tx<Radio_Wrapper>	Ack_Tx_State;
+    typedef Ack_Tx_Empty<Radio_Wrapper>     Ack_Tx_State;
 };
 
 template <> struct Traits<ATMega1281_Temperature_Sensor>: public Traits<void>
