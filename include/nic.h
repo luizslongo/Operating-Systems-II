@@ -79,7 +79,7 @@ public:
 
     private:
 	unsigned char _address[LENGTH];
-    };
+    } __attribute__((packed));
 
     // NIC protocol id
     typedef unsigned char Protocol;
