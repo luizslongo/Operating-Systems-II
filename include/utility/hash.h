@@ -135,6 +135,73 @@ private:
     Simple_Ordered_List<T, Key, Element> _table[SIZE];
 };
 
+// Hash Table without collision resolution strategy.
+template <typename T,
+         unsigned int SIZE,
+         typename Key = int,
+         typename El = List_Elements::Singly_Linked_Ordered<T, Key> >
+class Minimal_Hash
+{
+public:
+    typedef El Element;
+
+    Minimal_Hash() {}
+
+    bool empty() const {
+	return (_vector.size() == 0);
+    }
+    unsigned int size() const {
+	return _vector.size();
+    }
+    
+    Element* insert(Element * e) {
+    Element* element = remove_key(e->key() % SIZE);
+	_vector.insert(e, e->key() % SIZE);
+    return element;
+    }
+    
+    Element * remove(Element * e) {
+	if(_vector.remove(e))
+	    return e;
+    else
+        return 0;
+    }
+    Element * remove(const T * obj) {
+	Element * e = _vector.remove(obj);
+	if(e)
+	    return e;
+    else
+        return 0;
+    }
+    
+    Element * search(const T * obj) {
+	Element * e = _vector.search(obj);
+	if(e)
+	    return e;
+    else
+        return 0;
+    }
+    
+    Element * search_key(const Key & key) {
+	Element * e = _vector.get(key % SIZE);
+	if(e)
+	    return e;
+    else
+        return 0;
+    }
+    
+    Element * remove_key(const Key & key) {
+	Element * e = _vector.get(key % SIZE);
+	if(e)
+	    return _vector.remove(key % SIZE);
+    else
+        return 0;
+    }
+
+private:
+    Vector<T, SIZE, Element> _vector;
+};
+
 __END_SYS
  
 #endif
