@@ -46,7 +46,7 @@ private:
         u32 sequenceNO:14;
         u32 heuristic:16;
         NicAddress neighbor;
-    };
+    } __attribute__((packed));
 
     class RTable_Neighbor
     {
