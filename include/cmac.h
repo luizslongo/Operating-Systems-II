@@ -2,6 +2,7 @@
 #define __cmac_h
 
 #include <utility/random.h>
+#include <radio.h>
 
 __BEGIN_SYS
 
@@ -34,7 +35,7 @@ public:
     CMAC(int unit = 0) {
         _stats = new Statistics();
         _addr  = new Address(Traits<CMAC<Radio_Wrapper> >::ADDRESS);
-        _radio = new Radio_Wrapper();
+        _radio = new T();
         _timer = new Timer_1(alarm_handler_function);
     }
 
