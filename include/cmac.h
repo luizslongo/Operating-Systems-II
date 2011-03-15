@@ -34,7 +34,7 @@ public:
 public:
     CMAC(int unit = 0) {
         _stats = new Statistics();
-        _addr  = new Address(Traits<CMAC<Radio_Wrapper> >::ADDRESS);
+        _addr  = new Address(Traits<CMAC<T> >::ADDRESS);
         _radio = new T();
         _timer = new Timer_1(alarm_handler_function);
     }
@@ -44,21 +44,21 @@ public:
 
     int send(const Address & dst, const Protocol & prot,
             const void *data, unsigned int size) {
-        if (Traits<CMAC<Radio_Wrapper> >::TIME_TRIGGERED) {
+        if (Traits<CMAC<T> >::TIME_TRIGGERED) {
             if (_tx_pending || (size > mtu())) {
-                db<CMAC<Radio_Wrapper> >(WRN) << "CMAC::send - another TX pending or data size > MTU\n";
+                db<CMAC<T> >(WRN) << "CMAC::send - another TX pending or data size > MTU\n";
                 return -1;
             }
 
         } else {
             if (_tx_pending || _rx_pending || (size > mtu())) {
-                db<CMAC<Radio_Wrapper> >(WRN) << "CMAC::send - another TX or RX pending or data size > MTU\n";
+                db<CMAC<T> >(WRN) << "CMAC::send - another TX or RX pending or data size > MTU\n";
                 return -1;
             }
         }
 
         if (size == 0) {
-            db<CMAC<Radio_Wrapper> >(ERR) << "CMAC::send - data size = 0\n";
+            db<CMAC<T> >(ERR) << "CMAC::send - data size = 0\n";
             return 0;
         }
 
@@ -71,14 +71,14 @@ public:
 
         unsigned long start_time = alarm_ticks_ms;
 
-        if (Traits<CMAC<Radio_Wrapper> >::TIME_TRIGGERED) {
-            db<CMAC<Radio_Wrapper> >(INF) << "CMAC::send - waiting for TX handling\n";
+        if (Traits<CMAC<T> >::TIME_TRIGGERED) {
+            db<CMAC<T> >(INF) << "CMAC::send - waiting for TX handling\n";
 //            _sem_tx->p();
             tx_p();
             result = _state_machine_result;
 
         } else {
-            db<CMAC<Radio_Wrapper> >(TRC) << "CMAC::send - calling state machine\n";
+            db<CMAC<T> >(TRC) << "CMAC::send - calling state machine\n";
             result = state_machine();
         }
 
@@ -97,15 +97,15 @@ public:
     int receive(Address * src, Protocol * prot,
             void * data, unsigned int size) {
 
-        if (Traits<CMAC<Radio_Wrapper> >::TIME_TRIGGERED) {
+        if (Traits<CMAC<T> >::TIME_TRIGGERED) {
             if (_rx_pending || (size > mtu())) {
-                db<CMAC<Radio_Wrapper> >(WRN) << "CMAC::receive - another RX pending or buffer size > MTU\n";
+                db<CMAC<T> >(WRN) << "CMAC::receive - another RX pending or buffer size > MTU\n";
                 return -1;
             }
 
         } else {
             if (_rx_pending || _tx_pending || (size > mtu())) {
-                db<CMAC<Radio_Wrapper> >(WRN) << "CMAC::receive - another RX or TX pending or buffer size > MTU\n";
+                db<CMAC<T> >(WRN) << "CMAC::receive - another RX or TX pending or buffer size > MTU\n";
                 return -1;
             }
         }
@@ -118,14 +118,14 @@ public:
 
         unsigned long start_time = alarm_ticks_ms;
 
-        if (Traits<CMAC<Radio_Wrapper> >::TIME_TRIGGERED) {
-            db<CMAC<Radio_Wrapper> >(INF) << "CMAC::receive - waiting for RX handling\n";
+        if (Traits<CMAC<T> >::TIME_TRIGGERED) {
+            db<CMAC<T> >(INF) << "CMAC::receive - waiting for RX handling\n";
 //            _sem_rx->p();
             rx_p();
             result = _state_machine_result;
 
         } else {
-            db<CMAC<Radio_Wrapper> >(TRC) << "CMAC::receive - calling state machine\n";
+            db<CMAC<T> >(TRC) << "CMAC::receive - calling state machine\n";
             result = state_machine();
         }
 
