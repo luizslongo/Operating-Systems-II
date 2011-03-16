@@ -20,14 +20,19 @@ class UDP_Address:public IP_Address {
         }
     }
 
-    friend Debug & operator <<(Debug & db, const UDP_Address & h) {
-        return print_common(db, h);
+    template < typename T >
+    friend T & operator <<(T & out, const UDP_Address & h) {
+        out << (IP::Address)(h.ip()) << ":" << (unsigned int)(h.port());
+        return out;
     }
 
-    friend OStream & operator <<(OStream & out, const UDP_Address & h) {
-        return print_common(out, h);
+    char* to_string(char * dst) {
+        char *p = IP_Address::to_string(dst);
+        *p++ = ':';
+        p += utoa(_port,p);
+        *p = 0;
+        return p;
     }
-
 
     u16 port() const {
         return _port;
@@ -42,11 +47,6 @@ class UDP_Address:public IP_Address {
  private:
     u16 _port;
 
-    template < typename T >
-        static T & print_common(T & out, const UDP_Address & h) {
-        out << h.ip() << ":" << h.port();
-        return out;
-    }
 };
 
 class UDP: public IP::Observer, public Data_Observed < UDP_Address > {

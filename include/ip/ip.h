@@ -31,7 +31,8 @@ public:
 
     operator u32() { return *reinterpret_cast<u32 *>(this); }
     operator u32() const { return *reinterpret_cast<const u32 *>(this); }
-        
+    
+    // create from string representation
     IP_Address(const char * _addr) {
         unsigned char addr[4];
         addr[0] = 0; addr[1] = 0; addr[2] = 0; addr[3] = 0;
@@ -52,6 +53,32 @@ public:
         return db;
     }
 
+    // should be moved to other place
+    int utoa(unsigned long v,char * dst) {
+        int i=0,j;
+        // special case for v=0
+        if (v == 0) {
+            dst[i++] = '0';
+        }
+        for(j = v; j != 0; i++, j /= 10);
+        for(j = 0; v != 0; j++, v /= 10)
+            dst[i - 1 - j] = '0' + (v % 10);
+        return i;
+    }
+    // convert to string
+    char* to_string(char * dst) {
+        const u8 * _addr = reinterpret_cast<const u8*>(this);
+        char* p = dst;
+        for(int i=0;i<4;i++) {
+            p += utoa(_addr[i], p);
+            *p++ = '.';
+        }
+        // remove last dot
+        --p;
+        *p = 0;
+        return p;
+    }
+    
 };
 
 class IP: public NIC_Common, /*public NIC::Observer,*/ public Data_Observed<IP_Address>
