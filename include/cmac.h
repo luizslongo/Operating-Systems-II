@@ -37,6 +37,7 @@ public:
         _addr  = new Address(Traits<CMAC<T> >::ADDRESS);
         _radio = new T();
         _timer = new Timer_1(alarm_handler_function);
+        CMAC<T>::init(unit);
     }
 
     void tx_p();
