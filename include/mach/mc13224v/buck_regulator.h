@@ -7,10 +7,10 @@
 
 __BEGIN_SYS
 
-class Buck_Regulator
+class MC13224V_Buck_Regulator
 {
 private:
-    Buck_Regulator();
+    MC13224V_Buck_Regulator();
 
 public:
     // methods for manipulating SYS_CNTL
@@ -19,7 +19,6 @@ public:
     static bool enabled();
     static void SPIF_1P8V_enable();
     static void SPIF_1P8V_disable();
-//    static bool SPIF_1P8V_enabled();
 
     // methods for manipulating VREG
     static void adjust_buck_clock();

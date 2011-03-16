@@ -22,12 +22,19 @@ template <> struct Traits<MC13224V>: public Traits<MC13224V_Common>
 	static const unsigned int APPLICATION_HEAP_SIZE = 3072;
 	static const unsigned int SYSTEM_HEAP_SIZE = 2*APPLICATION_HEAP_SIZE;
 	static const bool SMP = false;
-	static const bool BUCK = true;
+};
+
+template <> struct Traits<MC13224V_Battery>: public Traits<MC13224V_Common>
+{
+    static const bool enabled = true;
+    static const bool buck_enabled = true;
+    static const unsigned int buck_voltage_threshold = 2500; // in mV
+    static const unsigned int frequency = 1; // in Hz
 };
 
 template <> struct Traits<MC13224V_Timer_0>: public Traits<MC13224V_Common>
 {
-	static const int FREQUENCY = 20;
+    static const int FREQUENCY = 20;
 };
 
 template <> struct Traits<MC13224V_Timer_1>: public Traits<MC13224V_Common>

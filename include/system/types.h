@@ -199,6 +199,10 @@ class ATMega128_ADC;
 class ATMega1281_ADC;
 class MC13224V_ADC;
 
+// Hardware Mediators - Battery
+class ATMega1281_Battery;
+class MC13224V_Battery;
+
 // Hardware Mediators - Sensors
 class PC_Sensor;
 class ATMega128_Temperature_Sensor;
@@ -287,6 +291,7 @@ enum
     NIC_ID,
     RADIO_ID,
     ADC_ID,
+    BATTERY_ID,
     TEMPERATURE_SENSOR_ID,
     PHOTO_SENSOR_ID,
     ACCELEROMETER_ID,
