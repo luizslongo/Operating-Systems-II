@@ -20,7 +20,7 @@ private:
     typedef ARM7::Reg32 Reg32;
 
 public:
-	MC13224V_ADC() {
+    MC13224V_ADC() {
 		clock_divider(0x80);
 		prescale(0x17);
 		on_time(0xA);
@@ -31,6 +31,17 @@ public:
 	}
 
 	MC13224V_ADC(unsigned char channel, Hertz frequency) {
+	// TODO: frequency is not being set here! Needs fixing.
+        clock_divider(0x80);
+        prescale(0xef); // 100 KHz
+        on_time(0xA);
+        convert_time(0x28);
+        mode(0x1);
+        override(0x100 | channel);
+        control(0x1);
+
+        unsigned int x = 16800;
+        while(x--); // will wait for stabilization
 	}
 
 	MC13224V_ADC(unsigned char channel, unsigned char reference,
