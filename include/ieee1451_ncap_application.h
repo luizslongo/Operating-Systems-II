@@ -3,6 +3,9 @@
 
 #include <ieee1451_ncap.h>
 #include <ieee1451_objects.h>
+#include <sip_defs.h>
+#include <sip_manager.h>
+#include <sip_user_agent.h>
 #include <utility/list.h>
 
 __BEGIN_SYS
@@ -15,18 +18,33 @@ class NCAPApplication
 private:
 	friend class TEDSRetriever;
 
-	Simple_List<IEEE1451TIMChannel> cache;
+	struct TIMCache
+	{
+		IEEE1451TIMChannel *tim;
+		UserAgent *ua;
+		Simple_List<TIMCache>::Element link;
+
+		TIMCache(IEEE1451TIMChannel *tim, UserAgent *ua) : tim(tim), ua(ua), link(this) {};
+		~TIMCache() { delete tim; delete ua; };
+	};
+
+	Simple_List<TIMCache> cache;
 	Simple_List<TEDSRetriever> retrievers;
 
+	static NCAPApplication *app;
+	NCAPApplication();
+
 public:
-	NCAPApplication() { IEEE1451dot0_NCAP::getInstance()->setApplication(this); IEEE1451dot5_NCAP::getInstance(); };
 	~NCAPApplication();
 
-	IEEE1451TIMChannel *getTIM(const IP::Address &address);
+	static NCAPApplication *getInstance();
+
+	TIMCache *getTIMCache(const IP::Address &address);
+	TIMCache *getTIMCache(const char *uri);
 	TEDSRetriever *getRetriever(unsigned short transId);
 
 	void updateTIM(const IP::Address &address);
-	void updateTIMCompleted(TEDSRetriever *retriever, IEEE1451TIMChannel *tim, const IP::Address address);
+	void updateTIMCompleted(TEDSRetriever *retriever, IEEE1451TIMChannel *tim, IP::Address address);
 
 	void reportTimConnected(const IP::Address &address);
 	void reportTimDisconnected(const IP::Address &address);
@@ -41,7 +59,11 @@ public:
 	unsigned short sendReadTEDS(const IP::Address &address, unsigned short channelNumber, char tedsId);
 	unsigned short sendReadDataSet(const IP::Address &address, unsigned short channelNumber);
 
-	static int readDataSetThread(NCAPApplication *ncap, IP::Address address, IEEE1451TIMChannel *tim);
+	void sendSipMessage(UserAgent *ua, const char *data);
+	void sendSipNotify(UserAgent *ua, SipSubscriptionState state, SipPidfXmlBasicElement pidfXml);
+
+	//static int readDataSetThread(NCAPApplication *ncap, IP::Address address, IEEE1451TIMChannel *tim);
+	static int messageCallback(SipEventCallback event, UserAgent *ua);
 };
 
 //-------------------------------------------

@@ -43,7 +43,7 @@ private:
 	class MySocket : public UDP::Socket
 	{
 	public:
-		MySocket(UDP *udp) : UDP::Socket(udp, UDP::Address(Traits<IP>::ADDRESS, IEEE1451_PORT), UDP::Address(Traits<IP>::BROADCAST, IEEE1451_PORT)) {};
+		MySocket(UDP *udp) : UDP::Socket(udp, UDP::Address(IP::instance()->address(), IEEE1451_PORT), UDP::Address(Traits<IP>::BROADCAST, IEEE1451_PORT)) {};
 		virtual ~MySocket() {};
 
 		void received(const UDP::Address &src, const char *data, unsigned int size);

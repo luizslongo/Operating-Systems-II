@@ -28,9 +28,25 @@ public:
     ~Function_Handler() {}
 
     void operator()() { _handler(); }
-	
+
 private:
     Function * _handler;
+};
+
+template<typename T>
+class Functor_Handler: public Handler
+{
+public:
+    typedef void (Functor)(T *);
+
+	Functor_Handler(Functor * h, T * p): _handler(h), _ptr(p) {}
+    ~Functor_Handler() {}
+
+    void operator()() { _handler(_ptr); }
+
+private:
+    Functor * _handler;
+    T * _ptr;
 };
 
 __END_SYS

@@ -14,10 +14,12 @@ extern "C"
     int strncmp(const char * s1, const char * s2, size_t n) __attribute__ ((weak));
     char * strcpy(char *d, const char *s) __attribute__ ((weak));
     char * strncpy(char *d, const char *s, size_t n) __attribute__ ((weak));
+    char * strcat(char *d, const char *s) __attribute__ ((weak));
     char * strchr(const char * s, int c) __attribute__ ((weak));
     char * strrchr (const char * s, int c) __attribute__ ((weak));
     size_t strlen(const char * s) __attribute__ ((weak));
     long atol(const char * s) __attribute__ ((weak));
+    char *itoa(int value, char *str) __attribute__ ((weak));
 
     int memcmp(const void * m1, const void * m2, size_t n)
     {
@@ -307,6 +309,12 @@ extern "C"
 
     }
 
+    char * strcat(char *dst0, const char *src0)
+    {
+    	size_t dst_len = strlen(dst0);
+        return strcpy(&dst0[dst_len], src0);
+    }
+
     char * strchr(const char * s1, int i)
     {
 	const unsigned char *s = (const unsigned char *) s1;
@@ -381,7 +389,7 @@ extern "C"
 	    str++;
 	return str - start;
     }
-    
+
     char * strrchr (const char *s, int c)
     {
         char *rtnval = 0;
@@ -396,7 +404,7 @@ extern "C"
     long atol(const char *s)
     {
         long ret=0; bool neg=false;
-        
+
         if (*s == '-') {
             neg = true;
             ++s;
@@ -407,5 +415,37 @@ extern "C"
         }
 
         return neg ? -ret : ret;
+    }
+
+    char *itoa(int value, char *str)
+    {
+        char *s = str;
+    	char buffer[11];
+        char *buf = buffer;
+        unsigned int v;
+
+        if (value < 0)
+        {
+            *s++ = '-';
+            v = -value;
+        }else
+        {
+            if (value == 0)
+                *s++ = '0';
+            v = (unsigned int) value;
+        }
+
+        while (v)
+        {
+            int i = v % 10;
+            v /= 10;
+            *buf++ = i + '0';
+        }
+
+        while (buf > buffer)
+            *s++ = *--buf;
+        *s = 0;
+
+        return str;
     }
 }

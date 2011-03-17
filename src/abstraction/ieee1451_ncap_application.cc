@@ -3,15 +3,25 @@
 __BEGIN_SYS
 
 
+NCAPApplication *NCAPApplication::app = 0;
+
+NCAPApplication::NCAPApplication()
+{
+	IEEE1451dot0_NCAP::getInstance()->setApplication(this);
+
+	SipManager::getInstance()->init();
+	SipManager::registerUserHandler(messageCallback);
+}
+
 NCAPApplication::~NCAPApplication()
 {
-	Simple_List<IEEE1451TIMChannel>::Iterator it1 = cache.begin();
+	Simple_List<TIMCache>::Iterator it1 = cache.begin();
 	while (it1 != cache.end())
 	{
-		Simple_List<IEEE1451TIMChannel>::Element *el = it1++;
-		IEEE1451TIMChannel *channel = el->object();
-		cache.remove(&channel->link);
-		delete channel;
+		Simple_List<TIMCache>::Element *el = it1++;
+		TIMCache *timCache = el->object();
+		cache.remove(&timCache->link);
+		delete timCache;
 	}
 
 	Simple_List<TEDSRetriever>::Iterator it2 = retrievers.begin();
@@ -25,16 +35,38 @@ NCAPApplication::~NCAPApplication()
 	}
 }
 
-IEEE1451TIMChannel *NCAPApplication::getTIM(const IP::Address &address)
+NCAPApplication *NCAPApplication::getInstance()
 {
-	Simple_List<IEEE1451TIMChannel>::Iterator it = cache.begin();
+	if (!app)
+		app = new NCAPApplication();
+	return app;
+}
+
+NCAPApplication::TIMCache *NCAPApplication::getTIMCache(const IP::Address &address)
+{
+	Simple_List<TIMCache>::Iterator it = cache.begin();
 	while (it != cache.end())
 	{
-		IEEE1451TIMChannel *tim = it->object();
+		TIMCache *timCache = it->object();
 		it++;
 
-		if (tim->address == address)
-			return tim;
+		if (timCache->tim->address == address)
+			return timCache;
+	}
+
+	return 0;
+}
+
+NCAPApplication::TIMCache *NCAPApplication::getTIMCache(const char *uri)
+{
+	Simple_List<TIMCache>::Iterator it = cache.begin();
+	while (it != cache.end())
+	{
+		TIMCache *timCache = it->object();
+		it++;
+
+		if (!strcmp(timCache->ua->getUri(), uri))
+			return timCache;
 	}
 
 	return 0;
@@ -62,40 +94,56 @@ void NCAPApplication::updateTIM(const IP::Address &address)
 	retriever->execute();
 }
 
-void NCAPApplication::updateTIMCompleted(TEDSRetriever *retriever, IEEE1451TIMChannel *tim, const IP::Address address)
+void NCAPApplication::updateTIMCompleted(TEDSRetriever *retriever, IEEE1451TIMChannel *tim, IP::Address address)
 {
-	cache.insert(&tim->link);
+	char uri[100], remote[20], local[20];
+	address.to_string(remote);
+	((IP::Address &) IP::instance(0)->address()).to_string(local);
+	strcpy(uri, "sip:");
+	strcat(uri, remote);
+	strcat(uri, "@");
+	strcat(uri, local);
+
+	TIMCache *timCache = new TIMCache(tim, SipManager::getInstance()->createUserAgent(uri));
+	cache.insert(&timCache->link);
 
 	retrievers.remove(&retriever->link);
 	delete retriever;
 
 	reportTimConnected(address);
 
-	new Thread(&NCAPApplication::readDataSetThread, this, address, (IEEE1451TIMChannel *) tim);
+	//new Thread(&NCAPApplication::readDataSetThread, this, address, (IEEE1451TIMChannel *) tim);
 }
 
 void NCAPApplication::reportTimConnected(const IP::Address &address)
 {
-	IEEE1451TIMChannel *tim = getTIM(address);
+	TIMCache *timCache = getTIMCache(address);
 
-	if (!tim)
+	if (!timCache)
 		updateTIM(address);
 	else
 	{
 		db<NCAPApplication>(INF) << "++ TIM CONNECTED (address=" << address << ") ++\n";
-		tim->connect();
+		timCache->tim->connect();
 
-		IEEE1451TransducerChannel *transducer = tim->getTransducer();
+		if (timCache->ua->hasSubscription())
+			sendSipNotify(timCache->ua, SIP_SUBSCRIPTION_STATE_ACTIVE, SIP_PIDF_XML_OPEN);
+
+		IEEE1451TransducerChannel *transducer = timCache->tim->getTransducer();
 		sendOperate(address, transducer->getChannelNumber());
 	}
 }
 
 void NCAPApplication::reportTimDisconnected(const IP::Address &address)
 {
-	IEEE1451TIMChannel *tim = getTIM(address);
-	if (tim)
+	TIMCache *timCache = getTIMCache(address);
+	if (timCache)
 	{
-		tim->disconnect();
+		timCache->tim->disconnect();
+
+		if (timCache->ua->hasSubscription())
+			sendSipNotify(timCache->ua, SIP_SUBSCRIPTION_STATE_ACTIVE, SIP_PIDF_XML_CLOSED);
+
 		db<NCAPApplication>(INF) << "++ TIM DISCONNECTED (address=" << address << ") ++\n";
 	}
 }
@@ -160,9 +208,11 @@ void NCAPApplication::reportTimInitiatedMessage(const IP::Address &address, cons
 
 void NCAPApplication::readTemperature(const IP::Address &address, const char *buffer)
 {
-	IEEE1451TIMChannel *tim = getTIM(address);
-	IEEE1451TransducerChannel *transducer = tim->getTransducer();
+	TIMCache *timCache = getTIMCache(address);
+	if (!timCache)
+		return;
 
+	IEEE1451TransducerChannel *transducer = timCache->tim->getTransducer();
 	TEDS_NCAP *channel = transducer->getTEDS(0x03);
 
 	TLV *sample = channel->getTLV(0x12);
@@ -179,12 +229,23 @@ void NCAPApplication::readTemperature(const IP::Address &address, const char *bu
 		TLV *maxDataRepetitions = auxDataSet.getTLV(0x2b);
 		unsigned short repeats = (maxDataRepetitions->value[0] << 8) | maxDataRepetitions->value[1];
 
-		for (unsigned int i = 0, j = 0; i < repeats; i++, j += 4)
+		char data[50]; data[0] = 0;
+		char aux[11];
+
+		for (unsigned short i = 0, j = 0; i < repeats; i++, j += 4)
 		{
 			float value = *((float *)(&buffer[j]));
-			db<NCAPApplication>(INF) << i << "=" << (int) value << ((i != (repeats - 1u)) ? "|" : "");
+
+			itoa((int) value, aux);
+			strcat(data, aux);
+			if (i != (repeats - 1))
+				strcat(data, ", ");
 		}
-		db<NCAPApplication>(INF) << "\n";
+
+		db<NCAPApplication>(INF) << "Read temperature: " << data << "\n";
+
+		if (timCache->ua->hasSubscription())
+			sendSipMessage(timCache->ua, data);
 	}
 }
 
@@ -221,20 +282,91 @@ unsigned short NCAPApplication::sendReadDataSet(const IP::Address &address, unsi
 	return transId;
 }
 
-int NCAPApplication::readDataSetThread(NCAPApplication *ncap, IP::Address address, IEEE1451TIMChannel *tim)
+void NCAPApplication::sendSipMessage(UserAgent *ua, const char *data)
+{
+	SipRequestMessage *message = ua->getUserAgentClient()->createMessage(data);
+	if (!message)
+		return;
+
+	ua->getUserAgentClient()->sendRequest(message);
+	//delete message;
+}
+
+void NCAPApplication::sendSipNotify(UserAgent *ua, SipSubscriptionState state, SipPidfXmlBasicElement pidfXml)
+{
+	SipRequestNotify *notify = ua->getUserAgentClient()->createNotify(state, pidfXml, 3600);
+	if (!notify)
+		return;
+
+	ua->getUserAgentClient()->sendRequest(notify);
+	//delete notify;
+}
+
+/*int NCAPApplication::readDataSetThread(NCAPApplication *ncap, IP::Address address, IEEE1451TIMChannel *tim)
 {
 	db<NCAPApplication>(INF) << "== NCAP request data thread created (address=" << address << ") ==\n";
 
 	while (1)
 	{
 		Alarm::delay(2200000);
-		if (tim->connected())
+		if (tim->isConnected())
 		{
 			db<NCAPApplication>(INF) << "-- Reading DataSet (address=" << address << ")...\n";
 			ncap->sendReadDataSet(address, 0x01);
 		}else
 			db<NCAPApplication>(INF) << "-- Address " << address << " is disconnected.\n";
 	}
+	return 0;
+}*/
+
+int NCAPApplication::messageCallback(SipEventCallback event, UserAgent *ua)
+{
+	NCAPApplication *app = NCAPApplication::getInstance();
+	TIMCache *timCache = app->getTIMCache(ua->getUri());
+	if (!timCache)
+	{
+		db<NCAPApplication>(INF) << "+++++ Invalid User Agent +++++\n";
+		return 1;
+	}
+
+	switch (event)
+	{
+		case SIP_SESSION_INITIATED: //TODO
+			db<NCAPApplication>(INF) << "+++++ Session Initiated +++++\n";
+			break;
+
+		case SIP_SESSION_TERMINATED: //TODO
+			db<NCAPApplication>(INF) << "+++++ Session Terminated +++++\n";
+			break;
+
+		case SIP_SUBSCRIPTION_INITIATED:
+		{
+			db<NCAPApplication>(INF) << "+++++ Subscription Initiated +++++\n";
+
+			if (timCache->tim->isConnected())
+				app->sendSipNotify(ua, SIP_SUBSCRIPTION_STATE_ACTIVE, SIP_PIDF_XML_OPEN);
+			else
+				app->sendSipNotify(ua, SIP_SUBSCRIPTION_STATE_ACTIVE, SIP_PIDF_XML_CLOSED);
+			break;
+		}
+
+		case SIP_SUBSCRIPTION_TERMINATED:
+			db<NCAPApplication>(INF) << "+++++ Subscription Terminated +++++\n";
+			break;
+
+		case SIP_MESSAGE_RECEIVED:
+		{
+			db<NCAPApplication>(INF) << "+++++ Message Received +++++\n";
+
+			if (!strncmp(ua->getTextReceived(), "request data", 12))
+				app->sendReadDataSet(timCache->tim->address, 0x01);
+			break;
+		}
+
+		default:
+			break;
+	}
+
 	return 0;
 }
 

@@ -89,24 +89,20 @@ public:
 class IEEE1451TIMChannel : public IEEE1451Channel
 {
 private:
-	friend class NCAPApplication;
-
 	//static const unsigned short TIM_CHANNEL_NUMBER;
 	IEEE1451TransducerChannel *transducer;
-	bool con;
-
-	Simple_List<IEEE1451TIMChannel>::Element link;
+	bool connected;
 
 public:
-	IEEE1451TIMChannel(const IP::Address &address, IEEE1451TransducerChannel *transducer) : IEEE1451Channel(address), transducer(transducer), con(false), link(this) {};
+	IEEE1451TIMChannel(const IP::Address &address, IEEE1451TransducerChannel *transducer) : IEEE1451Channel(address), transducer(transducer), connected(false) {};
 	~IEEE1451TIMChannel() { delete transducer; };
 
 	IEEE1451TransducerChannel *getTransducer() { return transducer; };
 	//unsigned short getChannelNumber() { return TIM_CHANNEL_NUMBER; };
-	void connect() { con = true; };
-	void disconnect() { con = false; };
-	bool connected() { return con; };
-	bool disconnected() { return con; };
+	void connect() { connected = true; };
+	void disconnect() { connected = false; };
+	bool isConnected() { return connected; };
+	bool isDisconnected() { return connected; };
 };
 
 //-------------------------------------------
