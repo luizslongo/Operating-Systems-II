@@ -7,6 +7,8 @@ __BEGIN_SYS
 
 void MC13224V::init()
 {
+    db<Init, MC13224V>(TRC) << "MC13224V::init()\n";
+
     if (Traits<MC13224V_Battery>::enabled)
         MC13224V_Battery::init();
 

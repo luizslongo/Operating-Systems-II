@@ -20,10 +20,10 @@ void MC13224V_Buck_Regulator::enable()
 {
     db<MC13224V_Buck_Regulator>(TRC) << "MC13224V_Buck_Regulator::enable()\n";
 
-//    adjust_buck_clock();
     crm_vreg_cntl(crm_vreg_cntl() | 0x03); // enable buck - BUCK_EN and BUCK_SYNC_REC_EN bits
     crm_sys_cntl((crm_sys_cntl() & ~0x83) | 0x81); // buck as power source
     while(!enabled());
+    adjust_buck_clock();
 }
 
 void MC13224V_Buck_Regulator::disable()
@@ -196,19 +196,13 @@ void MC13224V_Buck_Regulator::enter_bypass()
 {
     db<MC13224V_Buck_Regulator>(TRC) << "MC13224V_Buck_Regulator::enter_bypass()\n";
 
-    bool txrx = Radio_1P5V_txrx_enabled();
-    bool pll  = Radio_1P5V_txrx_pll_enabled();
     bool nvm  = NVM_1P8V_enabled();
 
-    NVM_1P8V_disable();
-    Radio_1P5V_disable();
-    disable();
+    if (nvm) NVM_1P8V_disable();
 
-    crm_vreg_cntl(crm_vreg_cntl() | 0x04);
+    crm_vreg_cntl((crm_vreg_cntl() & ~0x03) | 0x04);
     while(!is_in_bypass());
 
-    if (pll) Radio_1P5V_txrx_pll_enable();
-    else if (txrx) Radio_1P5V_txrx_enable();
     if (nvm) NVM_1P8V_enable();
 }
 
@@ -238,7 +232,7 @@ bool MC13224V_Buck_Regulator::is_in_bypass()
 {
 //    db<MC13224V_Buck_Regulator>(TRC) << "MC13224V_Buck_Regulator::is_in_bypass()\n";
 
-    return ((crm_vreg_cntl() & 0x04) && enabled());
+    return (((crm_vreg_cntl() & 0x07) == 0x04) && (crm_status() & 0x00020000));
 }
 
 void MC13224V_Buck_Regulator::VREG_wakeup_reconfigure()

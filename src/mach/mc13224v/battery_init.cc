@@ -8,6 +8,8 @@ __BEGIN_SYS
 
 void MC13224V_Battery::init()
 {
+    db<Init, MC13224V_Battery>(TRC) << "MC13224V_Battery::init()\n";
+
     system_battery = new(kmalloc(sizeof(MC13224V_Battery))) MC13224V_Battery();
 
     if (Traits<MC13224V_Battery>::buck_enabled)

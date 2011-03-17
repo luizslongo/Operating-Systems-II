@@ -15,13 +15,11 @@ protected:
     static const unsigned short battery_reference = 1200;
     static const unsigned short hysteresis = 100;
     // counts in the adc:
-    static const unsigned short adc_max = 4095;
-    static const unsigned short buck_disable_adc_threshold
-        = (battery_reference * adc_max) / Traits<MC13224V_Battery>::buck_voltage_threshold;
-    static const unsigned short buck_enable_adc_threshold
-        = (battery_reference * adc_max) / (Traits<MC13224V_Battery>::buck_voltage_threshold + hysteresis);
     static const unsigned short ADC_3p3v = 1489;
     static const unsigned short ADC_1p8v = 2730;
+    static const unsigned short adc_max = 4095;
+    static const unsigned short buck_disable_adc_threshold = 1966;
+    static const unsigned short buck_enable_adc_threshold = 1890;
 
     static const unsigned int frequency = Traits<MC13224V_Battery>::frequency;
 
@@ -43,10 +41,12 @@ private:
     void check_buck();
     void check_buck(unsigned short sample);
 
-    static const void enable_battery_over_threshold();
-    static const void disable_battery_over_threshold();
-    static const void enable_battery_under_threshold();
-    static const void disable_battery_under_threshold();
+    static const void battery_over_threshold_set(unsigned short value);
+    static const void battery_over_threshold_enable();
+    static const void battery_over_threshold_disable();
+    static const void battery_under_threshold_set(unsigned short value);
+    static const void battery_under_threshold_enable();
+    static const void battery_under_threshold_disable();
 
     ADC _adc;
     static MC13224V_Battery * system_battery;

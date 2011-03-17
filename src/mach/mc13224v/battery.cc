@@ -13,7 +13,7 @@ __END_SYS
 __USING_SYS
 
 MC13224V_Battery::MC13224V_Battery()
- : _adc(1, 1000000)
+ : _adc(8, 1)
 {
     db<MC13224V_Battery>(TRC) << "MC13224V_Battery::MC13224V_Battery()\n";
 }
@@ -22,7 +22,7 @@ const unsigned short MC13224V_Battery::get()
 {
     db<MC13224V_Battery>(TRC) << "MC13224V_Battery::get()\n";
 
-    return 3000;//_adc.get();
+    return _adc.get();
 }
 
 const unsigned short MC13224V_Battery::sample()
@@ -69,48 +69,59 @@ void MC13224V_Battery::check_buck()
     check_buck(get());
 }
 
+/* A future implementation should use ADCs threshold feature to avoid pooling of the battery voltage */
 void MC13224V_Battery::check_buck(unsigned short read)
 {
     db<MC13224V_Battery>(TRC) << "MC13224V_Battery::check_buck(" << read << ")\n";
 
-    if((read < buck_disable_adc_threshold) && (!MC13224V_Buck_Regulator::is_in_bypass()))
+    if((read > buck_disable_adc_threshold) && (!MC13224V_Buck_Regulator::is_in_bypass()))
     {
         MC13224V_Buck_Regulator::enter_bypass();
-        disable_battery_under_threshold();
-        enable_battery_over_threshold();
     }
-    else if((read > buck_enable_adc_threshold) && (MC13224V_Buck_Regulator::is_in_bypass()))
+    else if((read < buck_enable_adc_threshold) && (MC13224V_Buck_Regulator::is_in_bypass()))
     {
         MC13224V_Buck_Regulator::leave_bypass();
-        disable_battery_over_threshold();
-        enable_battery_under_threshold();
     }
 }
 
-const void MC13224V_Battery::enable_battery_over_threshold()
+const void MC13224V_Battery::battery_over_threshold_set(unsigned short value)
 {
-    db<MC13224V_Battery>(TRC) << "MC13224V_Battery::enable_battery_over_threshold()\n";
+    db<MC13224V_Battery>(TRC) << "MC13224V_Battery::battery_over_threshold_set(" << value << ")\n";
 
     // set 0x0200 in ?
 }
 
-const void MC13224V_Battery::disable_battery_over_threshold()
+const void MC13224V_Battery::battery_over_threshold_enable()
 {
-    db<MC13224V_Battery>(TRC) << "MC13224V_Battery::disable_battery_over_threshold()\n";
+    db<MC13224V_Battery>(TRC) << "MC13224V_Battery::battery_over_threshold_enable()\n";
+
+    // set 0x0200 in ?
+}
+
+const void MC13224V_Battery::battery_over_threshold_disable()
+{
+    db<MC13224V_Battery>(TRC) << "MC13224V_Battery::battery_over_threshold_disable()\n";
 
     // clear 0x0200 in ?
 }
 
-const void MC13224V_Battery::enable_battery_under_threshold()
+const void MC13224V_Battery::battery_under_threshold_set(unsigned short value)
 {
-    db<MC13224V_Battery>(TRC) << "MC13224V_Battery::enable_battery_under_threshold()\n";
+    db<MC13224V_Battery>(TRC) << "MC13224V_Battery::battery_under_threshold_set(" << value << ")\n";
+
+    // clear 0x0200 in ?
+}
+
+const void MC13224V_Battery::battery_under_threshold_enable()
+{
+    db<MC13224V_Battery>(TRC) << "MC13224V_Battery::battery_under_threshold_enable()\n";
 
     // set 0x0100 in ?
 }
 
-const void MC13224V_Battery::disable_battery_under_threshold()
+const void MC13224V_Battery::battery_under_threshold_disable()
 {
-    db<MC13224V_Battery>(TRC) << "MC13224V_Battery::disable_battery_under_threshold()\n";
+    db<MC13224V_Battery>(TRC) << "MC13224V_Battery::battery_under_threshold_disable()\n";
 
     // clear 0x0100 in ?
 }
