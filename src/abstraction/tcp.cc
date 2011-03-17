@@ -128,7 +128,7 @@ void TCP::Header::_checksum(IP::Address &src,IP::Address &dst,SegmentedBuffer * 
 // Socket stuff
 
 TCP::Socket::Socket(TCP * tcp,const Address &remote,const Address &local)
-	: _tcp(tcp), _remote(remote), _local(local), _rtt(5000000)
+	: _tcp(tcp), _remote(remote), _local(local), _rtt(5000000), _timeout(0)
 {
 	state(CLOSED);
 	_tcp->attach(this, _local.port());
@@ -152,6 +152,8 @@ s32 TCP::Socket::_send(Header * hdr, SegmentedBuffer * sb)
 	// hdr + sb
 	SegmentedBuffer nsb(hdr,hdr->size());
 	nsb.append(sb);
+
+
 	return _tcp->ip()->send(_local,_remote,&nsb,TCP::ID_TCP) - hdr->size();
 }
 
@@ -162,6 +164,21 @@ void TCP::Socket::send(const char *data,u16 len)
     snd_nxt += len;
     SegmentedBuffer sb(data,len);
     _send(&hdr,&sb);
+}
+
+void TCP::Socket::set_timeout() {
+    if (_timeout) delete _timeout;
+    _timeout = new Alarm(2 * _rtt, this, 1);
+}
+
+void TCP::Socket::clear_timeout() {
+    if (_timeout) delete _timeout;
+}
+
+void TCP::Socket::operator()() {
+    // timeout occured
+
+    error(ERR_TIMEOUT);
 }
 
 void TCP::Socket::close()
@@ -178,18 +195,19 @@ TCP::ClientSocket::ClientSocket(TCP * tcp,const Address& remote,const Address& l
 	snd_ini = Pseudo_Random::random() & 0x00FFFFFF;
 	snd_una = snd_ini;
 	snd_nxt = snd_ini + 1;
-	rcv_wnd = 512;
+	rcv_wnd = 512; // TODO: change to MTU minus headers
 
 	Header hdr(snd_ini, 0);
 	hdr._syn = true;
 	_send(&hdr,0);
+    set_timeout();
 }
 
 TCP::ServerSocket::ServerSocket(TCP * tcp,const Address& local) 
 	: Socket(tcp,Address(0,0),local)
 {
 	state(LISTEN);
-	rcv_wnd = 1024;
+	rcv_wnd = 1024; // TODO: change to MTU minus headers
 }
 
 void TCP::Socket::__LISTEN(const Header& r ,const char* data,u16 len)
@@ -212,7 +230,8 @@ void TCP::Socket::__LISTEN(const Header& r ,const char* data,u16 len)
         
         snd_nxt = snd_ini+1;
         snd_una = snd_ini;
-			
+		
+        set_timeout();
 	} else {
 		_remote = Address((u32)0,(u16)0);
 	}

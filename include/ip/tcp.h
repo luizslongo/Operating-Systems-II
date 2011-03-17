@@ -1,9 +1,9 @@
 #ifndef __tcp_h
 #define __tcp_h
-//#include <alarm.h>
-//#include <chronometer.h>
+#include <alarm.h>
 #include <ip/ip.h>
 #include <ip/udp.h> // TCP::Address == UDP_Address
+#include <utility/handler.h>
 #include <utility/random.h>
 
 __BEGIN_SYS
@@ -101,7 +101,7 @@ class TCP::Header {
 // Compact bitfields istead of using 1 char for each single bit attribute
 } __attribute__((packed)); 
 
-class TCP::Socket : public Data_Observer<TCP::Address> {
+class TCP::Socket : public Data_Observer<TCP::Address>, public Handler {
     friend class TCP;
  public:
     typedef void (Socket::* Handler)(const Header&,const char*,u16);
@@ -174,12 +174,15 @@ class TCP::Socket : public Data_Observer<TCP::Address> {
     
     Handler state_handler;
 
+    void operator()();
  protected: 
     // methods
     bool check_seq(const Header &h,u16 len);
     void send_ack();
     void send_fin();
     s32 _send(Header * hdr, SegmentedBuffer * sb);
+    void set_timeout();
+    void clear_timeout();
     
     // attributes
     TCP * _tcp;
@@ -190,7 +193,9 @@ class TCP::Socket : public Data_Observer<TCP::Address> {
     
     volatile u32 snd_una, snd_nxt, snd_ini, snd_wnd;
     volatile u32 rcv_una, rcv_nxt, rcv_ini, rcv_wnd;
-    
+
+    Alarm * _timeout;
+
     // class attributes
     static Handler handlers[13];
 };
