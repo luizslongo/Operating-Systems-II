@@ -177,10 +177,10 @@ char *createString(const char *src);
 bool startWith(const char *text1, const char *text2);
 bool contains(const char *text1, const char *text2);
 void removeLWS(char *text);
-bool getLine(char *text, char *result);
-bool match(char *text, const char *match, char *result, bool ignoreSpecial = false);
+bool getLine(const char *text, char *result);
+bool match(const char *text, const char *match, char *result, bool ignoreSpecial = false);
 void trim(char *text);
-void skip(char *text, char *skip);
+void skip(char *text, const char *skip);
 
 __END_SYS
 

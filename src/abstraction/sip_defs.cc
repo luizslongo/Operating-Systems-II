@@ -103,9 +103,9 @@ void removeLWS(char *text)
 	}
 }
 
-bool match(char *text, const char *match, char *result, bool ignoreSpecial)
+bool match(const char *text, const char *match, char *result, bool ignoreSpecial)
 {
-	char *pText = text;
+	const char *pText = text;
 	char *pResult = result;
 	bool found = false;
 	int size = strlen(match);
@@ -169,11 +169,11 @@ bool match(char *text, const char *match, char *result, bool ignoreSpecial)
 		return false;
 	}
 
-	strcpy(text, pText);
+	//strcpy(text, pText);
 	return true;
 }
 
-bool getLine(char *text, char *result)
+bool getLine(const char *text, char *result)
 {
 	bool ret = match(text, "\n", result);
 	if (ret)
@@ -210,13 +210,13 @@ void trim(char *text)
 	}
 }
 
-void skip(char *text, char *skip)
+void skip(char *text, const char *skip)
 {
 	char *pText = text;
 
 	while (*pText != 0)
 	{
-		char *pSkip = skip;
+		const char *pSkip = skip;
 		bool found = false;
 
 		while (*pSkip != 0)

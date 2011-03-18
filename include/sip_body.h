@@ -12,12 +12,12 @@ public:
 	//SipBody() {};
 	virtual ~SipBody() {}
 
-	static SipBody *decodeBody(char *sipMsg, SipBodyType bodyType);
+	static SipBody *decodeBody(const char *sipMsg, SipBodyType bodyType);
 	static SipBody *createBody(SipBodyType type/*, const SipBody *copy = 0*/);
 
 	virtual SipBodyType getBodyType() = 0;
 
-	virtual bool parse(char *sipMsg) = 0;
+	virtual bool parse(const char *sipMsg) = 0;
 	virtual bool encode(char *sipMsg) = 0;
 };
 
@@ -32,7 +32,7 @@ public:
 
 	SipBodyType getBodyType() { return SIP_BODY_APPLICATION_SDP; };
 
-	bool parse(char *sipMsg) { return true; };
+	bool parse(const char *sipMsg) { return true; };
 	bool encode(char *sipMsg);
 };
 
@@ -49,7 +49,7 @@ public:
 
 	SipBodyType getBodyType() { return SIP_BODY_APPLICATION_PIDF_XML; };
 
-	bool parse(char *sipMsg) { return true; };
+	bool parse(const char *sipMsg) { return true; };
 	bool encode(char *sipMsg);
 
 	void setElement(SipPidfXmlBasicElement element) { this->element = element; };
@@ -69,7 +69,7 @@ public:
 
 	SipBodyType getBodyType() { return SIP_BODY_TEXT_PLAIN; };
 
-	bool parse(char *sipMsg) { text = createString(sipMsg); return true; };
+	bool parse(const char *sipMsg) { text = createString(sipMsg); return true; };
 	bool encode(char *sipMsg) { strcat(sipMsg, text); return true; };
 
 	void setText(const char *text);

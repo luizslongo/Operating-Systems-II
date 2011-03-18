@@ -31,13 +31,13 @@ public:
 	static SipMessage *decodeMsg(const char *sipMsg);
 
 	static SipMessageType getMsgType(const char *sipMsg);
-	static char *getMsgType(const SipMessageType type);
+	static const char *getMsgType(const SipMessageType type);
 	virtual SipMessageType getMsgType() = 0;
 
-	bool parse(char *sipMsg);
-	virtual bool parseStartLine(char *sipMsg) = 0;
-	bool parseHeader(char *sipMsg);
-	bool parseBody(char *sipMsg);
+	bool parse(const char *sipMsg);
+	virtual bool parseStartLine(const char *sipMsg) = 0;
+	bool parseHeader(const char *sipMsg);
+	bool parseBody(const char *sipMsg);
 
 	bool encode(char *sipMsg);
 	virtual bool encodeStartLine(char *sipMsg) = 0;
@@ -53,7 +53,7 @@ public:
 	SipBody *getBody() { return body; };
 
 	static SipTransportType getTransportType(const char *type);
-	static char *getTransportType(const SipTransportType type);
+	static const char *getTransportType(const SipTransportType type);
 
 	void setCanDelete(bool canDelete) { this->canDelete = canDelete; };
 	bool getCanDelete() { return canDelete; };
@@ -97,7 +97,7 @@ public:
 	//SipRequest(SipMessageType msgType, char *requestURI, char *sipVersion = SIP_VERSION);
 	virtual ~SipRequest() {};
 
-	bool parseStartLine(char *sipMsg);
+	bool parseStartLine(const char *sipMsg);
 	bool encodeStartLine(char *sipMsg) { return requestLine.encode(sipMsg); };
 
 	void setRequestLine(const SipMessageType msgType, const char *requestURI, const char *sipVersion = SIP_VERSION)
@@ -217,7 +217,7 @@ public:
 	SipResponse(int statusCode);
 	~SipResponse() {};
 
-	bool parseStartLine(char *sipMsg);
+	bool parseStartLine(const char *sipMsg);
 	bool encodeStartLine(char *sipMsg) { return statusLine.encode(sipMsg); };
 
 	SipMessageType getMsgType() { return SIP_RESPONSE; };

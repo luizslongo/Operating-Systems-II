@@ -4,7 +4,7 @@
 __BEGIN_SYS
 
 
-SipBody *SipBody::decodeBody(char *sipMsg, SipBodyType bodyType)
+SipBody *SipBody::decodeBody(const char *sipMsg, SipBodyType bodyType)
 {
 	SipBody *body = createBody(bodyType);
 

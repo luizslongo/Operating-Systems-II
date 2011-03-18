@@ -112,9 +112,9 @@ SipMessageType SipMessage::getMsgType(const char *sipMsg)
 	return type;
 }
 
-char *SipMessage::getMsgType(const SipMessageType type)
+const char *SipMessage::getMsgType(const SipMessageType type)
 {
-	char *sipMsg = 0;
+	const char *sipMsg = 0;
 
 	switch (type)
 	{
@@ -134,7 +134,7 @@ char *SipMessage::getMsgType(const SipMessageType type)
 	return sipMsg;
 }
 
-bool SipMessage::parse(char *sipMsg)
+bool SipMessage::parse(const char *sipMsg)
 {
 	if (!parseStartLine(sipMsg))
 		return false;
@@ -148,7 +148,7 @@ bool SipMessage::parse(char *sipMsg)
 	return true;
 }
 
-bool SipMessage::parseHeader(char *sipMsg)
+bool SipMessage::parseHeader(const char *sipMsg)
 {
 	char line[MAX_LINE];
 	Simple_List<SipHeader> header;
@@ -165,7 +165,7 @@ bool SipMessage::parseHeader(char *sipMsg)
 	return true;
 }
 
-bool SipMessage::parseBody(char *sipMsg)
+bool SipMessage::parseBody(const char *sipMsg)
 {
 	SipHeaderContentType *contentType = (SipHeaderContentType *) getHeader(SIP_HEADER_CONTENT_TYPE);
 	if (contentType)
@@ -303,9 +303,9 @@ SipTransportType SipMessage::getTransportType(const char *type)
 	return transport;
 }
 
-char *SipMessage::getTransportType(const SipTransportType type)
+const char *SipMessage::getTransportType(const SipTransportType type)
 {
-	char *transport = 0;
+	const char *transport = 0;
 
 	switch (type)
 	{
@@ -392,7 +392,7 @@ void SipRequestLine::setRequestLine(const SipMessageType msgType, const char *re
 	setRequestLine(msgType, requestURI, sipVersion);
 }*/
 
-bool SipRequest::parseStartLine(char *sipMsg)
+bool SipRequest::parseStartLine(const char *sipMsg)
 {
 	char line[MAX_LINE];
 	getLine(sipMsg, line);
@@ -563,7 +563,7 @@ SipResponse::SipResponse(int statusCode)
 	}
 }
 
-bool SipResponse::parseStartLine(char *sipMsg)
+bool SipResponse::parseStartLine(const char *sipMsg)
 {
 	char line[MAX_LINE];
 	getLine(sipMsg, line);

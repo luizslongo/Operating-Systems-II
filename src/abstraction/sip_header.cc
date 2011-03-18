@@ -445,7 +445,7 @@ void ValueOptions::addOption(const char *option)
 
 void SipHeaderAllow::addAllowed(const SipMessageType allowed)
 {
-	char *allowed2 = SipMessage::getMsgType(allowed);
+	const char *allowed2 = SipMessage::getMsgType(allowed);
 	if (allowed2)
 		ValueOptions::addOption(allowed2);
 }
@@ -489,7 +489,7 @@ bool SipHeaderContentType::encode(char *sipMsg)
 {
 	strcat(sipMsg, "Content-Type: ");
 
-	char *contentType = 0;
+	const char *contentType = 0;
 	switch (type)
 	{
 		case SIP_BODY_APPLICATION_SDP:		contentType = "application/sdp";		break;
@@ -584,7 +584,7 @@ bool SipHeaderEvent::parse(char *sipMsg)
 
 bool SipHeaderEvent::encode(char *sipMsg)
 {
-	char *eventType = 0;
+	const char *eventType = 0;
 	switch (type)
 	{
 		case SIP_EVENT_PRESENCE:	eventType = "presence";	break;
@@ -655,7 +655,7 @@ bool SipHeaderSubscriptionState::encode(char *sipMsg)
 	char value[11];
 	itoa(expires, value);
 
-	char *subscriptionState = 0;
+	const char *subscriptionState = 0;
 	switch (state)
 	{
 		case SIP_SUBSCRIPTION_STATE_ACTIVE:		subscriptionState = "active";		break;
@@ -792,7 +792,7 @@ bool SipHeaderVia::encode(char *sipMsg)
 	char value[11];
 	itoa(port, value);
 
-	char *type = SipMessage::getTransportType(transport);
+	const char *type = SipMessage::getTransportType(transport);
 
 	strcat(sipMsg, "Via: ");
 	strcat(sipMsg, protocolName);
