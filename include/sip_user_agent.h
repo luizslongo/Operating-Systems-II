@@ -17,12 +17,14 @@ private:
 	friend class UserAgentClient;
 	friend class UserAgentServer;
 
-	enum State
+	SipMessageType type;
+
+	/*enum State
 	{
 		sttIdle,
 		//sttEarly,
 		sttConfirmed
-	} curState;
+	} curState;*/
 
 	char *callID;
 	char *localTag;
@@ -34,9 +36,11 @@ private:
 	char *remoteTarget;
 	Simple_List<SipHeader/*Route*/> routeSet;
 
+	Simple_List<SipDialog>::Element link;
+
 public:
-	SipDialog();
-	~SipDialog() { clear(); };
+	SipDialog(SipMessageType type);
+	~SipDialog();
 
 	void setDialog(const char *callID, const char *localTag, const char *remoteTag,
 			unsigned int localSequenceNumber, unsigned int remoteSequenceNumber,
@@ -48,9 +52,6 @@ public:
 
 	int getRouteSetSize() { return (int) routeSet.size(); };
 	SipHeaderRoute *getRoute(int pos);
-
-	bool isActive() { return curState != sttIdle; };
-	void clear();
 };
 
 //-------------------------------------------
@@ -93,24 +94,24 @@ public:
 	~UserAgentClient() {};
 
 private:
-	SipRequest *createRequest(SipMessageType msgType, const char *to = 0, SipMessage *invite = 0, SipSubscriptionState state = SIP_SUBSCRIPTION_STATE_INVALID, SipPidfXmlBasicElement pidfXmlElement = SIP_PIDF_XML_BASIC_ELEMENT_INVALID, unsigned int expires = 0, const char *data = 0);
+	SipRequest *createRequest(SipMessageType msgType, SipDialog *dialog = 0, const char *to = 0, SipMessage *invite = 0);
 
 public:
-	SipRequestAck *createAck(SipRequestInvite *invite) { return (SipRequestAck *) createRequest(SIP_REQUEST_ACK, 0, invite); };
-	SipRequestBye *createBye() { return (SipRequestBye *) createRequest(SIP_REQUEST_BYE); };
-	SipRequestInvite *createInvite(const char *to = 0) { return (SipRequestInvite *) createRequest(SIP_REQUEST_INVITE, to); };
-	SipRequestMessage *createMessage(const char *data) { return (SipRequestMessage *) createRequest(SIP_REQUEST_MESSAGE, 0, 0, SIP_SUBSCRIPTION_STATE_INVALID, SIP_PIDF_XML_BASIC_ELEMENT_INVALID, 0, data); };
-	SipRequestNotify *createNotify(SipSubscriptionState state, SipPidfXmlBasicElement pidfXmlElement, unsigned int expires = 0) { return (SipRequestNotify *) createRequest(SIP_REQUEST_NOTIFY, 0, 0, state, pidfXmlElement, expires); };
-	SipRequestSubscribe *createSubscribe() { return 0; };
+	SipRequestAck *createAck(const char *to, SipRequestInvite *invite);
+	SipRequestBye *createBye(const char *to);
+	SipRequestInvite *createInvite(const char *to);
+	SipRequestMessage *createMessage(const char *to, const char *data);
+	SipRequestNotify *createNotify(const char *to, SipSubscriptionState state, SipPidfXmlBasicElement pidfXmlElement, unsigned int expires = 0);
+	SipRequestSubscribe *createSubscribe(const char *to) { return 0; };
 	void sendRequest(SipRequest *request);
 
 	bool receiveMsg(SipResponse *response);
-	bool receiveMsg(SipRequest *request, SipResponse *response, Transaction *transaction);
-	//bool receive1xx(SipRequest *request, SipResponse *response, Transaction *transaction) { return true; };
-	bool receive2xx(SipRequest *request, SipResponse *response, Transaction *transaction);
-	bool receive3xx6xx(SipRequest *request, SipResponse *response, Transaction *transaction);
+	bool receiveMsg(SipRequest *request, SipResponse *response, SipTransaction *transaction);
+	//bool receive1xx(SipRequest *request, SipResponse *response, SipTransaction *transaction, SipDialog *dialog) { return true; };
+	bool receive2xx(SipRequest *request, SipResponse *response, SipTransaction *transaction, SipDialog *dialog);
+	bool receive3xx6xx(SipRequest *request, SipResponse *response, SipTransaction *transaction, SipDialog *dialog);
 
-	bool createDialog(SipRequest *request, SipResponse *response);
+	SipDialog *createDialog(SipRequest *request, SipResponse *response);
 };
 
 //-------------------------------------------
@@ -127,19 +128,19 @@ public:
 
 private:
 	SipResponse *createResponse(int statusCode, SipRequest *request);
-	void sendResponse(SipResponse *response, SipMessageType requestType, Transaction *transaction);
+	void sendResponse(SipResponse *response, SipMessageType requestType, SipTransaction *transaction);
 
 public:
 	bool receiveMsg(SipRequest *request);
-	bool receiveMsg(SipRequest *request, Transaction *transaction);
-	//bool receiveAck(SipRequestAck *request, Transaction *transaction) { return true; };
-	bool receiveBye(SipRequestBye *request, Transaction *transaction);
-	bool receiveInvite(SipRequestInvite *request, Transaction *transaction);
-	bool receiveMessage(SipRequestMessage *request, Transaction *transaction);
-	//bool receiveNotify(SipRequestNotify *request, Transaction *transaction) { return true; };
-	bool receiveSubscribe(SipRequestSubscribe *request, Transaction *transaction);
+	bool receiveMsg(SipRequest *request, SipTransaction *transaction);
+	//bool receiveAck(SipRequestAck *request, SipTransaction *transaction, SipDialog *dialog) { return true; };
+	bool receiveBye(SipRequestBye *request, SipTransaction *transaction, SipDialog *dialog);
+	bool receiveInvite(SipRequestInvite *request, SipTransaction *transaction, SipDialog *dialog);
+	bool receiveMessage(SipRequestMessage *request, SipTransaction *transaction, SipDialog *dialog);
+	//bool receiveNotify(SipRequestNotify *request, SipTransaction *transaction, SipDialog *dialog) { return true; };
+	bool receiveSubscribe(SipRequestSubscribe *request, SipTransaction *transaction, SipDialog *dialog);
 
-	bool createDialog(SipRequest *request, SipResponse *response);
+	SipDialog *createDialog(SipRequest *request, SipResponse *response);
 };
 
 //-------------------------------------------
@@ -149,24 +150,24 @@ class UserAgent
 private:
 	friend class UserAgentClient;
 	friend class UserAgentServer;
-	friend class TransactionClientInvite;
-	friend class TransactionClientNonInvite;
-	friend class TransactionServerInvite;
-	friend class TransactionServerNonInvite;
+	friend class SipTransactionClientInvite;
+	friend class SipTransactionClientNonInvite;
+	friend class SipTransactionServerInvite;
+	friend class SipTransactionServerNonInvite;
 	friend class SipManager;
 
 	UserAgentClient uac;
 	UserAgentServer uas;
 
-	SipDialog dialog;
+	Simple_List<SipDialog> dialogs;
 	SipSubscription subscription;
-	Simple_List<Transaction> transactions;
+	Simple_List<SipTransaction> transactions;
 
 	char *uri;
 	const char *textReceived;
 
 	int timerValues[SIP_TIMER_COUNT];
-	Functor_Handler<Transaction> *timerHandlers[SIP_TIMER_COUNT];
+	Functor_Handler<SipTransaction> *timerHandlers[SIP_TIMER_COUNT];
 	Alarm *timerAlarms[SIP_TIMER_COUNT];
 
 	Simple_List<UserAgent>::Element link;
@@ -178,19 +179,23 @@ public:
 	UserAgentClient *getUserAgentClient() { return &uac; };
 	UserAgentServer *getUserAgentServer() { return &uas; };
 
-	//bool matchingDialog(SipMessage *msg);
-	Transaction *matchingTransaction(SipMessage *msg);
+	SipDialog *matchingDialog(SipMessage *msg, SipMessageType type);
+	SipDialog *matchingDialog(const char *to, SipMessageType type);
+	SipTransaction *matchingTransaction(SipMessage *msg);
 
 	const char *getUri() { return uri; };
 	const char *getTextReceived() { return textReceived; };
 	bool hasSubscription() { return subscription.isActive(); };
+	const char *getSubscriber();
 
-	void addTransaction(Transaction *transaction) { transactions.insert(&transaction->link); };
-	void removeTransaction(Transaction *transaction) { transactions.remove(&transaction->link); delete transaction; };
+	void addTransaction(SipTransaction *transaction) { transactions.insert(&transaction->link); };
+	void removeTransaction(SipTransaction *transaction) { transactions.remove(&transaction->link); delete transaction; };
+	SipDialog *addDialog(SipMessageType type);
+	void removeDialog(SipDialog *dialog) { dialogs.remove(&dialog->link); delete dialog; };
 
 	int getTimerValue(SipTimer timer) { return timerValues[timer]; };
 	void setTimerValue(SipTimer timer, int timerValue) { timerValues[timer] = timerValue; };
-	void startTimer(SipTimer timer, Transaction *p);
+	void startTimer(SipTimer timer, SipTransaction *p);
 	void stopTimer(SipTimer timer);
 };
 

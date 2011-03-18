@@ -63,7 +63,7 @@ public:
 	void sendSipNotify(UserAgent *ua, SipSubscriptionState state, SipPidfXmlBasicElement pidfXml);
 
 	//static int readDataSetThread(NCAPApplication *ncap, IP::Address address, IEEE1451TIMChannel *tim);
-	static int messageCallback(SipEventCallback event, UserAgent *ua);
+	static int messageCallback(SipEventCallback event, UserAgent *ua, const char *remote);
 };
 
 //-------------------------------------------

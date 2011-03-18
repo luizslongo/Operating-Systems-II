@@ -47,7 +47,7 @@ private:
 //-------------------------------------------
 
 class UserAgent;
-typedef int (*USER_CALLBACK)(SipEventCallback event, UserAgent *ua);
+typedef int (*USER_CALLBACK)(SipEventCallback event, UserAgent *ua, const char *remote);
 
 class SipManager
 {

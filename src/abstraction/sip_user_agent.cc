@@ -4,9 +4,9 @@
 __BEGIN_SYS
 
 
-SipDialog::SipDialog()
+SipDialog::SipDialog(SipMessageType type) : type(type), link(this)
 {
-	curState = sttIdle;
+	//curState = sttIdle;
 
 	callID = 0;
 	localTag = 0;
@@ -16,6 +16,29 @@ SipDialog::SipDialog()
 	localURI = 0;
 	remoteURI = 0;
 	remoteTarget = 0;
+}
+
+SipDialog::~SipDialog()
+{
+	if (callID)
+		delete callID;
+
+	if (localTag)
+		delete localTag;
+
+	if (remoteTag)
+		delete remoteTag;
+
+	if (localURI)
+		delete localURI;
+
+	if (remoteURI)
+		delete remoteURI;
+
+	if (remoteTarget)
+		delete remoteTarget;
+
+	clearRouteSet();
 }
 
 void SipDialog::setDialog(const char *callID, const char *localTag, const char *remoteTag,
@@ -44,7 +67,7 @@ void SipDialog::setDialog(const char *callID, const char *localTag, const char *
 	if (this->remoteTarget) delete this->remoteTarget;
 	this->remoteTarget = createString(remoteTarget);
 
-	this->curState = sttConfirmed;
+	//this->curState = sttConfirmed;
 }
 
 void SipDialog::setRemoteTarget(const char *remoteTarget)
@@ -89,41 +112,6 @@ SipHeaderRoute *SipDialog::getRoute(int pos)
 	return 0;
 }
 
-void SipDialog::clear()
-{
-	curState = sttIdle;
-
-	if (callID)
-		delete callID;
-	callID = 0;
-
-	if (localTag)
-		delete localTag;
-	localTag = 0;
-
-	if (remoteTag)
-		delete remoteTag;
-	remoteTag = 0;
-
-	localSequenceNumber = 0;
-
-	remoteSequenceNumber = 0;
-
-	if (localURI)
-		delete localURI;
-	localURI = 0;
-
-	if (remoteURI)
-		delete remoteURI;
-	remoteURI = 0;
-
-	if (remoteTarget)
-		delete remoteTarget;
-	remoteTarget = 0;
-
-	clearRouteSet();
-}
-
 //-------------------------------------------
 
 void SipSubscription::setSubscription(SipEventPackage eventType, const char *eventId)
@@ -136,7 +124,7 @@ void SipSubscription::setSubscription(SipEventPackage eventType, const char *eve
 
 /*void SipSubscription::startTimer(void *p)
 {
-	timerHandler = new Functor_Handler(&TransactionClientNonInvite::timerKCallback, p);
+	timerHandler = new Functor_Handler(&, p);
 	timerAlarm = new Alarm(timerValue, timerHandler, 1);
 }
 
@@ -168,19 +156,8 @@ void SipSubscription::clear()
 
 //-------------------------------------------
 
-SipRequest *UserAgentClient::createRequest(SipMessageType msgType, const char *to, SipMessage *invite,
-		SipSubscriptionState state, SipPidfXmlBasicElement pidfXmlElement, unsigned int expires,
-		const char *data)
+SipRequest *UserAgentClient::createRequest(SipMessageType msgType, SipDialog *dialog, const char *to, SipMessage *invite)
 {
-	if (((!ua->dialog.isActive()) && (!to)) ||
-		(((msgType == SIP_REQUEST_ACK) /*|| (msgType == SIP_REQUEST_CANCEL)*/) && (!invite)) ||
-		((msgType == SIP_REQUEST_NOTIFY) && (!ua->subscription.isActive())) ||
-		((msgType == SIP_REQUEST_MESSAGE) && (!data)))
-	{
-		db<UserAgentClient>(WRN) << "UserAgentClient::createRequest -> Invalid parameters\n";
-		return 0;
-	}
-
 	SipRequest *request = 0;
 
 	switch (msgType)
@@ -198,11 +175,11 @@ SipRequest *UserAgentClient::createRequest(SipMessageType msgType, const char *t
 		default:						break;
 	}
 
-	if (!request)
+	/*if (!request)
 	{
-		db<UserAgentClient>(WRN) << "UserAgentClient::createRequest -> Failed to create the request (message type = " << msgType << ")\n";
+		db<UserAgentClient>(WRN) << "UserAgentClient::createRequest -> Failed to create request (message type = " << msgType << ")\n";
 		return 0;
-	}
+	}*/
 
 	SipHeaderVia *headerVia = new SipHeaderVia();
 	char branch[20];
@@ -231,7 +208,7 @@ SipRequest *UserAgentClient::createRequest(SipMessageType msgType, const char *t
 	request->addHeader(headerContact);
 
 
-	if (!ua->dialog.isActive())
+	if (!dialog)
 	{
 		headerTo->setAddress(to);
 
@@ -263,18 +240,18 @@ SipRequest *UserAgentClient::createRequest(SipMessageType msgType, const char *t
 		request->setRequestLine(msgType, to, SIP_VERSION);
 	}else
 	{
-		headerTo->setAddress(ua->dialog.remoteURI);
-		if (ua->dialog.remoteTag)
-			headerTo->setTag(ua->dialog.remoteTag);
+		headerTo->setAddress(dialog->remoteURI);
+		if (dialog->remoteTag)
+			headerTo->setTag(dialog->remoteTag);
 
-		headerFrom->setAddress(ua->dialog.localURI);
-		if (ua->dialog.localTag)
-			headerFrom->setTag(ua->dialog.localTag);
+		headerFrom->setAddress(dialog->localURI);
+		if (dialog->localTag)
+			headerFrom->setTag(dialog->localTag);
 
-		headerCallID->setString(ua->dialog.callID);
+		headerCallID->setString(dialog->callID);
 
-		if (ua->dialog.localSequenceNumber == 0)
-			ua->dialog.localSequenceNumber = 1;
+		if (dialog->localSequenceNumber == 0)
+			dialog->localSequenceNumber = 1;
 		unsigned int seq = 0;
 		if ((msgType == SIP_REQUEST_ACK)) //|| (msgType == SIP_REQUEST_CANCEL))
 		{
@@ -282,35 +259,35 @@ SipRequest *UserAgentClient::createRequest(SipMessageType msgType, const char *t
 			seq = cseq->getSequence();
 		}else
 		{
-			seq = ua->dialog.localSequenceNumber + 1;
-			ua->dialog.localSequenceNumber = seq;
+			seq = dialog->localSequenceNumber + 1;
+			dialog->localSequenceNumber = seq;
 		}
 		headerCSeq->setCSeq(msgType, seq);
 
-		headerContact->setAddress(ua->dialog.localURI);
+		headerContact->setAddress(dialog->localURI);
 
 		const char *remote = 0;
-		int routeSetSize = ua->dialog.getRouteSetSize();
+		int routeSetSize = dialog->getRouteSetSize();
 		if (routeSetSize == 0)
-			remote = ua->dialog.remoteTarget;
+			remote = dialog->remoteTarget;
 		else if (routeSetSize > 0)
 		{
-			SipHeaderRoute *route = ua->dialog.getRoute(0);
+			SipHeaderRoute *route = dialog->getRoute(0);
 			if (route->isLR())
 			{
-				remote = ua->dialog.remoteTarget;
+				remote = dialog->remoteTarget;
 
 				for (int i = 0; i < routeSetSize; i++)
-					request->addHeader(new SipHeaderRoute(*(ua->dialog.getRoute(i))));
+					request->addHeader(new SipHeaderRoute(*(dialog->getRoute(i))));
 			}else
 			{
-				remote = ua->dialog.getRoute(0)->getAddress();
+				remote = dialog->getRoute(0)->getAddress();
 
 				for (int i = 1; i < routeSetSize; i++)
-					request->addHeader(new SipHeaderRoute(*(ua->dialog.getRoute(i))));
+					request->addHeader(new SipHeaderRoute(*(dialog->getRoute(i))));
 
 				SipHeaderRoute *header = new SipHeaderRoute();
-				header->setAddress(ua->dialog.remoteTarget, true);
+				header->setAddress(dialog->remoteTarget, true);
 				request->addHeader(header);
 			}
 		}
@@ -329,41 +306,106 @@ SipRequest *UserAgentClient::createRequest(SipMessageType msgType, const char *t
 		request->setRequestLine(msgType, pRemote, SIP_VERSION);
 	}
 
-	if (msgType == SIP_REQUEST_INVITE)
+	return request;
+}
+
+SipRequestAck *UserAgentClient::createAck(const char *to, SipRequestInvite *invite)
+{
+	SipDialog *dialog = ua->matchingDialog(to, SIP_REQUEST_INVITE);
+
+	if ((!dialog) || (!invite))
 	{
-		SipHeaderAllow *headerAllow = new SipHeaderAllow();
-		for (int i = 0; i < (SIP_MESSAGE_TYPE_INVALID - 1); i++)
-			headerAllow->addAllowed((SipMessageType) i);
-		request->addHeader(headerAllow);
-
-		SipHeaderContentDisposition *headerContentDisposition = new SipHeaderContentDisposition();
-		headerContentDisposition->setString("session");
-		request->addHeader(headerContentDisposition);
-
-		SipSdpBody *sdp = new SipSdpBody();
-		request->setBody(sdp);
-
-	}else if (msgType == SIP_REQUEST_NOTIFY)
-	{
-		SipHeaderEvent *headerEvent = new SipHeaderEvent();
-		headerEvent->setEvent(ua->subscription.eventType, ua->subscription.eventId);
-		request->addHeader(headerEvent);
-
-		SipHeaderSubscriptionState *headerSubscriptionState = new SipHeaderSubscriptionState();
-		headerSubscriptionState->setSubscriptionState(state, expires);
-		request->addHeader(headerSubscriptionState);
-
-		SipPidfXmlBody *pidf = new SipPidfXmlBody();
-		pidf->setElement(pidfXmlElement);
-		request->setBody(pidf);
-	}else if (msgType == SIP_REQUEST_MESSAGE)
-	{
-		SipTextPlainBody *text = new SipTextPlainBody();
-		text->setText(data);
-		request->setBody(text);
+		db<UserAgentClient>(WRN) << "UserAgentClient::createAck -> Failed to create request\n";
+		return 0;
 	}
 
-	return request;
+	return (SipRequestAck *) createRequest(SIP_REQUEST_ACK, dialog, 0, invite);
+}
+
+SipRequestBye *UserAgentClient::createBye(const char *to)
+{
+	SipDialog *dialog = ua->matchingDialog(to, SIP_REQUEST_INVITE);
+
+	if (!dialog)
+	{
+		db<UserAgentClient>(WRN) << "UserAgentClient::createBye -> Failed to create request\n";
+		return 0;
+	}
+
+	return (SipRequestBye *) createRequest(SIP_REQUEST_BYE, dialog);
+}
+
+SipRequestInvite *UserAgentClient::createInvite(const char *to)
+{
+	SipDialog *dialog = ua->matchingDialog(to, SIP_REQUEST_INVITE);
+
+	if ((dialog) || (!to))
+	{
+		db<UserAgentClient>(WRN) << "UserAgentClient::createInvite -> Failed to create request\n";
+		return 0;
+	}
+
+	SipRequestInvite *invite = (SipRequestInvite *) createRequest(SIP_REQUEST_INVITE, 0, to);
+
+	SipHeaderAllow *headerAllow = new SipHeaderAllow();
+	for (int i = 0; i < (SIP_MESSAGE_TYPE_INVALID - 1); i++)
+		headerAllow->addAllowed((SipMessageType) i);
+	invite->addHeader(headerAllow);
+
+	SipHeaderContentDisposition *headerContentDisposition = new SipHeaderContentDisposition();
+	headerContentDisposition->setString("session");
+	invite->addHeader(headerContentDisposition);
+
+	SipSdpBody *sdp = new SipSdpBody();
+	invite->setBody(sdp);
+
+	return invite;
+}
+
+SipRequestMessage *UserAgentClient::createMessage(const char *to, const char *data)
+{
+	//SipDialog *dialog = ua->matchingDialog(to);
+
+	if ((!to) || (!data))
+	{
+		db<UserAgentClient>(WRN) << "UserAgentClient::createMessage -> Failed to create request\n";
+		return 0;
+	}
+
+	SipRequestMessage *message = (SipRequestMessage *) createRequest(SIP_REQUEST_MESSAGE, 0, to);
+
+	SipTextPlainBody *text = new SipTextPlainBody();
+	text->setText(data);
+	message->setBody(text);
+
+	return message;
+}
+
+SipRequestNotify *UserAgentClient::createNotify(const char *to, SipSubscriptionState state, SipPidfXmlBasicElement pidfXmlElement, unsigned int expires)
+{
+	SipDialog *dialog = ua->matchingDialog(to, SIP_REQUEST_SUBSCRIBE);
+
+	if ((!dialog) || (!ua->subscription.isActive()))
+	{
+		db<UserAgentClient>(WRN) << "UserAgentClient::createNotify -> Failed to create request\n";
+		return 0;
+	}
+
+	SipRequestNotify *notify = (SipRequestNotify *) createRequest(SIP_REQUEST_NOTIFY, dialog);
+
+	SipHeaderEvent *headerEvent = new SipHeaderEvent();
+	headerEvent->setEvent(ua->subscription.eventType, ua->subscription.eventId);
+	notify->addHeader(headerEvent);
+
+	SipHeaderSubscriptionState *headerSubscriptionState = new SipHeaderSubscriptionState();
+	headerSubscriptionState->setSubscriptionState(state, expires);
+	notify->addHeader(headerSubscriptionState);
+
+	SipPidfXmlBody *pidf = new SipPidfXmlBody();
+	pidf->setElement(pidfXmlElement);
+	notify->setBody(pidf);
+
+	return notify;
 }
 
 void UserAgentClient::sendRequest(SipRequest *request)
@@ -376,12 +418,12 @@ void UserAgentClient::sendRequest(SipRequest *request)
 
 	if (request->getMsgType() == SIP_REQUEST_INVITE)
 	{
-		TransactionClientInvite *transaction = new TransactionClientInvite(ua);
+		SipTransactionClientInvite *transaction = new SipTransactionClientInvite(ua);
 		ua->addTransaction(transaction);
 		transaction->sendInvite((SipRequestInvite *) request);
 	}else
 	{
-		TransactionClientNonInvite *transaction = new TransactionClientNonInvite(ua);
+		SipTransactionClientNonInvite *transaction = new SipTransactionClientNonInvite(ua);
 		ua->addTransaction(transaction);
 		transaction->sendRequest(request);
 	}
@@ -396,7 +438,7 @@ bool UserAgentClient::receiveMsg(SipResponse *response)
 		return false;
 
 	int statusCode = response->getStatusLine()->getStatusCode();
-	Transaction *transaction = ua->matchingTransaction(response);
+	SipTransaction *transaction = ua->matchingTransaction(response);
 
 	if (!transaction)
 	{
@@ -407,52 +449,55 @@ bool UserAgentClient::receiveMsg(SipResponse *response)
 	if (transaction->getTransactionType() == SIP_TRANSACTION_CLIENT_INVITE)
 	{
 		if ((statusCode >= 100) && (statusCode <= 199))
-			((TransactionClientInvite *) transaction)->receive1xx(response);
+			((SipTransactionClientInvite *) transaction)->receive1xx(response);
 
 		else if ((statusCode >= 200) && (statusCode <= 299))
-			((TransactionClientInvite *) transaction)->receive2xx(response);
+			((SipTransactionClientInvite *) transaction)->receive2xx(response);
 
 		else if ((statusCode >= 300) && (statusCode <= 699))
-			((TransactionClientInvite *) transaction)->receive3xx6xx(response);
+			((SipTransactionClientInvite *) transaction)->receive3xx6xx(response);
 
 	}else if (transaction->getTransactionType() == SIP_TRANSACTION_CLIENT_NON_INVITE)
 	{
 		if ((statusCode >= 100) && (statusCode <= 199))
-			((TransactionClientNonInvite *) transaction)->receive1xx(response);
+			((SipTransactionClientNonInvite *) transaction)->receive1xx(response);
 
 		else if ((statusCode >= 200) && (statusCode <= 699))
-			((TransactionClientNonInvite *) transaction)->receive2xx6xx(response);
+			((SipTransactionClientNonInvite *) transaction)->receive2xx6xx(response);
 	}
 
 	return true;
 }
 
-bool UserAgentClient::receiveMsg(SipRequest *request, SipResponse *response, Transaction *transaction)
+bool UserAgentClient::receiveMsg(SipRequest *request, SipResponse *response, SipTransaction *transaction)
 {
 	int statusCode = response->getStatusLine()->getStatusCode();
+	SipDialog *dialog = ua->matchingDialog(response, request->getMsgType());
 
 	if ((statusCode >= 200) && (statusCode <= 299))
-		receive2xx(request, response, transaction);
+		receive2xx(request, response, transaction, dialog);
 
 	else if ((statusCode >= 300) && (statusCode <= 699))
-		receive3xx6xx(request, response, transaction);
+		receive3xx6xx(request, response, transaction, dialog);
 
 	return true;
 }
 
-bool UserAgentClient::receive2xx(SipRequest *request, SipResponse *response, Transaction *transaction)
+bool UserAgentClient::receive2xx(SipRequest *request, SipResponse *response, SipTransaction *transaction, SipDialog *dialog)
 {
 	switch (request->getMsgType())
 	{
 		case SIP_REQUEST_INVITE:
 		{
-			if (!ua->dialog.isActive())
+			if (!dialog)
 			{
-				createDialog(request, response);
-
-				SipRequestAck *ack = createAck((SipRequestInvite *) request);
-				SipManager::getInstance()->getTransport()->sendMessage(ack);
-				delete ack;
+				SipDialog *newDialog = createDialog(request, response);
+				if (newDialog)
+				{
+					SipRequestAck *ack = createAck(newDialog->remoteURI, (SipRequestInvite *) request);
+					SipManager::getInstance()->getTransport()->sendMessage(ack);
+					delete ack;
+				}
 			}else
 			{
 				SipHeaderContact *contact = (SipHeaderContact *) response->getHeader(SIP_HEADER_CONTACT);
@@ -460,7 +505,7 @@ bool UserAgentClient::receive2xx(SipRequest *request, SipResponse *response, Tra
 				{
 					const char *target = contact->getAddress();
 					if (target)
-						ua->dialog.setRemoteTarget(target);
+						dialog->setRemoteTarget(target);
 				}
 			}
 			break;
@@ -468,10 +513,10 @@ bool UserAgentClient::receive2xx(SipRequest *request, SipResponse *response, Tra
 
 		case SIP_REQUEST_BYE:
 		{
-			if (ua->dialog.isActive())
+			if (dialog)
 			{
-				ua->dialog.clear();
-				SipManager::callback(SIP_SESSION_TERMINATED, ua);
+				SipManager::callback(SIP_SESSION_TERMINATED, ua, dialog->remoteURI);
+				ua->removeDialog(dialog);
 			}
 			break;
 		}
@@ -483,34 +528,34 @@ bool UserAgentClient::receive2xx(SipRequest *request, SipResponse *response, Tra
 	return true;
 }
 
-bool UserAgentClient::receive3xx6xx(SipRequest *request, SipResponse *response, Transaction *transaction)
+bool UserAgentClient::receive3xx6xx(SipRequest *request, SipResponse *response, SipTransaction *transaction, SipDialog *dialog)
 {
 	int statusCode = response->getStatusLine()->getStatusCode();
 
 	if ((statusCode == 408) || (statusCode == 481) || (request->getMsgType() == SIP_REQUEST_BYE))
 	{
-		if (ua->dialog.isActive())
+		if (dialog)
 		{
-			ua->dialog.clear();
-			SipManager::callback(SIP_SESSION_TERMINATED, ua);
+			SipManager::callback(SIP_SESSION_TERMINATED, ua, dialog->remoteURI);
+			ua->removeDialog(dialog);
 		}
 		return true;
 	}
 
-	if (ua->dialog.isActive())
+	if (dialog)
 	{
-		SipRequestBye *bye = createBye();
+		SipRequestBye *bye = createBye(dialog->remoteURI);
 		sendRequest(bye);
 		//delete bye;
 
-		ua->dialog.clear();
-		SipManager::callback(SIP_SESSION_TERMINATED, ua);
+		SipManager::callback(SIP_SESSION_TERMINATED, ua, dialog->remoteURI);
+		ua->removeDialog(dialog);
 	}
 
 	return true;
 }
 
-bool UserAgentClient::createDialog(SipRequest *request, SipResponse *response)
+SipDialog *UserAgentClient::createDialog(SipRequest *request, SipResponse *response)
 {
 	SipHeaderFrom *fromRequest = (SipHeaderFrom *) request->getHeader(SIP_HEADER_FROM);
 	SipHeaderFrom *fromResponse = (SipHeaderFrom *) response->getHeader(SIP_HEADER_FROM);
@@ -520,7 +565,7 @@ bool UserAgentClient::createDialog(SipRequest *request, SipResponse *response)
 	SipHeaderTo *to = (SipHeaderTo *) response->getHeader(SIP_HEADER_TO);
 
 	if ((!fromRequest) || (!fromResponse) || (!callId) || (!contact) || (!cseq) || (!to))
-		return false;
+		return 0;
 
 	const char *id = callId->getString();
 	const char *localTag = fromRequest->getTag();
@@ -531,19 +576,20 @@ bool UserAgentClient::createDialog(SipRequest *request, SipResponse *response)
 	unsigned int sequenceNumber = cseq->getSequence();
 
 	if ((!id) || (!localTag) || (!localURI) || (!remoteURI) || (!target))
-		return false;
+		return 0;
 
-	ua->dialog.setDialog(id, localTag, remoteTag, sequenceNumber, 0, localURI, remoteURI, target);
+	SipDialog *dialog = ua->addDialog(SIP_REQUEST_INVITE);
+	dialog->setDialog(id, localTag, remoteTag, sequenceNumber, 0, localURI, remoteURI, target);
 
 	int recordRouteNum = response->getNumHeader(SIP_HEADER_RECORD_ROUTE);
 	for (int i = 0; i < recordRouteNum; i++)
 	{
 		SipHeaderRoute *route = (SipHeaderRoute *) response->getHeader(SIP_HEADER_RECORD_ROUTE, i);
-		ua->dialog.addRouteFront(route);
+		dialog->addRouteFront(route);
 	}
 
-	SipManager::callback(SIP_SESSION_INITIATED, ua);
-	return true;
+	SipManager::callback(SIP_SESSION_INITIATED, ua, remoteURI);
+	return dialog;
 }
 
 //-------------------------------------------
@@ -612,7 +658,7 @@ SipResponse *UserAgentServer::createResponse(int statusCode, SipRequest *request
 	return response;
 }
 
-void UserAgentServer::sendResponse(SipResponse *response, SipMessageType requestType, Transaction *transaction)
+void UserAgentServer::sendResponse(SipResponse *response, SipMessageType requestType, SipTransaction *transaction)
 {
 	if ((!response) || (!transaction))
 	{
@@ -625,20 +671,20 @@ void UserAgentServer::sendResponse(SipResponse *response, SipMessageType request
 	if (requestType == SIP_REQUEST_INVITE)
 	{
 		if ((statusCode >= 100) && (statusCode <= 199))
-			((TransactionServerInvite *) transaction)->send1xx(response);
+			((SipTransactionServerInvite *) transaction)->send1xx(response);
 
 		else if ((statusCode >= 200) && (statusCode <= 299))
-			((TransactionServerInvite *) transaction)->send2xx(response);
+			((SipTransactionServerInvite *) transaction)->send2xx(response);
 
 		else if ((statusCode >= 300) && (statusCode <= 699))
-			((TransactionServerInvite *) transaction)->send3xx6xx(response);
+			((SipTransactionServerInvite *) transaction)->send3xx6xx(response);
 	}else
 	{
 		if ((statusCode >= 100) && (statusCode <= 199))
-			((TransactionServerNonInvite *) transaction)->send1xx(response);
+			((SipTransactionServerNonInvite *) transaction)->send1xx(response);
 
 		else if ((statusCode >= 200) && (statusCode <= 699))
-			((TransactionServerNonInvite *) transaction)->send2xx6xx(response);
+			((SipTransactionServerNonInvite *) transaction)->send2xx6xx(response);
 	}
 
 	if (response->getCanDelete())
@@ -648,7 +694,7 @@ void UserAgentServer::sendResponse(SipResponse *response, SipMessageType request
 bool UserAgentServer::receiveMsg(SipRequest *request)
 {
 	SipMessageType requestType = request->getMsgType();
-	Transaction *transaction = ua->matchingTransaction(request);
+	SipTransaction *transaction = ua->matchingTransaction(request);
 
 	if ((!transaction) && (requestType == SIP_REQUEST_ACK))
 	{
@@ -657,38 +703,39 @@ bool UserAgentServer::receiveMsg(SipRequest *request)
 
 	}else if ((!transaction) && (requestType == SIP_REQUEST_INVITE))
 	{
-		if (ua->dialog.isActive()) //TODO: Se já existe um dialog, não recebe mais INVITE!
-		{
-			db<UserAgentServer>(WRN) << "UserAgentServer::receiveMsg -> There is already a dialog\n";
-			return false;
-		}
+		//if (dialog) //TODO: Se já existe um dialog, não recebe mais INVITE!
+		//{
+		//	db<UserAgentServer>(WRN) << "UserAgentServer::receiveMsg -> There is already a dialog\n";
+		//	return false;
+		//}
 
-		transaction = new TransactionServerInvite(ua);
+		transaction = new SipTransactionServerInvite(ua);
 		ua->addTransaction(transaction);
 
 	}else if (!transaction) //&& (requestType != SIP_REQUEST_INVITE) && (requestType != SIP_REQUEST_ACK))
 	{
-		transaction = new TransactionServerNonInvite(ua);
+		transaction = new SipTransactionServerNonInvite(ua);
 		ua->addTransaction(transaction);
 	}
 
 	db<UserAgentServer>(INF) << "UserAgentServer::receiveMsg -> New request received\n";
 
 	if (requestType == SIP_REQUEST_INVITE)
-		((TransactionServerInvite *) transaction)->receiveInvite((SipRequestInvite *) request);
+		((SipTransactionServerInvite *) transaction)->receiveInvite((SipRequestInvite *) request);
 
 	else if (requestType == SIP_REQUEST_ACK)
-		((TransactionServerInvite *) transaction)->receiveAck((SipRequestAck *) request);
+		((SipTransactionServerInvite *) transaction)->receiveAck((SipRequestAck *) request);
 
 	else
-		((TransactionServerNonInvite *) transaction)->receiveRequest(request);
+		((SipTransactionServerNonInvite *) transaction)->receiveRequest(request);
 
 	return true;
 }
 
-bool UserAgentServer::receiveMsg(SipRequest *request, Transaction *transaction)
+bool UserAgentServer::receiveMsg(SipRequest *request, SipTransaction *transaction)
 {
 	SipMessageType requestType = request->getMsgType();
+	SipDialog *dialog = ua->matchingDialog(request, requestType);
 
 	if ((requestType != SIP_REQUEST_ACK)) //&& (requestType != SIP_REQUEST_CANCEL))
 	{
@@ -711,7 +758,7 @@ bool UserAgentServer::receiveMsg(SipRequest *request, Transaction *transaction)
 		}
 	}
 
-	if (!ua->dialog.isActive())
+	if (!dialog)
 	{
 		SipHeaderTo *headerTo = (SipHeaderTo *) request->getHeader(SIP_HEADER_TO);
 		if (!headerTo)
@@ -732,10 +779,10 @@ bool UserAgentServer::receiveMsg(SipRequest *request, Transaction *transaction)
 			return false;
 
 		unsigned int sequenceNumber = headerCSeq->getSequence();
-		unsigned int dialogSequenceNumber = ua->dialog.remoteSequenceNumber;
+		unsigned int dialogSequenceNumber = dialog->remoteSequenceNumber;
 
 		if ((dialogSequenceNumber == 0) || (sequenceNumber > dialogSequenceNumber))
-			ua->dialog.remoteSequenceNumber = sequenceNumber;
+			dialog->remoteSequenceNumber = sequenceNumber;
 		/*else if (sequenceNumber < dialogSequenceNumber) //TODO: Descomentar quando verificar Dialog!
 		{
 			SipResponse *response = createResponse(500, request);
@@ -748,21 +795,21 @@ bool UserAgentServer::receiveMsg(SipRequest *request, Transaction *transaction)
 
 	switch (requestType)
 	{
-		case SIP_REQUEST_ACK:		return true; //receiveAck((SipRequestAck *) request, transaction);
-		case SIP_REQUEST_BYE:		return receiveBye((SipRequestBye *) request, transaction);
-		case SIP_REQUEST_INVITE:	return receiveInvite((SipRequestInvite *) request, transaction);
-		case SIP_REQUEST_MESSAGE:	return receiveMessage((SipRequestMessage *) request, transaction);
-		case SIP_REQUEST_NOTIFY:	return true; //receiveNotify((SipRequestNotify *) request, transaction);
-		case SIP_REQUEST_SUBSCRIBE:	return receiveSubscribe((SipRequestSubscribe *) request, transaction);
+		case SIP_REQUEST_ACK:		return true; //receiveAck((SipRequestAck *) request, transaction, dialog);
+		case SIP_REQUEST_BYE:		return receiveBye((SipRequestBye *) request, transaction, dialog);
+		case SIP_REQUEST_INVITE:	return receiveInvite((SipRequestInvite *) request, transaction, dialog);
+		case SIP_REQUEST_MESSAGE:	return receiveMessage((SipRequestMessage *) request, transaction, dialog);
+		case SIP_REQUEST_NOTIFY:	return true; //receiveNotify((SipRequestNotify *) request, transaction, dialog);
+		case SIP_REQUEST_SUBSCRIBE:	return receiveSubscribe((SipRequestSubscribe *) request, transaction, dialog);
 		default:					break;
 	}
 
 	return false;
 }
 
-bool UserAgentServer::receiveBye(SipRequestBye *request, Transaction *transaction)
+bool UserAgentServer::receiveBye(SipRequestBye *request, SipTransaction *transaction, SipDialog *dialog)
 {
-	if (!ua->dialog.isActive())
+	if (!dialog)
 	{
 		SipResponse *response = createResponse(481, request);
 		sendResponse(response, SIP_REQUEST_BYE, transaction);
@@ -773,16 +820,16 @@ bool UserAgentServer::receiveBye(SipRequestBye *request, Transaction *transactio
 		sendResponse(response, SIP_REQUEST_BYE, transaction);
 		//delete response;
 
-		ua->dialog.clear();
-		SipManager::callback(SIP_SESSION_TERMINATED, ua);
+		SipManager::callback(SIP_SESSION_TERMINATED, ua, dialog->remoteURI);
+		ua->removeDialog(dialog);
 	}
 
 	return true;
 }
 
-bool UserAgentServer::receiveInvite(SipRequestInvite *request, Transaction *transaction)
+bool UserAgentServer::receiveInvite(SipRequestInvite *request, SipTransaction *transaction, SipDialog *dialog)
 {
-	if (!ua->dialog.isActive())
+	if (!dialog)
 	{
 		SipResponse *response = createResponse(200, request);
 
@@ -809,15 +856,15 @@ bool UserAgentServer::receiveInvite(SipRequestInvite *request, Transaction *tran
 		if (contact)
 		{
 			const char *target = contact->getAddress();
-			if ((target) && (!strcmp(ua->dialog.remoteTarget, target)))
-				ua->dialog.setRemoteTarget(target);
+			if ((target) && (!strcmp(dialog->remoteTarget, target)))
+				dialog->setRemoteTarget(target);
 		}
 	}
 
 	return true;
 }
 
-bool UserAgentServer::receiveMessage(SipRequestMessage *request, Transaction *transaction)
+bool UserAgentServer::receiveMessage(SipRequestMessage *request, SipTransaction *transaction, SipDialog *dialog)
 {
 	SipResponse *response = createResponse(200, request);
 	sendResponse(response, SIP_REQUEST_MESSAGE, transaction);
@@ -827,13 +874,16 @@ bool UserAgentServer::receiveMessage(SipRequestMessage *request, Transaction *tr
 	if ((!body) || (body->getBodyType() != SIP_BODY_TEXT_PLAIN))
 		return false;
 
+	const char *remoteURI = ((SipHeaderFrom *) request->getHeader(SIP_HEADER_FROM))->getAddress();
 	ua->textReceived = ((SipTextPlainBody *) body)->getText();
-	SipManager::callback(SIP_MESSAGE_RECEIVED, ua);
+
+	SipManager::callback(SIP_MESSAGE_RECEIVED, ua, remoteURI);
+
 	ua->textReceived = 0;
 	return true;
 }
 
-bool UserAgentServer::receiveSubscribe(SipRequestSubscribe *request, Transaction *transaction)
+bool UserAgentServer::receiveSubscribe(SipRequestSubscribe *request, SipTransaction *transaction, SipDialog *dialog)
 {
 	SipHeaderEvent *headerEvent = (SipHeaderEvent *) request->getHeader(SIP_HEADER_EVENT);
 	if (!headerEvent)
@@ -852,21 +902,22 @@ bool UserAgentServer::receiveSubscribe(SipRequestSubscribe *request, Transaction
 		headerExpires->setNumber(time);
 		response->addHeader(headerExpires);
 
-		if ((!ua->dialog.isActive()) && (time > 0))
+		if ((!dialog) && (time > 0))
 			createDialog(request, response);
 
 		sendResponse(response, SIP_REQUEST_SUBSCRIBE, transaction);
 		//delete response;
 
-		if (ua->dialog.isActive())
+		if (dialog)
 		{
 			if (time > 0)
-				; //TODO: Acionar ou atualizar timer por tempo do Expires
-			else
 			{
+				//TODO: Acionar ou atualizar timer por tempo do Expires
+			}else
+			{
+				SipManager::callback(SIP_SUBSCRIPTION_TERMINATED, ua, dialog->remoteURI);
 				ua->subscription.clear();
-				ua->dialog.clear(); //TODO: Deletar mesmo se tem INVITE session?
-				SipManager::callback(SIP_SUBSCRIPTION_TERMINATED, ua);
+				ua->removeDialog(dialog); //TODO: Deletar mesmo se tem INVITE session?
 			}
 		}
 	}else
@@ -879,7 +930,7 @@ bool UserAgentServer::receiveSubscribe(SipRequestSubscribe *request, Transaction
 	return true;
 }
 
-bool UserAgentServer::createDialog(SipRequest *request, SipResponse *response)
+SipDialog *UserAgentServer::createDialog(SipRequest *request, SipResponse *response)
 {
 	SipHeaderFrom *from = (SipHeaderFrom *) request->getHeader(SIP_HEADER_FROM);
 	SipHeaderCallID *callId = (SipHeaderCallID *) request->getHeader(SIP_HEADER_CALLID);
@@ -889,7 +940,7 @@ bool UserAgentServer::createDialog(SipRequest *request, SipResponse *response)
 	SipHeaderTo *toResponse = (SipHeaderTo *) response->getHeader(SIP_HEADER_TO);
 
 	if ((!from) || (!callId) || (!cseq) || (!toRequest) || (!toResponse) || (!contact))
-		return false;
+		return 0;
 
 	const char *id = callId->getString();
 	const char *localTag = toResponse->getTag();
@@ -900,37 +951,39 @@ bool UserAgentServer::createDialog(SipRequest *request, SipResponse *response)
 	unsigned int sequenceNumber = cseq->getSequence();
 
 	if ((!id) || (!localTag) || (!localURI) || (!remoteURI) || (!target))
-		return false;
+		return 0;
 
-	if (request->getMsgType() == SIP_REQUEST_SUBSCRIBE)
+	SipMessageType type = request->getMsgType();
+	if (type == SIP_REQUEST_SUBSCRIBE)
 	{
 		SipHeaderEvent *event = (SipHeaderEvent *) request->getHeader(SIP_HEADER_EVENT);
 		if (!event)
-			return false;
+			return 0;
 
 		SipEventPackage eventType = event->getType();
 		const char *eventId = event->getId();
 
 		if (eventType == SIP_EVENT_PACKAGE_INVALID)
-			return false;
+			return 0;
 
 		ua->subscription.setSubscription(eventType, eventId);
 	}
 
-	ua->dialog.setDialog(id, localTag, remoteTag, 0, sequenceNumber, localURI, remoteURI, target);
+	SipDialog *dialog = ua->addDialog(type);
+	dialog->setDialog(id, localTag, remoteTag, 0, sequenceNumber, localURI, remoteURI, target);
 
 	int recordRouteNum = response->getNumHeader(SIP_HEADER_RECORD_ROUTE);
 	for (int i = 0; i < recordRouteNum; i++)
 	{
 		SipHeaderRoute *route = (SipHeaderRoute *) response->getHeader(SIP_HEADER_RECORD_ROUTE, i);
-		ua->dialog.addRouteBack(route);
+		dialog->addRouteBack(route);
 	}
 
-	if (request->getMsgType() == SIP_REQUEST_SUBSCRIBE)
-		SipManager::callback(SIP_SUBSCRIPTION_INITIATED, ua);
-	else
-		SipManager::callback(SIP_SESSION_INITIATED, ua);
-	return true;
+	if (type == SIP_REQUEST_SUBSCRIBE)
+		SipManager::callback(SIP_SUBSCRIPTION_INITIATED, ua, remoteURI);
+	else //if (type == SIP_REQUEST_INVITE)
+		SipManager::callback(SIP_SESSION_INITIATED, ua, remoteURI);
+	return dialog;
 }
 
 //-------------------------------------------
@@ -950,10 +1003,10 @@ UserAgent::UserAgent(const char *uri) : uac(this), uas(this), link(this)
 
 UserAgent::~UserAgent()
 {
-	Simple_List<Transaction>::Iterator it = transactions.begin();
+	Simple_List<SipTransaction>::Iterator it = transactions.begin();
 	while (it != transactions.end())
 	{
-		Transaction *transaction = it->object();
+		SipTransaction *transaction = it->object();
 		transactions.remove(it++);
 		delete transaction;
 	}
@@ -967,50 +1020,86 @@ UserAgent::~UserAgent()
 	}
 }
 
-/*bool UserAgent::matchingDialog(SipMessage *msg)
+SipDialog *UserAgent::matchingDialog(SipMessage *msg, SipMessageType type)
 {
-	if ((!dialog.isActive()) || (!dialog.callID) || (!dialog.localTag)) //|| (!dialog.remoteTag))
-		return false;
+	if ((type == SIP_REQUEST_ACK) || (type == SIP_REQUEST_BYE) || (type == SIP_REQUEST_INVITE))
+		type = SIP_REQUEST_INVITE;
+	else //if ((type == SIP_REQUEST_MESSAGE) || (type == SIP_REQUEST_NOTIFY) || (type == SIP_REQUEST_SUBSCRIBE))
+		type = SIP_REQUEST_SUBSCRIBE;
 
-	SipHeaderFrom *headerFrom = (SipHeaderFrom *) msg->getHeader(SIP_HEADER_FROM);
-	SipHeaderCallID *headerCallId = (SipHeaderCallID *) msg->getHeader(SIP_HEADER_CALLID);
-	SipHeaderTo *headerTo = (SipHeaderTo *) msg->getHeader(SIP_HEADER_TO);
-
-	if ((!headerFrom) || (!headerCallId) || (!headerTo))
-		return false;
-
-	const char *callId = headerCallId->getString();
-	const char *localTag = 0; //No INVITE não possui ainda!
-	const char *remoteTag = 0; //Pode ser NULL, compatibilidade com RFC 2543
-
-	if (msg->getMsgType() == SIP_RESPONSE)
+	Simple_List<SipDialog>::Iterator it = dialogs.begin();
+	while (it != dialogs.end())
 	{
-		localTag = headerFrom->getTag();
-		remoteTag = headerTo->getTag();
-	}else
-	{
-		localTag = headerTo->getTag();
-		remoteTag = headerFrom->getTag();
+		SipDialog *dialog = it->object();
+		it++;
+
+		if ((dialog->type != type) || (!dialog->callID) || (!dialog->localTag)) //|| (!dialog->remoteTag))
+			continue;
+
+		SipHeaderFrom *headerFrom = (SipHeaderFrom *) msg->getHeader(SIP_HEADER_FROM);
+		SipHeaderCallID *headerCallId = (SipHeaderCallID *) msg->getHeader(SIP_HEADER_CALLID);
+		SipHeaderTo *headerTo = (SipHeaderTo *) msg->getHeader(SIP_HEADER_TO);
+
+		if ((!headerFrom) || (!headerCallId) || (!headerTo))
+			continue;
+
+		const char *callId = headerCallId->getString();
+		const char *localTag = 0; //No INVITE não possui ainda!
+		const char *remoteTag = 0; //Pode ser NULL, compatibilidade com RFC 2543
+
+		if (msg->getMsgType() == SIP_RESPONSE)
+		{
+			localTag = headerFrom->getTag();
+			remoteTag = headerTo->getTag();
+		}else
+		{
+			localTag = headerTo->getTag();
+			remoteTag = headerFrom->getTag();
+		}
+
+		if ((!callId)) //|| (!localTag) || (!remoteTag))
+			continue;
+
+		bool ret1 = !strcmp(dialog->callID, callId);
+		bool ret2 = (localTag) ? !strcmp(dialog->localTag, localTag) : true;
+		bool ret3 = (remoteTag) ? !strcmp(dialog->remoteTag, remoteTag) : true;
+
+		if ((localTag) && (remoteTag) && (!strcmp(localTag, remoteTag)) && ((ret2) || (ret3)))
+		{
+			ret2 = true;
+			ret3 = true;
+		}
+
+		if ((ret1) && (ret2) && (ret3))
+			return dialog;
 	}
 
-	if ((!callId)) //|| (!localTag) || (!remoteTag))
-		return false;
+	return 0;
+}
 
-	bool ret1 = !strcmp(dialog.callID, callId);
-	bool ret2 = (localTag) ? !strcmp(dialog.localTag, localTag) : true;
-	bool ret3 = (remoteTag) ? !strcmp(dialog.remoteTag, remoteTag) : true;
-	if ((!ret1) || (!ret2) || (!ret3))
-		return false;
-
-	return true;
-}*/
-
-Transaction *UserAgent::matchingTransaction(SipMessage *msg)
+SipDialog *UserAgent::matchingDialog(const char *to, SipMessageType type)
 {
-	Simple_List<Transaction>::Iterator it = transactions.begin();
+	Simple_List<SipDialog>::Iterator it = dialogs.begin();
+	while (it != dialogs.end())
+	{
+		SipDialog *dialog = it->object();
+		it++;
+
+		if ((dialog->type != type) || (!dialog->remoteURI))
+			continue;
+
+		if (!strcmp(to, dialog->remoteURI))
+			return dialog;
+	}
+	return 0;
+}
+
+SipTransaction *UserAgent::matchingTransaction(SipMessage *msg)
+{
+	Simple_List<SipTransaction>::Iterator it = transactions.begin();
 	while (it != transactions.end())
 	{
-		Transaction *transaction = it->object();
+		SipTransaction *transaction = it->object();
 		it++;
 
 		if (transaction->matchingTransaction(msg))
@@ -1019,21 +1108,44 @@ Transaction *UserAgent::matchingTransaction(SipMessage *msg)
 	return 0;
 }
 
-void UserAgent::startTimer(SipTimer timer, Transaction *p)
+const char *UserAgent::getSubscriber()
+{
+	Simple_List<SipDialog>::Iterator it = dialogs.begin();
+	while (it != dialogs.end())
+	{
+		SipDialog *dialog = it->object();
+		it++;
+
+		if (dialog->type != SIP_REQUEST_SUBSCRIBE)
+			continue;
+
+		return dialog->remoteURI;
+	}
+	return 0;
+}
+
+SipDialog *UserAgent::addDialog(SipMessageType type)
+{
+	SipDialog *dialog = new SipDialog(type);
+	dialogs.insert(&dialog->link);
+	return dialog;
+}
+
+void UserAgent::startTimer(SipTimer timer, SipTransaction *p)
 {
 	switch (timer)
 	{
-		case SIP_TIMER_A: timerHandlers[SIP_TIMER_A] = new Functor_Handler<Transaction>(&TransactionClientInvite::timerACallback, p);		break;
-		case SIP_TIMER_B: timerHandlers[SIP_TIMER_B] = new Functor_Handler<Transaction>(&TransactionClientInvite::timerBCallback, p);		break;
-		//case SIP_TIMER_C: timerHandlers[SIP_TIMER_C] = new Functor_Handler<Transaction>(&timerCCallback);									break;
-		case SIP_TIMER_D: timerHandlers[SIP_TIMER_D] = new Functor_Handler<Transaction>(&TransactionClientInvite::timerDCallback, p);		break;
-		case SIP_TIMER_E: timerHandlers[SIP_TIMER_E] = new Functor_Handler<Transaction>(&TransactionClientNonInvite::timerECallback, p);	break;
-		case SIP_TIMER_F: timerHandlers[SIP_TIMER_F] = new Functor_Handler<Transaction>(&TransactionClientNonInvite::timerFCallback, p);	break;
-		case SIP_TIMER_G: timerHandlers[SIP_TIMER_G] = new Functor_Handler<Transaction>(&TransactionServerInvite::timerGCallback, p);		break;
-		case SIP_TIMER_H: timerHandlers[SIP_TIMER_H] = new Functor_Handler<Transaction>(&TransactionServerInvite::timerHCallback, p);		break;
-		case SIP_TIMER_I: timerHandlers[SIP_TIMER_I] = new Functor_Handler<Transaction>(&TransactionServerInvite::timerICallback, p);		break;
-		case SIP_TIMER_J: timerHandlers[SIP_TIMER_J] = new Functor_Handler<Transaction>(&TransactionServerNonInvite::timerJCallback, p);	break;
-		case SIP_TIMER_K: timerHandlers[SIP_TIMER_K] = new Functor_Handler<Transaction>(&TransactionClientNonInvite::timerKCallback, p);	break;
+		case SIP_TIMER_A: timerHandlers[SIP_TIMER_A] = new Functor_Handler<SipTransaction>(&SipTransactionClientInvite::timerACallback, p);		break;
+		case SIP_TIMER_B: timerHandlers[SIP_TIMER_B] = new Functor_Handler<SipTransaction>(&SipTransactionClientInvite::timerBCallback, p);		break;
+		//case SIP_TIMER_C: timerHandlers[SIP_TIMER_C] = new Functor_Handler<SipTransaction>(&timerCCallback);									break;
+		case SIP_TIMER_D: timerHandlers[SIP_TIMER_D] = new Functor_Handler<SipTransaction>(&SipTransactionClientInvite::timerDCallback, p);		break;
+		case SIP_TIMER_E: timerHandlers[SIP_TIMER_E] = new Functor_Handler<SipTransaction>(&SipTransactionClientNonInvite::timerECallback, p);	break;
+		case SIP_TIMER_F: timerHandlers[SIP_TIMER_F] = new Functor_Handler<SipTransaction>(&SipTransactionClientNonInvite::timerFCallback, p);	break;
+		case SIP_TIMER_G: timerHandlers[SIP_TIMER_G] = new Functor_Handler<SipTransaction>(&SipTransactionServerInvite::timerGCallback, p);		break;
+		case SIP_TIMER_H: timerHandlers[SIP_TIMER_H] = new Functor_Handler<SipTransaction>(&SipTransactionServerInvite::timerHCallback, p);		break;
+		case SIP_TIMER_I: timerHandlers[SIP_TIMER_I] = new Functor_Handler<SipTransaction>(&SipTransactionServerInvite::timerICallback, p);		break;
+		case SIP_TIMER_J: timerHandlers[SIP_TIMER_J] = new Functor_Handler<SipTransaction>(&SipTransactionServerNonInvite::timerJCallback, p);	break;
+		case SIP_TIMER_K: timerHandlers[SIP_TIMER_K] = new Functor_Handler<SipTransaction>(&SipTransactionClientNonInvite::timerKCallback, p);	break;
 		default: return;
 	}
 

@@ -183,36 +183,40 @@ int sendNotify(UserAgent *ua);
 
 int sendMessage(UserAgent *ua);
 
-int messageCallback(SipEventCallback event, UserAgent *ua)
+char aux[100];
+
+int messageCallback(SipEventCallback event, UserAgent *ua, const char *remote)
 {
+	strcpy(aux, remote);
+
 	switch (event)
 	{
 		case SIP_SESSION_INITIATED:
-			cout << "+++++ Session Initiated +++++\n";
+			cout << "+++++ Session Initiated ("<< remote << ") +++++\n";
 			sendAudioTerminated = false;
 			sendAudioThread = new Thread(sendAudio, ua);
 			break;
 
 		case SIP_SESSION_TERMINATED:
-			cout << "+++++ Session Terminated +++++\n";
+			cout << "+++++ Session Terminated ("<< remote << ") +++++\n";
 			if (sendAudioThread)
 				sendAudioTerminated = true;
 			break;
 
 		case SIP_SUBSCRIPTION_INITIATED:
-			cout << "+++++ Subscription Initiated +++++\n";
+			cout << "+++++ Subscription Initiated ("<< remote << ") +++++\n";
 			sendNotifyTerminated = false;
 			sendNotifyThread = new Thread(sendNotify, ua);
 			break;
 
 		case SIP_SUBSCRIPTION_TERMINATED:
-			cout << "+++++ Subscription Terminated +++++\n";
+			cout << "+++++ Subscription Terminated ("<< remote << ") +++++\n";
 			if (sendNotifyThread)
 				sendNotifyTerminated = true;
 			break;
 
 		case SIP_MESSAGE_RECEIVED:
-			cout << "+++++ Message Received +++++\n";
+			cout << "+++++ Message Received ("<< remote << ") +++++\n";
 			cout << "Message: " << ua->getTextReceived() << "\n";
 			if (!strncmp(ua->getTextReceived(), "request data", 12))
 				sendMessage(ua);
@@ -272,12 +276,15 @@ void testeUserAgent()
 
 int sendMessage(UserAgent *ua)
 {
-	cout << "+++++ Send Message +++++\n";
+	char remote[100];
+	strcpy(remote, aux);
+
+	cout << "+++++ Send Message (" << remote << ") +++++\n";
 
 	char buffer[] = { "Text message!" };
 
 	cout << "+++++ Create Message +++++\n";
-	SipRequestMessage *message = ua->getUserAgentClient()->createMessage(buffer);
+	SipRequestMessage *message = ua->getUserAgentClient()->createMessage(remote, buffer);
 
 	cout << "+++++ Send Message +++++\n";
 	ua->getUserAgentClient()->sendRequest(message);
@@ -290,7 +297,10 @@ int sendMessage(UserAgent *ua)
 
 int sendNotify(UserAgent *ua)
 {
-	cout << "+++++ Send Notify +++++\n";
+	char remote[100];
+	strcpy(remote, aux);
+
+	cout << "+++++ Send Notify (" << remote << ") +++++\n";
 
 	bool openClosed = false;
 	while (!sendNotifyTerminated)
@@ -299,7 +309,7 @@ int sendNotify(UserAgent *ua)
 		openClosed = !openClosed;
 
 		cout << "+++++ Create Notify +++++\n";
-		SipRequestNotify *notify = ua->getUserAgentClient()->createNotify(SIP_SUBSCRIPTION_STATE_ACTIVE, element, 3600);
+		SipRequestNotify *notify = ua->getUserAgentClient()->createNotify(remote, SIP_SUBSCRIPTION_STATE_ACTIVE, element, 3600);
 
 		cout << "+++++ Send Notify +++++\n";
 		ua->getUserAgentClient()->sendRequest(notify);
@@ -324,7 +334,10 @@ int sendNotify(UserAgent *ua)
 
 int sendAudio(UserAgent *ua)
 {
-	cout << "+++++ Send Audio +++++\n";
+	char remote[100];
+	strcpy(remote, aux);
+
+	cout << "+++++ Send Audio (" << remote << ") +++++\n";
 	/*Alarm::delay(250 * 1000); //Alarm::delay(5000 * 1000); //5s
 	if (sendAudioTerminated)
 	{
@@ -2983,7 +2996,7 @@ int sendAudio(UserAgent *ua)
 	}
 
 	cout << "+++++ Create Bye +++++\n";
-	SipRequestBye *bye = ua->getUserAgentClient()->createBye();
+	SipRequestBye *bye = ua->getUserAgentClient()->createBye(remote);
 
 	cout << "+++++ Send Bye +++++\n";
 	ua->getUserAgentClient()->sendRequest(bye);

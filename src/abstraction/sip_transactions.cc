@@ -4,25 +4,25 @@
 __BEGIN_SYS
 
 
-Transaction::Transaction(UserAgent *ua) : ua(ua), link(this)
+SipTransaction::SipTransaction(UserAgent *ua) : ua(ua), link(this)
 {
 	this->transport = SipManager::getInstance()->getTransport();
 }
 
-void Transaction::clear()
+void SipTransaction::clear()
 {
 	ua->removeTransaction(this);
 }
 
 //-------------------------------------------
 
-TransactionClientInvite::TransactionClientInvite(UserAgent *ua) : Transaction(ua)
+SipTransactionClientInvite::SipTransactionClientInvite(UserAgent *ua) : SipTransaction(ua)
 {
 	this->curState = sttIdle;
 	this->requestMsg = 0;
 }
 
-TransactionClientInvite::~TransactionClientInvite()
+SipTransactionClientInvite::~SipTransactionClientInvite()
 {
 	ua->stopTimer(SIP_TIMER_A);
 	ua->stopTimer(SIP_TIMER_B);
@@ -32,7 +32,7 @@ TransactionClientInvite::~TransactionClientInvite()
 		delete requestMsg;
 }
 
-void TransactionClientInvite::sendAck(SipResponse *Msg)
+void SipTransactionClientInvite::sendAck(SipResponse *Msg)
 {
 	const char *requestUri = requestMsg->getRequestLine()->getRequestURI();
 	SipHeaderVia *via = (SipHeaderVia *) requestMsg->getHeader(SIP_HEADER_VIA);
@@ -70,7 +70,7 @@ void TransactionClientInvite::sendAck(SipResponse *Msg)
 	transport->sendMessage(&Ack);
 }
 
-void TransactionClientInvite::sendInvite(SipRequestInvite *Msg)
+void SipTransactionClientInvite::sendInvite(SipRequestInvite *Msg)
 {
 	switch (curState)
 	{
@@ -90,7 +90,7 @@ void TransactionClientInvite::sendInvite(SipRequestInvite *Msg)
 	}
 }
 
-void TransactionClientInvite::receive1xx(SipResponse *Msg)
+void SipTransactionClientInvite::receive1xx(SipResponse *Msg)
 {
 	switch (curState)
 	{
@@ -111,7 +111,7 @@ void TransactionClientInvite::receive1xx(SipResponse *Msg)
 	}
 }
 
-void TransactionClientInvite::receive2xx(SipResponse *Msg)
+void SipTransactionClientInvite::receive2xx(SipResponse *Msg)
 {
 	switch (curState)
 	{
@@ -134,7 +134,7 @@ void TransactionClientInvite::receive2xx(SipResponse *Msg)
 	}
 }
 
-void TransactionClientInvite::receive3xx6xx(SipResponse *Msg)
+void SipTransactionClientInvite::receive3xx6xx(SipResponse *Msg)
 {
 	switch (curState)
 	{
@@ -166,7 +166,7 @@ void TransactionClientInvite::receive3xx6xx(SipResponse *Msg)
 	}
 }
 
-void TransactionClientInvite::transportError()
+void SipTransactionClientInvite::transportError()
 {
 	switch (curState)
 	{
@@ -198,7 +198,7 @@ void TransactionClientInvite::transportError()
 	}
 }
 
-void TransactionClientInvite::timerAExpired()
+void SipTransactionClientInvite::timerAExpired()
 {
 	switch (curState)
 	{
@@ -214,7 +214,7 @@ void TransactionClientInvite::timerAExpired()
 	}
 }
 
-void TransactionClientInvite::timerBExpired()
+void SipTransactionClientInvite::timerBExpired()
 {
 	switch (curState)
 	{
@@ -234,7 +234,7 @@ void TransactionClientInvite::timerBExpired()
 	}
 }
 
-void TransactionClientInvite::timerDExpired()
+void SipTransactionClientInvite::timerDExpired()
 {
 	switch (curState)
 	{
@@ -248,7 +248,7 @@ void TransactionClientInvite::timerDExpired()
 	}
 }
 
-Transaction *TransactionClientInvite::matchingTransaction(SipMessage *msg)
+SipTransaction *SipTransactionClientInvite::matchingTransaction(SipMessage *msg)
 {
 	if ((!msg) || (msg->getMsgType() != SIP_RESPONSE))
 		return 0;
@@ -288,13 +288,13 @@ Transaction *TransactionClientInvite::matchingTransaction(SipMessage *msg)
 
 //-------------------------------------------
 
-TransactionClientNonInvite::TransactionClientNonInvite(UserAgent *ua) : Transaction(ua)
+SipTransactionClientNonInvite::SipTransactionClientNonInvite(UserAgent *ua) : SipTransaction(ua)
 {
 	this->curState = sttIdle;
 	this->requestMsg = 0;
 }
 
-TransactionClientNonInvite::~TransactionClientNonInvite()
+SipTransactionClientNonInvite::~SipTransactionClientNonInvite()
 {
 	ua->stopTimer(SIP_TIMER_E);
 	ua->stopTimer(SIP_TIMER_F);
@@ -304,7 +304,7 @@ TransactionClientNonInvite::~TransactionClientNonInvite()
 		delete requestMsg;
 }
 
-/*void TransactionClientNonInvite::copyRequest(SipRequest *Msg)
+/*void SipTransactionClientNonInvite::copyRequest(SipRequest *Msg)
 {
 	switch (Msg->getMsgType())
 	{
@@ -319,7 +319,7 @@ TransactionClientNonInvite::~TransactionClientNonInvite()
 	}
 }*/
 
-void TransactionClientNonInvite::sendRequest(SipRequest *Msg)
+void SipTransactionClientNonInvite::sendRequest(SipRequest *Msg)
 {
 	switch (curState)
 	{
@@ -339,7 +339,7 @@ void TransactionClientNonInvite::sendRequest(SipRequest *Msg)
 	}
 }
 
-void TransactionClientNonInvite::receive1xx(SipResponse *Msg)
+void SipTransactionClientNonInvite::receive1xx(SipResponse *Msg)
 {
 	switch (curState)
 	{
@@ -354,7 +354,7 @@ void TransactionClientNonInvite::receive1xx(SipResponse *Msg)
 	}
 }
 
-void TransactionClientNonInvite::receive2xx6xx(SipResponse *Msg)
+void SipTransactionClientNonInvite::receive2xx6xx(SipResponse *Msg)
 {
 	switch (curState)
 	{
@@ -373,7 +373,7 @@ void TransactionClientNonInvite::receive2xx6xx(SipResponse *Msg)
 	}
 }
 
-void TransactionClientNonInvite::transportError()
+void SipTransactionClientNonInvite::transportError()
 {
 	switch (curState)
 	{
@@ -395,7 +395,7 @@ void TransactionClientNonInvite::transportError()
 	}
 }
 
-void TransactionClientNonInvite::timerEExpired()
+void SipTransactionClientNonInvite::timerEExpired()
 {
 	switch (curState)
 	{
@@ -421,7 +421,7 @@ void TransactionClientNonInvite::timerEExpired()
 	}
 }
 
-void TransactionClientNonInvite::timerFExpired()
+void SipTransactionClientNonInvite::timerFExpired()
 {
 	switch (curState)
 	{
@@ -442,7 +442,7 @@ void TransactionClientNonInvite::timerFExpired()
 	}
 }
 
-void TransactionClientNonInvite::timerKExpired()
+void SipTransactionClientNonInvite::timerKExpired()
 {
 	switch (curState)
 	{
@@ -456,7 +456,7 @@ void TransactionClientNonInvite::timerKExpired()
 	}
 }
 
-Transaction *TransactionClientNonInvite::matchingTransaction(SipMessage *msg)
+SipTransaction *SipTransactionClientNonInvite::matchingTransaction(SipMessage *msg)
 {
 	if ((!msg) || (msg->getMsgType() != SIP_RESPONSE))
 		return 0;
@@ -496,14 +496,14 @@ Transaction *TransactionClientNonInvite::matchingTransaction(SipMessage *msg)
 
 //-------------------------------------------
 
-TransactionServerInvite::TransactionServerInvite(UserAgent *ua) : Transaction(ua)
+SipTransactionServerInvite::SipTransactionServerInvite(UserAgent *ua) : SipTransaction(ua)
 {
 	this->curState = sttIdle;
 	this->requestMsg = 0;
 	this->lastResponse = 0;
 }
 
-TransactionServerInvite::~TransactionServerInvite()
+SipTransactionServerInvite::~SipTransactionServerInvite()
 {
 	ua->stopTimer(SIP_TIMER_G);
 	ua->stopTimer(SIP_TIMER_H);
@@ -516,7 +516,7 @@ TransactionServerInvite::~TransactionServerInvite()
 		delete lastResponse;
 }
 
-void TransactionServerInvite::receiveInvite(SipRequestInvite *Msg)
+void SipTransactionServerInvite::receiveInvite(SipRequestInvite *Msg)
 {
 	switch (curState)
 	{
@@ -544,7 +544,7 @@ void TransactionServerInvite::receiveInvite(SipRequestInvite *Msg)
 	}
 }
 
-void TransactionServerInvite::receiveAck(SipRequestAck *Msg)
+void SipTransactionServerInvite::receiveAck(SipRequestAck *Msg)
 {
 	switch (curState)
 	{
@@ -561,7 +561,7 @@ void TransactionServerInvite::receiveAck(SipRequestAck *Msg)
 	}
 }
 
-void TransactionServerInvite::send1xx(SipResponse *Msg)
+void SipTransactionServerInvite::send1xx(SipResponse *Msg)
 {
 	switch (curState)
 	{
@@ -579,7 +579,7 @@ void TransactionServerInvite::send1xx(SipResponse *Msg)
 	}
 }
 
-void TransactionServerInvite::send2xx(SipResponse *Msg)
+void SipTransactionServerInvite::send2xx(SipResponse *Msg)
 {
 	switch (curState)
 	{
@@ -594,7 +594,7 @@ void TransactionServerInvite::send2xx(SipResponse *Msg)
 	}
 }
 
-void TransactionServerInvite::send3xx6xx(SipResponse *Msg)
+void SipTransactionServerInvite::send3xx6xx(SipResponse *Msg)
 {
 	switch (curState)
 	{
@@ -616,7 +616,7 @@ void TransactionServerInvite::send3xx6xx(SipResponse *Msg)
 	}
 }
 
-void TransactionServerInvite::transportError()
+void SipTransactionServerInvite::transportError()
 {
 	switch (curState)
 	{
@@ -639,7 +639,7 @@ void TransactionServerInvite::transportError()
 	}
 }
 
-void TransactionServerInvite::timerGExpired()
+void SipTransactionServerInvite::timerGExpired()
 {
 	switch (curState)
 	{
@@ -659,7 +659,7 @@ void TransactionServerInvite::timerGExpired()
 	}
 }
 
-void TransactionServerInvite::timerHExpired()
+void SipTransactionServerInvite::timerHExpired()
 {
 	switch (curState)
 	{
@@ -675,7 +675,7 @@ void TransactionServerInvite::timerHExpired()
 	}
 }
 
-void TransactionServerInvite::timerIExpired()
+void SipTransactionServerInvite::timerIExpired()
 {
 	switch (curState)
 	{
@@ -689,7 +689,7 @@ void TransactionServerInvite::timerIExpired()
 	}
 }
 
-Transaction *TransactionServerInvite::matchingTransaction(SipMessage *msg)
+SipTransaction *SipTransactionServerInvite::matchingTransaction(SipMessage *msg)
 {
 	if ((!msg) || ((msg->getMsgType() != SIP_REQUEST_INVITE) && (msg->getMsgType() != SIP_REQUEST_ACK)))
 		return 0;
@@ -736,14 +736,14 @@ Transaction *TransactionServerInvite::matchingTransaction(SipMessage *msg)
 
 //-------------------------------------------
 
-TransactionServerNonInvite::TransactionServerNonInvite(UserAgent *ua) : Transaction(ua)
+SipTransactionServerNonInvite::SipTransactionServerNonInvite(UserAgent *ua) : SipTransaction(ua)
 {
 	this->curState = sttIdle;
 	this->requestMsg = 0;
 	this->lastResponse = 0;
 }
 
-TransactionServerNonInvite::~TransactionServerNonInvite()
+SipTransactionServerNonInvite::~SipTransactionServerNonInvite()
 {
 	ua->stopTimer(SIP_TIMER_J);
 
@@ -754,7 +754,7 @@ TransactionServerNonInvite::~TransactionServerNonInvite()
 		delete lastResponse;
 }
 
-/*void TransactionServerNonInvite::copyRequest(SipRequest *Msg)
+/*void SipTransactionServerNonInvite::copyRequest(SipRequest *Msg)
 {
 	switch (Msg->getMsgType())
 	{
@@ -769,7 +769,7 @@ TransactionServerNonInvite::~TransactionServerNonInvite()
 	}
 }*/
 
-void TransactionServerNonInvite::receiveRequest(SipRequest *Msg)
+void SipTransactionServerNonInvite::receiveRequest(SipRequest *Msg)
 {
 	switch (curState)
 	{
@@ -797,7 +797,7 @@ void TransactionServerNonInvite::receiveRequest(SipRequest *Msg)
 	}
 }
 
-void TransactionServerNonInvite::send1xx(SipResponse *Msg)
+void SipTransactionServerNonInvite::send1xx(SipResponse *Msg)
 {
 	switch (curState)
 	{
@@ -816,7 +816,7 @@ void TransactionServerNonInvite::send1xx(SipResponse *Msg)
 	}
 }
 
-void TransactionServerNonInvite::send2xx6xx(SipResponse *Msg)
+void SipTransactionServerNonInvite::send2xx6xx(SipResponse *Msg)
 {
 	switch (curState)
 	{
@@ -837,7 +837,7 @@ void TransactionServerNonInvite::send2xx6xx(SipResponse *Msg)
 	}
 }
 
-void TransactionServerNonInvite::transportError()
+void SipTransactionServerNonInvite::transportError()
 {
 	switch (curState)
 	{
@@ -859,7 +859,7 @@ void TransactionServerNonInvite::transportError()
 	}
 }
 
-void TransactionServerNonInvite::timerJExpired()
+void SipTransactionServerNonInvite::timerJExpired()
 {
 	switch (curState)
 	{
@@ -873,7 +873,7 @@ void TransactionServerNonInvite::timerJExpired()
 	}
 }
 
-Transaction *TransactionServerNonInvite::matchingTransaction(SipMessage *msg)
+SipTransaction *SipTransactionServerNonInvite::matchingTransaction(SipMessage *msg)
 {
 	if ((!msg) || (msg->getMsgType() == SIP_RESPONSE) || (msg->getMsgType() == SIP_REQUEST_INVITE) ||
 		(msg->getMsgType() == SIP_REQUEST_ACK))

@@ -284,7 +284,7 @@ unsigned short NCAPApplication::sendReadDataSet(const IP::Address &address, unsi
 
 void NCAPApplication::sendSipMessage(UserAgent *ua, const char *data)
 {
-	SipRequestMessage *message = ua->getUserAgentClient()->createMessage(data);
+	SipRequestMessage *message = ua->getUserAgentClient()->createMessage(ua->getSubscriber(), data);
 	if (!message)
 		return;
 
@@ -294,7 +294,7 @@ void NCAPApplication::sendSipMessage(UserAgent *ua, const char *data)
 
 void NCAPApplication::sendSipNotify(UserAgent *ua, SipSubscriptionState state, SipPidfXmlBasicElement pidfXml)
 {
-	SipRequestNotify *notify = ua->getUserAgentClient()->createNotify(state, pidfXml, 3600);
+	SipRequestNotify *notify = ua->getUserAgentClient()->createNotify(ua->getSubscriber(), state, pidfXml, 3600);
 	if (!notify)
 		return;
 
@@ -319,7 +319,7 @@ void NCAPApplication::sendSipNotify(UserAgent *ua, SipSubscriptionState state, S
 	return 0;
 }*/
 
-int NCAPApplication::messageCallback(SipEventCallback event, UserAgent *ua)
+int NCAPApplication::messageCallback(SipEventCallback event, UserAgent *ua, const char *remote)
 {
 	NCAPApplication *app = NCAPApplication::getInstance();
 	TIMCache *timCache = app->getTIMCache(ua->getUri());
