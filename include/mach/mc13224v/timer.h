@@ -5,6 +5,7 @@
 
 #include <timer.h>
 #include <ic.h>
+#include <rtc.h>
 #include <system/memory_map.h>
 
 __BEGIN_SYS
@@ -16,7 +17,9 @@ protected:
     static const unsigned int CLOCK = Traits<Machine>::CLOCK;
 	unsigned int instance, offset;
 	static Handler* handlers[4];
-
+	
+	
+	typedef RTC::Microsecond Microsecond;
 	typedef IO_Map<Machine> IO;
 	typedef CPU::Reg16 Reg16;
 	
@@ -175,36 +178,36 @@ class MC13224V_Timer_0: public MC13224V_Timer{
 public:
 	static const unsigned int FREQUENCY = Traits<MC13224V_Timer_0>::FREQUENCY;
 	MC13224V_Timer_0(Handler *handler): 
-		MC13224V_Timer(handler, TIMER0){}
-	MC13224V_Timer_0(const Hertz& f, Handler *handler):
-		MC13224V_Timer(f, handler, TIMER0){}
+		MC13224V_Timer(FREQUENCY, handler, TIMER0){}
+	MC13224V_Timer_0(const Microsecond& quantum, Handler *handler):
+		MC13224V_Timer(1000000/quantum, handler, TIMER0){}
 };
 
 class MC13224V_Timer_1: public MC13224V_Timer{
 public:
 	static const unsigned int FREQUENCY = Traits<MC13224V_Timer_1>::FREQUENCY;
 	MC13224V_Timer_1(Handler *handler): 
-		MC13224V_Timer(handler, TIMER1){}
-	MC13224V_Timer_1(const Hertz& f, Handler *handler):
-		MC13224V_Timer(f, handler, TIMER1){}
+		MC13224V_Timer(FREQUENCY, handler, TIMER1){}
+	MC13224V_Timer_1(const Microsecond& quantum, Handler *handler):
+		MC13224V_Timer(1000000/quantum, handler, TIMER1){}
 };
 
 class MC13224V_Timer_2: public MC13224V_Timer{
 public:
 	static const unsigned int FREQUENCY = Traits<MC13224V_Timer_2>::FREQUENCY;
 	MC13224V_Timer_2(Handler *handler): 
-		MC13224V_Timer(handler, TIMER2){}
-	MC13224V_Timer_2(const Hertz& f, Handler *handler):
-		MC13224V_Timer(f, handler, TIMER2){}
+		MC13224V_Timer(FREQUENCY, handler, TIMER2){}
+	MC13224V_Timer_2(const Microsecond& quantum, Handler *handler):
+		MC13224V_Timer(1000000/quantum, handler, TIMER2){}
 };
 
 class MC13224V_Timer_3: public MC13224V_Timer{
 public:
 	static const unsigned int FREQUENCY = Traits<MC13224V_Timer_3>::FREQUENCY;
 	MC13224V_Timer_3(Handler *handler): 
-		MC13224V_Timer(handler, TIMER3){}
-	MC13224V_Timer_3(const Hertz& f, Handler *handler):
-		MC13224V_Timer(f, handler, TIMER3){}
+		MC13224V_Timer(FREQUENCY, handler, TIMER3){}
+	MC13224V_Timer_3(const Microsecond& quantum, Handler *handler):
+		MC13224V_Timer(1000000/quantum, handler, TIMER3){}
 };
 
 
