@@ -24,8 +24,12 @@ MACH_MC13224V	:= mc13224v
 
 # System configuration
 MODE            := $(MODE_LIBRARY)
+ifndef ARCH
 ARCH            := $(ARCH_IA32)
+endif
+ifndef MACH
 MACH            := $(MACH_PC)
+endif
 
 # do not modify anything bellow this line
 ###############################################################################
