@@ -3,7 +3,7 @@
 
 __BEGIN_SYS
 
-void PLASMA::interrupt_dispatcher() { 
+void PLASMA_IC::interrupt_dispatcher() { 
    ASMV(".globl interrupt_service_routine		\n"
 	"interrupt_service_routine:			\n"
         ".set push					\n"

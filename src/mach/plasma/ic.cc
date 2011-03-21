@@ -6,32 +6,39 @@
 
 __BEGIN_SYS
 
-void PLASMA_IC::int_handler(unsigned int interrupt) {
+// Class attributes
+PLASMA_IC::Interrupt_Handler PLASMA_IC::_int_vector[PLASMA_IC::INTS];
+
+void PLASMA_IC::int_no_handler(Interrupt_Id interrupt) {
+	db<PLASMA>(WRN) << "Intr " << interrupt << " occurred but had no handler associated !\n";
+}
+
+void PLASMA_IC::int_handler(Interrupt_Id i) {
     static bool cnt_lo = false;
     //static unsigned int lastcnt = 0;
 
     unsigned int bit = *reinterpret_cast<unsigned int*>(IC_STATUS_ADDRESS) & *reinterpret_cast<unsigned int*>(IC_MASK_ADDRESS);
     switch (bit) {
 	case 1: 
-           interrupt = 0;
+	   i = 0;
 	   break;
 	case 2: 
-	   interrupt = 1;
+	   i = 1;
 	   break;
 	case 4: 
-	   interrupt = 2;
+	   i = 2;
 	   break;
 	case 8: 
-	   interrupt = 3;
+	   i = 3;
 	   break;
 	case 16: 
-	   interrupt = 4;
+	   i = 4;
 	   break;
 	case 32: 
-	   interrupt = 5;
+	   i = 5;
 	   break;
 	default: 
-	   interrupt = 7;
+	   i = 7;
 	   break;
     }
 
@@ -47,10 +54,10 @@ void PLASMA_IC::int_handler(unsigned int interrupt) {
     }
 
     //dispatch specific handler
-    void (*h)(unsigned int);
-    h = PLASMA::int_vector(interrupt);
-    h(interrupt);
-    *(unsigned int*)Traits<PLASMA_Timer>::WRITE_ADDRESS = 0x00;
+	void (*h)(unsigned int);
+    h = PLASMA_IC::int_vector(i);
+    h(i);
+    *(unsigned int*)Traits<PLASMA_Timer>::WRITE_ADDRESS = 0x00; // Ack Interrupt
 }
 
 __END_SYS

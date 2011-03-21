@@ -22,10 +22,10 @@ typedef MIPS32_TSC			TSC;
 
 typedef PLASMA				Machine;
 typedef PLASMA_IC			IC;
-typedef PLASMA_Timer			Timer;
+typedef PLASMA_Timer		Timer;
 typedef PLASMA_RTC			RTC;
 typedef PLASMA_UART			UART;
-typedef Serial_Display			Display;
+typedef Serial_Display		Display;
 typedef PLASMA_NIC			NIC;
 
 __END_SYS
