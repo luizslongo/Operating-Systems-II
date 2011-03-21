@@ -89,13 +89,13 @@ public:
     static void irq_enable() {
 		ASMV("	mrs r1, cpsr\n"
 			 "	bic r1, r1, #0x80\n"
-			 "	msr cpsr_c, r1\n");
+			 "	msr cpsr_c, r1\n":::"r1", "cc");
 	}
 
     static void irq_disable() {
 		ASMV("	mrs r1, cpsr\n"
 			 "	orr r1, r1, #0x80\n"
-			 "	msr cpsr_c, r1\n");
+			 "	msr cpsr_c, r1\n":::"r1", "cc");
 	}
 
     static void fiq_enable() {}
@@ -119,7 +119,7 @@ public:
 		ASMV("	mov %0, r0\n"
 				: "=r" (return_value)
 				:
-				:);
+				: "r0");
 		return return_value;
 	}
 
@@ -127,7 +127,7 @@ public:
 		ASMV("	mov r0, %0\n"
 				: 
 				:"r" (fr)
-				:);
+				: "r0");
 	} 
 
     static Reg32 pdp() {    return 0;} // return 0; }
