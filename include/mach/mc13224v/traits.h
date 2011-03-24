@@ -71,34 +71,6 @@ template <> struct Traits<MC13224V_NIC>: public Traits<void>
     static const unsigned int RADIO_UNITS = NICS::Count<MC13224V_Radio>::Result;
 };
 
-template <> struct Traits<CMAC<Radio_Wrapper> >: public Traits<void>
-{
-    static const bool debugged      = false;
-    static const bool SM_STEP_DEBUG = false;
-
-    static const unsigned char BROADCAST       = ~0;
-    static const unsigned int  FREQUENCY       = 0;
-    static const unsigned int  POWER           = 5;
-    static const bool          TIME_TRIGGERED  = false;
-    static const bool          COORDINATOR     = false;
-    static const unsigned int  SLEEPING_PERIOD = 1000; //ms
-    static const unsigned long TIMEOUT         = 50; //ms
-    static const unsigned int  ADDRESS         = 0x0001;
-    static const unsigned int  MTU             = 118; 
-
-    typedef Generic_Sync<Radio_Wrapper>     Sync_State;
-    typedef IEEE802154_Pack<Radio_Wrapper>  Pack_State;
-    typedef Unslotted_CSMA_Contention<Radio_Wrapper>    Contention_State;
-    typedef Generic_Tx<Radio_Wrapper>       Tx_State;
-//    typedef IEEE802154_Ack_Rx<Radio_Wrapper>  Ack_Rx_State;
-    typedef Ack_Rx_Empty<Radio_Wrapper>     Ack_Rx_State;
-    typedef Generic_Lpl<Radio_Wrapper>      Lpl_State;
-    typedef Generic_Rx<Radio_Wrapper>       Rx_State;
-    typedef IEEE802154_Unpack<Radio_Wrapper>    Unpack_State;
-//    typedef IEEE802154_Ack_Tx<Radio_Wrapper>  Ack_Tx_State;
-    typedef Ack_Tx_Empty<Radio_Wrapper>     Ack_Tx_State;
-};
-
 __END_SYS
 
 #endif

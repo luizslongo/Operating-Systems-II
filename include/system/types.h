@@ -168,6 +168,7 @@ class PLASMA_NIC;
 class MC13224V_NIC;
 template<typename> class CMAC;
 template<typename> class CMAC_State;
+
 template<typename> class Empty;
 template<typename> class Sync_Empty;
 template<typename> class Pack_Empty;
@@ -179,11 +180,17 @@ template<typename> class Rx_Empty;
 template<typename> class Unpack_Empty;
 template<typename> class Ack_Tx_Empty;
 
-template<typename> class Generic_Sync;
+template<typename> class Synchronous_Sync;
+template<typename> class Asynchronous_Sync;
+template<typename> class Rx_Contention;
+template<typename> class Tx_Contention;
+template<typename> class Backoff;
+template<typename> class CSMA;
+
+template<typename> class Generic_Active;
 template<typename> class Generic_Tx;
 template<typename> class Generic_Rx;
 template<typename> class Generic_Lpl;
-template<typename> class Unslotted_CSMA_Contention;
 
 template<typename> class IEEE802154_Beacon_Sync;
 template<typename> class IEEE802154_Pack;

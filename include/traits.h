@@ -103,6 +103,23 @@ template <> struct Traits<IP>: public Traits<void>{
     static const bool echo_reply   = true;  // automatic ICMP echo reply
 };
 
+template <> struct Traits<CMAC<Radio_Wrapper> >: public Traits<void>
+{
+    static const bool debugged = false;
+
+    static const bool time_triggered = false;
+    static const bool coordinator    = false;
+    static const bool ack            = false;
+    static const bool csma           = false;
+    static const bool rts_cts        = false;
+
+    static const unsigned long SLEEPING_PERIOD = 1000;  // ms
+    static const unsigned long TIMEOUT         = 50;    // ms
+    static const unsigned long BACKOFF         = 2;     // ms
+    static const unsigned char ADDRESS         = 0x0001;
+    static const unsigned int  MTU             = 118; 
+};
+
 __END_SYS
 
 #ifdef __ARCH_TRAITS_H

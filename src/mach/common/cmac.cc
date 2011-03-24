@@ -10,85 +10,56 @@ __BEGIN_SYS
 template<> 
 CMAC<Radio_Wrapper>::CMAC_STATE_TRANSITION CMAC<Radio_Wrapper>::state_machine() {
     CMAC_STATE_TRANSITION result = TIMER_INT;
-    _state = SYNC;
+    _state = ACTIVE;
 
     db<CMAC>(TRC) << "CMAC::state_machine - starting state machine\n";
 
     while (_state != OFF) {
         switch (_state) {
-            case SYNC:
-                result = Traits<CMAC<Radio_Wrapper> >::Sync_State::execute(result);
-
-                if (result == SYNC_END)
-                    _state = OFF;
-                else if (result == RX_PENDING)
-                    _state = LPL;
-                else if (result == TX_PENDING)
-                    _state = PACK;
-
-                break;
-
-            case PACK: // first TX state
-                if (Traits<CMAC>::TIME_TRIGGERED)
-                    _last_sm_exec_tx = true;
-
-                result = Traits<CMAC<Radio_Wrapper> >::Pack_State::execute(result);
-
-                if (result == PACK_OK)
-                    _state = CONTENTION;
-                else if (result == PACK_FAILED)
-                    _state = OFF;
-
-                break;
-
-            case CONTENTION:
-                result = Traits<CMAC<Radio_Wrapper> >::Contention_State::execute(result);
-
-                if (result == CHANNEL_IDLE)
-                    _state = TX;
-                else if ((result == CHANNEL_BUSY) || (result == TIMEOUT))
-                    _state = OFF;
-
-                break;
-
-            case TX:
-                result = Traits<CMAC<Radio_Wrapper> >::Tx_State::execute(result);
-
-                if (result == TX_END) {
-                    if (_tx_dst_address == Radio_Common::BROADCAST)
-                        _state = OFF;
-                    else 
-                        _state = ACK_RX;
-                } else if (result == TX_ERROR)
-                    _state = OFF;
-
-                break;
-
-            case ACK_RX:
-                result = Traits<CMAC<Radio_Wrapper> >::Ack_Rx_State::execute(result);
-
-                if (result == TX_PENDING)
-                    _state = PACK;
-                else
-                    _state = OFF;
-
-                break;
-
-            case LPL: // first RX state
-                if (Traits<CMAC>::TIME_TRIGGERED)
-                    _last_sm_exec_rx = true;
-
-                result = Traits<CMAC<Radio_Wrapper> >::Lpl_State::execute(result);
+            case SYNCHRONOUS_SYNC:
+                result = Synchronous_Sync<Radio_Wrapper>::execute(result);
 
                 if (result == TIMEOUT)
                     _state = OFF;
-                else if (result == PREAMBLE_DETECTED)
-                    _state = RX;
+                else
+                    _state = ACTIVE;
 
                 break;
 
-            case RX:
-                result = Traits<CMAC<Radio_Wrapper> >::Rx_State::execute(result);
+            case ACTIVE:
+                result = Generic_Active<Radio_Wrapper>::execute(result);
+
+                if (result == SYNC_END)
+                    _state = OFF;
+                else 
+                    _state = ASYNCHRONOUS_SYNC;
+
+                break;
+
+            case ASYNCHRONOUS_SYNC:
+                result = Asynchronous_Sync<Radio_Wrapper>::execute(result);
+
+                if (result == RX_PENDING)
+                    _state = RX_CONTENTION;
+                else if (result == TX_PENDING)
+                    _state = TX_CONTENTION;
+                else if (result == TIMEOUT)
+                    _state = OFF;
+
+                break;
+
+            case RX_CONTENTION:
+                result = Rx_Contention<Radio_Wrapper>::execute(result);
+
+                if (result == RX_CONTENTION_OK)
+                    _state = RX_DATA;
+                else if (result == TIMEOUT)
+                    _state = OFF;
+
+                break;
+
+            case RX_DATA:
+                result = Generic_Rx<Radio_Wrapper>::execute(result);
 
                 if (result == RX_END)
                     _state = UNPACK;
@@ -98,10 +69,10 @@ CMAC<Radio_Wrapper>::CMAC_STATE_TRANSITION CMAC<Radio_Wrapper>::state_machine() 
                 break;
 
             case UNPACK:
-                result = Traits<CMAC<Radio_Wrapper> >::Unpack_State::execute(result);
+                result = IEEE802154_Unpack<Radio_Wrapper>::execute(result);
 
                 if (result == UNPACK_FAILED)
-                    _state = LPL;
+                    _state = ACTIVE;
                 else if (result == UNPACK_OK) {
                     if (_tx_dst_address == Radio_Common::BROADCAST)
                         _state = OFF;
@@ -112,9 +83,59 @@ CMAC<Radio_Wrapper>::CMAC_STATE_TRANSITION CMAC<Radio_Wrapper>::state_machine() 
                 break;
 
             case ACK_TX:
-                result = Traits<CMAC<Radio_Wrapper> >::Ack_Tx_State::execute(result);
+                result = IEEE802154_Ack_Tx<Radio_Wrapper>::execute(result);
 
-                _state = OFF;
+                if (result == KEEP_ALIVE)
+                    _state = RX_DATA;
+                else 
+                    _state = OFF;
+
+                break;
+
+            case TX_CONTENTION:
+                result = Tx_Contention<Radio_Wrapper>::execute(result);
+
+                if (result == TX_CONTENTION_OK)
+                    _state = PACK;
+                else if (result == TIMEOUT)
+                    _state = OFF;
+
+                break;
+
+            case PACK:
+                if (Traits<CMAC>::time_triggered)
+                    _last_sm_exec_tx = true;
+
+                result = IEEE802154_Pack<Radio_Wrapper>::execute(result);
+
+                if (result == PACK_OK)
+                    _state = TX_DATA;
+                else if (result == PACK_FAILED)
+                    _state = OFF;
+
+                break;
+
+            case TX_DATA:
+                result = Generic_Tx<Radio_Wrapper>::execute(result);
+
+                if (result == TX_END) {
+                    if (_tx_dst_address == Radio_Common::BROADCAST)
+                        _state = OFF;
+                    else 
+                        _state = ACK_RX;
+
+                } else if (result == TX_ERROR)
+                    _state = OFF;
+
+                break;
+
+            case ACK_RX:
+                result = IEEE802154_Ack_Rx<Radio_Wrapper>::execute(result);
+
+                if ((result == TX_PENDING) || (result == KEEP_ALIVE))
+                    _state = PACK;
+                else
+                    _state = OFF;
 
                 break;
 
@@ -150,21 +171,9 @@ void CMAC<Radio_Wrapper>::rx_p() {
     _sem_rx->p();
 }
 
-/*
-template<>
-int CMAC<Radio_Wrapper>::send(const Address & dst, const Protocol & prot,
-        const void * data, unsigned int size) {
-}
-
-template<> 
-int CMAC<Radio_Wrapper>::receive(Address * src, Protocol * prot,
-        void * data, unsigned int size) {
-}
-*/
-
 template<>
 void CMAC<Radio_Wrapper>::state_machine_handler() {
-    if (Traits<CMAC<Radio_Wrapper> >::TIME_TRIGGERED) {
+    if (Traits<CMAC<Radio_Wrapper> >::time_triggered) {
         _on_active_cycle = true;
 
         _state_machine_result = state_machine();
