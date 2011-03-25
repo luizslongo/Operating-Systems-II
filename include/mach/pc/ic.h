@@ -323,6 +323,7 @@ public:
 	v |= (periodic) ? TIMER_PERIODIC : 0;
 	write(TIMER_INITIAL, count / 16);
 	write(TIMER_PRESCALE, TIMER_PRESCALE_BY_16);
+	reset_timer();
 	write(LVT_TIMER, v);
     }
 
