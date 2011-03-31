@@ -33,6 +33,7 @@ BIN_MIPS =
 VHDL_DIR = ../vhdl
 LINUX_PWD = ./
 GCC_MIPS  = $(BIN_MIPS)mips-gcc $(CFLAGS)
+GPP_MIPS  = $(BIN_MIPS)mips-g++ $(CFLAGS)
 AS_MIPS   = $(BIN_MIPS)mips-as
 LD_MIPS   = $(BIN_MIPS)mips-ld
 DUMP_MIPS = $(BIN_MIPS)mips-objdump
@@ -122,6 +123,25 @@ count:
 	$(LD_MIPS) -Ttext 0 -eentry -Map test.map -s -N -o test.axf \
 		boot.o count.o no_os.o 
 	-$(DUMP_MIPS) --disassemble test.axf > test.lst
+	$(CONVERT_BIN)
+	$(CP) code.txt $(VHDL_DIR)
+	
+loader: 
+	$(AS_MIPS) -o boot.o boot.asm
+	$(GCC_MIPS) loader.cc
+	$(GCC_MIPS) no_os.c 
+	$(LD_MIPS) -Ttext 0 -eentry -Map test.map -s -N -o test.axf \
+		boot.o loader.o no_os.o -lc -lgcc -L/usr/local/mips/gcc/lib/gcc/mips-elf/4.0.2/
+	-$(DUMP_MIPS) --disassemble test.axf > test.lst
+	$(CONVERT_BIN)
+	$(CP) code.txt $(VHDL_DIR)
+	
+loader2:
+	$(AS_MIPS) -o boot.o boot.asm
+	$(GCC_MIPS) loader.cc
+	$(LD_MIPS) -Ttext 0 -eentry -s -N -o loader boot.o loader.o -L/usr/local/mips/gcc/lib/gcc/mips-elf/4.0.2/ -lgcc -lc
+	rm *.o
+	$(DUMP_MIPS) --disassemble loader > loader.asm
 	$(CONVERT_BIN)
 	$(CP) code.txt $(VHDL_DIR)
 
