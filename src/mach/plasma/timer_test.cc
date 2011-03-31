@@ -13,7 +13,14 @@ void timer_handler(){
   static unsigned int seconds = 0;
   static unsigned int minutes = 0;
 
-  cout << " =>" << minutes << ":" << seconds << "\n";
+  cout << " => ";
+  if (minutes < 10)
+		cout << "0";
+  cout << minutes << ":";
+  if (seconds < 10)
+		cout << "0";
+  cout << seconds << "\n";
+	
   seconds++;
 
   if(seconds == 60){
