@@ -35,6 +35,18 @@ module plasma_ml605 (
     );
      
    
+<<<<<<< .mine
+   // Plasma ////////////////////////
+    
+   wire reset = dir_btns[4];
+   
+   wire [18:0] gpio_others;
+   
+    plasma #(.memory_type("XILINX_16X"),
+             .log_file("UNUSED"),
+             .ethernet(0),
+             .use_cache(1))
+=======
     // Plasma itself
     wire reset = dir_btns[4];
     wire [18:0] gpio_others;
@@ -47,6 +59,7 @@ module plasma_ml605 (
         .use_cache(1)
     )
     // component instantiation
+>>>>>>> .r1470
     plasma (
         .clk(clk_50MHz),
         .reset(reset),

@@ -44,5 +44,5 @@ NET "clk_fpga_p"	LOC = "J9";     ## 4   on U11, 4 on U89 (DNP)
 ########################
 
 NET "clk_fpga_p" TNM_NET = "clk_fpga_p";
-TIMESPEC "TS_clk_fpga_p" = PERIOD "clk_fpga_p" 10 ns HIGH 50 %;
+TIMESPEC "TS_clk_fpga_p" = PERIOD "clk_fpga_p" 5 ns HIGH 50 %;
 
