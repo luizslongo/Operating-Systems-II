@@ -14,9 +14,7 @@ void PLASMA_IC::int_no_handler(Interrupt_Id interrupt) {
 }
 
 void PLASMA_IC::int_handler(Interrupt_Id i) {
-    static bool cnt_lo = false;
-    //static unsigned int lastcnt = 0;
-
+	
     unsigned int bit = *reinterpret_cast<unsigned int*>(IC_STATUS_ADDRESS) & *reinterpret_cast<unsigned int*>(IC_MASK_ADDRESS);
     switch (bit) {
 	case 1: 
@@ -42,22 +40,12 @@ void PLASMA_IC::int_handler(Interrupt_Id i) {
 	   break;
     }
 
-    // Gambiarra do Timer ...
-    if(cnt_lo){
-        disable(2);
-        enable(3);
-        cnt_lo = false;
-    } else {
- 	disable(3);
-        enable(2);
-        cnt_lo = true;
-    }
-
     //dispatch specific handler
 	void (*h)(unsigned int);
     h = PLASMA_IC::int_vector(i);
     h(i);
     *(unsigned int*)Traits<PLASMA_Timer>::WRITE_ADDRESS = 0x00; // Ack Interrupt
+
 }
 
 __END_SYS

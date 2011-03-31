@@ -10,15 +10,15 @@ void PLASMA_IC::init()
     db<PLASMA_IC>(TRC) << "PLASMA_IC::init()\n";
 
     MIPS32::int_disable();
-    disable();
+    disable(); //Disable all interrupts
 	
 	// Set all interrupt handlers to "No Handler"
     for(unsigned int i = 0; i < INTS; i++)
         int_vector(i, int_no_handler);
 	
-	//set some valid interrupt handlers
-    int_vector(PLASMA_IC::IRQ_UART_READ,  PLASMA_UART::int_handler);
-    int_vector(PLASMA_IC::IRQ_UART_WRITE, PLASMA_UART::int_handler);
+	//set some valid interrupt handlers - This should be done by uart init, doesn't it ?
+    //int_vector(PLASMA_IC::IRQ_UART_READ,  PLASMA_UART::int_handler);
+    //int_vector(PLASMA_IC::IRQ_UART_WRITE, PLASMA_UART::int_handler);
 	
 	CPU::Reg32 address;
     ASMV("la    %0, interrupt_service_routine" : "=r" (address) : );

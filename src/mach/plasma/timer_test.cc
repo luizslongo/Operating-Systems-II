@@ -9,36 +9,33 @@ __USING_SYS
 
 OStream cout;
 
-void timer_handler(unsigned int interrupt){
-  static unsigned int counter = 0;
+void timer_handler(){
   static unsigned int seconds = 0;
   static unsigned int minutes = 0;
 
-  if (counter++ == 95) {
-     counter = 0;
-     cout << interrupt << "=>" << minutes << ":" << seconds << "\n";
-     seconds++;
+  cout << " =>" << minutes << ":" << seconds << "\n";
+  seconds++;
 
-     if(seconds == 60){
-        minutes++;
-       seconds = 0;
-     }
-   }
+  if(seconds == 60){
+     minutes++;
+     seconds = 0;
+  }
 }
 
 int main()
 {
     cout << "PLASMA_Timer test\n";
 
-    Timer _timer;
-    CPU::int_disable();
-
-    Machine::int_vector(Machine::irq2int(IC::IRQ_TIMER), &timer_handler);
-    _timer.frequency(1);
-
-    IC::enable(IC::IRQ_TIMER);
-    CPU::int_enable();
-
+    PLASMA_Timer timer(1, &timer_handler, PLASMA_Timer::TEST);
+	
+	/* For some reason, after thread_first load, interrupts are disabled. 
+	   That's why timer_test was not working properly. 
+	   We should investigate if this is the behaviour expected. 
+	   Meanwhile we always make shure that interrupts are on after creating
+	   the timer ! */
+	
+	CPU::int_enable();
+	
     cout << "LEDs are flashing now!!!\n";
     unsigned int * led = (unsigned int *)(Traits<Machine>::LEDS_ADDRESS);
     for (unsigned int i = 0; ; i++) {

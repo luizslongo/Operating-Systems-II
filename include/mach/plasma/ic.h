@@ -59,8 +59,7 @@ public:
 	
     static void int_vector(Interrupt_Id i, Interrupt_Handler h) {
 		if (i < INTS) _int_vector[i] = h;
-		if(i==3) _int_vector[2] = h;//Gambi para o Timer do Plasma
-    }
+	}
 	
 	
     static void enable(Interrupt_Id irq) {
