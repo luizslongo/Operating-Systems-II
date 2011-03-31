@@ -39,8 +39,8 @@ use work.mlite_pack.all;
 entity plasma is
    generic(memory_type : string := "XILINX_16X"; --"DUAL_PORT_" "ALTERA_LPM";
            log_file    : string := "UNUSED";
-           ethernet    : std_logic := '0';
-           use_cache   : std_logic := '0');
+           ethernet    : integer := 0;
+           use_cache   : integer := 0);
    port(clk          : in std_logic;
         reset        : in std_logic;
 
@@ -139,13 +139,13 @@ begin  --architecture
          data_r       => cpu_data_r,
          mem_pause    => cpu_pause);
 
-   opt_cache: if use_cache = '0' generate
+   opt_cache: if use_cache = 0 generate
       cache_access <= '0';
       cache_checking <= '0';
       cache_miss <= '0';
    end generate;
    
-   opt_cache2: if use_cache = '1' generate
+   opt_cache2: if use_cache = 1 generate
    --Control 4KB unified cache that uses the upper 4KB of the 8KB
    --internal RAM.  Only lowest 2MB of DDR is cached.
    u_cache: cache 
@@ -277,7 +277,7 @@ begin  --architecture
          busy_write   => uart_write_busy,
          data_avail   => uart_data_avail);
 
-   dma_gen: if ethernet = '0' generate
+   dma_gen: if ethernet = 0 generate
       address <= cpu_address(31 downto 2);
       byte_we <= cpu_byte_we;
       data_write <= cpu_data_w;
@@ -287,7 +287,7 @@ begin  --architecture
       irq_eth_send <= '0';
    end generate;
 
-   dma_gen2: if ethernet = '1' generate
+   dma_gen2: if ethernet = 1 generate
    u4_eth: eth_dma 
       port map(
          clk         => clk,
