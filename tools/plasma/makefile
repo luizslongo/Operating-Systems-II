@@ -126,6 +126,16 @@ count:
 	$(CONVERT_BIN)
 	$(CP) code.txt $(VHDL_DIR)
 	
+mem_test: 
+	$(AS_MIPS) -o boot.o boot.asm
+	$(GCC_MIPS) mem_test.c
+	$(GCC_MIPS) no_os.c 
+	$(LD_MIPS) -Ttext 0 -eentry -Map test.map -s -N -o test.axf \
+		boot.o mem_test.o no_os.o 
+	-$(DUMP_MIPS) --disassemble test.axf > test.lst
+	$(CONVERT_BIN)
+	$(CP) code.txt $(VHDL_DIR)
+	
 loader: 
 	$(AS_MIPS) -o boot.o boot.asm
 	$(GCC_MIPS) loader.cc
