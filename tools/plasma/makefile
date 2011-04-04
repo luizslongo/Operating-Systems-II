@@ -97,14 +97,12 @@ opcodes:
 	$(LD_MIPS) -Ttext 0 -eentry -Map test.map -s -N -o test.axf opcodes.o
 	-@$(DUMP_MIPS) --disassemble test.axf > test.lst
 	$(CONVERT_BIN)
-	$(CP) code.txt $(VHDL_DIR)
 
 opcodes2: 
 	$(AS_MIPS) -o opcodes.o opcodes.asm
 	$(LD_MIPS) -Ttext 0x10000000 -eentry -Map test.map -s -N -o test.axf opcodes.o
 	-@$(DUMP_MIPS) --disassemble test.axf > test.lst
 	$(CONVERT_BIN)
-	$(CP) code.txt $(VHDL_DIR)
 
 test: 
 	$(AS_MIPS) -o boot.o boot.asm
@@ -114,7 +112,6 @@ test:
 		boot.o test.o no_os.o
 	-@$(DUMP_MIPS) --disassemble test.axf > test.lst
 	$(CONVERT_BIN)
-	$(CP) code.txt $(VHDL_DIR)
 
 count: 
 	$(AS_MIPS) -o boot.o boot.asm
@@ -124,7 +121,6 @@ count:
 		boot.o count.o no_os.o 
 	-$(DUMP_MIPS) --disassemble test.axf > test.lst
 	$(CONVERT_BIN)
-	$(CP) code.txt $(VHDL_DIR)
 	
 mem_test: 
 	$(AS_MIPS) -o boot.o boot.asm
@@ -134,7 +130,6 @@ mem_test:
 		boot.o mem_test.o no_os.o 
 	-$(DUMP_MIPS) --disassemble test.axf > test.lst
 	$(CONVERT_BIN)
-	$(CP) code.txt $(VHDL_DIR)
 	
 loader: 
 	$(AS_MIPS) -o boot.o boot.asm
@@ -144,7 +139,6 @@ loader:
 		boot.o loader.o no_os.o -lc -lgcc -L/usr/local/mips/gcc/lib/gcc/mips-elf/4.0.2/
 	-$(DUMP_MIPS) --disassemble test.axf > test.lst
 	$(CONVERT_BIN)
-	$(CP) code.txt $(VHDL_DIR)
 	
 loader2:
 	$(AS_MIPS) -o boot.o boot.asm
@@ -153,7 +147,6 @@ loader2:
 	rm *.o
 	$(DUMP_MIPS) --disassemble loader > loader.asm
 	$(CONVERT_BIN)
-	$(CP) code.txt $(VHDL_DIR)
 
 count_le: 
 	$(AS_MIPS) -EL -o boot.o boot.asm
@@ -163,7 +156,6 @@ count_le:
 		boot.o count.o no_os.o 
 	-$(DUMP_MIPS) --disassemble test.axf > test.lst
 	$(CONVERT_BIN)
-	$(CP) code.txt $(VHDL_DIR)
 
 count2:
 	$(AS_MIPS) -o boot.o boot.asm
@@ -173,7 +165,6 @@ count2:
 		boot.o count.o no_os.o
 	-$(DUMP_MIPS) --disassemble test.axf > test.lst
 	$(CONVERT_BIN)
-	$(CP) code.txt $(VHDL_DIR)
 
 count3:
 	$(AS_MIPS) -o boot.o boot.asm
@@ -183,7 +174,6 @@ count3:
 		boot.o count.o no_os.o
 	-$(DUMP_MIPS) --disassemble test.axf > test.lst
 	$(CONVERT_BIN)
-	$(CP) code.txt $(VHDL_DIR)
 
 count5: nomult.exe
 	$(AS_MIPS) -o boot.o boot.asm
@@ -197,7 +187,6 @@ count5: nomult.exe
 	nomult test.axf test.lst test.map
 	-$(DUMP_MIPS) --disassemble test.axf > test2.lst
 	$(CONVERT_BIN)
-	$(CP) code.txt $(VHDL_DIR)
 
 pi: 
 	$(AS_MIPS) -o boot.o boot.asm
@@ -206,7 +195,6 @@ pi:
 		boot.o pi.o 
 	@$(DUMP_MIPS) --disassemble test.axf > test.lst
 	$(CONVERT_BIN)
-	$(CP) code.txt $(VHDL_DIR)
 
 pi2:
 	$(AS_MIPS) -o boot.o boot.asm
@@ -215,7 +203,6 @@ pi2:
 		boot.o pi.o 
 	@$(DUMP_MIPS) --disassemble test.axf > test.lst
 	$(CONVERT_BIN)
-	$(CP) code.txt $(VHDL_DIR)
 
 pi5: nomult.exe
 	$(AS_MIPS) -o boot.o boot.asm
@@ -227,7 +214,6 @@ pi5: nomult.exe
 	nomult test.axf test.lst test.map
 	@$(DUMP_MIPS) --disassemble test.axf > test2.lst
 	$(CONVERT_BIN)
-	$(CP) code.txt $(VHDL_DIR)
 
 ddr_test:
 	$(AS_MIPS) -o boot.o boot.asm
@@ -237,7 +223,6 @@ ddr_test:
 		boot.o ddr_init.o no_os.o
 	@$(DUMP_MIPS) --disassemble test.axf > test.lst
 	$(CONVERT_BIN)
-	$(CP) code.txt $(VHDL_DIR)
 
 memtest:
 	$(AS_MIPS) -o boot.o boot.asm
@@ -267,7 +252,6 @@ bootldr:
 		boot.o bootldr.o no_os.o ddr_init.o
 	@$(DUMP_MIPS) --disassemble test.axf > test.lst
 	$(CONVERT_BIN)
-	$(CP) code.txt $(VHDL_DIR)
 	@echo Next do "make toimage" for Xilinx or "make tohex" for Altera.
 
 bootldr2:
@@ -279,7 +263,6 @@ bootldr2:
 		boot.o bootldr.o no_os.o ddr_init.o
 	@$(DUMP_MIPS) --disassemble test.axf > test.lst
 	$(CONVERT_BIN)
-	$(CP) code.txt $(VHDL_DIR)
 
 bootldr_little_endian: convert_le.exe
 	$(AS_MIPS) -EL -o boot.o boot.asm
@@ -290,7 +273,6 @@ bootldr_little_endian: convert_le.exe
 		boot.o bootldr.o no_os.o ddr_init.o
 	@$(DUMP_MIPS) --disassemble test.axf > test.lst
 	$(LINUX_PWD)convert_le.exe
-	$(CP) code.txt $(VHDL_DIR)
 
 # Run a MIPS opcode simulator
 run: mlite.exe
@@ -305,7 +287,6 @@ disassemble: mlite.exe
 # Used by Altera FPGAs for ram image
 tohex: bintohex.exe
 	$(LINUX_PWD)bintohex.exe test.bin
-	$(CP) code*.hex $(VHDL_DIR)
 
 # Used by Xilinx FPGAs for ram image
 toimage:

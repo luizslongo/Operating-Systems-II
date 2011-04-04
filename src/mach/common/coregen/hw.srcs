@@ -17,7 +17,8 @@ COREGEN_DIR = $(abspath $(BASE_DIR)/src/mach/common/coregen/)
 
 coregen_generate: \
 clk_xlnx_100M_diff \
-clk_xlnx_125M_diff
+clk_xlnx_125M_diff \
+ram_xlnx_256k
 
 clk_xlnx_100M_diff: \
 $(COREGEN_DIR)/clk_xlnx_100M_diff.xco
@@ -31,10 +32,16 @@ $(COREGEN_DIR)/clk_xlnx_125M_diff.xco
 	coregen -b clk_xlnx_125M_diff.xco \
 	-p coregen.cgp
 
+ram_xlnx_256k: \
+$(COREGEN_DIR)/ram_xlnx_256k.xco
+	cd $(COREGEN_DIR); \
+	coregen -b ram_xlnx_256k.xco \
+	-p coregen.cgp
+
 coregen_clean:
 	cd $(COREGEN_DIR); \
-	rm -rf clk_xlnx_100M_diff clk_xlnx_125M_diff; \
+	rm -rf clk_xlnx_100M_diff clk_xlnx_125M_diff ram_xlnx_256k; \
 	rm -f coregen.cgc; \
 	rm -rf tmp _xmsgs; \
-	rm -f *.v *.vhd *.ngc *.xise *.gise *.ncf *.tcl *.txt *.ejp *.veo *.log
+	rm -f *.ngc *.xise *.gise *.ncf *.tcl *.txt *.ejp *.log
 
