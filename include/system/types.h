@@ -267,8 +267,10 @@ template <typename, typename> class ADHOP;
 class Network;
 class IP;
 class UDP;
-template <typename> class Channel;
-typedef Channel<UDP> UDP_Channel;
+class TCP;
+class ICMP;
+template<class,class> class BCast_Router;
+template<class,class> class ARP_Router;
 
 // Abstractions	- Sentients
 class Photo_Sentient;

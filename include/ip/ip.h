@@ -2,11 +2,12 @@
 #define __ip_h
 
 #include <nic.h>
-#include <arp.h>
+#include <router.h>
 #include <utility/malloc.h>
 #include <utility/debug.h>
 #include <utility/buffer.h>
 #include <utility/string.h>
+#include <system/meta.h>
 #include <thread.h>
 
 // Common aliases
@@ -89,7 +90,9 @@ public:
     typedef IP_Address                Address;
     typedef NIC::Address              MAC_Address;
     typedef u8                        Protocol;
-    typedef ARP<NIC, IP>              _ARP;
+    typedef IF<Traits<IP>::use_arp,
+               ARP_Router<NIC, IP>,
+               BCast_Router<NIC, IP> >::Result  Router;
 
     static const u16 MTU = ~0;
     static const Address BROADCAST;
@@ -190,8 +193,8 @@ public:
         static unsigned short pktid;
     };
 
-    MAC_Address arp(const Address & la);
-    Address    rarp(const MAC_Address & pa);
+    //MAC_Address arp(const Address & la);
+    //Address    rarp(const MAC_Address & pa);
 
     const Address & address() { return _self; }
     const Address & gateway() { return _gateway; }
@@ -241,7 +244,7 @@ public:
 private:
     NIC _nic;
 
-    _ARP::Table _arpt;
+    Router _router;
     
     Address _self;
     Address _netmask;

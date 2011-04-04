@@ -101,6 +101,8 @@ template <> struct Traits<IP>: public Traits<void>{
     static const bool dynamic      = false; // true=dhcp false=static
     static const bool spawn_thread = true;  // automatic creation of IP's worker thread
     static const bool echo_reply   = true;  // automatic ICMP echo reply
+    
+    static const bool use_arp = true; // use Address Resolution Protocol
 };
 
 template <> struct Traits<CMAC<Radio_Wrapper> >: public Traits<void>

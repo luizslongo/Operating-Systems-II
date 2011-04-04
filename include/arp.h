@@ -106,7 +106,7 @@ public:
 	void tha(const MAC_Address & a) { _tha = a; }
 	void tpa(const Address & a) { _tpa = a; }
 
-	Oper op() { return CPU::ntohs(_oper); }
+	Oper op() const { return CPU::ntohs(_oper); }
 	const MAC_Address & sha() const { return _sha; }
 	const Address & spa() const { return _spa; }
 	const MAC_Address & tha() const { return _tha; }
