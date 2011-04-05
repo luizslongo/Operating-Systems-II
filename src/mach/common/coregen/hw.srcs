@@ -43,5 +43,5 @@ coregen_clean:
 	rm -rf clk_xlnx_100M_diff clk_xlnx_125M_diff ram_xlnx_256k; \
 	rm -f coregen.cgc; \
 	rm -rf tmp _xmsgs; \
-	rm -f *.ngc *.xise *.gise *.ncf *.tcl *.txt *.ejp *.log
+	rm -f *.xise *.gise *.ncf *.tcl *.txt *.ejp *.log
 
