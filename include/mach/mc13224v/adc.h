@@ -57,11 +57,11 @@ public:
 	}
     
 	int sample() {
-		return (ad1_result());	
+		return 0;
 	}
 
 	int get() {
-		return 0;
+		return (ad1_result());	
 	}
 
 	bool finished() {
