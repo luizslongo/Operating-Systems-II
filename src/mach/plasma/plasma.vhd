@@ -215,9 +215,9 @@ begin  --architecture
                if cpu_address(6 downto 4) = "001" then
                   irq_mask_reg <= cpu_data_w(7 downto 0);
                elsif cpu_address(6 downto 4) = "011" then
-                  gpio0_reg <= gpio0_reg or cpu_data_w;
+                  gpio0_reg <= cpu_data_w; --- what the fuck with this mask ? 
                elsif cpu_address(6 downto 4) = "100" then
-                  gpio0_reg <= gpio0_reg and not cpu_data_w;
+                  gpio0_reg <= cpu_data_w;
                end if;
             end if;
          end if;
