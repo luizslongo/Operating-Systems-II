@@ -74,9 +74,17 @@ int main( int argc, char *argv[] ) {
   fclose( file );
 
   //Envia o arquivo pela serial...
+  printf("\nSending %d bytes...\n", file_size);
   //Start protocol
   uart.send(&START_CMD,1);
   uart.send(&START_CMD,1);
+
+  unsigned char *size_ptr = reinterpret_cast<unsigned char *>(&file_size);
+  uart.send(&size_ptr[0],1);
+  uart.send(&size_ptr[1],1);
+  uart.send(&size_ptr[2],1);
+  uart.send(&size_ptr[3],1);
+
   for(unsigned int count=0; count < file_size ; count++){
       if(uart.send(&sendBuffer[count], 1) != 1){
 	printf("\nError sending the file...\n");

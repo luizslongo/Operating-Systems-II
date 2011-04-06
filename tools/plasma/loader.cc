@@ -4,12 +4,18 @@
 
 #define ENABLE                  0xA5
 #define COPY_ADDR		0x100E0000 //Last 128K
-#define MEM_BASE		0x10000000
+#define MEM_BASE		0x10000004
 #define MEM_TOP 		0x10100000
-#define TOUT			0x00000400
+#define TOUT			0x000FFFFF
 
 Plasma_UART uart;
-volatile unsigned int * leds = (volatile unsigned int *)0x20000030;
+volatile unsigned int * leds_set = (volatile unsigned int *)0x20000030;
+volatile unsigned int * leds_clear = (volatile unsigned int *)0x20000030;
+
+inline void leds(unsigned int val){
+    //*leds_clear = 0x0;
+    *leds_set = val;
+}
 
 void print_string(char * p);
 void printhex(int i);
@@ -44,7 +50,7 @@ void printhex(int i){
 int main( void ) {
 
   volatile unsigned char * elf_image = (unsigned char *)COPY_ADDR;
-  *leds = 0x81;
+  leds(0x01);
 
   print_string("----------------------------------------------------------------\n");
   print_string("                        Plasma ELF Loader\n");
@@ -54,45 +60,48 @@ int main( void ) {
   print_string("----------------------------------------------------------------\n");
 
   print_string("\n\n");
-  print_string("---------------------- Waiting OS image -----------------------\n");
+  print_string("---------------------- Waiting OS image ---4343432---------------\n");
   
-  *leds = 0xC3;
+  leds(0x02);
   //Synchronize with sender  
   while(uart.get() != ENABLE);
   while(uart.get() != ENABLE);
 
-  unsigned int timeout;
-  unsigned int bytes_received = 0;
-  bool receiving = true;
-  bool waiting = true;
-  while(receiving){
-    timeout = 0;
-    waiting = true;
-    while((!uart.has_data()) && waiting){
-      *leds = 0xE7;
-      if(timeout++ > TOUT){
-	  receiving = false; // Assume file finished!
-	  waiting = false;
-      }
-    }
-    //Save the byte received 
-    if(receiving){
-        *leds = 0xFF;
-        *elf_image++ = uart.get();
-        bytes_received++;
-    }
-    if((COPY_ADDR + bytes_received) == MEM_TOP){
-	print_string("File too long! Aborting receiving!\n");
-	*leds = 0x000000AA;
-	while(1);
-    }
+  leds(0x03);
+
+  //receive image size
+  unsigned int image_size = 0;
+  reinterpret_cast<unsigned char*>(&image_size)[3] = uart.get();
+  reinterpret_cast<unsigned char*>(&image_size)[2] = uart.get();
+  reinterpret_cast<unsigned char*>(&image_size)[1] = uart.get();
+  reinterpret_cast<unsigned char*>(&image_size)[0] = uart.get();
+
+  leds(0x04);
+
+  if((COPY_ADDR + image_size) >= MEM_TOP){
+      print_string("File too long! Aborting receiving!\n");
+      leds(0xAA);
+      while(1);
   }
 
-  *leds = bytes_received >> 8;
+  //receives
+  unsigned int bytes_received = 0;
+
+  for (bytes_received = 0; bytes_received < image_size; ++bytes_received) {
+      elf_image[bytes_received] = uart.get();
+      leds(bytes_received);
+  }
+
+  leds(0x05);
+
+  print_string("Expected 0x");
+  printhex((int)image_size);
+  print_string(" bytes\n");
   print_string("Received 0x");
   printhex((int)bytes_received);
   print_string(" bytes\n");
   
+
   print_string("\n\n");
   print_string("------------------------ Image Received ------------------------\n");
 
@@ -135,7 +144,7 @@ int main( void ) {
   print_string("----------------------------------------------------------------\n");
   print_string("\n\n");
 
-  *leds = 0x00;
+  leds(0x00);
   
   // Call setup
   void (*entry)() = reinterpret_cast<void (*)()>(elf_file->entry());
@@ -147,3 +156,39 @@ int main( void ) {
   return 0;
 
 };
+
+/*
+
+print_string("`````````````````````````````````````.................`````````````````````\n");
+print_string("`````````````````.:/+osyyhdddddddhhhhhhhhhhhyhhhhhhhhhhdmdo-```````````````\n");
+print_string("````````````-+yddhhhhyo//:::::::::::::----:::::::.``````.:smh:`````````````\n");
+print_string("`````````:smds///::::-------------::::---:::::::-:/:-``````.oNy.```````````\n");
+print_string("```````/ddo-``````--:::--..``````````/::---:::::/:::-::-`````-md-``````````\n");
+print_string("`````oM+``````:/:.````..::`````````/:``````````.://:/:.:-````.dm-`````````\n");
+print_string("``````dm``````/-`````````-/`````````:````.----..```./:-/```````.dm:````````\n");
+print_string("`````oMo````````.-:::--```:``````````-+ydhyNNNNNmds/`.``````````.hNo.``````\n");
+print_string("``.odd/.....--`ymNmmNNNmh+-````````:hds/-:/mMMMMMNhmm:`.:-````.-:/hNm+.````\n");
+print_string("`-md/:/:......`/ossyhhdmNMNdh+`````yMy+ydhysoys+ossyy:`::--::///::/+sdm+```\n");
+print_string("`dm:/-+/:://:-`````````.-oMh-```````:ss/-.```+dh/-.`.-:oyddysssydh:`.oomd-`\n");
+print_string("`Myo`+.ohysosdd+:+s.`````+M/``````````````````./yhyyyyys/-.-h:``.sNo`.+-dd`\n");
+print_string("`Myo`o`..``o--yyys/```.+hdy`````````:/:-`-`````````````.:+hmNm:.``sN-`+`/M`\n");
+print_string("`dms--/.``oMs```````:ymMo.```````.../osms::::::.```-:ohdhs/-hMmhs-oM-.+`oM`\n");
+print_string("`:Nd+/:-`/MMN/```:::/hymh-`````.syyhh`:Ny````-:/oyddMd/-``.+Nd...-Ny`/--Nd`\n");
+print_string("``:Nh...`yMmMmh+:-`````.odhoy/`````.-`os++shhhhs+:-oM/`-/ymMm/```.+:///mh-.\n");
+print_string(".``/Mo```mMMohMhddhs+/:--/ooo/:/+osyyhhhdMh:-.```-oNMdddhdMy.`````-:odmo.`.\n");
+print_string("..``mh```NMN-dm`.sMhosyydNmhyssdMh/:-..`.md.-/shdNNMMs--ymo```````-hNs-``..\n");
+print_string("....dd```mMMmMMo:dM:-...+Mo....sM:...-:/oNMmNNmdy+-yM:/dd:```````:md:```...\n");
+print_string("....dd```dMMMMMMMMMMNmmmNMNmmmmNMNmmNNMNmdNN+:.````-Nmd+````````:Nh.``.....\n");
+print_string("....dd```sMmMMNMMMMMMMMMMMMMMMMNNMMdyo/-.`yM-````-odd+.````````+Nh.``......\n");
+print_string("....md```-mmhMohMhshMNyyyNMs///:-Nh```````.mm--ohds:`````````:hmo.````.....\n");
+print_string("-...mh````-dmm+-dN-`dN-``/M/`````md````..-/hMmds:.`.--`.--.:hms-``````.....\n");
+print_string("....Nh.````./shddNdshMm+/+Md////+NNsssyhhhs+:-..::::-:::/oddo.```````......\n");
+print_string("....Ny``````-.``.-:://+++ooooo+++///:--.``.-::::-::::/sdds:``````````......\n");
+print_string("`..-Mo``:-``.//-.```````.......``````.-::::::::::/shdh+-`````````````......\n");
+print_string("`../M/``.//:.``--------::::::::::::/++::-----+yddy+:.`````````````````.....\n");
+print_string("`..:My.````-:::-------------------.````.-+ydds/-``````````````````````.....\n");
+print_string("`...+Nh-``````````````````````````.-/ohdds/.``````````````````````````.....\n");
+print_string("`...`-ymy+-.`````````````..:/oyhdmdhyo:.``````````````````````````````.....\n");
+print_string("`...```./yddhysssssssyyhddhyo+:-.````````````````````````````````````......\n");
+print_string("`..``````````..........``````````````````````````````````````````\n");
+*/

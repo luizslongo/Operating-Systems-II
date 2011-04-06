@@ -133,19 +133,19 @@ mem_test:
 	
 loader: 
 	$(AS_MIPS) -o boot.o boot.asm
-	$(GCC_MIPS) loader.cc
+	$(GPP_MIPS) loader.cc --no-exceptions --no-rtti --no-use-cxa-atexit -c -s
 	$(GCC_MIPS) no_os.c 
 	$(LD_MIPS) -Ttext 0 -eentry -Map test.map -s -N -o test.axf \
-		boot.o loader.o no_os.o -lc -lgcc -L/usr/local/mips/gcc/lib/gcc/mips-elf/4.0.2/
+		boot.o loader.o no_os.o
 	-$(DUMP_MIPS) --disassemble test.axf > test.lst
 	$(CONVERT_BIN)
 	
-loader2:
+loader2: 
 	$(AS_MIPS) -o boot.o boot.asm
-	$(GCC_MIPS) loader.cc
-	$(LD_MIPS) -Ttext 0 -eentry -s -N -o loader boot.o loader.o -L/usr/local/mips/gcc/lib/gcc/mips-elf/4.0.2/ -lgcc -lc
-	rm *.o
-	$(DUMP_MIPS) --disassemble loader > loader.asm
+	$(GPP_MIPS) loader.cc --no-exceptions --no-rtti --no-use-cxa-atexit
+	$(GCC_MIPS) no_os.c 
+	$(LD_MIPS) -Ttext 0 -eentry -s -N -o test.axf -Map test.map boot.o loader.o no_os.o -lc
+	-$(DUMP_MIPS) --disassemble test.axf > test.lst
 	$(CONVERT_BIN)
 
 count_le: 
