@@ -60,6 +60,7 @@ module plasma_ml605
          .uart_write(uart_tx_o),
          .uart_read(uart_rx_i),
  
+         
          .address(extram_address),
          .byte_we(extram_byte_we),
          .data_write(extram_data_write),
@@ -67,6 +68,16 @@ module plasma_ml605
          .mem_pause_in(extram_mem_pause),
          .no_ddr_start(extram_no_ddr_start),
          .no_ddr_stop(extram_no_ddr_stop),
+         
+         /*
+         .address(),
+         .byte_we(),
+         .data_write(),
+         .data_read(32'b0),
+         .mem_pause_in(1'b0),
+         .no_ddr_start(),
+         .no_ddr_stop(),
+         */
 
          .gpio0_out({gpio_others, dir_leds, gpio_leds}),
          .gpioA_in({19'b0, dir_btns, gpio_sws})

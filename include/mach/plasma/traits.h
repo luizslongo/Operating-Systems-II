@@ -13,7 +13,7 @@ template <> struct Traits<PLASMA>: public Traits<PLASMA_Common>
 {
   static const unsigned int MAX_CPUS = 1;
 
-  static const unsigned int CLOCK                  = 25000000;
+  static const unsigned int CLOCK                  = 50000000;
 
   static const unsigned int APPLICATION_STACK_SIZE = 16 * 1024;
   static const unsigned int APPLICATION_HEAP_SIZE  = 16 * 1024;
