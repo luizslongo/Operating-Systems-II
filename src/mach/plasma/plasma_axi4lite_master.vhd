@@ -100,9 +100,10 @@ begin
             mem_pause    => plasma_mem_pause_in);
 
 
-    -- leave write and read protections ALL LOW
+    -- leave write and read protections ALL LOW, read response LOW also
     awprot <= "000";
     arprot <= "000";
+    rresp  <= "00";
 
     -- binding plasma interrupt to 0. What should we do with this?
     plasma_intr_in <= '0';
@@ -122,7 +123,9 @@ begin
         end if;
     end process;
 
-    state_decision: process(aclk, plasma_byte_we)
+    state_decision: process(plasma_byte_we, arready,
+                            arready, rvalid, awready, wready, bvalid,
+                            plasma_address, rdata, plasma_data_write)
     begin
         case current_state is
             when READ_BEGIN =>
@@ -135,7 +138,7 @@ begin
                 end if;
                 
                 arvalid <= '1';
-                araddr  <= plasma_address;
+                araddr  <= plasma_address & "00";
                 -- all other channels LOW
 
 
@@ -156,6 +159,7 @@ begin
                 next_state <= READ_BEGIN;
 
                 plasma_mem_pause_in <= '1';
+					 plasma_data_read    <= rdata;
                 rready              <= '0';
 
 
@@ -169,7 +173,7 @@ begin
                 end if;
 
                 awvalid <= '1';
-                awaddr  <= plasma_address;
+                awaddr  <= plasma_address & "00";
                 -- all other channels LOW
 
 

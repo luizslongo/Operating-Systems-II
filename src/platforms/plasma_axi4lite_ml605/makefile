@@ -1,7 +1,7 @@
 ##################################################
 # Project Setup
 ##################################################
-TOP_MODULE = plasma_ml605
+TOP_MODULE = plasma_axi4lite_ml605
 BUILD_DIR = build
 
 ##################################################
@@ -23,20 +23,20 @@ include ../../../src/mach/plasma/hw.srcs
 
 # Top level sources
 TOP_SRCS = \
-plasma_ml605.vhd \
-plasma_ml605.ucf
+plasma_axi4lite_ml605.vhd \
+plasma_axi4lite_ml605.ucf
 
 
 # Coregen cores
 coregen_generate: \
 clk_xlnx_100M_diff \
-ram_xlnx_256k
+ram_amba_128k
 
 coregen_clean:
 	cd $(COREGEN_DIR); \
 	rm -rf \
 	clk_xlnx_100M_diff \
-	ram_xlnx_256k ; \
+	ram_amba_128k ; \
 	rm -f coregen.cgc; \
 	rm -rf tmp _xmsgs; \
 	rm -f *.xise *.gise *.ncf *.tcl *.txt *.ejp *.log *.ngc *~

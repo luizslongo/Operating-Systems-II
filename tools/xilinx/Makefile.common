@@ -38,7 +38,7 @@ clean:
 ##################################################
 # Dependency Targets
 ##################################################
-$(ISE_FILE): $(SOURCES)
+$(ISE_FILE): coregen_generate $(SOURCES)
 	@echo $@
 	$(ISE_HELPER) ""
 

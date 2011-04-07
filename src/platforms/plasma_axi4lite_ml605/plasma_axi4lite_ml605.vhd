@@ -3,14 +3,10 @@ use ieee.std_logic_1164.all;
 
 entity plasma_axi4lite_ml605 is
     Port(
-        gpio_leds    : out std_logic_vector(7 downto 0);
-        gpio_sws     : in std_logic_vector(7 downto 0);
-        dir_leds     : out std_logic_vector(4 downto 0);
-        dir_btns     : in std_logic_vector(4 downto 0);
-
-        uart_tx_o    : out std_logic;
-        uart_rx_i    : in std_logic;
-
+        -- we have no other ports now, but we should add some way
+        -- (an output) of inspecting the system...
+        reset_btn    : in std_logic;
+        
         clk_fpga_p   : in std_logic;
         clk_fpga_n   : in std_logic);
 end plasma_axi4lite_ml605;
@@ -96,8 +92,8 @@ architecture Behavioral of plasma_axi4lite_ml605 is
 
     signal sig_wvalid  : std_logic;
     signal sig_wready  : std_logic;
-    signal sig_wdata   : std_logic(31 downto 0);
-    signal sig_wstrb   : std_logic(3 downto 0);
+    signal sig_wdata   : std_logic_vector(31 downto 0);
+    signal sig_wstrb   : std_logic_vector(3 downto 0);
 
     signal sig_bvalid  : std_logic;
     signal sig_bready  : std_logic;
@@ -122,15 +118,15 @@ begin
             CLK_OUT1  => clk_100MHz,
             CLK_OUT2  => clk_50MHz);
 
-    sig_areset  <= dir_btns(4);
+    sig_areset  <= reset_btn;	 
 
     plasma_amba: plasma_axi4lite_master
         generic map(
-            memory_type     <= "XILINX_16X",
-            mult_type       <= "DEFAULT",
-            shifter_type    <= "DEFAULT",
-            alu_type        <= "DEFAULT",
-            pipeline_stages <= 2)
+            memory_type     => "XILINX_16X",
+            mult_type       => "DEFAULT",
+            shifter_type    => "DEFAULT",
+            alu_type        => "DEFAULT",
+            pipeline_stages => 2)
         port map(
             aclk       => clk_50MHz,
             areset     => sig_areset,

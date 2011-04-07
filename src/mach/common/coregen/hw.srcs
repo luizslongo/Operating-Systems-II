@@ -6,19 +6,13 @@ COREGEN_SRCS = $(abspath $(addprefix $(BASE_DIR)/src/mach/common/coregen/, \
 clk_xlnx_100M_diff.xco \
 clk_xlnx_125M_diff.xco \
 ram_xlnx_256k.xco \
-ram_amba_128k.xco \
-))
+ram_amba_128k.xco))
 
 #####################
 # Compile the cores
 #####################
 
 COREGEN_DIR = $(abspath $(BASE_DIR)/src/mach/common/coregen/)
-
-coregen_generate: \
-clk_xlnx_100M_diff \
-clk_xlnx_125M_diff \
-ram_xlnx_256k
 
 clk_xlnx_100M_diff: \
 $(COREGEN_DIR)/clk_xlnx_100M_diff.xco
@@ -38,10 +32,9 @@ $(COREGEN_DIR)/ram_xlnx_256k.xco
 	coregen -b ram_xlnx_256k.xco \
 	-p coregen.cgp
 
-coregen_clean:
+ram_amba_128k: \
+$(COREGEN_DIR)/ram_amba_128k.xco
 	cd $(COREGEN_DIR); \
-	rm -rf clk_xlnx_100M_diff clk_xlnx_125M_diff ram_xlnx_256k; \
-	rm -f coregen.cgc; \
-	rm -rf tmp _xmsgs; \
-	rm -f *.xise *.gise *.ncf *.tcl *.txt *.ejp *.log
+	coregen -b ram_amba_128k.xco \
+	-p coregen.cgp
 
