@@ -1,119 +1,118 @@
 library ieee;
-use ieee.std_logic_1164.all
+use ieee.std_logic_1164.all; 
 
 
 entity plasma_axi4lite_master is
-    Port(
-        aclk       : in std_logic,
-        areset     : in std_logic,
-
+    generic(
+        memory_type     : string  := "XILINX_16X"; --ALTERA_LPM, or DUAL_PORT_
+        mult_type       : string  := "DEFAULT"; --AREA_OPTIMIZED
+        shifter_type    : string  := "DEFAULT"; --AREA_OPTIMIZED
+        alu_type        : string  := "DEFAULT"; --AREA_OPTIMIZED
+        pipeline_stages : natural := 2); --2 or 3
+    port(
+        aclk       : in std_logic;
+        areset     : in std_logic;
         -- write address channel
---        awvalid    : out std_logic,
---        awready    : in std_logic,
-        awaddr     : out std_logic_vector(31 downto 0),
-        awprot     : out std_logic_vector(2 downto 0),
-
+        awvalid    : out std_logic;
+        awready    : in std_logic;
+        awaddr     : out std_logic_vector(31 downto 0);
+        awprot     : out std_logic_vector(2 downto 0);
         -- write data channel
---        wvalid     : out std_logic,
---        wready     : in std_logic,
-        wdata      : out std_logic_vector(31 downto 0),
-        wstrb      : in std_logic_vector(3 downto 0),
-
+        wvalid     : out std_logic;
+        wready     : in std_logic;
+        wdata      : out std_logic_vector(31 downto 0);
+        wstrb      : out std_logic_vector(3 downto 0);
         -- write response channel
-        bvalid     : in std_logic,
-        bready     : out std_logic,
-        bresp      : in std_logic_vector(1 downto 0),
-
+        bvalid     : in std_logic;
+        bready     : out std_logic;
+        bresp      : in std_logic_vector(1 downto 0);
         -- read address channel
---        arvalid    : out std_logic,
---        arready    : in std_logic,
-        araddr     : out std_logic_vector(31 downto 0),
-        arprot     : in std_logic_vector(2 downto 0),
-
+        arvalid    : out std_logic;
+        arready    : in std_logic;
+        araddr     : out std_logic_vector(31 downto 0);
+        arprot     : out std_logic_vector(2 downto 0);
         -- read data channel
---        rvalid     : in std_logic,
---        rready     : out std_logic,
-        rdata      : in std_logic_vector(31 downto 0),
-        rresp      : out std_logic_vector(1 downto 0))
+        rvalid     : in std_logic;
+        rready     : out std_logic;
+        rdata      : in std_logic_vector(31 downto 0);
+        rresp      : out std_logic_vector(1 downto 0));
 end plasma_axi4lite_master;
 
 
 architecture RTL of plasma_axi4lite_master is
-    component plasma is
+    component mlite_cpu is
         generic(
-            memory_type : string := "XILINX_16X"; --"DUAL_PORT_" "ALTERA_LPM";
-            log_file    : string := "UNUSED";
-            ethernet    : integer := 0;
-            use_cache   : integer := 0);
-        Port(
+            memory_type     : string  := "XILINX_16X"; --ALTERA_LPM, or DUAL_PORT_
+            mult_type       : string  := "DEFAULT"; --AREA_OPTIMIZED
+            shifter_type    : string  := "DEFAULT"; --AREA_OPTIMIZED
+            alu_type        : string  := "DEFAULT"; --AREA_OPTIMIZED
+            pipeline_stages : natural := 2); --2 or 3
+        port(
             clk          : in std_logic;
-            reset        : in std_logic;
-            uart_write   : out std_logic;
-            uart_read    : in std_logic;
+            reset_in     : in std_logic;
+            intr_in      : in std_logic;
+
+            address_next : out std_logic_vector(31 downto 2);
+            byte_we_next : out std_logic_vector(3 downto 0); 
+
             address      : out std_logic_vector(31 downto 2);
             byte_we      : out std_logic_vector(3 downto 0);
-            data_write   : out std_logic_vector(31 downto 0);
-            data_read    : in std_logic_vector(31 downto 0);
-            mem_pause_in : in std_logic;
-            no_ddr_start : out std_logic;
-            no_ddr_stop  : out std_Logic;
-            gpio0_out    : out std_logic_vector(31 downto 0);
-            gpioA_in     : in std_logic_vector(31 downto 0));
+            data_w       : out std_logic_vector(31 downto 0);
+            data_r       : in std_logic_vector(31 downto 0);
+            mem_pause    : in std_logic);
     end component;
 
-    signal awprot, arprot   : std_logic_vector(2 downto 0);
-    signal bready           : std_logic;
 
-    signal plasma_uart_write    : std_logic;
-    signal plasma_uart_read     : std_logic;
+    signal plasma_address_next  : std_logic_vector(31 downto 2);
+    signal plasma_byte_we_next  : std_logic_vector(3 downto 0);
+    signal plasma_intr_in       : std_logic;
+
     signal plasma_address       : std_logic_vector(31 downto 2);
     signal plasma_byte_we       : std_logic_vector(3 downto 0);
     signal plasma_data_write    : std_logic_vector(31 downto 0);
     signal plasma_data_read     : std_logic_vector(31 downto 0);
     signal plasma_mem_pause_in  : std_logic;
-    signal plasma_no_ddr_start  : std_logic;
-    signal plasma_no_ddr_stop   : std_logic;
-    signal plasma_gpio0_out     : std_logic_vector(31 downto 0);
-    signal plasma_gpioA_in      : std_logic_vector(31 downto 0);
+
+    type STATE_TYPE is (READ_BEGIN, AR_READY, R_VALID, WRITE_BEGIN, AW_READY, W_READY, WR_VALID);
+    signal current_state, next_state : STATE_TYPE;
 
 begin
 
-    plasma_mcu: plasma
+    plasma_cpu: mlite_cpu
         generic map(
-            memory_type => "XILINX_16X",
-            log_file    => "UNUSED",
-            ethernet    => 0,
-            use_cache   => 0)
+            memory_type     => memory_type,
+            mult_type       => mult_type,
+            shifter_type    => shifter_type,
+            alu_type        => alu_type,
+            pipeline_stages => pipeline_stages)
         port map(
             clk          => aclk,
-            reset        => areset,
+            reset_in     => areset,
+            intr_in      => plasma_intr_in,
+
+            address_next => plasma_address_next,
+            byte_we_next => plasma_byte_we_next, 
 
             address      => plasma_address,
-            data_write   => plasma_data_write,
-            data_read    => plasma_data_read,
             byte_we      => plasma_byte_we,
-            mem_pause_in => plasma_mem_pause_in,
-            no_ddr_start => plasma_no_ddr_start,
-            no_ddr_stop  => plasma_no_ddr_stop,
-
-            uart_write   => plasma_uart_write,
-            uart_read    => plasma_uart_read,
-            gpio0_out    => plasma_gpio0_out,
-            gpioA_in     => plasma_gpioA_in)
-
-    -- binding plasma MCU useless input pins to default signals
-    plasma_uart_read <= '0';
-    mem_pause_in     <= '0';
-    gpioA_in         <= "00000000000000000000000000000000";
+            data_w       => plasma_data_write,
+            data_r       => plasma_data_read,
+            mem_pause    => plasma_mem_pause_in);
 
 
-    -- state machine
-    type STATE_TYPE is (READ_BEGIN, AR_READY, R_VALID,
-                        WRITE_BEGIN, AW_READY, W_READY, WR_VALID, WR_RESP);
+    -- leave write and read protections ALL LOW
+    awprot <= "000";
+    arprot <= "000";
 
-    signal current_state, next_state : STATE_TYPE;
+    -- binding plasma interrupt to 0. What should we do with this?
+    plasma_intr_in <= '0';
+
+    -- write strobe, tied to plasma's byte_we
+    wstrb <= plasma_byte_we;
 
 
+    -- Moore machine, the inputs are Plasma's external memory signals
+    -- and the outputs are all AXI4Lite channels
     state_change: process(aclk, areset)
     begin
         if areset = '1' then
@@ -123,29 +122,89 @@ begin
         end if;
     end process;
 
-
-    -- Moore machine, the inputs are Plasma's external memory signals
-    -- and the outputs are all AXI4Lite channels
     state_decision: process(aclk, plasma_byte_we)
     begin
         case current_state is
             when READ_BEGIN =>
                 if plasma_byte_we /= "0000" then
                     next_state <= WRITE_BEGIN;
+                elsif arready = '1' then
+                    next_state <= AR_READY;
                 else
-                    -- follow the read chain of states: READ_BEGIN, AR_READY, R_VALID
+                    next_state <= READ_BEGIN;
+                end if;
+                
+                arvalid <= '1';
+                araddr  <= plasma_address;
+                -- all other channels LOW
+
+
+            when AR_READY =>
+                if rvalid = '1' then
+                    next_state <= R_VALID;
+                else
+                    next_state <= AR_READY;
                 end if;
 
-                -- axi4lite channel signal assignments here
+                arvalid             <= '0';
+                araddr              <= "00000000000000000000000000000000";
+                plasma_mem_pause_in <= '1';
+                rready              <= '1';
+
+
+            when R_VALID =>
+                next_state <= READ_BEGIN;
+
+                plasma_mem_pause_in <= '1';
+                rready              <= '0';
+
 
             when WRITE_BEGIN =>
                 if plasma_byte_we = "0000" then
                     next_state <= READ_BEGIN;
+                elsif awready = '1' then
+                    next_state <= AW_READY;
                 else
-                    -- write chain of states: WRITE_BEGIN, AW_READY, W_READY, WR_VALID, WR_RESP
+                    next_state <= WRITE_BEGIN;
                 end if;
 
-                -- axi4lite channel signal assignments here
+                awvalid <= '1';
+                awaddr  <= plasma_address;
+                -- all other channels LOW
+
+
+            when AW_READY =>
+                if wready = '1' then
+                    next_state <= W_READY;
+                else
+                    next_state <= AW_READY;
+                end if;
+
+                awvalid             <= '0';
+                awaddr              <= "00000000000000000000000000000000";
+                plasma_mem_pause_in <= '1';
+                wvalid              <= '1';
+
+
+            when W_READY =>
+                if bvalid = '1' then
+                    next_state <= WR_VALID;
+                else
+                    next_state <= W_READY;
+                end if;
+
+                wvalid              <= '0';
+                plasma_mem_pause_in <= '1';
+                wdata               <= plasma_data_write;
+                bready              <= '1';
+
+
+            when WR_VALID =>
+                -- this state is present just to allow the transmission of a write reponse
+                next_state <= READ_BEGIN;
+
+                plasma_mem_pause_in <= '1';
+
 
         end case;
     end process;

@@ -1,7 +1,7 @@
 ##################################################
 # Project Setup
 ##################################################
-TOP_MODULE = plasma_ml605
+TOP_MODULE = plasma_axi4lite_ml605
 BUILD_DIR = build
 
 ##################################################
@@ -23,11 +23,8 @@ include ../../../src/mach/plasma/hw.srcs
 
 # Top level sources
 TOP_SRCS = \
-plasma_ml605.ucf \
-plasma_ml605.v \
-#plasma_ml605.vhd
-
-
+plasma_axi4lite_ml605.vhd \
+plasma_ml605.ucf
 
 # IP sources
 SOURCES = $(abspath $(TOP_SRCS)) $(COREGEN_SRCS) \
@@ -52,41 +49,16 @@ simulator "Modelsim-SE Mixed" \
 ##################################################
 # Process Properties
 ##################################################
-# Currently optmizing for speed
-# If design does not fit, enable Resource Sharing
-
-#SYNTHESIZE_PROPERTIES = \
-"Optimization Goal" Speed \
-"Optimization Effort" High \
-"Resource Sharing" FALSE \
-"Register Balancing" Yes \
-"Optimize Instantiated Primitives" TRUE \
-"Cross Clock Analysis" TRUE
-
-#SYNTHESIZE_PROPERTIES = \
-#"Optimization Goal" Speed \
-#"Optimization Effort" High \
-
 SYNTHESIZE_PROPERTIES = ""
 
 TRANSLATE_PROPERTIES = ""
 
-MAP_PROPERTIES = ""
+MAP_PROPERTIES = \
+"Generate Detailed Map Report" TRUE \
+"Enable Multi-Threading" 2
 
-#MAP_PROPERTIES = \
-#"Placer Effort Level" High \
-#"Placer Extra Effort" Normal \
-#"Global Optimization" Speed \
-#"Generate Detailed Map Report" TRUE \
-#"Enable Multi-Threading" 2
-
-
-PLACE_ROUTE_PROPERTIES = ""
-
-#PLACE_ROUTE_PROPERTIES = \
-#"Place & Route Effort Level (Overall)" High \
-#"Extra Effort (Highest PAR level only)" Normal \
-#"Enable Multi-Threading" 2
+PLACE_ROUTE_PROPERTIES = \
+"Enable Multi-Threading" 2
 
 STATIC_TIMING_PROPERTIES = ""
 

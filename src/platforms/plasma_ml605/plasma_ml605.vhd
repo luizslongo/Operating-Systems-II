@@ -82,7 +82,8 @@ begin
                 CLK_OUT1  => clk_100MHz,
                 CLK_OUT2  => clk_50MHz);
 
-
+        
+        reset       <= dir_btns(4);
         gpio_others <= gpio0_out_s(31 downto 13);
         dir_leds    <= gpio0_out_s(12 downto 8);
         gpio_leds   <= gpio0_out_s(7 downto 0);
