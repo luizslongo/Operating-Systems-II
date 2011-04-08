@@ -76,6 +76,8 @@ architecture RTL of plasma_axi4lite_master is
     type STATE_TYPE is (READ_BEGIN, AR_READY, R_VALID, WRITE_BEGIN, AW_READY, W_READY, WR_VALID);
     signal current_state, next_state : STATE_TYPE;
 
+    constant ZERO_32BITS : std_logic_vector(31 downto 0) := "00000000000000000000000000000000";
+
 begin
 
     plasma_cpu: mlite_cpu
@@ -123,10 +125,25 @@ begin
         end if;
     end process;
 
-    state_decision: process(plasma_byte_we, arready,
+    state_decision: process(current_state, plasma_byte_we, arready,
                             arready, rvalid, awready, wready, bvalid,
                             plasma_address, rdata, plasma_data_write)
     begin
+        -- all outputs LOW by default
+        awvalid             <= '0';
+        awaddr              <= ZERO_32BITS;
+        wvalid              <= '0';
+        wdata               <= ZERO_32BITS;
+        bready              <= '0';
+        arvalid             <= '0';
+        araddr              <= ZERO_32BITS;
+        rready              <= '0';
+        plasma_data_read    <= ZERO_32BITS;
+        plasma_mem_pause_in <= '0';
+
+        -- default (initial) state is READ_BEGIN
+        next_state <= READ_BEGIN;
+
         case current_state is
             when READ_BEGIN =>
                 if plasma_byte_we /= "0000" then
@@ -150,7 +167,7 @@ begin
                 end if;
 
                 arvalid             <= '0';
-                araddr              <= "00000000000000000000000000000000";
+                araddr              <= ZERO_32BITS;
                 plasma_mem_pause_in <= '1';
                 rready              <= '1';
 
@@ -159,7 +176,7 @@ begin
                 next_state <= READ_BEGIN;
 
                 plasma_mem_pause_in <= '1';
-					 plasma_data_read    <= rdata;
+                plasma_data_read    <= rdata;
                 rready              <= '0';
 
 
@@ -185,7 +202,7 @@ begin
                 end if;
 
                 awvalid             <= '0';
-                awaddr              <= "00000000000000000000000000000000";
+                awaddr              <= ZERO_32BITS;
                 plasma_mem_pause_in <= '1';
                 wvalid              <= '1';
 
@@ -209,6 +226,7 @@ begin
 
                 plasma_mem_pause_in <= '1';
 
+            when others =>
 
         end case;
     end process;
