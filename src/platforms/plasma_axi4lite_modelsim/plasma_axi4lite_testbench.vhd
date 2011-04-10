@@ -166,7 +166,6 @@ begin
         wait for 10 ns;
     end process;
 
-    -- use a trace file for modelsim (trace.lxt)
 
     tb : process
     begin

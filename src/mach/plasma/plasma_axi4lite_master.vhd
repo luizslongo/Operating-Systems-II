@@ -133,9 +133,9 @@ begin
                             plasma_address, rdata, plasma_data_write)
     begin
         -- all outputs LOW by default
-        awvalid             <= '0';
-        awaddr              <= ZERO_32BITS;
-        wvalid              <= '0';
+        -- awvalid             <= '0';
+        -- awaddr              <= ZERO_32BITS;
+        -- wvalid              <= '0';
         wdata               <= ZERO_32BITS;
         bready              <= '0';
         arvalid             <= '0';

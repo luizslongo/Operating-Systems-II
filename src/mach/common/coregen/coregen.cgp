@@ -16,7 +16,7 @@ SET removerpms = false
 SET simulationfiles = Behavioral
 SET speedgrade = -1
 SET verilogsim = true
-SET vhdlsim = false
+SET vhdlsim = true
 SET workingdirectory = ./tmp/
 
 # CRC: 6de68b98

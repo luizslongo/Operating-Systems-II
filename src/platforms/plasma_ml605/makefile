@@ -39,7 +39,7 @@ coregen_clean:
 	ram_xlnx_256k ; \
 	rm -f coregen.cgc; \
 	rm -rf tmp _xmsgs; \
-	rm -f *.xise *.gise *.ncf *.tcl *.txt *.ejp *.log *.ngc *~
+	rm -f *.xise *.gise *.ncf *.tcl *.txt *.ejp *.log *.ngc *~ *.v *.veo *.vhd *.vho
 
 
 # IP sources
