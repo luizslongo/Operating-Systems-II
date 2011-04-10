@@ -5,6 +5,7 @@ entity plasma_axi4lite_ml605 is
     Port(
         -- we have no other ports now, but we should add some way
         -- (an output) of inspecting the system...
+        -- perhaps an AMBA-connected uart controller
         reset_btn    : in std_logic;
         
         clk_fpga_p   : in std_logic;
@@ -53,7 +54,7 @@ architecture Behavioral of plasma_axi4lite_ml605 is
             rvalid     : in std_logic;
             rready     : out std_logic;
             rdata      : in std_logic_vector(31 downto 0);
-            rresp      : out std_logic_vector(1 downto 0));
+            rresp      : in std_logic_vector(1 downto 0));
     end component;
 
     -- include here the amba ram generated with coregen

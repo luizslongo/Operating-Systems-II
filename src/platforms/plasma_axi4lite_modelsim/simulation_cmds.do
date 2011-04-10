@@ -19,11 +19,22 @@ vcom ../../mach/plasma/pc_next.vhd
 vcom ../../mach/plasma/reg_bank.vhd
 vcom ../../mach/plasma/shifter.vhd
 vcom ../../mach/plasma/cache.vhd
-vlog plasma_axi4lite_testbench.v
+vcom plasma_axi4lite_testbench.vhd
 
 #load/dump/run vhdl design
 vsim work.plasma_axi4lite_testbench
 vcd file trace.vcd
-vcd add -r -file trace.vcd
+
+vcd add plasma_axi4lite_testbench/clk_50MHz
+
+vcd add plasma_axi4lite_testbench/sig_arvalid
+vcd add plasma_axi4lite_testbench/sig_arready
+vcd add plasma_axi4lite_testbench/sig_araddr
+vcd add plasma_axi4lite_testbench/sig_arprot
+
+vcd add plasma_axi4lite_testbench/sig_rvalid
+vcd add plasma_axi4lite_testbench/sig_rready
+vcd add plasma_axi4lite_testbench/sig_rdata
+vcd add plasma_axi4lite_testbench/sig_rresp
+
 run -all
-#vcd flush trace.vcd

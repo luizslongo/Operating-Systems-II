@@ -35,7 +35,7 @@ entity plasma_axi4lite_master is
         rvalid     : in std_logic;
         rready     : out std_logic;
         rdata      : in std_logic_vector(31 downto 0);
-        rresp      : out std_logic_vector(1 downto 0));
+        rresp      : in std_logic_vector(1 downto 0));
 end plasma_axi4lite_master;
 
 
@@ -102,13 +102,16 @@ begin
             mem_pause    => plasma_mem_pause_in);
 
 
-    -- leave write and read protections ALL LOW, read response LOW also
+    -- leave write and read protections ALL LOW
     awprot <= "000";
     arprot <= "000";
-    rresp  <= "00";
 
     -- binding plasma interrupt to 0. What should we do with this?
     plasma_intr_in <= '0';
+
+    -- plasma synch_ram signals
+    plasma_byte_we_next <= "0000";
+    plasma_address_next <= ZERO_32BITS(31 downto 2);
 
     -- write strobe, tied to plasma's byte_we
     wstrb <= plasma_byte_we;
@@ -225,8 +228,6 @@ begin
                 next_state <= READ_BEGIN;
 
                 plasma_mem_pause_in <= '1';
-
-            when others =>
 
         end case;
     end process;

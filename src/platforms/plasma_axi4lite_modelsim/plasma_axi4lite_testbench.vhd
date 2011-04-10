@@ -1,10 +1,12 @@
 library ieee;
 use ieee.std_logic_1164.all;
+library std;
+use std.env.all;
 
-entity plasma_axi4lite_modelsim is
-end plasma_axi4lite_modelsim;
+entity plasma_axi4lite_testbench is
+end plasma_axi4lite_testbench;
 
-architecture Behavioral of plasma_axi4lite_modelsim is
+architecture Behavioral of plasma_axi4lite_testbench is
     component plasma_axi4lite_master is
         generic(
             memory_type     : string  := "XILINX_16X"; --ALTERA_LPM, or DUAL_PORT_
@@ -66,6 +68,7 @@ architecture Behavioral of plasma_axi4lite_modelsim is
 
 
     signal clk_50MHz   : std_logic;
+    signal sig_reset   : std_logic := '0';
 
     signal sig_awvalid : std_logic;
     signal sig_awready : std_logic;
@@ -102,7 +105,7 @@ begin
             pipeline_stages => 2)
         port map(
             aclk       => clk_50MHz,
-            areset     => reset_btn,
+            areset     => sig_reset,
             -- write address channel
             awvalid    => sig_awvalid,
             awready    => sig_awready,
@@ -131,7 +134,7 @@ begin
     ram_amba: ram_amba_128k
         port map(
             s_aclk        => clk_50MHz,
-            s_aresetn     => reset_btn,
+            s_aresetn     => sig_reset,
 
             s_axi_awvalid => sig_awvalid,
             s_axi_awready => sig_awready,
@@ -167,8 +170,12 @@ begin
 
     tb : process
     begin
+        sig_reset <= '1';
+        wait for 50 ns;
+        sig_reset <= '0';
+        wait for 500 ns;
 
-
+        finish(0);
     end process;
 
 end Behavioral;
