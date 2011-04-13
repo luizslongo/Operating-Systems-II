@@ -40,7 +40,7 @@ architecture Behavioral of plasma_axi4lite_testbench is
             rvalid     : in std_logic;
             rready     : out std_logic;
             rdata      : in std_logic_vector(31 downto 0);
-            rresp      : out std_logic_vector(1 downto 0));
+            rresp      : in std_logic_vector(1 downto 0));
     end component;
 
     component ram_amba_128k is
@@ -68,7 +68,7 @@ architecture Behavioral of plasma_axi4lite_testbench is
 
 
     signal clk_50MHz   : std_logic;
-    signal sig_reset   : std_logic := '0';
+    signal sig_reset   : std_logic;
 
     signal sig_awvalid : std_logic;
     signal sig_awready : std_logic;

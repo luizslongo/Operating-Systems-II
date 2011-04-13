@@ -27,7 +27,8 @@ vlog plasma_testbench.v
 
 #load/dump/run vhdl design
 vsim work.plasma_testbench
-#vcd file trace.vcd
-#vcd add -r -file trace.vcd /*
+vcd file trace.vcd
+vcd add -r -file trace.vcd /*
+
 run -all
-#vcd flush trace.vcd
+vcd flush trace.vcd

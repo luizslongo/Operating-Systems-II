@@ -28,10 +28,10 @@ module plasma_testbench;
        clk_c <= clk_c + 64'd1;
        
   // dump
-  initial begin
-      $dumpfile("trace.lxt");
-      $dumpvars(0,plasma_testbench);
-   end
+  //initial begin
+      //$dumpfile("trace.lxt");
+      //$dumpvars(0,plasma_testbench);
+   //end
    
    
    // Plasma ////////////////////////

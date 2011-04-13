@@ -92,11 +92,11 @@ begin
             reset_in     => areset,
             intr_in      => plasma_intr_in,
 
-            address_next => plasma_address_next,
-            byte_we_next => plasma_byte_we_next, 
+            address_next => plasma_address,
+            byte_we_next => plasma_byte_we, 
 
-            address      => plasma_address,
-            byte_we      => plasma_byte_we,
+            address      => plasma_address_next,
+            byte_we      => plasma_byte_we_next,
             data_w       => plasma_data_write,
             data_r       => plasma_data_read,
             mem_pause    => plasma_mem_pause_in);
@@ -106,7 +106,7 @@ begin
     awprot <= "000";
     arprot <= "000";
 
-    -- binding plasma interrupt to 0. What should we do with this?
+    -- binding plasma interrupt to 0. Externalize
     plasma_intr_in <= '0';
 
     -- plasma synch_ram signals
@@ -128,25 +128,9 @@ begin
         end if;
     end process;
 
-    state_decision: process(current_state, plasma_byte_we, arready,
-                            arready, rvalid, awready, wready, bvalid,
-                            plasma_address, rdata, plasma_data_write)
+    state_process: process(current_state, plasma_byte_we, arready, rvalid,
+                            awready, wready, bvalid)
     begin
-        -- all outputs LOW by default
-        -- awvalid             <= '0';
-        -- awaddr              <= ZERO_32BITS;
-        -- wvalid              <= '0';
-        wdata               <= ZERO_32BITS;
-        bready              <= '0';
-        arvalid             <= '0';
-        araddr              <= ZERO_32BITS;
-        rready              <= '0';
-        plasma_data_read    <= ZERO_32BITS;
-        plasma_mem_pause_in <= '0';
-
-        -- default (initial) state is READ_BEGIN
-        next_state <= READ_BEGIN;
-
         case current_state is
             when READ_BEGIN =>
                 if plasma_byte_we /= "0000" then
@@ -156,32 +140,16 @@ begin
                 else
                     next_state <= READ_BEGIN;
                 end if;
-                
-                arvalid <= '1';
-                araddr  <= plasma_address & "00";
-                -- all other channels LOW
-
-
+            
             when AR_READY =>
                 if rvalid = '1' then
                     next_state <= R_VALID;
                 else
                     next_state <= AR_READY;
                 end if;
-
-                arvalid             <= '0';
-                araddr              <= ZERO_32BITS;
-                plasma_mem_pause_in <= '1';
-                rready              <= '1';
-
-
+            
             when R_VALID =>
                 next_state <= READ_BEGIN;
-
-                plasma_mem_pause_in <= '1';
-                plasma_data_read    <= rdata;
-                rready              <= '0';
-
 
             when WRITE_BEGIN =>
                 if plasma_byte_we = "0000" then
@@ -192,23 +160,12 @@ begin
                     next_state <= WRITE_BEGIN;
                 end if;
 
-                awvalid <= '1';
-                awaddr  <= plasma_address & "00";
-                -- all other channels LOW
-
-
             when AW_READY =>
                 if wready = '1' then
                     next_state <= W_READY;
                 else
                     next_state <= AW_READY;
                 end if;
-
-                awvalid             <= '0';
-                awaddr              <= ZERO_32BITS;
-                plasma_mem_pause_in <= '1';
-                wvalid              <= '1';
-
 
             when W_READY =>
                 if bvalid = '1' then
@@ -217,18 +174,61 @@ begin
                     next_state <= W_READY;
                 end if;
 
+            when WR_VALID =>
+                next_state <= READ_BEGIN;
+        end case;
+    end process;
+
+    outputs_process: process(current_state)
+    begin
+        -- all outputs LOW by default
+        awvalid             <= '0';
+        awaddr              <= ZERO_32BITS;
+        wvalid              <= '0';
+        wdata               <= ZERO_32BITS;
+        bready              <= '0';
+        arvalid             <= '0';
+        araddr              <= ZERO_32BITS;
+        rready              <= '0';
+        plasma_data_read    <= ZERO_32BITS;
+        plasma_mem_pause_in <= '0';
+
+        case current_state is
+            when READ_BEGIN =>
+                plasma_mem_pause_in <= '0';
+                arvalid <= '1';
+                araddr  <= plasma_address & "00";
+
+            when AR_READY =>
+                arvalid             <= '0';
+                araddr              <= ZERO_32BITS;
+                plasma_mem_pause_in <= '1';
+                rready              <= '1';
+
+            when R_VALID =>
+                plasma_mem_pause_in <= '1';
+                plasma_data_read    <= rdata;
+                rready              <= '0';
+
+            when WRITE_BEGIN =>
+                awvalid <= '1';
+                awaddr  <= plasma_address & "00";
+                -- all other channels LOW
+
+            when AW_READY =>
+                awvalid             <= '0';
+                awaddr              <= ZERO_32BITS;
+                plasma_mem_pause_in <= '1';
+                wvalid              <= '1';
+
+            when W_READY =>
                 wvalid              <= '0';
                 plasma_mem_pause_in <= '1';
                 wdata               <= plasma_data_write;
                 bready              <= '1';
 
-
             when WR_VALID =>
-                -- this state is present just to allow the transmission of a write reponse
-                next_state <= READ_BEGIN;
-
                 plasma_mem_pause_in <= '1';
-
         end case;
     end process;
 
