@@ -13,7 +13,7 @@ __END_SYS
 __USING_SYS
 
 MC13224V_Battery::MC13224V_Battery()
- : _adc(8, 1)
+ : _adc()
 {
     db<MC13224V_Battery>(TRC) << "MC13224V_Battery::MC13224V_Battery()\n";
 }

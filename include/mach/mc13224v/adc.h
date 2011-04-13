@@ -10,41 +10,56 @@
 
 __BEGIN_SYS
 
-class MC13224V_ADC: public ADC_Common
+template<int unit> class MC13224V_ADC_Unit: public ADC_Common
 {
-private:
+protected:
     typedef IO_Map<Machine> IO;
     typedef TSC::Hertz Hertz;
     typedef ARM7::Reg8 Reg8;
     typedef ARM7::Reg16 Reg16;
     typedef ARM7::Reg32 Reg32;
+    typedef Traits<ADC> _Traits;
+ 
+    static const Hertz DEFAULT_FREQUENCY = Traits<Machine>::CLOCK>>9;
+    static const int shift = ((unit+1)%2); // 0 for unit 1, and 1 for unit 2
+    
+    enum {
+		OVERRIDE_ADC_UNIT_ON = 0x100 << shift,
+		OVERRIDE_ADC_OTHER_UNIT_ON = 0x300 >> shift,
+		CONTROL_MASTER_ON = 0x1,
+		MODE_OVERRIDE = 0x1,
+		
+		BATTERY_CHANNEL = 8
+	};
 
 public:
-    MC13224V_ADC() {
-		clock_divider(0x80);
-		prescale(0x17);
-		on_time(0xA);
-		convert_time(0x14);
-		mode(0x1);
-		override(0x300);
-		control(0x1);
-	}
-
-	MC13224V_ADC(unsigned char channel, Hertz frequency) {
-	// TODO: frequency is not being set here! Needs fixing.
-        clock_divider(0x80);
-        prescale(0xef); // 100 KHz
-        on_time(0xA);
-        convert_time(0x28);
-        mode(0x1);
-        override(0x100 | channel);
-        control(0x1);
-
+	MC13224V_ADC_Unit(unsigned char channel = SINGLE_ENDED_ADC0, 
+					  Hertz frequency = DEFAULT_FREQUENCY) {
+		// Must aways produce < or = 300000Hz
+        clock_divider(calculate_clock_divider(300000));
+        // Usually results 1000000Hz
+        prescale(calculate_prescale(1000000));
+        // ON TIME must be >= 10us
+        on_time(calculate_on_time(10));
+        // CONVERT TIME must be >= 20us, depends on prescale aready configured
+        convert_time(calculate_convert_time((double)1000000/(frequency)));
+        
+        // Setting the ADC to manual mode
+        mode(MODE_OVERRIDE);
+        
+        // Turning this unit on, setting this unit channel and 
+        // turning the master device on
+        turn_unit_on();
+        set_unit_channel(channel);
+        turn_master_on();
+		
+		// Will wait for stabilization. I don't know if it's
+		// really necessary, but we should wait >= ON TIME.
         unsigned int x = 16800;
-        while(x--); // will wait for stabilization
+        while(x--);
 	}
 
-	MC13224V_ADC(unsigned char channel, unsigned char reference,
+	MC13224V_ADC_Unit(unsigned char channel, unsigned char reference,
 		  unsigned char trigger, Hertz frequency) {
 	}
 
@@ -59,9 +74,9 @@ public:
 	int sample() {
 		return 0;
 	}
-
-	int get() {
-		return (ad1_result());	
+	
+	int get(){
+		return ad_result();
 	}
 
 	bool finished() {
@@ -73,8 +88,69 @@ public:
 
 	bool enable() { return true; }
 	void disable() {}
+	
+	bool power(_Traits::Power_Modes mode) {
+        switch(mode){
+            case _Traits::OFF:
+				override(override() & ~(OVERRIDE_ADC_UNIT_ON));
+				if(!(override() & OVERRIDE_ADC_OTHER_UNIT_ON)){
+					control(control() & ~CONTROL_MASTER_ON);
+				}
+				return true;
+            break;
+            case _Traits::LIGHT:
+            break;
+            case _Traits::STANDBY:
+            break;
+            case _Traits::FULL:
+				control(CONTROL_MASTER_ON);
+				override(override() | OVERRIDE_ADC_UNIT_ON);
+				//setup
+				return true;
+            break;
+        }
+        
+        return false;
+    }
+    
+    _Traits::Power_Modes power(){
+		if(override() & OVERRIDE_ADC_UNIT_ON){
+			return _Traits::FULL;
+		}
+		return _Traits::OFF;
+	}
 
 private:
+	
+	unsigned short calculate_clock_divider(Hertz adc_clock){
+		return ((double)Traits<Machine>::CLOCK/adc_clock);
+	}
+	
+	unsigned short calculate_prescale(Hertz adc_prescale_clock){
+		return ((double)Traits<Machine>::CLOCK/adc_prescale_clock) - 1;
+	}
+	
+	unsigned short calculate_on_time(unsigned int on_time){
+		return ((double)1/(Traits<Machine>::CLOCK/(prescale()+1)))*on_time*1000000;
+	}
+	
+	unsigned short calculate_convert_time(unsigned int convert_time){
+		return ((double)1/(Traits<Machine>::CLOCK/(prescale()+1)))*convert_time*1000000;
+	}
+
+	void turn_unit_on() {
+		override(override() | OVERRIDE_ADC_UNIT_ON);
+	}
+	
+	void set_unit_channel(unsigned char channel) {
+		override((override() & ~(0xF << shift*4)) | (channel << shift*4)); // clear and set
+	}
+	
+	void turn_master_on(){
+		// (control() | CONTRO_MASTER_ON) was breaking the samples
+		control(CONTROL_MASTER_ON);
+	}
+
 	static Reg16 clock_divider () { 
 		return ARM7::in16(IO::ADC_CLOCK_DIVIDER); 
 	}
@@ -124,25 +200,39 @@ private:
 		ARM7::out16(IO::ADC_CONTROL, value); 
 	}   
 
-	static Reg16 ad1_result () { 
-		return ARM7::in16(IO::ADC_AD1_RESULT); 
+	static Reg16 ad_result () { 
+		if(unit == 1)
+			return ARM7::in16(IO::ADC_AD1_RESULT); 
+		else
+			return ARM7::in16(IO::ADC_AD2_RESULT); 
 	}
-	static void ad1_result(Reg16 value) {
-		ARM7::out16(IO::ADC_AD1_RESULT, value); 
+	static void ad_result(Reg16 value) {
+		if(unit == 1)
+			ARM7::out16(IO::ADC_AD1_RESULT, value);
+		else
+			ARM7::out16(IO::ADC_AD2_RESULT, value);
 	}   
-
-	static Reg16 ad2_result () { 
-		return ARM7::in16(IO::ADC_AD2_RESULT); 
-	}
-	static void ad2_result(Reg16 value) {
-		ARM7::out16(IO::ADC_AD2_RESULT, value); 
-	}   
-
-private:
-	int _unit;
 };
+
+class MC13224V_ADC: public MC13224V_ADC_Unit<2>
+{
+public:
+	MC13224V_ADC(unsigned char channel, Hertz frequency): 
+		MC13224V_ADC_Unit<2>(channel, frequency) { }	
+};
+
+class MC13224V_Battery_ADC: public MC13224V_ADC_Unit<1>
+{
+public:
+	MC13224V_Battery_ADC(Hertz frequency): 
+		MC13224V_ADC_Unit<1>(BATTERY_CHANNEL, frequency) { }
+	MC13224V_Battery_ADC(): 
+		MC13224V_ADC_Unit<1>(BATTERY_CHANNEL, DEFAULT_FREQUENCY) { }
+};
+
 
 __END_SYS
 
 #endif
+
 

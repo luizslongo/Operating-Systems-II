@@ -34,22 +34,22 @@ template <> struct Traits<MC13224V_Battery>: public Traits<MC13224V_Common>
 
 template <> struct Traits<MC13224V_Timer_0>: public Traits<MC13224V_Common>
 {
-    static const int FREQUENCY = 20;
+    static const int FREQUENCY = 1000; // default system timer, in Hz
 };
 
 template <> struct Traits<MC13224V_Timer_1>: public Traits<MC13224V_Common>
 {
-	static const int FREQUENCY = 10;//24000000/128.0;;
+	static const int FREQUENCY = 100;
 };
 
 template <> struct Traits<MC13224V_Timer_2>: public Traits<MC13224V_Common>
 {
-	static const int FREQUENCY = 10;//24000000/128.0;
+	static const int FREQUENCY = 100;
 };
 
 template <> struct Traits<MC13224V_Timer_3>: public Traits<MC13224V_Common>
 {
-	static const int FREQUENCY = 10;//24000000/128.0;
+	static const int FREQUENCY = 100;
 };
 
 template <> struct Traits<MC13224V_RTC>: public Traits<MC13224V_Common>
@@ -69,6 +69,17 @@ template <> struct Traits<MC13224V_NIC>: public Traits<void>
     typedef LIST<MC13224V_Radio> NICS;
 
     static const unsigned int RADIO_UNITS = NICS::Count<MC13224V_Radio>::Result;
+};
+
+template <> struct Traits<MC13224V_ADC>: public Traits<void>
+{
+    enum Power_Modes
+    {
+        FULL        = 0,
+        LIGHT       = 1,
+        STANDBY     = 2,
+        OFF         = 3
+    };
 };
 
 __END_SYS

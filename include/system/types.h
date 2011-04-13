@@ -205,6 +205,7 @@ class ATMega16_ADC;
 class ATMega128_ADC;
 class ATMega1281_ADC;
 class MC13224V_ADC;
+class MC13224V_Battery_ADC;
 
 // Hardware Mediators - Battery
 class ATMega1281_Battery;

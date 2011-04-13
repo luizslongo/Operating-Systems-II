@@ -40,13 +40,6 @@ public:
 		UBRMOD =	0
 	};
 
-	enum {
-		FULL =		0,
-		LIGHT =		1,
-		STANDBY =	2,
-		OFF =		3
-	};
-
 	MC13224V_UART(unsigned int unit = 0) : _unit(unit) {
 		config(9600, 8, 0, 1);
 		func_sel();

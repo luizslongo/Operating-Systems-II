@@ -48,7 +48,7 @@ private:
     static const void battery_under_threshold_enable();
     static const void battery_under_threshold_disable();
 
-    ADC _adc;
+    MC13224V_Battery_ADC _adc;
     static MC13224V_Battery * system_battery;
 };
 

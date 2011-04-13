@@ -25,19 +25,20 @@ typedef ARM7		CPU;
 typedef ARM7_MMU	MMU;
 typedef ARM7_TSC	TSC;
 
-typedef MC13224V		    Machine;
-typedef MC13224V_IC		    IC;
-typedef MC13224V_Flash 		Flash;
-typedef MC13224V_Timer_0	Alarm_Timer;
-typedef MC13224V_Timer_1	Scheduler_Timer;
-typedef MC13224V_Timer_1    Timer_1;
-typedef Alarm_Timer		    Timer;
-typedef MC13224V_UART		UART;
-typedef Serial_Display		Display;
-typedef MC13224V_NIC		NIC;
-typedef MC13224V_ADC		ADC;
-typedef MC13224V_RTC        RTC;
-typedef MC13224V_Battery    Battery;
+typedef MC13224V		    	Machine;
+typedef MC13224V_IC		    	IC;
+typedef MC13224V_Flash 			Flash;
+typedef MC13224V_Timer_0		Alarm_Timer;
+typedef MC13224V_Timer_1		Scheduler_Timer;
+typedef MC13224V_Timer_1    	Timer_1;
+typedef Alarm_Timer		    	Timer;
+typedef MC13224V_UART			UART;
+typedef Serial_Display			Display;
+typedef MC13224V_NIC			NIC;
+typedef MC13224V_ADC			ADC;
+typedef MC13224V_Battery_ADC	Battery_ADC;
+typedef MC13224V_RTC        	RTC;
+typedef MC13224V_Battery    	Battery;
 
 
 __END_SYS
