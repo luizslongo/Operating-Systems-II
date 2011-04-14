@@ -30,20 +30,6 @@ vcom plasma_axi4lite_testbench.vhd
 vsim work.plasma_axi4lite_testbench
 vcd file trace.vcd
 
-
 vcd add -r -file trace.vcd /*
-
-#vcd add plasma_axi4lite_testbench/clk_50MHz
-#vcd add plasma_axi4lite_testbench/sig_reset
-
-#vcd add plasma_axi4lite_testbench/sig_arvalid
-#vcd add plasma_axi4lite_testbench/sig_arready
-#vcd add plasma_axi4lite_testbench/sig_araddr
-#vcd add plasma_axi4lite_testbench/sig_arprot
-
-#vcd add plasma_axi4lite_testbench/sig_rvalid
-#vcd add plasma_axi4lite_testbench/sig_rready
-#vcd add plasma_axi4lite_testbench/sig_rdata
-#vcd add plasma_axi4lite_testbench/sig_rresp
 
 run -all

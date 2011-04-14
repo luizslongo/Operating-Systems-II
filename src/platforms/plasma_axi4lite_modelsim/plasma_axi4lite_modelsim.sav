@@ -1,11 +1,17 @@
-[timestart] 0
-[size] 1440 846
-[pos] -1 -30
-*-7.000000 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
+[timestart] 417
+[size] 1680 999
+[pos] -1 -1
+*-6.000000 573 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
 [treeopen] plasma_axi4lite_testbench.
+[treeopen] plasma_axi4lite_testbench.plasma_amba.
 @28
 plasma_axi4lite_testbench.clk_50mhz
 plasma_axi4lite_testbench.sig_reset
+@c00029
+#{plasma_axi4lite_testbench.sig_intr} plasma_axi4lite_testbench.sig_intr
+@1401201
+-group_end
+@28
 plasma_axi4lite_testbench.sig_arvalid
 plasma_axi4lite_testbench.sig_arready
 @22
@@ -24,7 +30,9 @@ plasma_axi4lite_testbench.sig_awready
 @28
 plasma_axi4lite_testbench.sig_wvalid
 plasma_axi4lite_testbench.sig_wready
-@23
+@22
 #{plasma_axi4lite_testbench.sig_wdata[31:0]} plasma_axi4lite_testbench.sig_wdata[31] plasma_axi4lite_testbench.sig_wdata[30] plasma_axi4lite_testbench.sig_wdata[29] plasma_axi4lite_testbench.sig_wdata[28] plasma_axi4lite_testbench.sig_wdata[27] plasma_axi4lite_testbench.sig_wdata[26] plasma_axi4lite_testbench.sig_wdata[25] plasma_axi4lite_testbench.sig_wdata[24] plasma_axi4lite_testbench.sig_wdata[23] plasma_axi4lite_testbench.sig_wdata[22] plasma_axi4lite_testbench.sig_wdata[21] plasma_axi4lite_testbench.sig_wdata[20] plasma_axi4lite_testbench.sig_wdata[19] plasma_axi4lite_testbench.sig_wdata[18] plasma_axi4lite_testbench.sig_wdata[17] plasma_axi4lite_testbench.sig_wdata[16] plasma_axi4lite_testbench.sig_wdata[15] plasma_axi4lite_testbench.sig_wdata[14] plasma_axi4lite_testbench.sig_wdata[13] plasma_axi4lite_testbench.sig_wdata[12] plasma_axi4lite_testbench.sig_wdata[11] plasma_axi4lite_testbench.sig_wdata[10] plasma_axi4lite_testbench.sig_wdata[9] plasma_axi4lite_testbench.sig_wdata[8] plasma_axi4lite_testbench.sig_wdata[7] plasma_axi4lite_testbench.sig_wdata[6] plasma_axi4lite_testbench.sig_wdata[5] plasma_axi4lite_testbench.sig_wdata[4] plasma_axi4lite_testbench.sig_wdata[3] plasma_axi4lite_testbench.sig_wdata[2] plasma_axi4lite_testbench.sig_wdata[1] plasma_axi4lite_testbench.sig_wdata[0]
+@28
+plasma_axi4lite_testbench.plasma_amba.plasma_cpu.mem_pause
 [pattern_trace] 1
 [pattern_trace] 0

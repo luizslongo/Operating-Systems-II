@@ -181,7 +181,8 @@ begin
         sig_reset <= '0';
         wait for 60 ns;
         sig_reset <= '1';
-        wait for 500 ns;
+
+        wait for 20940 ns;
 
         finish(0);
     end process;

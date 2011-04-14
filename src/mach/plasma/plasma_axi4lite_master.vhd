@@ -76,7 +76,7 @@ architecture RTL of plasma_axi4lite_master is
     signal plasma_data_read     : std_logic_vector(31 downto 0);
     signal plasma_mem_pause_in  : std_logic;
 
-    type STATE_TYPE is (AFTER_RESET, READ_BEGIN, AR_READY, R_VALID, 
+    type STATE_TYPE is (RST1, RST2, READ_BEGIN, AR_READY, R_VALID, 
                         WRITE_BEGIN, AW_READY, W_READY, WR_VALID);
     signal current_state, next_state : STATE_TYPE;
 
@@ -122,7 +122,7 @@ begin
     state_change: process(aclk, areset)
     begin
         if areset = '0' then
-            current_state <= AFTER_RESET;
+            current_state <= RST1;
         elsif rising_edge(aclk) then
             current_state <= next_state;
         end if;
@@ -132,8 +132,8 @@ begin
                             awready, wready, bvalid)
     begin
         case current_state is
-            when AFTER_RESET =>
-                next_state <= READ_BEGIN;
+            when RST1 => next_state <= RST2;
+            when RST2 => next_state <= READ_BEGIN;
 
             when READ_BEGIN =>
                 if plasma_byte_we /= "0000" then
@@ -186,8 +186,7 @@ begin
                             plasma_address, plasma_data_write, rdata)
     begin
         if areset = '0' then
-            -- the master must drive these LOW during reset, see the manual:
-            -- AMBA AXI Protocol Specification section 11.1.2
+            -- must drive these LOW on reset, see: AXI Protocol Specification sec. 11.1.2
             arvalid <= '0';
             awvalid <= '0';
             wvalid  <= '0';
@@ -205,7 +204,8 @@ begin
             plasma_mem_pause_in <= '0';
 
             case current_state is
-                when AFTER_RESET =>
+                when RST1 => arvalid <= '0'; awvalid <= '0'; wvalid  <= '0';
+                when RST2 => arvalid <= '0'; awvalid <= '0'; wvalid  <= '0';
 
                 when READ_BEGIN =>
                     plasma_mem_pause_in <= '0';
@@ -214,7 +214,6 @@ begin
 
                 when AR_READY =>
                     arvalid             <= '0';
-                    araddr              <= ZERO_32BITS;
                     plasma_mem_pause_in <= '1';
                     rready              <= '1';
 
@@ -229,7 +228,6 @@ begin
 
                 when AW_READY =>
                     awvalid             <= '0';
-                    awaddr              <= ZERO_32BITS;
                     plasma_mem_pause_in <= '1';
                     wvalid              <= '1';
 

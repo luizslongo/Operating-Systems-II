@@ -1,7 +1,7 @@
 ##############################################################
 #
 # Xilinx Core Generator version 13.1
-# Date: Thu Apr 14 13:55:14 2011
+# Date: Thu Apr 14 19:06:36 2011
 #
 ##############################################################
 #
@@ -17,7 +17,7 @@ SET addpads = false
 SET asysymbol = false
 SET busformat = BusFormatAngleBracketNotRipped
 SET createndf = false
-SET designentry = Advanced
+SET designentry = Verilog
 SET device = xc6vlx240t
 SET devicefamily = virtex6
 SET flowvendor = Other
@@ -42,7 +42,7 @@ CSET axi_id_width=4
 CSET axi_slave_type=Memory_Slave
 CSET axi_type=AXI4_Lite
 CSET byte_size=8
-CSET coe_file=no_coe_file_loaded
+CSET coe_file=./ram_amba_128k.coe
 CSET collision_warnings=ALL
 CSET component_name=ram_amba_128k
 CSET disable_collision_warnings=false
@@ -52,9 +52,9 @@ CSET ecctype=No_ECC
 CSET enable_a=Use_ENA_Pin
 CSET enable_b=Use_ENB_Pin
 CSET error_injection_type=Single_Bit_Error_Injection
-CSET fill_remaining_memory_locations=false
+CSET fill_remaining_memory_locations=true
 CSET interface_type=AXI4
-CSET load_init_file=false
+CSET load_init_file=true
 CSET memory_type=Simple_Dual_Port_RAM
 CSET operating_mode_a=WRITE_FIRST
 CSET operating_mode_b=WRITE_FIRST
@@ -98,4 +98,4 @@ CSET write_width_b=32
 MISC pkg_timestamp=2011-02-03T22:20:43.000Z
 # END Extra information
 GENERATE
-# CRC: 52e49846
+# CRC: 32638ff1
