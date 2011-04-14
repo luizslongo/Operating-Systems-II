@@ -10,7 +10,7 @@
 
 __BEGIN_SYS
 
-template<typename NIC, typename Network>
+template<typename Link_Layer, typename Network_Layer>
 class ADHOP
 {
 public:
@@ -19,15 +19,16 @@ public:
     typedef unsigned long u32;
     typedef unsigned long long u64;
 
-    typedef typename Network::Address NetAddress;
-    typedef typename NIC::Address NicAddress;
+    typedef typename Network_Layer::Address Network_Address;
+    typedef typename Link_Layer::Address Link_Address;
+
     static const unsigned int INITIAL_PHEROMONE = 100;
     static const unsigned int TIMER_CHECK_ROUTING_TABLES = 5000000; // 5s
 
-    ADHOP(): seqNO_ITA(0), seqNO_ETA(0)
+    ADHOP(): seqNO(0)
     {}
 
-    void init(const NicAddress& pa)
+    void init(const Link_Address& pa)
     {
         my_address = pa;
     }
@@ -37,7 +38,6 @@ public:
         ETA = 1
     };
 
-private:
     class Ant
     {
     public:
@@ -45,13 +45,17 @@ private:
         u32 returning:1;
         u32 sequenceNO:14;
         u32 heuristic:16;
-        NicAddress neighbor;
+        Link_Address neighbor;
     } __attribute__((packed));
 
+private:
     class RTable_Neighbor
     {
     public:
-        RTable_Neighbor(const NetAddress& la, const NicAddress& pa): _link(this, INITIAL_PHEROMONE)
+        typedef List_Elements::Singly_Linked_Ordered<RTable_Neighbor, u16> Element;
+
+        RTable_Neighbor(const Network_Address& la, const Link_Address& pa):
+            _link(this, INITIAL_PHEROMONE)
         {
             this->restart();
             _destination_node = la;
@@ -72,72 +76,52 @@ private:
                 _link.rank( _link.rank() + (u16) (_link.rank() >> 1));
         }
 
-        bool match(const NetAddress& la) { return (la == _destination_node); }
-        bool match(const NetAddress& la, const NicAddress& pa)
+        bool match(const Network_Address& la) { return (la == _destination_node); }
+        bool match(const Network_Address& la, const Link_Address& pa)
         {
             return ((la == _destination_node) && (pa == _neighbor));
         }
 
-        bool verify(u16 seq, u8 type)
+        bool verify(u16 seq)
         {
-            switch(type) {
-                case ITA:
-                    if (seq > this->_seqNO_ITA) {
-                        this->_seqNO_ITA = seq;
-                        return true;
-                    } else {
-                        if (seq == 0) {
-                            this->restart();
-                        }
-                        return false;
-                    }
-                    break;
-                case ETA:
-                    if (seq > this->_seqNO_ETA) {
-                        this->_seqNO_ETA = seq;
-                        return true;
-                    } else {
-                        if (seq == 0) {
-                            this->restart();
-                        }
-                        return false;
-                    }
-                    break;
+            if (seq > this->_seqNO) {
+                this->_seqNO = seq;
+                return true;
+            } else {
+                if (seq == 0) {
+                    this->restart();
+                }
+                return false;
             }
             return false;
         }
 
-        typename List_Elements::Singly_Linked_Ordered<RTable_Neighbor, u16> _link;
-
     private:
         void restart()
         {
-            _seqNO_ITA = 0;
-            _seqNO_ETA = 0;
+            _seqNO = 0;
         }
 
-        u16 _seqNO_ITA:14;
-        u16 _seqNO_ETA:14;
+        u16 _seqNO:14;
     public:
-        NicAddress _neighbor;
-        NetAddress _destination_node;
+        Link_Address _neighbor;
+        Network_Address _destination_node;
+        Element _link;
     };
 
     class RTable_Neighbors:
-        Simple_List<RTable_Neighbor, List_Elements::Singly_Linked_Ordered<RTable_Neighbor, u16> >
+        Simple_List<RTable_Neighbor, typename RTable_Neighbor::Element>
     {
     private:
-        typedef Simple_List<RTable_Neighbor, List_Elements::Singly_Linked_Ordered<RTable_Neighbor, u16> > Base;
+        typedef Simple_List<RTable_Neighbor, typename RTable_Neighbor::Element> Base;
+        typedef typename Base::Object_Type Object_Type;
         typedef typename Base::Element Element;
 
     public:
-        RTable_Neighbors(const NetAddress& la, const NicAddress& pa): _link(this,la), Base()
-        {
-            RTable_Neighbor* neighbor = new(kmalloc(sizeof(RTable_Neighbor))) RTable_Neighbor(la, pa);
-            this->insert(&neighbor->_link);
-        }
+        RTable_Neighbors(): Base()
+        { }
 
-        ~RTable_Neighbors()
+        void clear()
         {
             while(Base::size()) {
                 Element* element = Base::remove();
@@ -184,7 +168,7 @@ private:
             }
         }
 
-        void update(const NetAddress& la, const NicAddress& pa, u16 heuristic)
+        void update(const Network_Address& la, const Link_Address& pa, u16 heuristic)
         {
             Element* element = search_entry(la, pa);
             if(element) {
@@ -192,110 +176,99 @@ private:
                 element->object()->update(heuristic);
                 this->insert(element);
             } else {
-                RTable_Neighbor* neighbor = new(kmalloc(sizeof(RTable_Neighbor))) RTable_Neighbor(la, pa);
+                Object_Type* neighbor =
+                    new(kmalloc(sizeof(Object_Type))) Object_Type(la, pa);
                 this->insert(&neighbor->_link);
             }
         }
 
-        Element* search_entry(const NetAddress& la, const NicAddress& pa)
+        Element* search_entry(const Network_Address& la, const Link_Address& pa)
         {
             Element * e;
             for(e = Base::head(); e && !e->object()->match(la, pa); e = e->next());
             return e;
         }
 
-        NicAddress search_address(const NetAddress& la)
+        Link_Address search_address(const Network_Address& la)
         {
             Element * e;
             for(e = Base::head(); e && !e->object()->match(la); e = e->next());
             if(e)
                 return e->object()->_neighbor;
             else
-                return NIC::BROADCAST;
+                return Link_Layer::BROADCAST;
         }
 
-        bool verify(const NetAddress& la, u16 seq, u8 type)
+        bool verify(const Network_Address& la, u16 seq)
         {
             Element * e;
             for(e = Base::head(); e && !e->object()->match(la); e = e->next());
             if(e)
-                return e->object()->verify(seq, type);
+                return e->object()->verify(seq);
             else
                 return true;
         }
-
-        typename Minimal_Hash<RTable_Neighbors, MAX_HASH>::Element _link;
     };
 
-    class RTable: Minimal_Hash<RTable_Neighbors, MAX_HASH>
+    class RTable:
+        Hash<RTable_Neighbor, MAX_HASH, int, typename RTable_Neighbor::Element, RTable_Neighbors>
     {
     private:
-        typedef Minimal_Hash<RTable_Neighbors, MAX_HASH> Base;
+        typedef
+            Hash<RTable_Neighbor, MAX_HASH, int, typename RTable_Neighbor::Element, RTable_Neighbors>
+            Base;
 
     public:
         typedef typename Base::Element Element;
+        typedef typename Base::List List;
 
-        RTable() {}
+        RTable() {
+            for(int i = 0; i < MAX_HASH; i++) {
+                List * list = (*this)[i]; 
+                kout << "list: " << list << "\n";
+            }
+        }
 
         ~RTable()
         {
             for(int i = 0; i < MAX_HASH; i++) {
-                NetAddress la((u8) i);
-                Element* element = Base::remove_key(la);
-                if(element)
-                    delete element->object();
+                List * list = (*this)[i]; 
+                list->clear();
             }
         }
 
         void update()
         {
             for(int i = 0; i < MAX_HASH; i++) {
-                NetAddress la((u8) i);
-                Element* element = Base::search_key(la);
-                if(element)
-                    element->object()->update();
+                List * list = (*this)[i]; 
+                list->update();
             }
         }
 
-        void update(const NetAddress& la, const NicAddress& pa, u16 heuristic = 0)
+        void update(const Network_Address& la, const Link_Address& pa, u16 heuristic = 0)
         {
-            Element * element = Base::search_key(la);
-            RTable_Neighbors * list;
-            if(element) {
-                list = element->object();
-                list->update(la, pa, heuristic);
-            } else {
-                list = new(kmalloc(sizeof(RTable_Neighbors))) RTable_Neighbors(la, pa);
-                Element* e = Base::insert(&list->_link);
-                if(e)
-                    delete e->object();
-            }
+            List * list = (*this)[la];
+            list->update(la, pa, heuristic);
         }
 
-        NicAddress search(const NetAddress& la)
+        Link_Address search(const Network_Address& la)
         {
-            Element * element = Base::search_key(la);
-            if(element)
-                return element->object()->search_address(la);
-            else
-                return NIC::BROADCAST;
+            List * list = (*this)[la];
+            return list->search_address(la);
         }
 
-        bool verify(const NetAddress& la, u16 seq, u8 type)
+        bool verify(const Network_Address& la, u16 seq)
         {
-            Element * element = Base::search_key(la);
-            if(element)
-                return element->object()->verify(la, seq, type);
-            else
-                return true;
+            List * list = (*this)[la];
+            return list->verify(la, seq);
         }
     };
 
 public:
-    bool update(const NetAddress& src, void* header)
+    bool update(const Network_Address& src, void* header)
     {
         Ant* ant = (Ant*) header;
-        if (rtable.verify(src, ant->sequenceNO, ant->type)) {
+        if (rtable.verify(src, ant->sequenceNO)) {
             rtable.update(src, ant->neighbor, ant->sequenceNO);
         }
         if (ant->type == ETA && ant->returning == 0)
@@ -306,27 +279,26 @@ public:
         return false;
     }
 
-    NicAddress decision(const NetAddress& dst, void* header)
+    Link_Address decision(const Network_Address& dst, void* header)
     {
         Ant* ant = (Ant*) header;
-        NicAddress nic_addr = rtable.search(dst);
-        if (nic_addr == NIC::BROADCAST) {
+        Link_Address nic_addr = rtable.search(dst);
+        if (nic_addr == Link_Layer::BROADCAST) {
             ant->type = ETA;
-            ant->sequenceNO = seqNO_ETA++;
         } else {
             ant->type = ITA;
-            ant->sequenceNO = seqNO_ITA++;
         }
+        ant->sequenceNO = seqNO++;
         ant->neighbor = my_address;
         ant->heuristic = 0;
         ant->returning = 0;
         return nic_addr;
     }
 
-    NicAddress decision(const NetAddress& src, const NetAddress& dst, void* header)
+    Link_Address decision(const Network_Address& src, const Network_Address& dst, void* header)
     {
         Ant* ant = (Ant*) header;
-        if (rtable.verify(src, ant->sequenceNO, ant->type)) {
+        if (rtable.verify(src, ant->sequenceNO)) {
             rtable.update(src, ant->neighbor, ant->sequenceNO);
             switch ((int) ant->type) {
                 case ITA:
@@ -334,41 +306,36 @@ public:
                 case ETA:
                     return receiving_ETA(src, dst, ant);
                 default:
-                    return NIC::BROADCAST;
+                    return Link_Layer::BROADCAST;
             }
         }
-        return NIC::BROADCAST;
-    }
-
-    static int ant_size() {
-        return sizeof(Ant);
+        return Link_Layer::BROADCAST;
     }
 
 private:
-    NicAddress receiving_ITA(const NetAddress& src, const NetAddress& dst, Ant* ant)
+    Link_Address receiving_ITA(const Network_Address& src, const Network_Address& dst, Ant* ant)
     {
         ant->neighbor = my_address;
         ant->heuristic = 0;
-        NicAddress neighbor = rtable.search(dst);
-        if (neighbor == NIC::BROADCAST) {
+        Link_Address neighbor = rtable.search(dst);
+        if (neighbor == Link_Layer::BROADCAST) {
             ant->type = ETA;
-            ant->sequenceNO = seqNO_ETA++;
-            return NIC::BROADCAST;
+            ant->sequenceNO = seqNO++;
+            return Link_Layer::BROADCAST;
         }
         return neighbor;
     }
 
-    NicAddress receiving_ETA(const NetAddress& src, const NetAddress& dst, Ant* ant)
+    Link_Address receiving_ETA(const Network_Address& src, const Network_Address& dst, Ant* ant)
     {
         ant->neighbor = my_address;
         ant->heuristic = 0;
         return rtable.search(dst);
     }
 
-    NicAddress my_address;
+    Link_Address my_address;
     RTable rtable;
-    u16 seqNO_ITA:14;
-    u16 seqNO_ETA:14;
+    u16 seqNO:14;
 };
 
 __END_SYS
