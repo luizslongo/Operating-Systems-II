@@ -35,7 +35,10 @@ entity plasma_axi4lite_master is
         rvalid     : in std_logic;
         rready     : out std_logic;
         rdata      : in std_logic_vector(31 downto 0);
-        rresp      : in std_logic_vector(1 downto 0));
+        rresp      : in std_logic_vector(1 downto 0);
+        
+        -- plasma cpu interrupt, externalized
+        intr       : in std_logic);
 end plasma_axi4lite_master;
 
 
@@ -62,10 +65,10 @@ architecture RTL of plasma_axi4lite_master is
             mem_pause    : in std_logic);
     end component;
 
+    signal plasma_reset         : std_logic;
 
     signal plasma_address_next  : std_logic_vector(31 downto 2);
     signal plasma_byte_we_next  : std_logic_vector(3 downto 0);
-    signal plasma_intr_in       : std_logic;
 
     signal plasma_address       : std_logic_vector(31 downto 2);
     signal plasma_byte_we       : std_logic_vector(3 downto 0);
@@ -73,7 +76,8 @@ architecture RTL of plasma_axi4lite_master is
     signal plasma_data_read     : std_logic_vector(31 downto 0);
     signal plasma_mem_pause_in  : std_logic;
 
-    type STATE_TYPE is (READ_BEGIN, AR_READY, R_VALID, WRITE_BEGIN, AW_READY, W_READY, WR_VALID);
+    type STATE_TYPE is (AFTER_RESET, READ_BEGIN, AR_READY, R_VALID, 
+                        WRITE_BEGIN, AW_READY, W_READY, WR_VALID);
     signal current_state, next_state : STATE_TYPE;
 
     constant ZERO_32BITS : std_logic_vector(31 downto 0) := "00000000000000000000000000000000";
@@ -89,14 +93,14 @@ begin
             pipeline_stages => pipeline_stages)
         port map(
             clk          => aclk,
-            reset_in     => areset,
-            intr_in      => plasma_intr_in,
+            reset_in     => plasma_reset,
+            intr_in      => intr,
 
-            address_next => plasma_address,
-            byte_we_next => plasma_byte_we, 
+            address_next => plasma_address_next,
+            byte_we_next => plasma_byte_we_next, 
 
-            address      => plasma_address_next,
-            byte_we      => plasma_byte_we_next,
+            address      => plasma_address,
+            byte_we      => plasma_byte_we,
             data_w       => plasma_data_write,
             data_r       => plasma_data_read,
             mem_pause    => plasma_mem_pause_in);
@@ -106,12 +110,8 @@ begin
     awprot <= "000";
     arprot <= "000";
 
-    -- binding plasma interrupt to 0. Externalize
-    plasma_intr_in <= '0';
-
-    -- plasma synch_ram signals
-    plasma_byte_we_next <= "0000";
-    plasma_address_next <= ZERO_32BITS(31 downto 2);
+    -- plasma reset is active HIGH while AXI is active LOW, damn!
+    plasma_reset <= not areset;
 
     -- write strobe, tied to plasma's byte_we
     wstrb <= plasma_byte_we;
@@ -121,8 +121,8 @@ begin
     -- and the outputs are all AXI4Lite channels
     state_change: process(aclk, areset)
     begin
-        if areset = '1' then
-            current_state <= READ_BEGIN;
+        if areset = '0' then
+            current_state <= AFTER_RESET;
         elsif rising_edge(aclk) then
             current_state <= next_state;
         end if;
@@ -132,6 +132,9 @@ begin
                             awready, wready, bvalid)
     begin
         case current_state is
+            when AFTER_RESET =>
+                next_state <= READ_BEGIN;
+
             when READ_BEGIN =>
                 if plasma_byte_we /= "0000" then
                     next_state <= WRITE_BEGIN;
@@ -179,57 +182,67 @@ begin
         end case;
     end process;
 
-    outputs_process: process(current_state)
+    outputs_process: process(areset, current_state,
+                            plasma_address, plasma_data_write, rdata)
     begin
-        -- all outputs LOW by default
-        awvalid             <= '0';
-        awaddr              <= ZERO_32BITS;
-        wvalid              <= '0';
-        wdata               <= ZERO_32BITS;
-        bready              <= '0';
-        arvalid             <= '0';
-        araddr              <= ZERO_32BITS;
-        rready              <= '0';
-        plasma_data_read    <= ZERO_32BITS;
-        plasma_mem_pause_in <= '0';
+        if areset = '0' then
+            -- the master must drive these LOW during reset, see the manual:
+            -- AMBA AXI Protocol Specification section 11.1.2
+            arvalid <= '0';
+            awvalid <= '0';
+            wvalid  <= '0';
+        else
+            -- all outputs LOW by default
+            awvalid             <= '0';
+            awaddr              <= ZERO_32BITS;
+            wvalid              <= '0';
+            wdata               <= ZERO_32BITS;
+            bready              <= '0';
+            arvalid             <= '0';
+            araddr              <= ZERO_32BITS;
+            rready              <= '0';
+            plasma_data_read    <= ZERO_32BITS;
+            plasma_mem_pause_in <= '0';
 
-        case current_state is
-            when READ_BEGIN =>
-                plasma_mem_pause_in <= '0';
-                arvalid <= '1';
-                araddr  <= plasma_address & "00";
+            case current_state is
+                when AFTER_RESET =>
 
-            when AR_READY =>
-                arvalid             <= '0';
-                araddr              <= ZERO_32BITS;
-                plasma_mem_pause_in <= '1';
-                rready              <= '1';
+                when READ_BEGIN =>
+                    plasma_mem_pause_in <= '0';
+                    arvalid <= '1';
+                    araddr  <= plasma_address & "00";
 
-            when R_VALID =>
-                plasma_mem_pause_in <= '1';
-                plasma_data_read    <= rdata;
-                rready              <= '0';
+                when AR_READY =>
+                    arvalid             <= '0';
+                    araddr              <= ZERO_32BITS;
+                    plasma_mem_pause_in <= '1';
+                    rready              <= '1';
 
-            when WRITE_BEGIN =>
-                awvalid <= '1';
-                awaddr  <= plasma_address & "00";
-                -- all other channels LOW
+                when R_VALID =>
+                    plasma_mem_pause_in <= '1';
+                    plasma_data_read    <= rdata;
+                    rready              <= '0';
 
-            when AW_READY =>
-                awvalid             <= '0';
-                awaddr              <= ZERO_32BITS;
-                plasma_mem_pause_in <= '1';
-                wvalid              <= '1';
+                when WRITE_BEGIN =>
+                    awvalid <= '1';
+                    awaddr  <= plasma_address & "00";
 
-            when W_READY =>
-                wvalid              <= '0';
-                plasma_mem_pause_in <= '1';
-                wdata               <= plasma_data_write;
-                bready              <= '1';
+                when AW_READY =>
+                    awvalid             <= '0';
+                    awaddr              <= ZERO_32BITS;
+                    plasma_mem_pause_in <= '1';
+                    wvalid              <= '1';
 
-            when WR_VALID =>
-                plasma_mem_pause_in <= '1';
-        end case;
+                when W_READY =>
+                    wvalid              <= '0';
+                    plasma_mem_pause_in <= '1';
+                    wdata               <= plasma_data_write;
+                    bready              <= '1';
+
+                when WR_VALID =>
+                    plasma_mem_pause_in <= '1';
+            end case;
+        end if;
     end process;
 
 end RTL;

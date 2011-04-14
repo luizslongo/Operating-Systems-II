@@ -84,6 +84,7 @@ architecture Behavioral of plasma_axi4lite_ml605 is
 
     signal clk_100MHz  : std_logic;
     signal clk_50MHz   : std_logic;
+    signal sig_reset   : std_logic;
 
     signal sig_awvalid : std_logic;
     signal sig_awready : std_logic;
@@ -111,6 +112,9 @@ architecture Behavioral of plasma_axi4lite_ml605 is
 
 begin
 
+    -- AXI reset is active-LOW
+    sig_reset <= not reset_btn;
+
     clock_manager: clk_xlnx_100M_diff
         port map(
             CLK_IN1_P => clk_fpga_p,
@@ -127,7 +131,7 @@ begin
             pipeline_stages => 2)
         port map(
             aclk       => clk_50MHz,
-            areset     => reset_btn,
+            areset     => sig_reset,
             -- write address channel
             awvalid    => sig_awvalid,
             awready    => sig_awready,
@@ -156,7 +160,7 @@ begin
     ram_amba: ram_amba_128k
         port map(
             s_aclk        => clk_50MHz,
-            s_aresetn     => reset_btn,
+            s_aresetn     => sig_reset,
 
             s_axi_awvalid => sig_awvalid,
             s_axi_awready => sig_awready,

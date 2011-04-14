@@ -40,7 +40,10 @@ architecture Behavioral of plasma_axi4lite_testbench is
             rvalid     : in std_logic;
             rready     : out std_logic;
             rdata      : in std_logic_vector(31 downto 0);
-            rresp      : in std_logic_vector(1 downto 0));
+            rresp      : in std_logic_vector(1 downto 0);
+
+            -- plasma cpu interrupt, externalized
+            intr       : in std_logic);
     end component;
 
     component ram_amba_128k is
@@ -69,6 +72,7 @@ architecture Behavioral of plasma_axi4lite_testbench is
 
     signal clk_50MHz   : std_logic;
     signal sig_reset   : std_logic;
+    signal sig_intr    : std_logic;
 
     signal sig_awvalid : std_logic;
     signal sig_awready : std_logic;
@@ -129,7 +133,9 @@ begin
             rvalid     => sig_rvalid,
             rready     => sig_rready,
             rdata      => sig_rdata,
-            rresp      => sig_rresp);
+            rresp      => sig_rresp,
+        
+            intr       => sig_intr);
 
     ram_amba: ram_amba_128k
         port map(
@@ -167,11 +173,14 @@ begin
     end process;
 
 
+    -- do not interrupt the CPU
+    sig_intr <= '0';
+
     tb : process
     begin
-        sig_reset <= '1';
-        wait for 50 ns;
         sig_reset <= '0';
+        wait for 60 ns;
+        sig_reset <= '1';
         wait for 500 ns;
 
         finish(0);
