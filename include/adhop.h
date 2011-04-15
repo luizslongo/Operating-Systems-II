@@ -119,7 +119,7 @@ private:
 
     public:
         RTable_Neighbors(): Base()
-        { }
+        {}
 
         void clear()
         {
@@ -222,12 +222,8 @@ private:
         typedef typename Base::Element Element;
         typedef typename Base::List List;
 
-        RTable() {
-            for(int i = 0; i < MAX_HASH; i++) {
-                List * list = (*this)[i]; 
-                kout << "list: " << list << "\n";
-            }
-        }
+        RTable()
+        {}
 
         ~RTable()
         {
