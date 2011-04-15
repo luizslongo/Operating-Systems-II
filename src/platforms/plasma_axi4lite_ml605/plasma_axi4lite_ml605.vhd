@@ -23,7 +23,7 @@ architecture Behavioral of plasma_axi4lite_ml605 is
 
     component plasma_axi4lite_master is
         generic(
-            memory_type     : string  := "XILINX_16X"; --ALTERA_LPM, or DUAL_PORT_
+            memory_type     : string  := "XILINX_16X";
             mult_type       : string  := "DEFAULT"; --AREA_OPTIMIZED
             shifter_type    : string  := "DEFAULT"; --AREA_OPTIMIZED
             alu_type        : string  := "DEFAULT"; --AREA_OPTIMIZED
@@ -54,7 +54,10 @@ architecture Behavioral of plasma_axi4lite_ml605 is
             rvalid     : in std_logic;
             rready     : out std_logic;
             rdata      : in std_logic_vector(31 downto 0);
-            rresp      : in std_logic_vector(1 downto 0));
+            rresp      : in std_logic_vector(1 downto 0);
+
+            -- plasma cpu interrupt, externalized
+            intr       : in std_logic);
     end component;
 
     -- include here the amba ram generated with coregen
@@ -85,6 +88,7 @@ architecture Behavioral of plasma_axi4lite_ml605 is
     signal clk_100MHz  : std_logic;
     signal clk_50MHz   : std_logic;
     signal sig_reset   : std_logic;
+    signal sig_intr    : std_logic;
 
     signal sig_awvalid : std_logic;
     signal sig_awready : std_logic;
@@ -114,6 +118,9 @@ begin
 
     -- AXI reset is active-LOW
     sig_reset <= not reset_btn;
+
+    -- do not interrupt the processor
+    sig_intr <= '0';
 
     clock_manager: clk_xlnx_100M_diff
         port map(
@@ -155,7 +162,8 @@ begin
             rvalid     => sig_rvalid,
             rready     => sig_rready,
             rdata      => sig_rdata,
-            rresp      => sig_rresp);
+            rresp      => sig_rresp,
+            intr       => sig_intr);
 
     ram_amba: ram_amba_128k
         port map(

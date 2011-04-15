@@ -4,7 +4,7 @@ use ieee.std_logic_1164.all;
 
 entity plasma_axi4lite_master is
     generic(
-        memory_type     : string  := "XILINX_16X"; --ALTERA_LPM, or DUAL_PORT_
+        memory_type     : string  := "XILINX_16X";
         mult_type       : string  := "DEFAULT"; --AREA_OPTIMIZED
         shifter_type    : string  := "DEFAULT"; --AREA_OPTIMIZED
         alu_type        : string  := "DEFAULT"; --AREA_OPTIMIZED
@@ -192,15 +192,12 @@ begin
             wvalid  <= '0';
         else
             -- all outputs LOW by default
-            awvalid             <= '0';
-            awaddr              <= ZERO_32BITS;
-            wvalid              <= '0';
-            wdata               <= ZERO_32BITS;
-            bready              <= '0';
-            arvalid             <= '0';
-            araddr              <= ZERO_32BITS;
-            rready              <= '0';
-            plasma_data_read    <= ZERO_32BITS;
+            awvalid <= '0'; awaddr <= ZERO_32BITS;
+            wvalid  <= '0'; wdata  <= ZERO_32BITS;
+            bready  <= '0';
+            arvalid <= '0'; araddr <= ZERO_32BITS;
+            rready  <= '0';
+            plasma_data_read <= ZERO_32BITS;
             plasma_mem_pause_in <= '0';
 
             case current_state is

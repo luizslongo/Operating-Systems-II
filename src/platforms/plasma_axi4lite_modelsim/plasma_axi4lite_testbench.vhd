@@ -9,10 +9,10 @@ end plasma_axi4lite_testbench;
 architecture Behavioral of plasma_axi4lite_testbench is
     component plasma_axi4lite_master is
         generic(
-            memory_type     : string  := "XILINX_16X"; --ALTERA_LPM, or DUAL_PORT_
-            mult_type       : string  := "DEFAULT"; --AREA_OPTIMIZED
-            shifter_type    : string  := "DEFAULT"; --AREA_OPTIMIZED
-            alu_type        : string  := "DEFAULT"; --AREA_OPTIMIZED
+            memory_type     : string  := "XILINX_16X";
+            mult_type       : string  := "DEFAULT";
+            shifter_type    : string  := "DEFAULT";
+            alu_type        : string  := "DEFAULT";
             pipeline_stages : natural := 2); --2 or 3
         port(
             aclk       : in std_logic;
