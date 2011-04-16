@@ -44,7 +44,7 @@ endif
 
 CFLAGS = -O2 -Wall -c -s 
 
-all: convert_bin.exe tracehex.exe bintohex.exe ram_image.exe
+all: convert_bin.exe bintohex.exe ram_image.exe
 	@echo make targets = count, opcodes, pi, test, run, tohex,\
 	bootldr, toimage, eterm
 	
@@ -60,9 +60,6 @@ convert_le.exe: convert.c
 
 mlite.exe: mlite.c
 	@$(CC_X86) -o mlite.exe mlite.c $(DWIN32)
-
-tracehex.exe: tracehex.c
-	@$(CC_X86) -o tracehex.exe tracehex.c
 
 bintohex.exe: bintohex.c
 	@$(CC_X86) -o bintohex.exe bintohex.c
@@ -128,6 +125,14 @@ mem_test:
 	$(GCC_MIPS) no_os.c 
 	$(LD_MIPS) -Ttext 0 -eentry -Map test.map -s -N -o test.axf \
 		boot.o mem_test.o no_os.o 
+	-$(DUMP_MIPS) --disassemble test.axf > test.lst
+	$(CONVERT_BIN)
+
+amba_test:
+	$(AS_MIPS) -o boot.o boot.asm
+	$(GCC_MIPS) amba_test.c
+	$(LD_MIPS) -Ttext 0 -eentry -Map test.map -s -N -o test.axf \
+		boot.o amba_test.o
 	-$(DUMP_MIPS) --disassemble test.axf > test.lst
 	$(CONVERT_BIN)
 	
@@ -291,5 +296,4 @@ tohex: bintohex.exe
 # Used by Xilinx FPGAs for ram image
 toimage:
 	$(LINUX_PWD)ram_image.exe ../../src/mach/plasma/ram_xilinx.vhd code.txt ../../src/mach/plasma/ram_image.vhd
-
 

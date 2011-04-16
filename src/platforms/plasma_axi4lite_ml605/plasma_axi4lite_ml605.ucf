@@ -21,10 +21,10 @@
 #NET "gpio_sws[6]"      LOC = "K22";    ## 7   on SW1 DIP switch (active-high)
 #NET "gpio_sws[7]"      LOC = "K21";    ## 8   on SW1 DIP switch (active-high)
 
-#NET "dir_leds[4]"      LOC = "AP24";   ## 2   on LED DS16
-#NET "dir_leds[3]"      LOC = "AE21";   ## 2   on LED DS19
-#NET "dir_leds[2]"      LOC = "AH27";   ## 2   on LED DS20
-#NET "dir_leds[1]"      LOC = "AH28";   ## 2   on LED DS18
+NET "amba_arvalid"      LOC = "AP24";   ## 2   on LED DS16
+NET "amba_arready"      LOC = "AE21";   ## 2   on LED DS19
+NET "amba_rready"       LOC = "AH27";   ## 2   on LED DS20
+NET "amba_rvalid"       LOC = "AH28";   ## 2   on LED DS18
 #NET "dir_leds[0]"      LOC = "AD21";   ## 2   on LED DS17
 
 NET "reset_btn"         LOC = "G26";    ## 2   on SW9 pushbutton (active-high)

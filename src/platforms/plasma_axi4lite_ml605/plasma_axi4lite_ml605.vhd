@@ -3,13 +3,15 @@ use ieee.std_logic_1164.all;
 
 entity plasma_axi4lite_ml605 is
     Port(
-        -- we have no other ports now, but we should add some way
-        -- (an output) of inspecting the system...
-        -- perhaps an AMBA-connected uart controller
         reset_btn    : in std_logic;
         
         clk_fpga_p   : in std_logic;
-        clk_fpga_n   : in std_logic);
+        clk_fpga_n   : in std_logic;
+
+        amba_arvalid : out std_logic;
+        amba_arready : out std_logic;
+        amba_rready  : out std_logic;
+        amba_rvalid  : out std_logic);
 end plasma_axi4lite_ml605;
 
 architecture Behavioral of plasma_axi4lite_ml605 is
@@ -116,6 +118,11 @@ architecture Behavioral of plasma_axi4lite_ml605 is
 
 begin
 
+    amba_arvalid <= sig_arvalid;
+    amba_arready <= sig_arready;
+    amba_rready  <= sig_rready;
+    amba_rvalid  <= sig_rvalid;
+    
     -- AXI reset is active-LOW
     sig_reset <= not reset_btn;
 

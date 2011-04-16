@@ -78,7 +78,7 @@ architecture RTL of plasma_axi4lite_master is
 
     type STATE_TYPE is (RST1, RST2, READ_BEGIN, AR_READY, R_VALID, 
                         WRITE_BEGIN, AW_READY, W_READY, WR_VALID);
-    signal current_state, next_state : STATE_TYPE;
+    signal state : STATE_TYPE;
 
     constant ZERO_32BITS : std_logic_vector(31 downto 0) := "00000000000000000000000000000000";
 
@@ -119,78 +119,17 @@ begin
 
     -- Moore machine, the inputs are Plasma's external memory signals
     -- and the outputs are all AXI4Lite channels
-    state_change: process(aclk, areset)
+    fsm_proc: process(aclk, areset)
     begin
         if areset = '0' then
-            current_state <= RST1;
-        elsif rising_edge(aclk) then
-            current_state <= next_state;
-        end if;
-    end process;
+            state <= RST1;
 
-    state_process: process(current_state, plasma_byte_we, arready, rvalid,
-                            awready, wready, bvalid)
-    begin
-        case current_state is
-            when RST1 => next_state <= RST2;
-            when RST2 => next_state <= READ_BEGIN;
-
-            when READ_BEGIN =>
-                if plasma_byte_we /= "0000" then
-                    next_state <= WRITE_BEGIN;
-                elsif arready = '1' then
-                    next_state <= AR_READY;
-                else
-                    next_state <= READ_BEGIN;
-                end if;
-            
-            when AR_READY =>
-                if rvalid = '1' then
-                    next_state <= R_VALID;
-                else
-                    next_state <= AR_READY;
-                end if;
-            
-            when R_VALID =>
-                next_state <= READ_BEGIN;
-
-            when WRITE_BEGIN =>
-                if plasma_byte_we = "0000" then
-                    next_state <= READ_BEGIN;
-                elsif awready = '1' then
-                    next_state <= AW_READY;
-                else
-                    next_state <= WRITE_BEGIN;
-                end if;
-
-            when AW_READY =>
-                if wready = '1' then
-                    next_state <= W_READY;
-                else
-                    next_state <= AW_READY;
-                end if;
-
-            when W_READY =>
-                if bvalid = '1' then
-                    next_state <= WR_VALID;
-                else
-                    next_state <= W_READY;
-                end if;
-
-            when WR_VALID =>
-                next_state <= READ_BEGIN;
-        end case;
-    end process;
-
-    outputs_process: process(areset, current_state,
-                            plasma_address, plasma_data_write, rdata)
-    begin
-        if areset = '0' then
-            -- must drive these LOW on reset, see: AXI Protocol Specification sec. 11.1.2
+            -- must drive these LOW on reset (AXI Protocol Specification sec. 11.1.2)
             arvalid <= '0';
             awvalid <= '0';
             wvalid  <= '0';
-        else
+
+        elsif rising_edge(aclk) then
             -- all outputs LOW by default
             awvalid <= '0'; awaddr <= ZERO_32BITS;
             wvalid  <= '0'; wdata  <= ZERO_32BITS;
@@ -200,41 +139,77 @@ begin
             plasma_data_read <= ZERO_32BITS;
             plasma_mem_pause_in <= '0';
 
-            case current_state is
-                when RST1 => arvalid <= '0'; awvalid <= '0'; wvalid  <= '0';
-                when RST2 => arvalid <= '0'; awvalid <= '0'; wvalid  <= '0';
+            case state is
+                when RST1 =>
+                    state <= RST2;
+                    arvalid <= '0'; awvalid <= '0'; wvalid  <= '0';
+
+                when RST2 =>
+                    state <= READ_BEGIN;
+                    arvalid <= '0'; awvalid <= '0'; wvalid  <= '0';
 
                 when READ_BEGIN =>
+                    if plasma_byte_we /= "0000" then
+                        state <= WRITE_BEGIN;
+                    elsif arready = '1' then
+                        state <= AR_READY;
+                    else
+                        state <= READ_BEGIN;
+                    end if;
                     plasma_mem_pause_in <= '0';
                     arvalid <= '1';
                     araddr  <= plasma_address & "00";
-
+                
                 when AR_READY =>
+                    if rvalid = '1' then
+                        state <= R_VALID;
+                    else
+                        state <= AR_READY;
+                    end if;
                     arvalid             <= '0';
                     plasma_mem_pause_in <= '1';
                     rready              <= '1';
-
+                
                 when R_VALID =>
+                    state <= READ_BEGIN;
                     plasma_mem_pause_in <= '1';
                     plasma_data_read    <= rdata;
                     rready              <= '0';
 
                 when WRITE_BEGIN =>
+                    if plasma_byte_we = "0000" then
+                        state <= READ_BEGIN;
+                    elsif awready = '1' then
+                        state <= AW_READY;
+                    else
+                        state <= WRITE_BEGIN;
+                    end if;
                     awvalid <= '1';
                     awaddr  <= plasma_address & "00";
 
                 when AW_READY =>
+                    if wready = '1' then
+                        state <= W_READY;
+                    else
+                        state <= AW_READY;
+                    end if;
                     awvalid             <= '0';
                     plasma_mem_pause_in <= '1';
                     wvalid              <= '1';
 
                 when W_READY =>
+                    if bvalid = '1' then
+                        state <= WR_VALID;
+                    else
+                        state <= W_READY;
+                    end if;
                     wvalid              <= '0';
                     plasma_mem_pause_in <= '1';
                     wdata               <= plasma_data_write;
                     bready              <= '1';
 
                 when WR_VALID =>
+                    state <= READ_BEGIN;
                     plasma_mem_pause_in <= '1';
             end case;
         end if;
