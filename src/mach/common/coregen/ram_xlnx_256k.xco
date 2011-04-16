@@ -29,7 +29,7 @@ SET removerpms = false
 SET simulationfiles = Behavioral
 SET speedgrade = -1
 SET verilogsim = true
-SET vhdlsim = false
+SET vhdlsim = true
 # END Project Options
 # BEGIN Select
 SELECT Block_Memory_Generator xilinx.com:ip:blk_mem_gen:6.1

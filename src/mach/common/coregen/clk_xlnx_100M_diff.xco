@@ -1,7 +1,7 @@
 ##############################################################
 #
 # Xilinx Core Generator version 13.1
-# Date: Sat Apr 16 12:22:55 2011
+# Date: Sat Apr 16 14:01:26 2011
 #
 ##############################################################
 #
@@ -29,7 +29,7 @@ SET removerpms = false
 SET simulationfiles = Behavioral
 SET speedgrade = -1
 SET verilogsim = true
-SET vhdlsim = false
+SET vhdlsim = true
 # END Project Options
 # BEGIN Select
 SELECT Clocking_Wizard family Xilinx,_Inc. 3.1
@@ -253,4 +253,4 @@ CSET use_spread_spectrum=false
 CSET use_status=false
 # END Parameters
 GENERATE
-# CRC: ffcb0576
+# CRC: 9326535e
