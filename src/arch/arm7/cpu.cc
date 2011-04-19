@@ -13,10 +13,12 @@ void ARM7::Context::load() const volatile
 {
 	db<CPU>(TRC) << "CPU::Context::load(this=" << (void*)this << ")\n";
 
-	ASMV("ldmfd %0, {r0-r12,lr,pc,sp}\n"
+	ASMV("ldr r0, [%0, #64]\n"
+         "msr spsr_cfsx, r0\n"
+         "ldmfd %0, {r0-r12,lr,pc,sp}^\n"
 		 :
 		 : "r" (this)
-		 :);
+		 : "r0");
 }
 
 
