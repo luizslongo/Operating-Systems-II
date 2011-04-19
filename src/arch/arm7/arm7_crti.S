@@ -66,7 +66,6 @@ reset:
 
 _start:
 	.equ STACK_ADDRESS,		0x00418000 /* should be a symbol */
-	.equ IRQ_STACK_SIZE,	(3*8*4)
 	.equ ARM_MODE_USR,		0x10
 	.equ ARM_MODE_IFQ,		0x11
 	.equ ARM_MODE_IRQ,		0x12
@@ -77,15 +76,16 @@ _start:
 
 	.set _rom_data_init, 0x108d0
 
-	/* Defining special stacks... */
+	/* Basically, EPOS for ARM7 runs just over the
+     * Supervisor mode (SVC). We set it in the program
+     * status register, turn off the interrupts and
+     * build a temporary stack, that will be used by
+     * the C++ global constructors.
+     */
 
-	ldr r0, =STACK_ADDRESS
-	msr cpsr_c, #ARM_MODE_IRQ | IRQ_BIT | IFQ_BIT
-	mov sp, r0
-
-	/*sub r0, r0, #IRQ_STACK_SIZE
+    ldr r0, =STACK_ADDRESS
 	msr cpsr_c, #ARM_MODE_SVC | IRQ_BIT | IFQ_BIT
-	mov sp, r0*/
+	mov sp, r0
 
 	/* Cleaning the bss section */
 
@@ -115,15 +115,15 @@ _start:
 
 	ctors_loop_end:
 
-	/* Initialize ROM variables */
-	ldr r12, =_rom_data_init
-	mov lr, pc
-	mov pc, r12
+    /* This piece of code should not be reachable
+     * when Thread::enabled = true. In this case,
+     * the main thread context should be loaded
+     * in the last constructor.
+     */
 
-	/* Calling main! */
-	ldr lr, =exit
-	ldr r0, =main
-	bx r0
+    ldr lr, =exit
+    ldr r0, =main
+    mov pc, r0
 
 exit:
 	b exit
