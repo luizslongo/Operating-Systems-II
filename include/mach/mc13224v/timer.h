@@ -179,6 +179,8 @@ public:
 		MC13224V_Timer(1000000/quantum, handler, TIMER2){}
 };
 
+//Obs: MC13224V_Timer_3 is being used by the TSC
+//TODO: Timer_3 source should be the 32kHz crystal, so TSC would have a good resolution
 class MC13224V_Timer_3: public MC13224V_Timer{
 public:
 	static const unsigned int FREQUENCY = Traits<MC13224V_Timer_3>::FREQUENCY;
