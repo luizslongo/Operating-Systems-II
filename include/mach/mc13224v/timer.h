@@ -103,29 +103,7 @@ public:
 
 protected:
 
-	static void handler_wrapper(){
-		Reg16 r;
-		if((r = CPU::in16(IO::TIMER0_CSCTRL)) & 0x0010){
-			CPU::out16(IO::TIMER0_CSCTRL, r & ~0x0010); 
-			handlers[TIMER0]();
-			return;
-		}
-		if((r = CPU::in16(IO::TIMER1_CSCTRL)) & 0x0010){
-			CPU::out16(IO::TIMER1_CSCTRL, r & ~0x0010);
-			handlers[TIMER1]();
-			return;
-		}
-		if((r = CPU::in16(IO::TIMER2_CSCTRL)) & 0x0010){
-			CPU::out16(IO::TIMER2_CSCTRL, r & ~0x0010);
-			handlers[TIMER2]();
-			return;
-		}
-		if((r = CPU::in16(IO::TIMER3_CSCTRL)) & 0x0010){
-			CPU::out16(IO::TIMER3_CSCTRL, r & ~0x0010);
-			handlers[TIMER3]();
-			return;
-		}
-	}
+	static void handler_wrapper();
 
     static Hertz count2freq(const Count & c) { 
 		// Using 128 as divisor in TIMERN_CTRL
