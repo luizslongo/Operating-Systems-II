@@ -1,8 +1,11 @@
 // EPOS-- ARM7 CPU Mediator Implementation
 
 #include <arch/arm7/cpu.h>
+#include <machine.h>
 
 __BEGIN_SYS
+
+ARM7::OP_Mode ARM7::_mode = ARM7::FULL;
 
 void ARM7::Context::save() volatile
 {
@@ -40,6 +43,26 @@ void ARM7::switch_context(Context * volatile * o, Context * volatile n)
         );
 }
 
+
+void ARM7::power(ARM7::OP_Mode mode)
+{
+    if (mode == _mode) return;
+    mode = _mode;
+
+    switch(mode)
+    {
+    case OFF: halt(); break;
+    case HIBERNATE:
+        out32(Machine::IO::CRM_SLEEP_CNTL, in32(Machine::IO::CRM_SLEEP_CNTL) | 0x1);
+        break;
+    case DOZE:
+        out32(Machine::IO::CRM_SLEEP_CNTL, in32(Machine::IO::CRM_SLEEP_CNTL) | 0x2);
+        break;
+    case FULL:
+    default:
+        break;
+    }
+}
 
 __END_SYS
 
