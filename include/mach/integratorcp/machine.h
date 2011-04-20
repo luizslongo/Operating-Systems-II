@@ -1,0 +1,51 @@
+#ifndef __integrator_machine_h
+#define __integrator_machine_h
+
+#include <machine.h>
+#include <cpu.h>
+#include <mmu.h>
+#include <tsc.h>
+#include <utility/string.h>
+
+__BEGIN_SYS
+
+class IntegratorCP: public Machine_Common
+{
+    static const unsigned long CM_CTRL = 0x1000000C;
+public:
+    IntegratorCP() {}
+
+    static unsigned int cpu_id() { return 0; }
+    static unsigned int n_cpus() { return 1; }
+
+    static void panic() { 
+		db<IntegratorCP>(ERR) << "PANIC!\n";
+		CPU::int_disable();
+		for(;;);
+	}
+    static void reboot() { 
+        db<IntegratorCP>(TRC) << "Machine::reboot()\n";
+        CPU::out32(CM_CTRL, CPU::in32(CM_CTRL) | (1 << 3)); 
+    }
+    static void poweroff() {  for(;;); }
+
+    static void init() {
+    };
+
+    static void smp_barrier() {};
+    static void smp_init(unsigned int) {};
+private:
+
+};
+
+__END_SYS
+
+#include "flash.h"
+#include "info.h"
+#include "uart.h"
+#include "rtc.h"
+#include "timer.h"
+#include "adc.h"
+#include "nic.h"
+
+#endif
