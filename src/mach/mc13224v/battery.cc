@@ -88,40 +88,40 @@ const void MC13224V_Battery::battery_over_threshold_set(unsigned short value)
 {
     db<MC13224V_Battery>(TRC) << "MC13224V_Battery::battery_over_threshold_set(" << value << ")\n";
 
-    // set 0x0200 in ?
+    // TODO: set 0x0200 in ?
 }
 
 const void MC13224V_Battery::battery_over_threshold_enable()
 {
     db<MC13224V_Battery>(TRC) << "MC13224V_Battery::battery_over_threshold_enable()\n";
 
-    // set 0x0200 in ?
+    // TODO: set 0x0200 in ?
 }
 
 const void MC13224V_Battery::battery_over_threshold_disable()
 {
     db<MC13224V_Battery>(TRC) << "MC13224V_Battery::battery_over_threshold_disable()\n";
 
-    // clear 0x0200 in ?
+    // TODO: clear 0x0200 in ?
 }
 
 const void MC13224V_Battery::battery_under_threshold_set(unsigned short value)
 {
     db<MC13224V_Battery>(TRC) << "MC13224V_Battery::battery_under_threshold_set(" << value << ")\n";
 
-    // clear 0x0200 in ?
+    // TODO: clear 0x0200 in ?
 }
 
 const void MC13224V_Battery::battery_under_threshold_enable()
 {
     db<MC13224V_Battery>(TRC) << "MC13224V_Battery::battery_under_threshold_enable()\n";
 
-    // set 0x0100 in ?
+    // TODO: set 0x0100 in ?
 }
 
 const void MC13224V_Battery::battery_under_threshold_disable()
 {
     db<MC13224V_Battery>(TRC) << "MC13224V_Battery::battery_under_threshold_disable()\n";
 
-    // clear 0x0100 in ?
+    // TODO: clear 0x0100 in ?
 }
