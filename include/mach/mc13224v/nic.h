@@ -6,6 +6,7 @@
 #include <nic.h>
 #include <cmac.h>
 #include "radio.h"
+#include "buck_regulator.h"
 
 __BEGIN_SYS
 
@@ -44,7 +45,37 @@ public:
 
     static void init();
 
+    typedef char OP_Mode;
+    enum {
+        OFF = 0,
+        SEND_ONLY = 1,
+        RECV_ONLY = 2,
+        FULL = 3,
+    };
+
+    static OP_Mode power() { return _mode; }
+    static void power(OP_Mode mode)
+    {
+        if(mode == _mode) return;
+
+        switch(mode)
+        {
+        case FULL:
+            MC13224V_Buck_Regulator::Radio_1P5V_txrx_enable();
+            init();
+            break;
+        case SEND_ONLY:
+            break;
+        case RECV_ONLY:
+            break;
+        case OFF:
+            MC13224V_Buck_Regulator::Radio_1P5V_disable();
+            break;
+        }
+    }
+
 private:
+    static OP_Mode _mode;
     Meta_NIC<NICS>::Base * _dev;
 };
 

@@ -17,19 +17,6 @@ public:
     // CPU Flags
     typedef Reg32 Flags;
 
-    enum {
-    FULL                = 0,
-    IDLE                = 1,
-    ADC_NOISE_REDUCTION = 2,
-    POWER_DOWN          = 3,
-    POWER_SAVE          = 4,
-    NATIVE_STANDBY      = 5, //For this mode an external oscilator is needed
-    EXTENDED_STANDBY    = 6, //For this mode an external oscilator is needed
-    LIGHT               = IDLE,
-    STANDBY             = POWER_SAVE,
-    OFF                 = POWER_DOWN
-    };
-
     // CPU Context
     class Context
     {
@@ -215,6 +202,22 @@ public:
 	static void out32(const Reg32 port, const Reg32 value) {
 		(*(volatile Reg32 *)port) = value;
 	}
+
+	typedef char OP_Mode;
+	enum {
+	    OFF = 0,
+	    HIBERNATE = 1,
+	    DOZE = 2,
+	    FULL = 3,
+        STANDBY = HIBERNATE,
+        LIGHT = DOZE
+
+	};
+	static OP_Mode power() { return _mode; }
+	static void power(OP_Mode mode);
+
+private:
+	static OP_Mode _mode;
 };
 
 __END_SYS

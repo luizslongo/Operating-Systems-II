@@ -215,7 +215,8 @@ template <> struct IO_Map<MC13224V>
 		MACA_OPTIONS	= MACA_BASE + 0x180,
 
 		CRM_BASE	= 0x80003000,
-		CRM_SYS_CNTL	= CRM_BASE + 0x00,
+        CRM_SYS_CNTL    = CRM_BASE + 0x00,
+        CRM_SLEEP_CNTL  = CRM_BASE + 0x08,
         CRM_STATUS      = CRM_BASE + 0x18,
         CRM_MOD_STATUS  = CRM_BASE + 0x1C,
 		CRM_VREG_CNTL 	= CRM_BASE + 0x48
