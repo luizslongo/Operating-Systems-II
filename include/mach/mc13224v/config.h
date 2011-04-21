@@ -39,6 +39,7 @@ typedef MC13224V_ADC			ADC;
 typedef MC13224V_Battery_ADC	Battery_ADC;
 typedef MC13224V_RTC        	RTC;
 typedef MC13224V_Battery    	Battery;
+typedef MC13224V_Timer_3        TSC_Timer;
 
 
 __END_SYS

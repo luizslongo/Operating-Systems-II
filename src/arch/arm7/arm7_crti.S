@@ -73,10 +73,14 @@ _start:
 	msr cpsr_c, #ARM_MODE_SVC | IRQ_BIT | FIQ_BIT
 	ldr sp, =STACK_ADDRESS
 
+/* this sould not be here */
+
+.ifdef mc13224v
     /* initialize rom data */
     ldr r12, =_rom_data_init
     mov lr, pc
     mov pc, r12
+.endif
 
 	/* Cleaning the bss section */
 

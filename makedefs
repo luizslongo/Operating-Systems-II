@@ -196,7 +196,7 @@ $(MACH_PLASMA)_LD_FLAGS      :=
 $(MACH_PLASMA)_CODE_NAME     := .hash
 $(MACH_PLASMA)_DATA_NAME     := .tdata
 $(MACH_MC13224V)_CC_FLAGS    := -mcpu=arm7tdmi-s -Wall
-$(MACH_MC13224V)_AS_FLAGS    := -mcpu=arm7tdmi-s
+$(MACH_MC13224V)_AS_FLAGS    := -mcpu=arm7tdmi-s --defsym mc13224v
 $(MACH_MC13224V)_LD_FLAGS    :=
 $(MACH_MC13224V)_CODE_NAME   := .init
 $(MACH_MC13224V)_DATA_NAME   := .data

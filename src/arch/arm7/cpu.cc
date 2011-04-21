@@ -49,6 +49,8 @@ void ARM7::power(ARM7::OP_Mode mode)
     if (mode == _mode) return;
     mode = _mode;
 
+// TODO: check for integratorcp
+#if MACH != integratorcp
     switch(mode)
     {
     case OFF: halt(); break;
@@ -62,6 +64,7 @@ void ARM7::power(ARM7::OP_Mode mode)
     default:
         break;
     }
+#endif
 }
 
 __END_SYS
