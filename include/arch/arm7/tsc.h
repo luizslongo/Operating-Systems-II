@@ -6,10 +6,6 @@
 #include <tsc.h>
 #include <cpu.h>
 
-//TODO: how to avoid breaking the Arch <=> Mach isolation?
-// the solution to this should bring time_stamp() implementation back to header
-class MC13224V_Timer_3;
-
 __BEGIN_SYS
 
 class ARM7_TSC: public TSC_Common
@@ -31,7 +27,7 @@ private:
     static void tsc_timer_handler();
 
     static volatile unsigned long _ts;
-    static MC13224V_Timer_3 _timer;
+    static TSC_Timer _timer;
 };
 
 __END_SYS

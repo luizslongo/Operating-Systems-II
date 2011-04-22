@@ -62,6 +62,7 @@ class AT90CAN128;
 class ML310;
 class PLASMA;
 class MC13224V;
+class IntegratorCP;
 
 // Hardware Mediators - Busses
 class PC_PCI;
@@ -76,6 +77,7 @@ class AT90CAN128_IC;
 class ML310_IC;
 class PLASMA_IC;
 class MC13224V_IC;
+class IntegratorCP_IC;
 
 // Hardware Mediators - Timers
 class PC_Timer;
@@ -97,6 +99,7 @@ class MC13224V_Timer_0;
 class MC13224V_Timer_1;
 class MC13224V_Timer_2;
 class MC13224V_Timer_3;
+template<unsigned int> class IntegratorCP_Timer;
 
 // Hardware Mediators - CAN
 class AT90CAN128_CAN;
@@ -110,6 +113,7 @@ class AT90CAN128_RTC;
 class ML310_RTC;
 class PLASMA_RTC;
 class MC13224V_RTC;
+class IntegratorCP_RTC;
 
 // Hardware Mediators - EEPROMs
 class PC_EEPROM;
@@ -121,6 +125,7 @@ class ATMega1281_EEPROM;
 class ATMega128_Flash;
 class ATMega1281_Flash;
 class MC13224V_Flash;
+class IntegratorCP_Flash;
 
 // Hardware Mediators - UARTs
 class PC_UART;
@@ -131,6 +136,8 @@ class AT90CAN128_UART;
 class ML310_UART;
 class PLASMA_UART;
 class MC13224V_UART;
+class IntegratorCP_UART;
+class IntegratorCP_NIC;
 
 // Hardware Mediators - USARTs
 class ATMega1281_USART;
@@ -166,6 +173,7 @@ class Radio_Wrapper;
 class ML310_NIC;
 class PLASMA_NIC;
 class MC13224V_NIC;
+class IntegratorCP_NIC;
 template<typename> class CMAC;
 template<typename> class CMAC_State;
 
