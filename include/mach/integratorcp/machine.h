@@ -25,6 +25,9 @@ public:
 	}
     static void reboot() { 
         db<IntegratorCP>(TRC) << "Machine::reboot()\n";
+        // qemu is messing with the console when we reset the board
+        // this for() will avoid reseting by now
+        for(;;);
         CPU::out32(CM_CTRL, CPU::in32(CM_CTRL) | (1 << 3)); 
     }
     static void poweroff() {  for(;;); }

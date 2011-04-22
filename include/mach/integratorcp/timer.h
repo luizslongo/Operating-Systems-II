@@ -7,26 +7,12 @@
 
 __BEGIN_SYS
 
-template<unsigned int UNIT>
-class IntegratorTimer2IRQ { };
-
-template<>
-class IntegratorTimer2IRQ<0> {
-    public: enum { value = IC::TIMERINT0 };
-};
-template<>
-class IntegratorTimer2IRQ<1> {
-    public: enum { value = IC::TIMERINT1 };
-};
-template<>
-class IntegratorTimer2IRQ<2> {
-    public: enum { value = IC::TIMERINT2 };
-};
-
 template<unsigned int UNIT=0>
 class IntegratorCP_Timer: public Timer_Common
 {
 protected:
+    static const unsigned char IRQ           = IC::TIMERINT0 + UNIT;
+    
     static const unsigned long TIMER_LOAD    = 0x13000000L + (UNIT * 0x100);            
     static const unsigned long TIMER_VALUE   = 0x13000004L + (UNIT * 0x100);
     static const unsigned long TIMER_CONTROL = 0x13000008L + (UNIT * 0x100);
@@ -44,11 +30,16 @@ protected:
 public:
     typedef void (*Handler)();
     
-    static const unsigned long FREQUENCY = 24000000; // this should be checked
+    static const unsigned int CLOCK = Traits<Machine>::CLOCK;
 
+    // default to 10Hz
+    static const unsigned int FREQUENCY = 10;
+    
     IntegratorCP_Timer(Handler handler)
 	{
         db<Timer>(TRC) << "Timer(unit="<<UNIT<<",hdl="<<(void*)handler<<")\n";
+        // default to 10hz
+        frequency(10);
         set_handler(handler);
         enable();
     }
@@ -61,23 +52,23 @@ public:
     }
 
     void set_handler(Handler handler) {
-        IC::Interrupt_Id intr = IntegratorTimer2IRQ<UNIT>::value; 
+        IC::Interrupt_Id intr = IRQ; 
         IC::enable(intr);
         IC::int_vector(intr, handler);   
     }
 
     Hertz frequency() const { 
-		return CPU::in32(TIMER_LOAD) * FREQUENCY;
+		return 10; //CPU::in32(TIMER_LOAD) / CLOCK;
 	}
     
     void frequency(const Hertz & f) {
         db<IC>(TRC) << "Timer<"<<UNIT<<">::frequency(f="<<f<<")\n";
-        CPU::out32(TIMER_LOAD, f / FREQUENCY);
+        CPU::out32(TIMER_LOAD, CLOCK);
         CPU::Reg32 control = CPU::in32(TIMER_CONTROL);
         
-        control |= 1L << BIT_MODE; // set periodic
-        control |= 1L << BIT_IE;   // enable interrupt
-        control |= 1L << BIT_SIZE; // 32bit counter
+        control |= (1UL << BIT_MODE); // set periodic
+        control |= (1UL << BIT_IE);   // enable interrupt
+        control |= (1UL << BIT_SIZE); // 32bit counter
         
         CPU::out32(TIMER_CONTROL, control);
     };
@@ -91,13 +82,13 @@ public:
     
     void enable(){
         db<IC>(TRC) << "Timer<"<<UNIT<<">::enable()\n";
-        CPU::Reg32 control = CPU::in32(TIMER_CONTROL) | (1L << BIT_IE);
+        CPU::Reg32 control = CPU::in32(TIMER_CONTROL) | (1L << BIT_ENABLE);
         CPU::out32(TIMER_CONTROL, control);
 	}
 
     void disable() {
         db<IC>(TRC) << "Timer<"<<UNIT<<">::disable()\n";
-        CPU::Reg32 control = CPU::in32(TIMER_CONTROL) & ~(1L << BIT_IE);
+        CPU::Reg32 control = CPU::in32(TIMER_CONTROL) & ~(1L << BIT_ENABLE);
         CPU::out32(TIMER_CONTROL, control);
 	}
 
