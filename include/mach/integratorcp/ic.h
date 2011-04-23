@@ -29,9 +29,7 @@ protected:
     
 
     
-    typedef void (*Interrupt_Handler)();
-    static Interrupt_Handler vector[29];
-    
+    typedef void (Handler)();    
     typedef unsigned char Interrupt_Id;
 
 
@@ -60,21 +58,17 @@ public:
 
     static void enable() {
         db<IntegratorCP_IC>(TRC) << "IC::enable()\n";
-        CPU::out32(PIC_IRQ_ENABLESET, 0xFFFFFFFF);
+        CPU::out32(PIC_IRQ_ENABLESET, _mask);
     }
 
     static void enable(Interrupt_Id id) {
-        // test, disable FIQ
-        CPU::out32(PIC_FIQ_ENABLESET, 0);
-        CPU::out32(CM_FIQ_ENSET, 0);
-        CPU::out32(CM_IRQ_ENSET, 0);
-        
         db<IntegratorCP_IC>(TRC) << "IC::enable(id=" << (int)id << ")\n";
         CPU::out32(PIC_IRQ_ENABLESET, CPU::in32(PIC_IRQ_ENABLESET) | (1UL << id) );
     }
 
     static void disable() {
         db<IntegratorCP_IC>(TRC) << "IC::disable()\n";
+        _mask = CPU::in32(PIC_IRQ_ENABLESET);
         CPU::out32(PIC_IRQ_ENABLESET, 0);
     }
 
@@ -83,13 +77,17 @@ public:
         CPU::out32(PIC_IRQ_ENABLESET, CPU::in32(PIC_IRQ_ENABLESET) & ~(1UL << id) );    
     }
 
-    static void int_vector(Interrupt_Id id,Interrupt_Handler func) {
+    static void int_vector(Interrupt_Id id,Handler * func) {
         db<IntegratorCP_IC>(TRC) << "IC::int_vector(id=" << (int)id << ",hdr="<< (void*)func <<")\n";
-        vector[id] = func;
+        _vector[id] = func;
     }
 
     static void handle_int();
     static void default_handler();
+    
+private:
+    static Handler* _vector[29];
+    static CPU::Reg32 _mask;
 };
 
 

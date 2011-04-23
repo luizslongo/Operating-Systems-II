@@ -99,7 +99,7 @@ class MC13224V_Timer_0;
 class MC13224V_Timer_1;
 class MC13224V_Timer_2;
 class MC13224V_Timer_3;
-template<unsigned int> class IntegratorCP_Timer;
+class IntegratorCP_Timer;
 
 // Hardware Mediators - CAN
 class AT90CAN128_CAN;
@@ -137,7 +137,6 @@ class ML310_UART;
 class PLASMA_UART;
 class MC13224V_UART;
 class IntegratorCP_UART;
-class IntegratorCP_NIC;
 
 // Hardware Mediators - USARTs
 class ATMega1281_USART;
