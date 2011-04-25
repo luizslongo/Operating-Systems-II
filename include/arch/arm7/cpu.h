@@ -74,15 +74,17 @@ public:
 	}
 
     static void irq_enable() {
-		ASMV("	mrs r1, cpsr\n"
-			 "	bic r1, r1, #0x80\n"
-			 "	msr cpsr_c, r1\n":::"r1", "cc");
-	}
+        Reg32 flags;
+        ASMV("mrs %0, cpsr\n"
+            "bic %0, %0, #0x80\n"
+            "msr cpsr_c, %0\n":  "+r"(flags) : : "cc");
+    }
 
     static void irq_disable() {
-		ASMV("	mrs r1, cpsr\n"
-			 "	orr r1, r1, #0x80\n"
-			 "	msr cpsr_c, r1\n":::"r1", "cc");
+        Reg32 flags;
+        ASMV("mrs %0, cpsr\n"
+            "orr %0, %0, #0x80\n"
+            "msr cpsr_c, %0\n":  "+r"(flags) : : "cc");
 	}
 
     static void fiq_enable() {}
