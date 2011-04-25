@@ -77,14 +77,14 @@ public:
         Reg32 flags;
         ASMV("mrs %0, cpsr\n"
             "bic %0, %0, #0x80\n"
-            "msr cpsr_c, %0\n":  "+r"(flags) : : "cc");
+            "msr cpsr_c, %0\n":  "=r"(flags) : : "cc");
     }
 
     static void irq_disable() {
         Reg32 flags;
         ASMV("mrs %0, cpsr\n"
             "orr %0, %0, #0x80\n"
-            "msr cpsr_c, %0\n":  "+r"(flags) : : "cc");
+            "msr cpsr_c, %0\n":  "=r"(flags) : : "cc");
 	}
 
     static void fiq_enable() {}
