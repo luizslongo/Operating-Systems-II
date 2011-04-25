@@ -149,34 +149,59 @@ public:
     static Reg32 ntohl(Reg32 v) { return htonl(v); }
     static Reg16 ntohs(Reg16 v) { return htons(v); }
 
-    static Context * init_stack(
-    Log_Addr stack, unsigned int size,
-    void (* exit)(), int (* entry)()) {
-    	Log_Addr sp = stack + size;
-		sp -= sizeof(Context); //stack bottom
-		return new(sp) Context(entry, sp - sizeof(unsigned int), Log_Addr(exit));
-	}
+    static Context * init_stack(Log_Addr stack, unsigned int size,
+                                void (* exit)(), int (* entry)()) 
+    {
+            Log_Addr sp = stack + size;
+            sp -= sizeof(Context); //stack bottom
+            return new(sp) Context(entry, sp - sizeof(unsigned int), Log_Addr(exit));
+    }
 
+    // Registers r0 - r3 are used for parameter passing (ARM calling convention)
     template<typename T1>
-    static Context * init_stack(
-    Log_Addr stack, unsigned int size,
-    void (* exit)(), int (* entry)(T1 a1), T1 a1) {
-    return 0;
+    static Context * init_stack(Log_Addr stack, unsigned int size,
+                                void (* exit)(), 
+                                int (* entry)(T1 a1), 
+                                T1 a1)
+    {
+            Log_Addr sp = stack + size;
+            sp -= sizeof(Context); //stack bottom
+            Context * ctx = new(sp) Context(entry, 
+                                            sp - sizeof(unsigned int),
+                                            Log_Addr(exit));
+            ctx->_r0 = (Reg32)(a1);
+            return ctx;
     }
 
-    template<typename T1, typename T2>
-    static Context * init_stack(
-    Log_Addr stack, unsigned int size, void (* exit)(),
-    int (* entry)(T1 a1, T2 a2), T1 a1, T2 a2) {
-    return 0;
+    template<typename T1,typename T2>
+    static Context * init_stack(Log_Addr stack, unsigned int size,
+                                void (* exit)(), 
+                                int (* entry)(T1 a1, T2 a2), 
+                                T1 a1, T2 a2)
+    {
+            Log_Addr sp = stack + size;
+            sp -= sizeof(Context); //stack bottom
+            Context * ctx = new(sp) Context(entry,
+                                            sp - sizeof(unsigned int),
+                                            Log_Addr(exit));
+            ctx->_r0 = (Reg32)(a1);
+            ctx->_r1 = (Reg32)(a2);
+            return ctx;
     }
-
-
-    template<typename T1, typename T2, typename T3>
-    static Context * init_stack(
-    Log_Addr stack, unsigned int size, void (* exit)(),
-    int (* entry)(T1 a1, T2 a2, T3 a3), T1 a1, T2 a2, T3 a3) {
-    return 0;
+    
+    template<typename T1,typename T2,typename T3>
+    static Context * init_stack(Log_Addr stack, unsigned int size,
+                                void (* exit)(), 
+                                int (* entry)(T1 a1, T2 a2, T3 a3), 
+                                T1 a1, T2 a2, T3 a3)
+    {
+            Log_Addr sp = stack + size;
+            sp -= sizeof(Context); //stack bottom
+            Context * ctx = new(sp) Context(entry, sp - sizeof(unsigned int), Log_Addr(exit));
+            ctx->_r0 = (Reg32)(a1);
+            ctx->_r1 = (Reg32)(a2);
+            ctx->_r2 = (Reg32)(a3);
+            return ctx;
     }
 
 	// ARM7 specific methods
