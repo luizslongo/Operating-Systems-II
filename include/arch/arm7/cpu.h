@@ -144,10 +144,11 @@ public:
         return old;
     }
 
-    static Reg32 htonl(Reg32 v) { return swap32(v); }
-    static Reg16 htons(Reg16 v) { return swap16(v); }
-    static Reg32 ntohl(Reg32 v) { return htonl(v); }
-    static Reg16 ntohs(Reg16 v) { return htons(v); }
+    // here we assume or arm machine is big endian
+    static Reg32 htonl(Reg32 v) { return v; }
+    static Reg16 htons(Reg16 v) { return v; }
+    static Reg32 ntohl(Reg32 v) { return v; }
+    static Reg16 ntohs(Reg16 v) { return v; }
 
     static Context * init_stack(Log_Addr stack, unsigned int size,
                                 void (* exit)(), int (* entry)()) 
