@@ -131,7 +131,7 @@ private:
 class Alarm_Timer: public IntegratorCP_Timer
 {
 public:
-    static const unsigned int FREQUENCY = Timer::FREQUENCY;
+    static const unsigned int FREQUENCY = 10;
 
 public:
     Alarm_Timer(const Handler * handler):
