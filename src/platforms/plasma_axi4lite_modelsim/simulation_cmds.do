@@ -27,7 +27,7 @@ vcom plasma_axi4lite_testbench.vhd
 
 
 #load/dump/run vhdl design
-vsim work.plasma_axi4lite_testbench
+vsim -L unisim work.plasma_axi4lite_testbench
 vcd file trace.vcd
 
 vcd add -r -file trace.vcd /*

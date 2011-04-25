@@ -163,6 +163,9 @@ end process;
       begin
          --Read port 1 lower 16 registers
          reg_bit1a : RAM16X1D
+         -- synthesis translate_off
+         generic map (INIT => X"0000")
+         -- synthesis translate_on
          port map (
             WCLK  => clk,              -- Port A write clock input
             WE    => weA,              -- Port A write enable input
@@ -180,6 +183,9 @@ end process;
          );
          --Read port 1 upper 16 registers
          reg_bit1b : RAM16X1D
+         -- synthesis translate_off
+         generic map (INIT => X"0000")
+         -- synthesis translate_on
          port map (
             WCLK  => clk,              -- Port A write clock input
             WE    => weB,              -- Port A write enable input
@@ -197,6 +203,9 @@ end process;
          );
          --Read port 2 lower 16 registers
          reg_bit2a : RAM16X1D
+         -- synthesis translate_off
+         generic map (INIT => X"0000")
+         -- synthesis translate_on
          port map (
             WCLK  => clk,              -- Port A write clock input
             WE    => weA,              -- Port A write enable input
@@ -214,6 +223,9 @@ end process;
          );
          --Read port 2 upper 16 registers
          reg_bit2b : RAM16X1D
+         -- synthesis translate_off
+         generic map (INIT => X"0000")
+         -- synthesis translate_on
          port map (
             WCLK  => clk,              -- Port A write clock input
             WE    => weB,              -- Port A write enable input

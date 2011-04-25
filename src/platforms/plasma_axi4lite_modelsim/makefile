@@ -7,4 +7,3 @@ run:
 	
 clean:
 	rm -rf *.vcd *.lxt *.log transcript work *.wlf *.mif *~
-	make -f $(IMPLEMENTATION_DIR)/makefile coregen_clean
