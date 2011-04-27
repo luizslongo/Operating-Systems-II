@@ -680,6 +680,7 @@ unsigned int MC13224V_Transceiver::init_from_flash(unsigned int addr) {
 
     MC13224V_Buck_Regulator::NVM_1P8V_enable();
 
+
     err = MC13224V_Flash::nvm_detect(MC13224V_Flash::gNvmInternalInterface_c, &type);
 
     MC13224V_Flash::nvm_setsvar(0);
@@ -700,7 +701,7 @@ unsigned int MC13224V_Transceiver::init_from_flash(unsigned int addr) {
             i += 4 * exec_init_entry(buf, ram_values);
         }
         return i;
-
+        kout << "foi tudo\n";
     } else {
         return 0;
     }

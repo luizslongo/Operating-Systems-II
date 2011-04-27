@@ -1,15 +1,17 @@
 // EPOS-- MC13224v Radio (Transceiver) NIC Mediator Implementation
 
-#include <utility/malloc.h>
+#include <system/kmalloc.h>
 #include <mach/mc13224v/machine.h>
 #include <mach/mc13224v/radio.h>
 #include <mach/mc13224v/buck_regulator.h>
 
 __BEGIN_SYS
 
-MC13224V_Transceiver * Radio_Wrapper::device = new MC13224V_Transceiver();
+MC13224V_Transceiver * Radio_Wrapper::device = 0;
 
 void Radio_Wrapper::init() {
+    device = new(kmalloc(sizeof(MC13224V_Transceiver))) MC13224V_Transceiver();
+
     MC13224V_Transceiver::maca_init();
 
     device->set_channel(0); /* 802.15.4 channel 11 */

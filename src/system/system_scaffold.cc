@@ -56,4 +56,6 @@ System_Info<Machine> * System::_si =
 
 Heap System::_heap;
 
+System_Info<Machine> * const System::info() { return _si; }
+
 __END_SYS

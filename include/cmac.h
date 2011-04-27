@@ -2,7 +2,9 @@
 #define __cmac_h
 
 #include <utility/random.h>
+#include <system/kmalloc.h>
 #include <radio.h>
+#include <timer.h>
 
 __BEGIN_SYS
 
@@ -34,10 +36,10 @@ public:
 
 public:
     CMAC(int unit = 0) {
-        _stats = new Statistics();
-        _addr  = new Address(Traits<CMAC<T> >::ADDRESS);
-        _radio = new T();
-        _timer = new Timer_1(alarm_handler_function);
+        _stats = new(kmalloc(sizeof(Statistics))) Statistics();
+        _addr  = new(kmalloc(sizeof(Address))) Address(Traits<CMAC<T> >::ADDRESS);
+        _radio = new(kmalloc(sizeof(T))) T();
+        _timer = new(kmalloc(sizeof(Timer_CMAC))) Timer_CMAC(alarm_handler_function);
         CMAC<T>::init(unit);
     }
 
@@ -193,7 +195,7 @@ protected:
     static event_handler *alarm_ev_handler;
     static volatile unsigned long alarm_ticks_ms;
     static unsigned long alarm_event_time_ms;
-    static Timer_1 * _timer;
+    static Timer_CMAC * _timer;
     static volatile bool timeout;
 
     static void alarm_handler_function();

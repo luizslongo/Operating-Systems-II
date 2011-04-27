@@ -4,14 +4,15 @@
 #define __system_h
 
 #include <utility/heap.h>
-#include <machine.h>
 
 __BEGIN_SYS
+
+//class Machine;
 
 class System
 {
 public:
-    static System_Info<Machine> * const info() { return _si; }
+    static System_Info<Machine> * const info();
     static Heap * const heap() { return &_heap; }
 
     static void init();

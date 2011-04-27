@@ -10,7 +10,7 @@ template<> CMAC<Radio_Wrapper>::event_handler* CMAC<Radio_Wrapper>::alarm_ev_han
 template<> volatile unsigned long CMAC<Radio_Wrapper>::alarm_ticks_ms = 0;
 template<> unsigned long CMAC<Radio_Wrapper>::alarm_event_time_ms     = 0;
 
-template<> Timer_1 * CMAC<Radio_Wrapper>::_timer = 0;
+template<> Timer_CMAC * CMAC<Radio_Wrapper>::_timer = 0;
 
 template<> unsigned int CMAC<Radio_Wrapper>::_sleeping_period = Traits<CMAC<Radio_Wrapper> >::SLEEPING_PERIOD;
 
