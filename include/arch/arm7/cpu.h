@@ -92,7 +92,7 @@ public:
 
     static void halt() {
 		int_enable();
-		for(;;); // is there a halt instruction?
+		power(DOZE);
 	}
 
     static void switch_context(Context * volatile * o, Context * volatile n) __attribute__((naked));
