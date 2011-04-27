@@ -50,10 +50,12 @@ void ARM7::power(ARM7::OP_Mode mode)
     mode = _mode;
 
 // TODO: check for integratorcp
-#if MACH != integratorcp
+#if MACH == mc13224v
     switch(mode)
     {
-    case OFF: halt(); break;
+    case OFF:
+        db<CPU>(WRN) << "Shutting system down! No way back from here!\n";
+        int_disable();
     case HIBERNATE:
         out32(Machine::IO::CRM_SLEEP_CNTL, in32(Machine::IO::CRM_SLEEP_CNTL) | 0x1);
         break;

@@ -8,7 +8,10 @@ __BEGIN_SYS
 
 void ARM7::init()
 {
+    db<Init, ARM7>(TRC) << "ARM7::init()\n";
+
 	MMU::init();
+
 	return;
 }
 
