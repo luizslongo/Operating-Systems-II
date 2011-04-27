@@ -47,7 +47,7 @@ void ARM7::switch_context(Context * volatile * o, Context * volatile n)
 void ARM7::power(ARM7::OP_Mode mode)
 {
     if (mode == _mode) return;
-    mode = _mode;
+    _mode = mode;
 
 // TODO: check for integratorcp
 #if MACH == mc13224v

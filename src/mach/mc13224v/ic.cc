@@ -114,32 +114,26 @@ void MC13224V_IC::int_handler(CPU::Reg16 pending) {
 
     db<MC13224V_IC> (TRC) << "MC13224V_IC::int_handler(" << (int)pending << ")\n";
 
-    switch (pending) {
-
-    case 1 << IRQ_TIMER:
+    if((1 << IRQ_TIMER) & pending)
+    {
         db<MC13224V_IC> (INF) << "Interrupt! IRQ_TIMER\n";
         vector[IRQ_TIMER]();
-        break;
-
-    case 1 << IRQ_UART1:
+    } else if((1 << IRQ_UART1) & pending)
+    {
         db<MC13224V_IC> (INF) << "Interrupt! IRQ_UART1\n";
         vector[IRQ_UART1]();
-        break;
-
-    case 1 << IRQ_UART2:
+    } else if((1 << IRQ_UART2) & pending)
+    {
         db<MC13224V_IC> (INF) << "Interrupt! IRQ_UART2\n";
         vector[IRQ_UART2]();
-        break;
-
-    case 1 << IRQ_MACA:
+    } else if((1 << IRQ_MACA) & pending)
+    {
         db<MC13224V_IC> (INF) << "Interrupt! IRQ_MACA\n";
         vector[IRQ_MACA]();
-        break;
-
-    default:
+    } else
+    {
         db<MC13224V_IC> (INF) << "Unexpected Interrupt! => " << (unsigned int)pending << "\n";
         Machine::panic();
-        break;
     }
 }
 
