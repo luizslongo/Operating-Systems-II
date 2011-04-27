@@ -13,18 +13,18 @@ struct Memory_Map<IntegratorCP>
 {
     enum {
         MEM_BASE =  0,
-        MEM_SIZE =  96 * 1024
+        MEM_SIZE =  16 * 1024 * 1024
     };
 
     enum {
-        BASE =      0x00400000,
-        TOP =       0x00418000,
+        BASE =      0x00000000,
+        TOP =       0x01FFFFFF,
         APP_LO =    0x00000000,
         APP_CODE =  0x00000000,
-        APP_DATA =  0x00000000,
-        APP_HI =    0x00000000,
-        PHY_MEM =   0x00400000,
-        IO_MEM =    0x80000000,
+        APP_DATA =  0x01000000,
+        APP_HI =    0x01FFFFFF,
+        PHY_MEM =   0x00000000,
+        IO_MEM =    0x10000000,
         APIC_MEM =  0x00000000,
         SYS =       0x00000000,
         IDT =       SYS + 0x00000000,

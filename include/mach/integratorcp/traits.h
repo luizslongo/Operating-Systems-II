@@ -7,9 +7,9 @@ template <> struct Traits<IntegratorCP>: public Traits<void>
 {
 	static const unsigned int MAX_CPUS = 1;
 	static const unsigned int CLOCK = 24000000;
-	static const unsigned int APPLICATION_STACK_SIZE = 1024;
-	static const unsigned int APPLICATION_HEAP_SIZE  = 8*1024;
-	static const unsigned int SYSTEM_HEAP_SIZE = 2*APPLICATION_HEAP_SIZE;
+	static const unsigned int APPLICATION_STACK_SIZE = 4096;
+	static const unsigned int APPLICATION_HEAP_SIZE  = 8*1024*1024;
+	static const unsigned int SYSTEM_HEAP_SIZE = APPLICATION_HEAP_SIZE / 2;
 };
 
 template <> struct Traits<IntegratorCP_NIC>: public Traits<void>

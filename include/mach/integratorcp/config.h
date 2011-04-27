@@ -26,6 +26,7 @@ typedef Serial_Display        Display;
 typedef IntegratorCP_NIC      NIC;
 typedef IntegratorCP_RTC      RTC;
 
+class TSC_Timer;
 
 __END_SYS
 
