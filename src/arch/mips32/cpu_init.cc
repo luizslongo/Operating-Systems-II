@@ -16,7 +16,7 @@ void MIPS32::init()
     // machine dependable and should not be included in the arch_init.
     System_Info<PLASMA> * si = System::info();
     //Boot map
-    si->bm.mem_base           = 0x10000004;	// Memory base address
+    si->bm.mem_base           = 0x10000010;	// Memory base address
     si->bm.mem_top            = 0x10100000;	// Memory top address
     si->bm.io_mem_base        = 0x20000000;	// I/O Memory base address
     si->bm.io_mem_top         = 0x20010000;	// I/O Memory top address
