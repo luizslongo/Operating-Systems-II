@@ -27,7 +27,7 @@ template <> struct Traits<MC13224V>: public Traits<MC13224V_Common>
 template <> struct Traits<MC13224V_Battery>: public Traits<MC13224V_Common>
 {
     static const bool enabled = true;
-    static const bool buck_enabled = true;
+    static const bool buck_enabled = false;
     static const unsigned int buck_voltage_threshold = 2500; // in mV
     static const unsigned int frequency = 1; // in Hz
 };
