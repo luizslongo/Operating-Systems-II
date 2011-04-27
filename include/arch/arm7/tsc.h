@@ -19,7 +19,7 @@ public:
 
     static Hertz frequency() {return CLOCK;}
 
-    static void init();
+    static void init() {}
 
     static Time_Stamp time_stamp();
 
