@@ -55,9 +55,6 @@ void button_int() {
 int sink() {
     cout << "Sink\n";
 
-    IC::int_vector(IC::IRQ_KBI7, button_int);
-    IC::enable(IC::IRQ_KBI7);
-
     NIC::Protocol prot;
     NIC::Address src;
 
@@ -72,6 +69,7 @@ int sink() {
 
 int main() {
     nic = new NIC;
+
     sensor(2);
 //    sensor(3);
 //    sink();
