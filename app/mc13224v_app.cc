@@ -64,15 +64,19 @@ int sink() {
         num++;
     }
 
+    cout << nic->statistics() << "\n";
+
     return 0;
 }
 
 int main() {
     nic = new NIC;
 
-    sensor(2);
+//    sensor(2);
 //    sensor(3);
-//    sink();
+    sink();
+
+    while (true);
 
     return 0;
 }
