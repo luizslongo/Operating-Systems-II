@@ -23,7 +23,7 @@ include ../../../src/mach/plasma/hw.srcs
 
 # Top level sources
 TOP_SRCS = \
-plasma_ml605.vhd \
+plasma_ml605.v \
 plasma_ml605.ucf
 
 

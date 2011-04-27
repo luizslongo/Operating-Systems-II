@@ -76,6 +76,10 @@ int main( void ) {
   reinterpret_cast<unsigned char*>(&image_size)[1] = uart.get();
   reinterpret_cast<unsigned char*>(&image_size)[0] = uart.get();
 
+  print_string("Image size: 0x");
+  printhex((int)image_size);
+  print_string(" bytes\n");
+
   leds(0x04);
 
   if((COPY_ADDR + image_size) >= MEM_TOP){

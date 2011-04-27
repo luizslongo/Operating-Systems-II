@@ -33,36 +33,53 @@ char *xtoa(unsigned long num)
 #define MemoryRead(A) (*(volatile unsigned int*)(A))
 #define MemoryWrite(A,V) *(volatile unsigned int*)(A)=(V)
 
-int main()
-{
-    puts("\nStarting at 0x10000000, writes and reads in the memory until it gets an error\n");
 
+void test(unsigned int diff){
     unsigned errors = 0;
 
     unsigned int i = 0;
     for(i = 0; ; ++i){
 
-        if((RAM_EXTERNAL_BASE+(i*4)) >= (RAM_EXTERNAL_BASE+RAM_EXTERNAL_SIZE-1)) break;
+        unsigned int addr = RAM_EXTERNAL_BASE+(i*4);
 
-        MemoryWrite(RAM_EXTERNAL_BASE+(i*4), i);
+        unsigned int value = i + diff;
 
-        if((i % 1000) == 0){
+        if(addr >= (RAM_EXTERNAL_BASE+RAM_EXTERNAL_SIZE-1)) break;
+
+        MemoryWrite(addr, value);
+        unsigned int read_value = MemoryRead(addr);
+
+        if((i % 10000) == 0){
             puts("Currently At address: ");
-            puts(xtoa(RAM_EXTERNAL_BASE+(i*4)));
+            puts(xtoa(addr));
             puts("\n");
 
             puts("Write value: ");
-            puts(xtoa(i));
+            puts(xtoa(value));
             puts("\n");
 
             puts("Read value: ");
-            puts(xtoa(MemoryRead(RAM_EXTERNAL_BASE+(i*4))));
+            puts(xtoa(read_value));
             puts("\n");
         }
 
-        if (i != MemoryRead(RAM_EXTERNAL_BASE+(i*4))){
+        if (value != read_value){
             puts("Error at address: ");
-            puts(xtoa(RAM_EXTERNAL_BASE+(i*4)));
+            puts(xtoa(addr));
+            puts("\n");
+            errors += 1;
+        }
+
+        if (value != MemoryRead(addr)){
+            puts("Error at address: ");
+            puts(xtoa(addr));
+            puts("\n");
+            errors += 1;
+        }
+
+        if (value != MemoryRead(addr)){
+            puts("Error at address: ");
+            puts(xtoa(addr));
             puts("\n");
             errors += 1;
         }
@@ -72,6 +89,15 @@ int main()
     puts("\nFinished\nNumber of errors: ");
     puts(xtoa(errors));
     puts("\n");
+}
+
+
+int main()
+{
+    puts("\nStarting at 0x10000000, writes and reads in the memory until it gets an error\n");
+    test(0);
+    puts("Do it again\n");
+    test(10);
 
     while(1);
 }

@@ -29,13 +29,13 @@ int main( int argc, char *argv[] ) {
 	linux_uart_no = 0;
         usb = false;
       } else if(strcmp("/dev/ttyS1", argv[i]) == 0){
-        linux_uart_no = 0;
+        linux_uart_no = 1;
         usb = false;
       } else if(strcmp("/dev/ttyUSB0", argv[i]) == 0){
         linux_uart_no = 0;
         usb = true;
       } else if(strcmp("/dev/ttyUSB1", argv[i]) == 0){
-        linux_uart_no = 0;
+        linux_uart_no = 1;
         usb = true;
       } else {
 	printf("Invalid device %s\n", argv[i]);
@@ -80,10 +80,11 @@ int main( int argc, char *argv[] ) {
   uart.send(&START_CMD,1);
 
   unsigned char *size_ptr = reinterpret_cast<unsigned char *>(&file_size);
-  uart.send(&size_ptr[0],1);
-  uart.send(&size_ptr[1],1);
-  uart.send(&size_ptr[2],1);
-  uart.send(&size_ptr[3],1);
+  //uart.send(&size_ptr[1],1);
+  //uart.send(&size_ptr[3],1);
+  //uart.send(&size_ptr[2],1);
+  //uart.send(&size_ptr[0],1);
+  uart.send(size_ptr,4);
 
   for(unsigned int count=0; count < file_size ; count++){
       if(uart.send(&sendBuffer[count], 1) != 1){
