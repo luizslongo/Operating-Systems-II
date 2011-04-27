@@ -32,6 +32,8 @@ ifndef MACH
 MACH            := $(MACH_PC)
 endif
 
+GDB_DEBUG		:= 0
+
 # do not modify anything bellow this line
 ###############################################################################
 # Path to EPOS root directory 
@@ -195,11 +197,11 @@ $(MACH_PLASMA)_AS_FLAGS      :=
 $(MACH_PLASMA)_LD_FLAGS      :=
 $(MACH_PLASMA)_CODE_NAME     := .hash
 $(MACH_PLASMA)_DATA_NAME     := .tdata
-$(MACH_MC13224V)_CC_FLAGS    := -mcpu=arm7tdmi-s -Wall
-$(MACH_MC13224V)_AS_FLAGS    := -mcpu=arm7tdmi-s --defsym mc13224v
-$(MACH_MC13224V)_LD_FLAGS    :=
+$(MACH_MC13224V)_CC_FLAGS    := -mcpu=arm7tdmi-s -Wall -mthumb-interwork
+$(MACH_MC13224V)_AS_FLAGS    := -mcpu=arm7tdmi-s --defsym mc13224v=1 -mthumb-interwork
+$(MACH_MC13224V)_LD_FLAGS    := 
 $(MACH_MC13224V)_CODE_NAME   := .init
-$(MACH_MC13224V)_DATA_NAME   := .data
+$(MACH_MC13224V)_DATA_NAME   := .ctors
 $(MACH_INTEGRATOR)_CC_FLAGS  := 
 $(MACH_INTEGRATOR)_AS_FLAGS  := 
 $(MACH_INTEGRATOR)_LD_FLAGS  :=
@@ -212,6 +214,11 @@ MACH_AS_FLAGS                := $($(MACH)_AS_FLAGS)
 MACH_LD_FLAGS                := $($(MACH)_LD_FLAGS)
 MACH_CODE_NAME               := $($(MACH)_CODE_NAME)
 MACH_DATA_NAME               := $($(MACH)_DATA_NAME)
+
+ifeq ($(GDB_DEBUG), 1)
+MACH_CC_FLAGS                := $(MACH_CC_FLAGS) -g
+MACH_AS_FLAGS                := $(MACH_AS_FLAGS) -g
+endif
 
 # Architecture specifics
 $(ARCH_IA32)_WORD_SIZE   := 32
