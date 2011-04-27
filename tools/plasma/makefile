@@ -135,6 +135,15 @@ amba_test:
 		boot.o amba_test.o
 	-$(DUMP_MIPS) --disassemble test.axf > test.lst
 	$(CONVERT_BIN)
+
+dtmf:
+	$(AS_MIPS) -o boot.o boot.asm
+	$(GCC_MIPS) no_os.c
+	$(GCC_MIPS) dtmf/dtmf_detector.c
+	$(GCC_MIPS) dtmf/parameters.c
+	$(LD_MIPS) -Ttext 0 -eentry -Map test.map -s -N -o test.axf boot.o no_os.o dtmf_detector.o parameters.o 
+	-$(DUMP_MIPS) --disassemble test.axf > test.lst
+	$(CONVERT_BIN)
 	
 loader: 
 	$(AS_MIPS) -o boot.o boot.asm
