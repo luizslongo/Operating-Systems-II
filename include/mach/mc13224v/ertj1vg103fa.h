@@ -10,7 +10,7 @@ __BEGIN_SYS
 class ERTJ1VG103FA {
 protected:
     static const int div_resistor = 10000; // 10 kohm
-    static const int adc_max_value = 2047; // 11 bits ADC
+    static const int adc_max_value = 4095; // 11 bits ADC
     static const int temperature_unit = Traits<Temperature_Sensor>::UNITS;
 
     enum {
@@ -21,7 +21,7 @@ protected:
     static const float A = 0.0010750492;
     static const float B = 0.00027028218;
     static const float C = 0.00000014524838;
-    static const float Correction = 4.37;
+    static const float Correction = 10.37;
     static const float Kelvin_to_Celsius = 273.15;
 
 public:

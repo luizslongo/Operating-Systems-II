@@ -133,7 +133,7 @@ void MC13224V_IC::int_handler(CPU::Reg16 pending) {
     } else
     {
         db<MC13224V_IC> (INF) << "Unexpected Interrupt! => " << (unsigned int)pending << "\n";
-        Machine::panic();
+//        Machine::panic();
     }
 }
 

@@ -29,5 +29,5 @@ int ERTJ1VG103FA::voltage(int read) {
 }
 
 float ERTJ1VG103FA::resistance(int read) {
-    return div_resistor * (((float) adc_max_value / read) - 1.0);
+    return div_resistor * (((float) adc_max_value / (adc_max_value - read)) - 1.0);
 }
