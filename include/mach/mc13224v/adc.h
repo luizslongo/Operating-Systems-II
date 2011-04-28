@@ -217,7 +217,7 @@ private:
 class MC13224V_ADC: public MC13224V_ADC_Unit<2>
 {
 public:
-	MC13224V_ADC(unsigned char channel, Hertz frequency): 
+	MC13224V_ADC(unsigned char channel, Hertz frequency = MC13224V_ADC_Unit<2>::DEFAULT_FREQUENCY):
 		MC13224V_ADC_Unit<2>(channel, frequency) { }	
 };
 
