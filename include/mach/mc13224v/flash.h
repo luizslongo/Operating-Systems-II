@@ -10,6 +10,7 @@ private:
     static const unsigned int NVM_DETECT_ADDR = 0x00006CB9;
     static const unsigned int NVM_READ_ADDR = 0x00006D69;
     static const unsigned int NVM_SETSVAR_ADDR = 0x00007085;
+    static const unsigned int NVM_ERASE_ADDR = 0x00006e05;
     static const unsigned int CRM_SET_SPIF_VOLTAGE_LEVEL_ADDR = 0x00003e8d;
 
     MC13224V_Flash() {
@@ -75,6 +76,9 @@ public:
 
     typedef void (*nvm_setsvar_func)(unsigned int zero_for_awesome);
     static nvm_setsvar_func nvm_setsvar;
+
+    typedef void (*nvm_erase_func)(nvmInterface_t nvmInterface, nvmType_t nvmType, unsigned int sectorBitfield);
+    static nvm_erase_func nvm_erase;
 
     typedef void (*crm_set_spif_voltage_level_func)(
             crmVoltageLevel_t spiFVoltageLevel);
