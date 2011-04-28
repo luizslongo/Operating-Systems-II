@@ -82,6 +82,17 @@ template <> struct Traits<MC13224V_ADC>: public Traits<void>
     };
 };
 
+template <> struct Traits<MC13224V_Temperature_Sensor>: public Traits<void>
+{
+    typedef LIST<ERTJ1VG103FA> SENSORS;
+
+    enum {
+        KELVIN = 0,
+        CELCIUS
+    };
+    static const int UNITS = CELCIUS;
+};
+
 __END_SYS
 
 #endif

@@ -233,6 +233,8 @@ class Dummy_Accel;
 class SHT11;
 class SHT11_Temperature;
 class SHT11_Humidity;
+class MC13224V_Temperature_Sensor;
+class ERTJ1VG103FA;
 
 // Abstractions	- Process
 class Thread;

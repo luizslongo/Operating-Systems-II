@@ -18,6 +18,7 @@
 #define __FLASH_H			__HEADER_MACH(flash)
 #define __ADC_H             __HEADER_MACH(adc)
 #define __BATTERY_H         __HEADER_MACH(battery)
+#define __SENSOR_H          __HEADER_MACH(sensor)
 
 __BEGIN_SYS
 
@@ -40,6 +41,7 @@ typedef MC13224V_ADC			ADC;
 typedef MC13224V_Battery_ADC	Battery_ADC;
 typedef MC13224V_RTC        	RTC;
 typedef MC13224V_Battery    	Battery;
+typedef MC13224V_Temperature_Sensor   Temperature_Sensor;
 
 
 __END_SYS
