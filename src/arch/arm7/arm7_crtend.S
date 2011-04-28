@@ -30,7 +30,8 @@ __do_global_ctors_aux:
         beq ctors_loop_end
         ldr r2, [r0], #-4
         stmfd sp!, {r0-r1}
-        blx r2
+        mov lr, pc
+        bx r2
         ldmfd sp!, {r0-r1}
     b ctors_loop
   
