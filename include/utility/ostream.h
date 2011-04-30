@@ -51,7 +51,7 @@ public:
 	return *this;
     }
     OStream & operator<<(unsigned char c) { 
-	return operator<<(static_cast<char>(c));
+	return operator<<(static_cast<unsigned int>(c));
     }
 
     OStream & operator<<(int i) {
