@@ -80,6 +80,12 @@ public:
         return p;
     }
     
+    bool is_neighbor(IP_Address other,IP_Address mask) const
+    {
+        u32 c1 = u32(this) & u32(mask);
+        u32 c2 = u32(other) & u32(mask);
+        return c1 == c2;
+    }
 };
 
 class IP: public NIC_Common, /*public NIC::Observer,*/ public Data_Observed<IP_Address>

@@ -2,41 +2,33 @@
 
 __BEGIN_SYS
 
+// TCP's checksum was added to UDP, we should merge this to avoid code redundancy
+void UDP::Header::checksum(IP::Address src,IP::Address dst,SegmentedBuffer * sb)
+{
+    db<UDP>(TRC) << __PRETTY_FUNCTION__ << endl;
+    u16 len;
+    len = sizeof(this);
 
-void UDP::calculate_checksum() {
-	// BELLOW CODE IS BUGGED, Will be corrected soon
-//	if(false) {
-//		unsigned int len = size();
-//
-//		Pseudo_Header phdr;
-//		phdr.src_ip = _ip_header.src_ip();
-//		phdr.dst_ip = _ip_header.dst_ip();
-//		phdr.zero = 0;
-//		phdr.protocol = ID_UDP;
-//		phdr.length = CPU::htons(len);
-//
-//		unsigned int sum = 0;
-//
-//		u8 * ptr = reinterpret_cast<u8 *>(this);
-//		unsigned int i;
-//
-//		for(i = 0; i < len-1; i+=2)
-//			sum += (((u16)(ptr[i+1]) & 0x00FF) << 8) | ptr[i];
-//		if(len & 1) {
-//			sum += ptr[len-1];
-//		}
-//
-//		ptr = reinterpret_cast<u8 *>(&phdr);
-//		for(i = 0;i < sizeof(Pseudo_Header); i+=2)
-//			sum += (((u16)(ptr[i+1]) & 0x00FF) << 8) | ptr[i];
-//
-//		while(sum >> 16)
-//			sum = (sum & 0xffff) + (sum >> 16);
-//
-//
-//		_udp_header.checksum(~sum);
-//	} else
-//		_udp_header.checksum(0);
+    if (sb) len += sb->total_size();
+
+    Pseudo_Header phdr((u32)src,(u32)dst,len);
+
+    _checksum = 0;
+
+    u32 sum = 0;
+
+    sum = IP::calculate_checksum(&phdr, sizeof(phdr));
+    sum += IP::calculate_checksum(this, sizeof(this));
+
+    while (sb) {
+        sum += IP::calculate_checksum(sb->data(), sb->size());
+        sb = sb->next();
+    }
+    
+    while (sum >> 16)
+        sum = (sum & 0xFFFF) + (sum >> 16);
+
+    _checksum = ~sum;
 }
 
 // Assembles data and sends to IP layer
@@ -45,7 +37,7 @@ s32 UDP::send(Address _local, Address _remote, SegmentedBuffer * data) {
 	UDP::Header hdr(_local.port(), _remote.port(),
 			data->total_size());
 	SegmentedBuffer sb(&hdr, sizeof(UDP::Header), data);
-	hdr.checksum(0);	//TODO: change calculate_checksum() to accept SegmentedBuffers
+	hdr.checksum(_local.ip(),_remote.ip(),&sb);
 	return _ip->send(_local.ip(), _remote.ip(), &sb, ID_UDP) - 8;	// discard header
 }
 

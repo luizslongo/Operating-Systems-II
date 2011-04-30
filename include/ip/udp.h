@@ -43,6 +43,11 @@ class UDP_Address:public IP_Address {
     void change_port(u16 new_port) {
         _port = new_port;
     }
+    
+    bool operator==(const UDP_Address& other)
+    {
+        return ip() == other.ip() && port() == other.port();    
+    }
 
  private:
     u16 _port;
@@ -50,9 +55,6 @@ class UDP_Address:public IP_Address {
 };
 
 class UDP: public IP::Observer, public Data_Observed < UDP_Address > {
- protected:
-    void calculate_checksum();
-
  public:
     // UDP ID (IP Frame)
     static const IP::Protocol ID_UDP = 0x11;
@@ -69,9 +71,8 @@ class UDP: public IP::Observer, public Data_Observed < UDP_Address > {
                 _length(CPU::htons(sizeof(UDP::Header) + data_size)),
                 _checksum(0)
         { }
-        void checksum(u16 cs) {
-            _checksum = cs;
-        }
+        void checksum(IP::Address src,IP::Address dst,SegmentedBuffer * sb);
+        
         u16 dst_port() const {
             return CPU::ntohs(_dst_port);
         }
@@ -90,7 +91,7 @@ class UDP: public IP::Observer, public Data_Observed < UDP_Address > {
         u16 _src_port;  // Source UDP port
         u16 _dst_port;  // Destination UDP port
         u16 _length;    // Length of datagram (header + data) in bytes
-        u16 _checksum;  // Pseudo header checksum (see RFC)
+        volatile u16 _checksum;  // Pseudo header checksum (see RFC)
     };
 
     UDP(IP * ip) : _ip(ip) {
@@ -125,7 +126,7 @@ class UDP: public IP::Observer, public Data_Observed < UDP_Address > {
             return send(&sb);
         }
         s32 send(SegmentedBuffer * data) {
-            db<IP>(TRC) << "UDP::Socket::send()\n";
+            db<UDP>(TRC) << "UDP::Socket::send()\n";
             return _udp->send(_local, _remote, data);
         }
 
@@ -159,14 +160,16 @@ class UDP: public IP::Observer, public Data_Observed < UDP_Address > {
 
  private:
 
-    void constructor_common();
-
     struct Pseudo_Header {
         u32 src_ip;
         u32 dst_ip;
         u8 zero;
         u8 protocol;
         u16 length;
+        
+        Pseudo_Header(u32 src,u32 dst,u16 len) 
+        : src_ip(src), dst_ip(dst), zero(0), protocol(ID_UDP),
+          length(CPU::htons(len)) {};
     };
 
     IP *_ip;

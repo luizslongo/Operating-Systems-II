@@ -1,7 +1,5 @@
 #include <ip/tcp.h>
 
-//#include <cpu.h>
-
 __BEGIN_SYS
 
 // static data
@@ -59,15 +57,13 @@ void TCP::Socket::update(Data_Observed<TCP::Address> *o, long c, TCP::Address sr
 	Header& hdr = *reinterpret_cast<Header*>(data);
 	int len = size - hdr.size();
 	
-	if (!((_remote.port() == src.port()) || _remote.port() == 0))
+	if ((_remote == src) || (_remote.port() == 0))
 	{
-		db<TCP>(TRC) << "TCP Segment does not belong to us\n";		
-		return;
-	}
-		
-	
-	if (state() == LISTEN) _remote = src;
-	(this->*state_handler)(hdr,&((char*)data)[hdr.size()],len);
+        if (state() == LISTEN) _remote = src;
+        (this->*state_handler)(hdr,&((char*)data)[hdr.size()],len);
+	} else {
+        db<TCP>(TRC) << "TCP Segment does not belong to us\n";          
+    }
 }
 
 // Header stuff
@@ -99,7 +95,7 @@ bool TCP::Header::validate_checksum(IP::Address &src,IP::Address &dst,u16 len)
 
 void TCP::Header::_checksum(IP::Address &src,IP::Address &dst,SegmentedBuffer * sb)
 {
-    db<IP>(TRC) << __PRETTY_FUNCTION__ << endl;
+    db<TCP>(TRC) << __PRETTY_FUNCTION__ << endl;
 	u16 len;
 	len = size();
 
@@ -355,7 +351,7 @@ void TCP::Socket::__ESTABLISHED(const Header& r ,const char* data,u16 len)
 		if (r._fin) state(CLOSE_WAIT);
 	}
 	else {
-		db<TCP>(TRC) << "out of order segment received\n";
+		db<TCP>(TRC) << "TCP::out of order segment received\n";
 	}
 }
 
