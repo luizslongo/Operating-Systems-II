@@ -262,7 +262,7 @@ void TCP::Socket::__SYN_SENT(const Header& r,const char* data,u16 len)
 				rcv_ini = r.seq_num();
 				snd_una = r.ack_num();
 				snd_wnd = r.wnd();
-				if (snd_una > snd_ini) {
+				if (snd_una <= snd_ini) {
 					state(SYN_RCVD);
 				} else {
 					state(ESTABLISHED);
