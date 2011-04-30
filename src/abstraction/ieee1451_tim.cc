@@ -240,10 +240,9 @@ void IEEE1451dot0_TIM::receiveMessage(unsigned short transId, const char *messag
 IEEE1451dot5_TIM *IEEE1451dot5_TIM::dot5 = 0;
 IP::Address IEEE1451dot5_TIM::NCAP_ADDRESS = IP::Address((unsigned long) 0xc0a80a01);
 
-IEEE1451dot5_TIM::IEEE1451dot5_TIM()
+IEEE1451dot5_TIM::IEEE1451dot5_TIM() : tcp(IP::instance())
 {
-	senderReceiver = new SenderReceiver();
-	SenderReceiver::registerPacketHandler(messageCallback);
+	socket = 0;
 	connected = false;
 }
 
@@ -258,8 +257,10 @@ void IEEE1451dot5_TIM::connect()
 {
 	//TODO: Voltar a receber dados da rede!
 
-	db<IEEE1451dot5_TIM>(INF) << "Enviando connect...\n";
-	senderReceiver->send(CONNECT, 0xffff, NCAP_ADDRESS, 0, 0);
+	db<IEEE1451dot5_TIM>(INF) << "Connecting...\n";
+	if (socket)
+		delete socket; //TODO
+	socket = new MyClientSocket(&tcp, NCAP_ADDRESS);
 	connected = true;
 }
 
@@ -267,35 +268,68 @@ void IEEE1451dot5_TIM::disconnect()
 {
 	//TODO: Parar de receber dados da rede!
 
-	db<IEEE1451dot5_TIM>(INF) << "Enviando disconnect...\n";
+	db<IEEE1451dot5_TIM>(INF) << "Disconnecting...\n";
 	connected = false;
-	senderReceiver->send(DISCONNECT, 0xffff, NCAP_ADDRESS, 0, 0);
+	if (socket)
+		socket->close();
 }
 
 void IEEE1451dot5_TIM::sendMessage(unsigned short transId, const char *message, unsigned int length)
 {
-	db<IEEE1451dot5_TIM>(INF) << "Enviando mensagem (transId=" << transId << ")...\n";
-	senderReceiver->send(MESSAGE, transId, NCAP_ADDRESS, message, length);
+	db<IEEE1451dot5_TIM>(INF) << "Sending message (transId=" << transId << ")...\n";
+
+	if (!socket)
+	{
+		db<IEEE1451dot5_TIM>(INF) << "Failed to send message (transId=" << transId << ")\n";
+		return;
+	}
+
+	unsigned int dataLength = sizeof(IEEE1451_Packet) + length;
+	char *data = new char[dataLength];
+
+	IEEE1451_Packet *out = (IEEE1451_Packet *) data;
+	char *msg = data + sizeof(IEEE1451_Packet);
+
+	out->transId = transId;
+	out->len = length;
+	memcpy(msg, message, length);
+
+	socket->send(data, dataLength);
+	delete data;
 }
 
-int IEEE1451dot5_TIM::messageCallback(unsigned char type, unsigned short transId, const IP::Address &source, const char *message, unsigned int length)
+void IEEE1451dot5_TIM::MyClientSocket::connected()
 {
-	if (!(source == NCAP_ADDRESS))
+	db<IEEE1451dot5_TIM::MyClientSocket>(INF) << "Client socket connected\n";
+}
+
+void IEEE1451dot5_TIM::MyClientSocket::closed()
+{
+	db<IEEE1451dot5_TIM::MyClientSocket>(INF) << "Client socket closed\n";
+	delete this; //TODO
+}
+
+void IEEE1451dot5_TIM::MyClientSocket::received(const char *data, u16 size)
+{
+	db<IEEE1451dot5_TIM::MyClientSocket>(INF) << "Client socket received message\n";
+
+	if (!(remote().ip() == NCAP_ADDRESS))
 	{
-		db<IEEE1451dot5_TIM>(INF) << "Message source is not NCAP_ADDRESS!\n";
-		return 0;
+		db<IEEE1451dot5_TIM::MyClientSocket>(INF) << "Message source is not NCAP_ADDRESS!\n";
+		return;
 	}
 
 	if (!IEEE1451dot5_TIM::getInstance()->connected)
 	{
-		db<IEEE1451dot5_TIM>(INF) << "Dot5 not connected!\n";
-		return 0;
+		db<IEEE1451dot5_TIM::MyClientSocket>(INF) << "Dot5 not connected!\n";
+		return;
 	}
 
-	if ((type == MESSAGE) && (length > 0))
-		IEEE1451dot0_TIM::getInstance()->receiveMessage(transId, message, length);
+	IEEE1451_Packet *in = (IEEE1451_Packet *) data;
+	const char *msg = data + sizeof(IEEE1451_Packet);
 
-	return 0;
+	if (in->len > 0)
+		IEEE1451dot0_TIM::getInstance()->receiveMessage(in->transId, msg, in->len);
 }
 
 __END_SYS

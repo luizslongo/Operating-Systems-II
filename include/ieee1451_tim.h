@@ -2,8 +2,9 @@
 #define __ieee1451_dot5_h
 
 #include <ieee1451_objects.h>
-#include <ieee1451_sender_receiver.h>
 #include <thread.h>
+#include <ip/ip.h>
+#include <ip/tcp.h>
 
 __BEGIN_SYS
 
@@ -69,16 +70,19 @@ public:
 class IEEE1451dot5_TIM
 {
 private:
-	SenderReceiver *senderReceiver;
-	bool connected;
+	class MyClientSocket;
 
+	TCP tcp;
+	MyClientSocket *socket;
+
+	bool connected;
 	static IP::Address NCAP_ADDRESS;
 
 	static IEEE1451dot5_TIM *dot5;
 	IEEE1451dot5_TIM();
 
 public:
-	~IEEE1451dot5_TIM() { if (senderReceiver) delete senderReceiver; };
+	~IEEE1451dot5_TIM() { if (socket) delete socket; };
 
 	static IEEE1451dot5_TIM *getInstance();
 
@@ -86,7 +90,21 @@ public:
 	void connect();
 	void disconnect();
 	void sendMessage(unsigned short transId, const char *message, unsigned int length);
-	static int messageCallback(unsigned char type, unsigned short transId, const IP::Address &source, const char *message, unsigned int length);
+
+private:
+	class MyClientSocket : public TCP::ClientSocket
+	{
+	public:
+		MyClientSocket(TCP *tcp, const IP::Address &dst) :
+			TCP::ClientSocket(tcp, TCP::Address(dst, IEEE1451_PORT), TCP::Address(IP::instance()->address(), IEEE1451_PORT)) {};
+		~MyClientSocket() {};
+
+		void connected();
+		void closed();
+		void received(const char *data, u16 size);
+		void sent(u16 size) {};
+		void error(short errorCode) {};
+	};
 };
 
 __END_SYS

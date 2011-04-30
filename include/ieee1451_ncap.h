@@ -2,8 +2,9 @@
 #define __ieee1451_ncap_h
 
 #include <ieee1451_objects.h>
-#include <ieee1451_sender_receiver.h>
 #include <thread.h>
+#include <ip/ip.h>
+#include <ip/tcp.h>
 #include <utility/list.h>
 #include <utility/malloc.h>
 
@@ -136,18 +137,42 @@ public:
 class IEEE1451dot5_NCAP
 {
 private:
-	SenderReceiver *senderReceiver;
+	class MyServerSocket;
+
+	TCP tcp;
+	Simple_List<MyServerSocket> sockets;
 
 	static IEEE1451dot5_NCAP *dot5;
 	IEEE1451dot5_NCAP();
 
 public:
-	~IEEE1451dot5_NCAP() { if (senderReceiver) delete senderReceiver; };
+	~IEEE1451dot5_NCAP();
 
 	static IEEE1451dot5_NCAP *getInstance();
 
+	MyServerSocket *getSocket(const IP::Address &addr);
+	void listen();
 	void sendMessage(unsigned short transId, const IP::Address &destination, const char *message, unsigned int length);
-	static int messageCallback(unsigned char type, unsigned short transId, const IP::Address &source, const char *message, unsigned int length);
+
+private:
+	class MyServerSocket : public TCP::ServerSocket
+	{
+	private:
+		friend class IEEE1451dot5_NCAP;
+
+		Simple_List<MyServerSocket>::Element link;
+
+	public:
+		MyServerSocket(TCP *tcp) : TCP::ServerSocket(tcp, TCP::Address(IP::instance()->address(), IEEE1451_PORT)),
+			link(this) {};
+		~MyServerSocket() {};
+
+		void connected();
+		void closed();
+		void received(const char *data, u16 size);
+		void sent(u16 size) {};
+		void error(short errorCode) {};
+	};
 };
 
 __END_SYS

@@ -61,6 +61,14 @@ enum AddressClass //IEEE 1451.0 (2007) -> Cap. 5.3
 	ADDRESS_CLASS_GLOBAL					= 0xFFFF
 };
 
+#define IEEE1451_PORT 55667
+
+struct IEEE1451_Packet
+{
+	unsigned short transId;
+	unsigned int len;
+};
+
 __END_SYS
 
 #endif

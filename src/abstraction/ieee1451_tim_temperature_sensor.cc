@@ -116,7 +116,7 @@ void IEEE1451TemperatureSensor::sendDataSet()
 
 int IEEE1451TemperatureSensor::execute()
 {
-	db<IEEE1451TemperatureSensor>(INF) << "Criada temperature sensor execute thread\n";
+	db<IEEE1451TemperatureSensor>(INF) << "Temperature sensor execute thread created\n";
 
 	executeThread = Thread::self();
 	IEEE1451dot5_TIM::getInstance()->connect();
