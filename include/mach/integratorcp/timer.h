@@ -15,6 +15,7 @@ protected:
     static const CPU::Reg32 TIMER_LOAD    = 0x13000000L;            
     static const CPU::Reg32 TIMER_VALUE   = 0x13000004L;
     static const CPU::Reg32 TIMER_CONTROL = 0x13000008L;
+    static const CPU::Reg32 TIMER_CLEAR   = 0x1300000CL;
     
     static const CPU::Reg8 BIT_ENABLE    = 7;
     static const CPU::Reg8 BIT_MODE      = 6; // 0 = free, 1 = periodic
@@ -50,7 +51,9 @@ protected:
    }
    
    CPU::Reg8 irq() { return IRQ + _channel; }
-    
+  
+   static Handler * _handler[3];
+
 public:
     typedef unsigned long Hertz;   
     typedef short Channel;
@@ -87,7 +90,8 @@ public:
 
     void handler(Handler * hand) {
         int intr = irq(); 
-        IC::int_vector(intr, hand);   
+        IC::int_vector(intr, &IntegratorCP_Timer::int_handler);   
+        _handler[_channel] = hand;
         IC::enable(intr);
     }
 
@@ -102,6 +106,8 @@ public:
     };
 
     static void init() {}
+
+    static void int_handler(IC::Interrupt_Id id);
 
     void reset() {
         db<IC>(TRC) << "Timer_"<<_channel<<"::reset()\n";

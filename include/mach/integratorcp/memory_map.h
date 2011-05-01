@@ -5,7 +5,6 @@
 
 #include <system/memory_map.h>
 
-// This must be redoned! Everything here was ripped from mc12234v
 __BEGIN_SYS
 
 template <>
@@ -18,31 +17,23 @@ struct Memory_Map<IntegratorCP>
 
     enum {
         BASE =      0x00000000,
-        TOP =       0x01FFFFFF,
+        TOP =       0x01EFFFFF,
         APP_LO =    0x00000000,
         APP_CODE =  0x00000000,
         APP_DATA =  0x01000000,
-        APP_HI =    0x01FFFFFF,
+        APP_HI =    0x01EFFFFF,
         PHY_MEM =   0x00000000,
         IO_MEM =    0x10000000,
         APIC_MEM =  0x00000000,
-        SYS =       0x00000000,
-        IDT =       SYS + 0x00000000,
-        GDT =       SYS + 0x00000000,
-        SYS_PT =    SYS + 0x00000000,
-        SYS_PD =    SYS + 0x00000000,
-        SYS_INFO =  0x00416000,
-        SYS_CODE =  SYS + 0x00000000,
-        SYS_DATA =  SYS + 0x00000000,
-        SYS_STACK = SYS + 0x00000000
-    };
-};
-
-template <class Imp> struct IO_Map;
-template <> struct IO_Map<IntegratorCP>
-{
-    typedef volatile unsigned char IO_Port;  
-    struct IO_Ports {
+        SYS =       0x01F00000,
+        IDT =       SYS + 0x00010000,
+        GDT =       SYS + 0x00020000,
+        SYS_PT =    SYS + 0x00030000,
+        SYS_PD =    SYS + 0x00040000,
+        SYS_INFO =  SYS + 0x00050000,
+        SYS_CODE =  SYS + 0x00060000,
+        SYS_DATA =  SYS + 0x00070000,
+        SYS_STACK = SYS + 0x00080000
     };
 };
 

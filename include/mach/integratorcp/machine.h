@@ -5,7 +5,6 @@
 #include <cpu.h>
 #include <mmu.h>
 #include <tsc.h>
-#include <utility/string.h>
 
 __BEGIN_SYS
 
@@ -32,8 +31,7 @@ public:
     }
     static void poweroff() {  for(;;); }
 
-    static void init() {
-    };
+    static void init(); 
 
     static void smp_barrier() {};
     static void smp_init(unsigned int) {};
