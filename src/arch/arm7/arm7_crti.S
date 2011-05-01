@@ -63,6 +63,16 @@ _init:
 	msr cpsr_c, #ARM_MODE_SVC | IRQ_BIT | FIQ_BIT
 	ldr sp, _stack_addr
 
+/* clear bss */
+    mov r0, #0
+    ldr r1, =__bss_start__
+    ldr r2, =__bss_end__
+  
+    bss_clean_loop:
+        cmp r1, r2
+        strlo r0, [r1], #4
+        blo bss_clean_loop
+
 /* this sould not be here */
 
 .ifdef mc13224v

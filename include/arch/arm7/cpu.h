@@ -21,6 +21,7 @@ public:
     class Context
     {
     public:
+
         Context(Log_Addr entry, Log_Addr stack_bottom, Log_Addr exit) :
 			_r0(0), _r1(0), _r2(0), _r3(0), _r4(0), _r5(0), _r6(0),
 			_r7(0), _r8(0), _r9(0), _r10(0), _r11(0), _r12(0),
@@ -33,9 +34,26 @@ public:
         void load() const volatile;
 
         friend Debug & operator << (Debug & db, const Context & c) {
-        db << "{sp="    << &c
-           << "}" ;
-        return db;
+            db << hex;
+            db << "{r0="    << c._r0
+               << ",r1="    << c._r1
+               << ",r2="    << c._r2
+               << ",r3="    << c._r3
+               << ",r4="    << c._r4
+               << ",r5="    << c._r5
+               << ",r6="    << c._r6
+               << ",r7="    << c._r7
+               << ",r8="    << c._r8
+               << ",r9="    << c._r9
+               << ",r10="    << c._r10
+               << ",r11="    << c._r11
+               << ",r12="    << c._r12
+               << ",SP="    << c._sp
+               << ",LR="    << c._lr
+               << ",PC="    << c._pc
+               << "}" ;
+            db << dec;
+            return db;
         }
 
     public:
@@ -95,9 +113,13 @@ public:
 		power(DOZE);
 	}
 
-    static void switch_context(Context * volatile * o, Context * volatile n) __attribute__((naked));
+    static void switch_context(Context * volatile * o, Context * volatile n);
 
-    static Flags flags() {  return 0; } // return cprs(); }
+    static Flags flags() { 
+        register Reg32 result;
+        ASMV("mrs %0, cpsr" : "=r"(result) ::);
+        return result;
+    } 
     static void flags(Flags flags) { }  //sreg(flags); }
 
     static Reg32 sp() {     return 0; } // return sphl(); }
@@ -144,11 +166,10 @@ public:
         return old;
     }
 
-    // here we assume or arm machine is big endian
-    static Reg32 htonl(Reg32 v) { return v; }
-    static Reg16 htons(Reg16 v) { return v; }
-    static Reg32 ntohl(Reg32 v) { return v; }
-    static Reg16 ntohs(Reg16 v) { return v; }
+    static Reg32 htonl(Reg32 v) { return swap32(v); }
+    static Reg16 htons(Reg16 v) { return swap16(v); }
+    static Reg32 ntohl(Reg32 v) { return swap32(v); }
+    static Reg16 ntohs(Reg16 v) { return swap16(v); }
 
     static Context * init_stack(Log_Addr stack, unsigned int size,
                                 void (* exit)(), int (* entry)()) 

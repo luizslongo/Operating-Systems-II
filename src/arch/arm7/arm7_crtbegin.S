@@ -1,7 +1,6 @@
 .file   "crtbegin.s"
     
 .section    .ctors
-.global __CTOR_LIST__ 
 __CTOR_LIST__:
     .long   -1
     

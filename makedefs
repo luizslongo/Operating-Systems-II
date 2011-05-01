@@ -137,7 +137,7 @@ $(MACH_MC13224V)_APP_CODE_ADDR       := 0x00400000
 $(MACH_MC13224V)_BOOT_LENGTH_MIN     := 128
 $(MACH_MC13224V)_BOOT_LENGTH_MAX     := 512
 $(MACH_INTEGRATOR)_MEM_BASE          := 0x00000000
-$(MACH_INTEGRATOR)_MEM_TOP           := 0x0FFFFFFF
+$(MACH_INTEGRATOR)_MEM_TOP           := 0x01FFFFFF
 $(MACH_INTEGRATOR)_BOOT_ADDR         := 0x00000000
 $(MACH_INTEGRATOR)_SETUP_ADDR        := 0x00000000
 $(MACH_INTEGRATOR)_INIT_ADDR         := 0x00000000
@@ -197,17 +197,17 @@ $(MACH_PLASMA)_AS_FLAGS      :=
 $(MACH_PLASMA)_LD_FLAGS      :=
 $(MACH_PLASMA)_CODE_NAME     := .hash
 $(MACH_PLASMA)_DATA_NAME     := .tdata
-$(MACH_MC13224V)_CC_FLAGS    := -mcpu=arm7tdmi-s -Wall -mthumb-interwork
+$(MACH_MC13224V)_CC_FLAGS    := -mcpu=arm7tdmi-s -D__mc13224v__  -Wall -mthumb-interwork
 $(MACH_MC13224V)_AS_FLAGS    := -mcpu=arm7tdmi-s --defsym mc13224v=1 -mthumb-interwork
 $(MACH_MC13224V)_LD_FLAGS    := 
 $(MACH_MC13224V)_CODE_NAME   := .init
 $(MACH_MC13224V)_DATA_NAME   := .ctors
-$(MACH_INTEGRATOR)_CC_FLAGS  := -mcpu=arm926ej-s
-$(MACH_INTEGRATOR)_AS_FLAGS  := -mcpu=arm926ej-s
+$(MACH_INTEGRATOR)_CC_FLAGS  := -mcpu=arm926ej-s -mfpu=fpa 
+$(MACH_INTEGRATOR)_AS_FLAGS  := -mcpu=arm926ej-s -mfpu=fpa 
 $(MACH_INTEGRATOR)_LD_FLAGS  := 
 $(MACH_INTEGRATOR)_CODE_NAME := .init
-$(MACH_INTEGRATOR)_DATA_NAME := .data
-$(MACH_INTEGRATOR)_EMULATOR  := qemu-system-arm -no-reboot -nographic -m 32 -kernel
+$(MACH_INTEGRATOR)_DATA_NAME := .ctors
+$(MACH_INTEGRATOR)_EMULATOR  := qemu-system-arm -no-reboot -nographic -m 128 -kernel
 
 MACH_CC_FLAGS                := $($(MACH)_CC_FLAGS)
 MACH_AS_FLAGS                := $($(MACH)_AS_FLAGS)

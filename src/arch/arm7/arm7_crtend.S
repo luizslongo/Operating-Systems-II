@@ -21,22 +21,20 @@ __JCR_END__:
 .type   __do_global_ctors_aux, function
 
 __do_global_ctors_aux:
-    stmfd sp!, {lr}
-    ldr r0, =__CTOR_END__ - 4
-    ldr r1, =__CTOR_LIST__
+    stmfd sp!, {r4,r5,lr}
+    mov r4, #-1
+    ldr r5, =__CTOR_END__ - 4
   
     ctors_loop:
-        cmp r0, r1
+        ldr r2, [r5], #-4
+        cmp r2, r4
         beq ctors_loop_end
-        ldr r2, [r0], #-4
-        stmfd sp!, {r0-r1}
         mov lr, pc
         bx r2
-        ldmfd sp!, {r0-r1}
-    b ctors_loop
-  
+        b ctors_loop
+    
     ctors_loop_end:
-    ldmfd sp!, {pc}
+    ldmfd sp!, {r4,r5,pc}
 
 .section    .init
     bl __do_global_ctors_aux
