@@ -16,7 +16,6 @@ void Radio_Wrapper::init() {
 
     device->set_channel(0); /* 802.15.4 channel 11 */
     device->set_power(0x12); /* 4.5dBm */
-
 }
 
 void Radio_Wrapper::set_event_handler(MC13224V_Transceiver::event_handler * handler) {
@@ -28,7 +27,7 @@ int Radio_Wrapper::send(unsigned char * data, unsigned int size) {
 
     do {
         p = device->get_free_packet();
-    }while (!p);
+    } while (!p);
 
     device->fill_packet(p, data, size);
     device->tx_packet(p);
@@ -42,11 +41,12 @@ int Radio_Wrapper::receive(unsigned char * data) {
         device->check_maca();
 
         p = device->rx_packet();
-    }while (!p);
+    } while (!p);
 
     for (int i = 0; i < p->length; i++) {
         data[i] = p->data[i + 1];
     }
+
     int size = p->length;
     device->free_packet(p);
 
@@ -54,7 +54,6 @@ int Radio_Wrapper::receive(unsigned char * data) {
 }
 
 void Radio_Wrapper::off() {
-    device->reset_maca();
 }
 
 void Radio_Wrapper::listen() {
