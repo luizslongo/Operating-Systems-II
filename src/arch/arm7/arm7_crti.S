@@ -1,4 +1,4 @@
-.file "arm7_crti.s"
+.file "arm7_crti.S"
 
 .section .init
 .align 2

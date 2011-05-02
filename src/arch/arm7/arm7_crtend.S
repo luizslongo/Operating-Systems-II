@@ -1,4 +1,4 @@
-.file   "arm7_crtend.s"
+.file   "arm7_crtend.S"
 
 .section    .ctors
 __CTOR_END__:

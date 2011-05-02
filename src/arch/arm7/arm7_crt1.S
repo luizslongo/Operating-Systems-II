@@ -1,4 +1,4 @@
-.file "arm7_crt1.s"
+.file "arm7_crt1.S"
 
 .section .text
 .align 4
