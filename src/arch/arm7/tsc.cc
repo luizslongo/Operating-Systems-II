@@ -8,11 +8,10 @@
 __BEGIN_SYS
 
 volatile unsigned long ARM7_TSC::_ts = 0;
-TSC_Timer ARM7_TSC::_timer(ARM7_TSC::RESOLUTION,
-        ARM7_TSC::tsc_timer_handler);
 
 
 ARM7_TSC::Time_Stamp ARM7_TSC::time_stamp() {
+    static TSC_Timer _timer(RESOLUTION, tsc_timer_handler);
     return _timer.read() | _ts << (sizeof(CPU::Reg16) * 8);
 }
 

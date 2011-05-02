@@ -67,5 +67,12 @@ void ARM7::power(ARM7::OP_Mode mode)
 #endif
 }
 
+extern "C" void __cxa_guard_acquire() {
+    CPU::int_disable();
+}
+extern "C" void __cxa_guard_release() {
+    CPU::int_enable();
+}
+
 __END_SYS
 

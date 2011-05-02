@@ -27,7 +27,6 @@ private:
     static void tsc_timer_handler();
 
     static volatile unsigned long _ts;
-    static TSC_Timer _timer;
 };
 
 __END_SYS
