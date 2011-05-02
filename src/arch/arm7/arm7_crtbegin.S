@@ -1,4 +1,4 @@
-.file   "crtbegin.s"
+.file   "arm7_crtbegin.s"
     
 .section    .ctors
 __CTOR_LIST__:

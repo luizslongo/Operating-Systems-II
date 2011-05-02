@@ -1,4 +1,4 @@
-.file "crtn.s"
+.file "arm7_crtn.s"
 
 .section .init
 ldr pc, =__epos_library_app_entry
