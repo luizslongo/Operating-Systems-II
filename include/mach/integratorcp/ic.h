@@ -76,7 +76,7 @@ public:
         _vector[id] = func;
     }
 
-    static void handle_int();
+    static void int_handler();
     static void default_handler(Interrupt_Id id);
     
 private:

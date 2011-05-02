@@ -96,13 +96,18 @@ public:
     }
 
     Hertz frequency() { 
-        return FREQUENCY / load();
+        if (_channel == 0)
+            return CLOCK / load();
+        else
+            return FREQUENCY / load();
     }
     
     void frequency(const Hertz & f) {
         db<Timer>(TRC) << "Timer_"<<_channel<<"::frequency(f="<<f<<")\n";
-        
-        load(FREQUENCY / f);
+        if (_channel == 0)
+            load(CLOCK / f);
+        else
+            load(FREQUENCY / f);
     };
 
     static void init() {}
@@ -161,7 +166,7 @@ class TSC_Timer: public IntegratorCP_Timer
 {
 public:
     TSC_Timer(const Hertz & freq,const Handler * h) 
-    : IntegratorCP_Timer(freq, h, TSC) {}
+    : IntegratorCP_Timer(1, h, TSC) {}
 };
 
 __END_SYS

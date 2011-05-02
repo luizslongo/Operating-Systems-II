@@ -64,7 +64,7 @@ public:
 		vector[id] = handler;
 	}
 
-	static void int_handler(CPU::Reg16 pending);
+	static void int_handler();
 
 };
 
