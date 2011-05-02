@@ -138,6 +138,9 @@ class TCP::Socket : public Data_Observer<TCP::Address>, public Handler {
     //* Called when the connection is closed
     virtual void closed() = 0;
     
+    //* Called when the peer closed his side of the connection
+    virtual void closing() {}
+    
     void close();
     void send(const char* data,u16 len);
     void send(SegmentedBuffer * sb);

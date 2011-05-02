@@ -180,7 +180,15 @@ void TCP::Socket::operator()() {
 void TCP::Socket::close()
 {
     send_fin();
-    state(CLOSE_WAIT);
+    if (state() == ESTABLISHED)
+        state(FIN_WAIT1);
+    else if (state() == CLOSE_WAIT) {
+        state(LAST_ACK);    
+    }
+    else if (state() == SYN_SENT) {
+        state(CLOSED);
+        closed();    
+    }
 }
 
 
@@ -322,8 +330,8 @@ void TCP::Socket::__SNDING(const Header &r,const char* data, u16 len)
 	db<TCP>(TRC) << __PRETTY_FUNCTION__ << endl;
 	
 	if (r._ack) {
-		//signal();
-		//sent(???);
+		//TODO: notify how many bytes were sent
+		sent(0);
 	}
 }
 
@@ -348,7 +356,11 @@ void TCP::Socket::__ESTABLISHED(const Header& r ,const char* data,u16 len)
 		else // TODO: this is wrong
 			__SNDING(r,data,len);
 
-		if (r._fin) state(CLOSE_WAIT);
+		if (r._fin) {
+            send_ack();
+            state(CLOSE_WAIT);
+            closing();
+        }
 	}
 	else {
 		db<TCP>(TRC) << "TCP::out of order segment received\n";
@@ -365,22 +377,26 @@ void TCP::Socket::__FIN_WAIT1(const Header& r ,const char* data,u16 len)
 
 	if (r._ack && !r._fin) { // TODO: check snd_una
 		state(FIN_WAIT2);
-		//rcv_nxt = r.seq_num() + len;
-		//signal();
 	}
 	if (r._ack && r._fin) {
 		state(TIME_WAIT);
-		//signal();
+		send_ack();
     }
 	if (!r._ack && r._fin) {
 		state(CLOSING);
-		//signal();
+		send_ack();
 	}
 }
 void TCP::Socket::__FIN_WAIT2(const Header& r ,const char* data,u16 len)
 {
 	db<TCP>(TRC) << __PRETTY_FUNCTION__ << endl;
-	//signal();
+	if (!check_seq(r,len))
+        return;
+    
+    if (r._fin) {
+        state(TIME_WAIT);
+        send_ack();
+    }
 }
 void TCP::Socket::__CLOSE_WAIT(const Header& r ,const char* data,u16 len)
 {
@@ -388,17 +404,23 @@ void TCP::Socket::__CLOSE_WAIT(const Header& r ,const char* data,u16 len)
 	if (!check_seq(r,len))
 		return;
 	
-    snd_nxt++;
-    send_fin();
-	//if (_transfer == SNDING)
-	//__SNDING(r,data,len);
+    if (r._rst || len) {
+        if (len)
+            //TODO: send_reset()
+        error(ERR_RESET);
+        state(CLOSED);
+        closed();
+    } 
 }
 void TCP::Socket::__CLOSING(const Header& r ,const char* data,u16 len)
 {
 	db<TCP>(TRC) << __PRETTY_FUNCTION__ << endl;
 	if (!check_seq(r,len))
 		return;
-	//signal();
+    
+    if (r._ack) {
+        state(TIME_WAIT);
+    }
 }
 void TCP::Socket::__LAST_ACK(const Header& r ,const char* data,u16 len)
 {
@@ -408,7 +430,6 @@ void TCP::Socket::__LAST_ACK(const Header& r ,const char* data,u16 len)
 	if (r._ack) {
 		state(CLOSED);
 		closed();
-		//signal();
 	}
 }
 
