@@ -9,6 +9,6 @@ _start:
 .align  4
 .global __epos_library_app_entry
 __epos_library_app_entry:
-    bl  main
+    b  main     /* Do not link! LR was loaded by Context::load() */
     bl  _fini
     bl  _exit

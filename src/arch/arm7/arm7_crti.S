@@ -83,6 +83,8 @@ _init:
     mov pc, r12
 .endif
 
+    bl __do_global_ctors_aux
+
 .section .fini
 .global _fini
 _fini:

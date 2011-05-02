@@ -35,6 +35,3 @@ __do_global_ctors_aux:
     
     ctors_loop_end:
     ldmfd sp!, {r4,r5,pc}
-
-.section    .init
-    bl __do_global_ctors_aux
