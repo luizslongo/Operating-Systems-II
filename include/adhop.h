@@ -4,7 +4,6 @@
 #include <system/kmalloc.h>
 #include <utility/hash.h>
 
-#define NULL 0
 #define MAX_LIST 3
 #define MAX_HASH 5
 
@@ -144,7 +143,7 @@ private:
             else {
                 Element * next, * prev;
                 for(
-                        next = Base::head(), prev = NULL;
+                        next = Base::head(), prev = 0;
                         (next->rank() > e->rank()) && next->next();
                         prev = next, next = next->next()
                    );
@@ -275,7 +274,7 @@ public:
         return false;
     }
 
-    Link_Address decision(const Network_Address& dst, void* header)
+    Link_Address resolve(const Network_Address& dst, void* header)
     {
         Ant* ant = (Ant*) header;
         Link_Address nic_addr = rtable.search(dst);
@@ -291,7 +290,7 @@ public:
         return nic_addr;
     }
 
-    Link_Address decision(const Network_Address& src, const Network_Address& dst, void* header)
+    Link_Address resolve(const Network_Address& src, const Network_Address& dst, void* header)
     {
         Ant* ant = (Ant*) header;
         if (rtable.verify(src, ant->sequenceNO)) {

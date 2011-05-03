@@ -98,7 +98,7 @@ public:
     typedef u8                        Protocol;
     typedef IF<Traits<IP>::use_arp,
                ARP_Router<NIC, IP>,
-               BCast_Router<NIC, IP> >::Result  Router;
+               ADHOP_Router<NIC, IP> >::Result  Router;
 
     static const u16 MTU = ~0;
     static const Address BROADCAST;
