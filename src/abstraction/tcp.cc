@@ -379,8 +379,9 @@ void TCP::Socket::__FIN_WAIT1(const Header& r ,const char* data,u16 len)
 		state(FIN_WAIT2);
 	}
 	if (r._ack && r._fin) {
-		state(TIME_WAIT);
+		state(CLOSED); // no TIME_WAIT
 		send_ack();
+        closed();
     }
 	if (!r._ack && r._fin) {
 		state(CLOSING);
@@ -394,8 +395,9 @@ void TCP::Socket::__FIN_WAIT2(const Header& r ,const char* data,u16 len)
         return;
     
     if (r._fin) {
-        state(TIME_WAIT);
+        state(CLOSED); // no TIME_WAIT
         send_ack();
+        closed();
     }
 }
 void TCP::Socket::__CLOSE_WAIT(const Header& r ,const char* data,u16 len)
@@ -419,7 +421,8 @@ void TCP::Socket::__CLOSING(const Header& r ,const char* data,u16 len)
 		return;
     
     if (r._ack) {
-        state(TIME_WAIT);
+        state(CLOSED); // no TIME_WAIT
+        closed();
     }
 }
 void TCP::Socket::__LAST_ACK(const Header& r ,const char* data,u16 len)
