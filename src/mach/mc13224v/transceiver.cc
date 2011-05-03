@@ -8,6 +8,7 @@
 __BEGIN_SYS
 
 MC13224V_Transceiver::event_handler * MC13224V_Transceiver::handler = 0;
+MC13224V_Transceiver::get_lqi_func MC13224V_Transceiver::get_lqi = reinterpret_cast<get_lqi_func>(reinterpret_cast<void *>(GET_LQI_ADDR));
 
 /* incremented on every maca entry */
 /* you can use this to detect that the receive loop is still running */
@@ -384,11 +385,6 @@ void MC13224V_Transceiver::maca_isr() {
         CPU::out32(IO::MACA_CLRIRQ, (1 << IRQ_DI));
         //	kout << "dma_rx = " << &dma_rx << "\n";
         dma_rx->length = CPU::in32(IO::MACA_GETRXLVL) - 2; /* packet length does not include FCS */
-        //		kout << "maca data ind " << (int) dma_rx->length << "\n\r";
-        /*
-         for (int i = 0; i < dma_rx->length; i++)
-         kout << "dma data[" << i << "] = " << (int) dma_rx->data[i] << "\n";
-         */
         add_to_rx(dma_rx);
         dma_rx = 0;
         if (handler != 0) {

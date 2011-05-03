@@ -101,6 +101,7 @@ private:
     static const unsigned int ROM_END = 0x0013ffff;
     static const unsigned int ENTRY_EOF = 0x00000e0f;
     static const unsigned int RF_BASE = 0x80009a00;
+    static const unsigned int GET_LQI_ADDR = 0x0000e04d;
 
     static const unsigned int MAX_SEQ1 = 2;
     static const unsigned int MAX_SEQ2 = 2;
@@ -211,6 +212,9 @@ public:
     static void free_packet(volatile packet_t * p);
     static void free_all_packets();
     static void add_to_rx(volatile packet_t * p);
+
+    typedef unsigned int (*get_lqi_func)(void);
+    static get_lqi_func get_lqi;
 
     static void post_receive();
     static void post_tx();
