@@ -26,13 +26,12 @@ MACH_INTEGRATOR := integratorcp
 # System configuration
 MODE            := $(MODE_LIBRARY)
 ifndef ARCH
-ARCH            := $(ARCH_ARM7)
+ARCH            := $(ARCH_IA32)
 endif
 ifndef MACH
-MACH            := $(MACH_MC13224V)
+MACH            := $(MACH_PC)
 endif
 
-APPLICATION     := nic_test
 GDB_DEBUG		:= 0
 
 # do not modify anything bellow this line
