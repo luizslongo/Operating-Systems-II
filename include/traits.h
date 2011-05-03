@@ -71,7 +71,7 @@ template <> struct Traits<Serial_Display>: public Traits<void>
 // Abstractions
 template <> struct Traits<Thread>: public Traits<void>
 {
-    typedef Scheduling_Criteria::Priority Criterion;
+    typedef Scheduling_Criteria::Round_Robin Criterion;
     static const bool smp = false;
     static const bool trace_idle = false;
     static const unsigned int QUANTUM = 10000; // us
@@ -103,6 +103,8 @@ template <> struct Traits<IP>: public Traits<void>{
     static const bool echo_reply   = true;  // automatic ICMP echo reply
     
     static const bool use_arp = true; // use Address Resolution Protocol
+    static const unsigned int OPT_SIZE = 3; // options size in 32-bit words
+    static const unsigned char DEF_TTL = 0x40; // time-to-live
 };
 
 template <> struct Traits<CMAC<Radio_Wrapper> >: public Traits<void>

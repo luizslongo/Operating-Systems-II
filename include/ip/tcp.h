@@ -206,11 +206,16 @@ class TCP::Socket : public Data_Observer<TCP::Address>, public Handler {
 class TCP::ClientSocket : public Socket {
  public:
     ClientSocket(TCP * tcp,const Address &remote,const Address &local);
+    
+    void reconnect() { connect(_remote); }
+    void connect(const Address& to);
 };
 
 class TCP::ServerSocket : public Socket {
  public:
     ServerSocket(TCP * tcp,const Address &local);
+    
+    void listen();
 };
 
 __END_SYS

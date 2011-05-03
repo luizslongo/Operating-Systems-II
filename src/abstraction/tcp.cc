@@ -195,23 +195,35 @@ void TCP::Socket::close()
 TCP::ClientSocket::ClientSocket(TCP * tcp,const Address& remote,const Address& local) 
 	: Socket(tcp,remote,local)
 {
-	state(SYN_SENT);
-	snd_ini = Pseudo_Random::random() & 0x00FFFFFF;
-	snd_una = snd_ini;
-	snd_nxt = snd_ini + 1;
-	rcv_wnd = 512; // TODO: change to MTU minus headers
+    connect(remote);
+}
 
-	Header hdr(snd_ini, 0);
-	hdr._syn = true;
-	_send(&hdr,0);
-    set_timeout();
+void TCP::ClientSocket::connect(const Address& to) {
+    _remote = to;
+    
+    state(SYN_SENT);
+    snd_ini = Pseudo_Random::random() & 0x00FFFFFF;
+    snd_una = snd_ini;
+    snd_nxt = snd_ini + 1;
+    rcv_wnd = 512; // TODO: change to MTU minus headers
+
+    Header hdr(snd_ini, 0);
+    hdr._syn = true;
+    _send(&hdr,0);
+    set_timeout();    
 }
 
 TCP::ServerSocket::ServerSocket(TCP * tcp,const Address& local) 
 	: Socket(tcp,Address(0,0),local)
 {
-	state(LISTEN);
-	rcv_wnd = 1024; // TODO: change to MTU minus headers
+    listen();
+}
+
+void TCP::ServerSocket::listen()
+{
+    _remote = Address(0,0);
+    state(LISTEN);
+    rcv_wnd = 1024; // TODO: change to MTU minus headers    
 }
 
 void TCP::Socket::__LISTEN(const Header& r ,const char* data,u16 len)
