@@ -29,7 +29,7 @@ typedef AVR8_TSC			TSC;
 
 typedef ATMega1281			Machine;
 typedef ATMega1281_IC   		IC;
-typedef ATMega1281_Timer_1		Timer_1;
+typedef ATMega1281_Timer_1		Timer_CMAC;
 typedef ATMega1281_Timer_2		Scheduler_Timer;
 typedef ATMega1281_Timer_3		Alarm_Timer;
 typedef Alarm_Timer    		    Timer;
