@@ -45,6 +45,8 @@ public:
 
     bool cca();
 
+    unsigned int lqi();
+
 private:
     static AT86RF230 * device;
 };

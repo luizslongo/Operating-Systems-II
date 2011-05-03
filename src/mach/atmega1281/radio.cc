@@ -40,5 +40,9 @@ bool Radio_Wrapper::cca() {
     return device->cca_measurement(AT86RF230::ENERGY_ABOVE_THRESHOLD, 0);
 }
 
+unsigned int Radio_Wrapper::lqi() {
+    return 0;
+}
+
 __END_SYS
 

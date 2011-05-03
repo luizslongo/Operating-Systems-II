@@ -70,5 +70,9 @@ bool Radio_Wrapper::cca() {
     return false;
 }
 
+unsigned int Radio_Wrapper::lqi() {
+    return device->get_lqi();
+}
+
 __END_SYS
 

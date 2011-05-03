@@ -45,6 +45,8 @@ public:
 
     bool cca();
 
+    unsigned int lqi();
+
 private:
     static MC13224V_Transceiver * device;
 };
