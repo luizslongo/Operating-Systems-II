@@ -3,6 +3,7 @@
 
 #include <arp.h>
 #include <utility/debug.h>
+#include <utility/buffer.h>
 
 __BEGIN_SYS
 
@@ -23,7 +24,7 @@ public:
         // do nothing
     }
     
-    MAC_Address resolve(const Address& addr)
+    MAC_Address resolve(const Address& addr,SegmentedBuffer * pdu)
     {
         return MAC_Address(LinkLayer::BROADCAST);    
     }
@@ -55,7 +56,7 @@ public:
         
     }
     
-    MAC_Address resolve(Address addr)
+    MAC_Address resolve(Address addr,SegmentedBuffer * pdu)
     {
         for(unsigned int i = 0; i < Traits<Network>::ARP_TRIES; i++)
         {

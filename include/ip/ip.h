@@ -121,7 +121,7 @@ public:
         Header() {}
 
         Header(const Address & src, const Address & dst, const Protocol & prot, u16 size) :
-            _ihl(DEF_IHL),  _version(DEF_VER), _tos(DEF_TOS),
+            _ihl(DEF_IHL + Traits<IP>::OPT_SIZE),  _version(DEF_VER), _tos(DEF_TOS),
             _length(CPU::htons(sizeof(Header) + size)), _id(CPU::htons(pktid++)),
             _offset(0), _flags(0), _ttl(DEF_TTL), _protocol(prot), _checksum(0),
             _src_ip(src), _dst_ip(dst)
@@ -158,6 +158,12 @@ public:
         void set_protocol(u8 protocol){
             _protocol = protocol;
         }
+        
+        char* get_options() { return _opt; }
+        
+        u8 ttl() { return _ttl; }
+        
+        void ttl(u8 nttl) { _ttl = nttl; }
 
         void calculate_checksum();
         
@@ -195,7 +201,7 @@ public:
         volatile u16 _checksum;  // Header checksum
         Address _src_ip;    // Source IP address
         Address _dst_ip;    // Destination IP addres
-    
+        char _opt[(4 * Traits<IP>::OPT_SIZE)];
         static unsigned short pktid;
     };
 
@@ -263,7 +269,7 @@ private:
     static const unsigned int DEF_VER = 4;
     static const unsigned int DEF_IHL = 5;    // 20 bytes
     static const unsigned int DEF_TOS = 0;
-    static const unsigned int DEF_TTL = 0x40; // 64 hops
+    static const unsigned int DEF_TTL = Traits<IP>::DEF_TTL;
 
     // Pseudo header for checksum calculations
     struct Pseudo_Header {

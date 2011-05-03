@@ -40,7 +40,7 @@ class TCP::Header {
 
     u16 _src_port, _dst_port;
     u32 _seq_num, _ack_num;
-#if !defined(i386) && !defined(AVR) 
+#if !defined(i386) && !defined(AVR) && !defined(ARM)
     u8  _hdr_off:4, _un1:4;
     bool  _un3:1, _un2:1;
     bool  _urg:1, _ack:1, _psh:1, _rst:1, _syn:1, _fin:1;

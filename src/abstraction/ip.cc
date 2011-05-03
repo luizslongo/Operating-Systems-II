@@ -70,7 +70,10 @@ void IP::process_ip(char *data, u16 size)
             db<IP>(TRC) << "IP checksum failed for incoming packet\n";
         } else {
             notify(pck_h.src_ip(),pck_h.dst_ip(),(int)pck_h.protocol(),
-               &data[pck_h.hlength()], pck_h.length() - pck_h.hlength());
+                &data[pck_h.hlength()], pck_h.length() - pck_h.hlength());
+            if (pck_h.ttl() > 0) {
+                pck_h.ttl(pck_h.ttl() - 1);
+            }
         }
     }
     else {
@@ -107,15 +110,14 @@ void IP::process_incoming() {
 		db<IP>(WRN) << "NIC::received error!" << endl;
 		return;
 	}
-	
-	// notify routing algorithm
-	_router.received(src, prot, data, size);
-	
+
 	if (prot == NIC::IP) {
 		_router.update(reinterpret_cast<Header*>(data)->src_ip(), src);
 		process_ip(data, size);
 	}
 	
+	// notify routing algorithm
+    _router.received(src, prot, data, size);
 }
 
 void IP::worker_loop() {
@@ -131,21 +133,20 @@ s32 IP::send(const Address & from,const Address & to,SegmentedBuffer * data,Prot
 	Header hdr(from,to,proto,data->total_size());
 	SegmentedBuffer pdu(&hdr,hdr.hlength(),data);
 
-	int size = pdu.total_size();
-	db<IP>(TRC) << "IP::send() " << size << " bytes" << endl;
-
-	//TODO: put fragmentation here
-	char sbuf[size];
-	//TODO: possible stack overflow here, we must change NIC::send to accept SegmentedBuffers
-	pdu.copy_to(sbuf,size);
-
 	MAC_Address mac = NIC::BROADCAST;
-	if (((u32)to & (u32)_netmask) == ((u32)_self & (u32)_netmask))
-		mac = _router.resolve(to);
+	if (from.is_neighbor(to,_netmask))
+		mac = _router.resolve(to,&pdu);
 	else
-		mac = _router.resolve(_gateway);
+		mac = _router.resolve(_gateway,&pdu);
 
-    
+    //TODO: put fragmentation here
+    int size = pdu.total_size();
+    char sbuf[size];
+    //TODO: possible stack overflow here, we must change NIC::send to accept SegmentedBuffers
+    pdu.copy_to(sbuf,size);   
+
+    db<IP>(TRC) << "IP::send() " << size << " bytes" << endl;
+        
 	if (_nic.send(mac,NIC::IP,sbuf,size) >= 0)
 		return size;
 	else
