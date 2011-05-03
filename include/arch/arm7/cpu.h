@@ -122,7 +122,6 @@ public:
     } 
     static void flags(Flags flags) { }  //sreg(flags); }
 
-    static Reg32 sp() {     return 0; } // return sphl(); }
     static void sp(Reg32 sp) {} // sphl(sp); }
 
     static Reg32 fr() {
@@ -140,6 +139,15 @@ public:
 				:"r" (fr)
 				: "r0");
 	} 
+	
+	static Reg32 sp() {
+        Reg32 return_value;
+        ASMV("  mov %0, sp\n"
+                : "=r" (return_value)
+                :
+                : "r0");
+        return return_value;
+    }
 
     static Reg32 pdp() {    return 0;} // return 0; }
     static void pdp(Reg32 pdp) {}
@@ -153,16 +161,17 @@ public:
         return old;
     }
     static int finc(volatile int & value) {
-        int_disable();
-        register int old = CPU_Common::finc(value);
-        int_enable();
-        return old; 
-    
+        register Reg32 old;
+        ASMV("ldr %0, [%1]" : "=r"(old) : "r"(&value) :);
+        ASMV("add %0, %0, #1" : : "r"(old) :);
+        ASMV("swp %0, %0, [%1]" :  : "r"(old), "r"(&value) :);
+        return old;
     }
     static int fdec(volatile int & value) {
-        int_disable();
-        register int old = CPU_Common::fdec(value);
-        int_enable();
+        register Reg32 old;
+        ASMV("ldr %0, [%1]" : "=r"(old) : "r"(&value) :);
+        ASMV("sub %0, %0, #1" : : "r"(old) :);
+        ASMV("swp %0, %0, [%1]" :  : "r"(old), "r"(&value) :);
         return old;
     }
 
@@ -267,6 +276,7 @@ public:
 
 private:
 	static OP_Mode _mode;
+    
 };
 
 __END_SYS
