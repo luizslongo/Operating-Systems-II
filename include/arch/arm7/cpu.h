@@ -155,9 +155,9 @@ public:
     static Log_Addr ip() {  return 0;} // return pc(); }    
 
     static bool tsl(volatile bool & lock) {
-        int_disable();
-        register bool old = CPU_Common::tsl(lock);
-        int_enable();
+        register Reg32 old;
+        ASMV("mov %0, #1" : : "r"(old) :);
+        ASMV("swp %0, %0, [%1]" :  : "r"(old), "r"(&lock) :);
         return old;
     }
     static int finc(volatile int & value) {
