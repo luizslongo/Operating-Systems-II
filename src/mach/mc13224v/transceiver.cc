@@ -697,7 +697,6 @@ unsigned int MC13224V_Transceiver::init_from_flash(unsigned int addr) {
             i += 4 * exec_init_entry(buf, ram_values);
         }
         return i;
-        kout << "foi tudo\n";
     } else {
         return 0;
     }
