@@ -8,6 +8,8 @@ __BEGIN_SYS
 
 ARM7::OP_Mode ARM7::_mode = ARM7::FULL;
 
+int ARM7::_lock_counter = 0;
+
 void ARM7::Context::save() volatile
 {
 
