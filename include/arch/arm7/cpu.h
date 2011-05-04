@@ -23,10 +23,10 @@ public:
     public:
 
         Context(Log_Addr entry, Log_Addr stack_bottom, Log_Addr exit) :
-			_r0(0), _r1(0), _r2(0), _r3(0), _r4(0), _r5(0), _r6(0),
-			_r7(0), _r8(0), _r9(0), _r10(0), _r11(0), _r12(0),
+            _r0(0), _r1(0), _r2(0), _r3(0), _r4(0), _r5(0), _r6(0),
+            _r7(0), _r8(0), _r9(0), _r10(0), _r11(0), _r12(0),
             _sp(stack_bottom), _lr(exit), _pc(entry),
-			_cpsr(0x60000013) {} // all interrupts enabled by defaul
+            _cpsr(0x60000013) {} // all interrupts enabled by defaul
 
         Context() {}
 
@@ -70,9 +70,9 @@ public:
         Reg32 _r10;
         Reg32 _r11;
         Reg32 _r12;
-		Reg32 _sp;
+        Reg32 _sp;
         Reg32 _lr;
-		Reg32 _pc;
+        Reg32 _pc;
         Reg32 _cpsr; // Current Program Status Register  
     };
 
@@ -87,16 +87,16 @@ public:
         if (_lock_counter > 0)
             _lock_counter--;
         if (_lock_counter == 0) {
-		    irq_enable();
-		    fiq_enable();
+            irq_enable();
+            fiq_enable();
         }
 	}
 
     static void int_disable() {
-		irq_disable();
-		fiq_disable();
+        irq_disable();
+        fiq_disable();
         _lock_counter++;
-	}
+    }
 
     static void irq_enable() {
         Reg32 flags;
@@ -116,9 +116,9 @@ public:
     static void fiq_disable() {}
 
     static void halt() {
-		int_enable();
-		power(DOZE);
-	}
+        int_enable();
+        power(DOZE);
+    }
 
     static void switch_context(Context * volatile * o, Context * volatile n);
 
@@ -127,39 +127,39 @@ public:
         ASMV("mrs %0, cpsr" : "=r"(result) ::);
         return result;
     } 
-    static void flags(Flags flags) { }  //sreg(flags); }
+    static void flags(Flags flags) {
+        ASMV("msr cpsr_c, %0" : : "r"(flags) :);
+    }
 
-    static void sp(Reg32 sp) {} // sphl(sp); }
+    static void sp(Reg32 sp) {
+        ASMV("mov sp, %0" : : "r"(sp) : "sp");
+    }
 
     static Reg32 fr() {
-		Reg32 return_value;
-		ASMV("	mov %0, r0\n"
-				: "=r" (return_value)
-				:
-				: "r0");
-		return return_value;
-	}
-
-    static void fr(Reg32 fr) {	
-		ASMV("	mov r0, %0\n"
-				: 
-				:"r" (fr)
-				: "r0");
-	} 
-	
-	static Reg32 sp() {
         Reg32 return_value;
-        ASMV("  mov %0, sp\n"
-                : "=r" (return_value)
-                :
-                : "r0");
+        ASMV("mov %0, r0" : "=r" (return_value) : : "r0");
         return return_value;
     }
 
-    static Reg32 pdp() {    return 0;} // return 0; }
-    static void pdp(Reg32 pdp) {}
+    static void fr(Reg32 fr) {	
+        ASMV("mov r0, %0" : : "r" (fr) : "r0");
+    } 
+
+    static Reg32 sp() {
+        Reg32 return_value;
+        ASMV("mov %0, sp" : "=r" (return_value) : : );
+        return return_value;
+    }
     
-    static Log_Addr ip() {  return 0;} // return pc(); }    
+    static Reg32 pdp() { return 0; }
+    
+    // PC is read with a +8 offset
+    static Log_Addr ip()
+    { 
+        register Reg32 result;
+        ASMV("mov %0, pc" : "=r"(result) : :);
+        return result;
+    } 
 
     static bool tsl(volatile bool & lock) {
         register Reg32 old;
@@ -246,47 +246,47 @@ public:
             return ctx;
     }
 
-	// ARM7 specific methods
+    // ARM7 specific methods
 
-	static Reg8 in8(const Reg32 port) {
-		return (*(volatile Reg8 *)port);
-	}
+    static Reg8 in8(const Reg32 port) {
+        return (*(volatile Reg8 *)port);
+    }
 
-	static Reg16 in16(const Reg32 port) {
-		return (*(volatile Reg16 *)port);
-	}
+    static Reg16 in16(const Reg32 port) {
+        return (*(volatile Reg16 *)port);
+    }
 
-	static Reg32 in32(const Reg32 port) {
-		return (*(volatile Reg32 *)port);
-	}
+    static Reg32 in32(const Reg32 port) {
+        return (*(volatile Reg32 *)port);
+    }
 
-	static void out8(const Reg32 port, const Reg8 value) {
-		(*(volatile Reg8 *)port) = value;
-	}
+    static void out8(const Reg32 port, const Reg8 value) {
+        (*(volatile Reg8 *)port) = value;
+    }
 
-	static void out16(const Reg32 port, const Reg16 value) {
-		(*(volatile Reg16 *)port) = value;
-	}  
+    static void out16(const Reg32 port, const Reg16 value) {
+        (*(volatile Reg16 *)port) = value;
+    }  
 
-	static void out32(const Reg32 port, const Reg32 value) {
-		(*(volatile Reg32 *)port) = value;
-	}
+    static void out32(const Reg32 port, const Reg32 value) {
+        (*(volatile Reg32 *)port) = value;
+    }
 
-	typedef char OP_Mode;
-	enum {
-	    OFF = 0,
-	    HIBERNATE = 1,
-	    DOZE = 2,
-	    FULL = 3,
+    typedef char OP_Mode;
+    enum {
+        OFF = 0,
+        HIBERNATE = 1,
+        DOZE = 2,
+        FULL = 3,
         STANDBY = HIBERNATE,
         LIGHT = DOZE
 
-	};
-	static OP_Mode power() { return _mode; }
-	static void power(OP_Mode mode);
+    };
+    static OP_Mode power() { return _mode; }
+    static void power(OP_Mode mode);
 
 private:
-	static OP_Mode _mode;
+    static OP_Mode _mode;
     static int _lock_counter;
     
 };
