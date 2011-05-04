@@ -82,13 +82,20 @@ public:
     static void init();
 
     static void int_enable() {
-		irq_enable();
-		fiq_enable();
+        irq_disable();
+        fiq_disable();
+        if (_lock_counter > 0)
+            _lock_counter--;
+        if (_lock_counter == 0) {
+		    irq_enable();
+		    fiq_enable();
+        }
 	}
 
     static void int_disable() {
 		irq_disable();
 		fiq_disable();
+        _lock_counter++;
 	}
 
     static void irq_enable() {
@@ -162,16 +169,20 @@ public:
     }
     static int finc(volatile int & value) {
         register Reg32 old;
+        int_disable();
         ASMV("ldr %0, [%1]" : "=r"(old) : "r"(&value) :);
         ASMV("add %0, %0, #1" : : "r"(old) :);
         ASMV("swp %0, %0, [%1]" :  : "r"(old), "r"(&value) :);
+        int_enable();
         return old;
     }
     static int fdec(volatile int & value) {
         register Reg32 old;
+        int_disable();
         ASMV("ldr %0, [%1]" : "=r"(old) : "r"(&value) :);
         ASMV("sub %0, %0, #1" : : "r"(old) :);
         ASMV("swp %0, %0, [%1]" :  : "r"(old), "r"(&value) :);
+        int_enable();
         return old;
     }
 
@@ -276,6 +287,7 @@ public:
 
 private:
 	static OP_Mode _mode;
+    static int _lock_counter;
     
 };
 
