@@ -12,7 +12,7 @@ end plasma_axi4lite_testbench;
 
 architecture Behavioral of plasma_axi4lite_testbench is
     
-    constant N_SLAVES       : integer := 2;
+    constant N_SLAVES       : integer := 3;
     constant N_SLAVES_LOG   : integer := integer(ceil(log2(real(N_SLAVES))));
     
     constant SLAVE0_ADDR_W  : integer := 15;
@@ -21,6 +21,9 @@ architecture Behavioral of plasma_axi4lite_testbench is
     constant SLAVE1_ADDR_W  : integer := 15;
     constant SLAVE1_ADDR    : std_logic_vector(SLAVE1_ADDR_W-1 downto 0) 
              := b"0000" & b"0000" & b"0000" & b"001";
+    constant SLAVE2_ADDR_W  : integer := 22;
+    constant SLAVE2_ADDR    : std_logic_vector(SLAVE2_ADDR_W-1 downto 0) 
+             := b"1000" & b"0000" & b"0000" & b"0000" & b"0000" & b"00";
     
     component axi4lite_decoder is
         generic(
@@ -29,7 +32,9 @@ architecture Behavioral of plasma_axi4lite_testbench is
             s0_addr_w   : integer := SLAVE0_ADDR_W; 
             s0_addr     : std_logic_vector(SLAVE0_ADDR_W-1 downto 0) := (others => '0');
             s1_addr_w   : integer := SLAVE1_ADDR_W; 
-            s1_addr     : std_logic_vector(SLAVE1_ADDR_W-1 downto 0) := (others => '0'));
+            s1_addr     : std_logic_vector(SLAVE1_ADDR_W-1 downto 0) := (others => '0');
+            s2_addr_w   : integer := SLAVE2_ADDR_W; 
+            s2_addr     : std_logic_vector(SLAVE2_ADDR_W-1 downto 0) := (others => '0'));
         port(
             -- master write address channel
             m_awvalid_i    : in std_logic;
@@ -145,8 +150,50 @@ architecture Behavioral of plasma_axi4lite_testbench is
             s_axi_rvalid  : out std_logic;
             s_axi_rready  : in std_logic);
     end component;
+    
+    component axi_uart_xilinx is
+        generic (
+            C_FAMILY              : string                        := "virtex6";
+            C_S_AXI_ACLK_FREQ_HZ  : integer                       := 100_000_000;
+            C_BASEADDR            : std_logic_vector(31 downto 0) := X"FFFF_FFFF";
+            C_HIGHADDR            : std_logic_vector(31 downto 0) := X"0000_0000";
+            C_BAUDRATE            : integer                       := 9600;
+            C_DATA_BITS           : integer range 5 to 8          := 8;
+            C_USE_PARITY          : integer range 0 to 1          := 0;
+            C_ODD_PARITY          : integer range 0 to 1          := 0
+        );
+        port (
+            -- System signals
+            S_AXI_ACLK            : in  std_logic;
+            S_AXI_ARESETN         : in  std_logic;
+            Interrupt             : out std_logic;
+            -- AXI signals
+            S_AXI_AWADDR          : in  std_logic_vector(31 downto 0);
+            S_AXI_AWVALID         : in  std_logic;
+            S_AXI_AWREADY         : out std_logic;
+            S_AXI_WDATA           : in  std_logic_vector(31 downto 0);
+            S_AXI_WSTRB           : in  std_logic_vector(3 downto 0);
+            S_AXI_WVALID          : in  std_logic;
+            S_AXI_WREADY          : out std_logic;
+            S_AXI_BRESP           : out std_logic_vector(1 downto 0);
+            S_AXI_BVALID          : out std_logic;
+            S_AXI_BREADY          : in  std_logic;
+            S_AXI_ARADDR          : in  std_logic_vector(31 downto 0);
+            S_AXI_ARVALID         : in  std_logic;
+            S_AXI_ARREADY         : out std_logic;
+            S_AXI_RDATA           : out std_logic_vector(31 downto 0);
+            S_AXI_RRESP           : out std_logic_vector(1 downto 0);
+            S_AXI_RVALID          : out std_logic;
+            S_AXI_RREADY          : in  std_logic;
+            -- UARTLite Interface Signals
+            RX                    : in  std_logic;
+            TX                    : out std_logic);
+    end component;
 
 
+    signal uart_rx  : std_logic;
+    signal uart_tx  : std_logic;
+    
     signal clk_50MHz   : std_logic;
     signal sig_reset   : std_logic;
     signal sig_intr    : std_logic;
@@ -246,6 +293,30 @@ architecture Behavioral of plasma_axi4lite_testbench is
     signal sig_s1_rready  : std_logic;
     signal sig_s1_rdata   : std_logic_vector(31 downto 0);
     signal sig_s1_rresp   : std_logic_vector(1 downto 0);
+    
+    signal sig_s2_awvalid : std_logic;
+    signal sig_s2_awready : std_logic;
+    signal sig_s2_awaddr  : std_logic_vector(31 downto 0);
+    signal sig_s2_awprot  : std_logic_vector(2 downto 0);
+
+    signal sig_s2_wvalid  : std_logic;
+    signal sig_s2_wready  : std_logic;
+    signal sig_s2_wdata   : std_logic_vector(31 downto 0);
+    signal sig_s2_wstrb   : std_logic_vector(3 downto 0);
+
+    signal sig_s2_bvalid  : std_logic;
+    signal sig_s2_bready  : std_logic;
+    signal sig_s2_bresp   : std_logic_vector(1 downto 0);
+
+    signal sig_s2_arvalid : std_logic;
+    signal sig_s2_arready : std_logic;
+    signal sig_s2_araddr  : std_logic_vector(31 downto 0);
+    signal sig_s2_arprot  : std_logic_vector(2 downto 0);
+
+    signal sig_s2_rvalid  : std_logic;
+    signal sig_s2_rready  : std_logic;
+    signal sig_s2_rdata   : std_logic_vector(31 downto 0);
+    signal sig_s2_rresp   : std_logic_vector(1 downto 0);
 
 begin
 
@@ -259,7 +330,9 @@ begin
             s0_addr_w   => SLAVE0_ADDR_W, 
             s0_addr     => SLAVE0_ADDR,
             s1_addr_w   => SLAVE1_ADDR_W, 
-            s1_addr     => SLAVE1_ADDR
+            s1_addr     => SLAVE1_ADDR,
+            s2_addr_w   => SLAVE2_ADDR_W, 
+            s2_addr     => SLAVE2_ADDR
         )
         port map(
             -- master write address channel
@@ -315,39 +388,50 @@ begin
         
      -- slave write address channel
      sig_s0_awvalid <= sig_awvalid(0);
-     sig_s1_awvalid <= sig_awvalid(1);  
-     sig_awready    <= sig_s1_awready & sig_s0_awready;
+     sig_s1_awvalid <= sig_awvalid(1);
+     sig_s2_awvalid <= sig_awvalid(2);  
+     sig_awready    <= sig_s2_awready & sig_s1_awready & sig_s0_awready;
      sig_s0_awaddr  <= sig_awaddr(31 downto 0);
      sig_s1_awaddr  <= sig_awaddr(63 downto 32);
+     sig_s2_awaddr  <= sig_awaddr(95 downto 64);
      sig_s0_awprot  <= sig_awprot(2 downto 0);
      sig_s1_awprot  <= sig_awprot(5 downto 3);
+     sig_s2_awprot  <= sig_awprot(8 downto 6);
     -- slave write data channel
      sig_s0_wvalid  <= sig_wvalid(0);
      sig_s1_wvalid  <= sig_wvalid(1);
-     sig_wready     <= sig_s1_wready & sig_s0_wready;
+     sig_s2_wvalid  <= sig_wvalid(2);
+     sig_wready     <= sig_s2_wready & sig_s1_wready & sig_s0_wready;
      sig_s0_wdata   <= sig_wdata(31 downto 0);
      sig_s1_wdata   <= sig_wdata(63 downto 32);
+     sig_s2_wdata   <= sig_wdata(95 downto 64);
      sig_s0_wstrb   <= sig_wstrb(3 downto 0);
      sig_s1_wstrb   <= sig_wstrb(7 downto 4);
+     sig_s2_wstrb   <= sig_wstrb(11 downto 8);
      -- slave write response channel
-     sig_bvalid     <= sig_s1_bvalid & sig_s0_bvalid;
+     sig_bvalid     <= sig_s2_bvalid & sig_s1_bvalid & sig_s0_bvalid;
      sig_s0_bready  <= sig_bready(0);
      sig_s1_bready  <= sig_bready(1);
-     sig_bresp      <= sig_s1_bresp & sig_s0_bresp;
+     sig_s2_bready  <= sig_bready(2);
+     sig_bresp      <= sig_s2_bresp & sig_s1_bresp & sig_s0_bresp;
     -- slave read address channel
      sig_s0_arvalid <= sig_arvalid(0);
      sig_s1_arvalid <= sig_arvalid(1);
-     sig_arready    <= sig_s1_arready & sig_s0_arready;
+     sig_s2_arvalid <= sig_arvalid(2);
+     sig_arready    <= sig_s2_arready & sig_s1_arready & sig_s0_arready;
      sig_s0_araddr  <= sig_araddr(31 downto 0);
      sig_s1_araddr  <= sig_araddr(63 downto 32);
+     sig_s2_araddr  <= sig_araddr(95 downto 64);
      sig_s0_arprot  <= sig_arprot(2 downto 0);
      sig_s1_arprot  <= sig_arprot(5 downto 3);
+     sig_s2_arprot  <= sig_arprot(8 downto 6);
     -- slave read data channel
-     sig_rvalid     <= sig_s1_rvalid & sig_s0_rvalid;
+     sig_rvalid     <= sig_s2_rvalid & sig_s1_rvalid & sig_s0_rvalid;
      sig_s0_rready  <= sig_rready(0);
      sig_s1_rready  <= sig_rready(1);
-     sig_rdata      <= sig_s1_rdata & sig_s0_rdata;
-     sig_rresp      <= sig_s1_rresp & sig_s0_rresp;
+     sig_s2_rready  <= sig_rready(2);
+     sig_rdata      <= sig_s2_rdata & sig_s1_rdata & sig_s0_rdata;
+     sig_rresp      <= sig_s2_rresp & sig_s1_rresp & sig_s0_rresp;
 
 
     -- ----------------------------------------------------------
@@ -452,7 +536,48 @@ begin
             s_axi_rready  => sig_s1_rready,
             s_axi_rdata   => sig_s1_rdata,
             s_axi_rresp   => sig_s1_rresp);
-
+            
+    -- ----------------------------------------------------------
+    -- Slave 2
+    -- ---------------------------------------------------------
+    uart: axi_uart_xilinx 
+        generic map (
+            C_FAMILY                => "virtex6",
+            C_BASEADDR              => X"8000_0000",
+            C_HIGHADDR              => X"8000_03FF",
+            C_S_AXI_ACLK_FREQ_HZ    => 50_000_000,
+            C_BAUDRATE              => 57600,
+            C_DATA_BITS             => 8,
+            C_USE_PARITY            => 0,
+            C_ODD_PARITY            => 0
+        )
+        port map (
+            -- System signals
+            S_AXI_ACLK      => clk_50MHz,
+            S_AXI_ARESETN   => sig_reset,
+            Interrupt       => open,
+            -- AXI signals
+            S_AXI_AWADDR    => sig_s2_awaddr,
+            S_AXI_AWVALID   => sig_s2_awvalid,
+            S_AXI_AWREADY   => sig_s2_awready,
+            S_AXI_WDATA     => sig_s2_wdata,
+            S_AXI_WSTRB     => sig_s2_wstrb,
+            S_AXI_WVALID    => sig_s2_wvalid,
+            S_AXI_WREADY    => sig_s2_wready,
+            S_AXI_BRESP     => sig_s2_bresp,
+            S_AXI_BVALID    => sig_s2_bvalid,
+            S_AXI_BREADY    => sig_s2_bready,
+            S_AXI_ARADDR    => sig_s2_araddr,
+            S_AXI_ARVALID   => sig_s2_arvalid,
+            S_AXI_ARREADY   => sig_s2_arready,
+            S_AXI_RDATA     => sig_s2_rdata,
+            S_AXI_RRESP     => sig_s2_rresp,
+            S_AXI_RVALID    => sig_s2_rvalid,
+            S_AXI_RREADY    => sig_s2_rready,
+            -- UARTLite Interface Signals
+            RX              => uart_rx,
+            TX              => uart_tx);
+    
     -- ----------------------------------------------------------
     -- Simulation
     -- ----------------------------------------------------------

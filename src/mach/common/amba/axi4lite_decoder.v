@@ -206,7 +206,7 @@ module axi4lite_decoder(
     amba_mux #(.SIZE(1), .N_INPUTS(sw_log2))
     bresp_mux(
     	.sel(ssel_write_idx),
-    	.in({{((1<<sw_log2)-(sw*2)){1'b0}},s_bresp_i}),
+    	.in({{(((1<<sw_log2)*2)-(sw*2)){1'b0}},s_bresp_i}),
     	.out(m_bresp_o)
     );
     end else begin
@@ -295,7 +295,7 @@ module axi4lite_decoder(
     amba_mux #(.SIZE(5), .N_INPUTS(sw_log2))
     rdata_mux(
         .sel(ssel_read_idx),
-        .in({{((1<<sw_log2)-(sw*aw)){1'b0}},s_rdata_i}),
+        .in({{(((1<<sw_log2)*aw)-(sw*aw)){1'b0}},s_rdata_i}),
         .out(m_rdata_o)
     );
     end else begin
@@ -311,7 +311,7 @@ module axi4lite_decoder(
     amba_mux #(.SIZE(1), .N_INPUTS(sw_log2))
     rresp_mux(
         .sel(ssel_read_idx),
-        .in({{((1<<sw_log2)-(sw*2)){1'b0}},s_rresp_i}),
+        .in({{(((1<<sw_log2)*2)-(sw*2)){1'b0}},s_rresp_i}),
         .out(m_rresp_o)
     );
     end else begin

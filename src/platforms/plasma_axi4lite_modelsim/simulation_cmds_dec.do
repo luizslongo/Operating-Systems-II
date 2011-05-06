@@ -23,6 +23,8 @@ vcom ../../mach/plasma/plasma_axi4lite_master.vhd
 
 vcom ../../mach/common/coregen/ram_amba_128k.vhd
 
+vlog ../../mach/common/axi_uart/axi_uart_xilinx.v
+
 vlog ../../mach/common/amba/amba_mux.v
 vlog ../../mach/common/amba/address_decoder.v
 vlog ../../mach/common/amba/priority_encoder.v
@@ -32,7 +34,7 @@ vcom plasma_axi4lite_dec_testbench.vhd
 
 
 #load/dump/run vhdl design
-vsim -L unisim work.plasma_axi4lite_testbench
+vsim -L unisim -L axi_uartlite_v1_01_a  work.plasma_axi4lite_testbench
 vcd file trace_dec.vcd
 
 vcd add -r -file trace_dec.vcd /*

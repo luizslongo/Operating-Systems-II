@@ -8,6 +8,12 @@
 
 #define AMBA2_BASE 0x00020000
 
+#define UART_BASE 0x80000000
+#define UART_RX_FIFO (UART_BASE+0x0)
+#define UART_TX_FIFO (UART_BASE+0x4)
+#define UART_TX_STATUS (UART_BASE+0x8)
+#define UART_TX_CTRL (UART_BASE+0xC)
+
 void OS_InterruptServiceRoutine(unsigned int status)
 {
    (void)status;
@@ -22,6 +28,16 @@ int main()
 
     for(i = 0; i < AMBA_DEPTH; ++i){
         MemoryWrite(AMBA2_BASE+(i*4), MemoryRead(AMBA_BASE+(i*4)));
+    }
+
+    MemoryWrite(UART_TX_CTRL, 0x3);//Disable interrupts and clear FIFO
+
+    i = 0;
+    while(i < AMBA_DEPTH){
+        if (MemoryRead(UART_TX_STATUS) & 0x8)
+            continue;
+        MemoryWrite(UART_TX_FIFO, i);
+        i++;
     }
 
     while(1);

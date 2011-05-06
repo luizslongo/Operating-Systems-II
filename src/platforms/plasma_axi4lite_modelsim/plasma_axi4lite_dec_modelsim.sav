@@ -118,3 +118,50 @@ plasma_axi4lite_testbench.sig_s1_bready
 #sig_s1_bresp[1:0] plasma_axi4lite_testbench.sig_s1_bresp[1] plasma_axi4lite_testbench.sig_s1_bresp[0]
 plasma_axi4lite_testbench.sig_s1_bvalid
 #sig_s1_rresp[1:0] plasma_axi4lite_testbench.sig_s1_rresp[1] plasma_axi4lite_testbench.sig_s1_rresp[0]
+@200
+-
+-
+@22
+#sig_s2_araddr[31:0] plasma_axi4lite_testbench.sig_s2_araddr[31] plasma_axi4lite_testbench.sig_s2_araddr[30] plasma_axi4lite_testbench.sig_s2_araddr[29] plasma_axi4lite_testbench.sig_s2_araddr[28] plasma_axi4lite_testbench.sig_s2_araddr[27] plasma_axi4lite_testbench.sig_s2_araddr[26] plasma_axi4lite_testbench.sig_s2_araddr[25] plasma_axi4lite_testbench.sig_s2_araddr[24] plasma_axi4lite_testbench.sig_s2_araddr[23] plasma_axi4lite_testbench.sig_s2_araddr[22] plasma_axi4lite_testbench.sig_s2_araddr[21] plasma_axi4lite_testbench.sig_s2_araddr[20] plasma_axi4lite_testbench.sig_s2_araddr[19] plasma_axi4lite_testbench.sig_s2_araddr[18] plasma_axi4lite_testbench.sig_s2_araddr[17] plasma_axi4lite_testbench.sig_s2_araddr[16] plasma_axi4lite_testbench.sig_s2_araddr[15] plasma_axi4lite_testbench.sig_s2_araddr[14] plasma_axi4lite_testbench.sig_s2_araddr[13] plasma_axi4lite_testbench.sig_s2_araddr[12] plasma_axi4lite_testbench.sig_s2_araddr[11] plasma_axi4lite_testbench.sig_s2_araddr[10] plasma_axi4lite_testbench.sig_s2_araddr[9] plasma_axi4lite_testbench.sig_s2_araddr[8] plasma_axi4lite_testbench.sig_s2_araddr[7] plasma_axi4lite_testbench.sig_s2_araddr[6] plasma_axi4lite_testbench.sig_s2_araddr[5] plasma_axi4lite_testbench.sig_s2_araddr[4] plasma_axi4lite_testbench.sig_s2_araddr[3] plasma_axi4lite_testbench.sig_s2_araddr[2] plasma_axi4lite_testbench.sig_s2_araddr[1] plasma_axi4lite_testbench.sig_s2_araddr[0]
+@28
+plasma_axi4lite_testbench.sig_s2_arvalid
+plasma_axi4lite_testbench.sig_s2_arready
+@200
+-
+@28
+plasma_axi4lite_testbench.sig_s2_rready
+@22
+#sig_s2_rdata[31:0] plasma_axi4lite_testbench.sig_s2_rdata[31] plasma_axi4lite_testbench.sig_s2_rdata[30] plasma_axi4lite_testbench.sig_s2_rdata[29] plasma_axi4lite_testbench.sig_s2_rdata[28] plasma_axi4lite_testbench.sig_s2_rdata[27] plasma_axi4lite_testbench.sig_s2_rdata[26] plasma_axi4lite_testbench.sig_s2_rdata[25] plasma_axi4lite_testbench.sig_s2_rdata[24] plasma_axi4lite_testbench.sig_s2_rdata[23] plasma_axi4lite_testbench.sig_s2_rdata[22] plasma_axi4lite_testbench.sig_s2_rdata[21] plasma_axi4lite_testbench.sig_s2_rdata[20] plasma_axi4lite_testbench.sig_s2_rdata[19] plasma_axi4lite_testbench.sig_s2_rdata[18] plasma_axi4lite_testbench.sig_s2_rdata[17] plasma_axi4lite_testbench.sig_s2_rdata[16] plasma_axi4lite_testbench.sig_s2_rdata[15] plasma_axi4lite_testbench.sig_s2_rdata[14] plasma_axi4lite_testbench.sig_s2_rdata[13] plasma_axi4lite_testbench.sig_s2_rdata[12] plasma_axi4lite_testbench.sig_s2_rdata[11] plasma_axi4lite_testbench.sig_s2_rdata[10] plasma_axi4lite_testbench.sig_s2_rdata[9] plasma_axi4lite_testbench.sig_s2_rdata[8] plasma_axi4lite_testbench.sig_s2_rdata[7] plasma_axi4lite_testbench.sig_s2_rdata[6] plasma_axi4lite_testbench.sig_s2_rdata[5] plasma_axi4lite_testbench.sig_s2_rdata[4] plasma_axi4lite_testbench.sig_s2_rdata[3] plasma_axi4lite_testbench.sig_s2_rdata[2] plasma_axi4lite_testbench.sig_s2_rdata[1] plasma_axi4lite_testbench.sig_s2_rdata[0]
+@28
+plasma_axi4lite_testbench.sig_s2_rvalid
+@200
+-
+@22
+#sig_s2_awaddr[31:0] plasma_axi4lite_testbench.sig_s2_awaddr[31] plasma_axi4lite_testbench.sig_s2_awaddr[30] plasma_axi4lite_testbench.sig_s2_awaddr[29] plasma_axi4lite_testbench.sig_s2_awaddr[28] plasma_axi4lite_testbench.sig_s2_awaddr[27] plasma_axi4lite_testbench.sig_s2_awaddr[26] plasma_axi4lite_testbench.sig_s2_awaddr[25] plasma_axi4lite_testbench.sig_s2_awaddr[24] plasma_axi4lite_testbench.sig_s2_awaddr[23] plasma_axi4lite_testbench.sig_s2_awaddr[22] plasma_axi4lite_testbench.sig_s2_awaddr[21] plasma_axi4lite_testbench.sig_s2_awaddr[20] plasma_axi4lite_testbench.sig_s2_awaddr[19] plasma_axi4lite_testbench.sig_s2_awaddr[18] plasma_axi4lite_testbench.sig_s2_awaddr[17] plasma_axi4lite_testbench.sig_s2_awaddr[16] plasma_axi4lite_testbench.sig_s2_awaddr[15] plasma_axi4lite_testbench.sig_s2_awaddr[14] plasma_axi4lite_testbench.sig_s2_awaddr[13] plasma_axi4lite_testbench.sig_s2_awaddr[12] plasma_axi4lite_testbench.sig_s2_awaddr[11] plasma_axi4lite_testbench.sig_s2_awaddr[10] plasma_axi4lite_testbench.sig_s2_awaddr[9] plasma_axi4lite_testbench.sig_s2_awaddr[8] plasma_axi4lite_testbench.sig_s2_awaddr[7] plasma_axi4lite_testbench.sig_s2_awaddr[6] plasma_axi4lite_testbench.sig_s2_awaddr[5] plasma_axi4lite_testbench.sig_s2_awaddr[4] plasma_axi4lite_testbench.sig_s2_awaddr[3] plasma_axi4lite_testbench.sig_s2_awaddr[2] plasma_axi4lite_testbench.sig_s2_awaddr[1] plasma_axi4lite_testbench.sig_s2_awaddr[0]
+@28
+plasma_axi4lite_testbench.sig_s2_awvalid
+plasma_axi4lite_testbench.sig_s2_awready
+@200
+-
+@28
+plasma_axi4lite_testbench.sig_s2_wready
+@22
+#sig_s2_wdata[31:0] plasma_axi4lite_testbench.sig_s2_wdata[31] plasma_axi4lite_testbench.sig_s2_wdata[30] plasma_axi4lite_testbench.sig_s2_wdata[29] plasma_axi4lite_testbench.sig_s2_wdata[28] plasma_axi4lite_testbench.sig_s2_wdata[27] plasma_axi4lite_testbench.sig_s2_wdata[26] plasma_axi4lite_testbench.sig_s2_wdata[25] plasma_axi4lite_testbench.sig_s2_wdata[24] plasma_axi4lite_testbench.sig_s2_wdata[23] plasma_axi4lite_testbench.sig_s2_wdata[22] plasma_axi4lite_testbench.sig_s2_wdata[21] plasma_axi4lite_testbench.sig_s2_wdata[20] plasma_axi4lite_testbench.sig_s2_wdata[19] plasma_axi4lite_testbench.sig_s2_wdata[18] plasma_axi4lite_testbench.sig_s2_wdata[17] plasma_axi4lite_testbench.sig_s2_wdata[16] plasma_axi4lite_testbench.sig_s2_wdata[15] plasma_axi4lite_testbench.sig_s2_wdata[14] plasma_axi4lite_testbench.sig_s2_wdata[13] plasma_axi4lite_testbench.sig_s2_wdata[12] plasma_axi4lite_testbench.sig_s2_wdata[11] plasma_axi4lite_testbench.sig_s2_wdata[10] plasma_axi4lite_testbench.sig_s2_wdata[9] plasma_axi4lite_testbench.sig_s2_wdata[8] plasma_axi4lite_testbench.sig_s2_wdata[7] plasma_axi4lite_testbench.sig_s2_wdata[6] plasma_axi4lite_testbench.sig_s2_wdata[5] plasma_axi4lite_testbench.sig_s2_wdata[4] plasma_axi4lite_testbench.sig_s2_wdata[3] plasma_axi4lite_testbench.sig_s2_wdata[2] plasma_axi4lite_testbench.sig_s2_wdata[1] plasma_axi4lite_testbench.sig_s2_wdata[0]
+#sig_s2_wstrb[3:0] plasma_axi4lite_testbench.sig_s2_wstrb[3] plasma_axi4lite_testbench.sig_s2_wstrb[2] plasma_axi4lite_testbench.sig_s2_wstrb[1] plasma_axi4lite_testbench.sig_s2_wstrb[0]
+@28
+plasma_axi4lite_testbench.sig_s2_wvalid
+@200
+-
+@28
+#sig_s2_arprot[2:0] plasma_axi4lite_testbench.sig_s2_arprot[2] plasma_axi4lite_testbench.sig_s2_arprot[1] plasma_axi4lite_testbench.sig_s2_arprot[0]
+#sig_s2_awprot[2:0] plasma_axi4lite_testbench.sig_s2_awprot[2] plasma_axi4lite_testbench.sig_s2_awprot[1] plasma_axi4lite_testbench.sig_s2_awprot[0]
+plasma_axi4lite_testbench.sig_s2_bready
+#sig_s2_bresp[1:0] plasma_axi4lite_testbench.sig_s2_bresp[1] plasma_axi4lite_testbench.sig_s2_bresp[0]
+plasma_axi4lite_testbench.sig_s2_bvalid
+@29
+#sig_s2_rresp[1:0] plasma_axi4lite_testbench.sig_s2_rresp[1] plasma_axi4lite_testbench.sig_s2_rresp[0]
+@200
+-
+@28
+plasma_axi4lite_testbench.uart_rx
+plasma_axi4lite_testbench.uart_tx
