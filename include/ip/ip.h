@@ -82,7 +82,7 @@ public:
     
     bool is_neighbor(IP_Address other,IP_Address mask) const
     {
-        u32 c1 = u32(this) & u32(mask);
+        u32 c1 = u32(*this) & u32(mask);
         u32 c2 = u32(other) & u32(mask);
         return c1 == c2;
     }
