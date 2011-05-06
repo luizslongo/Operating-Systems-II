@@ -124,19 +124,19 @@ class TCP::Socket : public Data_Observer<TCP::Address>, public Handler {
             TCP::Address dst, void *data, unsigned int size);
             
     //* Called when connection handshake is complete
-    virtual void connected() = 0;
+    virtual void connected() {};
     
     //* Called when data arrives
-    virtual void received(const char* data,u16 size) = 0;
+    virtual void received(const char* data,u16 size) {};
     
     //* Called when data was sucessfuly sent
-    virtual void sent(u16 size) = 0;
+    virtual void sent(u16 size) {};
     
     //* Called when there is an error
-    virtual void error(short errorcode) = 0;
+    virtual void error(short errorcode) {};
     
     //* Called when the connection is closed
-    virtual void closed() = 0;
+    virtual void closed() {};
     
     //* Called when the peer closed his side of the connection
     virtual void closing() {}

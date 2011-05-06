@@ -103,7 +103,7 @@ template <> struct Traits<IP>: public Traits<void>{
     static const bool echo_reply   = true;  // automatic ICMP echo reply
     
     static const bool use_arp = true; // use Address Resolution Protocol
-    static const unsigned int OPT_SIZE = 3; // options size in 32-bit words
+    static const unsigned int OPT_SIZE = 0; // options size in 32-bit words
     static const unsigned char DEF_TTL = 0x40; // time-to-live
 };
 

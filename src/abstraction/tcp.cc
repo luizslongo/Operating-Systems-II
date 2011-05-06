@@ -376,7 +376,9 @@ void TCP::Socket::__FIN_WAIT1(const Header& r ,const char* data,u16 len)
         return;
 
     if (r._ack && !r._fin) { // TODO: check snd_una
+        rcv_nxt = r.seq_num() + len;
         state(FIN_WAIT2);
+        send_ack();
     }
     if (r._ack && r._fin) {
         state(CLOSED); // no TIME_WAIT

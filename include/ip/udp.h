@@ -144,7 +144,7 @@ class UDP: public IP::Observer, public Data_Observed < UDP_Address > {
 
         // every Socket should implement one
         virtual void received(const UDP::Address & src,
-                      const char *data, unsigned int size) = 0;
+                      const char *data, unsigned int size) {};
 
         void update(Observed * o, long c,UDP_Address src,
                  UDP_Address dst,void * data,unsigned int size);
