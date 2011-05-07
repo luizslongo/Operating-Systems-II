@@ -11,20 +11,19 @@ entity plasma_axi4lite_testbench is
 end plasma_axi4lite_testbench;
 
 architecture Behavioral of plasma_axi4lite_testbench is
-    
     constant N_SLAVES       : integer := 3;
     constant N_SLAVES_LOG   : integer := integer(ceil(log2(real(N_SLAVES))));
-    
+
     constant SLAVE0_ADDR_W  : integer := 15;
-    constant SLAVE0_ADDR    : std_logic_vector(SLAVE0_ADDR_W-1 downto 0) 
-             := b"0000" & b"0000" & b"0000" & b"000";
+    constant SLAVE0_ADDR    : std_logic_vector(SLAVE0_ADDR_W-1 downto 0) := b"0000"&b"0000"&b"0000"&b"000";
+
     constant SLAVE1_ADDR_W  : integer := 15;
-    constant SLAVE1_ADDR    : std_logic_vector(SLAVE1_ADDR_W-1 downto 0) 
-             := b"0000" & b"0000" & b"0000" & b"001";
+    constant SLAVE1_ADDR    : std_logic_vector(SLAVE1_ADDR_W-1 downto 0) := b"0000"&b"0000"&b"0000"&b"001";
+
     constant SLAVE2_ADDR_W  : integer := 22;
     constant SLAVE2_ADDR    : std_logic_vector(SLAVE2_ADDR_W-1 downto 0) 
-             := b"1000" & b"0000" & b"0000" & b"0000" & b"0000" & b"00";
-    
+        := b"1000" & b"0000" & b"0000" & b"0000" & b"0000" & b"00";
+
     component axi4lite_decoder is
         generic(
             sw          : integer := 16;
@@ -60,35 +59,32 @@ architecture Behavioral of plasma_axi4lite_testbench is
             m_rready_i     : in std_logic;
             m_rdata_o      : out std_logic_vector(31 downto 0);
             m_rresp_o      : out std_logic_vector(1 downto 0);
-            
-             -- slave write address channel
+            -- slaves write address channel
             s_awvalid_o    : out std_logic_vector(N_SLAVES-1 downto 0);
             s_awready_i    : in std_logic_vector(N_SLAVES-1 downto 0);
             s_awaddr_o     : out std_logic_vector((N_SLAVES*32)-1 downto 0);
             s_awprot_o     : out std_logic_vector((N_SLAVES*3)-1 downto 0);
-            -- slave write data channel
+            -- slaves write data channel
             s_wvalid_o     : out std_logic_vector(N_SLAVES-1 downto 0);
             s_wready_i     : in std_logic_vector(N_SLAVES-1 downto 0);
             s_wdata_o      : out std_logic_vector((N_SLAVES*32)-1 downto 0);
             s_wstrb_o      : out std_logic_vector((N_SLAVES*4)-1 downto 0);
-            -- slave write response channel
+            -- slaves write response channel
             s_bvalid_i     : in std_logic_vector(N_SLAVES-1 downto 0);
             s_bready_o     : out std_logic_vector(N_SLAVES-1 downto 0);
             s_bresp_i      : in std_logic_vector((N_SLAVES*2)-1 downto 0);
-            -- slave read address channel
+            -- slaves read address channel
             s_arvalid_o    : out std_logic_vector(N_SLAVES-1 downto 0);
             s_arready_i    : in std_logic_vector(N_SLAVES-1 downto 0);
             s_araddr_o     : out std_logic_vector((N_SLAVES*32)-1 downto 0);
             s_arprot_o     : out std_logic_vector((N_SLAVES*3)-1 downto 0);
-            -- slave read data channel
+            -- slaves read data channel
             s_rvalid_i     : in std_logic_vector(N_SLAVES-1 downto 0);
             s_rready_o     : out std_logic_vector(N_SLAVES-1 downto 0);
             s_rdata_i      : in std_logic_vector((N_SLAVES*32)-1 downto 0);
-            s_rresp_i      : in std_logic_vector((N_SLAVES*2)-1 downto 0)
-        );
+            s_rresp_i      : in std_logic_vector((N_SLAVES*2)-1 downto 0));
     end component axi4lite_decoder;
-    
-    
+
     component plasma_axi4lite_master is
         generic(
             memory_type     : string  := "XILINX_16X";
@@ -150,19 +146,18 @@ architecture Behavioral of plasma_axi4lite_testbench is
             s_axi_rvalid  : out std_logic;
             s_axi_rready  : in std_logic);
     end component;
-    
+
     component axi_uart_xilinx is
-        generic (
+        generic(
             C_FAMILY              : string                        := "virtex6";
-            C_S_AXI_ACLK_FREQ_HZ  : integer                       := 100_000_000;
+            C_S_AXI_ACLK_FREQ_HZ  : integer                       := 50_000_000;
             C_BASEADDR            : std_logic_vector(31 downto 0) := X"FFFF_FFFF";
             C_HIGHADDR            : std_logic_vector(31 downto 0) := X"0000_0000";
             C_BAUDRATE            : integer                       := 9600;
             C_DATA_BITS           : integer range 5 to 8          := 8;
             C_USE_PARITY          : integer range 0 to 1          := 0;
-            C_ODD_PARITY          : integer range 0 to 1          := 0
-        );
-        port (
+            C_ODD_PARITY          : integer range 0 to 1          := 0);
+        port(
             -- System signals
             S_AXI_ACLK            : in  std_logic;
             S_AXI_ARESETN         : in  std_logic;
@@ -193,10 +188,11 @@ architecture Behavioral of plasma_axi4lite_testbench is
 
     signal uart_rx  : std_logic;
     signal uart_tx  : std_logic;
-    
+
     signal clk_50MHz   : std_logic;
     signal sig_reset   : std_logic;
     signal sig_intr    : std_logic;
+
 
     signal sig_m0_awvalid : std_logic;
     signal sig_m0_awready : std_logic;
@@ -221,31 +217,33 @@ architecture Behavioral of plasma_axi4lite_testbench is
     signal sig_m0_rready  : std_logic;
     signal sig_m0_rdata   : std_logic_vector(31 downto 0);
     signal sig_m0_rresp   : std_logic_vector(1 downto 0);
-     
+
+
     signal sig_awvalid  : std_logic_vector(N_SLAVES-1 downto 0);
     signal sig_awready  : std_logic_vector(N_SLAVES-1 downto 0);
     signal sig_awaddr   : std_logic_vector((N_SLAVES*32)-1 downto 0);
     signal sig_awprot   : std_logic_vector((N_SLAVES*3)-1 downto 0);
-     
+
     signal sig_wvalid   : std_logic_vector(N_SLAVES-1 downto 0);
     signal sig_wready   : std_logic_vector(N_SLAVES-1 downto 0);
     signal sig_wdata    : std_logic_vector((N_SLAVES*32)-1 downto 0);
     signal sig_wstrb    : std_logic_vector((N_SLAVES*4)-1 downto 0);
-     
+
     signal sig_bvalid   : std_logic_vector(N_SLAVES-1 downto 0);
     signal sig_bready   : std_logic_vector(N_SLAVES-1 downto 0);
     signal sig_bresp    : std_logic_vector((N_SLAVES*2)-1 downto 0);
-     
+
     signal sig_arvalid  : std_logic_vector(N_SLAVES-1 downto 0);
     signal sig_arready  : std_logic_vector(N_SLAVES-1 downto 0);
     signal sig_araddr   : std_logic_vector((N_SLAVES*32)-1 downto 0);
     signal sig_arprot   : std_logic_vector((N_SLAVES*3)-1 downto 0);
-     
+
     signal sig_rvalid   : std_logic_vector(N_SLAVES-1 downto 0);
     signal sig_rready   : std_logic_vector(N_SLAVES-1 downto 0);
     signal sig_rdata    : std_logic_vector((N_SLAVES*32)-1 downto 0);
     signal sig_rresp    : std_logic_vector((N_SLAVES*2)-1 downto 0);
-    
+
+
     signal sig_s0_awvalid : std_logic;
     signal sig_s0_awready : std_logic;
     signal sig_s0_awaddr  : std_logic_vector(31 downto 0);
@@ -269,7 +267,8 @@ architecture Behavioral of plasma_axi4lite_testbench is
     signal sig_s0_rready  : std_logic;
     signal sig_s0_rdata   : std_logic_vector(31 downto 0);
     signal sig_s0_rresp   : std_logic_vector(1 downto 0);
-    
+
+
     signal sig_s1_awvalid : std_logic;
     signal sig_s1_awready : std_logic;
     signal sig_s1_awaddr  : std_logic_vector(31 downto 0);
@@ -293,7 +292,8 @@ architecture Behavioral of plasma_axi4lite_testbench is
     signal sig_s1_rready  : std_logic;
     signal sig_s1_rdata   : std_logic_vector(31 downto 0);
     signal sig_s1_rresp   : std_logic_vector(1 downto 0);
-    
+
+
     signal sig_s2_awvalid : std_logic;
     signal sig_s2_awready : std_logic;
     signal sig_s2_awaddr  : std_logic_vector(31 downto 0);
@@ -320,9 +320,6 @@ architecture Behavioral of plasma_axi4lite_testbench is
 
 begin
 
-    -- ----------------------------------------------------------
-    -- AXI4 Interconnect
-    -- ----------------------------------------------------------
     axi4lite_interconnect: axi4lite_decoder
         generic map(
             sw          => N_SLAVES,
@@ -332,8 +329,7 @@ begin
             s1_addr_w   => SLAVE1_ADDR_W, 
             s1_addr     => SLAVE1_ADDR,
             s2_addr_w   => SLAVE2_ADDR_W, 
-            s2_addr     => SLAVE2_ADDR
-        )
+            s2_addr     => SLAVE2_ADDR)
         port map(
             -- master write address channel
             m_awvalid_i => sig_m0_awvalid,
@@ -359,85 +355,87 @@ begin
             m_rready_i  => sig_m0_rready,
             m_rdata_o   => sig_m0_rdata,
             m_rresp_o   => sig_m0_rresp,
-            
-             -- slave write address channel
+            -- slaves write address channel
             s_awvalid_o =>  sig_awvalid,
             s_awready_i =>  sig_awready,
             s_awaddr_o  =>  sig_awaddr,
             s_awprot_o  =>  sig_awprot,
-            -- slave write data channel
+            -- slaves write data channel
             s_wvalid_o  =>  sig_wvalid,
             s_wready_i  =>  sig_wready,
             s_wdata_o   =>  sig_wdata,
             s_wstrb_o   =>  sig_wstrb,
-            -- slave write response channel
+            -- slaves write response channel
             s_bvalid_i  =>  sig_bvalid,
             s_bready_o  =>  sig_bready,
             s_bresp_i   =>  sig_bresp,
-            -- slave read address channel
+            -- slaves read address channel
             s_arvalid_o =>  sig_arvalid,
             s_arready_i =>  sig_arready,
             s_araddr_o  =>  sig_araddr,
             s_arprot_o  =>  sig_arprot,
-            -- slave read data channel
+            -- slaves read data channel
             s_rvalid_i  =>  sig_rvalid,
             s_rready_o  =>  sig_rready,
             s_rdata_i   =>  sig_rdata,
-            s_rresp_i   =>  sig_rresp
-        );
-        
-     -- slave write address channel
-     sig_s0_awvalid <= sig_awvalid(0);
-     sig_s1_awvalid <= sig_awvalid(1);
-     sig_s2_awvalid <= sig_awvalid(2);  
-     sig_awready    <= sig_s2_awready & sig_s1_awready & sig_s0_awready;
-     sig_s0_awaddr  <= sig_awaddr(31 downto 0);
-     sig_s1_awaddr  <= sig_awaddr(63 downto 32);
-     sig_s2_awaddr  <= sig_awaddr(95 downto 64);
-     sig_s0_awprot  <= sig_awprot(2 downto 0);
-     sig_s1_awprot  <= sig_awprot(5 downto 3);
-     sig_s2_awprot  <= sig_awprot(8 downto 6);
-    -- slave write data channel
-     sig_s0_wvalid  <= sig_wvalid(0);
-     sig_s1_wvalid  <= sig_wvalid(1);
-     sig_s2_wvalid  <= sig_wvalid(2);
-     sig_wready     <= sig_s2_wready & sig_s1_wready & sig_s0_wready;
-     sig_s0_wdata   <= sig_wdata(31 downto 0);
-     sig_s1_wdata   <= sig_wdata(63 downto 32);
-     sig_s2_wdata   <= sig_wdata(95 downto 64);
-     sig_s0_wstrb   <= sig_wstrb(3 downto 0);
-     sig_s1_wstrb   <= sig_wstrb(7 downto 4);
-     sig_s2_wstrb   <= sig_wstrb(11 downto 8);
-     -- slave write response channel
-     sig_bvalid     <= sig_s2_bvalid & sig_s1_bvalid & sig_s0_bvalid;
-     sig_s0_bready  <= sig_bready(0);
-     sig_s1_bready  <= sig_bready(1);
-     sig_s2_bready  <= sig_bready(2);
-     sig_bresp      <= sig_s2_bresp & sig_s1_bresp & sig_s0_bresp;
-    -- slave read address channel
-     sig_s0_arvalid <= sig_arvalid(0);
-     sig_s1_arvalid <= sig_arvalid(1);
-     sig_s2_arvalid <= sig_arvalid(2);
-     sig_arready    <= sig_s2_arready & sig_s1_arready & sig_s0_arready;
-     sig_s0_araddr  <= sig_araddr(31 downto 0);
-     sig_s1_araddr  <= sig_araddr(63 downto 32);
-     sig_s2_araddr  <= sig_araddr(95 downto 64);
-     sig_s0_arprot  <= sig_arprot(2 downto 0);
-     sig_s1_arprot  <= sig_arprot(5 downto 3);
-     sig_s2_arprot  <= sig_arprot(8 downto 6);
-    -- slave read data channel
-     sig_rvalid     <= sig_s2_rvalid & sig_s1_rvalid & sig_s0_rvalid;
-     sig_s0_rready  <= sig_rready(0);
-     sig_s1_rready  <= sig_rready(1);
-     sig_s2_rready  <= sig_rready(2);
-     sig_rdata      <= sig_s2_rdata & sig_s1_rdata & sig_s0_rdata;
-     sig_rresp      <= sig_s2_rresp & sig_s1_rresp & sig_s0_rresp;
+            s_rresp_i   =>  sig_rresp);
 
 
-    -- ----------------------------------------------------------
-    -- Master
-    -- ----------------------------------------------------------
-    
+
+    -- slaves outputs assignment
+    sig_awready    <= sig_s2_awready & sig_s1_awready & sig_s0_awready;
+    sig_wready     <= sig_s2_wready  & sig_s1_wready  & sig_s0_wready;
+    sig_bvalid     <= sig_s2_bvalid  & sig_s1_bvalid  & sig_s0_bvalid;
+    sig_bresp      <= sig_s2_bresp   & sig_s1_bresp   & sig_s0_bresp;
+    sig_arready    <= sig_s2_arready & sig_s1_arready & sig_s0_arready;
+    sig_rdata      <= sig_s2_rdata   & sig_s1_rdata   & sig_s0_rdata;
+    sig_rresp      <= sig_s2_rresp   & sig_s1_rresp   & sig_s0_rresp;
+    sig_rvalid     <= sig_s2_rvalid  & sig_s1_rvalid  & sig_s0_rvalid;
+
+
+    -- slave0 inputs assignment
+    sig_s0_awvalid <= sig_awvalid(0);
+    sig_s0_awaddr  <= sig_awaddr( ((0*32)+31) downto (0*32) );
+    sig_s0_awprot  <= sig_awprot( ((0*3)+2) downto (0*3) );
+    sig_s0_wvalid  <= sig_wvalid(0);
+    sig_s0_wdata   <= sig_wdata( ((0*32)+31) downto (0*32) );
+    sig_s0_wstrb   <= sig_wstrb( ((0*4)+3) downto (0*4) );
+    sig_s0_bready  <= sig_bready(0);
+    sig_s0_arvalid <= sig_arvalid(0);
+    sig_s0_araddr  <= sig_araddr( ((0*32)+31) downto (0*32) );
+    sig_s0_arprot  <= sig_arprot( ((0*3)+2) downto (0*3) );
+    sig_s0_rready  <= sig_rready(0);
+
+
+    -- slave1 inputs assignment
+    sig_s1_awvalid <= sig_awvalid(1);
+    sig_s1_awaddr  <= sig_awaddr( ((1*32)+31) downto (1*32) );
+    sig_s1_awprot  <= sig_awprot( ((1*3)+2) downto (1*3) );
+    sig_s1_wvalid  <= sig_wvalid(1);
+    sig_s1_wdata   <= sig_wdata( ((1*32)+31) downto (1*32) );
+    sig_s1_wstrb   <= sig_wstrb( ((1*4)+3) downto (1*4) );
+    sig_s1_bready  <= sig_bready(1);
+    sig_s1_arvalid <= sig_arvalid(1);
+    sig_s1_araddr  <= sig_araddr( ((1*32)+31) downto (1*32) );
+    sig_s1_arprot  <= sig_arprot( ((1*3)+2) downto (1*3) );
+    sig_s1_rready  <= sig_rready(1);
+
+
+    -- slave2 inputs assignment
+    sig_s2_awvalid <= sig_awvalid(2);
+    sig_s2_awaddr  <= sig_awaddr( ((2*32)+31) downto (2*32) );
+    sig_s2_awprot  <= sig_awprot( ((2*3)+2) downto (2*3) );
+    sig_s2_wvalid  <= sig_wvalid(2);
+    sig_s2_wdata   <= sig_wdata( ((2*32)+31) downto (2*32) );
+    sig_s2_wstrb   <= sig_wstrb( ((2*4)+3) downto (2*4) );
+    sig_s2_bready  <= sig_bready(2);
+    sig_s2_arvalid <= sig_arvalid(2);
+    sig_s2_araddr  <= sig_araddr( ((2*32)+31) downto (2*32) );
+    sig_s2_arprot  <= sig_arprot( ((2*3)+2) downto (2*3) );
+    sig_s2_rready  <= sig_rready(2);
+
+
+
     plasma_amba: plasma_axi4lite_master
         generic map(
             memory_type     => "XILINX_16X",
@@ -472,14 +470,11 @@ begin
             rready     => sig_m0_rready,
             rdata      => sig_m0_rdata,
             rresp      => sig_m0_rresp,
-        
+
             intr       => sig_intr);
 
-    -- ----------------------------------------------------------
-    -- Slave 0
-    -- ----------------------------------------------------------
 
-    ram_amba: ram_amba_128k
+    ram_amba0: ram_amba_128k
         port map(
             s_aclk        => clk_50MHz,
             s_aresetn     => sig_reset,
@@ -505,12 +500,9 @@ begin
             s_axi_rready  => sig_s0_rready,
             s_axi_rdata   => sig_s0_rdata,
             s_axi_rresp   => sig_s0_rresp);
-     
-    -- ----------------------------------------------------------
-    -- Slave 1
-    -- ----------------------------------------------------------     
-            
-    device1: ram_amba_128k
+
+
+    ram_amba1: ram_amba_128k
         port map(
             s_aclk        => clk_50MHz,
             s_aresetn     => sig_reset,
@@ -536,12 +528,10 @@ begin
             s_axi_rready  => sig_s1_rready,
             s_axi_rdata   => sig_s1_rdata,
             s_axi_rresp   => sig_s1_rresp);
-            
-    -- ----------------------------------------------------------
-    -- Slave 2
-    -- ---------------------------------------------------------
+
+
     uart: axi_uart_xilinx 
-        generic map (
+        generic map(
             C_FAMILY                => "virtex6",
             C_BASEADDR              => X"8000_0000",
             C_HIGHADDR              => X"8000_03FF",
@@ -549,9 +539,8 @@ begin
             C_BAUDRATE              => 57600,
             C_DATA_BITS             => 8,
             C_USE_PARITY            => 0,
-            C_ODD_PARITY            => 0
-        )
-        port map (
+            C_ODD_PARITY            => 0)
+        port map(
             -- System signals
             S_AXI_ACLK      => clk_50MHz,
             S_AXI_ARESETN   => sig_reset,
@@ -577,11 +566,10 @@ begin
             -- UARTLite Interface Signals
             RX              => uart_rx,
             TX              => uart_tx);
-    
-    -- ----------------------------------------------------------
-    -- Simulation
-    -- ----------------------------------------------------------
 
+    
+    
+    -- simulation
     clk_process: process
     begin
         clk_50MHz <= '1';
@@ -589,7 +577,6 @@ begin
         clk_50MHz <= '0';
         wait for 10 ns;
     end process;
-
 
     -- do not interrupt the CPU
     sig_intr <= '0';
