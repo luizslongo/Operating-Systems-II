@@ -30,10 +30,14 @@ vlog ../../mach/common/amba/address_decoder.v
 vlog ../../mach/common/amba/priority_encoder.v
 vlog ../../mach/common/amba/axi4lite_decoder.v
 
+vcom ../../mach/plasma/plasma_axi4lite.vhd
+
 vcom plasma_axi4lite_dec_testbench.vhd
 
 
 #load/dump/run vhdl design
+set StdArithNoWarnings 1
+set NumericStdNoWarnings 1
 vsim -L unisim -L axi_uartlite_v1_01_a  work.plasma_axi4lite_testbench
 vcd file trace_dec.vcd
 

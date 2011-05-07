@@ -6,6 +6,7 @@ PLASMA_SRCS = $(abspath $(addprefix $(BASE_DIR)/src/mach/plasma/, \
 mlite_pack.vhd \
 plasma_axi4lite_master.vhd \
 plasma.vhd \
+plasma_axi4lite.vhd \
 ram_image.vhd \
 uart.vhd \
 eth_dma.vhd \

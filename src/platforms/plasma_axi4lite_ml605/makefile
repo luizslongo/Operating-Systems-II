@@ -16,6 +16,8 @@ include ../../../src/mach/common/coregen/hw.srcs
 
 # other IP sources definitions
 include ../../../src/mach/plasma/hw.srcs
+include ../../../src/mach/common/amba/hw.srcs
+include ../../../src/mach/common/axi_uart/hw.srcs
 
 ##################################################
 # Sources
@@ -43,7 +45,10 @@ coregen_clean:
 
 
 # IP sources
-SOURCES = $(abspath $(TOP_SRCS)) $(COREGEN_SRCS) \
+SOURCES = $(abspath $(TOP_SRCS)) \
+$(AMBA_SRCS) \
+$(AXI_UART_SRCS) \
+$(COREGEN_SRCS) \
 $(PLASMA_SRCS)
 
 ##################################################
