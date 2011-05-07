@@ -244,79 +244,35 @@ architecture Behavioral of plasma_axi4lite_testbench is
     signal sig_rresp    : std_logic_vector((N_SLAVES*2)-1 downto 0);
 
 
-    signal sig_s0_awvalid : std_logic;
-    signal sig_s0_awready : std_logic;
-    signal sig_s0_awaddr  : std_logic_vector(31 downto 0);
-    signal sig_s0_awprot  : std_logic_vector(2 downto 0);
+    type array_of_stdlogic is array(0 to N_SLAVES-1) of std_logic;
+    type array_of_stdvec2 is array(0 to N_SLAVES-1) of std_logic_vector(1 downto 0);
+    type array_of_stdvec3 is array(0 to N_SLAVES-1) of std_logic_vector(2 downto 0);
+    type array_of_stdvec4 is array(0 to N_SLAVES-1) of std_logic_vector(3 downto 0);
+    type array_of_stdvec32 is array(0 to N_SLAVES-1) of std_logic_vector(31 downto 0);
 
-    signal sig_s0_wvalid  : std_logic;
-    signal sig_s0_wready  : std_logic;
-    signal sig_s0_wdata   : std_logic_vector(31 downto 0);
-    signal sig_s0_wstrb   : std_logic_vector(3 downto 0);
+    signal sig_slaves_awvalid : array_of_stdlogic;
+    signal sig_slaves_awready : array_of_stdlogic;
+    signal sig_slaves_awaddr  : array_of_stdvec32;
+    signal sig_slaves_awprot  : array_of_stdvec3;
 
-    signal sig_s0_bvalid  : std_logic;
-    signal sig_s0_bready  : std_logic;
-    signal sig_s0_bresp   : std_logic_vector(1 downto 0);
+    signal sig_slaves_wvalid  : array_of_stdlogic;
+    signal sig_slaves_wready  : array_of_stdlogic;
+    signal sig_slaves_wdata   : array_of_stdvec32;
+    signal sig_slaves_wstrb   : array_of_stdvec4;
 
-    signal sig_s0_arvalid : std_logic;
-    signal sig_s0_arready : std_logic;
-    signal sig_s0_araddr  : std_logic_vector(31 downto 0);
-    signal sig_s0_arprot  : std_logic_vector(2 downto 0);
+    signal sig_slaves_bready  : array_of_stdlogic;
+    signal sig_slaves_bvalid  : array_of_stdlogic;
+    signal sig_slaves_bresp   : array_of_stdvec2;
 
-    signal sig_s0_rvalid  : std_logic;
-    signal sig_s0_rready  : std_logic;
-    signal sig_s0_rdata   : std_logic_vector(31 downto 0);
-    signal sig_s0_rresp   : std_logic_vector(1 downto 0);
+    signal sig_slaves_arvalid : array_of_stdlogic;
+    signal sig_slaves_arready : array_of_stdlogic;
+    signal sig_slaves_araddr  : array_of_stdvec32;
+    signal sig_slaves_arprot  : array_of_stdvec3;
 
-
-    signal sig_s1_awvalid : std_logic;
-    signal sig_s1_awready : std_logic;
-    signal sig_s1_awaddr  : std_logic_vector(31 downto 0);
-    signal sig_s1_awprot  : std_logic_vector(2 downto 0);
-
-    signal sig_s1_wvalid  : std_logic;
-    signal sig_s1_wready  : std_logic;
-    signal sig_s1_wdata   : std_logic_vector(31 downto 0);
-    signal sig_s1_wstrb   : std_logic_vector(3 downto 0);
-
-    signal sig_s1_bvalid  : std_logic;
-    signal sig_s1_bready  : std_logic;
-    signal sig_s1_bresp   : std_logic_vector(1 downto 0);
-
-    signal sig_s1_arvalid : std_logic;
-    signal sig_s1_arready : std_logic;
-    signal sig_s1_araddr  : std_logic_vector(31 downto 0);
-    signal sig_s1_arprot  : std_logic_vector(2 downto 0);
-
-    signal sig_s1_rvalid  : std_logic;
-    signal sig_s1_rready  : std_logic;
-    signal sig_s1_rdata   : std_logic_vector(31 downto 0);
-    signal sig_s1_rresp   : std_logic_vector(1 downto 0);
-
-
-    signal sig_s2_awvalid : std_logic;
-    signal sig_s2_awready : std_logic;
-    signal sig_s2_awaddr  : std_logic_vector(31 downto 0);
-    signal sig_s2_awprot  : std_logic_vector(2 downto 0);
-
-    signal sig_s2_wvalid  : std_logic;
-    signal sig_s2_wready  : std_logic;
-    signal sig_s2_wdata   : std_logic_vector(31 downto 0);
-    signal sig_s2_wstrb   : std_logic_vector(3 downto 0);
-
-    signal sig_s2_bvalid  : std_logic;
-    signal sig_s2_bready  : std_logic;
-    signal sig_s2_bresp   : std_logic_vector(1 downto 0);
-
-    signal sig_s2_arvalid : std_logic;
-    signal sig_s2_arready : std_logic;
-    signal sig_s2_araddr  : std_logic_vector(31 downto 0);
-    signal sig_s2_arprot  : std_logic_vector(2 downto 0);
-
-    signal sig_s2_rvalid  : std_logic;
-    signal sig_s2_rready  : std_logic;
-    signal sig_s2_rdata   : std_logic_vector(31 downto 0);
-    signal sig_s2_rresp   : std_logic_vector(1 downto 0);
+    signal sig_slaves_rready  : array_of_stdlogic;
+    signal sig_slaves_rdata   : array_of_stdvec32;
+    signal sig_slaves_rresp   : array_of_stdvec2;
+    signal sig_slaves_rvalid  : array_of_stdlogic;
 
 begin
 
@@ -381,59 +337,30 @@ begin
             s_rresp_i   =>  sig_rresp);
 
 
+    slaves_outputs_to_interconnect: for s in 0 to (N_SLAVES-1) generate
+        sig_awready(s) <= sig_slaves_awready(s);
+        sig_wready(s)  <= sig_slaves_wready(s);
+        sig_bvalid(s)  <= sig_slaves_bvalid(s);
+        sig_arready(s) <= sig_slaves_arready(s);
+        sig_rvalid(s)  <= sig_slaves_rvalid(s);
+        sig_bresp( ((s*2)+1) downto (s*2) )    <= sig_slaves_bresp(s);
+        sig_rdata( ((s*32)+31) downto (s*32) ) <= sig_slaves_rdata(s);
+        sig_rresp( ((s*2)+1) downto (s*2) )    <= sig_slaves_rresp(s);
+    end generate slaves_outputs_to_interconnect;
 
-    -- slaves outputs assignment
-    sig_awready    <= sig_s2_awready & sig_s1_awready & sig_s0_awready;
-    sig_wready     <= sig_s2_wready  & sig_s1_wready  & sig_s0_wready;
-    sig_bvalid     <= sig_s2_bvalid  & sig_s1_bvalid  & sig_s0_bvalid;
-    sig_bresp      <= sig_s2_bresp   & sig_s1_bresp   & sig_s0_bresp;
-    sig_arready    <= sig_s2_arready & sig_s1_arready & sig_s0_arready;
-    sig_rdata      <= sig_s2_rdata   & sig_s1_rdata   & sig_s0_rdata;
-    sig_rresp      <= sig_s2_rresp   & sig_s1_rresp   & sig_s0_rresp;
-    sig_rvalid     <= sig_s2_rvalid  & sig_s1_rvalid  & sig_s0_rvalid;
-
-
-    -- slave0 inputs assignment
-    sig_s0_awvalid <= sig_awvalid(0);
-    sig_s0_awaddr  <= sig_awaddr( ((0*32)+31) downto (0*32) );
-    sig_s0_awprot  <= sig_awprot( ((0*3)+2) downto (0*3) );
-    sig_s0_wvalid  <= sig_wvalid(0);
-    sig_s0_wdata   <= sig_wdata( ((0*32)+31) downto (0*32) );
-    sig_s0_wstrb   <= sig_wstrb( ((0*4)+3) downto (0*4) );
-    sig_s0_bready  <= sig_bready(0);
-    sig_s0_arvalid <= sig_arvalid(0);
-    sig_s0_araddr  <= sig_araddr( ((0*32)+31) downto (0*32) );
-    sig_s0_arprot  <= sig_arprot( ((0*3)+2) downto (0*3) );
-    sig_s0_rready  <= sig_rready(0);
-
-
-    -- slave1 inputs assignment
-    sig_s1_awvalid <= sig_awvalid(1);
-    sig_s1_awaddr  <= sig_awaddr( ((1*32)+31) downto (1*32) );
-    sig_s1_awprot  <= sig_awprot( ((1*3)+2) downto (1*3) );
-    sig_s1_wvalid  <= sig_wvalid(1);
-    sig_s1_wdata   <= sig_wdata( ((1*32)+31) downto (1*32) );
-    sig_s1_wstrb   <= sig_wstrb( ((1*4)+3) downto (1*4) );
-    sig_s1_bready  <= sig_bready(1);
-    sig_s1_arvalid <= sig_arvalid(1);
-    sig_s1_araddr  <= sig_araddr( ((1*32)+31) downto (1*32) );
-    sig_s1_arprot  <= sig_arprot( ((1*3)+2) downto (1*3) );
-    sig_s1_rready  <= sig_rready(1);
-
-
-    -- slave2 inputs assignment
-    sig_s2_awvalid <= sig_awvalid(2);
-    sig_s2_awaddr  <= sig_awaddr( ((2*32)+31) downto (2*32) );
-    sig_s2_awprot  <= sig_awprot( ((2*3)+2) downto (2*3) );
-    sig_s2_wvalid  <= sig_wvalid(2);
-    sig_s2_wdata   <= sig_wdata( ((2*32)+31) downto (2*32) );
-    sig_s2_wstrb   <= sig_wstrb( ((2*4)+3) downto (2*4) );
-    sig_s2_bready  <= sig_bready(2);
-    sig_s2_arvalid <= sig_arvalid(2);
-    sig_s2_araddr  <= sig_araddr( ((2*32)+31) downto (2*32) );
-    sig_s2_arprot  <= sig_arprot( ((2*3)+2) downto (2*3) );
-    sig_s2_rready  <= sig_rready(2);
-
+    slaves_inputs_from_interconnect: for s in 0 to (N_SLAVES-1) generate
+        sig_slaves_awvalid(s) <= sig_awvalid(s);
+        sig_slaves_awaddr(s)  <= sig_awaddr( ((s*32)+31) downto (s*32) );
+        sig_slaves_awprot(s)  <= sig_awprot( ((s*3)+2) downto (s*3) );
+        sig_slaves_wvalid(s)  <= sig_wvalid(s);
+        sig_slaves_wdata(s)   <= sig_wdata( ((s*32)+31) downto (s*32) );
+        sig_slaves_wstrb(s)   <= sig_wstrb( ((s*4)+3) downto (s*4) );
+        sig_slaves_bready(s)  <= sig_bready(s);
+        sig_slaves_arvalid(s) <= sig_arvalid(s);
+        sig_slaves_araddr(s)  <= sig_araddr( ((s*32)+31) downto (s*32) );
+        sig_slaves_arprot(s)  <= sig_arprot( ((s*3)+2) downto (s*3) );
+        sig_slaves_rready(s)  <= sig_rready(s);
+    end generate slaves_inputs_from_interconnect;
 
 
     plasma_amba: plasma_axi4lite_master
@@ -479,27 +406,27 @@ begin
             s_aclk        => clk_50MHz,
             s_aresetn     => sig_reset,
 
-            s_axi_awvalid => sig_s0_awvalid,
-            s_axi_awready => sig_s0_awready,
-            s_axi_awaddr  => sig_s0_awaddr, 
+            s_axi_awvalid => sig_slaves_awvalid(0),
+            s_axi_awready => sig_slaves_awready(0),
+            s_axi_awaddr  => sig_slaves_awaddr(0),
 
-            s_axi_wvalid  => sig_s0_wvalid,
-            s_axi_wready  => sig_s0_wready,
-            s_axi_wdata   => sig_s0_wdata,
-            s_axi_wstrb   => sig_s0_wstrb,
+            s_axi_wvalid  => sig_slaves_wvalid(0),
+            s_axi_wready  => sig_slaves_wready(0),
+            s_axi_wdata   => sig_slaves_wdata(0),
+            s_axi_wstrb   => sig_slaves_wstrb(0), 
 
-            s_axi_bvalid  => sig_s0_bvalid,
-            s_axi_bready  => sig_s0_bready,
-            s_axi_bresp   => sig_s0_bresp,
+            s_axi_bvalid  => sig_slaves_bvalid(0),
+            s_axi_bready  => sig_slaves_bready(0),
+            s_axi_bresp   => sig_slaves_bresp(0),
 
-            s_axi_arvalid => sig_s0_arvalid,
-            s_axi_arready => sig_s0_arready,
-            s_axi_araddr  => sig_s0_araddr,
+            s_axi_arvalid => sig_slaves_arvalid(0),
+            s_axi_arready => sig_slaves_arready(0),
+            s_axi_araddr  => sig_slaves_araddr(0),
 
-            s_axi_rvalid  => sig_s0_rvalid,
-            s_axi_rready  => sig_s0_rready,
-            s_axi_rdata   => sig_s0_rdata,
-            s_axi_rresp   => sig_s0_rresp);
+            s_axi_rvalid  => sig_slaves_rvalid(0),
+            s_axi_rready  => sig_slaves_rready(0),
+            s_axi_rdata   => sig_slaves_rdata(0),
+            s_axi_rresp   => sig_slaves_rresp(0));
 
 
     ram_amba1: ram_amba_128k
@@ -507,27 +434,27 @@ begin
             s_aclk        => clk_50MHz,
             s_aresetn     => sig_reset,
 
-            s_axi_awvalid => sig_s1_awvalid,
-            s_axi_awready => sig_s1_awready,
-            s_axi_awaddr  => sig_s1_awaddr, 
+            s_axi_awvalid => sig_slaves_awvalid(1),
+            s_axi_awready => sig_slaves_awready(1),
+            s_axi_awaddr  => sig_slaves_awaddr(1),
 
-            s_axi_wvalid  => sig_s1_wvalid,
-            s_axi_wready  => sig_s1_wready,
-            s_axi_wdata   => sig_s1_wdata,
-            s_axi_wstrb   => sig_s1_wstrb,
+            s_axi_wvalid  => sig_slaves_wvalid(1),
+            s_axi_wready  => sig_slaves_wready(1),
+            s_axi_wdata   => sig_slaves_wdata(1),
+            s_axi_wstrb   => sig_slaves_wstrb(1), 
 
-            s_axi_bvalid  => sig_s1_bvalid,
-            s_axi_bready  => sig_s1_bready,
-            s_axi_bresp   => sig_s1_bresp,
+            s_axi_bvalid  => sig_slaves_bvalid(1),
+            s_axi_bready  => sig_slaves_bready(1),
+            s_axi_bresp   => sig_slaves_bresp(1),
 
-            s_axi_arvalid => sig_s1_arvalid,
-            s_axi_arready => sig_s1_arready,
-            s_axi_araddr  => sig_s1_araddr,
+            s_axi_arvalid => sig_slaves_arvalid(1),
+            s_axi_arready => sig_slaves_arready(1),
+            s_axi_araddr  => sig_slaves_araddr(1),
 
-            s_axi_rvalid  => sig_s1_rvalid,
-            s_axi_rready  => sig_s1_rready,
-            s_axi_rdata   => sig_s1_rdata,
-            s_axi_rresp   => sig_s1_rresp);
+            s_axi_rvalid  => sig_slaves_rvalid(1),
+            s_axi_rready  => sig_slaves_rready(1),
+            s_axi_rdata   => sig_slaves_rdata(1),
+            s_axi_rresp   => sig_slaves_rresp(1));
 
 
     uart: axi_uart_xilinx 
@@ -546,23 +473,23 @@ begin
             S_AXI_ARESETN   => sig_reset,
             Interrupt       => open,
             -- AXI signals
-            S_AXI_AWADDR    => sig_s2_awaddr,
-            S_AXI_AWVALID   => sig_s2_awvalid,
-            S_AXI_AWREADY   => sig_s2_awready,
-            S_AXI_WDATA     => sig_s2_wdata,
-            S_AXI_WSTRB     => sig_s2_wstrb,
-            S_AXI_WVALID    => sig_s2_wvalid,
-            S_AXI_WREADY    => sig_s2_wready,
-            S_AXI_BRESP     => sig_s2_bresp,
-            S_AXI_BVALID    => sig_s2_bvalid,
-            S_AXI_BREADY    => sig_s2_bready,
-            S_AXI_ARADDR    => sig_s2_araddr,
-            S_AXI_ARVALID   => sig_s2_arvalid,
-            S_AXI_ARREADY   => sig_s2_arready,
-            S_AXI_RDATA     => sig_s2_rdata,
-            S_AXI_RRESP     => sig_s2_rresp,
-            S_AXI_RVALID    => sig_s2_rvalid,
-            S_AXI_RREADY    => sig_s2_rready,
+            S_AXI_AWADDR    => sig_slaves_awaddr(2),
+            S_AXI_AWVALID   => sig_slaves_awvalid(2),
+            S_AXI_AWREADY   => sig_slaves_awready(2),
+            S_AXI_WDATA     => sig_slaves_wdata(2),
+            S_AXI_WSTRB     => sig_slaves_wstrb(2),
+            S_AXI_WVALID    => sig_slaves_wvalid(2),
+            S_AXI_WREADY    => sig_slaves_wready(2),
+            S_AXI_BRESP     => sig_slaves_bresp(2),
+            S_AXI_BVALID    => sig_slaves_bvalid(2),
+            S_AXI_BREADY    => sig_slaves_bready(2),
+            S_AXI_ARADDR    => sig_slaves_araddr(2),
+            S_AXI_ARVALID   => sig_slaves_arvalid(2),
+            S_AXI_ARREADY   => sig_slaves_arready(2),
+            S_AXI_RDATA     => sig_slaves_rdata(2),
+            S_AXI_RRESP     => sig_slaves_rresp(2),
+            S_AXI_RVALID    => sig_slaves_rvalid(2),
+            S_AXI_RREADY    => sig_slaves_rready(2),
             -- UARTLite Interface Signals
             RX              => uart_rx,
             TX              => uart_tx);
