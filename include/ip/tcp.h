@@ -117,7 +117,7 @@ class TCP::Socket : public Data_Observer<TCP::Address>, public Handler {
     };
     
     Socket(TCP * tcp,const Address &local,const Address &remote);
-    ~Socket();
+    virtual ~Socket();
     
     // Data_Observer callback
     void update(Data_Observed<TCP::Address> *ob, long c, TCP::Address src,
@@ -136,10 +136,11 @@ class TCP::Socket : public Data_Observer<TCP::Address>, public Handler {
     virtual void error(short errorcode) {};
     
     //* Called when the connection is closed
-    virtual void closed() {};
+    // Default action deletes the Socket object
+    virtual void closed() { delete this; };
     
     //* Called when the peer closed his side of the connection
-    virtual void closing() {}
+    virtual void closing() {} 
     
     void close();
     void send(const char* data,u16 len);
@@ -216,6 +217,11 @@ class TCP::ServerSocket : public Socket {
     ServerSocket(TCP * tcp,const Address &local);
     
     void listen();
+    
+    //* Called to notify an incomming connection
+    //* Should return a copy of itself to accept the connection
+    virtual Socket* incomming(const Address& from) = 0;
+    
 };
 
 __END_SYS

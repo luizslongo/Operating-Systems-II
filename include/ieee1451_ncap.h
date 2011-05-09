@@ -167,6 +167,9 @@ private:
 			link(this) {};
 		~MyServerSocket() {};
 
+        TCP::Socket* incomming(const TCP::Address& from) {
+            return static_cast<TCP::Socket*>(new MyServerSocket(*this));    
+        }
 		void connected();
 		void closed();
 		void received(const char *data, u16 size);

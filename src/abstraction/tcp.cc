@@ -231,27 +231,39 @@ void TCP::Socket::__LISTEN(const Header& r ,const char* data,u16 len)
     db<TCP>(TRC) << __PRETTY_FUNCTION__ << endl;
 
     if (r._syn && !r._rst && !r._fin) {
-        rcv_nxt = r.seq_num()+1;
-        rcv_ini = r.seq_num();
-        snd_wnd = r.wnd();
+        Socket * n;
+        ServerSocket *ss = static_cast<ServerSocket*>(this);
+        if (!ss) {
+            db<TCP>(ERR) << "TCP::Non-ServerSocket in LISTEN state!\n";
+            Machine::panic();
+        }
+        if (ss && (n = ss->incomming(_remote))) {
+            n->rcv_nxt = r.seq_num()+1;
+            n->rcv_ini = r.seq_num();
+            n->snd_wnd = r.wnd();
 
-        state(SYN_RCVD);
+            n->state(SYN_RCVD);
 
-        snd_ini = Pseudo_Random::random() & 0x0000FFFF;
+            n->snd_ini = Pseudo_Random::random() & 0x0000FFFF;
 
-        Header s(snd_ini,rcv_nxt);
-        s._syn = true;
-        s._ack = true;
-        _send(&s,0);
+            Header s(snd_ini,rcv_nxt);
+            s._syn = true;
+            s._ack = true;
+            n->_send(&s,0);
         
-        snd_nxt = snd_ini+1;
-        snd_una = snd_ini;
+            n->snd_nxt = n->snd_ini+1;
+            n->snd_una = n->snd_ini;
 
-        set_timeout();
-    } else {
+            n->set_timeout();
+        }
+    } 
+    if (state() == LISTEN) {
+        // a new socket was created to handle the incomming connection
+        // and we stay in the listening state
         _remote = Address((u32)0,(u16)0);
     }
 }
+
 
 void TCP::Socket::__SYN_SENT(const Header& r,const char* data,u16 len)
 {
