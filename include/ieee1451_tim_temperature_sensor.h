@@ -1,5 +1,5 @@
-#ifndef __ieee1451_temperature_sensor_h
-#define __ieee1451_temperature_sensor_h
+#ifndef __ieee1451_tim_temperature_sensor_h
+#define __ieee1451_tim_temperature_sensor_h
 
 #include <ieee1451_tim.h>
 #include <mutex.h>

@@ -261,7 +261,9 @@ void IEEE1451dot5_TIM::connect()
 	if (socket)
 		delete socket; //TODO
 	socket = new MyClientSocket(&tcp, NCAP_ADDRESS);
-	connected = true;
+
+	while (!connected)
+		Alarm::delay(1000);
 }
 
 void IEEE1451dot5_TIM::disconnect()
@@ -269,9 +271,14 @@ void IEEE1451dot5_TIM::disconnect()
 	//TODO: Parar de receber dados da rede!
 
 	db<IEEE1451dot5_TIM>(INF) << "Disconnecting...\n";
-	connected = false;
 	if (socket)
 		socket->close();
+
+	while (connected)
+		Alarm::delay(1000);
+
+	delete socket;
+	socket = 0;
 }
 
 void IEEE1451dot5_TIM::sendMessage(unsigned short transId, const char *message, unsigned int length)
@@ -301,12 +308,13 @@ void IEEE1451dot5_TIM::sendMessage(unsigned short transId, const char *message, 
 void IEEE1451dot5_TIM::MyClientSocket::connected()
 {
 	db<IEEE1451dot5_TIM::MyClientSocket>(INF) << "Client socket connected\n";
+	IEEE1451dot5_TIM::getInstance()->connected = true;
 }
 
 void IEEE1451dot5_TIM::MyClientSocket::closed()
 {
 	db<IEEE1451dot5_TIM::MyClientSocket>(INF) << "Client socket closed\n";
-	delete this; //TODO
+	IEEE1451dot5_TIM::getInstance()->connected = false;
 }
 
 void IEEE1451dot5_TIM::MyClientSocket::received(const char *data, u16 size)

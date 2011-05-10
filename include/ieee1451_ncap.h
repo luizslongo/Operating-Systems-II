@@ -151,7 +151,6 @@ public:
 	static IEEE1451dot5_NCAP *getInstance();
 
 	MyServerSocket *getSocket(const IP::Address &addr);
-	void listen();
 	void sendMessage(unsigned short transId, const IP::Address &destination, const char *message, unsigned int length);
 
 private:
@@ -163,16 +162,15 @@ private:
 		Simple_List<MyServerSocket>::Element link;
 
 	public:
-		MyServerSocket(TCP *tcp) : TCP::ServerSocket(tcp, TCP::Address(IP::instance()->address(), IEEE1451_PORT)),
-			link(this) {};
+		MyServerSocket(TCP *tcp) : TCP::ServerSocket(tcp, TCP::Address(IP::instance()->address(), IEEE1451_PORT)), link(this) {};
+		MyServerSocket(const MyServerSocket &socket) : TCP::ServerSocket(socket), link(this) {};
 		~MyServerSocket() {};
 
-        TCP::Socket* incoming(const TCP::Address& from) {
-            return static_cast<TCP::Socket*>(new MyServerSocket(*this));    
-        }
+		TCP::Socket *incoming(const TCP::Address &from);
 		void connected();
 		void closed();
 		void received(const char *data, u16 size);
+		void closing();
 		void sent(u16 size) {};
 		void error(short errorCode) {};
 	};

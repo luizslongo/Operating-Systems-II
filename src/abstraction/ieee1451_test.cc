@@ -3,7 +3,7 @@
 __USING_SYS
 
 
-/*#include <ieee1451_tim_temperature_sensor.h>
+#include <ieee1451_tim_temperature_sensor.h>
 
 int tim()
 {
@@ -11,10 +11,10 @@ int tim()
 
     IEEE1451TemperatureSensor sensor(true, true);
     sensor.execute();
-}*/
+}
 
 
-#include <ieee1451_ncap_application.h>
+/*#include <ieee1451_ncap_application.h>
 
 int ncap()
 {
@@ -24,11 +24,11 @@ int ncap()
 
     Thread::self()->suspend();
     //while(1);
-}
+}*/
 
 
 int main()
 {
-    //tim();
-    ncap();
+    tim();
+    //ncap();
 }

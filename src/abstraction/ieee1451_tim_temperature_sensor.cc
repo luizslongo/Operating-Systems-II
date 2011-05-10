@@ -128,7 +128,7 @@ int IEEE1451TemperatureSensor::execute()
 		if ((tim_im) && (!polling) && (pos == 0))
 			IEEE1451dot5_TIM::getInstance()->disconnect();
 
-		db<IEEE1451TemperatureSensor>(INF) << "Collecting data...\n";
+		db<IEEE1451TemperatureSensor>(INF) << "Collecting data (pos = " << pos << ")...\n";
 
 		//while (!temperature.enable());
 		//while (!temperature.data_ready());

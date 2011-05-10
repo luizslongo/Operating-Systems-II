@@ -165,7 +165,9 @@ IEEE1451dot5_NCAP *IEEE1451dot5_NCAP::dot5 = 0;
 
 IEEE1451dot5_NCAP::IEEE1451dot5_NCAP() : tcp(IP::instance())
 {
-	listen();
+	db<IEEE1451dot5_NCAP>(INF) << "IEEE1451dot5 listening...\n";
+	MyServerSocket *socket = new MyServerSocket(&tcp);
+	sockets.insert(&socket->link);
 }
 
 IEEE1451dot5_NCAP::~IEEE1451dot5_NCAP()
@@ -202,13 +204,6 @@ IEEE1451dot5_NCAP::MyServerSocket *IEEE1451dot5_NCAP::getSocket(const IP::Addres
 	return 0;
 }
 
-void IEEE1451dot5_NCAP::listen()
-{
-	db<IEEE1451dot5_NCAP>(INF) << "Listening...\n";
-	MyServerSocket *socket = new MyServerSocket(&tcp);
-	sockets.insert(&socket->link);
-}
-
 void IEEE1451dot5_NCAP::sendMessage(unsigned short transId, const IP::Address &destination, const char *message, unsigned int length)
 {
 	db<IEEE1451dot5_NCAP>(INF) << "Sending message (transId=" << transId << ")...\n";
@@ -234,10 +229,17 @@ void IEEE1451dot5_NCAP::sendMessage(unsigned short transId, const IP::Address &d
 	delete data;
 }
 
+TCP::Socket *IEEE1451dot5_NCAP::MyServerSocket::incoming(const TCP::Address &from)
+{
+	db<IEEE1451dot5_NCAP::MyServerSocket>(INF) << "Server socket incoming\n";
+	MyServerSocket *socket = new MyServerSocket(*this);
+	IEEE1451dot5_NCAP::getInstance()->sockets.insert(&socket->link);
+	return static_cast<TCP::Socket *>(socket);
+}
+
 void IEEE1451dot5_NCAP::MyServerSocket::connected()
 {
 	db<IEEE1451dot5_NCAP::MyServerSocket>(INF) << "Server socket connected\n";
-	IEEE1451dot5_NCAP::getInstance()->listen();
 	IEEE1451dot0_NCAP::getInstance()->timConnected(remote());
 }
 
@@ -246,7 +248,7 @@ void IEEE1451dot5_NCAP::MyServerSocket::closed()
 	db<IEEE1451dot5_NCAP::MyServerSocket>(INF) << "Server socket closed\n";
 	IEEE1451dot0_NCAP::getInstance()->timDisconnected(remote());
 	IEEE1451dot5_NCAP::getInstance()->sockets.remove(&link);
-	delete this; //TODO
+	delete this;
 }
 
 void IEEE1451dot5_NCAP::MyServerSocket::received(const char *data, u16 size)
@@ -257,6 +259,12 @@ void IEEE1451dot5_NCAP::MyServerSocket::received(const char *data, u16 size)
 
 	if (in->len > 0)
 		IEEE1451dot0_NCAP::getInstance()->receiveMessage(remote(), in->transId, msg, in->len);
+}
+
+void IEEE1451dot5_NCAP::MyServerSocket::closing()
+{
+	db<IEEE1451dot5_NCAP::MyServerSocket>(INF) << "Server socket closing\n";
+	close();
 }
 
 __END_SYS

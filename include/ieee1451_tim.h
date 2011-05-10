@@ -102,6 +102,7 @@ private:
 		void connected();
 		void closed();
 		void received(const char *data, u16 size);
+		void closing() {};
 		void sent(u16 size) {};
 		void error(short errorCode) {};
 	};
