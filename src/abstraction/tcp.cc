@@ -130,6 +130,13 @@ TCP::Socket::Socket(TCP * tcp,const Address &remote,const Address &local)
     _tcp->attach(this, _local.port());
 }
 
+TCP::Socket::Socket(const TCP::Socket& socket)
+    : _tcp(socket._tcp), _remote(socket._remote), _local(socket._local), _rtt(5000000), _timeout(0)
+{
+    state(CLOSED);
+    _tcp->attach(this, _local.port());
+}
+
 TCP::Socket::~Socket()
 {
     _tcp->detach(this, _local.port());

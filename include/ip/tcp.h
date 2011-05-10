@@ -115,7 +115,8 @@ class TCP::Socket : public Data_Observer<TCP::Address>, public Handler {
         ERR_NOT_STARTED,
         ERR_REFUSED
     };
-    
+
+    Socket(const Socket& socket);    
     Socket(TCP * tcp,const Address &local,const Address &remote);
     virtual ~Socket();
     
