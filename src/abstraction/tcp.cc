@@ -224,13 +224,18 @@ TCP::ServerSocket::ServerSocket(TCP * tcp,const Address& local)
     : Socket(tcp,Address(0,0),local)
 {
     listen();
+    rcv_wnd = 1024; // TODO: change to MTU minus headers
+}
+
+TCP::ServerSocket::ServerSocket(const TCP::ServerSocket &socket) : Socket(socket)
+{
+    rcv_wnd = 1024; // TODO: change to MTU minus headers };
 }
 
 void TCP::ServerSocket::listen()
 {
     _remote = Address(0,0);
     state(LISTEN);
-    rcv_wnd = 1024; // TODO: change to MTU minus headers    
 }
 
 void TCP::Socket::__LISTEN(const Header& r ,const char* data,u16 len)

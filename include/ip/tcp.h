@@ -216,6 +216,7 @@ class TCP::ClientSocket : public Socket {
 class TCP::ServerSocket : public Socket {
  public:
     ServerSocket(TCP * tcp,const Address &local);
+    ServerSocket(const TCP::ServerSocket &socket);
     
     void listen();
     
