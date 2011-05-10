@@ -218,9 +218,9 @@ class TCP::ServerSocket : public Socket {
     
     void listen();
     
-    //* Called to notify an incomming connection
+    //* Called to notify an incoming connection
     //* Should return a copy of itself to accept the connection
-    virtual Socket* incomming(const Address& from) = 0;
+    virtual Socket* incoming(const Address& from) = 0;
     
 };
 

@@ -33,7 +33,7 @@ void TCP::update(Data_Observed<IP::Address> *ob, long c, IP::Address src,
     db<TCP>(TRC) << "TCP::update: "<< hdr << endl;
 
     if (!(hdr.validate_checksum(src,dst,size - hdr.size()))) {
-        db<TCP>(INF) << "TCP checksum failed for incomming packet!\n";
+        db<TCP>(INF) << "TCP checksum failed for incoming packet!\n";
         return;
     }
 
@@ -237,7 +237,7 @@ void TCP::Socket::__LISTEN(const Header& r ,const char* data,u16 len)
             db<TCP>(ERR) << "TCP::Non-ServerSocket in LISTEN state!\n";
             Machine::panic();
         }
-        if (ss && (n = ss->incomming(_remote))) {
+        if (ss && (n = ss->incoming(_remote))) {
             n->rcv_nxt = r.seq_num()+1;
             n->rcv_ini = r.seq_num();
             n->snd_wnd = r.wnd();
@@ -246,7 +246,7 @@ void TCP::Socket::__LISTEN(const Header& r ,const char* data,u16 len)
 
             n->snd_ini = Pseudo_Random::random() & 0x0000FFFF;
 
-            Header s(snd_ini,rcv_nxt);
+            Header s(n->snd_ini,n->rcv_nxt);
             s._syn = true;
             s._ack = true;
             n->_send(&s,0);

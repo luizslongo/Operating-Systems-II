@@ -9,7 +9,7 @@ class HTTPServer : public TCP::ServerSocket {
 public:
     HTTPServer(TCP * tcp) : TCP::ServerSocket(tcp,TCP::Address(tcp->ip()->address(),80)) {}
 
-    TCP::Socket* incomming(const TCP::Address& from) {
+    TCP::Socket* incoming(const TCP::Address& from) {
         // we can clone here to accept multiple connections
         // or just return itself
         return this;
