@@ -170,8 +170,9 @@ void TCP::Socket::send(const char *data,u16 len)
 }
 
 void TCP::Socket::set_timeout() {
-    if (_timeout) delete _timeout;
-    _timeout = new Alarm(2 * _rtt, this, 1);
+    //TODO: Not working!
+    //if (_timeout) delete _timeout;
+    //_timeout = new Alarm(2 * _rtt, this, 1);
 }
 
 void TCP::Socket::clear_timeout() {
@@ -217,7 +218,7 @@ void TCP::ClientSocket::connect(const Address& to) {
     Header hdr(snd_ini, 0);
     hdr._syn = true;
     _send(&hdr,0);
-    set_timeout();    
+    set_timeout();
 }
 
 TCP::ServerSocket::ServerSocket(TCP * tcp,const Address& local) 
