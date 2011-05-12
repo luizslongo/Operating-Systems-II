@@ -20,6 +20,7 @@
 #define __ADC_H				__HEADER_MACH(adc)
 #define __SENSOR_H			__HEADER_MACH(sensor)
 #define __RADIO_H			__HEADER_MACH(radio)
+#define __BATTERY_H         __HEADER_MACH(battery)
 
 __BEGIN_SYS
 
@@ -45,6 +46,7 @@ typedef ATMega1281_ADC			ADC;
 typedef ATMega1281_Temperature_Sensor	Temperature_Sensor;
 typedef ATMega1281_Humidity_Sensor	Humidity_Sensor;
 typedef ATMega1281_Radio		Radio;
+typedef ATMega1281_Battery      Battery;
 
 __END_SYS
 
