@@ -47,6 +47,8 @@ public:
 
     unsigned int lqi();
 
+    unsigned int rssi();
+
 private:
     static AT86RF230 * device;
 };

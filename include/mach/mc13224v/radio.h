@@ -47,6 +47,8 @@ public:
 
     unsigned int lqi();
 
+    unsigned int rssi();
+
 private:
     static MC13224V_Transceiver * device;
 };

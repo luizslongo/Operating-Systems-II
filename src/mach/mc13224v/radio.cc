@@ -74,5 +74,9 @@ unsigned int Radio_Wrapper::lqi() {
     return device->get_lqi();
 }
 
+unsigned int Radio_Wrapper::rssi() {
+    return 0;
+}
+
 __END_SYS
 

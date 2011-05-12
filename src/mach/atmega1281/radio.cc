@@ -44,5 +44,13 @@ unsigned int Radio_Wrapper::lqi() {
     return 0;
 }
 
+unsigned int Radio_Wrapper::rssi() {
+    int * i;
+    if (device->get_rssi(i))
+        return *i;
+
+    return 0;
+}
+
 __END_SYS
 
