@@ -215,6 +215,8 @@ void CMAC<Radio_Wrapper>::alarm_handler_function() {
 
 template<> Radio_Wrapper * CMAC<Radio_Wrapper>::_radio = 0;
 
+template<> CMAC<Radio_Wrapper>::Neighboring * CMAC<Radio_Wrapper>::_neighboring = 0;
+
 template<> CMAC<Radio_Wrapper>::Address * CMAC<Radio_Wrapper>::_addr = 0;
 
 template<> volatile CMAC<Radio_Wrapper>::CMAC_STATE CMAC<Radio_Wrapper>::_state = CMAC<Radio_Wrapper>::OFF;

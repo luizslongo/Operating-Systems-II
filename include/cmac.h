@@ -3,6 +3,7 @@
 
 #include <utility/random.h>
 #include <system/kmalloc.h>
+#include <battery.h>
 #include <radio.h>
 #include <timer.h>
 
@@ -26,7 +27,6 @@ public:
         TX_CONTENTION_OK, TX_PENDING, PACK_OK, PACK_FAILED, CHANNEL_BUSY, CHANNEL_IDLE, TX_END, TX_ERROR, TX_OK, TX_FAILED,
         /* receive */
         RX_CONTENTION_OK, RX_PENDING, PREAMBLE_DETECTED, TIMEOUT, RX_END, RX_ERROR, UNPACK_OK, UNPACK_FAILED, RX_OK,
-
     };
 
     typedef Radio_Common::Address Address;
@@ -34,13 +34,170 @@ public:
     typedef Radio_Common::Statistics Statistics;
     static const int FRAME_BUFFER_SIZE = T::FRAME_BUFFER_SIZE;
 
+    class Neighboring {
+    public:
+        class Node {
+        public:
+            Node() {}
+
+            Node(Address * addr) :
+                _address(addr), _energy(0), _lqi(0), _rssi(0) {}
+
+            Node(Address addr, unsigned int energy, unsigned int lqi, unsigned int rssi) :
+                _address(addr), _energy(energy), _lqi(lqi), _rssi(rssi) {}
+
+            ~Node() {}
+
+            Address get_address() {
+                return _address;
+            }
+
+            unsigned int get_energy() {
+                return _energy;
+            }
+
+            unsigned int get_lqi() {
+                return _lqi;
+            }
+
+            unsigned int get_rssi() {
+                return _rssi;
+            }
+
+            void set_energy(unsigned int val) {
+                _energy = val;
+            }
+
+            void set_lqi(unsigned int val) {
+                _lqi = val;
+            }
+
+            void set_rssi(unsigned int val) {
+                _rssi = val;
+            }
+
+            bool operator==(const Node & n) {
+                return _address == n.get_address();
+            }
+
+            bool operator!=(const Node & n) {
+                return _address != n.get_address();
+            }
+
+        private:
+            Address _address;
+            unsigned int _energy;
+            unsigned int _lqi;
+            unsigned int _rssi;
+        };
+
+        typedef List_Elements::Doubly_Linked<Node> element;
+
+        Neighboring() {}
+        ~Neighboring() {}
+
+        void add_node(Node * n) {
+            remove_node(n);
+
+            element * e = new(kmalloc(sizeof(element))) element(n);
+            _nodes.insert_head(e);
+
+            if (_nodes.size() > _size)
+                _nodes.remove_tail();
+        }
+
+        void remove_node(Node * n) {
+            if (_nodes.empty())
+                return;
+
+            List_Iterators::Bidirecional<element> it;
+            for (it = _nodes.begin(); it != _nodes.end(); it++) {
+                if (it->object()->get_address() == n->get_address()) {
+                    _nodes.remove(it);
+                    kfree(it->object());
+                    kfree(it);
+                    return;
+                }
+            }
+        }
+
+        Node * search(Address address) {
+            if (_nodes.empty())
+                return 0;
+
+            List_Iterators::Bidirecional<element> it;
+            for (it = _nodes.begin(); it != _nodes.end(); it++) {
+                if (it->object()->get_address() == address)
+                    return it->object();
+            }
+
+            return 0;
+        }
+
+        int get_node_energy(Address addr) {
+            Node * n = 0;
+            if (n = search(addr))
+                return n->get_energy();
+
+            return 0;
+        }
+
+        int get_node_lqi(Address addr) {
+            Node * n = 0;
+            if (n = search(addr))
+                return n->get_lqi();
+
+            return 0;
+        }
+
+        int get_node_rssi(Address addr) {
+            Node * n = 0;
+            if (n = search(addr))
+                return n->get_rssi();
+
+            return 0;
+        }
+
+        friend Debug &operator<< (Debug &out, Neighboring &n) {
+            out << "\nNeighboring size: " << n._nodes.size() << " of " << n._size << "\n";
+            if (n._nodes.empty())
+                return out;
+
+            out << "LRU node list:\n";
+
+            List_Iterators::Bidirecional<element> it;
+            for (it = n._nodes.begin(); it != n._nodes.end(); it++) {
+                out << "--------------------\n";
+                out << "Node address: " << it->object()->get_address() << "\n";
+                out << "Remaining energy: " << it->object()->get_energy() << "\n";
+                out << "LQI: " << it->object()->get_lqi() << "\n";
+                out << "RSSI: " << it->object()->get_rssi() << "\n";
+            }
+            out << "--------------------\n";
+
+            return out;
+        }
+
+    private:
+        static const unsigned int _size = Traits<CMAC<T> >::MAX_NEIGHBORS;
+        List<Node, element> _nodes;
+    };
+
 public:
     CMAC(int unit = 0) {
         _stats = new(kmalloc(sizeof(Statistics))) Statistics();
         _addr  = new(kmalloc(sizeof(Address))) Address(Traits<CMAC<T> >::ADDRESS);
         _radio = new(kmalloc(sizeof(T))) T();
         _timer = new(kmalloc(sizeof(Timer_CMAC))) Timer_CMAC(alarm_handler_function);
+
+        if (Traits<CMAC<T> >::MAX_NEIGHBORS > 0)
+            _neighboring = new(kmalloc(sizeof(Neighboring))) Neighboring();
+
         CMAC<T>::init(unit);
+    }
+
+    Neighboring * get_neighboring() {
+        return _neighboring;
     }
 
     void tx_p();
@@ -224,6 +381,8 @@ protected:
 
 protected:
     static T * _radio;
+
+    static Neighboring * _neighboring;
 
     /* timer control variables */
     static unsigned int _sleeping_period; // ms
@@ -1092,11 +1251,15 @@ public:
 
         unsigned char *payload_ptr = &(CMAC<T>::_frame_buffer[sizeof(data_frame_header_t)]);
 
+        unsigned short *remaining_energy_ptr = 
+            reinterpret_cast<unsigned short*>
+            (&(CMAC<T>::_frame_buffer[sizeof(data_frame_header_t) + CMAC<T>::_tx_data_size]));
+
         unsigned short *crc_ptr =
             reinterpret_cast<unsigned short*>
-            (&(CMAC<T>::_frame_buffer[sizeof(data_frame_header_t)+CMAC<T>::_tx_data_size]));
+            (&(CMAC<T>::_frame_buffer[sizeof(data_frame_header_t) + CMAC<T>::_tx_data_size + 2]));
 
-        CMAC<T>::_frame_buffer_size = sizeof(data_frame_header_t) + CMAC<T>::_tx_data_size + 2;
+        CMAC<T>::_frame_buffer_size = sizeof(data_frame_header_t) + CMAC<T>::_tx_data_size + 2 + 2;
 
         header_ptr->frame_control.frameType = IEEE802154_Frame<T>::FRAME_TYPE_DATA;
         header_ptr->frame_control.intraPan = IEEE802154_Frame<T>::INTRA_PAN_SAME_PAN;
@@ -1105,7 +1268,7 @@ public:
 
         header_ptr->source_address = *CMAC<T>::_addr;
         header_ptr->destination_address = CMAC<T>::_tx_dst_address;
-        CMAC<T>::_data_sequence_number = (CMAC<T>::_data_sequence_number < 255) ? (CMAC<T>::_data_sequence_number+1) : 0;
+        CMAC<T>::_data_sequence_number = (CMAC<T>::_data_sequence_number < 255) ? (CMAC<T>::_data_sequence_number + 1) : 0;
         header_ptr->data_sequence_n = CMAC<T>::_data_sequence_number;
 
         const unsigned char *aux = reinterpret_cast<const unsigned char*>(CMAC<T>::_tx_data);
@@ -1113,11 +1276,14 @@ public:
             payload_ptr[i] = aux[i];
         }
 
+        *remaining_energy_ptr = Battery::sys_batt().sample();
+
         *crc_ptr = CRC::crc16(reinterpret_cast<char*>(CMAC<T>::_frame_buffer), CMAC<T>::_frame_buffer_size - 2);
 
         db<CMAC<T> >(INF) << "IEEE802154_Pack - Frame created:\n"
             << *header_ptr
             << "payload_size: " << CMAC<T>::_tx_data_size << "\n"
+            << "remaining_energy: " << *remaining_energy_ptr << "\n"
             << "CRC: " << *crc_ptr << "\n";
 
         db<CMAC<T> >(TRC) << "IEEE802154_Pack - PACK_OK\n";
@@ -1135,12 +1301,15 @@ class IEEE802154_Unpack: public CMAC_State<T> {
 public:
     typedef typename CMAC<T>::CMAC_STATE_TRANSITION CMAC_STATE_TRANSITION;
     typedef typename IEEE802154_Frame<T>::data_frame_header_t data_frame_header_t;
+    typedef typename CMAC<T>::Neighboring::Node Node;
 
     static CMAC_STATE_TRANSITION execute(CMAC_STATE_TRANSITION input) {
         if (CMAC<T>::_frame_buffer_size == 0) {
             db<CMAC<T> >(ERR) << "IEEE802154_Unpack - UNPACK_FAILED - Frame size == 0\n";
             return CMAC<T>::UNPACK_FAILED;
         }
+
+        input = CMAC<T>::UNPACK_OK;
 
         db<CMAC<T> >(TRC) << "IEEE802154_Unpack - Decoding frame\n";
 
@@ -1149,14 +1318,18 @@ public:
 
         unsigned char *payload_ptr = &(CMAC<T>::_frame_buffer[sizeof(data_frame_header_t)]);
 
+        unsigned short *remaining_energy_ptr = 
+            reinterpret_cast<unsigned short*>(&(CMAC<T>::_frame_buffer[CMAC<T>::_frame_buffer_size - 2 - 2]));
+
         unsigned short *crc_ptr =
             reinterpret_cast<unsigned short*>(&(CMAC<T>::_frame_buffer[CMAC<T>::_frame_buffer_size - 2]));
 
-        CMAC<T>::_rx_data_size = CMAC<T>::_frame_buffer_size - sizeof(data_frame_header_t) - 2; // 16bit crc
+        CMAC<T>::_rx_data_size = CMAC<T>::_frame_buffer_size - sizeof(data_frame_header_t) - 2 - 2; // 16bit remaining_energy + 16bit crc
 
         db<CMAC<T> >(INF) << "IEEE802154_Unpack - Frame decoded:\n"
             << *header_ptr
             << "payload_size: " << CMAC<T>::_rx_data_size << "\n"
+            << "remaining_energy: " << *remaining_energy_ptr << "\n"
             << "CRC: " << *crc_ptr << "\n";
 
         unsigned short crc = CRC::crc16(reinterpret_cast<char*>(CMAC<T>::_frame_buffer), CMAC<T>::_frame_buffer_size - 2);
@@ -1165,29 +1338,35 @@ public:
             db<CMAC<T> >(WRN) << "IEEE802154_Unpack - CRC error: " << crc << "\n";
             CMAC<T>::_stats->dropped_packets += 1;
             return CMAC<T>::UNPACK_FAILED;
-        }
 
-        if (header_ptr->frame_control.frameType != IEEE802154_Frame<T>::FRAME_TYPE_DATA) {
+        } else if (header_ptr->frame_control.frameType != IEEE802154_Frame<T>::FRAME_TYPE_DATA) {
             db<CMAC<T> >(WRN) << "IEEE802154_Unpack - UNPACK_FAILED - Incorrect frame type\n";
-            return CMAC<T>::UNPACK_FAILED;
-        }
+            input = CMAC<T>::UNPACK_FAILED;
 
-        if (!(header_ptr->destination_address == *CMAC<T>::_addr) && !(header_ptr->destination_address == Radio_Common::BROADCAST)) {
+        } else if (!(header_ptr->destination_address == *CMAC<T>::_addr) && !(header_ptr->destination_address == Radio_Common::BROADCAST)) {
             db<CMAC<T> >(INF) << "IEEE802154_Unpack - UNPACK_FAILED - Wrong address\n";
-            return CMAC<T>::UNPACK_FAILED;
+            input = CMAC<T>::UNPACK_FAILED;
+
+        } else {
+            CMAC<T>::_data_sequence_number = header_ptr->data_sequence_n;
+
+            unsigned char *aux = reinterpret_cast<unsigned char*>(CMAC<T>::_rx_data);
+            for (unsigned int i = 0; i < CMAC<T>::_rx_data_size; ++i) {
+                aux[i] = payload_ptr[i];
+            }
+            CMAC<T>::_rx_src_address = typename CMAC<T>::Address(header_ptr->source_address);
+
+            db<CMAC<T> >(TRC) << "IEEE802154_Unpack - UNPACK_OK\n";
         }
 
-        CMAC<T>::_data_sequence_number = header_ptr->data_sequence_n;
-
-        unsigned char *aux = reinterpret_cast<unsigned char*>(CMAC<T>::_rx_data);
-        for (unsigned int i = 0; i < CMAC<T>::_rx_data_size; ++i) {
-            aux[i] = payload_ptr[i];
+        if (Traits<CMAC<T> >::MAX_NEIGHBORS > 0) {
+            Node * n = new(kmalloc(sizeof(Node))) Node(CMAC<T>::_rx_src_address, *remaining_energy_ptr, CMAC<T>::_radio->lqi(), CMAC<T>::_radio->rssi());
+            CMAC<T>::_neighboring->add_node(n);
+            db<CMAC<T> >(ERR) << "CMAC - Neighborhood status\n"
+                << *CMAC<T>::_neighboring;
         }
-        CMAC<T>::_rx_src_address = typename CMAC<T>::Address(header_ptr->source_address);
 
-        db<CMAC<T> >(TRC) << "IEEE802154_Unpack - UNPACK_OK\n";
-
-        return CMAC<T>::UNPACK_OK;
+        return input;
     }
 };
 
