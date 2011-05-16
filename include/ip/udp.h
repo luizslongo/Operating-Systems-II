@@ -62,6 +62,7 @@ class UDP: public IP::Observer, public Data_Observed < UDP_Address > {
     typedef UDP_Address Address;
 
     class Header {
+        friend class UDP;
      public:
         Header() {} 
 

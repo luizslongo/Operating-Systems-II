@@ -5,6 +5,11 @@ __BEGIN_SYS
 // TCP's checksum was added to UDP, we should merge this to avoid code redundancy
 void UDP::Header::checksum(IP::Address src,IP::Address dst,SegmentedBuffer * sb)
 {
+    if (!Traits<UDP>::checksum) {
+        _checksum = 0;
+        return;
+    }
+
     db<UDP>(TRC) << __PRETTY_FUNCTION__ << endl;
     u16 len;
     len = sizeof(this);
@@ -48,10 +53,18 @@ void UDP::update(Data_Observed<IP::Address> *ob, long c, IP::Address src,
 {
 	Header& hdr = *reinterpret_cast<Header*>(data);
 
-	db<IP>(INF) << "UDP::update: received "<< size <<" bytes from " 
+	db<UDP>(INF) << "UDP::update: received "<< size <<" bytes from " 
 	            << src << " to " << dst << "\n";
 
-	// TODO: put checksum verification here
+    if (Traits<UDP>::checksum && hdr._checksum != 0) {
+        SegmentedBuffer sb(data + sizeof(Header), size - sizeof(Header));
+        u16 csum = hdr._checksum;
+        hdr.checksum(src,dst,&sb);
+        if (hdr._checksum != csum) {
+            db<UDP>(INF) << "UDP::checksum failed for incomming data\n";
+            return;
+        }
+    }
 	notify(UDP::Address(src,hdr.src_port()),UDP::Address(dst,hdr.dst_port()),
 	       (int) hdr.dst_port(), &((char*)data)[sizeof(Header)],
 	       size - sizeof(Header));
@@ -62,7 +75,7 @@ void UDP::update(Data_Observed<IP::Address> *ob, long c, IP::Address src,
 void UDP::Socket::update(Observed *o, long c, UDP_Address src, UDP_Address dst,
                          void *data, unsigned int size)
 {
-	db<IP>(TRC) << __PRETTY_FUNCTION__ << "\n";
+	db<UDP>(TRC) << __PRETTY_FUNCTION__ << "\n";
 	
 	// virtual call
 	received(src,(const char*)data,size);

@@ -96,15 +96,23 @@ template <> struct Traits<Network>: public Traits<void>
 template <> struct Traits<IP>: public Traits<void>{
     static const unsigned long ADDRESS = 0xc0a80a01;   // 192.168.10.1
     static const unsigned long NETMASK = 0xffffff00;   // 255.255.255.0
-    static const unsigned long BROADCAST = 0; // 0= Default Broadcast Address
+    static const unsigned long BROADCAST = 0; 
 
     static const bool dynamic      = false; // true=dhcp false=static
     static const bool spawn_thread = true;  // automatic creation of IP's worker thread
-    static const bool echo_reply   = true;  // automatic ICMP echo reply
     
     static const bool use_arp = true; // use Address Resolution Protocol
     static const unsigned int OPT_SIZE = 0; // options size in 32-bit words
     static const unsigned char DEF_TTL = 0x40; // time-to-live
+
+};
+
+template <> struct Traits<UDP> : public Traits<IP> {
+    static const bool checksum = false;
+};
+
+template <> struct Traits<ICMP> : public Traits<IP> {
+    static const bool echo_reply = true; 
 };
 
 template <> struct Traits<CMAC<Radio_Wrapper> >: public Traits<void>

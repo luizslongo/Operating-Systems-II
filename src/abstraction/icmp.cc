@@ -29,7 +29,7 @@ void ICMP::update(Data_Observed<IP::Address> *ob, long c, IP::Address src,
         return;
     }
 
-    if (Traits<IP>::echo_reply && (packet.type() == ECHO)) { // PONG
+    if (Traits<ICMP>::echo_reply && (packet.type() == ECHO)) { // PONG
         db<ICMP>(TRC) << "ICMP::echo sending automatic reply to " << src << endl;
         Packet reply(ECHO_REPLY,0,packet.id(),packet.sequence(),packet._data);
         send(dst,src,reply);
