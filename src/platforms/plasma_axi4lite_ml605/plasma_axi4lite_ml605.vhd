@@ -29,7 +29,8 @@ architecture RTL of plasma_axi4lite_ml605 is
         reset_i        : in std_logic;
 
         uart_tx_o   : out std_logic;
-        uart_rx_i    : in std_logic);
+        uart_rx_i    : in std_logic;
+        uart_baud_o   : out std_logic);
     end component;
 
 
@@ -57,7 +58,8 @@ begin
         clk_i     => clk_50MHz,
         reset_i   => sig_reset,
         uart_tx_o => uart_tx,
-        uart_rx_i => uart_rx
+        uart_rx_i => uart_rx,
+        uart_baud_o => open
     );
     
     

@@ -20,14 +20,22 @@ architecture Behavioral of plasma_axi4lite_testbench is
         reset_i        : in std_logic;
 
         uart_tx_o   : out std_logic;
-        uart_rx_i    : in std_logic);
+        uart_rx_i    : in std_logic;
+        uart_baud_o : out std_logic);
+    end component;
+    
+    component uart_rx is
+    port (
+        baudclk    : in std_logic;
+        rxd     : in std_logic);
     end component;
 
 
-    signal uart_rx  : std_logic;
-    signal uart_tx  : std_logic;
+    signal sig_uart_rx  : std_logic;
+    signal sig_uart_tx  : std_logic;
+    signal sig_uart_baud  : std_logic;
 
-    signal clk_50MHz   : std_logic;
+    signal sig_clk_50MHz   : std_logic;
     signal sig_reset   : std_logic;
  
 begin
@@ -38,19 +46,25 @@ begin
         CLK_FREQ  => 50_000_000
     )
     port map(
-        clk_i     => clk_50MHz,
+        clk_i     => sig_clk_50MHz,
         reset_i   => sig_reset,
-        uart_tx_o => uart_tx,
-        uart_rx_i => uart_rx
+        uart_tx_o => sig_uart_tx,
+        uart_rx_i => sig_uart_rx,
+        uart_baud_o => sig_uart_baud
     );
     
-    
+    uart: uart_rx
+    port map (
+        baudclk => sig_uart_baud,
+        rxd  => sig_uart_tx
+    );
+        
     -- simulation
     clk_process: process
     begin
-        clk_50MHz <= '1';
+        sig_clk_50MHz <= '1';
         wait for 10 ns;
-        clk_50MHz <= '0';
+        sig_clk_50MHz <= '0';
         wait for 10 ns;
     end process;
 
@@ -60,7 +74,7 @@ begin
         wait for 60 ns;
         sig_reset <= '1';
 
-        wait for 500 us;
+        wait for 5 ms;
 
         finish(0);
     end process;

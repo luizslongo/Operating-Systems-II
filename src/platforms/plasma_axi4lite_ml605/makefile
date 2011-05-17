@@ -17,7 +17,8 @@ include ../../../src/mach/common/coregen/hw.srcs
 # other IP sources definitions
 include ../../../src/mach/plasma/hw.srcs
 include ../../../src/mach/common/amba/hw.srcs
-include ../../../src/mach/common/axi_uart/hw.srcs
+include ../../../src/mach/common/amba_wishbone/hw.srcs
+include ../../../src/mach/common/simple_uart/hw.srcs
 
 ##################################################
 # Sources
@@ -32,12 +33,14 @@ plasma_axi4lite_ml605.ucf
 # Coregen cores
 coregen_generate: \
 clk_xlnx_100M_diff \
-ram_amba_128k
+ram_amba_128k \
+axi4_ddr3_contrl
 
 coregen_clean:
 	cd $(COREGEN_DIR); \
 	rm -rf \
 	clk_xlnx_100M_diff \
+	axi4_ddr3_contrl \
 	ram_amba_128k ; \
 	rm -f coregen.cgc; \
 	rm -rf tmp _xmsgs; \
@@ -47,7 +50,8 @@ coregen_clean:
 # IP sources
 SOURCES = $(abspath $(TOP_SRCS)) \
 $(AMBA_SRCS) \
-$(AXI_UART_SRCS) \
+$(AXI_WB_SRCS) \
+$(SIMPLE_UART_SRCS) \
 $(COREGEN_SRCS) \
 $(PLASMA_SRCS)
 

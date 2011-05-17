@@ -7,11 +7,12 @@ entity plasma_axi4lite is
    generic(
         CLK_FREQ : integer := 50_000_000);
 
-   port(clk_i          : in std_logic;
-        reset_i        : in std_logic;
+   port(clk_i       : in std_logic;
+        reset_i     : in std_logic;
 
         uart_tx_o   : out std_logic;
-        uart_rx_i    : in std_logic);
+        uart_rx_i   : in std_logic;
+        uart_baud_o : out std_logic);
 
 end plasma_axi4lite;
 
@@ -152,47 +153,40 @@ architecture RTL of plasma_axi4lite is
             s_axi_rready  : in std_logic);
     end component;
 
-    component axi_uart_xilinx is
+    component simple_uart_axi4lite is
         generic(
-            C_FAMILY              : string;
-            C_S_AXI_ACLK_FREQ_HZ  : integer;
-            C_BASEADDR            : std_logic_vector(31 downto 0);
-            C_HIGHADDR            : std_logic_vector(31 downto 0);
-            C_BAUDRATE            : integer;
-            C_DATA_BITS           : integer range 5 to 8;
-            C_USE_PARITY          : integer range 0 to 1;
-            C_ODD_PARITY          : integer range 0 to 1);
+            TXDEPTH : integer;
+            RXDEPTH : integer);
         port(
             -- System signals
-            S_AXI_ACLK            : in  std_logic;
-            S_AXI_ARESETN         : in  std_logic;
-            Interrupt             : out std_logic;
+            clk_i       : in  std_logic;
+            axi_rst_i   : in  std_logic;
+            rx_int_o    : out std_logic;
+            tx_int_o    : out std_logic;
             -- AXI signals
-            S_AXI_AWADDR          : in  std_logic_vector(31 downto 0);
-            S_AXI_AWVALID         : in  std_logic;
-            S_AXI_AWREADY         : out std_logic;
-            S_AXI_WDATA           : in  std_logic_vector(31 downto 0);
-            S_AXI_WSTRB           : in  std_logic_vector(3 downto 0);
-            S_AXI_WVALID          : in  std_logic;
-            S_AXI_WREADY          : out std_logic;
-            S_AXI_BRESP           : out std_logic_vector(1 downto 0);
-            S_AXI_BVALID          : out std_logic;
-            S_AXI_BREADY          : in  std_logic;
-            S_AXI_ARADDR          : in  std_logic_vector(31 downto 0);
-            S_AXI_ARVALID         : in  std_logic;
-            S_AXI_ARREADY         : out std_logic;
-            S_AXI_RDATA           : out std_logic_vector(31 downto 0);
-            S_AXI_RRESP           : out std_logic_vector(1 downto 0);
-            S_AXI_RVALID          : out std_logic;
-            S_AXI_RREADY          : in  std_logic;
+            axi_awaddr_i          : in  std_logic_vector(31 downto 0);
+            axi_awvalid_i         : in  std_logic;
+            axi_awready_o         : out std_logic;
+            axi_wdata_i           : in  std_logic_vector(31 downto 0);
+            axi_wstrb_i           : in  std_logic_vector(3 downto 0);
+            axi_wvalid_i          : in  std_logic;
+            axi_wready_o          : out std_logic;
+            axi_bresp_o           : out std_logic_vector(1 downto 0);
+            axi_bvalid_o          : out std_logic;
+            axi_bready_i          : in  std_logic;
+            axi_araddr_i          : in  std_logic_vector(31 downto 0);
+            axi_arvalid_i         : in  std_logic;
+            axi_arready_o         : out std_logic;
+            axi_rdata_o           : out std_logic_vector(31 downto 0);
+            axi_rresp_o           : out std_logic_vector(1 downto 0);
+            axi_rvalid_o          : out std_logic;
+            axi_rready_i          : in  std_logic;
             -- UARTLite Interface Signals
-            RX                    : in  std_logic;
-            TX                    : out std_logic);
+            rx_i    : in  std_logic;
+            tx_o    : out std_logic;
+            baud_o  : out std_logic);
     end component;
 
-
-    signal uart_rx  : std_logic;
-    signal uart_tx  : std_logic;
 
     signal sig_intr    : std_logic;
 
@@ -462,41 +456,37 @@ begin
             s_axi_rresp   => sig_slaves_rresp(1));
 
 
-    uart: axi_uart_xilinx 
+    uart: simple_uart_axi4lite 
         generic map(
-            C_FAMILY                => "virtex6",
-            C_BASEADDR              => X"8000_0000",
-            C_HIGHADDR              => X"8000_03FF",
-            C_S_AXI_ACLK_FREQ_HZ    => CLK_FREQ,
-            C_BAUDRATE              => 57600,
-            C_DATA_BITS             => 8,
-            C_USE_PARITY            => 0,
-            C_ODD_PARITY            => 0)
+            TXDEPTH => 3,
+            RXDEPTH => 3)
         port map(
             -- System signals
-            S_AXI_ACLK      => clk_i,
-            S_AXI_ARESETN   => reset_i,
-            Interrupt       => open,
+            clk_i       => clk_i,
+            axi_rst_i   => reset_i,
+            rx_int_o    => open,
+            tx_int_o    => open,
             -- AXI signals
-            S_AXI_AWADDR    => sig_slaves_awaddr(2),
-            S_AXI_AWVALID   => sig_slaves_awvalid(2),
-            S_AXI_AWREADY   => sig_slaves_awready(2),
-            S_AXI_WDATA     => sig_slaves_wdata(2),
-            S_AXI_WSTRB     => sig_slaves_wstrb(2),
-            S_AXI_WVALID    => sig_slaves_wvalid(2),
-            S_AXI_WREADY    => sig_slaves_wready(2),
-            S_AXI_BRESP     => sig_slaves_bresp(2),
-            S_AXI_BVALID    => sig_slaves_bvalid(2),
-            S_AXI_BREADY    => sig_slaves_bready(2),
-            S_AXI_ARADDR    => sig_slaves_araddr(2),
-            S_AXI_ARVALID   => sig_slaves_arvalid(2),
-            S_AXI_ARREADY   => sig_slaves_arready(2),
-            S_AXI_RDATA     => sig_slaves_rdata(2),
-            S_AXI_RRESP     => sig_slaves_rresp(2),
-            S_AXI_RVALID    => sig_slaves_rvalid(2),
-            S_AXI_RREADY    => sig_slaves_rready(2),
+            axi_awaddr_i    => sig_slaves_awaddr(2),
+            axi_awvalid_i   => sig_slaves_awvalid(2),
+            axi_awready_o   => sig_slaves_awready(2),
+            axi_wdata_i     => sig_slaves_wdata(2),
+            axi_wstrb_i     => sig_slaves_wstrb(2),
+            axi_wvalid_i    => sig_slaves_wvalid(2),
+            axi_wready_o    => sig_slaves_wready(2),
+            axi_bresp_o     => sig_slaves_bresp(2),
+            axi_bvalid_o    => sig_slaves_bvalid(2),
+            axi_bready_i    => sig_slaves_bready(2),
+            axi_araddr_i    => sig_slaves_araddr(2),
+            axi_arvalid_i   => sig_slaves_arvalid(2),
+            axi_arready_o   => sig_slaves_arready(2),
+            axi_rdata_o     => sig_slaves_rdata(2),
+            axi_rresp_o     => sig_slaves_rresp(2),
+            axi_rvalid_o    => sig_slaves_rvalid(2),
+            axi_rready_i    => sig_slaves_rready(2),
             -- UARTLite Interface Signals
-            RX              => uart_rx_i,
-            TX              => uart_tx_o);   
+            rx_i    => uart_rx_i,
+            tx_o    => uart_tx_o,
+            baud_o  => uart_baud_o);   
 
 end RTL;
