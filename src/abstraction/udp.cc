@@ -57,7 +57,7 @@ void UDP::update(Data_Observed<IP::Address> *ob, long c, IP::Address src,
 	            << src << " to " << dst << "\n";
 
     if (Traits<UDP>::checksum && hdr._checksum != 0) {
-        SegmentedBuffer sb(data + sizeof(Header), size - sizeof(Header));
+        SegmentedBuffer sb(static_cast<char*>(data) + sizeof(Header), size - sizeof(Header));
         u16 csum = hdr._checksum;
         hdr.checksum(src,dst,&sb);
         if (hdr._checksum != csum) {
