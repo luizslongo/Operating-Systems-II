@@ -255,8 +255,13 @@ void testeUserAgent()
 {
 	cout << "+++++ Teste User Agent +++++\n";
 
+	IP *ip = IP::instance();
+	ip->set_address(IP::Address(10, 0, 0, 106));
+	ip->set_gateway(IP::Address(10, 0, 0, 1));
+	ip->set_netmask(IP::Address(255, 255, 255, 0));
+
 	const char *from = "sip:1111@10.0.0.106";
-	const char *to = "sip:1234@10.0.0.103";
+	const char *to = "sip:1234@10.0.0.100";
 
 	SipManager::getInstance()->init();
 	Alarm::delay(250 * 1000); //Alarm::delay(5000 * 1000); //5s

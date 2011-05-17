@@ -1,16 +1,28 @@
 #include <machine.h>
+#include <alarm.h>
 
 __USING_SYS
 
 
 #include <ieee1451_tim_temperature_sensor.h>
+#include <ieee1451_tim.h>
 
 int tim()
 {
+    //Alarm::delay(3000000);
     kout << "+++++ Iniciando wtim +++++\n";
+
+    IP *ip = IP::instance();
+    ip->set_address(IP::Address(10, 0, 0, 111));
+    ip->set_gateway(IP::Address(10, 0, 0, 1));
+    ip->set_netmask(IP::Address(255, 255, 255, 0));
+
+    IEEE1451dot5_TIM *tim = IEEE1451dot5_TIM::getInstance();
+    tim->setNCAPAddress(IP::Address(10, 0, 0, 110));
 
     IEEE1451TemperatureSensor sensor(true, true);
     sensor.execute();
+    return 0;
 }
 
 
@@ -18,12 +30,19 @@ int tim()
 
 int ncap()
 {
+    //Alarm::delay(3000000);
     kout << "+++++ Iniciando ncap +++++\n";
+
+    IP *ip = IP::instance();
+    ip->set_address(IP::Address(10, 0, 0, 110));
+    ip->set_gateway(IP::Address(10, 0, 0, 1));
+    ip->set_netmask(IP::Address(255, 255, 255, 0));
 
     NCAPApplication::getInstance();
 
     Thread::self()->suspend();
     //while(1);
+    return 0;
 }*/
 
 
