@@ -24,6 +24,12 @@ public:
 	Application::heap()->
 	    free(MMU::alloc(MMU::pages(Traits<Machine>::APPLICATION_HEAP_SIZE)),
 		 Traits<Machine>::APPLICATION_HEAP_SIZE);
+	if(Traits<Heap>::priority_alloc){
+	    db<Init>(INF) << "Initializing application's priority heap \n";
+	    Application::priority_heap()->free(reinterpret_cast<void*>(Traits<Machine>::PRIORITY_HEAP_BASE_ADDR), Traits<Machine>::PRIORITY_HEAP_SIZE);
+	    Application::priority_heap()->allocated(0);
+	    Application::heap()->allocated(0);
+	}
 	db<Init>(INF) << "done!\n\n";
     }
 };

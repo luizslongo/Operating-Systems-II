@@ -37,6 +37,7 @@ template <> struct Traits<Spin>: public Traits<void>
 
 template <> struct Traits<Heap>: public Traits<void>
 {
+    static const bool priority_alloc = false;
 };
 
 

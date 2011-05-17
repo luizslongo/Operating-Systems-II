@@ -20,6 +20,10 @@ template <> struct Traits<PLASMA>: public Traits<PLASMA_Common>
   static const unsigned int SYSTEM_STACK_SIZE      = 4 * 1024;
   static const unsigned int SYSTEM_HEAP_SIZE       = 16 * APPLICATION_STACK_SIZE;
   static const unsigned int LEDS_ADDRESS           = 0x20000030;
+
+  static const unsigned int PRIORITY_HEAP_BASE_ADDR = 0;
+  static const unsigned int PRIORITY_HEAP_SIZE = 4;
+  static const unsigned int PRIORITY_HEAP_TOP_ADDR = PRIORITY_HEAP_BASE_ADDR + PRIORITY_HEAP_SIZE - 1;
 };
 
 template <> struct Traits<PLASMA_IC>: public Traits<PLASMA_Common>

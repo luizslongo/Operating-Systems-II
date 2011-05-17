@@ -6,14 +6,14 @@
 __BEGIN_SYS
 
 // Methods
-void Heap_Common::out_of_memory()
+void Heap_Common_No_Profile::out_of_memory()
 {
     db<Heap>(ERR) << "Heap::alloc(this=" << this
 				  << "): out of memory!\n";
     Machine::panic();
 }
 
-void * Heap_Common::alloc(unsigned int bytes) {
+void * Heap_Common_No_Profile::alloc(unsigned int bytes) {
     if(!bytes)
         return 0;
     
@@ -36,18 +36,18 @@ void * Heap_Common::alloc(unsigned int bytes) {
     return &addr[1];
 }
 
-void * Heap_Common::calloc(unsigned int bytes) {
+void * Heap_Common_No_Profile::calloc(unsigned int bytes) {
     void * addr = alloc(bytes);
     memset(addr, bytes, 0);
     return addr;    
 }
 
-void Heap_Common::free(void * ptr) {
+void Heap_Common_No_Profile::free(void * ptr) {
     int * addr = reinterpret_cast<int *>(ptr);
     free(&addr[-1], addr[-1]);
 }
 
-void Heap_Common::free(void * ptr, unsigned int bytes) {
+void Heap_Common_No_Profile::free(void * ptr, unsigned int bytes) {
     db<Heap>(TRC) << "Heap::free(this=" << this
               << ",ptr=" << ptr
               << ",bytes=" << bytes << ")\n";

@@ -20,5 +20,17 @@ extern "C"
     void free(void * ptr) {
 	Application::heap()->free(ptr);
     }
+
+    void * p_malloc(size_t bytes) {
+    return Application::priority_heap()->alloc(bytes);
+    }
+
+    void * p_calloc(size_t n, unsigned int bytes) {
+    return Application::priority_heap()->calloc(n * bytes);
+    }
+
+    void p_free(void * ptr) {
+    Application::priority_heap()->free(ptr);
+    }
 }
 
