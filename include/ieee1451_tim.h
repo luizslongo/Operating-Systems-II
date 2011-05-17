@@ -59,6 +59,7 @@ public:
 
 	static IEEE1451dot0_TIM *getInstance();
 
+	void initTEDS();
 	TEDS_TIM *getTEDS(char id);
 	void receiveMessage(unsigned short transId, const char *message, unsigned int size);
 
@@ -76,7 +77,7 @@ private:
 	MyClientSocket *socket;
 
 	bool connected;
-	static IP::Address NCAP_ADDRESS;
+	IP::Address NCAPAddress;
 
 	static IEEE1451dot5_TIM *dot5;
 	IEEE1451dot5_TIM();
@@ -85,6 +86,7 @@ public:
 	~IEEE1451dot5_TIM() { if (socket) delete socket; };
 
 	static IEEE1451dot5_TIM *getInstance();
+	void setNCAPAddress(const IP::Address &addr) { NCAPAddress = addr; };
 
 	//bool isConnected() { return conn; };
 	void connect();

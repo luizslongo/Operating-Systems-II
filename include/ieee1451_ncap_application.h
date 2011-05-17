@@ -1,12 +1,16 @@
 #ifndef __ieee1451_ncap_application_h
 #define __ieee1451_ncap_application_h
 
+#define USE_SIP
+
 #include <ieee1451_ncap.h>
 #include <ieee1451_objects.h>
-#include <sip_defs.h>
-#include <sip_manager.h>
-#include <sip_user_agent.h>
 #include <utility/list.h>
+#ifdef USE_SIP
+	#include <sip_defs.h>
+	#include <sip_manager.h>
+	#include <sip_user_agent.h>
+#endif
 
 __BEGIN_SYS
 
@@ -21,11 +25,17 @@ private:
 	struct TIMCache
 	{
 		IEEE1451TIMChannel *tim;
-		UserAgent *ua;
 		Simple_List<TIMCache>::Element link;
+
+#ifdef USE_SIP
+		UserAgent *ua;
 
 		TIMCache(IEEE1451TIMChannel *tim, UserAgent *ua) : tim(tim), ua(ua), link(this) {};
 		~TIMCache() { delete tim; delete ua; };
+#else
+		TIMCache(IEEE1451TIMChannel *tim) : tim(tim), link(this) {};
+		~TIMCache() { delete tim; };
+#endif
 	};
 
 	Simple_List<TIMCache> cache;
@@ -40,7 +50,9 @@ public:
 	static NCAPApplication *getInstance();
 
 	TIMCache *getTIMCache(const IP::Address &address);
+#ifdef USE_SIP
 	TIMCache *getTIMCache(const char *uri);
+#endif
 	TEDSRetriever *getRetriever(unsigned short transId);
 
 	void updateTIM(const IP::Address &address);
@@ -59,11 +71,13 @@ public:
 	unsigned short sendReadTEDS(const IP::Address &address, unsigned short channelNumber, char tedsId);
 	unsigned short sendReadDataSet(const IP::Address &address, unsigned short channelNumber);
 
+#ifdef USE_SIP
 	void sendSipMessage(UserAgent *ua, const char *data);
 	void sendSipNotify(UserAgent *ua, SipSubscriptionState state, SipPidfXmlBasicElement pidfXml);
+	static int messageCallback(SipEventCallback event, UserAgent *ua, const char *remote);
+#endif
 
 	//static int readDataSetThread(NCAPApplication *ncap, IP::Address address, IEEE1451TIMChannel *tim);
-	static int messageCallback(SipEventCallback event, UserAgent *ua, const char *remote);
 };
 
 //-------------------------------------------

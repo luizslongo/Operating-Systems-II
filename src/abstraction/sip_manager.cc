@@ -78,7 +78,7 @@ int SipTransportLayer::sendData(const char *destination, int port, const char *d
 	UDP::Address dst(IP::Address(destination), port);
 	socket.set_remote(dst);
 
-	//db<SipTransportLayer>(INF) << "SipTransportLayer::sendData -> Sending data to " << dst << " (size = " << length << ")..\n" << data << "\n";
+	db<SipTransportLayer>(INF) << "SipTransportLayer::sendData -> Sending data to " << dst << " (size = " << length << ")..\n" << data << "\n";
 
 	if (socket.send(data, length) <= 0)
 	{

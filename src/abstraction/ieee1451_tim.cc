@@ -101,21 +101,9 @@ IEEE1451dot0_TIM *IEEE1451dot0_TIM::dot0 = 0;
 
 IEEE1451dot0_TIM::IEEE1451dot0_TIM()
 {
-	metaArray = new char[40];
-	metaArray[0] = 0x00; metaArray[1] = 0x00; metaArray[2] = 0x00; metaArray[3] = 0x24; metaArray[4] = 0x03; metaArray[5] = 0x04; metaArray[6] = 0x00; metaArray[7] = 0x01; metaArray[8] = 0x01; metaArray[9] = 0x01; metaArray[10] = 0x04; metaArray[11] = 0x0a; metaArray[12] = 0x00; metaArray[13] = 0x00; metaArray[14] = 0x00; metaArray[15] = 0x00; metaArray[16] = 0x00; metaArray[17] = 0x00; metaArray[18] = 0x00; metaArray[19] = 0x00; metaArray[20] = 0x00; metaArray[21] = 0x00; metaArray[22] = 0x0a; metaArray[23] = 0x04; metaArray[24] = 0x41; metaArray[25] = 0x20; metaArray[26] = 0x00; metaArray[27] = 0x00; metaArray[28] = 0x0c; metaArray[29] = 0x04; metaArray[30] = 0x00; metaArray[31] = 0x00; metaArray[32] = 0x00; metaArray[33] = 0x00; metaArray[34] = 0x0d; metaArray[35] = 0x02; metaArray[36] = 0x00; metaArray[37] = 0x01; metaArray[38] = 0xfe; metaArray[39] = 0xb6; //checksum errado
-	META_TEDS = new TEDS_TIM(metaArray, 40);
-
-	timUtnArray = new char[26];
-	timUtnArray[0] = 0x00; timUtnArray[1] = 0x00; timUtnArray[2] = 0x00; timUtnArray[3] = 0x16; timUtnArray[4] = 0x03; timUtnArray[5] = 0x04; timUtnArray[6] = 0x00; timUtnArray[7] = 0x0c; timUtnArray[8] = 0x01; timUtnArray[9] = 0x01; timUtnArray[10] = 0x04; timUtnArray[11] = 0x01; timUtnArray[12] = 0x00; timUtnArray[13] = 0x05; timUtnArray[14] = 0x09; timUtnArray[15] = 0x45; timUtnArray[16] = 0x50; timUtnArray[17] = 0x4f; timUtnArray[18] = 0x53; timUtnArray[19] = 0x2f; timUtnArray[20] = 0x4d; timUtnArray[21] = 0x69; timUtnArray[22] = 0x63; timUtnArray[23] = 0x61; timUtnArray[24] = 0xff; timUtnArray[25] = 0xff; //checksum errado
-	TIM_UTN_TEDS = new TEDS_TIM(timUtnArray, 26);
-
-	phyArray = new char[25];
-	phyArray[0] = 0x00; phyArray[1] = 0x00; phyArray[2] = 0x00; phyArray[3] = 0x15; phyArray[4] = 0x03; phyArray[5] = 0x04; phyArray[6] = 0x05; phyArray[7] = 0x0d; phyArray[8] = 0x01; phyArray[9] = 0x01; phyArray[10] = 0x0a; phyArray[11] = 0x01; phyArray[12] = 0xff; phyArray[13] = 0x0c; phyArray[14] = 0x02; phyArray[15] = 0x00; phyArray[16] = 0x01; phyArray[17] = 0x16; phyArray[18] = 0x01; phyArray[19] = 0x01; phyArray[20] = 0x28; phyArray[21] = 0x01; phyArray[22] = 0x01; phyArray[23] = 0xfe; phyArray[24] = 0x74; //checksum errado
-	PHY_TEDS = new TEDS_TIM(phyArray, 25);
-
 	transducer = 0;
-
 	IEEE1451dot5_TIM::getInstance();
+	initTEDS();
 }
 
 IEEE1451dot0_TIM::~IEEE1451dot0_TIM()
@@ -140,6 +128,21 @@ IEEE1451dot0_TIM *IEEE1451dot0_TIM::getInstance()
 	if (!dot0)
 		dot0 = new IEEE1451dot0_TIM();
 	return dot0;
+}
+
+void IEEE1451dot0_TIM::initTEDS()
+{
+	metaArray = new char[40];
+	metaArray[0] = 0x00; metaArray[1] = 0x00; metaArray[2] = 0x00; metaArray[3] = 0x24; metaArray[4] = 0x03; metaArray[5] = 0x04; metaArray[6] = 0x00; metaArray[7] = 0x01; metaArray[8] = 0x01; metaArray[9] = 0x01; metaArray[10] = 0x04; metaArray[11] = 0x0a; metaArray[12] = 0x00; metaArray[13] = 0x00; metaArray[14] = 0x00; metaArray[15] = 0x00; metaArray[16] = 0x00; metaArray[17] = 0x00; metaArray[18] = 0x00; metaArray[19] = 0x00; metaArray[20] = 0x00; metaArray[21] = 0x00; metaArray[22] = 0x0a; metaArray[23] = 0x04; metaArray[24] = 0x41; metaArray[25] = 0x20; metaArray[26] = 0x00; metaArray[27] = 0x00; metaArray[28] = 0x0c; metaArray[29] = 0x04; metaArray[30] = 0x00; metaArray[31] = 0x00; metaArray[32] = 0x00; metaArray[33] = 0x00; metaArray[34] = 0x0d; metaArray[35] = 0x02; metaArray[36] = 0x00; metaArray[37] = 0x01; metaArray[38] = 0xfe; metaArray[39] = 0xb6; //checksum errado
+	META_TEDS = new TEDS_TIM(metaArray, 40);
+
+	timUtnArray = new char[26];
+	timUtnArray[0] = 0x00; timUtnArray[1] = 0x00; timUtnArray[2] = 0x00; timUtnArray[3] = 0x16; timUtnArray[4] = 0x03; timUtnArray[5] = 0x04; timUtnArray[6] = 0x00; timUtnArray[7] = 0x0c; timUtnArray[8] = 0x01; timUtnArray[9] = 0x01; timUtnArray[10] = 0x04; timUtnArray[11] = 0x01; timUtnArray[12] = 0x00; timUtnArray[13] = 0x05; timUtnArray[14] = 0x09; timUtnArray[15] = 0x45; timUtnArray[16] = 0x50; timUtnArray[17] = 0x4f; timUtnArray[18] = 0x53; timUtnArray[19] = 0x2f; timUtnArray[20] = 0x4d; timUtnArray[21] = 0x69; timUtnArray[22] = 0x63; timUtnArray[23] = 0x61; timUtnArray[24] = 0xff; timUtnArray[25] = 0xff; //checksum errado
+	TIM_UTN_TEDS = new TEDS_TIM(timUtnArray, 26);
+
+	phyArray = new char[25];
+	phyArray[0] = 0x00; phyArray[1] = 0x00; phyArray[2] = 0x00; phyArray[3] = 0x15; phyArray[4] = 0x03; phyArray[5] = 0x04; phyArray[6] = 0x05; phyArray[7] = 0x0d; phyArray[8] = 0x01; phyArray[9] = 0x01; phyArray[10] = 0x0a; phyArray[11] = 0x01; phyArray[12] = 0xff; phyArray[13] = 0x0c; phyArray[14] = 0x02; phyArray[15] = 0x00; phyArray[16] = 0x01; phyArray[17] = 0x16; phyArray[18] = 0x01; phyArray[19] = 0x01; phyArray[20] = 0x28; phyArray[21] = 0x01; phyArray[22] = 0x01; phyArray[23] = 0xfe; phyArray[24] = 0x74; //checksum errado
+	PHY_TEDS = new TEDS_TIM(phyArray, 25);
 }
 
 TEDS_TIM *IEEE1451dot0_TIM::getTEDS(char id)
@@ -238,9 +241,8 @@ void IEEE1451dot0_TIM::receiveMessage(unsigned short transId, const char *messag
 //-------------------------------------------
 
 IEEE1451dot5_TIM *IEEE1451dot5_TIM::dot5 = 0;
-IP::Address IEEE1451dot5_TIM::NCAP_ADDRESS = IP::Address((unsigned long) 0xc0a80a01);
 
-IEEE1451dot5_TIM::IEEE1451dot5_TIM() : tcp(IP::instance())
+IEEE1451dot5_TIM::IEEE1451dot5_TIM() : tcp(IP::instance()), NCAPAddress((unsigned long) 0x0a00000b)
 {
 	socket = 0;
 	connected = false;
@@ -260,7 +262,7 @@ void IEEE1451dot5_TIM::connect()
 	db<IEEE1451dot5_TIM>(INF) << "Connecting...\n";
 	if (socket)
 		delete socket; //TODO
-	socket = new MyClientSocket(&tcp, NCAP_ADDRESS);
+	socket = new MyClientSocket(&tcp, NCAPAddress);
 
 	while (!connected)
 		Alarm::delay(1000);
@@ -321,9 +323,9 @@ void IEEE1451dot5_TIM::MyClientSocket::received(const char *data, u16 size)
 {
 	db<IEEE1451dot5_TIM::MyClientSocket>(INF) << "Client socket received message\n";
 
-	if (!(remote().ip() == NCAP_ADDRESS))
+	if (!(remote().ip() == IEEE1451dot5_TIM::getInstance()->NCAPAddress))
 	{
-		db<IEEE1451dot5_TIM::MyClientSocket>(INF) << "Message source is not NCAP_ADDRESS!\n";
+		db<IEEE1451dot5_TIM::MyClientSocket>(INF) << "Message source is not NCAP Address!\n";
 		return;
 	}
 

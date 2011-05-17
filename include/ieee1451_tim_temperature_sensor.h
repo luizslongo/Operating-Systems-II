@@ -37,6 +37,7 @@ public:
 	~IEEE1451TemperatureSensor();
 
 protected:
+	void initTEDS();
 	TEDS_TIM *getTEDS(char id);
 	//bool running() { return run; };
 	void start();
