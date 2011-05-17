@@ -666,6 +666,8 @@ public:
 
                         if (result == CMAC<T>::CHANNEL_BUSY)
                             state = RX_PREAMBLE;
+                        else
+                            return CMAC<T>::TIMEOUT;
 
                     } else {
                         result = CSMA<T>::execute(result);

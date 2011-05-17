@@ -74,9 +74,11 @@ CMAC<Radio_Wrapper>::CMAC_STATE_TRANSITION CMAC<Radio_Wrapper>::state_machine() 
                 if (result == UNPACK_FAILED)
                     _state = ACTIVE;
                 else if (result == UNPACK_OK) {
-                    if (_tx_dst_address == Radio_Common::BROADCAST)
+                    if (_tx_dst_address == Radio_Common::BROADCAST) {
                         _state = OFF;
-                    else 
+                        result = RX_OK;
+
+                    } else 
                         _state = ACK_TX;
                 }
 
@@ -119,9 +121,11 @@ CMAC<Radio_Wrapper>::CMAC_STATE_TRANSITION CMAC<Radio_Wrapper>::state_machine() 
                 result = Generic_Tx<Radio_Wrapper>::execute(result);
 
                 if (result == TX_END) {
-                    if (_tx_dst_address == Radio_Common::BROADCAST)
+                    if (_tx_dst_address == Radio_Common::BROADCAST) {
                         _state = OFF;
-                    else 
+                        result = TX_OK;
+
+                    } else 
                         _state = ACK_RX;
 
                 } else if (result == TX_ERROR)
