@@ -3,6 +3,13 @@ use ieee.std_logic_1164.all;
 use ieee.math_real.log2;
 use ieee.math_real.ceil;
 
+-- Memory Map:
+--   0x00000000 - 0x0fffffff   Internal RAM (4KB - 256MB)
+--   0x10000000 - 0x1fffffff   External RAM (1MB - 256MB)
+--   All peripherals have a 1 KB address space
+--   0x80000000  Uart
+--   0x80000400  GPIO
+
 entity plasma_axi4lite is
    generic(
         CLK_FREQ : integer := 50_000_000);
@@ -12,23 +19,30 @@ entity plasma_axi4lite is
 
         uart_tx_o   : out std_logic;
         uart_rx_i   : in std_logic;
-        uart_baud_o : out std_logic);
+        uart_baud_o : out std_logic;
+        
+        gpio_i  : in  std_logic_vector(31 downto 0);
+        gpio_o  : out  std_logic_vector(31 downto 0));
 
 end plasma_axi4lite;
 
 architecture RTL of plasma_axi4lite is
-    constant N_SLAVES       : integer := 3;
+    constant N_SLAVES       : integer := 4;
     constant N_SLAVES_LOG   : integer := integer(ceil(log2(real(N_SLAVES))));
 
-    constant SLAVE0_ADDR_W  : integer := 15;
-    constant SLAVE0_ADDR    : std_logic_vector(SLAVE0_ADDR_W-1 downto 0) := b"0000"&b"0000"&b"0000"&b"000";
+    constant SLAVE0_ADDR_W  : integer := 4;
+    constant SLAVE0_ADDR    : std_logic_vector(SLAVE0_ADDR_W-1 downto 0) := b"0000";
 
-    constant SLAVE1_ADDR_W  : integer := 15;
-    constant SLAVE1_ADDR    : std_logic_vector(SLAVE1_ADDR_W-1 downto 0) := b"0000"&b"0000"&b"0000"&b"001";
+    constant SLAVE1_ADDR_W  : integer := 4;
+    constant SLAVE1_ADDR    : std_logic_vector(SLAVE1_ADDR_W-1 downto 0) := b"0001";
 
     constant SLAVE2_ADDR_W  : integer := 22;
     constant SLAVE2_ADDR    : std_logic_vector(SLAVE2_ADDR_W-1 downto 0) 
         := b"1000" & b"0000" & b"0000" & b"0000" & b"0000" & b"00";
+        
+    constant SLAVE3_ADDR_W  : integer := 22;
+    constant SLAVE3_ADDR    : std_logic_vector(SLAVE2_ADDR_W-1 downto 0) 
+        := b"1000" & b"0000" & b"0000" & b"0000" & b"0000" & b"01";
 
     component axi4lite_decoder is
         generic(
@@ -39,7 +53,9 @@ architecture RTL of plasma_axi4lite is
             s1_addr_w   : integer; 
             s1_addr     : std_logic_vector(SLAVE1_ADDR_W-1 downto 0);
             s2_addr_w   : integer; 
-            s2_addr     : std_logic_vector(SLAVE2_ADDR_W-1 downto 0));
+            s2_addr     : std_logic_vector(SLAVE2_ADDR_W-1 downto 0);
+            s3_addr_w   : integer; 
+            s3_addr     : std_logic_vector(SLAVE3_ADDR_W-1 downto 0));
         port(
             -- master write address channel
             m_awvalid_i    : in std_logic;
@@ -152,6 +168,29 @@ architecture RTL of plasma_axi4lite is
             s_axi_rvalid  : out std_logic;
             s_axi_rready  : in std_logic);
     end component;
+    
+    component ram_amba_1024k is
+        port(
+            s_aclk        : in std_logic;
+            s_aresetn     : in std_logic;
+            s_axi_awaddr  : in std_logic_vector(31 downto 0);
+            s_axi_awvalid : in std_logic;
+            s_axi_awready : out std_logic;
+            s_axi_wdata   : in std_logic_vector(31 downto 0);
+            s_axi_wstrb   : in std_logic_vector(3 downto 0);
+            s_axi_wvalid  : in std_logic;
+            s_axi_wready  : out std_logic;
+            s_axi_bresp   : out std_logic_vector(1 downto 0);
+            s_axi_bvalid  : out std_logic;
+            s_axi_bready  : in std_logic;
+            s_axi_araddr  : in std_logic_vector(31 downto 0);
+            s_axi_arvalid : in std_logic;
+            s_axi_arready : out std_logic;
+            s_axi_rdata   : out std_logic_vector(31 downto 0);
+            s_axi_rresp   : out std_logic_vector(1 downto 0);
+            s_axi_rvalid  : out std_logic;
+            s_axi_rready  : in std_logic);
+    end component;
 
     component simple_uart_axi4lite is
         generic(
@@ -185,6 +224,33 @@ architecture RTL of plasma_axi4lite is
             rx_i    : in  std_logic;
             tx_o    : out std_logic;
             baud_o  : out std_logic);
+    end component;
+    
+    component gpio_axi4lite is
+        port(
+            -- AXI signals
+            clk_i       : in  std_logic;
+            axi_rst_i   : in  std_logic;
+            axi_awaddr_i          : in  std_logic_vector(31 downto 0);
+            axi_awvalid_i         : in  std_logic;
+            axi_awready_o         : out std_logic;
+            axi_wdata_i           : in  std_logic_vector(31 downto 0);
+            axi_wstrb_i           : in  std_logic_vector(3 downto 0);
+            axi_wvalid_i          : in  std_logic;
+            axi_wready_o          : out std_logic;
+            axi_bresp_o           : out std_logic_vector(1 downto 0);
+            axi_bvalid_o          : out std_logic;
+            axi_bready_i          : in  std_logic;
+            axi_araddr_i          : in  std_logic_vector(31 downto 0);
+            axi_arvalid_i         : in  std_logic;
+            axi_arready_o         : out std_logic;
+            axi_rdata_o           : out std_logic_vector(31 downto 0);
+            axi_rresp_o           : out std_logic_vector(1 downto 0);
+            axi_rvalid_o          : out std_logic;
+            axi_rready_i          : in  std_logic;
+            -- GPIO
+            gpio_i  : in  std_logic_vector(31 downto 0);
+            gpio_o  : out  std_logic_vector(31 downto 0));
     end component;
 
 
@@ -282,7 +348,9 @@ begin
             s1_addr_w   => SLAVE1_ADDR_W, 
             s1_addr     => SLAVE1_ADDR,
             s2_addr_w   => SLAVE2_ADDR_W, 
-            s2_addr     => SLAVE2_ADDR)
+            s2_addr     => SLAVE2_ADDR,
+            s3_addr_w   => SLAVE3_ADDR_W, 
+            s3_addr     => SLAVE3_ADDR)
         port map(
             -- master write address channel
             m_awvalid_i => sig_m0_awvalid,
@@ -428,7 +496,7 @@ begin
             s_axi_rresp   => sig_slaves_rresp(0));
 
 
-    ram_amba1: ram_amba_128k
+    ram_amba1: ram_amba_1024k
         port map(
             s_aclk        => clk_i,
             s_aresetn     => reset_i,
@@ -487,6 +555,33 @@ begin
             -- UARTLite Interface Signals
             rx_i    => uart_rx_i,
             tx_o    => uart_tx_o,
-            baud_o  => uart_baud_o);   
+            baud_o  => uart_baud_o);
+            
+    gpio: gpio_axi4lite 
+        port map(
+            -- System signals
+            clk_i       => clk_i,
+            axi_rst_i   => reset_i,
+            -- AXI signals
+            axi_awaddr_i    => sig_slaves_awaddr(3),
+            axi_awvalid_i   => sig_slaves_awvalid(3),
+            axi_awready_o   => sig_slaves_awready(3),
+            axi_wdata_i     => sig_slaves_wdata(3),
+            axi_wstrb_i     => sig_slaves_wstrb(3),
+            axi_wvalid_i    => sig_slaves_wvalid(3),
+            axi_wready_o    => sig_slaves_wready(3),
+            axi_bresp_o     => sig_slaves_bresp(3),
+            axi_bvalid_o    => sig_slaves_bvalid(3),
+            axi_bready_i    => sig_slaves_bready(3),
+            axi_araddr_i    => sig_slaves_araddr(3),
+            axi_arvalid_i   => sig_slaves_arvalid(3),
+            axi_arready_o   => sig_slaves_arready(3),
+            axi_rdata_o     => sig_slaves_rdata(3),
+            axi_rresp_o     => sig_slaves_rresp(3),
+            axi_rvalid_o    => sig_slaves_rvalid(3),
+            axi_rready_i    => sig_slaves_rready(3),
+            -- GPIO
+            gpio_o  => gpio_o,
+            gpio_i  => gpio_i);   
 
 end RTL;

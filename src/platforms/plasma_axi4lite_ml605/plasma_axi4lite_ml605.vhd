@@ -9,7 +9,12 @@ entity plasma_axi4lite_ml605 is
         clk_fpga_n   : in std_logic;
 
         uart_rx      : in std_logic;
-        uart_tx      : out std_logic);
+        uart_tx      : out std_logic;
+        gpio_leds    : out std_logic_vector(7 downto 0);
+        gpio_sws     : in std_logic_vector(7 downto 0);
+        dir_leds     : out std_logic_vector(3 downto 0);
+        dir_btns     : in std_logic_vector(3 downto 0)
+        );
 end plasma_axi4lite_ml605;
 
 architecture RTL of plasma_axi4lite_ml605 is
@@ -30,13 +35,19 @@ architecture RTL of plasma_axi4lite_ml605 is
 
         uart_tx_o   : out std_logic;
         uart_rx_i    : in std_logic;
-        uart_baud_o   : out std_logic);
+        uart_baud_o   : out std_logic;
+        gpio_i  : in  std_logic_vector(31 downto 0);
+        gpio_o  : out  std_logic_vector(31 downto 0));
     end component;
 
 
     signal clk_100MHz  : std_logic;
     signal clk_50MHz   : std_logic;
     signal sig_reset   : std_logic;
+    
+    
+    signal sig_gpio_i : std_logic_vector(31 downto 0);
+    signal sig_gpio_o : std_logic_vector(31 downto 0);
    
 begin
         
@@ -59,9 +70,15 @@ begin
         reset_i   => sig_reset,
         uart_tx_o => uart_tx,
         uart_rx_i => uart_rx,
-        uart_baud_o => open
+        uart_baud_o => open,
+        gpio_i	=> sig_gpio_i,
+        gpio_o	=> sig_gpio_o
     );
     
+    sig_gpio_i(11 downto 0) <= dir_btns & gpio_sws;
+    sig_gpio_i(31 downto 12) <= (others => '0');
+    gpio_leds <= sig_gpio_o(7 downto 0);
+    dir_leds <= sig_gpio_o(11 downto 8);
     
 
 end RTL;

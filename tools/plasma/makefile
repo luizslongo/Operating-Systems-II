@@ -305,4 +305,8 @@ tohex: bintohex.exe
 # Used by Xilinx FPGAs for ram image
 toimage:
 	$(LINUX_PWD)ram_image.exe ../../src/mach/plasma/ram_xilinx.vhd code.txt ../../src/mach/plasma/ram_image.vhd
+	
+toimage_coe:
+	java bin2coe 4 1000 test.bin 
+	cp test.coe ../../src/mach/common/coregen/ram_amba_128k.coe
 

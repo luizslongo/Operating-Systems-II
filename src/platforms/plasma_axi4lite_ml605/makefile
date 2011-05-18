@@ -19,6 +19,7 @@ include ../../../src/mach/plasma/hw.srcs
 include ../../../src/mach/common/amba/hw.srcs
 include ../../../src/mach/common/amba_wishbone/hw.srcs
 include ../../../src/mach/common/simple_uart/hw.srcs
+include ../../../src/mach/common/gpio/hw.srcs
 
 ##################################################
 # Sources
@@ -34,7 +35,8 @@ plasma_axi4lite_ml605.ucf
 coregen_generate: \
 clk_xlnx_100M_diff \
 ram_amba_128k \
-axi4_ddr3_contrl
+ram_amba_1024k
+#axi4_ddr3_contrl
 
 coregen_clean:
 	cd $(COREGEN_DIR); \
@@ -53,7 +55,8 @@ $(AMBA_SRCS) \
 $(AXI_WB_SRCS) \
 $(SIMPLE_UART_SRCS) \
 $(COREGEN_SRCS) \
-$(PLASMA_SRCS)
+$(PLASMA_SRCS) \
+$(GPIO_SRCS)
 
 ##################################################
 # Project Properties

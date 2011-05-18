@@ -6,7 +6,8 @@ clk_xlnx_100M_diff.xco \
 clk_xlnx_125M_diff.xco \
 ram_xlnx_256k.xco \
 ram_amba_128k.xco \
-axi4_ddr3_contrl.xco))
+axi4_ddr3_contrl.xco \
+ram_amba_1024k.xco))
 
 #####################
 # Compile the cores
@@ -36,9 +37,15 @@ $(COREGEN_DIR)/ram_amba_128k.vhd: $(COREGEN_DIR)/ram_amba_128k.xco
 	cd $(COREGEN_DIR); \
 	coregen -b ram_amba_128k.xco \
 	-p coregen.cgp
-	
+
+ram_amba_1024k: $(COREGEN_DIR)/ram_amba_1024k.vhd
+$(COREGEN_DIR)/ram_amba_1024k.vhd: $(COREGEN_DIR)/ram_amba_1024k.xco
+	cd $(COREGEN_DIR); \
+	coregen -b ram_amba_1024k.xco \
+	-p coregen.cgp
+    	
 axi4_ddr3_contrl: $(COREGEN_DIR)/axi4_ddr3_contrl.veo
 $(COREGEN_DIR)/axi4_ddr3_contrl.veo: $(COREGEN_DIR)/axi4_ddr3_contrl.xco
-    cd $(COREGEN_DIR); \
-    coregen -b axi4_ddr3_contrl.xco \
-    -p coregen.cgp
+	cd $(COREGEN_DIR); \
+	coregen -b axi4_ddr3_contrl.xco \
+	-p coregen.cgp
