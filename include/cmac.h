@@ -229,6 +229,7 @@ public:
         _tx_data_size   = size;
         _tx_dst_address = dst;
         _tx_pending     = true;
+        _tx_protocol    = prot;
 
         unsigned long start_time = alarm_ticks_ms;
 
@@ -298,7 +299,7 @@ public:
         _stats->rx_time += alarm_ticks_ms - start_time;
 
         *src  = _rx_src_address;
-        *prot = 0;
+        *prot = _rx_protocol;
 
         _rx_pending = false;
 
@@ -402,14 +403,18 @@ protected:
     static unsigned char _frame_buffer[FRAME_BUFFER_SIZE];
     static unsigned int _frame_buffer_size;
 
-    static void *_rx_data;
-    static const void *_tx_data;
-    static unsigned int _rx_data_size;
-    static unsigned int _tx_data_size;
-    static Address _tx_dst_address;
-    static Address _rx_src_address;
+    static void *        _rx_data;
+    static unsigned int  _rx_data_size;
+    static Address       _rx_src_address;
     static volatile bool _rx_pending;
+    static Protocol      _rx_protocol;
+
+    static const void *  _tx_data;
+    static unsigned int  _tx_data_size;
+    static Address       _tx_dst_address;
     static volatile bool _tx_pending;
+    static Protocol      _tx_protocol;
+
     static int _transmission_count;
 
     static unsigned char _data_sequence_number;
@@ -1251,32 +1256,44 @@ public:
         data_frame_header_t *header_ptr =
             reinterpret_cast<data_frame_header_t*>(CMAC<T>::_frame_buffer);
 
-        unsigned char *payload_ptr = &(CMAC<T>::_frame_buffer[sizeof(data_frame_header_t)]);
+        unsigned int *data_size_ptr =
+            reinterpret_cast<unsigned int*>
+            (&(CMAC<T>::_frame_buffer[sizeof(data_frame_header_t)]));
+
+        unsigned char *protocol_ptr = 
+            &(CMAC<T>::_frame_buffer[sizeof(data_frame_header_t) + 2]);
 
         unsigned short *remaining_energy_ptr = 
             reinterpret_cast<unsigned short*>
-            (&(CMAC<T>::_frame_buffer[sizeof(data_frame_header_t) + CMAC<T>::_tx_data_size]));
+            (&(CMAC<T>::_frame_buffer[sizeof(data_frame_header_t) + 2 + 2]));
 
+        unsigned char *payload_ptr = &(CMAC<T>::_frame_buffer[sizeof(data_frame_header_t) + 2 + 2 + 2]);
+
+        int offset = (CMAC<T>::_tx_data_size % 2) ? 1 : 0;
         unsigned short *crc_ptr =
             reinterpret_cast<unsigned short*>
-            (&(CMAC<T>::_frame_buffer[sizeof(data_frame_header_t) + CMAC<T>::_tx_data_size + 2]));
+            (&(CMAC<T>::_frame_buffer[sizeof(data_frame_header_t) + CMAC<T>::_tx_data_size + 2 + 2 + 2 + offset]));
 
-        CMAC<T>::_frame_buffer_size = sizeof(data_frame_header_t) + CMAC<T>::_tx_data_size + 2 + 2;
+        CMAC<T>::_frame_buffer_size = sizeof(data_frame_header_t) + CMAC<T>::_tx_data_size + 2 + 2 + 2 + 2 + offset;
 
-        header_ptr->frame_control.frameType = IEEE802154_Frame<T>::FRAME_TYPE_DATA;
-        header_ptr->frame_control.intraPan = IEEE802154_Frame<T>::INTRA_PAN_SAME_PAN;
+        header_ptr->frame_control.frameType                 = IEEE802154_Frame<T>::FRAME_TYPE_DATA;
+        header_ptr->frame_control.intraPan                  = IEEE802154_Frame<T>::INTRA_PAN_SAME_PAN;
         header_ptr->frame_control.destinationAddressingMode = IEEE802154_Frame<T>::ADDRESSING_MODE_SHORT_ADDRESS;
-        header_ptr->frame_control.sourceAddressingMode = IEEE802154_Frame<T>::ADDRESSING_MODE_SHORT_ADDRESS;
+        header_ptr->frame_control.sourceAddressingMode      = IEEE802154_Frame<T>::ADDRESSING_MODE_SHORT_ADDRESS;
 
-        header_ptr->source_address = *CMAC<T>::_addr;
+        header_ptr->source_address      = *CMAC<T>::_addr;
         header_ptr->destination_address = CMAC<T>::_tx_dst_address;
-        CMAC<T>::_data_sequence_number = (CMAC<T>::_data_sequence_number < 255) ? (CMAC<T>::_data_sequence_number + 1) : 0;
-        header_ptr->data_sequence_n = CMAC<T>::_data_sequence_number;
+        CMAC<T>::_data_sequence_number  = (CMAC<T>::_data_sequence_number < 255) ? (CMAC<T>::_data_sequence_number + 1) : 0;
+        header_ptr->data_sequence_n     = CMAC<T>::_data_sequence_number;
 
         const unsigned char *aux = reinterpret_cast<const unsigned char*>(CMAC<T>::_tx_data);
         for (unsigned int i = 0; i < CMAC<T>::_tx_data_size; ++i) {
             payload_ptr[i] = aux[i];
         }
+
+        *data_size_ptr = CMAC<T>::_tx_data_size;
+
+        *protocol_ptr = CMAC<T>::_tx_protocol;
 
         *remaining_energy_ptr = Battery::sys_batt().sample();
 
@@ -1285,6 +1302,7 @@ public:
         db<CMAC<T> >(INF) << "IEEE802154_Pack - Frame created:\n"
             << *header_ptr
             << "payload_size: " << CMAC<T>::_tx_data_size << "\n"
+            << "protocol: " << CMAC<T>::_tx_protocol << "\n"
             << "remaining_energy: " << *remaining_energy_ptr << "\n"
             << "CRC: " << *crc_ptr << "\n";
 
@@ -1318,19 +1336,22 @@ public:
         data_frame_header_t *header_ptr =
             reinterpret_cast<data_frame_header_t*>(CMAC<T>::_frame_buffer);
 
-        unsigned char *payload_ptr = &(CMAC<T>::_frame_buffer[sizeof(data_frame_header_t)]);
+        CMAC<T>::_rx_data_size = CMAC<T>::_frame_buffer[sizeof(data_frame_header_t)];
+
+        CMAC<T>::_rx_protocol = CMAC<T>::_frame_buffer[sizeof(data_frame_header_t) + 2];
 
         unsigned short *remaining_energy_ptr = 
-            reinterpret_cast<unsigned short*>(&(CMAC<T>::_frame_buffer[CMAC<T>::_frame_buffer_size - 2 - 2]));
+            reinterpret_cast<unsigned short*>(&(CMAC<T>::_frame_buffer[sizeof(data_frame_header_t) + 2 + 2]));
+
+        unsigned char *payload_ptr = &(CMAC<T>::_frame_buffer[sizeof(data_frame_header_t) + 2 + 2 + 2]);
 
         unsigned short *crc_ptr =
             reinterpret_cast<unsigned short*>(&(CMAC<T>::_frame_buffer[CMAC<T>::_frame_buffer_size - 2]));
 
-        CMAC<T>::_rx_data_size = CMAC<T>::_frame_buffer_size - sizeof(data_frame_header_t) - 2 - 2; // 16bit remaining_energy + 16bit crc
-
         db<CMAC<T> >(INF) << "IEEE802154_Unpack - Frame decoded:\n"
             << *header_ptr
             << "payload_size: " << CMAC<T>::_rx_data_size << "\n"
+            << "protocol: " << CMAC<T>::_rx_protocol << "\n"
             << "remaining_energy: " << *remaining_energy_ptr << "\n"
             << "CRC: " << *crc_ptr << "\n";
 
