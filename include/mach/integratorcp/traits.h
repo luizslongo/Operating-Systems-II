@@ -10,6 +10,10 @@ template <> struct Traits<IntegratorCP>: public Traits<void>
 	static const unsigned int APPLICATION_STACK_SIZE = 4096;
 	static const unsigned int APPLICATION_HEAP_SIZE  = 8*1024*1024;
 	static const unsigned int SYSTEM_HEAP_SIZE = APPLICATION_HEAP_SIZE / 2;
+
+	static const unsigned int PRIORITY_HEAP_BASE_ADDR = 0;
+	static const unsigned int PRIORITY_HEAP_SIZE = 4;
+	static const unsigned int PRIORITY_HEAP_TOP_ADDR = PRIORITY_HEAP_BASE_ADDR + PRIORITY_HEAP_SIZE - 1;
 };
 
 template <> struct Traits<IntegratorCP_NIC>: public Traits<void>

@@ -20,7 +20,11 @@ template <> struct Traits<ATMega1281>: public Traits<ATMega1281_Common>, public 
     static const unsigned int APPLICATION_HEAP_SIZE  = 2048;
 
     static const unsigned int SYSTEM_STACK_SIZE = 0;   // not used
-    static const unsigned int SYSTEM_HEAP_SIZE  = 4096; 
+    static const unsigned int SYSTEM_HEAP_SIZE  = 4096;
+
+    static const unsigned int PRIORITY_HEAP_BASE_ADDR = 0;
+    static const unsigned int PRIORITY_HEAP_SIZE = 4;
+    static const unsigned int PRIORITY_HEAP_TOP_ADDR = PRIORITY_HEAP_BASE_ADDR + PRIORITY_HEAP_SIZE - 1;
 };
 
 template <> struct Traits<ATMega1281_Timer_1>: public Traits<ATMega1281_Common>

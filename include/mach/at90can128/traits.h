@@ -22,6 +22,10 @@ template <> struct Traits<AT90CAN128>: public Traits<AT90CAN128_Common>, public 
 
     static const unsigned int SYSTEM_STACK_SIZE = 64;
     static const unsigned int SYSTEM_HEAP_SIZE = 8 *  APPLICATION_STACK_SIZE;
+
+    static const unsigned int PRIORITY_HEAP_BASE_ADDR = 0;
+    static const unsigned int PRIORITY_HEAP_SIZE = 4;
+    static const unsigned int PRIORITY_HEAP_TOP_ADDR = PRIORITY_HEAP_BASE_ADDR + PRIORITY_HEAP_SIZE - 1;
 };
 
 template <> struct Traits<AT90CAN128_Timer_1>: public Traits<AT90CAN128_Common>

@@ -22,6 +22,10 @@ template <> struct Traits<MC13224V>: public Traits<MC13224V_Common>
 	static const unsigned int APPLICATION_HEAP_SIZE = 3072;
 	static const unsigned int SYSTEM_HEAP_SIZE = 2*APPLICATION_HEAP_SIZE;
 	static const bool SMP = false;
+
+	static const unsigned int PRIORITY_HEAP_BASE_ADDR = 0;
+	static const unsigned int PRIORITY_HEAP_SIZE = 4;
+	static const unsigned int PRIORITY_HEAP_TOP_ADDR = PRIORITY_HEAP_BASE_ADDR + PRIORITY_HEAP_SIZE - 1;
 };
 
 template <> struct Traits<MC13224V_Battery>: public Traits<MC13224V_Common>
