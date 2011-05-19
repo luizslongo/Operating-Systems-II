@@ -1,20 +1,21 @@
 #include "plasma.h"
-#include "uart.h"
 #include "elf.h"
 
 #define ENABLE                  0xA5
 #define COPY_ADDR		0x100E0000 //Last 128K
-#define MEM_BASE		0x10000004
+#define MEM_BASE		0x10000000
 #define MEM_TOP 		0x10100000
 #define TOUT			0x000FFFFF
 
-Plasma_UART uart;
-volatile unsigned int * leds_set = (volatile unsigned int *)0x20000030;
-volatile unsigned int * leds_clear = (volatile unsigned int *)0x20000030;
+#define MemoryRead(A) (*(volatile unsigned int*)(A))
+#define MemoryWrite(A,V) *(volatile unsigned int*)(A)=(V)
 
 inline void leds(unsigned int val){
     //*leds_clear = 0x0;
-    *leds_set = val;
+    unsigned int aux = gpio_base->output;
+    aux &= 0xFFFFFF00;
+    val &= 0x0000000FF;
+    gpio_base->output = aux | val;
 }
 
 void print_string(char * p);
@@ -25,16 +26,16 @@ void printhex(char c);
 void print_string(char * p)
 {
    while(*p){
-     if(*p == '\n') uart.put('\r');
-     uart.put(*p);
+     if(*p == '\n') hal_uart_putc('\r');
+     hal_uart_putc(*p);
      p++;
    }
 }
 
 void printhex(char c)
 {
-   uart.put("0123456789ABCDEF"[(c >> 4) & 15]);
-   uart.put("0123456789ABCDEF"[c & 15]);
+   hal_uart_putc("0123456789ABCDEF"[(c >> 4) & 15]);
+   hal_uart_putc("0123456789ABCDEF"[c & 15]);
 }
 
 void printhex(short s){
@@ -42,12 +43,66 @@ void printhex(short s){
    printhex((char)(s & 255));
 }
 
-void printhex(int i){
+void printhex(unsigned int i){
    printhex((short)(i >> 16));
    printhex((short)(i & 0x0000FFFF));		   
 }
 
+
+void timer_handler(unsigned irq){
+    print_string("$TIMER_INT$");
+}
+void peripheral_test(){
+
+    print_string("Plasma peripheral test\n");
+
+    unsigned int i = 0;
+
+    print_string("Test external RAM - Write\n");
+    for(i = EXT_RAM_BASE; i < EXT_RAM_TOP; i += 4){
+        MemoryWrite(i, i);
+    }
+    print_string("Test external RAM - Read\n");
+    for(i = EXT_RAM_BASE; i < EXT_RAM_TOP; i += 4){
+        if(MemoryRead(i) != i){
+            print_string("Error\n");
+            while(1);
+        }
+    }
+    print_string("Test external RAM - Read after write\n");
+    for(i = EXT_RAM_BASE; i < EXT_RAM_TOP; i += 4){
+        MemoryWrite(i, i);
+        if(MemoryRead(i) != i){
+            print_string("Error\n");
+            while(1);
+        }
+    }
+    print_string("OK\n");
+
+
+    print_string("Test Timer\n");
+    unsigned int time = timer_regs->time;
+    print_string("Time: "); printhex(time); print_string("\n");
+    for (i = 0; i < 256; ++i);
+    time = timer_regs->time - time;
+    print_string("Elapsed: "); printhex(time); print_string("\n");
+    print_string("OK\n");
+
+    print_string("Test Timer interrupt / IC\n");
+    pic_init();
+    pic_register_handler(IRQ_TIMER, timer_handler);
+    int_enable();
+    unsigned int wait_time = timer_regs->time + time;
+    timer_regs->time = wait_time;
+    while(timer_regs->time < wait_time);
+    print_string("OK\n");
+
+    print_string("Peripheral test end\n\n");
+}
+
 int main( void ) {
+
+  hal_uart_init();
 
   volatile unsigned char * elf_image = (unsigned char *)COPY_ADDR;
   leds(0x01);
@@ -57,27 +112,34 @@ int main( void ) {
   print_string("          Software and Hardware Integration Lab - UFSC\n");
   print_string("              Hugo Marcondes (hugom@lisha.ufsc.br)\n");
   print_string("                        v0.1 - Sep. 2006\n");
+  print_string("\n");
+  print_string("               Set switches to 0xFF to enable test mode\n");
   print_string("----------------------------------------------------------------\n");
-
   print_string("\n\n");
+
+  if((gpio_base->input & 0xFF) == 0xFF){
+      print_string("Test mode enabled\n");
+      peripheral_test();
+  }
+
   print_string("---------------------- Waiting OS image ---4343432---------------\n");
   
   leds(0x02);
   //Synchronize with sender  
-  while(uart.get() != ENABLE);
-  while(uart.get() != ENABLE);
+  while(hal_uart_getc() != ENABLE);
+  while(hal_uart_getc() != ENABLE);
 
   leds(0x03);
 
   //receive image size
   unsigned int image_size = 0;
-  reinterpret_cast<unsigned char*>(&image_size)[3] = uart.get();
-  reinterpret_cast<unsigned char*>(&image_size)[2] = uart.get();
-  reinterpret_cast<unsigned char*>(&image_size)[1] = uart.get();
-  reinterpret_cast<unsigned char*>(&image_size)[0] = uart.get();
+  reinterpret_cast<unsigned char*>(&image_size)[3] = hal_uart_getc();
+  reinterpret_cast<unsigned char*>(&image_size)[2] = hal_uart_getc();
+  reinterpret_cast<unsigned char*>(&image_size)[1] = hal_uart_getc();
+  reinterpret_cast<unsigned char*>(&image_size)[0] = hal_uart_getc();
 
   print_string("Image size: 0x");
-  printhex((int)image_size);
+  printhex(image_size);
   print_string(" bytes\n");
 
   leds(0x04);
@@ -92,17 +154,17 @@ int main( void ) {
   unsigned int bytes_received = 0;
 
   for (bytes_received = 0; bytes_received < image_size; ++bytes_received) {
-      elf_image[bytes_received] = uart.get();
+      elf_image[bytes_received] = hal_uart_getc();
       leds(bytes_received);
   }
 
   leds(0x05);
 
   print_string("Expected 0x");
-  printhex((int)image_size);
+  printhex(image_size);
   print_string(" bytes\n");
   print_string("Received 0x");
-  printhex((int)bytes_received);
+  printhex(bytes_received);
   print_string(" bytes\n");
   
 
@@ -118,19 +180,19 @@ int main( void ) {
   }
 
   print_string("Number of segments: ");
-  printhex((int)elf_file->segments());
+  printhex((unsigned int)elf_file->segments());
   print_string("\n");
 
   print_string("Segment 0 size: ");
-  printhex((int)elf_file->segment_size(0));
+  printhex((unsigned int)elf_file->segment_size(0));
   print_string("\n");
 
   print_string("Segment 0 Addr: ");
-  printhex((int)elf_file->segment_address(0));
+  printhex((unsigned int)elf_file->segment_address(0));
   print_string("\n");
 
   print_string("Elf Entry Point: ");
-  printhex((int)elf_file->entry());
+  printhex((unsigned int)elf_file->entry());
   print_string("\n");
       
 

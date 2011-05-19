@@ -18,15 +18,14 @@
 
 /////////////////////////////
 #define UART_BASE 0x80000000
-typedef unsigned int uint32_t;
 typedef struct {
   //  All elements are 8 bits except for clkdiv (16), but we use uint32 to make
   //    the hardware for decoding easier
-  volatile uint32_t clkdiv;  // Set to 50e6 divided by baud rate (no x16 factor)
-  volatile uint32_t txlevel; // Number of spaces in the FIFO for writes
-  volatile uint32_t rxlevel; // Number of available elements in the FIFO for reads
-  volatile uint32_t txchar;  // Write characters to be sent here
-  volatile uint32_t rxchar;  // Read received characters here
+  volatile unsigned int clkdiv;  // Set to 50e6 divided by baud rate (no x16 factor)
+  volatile unsigned int txlevel; // Number of spaces in the FIFO for writes
+  volatile unsigned int rxlevel; // Number of available elements in the FIFO for reads
+  volatile unsigned int txchar;  // Write characters to be sent here
+  volatile unsigned int rxchar;  // Read received characters here
 } uart_regs_t;
 #define uart_regs ((uart_regs_t *) UART_BASE)
 void
@@ -69,8 +68,8 @@ hal_uart_getc(void)
 #define GPIO_BASE 0x80000400
 
 typedef struct {
-  volatile uint32_t output;
-  volatile uint32_t input;
+  volatile unsigned int output;
+  volatile unsigned int input;
 } gpio_regs_t;
 
 #define gpio_base ((gpio_regs_t *) GPIO_BASE)
@@ -91,10 +90,10 @@ typedef struct {
 #define PIC_UART_TX_INT   IRQ_TO_MASK(IRQ_UART_TX)
 
 typedef struct {
-  volatile uint32_t edge_enable; // mask: 1 -> edge triggered, 0 -> level
-  volatile uint32_t polarity;    // mask: 1 -> rising edge
-  volatile uint32_t mask;    // mask: 1 -> disabled
-  volatile uint32_t pending;     // mask: 1 -> pending; write 1's to clear pending ints
+  volatile unsigned int edge_enable; // mask: 1 -> edge triggered, 0 -> level
+  volatile unsigned int polarity;    // mask: 1 -> rising edge
+  volatile unsigned int mask;    // mask: 1 -> disabled
+  volatile unsigned int pending;     // mask: 1 -> pending; write 1's to clear pending ints
 } pic_regs_t;
 
 #define pic_regs ((pic_regs_t *) PIC_BASE)
@@ -134,6 +133,8 @@ pic_init(void)
   pic_regs->pending = ~0;                  // clear all pending ints
 }
 
+extern "C"{
+
 void OS_InterruptServiceRoutine(unsigned int status)
 {
     // pending and not masked interrupts
@@ -153,6 +154,8 @@ void OS_InterruptServiceRoutine(unsigned int status)
         return;
       }
     }
+}
+
 }
 
 
@@ -192,7 +195,7 @@ void int_disable() {
 #define TIMER_BASE  0x80000800
 
 typedef struct {
-  volatile uint32_t time;   // R: current, W: set time to interrupt
+  volatile unsigned int time;   // R: current, W: set time to interrupt
 } timer_regs_t;
 
 #define timer_regs ((timer_regs_t *) TIMER_BASE)

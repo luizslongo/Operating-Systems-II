@@ -136,6 +136,12 @@ amba_test:
 	-$(DUMP_MIPS) --disassemble test.axf > test.lst
 	$(CONVERT_BIN)
 
+to_be_loaded:
+	$(GPP_MIPS) to_be_loaded.c --no-exceptions --no-rtti --no-use-cxa-atexit -c -s
+	$(LD_MIPS) -Ttext 0x10000000 -eentry -Map test.map -s -N -o test.axf to_be_loaded.o
+	-$(DUMP_MIPS) --disassemble test.axf > test.lst
+	$(CONVERT_BIN)
+
 dtmf:
 	$(AS_MIPS) -o boot.o boot.asm
 	$(GCC_MIPS) no_os.c
@@ -147,10 +153,8 @@ dtmf:
 	
 loader: 
 	$(AS_MIPS) -o boot.o boot.asm
-	$(GPP_MIPS) loader.cc --no-exceptions --no-rtti --no-use-cxa-atexit -c -s
-	$(GCC_MIPS) no_os.c 
-	$(LD_MIPS) -Ttext 0 -eentry -Map test.map -s -N -o test.axf \
-		boot.o loader.o no_os.o
+	$(GPP_MIPS) loader.cc --no-exceptions --no-rtti --no-use-cxa-atexit -c -s 
+	$(LD_MIPS) -Ttext 0 -eentry -Map test.map -s -N -o test.axf boot.o loader.o -lc
 	-$(DUMP_MIPS) --disassemble test.axf > test.lst
 	$(CONVERT_BIN)
 	
@@ -307,7 +311,7 @@ toimage:
 	$(LINUX_PWD)ram_image.exe ../../src/mach/plasma/ram_xilinx.vhd code.txt ../../src/mach/plasma/ram_image.vhd
 	
 toimage_coe:
-	java bin2coe 4 1000 test.bin 
+	java bin2coe 4 2048 test.bin 
 	cp test.coe ../../src/mach/common/coregen/ram_amba_128k.coe
 	rm ../../src/mach/common/coregen/ram_amba_128k.vhd
 
