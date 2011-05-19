@@ -3,148 +3,80 @@
 #define MemoryRead(A) (*(volatile unsigned int*)(A))
 #define MemoryWrite(A,V) *(volatile unsigned int*)(A)=(V)
 
-////////////////////////////////
-#define EXT_RAM_BASE 0x10000000
-#define EXT_RAM_TOP  0x100FFFFF
 
-/////////////////////////////
-#define UART_BASE 0x80000000
-typedef unsigned int uint32_t;
-typedef struct {
-  //  All elements are 8 bits except for clkdiv (16), but we use uint32 to make
-  //    the hardware for decoding easier
-  volatile uint32_t clkdiv;  // Set to 50e6 divided by baud rate (no x16 factor)
-  volatile uint32_t txlevel; // Number of spaces in the FIFO for writes
-  volatile uint32_t rxlevel; // Number of available elements in the FIFO for reads
-  volatile uint32_t txchar;  // Write characters to be sent here
-  volatile uint32_t rxchar;  // Read received characters here
-} uart_regs_t;
-#define uart_regs ((uart_regs_t *) UART_BASE)
-void
-hal_uart_init(void)
+void print_string(char * p)
 {
-    uart_regs->clkdiv = 868;  // 57600 bps
+   while(*p){
+     if(*p == '\n') hal_uart_putc('\r');
+     hal_uart_putc(*p);
+     p++;
+   }
 }
 
-void
-hal_uart_putc(int ch)
+void printhex_8(char c)
 {
-  if (ch == '\n')       // FIXME for now map \n -> \r\n
-    hal_uart_putc('\r');
-
-  while (uart_regs->txlevel == 0)    // wait for fifo to have space
-    ;
-
-  uart_regs->txchar = ch;
+    hal_uart_putc("0123456789ABCDEF"[(c >> 4) & 15]);
+    hal_uart_putc("0123456789ABCDEF"[c & 15]);
 }
 
-void
-hal_uart_putc_nowait(int ch)
-{
-  if (ch == '\n')       // FIXME for now map \n -> \r\n
-    hal_uart_putc('\r');
-
-  if(uart_regs->txlevel)   // If fifo has space
-      uart_regs->txchar = ch;
+void printhex_16(short s){
+   printhex_8((char)(s >> 8));
+   printhex_8((char)(s & 255));
 }
 
-int
-hal_uart_getc(void)
-{
-  while ((uart_regs->rxlevel) == 0)  // wait for data to be ready
-    ;
-
-  return uart_regs->rxchar;
-}
-//////////////////////////////
-#define GPIO_BASE 0x80000400
-
-typedef struct {
-  volatile uint32_t output;
-  volatile uint32_t input;
-} gpio_regs_t;
-
-#define gpio_base ((gpio_regs_t *) GPIO_BASE)
-//////////////////////////////////
-
-
-void OS_InterruptServiceRoutine(unsigned int status)
-{
-   (void)status;
-}
-
-void hello(){
-    hal_uart_putc('H');
-    hal_uart_putc('e');
-    hal_uart_putc('l');
-    hal_uart_putc('l');
-    hal_uart_putc('o');
-    hal_uart_putc('!');
-    hal_uart_putc('\n');
+void printhex_32(int i){
+   printhex_16((short)(i >> 16));
+   printhex_16((short)(i & 0x0000FFFF));
 }
 
 
-void test_ex_ram(){
-    hal_uart_putc('T');
-    hal_uart_putc('2');
-    hal_uart_putc('-');
-    hal_uart_putc('E');
-    hal_uart_putc('r');
-    hal_uart_putc('a');
-    hal_uart_putc('m');
-    hal_uart_putc('\n');
-}
-
-void test_gpio(){
-    hal_uart_putc('T');
-    hal_uart_putc('3');
-    hal_uart_putc('-');
-    hal_uart_putc('G');
-    hal_uart_putc('P');
-    hal_uart_putc('I');
-    hal_uart_putc('O');
-    hal_uart_putc('\n');
-}
-
-void ok(){
-    hal_uart_putc('O');
-    hal_uart_putc('K');
-    hal_uart_putc('\n');
-}
-
-void error(){
-    hal_uart_putc('E');
-    hal_uart_putc('R');
-    hal_uart_putc('R');
-    hal_uart_putc('O');
-    hal_uart_putc('R');
-    hal_uart_putc('\n');
-    while(1);
+unsigned int wait = 0;
+void timer_handler(unsigned irq){
+    print_string("$TIMER_INT$");
 }
 
 int main()
 {
 
     hal_uart_init();
+    pic_init();
 
-    hello();
+    print_string("Hello\n");
 
     unsigned int i = 0;
 
 
-
-    test_ex_ram();
+    print_string("Test external RAM\n");
     for(i = EXT_RAM_BASE; i < EXT_RAM_TOP; i += 4){
         MemoryWrite(i, i);
     }
     for(i = EXT_RAM_BASE; i < EXT_RAM_TOP; i += 4){
-        if(MemoryRead(i) != i)
-            error();
+        if(MemoryRead(i) != i){
+            print_string("Error\n");
+            while(1);
+        }
     }
-    ok();
+    print_string("OK\n");
 
 
-    test_gpio();
+    print_string("Test Timer\n");
+    unsigned int time = timer_regs->time;
+    print_string("Time: "); printhex_32(time); print_string("\n");
+    for (i = 0; i < 256; ++i);
+    time = timer_regs->time - time;
+    print_string("Elapsed: "); printhex_32(time); print_string("\n");
+    print_string("OK\n");
+
+    print_string("Test Timer interrupt / IC\n");
+    pic_register_handler(IRQ_TIMER, timer_handler);
+    int_enable();
+    unsigned int wait_time = timer_regs->time + time;
+    timer_regs->time = wait_time;
+    while(timer_regs->time < wait_time);
+    print_string("OK\n");
+
+
+    print_string("Test GPIO\n");
     while(1){
         gpio_base->output = gpio_base->input;
     }

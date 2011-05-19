@@ -5,9 +5,7 @@
 
 int putchar(int value)
 {
-   while((MemoryRead(IRQ_STATUS) & IRQ_UART_WRITE_AVAILABLE) == 0)
-      ;
-   MemoryWrite(UART_WRITE, value);
+   hal_uart_putc(value);
    return 0;
 }
 
@@ -44,11 +42,10 @@ void OS_InterruptServiceRoutine(unsigned int status)
 
 int kbhit(void)
 {
-   return MemoryRead(IRQ_STATUS) & IRQ_UART_READ_AVAILABLE;
+   return 0;
 }
 
 int getch(void)
 {
-   while(!kbhit()) ;
-   return MemoryRead(UART_READ);
+   return hal_uart_getc();
 }

@@ -309,4 +309,5 @@ toimage:
 toimage_coe:
 	java bin2coe 4 1000 test.bin 
 	cp test.coe ../../src/mach/common/coregen/ram_amba_128k.coe
+	rm ../../src/mach/common/coregen/ram_amba_128k.vhd
 
