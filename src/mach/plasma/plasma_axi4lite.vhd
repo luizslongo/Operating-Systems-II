@@ -9,6 +9,8 @@ use ieee.math_real.ceil;
 --   All peripherals have a 1 KB address space
 --   0x80000000  Uart
 --   0x80000400  GPIO
+--   0x80000800  Timer
+--   0x80000C00  PIC
 
 entity plasma_axi4lite is
    generic(
@@ -27,7 +29,7 @@ entity plasma_axi4lite is
 end plasma_axi4lite;
 
 architecture RTL of plasma_axi4lite is
-    constant N_SLAVES       : integer := 4;
+    constant N_SLAVES       : integer := 6;
     constant N_SLAVES_LOG   : integer := integer(ceil(log2(real(N_SLAVES))));
 
     constant SLAVE0_ADDR_W  : integer := 4;
@@ -41,8 +43,16 @@ architecture RTL of plasma_axi4lite is
         := b"1000" & b"0000" & b"0000" & b"0000" & b"0000" & b"00";
         
     constant SLAVE3_ADDR_W  : integer := 22;
-    constant SLAVE3_ADDR    : std_logic_vector(SLAVE2_ADDR_W-1 downto 0) 
+    constant SLAVE3_ADDR    : std_logic_vector(SLAVE3_ADDR_W-1 downto 0) 
         := b"1000" & b"0000" & b"0000" & b"0000" & b"0000" & b"01";
+        
+    constant SLAVE4_ADDR_W  : integer := 22;
+    constant SLAVE4_ADDR    : std_logic_vector(SLAVE4_ADDR_W-1 downto 0) 
+        := b"1000" & b"0000" & b"0000" & b"0000" & b"0000" & b"10";
+        
+    constant SLAVE5_ADDR_W  : integer := 22;
+    constant SLAVE5_ADDR    : std_logic_vector(SLAVE5_ADDR_W-1 downto 0) 
+        := b"1000" & b"0000" & b"0000" & b"0000" & b"0000" & b"11";
 
     component axi4lite_decoder is
         generic(
@@ -55,7 +65,11 @@ architecture RTL of plasma_axi4lite is
             s2_addr_w   : integer; 
             s2_addr     : std_logic_vector(SLAVE2_ADDR_W-1 downto 0);
             s3_addr_w   : integer; 
-            s3_addr     : std_logic_vector(SLAVE3_ADDR_W-1 downto 0));
+            s3_addr     : std_logic_vector(SLAVE3_ADDR_W-1 downto 0);
+            s4_addr_w   : integer; 
+            s4_addr     : std_logic_vector(SLAVE4_ADDR_W-1 downto 0);
+            s5_addr_w   : integer; 
+            s5_addr     : std_logic_vector(SLAVE5_ADDR_W-1 downto 0));
         port(
             -- master write address channel
             m_awvalid_i    : in std_logic;
@@ -253,6 +267,59 @@ architecture RTL of plasma_axi4lite is
             gpio_o  : out  std_logic_vector(31 downto 0));
     end component;
 
+    component timer_axi4lite is
+        port(
+            -- AXI signals
+            clk_i       : in  std_logic;
+            axi_rst_i   : in  std_logic;
+            axi_awaddr_i          : in  std_logic_vector(31 downto 0);
+            axi_awvalid_i         : in  std_logic;
+            axi_awready_o         : out std_logic;
+            axi_wdata_i           : in  std_logic_vector(31 downto 0);
+            axi_wstrb_i           : in  std_logic_vector(3 downto 0);
+            axi_wvalid_i          : in  std_logic;
+            axi_wready_o          : out std_logic;
+            axi_bresp_o           : out std_logic_vector(1 downto 0);
+            axi_bvalid_o          : out std_logic;
+            axi_bready_i          : in  std_logic;
+            axi_araddr_i          : in  std_logic_vector(31 downto 0);
+            axi_arvalid_i         : in  std_logic;
+            axi_arready_o         : out std_logic;
+            axi_rdata_o           : out std_logic_vector(31 downto 0);
+            axi_rresp_o           : out std_logic_vector(1 downto 0);
+            axi_rvalid_o          : out std_logic;
+            axi_rready_i          : in  std_logic;
+            -- Int
+            int_o  : out  std_logic);
+    end component;
+    
+    component pic_axi4lite is
+        port(
+            -- AXI signals
+            clk_i       : in  std_logic;
+            axi_rst_i   : in  std_logic;
+            axi_awaddr_i          : in  std_logic_vector(31 downto 0);
+            axi_awvalid_i         : in  std_logic;
+            axi_awready_o         : out std_logic;
+            axi_wdata_i           : in  std_logic_vector(31 downto 0);
+            axi_wstrb_i           : in  std_logic_vector(3 downto 0);
+            axi_wvalid_i          : in  std_logic;
+            axi_wready_o          : out std_logic;
+            axi_bresp_o           : out std_logic_vector(1 downto 0);
+            axi_bvalid_o          : out std_logic;
+            axi_bready_i          : in  std_logic;
+            axi_araddr_i          : in  std_logic_vector(31 downto 0);
+            axi_arvalid_i         : in  std_logic;
+            axi_arready_o         : out std_logic;
+            axi_rdata_o           : out std_logic_vector(31 downto 0);
+            axi_rresp_o           : out std_logic_vector(1 downto 0);
+            axi_rvalid_o          : out std_logic;
+            axi_rready_i          : in  std_logic;
+            -- Int
+            irq_i  : in  std_logic_vector(31 downto 0);
+            int_o  : out  std_logic);
+    end component;
+
 
     signal sig_intr    : std_logic;
 
@@ -336,9 +403,19 @@ architecture RTL of plasma_axi4lite is
     signal sig_slaves_rdata   : array_of_stdvec32;
     signal sig_slaves_rresp   : array_of_stdvec2;
     signal sig_slaves_rvalid  : array_of_stdlogic;
+    
+    
+    signal sig_irqs         : std_logic_vector(31 downto 0);
+    signal sig_int_timer    : std_logic;
+    signal sig_uart_rx_int  : std_logic;
+    signal sig_uart_tx_int  : std_logic;
 
 begin
 
+    -- -----------------------------------------------------
+    -- AMBA interconnect
+    -- -----------------------------------------------------
+    
     axi4lite_interconnect: axi4lite_decoder
         generic map(
             sw          => N_SLAVES,
@@ -350,7 +427,11 @@ begin
             s2_addr_w   => SLAVE2_ADDR_W, 
             s2_addr     => SLAVE2_ADDR,
             s3_addr_w   => SLAVE3_ADDR_W, 
-            s3_addr     => SLAVE3_ADDR)
+            s3_addr     => SLAVE3_ADDR,
+            s4_addr_w   => SLAVE4_ADDR_W, 
+            s4_addr     => SLAVE4_ADDR,
+            s5_addr_w   => SLAVE5_ADDR_W, 
+            s5_addr     => SLAVE5_ADDR)
         port map(
             -- master write address channel
             m_awvalid_i => sig_m0_awvalid,
@@ -427,6 +508,9 @@ begin
         sig_slaves_rready(s)  <= sig_rready(s);
     end generate slaves_inputs_from_interconnect;
 
+    -- -----------------------------------------------------
+    -- Master - Plasma
+    -- -----------------------------------------------------
 
     plasma_amba: plasma_axi4lite_master
         generic map(
@@ -465,8 +549,9 @@ begin
 
             intr       => sig_intr);
             
-    sig_intr <= '0';
-
+    -- -----------------------------------------------------
+    -- Slave0 - Internal RAM
+    -- -----------------------------------------------------
 
     ram_amba0: ram_amba_128k
         port map(
@@ -495,6 +580,9 @@ begin
             s_axi_rdata   => sig_slaves_rdata(0),
             s_axi_rresp   => sig_slaves_rresp(0));
 
+    -- -----------------------------------------------------
+    -- Slave1 - External RAM (DDR3 controller)
+    -- -----------------------------------------------------
 
     ram_amba1: ram_amba_1024k
         port map(
@@ -523,6 +611,9 @@ begin
             s_axi_rdata   => sig_slaves_rdata(1),
             s_axi_rresp   => sig_slaves_rresp(1));
 
+    -- -----------------------------------------------------
+    -- Slave2 - UART
+    -- -----------------------------------------------------
 
     uart: simple_uart_axi4lite 
         generic map(
@@ -532,8 +623,8 @@ begin
             -- System signals
             clk_i       => clk_i,
             axi_rst_i   => reset_i,
-            rx_int_o    => open,
-            tx_int_o    => open,
+            rx_int_o    => sig_uart_rx_int,
+            tx_int_o    => sig_uart_tx_int,
             -- AXI signals
             axi_awaddr_i    => sig_slaves_awaddr(2),
             axi_awvalid_i   => sig_slaves_awvalid(2),
@@ -556,6 +647,11 @@ begin
             rx_i    => uart_rx_i,
             tx_o    => uart_tx_o,
             baud_o  => uart_baud_o);
+
+
+    -- -----------------------------------------------------
+    -- Slave3 - GPIO
+    -- -----------------------------------------------------
             
     gpio: gpio_axi4lite 
         port map(
@@ -582,6 +678,72 @@ begin
             axi_rready_i    => sig_slaves_rready(3),
             -- GPIO
             gpio_o  => gpio_o,
-            gpio_i  => gpio_i);   
+            gpio_i  => gpio_i);
+
+    -- -----------------------------------------------------
+    -- Slave4 - Timer
+    -- -----------------------------------------------------
+            
+    timer: timer_axi4lite 
+        port map(
+            -- System signals
+            clk_i       => clk_i,
+            axi_rst_i   => reset_i,
+            -- AXI signals
+            axi_awaddr_i    => sig_slaves_awaddr(4),
+            axi_awvalid_i   => sig_slaves_awvalid(4),
+            axi_awready_o   => sig_slaves_awready(4),
+            axi_wdata_i     => sig_slaves_wdata(4),
+            axi_wstrb_i     => sig_slaves_wstrb(4),
+            axi_wvalid_i    => sig_slaves_wvalid(4),
+            axi_wready_o    => sig_slaves_wready(4),
+            axi_bresp_o     => sig_slaves_bresp(4),
+            axi_bvalid_o    => sig_slaves_bvalid(4),
+            axi_bready_i    => sig_slaves_bready(4),
+            axi_araddr_i    => sig_slaves_araddr(4),
+            axi_arvalid_i   => sig_slaves_arvalid(4),
+            axi_arready_o   => sig_slaves_arready(4),
+            axi_rdata_o     => sig_slaves_rdata(4),
+            axi_rresp_o     => sig_slaves_rresp(4),
+            axi_rvalid_o    => sig_slaves_rvalid(4),
+            axi_rready_i    => sig_slaves_rready(4),
+            -- Int
+            int_o  => sig_int_timer); 
+            
+    -- -----------------------------------------------------
+    -- Slave5 - PIC
+    -- -----------------------------------------------------
+        
+    sig_irqs(0) <= sig_int_timer;
+    sig_irqs(1) <= sig_uart_rx_int;
+    sig_irqs(2) <= sig_uart_tx_int;
+    sig_irqs(31 downto 3) <= (others => '0');        
+            
+    pic: pic_axi4lite 
+        port map(
+            -- System signals
+            clk_i       => clk_i,
+            axi_rst_i   => reset_i,
+            -- AXI signals
+            axi_awaddr_i    => sig_slaves_awaddr(5),
+            axi_awvalid_i   => sig_slaves_awvalid(5),
+            axi_awready_o   => sig_slaves_awready(5),
+            axi_wdata_i     => sig_slaves_wdata(5),
+            axi_wstrb_i     => sig_slaves_wstrb(5),
+            axi_wvalid_i    => sig_slaves_wvalid(5),
+            axi_wready_o    => sig_slaves_wready(5),
+            axi_bresp_o     => sig_slaves_bresp(5),
+            axi_bvalid_o    => sig_slaves_bvalid(5),
+            axi_bready_i    => sig_slaves_bready(5),
+            axi_araddr_i    => sig_slaves_araddr(5),
+            axi_arvalid_i   => sig_slaves_arvalid(5),
+            axi_arready_o   => sig_slaves_arready(5),
+            axi_rdata_o     => sig_slaves_rdata(5),
+            axi_rresp_o     => sig_slaves_rresp(5),
+            axi_rvalid_o    => sig_slaves_rvalid(5),
+            axi_rready_i    => sig_slaves_rready(5),
+            -- Int
+            irq_i  => sig_irqs,
+            int_o  => sig_intr);
 
 end RTL;

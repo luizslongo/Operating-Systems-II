@@ -20,6 +20,8 @@ include ../../../src/mach/common/amba/hw.srcs
 include ../../../src/mach/common/amba_wishbone/hw.srcs
 include ../../../src/mach/common/simple_uart/hw.srcs
 include ../../../src/mach/common/gpio/hw.srcs
+include ../../../src/mach/common/simple_pic/hw.srcs
+include ../../../src/mach/common/simple_timer/hw.srcs
 
 ##################################################
 # Sources
@@ -54,6 +56,8 @@ SOURCES = $(abspath $(TOP_SRCS)) \
 $(AMBA_SRCS) \
 $(AXI_WB_SRCS) \
 $(SIMPLE_UART_SRCS) \
+$(SIMPLE_PIC_SRCS) \
+$(SIMPLE_TIMER_SRCS) \
 $(COREGEN_SRCS) \
 $(PLASMA_SRCS) \
 $(GPIO_SRCS)

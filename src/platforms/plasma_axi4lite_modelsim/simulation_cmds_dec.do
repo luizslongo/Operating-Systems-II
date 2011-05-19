@@ -37,6 +37,13 @@ vlog ../../mach/common/simple_uart/uart_rx.v
 vlog ../../mach/common/gpio/very_simple_gpio.v
 vlog ../../mach/common/gpio/gpio_axi4lite.v
 
+vlog ../../mach/common/simple_pic/priority_enc.v
+vlog ../../mach/common/simple_pic/pic.v
+vlog ../../mach/common/simple_pic/pic_axi4lite.v
+
+vlog ../../mach/common/simple_timer/timer2.v
+vlog ../../mach/common/simple_timer/timer_axi4lite.v
+
 vlog ../../mach/common/amba/amba_mux.v
 vlog ../../mach/common/amba/address_decoder.v
 vlog ../../mach/common/amba/priority_encoder.v
@@ -50,10 +57,13 @@ vcom plasma_axi4lite_dec_testbench.vhd
 #load/dump/run vhdl design
 set StdArithNoWarnings 1
 set NumericStdNoWarnings 1
-vsim -L unisim -L axi_uartlite_v1_01_a  work.plasma_axi4lite_testbench
-vcd file trace_dec.vcd
 
-vcd add -r -file trace_dec.vcd /*
-#vcd add -file trace_dec.vcd /plasma_axi4lite_testbench/*
+vsim -L unisim -L axi_uartlite_v1_01_a  work.plasma_axi4lite_testbench
+
+#vcd file trace_dec.vcd
+#vcd add -r -file trace_dec.vcd /*
+#vcd add -r -file trace_dec.vcd /plasma_axi4lite_testbench/plasma/timer/*
+#vcd add -r -file trace_dec.vcd /plasma_axi4lite_testbench/plasma/pic/*
+#vcd add -file trace_dec.vcd /plasma_axi4lite_testbench/plasma/plasma_amba/*
 
 run -all

@@ -87,7 +87,7 @@ begin
         wait for 60 ns;
         sig_reset <= '1';
 
-        wait for 5 ms;
+        wait for 1000 ms;
 
         finish(0);
     end process;
