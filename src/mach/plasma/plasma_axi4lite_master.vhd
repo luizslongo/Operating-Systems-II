@@ -179,9 +179,14 @@ begin
                     wvalid              <= '0';
                 
                 when DATA_READ =>
-                    state <= IDLE;
-
-                    plasma_mem_pause_in <= '0';
+                    if rvalid = '1' then
+                        state <= IDLE;
+                        plasma_mem_pause_in <= '0';
+                    else
+                        state <= DATA_READ;
+                        plasma_mem_pause_in <= '1';
+                    end if;
+                    
                     arvalid             <= '0';
                     awvalid             <= '0';
                     wvalid              <= '0';

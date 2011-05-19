@@ -1,19 +1,16 @@
 [size] 1680 977
 [pos] -1 -1
-*-22.000000 5893360 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
+*-10.000000 116060 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
 [treeopen] plasma_axi4lite_testbench.
 [treeopen] plasma_axi4lite_testbench.plasma.
+[treeopen] plasma_axi4lite_testbench.plasma.gpio.
 [treeopen] plasma_axi4lite_testbench.plasma.uart.
 @200
 -Top level
 @28
-plasma_axi4lite_testbench.clk_50mhz
 plasma_axi4lite_testbench.sig_reset
-plasma_axi4lite_testbench.uart_rx
-plasma_axi4lite_testbench.uart_tx
-@201
--
 @200
+-
 -Master
 @28
 plasma_axi4lite_testbench.plasma.plasma_amba.areset
@@ -174,3 +171,42 @@ plasma_axi4lite_testbench.plasma.uart.rx_i
 plasma_axi4lite_testbench.plasma.uart.rx_int_o
 plasma_axi4lite_testbench.plasma.uart.tx_int_o
 plasma_axi4lite_testbench.plasma.uart.tx_o
+@200
+-
+-Slave 3 - GPIO
+@28
+plasma_axi4lite_testbench.plasma.gpio.clk_i
+@22
+#axi_araddr_i[31:0] plasma_axi4lite_testbench.plasma.gpio.axi_araddr_i[31] plasma_axi4lite_testbench.plasma.gpio.axi_araddr_i[30] plasma_axi4lite_testbench.plasma.gpio.axi_araddr_i[29] plasma_axi4lite_testbench.plasma.gpio.axi_araddr_i[28] plasma_axi4lite_testbench.plasma.gpio.axi_araddr_i[27] plasma_axi4lite_testbench.plasma.gpio.axi_araddr_i[26] plasma_axi4lite_testbench.plasma.gpio.axi_araddr_i[25] plasma_axi4lite_testbench.plasma.gpio.axi_araddr_i[24] plasma_axi4lite_testbench.plasma.gpio.axi_araddr_i[23] plasma_axi4lite_testbench.plasma.gpio.axi_araddr_i[22] plasma_axi4lite_testbench.plasma.gpio.axi_araddr_i[21] plasma_axi4lite_testbench.plasma.gpio.axi_araddr_i[20] plasma_axi4lite_testbench.plasma.gpio.axi_araddr_i[19] plasma_axi4lite_testbench.plasma.gpio.axi_araddr_i[18] plasma_axi4lite_testbench.plasma.gpio.axi_araddr_i[17] plasma_axi4lite_testbench.plasma.gpio.axi_araddr_i[16] plasma_axi4lite_testbench.plasma.gpio.axi_araddr_i[15] plasma_axi4lite_testbench.plasma.gpio.axi_araddr_i[14] plasma_axi4lite_testbench.plasma.gpio.axi_araddr_i[13] plasma_axi4lite_testbench.plasma.gpio.axi_araddr_i[12] plasma_axi4lite_testbench.plasma.gpio.axi_araddr_i[11] plasma_axi4lite_testbench.plasma.gpio.axi_araddr_i[10] plasma_axi4lite_testbench.plasma.gpio.axi_araddr_i[9] plasma_axi4lite_testbench.plasma.gpio.axi_araddr_i[8] plasma_axi4lite_testbench.plasma.gpio.axi_araddr_i[7] plasma_axi4lite_testbench.plasma.gpio.axi_araddr_i[6] plasma_axi4lite_testbench.plasma.gpio.axi_araddr_i[5] plasma_axi4lite_testbench.plasma.gpio.axi_araddr_i[4] plasma_axi4lite_testbench.plasma.gpio.axi_araddr_i[3] plasma_axi4lite_testbench.plasma.gpio.axi_araddr_i[2] plasma_axi4lite_testbench.plasma.gpio.axi_araddr_i[1] plasma_axi4lite_testbench.plasma.gpio.axi_araddr_i[0]
+@28
+plasma_axi4lite_testbench.plasma.gpio.axi_arready_o
+plasma_axi4lite_testbench.plasma.gpio.axi_arvalid_i
+@22
+#axi_awaddr_i[31:0] plasma_axi4lite_testbench.plasma.gpio.axi_awaddr_i[31] plasma_axi4lite_testbench.plasma.gpio.axi_awaddr_i[30] plasma_axi4lite_testbench.plasma.gpio.axi_awaddr_i[29] plasma_axi4lite_testbench.plasma.gpio.axi_awaddr_i[28] plasma_axi4lite_testbench.plasma.gpio.axi_awaddr_i[27] plasma_axi4lite_testbench.plasma.gpio.axi_awaddr_i[26] plasma_axi4lite_testbench.plasma.gpio.axi_awaddr_i[25] plasma_axi4lite_testbench.plasma.gpio.axi_awaddr_i[24] plasma_axi4lite_testbench.plasma.gpio.axi_awaddr_i[23] plasma_axi4lite_testbench.plasma.gpio.axi_awaddr_i[22] plasma_axi4lite_testbench.plasma.gpio.axi_awaddr_i[21] plasma_axi4lite_testbench.plasma.gpio.axi_awaddr_i[20] plasma_axi4lite_testbench.plasma.gpio.axi_awaddr_i[19] plasma_axi4lite_testbench.plasma.gpio.axi_awaddr_i[18] plasma_axi4lite_testbench.plasma.gpio.axi_awaddr_i[17] plasma_axi4lite_testbench.plasma.gpio.axi_awaddr_i[16] plasma_axi4lite_testbench.plasma.gpio.axi_awaddr_i[15] plasma_axi4lite_testbench.plasma.gpio.axi_awaddr_i[14] plasma_axi4lite_testbench.plasma.gpio.axi_awaddr_i[13] plasma_axi4lite_testbench.plasma.gpio.axi_awaddr_i[12] plasma_axi4lite_testbench.plasma.gpio.axi_awaddr_i[11] plasma_axi4lite_testbench.plasma.gpio.axi_awaddr_i[10] plasma_axi4lite_testbench.plasma.gpio.axi_awaddr_i[9] plasma_axi4lite_testbench.plasma.gpio.axi_awaddr_i[8] plasma_axi4lite_testbench.plasma.gpio.axi_awaddr_i[7] plasma_axi4lite_testbench.plasma.gpio.axi_awaddr_i[6] plasma_axi4lite_testbench.plasma.gpio.axi_awaddr_i[5] plasma_axi4lite_testbench.plasma.gpio.axi_awaddr_i[4] plasma_axi4lite_testbench.plasma.gpio.axi_awaddr_i[3] plasma_axi4lite_testbench.plasma.gpio.axi_awaddr_i[2] plasma_axi4lite_testbench.plasma.gpio.axi_awaddr_i[1] plasma_axi4lite_testbench.plasma.gpio.axi_awaddr_i[0]
+@28
+plasma_axi4lite_testbench.plasma.gpio.axi_awready_o
+plasma_axi4lite_testbench.plasma.gpio.axi_awvalid_i
+plasma_axi4lite_testbench.plasma.gpio.axi_bready_i
+#axi_bresp_o[1:0] plasma_axi4lite_testbench.plasma.gpio.axi_bresp_o[1] plasma_axi4lite_testbench.plasma.gpio.axi_bresp_o[0]
+plasma_axi4lite_testbench.plasma.gpio.axi_bvalid_o
+@22
+#axi_rdata_o[31:0] plasma_axi4lite_testbench.plasma.gpio.axi_rdata_o[31] plasma_axi4lite_testbench.plasma.gpio.axi_rdata_o[30] plasma_axi4lite_testbench.plasma.gpio.axi_rdata_o[29] plasma_axi4lite_testbench.plasma.gpio.axi_rdata_o[28] plasma_axi4lite_testbench.plasma.gpio.axi_rdata_o[27] plasma_axi4lite_testbench.plasma.gpio.axi_rdata_o[26] plasma_axi4lite_testbench.plasma.gpio.axi_rdata_o[25] plasma_axi4lite_testbench.plasma.gpio.axi_rdata_o[24] plasma_axi4lite_testbench.plasma.gpio.axi_rdata_o[23] plasma_axi4lite_testbench.plasma.gpio.axi_rdata_o[22] plasma_axi4lite_testbench.plasma.gpio.axi_rdata_o[21] plasma_axi4lite_testbench.plasma.gpio.axi_rdata_o[20] plasma_axi4lite_testbench.plasma.gpio.axi_rdata_o[19] plasma_axi4lite_testbench.plasma.gpio.axi_rdata_o[18] plasma_axi4lite_testbench.plasma.gpio.axi_rdata_o[17] plasma_axi4lite_testbench.plasma.gpio.axi_rdata_o[16] plasma_axi4lite_testbench.plasma.gpio.axi_rdata_o[15] plasma_axi4lite_testbench.plasma.gpio.axi_rdata_o[14] plasma_axi4lite_testbench.plasma.gpio.axi_rdata_o[13] plasma_axi4lite_testbench.plasma.gpio.axi_rdata_o[12] plasma_axi4lite_testbench.plasma.gpio.axi_rdata_o[11] plasma_axi4lite_testbench.plasma.gpio.axi_rdata_o[10] plasma_axi4lite_testbench.plasma.gpio.axi_rdata_o[9] plasma_axi4lite_testbench.plasma.gpio.axi_rdata_o[8] plasma_axi4lite_testbench.plasma.gpio.axi_rdata_o[7] plasma_axi4lite_testbench.plasma.gpio.axi_rdata_o[6] plasma_axi4lite_testbench.plasma.gpio.axi_rdata_o[5] plasma_axi4lite_testbench.plasma.gpio.axi_rdata_o[4] plasma_axi4lite_testbench.plasma.gpio.axi_rdata_o[3] plasma_axi4lite_testbench.plasma.gpio.axi_rdata_o[2] plasma_axi4lite_testbench.plasma.gpio.axi_rdata_o[1] plasma_axi4lite_testbench.plasma.gpio.axi_rdata_o[0]
+@28
+plasma_axi4lite_testbench.plasma.gpio.axi_rready_i
+#axi_rresp_o[1:0] plasma_axi4lite_testbench.plasma.gpio.axi_rresp_o[1] plasma_axi4lite_testbench.plasma.gpio.axi_rresp_o[0]
+plasma_axi4lite_testbench.plasma.gpio.axi_rst_i
+@29
+plasma_axi4lite_testbench.plasma.gpio.axi_rvalid_o
+@22
+#axi_wdata_i[31:0] plasma_axi4lite_testbench.plasma.gpio.axi_wdata_i[31] plasma_axi4lite_testbench.plasma.gpio.axi_wdata_i[30] plasma_axi4lite_testbench.plasma.gpio.axi_wdata_i[29] plasma_axi4lite_testbench.plasma.gpio.axi_wdata_i[28] plasma_axi4lite_testbench.plasma.gpio.axi_wdata_i[27] plasma_axi4lite_testbench.plasma.gpio.axi_wdata_i[26] plasma_axi4lite_testbench.plasma.gpio.axi_wdata_i[25] plasma_axi4lite_testbench.plasma.gpio.axi_wdata_i[24] plasma_axi4lite_testbench.plasma.gpio.axi_wdata_i[23] plasma_axi4lite_testbench.plasma.gpio.axi_wdata_i[22] plasma_axi4lite_testbench.plasma.gpio.axi_wdata_i[21] plasma_axi4lite_testbench.plasma.gpio.axi_wdata_i[20] plasma_axi4lite_testbench.plasma.gpio.axi_wdata_i[19] plasma_axi4lite_testbench.plasma.gpio.axi_wdata_i[18] plasma_axi4lite_testbench.plasma.gpio.axi_wdata_i[17] plasma_axi4lite_testbench.plasma.gpio.axi_wdata_i[16] plasma_axi4lite_testbench.plasma.gpio.axi_wdata_i[15] plasma_axi4lite_testbench.plasma.gpio.axi_wdata_i[14] plasma_axi4lite_testbench.plasma.gpio.axi_wdata_i[13] plasma_axi4lite_testbench.plasma.gpio.axi_wdata_i[12] plasma_axi4lite_testbench.plasma.gpio.axi_wdata_i[11] plasma_axi4lite_testbench.plasma.gpio.axi_wdata_i[10] plasma_axi4lite_testbench.plasma.gpio.axi_wdata_i[9] plasma_axi4lite_testbench.plasma.gpio.axi_wdata_i[8] plasma_axi4lite_testbench.plasma.gpio.axi_wdata_i[7] plasma_axi4lite_testbench.plasma.gpio.axi_wdata_i[6] plasma_axi4lite_testbench.plasma.gpio.axi_wdata_i[5] plasma_axi4lite_testbench.plasma.gpio.axi_wdata_i[4] plasma_axi4lite_testbench.plasma.gpio.axi_wdata_i[3] plasma_axi4lite_testbench.plasma.gpio.axi_wdata_i[2] plasma_axi4lite_testbench.plasma.gpio.axi_wdata_i[1] plasma_axi4lite_testbench.plasma.gpio.axi_wdata_i[0]
+@28
+plasma_axi4lite_testbench.plasma.gpio.axi_wready_o
+@22
+#axi_wstrb_i[3:0] plasma_axi4lite_testbench.plasma.gpio.axi_wstrb_i[3] plasma_axi4lite_testbench.plasma.gpio.axi_wstrb_i[2] plasma_axi4lite_testbench.plasma.gpio.axi_wstrb_i[1] plasma_axi4lite_testbench.plasma.gpio.axi_wstrb_i[0]
+@28
+plasma_axi4lite_testbench.plasma.gpio.axi_wvalid_i
+@200
+-
+@22
+#gpio_i[31:0] plasma_axi4lite_testbench.plasma.gpio.gpio_i[31] plasma_axi4lite_testbench.plasma.gpio.gpio_i[30] plasma_axi4lite_testbench.plasma.gpio.gpio_i[29] plasma_axi4lite_testbench.plasma.gpio.gpio_i[28] plasma_axi4lite_testbench.plasma.gpio.gpio_i[27] plasma_axi4lite_testbench.plasma.gpio.gpio_i[26] plasma_axi4lite_testbench.plasma.gpio.gpio_i[25] plasma_axi4lite_testbench.plasma.gpio.gpio_i[24] plasma_axi4lite_testbench.plasma.gpio.gpio_i[23] plasma_axi4lite_testbench.plasma.gpio.gpio_i[22] plasma_axi4lite_testbench.plasma.gpio.gpio_i[21] plasma_axi4lite_testbench.plasma.gpio.gpio_i[20] plasma_axi4lite_testbench.plasma.gpio.gpio_i[19] plasma_axi4lite_testbench.plasma.gpio.gpio_i[18] plasma_axi4lite_testbench.plasma.gpio.gpio_i[17] plasma_axi4lite_testbench.plasma.gpio.gpio_i[16] plasma_axi4lite_testbench.plasma.gpio.gpio_i[15] plasma_axi4lite_testbench.plasma.gpio.gpio_i[14] plasma_axi4lite_testbench.plasma.gpio.gpio_i[13] plasma_axi4lite_testbench.plasma.gpio.gpio_i[12] plasma_axi4lite_testbench.plasma.gpio.gpio_i[11] plasma_axi4lite_testbench.plasma.gpio.gpio_i[10] plasma_axi4lite_testbench.plasma.gpio.gpio_i[9] plasma_axi4lite_testbench.plasma.gpio.gpio_i[8] plasma_axi4lite_testbench.plasma.gpio.gpio_i[7] plasma_axi4lite_testbench.plasma.gpio.gpio_i[6] plasma_axi4lite_testbench.plasma.gpio.gpio_i[5] plasma_axi4lite_testbench.plasma.gpio.gpio_i[4] plasma_axi4lite_testbench.plasma.gpio.gpio_i[3] plasma_axi4lite_testbench.plasma.gpio.gpio_i[2] plasma_axi4lite_testbench.plasma.gpio.gpio_i[1] plasma_axi4lite_testbench.plasma.gpio.gpio_i[0]
+#gpio_o[31:0] plasma_axi4lite_testbench.plasma.gpio.gpio_o[31] plasma_axi4lite_testbench.plasma.gpio.gpio_o[30] plasma_axi4lite_testbench.plasma.gpio.gpio_o[29] plasma_axi4lite_testbench.plasma.gpio.gpio_o[28] plasma_axi4lite_testbench.plasma.gpio.gpio_o[27] plasma_axi4lite_testbench.plasma.gpio.gpio_o[26] plasma_axi4lite_testbench.plasma.gpio.gpio_o[25] plasma_axi4lite_testbench.plasma.gpio.gpio_o[24] plasma_axi4lite_testbench.plasma.gpio.gpio_o[23] plasma_axi4lite_testbench.plasma.gpio.gpio_o[22] plasma_axi4lite_testbench.plasma.gpio.gpio_o[21] plasma_axi4lite_testbench.plasma.gpio.gpio_o[20] plasma_axi4lite_testbench.plasma.gpio.gpio_o[19] plasma_axi4lite_testbench.plasma.gpio.gpio_o[18] plasma_axi4lite_testbench.plasma.gpio.gpio_o[17] plasma_axi4lite_testbench.plasma.gpio.gpio_o[16] plasma_axi4lite_testbench.plasma.gpio.gpio_o[15] plasma_axi4lite_testbench.plasma.gpio.gpio_o[14] plasma_axi4lite_testbench.plasma.gpio.gpio_o[13] plasma_axi4lite_testbench.plasma.gpio.gpio_o[12] plasma_axi4lite_testbench.plasma.gpio.gpio_o[11] plasma_axi4lite_testbench.plasma.gpio.gpio_o[10] plasma_axi4lite_testbench.plasma.gpio.gpio_o[9] plasma_axi4lite_testbench.plasma.gpio.gpio_o[8] plasma_axi4lite_testbench.plasma.gpio.gpio_o[7] plasma_axi4lite_testbench.plasma.gpio.gpio_o[6] plasma_axi4lite_testbench.plasma.gpio.gpio_o[5] plasma_axi4lite_testbench.plasma.gpio.gpio_o[4] plasma_axi4lite_testbench.plasma.gpio.gpio_o[3] plasma_axi4lite_testbench.plasma.gpio.gpio_o[2] plasma_axi4lite_testbench.plasma.gpio.gpio_o[1] plasma_axi4lite_testbench.plasma.gpio.gpio_o[0]

@@ -1,9 +1,12 @@
 library ieee;
 use ieee.std_logic_1164.all;
+use ieee.std_logic_arith.all;
 use ieee.math_real.log2;
 use ieee.math_real.ceil;
 library std;
 use std.env.all;
+use STD.textio.all;
+use IEEE.STD_LOGIC_TEXTIO.all;
 
 
 
@@ -42,6 +45,8 @@ architecture Behavioral of plasma_axi4lite_testbench is
 
     signal sig_clk_50MHz   : std_logic;
     signal sig_reset   : std_logic;
+    
+    signal tsc : integer := 0;
  
 begin
 
@@ -73,6 +78,7 @@ begin
         wait for 10 ns;
         sig_clk_50MHz <= '0';
         wait for 10 ns;
+        tsc <= tsc + 1;
     end process;
 
     tb : process
@@ -81,11 +87,17 @@ begin
         wait for 60 ns;
         sig_reset <= '1';
 
-        wait for 500 ms;
+        wait for 5 ms;
 
         finish(0);
     end process;
     
-    sig_gpio_i <= sig_gpio_o;
+    sig_gpio_i <= conv_std_logic_vector(tsc, 32);
+    
+    gpio_out_process: process (sig_gpio_o)
+    variable my_line : line; 
+    begin
+        write(my_line, sig_gpio_o);
+    end process;
 
 end Behavioral;

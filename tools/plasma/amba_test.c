@@ -132,6 +132,7 @@ int main()
     unsigned int i = 0;
 
 
+
     test_ex_ram();
     for(i = EXT_RAM_BASE; i < EXT_RAM_TOP; i += 4){
         MemoryWrite(i, i);
@@ -141,6 +142,7 @@ int main()
             error();
     }
     ok();
+
 
     test_gpio();
     while(1){

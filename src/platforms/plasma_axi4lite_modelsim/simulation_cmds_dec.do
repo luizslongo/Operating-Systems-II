@@ -53,7 +53,7 @@ set NumericStdNoWarnings 1
 vsim -L unisim -L axi_uartlite_v1_01_a  work.plasma_axi4lite_testbench
 vcd file trace_dec.vcd
 
-#vcd add -r -file trace_dec.vcd /*
+vcd add -r -file trace_dec.vcd /*
 #vcd add -file trace_dec.vcd /plasma_axi4lite_testbench/*
 
 run -all
