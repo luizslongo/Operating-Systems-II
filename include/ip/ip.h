@@ -46,8 +46,9 @@ public:
         }
         memcpy(this,addr,sizeof(this));
     }
-    
-    friend Debug& operator<<(Debug& db,const IP_Address& addr) {
+   
+    template<typename T>
+    friend T& operator<<(T& db,const IP_Address& addr) {
         const u8 * _addr = reinterpret_cast<const u8*>(&addr);
         db << dec << (int)(_addr[0]) << "." << (int)(_addr[1]) 
            << "." << (int)(_addr[2]) << "." << (int)(_addr[3]);

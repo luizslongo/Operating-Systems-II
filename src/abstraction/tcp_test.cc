@@ -1,5 +1,6 @@
 #include <ip/tcp.h>
 #include <utility/string.h>
+#include <mutex.h>
 
 __USING_SYS
 
@@ -40,6 +41,50 @@ public:
     }
 }; 
 
+class WebClient : public TCP::ClientSocket {
+public:
+    WebClient(TCP * tcp) : 
+        TCP::ClientSocket(tcp,
+                TCP::Address("74.125.234.84:80"),
+                TCP::Address(tcp->ip()->address(),55000 + Pseudo_Random::random() % 10000)) 
+    {
+        m.lock();
+    }
+
+    void connected() {
+        cout << "Connected to " << remote() << endl;
+        send("GET / HTTP/1.1\n\rHost: www.google.com\n\r\n\r",40);
+        close();
+    }
+
+    void closing() {
+        close();
+    }
+
+    void closed() {
+        cout << "Disconnected from " << remote() << endl;
+        m.unlock();    
+    }
+
+    void error(short err) {
+        cout << "Connection error" << endl;
+        m.unlock();
+    }
+
+    void sent(u16 size) {} 
+
+    void received(const char *data,u16 size) {
+        cout << "Received "<<size<<" bytes: " << endl;
+        int p;
+        for(p=0;p<size;p++)
+            cout << *data++;
+    }
+
+    void wait() { m.lock(); }
+protected:
+    Mutex m;
+};
+
 int main()
 {
     IP ip(0);
@@ -49,7 +94,10 @@ int main()
     ip.set_gateway(IP::Address(10,0,2,2));
     ip.set_netmask(IP::Address(255,255,255,0));
 
-    HTTPServer httpd(&tcp);
+    //HTTPServer httpd(&tcp);
+    //Thread::self()->suspend();
 
-    Thread::self()->suspend();
+    WebClient web(&tcp);
+
+    web.wait();
 }

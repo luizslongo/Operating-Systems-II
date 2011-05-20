@@ -400,6 +400,12 @@ void TCP::Socket::__FIN_WAIT1(const Header& r ,const char* data,u16 len)
     if (!check_seq(r,len))
         return;
 
+    if (!r._fin && len) {
+        __RCVING(r,data,len);
+        if (r._ack)
+            state(FIN_WAIT2);
+        return;
+    }
     if (r._ack && !r._fin) { // TODO: check snd_una
         rcv_nxt = r.seq_num() + len;
         state(FIN_WAIT2);
@@ -421,7 +427,9 @@ void TCP::Socket::__FIN_WAIT2(const Header& r ,const char* data,u16 len)
     db<TCP>(TRC) << __PRETTY_FUNCTION__ << endl;
     if (!check_seq(r,len))
         return;
-    
+    if (len) {
+        __RCVING(r,data,len);
+    }
     if (r._fin) {
         state(CLOSED); // no TIME_WAIT
         send_ack();
