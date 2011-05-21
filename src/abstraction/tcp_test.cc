@@ -1,4 +1,4 @@
-#include <ip/tcp.h>
+#include <tcp.h>
 #include <utility/string.h>
 #include <mutex.h>
 

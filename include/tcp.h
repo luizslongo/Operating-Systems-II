@@ -1,8 +1,8 @@
 #ifndef __tcp_h
 #define __tcp_h
 #include <alarm.h>
-#include <ip/ip.h>
-#include <ip/udp.h> // TCP::Address == UDP_Address
+#include <ip.h>
+#include <udp.h> // TCP::Address == UDP_Address
 #include <utility/handler.h>
 #include <utility/random.h>
 

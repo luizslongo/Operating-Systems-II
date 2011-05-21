@@ -1,4 +1,4 @@
-#include <ip/icmp.h>
+#include <icmp.h>
 
 __BEGIN_SYS
 

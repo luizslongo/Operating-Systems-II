@@ -1,5 +1,5 @@
 #include <sip_body.h>
-#include <ip/ip.h>
+#include <ip.h>
 
 __BEGIN_SYS
 

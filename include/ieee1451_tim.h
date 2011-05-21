@@ -3,8 +3,8 @@
 
 #include <ieee1451_objects.h>
 #include <thread.h>
-#include <ip/ip.h>
-#include <ip/tcp.h>
+#include <ip.h>
+#include <tcp.h>
 
 __BEGIN_SYS
 

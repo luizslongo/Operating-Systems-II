@@ -1,4 +1,4 @@
-#include <ip/tcp.h>
+#include <tcp.h>
 
 __BEGIN_SYS
 

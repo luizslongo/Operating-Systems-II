@@ -1,4 +1,4 @@
-#include <ip/dhcp.h>
+#include <dhcp.h>
 #include <alarm.h>
 
 

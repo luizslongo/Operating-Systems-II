@@ -4,8 +4,8 @@
 #include <sip_defs.h>
 #include <sip_message.h>
 #include <mutex.h>
-#include <ip/ip.h>
-#include <ip/udp.h>
+#include <ip.h>
+#include <udp.h>
 #include <utility/list.h>
 
 __BEGIN_SYS

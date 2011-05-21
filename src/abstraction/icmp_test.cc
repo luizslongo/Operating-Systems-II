@@ -1,4 +1,4 @@
-#include <ip/icmp.h>
+#include <icmp.h>
 #include <alarm.h>
 
 __USING_SYS

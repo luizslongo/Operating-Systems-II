@@ -1,4 +1,4 @@
-#include <ip/ip.h>
+#include <ip.h>
 
 __BEGIN_SYS
 
