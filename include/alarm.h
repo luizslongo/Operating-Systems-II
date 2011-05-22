@@ -30,7 +30,6 @@ public:
     // Infinite times (for alarms)
     enum { INFINITE = -1 };
 
-public:
     Alarm(const Microsecond & time, Handler * handler, int times = 1);
     ~Alarm();
 
@@ -42,23 +41,23 @@ public:
 
 private:
     static Microsecond period() {
-	return 1000000 / resolution();
+        return 1000000 / resolution();
     }
 
     static Tick ticks(const Microsecond & time) {
-	return (time + period() / 2) / period();
+        return (time + period() / 2) / period();
     }
 
     static void lock() {
-	CPU::int_disable();
-	if(smp)
-	    _lock.acquire();
+        CPU::int_disable();
+        if(smp)
+            _lock.acquire();
     }
 
     static void unlock() {
-	if(smp)
-	    _lock.release();
-	CPU::int_enable();
+        if(smp)
+            _lock.release();
+        CPU::int_enable();
     }
 
     static void handler();
@@ -100,17 +99,17 @@ public:
 
 public:
     Private_Alarm(const Microsecond & time, 
-		  Handler * handler, 
-		  bool retrigger = true): 
-	Timer(1000000 / time, handler, retrigger)
+                  Handler * handler, 
+                  bool retrigger = true) 
+    : Timer(1000000 / time, handler, retrigger)
     {
-	db<Alarm>(TRC) << "Alarm(t=" << time
-		       << ",h=" << (void *)handler
-		       << ",r=" << retrigger << ") => " << this << "\n";
+        db<Alarm>(TRC) << "Alarm(t=" << time
+                       << ",h=" << (void *)handler
+                       << ",r=" << retrigger << ") => " << this << "\n";
     }
 
     ~Private_Alarm() {
-	db<Alarm>(TRC) << "~Alarm()\n";
+        db<Alarm>(TRC) << "~Alarm()\n";
     }
 
     static Hertz resolution() { return Timer::FREQUENCY; }

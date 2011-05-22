@@ -26,12 +26,13 @@ public:
     void stop() { lap(); }
 
     Time_Stamp ticks() {
-	if(_start == 0)
-	    return 0;
-	if(_stop == 0)
-	    return tsc.time_stamp() - _start;
-	return _stop - _start;
+        if(_start == 0)
+            return 0;
+        if(_stop == 0)
+            return tsc.time_stamp() - _start;
+        return _stop - _start;
     }
+
     Microsecond read() { return ticks() * 1000000 / frequency(); }
 
 private:
