@@ -21,48 +21,52 @@ public:
 
 public:
     Address_Space() {
-	db<Address_Space>(TRC) << "Address_Space() [Directory::pd=" 
-			       << Directory::pd() << "]\n";
+        db<Address_Space>(TRC) << "Address_Space() [Directory::pd=" 
+                               << Directory::pd() << "]\n";
     }
+
     Address_Space(const Self & s)
-	: Directory(reinterpret_cast<MMU::Page_Table *>(CPU::pdp())) {
- 	db<Address_Space>(TRC) << "Address_Space(SELF,pd=" << CPU::pdp() 
-			       << ")\n";
+    : Directory(reinterpret_cast<MMU::Page_Table *>(CPU::pdp())) {
+        db<Address_Space>(TRC) << "Address_Space(SELF,pd=" << CPU::pdp() 
+                               << ")\n";
     }
+
     ~Address_Space() {
-	db<Address_Space>(TRC) << "~Address_Space() [Directory::pd=" 
-			       << Directory::pd() << "]\n";
+        db<Address_Space>(TRC) << "~Address_Space() [Directory::pd=" 
+                               << Directory::pd() << "]\n";
     }
 
-   Log_Addr attach(const Segment & seg) {
-	db<Address_Space>(TRC) << "Address_Space::attach(seg=" << &seg
-			       << ")\n";
+    Log_Addr attach(const Segment & seg) {
+        db<Address_Space>(TRC) << "Address_Space::attach(seg=" << &seg
+                               << ")\n";
 
-	return Directory::attach(seg);
+        return Directory::attach(seg);
     }
+
     Log_Addr attach(const Segment & seg, Log_Addr addr) {
-	db<Address_Space>(TRC) << "Address_Space::attach(seg=" << &seg
-			       << ",addr=" << addr << ")\n";
+        db<Address_Space>(TRC) << "Address_Space::attach(seg=" << &seg
+                               << ",addr=" << addr << ")\n";
 
-	return Directory::attach(seg, addr);
+        return Directory::attach(seg, addr);
     }
-    void detach(const Segment & seg) {
-	db<Address_Space>(TRC) << "Address_Space::detach(seg=" << &seg 
-			       << ")\n";
 
-	Directory::detach(seg);
+    void detach(const Segment & seg) {
+        db<Address_Space>(TRC) << "Address_Space::detach(seg=" << &seg 
+                               << ")\n";
+
+        Directory::detach(seg);
     }
 
     void activate() {
-	db<Address_Space>(TRC) 
-	    << "Address_Space::activate() [Directory::pd=" 
-	    << Directory::pd() << "]\n";
+        db<Address_Space>(TRC) 
+            << "Address_Space::activate() [Directory::pd=" 
+            << Directory::pd() << "]\n";
 
-	Directory::activate();
+        Directory::activate();
     }
 
     Phy_Addr physical(Log_Addr address) { 
-	return Directory::physical(address);
+        return Directory::physical(address);
     }
 };
 

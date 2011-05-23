@@ -28,7 +28,7 @@
   ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
   POSSIBILITY OF SUCH DAMAGE. */
 
-/* $Id: iocan128.h,v 1.1 2010/02/25 19:09:45 rodrigo Exp $ */
+/* $Id: iocan128.h,v 1.2 2011/05/23 14:43:59 guto Exp $ */
 
 /* iocan128.h - definitions for CAN128 */
 

@@ -20,43 +20,44 @@ public:
 
     class Log_Addr {
     public:
-	Log_Addr() {}
-	Log_Addr(const Log_Addr & a) : _addr(a._addr) {}
-	Log_Addr(unsigned int a) : _addr(a) {}
- 	template <typename T>
-	Log_Addr(T * a) : _addr(reinterpret_cast<unsigned int>(a)) {}
+        Log_Addr() {}
+        Log_Addr(const Log_Addr & a) : _addr(a._addr) {}
+        Log_Addr(unsigned int a) : _addr(a) {}
+        template <typename T>
+        Log_Addr(T * a) : _addr(reinterpret_cast<unsigned int>(a)) {}
 
- 	operator unsigned int() const { return _addr; }
- 	template <typename T>
-	operator T *() const { return reinterpret_cast<T *>(_addr); }
+        operator unsigned int() const { return _addr; }
 
- 	template <typename T>
-	bool operator==(T a) const { return (_addr == (unsigned int)a); }
- 	template <typename T>
-	bool operator< (T a) const { return (_addr < (unsigned int)a); }
- 	template <typename T>
-	bool operator> (T a) const { return (_addr > (unsigned int)a); }
- 	template <typename T>
-	bool operator>=(T a) const { return (_addr >= (unsigned int)a); }
- 	template <typename T>
-	bool operator<=(T a) const { return (_addr <= (unsigned int)a); }
+        template <typename T>
+        operator T *() const { return reinterpret_cast<T *>(_addr); }
 
- 	template <typename T>
-	Log_Addr operator-(T a) const { return _addr - (unsigned int)a; }
- 	template <typename T>
-	Log_Addr operator+(T a) const { return _addr + (unsigned int)a; }
- 	template <typename T>
- 	Log_Addr & operator+=(T a) { _addr += a; return *this; }
- 	template <typename T>
- 	Log_Addr & operator-=(T a) { _addr -= a; return *this; }
- 	template <typename T>
-	Log_Addr & operator&=(T a) { _addr &= a; return *this; }
+        template <typename T>
+        bool operator==(T a) const { return (_addr == (unsigned int)a); }
+        template <typename T>
+        bool operator< (T a) const { return (_addr < (unsigned int)a); }
+        template <typename T>
+        bool operator> (T a) const { return (_addr > (unsigned int)a); }
+        template <typename T>
+        bool operator>=(T a) const { return (_addr >= (unsigned int)a); }
+        template <typename T>
+        bool operator<=(T a) const { return (_addr <= (unsigned int)a); }
 
-	friend Debug & operator << (Debug & db, Log_Addr a)
-	    { db << (void *)a._addr; return db; }
+        template <typename T>
+        Log_Addr operator-(T a) const { return _addr - (unsigned int)a; }
+        template <typename T>
+        Log_Addr operator+(T a) const { return _addr + (unsigned int)a; }
+        template <typename T>
+        Log_Addr & operator+=(T a) { _addr += a; return *this; }
+        template <typename T>
+        Log_Addr & operator-=(T a) { _addr -= a; return *this; }
+        template <typename T>
+        Log_Addr & operator&=(T a) { _addr &= a; return *this; }
+
+        friend Debug & operator << (Debug & db, Log_Addr a)
+        { db << (void *)a._addr; return db; }
 
     private:
-	unsigned int _addr;
+        unsigned int _addr;
     };
     typedef Log_Addr Phy_Addr;
 
@@ -68,29 +69,29 @@ public:
     static void halt() { for(;;); }
 
     static bool tsl(volatile bool & lock) {
-	bool old = lock;
-	lock = 1;
-	return old;
+        bool old = lock;
+        lock = 1;
+        return old;
     }
 
     static int finc(volatile int & value) {
-	int old = value;
-	value++;
-	return old;
+        int old = value;
+        value++;
+        return old;
     }
 
     static int fdec(volatile int & value) {
-	int old = value;
-	value--;
-	return old;
+        int old = value;
+        value--;
+        return old;
     }
 
     static int cas(volatile int & value, int compare, int replacement) {
-	int old = value;
-	if(value == compare) {
-	    value = replacement;
-	}
-	return old;
+        int old = value;
+        if(value == compare) {
+            value = replacement;
+        }
+        return old;
     }
 
 protected:
@@ -99,10 +100,10 @@ protected:
                 ((v >>  8) & 0x0000ff00) | ((v >> 24) & 0x000000ff));
     }
 
-    static Reg16 swap16(Reg16 v)     {
+    static Reg16 swap16(Reg16 v) {
         return ((v << 8) & 0xFF00) | ((v >> 8) & 0x00FF);
     }
-    
+
 };
 
 __END_SYS

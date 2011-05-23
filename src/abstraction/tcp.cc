@@ -251,6 +251,7 @@ void TCP::Socket::__LISTEN(const Header& r ,const char* data,u16 len)
             Machine::panic();
         }
         if (ss && (n = ss->incoming(_remote))) {
+            n->_remote = _remote;
             n->rcv_nxt = r.seq_num()+1;
             n->rcv_ini = r.seq_num();
             n->snd_wnd = r.wnd();

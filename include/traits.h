@@ -71,8 +71,8 @@ template <> struct Traits<Serial_Display>: public Traits<void>
 // Abstractions
 template <> struct Traits<Thread>: public Traits<void>
 {
-    typedef Scheduling_Criteria::Priority Criterion;
-    static const bool smp = false;
+    typedef Scheduling_Criteria::CPU_Affinity Criterion;
+    static const bool smp = true;
     static const bool trace_idle = false;
     static const unsigned int QUANTUM = 10000; // us
 };

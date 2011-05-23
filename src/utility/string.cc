@@ -14,6 +14,7 @@ extern "C"
     int strncmp(const char * s1, const char * s2, size_t n) __attribute__ ((weak));
     char * strcpy(char *d, const char *s) __attribute__ ((weak));
     char * strncpy(char *d, const char *s, size_t n) __attribute__ ((weak));
+    char * strcat(char *d, const char *s) __attribute__ ((weak));
     char * strchr(const char * s, int c) __attribute__ ((weak));
     char * strrchr (const char * s, int c) __attribute__ ((weak));
     size_t strlen(const char * s) __attribute__ ((weak));
@@ -305,6 +306,12 @@ extern "C"
 
 	return dst0;
 
+    }
+
+    char * strcat(char *dst0, const char *src0)
+    {
+    	size_t dst_len = strlen(dst0);
+        return strcpy(&dst0[dst_len], src0);
     }
 
     char * strchr(const char * s1, int i)

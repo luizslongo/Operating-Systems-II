@@ -104,7 +104,7 @@ $(MACH_ML310)_APP_CODE_ADDR          := 0x00000000
 $(MACH_ML310)_APP_DATA_ADDR          := 0x00200000
 $(MACH_ML310)_BOOT_LENGTH_MIN        := 2048
 $(MACH_ML310)_BOOT_LENGTH_MAX        := 2048
-$(MACH_PLASMA)_MEM_BASE              := 0x10000000
+$(MACH_PLASMA)_MEM_BASE              := 0x10000010
 $(MACH_PLASMA)_MEM_TOP               := 0x10100000
 $(MACH_PLASMA)_BOOT_ADDR             := 0x00000000
 $(MACH_PLASMA)_SETUP_ADDR            := 0x00000000
@@ -112,7 +112,7 @@ $(MACH_PLASMA)_INIT_ADDR             := 0x00000000
 $(MACH_PLASMA)_SYS_DATA_ADDR         := 0x100A2000
 $(MACH_PLASMA)_SYS_CODE_ADDR         := 0x100A0000
 $(MACH_PLASMA)_APP_DATA_ADDR         := 0x10080000
-$(MACH_PLASMA)_APP_CODE_ADDR         := 0x10000000
+$(MACH_PLASMA)_APP_CODE_ADDR         := 0x10000010
 $(MACH_PLASMA)_BOOT_LENGTH_MIN       := 128
 $(MACH_PLASMA)_BOOT_LENGTH_MAX       := 512
 BOOT_ADDR       = $($(MACH)_BOOT_ADDR)
@@ -133,6 +133,7 @@ $(MACH_PC)_AS_FLAGS   := --32
 $(MACH_PC)_LD_FLAGS   := 
 $(MACH_PC)_CODE_NAME  := .init
 $(MACH_PC)_DATA_NAME  := .ctors
+$(MACH_PC)_EMULATOR   := qemu -smp 8 -nographic -no-reboot -net nic,model=pcnet -net user -fda
 $(MACH_ATMEGA16)_CC_FLAGS    := -mmcu=atmega16 -Wno-inline
 $(MACH_ATMEGA16)_AS_FLAGS    := -mmcu=atmega16
 $(MACH_ATMEGA16)_LD_FLAGS    := -m avr5 
@@ -288,8 +289,7 @@ TOUCH    = touch
 
 TEE      = tee
 
-#QEMU = qemu -nographic -smp 8 -no-reboot -net none -fda
-QEMU     = qemu -nographic -no-reboot -net nic,model=pcnet -net user -fda
+EMULATOR = $($(MACH)_EMULATOR) 
 
 # Rules
 lib%.o: lib%.cc
@@ -309,7 +309,7 @@ lib%.o: lib%.cc
 		$(MKBI) $@ $<
 
 %.out: %.img
-		$(QEMU) $< | $(TEE) $@
+		$(EMULATOR) $< | $(TEE) $@
 
 %.o: %.cc
 		$(CXX) $(CXXFLAGS) $<

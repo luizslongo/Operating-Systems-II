@@ -24,7 +24,7 @@ protected:
 
     static const unsigned int QUANTUM = Traits<Thread>::QUANTUM;
     static const unsigned int STACK_SIZE =
-	Traits<Machine>::APPLICATION_STACK_SIZE;
+        Traits<Machine>::APPLICATION_STACK_SIZE;
 
     typedef CPU::Log_Addr Log_Addr;
     typedef CPU::Context Context;
@@ -32,12 +32,12 @@ protected:
 public:
     // Thread State
     enum State {
-	BEGINNING,
-	READY,
-	RUNNING,
-	SUSPENDED,
-	WAITING,
-	FINISHING
+        BEGINNING,
+        READY,
+        RUNNING,
+        SUSPENDED,
+        WAITING,
+        FINISHING
     };
 
     // Thread Priority
@@ -46,77 +46,76 @@ public:
     // Thread Scheduling Criterion
     typedef Traits<Thread>::Criterion Criterion;
     enum {
-	NORMAL = Criterion::NORMAL,
-	MAIN = Criterion::MAIN,
-	IDLE = Criterion::IDLE
+        NORMAL = Criterion::NORMAL,
+        MAIN = Criterion::MAIN,
+        IDLE = Criterion::IDLE
     };
 
     // Thread Queue
     typedef Ordered_Queue<Thread, Criterion, false,
-			  Scheduler<Thread>::Element> Queue;
+                          Scheduler<Thread>::Element> Queue;
 
 public:
     Thread(int (* entry)(), 
-	   const State & state = READY,
-	   const Criterion & criterion = NORMAL,
-	   unsigned int stack_size = STACK_SIZE)
-	: _state(state), _waiting(0), _joining(0), _link(this, criterion)
-
+           const State & state = READY,
+           const Criterion & criterion = NORMAL,
+           unsigned int stack_size = STACK_SIZE)
+    : _state(state), _waiting(0), _joining(0), _link(this, criterion)
     {
-	lock();
-	
-	_stack = kmalloc(stack_size);
-	_context = CPU::init_stack(_stack, stack_size, &implicit_exit, entry);
+        lock();
 
-	common_constructor(entry, stack_size);
+        _stack = kmalloc(stack_size);
+        _context = CPU::init_stack(_stack, stack_size, &implicit_exit, entry);
+
+        common_constructor(entry, stack_size);
     }
 
     template<typename T1>
     Thread(int (* entry)(T1 a1), T1 a1,
-	   const State & state = READY,
-	   const Criterion & criterion = NORMAL,
-	   unsigned int stack_size = STACK_SIZE)
-	: _state(state), _waiting(0), _joining(0), _link(this, criterion)
+           const State & state = READY,
+           const Criterion & criterion = NORMAL,
+           unsigned int stack_size = STACK_SIZE)
+    : _state(state), _waiting(0), _joining(0), _link(this, criterion)
     {
-	lock();
+        lock();
 
-	_stack = kmalloc(stack_size);
-	_context = CPU::init_stack(_stack, stack_size, &implicit_exit, entry, 
-				   a1);
+        _stack = kmalloc(stack_size);
+        _context = CPU::init_stack(_stack, stack_size, &implicit_exit, entry, 
+                                   a1);
 
-	common_constructor(entry, stack_size);
+        common_constructor(entry, stack_size);
     }
 
     template<typename T1, typename T2>
     Thread(int (* entry)(T1 a1, T2 a2), T1 a1, T2 a2,
-	   const State & state = READY,
-	   const Criterion & criterion = NORMAL,
-	   unsigned int stack_size = STACK_SIZE)
-	: _state(state), _waiting(0), _joining(0), _link(this, criterion)
+           const State & state = READY,
+           const Criterion & criterion = NORMAL,
+           unsigned int stack_size = STACK_SIZE)
+    : _state(state), _waiting(0), _joining(0), _link(this, criterion)
     {
-	lock();
+        lock();
 
-	_stack = kmalloc(stack_size);
-	_context = CPU::init_stack(_stack, stack_size, &implicit_exit, entry,
-				   a1, a2);
+        _stack = kmalloc(stack_size);
+        _context = CPU::init_stack(_stack, stack_size, &implicit_exit, entry,
+                                   a1, a2);
 
-	common_constructor(entry, stack_size);
+        common_constructor(entry, stack_size);
     }
 
     template<typename T1, typename T2, typename T3>
     Thread(int (* entry)(T1 a1, T2 a2, T3 a3), T1 a1, T2 a2, T3 a3,
-	   const State & state = READY,
-	   const Criterion & criterion = NORMAL,
-	   unsigned int stack_size = STACK_SIZE)
-	: _state(state), _waiting(0), _joining(0), _link(this, criterion)
+           const State & state = READY,
+           const Criterion & criterion = NORMAL,
+           unsigned int stack_size = STACK_SIZE)
+    : _state(state), _waiting(0), _joining(0), _link(this, criterion)
     {
-	lock();
+        lock();
 
-	_stack = kmalloc(stack_size);
-	_context = CPU::init_stack(_stack, stack_size, &implicit_exit, entry, 
-				   a1, a2, a3);
+        _stack = kmalloc(stack_size);
+        _context = CPU::init_stack(_stack, stack_size, &implicit_exit, entry, 
+                                   a1, a2, a3);
 
-	common_constructor(entry, stack_size);
+        common_constructor(entry, stack_size);
     }
 
     ~Thread();
@@ -146,15 +145,15 @@ protected:
     Queue::Element * link() { return &_link; }
 
     static void lock() {
-	CPU::int_disable();
-	if(smp)
-	    _lock.acquire();
+        CPU::int_disable();
+        if(smp)
+            _lock.acquire();
     }
 
     static void unlock() {
-	if(smp)
-	    _lock.release();
-	CPU::int_enable();
+        if(smp)
+            _lock.release();
+        CPU::int_enable();
     }
 
     void suspend(bool locked);
@@ -176,22 +175,22 @@ protected:
 //  		account_energy();
 //	}
 
-	if(prev != next) {
-	    if(prev->_state == RUNNING)
-		prev->_state = READY;
-	    next->_state = RUNNING;
+        if(prev != next) {
+            if(prev->_state == RUNNING)
+                prev->_state = READY;
+            next->_state = RUNNING;
 
-	    db<Thread>(TRC) << "Thread::dispatch(prev=" << prev
-			    << ",next=" << next << ")\n";
+            db<Thread>(TRC) << "Thread::dispatch(prev=" << prev
+                            << ",next=" << next << ")\n";
 
-	    if(smp)
-		_lock.release();
-	    CPU::switch_context(&prev->_context, next->_context);
-	} else
-	    if(smp)
-		_lock.release();
+            if(smp)
+                _lock.release();
+            CPU::switch_context(&prev->_context, next->_context);
+        } else
+            if(smp)
+                _lock.release();
 
-	CPU::int_enable();
+        CPU::int_enable();
     }
 
     static int idle();
@@ -218,7 +217,7 @@ public:
     ~Thread_Handler() {}
 
     void operator()() { _handler->resume(); }
-	
+
 private:
     Thread * _handler;
 };

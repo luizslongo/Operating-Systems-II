@@ -66,6 +66,7 @@ public:
   }
 
   int send( unsigned char *buffer, int size ) {
+     usleep(10000);
     return write( serial, buffer, size );
   }
 

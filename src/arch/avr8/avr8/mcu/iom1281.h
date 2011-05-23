@@ -28,7 +28,7 @@
   ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
   POSSIBILITY OF SUCH DAMAGE. */
 
-/* $Id: iom1281.h,v 1.2 2010/11/10 12:58:09 arliones Exp $ */
+/* $Id: iom1281.h,v 1.3 2011/05/23 14:43:59 guto Exp $ */
 
 /* avr/iom1281.h - definitions for ATmega1281 */
 

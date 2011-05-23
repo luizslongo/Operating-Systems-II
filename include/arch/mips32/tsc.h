@@ -19,8 +19,8 @@ public:
     static Hertz frequency() { return CLOCK; }
 
     static Time_Stamp time_stamp() {
-	//Unimplemented ... Plasma doesn't have an TSC implemented (MIPS have?)
-        return 0;
+	volatile unsigned int * counter = reinterpret_cast<unsigned int *>(Traits<PLASMA_Timer>::BASE_ADDRESS);
+        return *counter;
     }
 };
 

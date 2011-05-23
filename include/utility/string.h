@@ -12,10 +12,13 @@ extern "C" {
     int strncmp(const char * s1, const char * s2, size_t n);
     char * strcpy(char * d, const char * s);
     char * strncpy(char * d, const char * s, size_t n);
+    char * strcat(char * d, const char * s);
     char * strchr(const char * s, int c);
     char * strrchr(const char * s, int c);
     size_t strlen(const char * s);
     long atol(const char *s);
+    char *itoa(int v, char *s);
+    int utoa(unsigned long v,char * d);
 }
 
 #endif

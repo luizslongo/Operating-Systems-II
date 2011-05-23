@@ -73,12 +73,17 @@ private:
 
 
 // Hash Table with a Synonym List for each Key
-template <typename T, unsigned int SIZE, typename Key = int>
+template <typename T,
+         unsigned int SIZE,
+         typename Key = int,
+         typename El = List_Elements::Singly_Linked_Ordered<T, Key>,
+         typename L = Simple_Ordered_List<T, Key, El> >
 class Hash
 {
 public:
     typedef T Object_Type;
-    typedef typename List_Elements::Singly_Linked_Ordered<T, Key> Element;
+    typedef El Element;
+    typedef L List;
 
 public:
     Hash() {}
@@ -126,13 +131,17 @@ public:
 	return _table[key % SIZE].search_rank(key);
     }
     
-    
     Element * remove_key(int key) {
 	return _table[key % SIZE].remove_rank(key);
     }
 
+protected:
+    List * operator[](const Key & key) {
+        return &_table[key % SIZE];
+    }
+
 private:
-    Simple_Ordered_List<T, Key, Element> _table[SIZE];
+    List _table[SIZE];
 };
 
 __END_SYS
