@@ -290,7 +290,7 @@ ACC  = $(BIN)/eposcc $(MACH_CC_FLAGS) -c -ansi -O2
 ACXX = $(BIN)/eposcc $(MACH_CC_FLAGS) -c -ansi -O2
 AF77 = $(BIN)/eposcc $(MACH_CC_FLAGS) -c -ansi -O2
 ALD  = $(BIN)/eposcc --$(MODE) $(MACH_LD_FLAGS)
-ALDFLAGS = 
+ALDFLAGS = --gc-sections
 
 # Tools and flags to compile the system
 AR      = $(COMP_PREFIX)ar
@@ -307,7 +307,7 @@ CPP      = $(COMP_PREFIX)gcc -E
 CPPFLAGS = $(MACH_CC_FLAGS) -I$(INCLUDE)
 
 CXX      = $(COMP_PREFIX)g++ -c --no-exceptions --no-rtti --no-use-cxa-atexit 
-CXXFLAGS = $(MACH_CC_FLAGS) -O2 -nostdinc -Wall -I$(INCLUDE)
+CXXFLAGS = $(MACH_CC_FLAGS) -O2 -nostdinc -Wall -ffunction-sections -I$(INCLUDE)
 
 LD       = $(COMP_PREFIX)ld
 LDFLAGS  = $(MACH_LD_FLAGS) -L$(LIB) -Bstatic
