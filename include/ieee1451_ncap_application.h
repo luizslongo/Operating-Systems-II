@@ -7,113 +7,114 @@
 #include <ieee1451_objects.h>
 #include <utility/list.h>
 #ifdef USE_SIP
-#include <sip_defs.h>
-#include <sip_manager.h>
-#include <sip_user_agent.h>
+    #include <sip_defs.h>
+    #include <sip_manager.h>
+    #include <sip_user_agent.h>
 #endif
 
 __BEGIN_SYS
 
+class IEEE1451_TEDS_Retriever;
 
-class TEDSRetriever;
-
-class NCAPApplication
+class IEEE1451_NCAP_Application
 {
 private:
-    friend class TEDSRetriever;
+    friend class IEEE1451_TEDS_Retriever;
 
-    struct TIMCache
+    struct TIM_Cache
     {
-        IEEE1451TIMChannel *tim;
-        Simple_List<TIMCache>::Element link;
+        IEEE1451_TIM_Channel *_tim;
+        Simple_List<TIM_Cache>::Element _link;
 
 #ifdef USE_SIP
-        UserAgent *ua;
+        UserAgent *_ua;
 
-        TIMCache(IEEE1451TIMChannel *tim, UserAgent *ua) : tim(tim), ua(ua), link(this) {};
-        ~TIMCache() { delete tim; delete ua; };
+        TIM_Cache(IEEE1451_TIM_Channel *tim, UserAgent *ua) : _tim(tim), _ua(ua), _link(this) {};
+        ~TIM_Cache() { delete _tim; delete _ua; }
 #else
-        TIMCache(IEEE1451TIMChannel *tim) : tim(tim), link(this) {};
-        ~TIMCache() { delete tim; };
+        TIM_Cache(IEEE1451_TIM_Channel *tim) : _tim(tim), _link(this) {};
+        ~TIM_Cache() { delete _tim; }
 #endif
     };
 
-    Simple_List<TIMCache> cache;
-    Simple_List<TEDSRetriever> retrievers;
-
-    static NCAPApplication *app;
-    NCAPApplication();
+    IEEE1451_NCAP_Application();
 
 public:
-    ~NCAPApplication();
+    ~IEEE1451_NCAP_Application();
 
-    static NCAPApplication *getInstance();
+    static IEEE1451_NCAP_Application *get_instance();
 
-    TIMCache *getTIMCache(const IP::Address &address);
+    TIM_Cache *get_tim_cache(const IP::Address &address);
 #ifdef USE_SIP
-    TIMCache *getTIMCache(const char *uri);
+    TIM_Cache *get_tim_cache(const char *uri);
 #endif
-    TEDSRetriever *getRetriever(unsigned short transId);
+    IEEE1451_TEDS_Retriever *get_retriever(unsigned short trans_id);
 
-    void updateTIM(const IP::Address &address);
-    void updateTIMCompleted(TEDSRetriever *retriever, IEEE1451TIMChannel *tim, IP::Address address);
+    void update_tim(const IP::Address &address);
+    void update_tim_completed(IEEE1451_TEDS_Retriever *retriever, IEEE1451_TIM_Channel *tim, IP::Address address);
 
-    void reportTimConnected(const IP::Address &address);
-    void reportTimDisconnected(const IP::Address &address);
-    void reportError(unsigned short transId, int errorCode);
-    void reportCommandReply(const IP::Address &address, unsigned short transId, const char *message, unsigned int length);
-    void reportTimInitiatedMessage(const IP::Address &address, const char *message, unsigned int length);
+    void report_tim_connected(const IP::Address &address);
+    void report_tim_disconnected(const IP::Address &address);
+    //void report_error(unsigned short trans_id, int error_code);
+    void report_command_reply(const IP::Address &address, unsigned short trans_id, const char *message, unsigned int length);
+    void report_tim_initiated_message(const IP::Address &address, const char *message, unsigned int length);
 
-    void readTemperature(const IP::Address &address, const char *buffer);
+    void read_temperature(const IP::Address &address, const char *buffer);
 
-    unsigned short sendOperate(const IP::Address &address, unsigned short channelNumber);
-    unsigned short sendIdle(const IP::Address &address, unsigned short channelNumber);
-    unsigned short sendReadTEDS(const IP::Address &address, unsigned short channelNumber, char tedsId);
-    unsigned short sendReadDataSet(const IP::Address &address, unsigned short channelNumber);
+    unsigned short send_operate(const IP::Address &address, unsigned short channel_number);
+    unsigned short send_idle(const IP::Address &address, unsigned short channel_number);
+    unsigned short send_read_teds(const IP::Address &address, unsigned short channel_number, char tedsId);
+    unsigned short send_read_data_set(const IP::Address &address, unsigned short channel_number);
 
 #ifdef USE_SIP
-    void sendSipMessage(UserAgent *ua, const char *data);
-    void sendSipNotify(UserAgent *ua, SipSubscriptionState state, SipPidfXmlBasicElement pidfXml);
-    static int messageCallback(SipEventCallback event, UserAgent *ua, const char *remote);
+    void send_sip_message(UserAgent *ua, const char *data);
+    void send_sip_notify(UserAgent *ua, SipSubscriptionState state, SipPidfXmlBasicElement pidfXml);
+    static int message_callback(SipEventCallback event, UserAgent *ua, const char *remote);
 #endif
 
-    //static int readDataSetThread(NCAPApplication *ncap, IP::Address address, IEEE1451TIMChannel *tim);
+    //static int read_data_set_thread(IEEE1451_NCAP_Application *ncap, IP::Address address, IEEE1451_TIM_Channel *tim);
+
+private:
+    Simple_List<TIM_Cache> _cache;
+    Simple_List<IEEE1451_TEDS_Retriever> _retrievers;
+
+    static IEEE1451_NCAP_Application *_application;
 };
 
-//-------------------------------------------
 
-class TEDSRetriever
+class IEEE1451_TEDS_Retriever
 {
 private:
-    friend class NCAPApplication;
+    friend class IEEE1451_NCAP_Application;
 
     enum State
     {
-        meta_teds                   = 0,
-        tim_transducer_name_teds    = 1,
-        phy_teds                    = 2,
-        transducer_channel_teds     = 3,
-        transducer_name_teds        = 4
+        meta_teds = 0,
+        tim_transducer_name_teds = 1,
+        phy_teds = 2,
+        transducer_channel_teds = 3,
+        transducer_name_teds = 4
     };
 
-    IP::Address address;
-    NCAPApplication *app;
-    IEEE1451TransducerChannel *transducer;
-    IEEE1451TIMChannel *tim;
-
-    short state;
-    char tedsId;
-    unsigned short lastTransId;
-
-    Simple_List<TEDSRetriever>::Element link;
-
 public:
-    TEDSRetriever(const IP::Address &address, NCAPApplication *app);
-    ~TEDSRetriever() {};
+    IEEE1451_TEDS_Retriever(const IP::Address &address, IEEE1451_NCAP_Application *application);
+    ~IEEE1451_TEDS_Retriever() {};
 
-    void repeat() { execute(); };
+    void repeat() { execute(); }
     void process(const char *message, unsigned int length);
     void execute();
+
+private:
+    IP::Address _address;
+    IEEE1451_NCAP_Application *_application;
+    IEEE1451_Transducer_Channel *_transducer;
+    IEEE1451_TIM_Channel *_tim;
+
+    short _state;
+    char _teds_id;
+    unsigned short _last_trans_id;
+
+    Simple_List<IEEE1451_TEDS_Retriever>::Element _link;
 };
 
 __END_SYS

@@ -10,170 +10,174 @@
 
 __BEGIN_SYS
 
+class IEEE1451_Channel;
+class IEEE1451_NCAP_Application;
+class IEEE1451_TEDS_NCAP;
 
-class IEEE1451Channel;
-class NCAPApplication;
-class TEDS_NCAP;
-
-class TLV
+class IEEE1451_TLV
 {
-private:
-	friend class TEDS_NCAP;
-	friend class NCAPApplication;
-
-	char type;
-	unsigned short length;
-	char *value;
-
-	Simple_List<TLV>::Element link;
+    friend class IEEE1451_TEDS_NCAP;
 
 public:
-	TLV(char type, unsigned short length, char *value) : type(type), length(length), value(value), link(this) {};
-	~TLV() { delete value; };
+    IEEE1451_TLV(char type, unsigned short length, char *value) :
+        _type(type), _length(length), _value(value), _link(this) {}
+    ~IEEE1451_TLV() { delete _value; }
+
+    char get_type() { return _type; }
+    unsigned short get_length() { return _length; }
+    const char *get_value() { return _value; }
+
+private:
+    char _type;
+    unsigned short _length;
+    char *_value;
+
+    Simple_List<IEEE1451_TLV>::Element _link;
 };
 
-//-------------------------------------------
 
-class TEDS_NCAP
+class IEEE1451_TEDS_NCAP
 {
-private:
-	friend class IEEE1451Channel;
-
-	char id;
-	Simple_List<TLV> tlvs;
-
-	Simple_List<TEDS_NCAP>::Element link;
+    friend class IEEE1451_Channel;
 
 public:
-	TEDS_NCAP(char id, const char *teds, unsigned int length, bool subblock = false);
-	~TEDS_NCAP();
+    IEEE1451_TEDS_NCAP(char id, const char *teds, unsigned short length, bool sub_block = false);
+    ~IEEE1451_TEDS_NCAP();
 
-	TLV *getTLV(char type);
+    IEEE1451_TLV *get_tlv(char type);
+
+private:
+    char _id;
+    Simple_List<IEEE1451_TLV> _tlvs;
+    Simple_List<IEEE1451_TEDS_NCAP>::Element _link;
 };
 
-//-------------------------------------------
 
-class IEEE1451Channel
+class IEEE1451_Channel
 {
-private:
-	friend class NCAPApplication;
-
-	IP::Address address;
-	Simple_List<TEDS_NCAP> tedss;
+    friend class IEEE1451_NCAP_Application;
 
 public:
-	IEEE1451Channel(const IP::Address &address) : address(address) {};
-	virtual ~IEEE1451Channel();
+    IEEE1451_Channel(const IP::Address &address) : _address(address) {}
+    virtual ~IEEE1451_Channel();
 
-	//virtual unsigned short getChannelNumber() = 0;
+    //virtual unsigned short get_channel_number() = 0;
 
-	TEDS_NCAP *getTEDS(char id);
-	void addTEDS(TEDS_NCAP *teds) { tedss.insert(&teds->link); };
+    IEEE1451_TEDS_NCAP *get_teds(char id);
+    void add_teds(IEEE1451_TEDS_NCAP *teds) { _teds.insert(&teds->_link); }
+
+private:
+    IP::Address _address;
+    Simple_List<IEEE1451_TEDS_NCAP> _teds;
 };
 
-//-------------------------------------------
 
-class IEEE1451TransducerChannel : public IEEE1451Channel
+class IEEE1451_Transducer_Channel : public IEEE1451_Channel
 {
-private:
-	unsigned short channelNumber;
-
 public:
-	IEEE1451TransducerChannel(const IP::Address &address, short channelNumber) : IEEE1451Channel(address) { this->channelNumber = channelNumber; };
-	~IEEE1451TransducerChannel() {};
+    IEEE1451_Transducer_Channel(const IP::Address &address, unsigned short channel_number) :
+        IEEE1451_Channel(address), _channel_number(channel_number) {}
+    ~IEEE1451_Transducer_Channel() {}
 
-	unsigned short getChannelNumber() { return channelNumber; };
+    unsigned short get_channel_number() { return _channel_number; }
+
+private:
+    unsigned short _channel_number;
 };
 
-//-------------------------------------------
 
-class IEEE1451TIMChannel : public IEEE1451Channel
+class IEEE1451_TIM_Channel : public IEEE1451_Channel
 {
-private:
-	//static const unsigned short TIM_CHANNEL_NUMBER;
-	IEEE1451TransducerChannel *transducer;
-	bool connected;
-
 public:
-	IEEE1451TIMChannel(const IP::Address &address, IEEE1451TransducerChannel *transducer) : IEEE1451Channel(address), transducer(transducer), connected(false) {};
-	~IEEE1451TIMChannel() { delete transducer; };
+    IEEE1451_TIM_Channel(const IP::Address &address, IEEE1451_Transducer_Channel *transducer) :
+        IEEE1451_Channel(address), _transducer(transducer), _connected(false) {}
+    ~IEEE1451_TIM_Channel() { delete _transducer; }
 
-	IEEE1451TransducerChannel *getTransducer() { return transducer; };
-	//unsigned short getChannelNumber() { return TIM_CHANNEL_NUMBER; };
-	void connect() { connected = true; };
-	void disconnect() { connected = false; };
-	bool isConnected() { return connected; };
-	bool isDisconnected() { return connected; };
+    IEEE1451_Transducer_Channel *getTransducer() { return _transducer; }
+    //unsigned short get_channel_number() { return _tim_channel_number; }
+    void connect() { _connected = true; }
+    void disconnect() { _connected = false; }
+    bool connected() { return _connected; }
+    bool disconnected() { return _connected; }
+
+private:
+    IEEE1451_Transducer_Channel *_transducer;
+    bool _connected;
+
+    //static const unsigned short _tim_channel_number;
 };
 
-//-------------------------------------------
 
-class IEEE1451dot0_NCAP
+class IEEE1451_Dot0_NCAP
 {
 private:
-	NCAPApplication *application;
-
-	static IEEE1451dot0_NCAP *dot0;
-	IEEE1451dot0_NCAP();
+    IEEE1451_Dot0_NCAP();
 
 public:
-	~IEEE1451dot0_NCAP() {};
+    ~IEEE1451_Dot0_NCAP() {};
 
-	static IEEE1451dot0_NCAP *getInstance();
+    static IEEE1451_Dot0_NCAP *get_instance();
 
-	char *createCommand(unsigned short channelNumber, unsigned short command, const char *args = 0, unsigned int length = 0);
-	unsigned short sendCommand(const IP::Address &destination, const char *message, unsigned int length);
+    char *create_command(unsigned short channel_number, unsigned short command, const char *args = 0, unsigned int length = 0);
+    unsigned short send_command(const IP::Address &destination, const char *message, unsigned int length);
 
-	void timConnected(const IP::Address &address);
-	void timDisconnected(const IP::Address &address);
-	void receiveMessage(const IP::Address &address, unsigned short transId, const char *message, unsigned int length);
-	void errorOnSend(int errorCode, unsigned short transId);
+    void tim_connected(const IP::Address &address);
+    void tim_disconnected(const IP::Address &address);
+    void receive_msg(const IP::Address &address, unsigned short trans_id, const char *message, unsigned int length);
+    //void error_on_send(int error_code, unsigned short trans_id);
 
-	void setApplication(NCAPApplication *application) { this->application = application; };
+    void set_application(IEEE1451_NCAP_Application *application) { _application = application; }
+
+private:
+    IEEE1451_NCAP_Application *_application;
+
+    static IEEE1451_Dot0_NCAP *_dot0;
 };
 
-//-------------------------------------------
 
-class IEEE1451dot5_NCAP
+class IEEE1451_Dot5_NCAP
 {
 private:
-	class MyServerSocket;
+    class My_Server_Socket;
 
-	TCP tcp;
-	Simple_List<MyServerSocket> sockets;
-
-	static IEEE1451dot5_NCAP *dot5;
-	IEEE1451dot5_NCAP();
+    IEEE1451_Dot5_NCAP();
 
 public:
-	~IEEE1451dot5_NCAP();
+    ~IEEE1451_Dot5_NCAP();
 
-	static IEEE1451dot5_NCAP *getInstance();
+    static IEEE1451_Dot5_NCAP *get_instance();
 
-	MyServerSocket *getSocket(const IP::Address &addr);
-	void sendMessage(unsigned short transId, const IP::Address &destination, const char *message, unsigned int length);
+    My_Server_Socket *get_socket(const IP::Address &addr);
+    void send_msg(unsigned short trans_id, const IP::Address &destination, const char *message, unsigned int length);
 
 private:
-	class MyServerSocket : public TCP::ServerSocket
-	{
-	private:
-		friend class IEEE1451dot5_NCAP;
+    class My_Server_Socket : public TCP::ServerSocket
+    {
+    private:
+        friend class IEEE1451_Dot5_NCAP;
 
-		Simple_List<MyServerSocket>::Element link;
+        Simple_List<My_Server_Socket>::Element _link;
 
-	public:
-		MyServerSocket(TCP *tcp) : TCP::ServerSocket(tcp, TCP::Address(IP::instance()->address(), IEEE1451_PORT)), link(this) {};
-		MyServerSocket(const MyServerSocket &socket) : TCP::ServerSocket(socket), link(this) {};
-		~MyServerSocket() {};
+    public:
+        My_Server_Socket(TCP *tcp) :
+            TCP::ServerSocket(tcp, TCP::Address(IP::instance()->address(), IEEE1451_PORT)), _link(this) {};
+        My_Server_Socket(const My_Server_Socket &socket) : TCP::ServerSocket(socket), _link(this) {};
+        ~My_Server_Socket() {};
 
-		TCP::Socket *incoming(const TCP::Address &from);
-		void connected();
-		void closed();
-		void received(const char *data, u16 size);
-		void closing();
-		void sent(u16 size) {};
-		void error(short errorCode) {};
-	};
+        TCP::Socket *incoming(const TCP::Address &from);
+        void connected();
+        void closed();
+        void received(const char *data, u16 size);
+        void closing();
+        void sent(u16 size) {};
+        void error(short errorCode) {};
+    };
+
+private:
+    TCP _tcp;
+    Simple_List<My_Server_Socket> _sockets;
+
+    static IEEE1451_Dot5_NCAP *_dot5;
 };
 
 __END_SYS

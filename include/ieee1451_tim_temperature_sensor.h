@@ -6,47 +6,45 @@
 #include <thread.h>
 
 #define DATASET_SIZE	10
-#define READ_INTERVAL	550000 //10000000 //microseconds = 10 segundos
+#define READ_INTERVAL	550000 //10000000 //10 segundos
 
 __BEGIN_SYS
 
-
-class IEEE1451TemperatureSensor : public IEEE1451Transducer
+class IEEE1451_Temperature_Sensor : public IEEE1451_Transducer
 {
-private:
-	unsigned short channelNumber;
-
-	bool tim_im;
-	bool polling;
-
-	float dataSet[DATASET_SIZE * sizeof(float)];
-	Mutex dataSetMutex;
-	int pos;
-
-	//Temperature_Sensor temperature;
-
-	Thread *executeThread;
-
-	char *channelArray;
-	char *tempSensorUtnArray;
-	TEDS_TIM *CHANNEL_TEDS;
-	TEDS_TIM *TEMPSENSOR_UTN_TEDS;
-
 public:
-	IEEE1451TemperatureSensor(bool tim_im, bool polling);
-	~IEEE1451TemperatureSensor();
+    IEEE1451_Temperature_Sensor(bool tim_im, bool polling);
+    ~IEEE1451_Temperature_Sensor();
 
 protected:
-	void initTEDS();
-	TEDS_TIM *getTEDS(char id);
-	//bool running() { return run; };
-	void start();
-	void stop();
-	void readDataSet(unsigned short transId, unsigned int offset);
-	void sendDataSet();
+    void init_teds();
+    IEEE1451_TEDS_TIM *get_teds(char id);
+    //bool running() { return run; };
+    void start();
+    void stop();
+    void read_data_set(unsigned short trans_id, unsigned int offset);
+    void send_data_set();
 
 public:
-	int execute();
+    int execute();
+
+private:
+    unsigned short _channel_number;
+
+    bool _tim_im;
+    bool _polling;
+
+    float _data_set[DATASET_SIZE * sizeof(float)];
+    Mutex _data_set_mutex;
+    int _pos;
+
+    //Temperature_Sensor _temperature;
+    Thread *_execute_thread;
+
+    char *_channel_array;
+    char *_temp_sensor_utn_array;
+    IEEE1451_TEDS_TIM *_channel_teds;
+    IEEE1451_TEDS_TIM *_temp_sensor_utn_teds;
 };
 
 __END_SYS

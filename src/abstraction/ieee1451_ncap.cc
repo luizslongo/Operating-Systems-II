@@ -3,268 +3,266 @@
 
 __BEGIN_SYS
 
-
 //-------------------------------------------
 
-TEDS_NCAP::TEDS_NCAP(char id, const char *teds, unsigned int length, bool subblock)
-	: id(id), link(this)
+IEEE1451_TEDS_NCAP::IEEE1451_TEDS_NCAP(char id, const char *teds, unsigned short length, bool sub_block) :
+    _id(id), _link(this)
 {
-	unsigned int begin, end;
+    unsigned short begin, end;
 
-	if (subblock)
-	{
-		begin = 0;
-		end = length;
-	}else
-	{
-		begin = 4;
-		end = length - 2;
-	}
+    if (sub_block)
+    {
+        begin = 0;
+        end = length;
+    } else
+    {
+        begin = 4;
+        end = length - 2;
+    }
 
-	for (unsigned int i = begin; i < end; )
-	{
-		unsigned short type = teds[i++] & 0xff;
-		unsigned short len = teds[i++] & 0xff;
+    for (unsigned short i = begin; i < end; )
+    {
+        unsigned short type = teds[i++] & 0xff;
+        unsigned short len = teds[i++] & 0xff;
 
-		char *value = new char[len];
-		for (unsigned int j = 0; j < len; j++, i++)
-			value[j] = teds[i];
+        char *value = new char[len];
+        for (unsigned short j = 0; j < len; j++, i++)
+            value[j] = teds[i];
 
-		TLV *tlv = new TLV(type, len, value);
-		tlvs.insert(&tlv->link);
-	}
+        IEEE1451_TLV *tlv = new IEEE1451_TLV(type, len, value);
+        _tlvs.insert(&tlv->_link);
+    }
 }
 
-TEDS_NCAP::~TEDS_NCAP()
+IEEE1451_TEDS_NCAP::~IEEE1451_TEDS_NCAP()
 {
-	Simple_List<TLV>::Iterator it = tlvs.begin();
-	while (it != tlvs.end())
-	{
-		Simple_List<TLV>::Element *el = it++;
-		TLV *tlv = el->object();
-		tlvs.remove(&tlv->link);
-		delete tlv;
-	}
+    Simple_List<IEEE1451_TLV>::Iterator it = _tlvs.begin();
+    while (it != _tlvs.end())
+    {
+        Simple_List<IEEE1451_TLV>::Element *el = it++;
+        IEEE1451_TLV *tlv = el->object();
+        _tlvs.remove(&tlv->_link);
+        delete tlv;
+    }
 }
 
-TLV *TEDS_NCAP::getTLV(char type)
+IEEE1451_TLV *IEEE1451_TEDS_NCAP::get_tlv(char type)
 {
-	Simple_List<TLV>::Iterator it = tlvs.begin();
-	while (it != tlvs.end())
-	{
-		TLV *tlv = it->object();
-		it++;
+    Simple_List<IEEE1451_TLV>::Iterator it = _tlvs.begin();
+    while (it != _tlvs.end())
+    {
+        IEEE1451_TLV *tlv = it->object();
+        it++;
 
-		if (tlv->type == type)
-			return tlv;
-	}
+        if (tlv->get_type() == type)
+            return tlv;
+    }
 
-	return 0;
-}
-
-//-------------------------------------------
-
-//const unsigned short IEEE1451TIMChannel::TIM_CHANNEL_NUMBER = 0;
-
-IEEE1451Channel::~IEEE1451Channel()
-{
-	Simple_List<TEDS_NCAP>::Iterator it = tedss.begin();
-	while (it != tedss.end())
-	{
-		Simple_List<TEDS_NCAP>::Element *el = it++;
-		TEDS_NCAP *teds = el->object();
-		tedss.remove(&teds->link);
-		delete teds;
-	}
-}
-
-TEDS_NCAP *IEEE1451Channel::getTEDS(char id)
-{
-	Simple_List<TEDS_NCAP>::Iterator it = tedss.begin();
-	while (it != tedss.end())
-	{
-		TEDS_NCAP *teds = it->object();
-		it++;
-
-		if (teds->id == id)
-			return teds;
-	}
-
-	return 0;
+    return 0;
 }
 
 //-------------------------------------------
 
-IEEE1451dot0_NCAP *IEEE1451dot0_NCAP::dot0 = 0;
+//const unsigned short IEEE1451_TIM_Channel::_tim_channel_number = 0;
 
-IEEE1451dot0_NCAP::IEEE1451dot0_NCAP()
+IEEE1451_Channel::~IEEE1451_Channel()
 {
-	application = 0;
-	IEEE1451dot5_NCAP::getInstance();
+    Simple_List<IEEE1451_TEDS_NCAP>::Iterator it = _teds.begin();
+    while (it != _teds.end())
+    {
+        Simple_List<IEEE1451_TEDS_NCAP>::Element *el = it++;
+        IEEE1451_TEDS_NCAP *teds = el->object();
+        _teds.remove(&teds->_link);
+        delete teds;
+    }
 }
 
-IEEE1451dot0_NCAP *IEEE1451dot0_NCAP::getInstance()
+IEEE1451_TEDS_NCAP *IEEE1451_Channel::get_teds(char id)
 {
-	if (!dot0)
-		dot0 = new IEEE1451dot0_NCAP();
-	return dot0;
-}
+    Simple_List<IEEE1451_TEDS_NCAP>::Iterator it = _teds.begin();
+    while (it != _teds.end())
+    {
+        IEEE1451_TEDS_NCAP *teds = it->object();
+        it++;
 
-char *IEEE1451dot0_NCAP::createCommand(unsigned short channelNumber, unsigned short command, const char *args, unsigned int length)
-{
-	unsigned int size = sizeof(Command) + length;
-	char *buffer = new char[size];
+        if (teds->_id == id)
+            return teds;
+    }
 
-	Command *cmd = (Command *) buffer;
-	cmd->channelNumber = channelNumber;
-	cmd->command = command;
-	cmd->length = length;
-
-	for (unsigned short i = 0; i < length; i++)
-		buffer[i + sizeof(Command)] = args[i];
-
-	return buffer;
-}
-
-unsigned short IEEE1451dot0_NCAP::sendCommand(const IP::Address &destination, const char *message, unsigned int length)
-{
-	static unsigned int idGenerator = 1;
-	unsigned short transId = idGenerator++;
-
-	IEEE1451dot5_NCAP::getInstance()->sendMessage(transId, destination, message, length);
-	return transId;
-}
-
-void IEEE1451dot0_NCAP::timConnected(const IP::Address &address)
-{
-	application->reportTimConnected(address);
-}
-
-void IEEE1451dot0_NCAP::timDisconnected(const IP::Address &address)
-{
-	application->reportTimDisconnected(address);
-}
-
-void IEEE1451dot0_NCAP::receiveMessage(const IP::Address &address, unsigned short transId, const char *message, unsigned int length)
-{
-	if (transId == 0)
-		application->reportTimInitiatedMessage(address, message, length);
-	else
-		application->reportCommandReply(address, transId, message, length);
-}
-
-void IEEE1451dot0_NCAP::errorOnSend(int errorCode, unsigned short transId)
-{
-	//Dependendo do erro, avisar que desconectou também!
-	application->reportError(transId, errorCode);
+    return 0;
 }
 
 //-------------------------------------------
 
-IEEE1451dot5_NCAP *IEEE1451dot5_NCAP::dot5 = 0;
+IEEE1451_Dot0_NCAP *IEEE1451_Dot0_NCAP::_dot0 = 0;
 
-IEEE1451dot5_NCAP::IEEE1451dot5_NCAP() : tcp(IP::instance())
+IEEE1451_Dot0_NCAP::IEEE1451_Dot0_NCAP()
 {
-	db<IEEE1451dot5_NCAP>(INF) << "IEEE1451dot5 listening...\n";
-	MyServerSocket *socket = new MyServerSocket(&tcp);
-	sockets.insert(&socket->link);
+    _application = 0;
+    IEEE1451_Dot5_NCAP::get_instance();
 }
 
-IEEE1451dot5_NCAP::~IEEE1451dot5_NCAP()
+IEEE1451_Dot0_NCAP *IEEE1451_Dot0_NCAP::get_instance()
 {
-	Simple_List<MyServerSocket>::Iterator it = sockets.begin();
-	while (it != sockets.end())
-	{
-		Simple_List<MyServerSocket>::Element *el = it++;
-		MyServerSocket *socket = el->object();
-		sockets.remove(&socket->link);
-		delete socket;
-	}
+    if (!_dot0)
+        _dot0 = new IEEE1451_Dot0_NCAP();
+    return _dot0;
 }
 
-IEEE1451dot5_NCAP *IEEE1451dot5_NCAP::getInstance()
+char *IEEE1451_Dot0_NCAP::create_command(unsigned short channel_number, unsigned short command, const char *args, unsigned int length)
 {
-	if (!dot5)
-		dot5 = new IEEE1451dot5_NCAP();
-	return dot5;
+    unsigned int size = sizeof(Command) + length;
+    char *buffer = new char[size];
+
+    Command *cmd = (Command *) buffer;
+    cmd->_channel_number = channel_number;
+    cmd->_command = command;
+    cmd->_length = length;
+
+    for (unsigned short i = 0; i < length; i++)
+        buffer[i + sizeof(Command)] = args[i];
+
+    return buffer;
 }
 
-IEEE1451dot5_NCAP::MyServerSocket *IEEE1451dot5_NCAP::getSocket(const IP::Address &addr)
+unsigned short IEEE1451_Dot0_NCAP::send_command(const IP::Address &destination, const char *message, unsigned int length)
 {
-	Simple_List<MyServerSocket>::Iterator it = sockets.begin();
-	while (it != sockets.end())
-	{
-		MyServerSocket *socket = it->object();
-		it++;
+    static unsigned int id_generator = 1;
+    unsigned short trans_id = id_generator++;
 
-		if (socket->remote().ip() == addr)
-			return socket;
-	}
-
-	return 0;
+    IEEE1451_Dot5_NCAP::get_instance()->send_msg(trans_id, destination, message, length);
+    return trans_id;
 }
 
-void IEEE1451dot5_NCAP::sendMessage(unsigned short transId, const IP::Address &destination, const char *message, unsigned int length)
+void IEEE1451_Dot0_NCAP::tim_connected(const IP::Address &address)
 {
-	db<IEEE1451dot5_NCAP>(INF) << "Sending message (transId=" << transId << ")...\n";
-
-	MyServerSocket *socket = getSocket(destination);
-	if (!socket)
-	{
-		db<IEEE1451dot5_NCAP>(INF) << "Failed to send message (transId=" << transId << ")\n";
-		return;
-	}
-
-	unsigned int dataLength = sizeof(IEEE1451_Packet) + length;
-	char *data = new char[dataLength];
-
-	IEEE1451_Packet *out = (IEEE1451_Packet *) data;
-	char *msg = data + sizeof(IEEE1451_Packet);
-
-	out->transId = transId;
-	out->len = length;
-	memcpy(msg, message, length);
-
-	socket->send(data, dataLength);
-	delete data;
+    _application->report_tim_connected(address);
 }
 
-TCP::Socket *IEEE1451dot5_NCAP::MyServerSocket::incoming(const TCP::Address &from)
+void IEEE1451_Dot0_NCAP::tim_disconnected(const IP::Address &address)
 {
-	db<IEEE1451dot5_NCAP::MyServerSocket>(INF) << "Server socket incoming\n";
-	MyServerSocket *socket = new MyServerSocket(*this);
-	IEEE1451dot5_NCAP::getInstance()->sockets.insert(&socket->link);
-	return static_cast<TCP::Socket *>(socket);
+    _application->report_tim_disconnected(address);
 }
 
-void IEEE1451dot5_NCAP::MyServerSocket::connected()
+void IEEE1451_Dot0_NCAP::receive_msg(const IP::Address &address, unsigned short trans_id, const char *message, unsigned int length)
 {
-	db<IEEE1451dot5_NCAP::MyServerSocket>(INF) << "Server socket connected\n";
-	IEEE1451dot0_NCAP::getInstance()->timConnected(remote());
+    if (trans_id == 0)
+        _application->report_tim_initiated_message(address, message, length);
+    else
+        _application->report_command_reply(address, trans_id, message, length);
 }
 
-void IEEE1451dot5_NCAP::MyServerSocket::closed()
+/*void IEEE1451_Dot0_NCAP::error_on_send(int error_code, unsigned short trans_id)
 {
-	db<IEEE1451dot5_NCAP::MyServerSocket>(INF) << "Server socket closed\n";
-	IEEE1451dot0_NCAP::getInstance()->timDisconnected(remote());
-	IEEE1451dot5_NCAP::getInstance()->sockets.remove(&link);
-	delete this;
+    _application->report_error(trans_id, error_code);
+}*/
+
+//-------------------------------------------
+
+IEEE1451_Dot5_NCAP *IEEE1451_Dot5_NCAP::_dot5 = 0;
+
+IEEE1451_Dot5_NCAP::IEEE1451_Dot5_NCAP() : _tcp(IP::instance())
+{
+    db<IEEE1451_Dot5_NCAP>(INF) << "IEEE1451dot5 listening...\n";
+    My_Server_Socket *socket = new My_Server_Socket(&_tcp);
+    _sockets.insert(&socket->_link);
 }
 
-void IEEE1451dot5_NCAP::MyServerSocket::received(const char *data, u16 size)
+IEEE1451_Dot5_NCAP::~IEEE1451_Dot5_NCAP()
 {
-	db<IEEE1451dot5_NCAP::MyServerSocket>(INF) << "Server socket received message\n";
-	IEEE1451_Packet *in = (IEEE1451_Packet *) data;
-	const char *msg = data + sizeof(IEEE1451_Packet);
-
-	if (in->len > 0)
-		IEEE1451dot0_NCAP::getInstance()->receiveMessage(remote(), in->transId, msg, in->len);
+    Simple_List<My_Server_Socket>::Iterator it = _sockets.begin();
+    while (it != _sockets.end())
+    {
+        Simple_List<My_Server_Socket>::Element *el = it++;
+        My_Server_Socket *socket = el->object();
+        _sockets.remove(&socket->_link);
+        delete socket;
+    }
 }
 
-void IEEE1451dot5_NCAP::MyServerSocket::closing()
+IEEE1451_Dot5_NCAP *IEEE1451_Dot5_NCAP::get_instance()
 {
-	db<IEEE1451dot5_NCAP::MyServerSocket>(INF) << "Server socket closing\n";
-	close();
+    if (!_dot5)
+        _dot5 = new IEEE1451_Dot5_NCAP();
+    return _dot5;
+}
+
+IEEE1451_Dot5_NCAP::My_Server_Socket *IEEE1451_Dot5_NCAP::get_socket(const IP::Address &addr)
+{
+    Simple_List<My_Server_Socket>::Iterator it = _sockets.begin();
+    while (it != _sockets.end())
+    {
+        My_Server_Socket *socket = it->object();
+        it++;
+
+        if (socket->remote().ip() == addr)
+            return socket;
+    }
+
+    return 0;
+}
+
+void IEEE1451_Dot5_NCAP::send_msg(unsigned short trans_id, const IP::Address &destination, const char *message, unsigned int length)
+{
+    db<IEEE1451_Dot5_NCAP>(INF) << "Sending message (trans_id=" << trans_id << ")...\n";
+
+    My_Server_Socket *socket = get_socket(destination);
+    if (!socket)
+    {
+        db<IEEE1451_Dot5_NCAP>(INF) << "Failed to send message (trans_id=" << trans_id << ")\n";
+        return;
+    }
+
+    unsigned int data_length = sizeof(IEEE1451_Packet) + length;
+    char *data = new char[data_length];
+
+    IEEE1451_Packet *out = (IEEE1451_Packet *) data;
+    char *msg = data + sizeof(IEEE1451_Packet);
+
+    out->_trans_id = trans_id;
+    out->_length = length;
+    memcpy(msg, message, length);
+
+    socket->send(data, data_length);
+    delete data;
+}
+
+TCP::Socket *IEEE1451_Dot5_NCAP::My_Server_Socket::incoming(const TCP::Address &from)
+{
+    db<IEEE1451_Dot5_NCAP::My_Server_Socket>(INF) << "Server socket incoming\n";
+    My_Server_Socket *socket = new My_Server_Socket(*this);
+    IEEE1451_Dot5_NCAP::get_instance()->_sockets.insert(&socket->_link);
+    return static_cast<TCP::Socket *>(socket);
+}
+
+void IEEE1451_Dot5_NCAP::My_Server_Socket::connected()
+{
+    db<IEEE1451_Dot5_NCAP::My_Server_Socket>(INF) << "Server socket connected\n";
+    IEEE1451_Dot0_NCAP::get_instance()->tim_connected(remote());
+}
+
+void IEEE1451_Dot5_NCAP::My_Server_Socket::closed()
+{
+    db<IEEE1451_Dot5_NCAP::My_Server_Socket>(INF) << "Server socket closed\n";
+    IEEE1451_Dot0_NCAP::get_instance()->tim_disconnected(remote());
+    IEEE1451_Dot5_NCAP::get_instance()->_sockets.remove(&_link);
+    delete this;
+}
+
+void IEEE1451_Dot5_NCAP::My_Server_Socket::received(const char *data, u16 size)
+{
+    db<IEEE1451_Dot5_NCAP::My_Server_Socket>(INF) << "Server socket received message\n";
+    IEEE1451_Packet *in = (IEEE1451_Packet *) data;
+    const char *msg = data + sizeof(IEEE1451_Packet);
+
+    if (in->_length > 0)
+        IEEE1451_Dot0_NCAP::get_instance()->receive_msg(remote(), in->_trans_id, msg, in->_length);
+}
+
+void IEEE1451_Dot5_NCAP::My_Server_Socket::closing()
+{
+    db<IEEE1451_Dot5_NCAP::My_Server_Socket>(INF) << "Server socket closing\n";
+    close();
 }
 
 __END_SYS

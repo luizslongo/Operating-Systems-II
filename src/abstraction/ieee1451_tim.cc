@@ -2,344 +2,347 @@
 
 __BEGIN_SYS
 
-
-IEEE1451Transducer::IEEE1451Transducer()
+IEEE1451_Transducer::IEEE1451_Transducer()
 {
-	IEEE1451dot0_TIM::getInstance()->setTransducer(this);
+    IEEE1451_Dot0_TIM::get_instance()->setTransducer(this);
 }
 
-void IEEE1451Transducer::receiveMessage(unsigned short transId, const char *message, unsigned int size)
+void IEEE1451_Transducer::receive_msg(unsigned short trans_id, const char *message, unsigned int size)
 {
-	Command *cmd = (Command *) message;
-	const char *buffer = message + sizeof(Command);
+    Command *cmd = (Command *) message;
+    const char *buffer = message + sizeof(Command);
 
-	switch (cmd->command)
-	{
-		/*case COMMAND_CLASS_QUERY_TEDS:
-		case COMMAND_CLASS_UPDATE_TEDS:
-		{
-			TEDS *teds = getTEDS(buffer[0]);
-			TEDSQueryReply reply;
-			reply.header.length = 12;
-			if (teds)
-			{
-				reply.maxSize = 0;
-				reply.checksum = *((unsigned short *) teds->payload);
-				reply.size = teds->size;
-				reply.status = teds->status;
-				reply.atributes = teds->atributes;
-				reply.header.success = true;
-			}else
-			{
-				reply.maxSize = 0;
-				reply.checksum = 0;
-				reply.size = 0;
-				reply.status = 0;
-				reply.atributes = 0x40;
-				reply.header.success = false;
-			}
+    switch (cmd->_command)
+    {
+        /*case COMMAND_CLASS_QUERY_TEDS:
+         case COMMAND_CLASS_UPDATE_TEDS:
+         {
+             TEDS *teds = get_teds(buffer[0]);
+             TEDS_Query_Reply reply;
+             reply._header._length = 12;
+             if (teds)
+             {
+                 reply._maxSize = 0;
+                 reply._checksum = *((unsigned short *) teds->get_payload());
+                 reply._size = teds->get_size();
+                 reply._status = teds->get_status();
+                 reply._atributes = teds->get_atributes();
+                 reply._header._success = true;
+             }else
+             {
+                 reply._maxSize = 0;
+                 reply._checksum = 0;
+                 reply._size = 0;
+                 reply._status = 0;
+                 reply._atributes = 0x40;
+                 reply._header._success = false;
+             }
 
-			IEEE1451dot5_TIM::getInstance()->sendMessage(transId, (char *) &reply, sizeof(reply));
-			break;
-		}*/
+             IEEE1451_Dot5_TIM::get_instance()->send_msg(trans_id, (char *) &reply, sizeof(reply));
+             break;
+         }*/
 
-		case COMMAND_CLASS_READ_TEDS_SEGMENT:
-		{
-			TEDS_TIM *teds = getTEDS(buffer[0]);
-			if (teds)
-			{
-				unsigned int size = sizeof(TEDSReadReply) + teds->size;
-				char *reply = new char[size];
+        case COMMAND_CLASS_READ_TEDS_SEGMENT:
+        {
+            IEEE1451_TEDS_TIM *teds = get_teds(buffer[0]);
+            if (teds)
+            {
+                unsigned int teds_size = teds->get_size();
+                unsigned int reply_size = sizeof(TEDS_Read_Reply) + teds_size;
+                char *reply = new char[reply_size];
 
-				TEDSReadReply *readReply = (TEDSReadReply *) reply;
-				readReply->header.success = true;
-				readReply->header.length = teds->size + sizeof(readReply->offset);
-				readReply->offset = 0;
+                TEDS_Read_Reply *read_reply = (TEDS_Read_Reply *) reply;
+                read_reply->_header._success = true;
+                read_reply->_header._length = teds_size + sizeof(read_reply->_offset);
+                read_reply->_offset = 0;
 
-				for (unsigned short i = 0; i < teds->size; i++)
-					reply[i + sizeof(TEDSReadReply)] = teds->payload[i];
+                const char *teds_payload = teds->get_payload();
+                for (unsigned short i = 0; i < teds_size; i++)
+                    reply[i + sizeof(TEDS_Read_Reply)] = teds_payload[i];
 
-				IEEE1451dot5_TIM::getInstance()->sendMessage(transId, reply, size);
-				delete[] reply;
-			}else
-			{
-				TEDSReadReply reply;
-				reply.header.success = false;
-				reply.header.length = sizeof(reply.offset);;
-				reply.offset = 0;
+                IEEE1451_Dot5_TIM::get_instance()->send_msg(trans_id, reply, reply_size);
+                delete[] reply;
+            }else
+            {
+                TEDS_Read_Reply reply;
+                reply._header._success = false;
+                reply._header._length = sizeof(reply._offset);
+                reply._offset = 0;
 
-				IEEE1451dot5_TIM::getInstance()->sendMessage(transId, (char *) &reply, sizeof(TEDSReadReply));
-			}
+                IEEE1451_Dot5_TIM::get_instance()->send_msg(trans_id, (char *) &reply, sizeof(TEDS_Read_Reply));
+            }
 
-			break;
-		}
+            break;
+        }
 
-		case COMMAND_CLASS_READ_TRANSDUCER_CHANNEL_DATA_SET_SEGMENT:
-		{
-			unsigned int offset = *((unsigned int *) buffer);
-			readDataSet(transId, offset);
-			break;
-		}
+        case COMMAND_CLASS_READ_TRANSDUCER_CHANNEL_DATA_SET_SEGMENT:
+        {
+            unsigned int offset = *((unsigned int *) buffer);
+            read_data_set(trans_id, offset);
+            break;
+        }
 
-		case COMMAND_CLASS_TRANSDUCER_CHANNEL_OPERATE:
-			start();
-			break;
+        case COMMAND_CLASS_TRANSDUCER_CHANNEL_OPERATE:
+            start();
+            break;
 
-		case COMMAND_CLASS_TRANSDUCER_CHANNEL_IDLE:
-			stop();
-			break;
+        case COMMAND_CLASS_TRANSDUCER_CHANNEL_IDLE:
+            stop();
+            break;
 
-		default:
-			db<IEEE1451dot0_TIM>(INF) << "Received invalid message\n";
-			break;
-	}
-}
-
-//-------------------------------------------
-
-IEEE1451dot0_TIM *IEEE1451dot0_TIM::dot0 = 0;
-
-IEEE1451dot0_TIM::IEEE1451dot0_TIM()
-{
-	transducer = 0;
-	IEEE1451dot5_TIM::getInstance();
-	initTEDS();
-}
-
-IEEE1451dot0_TIM::~IEEE1451dot0_TIM()
-{
-	if (metaArray)
-		delete metaArray;
-	if (timUtnArray)
-		delete timUtnArray;
-	if (phyArray)
-		delete phyArray;
-
-	if (META_TEDS)
-		delete META_TEDS;
-	if (TIM_UTN_TEDS)
-		delete TIM_UTN_TEDS;
-	if (PHY_TEDS)
-		delete PHY_TEDS;
-}
-
-IEEE1451dot0_TIM *IEEE1451dot0_TIM::getInstance()
-{
-	if (!dot0)
-		dot0 = new IEEE1451dot0_TIM();
-	return dot0;
-}
-
-void IEEE1451dot0_TIM::initTEDS()
-{
-	metaArray = new char[40];
-	metaArray[0] = 0x00; metaArray[1] = 0x00; metaArray[2] = 0x00; metaArray[3] = 0x24; metaArray[4] = 0x03; metaArray[5] = 0x04; metaArray[6] = 0x00; metaArray[7] = 0x01; metaArray[8] = 0x01; metaArray[9] = 0x01; metaArray[10] = 0x04; metaArray[11] = 0x0a; metaArray[12] = 0x00; metaArray[13] = 0x00; metaArray[14] = 0x00; metaArray[15] = 0x00; metaArray[16] = 0x00; metaArray[17] = 0x00; metaArray[18] = 0x00; metaArray[19] = 0x00; metaArray[20] = 0x00; metaArray[21] = 0x00; metaArray[22] = 0x0a; metaArray[23] = 0x04; metaArray[24] = 0x41; metaArray[25] = 0x20; metaArray[26] = 0x00; metaArray[27] = 0x00; metaArray[28] = 0x0c; metaArray[29] = 0x04; metaArray[30] = 0x00; metaArray[31] = 0x00; metaArray[32] = 0x00; metaArray[33] = 0x00; metaArray[34] = 0x0d; metaArray[35] = 0x02; metaArray[36] = 0x00; metaArray[37] = 0x01; metaArray[38] = 0xfe; metaArray[39] = 0xb6; //checksum errado
-	META_TEDS = new TEDS_TIM(metaArray, 40);
-
-	timUtnArray = new char[26];
-	timUtnArray[0] = 0x00; timUtnArray[1] = 0x00; timUtnArray[2] = 0x00; timUtnArray[3] = 0x16; timUtnArray[4] = 0x03; timUtnArray[5] = 0x04; timUtnArray[6] = 0x00; timUtnArray[7] = 0x0c; timUtnArray[8] = 0x01; timUtnArray[9] = 0x01; timUtnArray[10] = 0x04; timUtnArray[11] = 0x01; timUtnArray[12] = 0x00; timUtnArray[13] = 0x05; timUtnArray[14] = 0x09; timUtnArray[15] = 0x45; timUtnArray[16] = 0x50; timUtnArray[17] = 0x4f; timUtnArray[18] = 0x53; timUtnArray[19] = 0x2f; timUtnArray[20] = 0x4d; timUtnArray[21] = 0x69; timUtnArray[22] = 0x63; timUtnArray[23] = 0x61; timUtnArray[24] = 0xff; timUtnArray[25] = 0xff; //checksum errado
-	TIM_UTN_TEDS = new TEDS_TIM(timUtnArray, 26);
-
-	phyArray = new char[25];
-	phyArray[0] = 0x00; phyArray[1] = 0x00; phyArray[2] = 0x00; phyArray[3] = 0x15; phyArray[4] = 0x03; phyArray[5] = 0x04; phyArray[6] = 0x05; phyArray[7] = 0x0d; phyArray[8] = 0x01; phyArray[9] = 0x01; phyArray[10] = 0x0a; phyArray[11] = 0x01; phyArray[12] = 0xff; phyArray[13] = 0x0c; phyArray[14] = 0x02; phyArray[15] = 0x00; phyArray[16] = 0x01; phyArray[17] = 0x16; phyArray[18] = 0x01; phyArray[19] = 0x01; phyArray[20] = 0x28; phyArray[21] = 0x01; phyArray[22] = 0x01; phyArray[23] = 0xfe; phyArray[24] = 0x74; //checksum errado
-	PHY_TEDS = new TEDS_TIM(phyArray, 25);
-}
-
-TEDS_TIM *IEEE1451dot0_TIM::getTEDS(char id)
-{
-	if (id == 0x01)
-		return META_TEDS;
-	else if (id == 0x0c)
-		return TIM_UTN_TEDS;
-	else if (id == 0x0d)
-		return PHY_TEDS;
-	return 0;
-}
-
-void IEEE1451dot0_TIM::receiveMessage(unsigned short transId, const char *message, unsigned int size)
-{
-	Command *cmd = (Command *) message;
-	const char *buffer = message + sizeof(Command);
-
-	if (cmd->channelNumber == ADDRESS_CLASS_TIM)
-	{
-		switch (cmd->command)
-		{
-			/*case COMMAND_CLASS_QUERY_TEDS:
-			case COMMAND_CLASS_UPDATE_TEDS:
-			{
-				TEDS *teds = getTEDS(buffer[0]);
-				TEDSQueryReply reply;
-				reply.header.length = 12;
-				if (teds)
-				{
-					reply.maxSize = 0;
-					reply.checksum = *((unsigned short *) teds->payload);
-					reply.size = teds->size;
-					reply.status = teds->status;
-					reply.atributes = teds->atributes;
-					reply.header.success = true;
-				}else
-				{
-					reply.maxSize = 0;
-					reply.checksum = 0;
-					reply.size = 0;
-					reply.status = 0;
-					reply.atributes = 0x40;
-					reply.header.success = false;
-				}
-
-				dot5->sendMessage(transId, (char *) &reply, sizeof(reply));
-				break;
-			}*/
-
-			case COMMAND_CLASS_READ_TEDS_SEGMENT:
-			{
-				TEDS_TIM *teds = getTEDS(buffer[0]);
-				if (teds)
-				{
-					int size = sizeof(TEDSReadReply) + teds->size;
-					char *reply = new char[size];
-
-					TEDSReadReply *readReply = (TEDSReadReply *) reply;
-					readReply->header.success = true;
-					readReply->header.length = teds->size + sizeof(readReply->offset);
-					readReply->offset = 0;
-
-					for (unsigned short i = 0; i < teds->size; i++)
-						reply[i + sizeof(TEDSReadReply)] = teds->payload[i];
-
-					IEEE1451dot5_TIM::getInstance()->sendMessage(transId, reply, size);
-					delete[] reply;
-				}else
-				{
-					TEDSReadReply reply;
-					reply.header.success = false;
-					reply.header.length = sizeof(reply.offset);
-					reply.offset = 0;
-
-					IEEE1451dot5_TIM::getInstance()->sendMessage(transId, (char *) &reply, sizeof(TEDSReadReply));
-				}
-				break;
-			}
-
-			default:
-				db<IEEE1451dot0_TIM>(INF) << "Received invalid message\n";
-				break;
-		}
-	}else if (((cmd->channelNumber >= ADDRESS_CLASS_TRANSDUCER_CHANNEL_FIRST) && (cmd->channelNumber <= ADDRESS_CLASS_TRANSDUCER_CHANNEL_LAST)) ||
-			(cmd->channelNumber == ADDRESS_CLASS_GLOBAL))
-	{
-		transducer->receiveMessage(transId, message, size);
-
-	}else if ((cmd->channelNumber >= ADDRESS_CLASS_GROUP_FIRST) && (cmd->channelNumber <= ADDRESS_CLASS_GROUP_LAST))
-	{
-		//group
-	}
+        default:
+            db<IEEE1451_Dot0_TIM>(INF) << "Received invalid message\n";
+            break;
+    }
 }
 
 //-------------------------------------------
 
-IEEE1451dot5_TIM *IEEE1451dot5_TIM::dot5 = 0;
+IEEE1451_Dot0_TIM *IEEE1451_Dot0_TIM::_dot0 = 0;
 
-IEEE1451dot5_TIM::IEEE1451dot5_TIM() : tcp(IP::instance()), NCAPAddress((unsigned long) 0x0a00000b)
+IEEE1451_Dot0_TIM::IEEE1451_Dot0_TIM()
 {
-	socket = 0;
-	connected = false;
+    _transducer = 0;
+    IEEE1451_Dot5_TIM::get_instance();
+    init_teds();
 }
 
-IEEE1451dot5_TIM *IEEE1451dot5_TIM::getInstance()
+IEEE1451_Dot0_TIM::~IEEE1451_Dot0_TIM()
 {
-	if (!dot5)
-		dot5 = new IEEE1451dot5_TIM();
-	return dot5;
+    if (_meta_array)
+        delete _meta_array;
+    if (_tim_utn_array)
+        delete _tim_utn_array;
+    if (_phy_array)
+        delete _phy_array;
+
+    if (_meta_teds)
+        delete _meta_teds;
+    if (_tim_utn_teds)
+        delete _tim_utn_teds;
+    if (_phy_teds)
+        delete _phy_teds;
 }
 
-void IEEE1451dot5_TIM::connect()
+IEEE1451_Dot0_TIM *IEEE1451_Dot0_TIM::get_instance()
 {
-	//TODO: Voltar a receber dados da rede!
-
-	db<IEEE1451dot5_TIM>(INF) << "Connecting...\n";
-	if (socket)
-		delete socket; //TODO
-	socket = new MyClientSocket(&tcp, NCAPAddress);
-
-	while (!connected)
-		Alarm::delay(1000);
+    if (!_dot0)
+        _dot0 = new IEEE1451_Dot0_TIM();
+    return _dot0;
 }
 
-void IEEE1451dot5_TIM::disconnect()
+void IEEE1451_Dot0_TIM::init_teds()
 {
-	//TODO: Parar de receber dados da rede!
+    _meta_array = new char[40];
+    _meta_array[0] = 0x00; _meta_array[1] = 0x00; _meta_array[2] = 0x00; _meta_array[3] = 0x24; _meta_array[4] = 0x03; _meta_array[5] = 0x04; _meta_array[6] = 0x00; _meta_array[7] = 0x01; _meta_array[8] = 0x01; _meta_array[9] = 0x01; _meta_array[10] = 0x04; _meta_array[11] = 0x0a; _meta_array[12] = 0x00; _meta_array[13] = 0x00; _meta_array[14] = 0x00; _meta_array[15] = 0x00; _meta_array[16] = 0x00; _meta_array[17] = 0x00; _meta_array[18] = 0x00; _meta_array[19] = 0x00; _meta_array[20] = 0x00; _meta_array[21] = 0x00; _meta_array[22] = 0x0a; _meta_array[23] = 0x04; _meta_array[24] = 0x41; _meta_array[25] = 0x20; _meta_array[26] = 0x00; _meta_array[27] = 0x00; _meta_array[28] = 0x0c; _meta_array[29] = 0x04; _meta_array[30] = 0x00; _meta_array[31] = 0x00; _meta_array[32] = 0x00; _meta_array[33] = 0x00; _meta_array[34] = 0x0d; _meta_array[35] = 0x02; _meta_array[36] = 0x00; _meta_array[37] = 0x01; _meta_array[38] = 0xfe; _meta_array[39] = 0xb6; //checksum errado
+    _meta_teds = new IEEE1451_TEDS_TIM(_meta_array, 40);
 
-	db<IEEE1451dot5_TIM>(INF) << "Disconnecting...\n";
-	if (socket)
-		socket->close();
+    _tim_utn_array = new char[26];
+    _tim_utn_array[0] = 0x00; _tim_utn_array[1] = 0x00; _tim_utn_array[2] = 0x00; _tim_utn_array[3] = 0x16; _tim_utn_array[4] = 0x03; _tim_utn_array[5] = 0x04; _tim_utn_array[6] = 0x00; _tim_utn_array[7] = 0x0c; _tim_utn_array[8] = 0x01; _tim_utn_array[9] = 0x01; _tim_utn_array[10] = 0x04; _tim_utn_array[11] = 0x01; _tim_utn_array[12] = 0x00; _tim_utn_array[13] = 0x05; _tim_utn_array[14] = 0x09; _tim_utn_array[15] = 0x45; _tim_utn_array[16] = 0x50; _tim_utn_array[17] = 0x4f; _tim_utn_array[18] = 0x53; _tim_utn_array[19] = 0x2f; _tim_utn_array[20] = 0x4d; _tim_utn_array[21] = 0x69; _tim_utn_array[22] = 0x63; _tim_utn_array[23] = 0x61; _tim_utn_array[24] = 0xff; _tim_utn_array[25] = 0xff; //checksum errado
+    _tim_utn_teds = new IEEE1451_TEDS_TIM(_tim_utn_array, 26);
 
-	while (connected)
-		Alarm::delay(1000);
-
-	delete socket;
-	socket = 0;
+    _phy_array = new char[25];
+    _phy_array[0] = 0x00; _phy_array[1] = 0x00; _phy_array[2] = 0x00; _phy_array[3] = 0x15; _phy_array[4] = 0x03; _phy_array[5] = 0x04; _phy_array[6] = 0x05; _phy_array[7] = 0x0d; _phy_array[8] = 0x01; _phy_array[9] = 0x01; _phy_array[10] = 0x0a; _phy_array[11] = 0x01; _phy_array[12] = 0xff; _phy_array[13] = 0x0c; _phy_array[14] = 0x02; _phy_array[15] = 0x00; _phy_array[16] = 0x01; _phy_array[17] = 0x16; _phy_array[18] = 0x01; _phy_array[19] = 0x01; _phy_array[20] = 0x28; _phy_array[21] = 0x01; _phy_array[22] = 0x01; _phy_array[23] = 0xfe; _phy_array[24] = 0x74; //checksum errado
+    _phy_teds = new IEEE1451_TEDS_TIM(_phy_array, 25);
 }
 
-void IEEE1451dot5_TIM::sendMessage(unsigned short transId, const char *message, unsigned int length)
+IEEE1451_TEDS_TIM *IEEE1451_Dot0_TIM::get_teds(char id)
 {
-	db<IEEE1451dot5_TIM>(INF) << "Sending message (transId=" << transId << ")...\n";
-
-	if (!socket)
-	{
-		db<IEEE1451dot5_TIM>(INF) << "Failed to send message (transId=" << transId << ")\n";
-		return;
-	}
-
-	unsigned int dataLength = sizeof(IEEE1451_Packet) + length;
-	char *data = new char[dataLength];
-
-	IEEE1451_Packet *out = (IEEE1451_Packet *) data;
-	char *msg = data + sizeof(IEEE1451_Packet);
-
-	out->transId = transId;
-	out->len = length;
-	memcpy(msg, message, length);
-
-	socket->send(data, dataLength);
-	delete data;
+    if (id == 0x01)
+        return _meta_teds;
+    else if (id == 0x0c)
+        return _tim_utn_teds;
+    else if (id == 0x0d)
+        return _phy_teds;
+    return 0;
 }
 
-void IEEE1451dot5_TIM::MyClientSocket::connected()
+void IEEE1451_Dot0_TIM::receive_msg(unsigned short trans_id, const char *message, unsigned int size)
 {
-	db<IEEE1451dot5_TIM::MyClientSocket>(INF) << "Client socket connected\n";
-	IEEE1451dot5_TIM::getInstance()->connected = true;
+    Command *cmd = (Command *) message;
+    const char *buffer = message + sizeof(Command);
+
+    if (cmd->_channel_number == ADDRESS_CLASS_TIM)
+    {
+        switch (cmd->_command)
+        {
+            /*case COMMAND_CLASS_QUERY_TEDS:
+             case COMMAND_CLASS_UPDATE_TEDS:
+             {
+                 TEDS *teds = get_teds(buffer[0]);
+                 TEDS_Query_Reply reply;
+                 reply._header._length = 12;
+                 if (teds)
+                 {
+                     reply._maxSize = 0;
+                     reply._checksum = *((unsigned short *) teds->get_payload());
+                     reply._size = teds->get_size();
+                     reply._status = teds->get_status();
+                     reply._atributes = teds->get_atributes();
+                     reply._header._success = true;
+                 }else
+                 {
+                     reply._maxSize = 0;
+                     reply._checksum = 0;
+                     reply._size = 0;
+                     reply._status = 0;
+                     reply._atributes = 0x40;
+                     reply._header._success = false;
+                 }
+
+                 _dot5->send_msg(trans_id, (char *) &reply, sizeof(reply));
+                 break;
+             }*/
+
+            case COMMAND_CLASS_READ_TEDS_SEGMENT:
+            {
+                IEEE1451_TEDS_TIM *teds = get_teds(buffer[0]);
+                if (teds)
+                {
+                    unsigned int teds_size = teds->get_size();
+                    unsigned int reply_size = sizeof(TEDS_Read_Reply) + teds_size;
+                    char *reply = new char[reply_size];
+
+                    TEDS_Read_Reply *read_reply = (TEDS_Read_Reply *) reply;
+                    read_reply->_header._success = true;
+                    read_reply->_header._length = teds_size + sizeof(read_reply->_offset);
+                    read_reply->_offset = 0;
+
+                    const char *teds_payload = teds->get_payload();
+                    for (unsigned short i = 0; i < teds_size; i++)
+                        reply[i + sizeof(TEDS_Read_Reply)] = teds_payload[i];
+
+                    IEEE1451_Dot5_TIM::get_instance()->send_msg(trans_id, reply, reply_size);
+                    delete[] reply;
+                }else
+                {
+                    TEDS_Read_Reply reply;
+                    reply._header._success = false;
+                    reply._header._length = sizeof(reply._offset);
+                    reply._offset = 0;
+
+                    IEEE1451_Dot5_TIM::get_instance()->send_msg(trans_id, (char *) &reply, sizeof(TEDS_Read_Reply));
+                }
+                break;
+            }
+
+            default:
+                db<IEEE1451_Dot0_TIM>(INF) << "Received invalid message\n";
+                break;
+        }
+    } else if (((cmd->_channel_number >= ADDRESS_CLASS_TRANSDUCER_CHANNEL_FIRST) && (cmd->_channel_number <= ADDRESS_CLASS_TRANSDUCER_CHANNEL_LAST)) ||
+                (cmd->_channel_number == ADDRESS_CLASS_GLOBAL))
+    {
+        _transducer->receive_msg(trans_id, message, size);
+
+    } else if ((cmd->_channel_number >= ADDRESS_CLASS_GROUP_FIRST) && (cmd->_channel_number <= ADDRESS_CLASS_GROUP_LAST))
+    {
+        //group
+    }
 }
 
-void IEEE1451dot5_TIM::MyClientSocket::closed()
+//-------------------------------------------
+
+IEEE1451_Dot5_TIM *IEEE1451_Dot5_TIM::_dot5 = 0;
+
+IEEE1451_Dot5_TIM::IEEE1451_Dot5_TIM() : _tcp(IP::instance()), _ncap_address((unsigned long) 0x0a00000b)
 {
-	db<IEEE1451dot5_TIM::MyClientSocket>(INF) << "Client socket closed\n";
-	IEEE1451dot5_TIM::getInstance()->connected = false;
+    _socket = 0;
+    _connected = false;
 }
 
-void IEEE1451dot5_TIM::MyClientSocket::received(const char *data, u16 size)
+IEEE1451_Dot5_TIM *IEEE1451_Dot5_TIM::get_instance()
 {
-	db<IEEE1451dot5_TIM::MyClientSocket>(INF) << "Client socket received message\n";
+    if (!_dot5)
+        _dot5 = new IEEE1451_Dot5_TIM();
+    return _dot5;
+}
 
-	if (!(remote().ip() == IEEE1451dot5_TIM::getInstance()->NCAPAddress))
-	{
-		db<IEEE1451dot5_TIM::MyClientSocket>(INF) << "Message source is not NCAP Address!\n";
-		return;
-	}
+void IEEE1451_Dot5_TIM::connect()
+{
+    //TODO: Voltar a receber dados da rede!
 
-	if (!IEEE1451dot5_TIM::getInstance()->connected)
-	{
-		db<IEEE1451dot5_TIM::MyClientSocket>(INF) << "Dot5 not connected!\n";
-		return;
-	}
+    db<IEEE1451_Dot5_TIM>(INF) << "Connecting...\n";
+    if (_socket)
+        delete _socket; //TODO
+    _socket = new My_Client_Socket(&_tcp, _ncap_address);
 
-	IEEE1451_Packet *in = (IEEE1451_Packet *) data;
-	const char *msg = data + sizeof(IEEE1451_Packet);
+    while (!_connected)
+        Alarm::delay(1000);
+}
 
-	if (in->len > 0)
-		IEEE1451dot0_TIM::getInstance()->receiveMessage(in->transId, msg, in->len);
+void IEEE1451_Dot5_TIM::disconnect()
+{
+    //TODO: Parar de receber dados da rede!
+
+    db<IEEE1451_Dot5_TIM>(INF) << "Disconnecting...\n";
+    if (_socket)
+        _socket->close();
+
+    while (_connected)
+        Alarm::delay(1000);
+
+    delete _socket;
+    _socket = 0;
+}
+
+void IEEE1451_Dot5_TIM::send_msg(unsigned short trans_id, const char *message, unsigned int length)
+{
+    db<IEEE1451_Dot5_TIM>(INF) << "Sending message (trans_id=" << trans_id << ")...\n";
+
+    if (!_socket)
+    {
+        db<IEEE1451_Dot5_TIM>(INF) << "Failed to send message (trans_id=" << trans_id << ")\n";
+        return;
+    }
+
+    unsigned int data_length = sizeof(IEEE1451_Packet) + length;
+    char *data = new char[data_length];
+
+    IEEE1451_Packet *out = (IEEE1451_Packet *) data;
+    char *msg = data + sizeof(IEEE1451_Packet);
+
+    out->_trans_id = trans_id;
+    out->_length = length;
+    memcpy(msg, message, length);
+
+    _socket->send(data, data_length);
+    delete data;
+}
+
+void IEEE1451_Dot5_TIM::My_Client_Socket::connected()
+{
+    db<IEEE1451_Dot5_TIM::My_Client_Socket>(INF) << "Client socket connected\n";
+    IEEE1451_Dot5_TIM::get_instance()->_connected = true;
+}
+
+void IEEE1451_Dot5_TIM::My_Client_Socket::closed()
+{
+    db<IEEE1451_Dot5_TIM::My_Client_Socket>(INF) << "Client socket closed\n";
+    IEEE1451_Dot5_TIM::get_instance()->_connected = false;
+}
+
+void IEEE1451_Dot5_TIM::My_Client_Socket::received(const char *data, u16 size)
+{
+    db<IEEE1451_Dot5_TIM::My_Client_Socket>(INF) << "Client socket received message\n";
+
+    if (!(remote().ip() == IEEE1451_Dot5_TIM::get_instance()->_ncap_address))
+    {
+        db<IEEE1451_Dot5_TIM::My_Client_Socket>(INF) << "Message source is not NCAP Address!\n";
+        return;
+    }
+
+    if (!IEEE1451_Dot5_TIM::get_instance()->_connected)
+    {
+        db<IEEE1451_Dot5_TIM::My_Client_Socket>(INF) << "Dot5 not connected!\n";
+        return;
+    }
+
+    IEEE1451_Packet *in = (IEEE1451_Packet *) data;
+    const char *msg = data + sizeof(IEEE1451_Packet);
+
+    if (in->_length > 0)
+        IEEE1451_Dot0_TIM::get_instance()->receive_msg(in->_trans_id, msg, in->_length);
 }
 
 __END_SYS

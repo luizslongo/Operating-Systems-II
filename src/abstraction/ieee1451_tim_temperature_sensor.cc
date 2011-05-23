@@ -2,168 +2,167 @@
 
 __BEGIN_SYS
 
-
-IEEE1451TemperatureSensor::IEEE1451TemperatureSensor(bool tim_im, bool polling)
+IEEE1451_Temperature_Sensor::IEEE1451_Temperature_Sensor(bool tim_im, bool polling)
 {
-	this->channelNumber = 0x01; //Só suporta um transdutor por mote!
-	this->tim_im = tim_im;
-	this->polling = polling;
-	this->pos = 0;
-	this->executeThread = 0;
+    _channel_number = 0x01; //Só suporta um transdutor por mote!
+    _tim_im = tim_im;
+    _polling = polling;
+    _pos = 0;
+    _execute_thread = 0;
 
-	initTEDS();
+    init_teds();
 }
 
-IEEE1451TemperatureSensor::~IEEE1451TemperatureSensor()
+IEEE1451_Temperature_Sensor::~IEEE1451_Temperature_Sensor()
 {
-	if (executeThread)
-		delete executeThread;
+    if (_execute_thread)
+        delete _execute_thread;
 
-	if (channelArray)
-		delete channelArray;
-	if (tempSensorUtnArray)
-		delete tempSensorUtnArray;
+    if (_channel_array)
+        delete _channel_array;
+    if (_temp_sensor_utn_array)
+        delete _temp_sensor_utn_array;
 
-	if (CHANNEL_TEDS)
-		delete CHANNEL_TEDS;
-	if (TEMPSENSOR_UTN_TEDS)
-		delete TEMPSENSOR_UTN_TEDS;
+    if (_channel_teds)
+        delete _channel_teds;
+    if (_temp_sensor_utn_teds)
+        delete _temp_sensor_utn_teds;
 }
 
-void IEEE1451TemperatureSensor::initTEDS()
+void IEEE1451_Temperature_Sensor::init_teds()
 {
-	channelArray = new char[123];
-	channelArray[0] = 0x00; channelArray[1] = 0x00; channelArray[2] = 0x00; channelArray[3] = 0x77; channelArray[4] = 0x03; channelArray[5] = 0x04; channelArray[6] = 0x00; channelArray[7] = 0x03; channelArray[8] = 0x01; channelArray[9] = 0x01; channelArray[10] = 0x0a; channelArray[11] = 0x01; channelArray[12] = 0x00; channelArray[13] = 0x0b; channelArray[14] = 0x01; channelArray[15] = 0x00; channelArray[16] = 0x0c; channelArray[17] = 0x06; channelArray[18] = 0x32; channelArray[19] = 0x01; channelArray[20] = 0x00; channelArray[21] = 0x39; channelArray[22] = 0x01; channelArray[23] = 0x82; channelArray[24] = 0x0d; channelArray[25] = 0x04; channelArray[26] = 0x43; channelArray[27] = 0x69; channelArray[28] = 0x00; channelArray[29] = 0x00; channelArray[30] = 0x0e; channelArray[31] = 0x04; channelArray[32] = 0x43; channelArray[33] = 0xb0; channelArray[34] = 0x80; channelArray[35] = 0x00; channelArray[36] = 0x0f; channelArray[37] = 0x04; channelArray[38] = 0x3f; channelArray[39] = 0x00; channelArray[40] = 0x00; channelArray[41] = 0x00; channelArray[42] = 0x10; channelArray[43] = 0x01; channelArray[44] = 0x00; channelArray[45] = 0x12; channelArray[46] = 0x09; channelArray[47] = 0x28; channelArray[48] = 0x01; channelArray[49] = 0x01; channelArray[50] = 0x29; channelArray[51] = 0x01; channelArray[52] = 0x04; channelArray[53] = 0x2a; channelArray[54] = 0x01; channelArray[55] = 0x00; channelArray[56] = 0x13; channelArray[57] = 0x1c; channelArray[58] = 0x2b; channelArray[59] = 0x02; channelArray[60] = 0x00; channelArray[61] = 0x0a; channelArray[62] = 0x2c; channelArray[63] = 0x04; channelArray[64] = 0x00; channelArray[65] = 0x00; channelArray[66] = 0x00; channelArray[67] = 0x00; channelArray[68] = 0x2d; channelArray[69] = 0x04; channelArray[70] = 0x41; channelArray[71] = 0x20; channelArray[72] = 0x00; channelArray[73] = 0x00; channelArray[74] = 0x2e; channelArray[75] = 0x06; channelArray[76] = 0x32; channelArray[77] = 0x01; channelArray[78] = 0x00; channelArray[79] = 0x37; channelArray[80] = 0x01; channelArray[81] = 0x82; channelArray[82] = 0x2f; channelArray[83] = 0x02; channelArray[84] = 0x00; channelArray[85] = 0x00; channelArray[86] = 0x16; channelArray[87] = 0x04; channelArray[88] = 0x00; channelArray[89] = 0x00; channelArray[90] = 0x00; channelArray[91] = 0x00; channelArray[92] = 0x17; channelArray[93] = 0x04; channelArray[94] = 0x3d; channelArray[95] = 0xcc; channelArray[96] = 0xcc; channelArray[97] = 0xcd; channelArray[98] = 0x18; channelArray[99] = 0x04; channelArray[100] = 0x00; channelArray[101] = 0x00; channelArray[102] = 0x00; channelArray[103] = 0x00; channelArray[104] = 0x19; channelArray[105] = 0x04; channelArray[106] = 0x3f; channelArray[107] = 0x00; channelArray[108] = 0x00; channelArray[109] = 0x00; channelArray[110] = 0x1f; channelArray[111] = 0x06; channelArray[112] = 0x30; channelArray[113] = 0x01; channelArray[114] = 0x02; channelArray[115] = 0x31; channelArray[116] = 0x01; channelArray[117] = 0x02; channelArray[118] = 0x22; channelArray[119] = 0x01; /*channelArray[120] = 0x02;*/ channelArray[121] = 0xf4; channelArray[122] = 0xa5; //checksum errado
-	CHANNEL_TEDS = new TEDS_TIM(channelArray, 123);
+    _channel_array = new char[123];
+    _channel_array[0] = 0x00; _channel_array[1] = 0x00; _channel_array[2] = 0x00; _channel_array[3] = 0x77; _channel_array[4] = 0x03; _channel_array[5] = 0x04; _channel_array[6] = 0x00; _channel_array[7] = 0x03; _channel_array[8] = 0x01; _channel_array[9] = 0x01; _channel_array[10] = 0x0a; _channel_array[11] = 0x01; _channel_array[12] = 0x00; _channel_array[13] = 0x0b; _channel_array[14] = 0x01; _channel_array[15] = 0x00; _channel_array[16] = 0x0c; _channel_array[17] = 0x06; _channel_array[18] = 0x32; _channel_array[19] = 0x01; _channel_array[20] = 0x00; _channel_array[21] = 0x39; _channel_array[22] = 0x01; _channel_array[23] = 0x82; _channel_array[24] = 0x0d; _channel_array[25] = 0x04; _channel_array[26] = 0x43; _channel_array[27] = 0x69; _channel_array[28] = 0x00; _channel_array[29] = 0x00; _channel_array[30] = 0x0e; _channel_array[31] = 0x04; _channel_array[32] = 0x43; _channel_array[33] = 0xb0; _channel_array[34] = 0x80; _channel_array[35] = 0x00; _channel_array[36] = 0x0f; _channel_array[37] = 0x04; _channel_array[38] = 0x3f; _channel_array[39] = 0x00; _channel_array[40] = 0x00; _channel_array[41] = 0x00; _channel_array[42] = 0x10; _channel_array[43] = 0x01; _channel_array[44] = 0x00; _channel_array[45] = 0x12; _channel_array[46] = 0x09; _channel_array[47] = 0x28; _channel_array[48] = 0x01; _channel_array[49] = 0x01; _channel_array[50] = 0x29; _channel_array[51] = 0x01; _channel_array[52] = 0x04; _channel_array[53] = 0x2a; _channel_array[54] = 0x01; _channel_array[55] = 0x00; _channel_array[56] = 0x13; _channel_array[57] = 0x1c; _channel_array[58] = 0x2b; _channel_array[59] = 0x02; _channel_array[60] = 0x00; _channel_array[61] = 0x0a; _channel_array[62] = 0x2c; _channel_array[63] = 0x04; _channel_array[64] = 0x00; _channel_array[65] = 0x00; _channel_array[66] = 0x00; _channel_array[67] = 0x00; _channel_array[68] = 0x2d; _channel_array[69] = 0x04; _channel_array[70] = 0x41; _channel_array[71] = 0x20; _channel_array[72] = 0x00; _channel_array[73] = 0x00; _channel_array[74] = 0x2e; _channel_array[75] = 0x06; _channel_array[76] = 0x32; _channel_array[77] = 0x01; _channel_array[78] = 0x00; _channel_array[79] = 0x37; _channel_array[80] = 0x01; _channel_array[81] = 0x82; _channel_array[82] = 0x2f; _channel_array[83] = 0x02; _channel_array[84] = 0x00; _channel_array[85] = 0x00; _channel_array[86] = 0x16; _channel_array[87] = 0x04; _channel_array[88] = 0x00; _channel_array[89] = 0x00; _channel_array[90] = 0x00; _channel_array[91] = 0x00; _channel_array[92] = 0x17; _channel_array[93] = 0x04; _channel_array[94] = 0x3d; _channel_array[95] = 0xcc; _channel_array[96] = 0xcc; _channel_array[97] = 0xcd; _channel_array[98] = 0x18; _channel_array[99] = 0x04; _channel_array[100] = 0x00; _channel_array[101] = 0x00; _channel_array[102] = 0x00; _channel_array[103] = 0x00; _channel_array[104] = 0x19; _channel_array[105] = 0x04; _channel_array[106] = 0x3f; _channel_array[107] = 0x00; _channel_array[108] = 0x00; _channel_array[109] = 0x00; _channel_array[110] = 0x1f; _channel_array[111] = 0x06; _channel_array[112] = 0x30; _channel_array[113] = 0x01; _channel_array[114] = 0x02; _channel_array[115] = 0x31; _channel_array[116] = 0x01; _channel_array[117] = 0x02; _channel_array[118] = 0x22; _channel_array[119] = 0x01; /*_channel_array[120] = 0x02;*/_channel_array[121] = 0xf4; _channel_array[122] = 0xa5; //checksum errado
+    _channel_teds = new IEEE1451_TEDS_TIM(_channel_array, 123);
 
-	if (!tim_im)
-		channelArray[120] = 0x01;
-	else if (tim_im)
-		channelArray[120] = 0x02;
+    if (!_tim_im)
+        _channel_array[120] = 0x01;
+    else if (_tim_im)
+        _channel_array[120] = 0x02;
 
-	tempSensorUtnArray = new char[43];
-	tempSensorUtnArray[0] = 0x00; tempSensorUtnArray[1] = 0x00; tempSensorUtnArray[2] = 0x00; tempSensorUtnArray[3] = 0x27; tempSensorUtnArray[4] = 0x03; tempSensorUtnArray[5] = 0x04; tempSensorUtnArray[6] = 0x00; tempSensorUtnArray[7] = 0x0c; tempSensorUtnArray[8] = 0x01; tempSensorUtnArray[9] = 0x01; tempSensorUtnArray[10] = 0x04; tempSensorUtnArray[11] = 0x01; tempSensorUtnArray[12] = 0x00; tempSensorUtnArray[13] = 0x05; tempSensorUtnArray[14] = 0x1a; tempSensorUtnArray[15] = 0x4f; tempSensorUtnArray[16] = 0x6e; tempSensorUtnArray[17] = 0x62; tempSensorUtnArray[18] = 0x6f; tempSensorUtnArray[19] = 0x61; tempSensorUtnArray[20] = 0x72; tempSensorUtnArray[21] = 0x64; tempSensorUtnArray[22] = 0x20; tempSensorUtnArray[23] = 0x54; tempSensorUtnArray[24] = 0x65; tempSensorUtnArray[25] = 0x6d; tempSensorUtnArray[26] = 0x70; tempSensorUtnArray[27] = 0x65; tempSensorUtnArray[28] = 0x72; tempSensorUtnArray[29] = 0x61; tempSensorUtnArray[30] = 0x74; tempSensorUtnArray[31] = 0x75; tempSensorUtnArray[32] = 0x72; tempSensorUtnArray[33] = 0x65; tempSensorUtnArray[34] = 0x20; tempSensorUtnArray[35] = 0x53; tempSensorUtnArray[36] = 0x65; tempSensorUtnArray[37] = 0x6e; tempSensorUtnArray[38] = 0x73; tempSensorUtnArray[39] = 0x6f; tempSensorUtnArray[40] = 0x72; tempSensorUtnArray[41] = 0xf5; tempSensorUtnArray[42] = 0x92; //checksum errado
-	TEMPSENSOR_UTN_TEDS = new TEDS_TIM(tempSensorUtnArray, 43);
+    _temp_sensor_utn_array = new char[43];
+    _temp_sensor_utn_array[0] = 0x00; _temp_sensor_utn_array[1] = 0x00; _temp_sensor_utn_array[2] = 0x00; _temp_sensor_utn_array[3] = 0x27; _temp_sensor_utn_array[4] = 0x03; _temp_sensor_utn_array[5] = 0x04; _temp_sensor_utn_array[6] = 0x00; _temp_sensor_utn_array[7] = 0x0c; _temp_sensor_utn_array[8] = 0x01; _temp_sensor_utn_array[9] = 0x01; _temp_sensor_utn_array[10] = 0x04; _temp_sensor_utn_array[11] = 0x01; _temp_sensor_utn_array[12] = 0x00; _temp_sensor_utn_array[13] = 0x05; _temp_sensor_utn_array[14] = 0x1a; _temp_sensor_utn_array[15] = 0x4f; _temp_sensor_utn_array[16] = 0x6e; _temp_sensor_utn_array[17] = 0x62; _temp_sensor_utn_array[18] = 0x6f; _temp_sensor_utn_array[19] = 0x61; _temp_sensor_utn_array[20] = 0x72; _temp_sensor_utn_array[21] = 0x64; _temp_sensor_utn_array[22] = 0x20; _temp_sensor_utn_array[23] = 0x54; _temp_sensor_utn_array[24] = 0x65; _temp_sensor_utn_array[25] = 0x6d; _temp_sensor_utn_array[26] = 0x70; _temp_sensor_utn_array[27] = 0x65; _temp_sensor_utn_array[28] = 0x72; _temp_sensor_utn_array[29] = 0x61; _temp_sensor_utn_array[30] = 0x74; _temp_sensor_utn_array[31] = 0x75; _temp_sensor_utn_array[32] = 0x72; _temp_sensor_utn_array[33] = 0x65; _temp_sensor_utn_array[34] = 0x20; _temp_sensor_utn_array[35] = 0x53; _temp_sensor_utn_array[36] = 0x65; _temp_sensor_utn_array[37] = 0x6e; _temp_sensor_utn_array[38] = 0x73; _temp_sensor_utn_array[39] = 0x6f; _temp_sensor_utn_array[40] = 0x72; _temp_sensor_utn_array[41] = 0xf5; _temp_sensor_utn_array[42] = 0x92; //checksum errado
+    _temp_sensor_utn_teds = new IEEE1451_TEDS_TIM(_temp_sensor_utn_array, 43);
 }
 
-TEDS_TIM *IEEE1451TemperatureSensor::getTEDS(char id)
+IEEE1451_TEDS_TIM *IEEE1451_Temperature_Sensor::get_teds(char id)
 {
-	if (id == 0x03)
-		return CHANNEL_TEDS;
-	else if (id == 0x0c)
-		return TEMPSENSOR_UTN_TEDS;
-	return 0;
+    if (id == 0x03)
+        return _channel_teds;
+    else if (id == 0x0c)
+        return _temp_sensor_utn_teds;
+    return 0;
 }
 
-void IEEE1451TemperatureSensor::start()
+void IEEE1451_Temperature_Sensor::start()
 {
-	db<IEEE1451TemperatureSensor>(INF) << "Temperature sensor start\n";
-	executeThread->resume();
+    db<IEEE1451_Temperature_Sensor>(INF) << "Temperature sensor start\n";
+    _execute_thread->resume();
 }
 
-void IEEE1451TemperatureSensor::stop()
+void IEEE1451_Temperature_Sensor::stop()
 {
-	db<IEEE1451TemperatureSensor>(INF) << "Temperature sensor stop\n";
-	executeThread->suspend();
+    db<IEEE1451_Temperature_Sensor>(INF) << "Temperature sensor stop\n";
+    _execute_thread->suspend();
 }
 
-void IEEE1451TemperatureSensor::readDataSet(unsigned short transId, unsigned int offset)
+void IEEE1451_Temperature_Sensor::read_data_set(unsigned short trans_id, unsigned int offset)
 {
-	db<IEEE1451TemperatureSensor>(INF) << "Reading data set (polling)...\n";
+    db<IEEE1451_Temperature_Sensor>(INF) << "Reading data set (polling)...\n";
 
-	unsigned int size = sizeof(DataSetReadReply) + DATASET_SIZE * sizeof(float);
-	char *buffer = new char[size];
+    unsigned int size = sizeof(Data_Set_Read_Reply) + DATASET_SIZE * sizeof(float);
+    char *buffer = new char[size];
 
-	DataSetReadReply *readReply = (DataSetReadReply *) buffer;
-	float *data = (float *) (buffer + sizeof(DataSetReadReply));
+    Data_Set_Read_Reply *read_reply = (Data_Set_Read_Reply *) buffer;
+    float *data = (float *) (buffer + sizeof(Data_Set_Read_Reply));
 
-	readReply->header.success = true;
-	readReply->header.length = DATASET_SIZE * sizeof(float) + sizeof(readReply->offset);
-	readReply->offset = 0; //TODO: Ver esquema do offset
+    read_reply->_header._success = true;
+    read_reply->_header._length = DATASET_SIZE * sizeof(float) + sizeof(read_reply->_offset);
+    read_reply->_offset = 0;
 
-	dataSetMutex.lock();
-	for (int i = 0, j = pos; i < DATASET_SIZE; i++)
-	{
-		data[i] = dataSet[j];
-		j = (j + 1) % DATASET_SIZE;
-	}
-	dataSetMutex.unlock();
+    _data_set_mutex.lock();
+    for (int i = 0, j = _pos; i < DATASET_SIZE; i++)
+    {
+        data[i] = _data_set[j];
+        j = (j + 1) % DATASET_SIZE;
+    }
+    _data_set_mutex.unlock();
 
-	IEEE1451dot5_TIM::getInstance()->sendMessage(transId, buffer, size);
-	delete[] buffer;
+    IEEE1451_Dot5_TIM::get_instance()->send_msg(trans_id, buffer, size);
+    delete[] buffer;
 }
 
-void IEEE1451TemperatureSensor::sendDataSet()
+void IEEE1451_Temperature_Sensor::send_data_set()
 {
-	db<IEEE1451TemperatureSensor>(INF) << "Sending data set (tim_im)...\n";
+    db<IEEE1451_Temperature_Sensor>(INF) << "Sending data set (tim_im)...\n";
 
-	unsigned int size = sizeof(Command) + DATASET_SIZE * sizeof(float);
-	char *buffer = new char[size];
+    unsigned int size = sizeof(Command) + DATASET_SIZE * sizeof(float);
+    char *buffer = new char[size];
 
-	Command *cmd = (Command *) buffer;
-	float *data = (float *) (buffer + sizeof(Command));
+    Command *cmd = (Command *) buffer;
+    float *data = (float *) (buffer + sizeof(Command));
 
-	cmd->channelNumber = channelNumber;
-	cmd->command = COMMAND_CLASS_READ_TRANSDUCER_CHANNEL_DATA_SET_SEGMENT;
-	cmd->length = DATASET_SIZE * sizeof(float);
+    cmd->_channel_number = _channel_number;
+    cmd->_command = COMMAND_CLASS_READ_TRANSDUCER_CHANNEL_DATA_SET_SEGMENT;
+    cmd->_length = DATASET_SIZE * sizeof(float);
 
-	dataSetMutex.lock();
-	for (int i = 0, j = pos; i < DATASET_SIZE; i++)
-	{
-		data[i] = dataSet[j];
-		j = (j + 1) % DATASET_SIZE;
-	}
-	dataSetMutex.unlock();
+    _data_set_mutex.lock();
+    for (int i = 0, j = _pos; i < DATASET_SIZE; i++)
+    {
+        data[i] = _data_set[j];
+        j = (j + 1) % DATASET_SIZE;
+    }
+    _data_set_mutex.unlock();
 
-	IEEE1451dot5_TIM::getInstance()->sendMessage(0, buffer, size);
-	delete[] buffer;
+    IEEE1451_Dot5_TIM::get_instance()->send_msg(0, buffer, size);
+    delete[] buffer;
 }
 
-int IEEE1451TemperatureSensor::execute()
+int IEEE1451_Temperature_Sensor::execute()
 {
-	db<IEEE1451TemperatureSensor>(INF) << "Temperature sensor execute thread created\n";
+    db<IEEE1451_Temperature_Sensor>(INF) << "Temperature sensor execute thread created\n";
 
-	executeThread = Thread::self();
-	IEEE1451dot5_TIM::getInstance()->connect();
-	executeThread->suspend();
-	int count = 1;
+    _execute_thread = Thread::self();
+    IEEE1451_Dot5_TIM::get_instance()->connect();
+    _execute_thread->suspend();
+    int count = 1;
 
-	while (true)
-	{
-		if ((tim_im) && (!polling) && (pos == 0))
-			IEEE1451dot5_TIM::getInstance()->disconnect();
+    while (true)
+    {
+        if ((_tim_im) && (!_polling) && (_pos == 0))
+            IEEE1451_Dot5_TIM::get_instance()->disconnect();
 
-		db<IEEE1451TemperatureSensor>(INF) << "Collecting data (pos = " << pos << ")...\n";
+        db<IEEE1451_Temperature_Sensor>(INF) << "Collecting data (pos = " << _pos << ")...\n";
 
-		//while (!temperature.enable());
-		//while (!temperature.data_ready());
+        //while (!_temperature.enable());
+        //while (!_temperature.data_ready());
 
-		dataSetMutex.lock();
-		dataSet[pos] = count++; //(float) temperature.sample();
-		pos = (pos + 1) % DATASET_SIZE;
-		dataSetMutex.unlock();
+        _data_set_mutex.lock();
+        _data_set[_pos] = count++; //(float) _temperature.sample();
+        _pos = (_pos + 1) % DATASET_SIZE;
+        _data_set_mutex.unlock();
 
-		//temperature.disable();
-		Alarm::delay(READ_INTERVAL);
+        //_temperature.disable();
+        Alarm::delay(READ_INTERVAL);
 
-		if ((tim_im) && (!polling) && (pos == 0))
-			IEEE1451dot5_TIM::getInstance()->connect();
+        if ((_tim_im) && (!_polling) && (_pos == 0))
+            IEEE1451_Dot5_TIM::get_instance()->connect();
 
-		if ((tim_im) && (pos == 0))
-			sendDataSet();
-	}
+        if ((_tim_im) && (_pos == 0))
+            send_data_set();
+    }
 
-	return 0;
+    return 0;
 }
 
-/* IEEE 1451.0 (2007) -> Cap. 5.10
-   -> TIM-Initiated Message
-      Sampling modes: Continuous sampling mode
-      Data transmission mode: Streaming when a buffer is full mode
-         Streaming operation = Continuous sampling + Streaming when a buffer is full
+/* IEEE 1451.0 (2007) -> Chapter 5.10
+    -> TIM-Initiated Message
+       Sampling modes: Continuous sampling mode
+       Data transmission mode: Streaming when a buffer is full mode
+       Streaming operation = Continuous sampling + Streaming when a buffer is full
 
-   -> Polling
-      Sampling modes: Continuous sampling mode
-      Data transmission mode: Only when commanded mode */
+    -> Polling
+       Sampling modes: Continuous sampling mode
+       Data transmission mode: Only when commanded mode */
 
 __END_SYS
