@@ -30,9 +30,7 @@ public:
     IP_Address(u8 a0, u8 a1 = 0, u8 a2 = 0, u8 a3 = 0)
         : NIC_Common::Address<4>(a0, a1, a2, a3) {}
 
-    operator u32() { return *reinterpret_cast<u32 *>(this); }
-    operator u32() const { return *reinterpret_cast<const u32 *>(this); }
-    
+  
     // create from string representation
     IP_Address(const char * _addr) {
         unsigned char addr[4];
@@ -47,26 +45,13 @@ public:
         memcpy(this,addr,sizeof(this));
     }
    
-    template<typename T>
-    friend T& operator<<(T& db,const IP_Address& addr) {
+    friend Debug& operator<<(Debug& db,const IP_Address& addr) {
         const u8 * _addr = reinterpret_cast<const u8*>(&addr);
         db << dec << (int)(_addr[0]) << "." << (int)(_addr[1]) 
            << "." << (int)(_addr[2]) << "." << (int)(_addr[3]);
         return db;
     }
 
-    // should be moved to other place
-    int utoa(unsigned long v,char * dst) {
-        int i=0,j;
-        // special case for v=0
-        if (v == 0) {
-            dst[i++] = '0';
-        }
-        for(j = v; j != 0; i++, j /= 10);
-        for(j = 0; v != 0; j++, v /= 10)
-            dst[i - 1 - j] = '0' + (v % 10);
-        return i;
-    }
     // convert to string
     char* to_string(char * dst) {
         const u8 * _addr = reinterpret_cast<const u8*>(this);
@@ -87,6 +72,9 @@ public:
         u32 c2 = u32(other) & u32(mask);
         return c1 == c2;
     }
+    
+    operator u32() { return *reinterpret_cast<u32 *>(this); }
+    operator u32() const { return *reinterpret_cast<const u32 *>(this); }
 };
 
 class IP: public NIC_Common, /*public NIC::Observer,*/ public Data_Observed<IP_Address>

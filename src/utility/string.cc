@@ -20,6 +20,7 @@ extern "C"
     size_t strlen(const char * s) __attribute__ ((weak));
     long atol(const char * s) __attribute__ ((weak));
     char *itoa(int value, char *str) __attribute__ ((weak));
+    int utoa(unsigned long v,char * dst) __attribute__((weak));
 
     int memcmp(const void * m1, const void * m2, size_t n)
     {
@@ -420,7 +421,7 @@ extern "C"
     char *itoa(int value, char *str)
     {
         char *s = str;
-    	char buffer[11];
+        char buffer[11];
         char *buf = buffer;
         unsigned int v;
 
@@ -447,5 +448,17 @@ extern "C"
         *s = 0;
 
         return str;
+    }
+    
+    int utoa(unsigned long v,char * dst)
+    {
+        int i=0,j;
+        // special case for v=0
+        if (v == 0)
+            dst[i++] = '0';
+        for(j = v; j != 0; i++, j /= 10);
+        for(j = 0; v != 0; j++, v /= 10)
+            dst[i - 1 - j] = '0' + (v % 10);
+        return i;
     }
 }

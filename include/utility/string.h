@@ -18,6 +18,7 @@ extern "C" {
     size_t strlen(const char * s);
     long atol(const char *s);
     char *itoa(int v, char *s);
+    int utoa(unsigned long v,char * d);
 }
 
 #endif
