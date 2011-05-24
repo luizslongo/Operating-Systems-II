@@ -7,12 +7,47 @@ const IP::Address IP::NULL = IP::Address((u32)0);
 
 u16 IP::Header::pktid = 0; // incremental packet id
 
+// IP::Address
+
+IP_Address::IP_Address(const char * _addr) {
+    unsigned char addr[4];
+    addr[0] = 0; addr[1] = 0; addr[2] = 0; addr[3] = 0;
+    int i;
+    for(i=0;i<4;++i) {
+        char * sep = strchr(_addr,'.');
+        addr[i] = atol(_addr);
+        if (!sep) break;
+        _addr = ++sep;
+    }
+    memcpy(this,addr,sizeof(this));
+}
+
+char* IP_Address::to_string(char * dst) {
+    const u8 * _addr = reinterpret_cast<const u8*>(this);
+    char* p = dst;
+    for(int i=0;i<4;i++) {
+        p += utoa(_addr[i], p);
+        *p++ = '.';
+    }
+    // remove last dot
+    --p;
+    *p = 0;
+    return p;
+}
+
+Debug& operator<<(Debug& db,const IP_Address& addr) {
+   const u8 * _addr = reinterpret_cast<const u8*>(&addr);
+   db << dec << (int)(_addr[0]) << "." << (int)(_addr[1])
+      << "." << (int)(_addr[2]) << "." << (int)(_addr[3]);
+   return db;
+}
+
 // IP::Header
+
 void IP::Header::calculate_checksum() {
     _checksum = 0;
     _checksum = ~(IP::calculate_checksum(this, hlength()));
 }
-
 
 // IP
 

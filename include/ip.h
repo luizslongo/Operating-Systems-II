@@ -31,40 +31,13 @@ public:
         : NIC_Common::Address<4>(a0, a1, a2, a3) {}
 
   
-    // create from string representation
-    IP_Address(const char * _addr) {
-        unsigned char addr[4];
-        addr[0] = 0; addr[1] = 0; addr[2] = 0; addr[3] = 0;
-        int i;
-        for(i=0;i<4;++i) {
-            char * sep = strchr(_addr,'.');
-            addr[i] = atol(_addr);
-            if (!sep) break;
-            _addr = ++sep;
-        }
-        memcpy(this,addr,sizeof(this));
-    }
+    //* create from string representation in the form A.B.C.D
+    IP_Address(const char * _addr);
    
-    friend Debug& operator<<(Debug& db,const IP_Address& addr) {
-        const u8 * _addr = reinterpret_cast<const u8*>(&addr);
-        db << dec << (int)(_addr[0]) << "." << (int)(_addr[1]) 
-           << "." << (int)(_addr[2]) << "." << (int)(_addr[3]);
-        return db;
-    }
+    friend Debug& operator<<(Debug& db,const IP_Address& addr);
 
-    // convert to string
-    char* to_string(char * dst) {
-        const u8 * _addr = reinterpret_cast<const u8*>(this);
-        char* p = dst;
-        for(int i=0;i<4;i++) {
-            p += utoa(_addr[i], p);
-            *p++ = '.';
-        }
-        // remove last dot
-        --p;
-        *p = 0;
-        return p;
-    }
+    //* convert to string pointed by dst and return last char position
+    char* to_string(char * dst);
     
     bool is_neighbor(IP_Address other,IP_Address mask) const
     {
@@ -194,9 +167,6 @@ public:
         static unsigned short pktid;
     };
 
-    //MAC_Address arp(const Address & la);
-    //Address    rarp(const MAC_Address & pa);
-
     const Address & address() { return _self; }
     const Address & gateway() { return _gateway; }
     const Address & netmask() { return _netmask; }
@@ -216,7 +186,6 @@ public:
 
     s32 send(const Address & from,const Address & to,SegmentedBuffer * data,Protocol proto);
 
-    //TODO: unit not working
     IP(unsigned int unit=0);
     ~IP();
 
