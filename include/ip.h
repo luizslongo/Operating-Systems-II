@@ -30,9 +30,7 @@ public:
     IP_Address(u8 a0, u8 a1 = 0, u8 a2 = 0, u8 a3 = 0)
         : NIC_Common::Address<4>(a0, a1, a2, a3) {}
 
-    operator u32() { return *reinterpret_cast<u32 *>(this); }
-    operator u32() const { return *reinterpret_cast<const u32 *>(this); }
-    
+  
     // create from string representation
     IP_Address(const char * _addr) {
         unsigned char addr[4];
@@ -54,18 +52,6 @@ public:
         return db;
     }
 
-    // should be moved to other place
-    int utoa(unsigned long v,char * dst) {
-        int i=0,j;
-        // special case for v=0
-        if (v == 0) {
-            dst[i++] = '0';
-        }
-        for(j = v; j != 0; i++, j /= 10);
-        for(j = 0; v != 0; j++, v /= 10)
-            dst[i - 1 - j] = '0' + (v % 10);
-        return i;
-    }
     // convert to string
     char* to_string(char * dst) {
         const u8 * _addr = reinterpret_cast<const u8*>(this);
@@ -86,6 +72,9 @@ public:
         u32 c2 = u32(other) & u32(mask);
         return c1 == c2;
     }
+    
+    operator u32() { return *reinterpret_cast<u32 *>(this); }
+    operator u32() const { return *reinterpret_cast<const u32 *>(this); }
 };
 
 class IP: public NIC_Common, /*public NIC::Observer,*/ public Data_Observed<IP_Address>
@@ -96,7 +85,9 @@ public:
     typedef IP_Address                Address;
     typedef NIC::Address              MAC_Address;
     typedef u8                        Protocol;
-    typedef ARP_Router<NIC, IP>       Router;
+    typedef IF<Traits<IP>::use_arp,
+               ARP_Router<NIC, IP>,
+               ADHOP_Router<NIC, IP> >::Result  Router;
 
     static const u16 MTU = ~0;
     static const Address BROADCAST;

@@ -148,41 +148,50 @@ class AT90CAN128_NIC;
 class ATMega1281_NIC;
 class ATMega128_Radio;
 class ATMega1281_Radio;
+class Radio_Wrapper;
 class ML310_NIC;
 class PLASMA_NIC;
-class CMAC;
-namespace CMAC_States
-{
-    class Empty;
-    class Sync_Empty;
-    class Pack_Empty;
-    class Contention_Empty;
-    class Tx_Empty;
-    class Ack_Rx_Empty;
-    class Lpl_Empty;
-    class Rx_Empty;
-    class Unpack_Empty;
-    class Ack_Tx_Empty;
+template<typename> class CMAC;
+template<typename> class CMAC_State;
 
-    class Generic_Sync;
-    class Generic_Tx;
-    class Generic_Rx;
-    class Generic_Lpl;
-    class Unslotted_CSMA_Contention;
+template<typename> class Empty;
+template<typename> class Sync_Empty;
+template<typename> class Pack_Empty;
+template<typename> class Contention_Empty;
+template<typename> class Tx_Empty;
+template<typename> class Ack_Rx_Empty;
+template<typename> class Lpl_Empty;
+template<typename> class Rx_Empty;
+template<typename> class Unpack_Empty;
+template<typename> class Ack_Tx_Empty;
 
-    class IEEE802154_Beacon_Sync;
-    class IEEE802154_Pack;
-    class IEEE802154_Unpack;
-    class IEEE802154_Ack_Rx;
-    class IEEE802154_Ack_Tx;
-    class IEEE802154_Slotted_CSMA_Contention;
-};
+template<typename> class Synchronous_Sync;
+template<typename> class Asynchronous_Sync;
+template<typename> class Rx_Contention;
+template<typename> class Tx_Contention;
+template<typename> class Backoff;
+template<typename> class CSMA;
+
+template<typename> class Generic_Active;
+template<typename> class Generic_Tx;
+template<typename> class Generic_Rx;
+template<typename> class Generic_Lpl;
+
+template<typename> class IEEE802154_Beacon_Sync;
+template<typename> class IEEE802154_Pack;
+template<typename> class IEEE802154_Unpack;
+template<typename> class IEEE802154_Ack_Rx;
+template<typename> class IEEE802154_Ack_Tx;
+template<typename> class IEEE802154_Slotted_CSMA_Contention;
 
 // Hardware Mediators - ADCs
 class AT90CAN128_ADC;
 class ATMega16_ADC;
 class ATMega128_ADC;
 class ATMega1281_ADC;
+
+// Hardware Mediators - Battery
+class ATMega1281_Battery;
 
 // Hardware Mediators - Sensors
 class PC_Sensor;
@@ -199,6 +208,7 @@ class Dummy_Accel;
 class SHT11;
 class SHT11_Temperature;
 class SHT11_Humidity;
+class ERTJ1VG103FA;
 
 // Abstractions	- Process
 class Thread;
@@ -237,12 +247,14 @@ class Chronometer;
 // Abstractions	- Communication
 class Ethernet;
 template <typename, typename> class ARP;
+template <typename, typename> class ADHOP;
 class Network;
 class IP;
-class ICMP;
 class UDP;
-template <typename> class Channel;
-typedef Channel<UDP> UDP_Channel;
+class TCP;
+class ICMP;
+template<class,class> class BCast_Router;
+template<class,class> class ARP_Router;
 
 // Abstractions	- Sentients
 class Photo_Sentient;
@@ -272,6 +284,7 @@ enum
     NIC_ID,
     RADIO_ID,
     ADC_ID,
+    BATTERY_ID,
     TEMPERATURE_SENSOR_ID,
     PHOTO_SENSOR_ID,
     ACCELEROMETER_ID,

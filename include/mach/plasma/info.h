@@ -20,6 +20,7 @@ public:
     // The information we have at boot time (built up by MKBI)
 
     struct Boot_Map      {
+       unsigned int n_cpus;     // Number of CPUs in SMPs
        PAddr mem_base;          // Memory base address
        PAddr mem_top;           // Memory top address
        PAddr io_mem_base;       // I/O Memory base address

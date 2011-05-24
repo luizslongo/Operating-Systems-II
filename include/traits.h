@@ -71,8 +71,8 @@ template <> struct Traits<Serial_Display>: public Traits<void>
 // Abstractions
 template <> struct Traits<Thread>: public Traits<void>
 {
-    typedef Scheduling_Criteria::CPU_Affinity Criterion;
-    static const bool smp = true;
+    typedef Scheduling_Criteria::Priority Criterion;
+    static const bool smp = false;
     static const bool trace_idle = false;
     static const unsigned int QUANTUM = 10000; // us
 };
@@ -96,11 +96,12 @@ template <> struct Traits<Network>: public Traits<void>
 template <> struct Traits<IP>: public Traits<void>{
     static const unsigned long ADDRESS = 0xc0a80a01;   // 192.168.10.1
     static const unsigned long NETMASK = 0xffffff00;   // 255.255.255.0
-    static const unsigned long BROADCAST = 0; // 0= Default Broadcast Address
+    static const unsigned long BROADCAST = 0; 
 
     static const bool dynamic      = false; // true=dhcp false=static
     static const bool spawn_thread = true;  // automatic creation of IP's worker thread
 
+    static const bool use_arp = true; // use Address Resolution Protocol
     static const unsigned int  OPT_SIZE = 0; // options size in 32-bit words
     static const unsigned char DEF_TTL = 0x40; // time-to-live
 
@@ -112,6 +113,24 @@ template <> struct Traits<UDP> : public Traits<IP> {
 
 template <> struct Traits<ICMP> : public Traits<IP> {
         static const bool echo_reply = true;
+};
+
+template <> struct Traits<CMAC<Radio_Wrapper> >: public Traits<void>
+{
+    static const bool debugged = false;
+
+    static const bool time_triggered = false;
+    static const bool coordinator    = false;
+    static const bool ack            = false;
+    static const bool csma           = false;
+    static const bool rts_cts        = false;
+
+    static const unsigned long SLEEPING_PERIOD = 1000;  // ms
+    static const unsigned long TIMEOUT         = 50;    // ms
+    static const unsigned long BACKOFF         = 2;     // ms
+    static const unsigned char ADDRESS         = 0x0001;
+    static const unsigned int  MTU             = 118; 
+    static const unsigned int  MAX_NEIGHBORS   = 3;
 };
 
 __END_SYS

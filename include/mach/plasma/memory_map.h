@@ -11,18 +11,18 @@ template <>
 struct Memory_Map<PLASMA>
 {
     enum Memory {
-        MEM_BASE =              0,
-        MEM_SIZE =              1 * 1024 * 1024,
+        MEM_BASE =              0x10000010,
+        MEM_SIZE =              (1 * 1024 * 1024) - 16,
     };
 
     enum Map {
-        BASE =          0x10000000,
+        BASE =          0x10000010,
         TOP =           0x10100000,
-        APP_LO =        0x10000000,
-        APP_CODE =      0x10000000,
+        APP_LO =        0x10000010,
+        APP_CODE =      0x10000010,
         APP_DATA =      0x10080000,
         APP_HI =        0x100A0000,
-        PHY_MEM =       0x10000000,
+        PHY_MEM =       0x10000004,
         IO_MEM =        0x20000000,
         INT_VEC =       0x0000003C,
         SYS_INFO =      0x1FFFF000,

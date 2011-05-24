@@ -14,13 +14,14 @@ protected:
     Radio_Common() {}
 
 public:
+    typedef NIC_Common::Address<1> Address;
+    typedef unsigned char Protocol;
+
     static const unsigned int MTU = 24;  
     static const unsigned int HEADER_SIZE = 6;
     static const unsigned int TRAILER_SIZE = 2;
-    static const unsigned short BROADCAST = ~0;
+    static const Address BROADCAST;
 
-    typedef NIC_Common::Address<1> Address;
-    typedef unsigned char Protocol;
     typedef char PDU[MTU];
 
     class Frame {

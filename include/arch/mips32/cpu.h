@@ -20,7 +20,7 @@ public:
 	enum STATUS_REG {
 		STATUS_CURRENT		= 0x0003,   // 00000000.00000011
 		STATUS_PREVIOUS		= 0x000C,   // 00000000.00001100
-		STATUS_OLD		= 0x0030,   // 00000000.00110000     //BELLOW I'M NOT SURE ABOUT BITS
+		STATUS_OLD		    = 0x0030,   // 00000000.00110000     //BELLOW I'M NOT SURE ABOUT BITS
 		STATUS_MASK_INT		= 0x0010,   // 00000001.00000000     intr 0
 		STATUS_MASK_ADDRL	= 0x0020,   // 00000010.00000000     intr 4
 		STATUS_MASK_ADDRS	= 0x0040,   // 00000100.00000000     intr 5
@@ -57,12 +57,12 @@ public:
     public:
 	Context(Log_Addr entry, Log_Addr vstack) { 
 		//adjust special registers to class attributes
-                _gp = CPU::reg<28>();
-                //Trick: Store in K0 an pointer to virtual stack 
-                // created on init_stack for use in entry_wrapper.
+		_gp = CPU::reg<28>();
+		//Trick: Store in K0 an pointer to virtual stack 
+		// created on init_stack for use in entry_wrapper.
 		_t0 = vstack;
-                _status = cp0regs<12>();
-        	_status = _status | 0x01; //Default STATUS = Interrupts Enabled
+		_status = cp0regs<12>();
+		_status = _status | 0x01; //Default STATUS = Interrupts Enabled
 		_ra = entry;
 	}
 	
@@ -120,7 +120,7 @@ public:
 	Reg32 _mhi;	//mfhi
 	Reg32 _mlo;	//mflo
 	Reg32 _status;  //Status
-    	Reg32 _epc;     //Exception Program Counter
+	Reg32 _epc;     //Exception Program Counter
     };//end class context
 
 public:
@@ -131,13 +131,13 @@ public:
     static void switch_context(Context * volatile * o, Context * volatile n);
 
     static void int_enable() {
-	CP0Reg status = cp0regs<12>();
+	    CP0Reg status = cp0regs<12>();
         status = status | 0x01;
         cp0regs<12>(status);
     }
 
     static void int_disable() {
-	CP0Reg status = cp0regs<12>();
+    	CP0Reg status = cp0regs<12>();
         status = status & 0xFFFFFFFE;
         cp0regs<12>(status);
     }

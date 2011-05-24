@@ -2,6 +2,7 @@
 #define __router_h
 
 #include <arp.h>
+#include <adhop.h>
 #include <utility/debug.h>
 #include <utility/buffer.h>
 
@@ -122,6 +123,66 @@ private:
     ARP_Router();
     // disable copy constructor
     ARP_Router(const ARP_Router& r);
+};
+
+template <class LinkLayer, class NetworkLayer>
+class ADHOP_Router {
+    typedef typename LinkLayer::Address    Link_Address;
+    typedef typename LinkLayer::Protocol   Protocol;
+    typedef typename LinkLayer::PDU        PDU;
+    typedef typename NetworkLayer::Address Network_Address;
+    typedef typename NetworkLayer::Header  Network_Header;
+
+    typedef typename ADHOP<LinkLayer,NetworkLayer>::Ant Ant;
+
+public:
+    ADHOP_Router(LinkLayer* nic, NetworkLayer* network)
+    {
+        _nic = nic;
+        _network = network;
+        _my_net_address = network->address();
+        _my_nic_address = nic->address();
+        _router.init(nic->address());
+    }
+
+    void update(const Network_Address& la, const Link_Address& pa)
+    {
+        // do nothing
+    }
+
+    Link_Address resolve(const Network_Address& dst, SegmentedBuffer * pdu)
+    {
+        Ant * ant = (Ant *) ((Network_Header *) pdu->data())->get_options();
+        Link_Address result = _router.resolve(dst, (void *) ant);
+        return result; 
+    }
+
+    void received(const Link_Address& src, Protocol proto,
+            const PDU& data, int size)
+    {
+        if (proto == LinkLayer::IP) {
+            Ant * ant = (Ant *) ((Network_Header *) data)->get_options();
+            Network_Address net_dst = ((Network_Header *) data)->dst_ip();
+            Network_Address net_src = ((Network_Header *) data)->src_ip();
+            if (net_dst == _my_net_address) {
+                if (_router.update(net_src, (void *) ant)) {
+                    //TODO: it is not infoming the mode "return" to the ant
+                    _network->send(net_src, (char *) 0, 0, 0);
+                }
+            } else {
+                Link_Address next_hop = _router.resolve(net_src, net_dst, (void *) ant);
+                ((Network_Header *) data)->calculate_checksum();
+                int result = _nic->send(next_hop, proto, data, size); 
+            }
+        }
+    }
+
+private:
+    LinkLayer* _nic;
+    NetworkLayer* _network;
+    Link_Address _my_nic_address;
+    Network_Address _my_net_address;
+    ADHOP<LinkLayer,NetworkLayer> _router;
 };
 
 __END_SYS

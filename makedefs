@@ -133,7 +133,7 @@ $(MACH_PC)_AS_FLAGS   := --32
 $(MACH_PC)_LD_FLAGS   := 
 $(MACH_PC)_CODE_NAME  := .init
 $(MACH_PC)_DATA_NAME  := .ctors
-$(MACH_PC)_EMULATOR   := qemu -smp 8 -nographic -no-reboot -net nic,model=pcnet -net user -fda
+$(MACH_PC)_EMULATOR   := qemu -nographic -no-reboot -net nic,model=pcnet -net user -fda
 $(MACH_ATMEGA16)_CC_FLAGS    := -mmcu=atmega16 -Wno-inline
 $(MACH_ATMEGA16)_AS_FLAGS    := -mmcu=atmega16
 $(MACH_ATMEGA16)_LD_FLAGS    := -m avr5 

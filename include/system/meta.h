@@ -14,6 +14,15 @@ template<typename Then, typename Else>
 struct IF<false, Then, Else>
 { typedef Else Result; };
 
+// IF metaprogram for integer
+template<bool condition, int Then, int Else>
+struct IF_INT
+{ enum { Result = Then }; };
+
+template<int Then, int Else>
+struct IF_INT<false, Then, Else>
+{ enum { Result = Else }; };
+
 
 // EQUAL metaprogram
 template<typename T1, typename T2>
