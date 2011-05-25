@@ -195,9 +195,6 @@ public:
     static void maca_off();
     static void maca_on();
 
-    /* run periodically to make sure the maca is still doing right */
-    static void check_maca();
-
     /* maca configuration interface */
     void set_power(unsigned char power);
     void set_channel(unsigned char chan);

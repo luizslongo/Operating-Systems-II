@@ -7,20 +7,15 @@
 
 __BEGIN_SYS
 
-MC13224V_Transceiver::event_handler * MC13224V_Transceiver::handler = 0;
 MC13224V_Transceiver::get_lqi_func MC13224V_Transceiver::get_lqi = reinterpret_cast<get_lqi_func>(reinterpret_cast<void *>(GET_LQI_ADDR));
 
-/* incremented on every maca entry */
-/* you can use this to detect that the receive loop is still running */
-volatile unsigned int MC13224V_Transceiver::maca_entry = 0;
+MC13224V_Transceiver::event_handler * MC13224V_Transceiver::handler = 0;
+
 volatile unsigned char MC13224V_Transceiver::fcs_mode = MC13224V_Transceiver::USE_FCS;
 
 volatile MC13224V_Transceiver::packet_t MC13224V_Transceiver::packet_pool[NUM_PACKETS];
 volatile MC13224V_Transceiver::packet_t *MC13224V_Transceiver::free_head, *MC13224V_Transceiver::rx_end, *MC13224V_Transceiver::tx_end, *MC13224V_Transceiver::dma_tx, *MC13224V_Transceiver::dma_rx;
 
-/* rx_head and tx_head are visible to the outside */
-/* so you can peek at it and see if there is data */
-/* waiting for you, or data still to be sent */
 volatile MC13224V_Transceiver::packet_t *MC13224V_Transceiver::rx_head;
 volatile MC13224V_Transceiver::packet_t *MC13224V_Transceiver::tx_head;
 
@@ -56,11 +51,11 @@ const unsigned int MC13224V_Transceiver::data_reg_rep[MAX_DATA] = {0x00180012,0x
 unsigned char ctov[16] = {0x0b,0x0b,0x0b,0x0a,0x0d,0x0d,0x0c,0x0c,0x0f,0x0e,0x0e,0x0e,0x11,0x10,0x10,0x0f};
 
 const unsigned int MC13224V_Transceiver::PSMVAL[19] = {0x0000080f,0x0000080f,0x0000080f,0x0000080f,0x0000081f,0x0000081f,0x0000081f,0x0000080f,0x0000080f,0x0000080f,0x0000001f,0x0000000f,0x0000000f,0x00000816,0x0000001b,0x0000000b,0x00000802,0x00000817,0x00000003};
-const unsigned int MC13224V_Transceiver::PAVAL[19] = {0x000022c0,0x000022c0,0x000022c0,0x00002280,0x00002303,0x000023c0,0x00002880,0x000029f0,0x000029f0,0x000029f0,0x000029c0,0x00002bf0,0x000029f0,0x000028a0,0x00002800,0x00002ac0,0x00002880,0x00002a00,0x00002b00};
+const unsigned int MC13224V_Transceiver::PAVAL[19]  = {0x000022c0,0x000022c0,0x000022c0,0x00002280,0x00002303,0x000023c0,0x00002880,0x000029f0,0x000029f0,0x000029f0,0x000029c0,0x00002bf0,0x000029f0,0x000028a0,0x00002800,0x00002ac0,0x00002880,0x00002a00,0x00002b00};
 const unsigned int MC13224V_Transceiver::AIMVAL[19] = {0x000123a0,0x000163a0,0x0001a3a0,0x0001e3a0,0x000223a0,0x000263a0,0x0002a3a0,0x0002e3a0,0x000323a0,0x000363a0,0x0003a3a0,0x0003a3a0,0x0003e3a0,0x000423a0,0x000523a0,0x000423a0,0x0004e3a0,0x0004e3a0,0x0004e3a0};
 
 const unsigned char MC13224V_Transceiver::VCODivI[16] = {0x2f,0x2f,0x2f,0x2f,0x2f,0x2f,0x2f,0x2f,0x30,0x30,0x30,0x2f,0x30,0x30,0x30,0x30};
-const unsigned int MC13224V_Transceiver::VCODivF[16] = {0x00355555,0x006aaaaa,0x00a00000,0x00d55555,0x010aaaaa,0x01400000,0x01755555,0x01aaaaaa,0x01e00000,0x00155555,0x004aaaaa,0x00800000,0x00b55555,0x00eaaaaa,0x01200000,0x01555555};
+const unsigned int MC13224V_Transceiver::VCODivF[16]  = {0x00355555,0x006aaaaa,0x00a00000,0x00d55555,0x010aaaaa,0x01400000,0x01755555,0x01aaaaaa,0x01e00000,0x00155555,0x004aaaaa,0x00800000,0x00b55555,0x00eaaaaa,0x01200000,0x01555555};
 
 void MC13224V_Transceiver::set_event_handler(event_handler * ev_handler) {
     handler = ev_handler;
@@ -68,48 +63,6 @@ void MC13224V_Transceiver::set_event_handler(event_handler * ev_handler) {
 
 MC13224V_Transceiver::event_handler * MC13224V_Transceiver::get_event_handler() {
     return handler;
-}
-
-/* call periodically to */
-/* check that maca_entry is changing */
-/* if it is not, it will do a manual call to maca_isr which should */
-/* get the ball rolling again */
-/* also checks that the clock is running --- if it isn't then */
-/* it calls redoes the maca intialization but _DOES NOT_ free all packets */
-void MC13224V_Transceiver::check_maca() {
-    IC::disable(IC::IRQ_MACA);
-    static volatile unsigned int last_time;
-    static volatile unsigned int last_entry;
-    volatile unsigned int i;
-
-    /* if IO::MACA_CLK == last_time */
-    /* try waiting for one clock period */
-    /* since maybe check_maca is getting called quickly */
-    for (i=0; (i < 1024) && (CPU::in32(IO::MACA_CLK) == last_time); i++) {continue;}
-
-    if (CPU::in32(IO::MACA_CLK) == last_time) {
-        //		PRINTF("check maca: maca_clk stopped, restarting\n");
-        /* clock isn't running */
-        ResumeMACASync();
-        IC::force_interrupt(IC::IRQ_MACA);
-    } else {
-        if ((last_time > (CPU::in32(IO::MACA_SFTCLK) + RECV_SOFTIMEOUT)) &&
-                (last_time > (CPU::in32(IO::MACA_CPLCLK) + CPL_TIMEOUT))) {
-            //			PRINTF("check maca: complete clocks expired\n");
-            /* all complete clocks have expired */
-            /* check that maca entry is changing */
-            /* if not, do call the isr to restart the cycle */
-            if (last_entry == maca_entry) {
-                //				PRINTF("check maca: forcing isr\n");
-                IC::force_interrupt(IC::IRQ_MACA);
-            }
-        }
-    }
-
-    last_entry = maca_entry;
-    last_time = CPU::in32(IO::MACA_CLK);
-
-    IC::enable(IC::IRQ_MACA);
 }
 
 void MC13224V_Transceiver::maca_init() {
@@ -149,23 +102,21 @@ void MC13224V_Transceiver::free_packet(volatile packet_t *p) {
     IC::disable(IC::IRQ_MACA);
 
     if (!p)
-    return;
+        return;
 
     if (p == &dummy_ack)
-    return;
+        return;
 
     p->length = 0;
     p->offset = 0;
-    p->left = free_head;
-    p->right = 0;
-
+    p->left   = free_head;
+    p->right  = 0;
     free_head = p;
 
     IC::enable(IC::IRQ_MACA);
 
-    if (IC::interrupt_pending(IC::IRQ_MACA)) {
+    if (IC::interrupt_pending(IC::IRQ_MACA))
         IC::force_interrupt(IC::IRQ_MACA);
-    }
 }
 
 volatile MC13224V_Transceiver::packet_t* MC13224V_Transceiver::get_free_packet() {
@@ -174,16 +125,14 @@ volatile MC13224V_Transceiver::packet_t* MC13224V_Transceiver::get_free_packet()
     IC::disable(IC::IRQ_MACA);
 
     p = free_head;
-    if ( p != 0 ) {
+    if (p != 0) {
         free_head = p->left;
         free_head->right = 0;
     }
 
-    //	print_packets("get_free_packet");
     IC::enable(IC::IRQ_MACA);
-    if (IC::interrupt_pending(IC::IRQ_MACA)) {
+    if (IC::interrupt_pending(IC::IRQ_MACA))
         IC::force_interrupt(IC::IRQ_MACA);
-    }
 
     return p;
 }
@@ -194,8 +143,10 @@ void MC13224V_Transceiver::post_receive() {
     /* this is undocumented but very important */
     /* you will not receive anything without setting it */
     CPU::out32(IO::MACA_TXLEN, (MAX_PACKET_SIZE << 16));
+
     if (dma_rx == 0) {
         dma_rx = get_free_packet();
+
         if (dma_rx == 0) {
             //			PRINTF("trying to fill MACA_DMARX in post_receieve but out of packet buffers\n\r");
             /* set the sftclock so that we return to the maca_isr */
@@ -206,17 +157,18 @@ void MC13224V_Transceiver::post_receive() {
             return;
         }
     }
+
     CPU::out32(IO::MACA_DMARX, (unsigned int)&(dma_rx->data[0]));
     /* with timeout */
     CPU::out32(IO::MACA_SFTCLK, CPU::in32(IO::MACA_CLK) + RECV_SOFTIMEOUT); /* soft timeout */
     CPU::out32(IO::MACA_TMREN, (1 << TMREN_SFT));
     /* start the receive sequence */
-    CPU::out32(IO::MACA_CONTROL, ( (1 << CONTROL_ASAP) |
-                    ( 4 << CONTROL_PRECOUNT) |
-                    ( fcs_mode << CONTROL_NOFC ) |
-                    (1 << CONTROL_AUTO) |
-                    (1 << CONTROL_PRM) |
-                    (SEQ_RX)));
+    CPU::out32(IO::MACA_CONTROL, ((1 << CONTROL_ASAP) |
+                (4 << CONTROL_PRECOUNT) |
+                (fcs_mode << CONTROL_NOFC) |
+                (1 << CONTROL_AUTO) |
+                (1 << CONTROL_PRM) |
+                (SEQ_RX)));
     /* status bit 10 is set immediately */
     /* then 11, 10, and 9 get set */
     /* they are cleared once we get back to maca_isr */
@@ -227,14 +179,14 @@ volatile MC13224V_Transceiver::packet_t* MC13224V_Transceiver::rx_packet() {
     IC::disable(IC::IRQ_MACA);
 
     p = rx_head;
-    if ( p != 0 ) {
+    if (p != 0) {
         rx_head = p->left;
         rx_head->right = 0;
     }
 
-    //	print_packets("rx_packet");
     IC::enable(IC::IRQ_MACA);
-    if (IC::interrupt_pending(IC::IRQ_MACA)) {IC::force_interrupt(IC::IRQ_MACA);}
+    if (IC::interrupt_pending(IC::IRQ_MACA))
+        IC::force_interrupt(IC::IRQ_MACA);
 
     return p;
 }
@@ -248,18 +200,19 @@ void MC13224V_Transceiver::post_tx() {
 
     CPU::out32(IO::MACA_TXLEN, (unsigned int)((dma_tx->length) + 2));
     CPU::out32(IO::MACA_DMATX, (unsigned int)&(dma_tx->data[ 0 + dma_tx->offset]));
+
     if (dma_rx == 0) {
         dma_rx = get_free_packet();
         if (dma_rx == 0) {
             dma_rx = &dummy_ack;
             //			PRINTF("trying to fill MACA_DMARX on post_tx but out of packet buffers\n\r");
         }
-
     }
+
     CPU::out32(IO::MACA_DMARX, (unsigned int)&(dma_rx->data[0]));
     /* disable soft timeout clock */
     /* disable start clock */
-    CPU::out32(IO::MACA_TMRDIS, (1 << TMREN_SFT) | ( 1 << TMREN_CPL) | ( 1 << TMREN_STRT));
+    CPU::out32(IO::MACA_TMRDIS, (1 << TMREN_SFT) | (1 << TMREN_CPL) | (1 << TMREN_STRT));
 
     /* set complete clock to long value */
     /* acts like a watchdog in case the MACA locks up */
@@ -268,10 +221,10 @@ void MC13224V_Transceiver::post_tx() {
     CPU::out32(IO::MACA_TMREN, (1 << TMREN_CPL));
 
     IC::enable(IC::IRQ_MACA);
-    CPU::out32(IO::MACA_CONTROL, ( (1 << CONTROL_PRM) | ( 4 << CONTROL_PRECOUNT) |
-                    (MODE_NO_CCA << CONTROL_MODE) |
-                    (1 << CONTROL_ASAP) |
-                    (SEQ_TX)));
+    CPU::out32(IO::MACA_CONTROL, ((1 << CONTROL_PRM) | (4 << CONTROL_PRECOUNT) |
+                (MODE_NO_CCA << CONTROL_MODE) |
+                (1 << CONTROL_ASAP) |
+                (SEQ_TX)));
     /* status bit 10 is set immediately */
     /* then 11, 10, and 9 get set */
     /* they are cleared once we get back to maca_isr */
@@ -280,17 +233,16 @@ void MC13224V_Transceiver::post_tx() {
 void MC13224V_Transceiver::fill_packet(volatile packet_t *p, unsigned char * data, unsigned int size) {
     p->length = size;
     p->offset = 0;
+
     for (unsigned int i = 0; i < size; i++)
-    p->data[i] = data[i];
+        p->data[i] = data[i];
 }
 
 void MC13224V_Transceiver::tx_packet(volatile packet_t *p) {
     IC::disable(IC::IRQ_MACA);
 
-    if (!p) {
-        //	    PRINTF("tx_packet passed packet 0\n\r");
+    if (!p)
         return;
-    }
 
     if (tx_head == 0) {
         /* start a new queue if empty */
@@ -304,12 +256,17 @@ void MC13224V_Transceiver::tx_packet(volatile packet_t *p) {
         /* move the queue */
         tx_end = p; tx_end->left = 0;
     }
-    //	print_packets("tx packet");
+
     IC::enable(IC::IRQ_MACA);
-    if (IC::interrupt_pending(IC::IRQ_MACA)) {IC::force_interrupt(IC::IRQ_MACA);}
-    if (last_post == NO_POST) {IC::force_interrupt(IC::IRQ_MACA);}
+    if (IC::interrupt_pending(IC::IRQ_MACA))
+        IC::force_interrupt(IC::IRQ_MACA);
+
+    if (last_post == NO_POST)
+        IC::force_interrupt(IC::IRQ_MACA);
+
     /* if we are in a reception cycle, advance the softclock timeout to now */
-    if (last_post == RX_POST) {CPU::out32(IO::MACA_SFTCLK, CPU::in32(IO::MACA_CLK));}
+    if (last_post == RX_POST)
+        CPU::out32(IO::MACA_SFTCLK, CPU::in32(IO::MACA_CLK));
 }
 
 void MC13224V_Transceiver::free_all_packets() {
@@ -317,14 +274,15 @@ void MC13224V_Transceiver::free_all_packets() {
     IC::disable(IC::IRQ_MACA);
 
     free_head = 0;
-    for (i = 0; i < NUM_PACKETS; i++) {
+    for (i = 0; i < NUM_PACKETS; i++)
         free_packet((volatile packet_t *)&(packet_pool[i]));
-    }
+
     rx_head = 0; rx_end = 0;
     tx_head = 0; tx_end = 0;
 
     IC::enable(IC::IRQ_MACA);
-    if (IC::interrupt_pending(IC::IRQ_MACA)) {IC::force_interrupt(IC::IRQ_MACA);}
+    if (IC::interrupt_pending(IC::IRQ_MACA))
+        IC::force_interrupt(IC::IRQ_MACA);
 }
 
 /* private routines used by driver */
@@ -334,22 +292,24 @@ void MC13224V_Transceiver::free_tx_head() {
 
     p = tx_head;
     tx_head = tx_head->left;
-    if (tx_head == 0) {tx_end = 0;}
+    if (tx_head == 0)
+        tx_end = 0;
+
     free_packet(p);
 
-    //	print_packets("free tx head");
     IC::enable(IC::IRQ_MACA);
-    if (IC::interrupt_pending(IC::IRQ_MACA)) {IC::force_interrupt(IC::IRQ_MACA);}
+    if (IC::interrupt_pending(IC::IRQ_MACA))
+        IC::force_interrupt(IC::IRQ_MACA);
 }
 
 void MC13224V_Transceiver::add_to_rx(volatile packet_t *p) {
     IC::disable(IC::IRQ_MACA);
 
-    if (!p) {
-        //	    PRINTF("add_to_rx passed packet 0\n\r");
+    if (!p)
         return;
-    }
+
     p->offset = 1; /* first byte is the length */
+
     if (rx_head == 0) {
         /* start a new queue if empty */
         rx_end = p;
@@ -361,16 +321,14 @@ void MC13224V_Transceiver::add_to_rx(volatile packet_t *p) {
         rx_end = p; rx_end->left = 0;
     }
 
-    //	print_packets("add to rx");
     IC::enable(IC::IRQ_MACA);
-    if (IC::interrupt_pending(IC::IRQ_MACA)) {IC::force_interrupt(IC::IRQ_MACA);}
+    if (IC::interrupt_pending(IC::IRQ_MACA))
+        IC::force_interrupt(IC::IRQ_MACA);
 }
 
 void MC13224V_Transceiver::maca_isr() {
     CPU::out32(IO::ITC_INTFRC, 0); /* stop forcing interrupts */
     IC::disable(IC::IRQ_MACA);
-
-    maca_entry++;
 
     if (bit_is_set(CPU::in32(IO::MACA_STATUS), STATUS_OVR));
     //    { kout << "maca overrun\n\r"; }
@@ -387,9 +345,9 @@ void MC13224V_Transceiver::maca_isr() {
         dma_rx->length = CPU::in32(IO::MACA_GETRXLVL) - 2; /* packet length does not include FCS */
         add_to_rx(dma_rx);
         dma_rx = 0;
-        if (handler != 0) {
+
+        if (handler != 0)
             handler(SFD_DETECTED);
-        }
     }
 
     if (bit_is_set(CPU::in8(IO::MACA_IRQ),IRQ_FLT)) {
@@ -397,17 +355,21 @@ void MC13224V_Transceiver::maca_isr() {
         ResumeMACASync();
         CPU::out32(IO::MACA_CLRIRQ, (1 << IRQ_FLT));
     }
+
     if (bit_is_set(CPU::in8(IO::MACA_IRQ),IRQ_CRC)) {
         //	kout << "maca checksum failed\n\r";
         ResumeMACASync();
         CPU::out32(IO::MACA_CLRIRQ, (1 << IRQ_CRC));
     }
+
     if (bit_is_set(CPU::in8(IO::MACA_IRQ),IRQ_SFT)) {
         CPU::out32(IO::MACA_CLRIRQ, (1 << IRQ_SFT));
     }
+
     if (bit_is_set(CPU::in8(IO::MACA_IRQ),IRQ_POLL)) {
         CPU::out32(IO::MACA_CLRIRQ, (1 << IRQ_POLL));
     }
+
     if (bit_is_set(CPU::in8(IO::MACA_IRQ),IRQ_ACPL)) {
         if (last_post == TX_POST) {
             dma_tx = 0;
@@ -427,19 +389,13 @@ void MC13224V_Transceiver::maca_isr() {
     if (tx_head != 0) {
         post_tx();
 
-    } else {
+    } else
         post_receive();
-        if (handler != 0) {
-            handler(SFD_DETECTED);
-        }
-    }
 
     IC::enable(IC::IRQ_MACA);
-    check_maca();
 }
 
 void MC13224V_Transceiver::init_phy() {
-    //  IO::MACA_TMREN = (1 << maca_tmren_strt) | (1 << maca_tmren_cpl);
     CPU::out32(IO::MACA_CLKDIV, MACA_CLOCK_DIV);
     CPU::out32(IO::MACA_WARMUP, 0x00180012);
     CPU::out32(IO::MACA_EOFDELAY, 0x00000004);
@@ -448,13 +404,13 @@ void MC13224V_Transceiver::init_phy() {
     CPU::out32(IO::MACA_FRAMESYNC0, 0x000000A7);
     CPU::out32(IO::MACA_CLK, 0x00000008);
     CPU::out32(IO::MACA_MASKIRQ, ((1 << IRQ_RST) |
-                    (1 << IRQ_ACPL) |
-                    (1 << IRQ_CM) |
-                    (1 << IRQ_FLT) |
-                    (1 << IRQ_CRC) |
-                    (1 << IRQ_DI) |
-                    (1 << IRQ_SFT)
-            ));
+                (1 << IRQ_ACPL) |
+                (1 << IRQ_CM) |
+                (1 << IRQ_FLT) |
+                (1 << IRQ_CRC) |
+                (1 << IRQ_DI) |
+                (1 << IRQ_SFT)
+                ));
     CPU::out32(IO::MACA_SLOTOFFSET, 0x00350000);
 }
 
@@ -463,13 +419,13 @@ void MC13224V_Transceiver::reset_maca() {
 
     CPU::out32(IO::MACA_RESET, (1 << RESET_RST));
 
-    for (cnt = 0; cnt < 100; cnt++) {};
+    for (cnt = 0; cnt < 100; cnt++);
 
     CPU::out32(IO::MACA_RESET, (1 << RESET_CLK_ON));
 
     CPU::out32(IO::MACA_CONTROL, SEQ_NOP);
 
-    for (cnt = 0; cnt < 400000; cnt++) {};
+    for (cnt = 0; cnt < 400000; cnt++);
 
     // Clear all interrupts. 
     CPU::out32(IO::MACA_CLRIRQ, 0xffff);
@@ -480,10 +436,10 @@ void MC13224V_Transceiver::flyback_init() {
 
     val8 = *(volatile unsigned int *)(RF_BASE+8);
     aux = val8 | 0x0000f7df;
-    *(volatile unsigned int *)(RF_BASE+8) = aux;
-    *(volatile unsigned int *)(RF_BASE+12) = 0x00ffffff;
-    *(volatile unsigned int *)(RF_BASE+16) = (((unsigned int)0x00ffffff)>>12);
-    *(volatile unsigned int *)(RF_BASE) = 16;
+    *(volatile unsigned int *)(RF_BASE + 8)  = aux;
+    *(volatile unsigned int *)(RF_BASE + 12) = 0x00ffffff;
+    *(volatile unsigned int *)(RF_BASE + 16) = (((unsigned int)0x00ffffff)>>12);
+    *(volatile unsigned int *)(RF_BASE)      = 16;
 }
 
 void MC13224V_Transceiver::maca_off() {
@@ -505,10 +461,9 @@ void MC13224V_Transceiver::maca_on() {
     IC::force_interrupt(IC::IRQ_MACA);
 }
 
-unsigned char MC13224V_Transceiver::get_ctov( unsigned int r0, unsigned int r1 ) {
-
+unsigned char MC13224V_Transceiver::get_ctov(unsigned int r0, unsigned int r1) {
     r0 = r0 * INIT_CTOV_WORD_1;
-    r0 += ( r1 << 22 );
+    r0 += (r1 << 22);
     r0 += INIT_CTOV_WORD_2;
 
     r0 = (unsigned int)(((signed int)r0) >> 25);
@@ -519,70 +474,58 @@ unsigned char MC13224V_Transceiver::get_ctov( unsigned int r0, unsigned int r1 )
 void MC13224V_Transceiver::radio_init() {
     volatile unsigned int i;
     /* sequence 1 */
-    for (i = 0; i < MAX_SEQ1; i++) {
+    for (i = 0; i < MAX_SEQ1; i++)
         *(volatile unsigned int *)(addr_seq1[i]) = data_seq1[i];
-    }
+
     /* seq 1 delay */
-    for (i = 0; i < 0x161a8; i++) {continue;}
+    for (i = 0; i < 0x161a8; i++);
+
     /* sequence 2 */
-    for (i = 0; i < MAX_SEQ2; i++) {
+    for (i = 0; i < MAX_SEQ2; i++)
         *(volatile unsigned int *)(addr_seq2[i]) = data_seq2[i];
-    }
+
     /* modem val */
     *(volatile unsigned int *)0x80009000 = 0x80050100;
+
     /* cal 3 seq 1*/
-    for (i = 0; i < MAX_CAL3_SEQ1; i++) {
+    for (i = 0; i < MAX_CAL3_SEQ1; i++)
         *(volatile unsigned int *)(addr_cal3_seq1[i]) = data_cal3_seq1[i];
-    }
+
     /* cal 3 delay */
-    for (i=0; i<0x11194; i++) {continue;}
+    for (i=0; i<0x11194; i++);
+
     /* cal 3 seq 2*/
-    for (i=0; i<MAX_CAL3_SEQ2; i++) {
+    for (i=0; i<MAX_CAL3_SEQ2; i++)
         *(volatile unsigned int *)(addr_cal3_seq2[i]) = data_cal3_seq2[i];
-    }
+
     /* cal 3 delay */
-    for (i=0; i<0x11194; i++) {continue;}
+    for (i=0; i<0x11194; i++);
+
     /* cal 3 seq 3*/
-    for (i=0; i<MAX_CAL3_SEQ3; i++) {
+    for (i=0; i<MAX_CAL3_SEQ3; i++)
         *(volatile unsigned int *)(addr_cal3_seq3[i]) = data_cal3_seq3[i];
-    }
+
     /* cal 5 */
-    for (i=0; i<MAX_CAL5; i++) {
+    for (i=0; i<MAX_CAL5; i++)
         *(volatile unsigned int *)(addr_cal5[i]) = data_cal5[i];
-    }
+
     /*reg replacment */
-    for (i=0; i<MAX_DATA; i++) {
+    for (i=0; i<MAX_DATA; i++)
         *(volatile unsigned int *)(addr_reg_rep[i]) = data_reg_rep[i];
-    }
-
-    //	PRINTF("initfromflash\n\r");
-
-    *(volatile unsigned int *)(0x80003048) = 0x00000f04; /* bypass the buck */
-    for (i=0; i<0x161a8; i++) {continue;} /* wait for the bypass to take */
-    //	while((((*(volatile unsigned int *)(0x80003018))>>17) & 1) !=1) { continue; } /* wait for the bypass to take */
-    *(volatile unsigned int *)(0x80003048) = 0x00000fa4; /* start the regulators */
-    for (i=0; i<0x161a8; i++) {continue;} /* wait for the bypass to take */
 
     init_from_flash(0x1F000);
 
-    for (i=0; i<4; i++) {
-        //		PRINTF("  0x%02x\n\r",ram_values[i]);
-    }
-
-    //        PRINTF("radio_init: ctov parameter 0x%02x\n\r",ram_values[3]);
-    for (i=0; i<16; i++) {
+    for (i=0; i<16; i++)
         ctov[i] = get_ctov(i,ram_values[3]);
-        //                PRINTF("radio_init: ctov[%d] = 0x%02x\n\r",i,ctov[i]);
-    }
 }
 
 void MC13224V_Transceiver::set_demodulator_type(unsigned char demod) {
     unsigned int val = CPU::in32(RF_REG);
-    if (demod == DEMOD_NCD) {
+    if (demod == DEMOD_NCD)
         val = (val & ~1);
-    } else {
+    else
         val = (val | 1);
-    }
+
     CPU::out32(RF_REG, val);
 }
 
@@ -597,7 +540,8 @@ void MC13224V_Transceiver::set_power(unsigned char power) {
     CPU::out32(ADDR_POW3, AIMVAL[power]);
 
     IC::enable(IC::IRQ_MACA);
-    if (IC::interrupt_pending(IC::IRQ_MACA)) {IC::force_interrupt(IC::IRQ_MACA);}
+    if (IC::interrupt_pending(IC::IRQ_MACA))
+        IC::force_interrupt(IC::IRQ_MACA);
 }
 
 void MC13224V_Transceiver::set_channel(unsigned char chan) {
@@ -624,9 +568,8 @@ void MC13224V_Transceiver::set_channel(unsigned char chan) {
     CPU::out32(ADDR_CHAN4, tmp);
 
     IC::enable(IC::IRQ_MACA);
-    if (IC::interrupt_pending(IC::IRQ_MACA)) {
+    if (IC::interrupt_pending(IC::IRQ_MACA))
         IC::force_interrupt(IC::IRQ_MACA);
-    }
 }
 
 /* processes up to 4 words of initialization entries */
@@ -637,37 +580,44 @@ unsigned int MC13224V_Transceiver::exec_init_entry(volatile unsigned int *entrie
         if (entries[0] == 0) {
             /* do delay command*/
             //			kout << "init_entry: delay " << entries[1] << "\n\r";
-            for (i=0; i<entries[1]; i++) {continue;}
+            for (i=0; i<entries[1]; i++);
+
             return 2;
+
         } else if (entries[0] == 1) {
             /* do bit set/clear command*/
             //			kout << "init_entry: bit set clear " << entries[1] << " " << entries[2] << " " << entries[3] << "\n\r";
             CPU::out32(entries[2], (CPU::in32(entries[2]) & ~entries[1]) | (entries[3] & entries[1]));
+
             return 4;
-        } else if ((entries[0] >= 16) &&
-                (entries[0] < 0xfff1)) {
+
+        } else if ((entries[0] >= 16) && (entries[0] < 0xfff1)) {
             /* store bytes in valbuf */
             //			kout << "init_entry: store in valbuf " << entries[1] << " position " << (entries[0]>>4)-1 << "\n\r";
             valbuf[(entries[0]>>4)-1] = entries[1];
+
             return 2;
+
         } else if (entries[0] == ENTRY_EOF) {
             //			kout << "init_entry: eof \n";
             return 0;
+
         } else {
             /* invalid command code */
             //			kout << "init_entry: invaild code " << entries[0] << "\n\r";
             return 0;
         }
+
     } else { /* address isn't in ROM space */
         /* do store value in address command  */
         //		kout << "init_entry: address value pair - *" << entries[0] << " = " << entries[1] << "\n\r";
         CPU::out32(entries[0], entries[1]);
+
         return 2;
     }
 }
 
 unsigned int MC13224V_Transceiver::init_from_flash(unsigned int addr) {
-
     MC13224V_Flash::nvmType_t type = MC13224V_Flash::gNvmType_NoNvm_c;
     MC13224V_Flash::nvmErr_t err;
     volatile unsigned int buf[8];
@@ -676,17 +626,12 @@ unsigned int MC13224V_Transceiver::init_from_flash(unsigned int addr) {
 
     MC13224V_Buck_Regulator::NVM_1P8V_enable();
 
-
     err = MC13224V_Flash::nvm_detect(MC13224V_Flash::gNvmInternalInterface_c, &type);
 
     MC13224V_Flash::nvm_setsvar(0);
 
     err = MC13224V_Flash::nvm_read(MC13224V_Flash::gNvmInternalInterface_c, type, (unsigned char *)buf, addr, 8);
-    i+=8;
-
-    for (j=0; j<4; j++) {
-        //		kout << buf[j] << "\n\r";
-    }
+    i += 8;
 
     if (buf[0] == FLASH_INIT_MAGIC) {
         len = buf[1] & 0x0000ffff;
@@ -696,10 +641,11 @@ unsigned int MC13224V_Transceiver::init_from_flash(unsigned int addr) {
 
             i += 4 * exec_init_entry(buf, ram_values);
         }
+
         return i;
-    } else {
+
+    } else
         return 0;
-    }
 }
 
 /* 
