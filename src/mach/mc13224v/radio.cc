@@ -38,8 +38,6 @@ int Radio_Wrapper::send(unsigned char * data, unsigned int size) {
 int Radio_Wrapper::receive(unsigned char * data) {
     volatile MC13224V_Transceiver::packet_t * p;
     do {
-        device->check_maca();
-
         p = device->rx_packet();
     } while (!p);
 
@@ -57,8 +55,7 @@ void Radio_Wrapper::off() {
 }
 
 void Radio_Wrapper::listen() {
-    MC13224V_Transceiver::event_handler * ev = device->get_event_handler();
-    ev(MC13224V_Transceiver::SFD_DETECTED);
+    device->post_receive();
 }
 
 void Radio_Wrapper::reset() {
