@@ -3,922 +3,920 @@
 
 __BEGIN_SYS
 
-
-SipTransaction::SipTransaction(UserAgent *ua) : ua(ua), link(this)
+SIP_Transaction::SIP_Transaction(SIP_User_Agent *ua) : _ua(ua), _link(this)
 {
-	this->transport = SipManager::getInstance()->getTransport();
+    _transport = SIP_Manager::get_instance()->get_transport();
 }
 
-void SipTransaction::clear()
+void SIP_Transaction::clear()
 {
-	ua->removeTransaction(this);
-}
-
-//-------------------------------------------
-
-SipTransactionClientInvite::SipTransactionClientInvite(UserAgent *ua) : SipTransaction(ua)
-{
-	this->curState = sttIdle;
-	this->requestMsg = 0;
-}
-
-SipTransactionClientInvite::~SipTransactionClientInvite()
-{
-	ua->stopTimer(SIP_TIMER_A);
-	ua->stopTimer(SIP_TIMER_B);
-	ua->stopTimer(SIP_TIMER_D);
-
-	if (requestMsg)
-		delete requestMsg;
-}
-
-void SipTransactionClientInvite::sendAck(SipResponse *Msg)
-{
-	const char *requestUri = requestMsg->getRequestLine()->getRequestURI();
-	SipHeaderVia *via = (SipHeaderVia *) requestMsg->getHeader(SIP_HEADER_VIA);
-	SipHeaderFrom *from = (SipHeaderFrom *) requestMsg->getHeader(SIP_HEADER_FROM);
-	SipHeaderCallID *callId = (SipHeaderCallID *) requestMsg->getHeader(SIP_HEADER_CALLID);
-	SipHeaderCSeq *cseq = (SipHeaderCSeq *) requestMsg->getHeader(SIP_HEADER_CSEQ);
-	SipHeaderTo *to = (SipHeaderTo *) Msg->getHeader(SIP_HEADER_TO);
-
-	if ((!requestUri) || (!via) || (!from) || (!callId) || (!cseq) || (!to))
-		return;
-
-	SipRequestAck Ack;
-
-	Ack.setRequestLine(SIP_REQUEST_ACK, requestUri, SIP_VERSION);
-	Ack.addHeader(new SipHeaderVia(*via));
-	Ack.addHeader(new SipHeaderTo(*to));
-	Ack.addHeader(new SipHeaderFrom(*from));
-	Ack.addHeader(new SipHeaderCallID(*callId));
-
-	SipHeaderMaxForwards *headerMaxForwards = new SipHeaderMaxForwards();
-	headerMaxForwards->setNumber(70);
-	Ack.addHeader(headerMaxForwards);
-
-	SipHeaderCSeq *headerCSeq = new SipHeaderCSeq();
-	headerCSeq->setCSeq(SIP_REQUEST_ACK, cseq->getSequence());
-	Ack.addHeader(headerCSeq);
-
-	int routeNum = requestMsg->getNumHeader(SIP_HEADER_ROUTE);
-	for (int i = 0; i < routeNum; i++)
-	{
-		SipHeaderRoute *header = (SipHeaderRoute *) requestMsg->getHeader(SIP_HEADER_ROUTE, i);
-		Ack.addHeader(new SipHeaderRoute(*header));
-	}
-
-	transport->sendMessage(&Ack);
-}
-
-void SipTransactionClientInvite::sendInvite(SipRequestInvite *Msg)
-{
-	switch (curState)
-	{
-		case sttIdle:
-			curState = sttCalling;
-			requestMsg = Msg; //requestMsg = new SipRequestInvite(*Msg);
-			Msg->setCanDelete(false);
-			transport->sendMessage(requestMsg);
-			ua->setTimerValue(SIP_TIMER_A, SIP_TIMER_1);
-			ua->startTimer(SIP_TIMER_A, this);
-			ua->setTimerValue(SIP_TIMER_B, SIP_TIMER_1 * 64);
-			ua->startTimer(SIP_TIMER_B, this);
-			break;
-
-		default:
-			break;
-	}
-}
-
-void SipTransactionClientInvite::receive1xx(SipResponse *Msg)
-{
-	switch (curState)
-	{
-		case sttCalling:
-			curState = sttProceeding;
-			ua->stopTimer(SIP_TIMER_A);
-			ua->stopTimer(SIP_TIMER_B);
-			ua->uac.receiveMsg(requestMsg, Msg, this);
-			break;
-
-		case sttProceeding:
-			//curState = sttProceeding;
-			ua->uac.receiveMsg(requestMsg, Msg, this);
-			break;
-
-		default:
-			break;
-	}
-}
-
-void SipTransactionClientInvite::receive2xx(SipResponse *Msg)
-{
-	switch (curState)
-	{
-		case sttCalling:
-			//curState = sttTerminated;
-			ua->stopTimer(SIP_TIMER_A);
-			ua->stopTimer(SIP_TIMER_B);
-			ua->uac.receiveMsg(requestMsg, Msg, this);
-			clear();
-			break;
-
-		case sttProceeding:
-			//curState = sttTerminated;
-			ua->uac.receiveMsg(requestMsg, Msg, this);
-			clear();
-			break;
-
-		default:
-			break;
-	}
-}
-
-void SipTransactionClientInvite::receive3xx6xx(SipResponse *Msg)
-{
-	switch (curState)
-	{
-		case sttCalling:
-			curState = sttCompleted;
-			sendAck(Msg);
-			ua->setTimerValue(SIP_TIMER_D, SIP_TIMER_32s);
-			ua->startTimer(SIP_TIMER_D, this);
-			ua->stopTimer(SIP_TIMER_A);
-			ua->stopTimer(SIP_TIMER_B);
-			ua->uac.receiveMsg(requestMsg, Msg, this);
-			break;
-
-		case sttProceeding:
-			curState = sttCompleted;
-			sendAck(Msg);
-			ua->setTimerValue(SIP_TIMER_D, SIP_TIMER_32s);
-			ua->startTimer(SIP_TIMER_D, this);
-			ua->uac.receiveMsg(requestMsg, Msg, this);
-			break;
-
-		case sttCompleted:
-			//curState = sttCompleted;
-			sendAck(Msg);
-			break;
-
-		default:
-			break;
-	}
-}
-
-void SipTransactionClientInvite::transportError()
-{
-	switch (curState)
-	{
-		case sttCalling:
-		{
-			//curState = sttTerminated;
-			ua->stopTimer(SIP_TIMER_A);
-			ua->stopTimer(SIP_TIMER_B);
-
-			SipResponse response(503);
-			ua->uac.receiveMsg(requestMsg, &response, this);
-			clear();
-			break;
-		}
-
-		case sttCompleted:
-		{
-			//curState = sttTerminated;
-			ua->stopTimer(SIP_TIMER_D);
-
-			SipResponse response(503);
-			ua->uac.receiveMsg(requestMsg, &response, this);
-			clear();
-			break;
-		}
-
-		default:
-			break;
-	}
-}
-
-void SipTransactionClientInvite::timerAExpired()
-{
-	switch (curState)
-	{
-		case sttCalling:
-			//curState = sttCalling;
-			ua->setTimerValue(SIP_TIMER_A, ua->getTimerValue(SIP_TIMER_A) * 2);
-			ua->startTimer(SIP_TIMER_A, this);
-			transport->sendMessage(requestMsg);
-			break;
-
-		default:
-			break;
-	}
-}
-
-void SipTransactionClientInvite::timerBExpired()
-{
-	switch (curState)
-	{
-		case sttCalling:
-		{
-			//curState = sttTerminated;
-			ua->stopTimer(SIP_TIMER_A);
-
-			SipResponse response(408);
-			ua->uac.receiveMsg(requestMsg, &response, this);
-			clear();
-			break;
-		}
-
-		default:
-			break;
-	}
-}
-
-void SipTransactionClientInvite::timerDExpired()
-{
-	switch (curState)
-	{
-		case sttCompleted:
-			//curState = sttTerminated;
-			clear();
-			break;
-
-		default:
-			break;
-	}
-}
-
-SipTransaction *SipTransactionClientInvite::matchingTransaction(SipMessage *msg)
-{
-	if ((!msg) || (msg->getMsgType() != SIP_RESPONSE))
-		return 0;
-
-	SipResponse *response = (SipResponse *) msg;
-
-	SipHeaderVia *viaResponse = (SipHeaderVia *) response->getHeader(SIP_HEADER_VIA);
-	SipHeaderCSeq *cseqResponse = (SipHeaderCSeq *) response->getHeader(SIP_HEADER_CSEQ);
-	if ((!viaResponse) || (!cseqResponse))
-		return 0;
-
-	const char *branchResponse = viaResponse->getBranch();
-	SipMessageType msgTypeResponse = cseqResponse->getMethod();
-	//unsigned int sequenceResponse = cseqResponse->getSequence();
-
-	if (!branchResponse)
-		return 0;
-
-	if (requestMsg)
-	{
-		SipHeaderVia *via = (SipHeaderVia *) requestMsg->getHeader(SIP_HEADER_VIA);
-		SipHeaderCSeq *cseq = (SipHeaderCSeq *) requestMsg->getHeader(SIP_HEADER_CSEQ);
-
-		if ((via) && (cseq))
-		{
-			const char *branch = via->getBranch();
-			SipMessageType msgType = cseq->getMethod();
-			//unsigned int sequence = cseq->getSequence();
-
-			if ((!strcmp(branch, branchResponse)) && (msgType == msgTypeResponse)) // && (sequence == sequenceResponse))
-				return this;
-		}
-	}
-
-	return 0;
+    _ua->remove_transaction(this);
 }
 
 //-------------------------------------------
 
-SipTransactionClientNonInvite::SipTransactionClientNonInvite(UserAgent *ua) : SipTransaction(ua)
+SIP_Transaction_Client_Invite::SIP_Transaction_Client_Invite(SIP_User_Agent *ua) : SIP_Transaction(ua)
 {
-	this->curState = sttIdle;
-	this->requestMsg = 0;
+    _state = sttIdle;
+    _request_msg = 0;
 }
 
-SipTransactionClientNonInvite::~SipTransactionClientNonInvite()
+SIP_Transaction_Client_Invite::~SIP_Transaction_Client_Invite()
 {
-	ua->stopTimer(SIP_TIMER_E);
-	ua->stopTimer(SIP_TIMER_F);
-	ua->stopTimer(SIP_TIMER_K);
+    _ua->stop_timer(SIP_TIMER_A);
+    _ua->stop_timer(SIP_TIMER_B);
+    _ua->stop_timer(SIP_TIMER_D);
 
-	if (requestMsg)
-		delete requestMsg;
+    if (_request_msg)
+        delete _request_msg;
 }
 
-/*void SipTransactionClientNonInvite::copyRequest(SipRequest *Msg)
+void SIP_Transaction_Client_Invite::send_ack(SIP_Response *msg)
 {
-	switch (Msg->getMsgType())
-	{
-		case SIP_REQUEST_BYE:			requestMsg = new SipRequestBye(*((SipRequestBye *) Msg));				break;
-		//case SIP_REQUEST_CANCEL:		requestMsg = new SipRequestCancel(*((SipRequestCancel *) Msg));			break;
-		case SIP_REQUEST_MESSAGE:		requestMsg = new SipRequestMessage(*((SipRequestMessage *) Msg));		break;
-		case SIP_REQUEST_NOTIFY:		requestMsg = new SipRequestNotify(*((SipRequestNotify *) Msg));			break;
-		//case SIP_REQUEST_OPTIONS:		requestMsg = new SipRequestOptions(*((SipRequestOptions *) Msg));		break;
-		//case SIP_REQUEST_REGISTER:	requestMsg = new SipRequestRegister(*((SipRequestRegister *) Msg));		break;
-		case SIP_REQUEST_SUBSCRIBE:		requestMsg = new SipRequestSubscribe(*((SipRequestSubscribe *) Msg));	break;
-		default:						break;
-	}
+    const char *request_uri = _request_msg->get_request_line()->get_request_uri();
+    SIP_Header_Via *via = (SIP_Header_Via *) _request_msg->get_header(SIP_HEADER_VIA);
+    SIP_Header_From *from = (SIP_Header_From *) _request_msg->get_header(SIP_HEADER_FROM);
+    SIP_Header_Call_ID *callId = (SIP_Header_Call_ID *) _request_msg->get_header(SIP_HEADER_CALLID);
+    SIP_Header_CSeq *cseq = (SIP_Header_CSeq *) _request_msg->get_header(SIP_HEADER_CSEQ);
+    SIP_Header_To *to = (SIP_Header_To *) msg->get_header(SIP_HEADER_TO);
+
+    if ((!request_uri) || (!via) || (!from) || (!callId) || (!cseq) || (!to))
+        return;
+
+    SIP_Request_Ack ack;
+    ack.set_request_line(SIP_REQUEST_ACK, request_uri, SIP_VERSION);
+    ack.add_header(new SIP_Header_Via(*via));
+    ack.add_header(new SIP_Header_To(*to));
+    ack.add_header(new SIP_Header_From(*from));
+    ack.add_header(new SIP_Header_Call_ID(*callId));
+
+    SIP_Header_Max_Forwards *headerMaxForwards = new SIP_Header_Max_Forwards();
+    headerMaxForwards->set_number(70);
+    ack.add_header(headerMaxForwards);
+
+    SIP_Header_CSeq *headerCSeq = new SIP_Header_CSeq();
+    headerCSeq->set_cseq(SIP_REQUEST_ACK, cseq->get_sequence());
+    ack.add_header(headerCSeq);
+
+    int routeNum = _request_msg->get_num_header(SIP_HEADER_ROUTE);
+    for (int i = 0; i < routeNum; i++)
+    {
+        SIP_Header_Route *header = (SIP_Header_Route *) _request_msg->get_header(SIP_HEADER_ROUTE, i);
+        ack.add_header(new SIP_Header_Route(*header));
+    }
+
+    _transport->send_message(&ack);
+}
+
+void SIP_Transaction_Client_Invite::send_invite(SIP_Request_Invite *msg)
+{
+    switch (_state)
+    {
+        case sttIdle:
+            _state = sttCalling;
+            _request_msg = msg; //_request_msg = new SIP_Request_Invite(*msg);
+            msg->set_can_delete(false);
+            _transport->send_message(_request_msg);
+            _ua->setTimerValue(SIP_TIMER_A, SIP_TIMER_1);
+            _ua->start_timer(SIP_TIMER_A, this);
+            _ua->setTimerValue(SIP_TIMER_B, SIP_TIMER_1 * 64);
+            _ua->start_timer(SIP_TIMER_B, this);
+            break;
+
+        default:
+            break;
+    }
+}
+
+void SIP_Transaction_Client_Invite::receive_1xx(SIP_Response *msg)
+{
+    switch (_state)
+    {
+        case sttCalling:
+            _state = sttProceeding;
+            _ua->stop_timer(SIP_TIMER_A);
+            _ua->stop_timer(SIP_TIMER_B);
+            _ua->_uac.receive_msg(_request_msg, msg, this);
+            break;
+
+        case sttProceeding:
+            //_state = sttProceeding;
+            _ua->_uac.receive_msg(_request_msg, msg, this);
+            break;
+
+        default:
+            break;
+    }
+}
+
+void SIP_Transaction_Client_Invite::receive_2xx(SIP_Response *msg)
+{
+    switch (_state)
+    {
+        case sttCalling:
+            //_state = sttTerminated;
+            _ua->stop_timer(SIP_TIMER_A);
+            _ua->stop_timer(SIP_TIMER_B);
+            _ua->_uac.receive_msg(_request_msg, msg, this);
+            clear();
+            break;
+
+        case sttProceeding:
+            //_state = sttTerminated;
+            _ua->_uac.receive_msg(_request_msg, msg, this);
+            clear();
+            break;
+
+        default:
+            break;
+    }
+}
+
+void SIP_Transaction_Client_Invite::receive_3xx_6xx(SIP_Response *msg)
+{
+    switch (_state)
+    {
+        case sttCalling:
+            _state = sttCompleted;
+            send_ack(msg);
+            _ua->setTimerValue(SIP_TIMER_D, SIP_TIMER_32s);
+            _ua->start_timer(SIP_TIMER_D, this);
+            _ua->stop_timer(SIP_TIMER_A);
+            _ua->stop_timer(SIP_TIMER_B);
+            _ua->_uac.receive_msg(_request_msg, msg, this);
+            break;
+
+        case sttProceeding:
+            _state = sttCompleted;
+            send_ack(msg);
+            _ua->setTimerValue(SIP_TIMER_D, SIP_TIMER_32s);
+            _ua->start_timer(SIP_TIMER_D, this);
+            _ua->_uac.receive_msg(_request_msg, msg, this);
+            break;
+
+        case sttCompleted:
+            //_state = sttCompleted;
+            send_ack(msg);
+            break;
+
+        default:
+            break;
+    }
+}
+
+void SIP_Transaction_Client_Invite::transport_error()
+{
+    switch (_state)
+    {
+        case sttCalling:
+        {
+            //_state = sttTerminated;
+            _ua->stop_timer(SIP_TIMER_A);
+            _ua->stop_timer(SIP_TIMER_B);
+
+            SIP_Response response(503);
+            _ua->_uac.receive_msg(_request_msg, &response, this);
+            clear();
+            break;
+        }
+
+        case sttCompleted:
+        {
+            //_state = sttTerminated;
+            _ua->stop_timer(SIP_TIMER_D);
+
+            SIP_Response response(503);
+            _ua->_uac.receive_msg(_request_msg, &response, this);
+            clear();
+            break;
+        }
+
+        default:
+            break;
+    }
+}
+
+void SIP_Transaction_Client_Invite::timer_A_Expired()
+{
+    switch (_state)
+    {
+        case sttCalling:
+            //_state = sttCalling;
+            _ua->setTimerValue(SIP_TIMER_A, _ua->getTimerValue(SIP_TIMER_A) * 2);
+            _ua->start_timer(SIP_TIMER_A, this);
+            _transport->send_message(_request_msg);
+            break;
+
+        default:
+            break;
+    }
+}
+
+void SIP_Transaction_Client_Invite::timer_B_Expired()
+{
+    switch (_state)
+    {
+        case sttCalling:
+        {
+            //_state = sttTerminated;
+            _ua->stop_timer(SIP_TIMER_A);
+
+            SIP_Response response(408);
+            _ua->_uac.receive_msg(_request_msg, &response, this);
+            clear();
+            break;
+        }
+
+        default:
+            break;
+    }
+}
+
+void SIP_Transaction_Client_Invite::timer_D_Expired()
+{
+    switch (_state)
+    {
+        case sttCompleted:
+            //_state = sttTerminated;
+            clear();
+            break;
+
+        default:
+            break;
+    }
+}
+
+SIP_Transaction *SIP_Transaction_Client_Invite::matching_transaction(SIP_Message *msg)
+{
+    if ((!msg) || (msg->get_msg_type() != SIP_RESPONSE))
+        return 0;
+
+    SIP_Response *response = (SIP_Response *) msg;
+
+    SIP_Header_Via *via_response = (SIP_Header_Via *) response->get_header(SIP_HEADER_VIA);
+    SIP_Header_CSeq *cseq_response = (SIP_Header_CSeq *) response->get_header(SIP_HEADER_CSEQ);
+    if ((!via_response) || (!cseq_response))
+        return 0;
+
+    const char *branch_response = via_response->get_branch();
+    SIP_Message_Type msg_type_response = cseq_response->get_method();
+    //unsigned int sequence_response = cseq_response->get_sequence();
+
+    if (!branch_response)
+        return 0;
+
+    if (_request_msg)
+    {
+        SIP_Header_Via *via = (SIP_Header_Via *) _request_msg->get_header(SIP_HEADER_VIA);
+        SIP_Header_CSeq *cseq = (SIP_Header_CSeq *) _request_msg->get_header(SIP_HEADER_CSEQ);
+
+        if ((via) && (cseq))
+        {
+            const char *branch = via->get_branch();
+            SIP_Message_Type msg_type = cseq->get_method();
+            //unsigned int sequence = cseq->get_sequence();
+
+            if ((!strcmp(branch, branch_response)) && (msg_type == msg_type_response)) // && (sequence == sequence_response))
+                return this;
+        }
+    }
+
+    return 0;
+}
+
+//-------------------------------------------
+
+SIP_Transaction_Client_Non_Invite::SIP_Transaction_Client_Non_Invite(SIP_User_Agent *ua) : SIP_Transaction(ua)
+{
+    _state = sttIdle;
+    _request_msg = 0;
+}
+
+SIP_Transaction_Client_Non_Invite::~SIP_Transaction_Client_Non_Invite()
+{
+    _ua->stop_timer(SIP_TIMER_E);
+    _ua->stop_timer(SIP_TIMER_F);
+    _ua->stop_timer(SIP_TIMER_K);
+
+    if (_request_msg)
+        delete _request_msg;
+}
+
+/*void SIP_Transaction_Client_Non_Invite::copy_request(Sip_Request *msg)
+{
+    switch (msg->get_msg_type())
+    {
+        case SIP_REQUEST_BYE:			_request_msg = new SIP_Request_Bye(*((SIP_Request_Bye *) msg));             break;
+        //case SIP_REQUEST_CANCEL:		_request_msg = new SIP_Request_Cancel(*((SIP_Request_Cancel *) msg));       break;
+        case SIP_REQUEST_MESSAGE:		_request_msg = new SIP_Request_Message(*((SIP_Request_Message *) msg));     break;
+        case SIP_REQUEST_NOTIFY:		_request_msg = new SIP_Request_Notify(*((SIP_Request_Notify *) msg));       break;
+        //case SIP_REQUEST_OPTIONS:		_request_msg = new SIP_Request_Options(*((SIP_Request_Options *) msg));     break;
+        //case SIP_REQUEST_REGISTER:	_request_msg = new SIP_Request_Register(*((SIP_Request_Register *) msg));   break;
+        case SIP_REQUEST_SUBSCRIBE:		_request_msg = new SIP_Request_Subscribe(*((SIP_Request_Subscribe *) msg)); break;
+        default:						break;
+    }
 }*/
 
-void SipTransactionClientNonInvite::sendRequest(SipRequest *Msg)
+void SIP_Transaction_Client_Non_Invite::send_request(SIP_Request *msg)
 {
-	switch (curState)
-	{
-		case sttIdle:
-			curState = sttTrying;
-			requestMsg = Msg; //copyRequest(Msg);
-			Msg->setCanDelete(false);
-			transport->sendMessage(requestMsg);
-			ua->setTimerValue(SIP_TIMER_E, SIP_TIMER_1);
-			ua->startTimer(SIP_TIMER_E, this);
-			ua->setTimerValue(SIP_TIMER_F, SIP_TIMER_1 * 64);
-			ua->startTimer(SIP_TIMER_F, this);
-			break;
+    switch (_state)
+    {
+        case sttIdle:
+            _state = sttTrying;
+            _request_msg = msg; //copy_request(msg);
+            msg->set_can_delete(false);
+            _transport->send_message(_request_msg);
+            _ua->setTimerValue(SIP_TIMER_E, SIP_TIMER_1);
+            _ua->start_timer(SIP_TIMER_E, this);
+            _ua->setTimerValue(SIP_TIMER_F, SIP_TIMER_1 * 64);
+            _ua->start_timer(SIP_TIMER_F, this);
+            break;
 
-		default:
-			break;
-	}
+        default:
+            break;
+    }
 }
 
-void SipTransactionClientNonInvite::receive1xx(SipResponse *Msg)
+void SIP_Transaction_Client_Non_Invite::receive_1xx(SIP_Response *msg)
 {
-	switch (curState)
-	{
-		case sttTrying:
-		case sttProceeding:
-			curState = sttProceeding;
-			ua->uac.receiveMsg(requestMsg, Msg, this);
-			break;
+    switch (_state)
+    {
+        case sttTrying:
+        case sttProceeding:
+            _state = sttProceeding;
+            _ua->_uac.receive_msg(_request_msg, msg, this);
+            break;
 
-		default:
-			break;
-	}
+        default:
+            break;
+    }
 }
 
-void SipTransactionClientNonInvite::receive2xx6xx(SipResponse *Msg)
+void SIP_Transaction_Client_Non_Invite::receive_2xx_6xx(SIP_Response *msg)
 {
-	switch (curState)
-	{
-		case sttTrying:
-		case sttProceeding:
-			curState = sttCompleted;
-			ua->setTimerValue(SIP_TIMER_K, SIP_TIMER_4);
-			ua->startTimer(SIP_TIMER_K, this);
-			ua->stopTimer(SIP_TIMER_E);
-			ua->stopTimer(SIP_TIMER_F);
-			ua->uac.receiveMsg(requestMsg, Msg, this);
-			break;
+    switch (_state)
+    {
+        case sttTrying:
+        case sttProceeding:
+            _state = sttCompleted;
+            _ua->setTimerValue(SIP_TIMER_K, SIP_TIMER_4);
+            _ua->start_timer(SIP_TIMER_K, this);
+            _ua->stop_timer(SIP_TIMER_E);
+            _ua->stop_timer(SIP_TIMER_F);
+            _ua->_uac.receive_msg(_request_msg, msg, this);
+            break;
 
-		default:
-			break;
-	}
+        default:
+            break;
+    }
 }
 
-void SipTransactionClientNonInvite::transportError()
+void SIP_Transaction_Client_Non_Invite::transport_error()
 {
-	switch (curState)
-	{
-		case sttTrying:
-		case sttProceeding:
-		{
-			//curState = sttTerminated;
-			ua->stopTimer(SIP_TIMER_E);
-			ua->stopTimer(SIP_TIMER_F);
+    switch (_state)
+    {
+        case sttTrying:
+        case sttProceeding:
+        {
+            //_state = sttTerminated;
+            _ua->stop_timer(SIP_TIMER_E);
+            _ua->stop_timer(SIP_TIMER_F);
 
-			SipResponse response(503);
-			ua->uac.receiveMsg(requestMsg, &response, this);
-			clear();
-			break;
-		}
+            SIP_Response response(503);
+            _ua->_uac.receive_msg(_request_msg, &response, this);
+            clear();
+            break;
+        }
 
-		default:
-			break;
-	}
+        default:
+            break;
+    }
 }
 
-void SipTransactionClientNonInvite::timerEExpired()
+void SIP_Transaction_Client_Non_Invite::timer_E_Expired()
 {
-	switch (curState)
-	{
-		case sttTrying:
-		{
-			//curState = sttTrying;
-			int timerValue = ((ua->getTimerValue(SIP_TIMER_E) * 2) < SIP_TIMER_2) ? ua->getTimerValue(SIP_TIMER_E) * 2 : SIP_TIMER_2;
-			ua->setTimerValue(SIP_TIMER_E, timerValue);
-			ua->startTimer(SIP_TIMER_E, this);
-			transport->sendMessage(requestMsg);
-			break;
-		}
+    switch (_state)
+    {
+        case sttTrying:
+        {
+            //_state = sttTrying;
+            int timerValue = ((_ua->getTimerValue(SIP_TIMER_E) * 2) < SIP_TIMER_2) ? _ua->getTimerValue(SIP_TIMER_E) * 2 : SIP_TIMER_2;
+            _ua->setTimerValue(SIP_TIMER_E, timerValue);
+            _ua->start_timer(SIP_TIMER_E, this);
+            _transport->send_message(_request_msg);
+            break;
+        }
 
-		case sttProceeding:
-			//curState = sttProceeding;
-			ua->setTimerValue(SIP_TIMER_E, SIP_TIMER_2);
-			ua->startTimer(SIP_TIMER_E, this);
-			transport->sendMessage(requestMsg);
-			break;
+        case sttProceeding:
+            //_state = sttProceeding;
+            _ua->setTimerValue(SIP_TIMER_E, SIP_TIMER_2);
+            _ua->start_timer(SIP_TIMER_E, this);
+            _transport->send_message(_request_msg);
+            break;
 
-		default:
-			break;
-	}
+        default:
+            break;
+    }
 }
 
-void SipTransactionClientNonInvite::timerFExpired()
+void SIP_Transaction_Client_Non_Invite::timer_F_Expired()
 {
-	switch (curState)
-	{
-		case sttTrying:
-		case sttProceeding:
-		{
-			//curState = sttTerminated;
-			ua->stopTimer(SIP_TIMER_E);
+    switch (_state)
+    {
+        case sttTrying:
+        case sttProceeding:
+        {
+            //_state = sttTerminated;
+            _ua->stop_timer(SIP_TIMER_E);
 
-			SipResponse response(408);
-			ua->uac.receiveMsg(requestMsg, &response, this);
-			clear();
-			break;
-		}
+            SIP_Response response(408);
+            _ua->_uac.receive_msg(_request_msg, &response, this);
+            clear();
+            break;
+        }
 
-		default:
-			break;
-	}
+        default:
+            break;
+    }
 }
 
-void SipTransactionClientNonInvite::timerKExpired()
+void SIP_Transaction_Client_Non_Invite::timer_K_Expired()
 {
-	switch (curState)
-	{
-		case sttCompleted:
-			//curState = sttTerminated;
-			clear();
-			break;
+    switch (_state)
+    {
+        case sttCompleted:
+            //_state = sttTerminated;
+            clear();
+            break;
 
-		default:
-			break;
-	}
+        default:
+            break;
+    }
 }
 
-SipTransaction *SipTransactionClientNonInvite::matchingTransaction(SipMessage *msg)
+SIP_Transaction *SIP_Transaction_Client_Non_Invite::matching_transaction(SIP_Message *msg)
 {
-	if ((!msg) || (msg->getMsgType() != SIP_RESPONSE))
-		return 0;
+    if ((!msg) || (msg->get_msg_type() != SIP_RESPONSE))
+        return 0;
 
-	SipResponse *response = (SipResponse *) msg;
+    SIP_Response *response = (SIP_Response *) msg;
 
-	SipHeaderVia *viaResponse = (SipHeaderVia *) response->getHeader(SIP_HEADER_VIA);
-	SipHeaderCSeq *cseqResponse = (SipHeaderCSeq *) response->getHeader(SIP_HEADER_CSEQ);
-	if ((!viaResponse) || (!cseqResponse))
-		return 0;
+    SIP_Header_Via *via_response = (SIP_Header_Via *) response->get_header(SIP_HEADER_VIA);
+    SIP_Header_CSeq *cseq_response = (SIP_Header_CSeq *) response->get_header(SIP_HEADER_CSEQ);
+    if ((!via_response) || (!cseq_response))
+        return 0;
 
-	const char *branchResponse = viaResponse->getBranch();
-	SipMessageType msgTypeResponse = cseqResponse->getMethod();
-	//unsigned int sequenceResponse = cseqResponse->getSequence();
+    const char *branch_response = via_response->get_branch();
+    SIP_Message_Type msg_type_response = cseq_response->get_method();
+    //unsigned int sequence_response = cseq_response->get_sequence();
 
-	if (!branchResponse)
-		return 0;
+    if (!branch_response)
+        return 0;
 
-	if (requestMsg)
-	{
-		SipHeaderVia *via = (SipHeaderVia *) requestMsg->getHeader(SIP_HEADER_VIA);
-		SipHeaderCSeq *cseq = (SipHeaderCSeq *) requestMsg->getHeader(SIP_HEADER_CSEQ);
+    if (_request_msg)
+    {
+        SIP_Header_Via *via = (SIP_Header_Via *) _request_msg->get_header(SIP_HEADER_VIA);
+        SIP_Header_CSeq *cseq = (SIP_Header_CSeq *) _request_msg->get_header(SIP_HEADER_CSEQ);
 
-		if ((via) && (cseq))
-		{
-			const char *branch = via->getBranch();
-			SipMessageType msgType = cseq->getMethod();
-			//unsigned int sequence = cseq->getSequence();
+        if ((via) && (cseq))
+        {
+            const char *branch = via->get_branch();
+            SIP_Message_Type msg_type = cseq->get_method();
+            //unsigned int sequence = cseq->get_sequence();
 
-			if ((!strcmp(branch, branchResponse)) && (msgType == msgTypeResponse)) // && (sequence == sequenceResponse))
-				return this;
-		}
-	}
+            if ((!strcmp(branch, branch_response)) && (msg_type == msg_type_response)) // && (sequence == sequence_response))
+                return this;
+        }
+    }
 
-	return 0;
-}
-
-//-------------------------------------------
-
-SipTransactionServerInvite::SipTransactionServerInvite(UserAgent *ua) : SipTransaction(ua)
-{
-	this->curState = sttIdle;
-	this->requestMsg = 0;
-	this->lastResponse = 0;
-}
-
-SipTransactionServerInvite::~SipTransactionServerInvite()
-{
-	ua->stopTimer(SIP_TIMER_G);
-	ua->stopTimer(SIP_TIMER_H);
-	ua->stopTimer(SIP_TIMER_I);
-
-	if (requestMsg)
-		delete requestMsg;
-
-	if (lastResponse)
-		delete lastResponse;
-}
-
-void SipTransactionServerInvite::receiveInvite(SipRequestInvite *Msg)
-{
-	switch (curState)
-	{
-		case sttIdle:
-			curState = sttProceeding;
-			requestMsg = Msg; //requestMsg = new SipRequestInvite(*Msg);
-			Msg->setCanDelete(false);
-			ua->uas.receiveMsg(Msg, this);
-			break;
-
-		case sttProceeding:
-			//curState = sttProceeding;
-			if (lastResponse)
-				transport->sendMessage(lastResponse);
-			break;
-
-		case sttCompleted:
-			//curState = sttCompleted;
-			if (lastResponse)
-				transport->sendMessage(lastResponse);
-			break;
-
-		default:
-			break;
-	}
-}
-
-void SipTransactionServerInvite::receiveAck(SipRequestAck *Msg)
-{
-	switch (curState)
-	{
-		case sttCompleted:
-			curState = sttConfirmed;
-			ua->setTimerValue(SIP_TIMER_I, SIP_TIMER_4);
-			ua->startTimer(SIP_TIMER_I, this);
-			ua->stopTimer(SIP_TIMER_G);
-			ua->stopTimer(SIP_TIMER_H);
-			break;
-
-		default:
-			break;
-	}
-}
-
-void SipTransactionServerInvite::send1xx(SipResponse *Msg)
-{
-	switch (curState)
-	{
-		case sttProceeding:
-			//curState = sttProceeding;
-			if (lastResponse)
-				delete lastResponse;
-			lastResponse = Msg; //lastResponse = new SipResponse(*Msg);
-			Msg->setCanDelete(false);
-			transport->sendMessage(lastResponse);
-			break;
-
-		default:
-			break;
-	}
-}
-
-void SipTransactionServerInvite::send2xx(SipResponse *Msg)
-{
-	switch (curState)
-	{
-		case sttProceeding:
-			//curState = sttTerminated;
-			transport->sendMessage(Msg);
-			clear();
-			break;
-
-		default:
-			break;
-	}
-}
-
-void SipTransactionServerInvite::send3xx6xx(SipResponse *Msg)
-{
-	switch (curState)
-	{
-		case sttProceeding:
-			curState = sttCompleted;
-			if (lastResponse)
-				delete lastResponse;
-			lastResponse = Msg; //lastResponse = new SipResponse(*Msg);
-			Msg->setCanDelete(false);
-			transport->sendMessage(lastResponse);
-			ua->setTimerValue(SIP_TIMER_G, SIP_TIMER_1);
-			ua->startTimer(SIP_TIMER_G, this);
-			ua->setTimerValue(SIP_TIMER_H, SIP_TIMER_1 * 64);
-			ua->startTimer(SIP_TIMER_H, this);
-			break;
-
-		default:
-			break;
-	}
-}
-
-void SipTransactionServerInvite::transportError()
-{
-	switch (curState)
-	{
-		case sttProceeding:
-			//curState = sttTerminated;
-			//ua->uas.receiveMsg(); //TODO: InformTU("Transport Error");
-			clear();
-			break;
-
-		case sttCompleted:
-			//curState = sttTerminated;
-			ua->stopTimer(SIP_TIMER_G);
-			ua->stopTimer(SIP_TIMER_H);
-			//ua->uas.receiveMsg(); //TODO: InformTU("Transport Error");
-			clear();
-			break;
-
-		default:
-			break;
-	}
-}
-
-void SipTransactionServerInvite::timerGExpired()
-{
-	switch (curState)
-	{
-		case sttCompleted:
-		{
-			//curState = sttCompleted;
-			int timerValue = ((ua->getTimerValue(SIP_TIMER_G) * 2) < SIP_TIMER_2) ? ua->getTimerValue(SIP_TIMER_G) * 2 : SIP_TIMER_2;
-			ua->setTimerValue(SIP_TIMER_G, timerValue);
-			ua->startTimer(SIP_TIMER_G, this);
-			if (lastResponse)
-				transport->sendMessage(lastResponse);
-			break;
-		}
-
-		default:
-			break;
-	}
-}
-
-void SipTransactionServerInvite::timerHExpired()
-{
-	switch (curState)
-	{
-		case sttCompleted:
-			//curState = sttTerminated;
-			ua->stopTimer(SIP_TIMER_G);
-			//ua->uas.receiveMsg(); //TODO: InformTU("Timeout occurred - TimerH");
-			clear();
-			break;
-
-		default:
-			break;
-	}
-}
-
-void SipTransactionServerInvite::timerIExpired()
-{
-	switch (curState)
-	{
-		case sttConfirmed:
-			//curState = sttTerminated;
-			clear();
-			break;
-
-		default:
-			break;
-	}
-}
-
-SipTransaction *SipTransactionServerInvite::matchingTransaction(SipMessage *msg)
-{
-	if ((!msg) || ((msg->getMsgType() != SIP_REQUEST_INVITE) && (msg->getMsgType() != SIP_REQUEST_ACK)))
-		return 0;
-
-	SipRequest *request = (SipRequest *) msg;
-
-	SipHeaderVia *viaRequest = (SipHeaderVia *) request->getHeader(SIP_HEADER_VIA);
-	if (!viaRequest)
-		return 0;
-
-	SipMessageType methodRequest = request->getRequestLine()->getMethod();
-	const char *branchRequest = viaRequest->getBranch();
-	const char *sentbyRequest = viaRequest->getSentBy();
-
-	if ((!sentbyRequest) || (methodRequest == SIP_MESSAGE_TYPE_INVALID))
-		return 0;
-
-	bool magicCookie = false;
-	if ((branchRequest) && (startWith(branchRequest, "z9hG4bK")))
-		magicCookie = true;
-
-	if (magicCookie)
-	{
-		SipHeaderVia *via = (SipHeaderVia *) requestMsg->getHeader(SIP_HEADER_VIA);
-		if (via)
-		{
-			SipMessageType method = requestMsg->getRequestLine()->getMethod();
-			const char *branch = via->getBranch();
-			const char *sentby = via->getSentBy();
-
-			if ((branch) && (sentby) && (method != SIP_MESSAGE_TYPE_INVALID))
-			{
-				if ((!strcmp(branch, branchRequest)) && (!strcmp(sentby, sentbyRequest)) &&
-					((method == methodRequest) || ((methodRequest == SIP_REQUEST_ACK) && (method == SIP_REQUEST_INVITE))))
-				{
-					return this;
-				}
-			}
-		}
-	}
-
-	return 0;
+    return 0;
 }
 
 //-------------------------------------------
 
-SipTransactionServerNonInvite::SipTransactionServerNonInvite(UserAgent *ua) : SipTransaction(ua)
+SIP_Transaction_Server_Invite::SIP_Transaction_Server_Invite(SIP_User_Agent *ua) : SIP_Transaction(ua)
 {
-	this->curState = sttIdle;
-	this->requestMsg = 0;
-	this->lastResponse = 0;
+    _state = sttIdle;
+    _request_msg = 0;
+    _last_response = 0;
 }
 
-SipTransactionServerNonInvite::~SipTransactionServerNonInvite()
+SIP_Transaction_Server_Invite::~SIP_Transaction_Server_Invite()
 {
-	ua->stopTimer(SIP_TIMER_J);
+    _ua->stop_timer(SIP_TIMER_G);
+    _ua->stop_timer(SIP_TIMER_H);
+    _ua->stop_timer(SIP_TIMER_I);
 
-	if (requestMsg)
-		delete requestMsg;
+    if (_request_msg)
+        delete _request_msg;
 
-	if (lastResponse)
-		delete lastResponse;
+    if (_last_response)
+        delete _last_response;
 }
 
-/*void SipTransactionServerNonInvite::copyRequest(SipRequest *Msg)
+void SIP_Transaction_Server_Invite::receive_invite(SIP_Request_Invite *msg)
 {
-	switch (Msg->getMsgType())
-	{
-		case SIP_REQUEST_BYE:			requestMsg = new SipRequestBye(*((SipRequestBye *) Msg));				break;
-		//case SIP_REQUEST_CANCEL:		requestMsg = new SipRequestCancel(*((SipRequestCancel *) Msg));			break;
-		case SIP_REQUEST_MESSAGE:		requestMsg = new SipRequestMessage(*((SipRequestMessage *) Msg));		break;
-		case SIP_REQUEST_NOTIFY:		requestMsg = new SipRequestNotify(*((SipRequestNotify *) Msg));			break;
-		//case SIP_REQUEST_OPTIONS:		requestMsg = new SipRequestOptions(*((SipRequestOptions *) Msg));		break;
-		//case SIP_REQUEST_REGISTER:	requestMsg = new SipRequestRegister(*((SipRequestRegister *) Msg));		break;
-		case SIP_REQUEST_SUBSCRIBE:		requestMsg = new SipRequestSubscribe(*((SipRequestSubscribe *) Msg));	break;
-		default:						break;
-	}
+    switch (_state)
+    {
+        case sttIdle:
+            _state = sttProceeding;
+            _request_msg = msg; //_request_msg = new SIP_Request_Invite(*msg);
+            msg->set_can_delete(false);
+            _ua->_uas.receive_msg(msg, this);
+            break;
+
+        case sttProceeding:
+            //_state = sttProceeding;
+            if (_last_response)
+                _transport->send_message(_last_response);
+            break;
+
+        case sttCompleted:
+            //_state = sttCompleted;
+            if (_last_response)
+                _transport->send_message(_last_response);
+            break;
+
+        default:
+            break;
+    }
+}
+
+void SIP_Transaction_Server_Invite::receive_ack(SIP_Request_Ack *msg)
+{
+    switch (_state)
+    {
+        case sttCompleted:
+            _state = sttConfirmed;
+            _ua->setTimerValue(SIP_TIMER_I, SIP_TIMER_4);
+            _ua->start_timer(SIP_TIMER_I, this);
+            _ua->stop_timer(SIP_TIMER_G);
+            _ua->stop_timer(SIP_TIMER_H);
+            break;
+
+        default:
+            break;
+    }
+}
+
+void SIP_Transaction_Server_Invite::send_1xx(SIP_Response *msg)
+{
+    switch (_state)
+    {
+        case sttProceeding:
+            //_state = sttProceeding;
+            if (_last_response)
+                delete _last_response;
+            _last_response = msg; //_last_response = new SIP_Response(*msg);
+            msg->set_can_delete(false);
+            _transport->send_message(_last_response);
+            break;
+
+        default:
+            break;
+    }
+}
+
+void SIP_Transaction_Server_Invite::send_2xx(SIP_Response *msg)
+{
+    switch (_state)
+    {
+        case sttProceeding:
+            //_state = sttTerminated;
+            _transport->send_message(msg);
+            clear();
+            break;
+
+        default:
+            break;
+    }
+}
+
+void SIP_Transaction_Server_Invite::send_3xx_6xx(SIP_Response *msg)
+{
+    switch (_state)
+    {
+        case sttProceeding:
+            _state = sttCompleted;
+            if (_last_response)
+                delete _last_response;
+            _last_response = msg; //_last_response = new SIP_Response(*msg);
+            msg->set_can_delete(false);
+            _transport->send_message(_last_response);
+            _ua->setTimerValue(SIP_TIMER_G, SIP_TIMER_1);
+            _ua->start_timer(SIP_TIMER_G, this);
+            _ua->setTimerValue(SIP_TIMER_H, SIP_TIMER_1 * 64);
+            _ua->start_timer(SIP_TIMER_H, this);
+            break;
+
+        default:
+            break;
+    }
+}
+
+void SIP_Transaction_Server_Invite::transport_error()
+{
+    switch (_state)
+    {
+        case sttProceeding:
+            //_state = sttTerminated;
+            //_ua->_uas.receive_msg(); //TODO: InformTU("Transport Error");
+            clear();
+            break;
+
+        case sttCompleted:
+            //_state = sttTerminated;
+            _ua->stop_timer(SIP_TIMER_G);
+            _ua->stop_timer(SIP_TIMER_H);
+            //_ua->_uas.receive_msg(); //TODO: InformTU("Transport Error");
+            clear();
+            break;
+
+        default:
+            break;
+    }
+}
+
+void SIP_Transaction_Server_Invite::timer_G_Expired()
+{
+    switch (_state)
+    {
+        case sttCompleted:
+        {
+            //_state = sttCompleted;
+            int timerValue = ((_ua->getTimerValue(SIP_TIMER_G) * 2) < SIP_TIMER_2) ? _ua->getTimerValue(SIP_TIMER_G) * 2 : SIP_TIMER_2;
+            _ua->setTimerValue(SIP_TIMER_G, timerValue);
+            _ua->start_timer(SIP_TIMER_G, this);
+            if (_last_response)
+                _transport->send_message(_last_response);
+            break;
+        }
+
+        default:
+            break;
+    }
+}
+
+void SIP_Transaction_Server_Invite::timer_H_Expired()
+{
+    switch (_state)
+    {
+        case sttCompleted:
+            //_state = sttTerminated;
+            _ua->stop_timer(SIP_TIMER_G);
+            //_ua->_uas.receive_msg(); //TODO: InformTU("Timeout occurred - TimerH");
+            clear();
+            break;
+
+        default:
+            break;
+    }
+}
+
+void SIP_Transaction_Server_Invite::timer_I_Expired()
+{
+    switch (_state)
+    {
+        case sttConfirmed:
+            //_state = sttTerminated;
+            clear();
+            break;
+
+        default:
+            break;
+    }
+}
+
+SIP_Transaction *SIP_Transaction_Server_Invite::matching_transaction(SIP_Message *msg)
+{
+    if ((!msg) || ((msg->get_msg_type() != SIP_REQUEST_INVITE) && (msg->get_msg_type() != SIP_REQUEST_ACK)))
+        return 0;
+
+    SIP_Request *request = (SIP_Request *) msg;
+
+    SIP_Header_Via *via_request = (SIP_Header_Via *) request->get_header(SIP_HEADER_VIA);
+    if (!via_request)
+        return 0;
+
+    SIP_Message_Type method_request = request->get_request_line()->get_method();
+    const char *branch_request = via_request->get_branch();
+    const char *sent_by_request = via_request->get_sent_by();
+
+    if ((!sent_by_request) || (method_request == SIP_MESSAGE_TYPE_INVALID))
+        return 0;
+
+    bool magic_cookie = false;
+    if ((branch_request) && (start_with(branch_request, "z9hG4bK")))
+        magic_cookie = true;
+
+    if (magic_cookie)
+    {
+        SIP_Header_Via *via = (SIP_Header_Via *) _request_msg->get_header(SIP_HEADER_VIA);
+        if (via)
+        {
+            SIP_Message_Type method = _request_msg->get_request_line()->get_method();
+            const char *branch = via->get_branch();
+            const char *sent_by = via->get_sent_by();
+
+            if ((branch) && (sent_by) && (method != SIP_MESSAGE_TYPE_INVALID))
+            {
+                if ((!strcmp(branch, branch_request)) && (!strcmp(sent_by, sent_by_request)) &&
+                    ((method == method_request) || ((method_request == SIP_REQUEST_ACK) && (method == SIP_REQUEST_INVITE))))
+                {
+                    return this;
+                }
+            }
+        }
+    }
+
+    return 0;
+}
+
+//-------------------------------------------
+
+SIP_Transaction_Server_Non_Invite::SIP_Transaction_Server_Non_Invite(SIP_User_Agent *ua) : SIP_Transaction(ua)
+{
+    _state = sttIdle;
+    _request_msg = 0;
+    _last_response = 0;
+}
+
+SIP_Transaction_Server_Non_Invite::~SIP_Transaction_Server_Non_Invite()
+{
+    _ua->stop_timer(SIP_TIMER_J);
+
+    if (_request_msg)
+        delete _request_msg;
+
+    if (_last_response)
+        delete _last_response;
+}
+
+/*void SIP_Transaction_Server_Non_Invite::copy_request(SIP_Request *msg)
+{
+    switch (msg->get_msg_type())
+    {
+        case SIP_REQUEST_BYE:			_request_msg = new SIP_Request_Bye(*((SIP_Request_Bye *) msg));             break;
+        //case SIP_REQUEST_CANCEL:		_request_msg = new SIP_Request_Cancel(*((SIP_Request_Cancel *) msg));       break;
+        case SIP_REQUEST_MESSAGE:		_request_msg = new SIP_Request_Message(*((SIP_Request_Message *) msg));     break;
+        case SIP_REQUEST_NOTIFY:		_request_msg = new SIP_Request_Notify(*((SIP_Request_Notify *) msg));       break;
+        //case SIP_REQUEST_OPTIONS:		_request_msg = new SIP_Request_Options(*((SIP_Request_Options *) msg));     break;
+        //case SIP_REQUEST_REGISTER:	_request_msg = new SIP_Request_Register(*((SIP_Request_Register *) msg));   break;
+        case SIP_REQUEST_SUBSCRIBE:		_request_msg = new SIP_Request_Subscribe(*((SIP_Request_Subscribe *) msg)); break;
+        default:						break;
+    }
 }*/
 
-void SipTransactionServerNonInvite::receiveRequest(SipRequest *Msg)
+void SIP_Transaction_Server_Non_Invite::receive_request(SIP_Request *msg)
 {
-	switch (curState)
-	{
-		case sttIdle:
-			curState = sttTrying;
-			requestMsg = Msg; //copyRequest(Msg);
-			Msg->setCanDelete(false);
-			ua->uas.receiveMsg(Msg, this);
-			break;
+    switch (_state)
+    {
+        case sttIdle:
+            _state = sttTrying;
+            _request_msg = msg; //copy_request(msg);
+            msg->set_can_delete(false);
+            _ua->_uas.receive_msg(msg, this);
+            break;
 
-		case sttProceeding:
-			//curState = sttProceeding;
-			if (lastResponse)
-				transport->sendMessage(lastResponse);
-			break;
+        case sttProceeding:
+            //_state = sttProceeding;
+            if (_last_response)
+                _transport->send_message(_last_response);
+            break;
 
-		case sttCompleted:
-			//curState = sttCompleted;
-			if (lastResponse)
-				transport->sendMessage(lastResponse);
-			break;
+        case sttCompleted:
+            //_state = sttCompleted;
+            if (_last_response)
+                _transport->send_message(_last_response);
+            break;
 
-		default:
-			break;
-	}
+        default:
+            break;
+    }
 }
 
-void SipTransactionServerNonInvite::send1xx(SipResponse *Msg)
+void SIP_Transaction_Server_Non_Invite::send_1xx(SIP_Response *msg)
 {
-	switch (curState)
-	{
-		case sttTrying:
-		case sttProceeding:
-			curState = sttProceeding;
-			if (lastResponse)
-				delete lastResponse;
-			lastResponse = Msg; //lastResponse = new SipResponse(*Msg);
-			Msg->setCanDelete(false);
-			transport->sendMessage(lastResponse);
-			break;
+    switch (_state)
+    {
+        case sttTrying:
+        case sttProceeding:
+            _state = sttProceeding;
+            if (_last_response)
+                delete _last_response;
+            _last_response = msg; //_last_response = new SIP_Response(*msg);
+            msg->set_can_delete(false);
+            _transport->send_message(_last_response);
+            break;
 
-		default:
-			break;
-	}
+        default:
+            break;
+    }
 }
 
-void SipTransactionServerNonInvite::send2xx6xx(SipResponse *Msg)
+void SIP_Transaction_Server_Non_Invite::send_2xx_6xx(SIP_Response *msg)
 {
-	switch (curState)
-	{
-		case sttTrying:
-		case sttProceeding:
-			curState = sttCompleted;
-			if (lastResponse)
-				delete lastResponse;
-			lastResponse = Msg; //lastResponse = new SipResponse(*Msg);
-			Msg->setCanDelete(false);
-			transport->sendMessage(lastResponse);
-			ua->setTimerValue(SIP_TIMER_J, SIP_TIMER_1 * 64);
-			ua->startTimer(SIP_TIMER_J, this);
-			break;
+    switch (_state)
+    {
+        case sttTrying:
+        case sttProceeding:
+            _state = sttCompleted;
+            if (_last_response)
+                delete _last_response;
+            _last_response = msg; //_last_response = new SIP_Response(*msg);
+            msg->set_can_delete(false);
+            _transport->send_message(_last_response);
+            _ua->setTimerValue(SIP_TIMER_J, SIP_TIMER_1 * 64);
+            _ua->start_timer(SIP_TIMER_J, this);
+            break;
 
-		default:
-			break;
-	}
+        default:
+            break;
+    }
 }
 
-void SipTransactionServerNonInvite::transportError()
+void SIP_Transaction_Server_Non_Invite::transport_error()
 {
-	switch (curState)
-	{
-		case sttProceeding:
-			//curState = sttTerminated;
-			//ua->uas.receiveMsg(); //TODO: InformTU("Transport Error");
-			clear();
-			break;
+    switch (_state)
+    {
+        case sttProceeding:
+            //_state = sttTerminated;
+            //_ua->_uas.receive_msg(); //TODO: InformTU("Transport Error");
+            clear();
+            break;
 
-		case sttCompleted:
-			//curState = sttTerminated;
-			ua->stopTimer(SIP_TIMER_J);
-			//ua->uas.receiveMsg(); //TODO: InformTU("Transport Error");
-			clear();
-			break;
+        case sttCompleted:
+            //_state = sttTerminated;
+            _ua->stop_timer(SIP_TIMER_J);
+            //_ua->_uas.receive_msg(); //TODO: InformTU("Transport Error");
+            clear();
+            break;
 
-		default:
-			break;
-	}
+        default:
+            break;
+    }
 }
 
-void SipTransactionServerNonInvite::timerJExpired()
+void SIP_Transaction_Server_Non_Invite::timer_J_Expired()
 {
-	switch (curState)
-	{
-		case sttCompleted:
-			//curState = sttTerminated;
-			clear();
-			break;
+    switch (_state)
+    {
+        case sttCompleted:
+            //_state = sttTerminated;
+            clear();
+            break;
 
-		default:
-			break;
-	}
+        default:
+            break;
+    }
 }
 
-SipTransaction *SipTransactionServerNonInvite::matchingTransaction(SipMessage *msg)
+SIP_Transaction *SIP_Transaction_Server_Non_Invite::matching_transaction(SIP_Message *msg)
 {
-	if ((!msg) || (msg->getMsgType() == SIP_RESPONSE) || (msg->getMsgType() == SIP_REQUEST_INVITE) ||
-		(msg->getMsgType() == SIP_REQUEST_ACK))
-	{
-		return 0;
-	}
+    if ((!msg) || (msg->get_msg_type() == SIP_RESPONSE) || (msg->get_msg_type() == SIP_REQUEST_INVITE) ||
+        (msg->get_msg_type() == SIP_REQUEST_ACK))
+    {
+        return 0;
+    }
 
-	SipRequest *request = (SipRequest *) msg;
+    SIP_Request *request = (SIP_Request *) msg;
 
-	SipHeaderVia *viaRequest = (SipHeaderVia *) request->getHeader(SIP_HEADER_VIA);
-	if (!viaRequest)
-		return 0;
+    SIP_Header_Via *via_request = (SIP_Header_Via *) request->get_header(SIP_HEADER_VIA);
+    if (!via_request)
+        return 0;
 
-	SipMessageType methodRequest = request->getRequestLine()->getMethod();
-	const char *branchRequest = viaRequest->getBranch();
-	const char *sentbyRequest = viaRequest->getSentBy();
+    SIP_Message_Type method_request = request->get_request_line()->get_method();
+    const char *branch_request = via_request->get_branch();
+    const char *sent_by_request = via_request->get_sent_by();
 
-	if ((!sentbyRequest) || (methodRequest == SIP_MESSAGE_TYPE_INVALID))
-		return 0;
+    if ((!sent_by_request) || (method_request == SIP_MESSAGE_TYPE_INVALID))
+        return 0;
 
-	bool magicCookie = false;
-	if ((branchRequest) && (startWith(branchRequest, "z9hG4bK")))
-		magicCookie = true;
+    bool magic_cookie = false;
+    if ((branch_request) && (start_with(branch_request, "z9hG4bK")))
+        magic_cookie = true;
 
-	if (magicCookie)
-	{
-		SipHeaderVia *via = (SipHeaderVia *) requestMsg->getHeader(SIP_HEADER_VIA);
-		if (via)
-		{
-			SipMessageType method = requestMsg->getRequestLine()->getMethod();
-			const char *branch = via->getBranch();
-			const char *sentby = via->getSentBy();
+    if (magic_cookie)
+    {
+        SIP_Header_Via *via = (SIP_Header_Via *) _request_msg->get_header(SIP_HEADER_VIA);
+        if (via)
+        {
+            SIP_Message_Type method = _request_msg->get_request_line()->get_method();
+            const char *branch = via->get_branch();
+            const char *sent_by = via->get_sent_by();
 
-			if ((branch) && (sentby) && (method != SIP_MESSAGE_TYPE_INVALID))
-			{
-				if ((!strcmp(branch, branchRequest)) && (!strcmp(sentby, sentbyRequest)) &&
-					((method == methodRequest) || ((methodRequest == SIP_REQUEST_ACK) && (method == SIP_REQUEST_INVITE))))
-				{
-					return this;
-				}
-			}
-		}
-	}
+            if ((branch) && (sent_by) && (method != SIP_MESSAGE_TYPE_INVALID))
+            {
+                if ((!strcmp(branch, branch_request)) && (!strcmp(sent_by, sent_by_request)) &&
+                    ((method == method_request) || ((method_request == SIP_REQUEST_ACK) && (method == SIP_REQUEST_INVITE))))
+                {
+                    return this;
+                }
+            }
+        }
+    }
 
-	return 0;
+    return 0;
 }
 
 __END_SYS

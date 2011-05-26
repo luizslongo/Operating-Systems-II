@@ -3,578 +3,575 @@
 
 __BEGIN_SYS
 
-
-/*SipMessage::SipMessage(SipMessage &msg) : link(this)
+/*SIP_Message::SIP_Message(SIP_Message &msg) : _link(this)
 {
-	canDelete = true;
+    _can_delete = true;
 
-	Simple_List<SipHeader>::Iterator it = msg.headers.begin();
-	while (it != msg.headers.end())
-	{
-		SipHeader *header = it->object();
-		it++;
+    Simple_List<SIP_Header>::Iterator it = _headers();
+    while (it != msg._headers.end())
+    {
+        SIP_Header *header = it->object();
+        it++;
 
-		SipHeader *header2 = SipHeader::createHeader(header->getHeaderType(), header);
-		addHeader(header2);
-	}
+        SIP_Header *header2 = SIP_Header::create_header(header->get_header_type(), header);
+        add_header(header2);
+    }
 
-	if (msg.body)
-		body = SipBody::createBody(msg.body->getBodyType(), msg.body);
-	else
-		body = 0;
+    if (msg._body)
+        _body = SIP_Body::create_body(msg._body->get_body_type(), msg._body);
+    else
+        _body = 0;
 }*/
 
-SipMessage::~SipMessage()
+SIP_Message::~SIP_Message()
 {
-	Simple_List<SipHeader>::Iterator it = headers.begin();
-	while (it != headers.end())
-	{
-		SipHeader *header = it->object();
-		headers.remove(it++);
-		delete header;
-	}
+    Simple_List<SIP_Header>::Iterator it = _headers.begin();
+    while (it != _headers.end())
+    {
+        SIP_Header *header = it->object();
+        _headers.remove(it++);
+        delete header;
+    }
 
-	if (body)
-		delete body;
+    if (_body)
+        delete _body;
 }
 
-SipMessage *SipMessage::decodeMsg(const char *sipMsg)
+SIP_Message *SIP_Message::decode_msg(const char *sip_msg)
 {
-	char *pSipMsg = (char *) sipMsg;
-	removeLWS(pSipMsg);
+    char *p_sip_msg = (char *) sip_msg;
+    remove_lws(p_sip_msg);
 
-	char type[30];
-	match(pSipMsg, " ", type);
-	trim(type);
-	SipMessageType msgType = getMsgType(type);
+    char type[30];
+    match(p_sip_msg, " ", type);
+    trim(type);
+    SIP_Message_Type msg_type = get_msg_type(type);
 
-	SipMessage *msg = 0;
+    SIP_Message *msg = 0;
 
-	switch (msgType)
-	{
-		case SIP_REQUEST_ACK:			msg = new SipRequestAck();			break;
-		case SIP_REQUEST_BYE:			msg = new SipRequestBye();			break;
-		//case SIP_REQUEST_CANCEL:		msg = new SipRequestCancel();		break;
-		case SIP_REQUEST_INVITE:		msg = new SipRequestInvite();		break;
-		case SIP_REQUEST_MESSAGE:		msg = new SipRequestMessage();		break;
-		case SIP_REQUEST_NOTIFY:		msg = new SipRequestNotify();		break;
-		//case SIP_REQUEST_OPTIONS:		msg = new SipRequestOptions();		break;
-		//case SIP_REQUEST_REGISTER:	msg = new SipRequestRegister();		break;
-		case SIP_REQUEST_SUBSCRIBE:		msg = new SipRequestSubscribe();	break;
-		case SIP_RESPONSE:				msg = new SipResponse();			break;
-		default: db<SipMessage>(WRN) << "SipMessage::decodeMsgType -> Invalid " << type << " message type\n"; break;
-	}
+    switch (msg_type)
+    {
+        case SIP_REQUEST_ACK:        msg = new SIP_Request_Ack();       break;
+        case SIP_REQUEST_BYE:        msg = new SIP_Request_Bye();       break;
+        //case SIP_REQUEST_CANCEL:   msg = new SIP_Request_Cancel();    break;
+        case SIP_REQUEST_INVITE:     msg = new SIP_Request_Invite();    break;
+        case SIP_REQUEST_MESSAGE:    msg = new SIP_Request_Message();   break;
+        case SIP_REQUEST_NOTIFY:     msg = new SIP_Request_Notify();    break;
+        //case SIP_REQUEST_OPTIONS:  msg = new SIP_Request_Options();   break;
+        //case SIP_REQUEST_REGISTER: msg = new SIP_Request_Register();  break;
+        case SIP_REQUEST_SUBSCRIBE:  msg = new SIP_Request_Subscribe(); break;
+        case SIP_RESPONSE:           msg = new SIP_Response();          break;
+        default: db<SIP_Message>(WRN) << "SIP_Message::decode_msg -> Invalid " << type << " message type\n"; break;
+    }
 
-	if ((msg) && (!msg->parse(pSipMsg)))
-	{
-		db<SipMessage>(WRN) << "SipMessage::decodeMsgType -> Failed to parse " << type << " message type\n";
-		delete msg;
-		msg = 0;
-	}
+    if ((msg) && (!msg->parse(p_sip_msg)))
+    {
+        db<SIP_Message>(WRN) << "SIP_Message::decode_msg -> Failed to parse " << type << " message type\n";
+        delete msg;
+        msg = 0;
+    }
 
-	return msg;
+    return msg;
 }
 
-SipMessageType SipMessage::getMsgType(const char *sipMsg)
+SIP_Message_Type SIP_Message::get_msg_type(const char *sip_msg)
 {
-	SipMessageType type = SIP_MESSAGE_TYPE_INVALID;
+    SIP_Message_Type type = SIP_MESSAGE_TYPE_INVALID;
 
-	if (!strcmp(sipMsg, "ACK"))
-		type = SIP_REQUEST_ACK;
+    if (!strcmp(sip_msg, "ACK"))
+        type = SIP_REQUEST_ACK;
 
-	else if (!strcmp(sipMsg, "BYE"))
-		type = SIP_REQUEST_BYE;
+    else if (!strcmp(sip_msg, "BYE"))
+        type = SIP_REQUEST_BYE;
 
-	/*else if (!strcmp(sipMsg, "CANCEL"))
-		type = SIP_REQUEST_CANCEL;*/
+    /*else if (!strcmp(sip_msg, "CANCEL"))
+        type = SIP_REQUEST_CANCEL;*/
 
-	else if (!strcmp(sipMsg, "INVITE"))
-		type = SIP_REQUEST_INVITE;
+    else if (!strcmp(sip_msg, "INVITE"))
+        type = SIP_REQUEST_INVITE;
 
-	else if (!strcmp(sipMsg, "MESSAGE"))
-			type = SIP_REQUEST_MESSAGE;
+    else if (!strcmp(sip_msg, "MESSAGE"))
+        type = SIP_REQUEST_MESSAGE;
 
-	else if (!strcmp(sipMsg, "NOTIFY"))
-		type = SIP_REQUEST_NOTIFY;
+    else if (!strcmp(sip_msg, "NOTIFY"))
+        type = SIP_REQUEST_NOTIFY;
 
-	/*else if (!strcmp(sipMsg, "OPTIONS"))
-		type = SIP_REQUEST_OPTIONS;
+    /*else if (!strcmp(sip_msg, "OPTIONS"))
+        type = SIP_REQUEST_OPTIONS;
 
-	else if (!strcmp(sipMsg, "REGISTER"))
-		type = SIP_REQUEST_REGISTER;*/
+    else if (!strcmp(sip_msg, "REGISTER"))
+        type = SIP_REQUEST_REGISTER;*/
 
-	else if (!strcmp(sipMsg, "SUBSCRIBE"))
-			type = SIP_REQUEST_SUBSCRIBE;
+    else if (!strcmp(sip_msg, "SUBSCRIBE"))
+        type = SIP_REQUEST_SUBSCRIBE;
 
-	else if (!strcmp(sipMsg, SIP_VERSION))
-		type = SIP_RESPONSE;
+    else if (!strcmp(sip_msg, SIP_VERSION))
+        type = SIP_RESPONSE;
 
-	return type;
+    return type;
 }
 
-const char *SipMessage::getMsgType(const SipMessageType type)
+const char *SIP_Message::get_msg_type(const SIP_Message_Type type)
 {
-	const char *sipMsg = 0;
+    const char *sipMsg = 0;
 
-	switch (type)
-	{
-		case SIP_REQUEST_ACK:			sipMsg = "ACK";			break;
-		case SIP_REQUEST_BYE:			sipMsg = "BYE";			break;
-		//case SIP_REQUEST_CANCEL:		sipMsg = "CANCEL";		break;
-		case SIP_REQUEST_INVITE:		sipMsg = "INVITE";		break;
-		case SIP_REQUEST_MESSAGE:		sipMsg = "MESSAGE";		break;
-		case SIP_REQUEST_NOTIFY:		sipMsg = "NOTIFY";		break;
-		//case SIP_REQUEST_OPTIONS:		sipMsg = "OPTIONS";		break;
-		//case SIP_REQUEST_REGISTER:	sipMsg = "REGISTER";	break;
-		case SIP_REQUEST_SUBSCRIBE:		sipMsg = "SUBSCRIBE";	break;
-		case SIP_RESPONSE:				sipMsg = SIP_VERSION;	break;
-		default:						break;
-	}
+    switch (type)
+    {
+        case SIP_REQUEST_ACK:        sipMsg = "ACK";       break;
+        case SIP_REQUEST_BYE:        sipMsg = "BYE";       break;
+        //case SIP_REQUEST_CANCEL:   sipMsg = "CANCEL";    break;
+        case SIP_REQUEST_INVITE:     sipMsg = "INVITE";    break;
+        case SIP_REQUEST_MESSAGE:    sipMsg = "MESSAGE";   break;
+        case SIP_REQUEST_NOTIFY:     sipMsg = "NOTIFY";    break;
+        //case SIP_REQUEST_OPTIONS:  sipMsg = "OPTIONS";   break;
+        //case SIP_REQUEST_REGISTER: sipMsg = "REGISTER";  break;
+        case SIP_REQUEST_SUBSCRIBE:  sipMsg = "SUBSCRIBE"; break;
+        case SIP_RESPONSE:           sipMsg = SIP_VERSION; break;
+        default: break;
+    }
 
-	return sipMsg;
+    return sipMsg;
 }
 
-bool SipMessage::parse(const char *sipMsg)
+bool SIP_Message::parse(const char *sip_msg)
 {
-	if (!parseStartLine(sipMsg))
-		return false;
+    if (!parse_start_line(sip_msg))
+        return false;
 
-	if (!parseHeader(sipMsg))
-		return false;
+    if (!parse_header(sip_msg))
+        return false;
 
-	if (!parseBody(sipMsg))
-		return false;
+    if (!parse_body(sip_msg))
+        return false;
 
-	return true;
-}
-
-bool SipMessage::parseHeader(const char *sipMsg)
-{
-	char line[MAX_LINE];
-	Simple_List<SipHeader> header;
-	while (true)
-	{
-		bool ret = getLine(sipMsg, line);
-		if ((!ret) || (!strcmp(line, "")))
-			return true;
-
-		SipHeader::decodeHeader(line, header);
-		addHeaders(header);
-	}
-
-	return true;
-}
-
-bool SipMessage::parseBody(const char *sipMsg)
-{
-	SipHeaderContentType *contentType = (SipHeaderContentType *) getHeader(SIP_HEADER_CONTENT_TYPE);
-	if (contentType)
-		body = SipBody::decodeBody(sipMsg, contentType->getContentType());
-	return true;
-}
-
-bool SipMessage::encode(char *sipMsg)
-{
-	char bodyMsg[512];
-	bodyMsg[0] = 0;
-
-	if (!encodeStartLine(sipMsg))
-		return false;
-
-	if (!encodeBody(bodyMsg))
-		return false;
-
-	if (!encodeHeader(sipMsg, bodyMsg))
-		return false;
-
-	return true;
-}
-
-bool SipMessage::encodeHeader(char *sipMsg, char *bodyMsg)
-{
-	char *pSipMsg;
-
-	if (body)
-	{
-		SipHeaderContentType *headerContentType = (SipHeaderContentType *) getHeader(SIP_HEADER_CONTENT_TYPE);
-		if (!headerContentType)
-		{
-			headerContentType = new SipHeaderContentType();
-			addHeader(headerContentType);
-		}
-		headerContentType->setContentType(body->getBodyType());
-	}
-
-	SipHeaderContentLength *headerContentLength = (SipHeaderContentLength *) getHeader(SIP_HEADER_CONTENT_LENGTH);
-	if (!headerContentLength)
-	{
-		headerContentLength = new SipHeaderContentLength();
-		addHeader(headerContentLength);
-	}
-	headerContentLength->setNumber(strlen(bodyMsg));
-
-
-	Simple_List<SipHeader>::Iterator it = headers.begin();
-	while (it != headers.end())
-	{
-		SipHeader *header = it->object();
-		it++;
-
-		pSipMsg = sipMsg + strlen(sipMsg);
-
-		if (header)
-			header->encode(pSipMsg);
-	}
-
-	strcat(sipMsg, "\r\n");
-	strcat(sipMsg, bodyMsg);
-	return true;
-}
-
-bool SipMessage::encodeBody(char *sipMsg)
-{
-	if (body)
-		body->encode(sipMsg);
     return true;
 }
 
-void SipMessage::addHeader(SipHeader *header)
+bool SIP_Message::parse_header(const char *sip_msg)
 {
-	if (header)
-		headers.insert(&header->link);
+    char line[MAX_LINE];
+    Simple_List<SIP_Header> header;
+    while (true)
+    {
+        bool ret = get_line(sip_msg, line);
+        if ((!ret) || (!strcmp(line, "")))
+            return true;
+
+        SIP_Header::decode_header(line, header);
+        add_headers(header);
+    }
+
+    return true;
 }
 
-void SipMessage::addHeaders(Simple_List<SipHeader> &headers)
+bool SIP_Message::parse_body(const char *sip_msg)
 {
-	Simple_List<SipHeader>::Iterator it = headers.begin();
-	while (it != headers.end())
-	{
-		SipHeader *header = it->object();
-		it++;
-		headers.remove_head();
-		this->headers.insert(&header->link);
-	}
+    SIP_Header_Content_Type *content_type = (SIP_Header_Content_Type *) get_header(SIP_HEADER_CONTENT_TYPE);
+    if (content_type)
+        _body = SIP_Body::decode_body(sip_msg, content_type->get_content_type());
+    return true;
 }
 
-SipHeader *SipMessage::getHeader(int headerType, int pos)
+bool SIP_Message::encode(char *sip_msg)
 {
-	int count = -1;
-	Simple_List<SipHeader>::Iterator it = headers.begin();
-	while (it != headers.end())
-	{
-		SipHeader *header = it->object();
-		it++;
+    char body_msg[512];
+    body_msg[0] = 0;
 
-		if (header->getHeaderType() == headerType)
-		{
-			count++;
-			if (count == pos)
-				return header;
-		}
-	}
-	return 0;
+    if (!encode_start_line(sip_msg))
+        return false;
+
+    if (!encode_body(body_msg))
+        return false;
+
+    if (!encode_header(sip_msg, body_msg))
+        return false;
+
+    return true;
 }
 
-int SipMessage::getNumHeader(int headerType)
+bool SIP_Message::encode_header(char *sip_msg, char *body_msg)
 {
-	int count = 0;
-	Simple_List<SipHeader>::Iterator it = headers.begin();
-	while (it != headers.end())
-	{
-		SipHeader *header = it->object();
-		it++;
+    if (_body)
+    {
+        SIP_Header_Content_Type *header_content_type = (SIP_Header_Content_Type *) get_header(SIP_HEADER_CONTENT_TYPE);
+        if (!header_content_type)
+        {
+            header_content_type = new SIP_Header_Content_Type();
+            add_header(header_content_type);
+        }
+        header_content_type->set_content_type(_body->get_body_type());
+    }
 
-		if (header->getHeaderType() == headerType)
-			count++;
-	}
-	return count;
+    SIP_Header_Content_Length *header_content_length = (SIP_Header_Content_Length *) get_header(SIP_HEADER_CONTENT_LENGTH);
+    if (!header_content_length)
+    {
+        header_content_length = new SIP_Header_Content_Length();
+        add_header(header_content_length);
+    }
+    header_content_length->set_number(strlen(body_msg));
+
+    char *p_sip_msg;
+    Simple_List<SIP_Header>::Iterator it = _headers.begin();
+    while (it != _headers.end())
+    {
+        SIP_Header *header = it->object();
+        it++;
+
+        p_sip_msg = sip_msg + strlen(sip_msg);
+
+        if (header)
+            header->encode(p_sip_msg);
+    }
+
+    strcat(sip_msg, "\r\n");
+    strcat(sip_msg, body_msg);
+    return true;
 }
 
-SipTransportType SipMessage::getTransportType(const char *type)
+bool SIP_Message::encode_body(char *sip_msg)
 {
-	SipTransportType transport = SIP_TRANSPORT_TYPE_INVALID;
-
-	if (!strcmp(type, "UDP"))
-		transport = SIP_TRANSPORT_UDP;
-
-	else if (!strcmp(type, "TCP"))
-		transport = SIP_TRANSPORT_TCP;
-
-	return transport;
+    if (_body)
+        _body->encode(sip_msg);
+    return true;
 }
 
-const char *SipMessage::getTransportType(const SipTransportType type)
+void SIP_Message::add_header(SIP_Header *header)
 {
-	const char *transport = 0;
+    if (header)
+        _headers.insert(&header->_link);
+}
 
-	switch (type)
-	{
-		case SIP_TRANSPORT_UDP:	transport = "UDP";	break;
-		case SIP_TRANSPORT_TCP:	transport = "TCP";	break;
-		default:			break;
-	}
+void SIP_Message::add_headers(Simple_List<SIP_Header> &headers)
+{
+    Simple_List<SIP_Header>::Iterator it = headers.begin();
+    while (it != headers.end())
+    {
+        SIP_Header *header = it->object();
+        it++;
+        headers.remove_head();
+        _headers.insert(&header->_link);
+    }
+}
 
-	return transport;
+SIP_Header *SIP_Message::get_header(int header_type, int pos)
+{
+    int count = -1;
+    Simple_List<SIP_Header>::Iterator it = _headers.begin();
+    while (it != _headers.end())
+    {
+        SIP_Header *header = it->object();
+        it++;
+
+        if (header->get_header_type() == header_type)
+        {
+            count++;
+            if (count == pos)
+                return header;
+        }
+    }
+    return 0;
+}
+
+int SIP_Message::get_num_header(int header_type)
+{
+    int count = 0;
+    Simple_List<SIP_Header>::Iterator it = _headers.begin();
+    while (it != _headers.end())
+    {
+        SIP_Header *header = it->object();
+        it++;
+
+        if (header->get_header_type() == header_type)
+            count++;
+    }
+    return count;
+}
+
+SIP_Transport_Type SIP_Message::get_transport_type(const char *type)
+{
+    SIP_Transport_Type transport = SIP_TRANSPORT_TYPE_INVALID;
+
+    if (!strcmp(type, "UDP"))
+        transport = SIP_TRANSPORT_UDP;
+
+    else if (!strcmp(type, "TCP"))
+        transport = SIP_TRANSPORT_TCP;
+
+    return transport;
+}
+
+const char *SIP_Message::get_transport_type(const SIP_Transport_Type type)
+{
+    const char *transport = 0;
+
+    switch (type)
+    {
+        case SIP_TRANSPORT_UDP: transport = "UDP"; break;
+        case SIP_TRANSPORT_TCP: transport = "TCP"; break;
+        default: break;
+    }
+
+    return transport;
 }
 
 //-------------------------------------------
 
-/*SipRequestLine::SipRequestLine(const SipRequestLine &request)
+/*SIP_Request_Line::SIP_Request_Line(const SIP_Request_Line &request)
 {
-	method = request.method;
-	requestURI = createString(request.requestURI);
-	sipVersion = createString(request.sipVersion);
+    _method = request._method;
+    _request_uri = create_string(request._request_uri);
+    _sip_version = create_string(request._sip_version);
 }*/
 
-/*SipRequestLine::SipRequestLine(const SipMessageType msgType, const char *requestURI, const char *sipVersion)
+/*SIP_Request_Line::SIP_Request_Line(const SIP_Message_Type msg_type, const char *request_uri, const char *sip_version)
 {
-	this->method = msgType;
-	this->requestURI = createString(requestURI);
-	this->sipVersion = createString(sipVersion);
+    _method = msg_type;
+    _request_uri = create_string(request_uri);
+    _sip_version = create_string(sip_version);
 }*/
 
-SipRequestLine::~SipRequestLine()
+SIP_Request_Line::~SIP_Request_Line()
 {
-	if (requestURI)
-		delete requestURI;
+    if (_request_uri)
+        delete _request_uri;
 
-	if (sipVersion)
-		delete sipVersion;
+    if (_sip_version)
+        delete _sip_version;
 }
 
-bool SipRequestLine::parse(const SipMessageType MsgType, char *sipMsg)
+bool SIP_Request_Line::parse(const SIP_Message_Type msg_type, char *sip_msg)
 {
-	method = MsgType;
+    _method = msg_type;
 
-	char result[255];
-	skip(sipMsg, " \t");
-	match(sipMsg, " ", result);
-	requestURI = createString(result);
-	if (!requestURI)
-		return false;
+    char result[255];
+    skip(sip_msg, " \t");
+    match(sip_msg, " ", result);
+    _request_uri = create_string(result);
+    if (!_request_uri)
+        return false;
 
-	trim(sipMsg);
-	sipVersion = createString(sipMsg);
-	if (!sipVersion)
-		return false;
+    trim(sip_msg);
+    _sip_version = create_string(sip_msg);
+    if (!_sip_version)
+        return false;
 
-	return true;
+    return true;
 }
 
-bool SipRequestLine::encode(char *sipMsg)
+bool SIP_Request_Line::encode(char *sip_msg)
 {
-	strcat(sipMsg, SipMessage::getMsgType(method));
-	strcat(sipMsg, " ");
-	strcat(sipMsg, requestURI);
-	strcat(sipMsg, " ");
-	strcat(sipMsg, sipVersion);
-	strcat(sipMsg, "\r\n");
-	return true;
+    strcat(sip_msg, SIP_Message::get_msg_type(_method));
+    strcat(sip_msg, " ");
+    strcat(sip_msg, _request_uri);
+    strcat(sip_msg, " ");
+    strcat(sip_msg, _sip_version);
+    strcat(sip_msg, "\r\n");
+    return true;
 }
 
-void SipRequestLine::setRequestLine(const SipMessageType msgType, const char *requestURI, const char *sipVersion)
+void SIP_Request_Line::set_request_line(const SIP_Message_Type msg_type, const char *request_uri, const char *sip_version)
 {
-	this->method = msgType;
+    _method = msg_type;
 
-	if (this->requestURI)
-		delete this->requestURI;
-	this->requestURI = createString(requestURI);
+    if (_request_uri)
+        delete _request_uri;
+    _request_uri = create_string(request_uri);
 
-	if (this->sipVersion)
-		delete this->sipVersion;
-	this->sipVersion = createString(sipVersion);
+    if (_sip_version)
+        delete _sip_version;
+    _sip_version = create_string(sip_version);
 }
 
 //-------------------------------------------
 
-/*SipRequest::SipRequest(SipMessageType msgType, char *requestURI, char *sipVersion = SIP_VERSION)
+/*SIP_Request::SIP_Request(SIP_Message_Type msg_type, char *request_uri, char *sip_version)
 {
-	setRequestLine(msgType, requestURI, sipVersion);
+    set_request_line(msg_type, request_uri, sip_version);
 }*/
 
-bool SipRequest::parseStartLine(const char *sipMsg)
+bool SIP_Request::parse_start_line(const char *sip_msg)
 {
-	char line[MAX_LINE];
-	getLine(sipMsg, line);
+    char line[MAX_LINE];
+    get_line(sip_msg, line);
 
-	if (!requestLine.parse(getMsgType(), line))
-	{
-		db<SipRequest>(WRN) << "SipRequest::parseStartLine -> parse failed\n";
-		return false;
-	}
+    if (!_request_line.parse(get_msg_type(), line))
+    {
+        db<SIP_Request>(WRN) << "SIP_Request::parse_start_line -> parse failed\n";
+        return false;
+    }
 
-	return true;
+    return true;
 }
 
 //-------------------------------------------
 
-SipStatusCode SipResponse::statusCodes[] =
+SIP_Status_Code SIP_Response::_status_codes[] =
 {
-	//Informational
-	{ 100, "Trying" },
-	{ 180, "Ringing" },
-	{ 181, "Call is Being Forwarded" },
-	{ 182, "Queued" },
-	{ 183, "Session Progress" },
+    //Informational
+    { 100, "Trying" },
+    { 180, "Ringing" },
+    { 181, "Call is Being Forwarded" },
+    { 182, "Queued" },
+    { 183, "Session Progress" },
 
-	//Success
-	{ 200, "OK" },
-	{ 202, "Accepted" },
+    //Success
+    { 200, "OK" },
+    { 202, "Accepted" },
 
-	//Redirection
-	{ 300, "Multiple Choices" },
-	{ 301, "Moved Permanently" },
-	{ 302, "Moved Temporarily" },
-	//{ 303, "See Other" },
-	{ 305, "Use Proxy" },
-	{ 380, "Alternative Service" },
+    //Redirection
+    { 300, "Multiple Choices" },
+    { 301, "Moved Permanently" },
+    { 302, "Moved Temporarily" },
+    //{ 303, "See Other" },
+    { 305, "Use Proxy" },
+    { 380, "Alternative Service" },
 
-	//Client-Error
-	{ 400, "Bad Request" },
-	{ 401, "Unauthorized" },
-	{ 402, "Payment Required" },
-	{ 403, "Forbidden" },
-	{ 404, "Not Found" },
-	{ 405, "Method Not Allowed" },
-	{ 406, "Not Acceptable" },
-	{ 407, "Proxy Authentication Required" },
-	{ 408, "Request Timeout" },
-	{ 409, "Conflict" },
-	{ 410, "Gone" },
-	//{ 411, "Length Required" },
-	{ 413, "Request Entity Too Large" },
-	{ 414, "Request-URI Too Large" },
-	{ 415, "Unsupported Media Type" },
-	{ 420, "Bad Extension" },
-	{ 480, "Temporarily Unavailable" },
-	{ 481, "Call Leg/Transaction Does Not Exist" },
-	{ 482, "Loop Detected" },
-	{ 483, "Too Many Hops" },
-	{ 484, "Address Incomplete" },
-	{ 485, "Ambiguous" },
-	{ 486, "Busy Here" },
-	{ 487, "Request Terminated" },
-	{ 488, "Not Acceptable Here" },
-	{ 489, "Bad Event" },
+    //Client-Error
+    { 400, "Bad Request" },
+    { 401, "Unauthorized" },
+    { 402, "Payment Required" },
+    { 403, "Forbidden" },
+    { 404, "Not Found" },
+    { 405, "Method Not Allowed" },
+    { 406, "Not Acceptable" },
+    { 407, "Proxy Authentication Required" },
+    { 408, "Request Timeout" },
+    { 409, "Conflict" },
+    { 410, "Gone" },
+    //{ 411, "Length Required" },
+    { 413, "Request Entity Too Large" },
+    { 414, "Request-URI Too Large" },
+    { 415, "Unsupported Media Type" },
+    { 420, "Bad Extension" },
+    { 480, "Temporarily Unavailable" },
+    { 481, "Call Leg/Transaction Does Not Exist" },
+    { 482, "Loop Detected" },
+    { 483, "Too Many Hops" },
+    { 484, "Address Incomplete" },
+    { 485, "Ambiguous" },
+    { 486, "Busy Here" },
+    { 487, "Request Terminated" },
+    { 488, "Not Acceptable Here" },
+    { 489, "Bad Event" },
 
-	//Server-Error
-	{ 500, "Server Internal Error" },
-	{ 501, "Not Implemented" },
-	{ 502, "Bad Gateway" },
-	{ 503, "Service Unavailable" },
-	{ 504, "Server Timed-out" },
-	{ 505, "Version Not Supported" },
-	{ 513, "Message Too Large" },
+    //Server-Error
+    { 500, "Server Internal Error" },
+    { 501, "Not Implemented" },
+    { 502, "Bad Gateway" },
+    { 503, "Service Unavailable" },
+    { 504, "Server Timed-out" },
+    { 505, "Version Not Supported" },
+    { 513, "Message Too Large" },
 
-	//Global-Failure
-	{ 600, "Busy Everywhere"},
-	{ 603, "Decline"},
-	{ 604, "Does Not Exist Anywhere"},
-	{ 606, "Not Acceptable"},
-	{ 0, "Unknown"},
+    //Global-Failure
+    { 600, "Busy Everywhere" },
+    { 603, "Decline" },
+    { 604, "Does Not Exist Anywhere" },
+    { 606, "Not Acceptable" },
+    { 0, "Unknown" },
 };
 
-/*SipStatusLine::SipStatusLine(const SipStatusLine &status)
+/*SIP_Status_Line::SIP_Status_Line(const SIP_Status_Line &status)
 {
-	sipVersion = createString(status.sipVersion);
-	statusCode = status.statusCode;
-	reasonPhrase = createString(status.reasonPhrase);
+    _sip_version = create_string(status._sip_version);
+    _status_code = status._status_code;
+    _reason_phrase = create_string(status._reason_phrase);
 }*/
 
-/*SipStatusLine::SipStatusLine(const char *sipVersion, int code, const char *reason)
+/*SIP_Status_Line::SIP_Status_Line(const char *sip_version, int code, const char *reason)
 {
-	this->sipVersion = createString(sipVersion);
-	this->statusCode = code;
-	this->reasonPhrase = createString(reason);
+    _sip_version = create_string(sip_version);
+    _status_code = code;
+    _reason_phrase = create_string(reason);
 }*/
 
-SipStatusLine::~SipStatusLine()
+SIP_Status_Line::~SIP_Status_Line()
 {
-	if (sipVersion)
-		delete sipVersion;
+    if (_sip_version)
+        delete _sip_version;
 
-	if (reasonPhrase)
-		delete reasonPhrase;
+    if (_reason_phrase)
+        delete _reason_phrase;
 }
 
-bool SipStatusLine::parse(const char *Version, char *sipMsg)
+bool SIP_Status_Line::parse(const char *version, char *sip_msg)
 {
-	sipVersion = createString(Version);
-	if (!sipVersion)
-		return false;
+    _sip_version = create_string(version);
+    if (!_sip_version)
+        return false;
 
-	char result[255];
-	skip(sipMsg, " \t");
-	match(sipMsg, " ", result);
-	int size = strlen(result);
-	if (size == 0)
-		return false;
-	statusCode = (int) atol(result);
+    char result[255];
+    skip(sip_msg, " \t");
+    match(sip_msg, " ", result);
+    int size = strlen(result);
+    if (size == 0)
+        return false;
+    _status_code = (int) atol(result);
 
-	trim(sipMsg);
-	reasonPhrase = createString(sipMsg);
-	if (!reasonPhrase)
-		return false;
+    trim(sip_msg);
+    _reason_phrase = create_string(sip_msg);
+    if (!_reason_phrase)
+        return false;
 
-	return true;
+    return true;
 }
 
-bool SipStatusLine::encode(char *sipMsg)
+bool SIP_Status_Line::encode(char *sip_msg)
 {
-	strcat(sipMsg, sipVersion);
-	strcat(sipMsg, " ");
+    strcat(sip_msg, _sip_version);
+    strcat(sip_msg, " ");
 
-	char value[11];
-	itoa(statusCode, value);
-	strcat(sipMsg, value);
-	strcat(sipMsg, " ");
+    char value[11];
+    itoa(_status_code, value);
+    strcat(sip_msg, value);
+    strcat(sip_msg, " ");
 
-	strcat(sipMsg, reasonPhrase);
-	strcat(sipMsg, "\r\n");
-	return true;
+    strcat(sip_msg, _reason_phrase);
+    strcat(sip_msg, "\r\n");
+    return true;
 }
 
-void SipStatusLine::setStatusLine(const char *sipVersion, int statusCode, const char *reasonPhrase)
+void SIP_Status_Line::set_status_line(const char *sip_version, int status_code, const char *reason_phrase)
 {
-	if (this->sipVersion)
-		delete this->sipVersion;
-	this->sipVersion = createString(sipVersion);
+    if (_sip_version)
+        delete _sip_version;
+    _sip_version = create_string(sip_version);
 
-	this->statusCode = statusCode;
+    _status_code = status_code;
 
-	if (this->reasonPhrase)
-		delete this->reasonPhrase;
-	this->reasonPhrase = createString(reasonPhrase);
+    if (_reason_phrase)
+        delete _reason_phrase;
+    _reason_phrase = create_string(reason_phrase);
 }
 
 //-------------------------------------------
 
-SipResponse::SipResponse(int statusCode)
+SIP_Response::SIP_Response(int status_code)
 {
-	int i = 0;
-	while (statusCodes[i].code != 0)
-	{
-		if (statusCodes[i].code == statusCode)
-		{
-			statusLine.setStatusLine(SIP_VERSION, statusCode, statusCodes[i].reasonPhrase);
-			break;
-		}
-		i++;
-	}
+    int i = 0;
+    while (_status_codes[i]._code != 0)
+    {
+        if (_status_codes[i]._code == status_code)
+        {
+            _status_line.set_status_line(SIP_VERSION, status_code, _status_codes[i]._reason_phrase);
+            break;
+        }
+        i++;
+    }
 }
 
-bool SipResponse::parseStartLine(const char *sipMsg)
+bool SIP_Response::parse_start_line(const char *sip_msg)
 {
-	char line[MAX_LINE];
-	getLine(sipMsg, line);
+    char line[MAX_LINE];
+    get_line(sip_msg, line);
 
-	if (!statusLine.parse(SIP_VERSION, line))
-	{
-		db<SipResponse>(WRN) << "SipResponse::parseStartLine -> parse failed\n";
-		return false;
-	}
+    if (!_status_line.parse(SIP_VERSION, line))
+    {
+        db<SIP_Response>(WRN) << "SIP_Response::parse_start_line -> parse failed\n";
+        return false;
+    }
 
-	return true;
+    return true;
 }
 
 __END_SYS

@@ -4,299 +4,297 @@
 
 __BEGIN_SYS
 
-
-bool SipTransportLayer::init()
+bool SIP_Transport_Layer::init()
 {
-	hostPort = SIP_PORT;
+    _host_port = SIP_PORT;
 
-	char local[20];
-	((IP::Address &) IP::instance(0)->address()).to_string(local);
-	hostIP = createString(local);
-	if (!hostIP)
+    char local[20];
+    ((IP::Address &) IP::instance(0)->address()).to_string(local);
+    _host_ip = create_string(local);
+    if (!_host_ip)
     {
-		db<SipTransportLayer>(WRN) << "SipTransportLayer::init -> Failed to get the host ip\n";
-		return false;
-	}
+        db<SIP_Transport_Layer>(WRN) << "SIP_Transport_Layer::init -> Failed to get the host ip\n";
+        return false;
+    }
 
-	return true;
+    return true;
 }
 
-int SipTransportLayer::sendMessage(SipMessage *message)
+int SIP_Transport_Layer::send_message(SIP_Message *msg)
 {
-	char *destination = 0;
-	char auxDestination[512];
-	int port = 0;
+    char *destination = 0;
+    char aux_dest[512];
+    int port = 0;
 
-	SipHeaderVia *via = (SipHeaderVia *) message->getHeader(SIP_HEADER_VIA);
-	if (!via)
-		return -1;
+    SIP_Header_Via *via = (SIP_Header_Via *) msg->get_header(SIP_HEADER_VIA);
+    if (!via)
+        return -1;
 
-	if (message->getMsgType() == SIP_RESPONSE)
-	{
-		destination = (char *) via->getReceived();
-		if (!destination)
-			destination = (char *) via->getSentBy();
-		port = via->getPort();
-	}else
-	{
-		//headerVia->setSentBy(0, hostIP);
-		//headerVia->setPort(0, hostPort);
-		//headerVia->setTransport(0, SIP_TRANSPORT_UDP);
+    if (msg->get_msg_type() == SIP_RESPONSE)
+    {
+        destination = (char *) via->get_received();
+        if (!destination)
+            destination = (char *) via->get_sent_by();
+        port = via->get_port();
+    } else
+    {
+        //via->set_sent_by(0, _host_ip);
+        //via->set_port(0, _host_port);
+        //via->set_transport(0, SIP_TRANSPORT_UDP);
 
-		const char *requestURI = ((SipRequest *) message)->getRequestLine()->getRequestURI();
+        const char *request_uri = ((SIP_Request *) msg)->get_request_line()->get_request_uri();
 
-		SipHeaderRoute *route = (SipHeaderRoute *) message->getHeader(SIP_HEADER_ROUTE);
-		const char *dest = 0;
+        SIP_Header_Route *route = (SIP_Header_Route *) msg->get_header(SIP_HEADER_ROUTE);
+        const char *dest = 0;
 
-		if ((route) && (route->isLR()))
-			dest = route->getAddress();
-		else //if ((!route) || (!route->isLR()) /*Strict Route*/ )
-			dest = requestURI;
+        if ((route) && (route->is_lr()))
+            dest = route->get_address();
+        else //if ((!route) || (!route->is_lr()) /*Strict Route*/ )
+            dest = request_uri;
 
-		char aux[255];
-		strcpy(auxDestination, dest);
-		match(auxDestination, ":" , aux);
-		skip(auxDestination, " \t");
-		match(auxDestination, "@" , aux);
-		skip(auxDestination, " \t");
-		destination = auxDestination;
-		port = 5060;
-	}
+        char aux[255];
+        strcpy(aux_dest, dest);
+        match(aux_dest, ":" , aux);
+        skip(aux_dest, " \t");
+        match(aux_dest, "@" , aux);
+        skip(aux_dest, " \t");
+        destination = aux_dest;
+        port = 5060;
+    }
 
-	if ((!destination) || (port == 0))
-		return -1;
+    if ((!destination) || (port == 0))
+        return -1;
 
-	sendBuffer[0] = 0;
-	message->encode(sendBuffer);
-	int length = strlen(sendBuffer);
+    _send_buffer[0] = 0;
+    msg->encode(_send_buffer);
+    int length = strlen(_send_buffer);
 
-	return sendData(destination, port, sendBuffer, length);
+    return send_data(destination, port, _send_buffer, length);
 }
 
-int SipTransportLayer::sendData(const char *destination, int port, const char *data, int length)
+int SIP_Transport_Layer::send_data(const char *destination, int port, const char *data, int length)
 {
-	UDP::Address dst(IP::Address(destination), port);
-	socket.set_remote(dst);
+    UDP::Address dst(IP::Address(destination), port);
+    _socket.set_remote(dst);
 
-	//db<SipTransportLayer>(INF) << "SipTransportLayer::sendData -> Sending data to " << dst << " (size = " << length << ")..\n" << data << "\n";
+    //db<SIP_Transport_Layer>(INF) << "SIP_Transport_Layer::send_data -> Sending data to " << dst << " (size = " << length << ")..\n" << data << "\n";
 
-	if (socket.send(data, length) <= 0)
-	{
-		db<SipTransportLayer>(WRN) << "SipTransportLayer::sendData -> Failed to send data\n";
-		return -1;
-	}
+    if (_socket.send(data, length) <= 0)
+    {
+        db<SIP_Transport_Layer>(WRN) << "SIP_Transport_Layer::send_data -> Failed to send data\n";
+        return -1;
+    }
 
-	return 0;
+    return 0;
 }
 
-void SipTransportLayer::MySocket::received(const UDP::Address &src, const char *data, unsigned int size)
+void SIP_Transport_Layer::My_Socket::received(const UDP::Address &src, const char *data, unsigned int size)
 {
-	db<SipTransportLayer::MySocket>(INF) << "SipTransportLayer::MySocket::received..\n";
+    db<SIP_Transport_Layer::My_Socket>(INF) << "SIP_Transport_Layer::MySocket::received..\n";
 
-	char remoteAddr[20];
-	src.ip().to_string(remoteAddr);
-	int remotePort = src.port();
-	((char *) data)[size] = 0;
+    char remote_addr[20];
+    src.ip().to_string(remote_addr);
+    int remote_port = src.port();
+    ((char *) data)[size] = 0;
 
-	db<SipTransportLayer>(INF) << "SipTransportLayer::received -> Received message from " << remoteAddr <<
-			":" << remotePort << " (size = " << size << ")..\n" << data << "\n";
+    db<SIP_Transport_Layer>(INF) << "SIP_Transport_Layer::received -> Received message from " << remote_addr <<
+            ":" << remote_port << " (size = " << size << ")..\n" << data << "\n";
 
-	SipMessage *msg = SipMessage::decodeMsg(data);
+    SIP_Message *msg = SIP_Message::decode_msg(data);
 
-	if (!msg)
-	{
-		db<SipTransportLayer>(WRN) << "SipTransportLayer::received -> Failed to decode SIP message received\n";
-		return;
-	}
+    if (!msg)
+    {
+        db<SIP_Transport_Layer>(WRN) << "SIP_Transport_Layer::received -> Failed to decode SIP message received\n";
+        return;
+    }
 
-	bool ok = false;
-	SipHeaderVia *via = (SipHeaderVia *) msg->getHeader(SIP_HEADER_VIA);
-	if (via)
-	{
-		const char *sentby = via->getSentBy();
-		if (sentby)
-		{
-			if (msg->getMsgType() == SIP_RESPONSE)
-			{
-				if (!strcmp(sentby, SipManager::getInstance()->getTransport()->getHostIP()))
-					ok = true;
-			}else
-			{
-				if (strcmp(sentby, remoteAddr))
-					via->setReceived(remoteAddr);
-				ok = true;
-			}
-		}
-	}
+    bool ok = false;
+    SIP_Header_Via *via = (SIP_Header_Via *) msg->get_header(SIP_HEADER_VIA);
+    if (via)
+    {
+        const char *sent_by = via->get_sent_by();
+        if (sent_by)
+        {
+            if (msg->get_msg_type() == SIP_RESPONSE)
+            {
+                if (!strcmp(sent_by, SIP_Manager::get_instance()->get_transport()->get_host_ip()))
+                    ok = true;
+            } else
+            {
+                if (strcmp(sent_by, remote_addr))
+                    via->set_received(remote_addr);
+                ok = true;
+            }
+        }
+    }
 
-	if (!ok)
-	{
-		db<SipTransportLayer>(WRN) << "SipTransportLayer::received -> Incorrect message...\n";
-		delete msg;
-		return;
-	}
+    if (!ok)
+    {
+        db<SIP_Transport_Layer>(WRN) << "SIP_Transport_Layer::received -> Incorrect message...\n";
+        delete msg;
+        return;
+    }
 
-	SipManager::getInstance()->addMessageList(msg);
+    SIP_Manager::get_instance()->add_message_list(msg);
 }
 
 //-------------------------------------------
 
-USER_CALLBACK SipManager::callback = 0;
-SipManager *SipManager::instance = 0;
-bool SipManager::terminated = false;
+USER_CALLBACK SIP_Manager::_callback = 0;
+SIP_Manager *SIP_Manager::_instance = 0;
+bool SIP_Manager::_terminated = false;
 
-
-SipManager::SipManager()
+SIP_Manager::SIP_Manager()
 {
-	threadReceiveMessage = 0;
+    _thread_receive_message = 0;
 }
 
-SipManager::~SipManager()
+SIP_Manager::~SIP_Manager()
 {
-	terminated = true;
+    _terminated = true;
 
-	if (threadReceiveMessage)
-	{
-		delete threadReceiveMessage;
-		threadReceiveMessage = 0;
-	}
+    if (_thread_receive_message)
+    {
+        delete _thread_receive_message;
+        _thread_receive_message = 0;
+    }
 
-	Simple_List<UserAgent>::Iterator it = ua.begin();
-	while (it != ua.end())
-	{
-		UserAgent *userAgent = it->object();
-		ua.remove(it++);
-		delete userAgent;
-	}
+    Simple_List<SIP_User_Agent>::Iterator it = _ua.begin();
+    while (it != _ua.end())
+    {
+        SIP_User_Agent *ua = it->object();
+        _ua.remove(it++);
+        delete ua;
+    }
 }
 
-SipManager *SipManager::getInstance()
+SIP_Manager *SIP_Manager::get_instance()
 {
-	if (!instance)
-	{
-		terminated = false;
-		instance = new SipManager();
-	}
+    if (!_instance)
+    {
+        _terminated = false;
+        _instance = new SIP_Manager();
+    }
 
-	return instance;
+    return _instance;
 }
 
-void SipManager::deleteInstance()
+void SIP_Manager::delete_instance()
 {
-	if (instance)
-	{
-		delete instance;
-		instance = 0;
-	}
+    if (_instance)
+    {
+        delete _instance;
+        _instance = 0;
+    }
 }
 
-bool SipManager::init()
+bool SIP_Manager::init()
 {
-	if (!transport.init())
-		return false;
+    if (!_transport.init())
+        return false;
 
-	threadReceiveMessage = new Thread(SipManager::receiveMessageThread);
-	return true;
+    _thread_receive_message = new Thread(SIP_Manager::receive_message_thread);
+    return true;
 }
 
-int SipManager::receiveMessageThread()
+int SIP_Manager::receive_message_thread()
 {
-	db<SipManager>(INF) << "SipManager::receiveMessageThread -> Started..\n";
+    db<SIP_Manager>(INF) << "SIP_Manager::receive_message_thread -> Started..\n";
 
-	SipManager *manager = SipManager::getInstance();
+    SIP_Manager *manager = SIP_Manager::get_instance();
 
-	while (!terminated)
-	{
-		while (manager->messages.size() == 0)
-		{
-			if (terminated)
-				break;
-			Alarm::delay(500); //Alarm::delay(500 * 1000);
-		}
+    while (!_terminated)
+    {
+        while (manager->_messages.size() == 0)
+        {
+            if (_terminated)
+                break;
+            Alarm::delay(500);
+        }
 
-		if (terminated)
-			break;
+        if (_terminated)
+            break;
 
-		SipMessage *msg = manager->getMessageList();
+        SIP_Message *msg = manager->get_message_list();
 
-		if (!msg)
-		{
-			db<SipManager>(WRN) << "SipManager::receiveMessageThread -> Invalid message\n";
-			continue;
-		}
+        if (!msg)
+        {
+            db<SIP_Manager>(WRN) << "SIP_Manager::receive_message_thread -> Invalid message\n";
+            continue;
+        }
 
-		SipMessageType msgType = msg->getMsgType();
-		db<SipManager>(WRN) << "SipManager::receiveMessageThread -> Message received (type=" << msgType << ")\n";
+        SIP_Message_Type type = msg->get_msg_type();
+        db<SIP_Manager>(WRN) << "SIP_Manager::receive_message_thread -> Message received (type=" << type << ")\n";
 
-		if (msgType == SIP_RESPONSE)
-		{
-			const char *uri = ((SipHeaderFrom *) msg->getHeader(SIP_HEADER_FROM))->getAddress();
-			UserAgent *userAgent = manager->getUserAgent(uri);
+        if (type == SIP_RESPONSE)
+        {
+            const char *uri = ((SIP_Header_From *) msg->get_header(SIP_HEADER_FROM))->get_address();
+            SIP_User_Agent *ua = manager->get_user_agent(uri);
 
-			if (!userAgent)
-				db<SipManager>(WRN) << "SipManager::receiveMessageThread -> Ignoring invalid response\n";
-			else
-				userAgent->getUserAgentClient()->receiveMsg((SipResponse *) msg);
-		}else
-		{
-			const char *uri = ((SipRequest *) msg)->getRequestLine()->getRequestURI();
-			UserAgent *userAgent = manager->getUserAgent(uri);
+            if (!ua)
+                db<SIP_Manager>(WRN) << "SIP_Manager::receive_message_thread -> Ignoring invalid response\n";
+            else
+                ua->get_uac()->receive_msg((SIP_Response *) msg);
+        } else
+        {
+            const char *uri = ((SIP_Request *) msg)->get_request_line()->get_request_uri();
+            SIP_User_Agent *ua = manager->get_user_agent(uri);
 
-			if (!userAgent)
-				db<SipManager>(WRN) << "SipManager::receiveMessageThread -> Ignoring invalid request\n";
-			else
-				userAgent->getUserAgentServer()->receiveMsg((SipRequest *) msg);
-		}
+            if (!ua)
+                db<SIP_Manager>(WRN) << "SIP_Manager::receive_message_thread -> Ignoring invalid request\n";
+            else
+                ua->get_uas()->receive_msg((SIP_Request *) msg);
+        }
 
-		if (msg->getCanDelete())
-			delete msg;
-	}
+        if (msg->get_can_delete())
+            delete msg;
+    }
 
-	db<SipManager>(INF) << "SipManager::receiveMessageThread -> Stopped..\n";
-	return 0;
+    db<SIP_Manager>(INF) << "SIP_Manager::receive_message_thread -> Stopped..\n";
+    return 0;
 }
 
-UserAgent *SipManager::createUserAgent(const char *uri)
+SIP_User_Agent *SIP_Manager::create_user_agent(const char *uri)
 {
-	UserAgent *userAgent = new UserAgent(uri);
-	ua.insert(&userAgent->link);
-	return userAgent;
+    SIP_User_Agent *ua = new SIP_User_Agent(uri);
+    _ua.insert(&ua->_link);
+    return ua;
 }
 
-UserAgent *SipManager::getUserAgent(const char *uri)
+SIP_User_Agent *SIP_Manager::get_user_agent(const char *uri)
 {
-	Simple_List<UserAgent>::Iterator it = ua.begin();
-	while (it != ua.end())
-	{
-		UserAgent *userAgent = it->object();
-		it++;
+    Simple_List<SIP_User_Agent>::Iterator it = _ua.begin();
+    while (it != _ua.end())
+    {
+        SIP_User_Agent *ua = it->object();
+        it++;
 
-		if (!strcmp(userAgent->getUri(), uri))
-			return userAgent;
-	}
-	return 0;
+        if (!strcmp(ua->get_uri(), uri))
+            return ua;
+    }
+    return 0;
 }
 
-void SipManager::addMessageList(SipMessage *msg)
+void SIP_Manager::add_message_list(SIP_Message *msg)
 {
-	messagesMutex.lock();
-	messages.insert(&msg->link);
-	messagesMutex.unlock();
+    _messages_mutex.lock();
+    _messages.insert(&msg->_link);
+    _messages_mutex.unlock();
 }
 
-SipMessage *SipManager::getMessageList()
+SIP_Message *SIP_Manager::get_message_list()
 {
-	messagesMutex.lock();
-	SipMessage *msg = messages.head()->object();
-	messages.remove_head();
-	messagesMutex.unlock();
-	return msg;
+    _messages_mutex.lock();
+    SIP_Message *msg = _messages.head()->object();
+    _messages.remove_head();
+    _messages_mutex.unlock();
+    return msg;
 }
 
-void SipManager::random(char *buffer)
+void SIP_Manager::random(char *buffer)
 {
-	unsigned long value = Pseudo_Random::random();
-	itoa(value, buffer);
+    unsigned long value = Pseudo_Random::random();
+    itoa(value, buffer);
 }
 
 __END_SYS

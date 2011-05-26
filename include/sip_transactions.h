@@ -7,183 +7,185 @@
 
 __BEGIN_SYS
 
+class SIP_User_Agent_Client;
+class SIP_User_Agent_Server;
 
-class UserAgentClient;
-class UserAgentServer;
-
-class SipTransaction
+class SIP_Transaction
 {
-private:
-	friend class UserAgent;
+    friend class SIP_User_Agent;
+
+public:
+    SIP_Transaction(SIP_User_Agent *ua);
+    virtual ~SIP_Transaction() {}
+
+    virtual SIP_Transaction_Type get_transaction_type() = 0;
+    virtual SIP_Transaction *matching_transaction(SIP_Message *msg) = 0;
+    void clear();
 
 protected:
-	SipTransportLayer *transport;
-	UserAgent *ua;
+    SIP_Transport_Layer *_transport;
+    SIP_User_Agent *_ua;
 
-	Simple_List<SipTransaction>::Element link;
-
-public:
-	SipTransaction(UserAgent *ua);
-	virtual ~SipTransaction() {};
-
-	virtual SipTransactionType getTransactionType() = 0;
-	virtual SipTransaction *matchingTransaction(SipMessage *msg) = 0;
-	void clear();
+    Simple_List<SIP_Transaction>::Element _link;
 };
 
-//-------------------------------------------
 
-class SipTransactionClientInvite : public SipTransaction
+class SIP_Transaction_Client_Invite : public SIP_Transaction
 {
 private:
-	enum State
-	{
-		sttIdle,
-		sttCalling,
-		sttProceeding,
-		sttCompleted,
-		//sttTerminated
-	} curState;
-
-	SipRequestInvite *requestMsg;
+    enum State
+    {
+        sttIdle,
+        sttCalling,
+        sttProceeding,
+        sttCompleted,
+        //sttTerminated
+    };
 
 public:
-	SipTransactionClientInvite(UserAgent *ua);
-	~SipTransactionClientInvite();
+    SIP_Transaction_Client_Invite(SIP_User_Agent *ua);
+    ~SIP_Transaction_Client_Invite();
 
-	void sendAck(SipResponse *Msg);
+    void send_ack(SIP_Response *msg);
 
-	void sendInvite(SipRequestInvite *Msg);
-	void receive1xx(SipResponse *Msg);
-	void receive2xx(SipResponse *Msg);
-	void receive3xx6xx(SipResponse *Msg);
-	void transportError();
+    void send_invite(SIP_Request_Invite *msg);
+    void receive_1xx(SIP_Response *msg);
+    void receive_2xx(SIP_Response *msg);
+    void receive_3xx_6xx(SIP_Response *msg);
+    void transport_error();
 
-	void timerAExpired();
-	void timerBExpired();
-	void timerDExpired();
+    void timer_A_Expired();
+    void timer_B_Expired();
+    void timer_D_Expired();
 
-	static void timerACallback(SipTransaction *p) { ((SipTransactionClientInvite *) p)->timerAExpired(); };
-	static void timerBCallback(SipTransaction *p) { ((SipTransactionClientInvite *) p)->timerBExpired(); };
-	static void timerDCallback(SipTransaction *p) { ((SipTransactionClientInvite *) p)->timerDExpired(); };
+    static void timer_A_Callback(SIP_Transaction *p) { ((SIP_Transaction_Client_Invite *) p)->timer_A_Expired(); }
+    static void timer_B_Callback(SIP_Transaction *p) { ((SIP_Transaction_Client_Invite *) p)->timer_B_Expired(); }
+    static void timer_D_Callback(SIP_Transaction *p) { ((SIP_Transaction_Client_Invite *) p)->timer_D_Expired(); }
 
-	SipTransactionType getTransactionType() { return SIP_TRANSACTION_CLIENT_INVITE; };
-	SipTransaction *matchingTransaction(SipMessage *msg);
+    SIP_Transaction_Type get_transaction_type() { return SIP_TRANSACTION_CLIENT_INVITE; }
+    SIP_Transaction *matching_transaction(SIP_Message *msg);
+
+private:
+    State _state;
+    SIP_Request_Invite *_request_msg;
 };
 
-//-------------------------------------------
 
-class SipTransactionClientNonInvite : public SipTransaction
+class SIP_Transaction_Client_Non_Invite : public SIP_Transaction
 {
 private:
-	enum State
-	{
-		sttIdle,
-		sttTrying,
-		sttProceeding,
-		sttCompleted,
-		//sttTerminated
-	} curState;
-
-	SipRequest *requestMsg;
+    enum State
+    {
+        sttIdle,
+        sttTrying,
+        sttProceeding,
+        sttCompleted,
+        //sttTerminated
+    };
 
 public:
-	SipTransactionClientNonInvite(UserAgent *ua);
-	~SipTransactionClientNonInvite();
+    SIP_Transaction_Client_Non_Invite(SIP_User_Agent *ua);
+    ~SIP_Transaction_Client_Non_Invite();
 
-	//void copyRequest(SipRequest *Msg);
+    //void copy_request(SIP_Request *msg);
 
-	void sendRequest(SipRequest *Msg);
-	void receive1xx(SipResponse *Msg);
-	void receive2xx6xx(SipResponse *Msg);
-	void transportError();
+    void send_request(SIP_Request *msg);
+    void receive_1xx(SIP_Response *msg);
+    void receive_2xx_6xx(SIP_Response *msg);
+    void transport_error();
 
-	void timerEExpired();
-	void timerFExpired();
-	void timerKExpired();
+    void timer_E_Expired();
+    void timer_F_Expired();
+    void timer_K_Expired();
 
-	static void timerECallback(SipTransaction *p) { ((SipTransactionClientNonInvite *) p)->timerEExpired(); };
-	static void timerFCallback(SipTransaction *p) { ((SipTransactionClientNonInvite *) p)->timerFExpired(); };
-	static void timerKCallback(SipTransaction *p) { ((SipTransactionClientNonInvite *) p)->timerKExpired(); };
+    static void timer_E_Callback(SIP_Transaction *p) { ((SIP_Transaction_Client_Non_Invite *) p)->timer_E_Expired(); }
+    static void timer_F_Callback(SIP_Transaction *p) { ((SIP_Transaction_Client_Non_Invite *) p)->timer_F_Expired(); }
+    static void timer_K_Callback(SIP_Transaction *p) { ((SIP_Transaction_Client_Non_Invite *) p)->timer_K_Expired(); }
 
-	SipTransactionType getTransactionType() { return SIP_TRANSACTION_CLIENT_NON_INVITE; };
-	SipTransaction *matchingTransaction(SipMessage *msg);
+    SIP_Transaction_Type get_transaction_type() { return SIP_TRANSACTION_CLIENT_NON_INVITE; }
+    SIP_Transaction *matching_transaction(SIP_Message *msg);
+
+private:
+    State _state;
+    SIP_Request *_request_msg;
 };
 
-//-------------------------------------------
 
-class SipTransactionServerInvite : public SipTransaction
+class SIP_Transaction_Server_Invite : public SIP_Transaction
 {
 private:
-	enum State
-	{
-		sttIdle,
-		sttProceeding,
-		sttCompleted,
-		sttConfirmed,
-		//sttTerminated
-	} curState;
-
-	SipRequestInvite *requestMsg;
-	SipResponse *lastResponse;
+    enum State
+    {
+        sttIdle,
+        sttProceeding,
+        sttCompleted,
+        sttConfirmed,
+        //sttTerminated
+    };
 
 public:
-	SipTransactionServerInvite(UserAgent *ua);
-	~SipTransactionServerInvite();
+    SIP_Transaction_Server_Invite(SIP_User_Agent *ua);
+    ~SIP_Transaction_Server_Invite();
 
-	void receiveInvite(SipRequestInvite *Msg);
-	void receiveAck(SipRequestAck *Msg);
-	void send1xx(SipResponse *Msg);
-	void send2xx(SipResponse *Msg);
-	void send3xx6xx(SipResponse *Msg);
-	void transportError();
+    void receive_invite(SIP_Request_Invite *msg);
+    void receive_ack(SIP_Request_Ack *msg);
+    void send_1xx(SIP_Response *msg);
+    void send_2xx(SIP_Response *msg);
+    void send_3xx_6xx(SIP_Response *msg);
+    void transport_error();
 
-	void timerGExpired();
-	void timerHExpired();
-	void timerIExpired();
+    void timer_G_Expired();
+    void timer_H_Expired();
+    void timer_I_Expired();
 
-	static void timerGCallback(SipTransaction *p) { ((SipTransactionServerInvite *) p)->timerGExpired(); };
-	static void timerHCallback(SipTransaction *p) { ((SipTransactionServerInvite *) p)->timerHExpired(); };
-	static void timerICallback(SipTransaction *p) { ((SipTransactionServerInvite *) p)->timerIExpired(); };
+    static void timer_G_Callback(SIP_Transaction *p) { ((SIP_Transaction_Server_Invite *) p)->timer_G_Expired(); }
+    static void timer_H_Callback(SIP_Transaction *p) { ((SIP_Transaction_Server_Invite *) p)->timer_H_Expired(); }
+    static void timer_I_Callback(SIP_Transaction *p) { ((SIP_Transaction_Server_Invite *) p)->timer_I_Expired(); }
 
-	SipTransactionType getTransactionType() { return SIP_TRANSACTION_SERVER_INVITE; };
-	SipTransaction *matchingTransaction(SipMessage *msg);
+    SIP_Transaction_Type get_transaction_type() { return SIP_TRANSACTION_SERVER_INVITE; }
+    SIP_Transaction *matching_transaction(SIP_Message *msg);
+
+private:
+    State _state;
+    SIP_Request_Invite *_request_msg;
+    SIP_Response *_last_response;
 };
 
-//-------------------------------------------
 
-class SipTransactionServerNonInvite : public SipTransaction
+class SIP_Transaction_Server_Non_Invite : public SIP_Transaction
 {
 private:
-	enum State
-	{
-		sttIdle,
-		sttTrying,
-		sttProceeding,
-		sttCompleted,
-		//sttTerminated
-	} curState;
-
-	SipRequest *requestMsg;
-	SipResponse *lastResponse;
+    enum State
+    {
+        sttIdle,
+        sttTrying,
+        sttProceeding,
+        sttCompleted,
+        //sttTerminated
+    };
 
 public:
-	SipTransactionServerNonInvite(UserAgent *ua);
-	~SipTransactionServerNonInvite();
+    SIP_Transaction_Server_Non_Invite(SIP_User_Agent *ua);
+    ~SIP_Transaction_Server_Non_Invite();
 
-	//void copyRequest(SipRequest *Msg);
+    //void copy_request(SIP_Request *msg);
 
-	void receiveRequest(SipRequest *Msg);
-	void send1xx(SipResponse *Msg);
-	void send2xx6xx(SipResponse *Msg);
-	void transportError();
+    void receive_request(SIP_Request *msg);
+    void send_1xx(SIP_Response *msg);
+    void send_2xx_6xx(SIP_Response *msg);
+    void transport_error();
 
-	void timerJExpired();
+    void timer_J_Expired();
 
-	static void timerJCallback(SipTransaction *p) { ((SipTransactionServerNonInvite *) p)->timerJExpired(); };
+    static void timer_J_Callback(SIP_Transaction *p) { ((SIP_Transaction_Server_Non_Invite *) p)->timer_J_Expired(); }
 
-	SipTransactionType getTransactionType() { return SIP_TRANSACTION_SERVER_NON_INVITE; };
-	SipTransaction *matchingTransaction(SipMessage *msg);
+    SIP_Transaction_Type get_transaction_type() { return SIP_TRANSACTION_SERVER_NON_INVITE; }
+    SIP_Transaction *matching_transaction(SIP_Message *msg);
+
+private:
+    State _state;
+    SIP_Request *_request_msg;
+    SIP_Response *_last_response;
 };
 
 __END_SYS

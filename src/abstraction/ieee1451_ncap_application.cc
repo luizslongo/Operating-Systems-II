@@ -9,8 +9,8 @@ IEEE1451_NCAP_Application::IEEE1451_NCAP_Application()
     IEEE1451_Dot0_NCAP::get_instance()->set_application(this);
 
 #ifdef USE_SIP
-    SipManager::getInstance()->init();
-    SipManager::registerUserHandler(message_callback);
+    SIP_Manager::get_instance()->init();
+    SIP_Manager::register_user_handler(message_callback);
 #endif
 }
 
@@ -68,7 +68,7 @@ IEEE1451_NCAP_Application::TIM_Cache *IEEE1451_NCAP_Application::get_tim_cache(c
         TIM_Cache *tim_cache = it->object();
         it++;
 
-        if (!strcmp(tim_cache->_ua->getUri(), uri))
+        if (!strcmp(tim_cache->_ua->get_uri(), uri))
             return tim_cache;
     }
 
@@ -110,7 +110,7 @@ void IEEE1451_NCAP_Application::update_tim_completed(IEEE1451_TEDS_Retriever *re
     strcat(uri, "@");
     strcat(uri, local);
 
-    TIM_Cache *tim_cache = new TIM_Cache(tim, SipManager::getInstance()->createUserAgent(uri));
+    TIM_Cache *tim_cache = new TIM_Cache(tim, SIP_Manager::get_instance()->create_user_agent(uri));
 #else
     TIM_Cache *tim_cache = new TIM_Cache(tim);
 #endif
@@ -139,7 +139,7 @@ void IEEE1451_NCAP_Application::report_tim_connected(const IP::Address &address)
         tim_cache->_tim->connect();
 
 #ifdef USE_SIP
-        if (tim_cache->_ua->hasSubscription())
+        if (tim_cache->_ua->has_subscription())
             send_sip_notify(tim_cache->_ua, SIP_SUBSCRIPTION_STATE_ACTIVE, SIP_PIDF_XML_OPEN);
 #endif
 
@@ -156,7 +156,7 @@ void IEEE1451_NCAP_Application::report_tim_disconnected(const IP::Address &addre
         tim_cache->_tim->disconnect();
 
 #ifdef USE_SIP
-        if (tim_cache->_ua->hasSubscription())
+        if (tim_cache->_ua->has_subscription())
             send_sip_notify(tim_cache->_ua, SIP_SUBSCRIPTION_STATE_ACTIVE, SIP_PIDF_XML_CLOSED);
 #endif
 
@@ -261,7 +261,7 @@ void IEEE1451_NCAP_Application::read_temperature(const IP::Address &address, con
         db<IEEE1451_NCAP_Application>(INF) << "Read temperature: " << data << "\n";
 
 #ifdef USE_SIP
-        if (tim_cache->_ua->hasSubscription())
+        if (tim_cache->_ua->has_subscription())
             send_sip_message(tim_cache->_ua, data);
 #endif
     }
@@ -302,30 +302,30 @@ unsigned short IEEE1451_NCAP_Application::send_read_data_set(const IP::Address &
 
 #ifdef USE_SIP
 
-void IEEE1451_NCAP_Application::send_sip_message(UserAgent *ua, const char *data)
+void IEEE1451_NCAP_Application::send_sip_message(SIP_User_Agent *ua, const char *data)
 {
-    SipRequestMessage *message = ua->getUserAgentClient()->createMessage(ua->getSubscriber(), data);
+    SIP_Request_Message *message = ua->get_uac()->create_message(ua->get_subscriber(), data);
     if (!message)
         return;
 
-    ua->getUserAgentClient()->sendRequest(message);
+    ua->get_uac()->send_request(message);
     //delete message;
 }
 
-void IEEE1451_NCAP_Application::send_sip_notify(UserAgent *ua, SipSubscriptionState state, SipPidfXmlBasicElement pidfXml)
+void IEEE1451_NCAP_Application::send_sip_notify(SIP_User_Agent *ua, SIP_Subscription_State state, SIP_Pidf_Xml_Basic_Element pidfXml)
 {
-    SipRequestNotify *notify = ua->getUserAgentClient()->createNotify(ua->getSubscriber(), state, pidfXml, 3600);
+    SIP_Request_Notify *notify = ua->get_uac()->create_notify(ua->get_subscriber(), state, pidfXml, 3600);
     if (!notify)
         return;
 
-    ua->getUserAgentClient()->sendRequest(notify);
+    ua->get_uac()->send_request(notify);
     //delete notify;
 }
 
-int IEEE1451_NCAP_Application::message_callback(SipEventCallback event, UserAgent *ua, const char *remote)
+int IEEE1451_NCAP_Application::message_callback(SIP_Event_Callback event, SIP_User_Agent *ua, const char *remote)
 {
     IEEE1451_NCAP_Application *app = IEEE1451_NCAP_Application::get_instance();
-    TIM_Cache *tim_cache = app->get_tim_cache(ua->getUri());
+    TIM_Cache *tim_cache = app->get_tim_cache(ua->get_uri());
     if (!tim_cache)
     {
         db<IEEE1451_NCAP_Application>(INF) << "+++++ Invalid User Agent +++++\n";
@@ -361,7 +361,7 @@ int IEEE1451_NCAP_Application::message_callback(SipEventCallback event, UserAgen
         {
             db<IEEE1451_NCAP_Application>(INF) << "+++++ Message Received +++++\n";
 
-            if (!strncmp(ua->getTextReceived(), "request data", 12))
+            if (!strncmp(ua->get_text_received(), "request data", 12))
                 app->send_read_data_set(tim_cache->_tim->_address, 0x01);
             break;
         }

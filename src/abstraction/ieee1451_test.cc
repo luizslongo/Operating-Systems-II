@@ -10,7 +10,7 @@ __USING_SYS
 int tim()
 {
     //Alarm::delay(3000000);
-    kout << "+++++ Iniciando wtim +++++\n";
+    kout << "+++++ Starting wtim +++++\n";
 
     IP *ip = IP::instance();
     ip->set_address(IP::Address(10, 0, 0, 111));
@@ -31,7 +31,7 @@ int tim()
 int ncap()
 {
     //Alarm::delay(3000000);
-    kout << "+++++ Iniciando ncap +++++\n";
+    kout << "+++++ Starting ncap +++++\n";
 
     IP *ip = IP::instance();
     ip->set_address(IP::Address(10, 0, 0, 110));

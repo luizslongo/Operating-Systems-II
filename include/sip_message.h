@@ -9,220 +9,206 @@
 
 __BEGIN_SYS
 
+class SIP_Manager;
 
-class SipManager;
-
-class SipMessage
+class SIP_Message
 {
+    friend class SIP_Manager;
+
+public:
+    SIP_Message() : _body(0), _can_delete(true), _link(this) {};
+    //SIP_Message(SIP_Message &msg);
+    virtual ~SIP_Message();
+
+    static SIP_Message *decode_msg(const char *sip_msg);
+
+    static SIP_Message_Type get_msg_type(const char *sip_msg);
+    static const char *get_msg_type(const SIP_Message_Type type);
+    virtual SIP_Message_Type get_msg_type() = 0;
+
+    bool parse(const char *sip_msg);
+    virtual bool parse_start_line(const char *sip_msg) = 0;
+    bool parse_header(const char *sip_msg);
+    bool parse_body(const char *sip_msg);
+
+    bool encode(char *sip_msg);
+    virtual bool encode_start_line(char *sip_msg) = 0;
+    bool encode_header(char *sip_msg, char *body_msg);
+    bool encode_body(char *sip_msg);
+
+    void add_header(SIP_Header *header);
+    void add_headers(Simple_List<SIP_Header> &headers);
+    SIP_Header *get_header(int header_type, int pos = 0);
+    int get_num_header(int header_type);
+
+    void set_body(SIP_Body *body) { _body = body; }
+    SIP_Body *get_body() { return _body; }
+
+    static SIP_Transport_Type get_transport_type(const char *type);
+    static const char *get_transport_type(const SIP_Transport_Type type);
+
+    void set_can_delete(bool can_delete) { _can_delete = can_delete; }
+    bool get_can_delete() { return _can_delete; }
+
 private:
-	friend class SipManager;
+    Simple_List<SIP_Header> _headers;
+    SIP_Body *_body;
+    bool _can_delete;
 
-	Simple_List<SipHeader> headers;
-	SipBody *body;
-	bool canDelete;
-
-	Simple_List<SipMessage>::Element link;
-
-public:
-	SipMessage() : body(0), canDelete(true), link(this) {};
-	//SipMessage(SipMessage &msg);
-	virtual ~SipMessage();
-
-	static SipMessage *decodeMsg(const char *sipMsg);
-
-	static SipMessageType getMsgType(const char *sipMsg);
-	static const char *getMsgType(const SipMessageType type);
-	virtual SipMessageType getMsgType() = 0;
-
-	bool parse(const char *sipMsg);
-	virtual bool parseStartLine(const char *sipMsg) = 0;
-	bool parseHeader(const char *sipMsg);
-	bool parseBody(const char *sipMsg);
-
-	bool encode(char *sipMsg);
-	virtual bool encodeStartLine(char *sipMsg) = 0;
-	bool encodeHeader(char *sipMsg, char *bodyMsg);
-	bool encodeBody(char *sipMsg);
-
-	void addHeader(SipHeader *header);
-	void addHeaders(Simple_List<SipHeader> &headers);
-	SipHeader *getHeader(int headerType, int pos = 0);
-	int getNumHeader(int headerType);
-
-	void setBody(SipBody *body) { this->body = body; };
-	SipBody *getBody() { return body; };
-
-	static SipTransportType getTransportType(const char *type);
-	static const char *getTransportType(const SipTransportType type);
-
-	void setCanDelete(bool canDelete) { this->canDelete = canDelete; };
-	bool getCanDelete() { return canDelete; };
+    Simple_List<SIP_Message>::Element _link;
 };
 
-//-------------------------------------------
 
-class SipRequestLine
+class SIP_Request_Line
 {
+public:
+    SIP_Request_Line() : _method(SIP_MESSAGE_TYPE_INVALID), _request_uri(0), _sip_version(0) {}
+    //SIP_Request_Line(const SIP_Request_Line &request);
+    //SIP_Request_Line(const SIP_Message_Type msg_type, const char *request_uri, const char *sip_version = SIP_VERSION);
+    ~SIP_Request_Line();
+
+    bool parse(const SIP_Message_Type msg_type, char *sip_msg);
+    bool encode(char *sipMsg);
+
+    void set_request_line(const SIP_Message_Type msg_type, const char *request_uri, const char *sip_version);
+
+    SIP_Message_Type get_method() const { return _method; }
+    const char *get_request_uri() const { return _request_uri; }
+    //const char *get_sip_version() const { return _sip_version; }
+
 private:
-	SipMessageType method;
-	char *requestURI;
-	char *sipVersion;
-
-public:
-	SipRequestLine() : method(SIP_MESSAGE_TYPE_INVALID), requestURI(0), sipVersion(0) {};
-	//SipRequestLine(const SipRequestLine &request);
-	//SipRequestLine(const SipMessageType msgType, const char *requestURI, const char *sipVersion = SIP_VERSION);
-	~SipRequestLine();
-
-	bool parse(const SipMessageType MsgType, char *sipMsg);
-	bool encode(char *sipMsg);
-
-	void setRequestLine(const SipMessageType msgType, const char *requestURI, const char *sipVersion);
-
-	SipMessageType getMethod() const { return method; };
-	const char *getRequestURI() const { return requestURI; };
-	//const char *getSIPVersion() const { return sipVersion; };
+    SIP_Message_Type _method;
+    char *_request_uri;
+    char *_sip_version;
 };
 
-//-------------------------------------------
 
-class SipRequest : public SipMessage
+class SIP_Request : public SIP_Message
 {
+public:
+    SIP_Request() {}
+    //SIP_Request(SIP_Request &request) : SIP_Message(request), _request_line(request._request_line) {}
+    //SIP_Request(SIP_Message_Type msg_type, char *request_uri, char *sip_version = SIP_VERSION);
+    virtual ~SIP_Request() {}
+
+    bool parse_start_line(const char *sip_msg);
+    bool encode_start_line(char *sip_msg) { return _request_line.encode(sip_msg); }
+
+    void set_request_line(const SIP_Message_Type msg_type, const char *request_uri, const char *sip_version = SIP_VERSION)
+    { _request_line.set_request_line(msg_type, request_uri, sip_version); }
+    const SIP_Request_Line *get_request_line() { return &_request_line; }
+
 private:
-	SipRequestLine requestLine;
-
-public:
-	SipRequest() {};
-	//SipRequest(SipRequest &request) : SipMessage(request), requestLine(request.requestLine) {};
-	//SipRequest(SipMessageType msgType, char *requestURI, char *sipVersion = SIP_VERSION);
-	virtual ~SipRequest() {};
-
-	bool parseStartLine(const char *sipMsg);
-	bool encodeStartLine(char *sipMsg) { return requestLine.encode(sipMsg); };
-
-	void setRequestLine(const SipMessageType msgType, const char *requestURI, const char *sipVersion = SIP_VERSION)
-		{ requestLine.setRequestLine(msgType, requestURI, sipVersion); };
-	const SipRequestLine *getRequestLine() { return &requestLine; };
+    SIP_Request_Line _request_line;
 };
 
-//-------------------------------------------
 
-class SipRequestAck : public SipRequest
+class SIP_Request_Ack : public SIP_Request
 {
 public:
-	SipMessageType getMsgType() { return SIP_REQUEST_ACK; };
+    SIP_Message_Type get_msg_type() { return SIP_REQUEST_ACK; }
 };
 
-//-------------------------------------------
 
-class SipRequestBye : public SipRequest
+class SIP_Request_Bye : public SIP_Request
 {
 public:
-	SipMessageType getMsgType() { return SIP_REQUEST_BYE; };
+    SIP_Message_Type get_msg_type() { return SIP_REQUEST_BYE; }
 };
 
-//-------------------------------------------
 
-/*class SipRequestCancel : public SipRequest
+/*class SIP_Request_Cancel : public SIP_Request
 {
 public:
-	SipMessageType getMsgType() { return SIP_REQUEST_CANCEL; };
+    SIP_Message_Type get_msg_type() { return SIP_REQUEST_CANCEL; }
 };*/
 
-//-------------------------------------------
 
-class SipRequestInvite : public SipRequest
+class SIP_Request_Invite : public SIP_Request
 {
 public:
-	SipMessageType getMsgType() { return SIP_REQUEST_INVITE; };
+    SIP_Message_Type get_msg_type() { return SIP_REQUEST_INVITE; }
 };
 
-//-------------------------------------------
 
-class SipRequestMessage : public SipRequest
+class SIP_Request_Message : public SIP_Request
 {
 public:
-	SipMessageType getMsgType() { return SIP_REQUEST_MESSAGE; };
+    SIP_Message_Type get_msg_type() { return SIP_REQUEST_MESSAGE; }
 };
 
-//-------------------------------------------
 
-class SipRequestNotify : public SipRequest
+class SIP_Request_Notify : public SIP_Request
 {
 public:
-	SipMessageType getMsgType() { return SIP_REQUEST_NOTIFY; };
+    SIP_Message_Type get_msg_type() { return SIP_REQUEST_NOTIFY; }
 };
 
-//-------------------------------------------
 
-/*class SipRequestOptions : public SipRequest
+/*class SIP_Request_Options : public SIP_Request
 {
 public:
-	SipMessageType getMsgType() { return SIP_REQUEST_OPTIONS; };
+    SIP_Message_Type get_msg_type() { return SIP_REQUEST_OPTIONS; }
 };*/
 
-//-------------------------------------------
 
-/*class SipRequestRegister : public SipRequest
+/*class SIP_Request_Register : public SIP_Request
 {
 public:
-	SipMessageType getMsgType() { return SIP_REQUEST_REGISTER; };
+    SIP_Message_Type get_msg_type() { return SIP_REQUEST_REGISTER; }
 };*/
 
-//-------------------------------------------
 
-class SipRequestSubscribe : public SipRequest
+class SIP_Request_Subscribe : public SIP_Request
 {
 public:
-	SipMessageType getMsgType() { return SIP_REQUEST_SUBSCRIBE; };
+    SIP_Message_Type get_msg_type() { return SIP_REQUEST_SUBSCRIBE; }
 };
 
-//-------------------------------------------
 
-class SipStatusLine
+class SIP_Status_Line
 {
-private:
-	char *sipVersion;
-	int statusCode;
-	char *reasonPhrase;
-
 public:
-	SipStatusLine() : sipVersion(0), statusCode(0), reasonPhrase(0) {};
-	//SipStatusLine(const SipStatusLine &status);
-	//SipStatusLine(const char *sipVersion, int code, const char *reason);
-	~SipStatusLine();
+    SIP_Status_Line() : _sip_version(0), _status_code(0), _reason_phrase(0) {};
+    //SIP_Status_Line(const SIP_Status_Line &status);
+    //SIP_Status_Line(const char *sip_version, int code, const char *reason);
+    ~SIP_Status_Line();
 
-	bool parse(const char *version, char *sipMsg);
-	bool encode(char *sipMsg);
+    bool parse(const char *version, char *sip_msg);
+    bool encode(char *sip_msg);
 
-	void setStatusLine(const char *sipVersion, int statusCode, const char *reasonPhrase);
+    void set_status_line(const char *sip_version, int status_code, const char *reason_phrase);
 
-	const char *getSIPVersion() const { return sipVersion; };
-	int getStatusCode() const { return statusCode; };
-	const char *getReasonPhrase() const { return reasonPhrase; };
+    const char *get_sip_version() const { return _sip_version; }
+    int get_status_code() const { return _status_code; }
+    //const char *get_reason_phrase() const { return _reason_phrase; }
+
+private:
+    char *_sip_version;
+    int _status_code;
+    char *_reason_phrase;
 };
 
-//-------------------------------------------
 
-class SipResponse : public SipMessage
+class SIP_Response : public SIP_Message
 {
-private:
-	SipStatusLine statusLine;
-
-	static SipStatusCode statusCodes[];
-
 public:
-	SipResponse() {};
-	//SipResponse(SipResponse &response) : SipMessage(response), statusLine(response.statusLine) {};
-	SipResponse(int statusCode);
-	~SipResponse() {};
+    SIP_Response() {};
+    //SIP_Response(SIP_Response &response) : SIP_Message(response), _status_line(response._status_line) {}
+    SIP_Response(int status_code);
+    ~SIP_Response() {};
 
-	bool parseStartLine(const char *sipMsg);
-	bool encodeStartLine(char *sipMsg) { return statusLine.encode(sipMsg); };
+    bool parse_start_line(const char *sipMsg);
+    bool encode_start_line(char *sip_msg) { return _status_line.encode(sip_msg); }
 
-	SipMessageType getMsgType() { return SIP_RESPONSE; };
+    SIP_Message_Type get_msg_type() { return SIP_RESPONSE; }
 
-	const SipStatusLine *getStatusLine() { return &statusLine; };
+    const SIP_Status_Line *get_status_line() { return &_status_line; }
+
+private:
+    SIP_Status_Line _status_line;
+
+    static SIP_Status_Code _status_codes[];
 };
 
 __END_SYS

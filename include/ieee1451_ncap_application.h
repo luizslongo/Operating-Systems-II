@@ -27,9 +27,9 @@ private:
         Simple_List<TIM_Cache>::Element _link;
 
 #ifdef USE_SIP
-        UserAgent *_ua;
+        SIP_User_Agent *_ua;
 
-        TIM_Cache(IEEE1451_TIM_Channel *tim, UserAgent *ua) : _tim(tim), _ua(ua), _link(this) {};
+        TIM_Cache(IEEE1451_TIM_Channel *tim, SIP_User_Agent *ua) : _tim(tim), _link(this), _ua(ua) {};
         ~TIM_Cache() { delete _tim; delete _ua; }
 #else
         TIM_Cache(IEEE1451_TIM_Channel *tim) : _tim(tim), _link(this) {};
@@ -67,9 +67,9 @@ public:
     unsigned short send_read_data_set(const IP::Address &address, unsigned short channel_number);
 
 #ifdef USE_SIP
-    void send_sip_message(UserAgent *ua, const char *data);
-    void send_sip_notify(UserAgent *ua, SipSubscriptionState state, SipPidfXmlBasicElement pidfXml);
-    static int message_callback(SipEventCallback event, UserAgent *ua, const char *remote);
+    void send_sip_message(SIP_User_Agent *ua, const char *data);
+    void send_sip_notify(SIP_User_Agent *ua, SIP_Subscription_State state, SIP_Pidf_Xml_Basic_Element pidfXml);
+    static int message_callback(SIP_Event_Callback event, SIP_User_Agent *ua, const char *remote);
 #endif
 
     //static int read_data_set_thread(IEEE1451_NCAP_Application *ncap, IP::Address address, IEEE1451_TIM_Channel *tim);
