@@ -49,10 +49,10 @@ public:
 
 protected:
 
-    static const char END = 0xc0;
-    static const char ESC = 0xdb;
-    static const char ESC_END = 0xdc;
-    static const char ESC_ESC = 0xdd;
+    static const char END = '\xc0';
+    static const char ESC = '\xdb';
+    static const char ESC_END = '\xdc';
+    static const char ESC_ESC = '\xdd';
 
 
     unsigned int _unit;
