@@ -75,7 +75,7 @@ int SIP_Transport_Layer::send_message(SIP_Message *msg)
 int SIP_Transport_Layer::send_data(const char *destination, int port, const char *data, int length)
 {
     UDP::Address dst(IP::Address(destination), port);
-    _socket.set_remote(dst);
+    _socket.remote(dst);
 
     //db<SIP_Transport_Layer>(INF) << "SIP_Transport_Layer::send_data -> Sending data to " << dst << " (size = " << length << ")..\n" << data << "\n";
 

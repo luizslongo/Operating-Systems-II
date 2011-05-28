@@ -1222,7 +1222,7 @@ void Send_RTP::send_data(const char *destination, unsigned short port, const cha
     //      size << ", seq: " << _sequence << ", timestamp: " << _timestamp << ")\n";
 
     UDP::Address dst(IP::Address(destination), port);
-    _socket.set_remote(dst);
+    _socket.remote(dst);
 
     if (_socket.send(_buffer, size + 12) <= 0)
     {

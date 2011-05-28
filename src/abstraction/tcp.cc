@@ -75,7 +75,7 @@ TCP::Header::Header(u32 seq,u32 ack)
     ack_num(ack);
 }
 
-bool TCP::Header::validate_checksum(IP::Address &src,IP::Address &dst,u16 len)
+bool TCP::Header::validate_checksum(IP::Address src,IP::Address dst,u16 len)
 {
     db<IP>(TRC) << __PRETTY_FUNCTION__ << endl;
     len += size();
@@ -93,7 +93,7 @@ bool TCP::Header::validate_checksum(IP::Address &src,IP::Address &dst,u16 len)
     return sum == 0xFFFF;
 }
 
-void TCP::Header::_checksum(IP::Address &src,IP::Address &dst,SegmentedBuffer * sb)
+void TCP::Header::_checksum(IP::Address src,IP::Address dst,SegmentedBuffer * sb)
 {
     db<TCP>(TRC) << __PRETTY_FUNCTION__ << endl;
     u16 len;
@@ -150,14 +150,14 @@ s32 TCP::Socket::_send(Header * hdr, SegmentedBuffer * sb)
     hdr->_hdr_off = 5; // our header is always 20 bytes
     hdr->wnd(rcv_wnd);
     hdr->chksum(0);
-    hdr->_checksum(_local,_remote,sb);
+    hdr->_checksum(_local.ip(),_remote.ip(),sb);
 
     // hdr + sb
     SegmentedBuffer nsb(hdr,hdr->size());
     nsb.append(sb);
 
 
-    return _tcp->ip()->send(_local,_remote,&nsb,TCP::ID_TCP) - hdr->size();
+    return _tcp->ip()->send(_local.ip(),_remote.ip(),&nsb,TCP::ID_TCP) - hdr->size();
 }
 
 void TCP::Socket::send(const char *data,u16 len)

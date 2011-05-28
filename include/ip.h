@@ -1,6 +1,7 @@
 #ifndef __ip_h
 #define __ip_h
 
+#include <active.h>
 #include <nic.h>
 #include <router.h>
 #include <utility/malloc.h>
@@ -48,14 +49,17 @@ public:
     
     operator u32() { return *reinterpret_cast<u32 *>(this); }
     operator u32() const { return *reinterpret_cast<const u32 *>(this); }
-} __attribute__ ((aligned(4)));
+};
 
 class IP : public Traits<IP>,
+           public Active,
            public NIC_Common,
            /*public NIC::Observer,*/ // many NICs don't support
            public Data_Observed<IP_Address>
 {
 public:
+
+    // Definitions
 
     typedef Data_Observer<IP_Address> Observer;
     typedef IP_Address                Address;
@@ -76,6 +80,8 @@ public:
     };
 
     class Header;
+
+    // Methods
 
     const Address & address() { return _self; }
     const Address & gateway() { return _gateway; }
@@ -101,11 +107,9 @@ public:
 
 //  void update(NIC::Observed * o, int p);
 
-    void worker_loop();
+    int run();
     void process_incoming();
     void process_ip(char * data,u16 size);
-
-    void kill();
 
     NIC * nic() { return &_nic; }
     const MAC_Address & hw_address() { return _nic.address(); }
@@ -120,10 +124,12 @@ public:
         return _instance[unit]; 
     }
 
-    static int thread_main(IP * thiz);
 private:
     NIC _nic;
     char * _packet[MAX_FRAGMENTS];
+    u16    _packet_size[MAX_FRAGMENTS];
+    int    _packet_count;
+
     Router _router;
     
     Address _self;

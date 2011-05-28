@@ -125,7 +125,7 @@ public:
         case DISCOVER:
 
             if (packet->your_address()) {
-                set_remote(src);
+                remote(src);
 
                 UDP::Address me(packet->your_address(),68);
             //  set_local(me);

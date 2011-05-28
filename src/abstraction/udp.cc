@@ -81,5 +81,27 @@ void UDP::Socket::update(Observed *o, long c, UDP_Address src, UDP_Address dst,
 	received(src,(const char*)data,size);
 }
 
+// Synchronous Socket
+int UDP::Sync_Socket::receive(Address * from,char * buf,unsigned int size)
+{
+    _buffer_size = size;
+    _buffer_data = buf;
+    _buffer_wait.lock();
+    _buffer_data = 0;
+    memcpy(from, (void*)&_buffer_src, sizeof(Address));
+    return _buffer_size;
+}
+
+void UDP::Sync_Socket::received(const Address & src,
+                                const char *data, unsigned int size)
+{
+    if (_buffer_data) {
+        if (size < _buffer_size)
+            _buffer_size = size;
+        memcpy((char*)_buffer_data, data, _buffer_size);
+        memcpy((Address*)&_buffer_src, &src, sizeof(Address));
+        _buffer_wait.unlock();
+    }
+}
 __END_SYS
 

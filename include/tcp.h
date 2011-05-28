@@ -72,10 +72,10 @@ class TCP::Header {
     void dst_port(u16 v) { _dst_port = CPU::htons(v); }
     void src_port(u16 v) { _src_port = CPU::htons(v); }
     
-    u16 _checksum(IP::Address &src,IP::Address &dst,u16 len);
-    void _checksum(IP::Address &src,IP::Address &dst,SegmentedBuffer * sb);
-    void checksum(IP::Address &src,IP::Address &dst,u16 len);
-    bool validate_checksum(IP::Address &src,IP::Address &dst,u16 len);
+    u16 _checksum(IP::Address src,IP::Address dst,u16 len);
+    void _checksum(IP::Address src,IP::Address dst,SegmentedBuffer * sb);
+    void checksum(IP::Address src,IP::Address dst,u16 len);
+    bool validate_checksum(IP::Address src,IP::Address dst,u16 len);
 
     // Ultimate unreadable coding style!
     friend Debug& operator<< (Debug & db, const Header& s)

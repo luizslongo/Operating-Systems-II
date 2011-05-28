@@ -53,9 +53,9 @@ void IP::Header::calculate_checksum() {
 IP::IP(unsigned int unit)
     : _nic(unit),
       _router(&_nic, this),
-     _self(IP::NULL),
-     _broadcast(255,255,255,255),
-     _thread(0)
+      _self(IP::NULL),
+      _broadcast(255,255,255,255),
+      _thread(0)
 {
     if (_instance[unit])
     {
@@ -71,22 +71,16 @@ IP::IP(unsigned int unit)
         _netmask = Address(Traits<IP>::NETMASK);
     }
 
-    if (Traits<IP>::spawn_thread) {
-        _thread = new Thread(IP::thread_main,this);
-    }
-
     _instance[unit] = this;
 
     // allocate memory for receiving packets
     for(int i=0;i<MAX_FRAGMENTS;++i)
         _packet[i] = new char[NIC::MTU];
+
+    start();
 }
 
 IP::~IP() {
-    if (Traits<IP>::spawn_thread) {
-        delete _thread;
-    }
-
     for(int i=0;i<MAX_FRAGMENTS;++i)
         delete _packet[i];
 }
@@ -105,72 +99,47 @@ void IP::process_ip(char *data, u16 size)
         db<IP>(TRC) << "IP: " << pck_h << "\n" ;
     }
 
-    if(pck_h.flags() != Header::MF_FLAG && pck_h.offset() == 0)
+    if(!fragmentation && (pck_h.flags() == Header::MF_FLAG || pck_h.offset() != 0))
     {
-        if (calculate_checksum(data,pck_h.hlength()) != 0xFFFF) {
-            db<IP>(TRC) << "IP checksum failed for incoming packet\n";
-        } else {
-            notify(pck_h.src_ip(),pck_h.dst_ip(),(int)pck_h.protocol(),
+        db<IP>(INF) << "IP::Fragmented packet discarded\n";
+        return;
+    }
+
+    if (calculate_checksum(data,pck_h.hlength()) != 0xFFFF) {
+        db<IP>(TRC) << "IP checksum failed for incoming packet\n";
+    } else {
+        notify(pck_h.src_ip(),pck_h.dst_ip(),(int)pck_h.protocol(),
                 &data[pck_h.hlength()], pck_h.length() - pck_h.hlength());
-            if (pck_h.ttl() > 0) {
-                pck_h.ttl(pck_h.ttl() - 1);
-            }
+        if (pck_h.ttl() > 0) {
+            pck_h.ttl(pck_h.ttl() - 1);
         }
     }
-    else {
-        db<IP>(WRN) << "Fragmented packet discarded" << endl;
-         // TODO: reasemble fragmented packets
-    }
+
 }
 
-
-
-
-/*void IP::update(NIC::Observed * o, int p)
-{
-	db<IP>(TRC) << "IP::update(o=" << o
-		     << ",p=" << hex << p << dec << ")\n";
-
-	//if (_thread) _thread->resume();
-}*/
-
-void IP::kill()
-{
-    _alive = false;
-    if (_thread) {
-        _thread->resume();
-    }
-}
-
-void IP::process_incoming()
+int IP::run()
 {
     db<IP>(TRC) << __PRETTY_FUNCTION__ << endl;
     NIC::Address src;
     NIC::Protocol prot;
 
-    int size = _nic.receive(&src, &prot, _packet[0], NIC::MTU);
-    if(size <= 0) {
-        db<IP>(WRN) << "NIC::received error!" << endl;
-        return;
+    while (true) {
+        int size = _nic.receive(&src, &prot, _packet[0], _nic.mtu());
+        if(size <= 0) {
+            db<IP>(WRN) << "NIC::received error!" << endl;
+            continue;
+        }
+
+        if (prot == NIC::IP) {
+            _router.update(reinterpret_cast<Header*>(_packet[0])->src_ip(), src);
+            process_ip(_packet[0], size);
+        }
+
+        // notify routing algorithm
+        _router.received(src, prot, _packet[0], size);
     }
 
-    if (prot == NIC::IP) {
-        _router.update(reinterpret_cast<Header*>(_packet[0])->src_ip(), src);
-        process_ip(_packet[0], size);
-    }
-
-    // notify routing algorithm
-    _router.received(src, prot, _packet[0], size);
-}
-
-void IP::worker_loop()
-{
-    _alive = true;
-    _thread = Thread::self();
-    while (_alive) {
-        process_incoming();
-        Thread::yield();
-    }
+    return 0;
 }
 
 s32 IP::send(const Address & from,const Address & to,SegmentedBuffer * data,Protocol proto)
@@ -217,11 +186,6 @@ u16 IP::calculate_checksum(const void* ptr, u16 count)
         sum = (sum & 0xffff) + (sum >> 16);
 
     return sum;
-}
-
-int IP::thread_main(IP * thiz) {
-    thiz->worker_loop();
-    return 0;
 }
 
 __END_SYS
