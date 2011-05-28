@@ -133,6 +133,13 @@ enum SIP_Pidf_Xml_Basic_Element
     SIP_PIDF_XML_BASIC_ELEMENT_INVALID
 };
 
+enum SIP_Call_Status
+{
+    SIP_CALL_STATUS_INACTIVE,
+    SIP_CALL_STATUS_INCOMING,
+    SIP_CALL_STATUS_OUTGOING
+};
+
 /*enum SIP_Priority
 {
     SIP_PRIORITY_EMERGENCY,

@@ -24,7 +24,7 @@ private:
     }*/
 
 public:
-    SIP_Dialog(SIP_Message_Type type);
+    SIP_Dialog(SIP_Message_Type type, SIP_Call_Status call_status);
     ~SIP_Dialog();
 
     void set_dialog(const char *call_id, const char *local_tag, const char *remote_tag,
@@ -40,6 +40,7 @@ public:
 
 private:
     SIP_Message_Type _type;
+    SIP_Call_Status _call_status;
 
     //State _state;
 
@@ -170,14 +171,17 @@ public:
     const char *get_text_received() { return _text_received; }
     bool has_subscription() { return _subscription.is_active(); }
     const char *get_subscriber();
+    SIP_Dialog *get_call();
+    SIP_Call_Status get_call_status();
+    bool connected() { return (get_call_status() != SIP_CALL_STATUS_INACTIVE); }
 
     void add_transaction(SIP_Transaction *transaction) { _transactions.insert(&transaction->_link); }
     void remove_transaction(SIP_Transaction *transaction) { _transactions.remove(&transaction->_link); delete transaction; }
-    SIP_Dialog *add_dialog(SIP_Message_Type type);
+    SIP_Dialog *add_dialog(SIP_Message_Type type, SIP_Call_Status call_status);
     void remove_dialog(SIP_Dialog *dialog) { _dialogs.remove(&dialog->_link); delete dialog; }
 
-    int getTimerValue(SIP_Timer timer) { return _timer_values[timer]; }
-    void setTimerValue(SIP_Timer timer, int timer_value) { _timer_values[timer] = timer_value; }
+    int get_timer_value(SIP_Timer timer) { return _timer_values[timer]; }
+    void set_timer_value(SIP_Timer timer, int timer_value) { _timer_values[timer] = timer_value; }
     void start_timer(SIP_Timer timer, SIP_Transaction *p);
     void stop_timer(SIP_Timer timer);
 
@@ -203,10 +207,10 @@ private:
 class Send_RTP
 {
 public:
-    Send_RTP() : _sequence(0x016a), _timestamp(0x00207a10), _udp(IP::instance()), _socket(&_udp) {}
+    Send_RTP() : _version(0x02), _sequence(0x016a), _timestamp(0x00207a10), _ssrc(0xfdfca272), _udp(IP::instance()), _socket(&_udp) {}
     ~Send_RTP() {}
 
-    void send_data(const char *destination, unsigned short port, char *data, unsigned int size);
+    void send_data(const char *destination, unsigned short port, const char *data, unsigned int size);
 
 private:
     class My_Socket : public UDP::Socket
@@ -217,14 +221,17 @@ private:
 
         void received(const UDP::Address &src, const char *data, unsigned int size)
         {
-            db<Send_RTP::My_Socket>(INF) << "Send_RTP::My_Socket::received..\n";
+            //db<Send_RTP::My_Socket>(INF) << "Send_RTP::My_Socket::received..\n";
         }
     };
 
 private:
-    unsigned int _sequence;
-    unsigned int _timestamp;
+    unsigned short _version;
+    unsigned short _sequence;
+    unsigned long _timestamp;
+    unsigned long _ssrc;
 
+    char _buffer[172];
     UDP _udp;
     My_Socket _socket;
 };

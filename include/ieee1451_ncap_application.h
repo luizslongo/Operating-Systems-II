@@ -10,6 +10,7 @@
     #include <sip_defs.h>
     #include <sip_manager.h>
     #include <sip_user_agent.h>
+    #include <thread.h>
 #endif
 
 __BEGIN_SYS
@@ -28,11 +29,15 @@ private:
 
 #ifdef USE_SIP
         SIP_User_Agent *_ua;
+        Thread _session_thread;
+        Send_RTP _send_rtp;
 
-        TIM_Cache(IEEE1451_TIM_Channel *tim, SIP_User_Agent *ua) : _tim(tim), _link(this), _ua(ua) {};
+        TIM_Cache(IEEE1451_TIM_Channel *tim, SIP_User_Agent *ua) : _tim(tim), _link(this), _ua(ua),
+                _session_thread(&IEEE1451_NCAP_Application::send_read_multimedia_data_set_thread,
+                IEEE1451_NCAP_Application::get_instance(), _tim->_address, (unsigned short) 0x01) {}
         ~TIM_Cache() { delete _tim; delete _ua; }
 #else
-        TIM_Cache(IEEE1451_TIM_Channel *tim) : _tim(tim), _link(this) {};
+        TIM_Cache(IEEE1451_TIM_Channel *tim) : _tim(tim), _link(this) {}
         ~TIM_Cache() { delete _tim; }
 #endif
     };
@@ -59,14 +64,18 @@ public:
     void report_command_reply(const IP::Address &address, unsigned short trans_id, const char *message, unsigned int length);
     void report_tim_initiated_message(const IP::Address &address, const char *message, unsigned int length);
 
-    void read_temperature(const IP::Address &address, const char *buffer);
+    void read_temperature(const IP::Address &address, const char *buffer, unsigned short length);
+    void read_audio(const IP::Address &address, const char *buffer, unsigned short length);
 
     unsigned short send_operate(const IP::Address &address, unsigned short channel_number);
     unsigned short send_idle(const IP::Address &address, unsigned short channel_number);
     unsigned short send_read_teds(const IP::Address &address, unsigned short channel_number, char tedsId);
     unsigned short send_read_data_set(const IP::Address &address, unsigned short channel_number);
+    static int send_read_multimedia_data_set_thread(IEEE1451_NCAP_Application *ncap, IP::Address address, unsigned short channel_number);
 
 #ifdef USE_SIP
+    void send_sip_invite(SIP_User_Agent *ua);
+    void send_sip_bye(SIP_User_Agent *ua);
     void send_sip_message(SIP_User_Agent *ua, const char *data);
     void send_sip_notify(SIP_User_Agent *ua, SIP_Subscription_State state, SIP_Pidf_Xml_Basic_Element pidfXml);
     static int message_callback(SIP_Event_Callback event, SIP_User_Agent *ua, const char *remote);

@@ -93,7 +93,7 @@ public:
         IEEE1451_Channel(address), _transducer(transducer), _connected(false) {}
     ~IEEE1451_TIM_Channel() { delete _transducer; }
 
-    IEEE1451_Transducer_Channel *getTransducer() { return _transducer; }
+    IEEE1451_Transducer_Channel *get_transducer() { return _transducer; }
     //unsigned short get_channel_number() { return _tim_channel_number; }
     void connect() { _connected = true; }
     void disconnect() { _connected = false; }

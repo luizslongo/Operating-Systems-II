@@ -5,6 +5,7 @@ __USING_SYS
 
 
 #include <ieee1451_tim_temperature_sensor.h>
+//#include <ieee1451_tim_audio_sensor.h>
 #include <ieee1451_tim.h>
 
 int tim()
@@ -21,6 +22,7 @@ int tim()
     tim->set_ncap_address(IP::Address(10, 0, 0, 110));
 
     IEEE1451_Temperature_Sensor sensor(true, true);
+    //IEEE1451_Audio_Sensor sensor(true, true);
     sensor.execute();
     return 0;
 }

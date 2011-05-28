@@ -193,7 +193,7 @@ bool SIP_Manager::init()
     if (!_transport.init())
         return false;
 
-    _thread_receive_message = new Thread(SIP_Manager::receive_message_thread);
+    _thread_receive_message = new Thread(SIP_Manager::receive_message_thread, Thread::READY, Thread::MAIN);
     return true;
 }
 

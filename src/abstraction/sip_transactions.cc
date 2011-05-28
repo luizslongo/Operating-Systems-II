@@ -77,9 +77,9 @@ void SIP_Transaction_Client_Invite::send_invite(SIP_Request_Invite *msg)
             _request_msg = msg; //_request_msg = new SIP_Request_Invite(*msg);
             msg->set_can_delete(false);
             _transport->send_message(_request_msg);
-            _ua->setTimerValue(SIP_TIMER_A, SIP_TIMER_1);
+            _ua->set_timer_value(SIP_TIMER_A, SIP_TIMER_1);
             _ua->start_timer(SIP_TIMER_A, this);
-            _ua->setTimerValue(SIP_TIMER_B, SIP_TIMER_1 * 64);
+            _ua->set_timer_value(SIP_TIMER_B, SIP_TIMER_1 * 64);
             _ua->start_timer(SIP_TIMER_B, this);
             break;
 
@@ -139,7 +139,7 @@ void SIP_Transaction_Client_Invite::receive_3xx_6xx(SIP_Response *msg)
         case sttCalling:
             _state = sttCompleted;
             send_ack(msg);
-            _ua->setTimerValue(SIP_TIMER_D, SIP_TIMER_32s);
+            _ua->set_timer_value(SIP_TIMER_D, SIP_TIMER_32s);
             _ua->start_timer(SIP_TIMER_D, this);
             _ua->stop_timer(SIP_TIMER_A);
             _ua->stop_timer(SIP_TIMER_B);
@@ -149,7 +149,7 @@ void SIP_Transaction_Client_Invite::receive_3xx_6xx(SIP_Response *msg)
         case sttProceeding:
             _state = sttCompleted;
             send_ack(msg);
-            _ua->setTimerValue(SIP_TIMER_D, SIP_TIMER_32s);
+            _ua->set_timer_value(SIP_TIMER_D, SIP_TIMER_32s);
             _ua->start_timer(SIP_TIMER_D, this);
             _ua->_uac.receive_msg(_request_msg, msg, this);
             break;
@@ -202,7 +202,7 @@ void SIP_Transaction_Client_Invite::timer_A_Expired()
     {
         case sttCalling:
             //_state = sttCalling;
-            _ua->setTimerValue(SIP_TIMER_A, _ua->getTimerValue(SIP_TIMER_A) * 2);
+            _ua->set_timer_value(SIP_TIMER_A, _ua->get_timer_value(SIP_TIMER_A) * 2);
             _ua->start_timer(SIP_TIMER_A, this);
             _transport->send_message(_request_msg);
             break;
@@ -326,9 +326,9 @@ void SIP_Transaction_Client_Non_Invite::send_request(SIP_Request *msg)
             _request_msg = msg; //copy_request(msg);
             msg->set_can_delete(false);
             _transport->send_message(_request_msg);
-            _ua->setTimerValue(SIP_TIMER_E, SIP_TIMER_1);
+            _ua->set_timer_value(SIP_TIMER_E, SIP_TIMER_1);
             _ua->start_timer(SIP_TIMER_E, this);
-            _ua->setTimerValue(SIP_TIMER_F, SIP_TIMER_1 * 64);
+            _ua->set_timer_value(SIP_TIMER_F, SIP_TIMER_1 * 64);
             _ua->start_timer(SIP_TIMER_F, this);
             break;
 
@@ -359,7 +359,7 @@ void SIP_Transaction_Client_Non_Invite::receive_2xx_6xx(SIP_Response *msg)
         case sttTrying:
         case sttProceeding:
             _state = sttCompleted;
-            _ua->setTimerValue(SIP_TIMER_K, SIP_TIMER_4);
+            _ua->set_timer_value(SIP_TIMER_K, SIP_TIMER_4);
             _ua->start_timer(SIP_TIMER_K, this);
             _ua->stop_timer(SIP_TIMER_E);
             _ua->stop_timer(SIP_TIMER_F);
@@ -400,8 +400,8 @@ void SIP_Transaction_Client_Non_Invite::timer_E_Expired()
         case sttTrying:
         {
             //_state = sttTrying;
-            int timerValue = ((_ua->getTimerValue(SIP_TIMER_E) * 2) < SIP_TIMER_2) ? _ua->getTimerValue(SIP_TIMER_E) * 2 : SIP_TIMER_2;
-            _ua->setTimerValue(SIP_TIMER_E, timerValue);
+            int timerValue = ((_ua->get_timer_value(SIP_TIMER_E) * 2) < SIP_TIMER_2) ? _ua->get_timer_value(SIP_TIMER_E) * 2 : SIP_TIMER_2;
+            _ua->set_timer_value(SIP_TIMER_E, timerValue);
             _ua->start_timer(SIP_TIMER_E, this);
             _transport->send_message(_request_msg);
             break;
@@ -409,7 +409,7 @@ void SIP_Transaction_Client_Non_Invite::timer_E_Expired()
 
         case sttProceeding:
             //_state = sttProceeding;
-            _ua->setTimerValue(SIP_TIMER_E, SIP_TIMER_2);
+            _ua->set_timer_value(SIP_TIMER_E, SIP_TIMER_2);
             _ua->start_timer(SIP_TIMER_E, this);
             _transport->send_message(_request_msg);
             break;
@@ -548,7 +548,7 @@ void SIP_Transaction_Server_Invite::receive_ack(SIP_Request_Ack *msg)
     {
         case sttCompleted:
             _state = sttConfirmed;
-            _ua->setTimerValue(SIP_TIMER_I, SIP_TIMER_4);
+            _ua->set_timer_value(SIP_TIMER_I, SIP_TIMER_4);
             _ua->start_timer(SIP_TIMER_I, this);
             _ua->stop_timer(SIP_TIMER_G);
             _ua->stop_timer(SIP_TIMER_H);
@@ -603,9 +603,9 @@ void SIP_Transaction_Server_Invite::send_3xx_6xx(SIP_Response *msg)
             _last_response = msg; //_last_response = new SIP_Response(*msg);
             msg->set_can_delete(false);
             _transport->send_message(_last_response);
-            _ua->setTimerValue(SIP_TIMER_G, SIP_TIMER_1);
+            _ua->set_timer_value(SIP_TIMER_G, SIP_TIMER_1);
             _ua->start_timer(SIP_TIMER_G, this);
-            _ua->setTimerValue(SIP_TIMER_H, SIP_TIMER_1 * 64);
+            _ua->set_timer_value(SIP_TIMER_H, SIP_TIMER_1 * 64);
             _ua->start_timer(SIP_TIMER_H, this);
             break;
 
@@ -644,8 +644,8 @@ void SIP_Transaction_Server_Invite::timer_G_Expired()
         case sttCompleted:
         {
             //_state = sttCompleted;
-            int timerValue = ((_ua->getTimerValue(SIP_TIMER_G) * 2) < SIP_TIMER_2) ? _ua->getTimerValue(SIP_TIMER_G) * 2 : SIP_TIMER_2;
-            _ua->setTimerValue(SIP_TIMER_G, timerValue);
+            int timerValue = ((_ua->get_timer_value(SIP_TIMER_G) * 2) < SIP_TIMER_2) ? _ua->get_timer_value(SIP_TIMER_G) * 2 : SIP_TIMER_2;
+            _ua->set_timer_value(SIP_TIMER_G, timerValue);
             _ua->start_timer(SIP_TIMER_G, this);
             if (_last_response)
                 _transport->send_message(_last_response);
@@ -826,7 +826,7 @@ void SIP_Transaction_Server_Non_Invite::send_2xx_6xx(SIP_Response *msg)
             _last_response = msg; //_last_response = new SIP_Response(*msg);
             msg->set_can_delete(false);
             _transport->send_message(_last_response);
-            _ua->setTimerValue(SIP_TIMER_J, SIP_TIMER_1 * 64);
+            _ua->set_timer_value(SIP_TIMER_J, SIP_TIMER_1 * 64);
             _ua->start_timer(SIP_TIMER_J, this);
             break;
 

@@ -2,11 +2,12 @@
 
 __BEGIN_SYS
 
-SIP_Dialog::SIP_Dialog(SIP_Message_Type type) : _type(type), _link(this)
+SIP_Dialog::SIP_Dialog(SIP_Message_Type type, SIP_Call_Status call_status) :
+    _type(type), _call_status(call_status), _link(this)
 {
     //_state = sttIdle;
 
-    _call_id= 0;
+    _call_id = 0;
     _local_tag = 0;
     _remote_tag = 0;
     _local_sequence_number = 0;
@@ -581,7 +582,7 @@ SIP_Dialog *SIP_User_Agent_Client::create_dialog(SIP_Request *request, SIP_Respo
     if ((!id) || (!local_tag) || (!local_uri) || (!remote_uri) || (!target))
         return 0;
 
-    SIP_Dialog *dialog = _ua->add_dialog(SIP_REQUEST_INVITE);
+    SIP_Dialog *dialog = _ua->add_dialog(SIP_REQUEST_INVITE, SIP_CALL_STATUS_OUTGOING);
     dialog->set_dialog(id, local_tag, remote_tag, sequence_number, 0, local_uri, remote_uri, target);
 
     int record_route_num = response->get_num_header(SIP_HEADER_RECORD_ROUTE);
@@ -969,7 +970,7 @@ SIP_Dialog *SIP_User_Agent_Server::create_dialog(SIP_Request *request, SIP_Respo
         _ua->_subscription.set_subscription(event_type, event_id);
     }
 
-    SIP_Dialog *dialog = _ua->add_dialog(type);
+    SIP_Dialog *dialog = _ua->add_dialog(type, SIP_CALL_STATUS_INCOMING);
     dialog->set_dialog(id, local_tag, remote_tag, 0, sequence_number, local_uri, remote_uri, target);
 
     int record_route_num = response->get_num_header(SIP_HEADER_RECORD_ROUTE);
@@ -1124,9 +1125,32 @@ const char *SIP_User_Agent::get_subscriber()
     return 0;
 }
 
-SIP_Dialog *SIP_User_Agent::add_dialog(SIP_Message_Type type)
+SIP_Dialog *SIP_User_Agent::get_call()
 {
-    SIP_Dialog *dialog = new SIP_Dialog(type);
+    Simple_List<SIP_Dialog>::Iterator it = _dialogs.begin();
+    while (it != _dialogs.end())
+    {
+        SIP_Dialog *dialog = it->object();
+        it++;
+
+        if (dialog->_type == SIP_REQUEST_INVITE)
+            return dialog;
+    }
+    return 0;
+}
+
+SIP_Call_Status SIP_User_Agent::get_call_status()
+{
+    SIP_Dialog *dialog = get_call();
+    if (dialog)
+        return dialog->_call_status;
+
+    return SIP_CALL_STATUS_INACTIVE;
+}
+
+SIP_Dialog *SIP_User_Agent::add_dialog(SIP_Message_Type type, SIP_Call_Status call_status)
+{
+    SIP_Dialog *dialog = new SIP_Dialog(type, call_status);
     _dialogs.insert(&dialog->_link);
     return dialog;
 }
@@ -1169,15 +1193,30 @@ void SIP_User_Agent::stop_timer(SIP_Timer timer)
 
 //-------------------------------------------
 
-void Send_RTP::send_data(const char *destination, unsigned short port, char *data, unsigned int size)
+void Send_RTP::send_data(const char *destination, unsigned short port, const char *data, unsigned int size)
 {
-    data[3] = _sequence;
-    data[2] = _sequence >> 8;
+    _buffer[0] = 0x80; //(_version << 6) && 0xc0;
+    _buffer[1] = (_sequence == 0x016a) ? 0x80 : 0x00;
+    _buffer[2] = _sequence >> 8;
+    _buffer[3] = _sequence;
+    _buffer[4] = _timestamp >> 24;
+    _buffer[5] = _timestamp >> 16;
+    _buffer[6] = _timestamp >> 8;
+    _buffer[7] = _timestamp;
+    _buffer[8] = _ssrc >> 24;
+    _buffer[9] = _ssrc >> 16;
+    _buffer[10] = _ssrc >> 8;
+    _buffer[11] = _ssrc;
+    memcpy(&_buffer[12], data, size);
 
-    data[7] = _timestamp;
-    data[6] = _timestamp >> 8;
-    data[5] = _timestamp >> 16;
-    data[4] = _timestamp >> 24;
+    char aux_dest[512];
+    char aux[255];
+    strcpy(aux_dest, destination);
+    match(aux_dest, ":" , aux);
+    skip(aux_dest, " \t");
+    match(aux_dest, "@" , aux);
+    skip(aux_dest, " \t");
+    destination = aux_dest;
 
     //db<Send_RTP>(INF) << "Send_RTP::send_data -> Sending data to " << destination << ":" << port << " (size: " <<
     //      size << ", seq: " << _sequence << ", timestamp: " << _timestamp << ")\n";
@@ -1185,7 +1224,7 @@ void Send_RTP::send_data(const char *destination, unsigned short port, char *dat
     UDP::Address dst(IP::Address(destination), port);
     _socket.set_remote(dst);
 
-    if (_socket.send(data, size) <= 0)
+    if (_socket.send(_buffer, size + 12) <= 0)
     {
         db<Send_RTP>(WRN) << "Send_RTP::send_data -> Failed to send data\n";
         //return;
