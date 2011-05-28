@@ -1,7 +1,7 @@
 #ifndef __ieee1451_ncap_application_h
 #define __ieee1451_ncap_application_h
 
-#define USE_SIP
+//#define USE_SIP
 
 #include <ieee1451_ncap.h>
 #include <ieee1451_objects.h>

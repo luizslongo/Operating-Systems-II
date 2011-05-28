@@ -254,6 +254,7 @@ void IEEE1451_NCAP_Application::report_tim_initiated_message(const IP::Address &
             read_temperature(address, buffer, cmd->_length);
         else if (audio)
         {
+#ifdef USE_SIP
             if ((cmd->_length == 1) && (buffer[0] == 1) && (!tim_cache->_ua->connected()))
                 send_sip_invite(tim_cache->_ua);
 
@@ -262,6 +263,7 @@ void IEEE1451_NCAP_Application::report_tim_initiated_message(const IP::Address &
                 send_sip_bye(tim_cache->_ua);
                 tim_cache->_session_thread.suspend();
             }else
+#endif
                 read_audio(address, buffer, cmd->_length);
         }
     }
@@ -377,8 +379,10 @@ int IEEE1451_NCAP_Application::send_read_multimedia_data_set_thread(IEEE1451_NCA
 
     while (1)
     {
+#ifdef USE_SIP
         if (!tim_cache->_ua->connected())
             Thread::self()->suspend();
+#endif
 
         //db<IEEE1451_NCAP_Application>(TRC) << "-- Reading Multimedia Data Set (address=" << address << ")...\n";
         ncap->send_read_data_set(address, channel_number);
