@@ -50,8 +50,7 @@ void IP::Header::calculate_checksum() {
 }
 
 // IP
-
-IP::IP(unsigned int unit) 
+IP::IP(unsigned int unit)
     : _nic(unit),
       _router(&_nic, this),
      _self(IP::NULL),
@@ -77,12 +76,19 @@ IP::IP(unsigned int unit)
     }
 
     _instance[unit] = this;
+
+    // allocate memory for receiving packets
+    for(int i=0;i<MAX_FRAGMENTS;++i)
+        _packet[i] = new char[NIC::MTU];
 }
 
 IP::~IP() {
     if (Traits<IP>::spawn_thread) {
         delete _thread;
     }
+
+    for(int i=0;i<MAX_FRAGMENTS;++i)
+        delete _packet[i];
 }
 
 void IP::process_ip(char *data, u16 size)
@@ -141,20 +147,20 @@ void IP::process_incoming()
     db<IP>(TRC) << __PRETTY_FUNCTION__ << endl;
     NIC::Address src;
     NIC::Protocol prot;
-    NIC::PDU data;
-    int size = _nic.receive(&src, &prot, data, sizeof(NIC::PDU));
+
+    int size = _nic.receive(&src, &prot, _packet[0], NIC::MTU);
     if(size <= 0) {
         db<IP>(WRN) << "NIC::received error!" << endl;
         return;
     }
 
     if (prot == NIC::IP) {
-        _router.update(reinterpret_cast<Header*>(data)->src_ip(), src);
-        process_ip(data, size);
+        _router.update(reinterpret_cast<Header*>(_packet[0])->src_ip(), src);
+        process_ip(_packet[0], size);
     }
 
     // notify routing algorithm
-    _router.received(src, prot, data, size);
+    _router.received(src, prot, _packet[0], size);
 }
 
 void IP::worker_loop()

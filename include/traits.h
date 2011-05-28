@@ -97,7 +97,10 @@ template <> struct Traits<Network>: public Traits<void>
 template <> struct Traits<IP>: public Traits<void>{
     static const unsigned long ADDRESS = 0xc0a80a01;   // 192.168.10.1
     static const unsigned long NETMASK = 0xffffff00;   // 255.255.255.0
-    static const unsigned long BROADCAST = 0; 
+    static const unsigned long BROADCAST = 0;
+
+    static const bool fragmentation = false;
+    static const int MAX_FRAGMENTS = 1;
 
     static const bool dynamic      = false; // true=dhcp false=static
     static const bool spawn_thread = true;  // automatic creation of IP's worker thread
@@ -110,6 +113,10 @@ template <> struct Traits<IP>: public Traits<void>{
 
 template <> struct Traits<UDP> : public Traits<IP> {
     static const bool checksum = false;
+};
+
+template <> struct Traits<TCP> : public Traits<IP> {
+    static const bool checksum = true;
 };
 
 template <> struct Traits<ICMP> : public Traits<IP> {

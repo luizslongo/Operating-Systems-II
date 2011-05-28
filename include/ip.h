@@ -48,9 +48,12 @@ public:
     
     operator u32() { return *reinterpret_cast<u32 *>(this); }
     operator u32() const { return *reinterpret_cast<const u32 *>(this); }
-};
+} __attribute__ ((aligned(4)));
 
-class IP: public NIC_Common, /*public NIC::Observer,*/ public Data_Observed<IP_Address>
+class IP : public Traits<IP>,
+           public NIC_Common,
+           /*public NIC::Observer,*/ // many NICs don't support
+           public Data_Observed<IP_Address>
 {
 public:
 
@@ -58,7 +61,7 @@ public:
     typedef IP_Address                Address;
     typedef NIC::Address              MAC_Address;
     typedef u8                        Protocol;
-    typedef IF<Traits<IP>::use_arp,
+    typedef IF<use_arp,
                ARP_Router<NIC, IP>,
                ADHOP_Router<NIC, IP> >::Result  Router;
 
@@ -72,100 +75,7 @@ public:
         PROT_RARP = NIC::RARP
     };
 
-    class Header {
-    public:
-        enum {
-            MF_FLAG = 1, // More Fragments
-            DF_FLAG = 2  // Don't Fragment
-        };
-
-    public:
-        Header() {}
-
-        Header(const Address & src, const Address & dst, const Protocol & prot, u16 size) :
-            _ihl(DEF_IHL + Traits<IP>::OPT_SIZE),  _version(DEF_VER), _tos(DEF_TOS),
-            _length(CPU::htons(sizeof(Header) + size)), _id(CPU::htons(pktid++)),
-            _offset(0), _flags(0), _ttl(DEF_TTL), _protocol(prot), _checksum(0),
-            _src_ip(src), _dst_ip(dst)
-        {
-            calculate_checksum();
-        }
-
-        const Address & src_ip() const { return _src_ip; }
-        const Address & dst_ip() const { return _dst_ip; }
-        u32 hlength() { return _ihl * 4; }
-        u32 length() const { return CPU::ntohs(_length); }
-        u16 flags() const {
-            return CPU::ntohs(_flags << 13 | _offset) >> 13;
-        }
-        u16 offset() const {
-            return CPU::ntohs(_flags << 13 | _offset) & 0x1fff;
-        }
-        const Protocol & protocol() const { return _protocol; }
-        u16 id() const { return CPU::ntohs(_id); }
-
-        // setters for fragment operations
-        void set_src(const Address & src_ip){ _src_ip = src_ip; }
-        void set_length(u16 length) { _length = CPU::htons(length); }
-        void set_offset(u16 off) {
-            u16 x = CPU::htons(flags()<<13|off);
-            _offset = x&0x1fff;
-            _flags  = x>>13;
-        }
-        void set_flags(u16 flg) {
-            u16 x = CPU::htons(flg<<13|offset());
-            _offset = x&0x1fff;
-            _flags  = x>>13;
-        }
-        void set_protocol(u8 protocol){
-            _protocol = protocol;
-        }
-        
-        char* get_options() { return _opt; }
-        
-        u8 ttl() { return _ttl; }
-        
-        void ttl(u8 nttl) { _ttl = nttl; }
-
-        void calculate_checksum();
-        
-        friend Debug& operator<< (Debug &db, const IP::Header &h) {
-            IP::Address ip_src(h._src_ip), ip_dst(h._dst_ip);
-            u16 flags = h.flags();
-
-            db  << "{ver=" << h._version
-            << ",ihl=" << h._ihl
-            << ",tos=" << h._tos
-            << ",len=" << CPU::ntohs(h._length)
-            << ",id="  << CPU::ntohs(h._id)
-            << ",off=" << h.offset()
-            << ",flg=" << (flags == IP::Header::DF_FLAG ? "[DF]" : 
-            (flags == IP::Header::MF_FLAG ? "[MF]" : "[ ]"))
-            << ",ttl=" << h._ttl
-            << ",pro=" << h._protocol
-            << ",chk=" << (void *)h._checksum
-            << ",src=" << ip_src
-            << ",dst=" << ip_dst
-            << "}";
-            return db;
-        }
-
-    private:
-        u8  _ihl:4;     // IP Header Length (in 32-bit words)
-        u8  _version:4; // IP Version
-        u8  _tos;       // Type Of Service (no used -> 0)
-        u16 _length;    // Size of datagram (header + data)
-        u16 _id;        // Datagram id
-        u16 _offset:13; // Fragment offset (x 8 bytes)
-        u16 _flags:3;   // Flags (UN, DF, MF)
-        u8  _ttl;       // Time To Live
-        Protocol  _protocol;  // RFC 1700 (1->ICMP, 6->TCP, 17->UDP)
-        volatile u16 _checksum;  // Header checksum
-        Address _src_ip;    // Source IP address
-        Address _dst_ip;    // Destination IP addres
-        char _opt[(4 * Traits<IP>::OPT_SIZE)];
-        static unsigned short pktid;
-    };
+    class Header;
 
     const Address & address() { return _self; }
     const Address & gateway() { return _gateway; }
@@ -213,7 +123,7 @@ public:
     static int thread_main(IP * thiz);
 private:
     NIC _nic;
-
+    char * _packet[MAX_FRAGMENTS];
     Router _router;
     
     Address _self;
@@ -239,6 +149,100 @@ private:
     };
     
     static IP* _instance[Traits<NIC>::NICS::Length];
+};
+
+class IP::Header : public Traits<IP> {
+public:
+    enum {
+        MF_FLAG = 1, // More Fragments
+        DF_FLAG = 2  // Don't Fragment
+    };
+
+    Header() {}
+
+    Header(const Address & src, const Address & dst, const Protocol & prot, u16 size) :
+        _ihl(DEF_IHL + Traits<IP>::OPT_SIZE),  _version(DEF_VER), _tos(DEF_TOS),
+        _length(CPU::htons(sizeof(Header) + size)), _id(CPU::htons(pktid++)),
+        _offset(0), _flags(0), _ttl(DEF_TTL), _protocol(prot), _checksum(0),
+        _src_ip(src), _dst_ip(dst)
+    {
+        calculate_checksum();
+    }
+
+    const Address & src_ip() const { return _src_ip; }
+    const Address & dst_ip() const { return _dst_ip; }
+    u32 hlength() { return _ihl * 4; }
+    u32 length() const { return CPU::ntohs(_length); }
+    u16 flags() const {
+        return CPU::ntohs(_flags << 13 | _offset) >> 13;
+    }
+    u16 offset() const {
+        return CPU::ntohs(_flags << 13 | _offset) & 0x1fff;
+    }
+    const Protocol & protocol() const { return _protocol; }
+    u16 id() const { return CPU::ntohs(_id); }
+
+    // setters for fragment operations
+    void set_src(const Address & src_ip){ _src_ip = src_ip; }
+    void set_length(u16 length) { _length = CPU::htons(length); }
+    void set_offset(u16 off) {
+        u16 x = CPU::htons(flags()<<13|off);
+        _offset = x&0x1fff;
+        _flags  = x>>13;
+    }
+    void set_flags(u16 flg) {
+        u16 x = CPU::htons(flg<<13|offset());
+        _offset = x&0x1fff;
+        _flags  = x>>13;
+    }
+    void set_protocol(u8 protocol){
+        _protocol = protocol;
+    }
+
+    char* get_options() { return _opt; }
+
+    u8 ttl() { return _ttl; }
+
+    void ttl(u8 nttl) { _ttl = nttl; }
+
+    void calculate_checksum();
+
+    friend Debug& operator<< (Debug &db, const IP::Header &h) {
+        IP::Address ip_src(h._src_ip), ip_dst(h._dst_ip);
+        u16 flags = h.flags();
+
+        db  << "{ver=" << h._version
+        << ",ihl=" << h._ihl
+        << ",tos=" << h._tos
+        << ",len=" << CPU::ntohs(h._length)
+        << ",id="  << CPU::ntohs(h._id)
+        << ",off=" << h.offset()
+        << ",flg=" << (flags == IP::Header::DF_FLAG ? "[DF]" :
+        (flags == IP::Header::MF_FLAG ? "[MF]" : "[ ]"))
+        << ",ttl=" << h._ttl
+        << ",pro=" << h._protocol
+        << ",chk=" << (void *)h._checksum
+        << ",src=" << ip_src
+        << ",dst=" << ip_dst
+        << "}";
+        return db;
+    }
+
+private:
+    u8  _ihl:4;     // IP Header Length (in 32-bit words)
+    u8  _version:4; // IP Version
+    u8  _tos;       // Type Of Service (no used -> 0)
+    u16 _length;    // Size of datagram (header + data)
+    u16 _id;        // Datagram id
+    u16 _offset:13; // Fragment offset (x 8 bytes)
+    u16 _flags:3;   // Flags (UN, DF, MF)
+    u8  _ttl;       // Time To Live
+    Protocol  _protocol;  // RFC 1700 (1->ICMP, 6->TCP, 17->UDP)
+    volatile u16 _checksum;  // Header checksum
+    Address _src_ip;    // Source IP address
+    Address _dst_ip;    // Destination IP addres
+    char _opt[(4 * OPT_SIZE)];
+    static unsigned short pktid;
 };
 
 __END_SYS

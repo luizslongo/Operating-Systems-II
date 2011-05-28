@@ -31,7 +31,7 @@ public:
     }
     
     void received(const MAC_Address& src, Protocol proto,
-                  const PDU& data, int size) {}
+                  const char* data, int size) {}
 
    
 };
@@ -93,7 +93,7 @@ public:
     }
     
     void received(const MAC_Address& src, Protocol proto,
-                  const PDU& data, int size)
+                  const char* data, int size)
     {
         if (proto == LinkLayer::ARP) {
             const Packet& packet = *reinterpret_cast<const Packet *>(data);
@@ -158,7 +158,7 @@ public:
     }
 
     void received(const Link_Address& src, Protocol proto,
-            const PDU& data, int size)
+            const char* data, int size)
     {
         if (proto == LinkLayer::IP) {
             Ant * ant = (Ant *) ((Network_Header *) data)->get_options();
