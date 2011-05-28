@@ -34,7 +34,7 @@ private:
 
         TIM_Cache(IEEE1451_TIM_Channel *tim, SIP_User_Agent *ua) : _tim(tim), _link(this), _ua(ua),
                 _session_thread(&IEEE1451_NCAP_Application::send_read_multimedia_data_set_thread,
-                IEEE1451_NCAP_Application::get_instance(), _tim->_address, (unsigned short) 0x01) {}
+                IEEE1451_NCAP_Application::get_instance(), _tim->get_address(), (unsigned short) 0x01) {}
         ~TIM_Cache() { delete _tim; delete _ua; }
 #else
         TIM_Cache(IEEE1451_TIM_Channel *tim) : _tim(tim), _link(this) {}

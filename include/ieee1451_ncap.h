@@ -63,6 +63,7 @@ public:
 
     //virtual unsigned short get_channel_number() = 0;
 
+    IP::Address get_address() { return _address; }
     IEEE1451_TEDS_NCAP *get_teds(char id);
     void add_teds(IEEE1451_TEDS_NCAP *teds) { _teds.insert(&teds->_link); }
 
