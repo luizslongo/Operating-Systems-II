@@ -240,6 +240,7 @@ class ERTJ1VG103FA;
 class Thread;
 class Task;
 class Active;
+class Neighboring;
 
 // Abstractions - Scheduler
 template <typename> class Scheduler;

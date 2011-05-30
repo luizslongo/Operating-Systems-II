@@ -138,7 +138,13 @@ template <> struct Traits<CMAC<Radio_Wrapper> >: public Traits<void>
     static const unsigned long BACKOFF         = 2;     // ms
     static const unsigned char ADDRESS         = 0x0001;
     static const unsigned int  MTU             = 118; 
-    static const unsigned int  MAX_NEIGHBORS   = 3;
+};
+
+template <> struct Traits<Neighboring>: public Traits<void>
+{
+    static const bool enabled = true;
+
+    static const unsigned int MAX_NEIGHBORS = 3;
 };
 
 __END_SYS
