@@ -4,7 +4,7 @@ __BEGIN_SYS
 
 IEEE1451_Temperature_Sensor::IEEE1451_Temperature_Sensor(bool tim_im, bool polling)
 {
-    _channel_number = 0x01; //Só suporta um transdutor por mote!
+    _channel_number = 0x01; //It just supports one transducer per mote!
     _tim_im = tim_im;
     _polling = polling;
     _pos = 0;
@@ -47,38 +47,38 @@ void IEEE1451_Temperature_Sensor::init_teds()
 
 IEEE1451_TEDS_TIM *IEEE1451_Temperature_Sensor::get_teds(char id)
 {
-    if (id == 0x03)
+    if (id == TEDS_TRANSDUCER_CHANNEL)
         return _channel_teds;
-    else if (id == 0x0c)
+    else if (id == TEDS_USER_TRANSDUCER_NAME)
         return _temp_sensor_utn_teds;
     return 0;
 }
 
 void IEEE1451_Temperature_Sensor::start()
 {
-    db<IEEE1451_Temperature_Sensor>(INF) << "Temperature sensor start\n";
+    db<IEEE1451_Temperature_Sensor>(TRC) << "Temperature sensor start\n";
     _execute_thread->resume();
 }
 
 void IEEE1451_Temperature_Sensor::stop()
 {
-    db<IEEE1451_Temperature_Sensor>(INF) << "Temperature sensor stop\n";
+    db<IEEE1451_Temperature_Sensor>(TRC) << "Temperature sensor stop\n";
     _execute_thread->suspend();
 }
 
 void IEEE1451_Temperature_Sensor::read_data_set(unsigned short trans_id, unsigned int offset)
 {
-    db<IEEE1451_Temperature_Sensor>(INF) << "Reading data set (polling)...\n";
+    db<IEEE1451_Temperature_Sensor>(TRC) << "Reading data set (polling)...\n";
 
     unsigned int size = sizeof(IEEE1451_Data_Set_Read_Reply) + DATASET_SIZE * sizeof(float);
     char buffer[size];
 
-    IEEE1451_Data_Set_Read_Reply *read_reply = (IEEE1451_Data_Set_Read_Reply *) buffer;
+    IEEE1451_Data_Set_Read_Reply *reply = (IEEE1451_Data_Set_Read_Reply *) buffer;
     float *data = (float *) (buffer + sizeof(IEEE1451_Data_Set_Read_Reply));
 
-    read_reply->_header._success = true;
-    read_reply->_header._length = DATASET_SIZE * sizeof(float) + sizeof(read_reply->_offset);
-    read_reply->_offset = 0;
+    reply->_header._success = true;
+    reply->_header._length = DATASET_SIZE * sizeof(float) + sizeof(reply->_offset);
+    reply->_offset = 0;
 
     _data_set_mutex.lock();
     for (int i = 0, j = _pos; i < DATASET_SIZE; i++)
@@ -88,12 +88,12 @@ void IEEE1451_Temperature_Sensor::read_data_set(unsigned short trans_id, unsigne
     }
     _data_set_mutex.unlock();
 
-    IEEE1451_Dot5_TIM::get_instance()->send_msg(trans_id, buffer, size);
+    IEEE1451_TIM::get_instance()->send_msg(trans_id, buffer, size);
 }
 
 void IEEE1451_Temperature_Sensor::send_data_set()
 {
-    db<IEEE1451_Temperature_Sensor>(INF) << "Sending data set (tim_im)...\n";
+    db<IEEE1451_Temperature_Sensor>(TRC) << "Sending data set (tim_im)...\n";
 
     unsigned int size = sizeof(IEEE1451_Command) + DATASET_SIZE * sizeof(float);
     char buffer[size];
@@ -113,22 +113,27 @@ void IEEE1451_Temperature_Sensor::send_data_set()
     }
     _data_set_mutex.unlock();
 
-    IEEE1451_Dot5_TIM::get_instance()->send_msg(0, buffer, size);
+    IEEE1451_TIM::get_instance()->send_msg(0, buffer, size);
 }
 
 int IEEE1451_Temperature_Sensor::execute()
 {
-    db<IEEE1451_Temperature_Sensor>(INF) << "Temperature sensor execute thread created\n";
+    db<IEEE1451_Temperature_Sensor>(TRC) << "Temperature sensor execute thread created\n";
 
     _execute_thread = Thread::self();
-    IEEE1451_Dot5_TIM::get_instance()->connect();
+    IEEE1451_TIM *tim = IEEE1451_TIM::get_instance();
+
+    tim->connect();
     _execute_thread->suspend();
+
+#ifndef __mc13224v__
     int count = 1;
+#endif
 
     while (true)
     {
         if ((_tim_im) && (!_polling) && (_pos == 0))
-            IEEE1451_Dot5_TIM::get_instance()->disconnect();
+            tim->disconnect();
 
         db<IEEE1451_Temperature_Sensor>(INF) << "Collecting data (pos = " << _pos << ")...\n";
 
@@ -136,7 +141,13 @@ int IEEE1451_Temperature_Sensor::execute()
         //while (!_temperature.data_ready());
 
         _data_set_mutex.lock();
-        _data_set[_pos] = count++; //(float) _temperature.sample();
+
+#ifdef __mc13224v__
+        _data_set[_pos] = _temperature.sample();
+#else
+        _data_set[_pos] = count++;
+#endif
+
         _pos = (_pos + 1) % DATASET_SIZE;
         _data_set_mutex.unlock();
 
@@ -144,7 +155,7 @@ int IEEE1451_Temperature_Sensor::execute()
         Alarm::delay(READ_INTERVAL);
 
         if ((_tim_im) && (!_polling) && (_pos == 0))
-            IEEE1451_Dot5_TIM::get_instance()->connect();
+            tim->connect();
 
         if ((_tim_im) && (_pos == 0))
             send_data_set();

@@ -6,7 +6,7 @@
 #include <thread.h>
 
 #define DATASET_SIZE    160
-#define READ_INTERVAL   6000000 //60s
+#define READ_INTERVAL   60000000 //6000000
 
 __BEGIN_SYS
 

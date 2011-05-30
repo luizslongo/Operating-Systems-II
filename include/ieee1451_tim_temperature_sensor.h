@@ -4,9 +4,12 @@
 #include <ieee1451_tim.h>
 #include <mutex.h>
 #include <thread.h>
+#ifdef __mc13224v__
+    #include <sensor.h>
+#endif
 
-#define DATASET_SIZE	10
-#define READ_INTERVAL	550000 //10000000 //10 segundos
+#define DATASET_SIZE    10
+#define READ_INTERVAL   10000000 //550000
 
 __BEGIN_SYS
 
@@ -38,7 +41,10 @@ private:
     Mutex _data_set_mutex;
     int _pos;
 
-    //Temperature_Sensor _temperature;
+#ifdef __mc13224v__
+    Temperature_Sensor _temperature;
+#endif
+
     Thread *_execute_thread;
 
     char *_channel_array;

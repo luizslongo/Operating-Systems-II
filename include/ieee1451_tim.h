@@ -8,16 +8,10 @@
 
 __BEGIN_SYS
 
-class IEEE1451_TEDS_TIM
+struct IEEE1451_TEDS_TIM
 {
-public:
-    IEEE1451_TEDS_TIM(char *payload, unsigned short size)
-        : _payload(payload), _size(size) {}
+    IEEE1451_TEDS_TIM(char *payload, unsigned short size) : _payload(payload), _size(size) {}
 
-    const char *get_payload() { return _payload; }
-    unsigned int get_size() { return _size; }
-
-private:
     char *_payload;
     unsigned short _size;
 };
@@ -40,23 +34,47 @@ protected:
 };
 
 
-class IEEE1451_Dot0_TIM
+class IEEE1451_TIM //IEEE 1451.0 + IEEE 1451.5
 {
 private:
-    IEEE1451_Dot0_TIM();
+    IEEE1451_TIM();
 
 public:
-    ~IEEE1451_Dot0_TIM();
+    ~IEEE1451_TIM();
 
-    static IEEE1451_Dot0_TIM *get_instance();
+    static IEEE1451_TIM *get_instance();
 
     void init_teds();
     IEEE1451_TEDS_TIM *get_teds(char id);
+    void set_ncap_address(const IP::Address &addr) { _ncap_address = addr; }
+
+    void connect();
+    void disconnect();
+    void send_msg(unsigned short trans_id, const char *message, unsigned int length);
     void receive_msg(unsigned short trans_id, const char *message, unsigned int size);
 
-    void setTransducer(IEEE1451_Transducer *transducer) { _transducer = transducer; }
+    void set_transducer(IEEE1451_Transducer *transducer) { _transducer = transducer; }
 
 private:
+    class TIM_Socket : public TCP::ClientSocket
+    {
+    public:
+        TIM_Socket(TCP *tcp, const IP::Address &dst) : TCP::ClientSocket(tcp, TCP::Address(dst, IEEE1451_PORT),
+            TCP::Address(IP::instance()->address(), IEEE1451_PORT)) {}
+        ~TIM_Socket() {}
+
+        void connected();
+        void closed();
+        void received(const char *data, u16 size);
+    };
+
+private:
+    TCP _tcp;
+    TIM_Socket *_socket;
+
+    bool _connected;
+    IP::Address _ncap_address;
+
     char *_meta_array;
     char *_tim_utn_array;
     char *_phy_array;
@@ -66,55 +84,7 @@ private:
 
     IEEE1451_Transducer *_transducer;
 
-    static IEEE1451_Dot0_TIM *_dot0;
-};
-
-
-class IEEE1451_Dot5_TIM
-{
-private:
-    IEEE1451_Dot5_TIM();
-
-public:
-    ~IEEE1451_Dot5_TIM() {
-        if (_socket)
-            delete _socket;
-    }
-
-    static IEEE1451_Dot5_TIM *get_instance();
-
-    void set_ncap_address(const IP::Address &addr) { _ncap_address = addr; }
-
-    //bool connected() { return _connected; }
-    void connect();
-    void disconnect();
-    void send_msg(unsigned short trans_id, const char *message, unsigned int length);
-
-private:
-    class My_Client_Socket : public TCP::ClientSocket
-    {
-    public:
-        My_Client_Socket(TCP *tcp, const IP::Address &dst) :
-            TCP::ClientSocket(tcp, TCP::Address(dst, IEEE1451_PORT),
-            TCP::Address(IP::instance()->address(), IEEE1451_PORT)) {}
-        ~My_Client_Socket() {}
-
-        void connected();
-        void closed();
-        void received(const char *data, u16 size);
-        void closing() {};
-        void sent(u16 size) {};
-        void error(short errorCode) {};
-    };
-
-private:
-    TCP _tcp;
-    My_Client_Socket *_socket;
-
-    bool _connected;
-    IP::Address _ncap_address;
-
-    static IEEE1451_Dot5_TIM *_dot5;
+    static IEEE1451_TIM *_ieee1451;
 };
 
 __END_SYS

@@ -18,7 +18,7 @@ int tim()
     ip->set_gateway(IP::Address(10, 0, 0, 1));
     ip->set_netmask(IP::Address(255, 255, 255, 0));
 
-    IEEE1451_Dot5_TIM *tim = IEEE1451_Dot5_TIM::get_instance();
+    IEEE1451_TIM *tim = IEEE1451_TIM::get_instance();
     tim->set_ncap_address(IP::Address(10, 0, 0, 110));
 
     IEEE1451_Temperature_Sensor sensor(true, true);
@@ -43,7 +43,6 @@ int ncap()
     IEEE1451_NCAP_Application::get_instance();
 
     Thread::self()->suspend();
-    //while(1);
     return 0;
 }*/
 

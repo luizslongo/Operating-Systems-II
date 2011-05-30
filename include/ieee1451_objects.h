@@ -5,6 +5,8 @@
 
 __BEGIN_SYS
 
+#define IEEE1451_PORT 55667
+
 struct IEEE1451_Command
 {
     unsigned short _channel_number;
@@ -25,7 +27,7 @@ struct IEEE1451_Reply
      unsigned char _status;
      unsigned long _size;
      unsigned short _checksum;
-     unsigned long _maxSize;
+     unsigned long _max_size;
 };*/
 
 struct IEEE1451_TEDS_Read_Reply
@@ -38,6 +40,12 @@ struct IEEE1451_Data_Set_Read_Reply
 {
     IEEE1451_Reply _header;
     unsigned long _offset;
+};
+
+struct IEEE1451_Packet
+{
+    unsigned short _trans_id;
+    unsigned short _length;
 };
 
 enum IEEE1451_Command_Class //IEEE 1451.0 (2007) -> Chapter 7
@@ -125,14 +133,6 @@ enum IEEE1451_TEDS_Data_Block_Phy
     TEDS_PHY_MAX_C_DEV   = 12,
     TEDS_PHY_BATTERY     = 22,
     TEDS_PHY_RECONNECT   = 40
-};
-
-#define IEEE1451_PORT 55667
-
-struct IEEE1451_Packet
-{
-    unsigned short _trans_id;
-    unsigned short _length;
 };
 
 __END_SYS
