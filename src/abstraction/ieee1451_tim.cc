@@ -9,16 +9,18 @@ IEEE1451_Transducer::IEEE1451_Transducer()
 
 void IEEE1451_Transducer::receive_msg(unsigned short trans_id, const char *message, unsigned int size)
 {
-    Command *cmd = (Command *) message;
-    const char *buffer = message + sizeof(Command);
+    IEEE1451_Command *cmd = (IEEE1451_Command *) message;
+    const char *buffer = message + sizeof(IEEE1451_Command);
+
+    db<IEEE1451_Transducer>(TRC) << "IEEE1451_Transducer::receive_msg (" << trans_id << ", " << cmd->_command << ")\n";
 
     switch (cmd->_command)
     {
         /*case COMMAND_CLASS_QUERY_TEDS:
          case COMMAND_CLASS_UPDATE_TEDS:
          {
-             TEDS *teds = get_teds(buffer[0]);
-             TEDS_Query_Reply reply;
+             IEEE1451_TEDS_TIM *teds = get_teds(buffer[0]);
+             IEEE1451_TEDS_Query_Reply reply;
              reply._header._length = 12;
              if (teds)
              {
@@ -48,28 +50,27 @@ void IEEE1451_Transducer::receive_msg(unsigned short trans_id, const char *messa
             if (teds)
             {
                 unsigned int teds_size = teds->get_size();
-                unsigned int reply_size = sizeof(TEDS_Read_Reply) + teds_size;
-                char *reply = new char[reply_size];
+                unsigned int reply_size = sizeof(IEEE1451_TEDS_Read_Reply) + teds_size;
+                char reply[reply_size];
 
-                TEDS_Read_Reply *read_reply = (TEDS_Read_Reply *) reply;
+                IEEE1451_TEDS_Read_Reply *read_reply = (IEEE1451_TEDS_Read_Reply *) reply;
                 read_reply->_header._success = true;
                 read_reply->_header._length = teds_size + sizeof(read_reply->_offset);
                 read_reply->_offset = 0;
 
                 const char *teds_payload = teds->get_payload();
                 for (unsigned short i = 0; i < teds_size; i++)
-                    reply[i + sizeof(TEDS_Read_Reply)] = teds_payload[i];
+                    reply[i + sizeof(IEEE1451_TEDS_Read_Reply)] = teds_payload[i];
 
                 IEEE1451_Dot5_TIM::get_instance()->send_msg(trans_id, reply, reply_size);
-                delete[] reply;
             }else
             {
-                TEDS_Read_Reply reply;
+                IEEE1451_TEDS_Read_Reply reply;
                 reply._header._success = false;
                 reply._header._length = sizeof(reply._offset);
                 reply._offset = 0;
 
-                IEEE1451_Dot5_TIM::get_instance()->send_msg(trans_id, (char *) &reply, sizeof(TEDS_Read_Reply));
+                IEEE1451_Dot5_TIM::get_instance()->send_msg(trans_id, (char *) &reply, sizeof(IEEE1451_TEDS_Read_Reply));
             }
 
             break;
@@ -110,11 +111,11 @@ IEEE1451_Dot0_TIM::IEEE1451_Dot0_TIM()
 IEEE1451_Dot0_TIM::~IEEE1451_Dot0_TIM()
 {
     if (_meta_array)
-        delete _meta_array;
+        kfree(_meta_array);
     if (_tim_utn_array)
-        delete _tim_utn_array;
+        kfree(_tim_utn_array);
     if (_phy_array)
-        delete _phy_array;
+        kfree(_phy_array);
 
     if (_meta_teds)
         delete _meta_teds;
@@ -133,15 +134,15 @@ IEEE1451_Dot0_TIM *IEEE1451_Dot0_TIM::get_instance()
 
 void IEEE1451_Dot0_TIM::init_teds()
 {
-    _meta_array = new char[40];
+    _meta_array = new (kmalloc(40)) char[40];
     _meta_array[0] = 0x00; _meta_array[1] = 0x00; _meta_array[2] = 0x00; _meta_array[3] = 0x24; _meta_array[4] = TEDS_META_TEDS_ID; _meta_array[5] = 0x04; _meta_array[6] = 0x00; _meta_array[7] = TEDS_META; _meta_array[8] = 0x01; _meta_array[9] = 0x01; _meta_array[10] = TEDS_META_UUID; _meta_array[11] = 0x0a; _meta_array[12] = 0x00; _meta_array[13] = 0x00; _meta_array[14] = 0x00; _meta_array[15] = 0x00; _meta_array[16] = 0x00; _meta_array[17] = 0x00; _meta_array[18] = 0x00; _meta_array[19] = 0x00; _meta_array[20] = 0x00; _meta_array[21] = 0x00; _meta_array[22] = TEDS_META_O_HOLD_OFF; _meta_array[23] = 0x04; _meta_array[24] = 0x41; _meta_array[25] = 0x20; _meta_array[26] = 0x00; _meta_array[27] = 0x00; _meta_array[28] = TEDS_META_TEST_TIME; _meta_array[29] = 0x04; _meta_array[30] = 0x00; _meta_array[31] = 0x00; _meta_array[32] = 0x00; _meta_array[33] = 0x00; _meta_array[34] = TEDS_META_MAX_CHAN; _meta_array[35] = 0x02; _meta_array[36] = 0x00; _meta_array[37] = 0x01; _meta_array[38] = 0xfe; _meta_array[39] = 0xb6; //checksum errado
     _meta_teds = new IEEE1451_TEDS_TIM(_meta_array, 40);
 
-    _tim_utn_array = new char[26];
+    _tim_utn_array = new (kmalloc(26)) char[26];
     _tim_utn_array[0] = 0x00; _tim_utn_array[1] = 0x00; _tim_utn_array[2] = 0x00; _tim_utn_array[3] = 0x16; _tim_utn_array[4] = TEDS_USER_TRANSDUCER_NAME_TEDS_ID; _tim_utn_array[5] = 0x04; _tim_utn_array[6] = 0x00; _tim_utn_array[7] = TEDS_USER_TRANSDUCER_NAME; _tim_utn_array[8] = 0x01; _tim_utn_array[9] = 0x01; _tim_utn_array[10] = TEDS_USER_TRANSDUCER_NAME_FORMAT; _tim_utn_array[11] = 0x01; _tim_utn_array[12] = 0x00; _tim_utn_array[13] = TEDS_USER_TRANSDUCER_NAME_TC_NAME; _tim_utn_array[14] = 0x09; _tim_utn_array[15] = 0x45; _tim_utn_array[16] = 0x50; _tim_utn_array[17] = 0x4f; _tim_utn_array[18] = 0x53; _tim_utn_array[19] = 0x2f; _tim_utn_array[20] = 0x4d; _tim_utn_array[21] = 0x6f; _tim_utn_array[22] = 0x74; _tim_utn_array[23] = 0x65; _tim_utn_array[24] = 0xff; _tim_utn_array[25] = 0xff; //checksum errado
     _tim_utn_teds = new IEEE1451_TEDS_TIM(_tim_utn_array, 26);
 
-    _phy_array = new char[25];
+    _phy_array = new (kmalloc(25)) char[25];
     _phy_array[0] = 0x00; _phy_array[1] = 0x00; _phy_array[2] = 0x00; _phy_array[3] = 0x15; _phy_array[4] = TEDS_PHY_TEDS_ID; _phy_array[5] = 0x04; _phy_array[6] = 0x05; _phy_array[7] = TEDS_PHY; _phy_array[8] = 0x01; _phy_array[9] = 0x01; _phy_array[10] = TEDS_PHY_RADIO; _phy_array[11] = 0x01; _phy_array[12] = 0xff; _phy_array[13] = TEDS_PHY_MAX_C_DEV; _phy_array[14] = 0x02; _phy_array[15] = 0x00; _phy_array[16] = 0x01; _phy_array[17] = TEDS_PHY_BATTERY; _phy_array[18] = 0x01; _phy_array[19] = 0x01; _phy_array[20] = TEDS_PHY_RECONNECT; _phy_array[21] = 0x01; _phy_array[22] = 0x01; _phy_array[23] = 0xfe; _phy_array[24] = 0x74; //checksum errado
     _phy_teds = new IEEE1451_TEDS_TIM(_phy_array, 25);
 }
@@ -159,8 +160,10 @@ IEEE1451_TEDS_TIM *IEEE1451_Dot0_TIM::get_teds(char id)
 
 void IEEE1451_Dot0_TIM::receive_msg(unsigned short trans_id, const char *message, unsigned int size)
 {
-    Command *cmd = (Command *) message;
-    const char *buffer = message + sizeof(Command);
+    IEEE1451_Command *cmd = (IEEE1451_Command *) message;
+    const char *buffer = message + sizeof(IEEE1451_Command);
+
+    db<IEEE1451_Dot0_TIM>(TRC) << "IEEE1451_Dot0_TIM::receive_msg (" << trans_id << ", " << hex << cmd->_command << ")\n";
 
     if (cmd->_channel_number == ADDRESS_CLASS_TIM)
     {
@@ -169,8 +172,8 @@ void IEEE1451_Dot0_TIM::receive_msg(unsigned short trans_id, const char *message
             /*case COMMAND_CLASS_QUERY_TEDS:
              case COMMAND_CLASS_UPDATE_TEDS:
              {
-                 TEDS *teds = get_teds(buffer[0]);
-                 TEDS_Query_Reply reply;
+                 IEEE1451_TEDS_TIM *teds = get_teds(buffer[0]);
+                 IEEE1451_TEDS_Query_Reply reply;
                  reply._header._length = 12;
                  if (teds)
                  {
@@ -200,28 +203,27 @@ void IEEE1451_Dot0_TIM::receive_msg(unsigned short trans_id, const char *message
                 if (teds)
                 {
                     unsigned int teds_size = teds->get_size();
-                    unsigned int reply_size = sizeof(TEDS_Read_Reply) + teds_size;
-                    char *reply = new char[reply_size];
+                    unsigned int reply_size = sizeof(IEEE1451_TEDS_Read_Reply) + teds_size;
+                    char reply[reply_size];
 
-                    TEDS_Read_Reply *read_reply = (TEDS_Read_Reply *) reply;
+                    IEEE1451_TEDS_Read_Reply *read_reply = (IEEE1451_TEDS_Read_Reply *) reply;
                     read_reply->_header._success = true;
                     read_reply->_header._length = teds_size + sizeof(read_reply->_offset);
                     read_reply->_offset = 0;
 
                     const char *teds_payload = teds->get_payload();
                     for (unsigned short i = 0; i < teds_size; i++)
-                        reply[i + sizeof(TEDS_Read_Reply)] = teds_payload[i];
+                        reply[i + sizeof(IEEE1451_TEDS_Read_Reply)] = teds_payload[i];
 
                     IEEE1451_Dot5_TIM::get_instance()->send_msg(trans_id, reply, reply_size);
-                    delete[] reply;
                 }else
                 {
-                    TEDS_Read_Reply reply;
+                    IEEE1451_TEDS_Read_Reply reply;
                     reply._header._success = false;
                     reply._header._length = sizeof(reply._offset);
                     reply._offset = 0;
 
-                    IEEE1451_Dot5_TIM::get_instance()->send_msg(trans_id, (char *) &reply, sizeof(TEDS_Read_Reply));
+                    IEEE1451_Dot5_TIM::get_instance()->send_msg(trans_id, (char *) &reply, sizeof(IEEE1451_TEDS_Read_Reply));
                 }
                 break;
             }
@@ -268,7 +270,7 @@ void IEEE1451_Dot5_TIM::connect()
     _socket = new My_Client_Socket(&_tcp, _ncap_address);
 
     while (!_connected)
-        Alarm::delay(1000);
+        Alarm::delay(500000);
 }
 
 void IEEE1451_Dot5_TIM::disconnect()
@@ -312,31 +314,33 @@ void IEEE1451_Dot5_TIM::send_msg(unsigned short trans_id, const char *message, u
 
 void IEEE1451_Dot5_TIM::My_Client_Socket::connected()
 {
-    db<IEEE1451_Dot5_TIM::My_Client_Socket>(INF) << "Client socket connected\n";
+    db<IEEE1451_Dot5_TIM>(INF) << "Client socket connected\n";
     IEEE1451_Dot5_TIM::get_instance()->_connected = true;
 }
 
 void IEEE1451_Dot5_TIM::My_Client_Socket::closed()
 {
-    db<IEEE1451_Dot5_TIM::My_Client_Socket>(INF) << "Client socket closed\n";
+    db<IEEE1451_Dot5_TIM>(INF) << "Client socket closed\n";
     IEEE1451_Dot5_TIM::get_instance()->_connected = false;
 }
 
 void IEEE1451_Dot5_TIM::My_Client_Socket::received(const char *data, u16 size)
 {
-    db<IEEE1451_Dot5_TIM::My_Client_Socket>(INF) << "Client socket received message\n";
+    db<IEEE1451_Dot5_TIM>(INF) << "Client socket received message\n";
 
     if (!(remote().ip() == IEEE1451_Dot5_TIM::get_instance()->_ncap_address))
     {
-        db<IEEE1451_Dot5_TIM::My_Client_Socket>(INF) << "Message source is not NCAP Address!\n";
+        db<IEEE1451_Dot5_TIM>(INF) << "Message source is not NCAP Address!\n";
         return;
     }
 
     if (!IEEE1451_Dot5_TIM::get_instance()->_connected)
     {
-        db<IEEE1451_Dot5_TIM::My_Client_Socket>(INF) << "Dot5 not connected!\n";
+        db<IEEE1451_Dot5_TIM>(INF) << "Dot5 not connected!\n";
         return;
     }
+
+    db<IEEE1451_Dot5_TIM>(INF) << "Received message OK!\n";
 
     IEEE1451_Packet *in = (IEEE1451_Packet *) data;
     const char *msg = data + sizeof(IEEE1451_Packet);

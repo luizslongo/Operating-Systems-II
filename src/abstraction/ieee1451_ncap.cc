@@ -111,16 +111,15 @@ IEEE1451_Dot0_NCAP *IEEE1451_Dot0_NCAP::get_instance()
 
 char *IEEE1451_Dot0_NCAP::create_command(unsigned short channel_number, unsigned short command, const char *args, unsigned int length)
 {
-    unsigned int size = sizeof(Command) + length;
+    unsigned int size = sizeof(IEEE1451_Command) + length;
     char *buffer = new char[size];
+    char *msg = buffer + sizeof(IEEE1451_Command);
 
-    Command *cmd = (Command *) buffer;
+    IEEE1451_Command *cmd = (IEEE1451_Command *) buffer;
     cmd->_channel_number = channel_number;
     cmd->_command = command;
     cmd->_length = length;
-
-    for (unsigned short i = 0; i < length; i++)
-        buffer[i + sizeof(Command)] = args[i];
+    memcpy(msg, args, length);
 
     return buffer;
 }
@@ -214,7 +213,7 @@ void IEEE1451_Dot5_NCAP::send_msg(unsigned short trans_id, const IP::Address &de
     }
 
     unsigned int data_length = sizeof(IEEE1451_Packet) + length;
-    char *data = new char[data_length];
+    char data[data_length];
 
     IEEE1451_Packet *out = (IEEE1451_Packet *) data;
     char *msg = data + sizeof(IEEE1451_Packet);
@@ -224,12 +223,11 @@ void IEEE1451_Dot5_NCAP::send_msg(unsigned short trans_id, const IP::Address &de
     memcpy(msg, message, length);
 
     socket->send(data, data_length);
-    delete data;
 }
 
 TCP::Socket *IEEE1451_Dot5_NCAP::My_Server_Socket::incoming(const TCP::Address &from)
 {
-    db<IEEE1451_Dot5_NCAP::My_Server_Socket>(INF) << "Server socket incoming\n";
+    db<IEEE1451_Dot5_NCAP>(INF) << "Server socket incoming\n";
     My_Server_Socket *socket = new My_Server_Socket(*this);
     IEEE1451_Dot5_NCAP::get_instance()->_sockets.insert(&socket->_link);
     return static_cast<TCP::Socket *>(socket);
@@ -237,13 +235,13 @@ TCP::Socket *IEEE1451_Dot5_NCAP::My_Server_Socket::incoming(const TCP::Address &
 
 void IEEE1451_Dot5_NCAP::My_Server_Socket::connected()
 {
-    db<IEEE1451_Dot5_NCAP::My_Server_Socket>(INF) << "Server socket connected\n";
+    db<IEEE1451_Dot5_NCAP>(INF) << "Server socket connected\n";
     IEEE1451_Dot0_NCAP::get_instance()->tim_connected(remote().ip());
 }
 
 void IEEE1451_Dot5_NCAP::My_Server_Socket::closed()
 {
-    db<IEEE1451_Dot5_NCAP::My_Server_Socket>(INF) << "Server socket closed\n";
+    db<IEEE1451_Dot5_NCAP>(INF) << "Server socket closed\n";
     IEEE1451_Dot0_NCAP::get_instance()->tim_disconnected(remote().ip());
     IEEE1451_Dot5_NCAP::get_instance()->_sockets.remove(&_link);
     delete this;
@@ -251,7 +249,7 @@ void IEEE1451_Dot5_NCAP::My_Server_Socket::closed()
 
 void IEEE1451_Dot5_NCAP::My_Server_Socket::received(const char *data, u16 size)
 {
-    db<IEEE1451_Dot5_NCAP::My_Server_Socket>(INF) << "Server socket received message\n";
+    db<IEEE1451_Dot5_NCAP>(INF) << "Server socket received message\n";
     IEEE1451_Packet *in = (IEEE1451_Packet *) data;
     const char *msg = data + sizeof(IEEE1451_Packet);
 
@@ -261,7 +259,7 @@ void IEEE1451_Dot5_NCAP::My_Server_Socket::received(const char *data, u16 size)
 
 void IEEE1451_Dot5_NCAP::My_Server_Socket::closing()
 {
-    db<IEEE1451_Dot5_NCAP::My_Server_Socket>(INF) << "Server socket closing\n";
+    db<IEEE1451_Dot5_NCAP>(INF) << "Server socket closing\n";
     close();
 }
 

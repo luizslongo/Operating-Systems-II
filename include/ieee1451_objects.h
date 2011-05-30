@@ -5,14 +5,14 @@
 
 __BEGIN_SYS
 
-struct Command
+struct IEEE1451_Command
 {
     unsigned short _channel_number;
     unsigned short _command;
     unsigned short _length;
 };
 
-struct Reply
+struct IEEE1451_Reply
 {
     bool _success;
     unsigned short _length;
@@ -20,7 +20,7 @@ struct Reply
 
 /*struct TEDS_Query_Reply
 {
-     Reply _header;
+     IEEE1451_Reply _header;
      unsigned char _atributes;
      unsigned char _status;
      unsigned long _size;
@@ -28,19 +28,19 @@ struct Reply
      unsigned long _maxSize;
 };*/
 
-struct TEDS_Read_Reply
+struct IEEE1451_TEDS_Read_Reply
 {
-    Reply _header;
+    IEEE1451_Reply _header;
     unsigned long _offset;
 };
 
-struct Data_Set_Read_Reply
+struct IEEE1451_Data_Set_Read_Reply
 {
-    Reply _header;
+    IEEE1451_Reply _header;
     unsigned long _offset;
 };
 
-enum Command_Class //IEEE 1451.0 (2007) -> Chapter 7
+enum IEEE1451_Command_Class //IEEE 1451.0 (2007) -> Chapter 7
 {
     //COMMAND_CLASS_QUERY_TEDS                              = 0x0101, //Query TEDS
     //COMMAND_CLASS_UPDATE_TEDS                             = 0x0104, //Update TEDS
@@ -50,7 +50,7 @@ enum Command_Class //IEEE 1451.0 (2007) -> Chapter 7
     COMMAND_CLASS_TRANSDUCER_CHANNEL_IDLE                   = 0x0402  //TransducerChannel Idle
 };
 
-enum Address_Class //IEEE 1451.0 (2007) -> Chapter 5.3
+enum IEEE1451_Address_Class //IEEE 1451.0 (2007) -> Chapter 5.3
 {
     ADDRESS_CLASS_TIM                       = 0x0000,
     ADDRESS_CLASS_TRANSDUCER_CHANNEL_FIRST  = 0x0001,
@@ -60,7 +60,7 @@ enum Address_Class //IEEE 1451.0 (2007) -> Chapter 5.3
     ADDRESS_CLASS_GLOBAL                    = 0xFFFF
 };
 
-enum TEDS_Access_Code
+enum IEEE1451_TEDS_Access_Code
 {
     TEDS_META                   = 1,
     TEDS_TRANSDUCER_CHANNEL     = 3,
@@ -68,7 +68,7 @@ enum TEDS_Access_Code
     TEDS_PHY                    = 13
 };
 
-enum TEDS_Data_Block_Meta
+enum IEEE1451_TEDS_Data_Block_Meta
 {
     TEDS_META_TEDS_ID     = 3,
     TEDS_META_UUID        = 4,
@@ -77,7 +77,7 @@ enum TEDS_Data_Block_Meta
     TEDS_META_MAX_CHAN    = 13
 };
 
-enum TEDS_Data_Block_Transducer_Channel
+enum IEEE1451_TEDS_Data_Block_Transducer_Channel
 {
     TEDS_TRANSDUCER_CHANNEL_TEDS_ID     = 3,
     TEDS_TRANSDUCER_CHANNEL_CAL_KEY     = 10,
@@ -111,14 +111,14 @@ enum TEDS_Data_Block_Transducer_Channel
     TEDS_TRANSDUCER_CHANNEL_DATA_XMIT   = 34
 };
 
-enum TEDS_Data_Block_User_Transducer_Name
+enum IEEE1451_TEDS_Data_Block_User_Transducer_Name
 {
     TEDS_USER_TRANSDUCER_NAME_TEDS_ID   = 3,
     TEDS_USER_TRANSDUCER_NAME_FORMAT    = 4,
     TEDS_USER_TRANSDUCER_NAME_TC_NAME   = 5
 };
 
-enum TEDS_Data_Block_Phy
+enum IEEE1451_TEDS_Data_Block_Phy
 {
     TEDS_PHY_TEDS_ID     = 3,
     TEDS_PHY_RADIO       = 10,
@@ -132,7 +132,7 @@ enum TEDS_Data_Block_Phy
 struct IEEE1451_Packet
 {
     unsigned short _trans_id;
-    unsigned int _length;
+    unsigned short _length;
 };
 
 __END_SYS

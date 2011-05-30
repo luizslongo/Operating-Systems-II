@@ -180,8 +180,8 @@ void IEEE1451_NCAP_Application::report_command_reply(const IP::Address &address,
 
     if (retriever)
     {
-        TEDS_Read_Reply *reply = (TEDS_Read_Reply *) message;
-        const char *buffer = message + sizeof(TEDS_Read_Reply);
+        IEEE1451_TEDS_Read_Reply *reply = (IEEE1451_TEDS_Read_Reply *) message;
+        const char *buffer = message + sizeof(IEEE1451_TEDS_Read_Reply);
 
         if ((!reply->_header._success) || (reply->_header._length < sizeof(reply->_offset)))
         {
@@ -192,11 +192,11 @@ void IEEE1451_NCAP_Application::report_command_reply(const IP::Address &address,
 
         db<IEEE1451_NCAP_Application>(INF) << "++ REPLY RECEIVED (teds) (trans_id=" << trans_id << ", address=" << address << ", length=" << reply->_header._length << ") ++\n";
 
-        retriever->process(buffer, length - sizeof(TEDS_Read_Reply));
+        retriever->process(buffer, length - sizeof(IEEE1451_TEDS_Read_Reply));
     } else
     {
-        Data_Set_Read_Reply *reply = (Data_Set_Read_Reply *) message;
-        const char *buffer = message + sizeof(Data_Set_Read_Reply);
+        IEEE1451_Data_Set_Read_Reply *reply = (IEEE1451_Data_Set_Read_Reply *) message;
+        const char *buffer = message + sizeof(IEEE1451_Data_Set_Read_Reply);
         unsigned short buffer_len = reply->_header._length - sizeof(reply->_offset);
 
         if ((!reply->_header._success) || (reply->_header._length < sizeof(reply->_offset)))
@@ -230,8 +230,8 @@ void IEEE1451_NCAP_Application::report_command_reply(const IP::Address &address,
 
 void IEEE1451_NCAP_Application::report_tim_initiated_message(const IP::Address &address, const char *message, unsigned int length)
 {
-    Command *cmd = (Command *) message;
-    const char *buffer = message + sizeof(Command);
+    IEEE1451_Command *cmd = (IEEE1451_Command *) message;
+    const char *buffer = message + sizeof(IEEE1451_Command);
 
     db<IEEE1451_NCAP_Application>(INF) << "++ TIM MESSAGE RECEIVED (address=" << address << ") ++\n";
 
@@ -340,7 +340,7 @@ void IEEE1451_NCAP_Application::read_audio(const IP::Address &address, const cha
 unsigned short IEEE1451_NCAP_Application::send_operate(const IP::Address &address, unsigned short channel_number)
 {
     char *cmd = IEEE1451_Dot0_NCAP::get_instance()->create_command(channel_number, COMMAND_CLASS_TRANSDUCER_CHANNEL_OPERATE);
-    unsigned short trans_id = IEEE1451_Dot0_NCAP::get_instance()->send_command(address, cmd, sizeof(Command));
+    unsigned short trans_id = IEEE1451_Dot0_NCAP::get_instance()->send_command(address, cmd, sizeof(IEEE1451_Command));
     delete[] cmd;
     return trans_id;
 }
@@ -348,7 +348,7 @@ unsigned short IEEE1451_NCAP_Application::send_operate(const IP::Address &addres
 unsigned short IEEE1451_NCAP_Application::send_idle(const IP::Address &address, unsigned short channel_number)
 {
     char *cmd = IEEE1451_Dot0_NCAP::get_instance()->create_command(channel_number, COMMAND_CLASS_TRANSDUCER_CHANNEL_IDLE);
-    unsigned short trans_id = IEEE1451_Dot0_NCAP::get_instance()->send_command(address, cmd, sizeof(Command));
+    unsigned short trans_id = IEEE1451_Dot0_NCAP::get_instance()->send_command(address, cmd, sizeof(IEEE1451_Command));
     delete[] cmd;
     return trans_id;
 }
@@ -356,7 +356,7 @@ unsigned short IEEE1451_NCAP_Application::send_idle(const IP::Address &address, 
 unsigned short IEEE1451_NCAP_Application::send_read_teds(const IP::Address &address, unsigned short channel_number, char tedsId)
 {
     char *cmd = IEEE1451_Dot0_NCAP::get_instance()->create_command(channel_number, COMMAND_CLASS_READ_TEDS_SEGMENT, &tedsId, 1);
-    unsigned short trans_id = IEEE1451_Dot0_NCAP::get_instance()->send_command(address, cmd, sizeof(Command) + 1);
+    unsigned short trans_id = IEEE1451_Dot0_NCAP::get_instance()->send_command(address, cmd, sizeof(IEEE1451_Command) + 1);
     delete[] cmd;
     return trans_id;
 }
@@ -365,7 +365,7 @@ unsigned short IEEE1451_NCAP_Application::send_read_data_set(const IP::Address &
 {
     unsigned int offset = 0;
     char *cmd = IEEE1451_Dot0_NCAP::get_instance()->create_command(channel_number, COMMAND_CLASS_READ_TRANSDUCER_CHANNEL_DATA_SET_SEGMENT, (char *) &offset, sizeof(offset));
-    unsigned short trans_id = IEEE1451_Dot0_NCAP::get_instance()->send_command(address, cmd, sizeof(Command) + sizeof(offset));
+    unsigned short trans_id = IEEE1451_Dot0_NCAP::get_instance()->send_command(address, cmd, sizeof(IEEE1451_Command) + sizeof(offset));
     delete[] cmd;
     return trans_id;
 }
@@ -555,31 +555,31 @@ void IEEE1451_TEDS_Retriever::execute()
     {
         case meta_teds:
             db<IEEE1451_TEDS_Retriever>(INF) << ">> Getting meta teds...\n";
-            _teds_id = 0x01;
+            _teds_id = TEDS_META;
             channel_number = 0x00;
             break;
 
         case tim_transducer_name_teds:
             db<IEEE1451_TEDS_Retriever>(INF) << ">> Getting tim's transducer name teds...\n";
-            _teds_id = 0x0c;
+            _teds_id = TEDS_USER_TRANSDUCER_NAME;
             channel_number = 0x00;
             break;
 
         case phy_teds:
             db<IEEE1451_TEDS_Retriever>(INF) << ">> Getting phy teds...\n";
-            _teds_id = 0x0d;
+            _teds_id = TEDS_PHY;
             channel_number = 0x00;
             break;
 
         case transducer_channel_teds:
             db<IEEE1451_TEDS_Retriever>(INF) << ">> Getting transducer channel teds...\n";
-            _teds_id = 0x03;
+            _teds_id = TEDS_TRANSDUCER_CHANNEL;
             channel_number = 0x01;
             break;
 
         case transducer_name_teds:
             db<IEEE1451_TEDS_Retriever>(INF) << ">> Getting transducer's transducer name teds...\n";
-            _teds_id = 0x0c;
+            _teds_id = TEDS_USER_TRANSDUCER_NAME;
             channel_number = 0x01;
             break;
 
