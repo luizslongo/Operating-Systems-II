@@ -7,8 +7,6 @@
 
 __BEGIN_SYS
 
-//Neighboring * Neighboring::_instance = 0;
-
 template<> 
 CMAC<Radio_Wrapper>::CMAC_STATE_TRANSITION CMAC<Radio_Wrapper>::state_machine() {
     CMAC_STATE_TRANSITION result = TIMER_INT;
