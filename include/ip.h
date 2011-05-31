@@ -3,7 +3,7 @@
 
 #include <active.h>
 #include <nic.h>
-#include <router.h>
+#include <service.h>
 #include <utility/malloc.h>
 #include <utility/debug.h>
 #include <utility/buffer.h>
@@ -65,9 +65,8 @@ public:
     typedef IP_Address                Address;
     typedef NIC::Address              MAC_Address;
     typedef u8                        Protocol;
-    typedef IF<use_arp,
-               ARP_Router<NIC, IP>,
-               ADHOP_Router<NIC, IP> >::Result  Router;
+
+    typedef Service::Network_Service<NIC,IP> Network_Service;
 
     static const u16 MTU = ~0;
     static const Address BROADCAST;
@@ -130,7 +129,7 @@ private:
     u16    _packet_size[MAX_FRAGMENTS];
     int    _packet_count;
 
-    Router _router;
+    Network_Service _network_service;
     
     Address _self;
     Address _netmask;

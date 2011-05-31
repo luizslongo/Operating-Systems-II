@@ -1,8 +1,9 @@
-#ifndef ADHOP_H_
-#define ADHOP_H_
+#ifndef __adhop_h
+#define __adhop_h
 
 #include <system/kmalloc.h>
 #include <utility/hash.h>
+#include <network_service.h>
 
 #define MAX_LIST 3
 #define MAX_HASH 5
@@ -10,27 +11,34 @@
 __BEGIN_SYS
 
 template<typename Link_Layer, typename Network_Layer>
-class ADHOP
+class ADHOP: public Network_Service_Common<Link_Layer, Network_Layer>
 {
 public:
+    typedef Network_Service_Common<Link_Layer, Network_Layer> Base;
+
     typedef unsigned char u8;
     typedef unsigned short u16;
     typedef unsigned long u32;
     typedef unsigned long long u64;
 
-    typedef typename Network_Layer::Address Network_Address;
-    typedef typename Link_Layer::Address Link_Address;
+    using Base::_nic;
+    using Base::_network;
+    using Base::_my_nic_address;
+    using Base::_my_network_address;
+
+    typedef typename Base::Link_Address Link_Address;
+    typedef typename Base::Network_Address Network_Address;
+
+    typedef typename Base::Protocol Protocol;
+
+    typedef typename Network_Layer::Header Network_Header;
 
     static const unsigned int INITIAL_PHEROMONE = 100;
     static const unsigned int TIMER_CHECK_ROUTING_TABLES = 5000000; // 5s
 
-    ADHOP(): seqNO(0)
-    {}
-
-    void init(const Link_Address& pa)
-    {
-        my_address = pa;
-    }
+    ADHOP(Link_Layer* nic, Network_Layer* network):
+        Base(nic, network), seqNO(0)
+    { }
 
     enum {
         ITA = 0,
@@ -45,13 +53,14 @@ public:
         u32 sequenceNO:14;
         u32 heuristic:16;
         Link_Address neighbor;
-    } __attribute__((packed));
+    } __attribute__((packed,__may_alias__));
 
 private:
     class RTable_Neighbor
     {
     public:
-        typedef List_Elements::Singly_Linked_Ordered<RTable_Neighbor, u16> Element;
+        typedef
+            List_Elements::Singly_Linked_Ordered<RTable_Neighbor, u16> Element;
 
         RTable_Neighbor(const Network_Address& la, const Link_Address& pa):
             _link(this, INITIAL_PHEROMONE)
@@ -75,7 +84,10 @@ private:
                 _link.rank( _link.rank() + (u16) (_link.rank() >> 1));
         }
 
-        bool match(const Network_Address& la) { return (la == _destination_node); }
+        bool match(const Network_Address& la)
+        {
+            return (la == _destination_node);
+        }
         bool match(const Network_Address& la, const Link_Address& pa)
         {
             return ((la == _destination_node) && (pa == _neighbor));
@@ -102,6 +114,7 @@ private:
         }
 
         u16 _seqNO:14;
+
     public:
         Link_Address _neighbor;
         Network_Address _destination_node;
@@ -112,7 +125,9 @@ private:
         Simple_List<RTable_Neighbor, typename RTable_Neighbor::Element>
     {
     private:
-        typedef Simple_List<RTable_Neighbor, typename RTable_Neighbor::Element> Base;
+        typedef
+            Simple_List<RTable_Neighbor, typename RTable_Neighbor::Element>
+            Base;
         typedef typename Base::Object_Type Object_Type;
         typedef typename Base::Element Element;
 
@@ -167,7 +182,8 @@ private:
             }
         }
 
-        void update(const Network_Address& la, const Link_Address& pa, u16 heuristic)
+        void update(const Network_Address& la,
+                const Link_Address& pa, u16 heuristic)
         {
             Element* element = search_entry(la, pa);
             if(element) {
@@ -181,10 +197,13 @@ private:
             }
         }
 
-        Element* search_entry(const Network_Address& la, const Link_Address& pa)
+        Element* search_entry(const Network_Address& la,
+                const Link_Address& pa)
         {
             Element * e;
-            for(e = Base::head(); e && !e->object()->match(la, pa); e = e->next());
+            for(e = Base::head();
+                    e && !e->object()->match(la, pa);
+                    e = e->next());
             return e;
         }
 
@@ -210,11 +229,19 @@ private:
     };
 
     class RTable:
-        Hash<RTable_Neighbor, MAX_HASH, int, typename RTable_Neighbor::Element, RTable_Neighbors>
+        Hash<RTable_Neighbor,
+            MAX_HASH,
+            int,
+            typename RTable_Neighbor::Element,
+            RTable_Neighbors>
     {
     private:
         typedef
-            Hash<RTable_Neighbor, MAX_HASH, int, typename RTable_Neighbor::Element, RTable_Neighbors>
+            Hash<RTable_Neighbor,
+                MAX_HASH,
+                int,
+                typename RTable_Neighbor::Element,
+                RTable_Neighbors>
             Base;
 
     public:
@@ -227,7 +254,7 @@ private:
         ~RTable()
         {
             for(int i = 0; i < MAX_HASH; i++) {
-                List * list = (*this)[i]; 
+                List * list = (*this)[i];
                 list->clear();
             }
         }
@@ -235,12 +262,13 @@ private:
         void update()
         {
             for(int i = 0; i < MAX_HASH; i++) {
-                List * list = (*this)[i]; 
+                List * list = (*this)[i];
                 list->update();
             }
         }
 
-        void update(const Network_Address& la, const Link_Address& pa, u16 heuristic = 0)
+        void update(const Network_Address& la,
+                const Link_Address& pa, u16 heuristic = 0)
         {
             List * list = (*this)[la];
             list->update(la, pa, heuristic);
@@ -260,11 +288,10 @@ private:
     };
 
 public:
-    bool update(const Network_Address& src, void* header)
+    bool update(const Network_Address& src, Ant* ant)
     {
-        Ant* ant = (Ant*) header;
-        if (rtable.verify(src, ant->sequenceNO)) {
-            rtable.update(src, ant->neighbor, ant->sequenceNO);
+        if (_rtable.verify(src, ant->sequenceNO)) {
+            _rtable.update(src, ant->neighbor, ant->sequenceNO);
         }
         if (ant->type == ETA && ant->returning == 0)
         {
@@ -274,27 +301,26 @@ public:
         return false;
     }
 
-    Link_Address resolve(const Network_Address& dst, void* header)
+    Link_Address resolve(const Network_Address& dst, Ant* ant)
     {
-        Ant* ant = (Ant*) header;
-        Link_Address nic_addr = rtable.search(dst);
+        Link_Address nic_addr = _rtable.search(dst);
         if (nic_addr == Link_Layer::BROADCAST) {
             ant->type = ETA;
         } else {
             ant->type = ITA;
         }
         ant->sequenceNO = seqNO++;
-        ant->neighbor = my_address;
+        ant->neighbor = _my_nic_address;
         ant->heuristic = 0;
         ant->returning = 0;
         return nic_addr;
     }
 
-    Link_Address resolve(const Network_Address& src, const Network_Address& dst, void* header)
+    Link_Address resolve(const Network_Address& src,
+            const Network_Address& dst, Ant* ant)
     {
-        Ant* ant = (Ant*) header;
-        if (rtable.verify(src, ant->sequenceNO)) {
-            rtable.update(src, ant->neighbor, ant->sequenceNO);
+        if (_rtable.verify(src, ant->sequenceNO)) {
+            _rtable.update(src, ant->neighbor, ant->sequenceNO);
             switch ((int) ant->type) {
                 case ITA:
                     return receiving_ITA(src, dst, ant);
@@ -307,12 +333,12 @@ public:
         return Link_Layer::BROADCAST;
     }
 
-private:
-    Link_Address receiving_ITA(const Network_Address& src, const Network_Address& dst, Ant* ant)
+    Link_Address receiving_ITA(const Network_Address& src,
+            const Network_Address& dst, Ant* ant)
     {
-        ant->neighbor = my_address;
+        ant->neighbor = _my_nic_address;
         ant->heuristic = 0;
-        Link_Address neighbor = rtable.search(dst);
+        Link_Address neighbor = _rtable.search(dst);
         if (neighbor == Link_Layer::BROADCAST) {
             ant->type = ETA;
             ant->sequenceNO = seqNO++;
@@ -321,15 +347,50 @@ private:
         return neighbor;
     }
 
-    Link_Address receiving_ETA(const Network_Address& src, const Network_Address& dst, Ant* ant)
+    Link_Address receiving_ETA(const Network_Address& src,
+            const Network_Address& dst, Ant* ant)
     {
-        ant->neighbor = my_address;
+        ant->neighbor = _my_nic_address;
         ant->heuristic = 0;
-        return rtable.search(dst);
+        return _rtable.search(dst);
     }
 
-    Link_Address my_address;
-    RTable rtable;
+public:
+    void update(const Network_Address& la, const Link_Address& pa)
+    {
+        // do nothing
+    }
+
+    Link_Address resolve(const Network_Address& la, SegmentedBuffer * pdu)
+    {
+        Ant * ant = (Ant *) ((Network_Header *) pdu->data())->get_options();
+        Link_Address result = resolve(la, ant);
+        return result;
+    }
+
+    void received(const Link_Address& pa, Protocol proto,
+            const char* data, int size)
+    {
+        if (proto == Link_Layer::IP) {
+            Ant * ant = (Ant *) ((Network_Header *) data)->get_options();
+            Network_Address net_dst = ((Network_Header *) data)->dst_ip();
+            Network_Address net_src = ((Network_Header *) data)->src_ip();
+            if (net_dst == _my_network_address) {
+                if (update(net_src, ant)) {
+                    //TODO: it is not infoming the mode "return" to the ant
+                    _network->send(net_src, (char *) 0, 0, 0);
+                }
+            } else {
+                Link_Address next_hop =
+                    resolve(net_src, net_dst, ant);
+                ((Network_Header *) data)->calculate_checksum();
+                _nic->send(next_hop, proto, data, size);
+            }
+        }
+    }
+
+private:
+    RTable _rtable;
     u16 seqNO:14;
 };
 

@@ -240,7 +240,6 @@ class ERTJ1VG103FA;
 class Thread;
 class Task;
 class Active;
-class Neighboring;
 
 // Abstractions - Scheduler
 template <typename> class Scheduler;
@@ -273,15 +272,21 @@ class Chronometer;
 
 // Abstractions	- Communication
 class Ethernet;
-template <typename, typename> class ARP;
-template <typename, typename> class ADHOP;
 class Network;
 class IP;
 class UDP;
 class TCP;
 class ICMP;
-template<class,class> class BCast_Router;
-template<class,class> class ARP_Router;
+
+// Abstractions - Communication - Layer integration
+class Neighboring;
+
+// Abstractions - Service
+class Service;
+
+// Abstractions - Service - Network service
+template <typename, typename> class ARP;
+template <typename, typename> class ADHOP;
 
 // Abstractions	- Sentients
 class Photo_Sentient;

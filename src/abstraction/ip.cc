@@ -52,7 +52,7 @@ void IP::Header::calculate_checksum() {
 // IP
 IP::IP(unsigned int unit)
     : _nic(unit),
-      _router(&_nic, this),
+      _network_service(&_nic, this),
       _self(IP::NULL),
       _broadcast(255,255,255,255),
       _thread(0)
@@ -61,13 +61,13 @@ IP::IP(unsigned int unit)
     {
         db<IP>(ERR) << "IP::created IP object twice for the same NIC!";	
     }
-    _router.update(_broadcast, NIC::BROADCAST);
+    _network_service.update(_broadcast, NIC::BROADCAST);
 
     if (Traits<IP>::dynamic == false) {
         _self = Address(Traits<IP>::ADDRESS);
-        _router.update(_self,_nic.address());
+        _network_service.update(_self,_nic.address());
         _broadcast = Address(Traits<IP>::BROADCAST);
-        _router.update(_broadcast, NIC::BROADCAST);
+        _network_service.update(_broadcast, NIC::BROADCAST);
         _netmask = Address(Traits<IP>::NETMASK);
     }
 
@@ -131,12 +131,12 @@ int IP::run()
         }
 
         if (prot == NIC::IP) {
-            _router.update(reinterpret_cast<Header*>(_packet[0])->src_ip(), src);
+            _network_service.update(reinterpret_cast<Header*>(_packet[0])->src_ip(), src);
             process_ip(_packet[0], size);
         }
 
         // notify routing algorithm
-        _router.received(src, prot, _packet[0], size);
+        _network_service.received(src, prot, _packet[0], size);
     }
 
     return 0;
@@ -149,9 +149,9 @@ s32 IP::send(const Address & from,const Address & to,SegmentedBuffer * data,Prot
 
     MAC_Address mac = NIC::BROADCAST;
     if (from.is_neighbor(to,_netmask))
-        mac = _router.resolve(to,&pdu);
+        mac = _network_service.resolve(to,&pdu);
     else
-        mac = _router.resolve(_gateway,&pdu);
+        mac = _network_service.resolve(_gateway,&pdu);
 
     //TODO: put fragmentation here
     int size = pdu.total_size();

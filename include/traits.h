@@ -105,7 +105,6 @@ template <> struct Traits<IP>: public Traits<void>{
     static const bool dynamic      = false; // true=dhcp false=static
     static const bool spawn_thread = true;  // automatic creation of IP's worker thread
     
-    static const bool use_arp = true; // use Address Resolution Protocol
     static const unsigned int OPT_SIZE = 0; // options size in 32-bit words
     static const unsigned char DEF_TTL = 0x40; // time-to-live
 
@@ -145,6 +144,19 @@ template <> struct Traits<Neighboring>: public Traits<void>
     static const bool enabled = true;
 
     static const unsigned int MAX_NEIGHBORS = 3;
+};
+
+template <> struct Traits<Service>: public Traits<void>
+{
+    static const bool enabled = true;
+
+    // Services types
+    enum {
+        ARP = 0, // Network service
+        ADHOP    // Network service
+    };
+
+    static const unsigned int NETWORK_SERVICE = ARP;
 };
 
 __END_SYS
