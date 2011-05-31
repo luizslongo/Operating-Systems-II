@@ -431,7 +431,9 @@ public:
 
     Element * remove_tail() {
         if(_tail)
-                return remove(_tail);
+            return remove(_tail);
+        else
+            return 0;
     }
 
     Element * remove(const Object_Type * obj) {
