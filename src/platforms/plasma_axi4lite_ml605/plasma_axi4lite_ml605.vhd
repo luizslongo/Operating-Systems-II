@@ -39,6 +39,13 @@ architecture RTL of plasma_axi4lite_ml605 is
         gpio_i  : in  std_logic_vector(31 downto 0);
         gpio_o  : out  std_logic_vector(31 downto 0));
     end component;
+    
+    component axi4_reset_control is
+        port (
+                clk_i       : in std_logic;
+                ext_reset_i : in std_logic;
+                axi_reset_o : out std_logic);
+    end component;
 
 
     signal clk_100MHz  : std_logic;
@@ -51,9 +58,6 @@ architecture RTL of plasma_axi4lite_ml605 is
    
 begin
         
-    -- AXI reset is active-LOW
-    sig_reset <= not reset_btn;
-
     clock_manager: clk_xlnx_100M_diff
         port map(
             CLK_IN1_P => clk_fpga_p,
@@ -61,6 +65,14 @@ begin
             CLK_OUT1  => clk_100MHz,
             CLK_OUT2  => clk_50MHz);
 
+    -- AXI reset is active-LOW
+    -- Force a initial reset
+    reset: axi4_reset_control
+        port map(
+            clk_i => clk_50MHz,
+            ext_reset_i => not reset_btn,
+            axi_reset_o => sig_reset);
+    
     plasma : plasma_axi4lite
     generic map(
         CLK_FREQ  => 50_000_000
