@@ -185,17 +185,29 @@ int main( void ) {
   printhex((unsigned int)elf_file->segments());
   print_string("\n");
 
+  /*
   print_string("Segment 0 size: ");
   printhex((unsigned int)elf_file->segment_size(0));
   print_string("\n");
 
   print_string("Segment 0 Addr: ");
   printhex((unsigned int)elf_file->segment_address(0));
-  print_string("\n");
+  print_string("\n");*/
+
+  for(int i = 0; i < elf_file->segments(); ++i){
+      print_string("Segment ");
+      printhex((unsigned int)i);
+      print_string(" size:  ");
+      printhex((unsigned int)elf_file->segment_size(i));
+      print_string(" addr: ");
+      printhex((unsigned int)elf_file->segment_address(i));
+      print_string("\n");
+  }
 
   print_string("Elf Entry Point: ");
   printhex((unsigned int)elf_file->entry());
   print_string("\n");
+
       
 
   if(elf_file->load_segment(0) < 0) {
