@@ -103,6 +103,8 @@ void peripheral_test(){
 int main( void ) {
 
   hal_uart_init();
+  
+  //while(1) hal_uart_putc(hal_uart_getc());
 
   volatile unsigned char * elf_image = (unsigned char *)COPY_ADDR;
   leds(0x01);

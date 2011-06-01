@@ -32,13 +32,12 @@ void
 hal_uart_init(void)
 {
     uart_regs->clkdiv = 868;  // 57600 bps
+    //uart_regs->clkdiv = 5208;  // 9600 bps
 }
 
 void
 hal_uart_putc(int ch)
 {
-  if (ch == '\n')       // FIXME for now map \n -> \r\n
-    hal_uart_putc('\r');
 
   while (uart_regs->txlevel == 0)    // wait for fifo to have space
     ;
@@ -49,8 +48,6 @@ hal_uart_putc(int ch)
 void
 hal_uart_putc_nowait(int ch)
 {
-  if (ch == '\n')       // FIXME for now map \n -> \r\n
-    hal_uart_putc('\r');
 
   if(uart_regs->txlevel)   // If fifo has space
       uart_regs->txchar = ch;
