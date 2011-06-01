@@ -1,6 +1,58 @@
-#include <ieee1451_tim_temperature_sensor.h>
+#include <ieee1451_tim.h>
+#include <mutex.h>
+#include <thread.h>
+#ifdef __mc13224v__
+    #include <sensor.h>
+#endif
 
-__BEGIN_SYS
+#define DATASET_SIZE    10
+#define READ_INTERVAL   10000000 //550000
+
+__USING_SYS
+
+OStream cout;
+
+class IEEE1451_Temperature_Sensor : public IEEE1451_Transducer
+{
+public:
+    IEEE1451_Temperature_Sensor(bool tim_im, bool polling);
+    ~IEEE1451_Temperature_Sensor();
+
+protected:
+    void init_teds();
+    IEEE1451_TEDS_TIM *get_teds(char id);
+    //bool running() { return run; };
+    void start();
+    void stop();
+    void read_data_set(unsigned short trans_id, unsigned int offset);
+    void send_data_set();
+
+public:
+    int execute();
+
+private:
+    unsigned short _channel_number;
+
+    bool _tim_im;
+    bool _polling;
+
+    float _data_set[DATASET_SIZE * sizeof(float)];
+    Mutex _data_set_mutex;
+    int _pos;
+
+#ifdef __mc13224v__
+    Temperature_Sensor _temperature;
+#endif
+
+    Thread *_execute_thread;
+
+    char *_channel_array;
+    char *_temp_sensor_utn_array;
+    IEEE1451_TEDS_TIM *_channel_teds;
+    IEEE1451_TEDS_TIM *_temp_sensor_utn_teds;
+};
+
+//-------------------------------------------
 
 IEEE1451_Temperature_Sensor::IEEE1451_Temperature_Sensor(bool tim_im, bool polling)
 {
@@ -56,19 +108,19 @@ IEEE1451_TEDS_TIM *IEEE1451_Temperature_Sensor::get_teds(char id)
 
 void IEEE1451_Temperature_Sensor::start()
 {
-    db<IEEE1451_Temperature_Sensor>(TRC) << "Temperature sensor start\n";
+    cout << "Temperature sensor start\n";
     _execute_thread->resume();
 }
 
 void IEEE1451_Temperature_Sensor::stop()
 {
-    db<IEEE1451_Temperature_Sensor>(TRC) << "Temperature sensor stop\n";
+    cout << "Temperature sensor stop\n";
     _execute_thread->suspend();
 }
 
 void IEEE1451_Temperature_Sensor::read_data_set(unsigned short trans_id, unsigned int offset)
 {
-    db<IEEE1451_Temperature_Sensor>(TRC) << "Reading data set (polling)...\n";
+    cout << "Reading data set (polling)...\n";
 
     unsigned int size = sizeof(IEEE1451_Data_Set_Read_Reply) + DATASET_SIZE * sizeof(float);
     char buffer[size];
@@ -93,7 +145,7 @@ void IEEE1451_Temperature_Sensor::read_data_set(unsigned short trans_id, unsigne
 
 void IEEE1451_Temperature_Sensor::send_data_set()
 {
-    db<IEEE1451_Temperature_Sensor>(TRC) << "Sending data set (tim_im)...\n";
+    cout << "Sending data set (tim_im)...\n";
 
     unsigned int size = sizeof(IEEE1451_Command) + DATASET_SIZE * sizeof(float);
     char buffer[size];
@@ -118,7 +170,7 @@ void IEEE1451_Temperature_Sensor::send_data_set()
 
 int IEEE1451_Temperature_Sensor::execute()
 {
-    db<IEEE1451_Temperature_Sensor>(TRC) << "Temperature sensor execute thread created\n";
+    cout << "Temperature sensor execute thread created\n";
 
     _execute_thread = Thread::self();
     IEEE1451_TIM *tim = IEEE1451_TIM::get_instance();
@@ -135,7 +187,7 @@ int IEEE1451_Temperature_Sensor::execute()
         if ((_tim_im) && (!_polling) && (_pos == 0))
             tim->disconnect();
 
-        db<IEEE1451_Temperature_Sensor>(INF) << "Collecting data (pos = " << _pos << ")...\n";
+        cout << "Collecting data (pos = " << _pos << ")...\n";
 
         //while (!_temperature.enable());
         //while (!_temperature.data_ready());
@@ -164,6 +216,26 @@ int IEEE1451_Temperature_Sensor::execute()
     return 0;
 }
 
+//-------------------------------------------
+
+int main()
+{
+    //Alarm::delay(3000000);
+    cout << "+++++ Starting wtim +++++\n";
+
+    IP *ip = IP::instance();
+    ip->set_address(IP::Address(10, 0, 0, 111));
+    ip->set_gateway(IP::Address(10, 0, 0, 1));
+    ip->set_netmask(IP::Address(255, 255, 255, 0));
+
+    IEEE1451_TIM *tim = IEEE1451_TIM::get_instance();
+    tim->set_ncap_address(IP::Address(10, 0, 0, 110));
+
+    IEEE1451_Temperature_Sensor sensor(true, true);
+    sensor.execute();
+    return 0;
+}
+
 /* IEEE 1451.0 (2007) -> Chapter 5.10
     -> TIM-Initiated Message
        Sampling modes: Continuous sampling mode
@@ -174,4 +246,3 @@ int IEEE1451_Temperature_Sensor::execute()
        Sampling modes: Continuous sampling mode
        Data transmission mode: Only when commanded mode */
 
-__END_SYS

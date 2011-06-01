@@ -1,6 +1,51 @@
-#include <ieee1451_tim_audio_sensor.h>
+#include <ieee1451_tim.h>
+//#include <mutex.h>
+#include <thread.h>
 
-__BEGIN_SYS
+#define DATASET_SIZE    160
+#define READ_INTERVAL   60000000 //6000000
+
+__USING_SYS
+
+OStream cout;
+
+class IEEE1451_Audio_Sensor : public IEEE1451_Transducer
+{
+public:
+    IEEE1451_Audio_Sensor(bool tim_im, bool polling);
+    ~IEEE1451_Audio_Sensor();
+
+protected:
+    void init_teds();
+    IEEE1451_TEDS_TIM *get_teds(char id);
+    //bool running() { return run; };
+    void start();
+    void stop();
+    void read_data_set(unsigned short trans_id, unsigned int offset);
+    void send_data_set(bool first = false, bool last = false);
+
+public:
+    int execute();
+
+private:
+    unsigned short _channel_number;
+
+    bool _tim_im;
+    bool _polling;
+
+    static char _data_set[][DATASET_SIZE];
+    //Mutex _data_set_mutex;
+    int _pos;
+
+    Thread *_execute_thread;
+
+    char *_channel_array;
+    char *_temp_sensor_utn_array;
+    IEEE1451_TEDS_TIM *_channel_teds;
+    IEEE1451_TEDS_TIM *_temp_sensor_utn_teds;
+};
+
+//-------------------------------------------
 
 IEEE1451_Audio_Sensor::IEEE1451_Audio_Sensor(bool tim_im, bool polling)
 {
@@ -56,19 +101,19 @@ IEEE1451_TEDS_TIM *IEEE1451_Audio_Sensor::get_teds(char id)
 
 void IEEE1451_Audio_Sensor::start()
 {
-    db<IEEE1451_Audio_Sensor>(TRC) << "Audio sensor start\n";
+    cout << "Audio sensor start\n";
     _execute_thread->resume();
 }
 
 void IEEE1451_Audio_Sensor::stop()
 {
-    db<IEEE1451_Audio_Sensor>(TRC) << "Audio sensor stop\n";
+    cout << "Audio sensor stop\n";
     _execute_thread->suspend();
 }
 
 void IEEE1451_Audio_Sensor::read_data_set(unsigned short trans_id, unsigned int offset)
 {
-    db<IEEE1451_Audio_Sensor>(TRC) << "Reading data set (polling)...\n";
+    cout << "Reading data set (polling)...\n";
 
     unsigned int size = sizeof(IEEE1451_Data_Set_Read_Reply) + DATASET_SIZE;
     char buffer[size];
@@ -90,7 +135,7 @@ void IEEE1451_Audio_Sensor::read_data_set(unsigned short trans_id, unsigned int 
 
 void IEEE1451_Audio_Sensor::send_data_set(bool first, bool last)
 {
-    db<IEEE1451_Audio_Sensor>(TRC) << "Sending data set (tim_im)...\n";
+    cout << "Sending data set (tim_im)...\n";
 
     unsigned int size = sizeof(IEEE1451_Command) + ((first || last) ? 1 : DATASET_SIZE);
     char buffer[size];
@@ -120,7 +165,7 @@ void IEEE1451_Audio_Sensor::send_data_set(bool first, bool last)
 
 int IEEE1451_Audio_Sensor::execute()
 {
-    db<IEEE1451_Audio_Sensor>(TRC) << "Audio sensor execute thread created\n";
+    cout << "Audio sensor execute thread created\n";
 
     _execute_thread = Thread::self();
     IEEE1451_TIM *tim = IEEE1451_TIM::get_instance();
@@ -154,6 +199,28 @@ int IEEE1451_Audio_Sensor::execute()
 
     return 0;
 }
+
+//-------------------------------------------
+
+int main()
+{
+    //Alarm::delay(3000000);
+    kout << "+++++ Starting wtim +++++\n";
+
+    IP *ip = IP::instance();
+    ip->set_address(IP::Address(10, 0, 0, 113));
+    ip->set_gateway(IP::Address(10, 0, 0, 1));
+    ip->set_netmask(IP::Address(255, 255, 255, 0));
+
+    IEEE1451_TIM *tim = IEEE1451_TIM::get_instance();
+    tim->set_ncap_address(IP::Address(10, 0, 0, 110));
+
+    IEEE1451_Audio_Sensor sensor(true, true);
+    sensor.execute();
+    return 0;
+}
+
+//-------------------------------------------
 
 char IEEE1451_Audio_Sensor::_data_set[][DATASET_SIZE] = {
     {   //0x80, 0x80, 0x01, 0x6a, 0x00, 0x20, 0x7a, 0x10,
@@ -2783,4 +2850,3 @@ char IEEE1451_Audio_Sensor::_data_set[][DATASET_SIZE] = {
  Sampling modes: Continuous sampling mode
  Data transmission mode: Only when commanded mode */
 
-__END_SYS

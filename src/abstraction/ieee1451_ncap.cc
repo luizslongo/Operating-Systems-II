@@ -1,5 +1,4 @@
 #include <ieee1451_ncap.h>
-#include <ieee1451_ncap_application.h>
 
 __BEGIN_SYS
 

@@ -1,6 +1,129 @@
-#include <ieee1451_ncap_application.h>
+//#define USE_SIP
 
-__BEGIN_SYS
+#include <ieee1451_ncap.h>
+#include <ieee1451_objects.h>
+#include <utility/list.h>
+#ifdef USE_SIP
+    #include <sip_defs.h>
+    #include <sip_manager.h>
+    #include <sip_user_agent.h>
+    #include <thread.h>
+#endif
+
+__USING_SYS
+
+OStream cout;
+
+class IEEE1451_TEDS_Retriever;
+
+class IEEE1451_NCAP_Application : public IEEE1451_NCAP::Listener
+{
+private:
+    struct TIM_Cache
+    {
+        IEEE1451_TIM_Channel *_tim;
+        Simple_List<TIM_Cache>::Element _link;
+
+#ifdef USE_SIP
+        SIP_User_Agent *_ua;
+        Thread _session_thread;
+        Send_RTP _send_rtp;
+
+        TIM_Cache(IEEE1451_TIM_Channel *tim, SIP_User_Agent *ua) : _tim(tim), _link(this), _ua(ua),
+                _session_thread(&IEEE1451_NCAP_Application::send_read_multimedia_data_set_thread,
+                IEEE1451_NCAP_Application::get_instance(), _tim->_address, (unsigned short) 0x01) {}
+        ~TIM_Cache() { delete _tim; delete _ua; }
+#else
+        TIM_Cache(IEEE1451_TIM_Channel *tim) : _tim(tim), _link(this) {}
+        ~TIM_Cache() { delete _tim; }
+#endif
+    };
+
+    IEEE1451_NCAP_Application();
+
+public:
+    ~IEEE1451_NCAP_Application();
+
+    static IEEE1451_NCAP_Application *get_instance();
+
+    TIM_Cache *get_tim_cache(const IP::Address &address);
+#ifdef USE_SIP
+    TIM_Cache *get_tim_cache(const char *uri);
+#endif
+    IEEE1451_TEDS_Retriever *get_retriever(unsigned short trans_id);
+
+    void update_tim(const IP::Address &address);
+    void update_tim_completed(IEEE1451_TEDS_Retriever *retriever, IEEE1451_TIM_Channel *tim, IP::Address address);
+
+    void report_tim_connected(const IP::Address &address);
+    void report_tim_disconnected(const IP::Address &address);
+    //void report_error(unsigned short trans_id, int error_code);
+    void report_command_reply(const IP::Address &address, unsigned short trans_id, const char *message, unsigned int length);
+    void report_tim_initiated_message(const IP::Address &address, const char *message, unsigned int length);
+
+    void read_temperature(const IP::Address &address, const char *buffer, unsigned short length);
+    void read_audio(const IP::Address &address, const char *buffer, unsigned short length);
+
+    unsigned short send_operate(const IP::Address &address, unsigned short channel_number);
+    unsigned short send_idle(const IP::Address &address, unsigned short channel_number);
+    unsigned short send_read_teds(const IP::Address &address, unsigned short channel_number, char tedsId);
+    unsigned short send_read_data_set(const IP::Address &address, unsigned short channel_number);
+    static int send_read_multimedia_data_set_thread(IEEE1451_NCAP_Application *ncap, IP::Address address, unsigned short channel_number);
+
+#ifdef USE_SIP
+    void send_sip_invite(SIP_User_Agent *ua);
+    void send_sip_bye(SIP_User_Agent *ua);
+    void send_sip_message(SIP_User_Agent *ua, const char *data);
+    void send_sip_notify(SIP_User_Agent *ua, SIP_Subscription_State state, SIP_Pidf_Xml_Basic_Element pidfXml);
+    static int message_callback(SIP_Event_Callback event, SIP_User_Agent *ua, const char *remote);
+#endif
+
+    //static int read_data_set_thread(IEEE1451_NCAP_Application *ncap, IP::Address address, IEEE1451_TIM_Channel *tim);
+
+private:
+    Simple_List<TIM_Cache> _cache;
+    Simple_List<IEEE1451_TEDS_Retriever> _retrievers;
+
+    static IEEE1451_NCAP_Application *_application;
+};
+
+
+class IEEE1451_TEDS_Retriever
+{
+private:
+    friend class IEEE1451_NCAP_Application;
+
+    enum State
+    {
+        meta_teds = 0,
+        tim_transducer_name_teds = 1,
+        phy_teds = 2,
+        transducer_channel_teds = 3,
+        transducer_name_teds = 4
+    };
+
+public:
+    IEEE1451_TEDS_Retriever(const IP::Address &address, IEEE1451_NCAP_Application *application);
+    ~IEEE1451_TEDS_Retriever() {}
+
+    //void repeat() { execute(); }
+    void process(const char *message, unsigned int length);
+    void execute();
+
+private:
+    IP::Address _address;
+    IEEE1451_NCAP_Application *_application;
+    IEEE1451_Transducer_Channel *_transducer;
+    IEEE1451_TIM_Channel *_tim;
+
+    short _state;
+    char _teds_id;
+    unsigned short _last_trans_id;
+
+    Simple_List<IEEE1451_TEDS_Retriever>::Element _link;
+};
+
+//-------------------------------------------
 
 IEEE1451_NCAP_Application *IEEE1451_NCAP_Application::_application = 0;
 
@@ -135,7 +258,7 @@ void IEEE1451_NCAP_Application::report_tim_connected(const IP::Address &address)
         update_tim(address);
     else
     {
-        db<IEEE1451_NCAP_Application>(INF) << "++ TIM CONNECTED (address=" << address << ") ++\n";
+        cout << "++ TIM CONNECTED (address=" << address << ") ++\n";
         tim_cache->_tim->_connected = true;
 
 #ifdef USE_SIP
@@ -160,7 +283,7 @@ void IEEE1451_NCAP_Application::report_tim_disconnected(const IP::Address &addre
             send_sip_notify(tim_cache->_ua, SIP_SUBSCRIPTION_STATE_ACTIVE, SIP_PIDF_XML_CLOSED);
 #endif
 
-        db<IEEE1451_NCAP_Application>(INF) << "++ TIM DISCONNECTED (address=" << address << ") ++\n";
+        cout << "++ TIM DISCONNECTED (address=" << address << ") ++\n";
     }
 }
 
@@ -171,7 +294,7 @@ void IEEE1451_NCAP_Application::report_tim_disconnected(const IP::Address &addre
     if (retriever)
         retriever->repeat();
     //else
-    //  db<IEEE1451_NCAP_Application>(INF) << "++ ERROR (" << trans_id << "): " << error_code << " ++\n";
+    //  cout << "++ ERROR (" << trans_id << "): " << error_code << " ++\n";
  }*/
 
 void IEEE1451_NCAP_Application::report_command_reply(const IP::Address &address, unsigned short trans_id, const char *message, unsigned int length)
@@ -185,12 +308,12 @@ void IEEE1451_NCAP_Application::report_command_reply(const IP::Address &address,
 
         if ((!reply->_header._success) || (reply->_header._length < sizeof(reply->_offset)))
         {
-            db<IEEE1451_NCAP_Application>(INF) << "Error in report command reply (teds)\n";
+            cout << "Error in report command reply (teds)\n";
             //report_error(trans_id, 0);
             return;
         }
 
-        db<IEEE1451_NCAP_Application>(INF) << "++ REPLY RECEIVED (teds) (trans_id=" << trans_id << ", address=" << address << ", length=" << reply->_header._length << ") ++\n";
+        cout << "++ REPLY RECEIVED (teds) (trans_id=" << trans_id << ", address=" << address << ", length=" << reply->_header._length << ") ++\n";
 
         retriever->process(buffer, length - sizeof(IEEE1451_TEDS_Read_Reply));
     } else
@@ -201,12 +324,12 @@ void IEEE1451_NCAP_Application::report_command_reply(const IP::Address &address,
 
         if ((!reply->_header._success) || (reply->_header._length < sizeof(reply->_offset)))
         {
-            db<IEEE1451_NCAP_Application>(INF) << "Error in report command reply (data set)\n";
+            cout << "Error in report command reply (data set)\n";
             //report_error(trans_id, 0);
             return;
         }
 
-        db<IEEE1451_NCAP_Application>(INF) << "++ REPLY RECEIVED (data set) (trans_id=" << trans_id << ", address=" << address << ", length=" << reply->_header._length << ") ++\n";
+        cout << "++ REPLY RECEIVED (data set) (trans_id=" << trans_id << ", address=" << address << ", length=" << reply->_header._length << ") ++\n";
 
         TIM_Cache *tim_cache = get_tim_cache(address);
         if (!tim_cache)
@@ -233,7 +356,7 @@ void IEEE1451_NCAP_Application::report_tim_initiated_message(const IP::Address &
     IEEE1451_Command *cmd = (IEEE1451_Command *) message;
     const char *buffer = message + sizeof(IEEE1451_Command);
 
-    db<IEEE1451_NCAP_Application>(INF) << "++ TIM MESSAGE RECEIVED (address=" << address << ") ++\n";
+    cout << "++ TIM MESSAGE RECEIVED (address=" << address << ") ++\n";
 
     if ((cmd->_channel_number == 1) && (cmd->_command == COMMAND_CLASS_READ_TRANSDUCER_CHANNEL_DATA_SET_SEGMENT))
     {
@@ -305,7 +428,7 @@ void IEEE1451_NCAP_Application::read_temperature(const IP::Address &address, con
                 strcat(data, ", ");
         }
 
-        db<IEEE1451_NCAP_Application>(TRC) << "Read temperature (" << repeats << "): " << data << "\n";
+        cout << "Read temperature (" << repeats << "): " << data << "\n";
 
 #ifdef USE_SIP
         if (tim_cache->_ua->has_subscription())
@@ -329,7 +452,7 @@ void IEEE1451_NCAP_Application::read_audio(const IP::Address &address, const cha
     IEEE1451_TLV *max_data_repetitions = aux_data_set.get_tlv(TEDS_TRANSDUCER_CHANNEL_REPEATS);
     unsigned short repeats = (((unsigned char) max_data_repetitions->_value[0]) << 8) | ((unsigned char) max_data_repetitions->_value[1]);
 
-    db<IEEE1451_NCAP_Application>(TRC) << "Read audio (" << repeats << ")\n";
+    cout << "Read audio (" << repeats << ")\n";
 
 #ifdef USE_SIP
     if ((tim_cache->_ua->has_subscription()) && (tim_cache->_ua->connected()))
@@ -376,7 +499,7 @@ unsigned short IEEE1451_NCAP_Application::send_read_data_set(const IP::Address &
 
 int IEEE1451_NCAP_Application::send_read_multimedia_data_set_thread(IEEE1451_NCAP_Application *ncap, IP::Address address, unsigned short channel_number)
 {
-    db<IEEE1451_NCAP_Application>(TRC) << "== Send read multimedia data set thread (address=" << address << ") ==\n";
+    cout << "== Send read multimedia data set thread (address=" << address << ") ==\n";
 
 #ifdef USE_SIP
     TIM_Cache *tim_cache = ncap->get_tim_cache(address);
@@ -390,7 +513,7 @@ int IEEE1451_NCAP_Application::send_read_multimedia_data_set_thread(IEEE1451_NCA
             Thread::self()->suspend();
 #endif
 
-        //db<IEEE1451_NCAP_Application>(TRC) << "-- Reading Multimedia Data Set (address=" << address << ")...\n";
+        //cout << "-- Reading Multimedia Data Set (address=" << address << ")...\n";
         ncap->send_read_data_set(address, channel_number);
         Alarm::delay(50000);
     }
@@ -449,7 +572,7 @@ int IEEE1451_NCAP_Application::message_callback(SIP_Event_Callback event, SIP_Us
     TIM_Cache *tim_cache = app->get_tim_cache(ua->get_uri());
     if (!tim_cache)
     {
-        db<IEEE1451_NCAP_Application>(INF) << "++ Invalid User Agent ++\n";
+        cout << "++ Invalid User Agent ++\n";
         return 1;
     }
 
@@ -457,7 +580,7 @@ int IEEE1451_NCAP_Application::message_callback(SIP_Event_Callback event, SIP_Us
     {
         case SIP_SESSION_INITIATED:
         {
-            db<IEEE1451_NCAP_Application>(INF) << "++ Session Initiated (" << tim_cache->_ua->get_call_status() << ") ++\n";
+            cout << "++ Session Initiated (" << tim_cache->_ua->get_call_status() << ") ++\n";
             if (tim_cache->_ua->get_call_status() == SIP_CALL_STATUS_INCOMING)
                 tim_cache->_session_thread.resume();
             break;
@@ -465,14 +588,14 @@ int IEEE1451_NCAP_Application::message_callback(SIP_Event_Callback event, SIP_Us
 
         case SIP_SESSION_TERMINATED:
         {
-            db<IEEE1451_NCAP_Application>(INF) << "++ Session Terminated ++\n";
+            cout << "++ Session Terminated ++\n";
             tim_cache->_session_thread.suspend();
             break;
         }
 
         case SIP_SUBSCRIPTION_INITIATED:
         {
-            db<IEEE1451_NCAP_Application>(INF) << "++ Subscription Initiated ++\n";
+            cout << "++ Subscription Initiated ++\n";
 
             if (tim_cache->_tim->_connected)
                 app->send_sip_notify(ua, SIP_SUBSCRIPTION_STATE_ACTIVE, SIP_PIDF_XML_OPEN);
@@ -482,12 +605,12 @@ int IEEE1451_NCAP_Application::message_callback(SIP_Event_Callback event, SIP_Us
         }
 
         case SIP_SUBSCRIPTION_TERMINATED:
-            db<IEEE1451_NCAP_Application>(INF) << "++ Subscription Terminated ++\n";
+            cout << "++ Subscription Terminated ++\n";
             break;
 
         case SIP_MESSAGE_RECEIVED:
         {
-            db<IEEE1451_NCAP_Application>(INF) << "++ Message Received ++\n";
+            cout << "++ Message Received ++\n";
 
             if (!strncmp(ua->get_text_received(), "request data", 12))
                 app->send_read_data_set(tim_cache->_tim->_address, 0x01);
@@ -505,17 +628,17 @@ int IEEE1451_NCAP_Application::message_callback(SIP_Event_Callback event, SIP_Us
 
 /*int IEEE1451_NCAP_Application::read_data_set_thread(IEEE1451_NCAP_Application *ncap, IP::Address address, IEEE1451_TIM_Channel *tim)
 {
-    db<IEEE1451_NCAP_Application>(INF) << "== NCAP request data thread created (address=" << address << ") ==\n";
+    cout << "== NCAP request data thread created (address=" << address << ") ==\n";
 
     while (1)
     {
         Alarm::delay(2200000);
         if (tim->_connected)
         {
-            db<IEEE1451_NCAP_Application>(INF) << "-- Reading DataSet (address=" << address << ")...\n";
+            cout << "-- Reading DataSet (address=" << address << ")...\n";
             ncap->send_read_data_set(address, 0x01);
         }else
-            db<IEEE1451_NCAP_Application>(INF) << "-- Address " << address << " is disconnected.\n";
+            cout << "-- Address " << address << " is disconnected.\n";
     }
     return 0;
 }*/
@@ -570,37 +693,37 @@ void IEEE1451_TEDS_Retriever::execute()
     switch (_state)
     {
         case meta_teds:
-            db<IEEE1451_TEDS_Retriever>(TRC) << ">> Getting meta teds...\n";
+            cout << ">> Getting meta teds...\n";
             _teds_id = TEDS_META;
             channel_number = 0x00;
             break;
 
         case tim_transducer_name_teds:
-            db<IEEE1451_TEDS_Retriever>(TRC) << ">> Getting tim's transducer name teds...\n";
+            cout << ">> Getting tim's transducer name teds...\n";
             _teds_id = TEDS_USER_TRANSDUCER_NAME;
             channel_number = 0x00;
             break;
 
         case phy_teds:
-            db<IEEE1451_TEDS_Retriever>(TRC) << ">> Getting phy teds...\n";
+            cout << ">> Getting phy teds...\n";
             _teds_id = TEDS_PHY;
             channel_number = 0x00;
             break;
 
         case transducer_channel_teds:
-            db<IEEE1451_TEDS_Retriever>(TRC) << ">> Getting transducer channel teds...\n";
+            cout << ">> Getting transducer channel teds...\n";
             _teds_id = TEDS_TRANSDUCER_CHANNEL;
             channel_number = 0x01;
             break;
 
         case transducer_name_teds:
-            db<IEEE1451_TEDS_Retriever>(TRC) << ">> Getting transducer's transducer name teds...\n";
+            cout << ">> Getting transducer's transducer name teds...\n";
             _teds_id = TEDS_USER_TRANSDUCER_NAME;
             channel_number = 0x01;
             break;
 
         default:
-            db<IEEE1451_TEDS_Retriever>(TRC) << ">> TEDS completed...\n";
+            cout << ">> TEDS completed...\n";
             _teds_id = 0;
             _application->update_tim_completed(this, _tim, _address);
             return;
@@ -609,4 +732,21 @@ void IEEE1451_TEDS_Retriever::execute()
     _last_trans_id = _application->send_read_teds(_address, channel_number, _teds_id);
 }
 
-__END_SYS
+//-------------------------------------------
+
+int main()
+{
+    //Alarm::delay(3000000);
+    cout << "+++++ Starting ncap +++++\n";
+
+    IP *ip = IP::instance();
+    ip->set_address(IP::Address(10, 0, 0, 110));
+    ip->set_gateway(IP::Address(10, 0, 0, 1));
+    ip->set_netmask(IP::Address(255, 255, 255, 0));
+
+    IEEE1451_NCAP_Application::get_instance();
+
+    Thread::self()->suspend();
+    return 0;
+}
+
