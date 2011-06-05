@@ -123,8 +123,6 @@ template <> struct Traits<IP>: public Traits<Services>
     
     static const unsigned int OPT_SIZE = 0; // options size in 32-bit words
     static const unsigned char DEF_TTL = 0x40; // time-to-live
-
-    static const int SERVICE = ADHOP;
 };
 
 template <> struct Traits<UDP> : public Traits<IP>
