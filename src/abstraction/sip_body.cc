@@ -23,15 +23,15 @@ SIP_Body *SIP_Body::decode_body(const char *sip_msg, SIP_Body_Type body_type)
     return body;
 }
 
-SIP_Body *SIP_Body::create_body(SIP_Body_Type type/*, const SIP_Body *copy*/)
+SIP_Body *SIP_Body::create_body(SIP_Body_Type type)
 {
     SIP_Body *body = 0;
 
     switch (type)
     {
-        case SIP_BODY_APPLICATION_SDP:      body = /*(!copy) ?*/new SIP_SDP_Body() /*: new SIP_Sdp_Body(*((SIP_Sdp_Body *) copy))*/;                        break;
-        case SIP_BODY_APPLICATION_PIDF_XML: body = /*(!copy) ?*/new SIP_Pidf_Xml_Body() /*: new SIP_Pidf_Xml_Body(*((SIP_Pidf_Xml_Body *) copy))*/;         break;
-        case SIP_BODY_TEXT_PLAIN:           body = /*(!copy) ?*/new SIP_Text_Plain_Body() /*: new SIP_Text_Plain_Body(*((SIP_Text_Plain_Body *) copy))*/;   break;
+        case SIP_BODY_APPLICATION_SDP:      body = new SIP_SDP_Body();        break;
+        case SIP_BODY_APPLICATION_PIDF_XML: body = new SIP_Pidf_Xml_Body();   break;
+        case SIP_BODY_TEXT_PLAIN:           body = new SIP_Text_Plain_Body(); break;
         default: break;
     }
 

@@ -316,7 +316,7 @@ void IEEE1451_NCAP_Application::report_command_reply(const IP::Address &address,
         cout << "++ REPLY RECEIVED (teds) (trans_id=" << trans_id << ", address=" << address << ", length=" << reply->_header._length << ") ++\n";
 
         retriever->process(buffer, length - sizeof(IEEE1451_TEDS_Read_Reply));
-    } else
+    }else
     {
         IEEE1451_Data_Set_Read_Reply *reply = (IEEE1451_Data_Set_Read_Reply *) message;
         const char *buffer = message + sizeof(IEEE1451_Data_Set_Read_Reply);
@@ -500,6 +500,7 @@ unsigned short IEEE1451_NCAP_Application::send_read_data_set(const IP::Address &
 int IEEE1451_NCAP_Application::send_read_multimedia_data_set_thread(IEEE1451_NCAP_Application *ncap, IP::Address address, unsigned short channel_number)
 {
     cout << "== Send read multimedia data set thread (address=" << address << ") ==\n";
+    Alarm::delay(1000000);
 
 #ifdef USE_SIP
     TIM_Cache *tim_cache = ncap->get_tim_cache(address);
@@ -524,46 +525,38 @@ int IEEE1451_NCAP_Application::send_read_multimedia_data_set_thread(IEEE1451_NCA
 
 void IEEE1451_NCAP_Application::send_sip_invite(SIP_User_Agent *ua)
 {
-    SIP_User_Agent_Client *uac = ua->get_uac();
-    SIP_Request_Invite *invite = uac->create_invite(ua->get_subscriber());
+    SIP_Request *invite = ua->create_invite(ua->get_subscriber());
     if (!invite)
         return;
 
-    uac->send_request(invite);
-    //delete invite;
+    ua->send_request(invite);
 }
 
 void IEEE1451_NCAP_Application::send_sip_bye(SIP_User_Agent *ua)
 {
-    SIP_User_Agent_Client *uac = ua->get_uac();
-    SIP_Request_Bye *bye = uac->create_bye(ua->get_subscriber());
+    SIP_Request *bye = ua->create_bye(ua->get_subscriber());
     if (!bye)
         return;
 
-    uac->send_request(bye);
-    //delete bye;
+    ua->send_request(bye);
 }
 
 void IEEE1451_NCAP_Application::send_sip_message(SIP_User_Agent *ua, const char *data)
 {
-    SIP_User_Agent_Client *uac = ua->get_uac();
-    SIP_Request_Message *message = uac->create_message(ua->get_subscriber(), data);
+    SIP_Request *message = ua->create_message(ua->get_subscriber(), data);
     if (!message)
         return;
 
-    uac->send_request(message);
-    //delete message;
+    ua->send_request(message);
 }
 
 void IEEE1451_NCAP_Application::send_sip_notify(SIP_User_Agent *ua, SIP_Subscription_State state, SIP_Pidf_Xml_Basic_Element pidfXml)
 {
-    SIP_User_Agent_Client *uac = ua->get_uac();
-    SIP_Request_Notify *notify = uac->create_notify(ua->get_subscriber(), state, pidfXml, 3600);
+    SIP_Request *notify = ua->create_notify(ua->get_subscriber(), state, pidfXml, 3600);
     if (!notify)
         return;
 
-    uac->send_request(notify);
-    //delete notify;
+    ua->send_request(notify);
 }
 
 int IEEE1451_NCAP_Application::message_callback(SIP_Event_Callback event, SIP_User_Agent *ua, const char *remote)

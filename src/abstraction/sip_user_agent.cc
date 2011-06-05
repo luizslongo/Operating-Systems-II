@@ -161,28 +161,30 @@ void SIP_Subscription::clear()
 
 //-------------------------------------------
 
-SIP_Request *SIP_User_Agent_Client::create_request(SIP_Message_Type msg_type, SIP_Dialog *dialog, const char *to, SIP_Message *invite)
+SIP_User_Agent::SIP_User_Agent(const char *uri) : _link(this)
 {
-    SIP_Request *request = 0;
+    _uri = create_string(uri);
+    _text_received = 0;
+}
 
-    switch (msg_type)
+SIP_User_Agent::~SIP_User_Agent()
+{
+    Simple_List<SIP_Transaction>::Iterator it = _transactions.begin();
+    while (it != _transactions.end())
     {
-        case SIP_REQUEST_ACK:        request = new SIP_Request_Ack();       break;
-        case SIP_REQUEST_BYE:        request = new SIP_Request_Bye();       break;
-        //case SIP_REQUEST_CANCEL:   request = new SIP_Request_Cancel();    break;
-        case SIP_REQUEST_INVITE:     request = new SIP_Request_Invite();    break;
-        case SIP_REQUEST_MESSAGE:    request = new SIP_Request_Message();   break;
-        case SIP_REQUEST_NOTIFY:     request = new SIP_Request_Notify();    break;
-        //case SIP_REQUEST_OPTIONS:  request = new SIP_Request_Options();   break;
-        //case SIP_REQUEST_REGISTER: request = new SIP_Request_Register();  break;
-        case SIP_REQUEST_SUBSCRIBE:  request = new SIP_Request_Subscribe(); break;
-        //case SIP_RESPONSE:         break;
-        default: break;
+        SIP_Transaction *transaction = it->object();
+        _transactions.remove(it++);
+        delete transaction;
     }
+}
+
+SIP_Request *SIP_User_Agent::create_request(SIP_Message_Type msg_type, SIP_Dialog *dialog, const char *to, SIP_Message *invite)
+{
+    SIP_Request *request = new SIP_Request(msg_type);
 
     /*if (!request)
     {
-        db<SIP_User_Agent_Client>(WRN) << "SIP_User_Agent_Client::create_request -> Failed to create request (message type = " << msg_type << ")\n";
+        db<SIP_User_Agent>(WRN) << "SIP_User_Agent::create_request -> Failed to create request (message type = " << msg_type << ")\n";
         return 0;
     }*/
 
@@ -190,7 +192,7 @@ SIP_Request *SIP_User_Agent_Client::create_request(SIP_Message_Type msg_type, SI
     char branch[20];
     strcpy(branch, "z9hG4bK");
     SIP_Manager::random(&branch[7]);
-    header_via->set_via("SIP", "2.0", SIP_TRANSPORT_UDP, SIP_Manager::get_instance()->get_transport()->get_host_ip(), SIP_Manager::get_instance()->get_transport()->get_host_port(), branch);
+    header_via->set_via("SIP", "2.0", SIP_TRANSPORT_UDP, SIP_Manager::get_instance()->get_host_ip(), SIP_Manager::get_instance()->get_host_port(), branch);
     request->add_header(header_via);
 
     SIP_Header_To *header_to = new SIP_Header_To();
@@ -218,20 +220,17 @@ SIP_Request *SIP_User_Agent_Client::create_request(SIP_Message_Type msg_type, SI
 
         char tag[20];
         SIP_Manager::random(tag);
-        header_from->set_address(_ua->_uri);
+        header_from->set_address(_uri);
         header_from->set_tag(tag);
 
         char call_id[100], host[255], aux[255];
         //static int local_id_resgister = 2900;
-        strcpy(host, _ua->_uri);
+        strcpy(host, _uri);
         match(host, ":" , aux);
         skip(host, " \t");
         match(host, "@" , aux);
         skip(host, " \t");
-        //if (msg_type == SIP_REQUEST_REGISTER)
-        //  itoa(local_id_resgister, call_id);
-        //else
-            SIP_Manager::random(call_id);
+        SIP_Manager::random(call_id);
         strcat(call_id, "@");
         strcat(call_id, host);
         header_call_id->set_string(call_id);
@@ -239,7 +238,7 @@ SIP_Request *SIP_User_Agent_Client::create_request(SIP_Message_Type msg_type, SI
         static unsigned int sequence = 1;
         header_cseq->set_cseq(msg_type, sequence++);
 
-        header_contact->set_address(_ua->_uri);
+        header_contact->set_address(_uri);
 
         request->set_request_line(msg_type, to, SIP_VERSION);
     }else
@@ -257,7 +256,7 @@ SIP_Request *SIP_User_Agent_Client::create_request(SIP_Message_Type msg_type, SI
         if (dialog->_local_sequence_number == 0)
             dialog->_local_sequence_number = 1;
         unsigned int sequence = 0;
-        if ((msg_type == SIP_REQUEST_ACK)) //|| (msg_type == SIP_REQUEST_CANCEL))
+        if (msg_type == SIP_REQUEST_ACK)
         {
             SIP_Header_CSeq *cseq = (SIP_Header_CSeq *) invite->get_header(SIP_HEADER_CSEQ);
             sequence = cseq->get_sequence();
@@ -283,7 +282,7 @@ SIP_Request *SIP_User_Agent_Client::create_request(SIP_Message_Type msg_type, SI
 
                 for (int i = 0; i < routes_size; i++)
                     request->add_header(new SIP_Header_Route(*(dialog->get_route(i))));
-            } else
+            }else
             {
                 remote = dialog->get_route(0)->get_address();
 
@@ -313,296 +312,11 @@ SIP_Request *SIP_User_Agent_Client::create_request(SIP_Message_Type msg_type, SI
     return request;
 }
 
-SIP_Request_Ack *SIP_User_Agent_Client::create_ack(const char *to, SIP_Request_Invite *invite)
-{
-    SIP_Dialog *dialog = _ua->matchingDialog(to, SIP_REQUEST_INVITE);
-
-    if ((!dialog) || (!invite))
-    {
-        db<SIP_User_Agent_Client>(WRN) << "SIP_User_Agent_Client::create_ack -> Failed to create request\n";
-        return 0;
-    }
-
-    return (SIP_Request_Ack *) create_request(SIP_REQUEST_ACK, dialog, 0, invite);
-}
-
-SIP_Request_Bye *SIP_User_Agent_Client::create_bye(const char *to)
-{
-    SIP_Dialog *dialog = _ua->matchingDialog(to, SIP_REQUEST_INVITE);
-
-    if (!dialog)
-    {
-        db<SIP_User_Agent_Client>(WRN) << "SIP_User_Agent_Client::create_bye -> Failed to create request\n";
-        return 0;
-    }
-
-    return (SIP_Request_Bye *) create_request(SIP_REQUEST_BYE, dialog);
-}
-
-SIP_Request_Invite *SIP_User_Agent_Client::create_invite(const char *to)
-{
-    SIP_Dialog *dialog = _ua->matchingDialog(to, SIP_REQUEST_INVITE);
-
-    if ((dialog) || (!to))
-    {
-        db<SIP_User_Agent_Client>(WRN) << "SIP_User_Agent_Client::create_invite -> Failed to create request\n";
-        return 0;
-    }
-
-    SIP_Request_Invite *invite = (SIP_Request_Invite *) create_request(SIP_REQUEST_INVITE, 0, to);
-
-    SIP_Header_Allow *header_allow = new SIP_Header_Allow();
-    for (int i = 0; i < (SIP_MESSAGE_TYPE_INVALID - 1); i++)
-        header_allow->addAllowed((SIP_Message_Type) i);
-    invite->add_header(header_allow);
-
-    SIP_Header_Content_Disposition *header_content_disposition = new SIP_Header_Content_Disposition();
-    header_content_disposition->set_string("session");
-    invite->add_header(header_content_disposition);
-
-    SIP_SDP_Body *sdp = new SIP_SDP_Body();
-    invite->set_body(sdp);
-
-    return invite;
-}
-
-SIP_Request_Message *SIP_User_Agent_Client::create_message(const char *to, const char *data)
-{
-    //SIP_Dialog *dialog = _ua->matchingDialog(to);
-
-    if ((!to) || (!data))
-    {
-        db<SIP_User_Agent_Client>(WRN) << "SIP_User_Agent_Client::create_message -> Failed to create request\n";
-        return 0;
-    }
-
-    SIP_Request_Message *message = (SIP_Request_Message *) create_request(SIP_REQUEST_MESSAGE, 0, to);
-
-    SIP_Text_Plain_Body *text = new SIP_Text_Plain_Body();
-    text->set_text(data);
-    message->set_body(text);
-
-    return message;
-}
-
-SIP_Request_Notify *SIP_User_Agent_Client::create_notify(const char *to, SIP_Subscription_State state, SIP_Pidf_Xml_Basic_Element pidf_xml_element, unsigned int expires)
-{
-    SIP_Dialog *dialog = _ua->matchingDialog(to, SIP_REQUEST_SUBSCRIBE);
-
-    if ((!dialog) || (!_ua->_subscription.is_active()))
-    {
-        db<SIP_User_Agent_Client>(WRN) << "SIP_User_Agent_Client::create_notify -> Failed to create request\n";
-        return 0;
-    }
-
-    SIP_Request_Notify *notify = (SIP_Request_Notify *) create_request(SIP_REQUEST_NOTIFY, dialog);
-
-    SIP_Header_Event *header_event = new SIP_Header_Event();
-    header_event->set_event(_ua->_subscription._event_type, _ua->_subscription._event_id);
-    notify->add_header(header_event);
-
-    SIP_Header_Subscription_State *header_subscription_state = new SIP_Header_Subscription_State();
-    header_subscription_state->set_subscription_state(state, expires);
-    notify->add_header(header_subscription_state);
-
-    SIP_Pidf_Xml_Body *pidf = new SIP_Pidf_Xml_Body();
-    pidf->set_element(pidf_xml_element);
-    notify->set_body(pidf);
-
-    return notify;
-}
-
-void SIP_User_Agent_Client::send_request(SIP_Request *request)
-{
-    if (!request)
-    {
-        db<SIP_User_Agent_Client>(WRN) << "SIP_User_Agent_Client::send_request -> Invalid parameter\n";
-        return;
-    }
-
-    if (request->get_msg_type() == SIP_REQUEST_INVITE)
-    {
-        SIP_Transaction_Client_Invite *transaction = new SIP_Transaction_Client_Invite(_ua);
-        _ua->add_transaction(transaction);
-        transaction->send_invite((SIP_Request_Invite *) request);
-    } else
-    {
-        SIP_Transaction_Client_Non_Invite *transaction = new SIP_Transaction_Client_Non_Invite(_ua);
-        _ua->add_transaction(transaction);
-        transaction->send_request(request);
-    }
-
-    if (request->get_can_delete())
-        delete request;
-}
-
-bool SIP_User_Agent_Client::receive_msg(SIP_Response *response)
-{
-    if (response->get_num_header(SIP_HEADER_VIA) != 1)
-        return false;
-
-    int status_code = response->get_status_line()->get_status_code();
-    SIP_Transaction *transaction = _ua->matching_transaction(response);
-
-    if (!transaction)
-    {
-        db<SIP_User_Agent_Client>(WRN) << "SIP_User_Agent_Client::receive_msg -> Ignoring invalid response\n";
-        return false;
-    }
-
-    if (transaction->get_transaction_type() == SIP_TRANSACTION_CLIENT_INVITE)
-    {
-        if ((status_code >= 100) && (status_code <= 199))
-            ((SIP_Transaction_Client_Invite *) transaction)->receive_1xx(response);
-
-        else if ((status_code >= 200) && (status_code <= 299))
-            ((SIP_Transaction_Client_Invite *) transaction)->receive_2xx(response);
-
-        else if ((status_code >= 300) && (status_code <= 699))
-            ((SIP_Transaction_Client_Invite *) transaction)->receive_3xx_6xx(response);
-
-    } else if (transaction->get_transaction_type() == SIP_TRANSACTION_CLIENT_NON_INVITE)
-    {
-        if ((status_code >= 100) && (status_code <= 199))
-            ((SIP_Transaction_Client_Non_Invite *) transaction)->receive_1xx(response);
-
-        else if ((status_code >= 200) && (status_code <= 699))
-            ((SIP_Transaction_Client_Non_Invite *) transaction)->receive_2xx_6xx(response);
-    }
-
-    return true;
-}
-
-bool SIP_User_Agent_Client::receive_msg(SIP_Request *request, SIP_Response *response, SIP_Transaction *transaction)
-{
-    int status_code = response->get_status_line()->get_status_code();
-    SIP_Dialog *dialog = _ua->matchingDialog(response, request->get_msg_type());
-
-    if ((status_code >= 200) && (status_code <= 299))
-        receive_2xx(request, response, transaction, dialog);
-
-    else if ((status_code >= 300) && (status_code <= 699))
-        receive_3xx_6xx(request, response, transaction, dialog);
-
-    return true;
-}
-
-bool SIP_User_Agent_Client::receive_2xx(SIP_Request *request, SIP_Response *response, SIP_Transaction *transaction, SIP_Dialog *dialog)
-{
-    switch (request->get_msg_type())
-    {
-        case SIP_REQUEST_INVITE:
-        {
-            if (!dialog)
-            {
-                SIP_Dialog *new_dialog = create_dialog(request, response);
-                if (new_dialog)
-                {
-                    SIP_Request_Ack *ack = create_ack(new_dialog->_remote_uri, (SIP_Request_Invite *) request);
-                    SIP_Manager::get_instance()->get_transport()->send_message(ack);
-                    delete ack;
-                }
-            } else
-            {
-                SIP_Header_Contact *contact = (SIP_Header_Contact *) response->get_header(SIP_HEADER_CONTACT);
-                if (contact)
-                {
-                    const char *target = contact->get_address();
-                    if (target)
-                        dialog->set_remote_target(target);
-                }
-            }
-            break;
-        }
-
-        case SIP_REQUEST_BYE:
-        {
-            if (dialog)
-            {
-                SIP_Manager::_callback(SIP_SESSION_TERMINATED, _ua, dialog->_remote_uri);
-                _ua->remove_dialog(dialog);
-            }
-            break;
-        }
-
-        default:
-            break;
-    }
-
-    return true;
-}
-
-bool SIP_User_Agent_Client::receive_3xx_6xx(SIP_Request *request, SIP_Response *response, SIP_Transaction *transaction, SIP_Dialog *dialog)
-{
-    int status_code = response->get_status_line()->get_status_code();
-
-    if ((status_code == 408) || (status_code == 481) || (request->get_msg_type() == SIP_REQUEST_BYE))
-    {
-        if (dialog)
-        {
-            SIP_Manager::_callback(SIP_SESSION_TERMINATED, _ua, dialog->_remote_uri);
-            _ua->remove_dialog(dialog);
-        }
-        return true;
-    }
-
-    if (dialog)
-    {
-        SIP_Request_Bye *bye = create_bye(dialog->_remote_uri);
-        send_request(bye);
-        //delete bye;
-
-        SIP_Manager::_callback(SIP_SESSION_TERMINATED, _ua, dialog->_remote_uri);
-        _ua->remove_dialog(dialog);
-    }
-
-    return true;
-}
-
-SIP_Dialog *SIP_User_Agent_Client::create_dialog(SIP_Request *request, SIP_Response *response)
-{
-    SIP_Header_From *from_request = (SIP_Header_From *) request->get_header(SIP_HEADER_FROM);
-    SIP_Header_From *from_response = (SIP_Header_From *) response->get_header(SIP_HEADER_FROM);
-    SIP_Header_Call_ID *call_id = (SIP_Header_Call_ID *) request->get_header(SIP_HEADER_CALLID);
-    SIP_Header_Contact *contact = (SIP_Header_Contact *) response->get_header(SIP_HEADER_CONTACT);
-    SIP_Header_CSeq *cseq = (SIP_Header_CSeq *) request->get_header(SIP_HEADER_CSEQ);
-    SIP_Header_To *to = (SIP_Header_To *) response->get_header(SIP_HEADER_TO);
-
-    if ((!from_request) || (!from_response) || (!call_id) || (!contact) || (!cseq) || (!to))
-        return 0;
-
-    const char *id = call_id->get_string();
-    const char *local_tag = from_request->get_tag();
-    const char *remote_tag = to->get_tag(); //It can be NULL, compatibility with RFC 2543
-    const char *local_uri = from_response->get_address();
-    const char *remote_uri = to->get_address();
-    const char *target = contact->get_address();
-    unsigned int sequence_number = cseq->get_sequence();
-
-    if ((!id) || (!local_tag) || (!local_uri) || (!remote_uri) || (!target))
-        return 0;
-
-    SIP_Dialog *dialog = _ua->add_dialog(SIP_REQUEST_INVITE, SIP_CALL_STATUS_OUTGOING);
-    dialog->set_dialog(id, local_tag, remote_tag, sequence_number, 0, local_uri, remote_uri, target);
-
-    int record_route_num = response->get_num_header(SIP_HEADER_RECORD_ROUTE);
-    for (int i = 0; i < record_route_num; i++)
-    {
-        SIP_Header_Route *route = (SIP_Header_Route *) response->get_header(SIP_HEADER_RECORD_ROUTE, i);
-        dialog->add_route_front(route);
-    }
-
-    SIP_Manager::_callback(SIP_SESSION_INITIATED, _ua, remote_uri);
-    return dialog;
-}
-
-//-------------------------------------------
-
-SIP_Response *SIP_User_Agent_Server::create_response(int status_code, SIP_Request *request)
+SIP_Response *SIP_User_Agent::create_response(unsigned short status_code, SIP_Request *request)
 {
     if ((status_code < 100) || (status_code > 699) || (!request))
     {
-        db<SIP_User_Agent_Server>(WRN) << "SIP_User_Agent_Server::create_response -> Invalid parameters\n";
+        db<SIP_User_Agent>(WRN) << "SIP_User_Agent::create_response -> Invalid parameters\n";
         return 0;
     }
 
@@ -611,9 +325,6 @@ SIP_Response *SIP_User_Agent_Server::create_response(int status_code, SIP_Reques
     SIP_Header_Call_ID *call_id = (SIP_Header_Call_ID *) request->get_header(SIP_HEADER_CALLID);
     SIP_Header_CSeq *cseq = (SIP_Header_CSeq *) request->get_header(SIP_HEADER_CSEQ);
     SIP_Header_To *to = (SIP_Header_To *) request->get_header(SIP_HEADER_TO);
-
-    if ((via_num == 0) || (!from) || (!call_id) || (!cseq) || (!to))
-        return 0;
 
     SIP_Response *response = new SIP_Response(status_code);
 
@@ -662,15 +373,138 @@ SIP_Response *SIP_User_Agent_Server::create_response(int status_code, SIP_Reques
     return response;
 }
 
-void SIP_User_Agent_Server::send_response(SIP_Response *response, SIP_Message_Type request_type, SIP_Transaction *transaction)
+SIP_Request *SIP_User_Agent::create_ack(const char *to, SIP_Request *invite)
 {
-    if ((!response) || (!transaction))
+    SIP_Dialog *dialog = matching_dialog(to, SIP_REQUEST_INVITE);
+
+    if ((!dialog) || (!invite))
     {
-        db<SIP_User_Agent_Server>(WRN) << "SIP_User_Agent_Server::send_response -> Invalid parameters\n";
+        db<SIP_User_Agent>(WRN) << "SIP_User_Agent::create_ack -> Failed to create request\n";
+        return 0;
+    }
+
+    return create_request(SIP_REQUEST_ACK, dialog, 0, invite);
+}
+
+SIP_Request *SIP_User_Agent::create_bye(const char *to)
+{
+    SIP_Dialog *dialog = matching_dialog(to, SIP_REQUEST_INVITE);
+
+    if (!dialog)
+    {
+        db<SIP_User_Agent>(WRN) << "SIP_User_Agent::create_bye -> Failed to create request\n";
+        return 0;
+    }
+
+    return create_request(SIP_REQUEST_BYE, dialog);
+}
+
+SIP_Request *SIP_User_Agent::create_invite(const char *to)
+{
+    SIP_Dialog *dialog = matching_dialog(to, SIP_REQUEST_INVITE);
+
+    if ((dialog) || (!to))
+    {
+        db<SIP_User_Agent>(WRN) << "SIP_User_Agent::create_invite -> Failed to create request\n";
+        return 0;
+    }
+
+    SIP_Request *invite = create_request(SIP_REQUEST_INVITE, 0, to);
+
+    SIP_Header_Allow *header_allow = new SIP_Header_Allow();
+    for (int i = 0; i < (SIP_MESSAGE_TYPE_INVALID - 1); i++)
+        header_allow->add_allowed((SIP_Message_Type) i);
+    invite->add_header(header_allow);
+
+    SIP_Header_Content_Disposition *header_content_disposition = new SIP_Header_Content_Disposition();
+    header_content_disposition->set_string("session");
+    invite->add_header(header_content_disposition);
+
+    SIP_SDP_Body *sdp = new SIP_SDP_Body();
+    invite->set_body(sdp);
+
+    return invite;
+}
+
+SIP_Request *SIP_User_Agent::create_message(const char *to, const char *data)
+{
+    //SIP_Dialog *dialog = matching_dialog(to);
+
+    if ((!to) || (!data))
+    {
+        db<SIP_User_Agent>(WRN) << "SIP_User_Agent::create_message -> Failed to create request\n";
+        return 0;
+    }
+
+    SIP_Request *message = create_request(SIP_REQUEST_MESSAGE, 0, to);
+
+    SIP_Text_Plain_Body *text = new SIP_Text_Plain_Body();
+    text->set_text(data);
+    message->set_body(text);
+
+    return message;
+}
+
+SIP_Request *SIP_User_Agent::create_notify(const char *to, SIP_Subscription_State state, SIP_Pidf_Xml_Basic_Element pidf_xml_element, unsigned int expires)
+{
+    SIP_Dialog *dialog = matching_dialog(to, SIP_REQUEST_SUBSCRIBE);
+
+    if ((!dialog) || (!_subscription.is_active()))
+    {
+        db<SIP_User_Agent>(WRN) << "SIP_User_Agent::create_notify -> Failed to create request\n";
+        return 0;
+    }
+
+    SIP_Request *notify = create_request(SIP_REQUEST_NOTIFY, dialog);
+
+    SIP_Header_Event *header_event = new SIP_Header_Event();
+    header_event->set_event(_subscription._event_type, _subscription._event_id);
+    notify->add_header(header_event);
+
+    SIP_Header_Subscription_State *header_subscription_state = new SIP_Header_Subscription_State();
+    header_subscription_state->set_subscription_state(state, expires);
+    notify->add_header(header_subscription_state);
+
+    SIP_Pidf_Xml_Body *pidf = new SIP_Pidf_Xml_Body();
+    pidf->set_element(pidf_xml_element);
+    notify->set_body(pidf);
+
+    return notify;
+}
+
+void SIP_User_Agent::send_request(SIP_Request *request)
+{
+    if (!request)
+    {
+        db<SIP_User_Agent>(WRN) << "SIP_User_Agent::send_request -> Invalid parameter\n";
         return;
     }
 
-    int status_code = response->get_status_line()->get_status_code();
+    if (request->get_msg_type() == SIP_REQUEST_INVITE)
+    {
+        SIP_Transaction_Client_Invite *transaction = new SIP_Transaction_Client_Invite(this);
+        add_transaction(transaction);
+        transaction->send_invite(request);
+    }else
+    {
+        SIP_Transaction_Client_Non_Invite *transaction = new SIP_Transaction_Client_Non_Invite(this);
+        add_transaction(transaction);
+        transaction->send_request(request);
+    }
+
+    if (request->get_can_delete())
+        delete request;
+}
+
+void SIP_User_Agent::send_response(SIP_Response *response, SIP_Message_Type request_type, SIP_Transaction *transaction)
+{
+    if ((!response) || (!transaction))
+    {
+        db<SIP_User_Agent>(WRN) << "SIP_User_Agent::send_response -> Invalid parameters\n";
+        return;
+    }
+
+    unsigned short status_code = response->get_status_code();
 
     if (request_type == SIP_REQUEST_INVITE)
     {
@@ -682,7 +516,7 @@ void SIP_User_Agent_Server::send_response(SIP_Response *response, SIP_Message_Ty
 
         else if ((status_code >= 300) && (status_code <= 699))
             ((SIP_Transaction_Server_Invite *) transaction)->send_3xx_6xx(response);
-    } else
+    }else
     {
         if ((status_code >= 100) && (status_code <= 199))
             ((SIP_Transaction_Server_Non_Invite *) transaction)->send_1xx(response);
@@ -695,40 +529,162 @@ void SIP_User_Agent_Server::send_response(SIP_Response *response, SIP_Message_Ty
         delete response;
 }
 
-bool SIP_User_Agent_Server::receive_msg(SIP_Request *request)
+bool SIP_User_Agent::receive_response(SIP_Response *response)
+{
+    if (response->get_num_header(SIP_HEADER_VIA) != 1)
+        return false;
+
+    unsigned short status_code = response->get_status_code();
+    SIP_Transaction *transaction = matching_transaction(response);
+
+    if (!transaction)
+    {
+        db<SIP_User_Agent>(WRN) << "SIP_User_Agent::receive_response -> Ignoring invalid response\n";
+        return false;
+    }
+
+    if (transaction->get_transaction_type() == SIP_TRANSACTION_CLIENT_INVITE)
+    {
+        if ((status_code >= 100) && (status_code <= 199))
+            ((SIP_Transaction_Client_Invite *) transaction)->receive_1xx(response);
+
+        else if ((status_code >= 200) && (status_code <= 299))
+            ((SIP_Transaction_Client_Invite *) transaction)->receive_2xx(response);
+
+        else if ((status_code >= 300) && (status_code <= 699))
+            ((SIP_Transaction_Client_Invite *) transaction)->receive_3xx_6xx(response);
+
+    }else if (transaction->get_transaction_type() == SIP_TRANSACTION_CLIENT_NON_INVITE)
+    {
+        if ((status_code >= 100) && (status_code <= 199))
+            ((SIP_Transaction_Client_Non_Invite *) transaction)->receive_1xx(response);
+
+        else if ((status_code >= 200) && (status_code <= 699))
+            ((SIP_Transaction_Client_Non_Invite *) transaction)->receive_2xx_6xx(response);
+    }
+
+    return true;
+}
+
+bool SIP_User_Agent::receive_response(SIP_Request *request, SIP_Response *response, SIP_Transaction *transaction)
+{
+    unsigned short status_code = response->get_status_code();
+    SIP_Dialog *dialog = matching_dialog(response, request->get_msg_type());
+
+    if ((status_code >= 200) && (status_code <= 299))
+        receive_2xx(request, response, transaction, dialog);
+
+    else if ((status_code >= 300) && (status_code <= 699))
+        receive_3xx_6xx(request, response, transaction, dialog);
+
+    return true;
+}
+
+bool SIP_User_Agent::receive_2xx(SIP_Request *request, SIP_Response *response, SIP_Transaction *transaction, SIP_Dialog *dialog)
+{
+    switch (request->get_msg_type())
+    {
+        case SIP_REQUEST_INVITE:
+        {
+            if (!dialog)
+            {
+                SIP_Dialog *new_dialog = create_dialog_client(request, response);
+                if (new_dialog)
+                {
+                    SIP_Request *ack = create_ack(new_dialog->_remote_uri, request);
+                    SIP_Manager::get_instance()->send_message(ack);
+                    delete ack;
+                }
+            }else
+            {
+                SIP_Header_Contact *contact = (SIP_Header_Contact *) response->get_header(SIP_HEADER_CONTACT);
+                if (contact)
+                {
+                    const char *target = contact->get_address();
+                    if (target)
+                        dialog->set_remote_target(target);
+                }
+            }
+            break;
+        }
+
+        case SIP_REQUEST_BYE:
+        {
+            if (dialog)
+            {
+                SIP_Manager::_callback(SIP_SESSION_TERMINATED, this, dialog->_remote_uri);
+                remove_dialog(dialog);
+            }
+            break;
+        }
+
+        default:
+            break;
+    }
+
+    return true;
+}
+
+bool SIP_User_Agent::receive_3xx_6xx(SIP_Request *request, SIP_Response *response, SIP_Transaction *transaction, SIP_Dialog *dialog)
+{
+    unsigned short status_code = response->get_status_code();
+
+    if ((status_code == 408) || (status_code == 481) || (request->get_msg_type() == SIP_REQUEST_BYE))
+    {
+        if (dialog)
+        {
+            SIP_Manager::_callback(SIP_SESSION_TERMINATED, this, dialog->_remote_uri);
+            remove_dialog(dialog);
+        }
+        return true;
+    }
+
+    if (dialog)
+    {
+        SIP_Request *bye = create_bye(dialog->_remote_uri);
+        send_request(bye);
+
+        SIP_Manager::_callback(SIP_SESSION_TERMINATED, this, dialog->_remote_uri);
+        remove_dialog(dialog);
+    }
+
+    return true;
+}
+
+bool SIP_User_Agent::receive_request(SIP_Request *request)
 {
     SIP_Message_Type request_type = request->get_msg_type();
-    SIP_Transaction *transaction = _ua->matching_transaction(request);
+    SIP_Transaction *transaction = matching_transaction(request);
 
     if ((!transaction) && (request_type == SIP_REQUEST_ACK))
     {
-        db<SIP_User_Agent_Server>(WRN) << "SIP_User_Agent_Server::receive_msg -> Invalid ACK message\n";
-        return false;
+        db<SIP_User_Agent>(TRC) << "SIP_User_Agent::receive_request -> Received ACK message\n";
+        return true;
 
-    } else if ((!transaction) && (request_type == SIP_REQUEST_INVITE))
+    }else if ((!transaction) && (request_type == SIP_REQUEST_INVITE))
     {
-        //if (dialog) //TODO: Se já existe um dialog, não recebe mais INVITE!
-        //{
-        //	db<SIP_User_Agent_Server>(WRN) << "SIP_User_Agent_Server::receive_msg -> There is already a dialog\n";
-        //	return false;
-        //}
+        if (get_call()) //If there is a dialog, it does not receive new INVITE!
+        {
+            db<SIP_User_Agent>(WRN) << "SIP_User_Agent::receive_request -> There is already a dialog\n";
+            return false;
+        }
 
-        transaction = new SIP_Transaction_Server_Invite(_ua);
-        _ua->add_transaction(transaction);
+        transaction = new SIP_Transaction_Server_Invite(this);
+        add_transaction(transaction);
 
-    } else if (!transaction) //&& (request_type != SIP_REQUEST_INVITE) && (request_type != SIP_REQUEST_ACK))
+    }else if (!transaction) //&& (request_type != SIP_REQUEST_INVITE) && (request_type != SIP_REQUEST_ACK))
     {
-        transaction = new SIP_Transaction_Server_Non_Invite(_ua);
-        _ua->add_transaction(transaction);
+        transaction = new SIP_Transaction_Server_Non_Invite(this);
+        add_transaction(transaction);
     }
 
-    db<SIP_User_Agent_Server>(INF) << "SIP_User_Agent_Server::receive_msg -> New request received\n";
+    db<SIP_User_Agent>(TRC) << "SIP_User_Agent::receive_request -> New request received\n";
 
     if (request_type == SIP_REQUEST_INVITE)
-        ((SIP_Transaction_Server_Invite *) transaction)->receive_invite((SIP_Request_Invite *) request);
+        ((SIP_Transaction_Server_Invite *) transaction)->receive_invite(request);
 
     else if (request_type == SIP_REQUEST_ACK)
-        ((SIP_Transaction_Server_Invite *) transaction)->receive_ack((SIP_Request_Ack *) request);
+        ((SIP_Transaction_Server_Invite *) transaction)->receive_ack(request);
 
     else
         ((SIP_Transaction_Server_Non_Invite *) transaction)->receive_request(request);
@@ -736,12 +692,12 @@ bool SIP_User_Agent_Server::receive_msg(SIP_Request *request)
     return true;
 }
 
-bool SIP_User_Agent_Server::receive_msg(SIP_Request *request, SIP_Transaction *transaction)
+bool SIP_User_Agent::receive_request(SIP_Request *request, SIP_Transaction *transaction)
 {
     SIP_Message_Type request_type = request->get_msg_type();
-    SIP_Dialog *dialog = _ua->matchingDialog(request, request_type);
+    SIP_Dialog *dialog = matching_dialog(request, request_type);
 
-    if ((request_type != SIP_REQUEST_ACK)) //&& (request_type != SIP_REQUEST_CANCEL))
+    if (request_type != SIP_REQUEST_ACK)
     {
         SIP_Header_Require *require = (SIP_Header_Require *) request->get_header(SIP_HEADER_REQUIRE);
         if (require)
@@ -757,7 +713,6 @@ bool SIP_User_Agent_Server::receive_msg(SIP_Request *request, SIP_Transaction *t
             }
 
             send_response(response, request_type, transaction);
-            //delete response;
             return false;
         }
     }
@@ -765,23 +720,16 @@ bool SIP_User_Agent_Server::receive_msg(SIP_Request *request, SIP_Transaction *t
     if (!dialog)
     {
         SIP_Header_To *header_to = (SIP_Header_To *) request->get_header(SIP_HEADER_TO);
-        if (!header_to)
-            return false;
-
         const char *remote_tag = header_to->get_tag();
         if (remote_tag)
         {
             SIP_Response *response = create_response(481, request);
             send_response(response, request_type, transaction);
-            //delete response;
             return false;
         }
-    } else
+    }else
     {
         SIP_Header_CSeq *header_cseq = (SIP_Header_CSeq *) request->get_header(SIP_HEADER_CSEQ);
-        if (!header_cseq)
-            return false;
-
         unsigned int sequence_number = header_cseq->get_sequence();
         if ((dialog->_remote_sequence_number == 0) || (sequence_number > dialog->_remote_sequence_number))
             dialog->_remote_sequence_number = sequence_number;
@@ -789,46 +737,43 @@ bool SIP_User_Agent_Server::receive_msg(SIP_Request *request, SIP_Transaction *t
         {
             SIP_Response *response = create_response(500, request);
             send_response(response, request_type, transaction);
-            //delete response;
             return false;
         }*/
     }
 
     switch (request_type)
     {
-        case SIP_REQUEST_ACK:       return true; //receive_ack((SIP_Request_Ack *) request, transaction, dialog);
-        case SIP_REQUEST_BYE:       return receive_bye((SIP_Request_Bye *) request, transaction, dialog);
-        case SIP_REQUEST_INVITE:    return receive_invite((SIP_Request_Invite *) request, transaction, dialog);
-        case SIP_REQUEST_MESSAGE:   return receive_message((SIP_Request_Message *) request, transaction, dialog);
-        case SIP_REQUEST_NOTIFY:    return true; //receive_notify((SIP_Request_Notify *) request, transaction, dialog);
-        case SIP_REQUEST_SUBSCRIBE: return receive_subscribe((SIP_Request_Subscribe *) request, transaction, dialog);
+        case SIP_REQUEST_ACK:       return true; //receive_ack(request, transaction, dialog);
+        case SIP_REQUEST_BYE:       return receive_bye(request, transaction, dialog);
+        case SIP_REQUEST_INVITE:    return receive_invite(request, transaction, dialog);
+        case SIP_REQUEST_MESSAGE:   return receive_message(request, transaction, dialog);
+        case SIP_REQUEST_NOTIFY:    return true; //receive_notify(request, transaction, dialog);
+        case SIP_REQUEST_SUBSCRIBE: return receive_subscribe(request, transaction, dialog);
         default: break;
     }
 
     return false;
 }
 
-bool SIP_User_Agent_Server::receive_bye(SIP_Request_Bye *request, SIP_Transaction *transaction, SIP_Dialog *dialog)
+bool SIP_User_Agent::receive_bye(SIP_Request *request, SIP_Transaction *transaction, SIP_Dialog *dialog)
 {
     if (!dialog)
     {
         SIP_Response *response = create_response(481, request);
         send_response(response, SIP_REQUEST_BYE, transaction);
-        //delete response;
-    } else
+    }else
     {
         SIP_Response *response = create_response(200, request);
         send_response(response, SIP_REQUEST_BYE, transaction);
-        //delete response;
 
-        SIP_Manager::_callback(SIP_SESSION_TERMINATED, _ua, dialog->_remote_uri);
-        _ua->remove_dialog(dialog);
+        SIP_Manager::_callback(SIP_SESSION_TERMINATED, this, dialog->_remote_uri);
+        remove_dialog(dialog);
     }
 
     return true;
 }
 
-bool SIP_User_Agent_Server::receive_invite(SIP_Request_Invite *request, SIP_Transaction *transaction, SIP_Dialog *dialog)
+bool SIP_User_Agent::receive_invite(SIP_Request *request, SIP_Transaction *transaction, SIP_Dialog *dialog)
 {
     if (!dialog)
     {
@@ -843,15 +788,14 @@ bool SIP_User_Agent_Server::receive_invite(SIP_Request_Invite *request, SIP_Tran
 
         SIP_Header_Allow *header_allow = new SIP_Header_Allow();
         for (int i = 0; i < (SIP_MESSAGE_TYPE_INVALID - 1); i++)
-            header_allow->addAllowed((SIP_Message_Type) i);
+            header_allow->add_allowed((SIP_Message_Type) i);
         response->add_header(header_allow);
 
-        create_dialog(request, response);
+        create_dialog_server(request, response);
         send_response(response, SIP_REQUEST_INVITE, transaction);
-        //delete response;
 
         //TODO: 13.3.1.4 The INVITE is Accepted: Reenviar periodicamente a resposta até receber ACK
-    } else
+    }else
     {
         SIP_Header_Contact *contact = (SIP_Header_Contact *) request->get_header(SIP_HEADER_CONTACT);
         if (contact)
@@ -865,26 +809,25 @@ bool SIP_User_Agent_Server::receive_invite(SIP_Request_Invite *request, SIP_Tran
     return true;
 }
 
-bool SIP_User_Agent_Server::receive_message(SIP_Request_Message *request, SIP_Transaction *transaction, SIP_Dialog *dialog)
+bool SIP_User_Agent::receive_message(SIP_Request *request, SIP_Transaction *transaction, SIP_Dialog *dialog)
 {
     SIP_Response *response = create_response(200, request);
     send_response(response, SIP_REQUEST_MESSAGE, transaction);
-    //delete response;
 
     SIP_Body *body = request->get_body();
     if ((!body) || (body->get_body_type() != SIP_BODY_TEXT_PLAIN))
         return false;
 
     const char *remote_uri = ((SIP_Header_From *) request->get_header(SIP_HEADER_FROM))->get_address();
-    _ua->_text_received = ((SIP_Text_Plain_Body *) body)->get_text();
+    _text_received = ((SIP_Text_Plain_Body *) body)->get_text();
 
-    SIP_Manager::_callback(SIP_MESSAGE_RECEIVED, _ua, remote_uri);
+    SIP_Manager::_callback(SIP_MESSAGE_RECEIVED, this, remote_uri);
 
-    _ua->_text_received = 0;
+    _text_received = 0;
     return true;
 }
 
-bool SIP_User_Agent_Server::receive_subscribe(SIP_Request_Subscribe *request, SIP_Transaction *transaction, SIP_Dialog *dialog)
+bool SIP_User_Agent::receive_subscribe(SIP_Request *request, SIP_Transaction *transaction, SIP_Dialog *dialog)
 {
     SIP_Header_Event *header_event = (SIP_Header_Event *) request->get_header(SIP_HEADER_EVENT);
     if (!header_event)
@@ -892,8 +835,8 @@ bool SIP_User_Agent_Server::receive_subscribe(SIP_Request_Subscribe *request, SI
 
     SIP_Event_Package event_type = header_event->get_type();
 
-    if (((!_ua->_subscription.is_active()) && (event_type == SIP_EVENT_PRESENCE)) ||
-        ((_ua->_subscription.is_active()) && (event_type == _ua->_subscription._event_type)))
+    if (((!_subscription.is_active()) && (event_type == SIP_EVENT_PRESENCE)) ||
+        ((_subscription.is_active()) && (event_type == _subscription._event_type)))
     {
         SIP_Response *response = create_response(200, request);
 
@@ -904,34 +847,69 @@ bool SIP_User_Agent_Server::receive_subscribe(SIP_Request_Subscribe *request, SI
         response->add_header(header_expires);
 
         if ((!dialog) && (time > 0))
-            create_dialog(request, response);
+            create_dialog_server(request, response);
 
         send_response(response, SIP_REQUEST_SUBSCRIBE, transaction);
-        //delete response;
 
         if (dialog)
         {
             if (time > 0)
             {
                 //TODO: Acionar ou atualizar timer por tempo do Expires
-            } else
+            }else
             {
-                SIP_Manager::_callback(SIP_SUBSCRIPTION_TERMINATED, _ua, dialog->_remote_uri);
-                _ua->_subscription.clear();
-                _ua->remove_dialog(dialog); //TODO: Deletar mesmo se tem INVITE session?
+                SIP_Manager::_callback(SIP_SUBSCRIPTION_TERMINATED, this, dialog->_remote_uri);
+                _subscription.clear();
+                remove_dialog(dialog); //TODO: Deletar mesmo se tem INVITE session?
             }
         }
-    } else
+    }else
     {
         SIP_Response *response = create_response(489, request);
         send_response(response, SIP_REQUEST_SUBSCRIBE, transaction);
-        //delete response;
     }
 
     return true;
 }
 
-SIP_Dialog *SIP_User_Agent_Server::create_dialog(SIP_Request *request, SIP_Response *response)
+SIP_Dialog *SIP_User_Agent::create_dialog_client(SIP_Request *request, SIP_Response *response)
+{
+    SIP_Header_From *from_request = (SIP_Header_From *) request->get_header(SIP_HEADER_FROM);
+    SIP_Header_From *from_response = (SIP_Header_From *) response->get_header(SIP_HEADER_FROM);
+    SIP_Header_Call_ID *call_id = (SIP_Header_Call_ID *) request->get_header(SIP_HEADER_CALLID);
+    SIP_Header_Contact *contact = (SIP_Header_Contact *) response->get_header(SIP_HEADER_CONTACT);
+    SIP_Header_CSeq *cseq = (SIP_Header_CSeq *) request->get_header(SIP_HEADER_CSEQ);
+    SIP_Header_To *to = (SIP_Header_To *) response->get_header(SIP_HEADER_TO);
+
+    if (!contact)
+        return 0;
+
+    const char *id = call_id->get_string();
+    const char *local_tag = from_request->get_tag();
+    const char *remote_tag = to->get_tag(); //It can be NULL, compatibility with RFC 2543
+    const char *local_uri = from_response->get_address();
+    const char *remote_uri = to->get_address();
+    const char *target = contact->get_address();
+    unsigned int sequence_number = cseq->get_sequence();
+
+    if ((!id) || (!local_tag) || (!local_uri) || (!remote_uri) || (!target))
+        return 0;
+
+    SIP_Dialog *dialog = add_dialog(SIP_REQUEST_INVITE, SIP_CALL_STATUS_OUTGOING);
+    dialog->set_dialog(id, local_tag, remote_tag, sequence_number, 0, local_uri, remote_uri, target);
+
+    int record_route_num = response->get_num_header(SIP_HEADER_RECORD_ROUTE);
+    for (int i = 0; i < record_route_num; i++)
+    {
+        SIP_Header_Route *route = (SIP_Header_Route *) response->get_header(SIP_HEADER_RECORD_ROUTE, i);
+        dialog->add_route_front(route);
+    }
+
+    SIP_Manager::_callback(SIP_SESSION_INITIATED, this, remote_uri);
+    return dialog;
+}
+
+SIP_Dialog *SIP_User_Agent::create_dialog_server(SIP_Request *request, SIP_Response *response)
 {
     SIP_Header_From *from = (SIP_Header_From *) request->get_header(SIP_HEADER_FROM);
     SIP_Header_Call_ID *call_id = (SIP_Header_Call_ID *) request->get_header(SIP_HEADER_CALLID);
@@ -940,7 +918,7 @@ SIP_Dialog *SIP_User_Agent_Server::create_dialog(SIP_Request *request, SIP_Respo
     SIP_Header_To *to_request = (SIP_Header_To *) request->get_header(SIP_HEADER_TO);
     SIP_Header_To *to_response = (SIP_Header_To *) response->get_header(SIP_HEADER_TO);
 
-    if ((!from) || (!call_id) || (!cseq) || (!to_request) || (!to_response) || (!contact))
+    if (!contact)
         return 0;
 
     const char *id = call_id->get_string();
@@ -967,10 +945,10 @@ SIP_Dialog *SIP_User_Agent_Server::create_dialog(SIP_Request *request, SIP_Respo
         if (event_type == SIP_EVENT_PACKAGE_INVALID)
             return 0;
 
-        _ua->_subscription.set_subscription(event_type, event_id);
+        _subscription.set_subscription(event_type, event_id);
     }
 
-    SIP_Dialog *dialog = _ua->add_dialog(type, SIP_CALL_STATUS_INCOMING);
+    SIP_Dialog *dialog = add_dialog(type, SIP_CALL_STATUS_INCOMING);
     dialog->set_dialog(id, local_tag, remote_tag, 0, sequence_number, local_uri, remote_uri, target);
 
     int record_route_num = response->get_num_header(SIP_HEADER_RECORD_ROUTE);
@@ -981,47 +959,13 @@ SIP_Dialog *SIP_User_Agent_Server::create_dialog(SIP_Request *request, SIP_Respo
     }
 
     if (type == SIP_REQUEST_SUBSCRIBE)
-        SIP_Manager::_callback(SIP_SUBSCRIPTION_INITIATED, _ua, remote_uri);
+        SIP_Manager::_callback(SIP_SUBSCRIPTION_INITIATED, this, remote_uri);
     else //if (type == SIP_REQUEST_INVITE)
-        SIP_Manager::_callback(SIP_SESSION_INITIATED, _ua, remote_uri);
+        SIP_Manager::_callback(SIP_SESSION_INITIATED, this, remote_uri);
     return dialog;
 }
 
-//-------------------------------------------
-
-SIP_User_Agent::SIP_User_Agent(const char *uri) : _uac(this), _uas(this), _link(this)
-{
-    _uri = create_string(uri);
-    _text_received = 0;
-
-    for (int i = 0; i < SIP_TIMER_COUNT; i++)
-    {
-        _timer_values[i] = 0;
-        _timer_handlers[i] = 0;
-        _timer_alarms[i] = 0;
-    }
-}
-
-SIP_User_Agent::~SIP_User_Agent()
-{
-    Simple_List<SIP_Transaction>::Iterator it = _transactions.begin();
-    while (it != _transactions.end())
-    {
-        SIP_Transaction *transaction = it->object();
-        _transactions.remove(it++);
-        delete transaction;
-    }
-
-    for (int i = 0; i < SIP_TIMER_COUNT; i++)
-    {
-        if (_timer_handlers[i])
-            delete _timer_handlers[i];
-        if (_timer_alarms[i])
-            delete _timer_alarms[i];
-    }
-}
-
-SIP_Dialog *SIP_User_Agent::matchingDialog(SIP_Message *msg, SIP_Message_Type type)
+SIP_Dialog *SIP_User_Agent::matching_dialog(SIP_Message *msg, SIP_Message_Type type)
 {
     if ((type == SIP_REQUEST_ACK) || (type == SIP_REQUEST_BYE) || (type == SIP_REQUEST_INVITE))
         type = SIP_REQUEST_INVITE;
@@ -1041,12 +985,9 @@ SIP_Dialog *SIP_User_Agent::matchingDialog(SIP_Message *msg, SIP_Message_Type ty
         SIP_Header_Call_ID *header_call_id = (SIP_Header_Call_ID *) msg->get_header(SIP_HEADER_CALLID);
         SIP_Header_To *header_to = (SIP_Header_To *) msg->get_header(SIP_HEADER_TO);
 
-        if ((!header_from) || (!header_call_id) || (!header_to))
-            continue;
-
         const char *call_id = header_call_id->get_string();
-        const char *local_tag = 0; //No INVITE não possui ainda!
-        const char *remote_tag = 0; //Pode ser NULL, compatibilidade com RFC 2543
+        const char *local_tag = 0; //INVITE does not have yet!
+        const char *remote_tag = 0; //It can be NULL, compatibility with RFC 2543
 
         if (msg->get_msg_type() == SIP_RESPONSE)
         {
@@ -1078,7 +1019,7 @@ SIP_Dialog *SIP_User_Agent::matchingDialog(SIP_Message *msg, SIP_Message_Type ty
     return 0;
 }
 
-SIP_Dialog *SIP_User_Agent::matchingDialog(const char *to, SIP_Message_Type type)
+SIP_Dialog *SIP_User_Agent::matching_dialog(const char *to, SIP_Message_Type type)
 {
     Simple_List<SIP_Dialog>::Iterator it = _dialogs.begin();
     while (it != _dialogs.end())
@@ -1153,85 +1094,6 @@ SIP_Dialog *SIP_User_Agent::add_dialog(SIP_Message_Type type, SIP_Call_Status ca
     SIP_Dialog *dialog = new SIP_Dialog(type, call_status);
     _dialogs.insert(&dialog->_link);
     return dialog;
-}
-
-void SIP_User_Agent::start_timer(SIP_Timer timer, SIP_Transaction *p)
-{
-    switch (timer)
-    {
-        case SIP_TIMER_A: _timer_handlers[SIP_TIMER_A] = new Functor_Handler<SIP_Transaction>(&SIP_Transaction_Client_Invite::timer_A_Callback, p);     break;
-        case SIP_TIMER_B: _timer_handlers[SIP_TIMER_B] = new Functor_Handler<SIP_Transaction>(&SIP_Transaction_Client_Invite::timer_B_Callback, p);     break;
-        //case SIP_TIMER_C: _timer_handlers[SIP_TIMER_C] = new Functor_Handler<SIP_Transaction>(&timer_C_Callback);                                     break;
-        case SIP_TIMER_D: _timer_handlers[SIP_TIMER_D] = new Functor_Handler<SIP_Transaction>(&SIP_Transaction_Client_Invite::timer_D_Callback, p);     break;
-        case SIP_TIMER_E: _timer_handlers[SIP_TIMER_E] = new Functor_Handler<SIP_Transaction>(&SIP_Transaction_Client_Non_Invite::timer_E_Callback, p); break;
-        case SIP_TIMER_F: _timer_handlers[SIP_TIMER_F] = new Functor_Handler<SIP_Transaction>(&SIP_Transaction_Client_Non_Invite::timer_F_Callback, p); break;
-        case SIP_TIMER_G: _timer_handlers[SIP_TIMER_G] = new Functor_Handler<SIP_Transaction>(&SIP_Transaction_Server_Invite::timer_G_Callback, p);     break;
-        case SIP_TIMER_H: _timer_handlers[SIP_TIMER_H] = new Functor_Handler<SIP_Transaction>(&SIP_Transaction_Server_Invite::timer_H_Callback, p);     break;
-        case SIP_TIMER_I: _timer_handlers[SIP_TIMER_I] = new Functor_Handler<SIP_Transaction>(&SIP_Transaction_Server_Invite::timer_I_Callback, p);     break;
-        case SIP_TIMER_J: _timer_handlers[SIP_TIMER_J] = new Functor_Handler<SIP_Transaction>(&SIP_Transaction_Server_Non_Invite::timer_J_Callback, p); break;
-        case SIP_TIMER_K: _timer_handlers[SIP_TIMER_K] = new Functor_Handler<SIP_Transaction>(&SIP_Transaction_Client_Non_Invite::timer_K_Callback, p); break;
-        default: return;
-    }
-
-    _timer_alarms[timer] = new Alarm(_timer_values[timer], _timer_handlers[timer], 1);
-}
-
-void SIP_User_Agent::stop_timer(SIP_Timer timer)
-{
-    if (_timer_handlers[timer])
-    {
-        delete _timer_handlers[timer];
-        _timer_handlers[timer] = 0;
-    }
-
-    if (_timer_alarms[timer])
-    {
-        delete _timer_alarms[timer];
-        _timer_alarms[timer] = 0;
-    }
-}
-
-//-------------------------------------------
-
-void Send_RTP::send_data(const char *destination, unsigned short port, const char *data, unsigned int size)
-{
-    _buffer[0] = 0x80; //(_version << 6) && 0xc0;
-    _buffer[1] = (_sequence == 0x016a) ? 0x80 : 0x00;
-    _buffer[2] = _sequence >> 8;
-    _buffer[3] = _sequence;
-    _buffer[4] = _timestamp >> 24;
-    _buffer[5] = _timestamp >> 16;
-    _buffer[6] = _timestamp >> 8;
-    _buffer[7] = _timestamp;
-    _buffer[8] = _ssrc >> 24;
-    _buffer[9] = _ssrc >> 16;
-    _buffer[10] = _ssrc >> 8;
-    _buffer[11] = _ssrc;
-    memcpy(&_buffer[12], data, size);
-
-    char aux_dest[512];
-    char aux[255];
-    strcpy(aux_dest, destination);
-    match(aux_dest, ":" , aux);
-    skip(aux_dest, " \t");
-    match(aux_dest, "@" , aux);
-    skip(aux_dest, " \t");
-    destination = aux_dest;
-
-    //db<Send_RTP>(INF) << "Send_RTP::send_data -> Sending data to " << destination << ":" << port << " (size: " <<
-    //      size << ", seq: " << _sequence << ", timestamp: " << _timestamp << ")\n";
-
-    UDP::Address dst(IP::Address(destination), port);
-    _socket.remote(dst);
-
-    if (_socket.send(_buffer, size + 12) <= 0)
-    {
-        db<Send_RTP>(WRN) << "Send_RTP::send_data -> Failed to send data\n";
-        //return;
-    }
-
-    _sequence++;
-    _timestamp += 0xA0;
 }
 
 __END_SYS

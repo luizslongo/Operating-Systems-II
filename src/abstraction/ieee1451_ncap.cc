@@ -13,7 +13,7 @@ IEEE1451_TEDS_NCAP::IEEE1451_TEDS_NCAP(char id, const char *teds, unsigned short
     {
         begin = 0;
         end = length;
-    } else
+    }else
     {
         begin = 4;
         end = length - 2;

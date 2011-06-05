@@ -10,7 +10,6 @@ __USING_SYS
 OStream cout;
 
 //void test_decode_encode();
-//void test_copy_constructor();
 void test_user_agent();
 
 //-----------------------------------------------
@@ -20,7 +19,6 @@ int main()
     cout << "SIP test application.\n\n";
 
     //test_decode_encode();
-    //test_copy_constructor();
     test_user_agent();
 
     while (1);
@@ -135,37 +133,6 @@ void test_decode_encode()
     cout << "Sent message: \nSize: " << strlen(invite_msg) << "\n" << invite_msg << "\n";
 
     if (msg) delete msg;
-}
-
-//-----------------------------------------------
-
-void test_copy_constructor()
-{
-    cout << "+++++ Test Copy Constructor +++++\n\n";
-
-    char invite_msg[3000];
-    invite_msg[0] = 0;
-
-    create_invite(invite_msg);
-
-    cout << "********************************************\n";
-    cout << "Received message: \nSize: " << strlen(invite_msg) << ", " << invite_msg << "\n";
-
-    SIP_Request_Invite *msg = (SIP_Request_Invite *) SIP_Message::decode_msg(invite_msg);
-    SIP_Request_Invite *msg2 = new SIP_Request_Invite(*msg);
-
-    invite_msg[0] = 0;
-    if (msg2)
-    {
-        if (!msg2->encode(invite_msg))
-        cout << "Failed to encode message\n";
-    }
-
-    cout << "\n\n\n++++++++++++++++++++++++++++++++++++++++++\n";
-    cout << "Sent message: \nSize: " << strlen(invite_msg) << ", " << invite_msg << "\n";
-
-    if (msg) delete msg;
-    if (msg2) delete msg2;
 }*/
 
 //-----------------------------------------------
@@ -237,11 +204,10 @@ int create_session(SIP_User_Agent *ua, const char *to)
     while (1)
     {
         cout << "+++++ Create Invite +++++\n";
-        SIP_Request_Invite *invite = ua->get_uac()->create_invite(to);
+        SIP_Request *invite = ua->create_invite(to);
 
         cout << "+++++ Send Invite +++++\n";
-        ua->get_uac()->send_request(invite);
-        //delete invite;
+        ua->send_request(invite);
 
         Alarm::delay(3000 * 1000); //Alarm::delay(30000 * 1000); //60s
     }
@@ -288,11 +254,10 @@ int send_message(SIP_User_Agent *ua)
     char buffer[] = { "Text message!" };
 
     cout << "+++++ Create Message +++++\n";
-    SIP_Request_Message *message = ua->get_uac()->create_message(remote, buffer);
+    SIP_Request *message = ua->create_message(remote, buffer);
 
     cout << "+++++ Send Message +++++\n";
-    ua->get_uac()->send_request(message);
-    //delete message;
+    ua->send_request(message);
 
     return 0;
 }
@@ -313,11 +278,10 @@ int send_notify(SIP_User_Agent *ua)
         openClosed = !openClosed;
 
         cout << "+++++ Create Notify +++++\n";
-        SIP_Request_Notify *notify = ua->get_uac()->create_notify(remote, SIP_SUBSCRIPTION_STATE_ACTIVE, element, 3600);
+        SIP_Request *notify = ua->create_notify(remote, SIP_SUBSCRIPTION_STATE_ACTIVE, element, 3600);
 
         cout << "+++++ Send Notify +++++\n";
-        ua->get_uac()->send_request(notify);
-        //delete notify;
+        ua->send_request(notify);
 
         Alarm::delay(500 * 1000); //Alarm::delay(10000 * 1000); //10s
         if (send_notify_terminated)
@@ -3000,11 +2964,10 @@ int send_audio(SIP_User_Agent *ua)
     }
 
     cout << "+++++ Create Bye +++++\n";
-    SIP_Request_Bye *bye = ua->get_uac()->create_bye(remote);
+    SIP_Request *bye = ua->create_bye(remote);
 
     cout << "+++++ Send Bye +++++\n";
-    ua->get_uac()->send_request(bye);
-    //delete bye;
+    ua->send_request(bye);
 
     send_audio_thread = 0;
     return 0;

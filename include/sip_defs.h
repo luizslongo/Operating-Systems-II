@@ -10,6 +10,7 @@ __BEGIN_SYS
 #define MAX_MSG_SIZE 1500
 #define MAX_LINE 512
 #define MAX_REASON_PHRASE_LEN 128
+#define SIP_PORT 5060
 
 enum SIP_Message_Type
 {
@@ -18,10 +19,10 @@ enum SIP_Message_Type
     //SIP_REQUEST_CANCEL,
     SIP_REQUEST_INVITE,
     SIP_REQUEST_MESSAGE,
-    SIP_REQUEST_NOTIFY, //Só suporta o envio!
+    SIP_REQUEST_NOTIFY, //Supports only the sending
     //SIP_REQUEST_OPTIONS,
     //SIP_REQUEST_REGISTER,
-    SIP_REQUEST_SUBSCRIBE, //Só suporta a recepção!
+    SIP_REQUEST_SUBSCRIBE, //Supports only the reception
     SIP_RESPONSE,
     SIP_MESSAGE_TYPE_INVALID
 };
@@ -95,20 +96,10 @@ enum SIP_Transaction_Type
     SIP_TRANSACTION_TYPE_INVALID
 };
 
-enum SIP_Event_Callback
-{
-    SIP_SESSION_INITIATED,
-    SIP_SESSION_TERMINATED,
-    SIP_SUBSCRIPTION_INITIATED,
-    SIP_SUBSCRIPTION_TERMINATED,
-    SIP_MESSAGE_RECEIVED,
-    SIP_EVENT_CALLBACK_INVALID
-};
-
 enum SIP_Transport_Type
 {
     SIP_TRANSPORT_UDP,
-    SIP_TRANSPORT_TCP,
+    //SIP_TRANSPORT_TCP,
     SIP_TRANSPORT_TYPE_INVALID
 };
 
@@ -133,21 +124,22 @@ enum SIP_Pidf_Xml_Basic_Element
     SIP_PIDF_XML_BASIC_ELEMENT_INVALID
 };
 
+enum SIP_Event_Callback
+{
+    SIP_SESSION_INITIATED,
+    SIP_SESSION_TERMINATED,
+    SIP_SUBSCRIPTION_INITIATED,
+    SIP_SUBSCRIPTION_TERMINATED,
+    SIP_MESSAGE_RECEIVED,
+    SIP_EVENT_CALLBACK_INVALID
+};
+
 enum SIP_Call_Status
 {
     SIP_CALL_STATUS_INACTIVE,
     SIP_CALL_STATUS_INCOMING,
     SIP_CALL_STATUS_OUTGOING
 };
-
-/*enum SIP_Priority
-{
-    SIP_PRIORITY_EMERGENCY,
-    SIP_PRIORITY_URGENT,
-    SIP_PRIORITY_NORMAL,
-    SIP_PRIORITY_NONURGENT,
-    SIP_PRIORITY_INVALID
-};*/
 
 enum SIP_Timer
 {
@@ -172,7 +164,7 @@ enum SIP_Timer
 
 struct SIP_Status_Code
 {
-    int _code;
+    unsigned short _code;
     char _reason_phrase[MAX_REASON_PHRASE_LEN];
 };
 

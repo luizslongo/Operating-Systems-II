@@ -11,7 +11,7 @@ public:
     virtual ~SIP_Body() {}
 
     static SIP_Body *decode_body(const char *sip_msg, SIP_Body_Type body_type);
-    static SIP_Body *create_body(SIP_Body_Type type/*, const SIP_Body *copy = 0*/);
+    static SIP_Body *create_body(SIP_Body_Type type);
 
     virtual SIP_Body_Type get_body_type() = 0;
 
@@ -23,9 +23,6 @@ public:
 class SIP_SDP_Body : public SIP_Body
 {
 public:
-    SIP_SDP_Body() {}
-    ~SIP_SDP_Body() {}
-
     SIP_Body_Type get_body_type() { return SIP_BODY_APPLICATION_SDP; }
 
     bool parse(const char *sip_msg) { return true; }
@@ -36,8 +33,7 @@ public:
 class SIP_Pidf_Xml_Body : public SIP_Body
 {
 public:
-    SIP_Pidf_Xml_Body() {}
-    ~SIP_Pidf_Xml_Body() {}
+    SIP_Pidf_Xml_Body() : _element(SIP_PIDF_XML_BASIC_ELEMENT_INVALID) {}
 
     SIP_Body_Type get_body_type() { return SIP_BODY_APPLICATION_PIDF_XML; }
 

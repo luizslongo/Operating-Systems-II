@@ -12,11 +12,11 @@ class SIP_Header
     friend class SIP_Dialog;
 
 public:
-    SIP_Header() : _link(this) {};
-    virtual ~SIP_Header() {};
+    SIP_Header() : _link(this) {}
+    virtual ~SIP_Header() {}
 
     static void decode_header(char *line, Simple_List<SIP_Header> &ret);
-    static SIP_Header *create_header(SIP_Header_Type type/*, const SIP_Header *copy = 0*/);
+    static SIP_Header *create_header(SIP_Header_Type type);
 
     virtual SIP_Header_Type get_header_type() = 0;
 
@@ -31,7 +31,7 @@ private:
 class Value_String : public SIP_Header
 {
 public:
-    Value_String() : _string(0) {};
+    Value_String() : _string(0) {}
     Value_String(Value_String &value) { _string = create_string(value._string); }
     ~Value_String() { if (_string) delete _string; }
 
@@ -67,7 +67,7 @@ protected:
 class Value_Address_Params : public SIP_Header
 {
 public:
-    Value_Address_Params() : _display(0), _address(0), _tag(0), _lr(false) {};
+    Value_Address_Params() : _display(0), _address(0), _tag(0), _lr(false) {}
     Value_Address_Params(Value_Address_Params &value);
     ~Value_Address_Params();
 
@@ -114,7 +114,7 @@ public:
     //TODO: Allow pode ser vazio!
     SIP_Header_Type get_header_type() { return SIP_HEADER_ALLOW; }
 
-    void addAllowed(const SIP_Message_Type allowed);
+    void add_allowed(SIP_Message_Type allowed);
 };
 
 
@@ -178,9 +178,9 @@ private:
 class SIP_Header_CSeq : public SIP_Header
 {
 public:
-    SIP_Header_CSeq() : _sequence(0), _method(SIP_MESSAGE_TYPE_INVALID) {};
+    SIP_Header_CSeq() : _sequence(0), _method(SIP_MESSAGE_TYPE_INVALID) {}
     SIP_Header_CSeq(SIP_Header_CSeq &header) { _sequence = header._sequence; _method = header._method; }
-    ~SIP_Header_CSeq() {};
+    ~SIP_Header_CSeq() {}
 
     SIP_Header_Type get_header_type() { return SIP_HEADER_CSEQ; }
 
@@ -266,7 +266,7 @@ class SIP_Header_Subscription_State : public SIP_Header
 public:
     SIP_Header_Subscription_State() : _state(SIP_SUBSCRIPTION_STATE_INVALID), _expires(-1) {}
     SIP_Header_Subscription_State(SIP_Header_Subscription_State &header) { _state = header._state; _expires = header._expires; }
-    ~SIP_Header_Subscription_State() {};
+    ~SIP_Header_Subscription_State() {}
 
     SIP_Header_Type get_header_type() { return SIP_HEADER_SUBSCRIPTION_STATE; }
 
@@ -311,11 +311,11 @@ public:
 
     //SIP_Transport_Type get_transport() { return _transport; }
     const char *get_sent_by() { return _sent_by; }
-    int get_port() { return _port; }
+    unsigned short get_port() { return _port; }
     const char *get_branch() { return _branch; }
     const char *get_received() { return _received; }
     void set_via(const char *protocolName, const char *protocolVersion, const SIP_Transport_Type transport,
-            const char *sentBy, int port, const char *branch);
+            const char *sentBy, unsigned short port, const char *branch);
     void set_received(const char *received);
 
 private:
@@ -323,7 +323,7 @@ private:
     char *_protocol_version;
     SIP_Transport_Type _transport;
     char *_sent_by;
-    int _port;
+    unsigned short _port;
     char *_branch;
     char *_received;
 };

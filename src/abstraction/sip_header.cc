@@ -107,31 +107,31 @@ void SIP_Header::decode_header(char *line, Simple_List<SIP_Header> &ret)
     return;
 }
 
-SIP_Header *SIP_Header::create_header(SIP_Header_Type type/*, const SIP_Header *copy*/)
+SIP_Header *SIP_Header::create_header(SIP_Header_Type type)
 {
     SIP_Header *header = 0;
 
     switch (type)
     {
-        case SIP_HEADER_ALLOW:               header = /*(!copy) ?*/new SIP_Header_Allow() /*: new SIP_Header_Allow(*((SIP_Header_Allow *) copy))*/;                                           break;
-        case SIP_HEADER_ALLOW_EVENTS:        header = /*(!copy) ?*/new SIP_Header_Allow_Events() /*: new SIP_Header_Allow_Events(*((SIP_Header_Allow_Events *) copy))*/;                      break;
-        case SIP_HEADER_CALLID:              header = /*(!copy) ?*/new SIP_Header_Call_ID() /*: new SIP_Header_Call_ID(*((SIP_Header_Call_ID *) copy))*/;                                     break;
-        case SIP_HEADER_CONTACT:             header = /*(!copy) ?*/new SIP_Header_Contact() /*: new SIP_Header_Contact(*((SIP_Header_Contact *) copy))*/;                                     break;
-        case SIP_HEADER_CONTENT_DISPOSITION: header = /*(!copy) ?*/new SIP_Header_Content_Disposition() /*: new SIP_Header_Content_Disposition(*((SIP_Header_Content_Disposition *) copy))*/; break;
-        case SIP_HEADER_CONTENT_LENGTH:      header = /*(!copy) ?*/new SIP_Header_Content_Length() /*: new SIP_Header_Content_Length(*((SIP_Header_Content_Length *) copy))*/;                break;
-        case SIP_HEADER_CONTENT_TYPE:        header = /*(!copy) ?*/new SIP_Header_Content_Type() /*: new SIP_Header_Content_Type(*((SIP_Header_Content_Type *) copy))*/;                      break;
-        case SIP_HEADER_CSEQ:                header = /*(!copy) ?*/new SIP_Header_CSeq() /*: new SIP_Header_CSeq(*((SIP_Header_CSeq *) copy))*/;                                              break;
-        case SIP_HEADER_EVENT:               header = /*(!copy) ?*/new SIP_Header_Event() /*: new SIP_Header_Event(*((SIP_Header_Event *) copy))*/;                                           break;
-        case SIP_HEADER_EXPIRES:             header = /*(!copy) ?*/new SIP_Header_Expires() /*: new SIP_Header_Expires(*((SIP_Header_Expires *) copy))*/;                                     break;
-        case SIP_HEADER_FROM:                header = /*(!copy) ?*/new SIP_Header_From() /*: new SIP_Header_From(*((SIP_Header_From *) copy))*/;                                              break;
-        case SIP_HEADER_MAX_FORWARDS:        header = /*(!copy) ?*/new SIP_Header_Max_Forwards() /*: new SIP_Header_Max_Forwards(*((SIP_Header_Max_Forwards *) copy))*/;                      break;
-        case SIP_HEADER_RECORD_ROUTE:        header = /*(!copy) ?*/new SIP_Header_Record_Route() /*: new SIP_Header_Record_Route(*((SIP_Header_Record_Route *) copy))*/;                      break;
-        case SIP_HEADER_REQUIRE:             header = /*(!copy) ?*/new SIP_Header_Require() /*: new SIP_Header_Require(*((SIP_Header_Require *) copy))*/;                                     break;
-        case SIP_HEADER_ROUTE:               header = /*(!copy) ?*/new SIP_Header_Route() /*: new SIP_Header_Route(*((SIP_Header_Route *) copy))*/;                                           break;
-        case SIP_HEADER_SUBSCRIPTION_STATE:  header = /*(!copy) ?*/new SIP_Header_Subscription_State() /*: new SIP_Header_Subscription_State(*((SIP_Header_Subscription_State *) copy))*/;    break;
-        case SIP_HEADER_TO:                  header = /*(!copy) ?*/new SIP_Header_To() /*: new SIP_Header_To(*((SIP_Header_To *) copy))*/;                                                    break;
-        case SIP_HEADER_UNSUPPORTED:         header = /*(!copy) ?*/new SIP_Header_Unsupported() /*: new SIP_Header_Unsupported(*((SIP_Header_Unsupported *) copy))*/;                         break;
-        case SIP_HEADER_VIA:                 header = /*(!copy) ?*/new SIP_Header_Via() /*: new SIP_Header_Via(*((SIP_Header_Via *) copy))*/;                                                 break;
+        case SIP_HEADER_ALLOW:               header = new SIP_Header_Allow();               break;
+        case SIP_HEADER_ALLOW_EVENTS:        header = new SIP_Header_Allow_Events();        break;
+        case SIP_HEADER_CALLID:              header = new SIP_Header_Call_ID();             break;
+        case SIP_HEADER_CONTACT:             header = new SIP_Header_Contact();             break;
+        case SIP_HEADER_CONTENT_DISPOSITION: header = new SIP_Header_Content_Disposition(); break;
+        case SIP_HEADER_CONTENT_LENGTH:      header = new SIP_Header_Content_Length();      break;
+        case SIP_HEADER_CONTENT_TYPE:        header = new SIP_Header_Content_Type();        break;
+        case SIP_HEADER_CSEQ:                header = new SIP_Header_CSeq();                break;
+        case SIP_HEADER_EVENT:               header = new SIP_Header_Event();               break;
+        case SIP_HEADER_EXPIRES:             header = new SIP_Header_Expires();             break;
+        case SIP_HEADER_FROM:                header = new SIP_Header_From();                break;
+        case SIP_HEADER_MAX_FORWARDS:        header = new SIP_Header_Max_Forwards();        break;
+        case SIP_HEADER_RECORD_ROUTE:        header = new SIP_Header_Record_Route();        break;
+        case SIP_HEADER_REQUIRE:             header = new SIP_Header_Require();             break;
+        case SIP_HEADER_ROUTE:               header = new SIP_Header_Route();               break;
+        case SIP_HEADER_SUBSCRIPTION_STATE:  header = new SIP_Header_Subscription_State();  break;
+        case SIP_HEADER_TO:                  header = new SIP_Header_To();                  break;
+        case SIP_HEADER_UNSUPPORTED:         header = new SIP_Header_Unsupported();         break;
+        case SIP_HEADER_VIA:                 header = new SIP_Header_Via();                 break;
         default: break;
     }
 
@@ -248,7 +248,7 @@ bool Value_Address_Params::parse(char *sip_msg)
                 if (contains(result, "lr"))
                     _lr = true;
 
-            } else if (matched1)
+            }else if (matched1)
             {
                 matched1 = match(result, ">", aux, true);
                 if (!matched1)
@@ -256,12 +256,12 @@ bool Value_Address_Params::parse(char *sip_msg)
 
                 trim(aux);
                 _address = create_string(aux);
-            } else
+            }else
                 _address = create_string(result);
 
             if (!_address)
                 return false;
-        } else
+        }else
         {
             if (start_with(result, "tag="))
             {
@@ -444,7 +444,7 @@ void Value_Options::add_option(const char *option)
 
 //-------------------------------------------
 
-void SIP_Header_Allow::addAllowed(const SIP_Message_Type allowed)
+void SIP_Header_Allow::add_allowed(SIP_Message_Type allowed)
 {
     const char *allowed2 = SIP_Message::get_msg_type(allowed);
     if (allowed2)
@@ -474,12 +474,16 @@ bool SIP_Header_Content_Type::parse(char *sip_msg)
 
     match(sip_msg, ";", result);
     trim(result);
+
     if (!strcmp(result, "application/sdp"))
         _type = SIP_BODY_APPLICATION_SDP;
+
     else if (!strcmp(result, "application/pidf+xml"))
         _type = SIP_BODY_APPLICATION_PIDF_XML;
+
     else if (!strcmp(result, "text/plain"))
         _type = SIP_BODY_TEXT_PLAIN;
+
     else
         return false;
 
@@ -609,12 +613,16 @@ bool SIP_Header_Subscription_State::parse(char *sip_msg)
 
     matched = match(sip_msg, ";", result);
     trim(result);
+
     if (!strcmp(result, "active"))
         _state = SIP_SUBSCRIPTION_STATE_ACTIVE;
+
     //else if (!strcmp(result, "pending"))
     //	_state = SIP_SUBSCRIPTION_STATE_PENDING;
+
     else if (!strcmp(result, "terminated"))
         _state = SIP_SUBSCRIPTION_STATE_TERMINATED;
+
     else
         return false;
 
@@ -725,7 +733,7 @@ bool SIP_Header_Via::parse(char *sip_msg)
         matched = match(sip_msg, ";", result);
         trim(result);
         _port = (int) atol(result);
-    } else
+    }else
     {
         matched = match(sip_msg, ";", result);
         trim(result);
@@ -746,7 +754,7 @@ bool SIP_Header_Via::parse(char *sip_msg)
             _branch = create_string(&result[7]);
             if (!_branch)
                 return false;
-        } else if (start_with(result, "received="))
+        }else if (start_with(result, "received="))
         {
             _received = create_string(&result[9]);
             if (!_received)
@@ -792,7 +800,7 @@ bool SIP_Header_Via::encode(char *sip_msg)
 }
 
 void SIP_Header_Via::set_via(const char *protocolName, const char *protocolVersion,
-        const SIP_Transport_Type transport, const char *sentBy, int port,
+        const SIP_Transport_Type transport, const char *sentBy, unsigned short port,
         const char *branch)
 {
     if (_protocol_name)
