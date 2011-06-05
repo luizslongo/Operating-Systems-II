@@ -23,6 +23,38 @@ template<int Then, int Else>
 struct IF_INT<false, Then, Else>
 { enum { Result = Else }; };
 
+//SWITCH-CASE metaprogram
+const int DEFAULT = ~(~0u >> 1); //Initialize with the smallest int
+
+struct Nil_Case {};
+
+template <int tag_, typename Type_, typename Next_ = Nil_Case>
+struct CASE
+{ 
+    enum { tag = tag_ }; 
+    typedef Type_ Type;
+    typedef Next_ Next;
+};
+
+template<int tag, typename Case>
+class SWITCH
+{
+    typedef typename Case::Next Next_Case;
+    enum { 
+        case_tag = Case::tag, 
+        found = ( case_tag == tag || case_tag == DEFAULT  )
+    };
+public:
+    typedef typename IF<found, typename Case::Type,
+        typename SWITCH<tag, Next_Case>::Result>::Result Result;
+};
+
+template<int tag>
+class SWITCH<tag, Nil_Case>
+{
+public:
+    typedef Nil_Case Result;
+};
 
 // EQUAL metaprogram
 template<typename T1, typename T2>
