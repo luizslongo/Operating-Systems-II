@@ -69,6 +69,21 @@ template <> struct Traits<Serial_Display>: public Traits<void>
 };
 
 
+// Services
+template <> struct Traits<Services>: public Traits<void>
+{
+    static const bool enabled = true;
+
+    // Network services
+    enum {
+        ARP = 0,
+        ADHOP
+    };
+
+    static const int SERVICE = ARP;
+};
+
+
 // Abstractions
 template <> struct Traits<Thread>: public Traits<void>
 {
@@ -87,14 +102,15 @@ template <> struct Traits<Synchronizer>: public Traits<void>
 {
 };
 
-template <> struct Traits<Network>: public Traits<void>
+template <> struct Traits<Network>: public Traits<Services>
 {
     static const unsigned short ELP = 0x8888;
     static const unsigned int   ARP_TRIES = 3;
     static const unsigned int   ARP_TIMEOUT = 1000000; // 1s
 };
 
-template <> struct Traits<IP>: public Traits<void>{
+template <> struct Traits<IP>: public Traits<Services>
+{
     static const unsigned long ADDRESS = 0xc0a80a01;   // 192.168.10.1
     static const unsigned long NETMASK = 0xffffff00;   // 255.255.255.0
     static const unsigned long BROADCAST = 0;
@@ -108,17 +124,21 @@ template <> struct Traits<IP>: public Traits<void>{
     static const unsigned int OPT_SIZE = 0; // options size in 32-bit words
     static const unsigned char DEF_TTL = 0x40; // time-to-live
 
+    static const int SERVICE = ADHOP;
 };
 
-template <> struct Traits<UDP> : public Traits<IP> {
+template <> struct Traits<UDP> : public Traits<IP>
+{
     static const bool checksum = false;
 };
 
-template <> struct Traits<TCP> : public Traits<IP> {
+template <> struct Traits<TCP> : public Traits<IP>
+{
     static const bool checksum = true;
 };
 
-template <> struct Traits<ICMP> : public Traits<IP> {
+template <> struct Traits<ICMP> : public Traits<IP>
+{
     static const bool echo_reply = true; 
 };
 
@@ -144,19 +164,6 @@ template <> struct Traits<Neighboring>: public Traits<void>
     static const bool enabled = true;
 
     static const unsigned int MAX_NEIGHBORS = 3;
-};
-
-template <> struct Traits<Service>: public Traits<void>
-{
-    static const bool enabled = true;
-
-    // Services types
-    enum {
-        ARP = 0, // Network service
-        ADHOP    // Network service
-    };
-
-    static const unsigned int NETWORK_SERVICE = ARP;
 };
 
 __END_SYS

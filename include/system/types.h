@@ -282,7 +282,8 @@ class ICMP;
 class Neighboring;
 
 // Abstractions - Service
-class Service;
+template <int> class Service;
+class Services;
 
 // Abstractions - Service - Network service
 template <typename, typename> class ARP;

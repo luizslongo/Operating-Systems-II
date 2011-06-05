@@ -66,7 +66,9 @@ public:
     typedef NIC::Address              MAC_Address;
     typedef u8                        Protocol;
 
-    typedef Service::Network_Service<NIC,IP> Network_Service;
+    typedef
+        Service<Traits<IP>::SERVICE>::Network_Service<NIC,IP>
+        Network_Service;
 
     static const u16 MTU = ~0;
     static const Address BROADCAST;
