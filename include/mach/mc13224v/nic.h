@@ -43,6 +43,10 @@ public:
 
     const Statistics & statistics() {return _dev->statistics();}
 
+    void attach(Observer * obs, const Protocol & prot) { _dev->attach(obs, prot); }
+    void detach(Observer * obs, const Protocol & prot) { _dev->detach(obs, prot); }
+    void notify(const Protocol & prot) { _dev->notify(prot); }
+
     static void init();
 
     typedef char OP_Mode;

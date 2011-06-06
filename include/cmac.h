@@ -1,6 +1,7 @@
 #ifndef __cmac_h
 #define __cmac_h
 
+#include <utility/observer.h>
 #include <utility/random.h>
 #include <system/kmalloc.h>
 #include <battery.h>
@@ -11,7 +12,7 @@
 __BEGIN_SYS
 
 template <typename T>
-class CMAC {
+class CMAC: public NIC_Common::Observed {
 public:
     enum CMAC_STATE {
         OFF,
@@ -136,11 +137,6 @@ public:
             result = state_machine();
         }
 
-        if (result == RX_OK) {
-            _stats->rx_packets += 1;
-            _stats->rx_bytes += _rx_data_size;
-        }
-
         _stats->rx_time += alarm_ticks_ms - start_time;
 
         *src  = _rx_src_address;
@@ -148,10 +144,16 @@ public:
 
         _rx_pending = false;
 
-        if (result == RX_OK)
+        if (result == RX_OK) {
+            _stats->rx_packets += 1;
+            _stats->rx_bytes   += _rx_data_size;
+
+            notify((int) *prot);
+
             return _rx_data_size;
-        else
-            return result*(-1);
+
+        } else
+            return result * (-1);
     } 
 
     /**

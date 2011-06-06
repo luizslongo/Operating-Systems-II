@@ -53,41 +53,19 @@ private:
     static MC13224V_Transceiver * device;
 };
 
-class MC13224V_Radio : public Radio_Common, CMAC<Radio_Wrapper>
+class MC13224V_Radio: public CMAC<Radio_Wrapper>, Radio_Common
 {
 public:
-    typedef CMAC<Radio_Wrapper>::Address Address;
-    typedef CMAC<Radio_Wrapper>::Statistics Statistics;
-
     MC13224V_Radio(int unit = 0): CMAC<Radio_Wrapper>(unit) {}
 
     ~MC13224V_Radio() {}
 
     static void init(unsigned int n) {}
 
-    static void set_event_handler(CMAC<Radio_Wrapper>::event_handler * handler);
-
-    int send(const Radio_Common::Address & dst, const Radio_Common::Protocol & prot,
-            const void *data, unsigned int size) {
-        return CMAC<Radio_Wrapper>::send(dst, prot, data, size);
-    }
-
-    int receive(Radio_Common::Address * src, Radio_Common::Protocol * prot,
-            void * data, unsigned int size) {
-        return CMAC<Radio_Wrapper>::receive(src, prot, data, size);
-    }
-
     void reset() {}
-
-    unsigned int mtu() const {
-        return Traits<CMAC<Radio_Wrapper> >::MTU;
-    }
-
-    const Address & address() { return CMAC<Radio_Wrapper>::address(); }
-
-    const Statistics & statistics() { return CMAC<Radio_Wrapper>::statistics(); }
 };
 
 __END_SYS
 
 #endif
+

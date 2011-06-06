@@ -8,7 +8,7 @@
 
 __BEGIN_SYS
 
-class Radio_Common: private NIC_Common
+class Radio_Common: public NIC_Common
 {
 protected:
     Radio_Common() {}
@@ -83,10 +83,6 @@ public:
     char _data[MTU];
     unsigned short _crc;
     };
-
-    void attach(Observer * obs, const Protocol & prot) {}
-    void detach(Observer * obs, const Protocol & prot) {}
-    void notify(const Protocol & prot) {}
 
     // Frame types
     enum {
