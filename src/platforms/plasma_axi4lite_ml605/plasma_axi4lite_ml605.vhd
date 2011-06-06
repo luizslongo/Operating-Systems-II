@@ -37,7 +37,8 @@ architecture RTL of plasma_axi4lite_ml605 is
         uart_rx_i    : in std_logic;
         uart_baud_o   : out std_logic;
         gpio_i  : in  std_logic_vector(31 downto 0);
-        gpio_o  : out  std_logic_vector(31 downto 0));
+        gpio_o  : out  std_logic_vector(31 downto 0);
+        ext_int_i   : in std_logic_vector(7 downto 0));
     end component;
     
     component axi4_reset_control is
@@ -55,6 +56,8 @@ architecture RTL of plasma_axi4lite_ml605 is
     
     signal sig_gpio_i : std_logic_vector(31 downto 0);
     signal sig_gpio_o : std_logic_vector(31 downto 0);
+    
+    signal sig_ext_int : std_logic_vector(7 downto 0);
    
 begin
         
@@ -84,13 +87,17 @@ begin
         uart_rx_i => uart_rx,
         uart_baud_o => open,
         gpio_i	=> sig_gpio_i,
-        gpio_o	=> sig_gpio_o
+        gpio_o	=> sig_gpio_o,
+        ext_int_i => sig_ext_int
     );
     
     sig_gpio_i(11 downto 0) <= dir_btns & gpio_sws;
     sig_gpio_i(31 downto 12) <= (others => '0');
     gpio_leds <= sig_gpio_o(7 downto 0);
     dir_leds <= sig_gpio_o(11 downto 8);
+    
+    sig_ext_int(3 downto 0) <= dir_btns;
+    sig_ext_int(7 downto 4) <= (others => '0');
     
 
 end RTL;

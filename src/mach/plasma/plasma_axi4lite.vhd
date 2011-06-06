@@ -23,8 +23,9 @@ entity plasma_axi4lite is
         uart_rx_i   : in std_logic;
         uart_baud_o : out std_logic;
         
-        gpio_i  : in  std_logic_vector(31 downto 0);
-        gpio_o  : out  std_logic_vector(31 downto 0));
+        gpio_i      : in  std_logic_vector(31 downto 0);
+        gpio_o      : out  std_logic_vector(31 downto 0);
+        ext_int_i   : in std_logic_vector(7 downto 0));
 
 end plasma_axi4lite;
 
@@ -717,7 +718,8 @@ begin
     sig_irqs(0) <= sig_int_timer;
     sig_irqs(1) <= sig_uart_rx_int;
     sig_irqs(2) <= sig_uart_tx_int;
-    sig_irqs(31 downto 3) <= (others => '0');        
+    sig_irqs(10 downto 3) <= ext_int_i;
+    sig_irqs(31 downto 11) <= (others => '0');        
             
     pic: pic_axi4lite 
         port map(
