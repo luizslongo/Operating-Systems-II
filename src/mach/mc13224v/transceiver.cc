@@ -622,7 +622,7 @@ unsigned int MC13224V_Transceiver::init_from_flash(unsigned int addr) {
     MC13224V_Flash::nvmErr_t err;
     volatile unsigned int buf[8];
     volatile unsigned int len;
-    volatile unsigned int i = 0, j;
+    volatile unsigned int i = 0;
 
     MC13224V_Buck_Regulator::NVM_1P8V_enable();
 
