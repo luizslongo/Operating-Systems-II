@@ -28,7 +28,7 @@ void sensor(unsigned char id) {
 
     Temperature_Sensor * temp = new Temperature_Sensor();
 
-    for (int i = 0; i < DATA_SIZE; i++) {
+    for (unsigned int i = 0; i < DATA_SIZE; i++) {
         msg[i] = i;
     }
 
