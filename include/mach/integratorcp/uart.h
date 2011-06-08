@@ -20,6 +20,11 @@ class PL011_UART : public UART_Common {
             *_base = c;
         }
 
+        char get() {
+            //TODO: do!
+            return 'a';
+        }
+
     protected:
         volatile unsigned long * _base;
         volatile unsigned long * _flag;
