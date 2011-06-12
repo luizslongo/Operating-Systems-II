@@ -7,7 +7,8 @@ __BEGIN_SYS
 
 class PL011_UART : public UART_Common {
     protected:
-        const static unsigned char BUFFER_FULL  = (1 << 5);
+        const static unsigned char TX_BUFFER_FULL  = (1 << 5);
+        const static unsigned char RX_BUFFER_EMPTY = (1 << 4);
 
     public:
         PL011_UART(unsigned long base) {
@@ -16,13 +17,14 @@ class PL011_UART : public UART_Common {
         }
 
         void put(unsigned char c) {
-            while (*_flag & BUFFER_FULL);
+            while (*_flag & TX_BUFFER_FULL);
             *_base = c;
         }
 
         char get() {
-            //TODO: do!
-            return 'a';
+            while (*_flag & RX_BUFFER_EMPTY));
+            *_flag |= RX_BUFFER_EMPTY;
+            return (char)(*_base & 0xFF);
         }
 
     protected:
