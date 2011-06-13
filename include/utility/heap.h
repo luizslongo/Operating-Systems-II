@@ -10,18 +10,26 @@
 
 __BEGIN_SYS
 
+// Priority allocation type definitions
+typedef enum {
+    ALLOC_P_HIGH,
+    ALLOC_P_LOW,
+    ALLOC_P_NORMAL,
+} alloc_priority;
+
+
 // Heap Common Packages (actually the non-atomic heap)
-class Heap_Common_No_Profile: private Grouping_List<char>
+class Heap_Common: private Grouping_List<char>
 {
 public:
     using Grouping_List<char>::empty;
     using Grouping_List<char>::size;
 
-    Heap_Common_No_Profile() {
+    Heap_Common() {
 	db<Init, Heap>(TRC) << "Heap() => " << this << "\n";
     }
 
-    Heap_Common_No_Profile(void * addr, unsigned int bytes) {
+    Heap_Common(void * addr, unsigned int bytes) {
 	db<Init, Heap>(TRC) << "Heap(addr=" << addr << ",bytes=" << bytes 
 			    << ") => " << this << "\n";  
     }
@@ -40,28 +48,32 @@ public:
     unsigned int max_depth();
     void max_depth(unsigned int bytes);
 
+    static bool to_priority_heap(unsigned int bytes, alloc_priority p);
+    static bool from_priority_heap(void * ptr);
+
 private:
     void out_of_memory();
 };
 
+
 //Heap used when priority allocation is enabled
-class Heap_Common_Profiled : public Heap_Common_No_Profile {
+class Heap_Profiled : public Heap_Common {
 
 public:
-    Heap_Common_Profiled()
-        :Heap_Common_No_Profile(),
+    Heap_Profiled()
+        :Heap_Common(),
          _allocated(0),
          _max_depth(0)
     {}
 
-    Heap_Common_Profiled(void * addr, unsigned int bytes)
-        :Heap_Common_No_Profile(addr, bytes),
+    Heap_Profiled(void * addr, unsigned int bytes)
+        :Heap_Common(addr, bytes),
         _allocated(0),
         _max_depth(0)
     {}
 
     void * alloc(unsigned int bytes){
-        void* aux = Heap_Common_No_Profile::alloc(bytes);
+        void* aux = Heap_Common::alloc(bytes);
         if(aux){
             _allocated += bytes;
             _max_depth = _allocated > _max_depth ? _allocated : _max_depth;
@@ -70,16 +82,19 @@ public:
     }
 
     void free(void * ptr, unsigned int bytes){
-        Heap_Common_No_Profile::free(ptr, bytes);
+        Heap_Common::free(ptr, bytes);
         _allocated -= bytes;
     }
 
-    void * calloc(unsigned int bytes) {return Heap_Common_No_Profile::calloc(bytes);}
+    void * calloc(unsigned int bytes) {return Heap_Common::calloc(bytes);}
 
     void free(void * ptr){
         int * addr = reinterpret_cast<int *>(ptr);
         free(&addr[-1], addr[-1]);
     }
+
+    static bool to_priority_heap(unsigned int bytes, alloc_priority p);
+    static bool from_priority_heap(void * ptr);
 
     unsigned int allocated() { return _allocated; }
     void allocated(unsigned int bytes) { _allocated = bytes; }
@@ -92,55 +107,48 @@ private:
     unsigned int _max_depth;
 };
 
-//class Heap_Common:
-//    public IF<Traits<Heap>::priority_alloc,
-//               Heap_Common_Profiled,
-//               Heap_Common_No_Profile>::Result
-//{};
-typedef IF<Traits<Heap>::priority_alloc,
-               Heap_Common_Profiled,
-               Heap_Common_No_Profile>::Result
-        Heap_Common;
 
 // Wrapper for non-atomic heap  
 template <bool atomic>
-class Heap_Wrapper: public Heap_Common {};
+class Heap_Wrapper: public IF<Traits<Heap>::priority_alloc, Heap_Profiled, Heap_Common>::Result {};
 
 
 // Wrapper for atomic heap
 template<>
-class Heap_Wrapper<true>: public Heap_Common
+class Heap_Wrapper<true>: public IF<Traits<Heap>::priority_alloc, Heap_Profiled, Heap_Common>::Result
 {
 public:
+    typedef IF<Traits<Heap>::priority_alloc, Heap_Profiled, Heap_Common>::Result Base;
+
     Heap_Wrapper() {}
 
-    Heap_Wrapper(void * addr, unsigned int bytes): Heap_Common(addr, bytes) {
+    Heap_Wrapper(void * addr, unsigned int bytes): Base(addr, bytes) {
 	free(addr, bytes); 
     }
 
     void * alloc(unsigned int bytes) {
 	_lock.acquire();
-	void * tmp = Heap_Common::alloc(bytes);
+	void * tmp = Base::alloc(bytes);
 	_lock.release();
 	return tmp;
     }
 
     void * calloc(unsigned int bytes) {
 	_lock.acquire();
-	void * tmp = Heap_Common::calloc(bytes);
+	void * tmp = Base::calloc(bytes);
 	_lock.release();
 	return tmp;
     }
 
     void free(void * ptr) {
 	_lock.acquire();
-	Heap_Common::free(ptr);
+	Base::free(ptr);
 	_lock.release();
     }
 
     void free(void * ptr, unsigned int bytes) {
 	_lock.acquire();
-	Heap_Common::free(ptr, bytes);
+	Base::free(ptr, bytes);
 	_lock.release();
     }
 

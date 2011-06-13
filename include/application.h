@@ -7,17 +7,6 @@
 
 __BEGIN_SYS
 
-typedef enum {
-    ALLOC_P_HIGH,
-    ALLOC_P_LOW,
-    ALLOC_P_NORMAL,
-} alloc_priority;
-
-typedef enum {
-    ALLOC_T_VOLATILE,
-    ALLOC_T_PERSISTENT,
-} alloc_type;
-
 class Application
 {
 public:
