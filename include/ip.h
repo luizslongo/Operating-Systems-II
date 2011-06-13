@@ -18,6 +18,7 @@ typedef unsigned long  u32;
 typedef signed   long  s32;
 
 __BEGIN_SYS
+
 class IP_Address : public NIC_Common::Address<4> {
 public:
     IP_Address() {}
@@ -53,8 +54,6 @@ public:
 
 class IP : public Traits<IP>,
            public Active,
-           public NIC_Common,
-           /*public NIC::Observer,*/ // many NICs don't support
            public Data_Observed<IP_Address>
 {
 public:

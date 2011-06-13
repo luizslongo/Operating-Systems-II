@@ -2,6 +2,8 @@
 
 __BEGIN_SYS
 
+UDP* UDP::_instance[Traits<NIC>::NICS::Length];
+
 // TCP's checksum was added to UDP, we should merge this to avoid code redundancy
 void UDP::Header::checksum(IP::Address src,IP::Address dst,SegmentedBuffer * sb)
 {
@@ -36,25 +38,37 @@ void UDP::Header::checksum(IP::Address src,IP::Address dst,SegmentedBuffer * sb)
     _checksum = ~sum;
 }
 
+UDP::Socket::Socket(Address local, Address remote, UDP * udp)
+    : _local(local), _remote(remote), _udp(udp)
+{
+    if (!_udp)
+        _udp = UDP::instance();
+    _udp->attach(this, _local.port());
+}
+
+UDP::Socket::~Socket() {
+    _udp->detach(this, _local.port());
+}
+
 // Assembles data and sends to IP layer
 
 s32 UDP::send(Address _local, Address _remote, SegmentedBuffer * data) {
-	UDP::Header hdr(_local.port(), _remote.port(),
-			data->total_size());
-	SegmentedBuffer sb(&hdr, sizeof(UDP::Header), data);
-	hdr.checksum(_local.ip(),_remote.ip(),&sb);
-	return _ip->send(_local.ip(), _remote.ip(), &sb, ID_UDP) - 8;	// discard header
+    UDP::Header hdr(_local.port(), _remote.port(),
+                    data->total_size());
+    SegmentedBuffer sb(&hdr, sizeof(UDP::Header), data);
+    hdr.checksum(_local.ip(),_remote.ip(),&sb);
+    return _ip->send(_local.ip(), _remote.ip(), &sb, ID_UDP) - 8;	// discard header
 }
 
 // Called by IP's notify(...)
 
 void UDP::update(Data_Observed<IP::Address> *ob, long c, IP::Address src,
-	         IP::Address dst, void *data, unsigned int size)
+                 IP::Address dst, void *data, unsigned int size)
 {
-	Header& hdr = *reinterpret_cast<Header*>(data);
+    Header& hdr = *reinterpret_cast<Header*>(data);
 
-	db<UDP>(INF) << "UDP::update: received "<< size <<" bytes from " 
-	            << src << " to " << dst << "\n";
+    db<UDP>(INF) << "UDP::update: received "<< size <<" bytes from " 
+                 << src << " to " << dst << "\n";
 
     if (Traits<UDP>::checksum && hdr._checksum != 0) {
         SegmentedBuffer sb(static_cast<char*>(data) + sizeof(Header), size - sizeof(Header));
@@ -65,9 +79,9 @@ void UDP::update(Data_Observed<IP::Address> *ob, long c, IP::Address src,
             return;
         }
     }
-	notify(UDP::Address(src,hdr.src_port()),UDP::Address(dst,hdr.dst_port()),
-	       (int) hdr.dst_port(), &((char*)data)[sizeof(Header)],
-	       size - sizeof(Header));
+    notify(UDP::Address(src,hdr.src_port()),UDP::Address(dst,hdr.dst_port()),
+           (int) hdr.dst_port(), &((char*)data)[sizeof(Header)],
+           size - sizeof(Header));
 }
 
 // Called by UDP's notify(...)
@@ -75,31 +89,29 @@ void UDP::update(Data_Observed<IP::Address> *ob, long c, IP::Address src,
 void UDP::Socket::update(Observed *o, long c, UDP_Address src, UDP_Address dst,
                          void *data, unsigned int size)
 {
-	db<UDP>(TRC) << __PRETTY_FUNCTION__ << "\n";
-	
-	// virtual call
-	received(src,(const char*)data,size);
+    // virtual call
+    received(src,(const char*)data,size);
 }
 
-// Synchronous Socket
-int UDP::Sync_Socket::receive(Address * from,char * buf,unsigned int size)
+
+int UDP::Channel::receive(Address * from,char * buf,unsigned int size)
 {
     _buffer_size = size;
     _buffer_data = buf;
     _buffer_wait.lock();
     _buffer_data = 0;
-    memcpy(from, (void*)&_buffer_src, sizeof(Address));
+    _buffer_src = from;
     return _buffer_size;
 }
 
-void UDP::Sync_Socket::received(const Address & src,
+void UDP::Channel::received(const Address & src,
                                 const char *data, unsigned int size)
 {
     if (_buffer_data) {
         if (size < _buffer_size)
             _buffer_size = size;
-        memcpy((char*)_buffer_data, data, _buffer_size);
-        memcpy((Address*)&_buffer_src, &src, sizeof(Address));
+        memcpy(_buffer_data, data, _buffer_size);
+        memcpy(_buffer_src, &src, sizeof(Address));
         _buffer_wait.unlock();
     }
 }

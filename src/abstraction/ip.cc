@@ -63,19 +63,19 @@ IP::IP(unsigned int unit)
     }
     _network_service.update(_broadcast, NIC::BROADCAST);
 
-    if (Traits<IP>::dynamic == false) {
-        _self = Address(Traits<IP>::ADDRESS);
+    if (CONFIG == STATIC) {
+        _self = Address(ADDRESS);
         _network_service.update(_self,_nic.address());
-        _broadcast = Address(Traits<IP>::BROADCAST);
+        _broadcast = Address(BROADCAST);
         _network_service.update(_broadcast, NIC::BROADCAST);
-        _netmask = Address(Traits<IP>::NETMASK);
+        _netmask = Address(NETMASK);
     }
 
     _instance[unit] = this;
 
     // allocate memory for receiving packets
     for(int i=0;i<MAX_FRAGMENTS;++i)
-        _packet[i] = new char[NIC::MTU];
+        _packet[i] = new char[mtu()];
 
     start();
 }
@@ -137,6 +137,8 @@ int IP::run()
 
         // notify routing algorithm
         _network_service.received(src, prot, _packet[0], size);
+        
+        Thread::yield();
     }
 
     return 0;

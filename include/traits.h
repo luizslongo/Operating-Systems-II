@@ -111,18 +111,25 @@ template <> struct Traits<Network>: public Traits<Services>
 
 template <> struct Traits<IP>: public Traits<Services>
 {
-    static const unsigned long ADDRESS = 0xc0a80a01;   // 192.168.10.1
-    static const unsigned long NETMASK = 0xffffff00;   // 255.255.255.0
-    static const unsigned long BROADCAST = 0;
+    static const unsigned long ADDRESS   = 0xc0a80a01;   // 192.168.10.1
+    static const unsigned long NETMASK   = 0xffffff00;   // 255.255.255.0
+    static const unsigned long BROADCAST = 0xc0a80aff;   // 192.168.10.255
 
-    static const bool fragmentation = false;
-    static const int MAX_FRAGMENTS = 1;
+    static const bool forwarding    = false;
+    static const bool fragmentation = false;   
+    static const bool spawn_thread  = true;
 
-    static const bool dynamic      = false; // true=dhcp false=static
-    static const bool spawn_thread = true;  // automatic creation of IP's worker thread
+    // Network configuration method
+    enum {
+        STATIC,
+        LINK_LOCAL,
+        DHCP
+    };
     
-    static const unsigned int OPT_SIZE = 0; // options size in 32-bit words
-    static const unsigned char DEF_TTL = 0x40; // time-to-live
+    static const short         CONFIG   = DHCP;
+    static const unsigned int  OPT_SIZE = 0; // options size in 32-bit words
+    static const unsigned char DEF_TTL  = 0x40; // time-to-live
+    static const unsigned int  MAX_FRAGMENTS = 1;
 };
 
 template <> struct Traits<UDP> : public Traits<IP>
@@ -139,6 +146,7 @@ template <> struct Traits<ICMP> : public Traits<IP>
 {
     static const bool echo_reply = true; 
 };
+
 
 template <> struct Traits<CMAC<Radio_Wrapper> >: public Traits<void>
 {

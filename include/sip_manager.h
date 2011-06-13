@@ -42,7 +42,7 @@ private:
     class SIP_Socket : public UDP::Socket
     {
     public:
-        SIP_Socket(UDP *udp) : UDP::Socket(udp, UDP::Address(IP::instance()->address(), SIP_PORT), UDP::Address(Traits<IP>::BROADCAST, SIP_PORT)) {}
+        SIP_Socket(UDP *udp) : UDP::Socket(UDP::Address(IP::instance()->address(), SIP_PORT), UDP::Address(Traits<IP>::BROADCAST, SIP_PORT), udp) {}
 
         int send_data(const char *destination, unsigned short port, const char *data, int length);
         void received(const UDP::Address &src, const char *data, unsigned int size);
@@ -73,7 +73,7 @@ private:
     class My_Socket : public UDP::Socket
     {
     public:
-        My_Socket(UDP *udp) : UDP::Socket(udp, UDP::Address(IP::instance()->address(), 8000), UDP::Address(Traits<IP>::BROADCAST, 8000)) {}
+        My_Socket(UDP *udp) : UDP::Socket(UDP::Address(IP::instance()->address(), 8000), UDP::Address(Traits<IP>::BROADCAST, 8000), udp) {}
         virtual ~My_Socket() {}
 
         void received(const UDP::Address &src, const char *data, unsigned int size)

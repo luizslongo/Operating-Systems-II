@@ -22,6 +22,8 @@ public:
         _my_nic_address = nic->address();
         _my_network_address = network->address();
     }
+    
+    virtual ~Network_Service_Common() {}
 
     virtual void update(const Network_Address& la,
             const Link_Address& pa) = 0;

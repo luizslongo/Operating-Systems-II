@@ -60,7 +60,7 @@ public:
 
     class Header;
     class Socket;
-    class Sync_Socket;
+    class Channel;
 
     UDP(IP * ip) : _ip(ip) {
         _ip->attach(this, ID_UDP);
@@ -76,7 +76,13 @@ public:
     void update(Data_Observed<IP::Address> *ob, long c, IP::Address src,
                 IP::Address dst, void *data, unsigned int size);
 
-    IP *ip() { return _ip; }
+    IP * ip() { return _ip; }
+    
+    static UDP * instance(unsigned int i = 0) {
+        if (!_instance[i])
+            _instance[i] = new UDP(IP::instance(i));
+        return _instance[i];
+    }
 
 private:
 
@@ -93,6 +99,8 @@ private:
     };
 
     IP *_ip;
+    
+    static UDP* _instance[Traits<NIC>::NICS::Length];
 };
 
 class UDP::Header {
@@ -129,22 +137,15 @@ private:
 class UDP::Socket: public Data_Observer <UDP_Address> {
     friend class UDP;
 public:
-    Socket(UDP * udp, Address local, Address remote)
-    : _local(local), _remote(remote), _udp(udp)
-    {
-        _udp->attach(this, _local.port());
-    }
+    Socket(Address local, Address remote, UDP * udp = 0);
 
-    ~Socket() {
-        _udp->detach(this, _local.port());
-    }
+    ~Socket();
 
     s32 send(const char *data, u16 size) const {
         SegmentedBuffer sb(data, size);
         return send(&sb);
     }
     s32 send(SegmentedBuffer * data) const {
-        db<UDP>(TRC) << "UDP::Socket::send()\n";
         return _udp->send(_local, _remote, data);
     }
 
@@ -167,7 +168,7 @@ protected:
 };
 
 
-class UDP::Sync_Socket : public Socket
+class UDP::Channel : public Socket
 {
 public:
     int receive(Address * from,char * buf,unsigned int size);
@@ -176,11 +177,12 @@ protected:
     virtual void received(const Address & src,
                           const char *data, unsigned int size);
 
-    volatile char * _buffer_data;
-    volatile unsigned int _buffer_size;
-    volatile Address _buffer_src;
-    Mutex _buffer_wait;
+    Address * _buffer_src;
+    Mutex     _buffer_wait;
+    unsigned int _buffer_size;
+    char       * _buffer_data;
 };
+
 
 
 __END_SYS
