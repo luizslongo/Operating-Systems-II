@@ -77,7 +77,8 @@ template <> struct Traits<Services>: public Traits<void>
     // Network services
     enum {
         ARP = 0,
-        ADHOP
+        ADHOP,
+        BCast
     };
 
     static const int SERVICE = ARP;

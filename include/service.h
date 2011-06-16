@@ -16,9 +16,11 @@ public:
         public SWITCH<SERVICE,
                      CASE<Traits<Services>::ADHOP,
                          ADHOP<Link_Layer,Network_Layer>,
+                     CASE<Traits<Services>::BCast,
+                         BCast<Link_Layer,Network_Layer>,
                      CASE<DEFAULT,
                          ARP<Link_Layer,Network_Layer>
-                     > >
+                     > > >
                >::Result
     {
     public:
@@ -26,9 +28,11 @@ public:
             SWITCH<SERVICE,
                   CASE<Traits<Services>::ADHOP,
                       ADHOP<Link_Layer,Network_Layer>,
+                  CASE<Traits<Services>::BCast,
+                      BCast<Link_Layer,Network_Layer>,
                   CASE<DEFAULT,
                       ARP<Link_Layer,Network_Layer>
-                  > >
+                  > > >
             >::Result Base;
 
         Network_Service(Link_Layer* nic, Network_Layer* network):

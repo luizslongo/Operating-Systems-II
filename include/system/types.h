@@ -288,11 +288,16 @@ class Services;
 // Abstractions - Service - Network service
 template <typename, typename> class ARP;
 template <typename, typename> class ADHOP;
+template <typename, typename> class BCast;
 
 // Abstractions	- Sentients
 class Photo_Sentient;
 class Temperature_Sentient;
 
+// Abstractions - IEEE 1451
+class IEEE1451_NCAP;
+class IEEE1451_TIM;
+class IEEE1451_Transducer;
 
 // System Components IDs
 // The order in this enumeration defines many things in the system (e.g. init)

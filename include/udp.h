@@ -121,7 +121,7 @@ public:
     void update(Data_Observed<IP::Address> *ob, long c, IP::Address src,
                 IP::Address dst, void *data, unsigned int size);
     
-    static UDP * UDP::instance(unsigned int i=0);
+    static UDP * instance(unsigned int i=0);
 
 private:
 

@@ -220,6 +220,38 @@ private:
     Table _arpt;
 };
 
+
+// A dummy router that always resolves logical address to broadcast address
+template<typename Link_Layer, typename Network_Layer>
+class BCast: public Network_Service_Common<Link_Layer, Network_Layer>
+{
+public:
+    typedef Network_Service_Common<Link_Layer, Network_Layer> Base;
+
+    typedef typename Base::Link_Address Link_Address;
+    typedef typename Base::Network_Address Network_Address;
+
+    typedef typename Base::Protocol Protocol;
+
+    typedef NIC::Address MAC_Address;
+
+
+    BCast(Link_Layer* nic, Network_Layer* network): Base(nic, network) {}
+
+    void update(const Network_Address& la, const Link_Address& pa)
+    {
+        // Do nothing
+    }
+
+    Link_Address resolve(const Network_Address& addr, SegmentedBuffer * pdu)
+    {
+        return MAC_Address(Link_Layer::BROADCAST);
+    }
+
+    void received(const Link_Address& src, Protocol proto,
+                  const char* data, int size) {}
+};
+
 __END_SYS
 
 #endif
