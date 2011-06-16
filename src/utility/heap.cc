@@ -17,6 +17,8 @@ void Heap_Common::out_of_memory()
 void * Heap_Common::alloc(unsigned int bytes) {
     if(!bytes)
         return 0;
+
+    while ((bytes % sizeof(void*)) != 0) ++bytes;
     
     bytes += sizeof(int);
     if(bytes < sizeof(Element))
