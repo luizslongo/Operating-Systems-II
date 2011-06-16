@@ -307,7 +307,7 @@ CPP      = $(COMP_PREFIX)gcc -E
 CPPFLAGS = $(MACH_CC_FLAGS) -I$(INCLUDE)
 
 CXX      = $(COMP_PREFIX)g++ -c --no-exceptions --no-rtti --no-use-cxa-atexit 
-CXXFLAGS = $(MACH_CC_FLAGS) -O2 -nostdinc -Wall -ffunction-sections -I$(INCLUDE)
+CXXFLAGS = $(MACH_CC_FLAGS) -O2 -nostdinc -Wall -fdata-sections -ffunction-sections -I$(INCLUDE)
 
 LD       = $(COMP_PREFIX)ld
 LDFLAGS  = $(MACH_LD_FLAGS) -L$(LIB) -Bstatic

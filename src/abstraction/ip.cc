@@ -74,14 +74,14 @@ IP::IP(unsigned int unit)
     _instance[unit] = this;
 
     // allocate memory for receiving packets
-    for(int i=0;i<MAX_FRAGMENTS;++i)
+    for(unsigned int i=0;i<MAX_FRAGMENTS;++i)
         _packet[i] = new char[mtu()];
 
     start();
 }
 
 IP::~IP() {
-    for(int i=0;i<MAX_FRAGMENTS;++i)
+    for(unsigned int i=0;i<MAX_FRAGMENTS;++i)
         delete _packet[i];
 }
 

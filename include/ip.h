@@ -70,8 +70,10 @@ public:
         Network_Service;
 
     static const u16 MTU = ~0;
-    static const Address BROADCAST;
     static const Address NULL;
+    
+    /// This flag is used for single-NIC optmizations
+    static const bool multiNIC = (Traits<NIC>::NICS::Length != 1);
 
     enum {
         PROT_IP   = NIC::IP,

@@ -2,22 +2,32 @@
 
 __BEGIN_SYS
 
-ICMP::ICMP(IP* ip = 0) : _ip(ip)
-{
-    // if no IP is given we try to pick a global one
-    if (!_ip)
-        _ip = IP::instance();
+ICMP * ICMP_SingleNIC::_instance;
 
-    if (!_ip)
-        db<ICMP>(ERR) << "ICMP::Cannot get default IP object, ICMP will not work\n";
-    else
-        _ip->attach(this, ICMP_ID);
+ICMP * ICMP_MultiNIC::_instance[Traits<NIC>::NICS::Length];
+
+ICMP * ICMP_SingleNIC::instance()
+{
+    if (!_instance)
+        _instance = new ICMP(IP::instance());
+    return _instance;
+}
+
+ICMP * ICMP_MultiNIC::instance(unsigned int i)
+{
+    if (!_instance[i])
+        _instance[i] = new ICMP(IP::instance(i));
+    return _instance[i];
+}
+
+ICMP::ICMP(IP* _ip) : Base(_ip)
+{
+    ip()->attach(this, ICMP_ID);
 }
 
 ICMP::~ICMP()
 {
-    if (_ip)
-        _ip->detach(this, ICMP_ID);
+    ip()->detach(this, ICMP_ID);
 }
 
 void ICMP::update(Data_Observed<IP::Address> *ob, long c, IP::Address src,
@@ -50,20 +60,17 @@ ICMP::Packet::Packet(Type type,Code code, unsigned short id,unsigned short seq,
       _id(CPU::htons(id)),
       _sequence(CPU::htons(seq))
 {
-    memset(_data, 0, 56);
     if (data) memcpy(_data,data,size < 56 ? size : 56);
+    else memset(_data, 0, 56);
 }
 
 void ICMP::send(IP::Address from,IP::Address to,Packet& pkt)
 {
-    if (!_ip)
-        return;
-
     // Thou shall not calculate the checksum in ctor body!
     pkt._checksum = 0;
     pkt._checksum = ~(IP::calculate_checksum(&pkt, sizeof(pkt)));
     SegmentedBuffer sb(pkt.raw(),sizeof(pkt));
-    _ip->send(from,to,&sb,ICMP_ID);
+    ip()->send(from,to,&sb,ICMP_ID);
 }
 
 __END_SYS

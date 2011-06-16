@@ -13,7 +13,7 @@ void DHCP::Client::configure() {
     db<IP>(INF) << "DHCP::Client sending discover msg\n";
     _state = DISCOVER;
 
-    DHCP::Discover pkt(_udp->ip());
+    DHCP::Discover pkt(udp()->ip());
     SegmentedBuffer sb(&pkt,sizeof(DHCP::Discover));
 
     _xid = pkt.xid();
@@ -117,7 +117,7 @@ void DHCP::Client::received(const UDP::Address & src,
             db<IP>(INF) << "Server " << src.ip() << " offered IP " << me.ip() << "\n";
             parse_options(packet);
 
-            DHCP::Request req(_udp->ip(),packet);
+            DHCP::Request req(udp()->ip(),packet);
             SegmentedBuffer sb(&req,sizeof(DHCP::Request));
             send(&sb);
         }

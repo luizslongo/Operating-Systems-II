@@ -1,8 +1,29 @@
 #include <udp.h>
 
+#include <utility/string.h> // for Address constructor
+
 __BEGIN_SYS
 
-UDP* UDP::_instance[Traits<NIC>::NICS::Length];
+// UDP::Address
+UDP_Address::UDP_Address(const char *addr) : _ip(addr)
+{
+    char *sep = strchr(addr,':');
+    if (sep) {
+        _port = atol(++sep);
+    } else {
+        _port = 0;
+    }
+}
+
+char* UDP_Address::to_string(char * dst)
+{
+    char *p = _ip.to_string(dst);
+    *p++ = ':';
+    p += utoa(_port,p);
+    *p = 0;
+    return p;
+}
+
 
 // TCP's checksum was added to UDP, we should merge this to avoid code redundancy
 void UDP::Header::checksum(IP::Address src,IP::Address dst,SegmentedBuffer * sb)
@@ -38,16 +59,22 @@ void UDP::Header::checksum(IP::Address src,IP::Address dst,SegmentedBuffer * sb)
     _checksum = ~sum;
 }
 
-UDP::Socket::Socket(Address local, Address remote, UDP * udp)
-    : _local(local), _remote(remote), _udp(udp)
+UDP::UDP(IP * _ip) : Base(_ip) {
+    ip()->attach(this, ID_UDP);
+}
+
+UDP::~UDP() {
+    ip()->detach(this, ID_UDP);
+}
+
+UDP::Socket::Socket(Address local, Address remote, UDP * _udp)
+    : Base(_udp), _local(local), _remote(remote)
 {
-    if (!_udp)
-        _udp = UDP::instance();
-    _udp->attach(this, _local.port());
+    udp()->attach(this, _local.port());
 }
 
 UDP::Socket::~Socket() {
-    _udp->detach(this, _local.port());
+    udp()->detach(this, _local.port());
 }
 
 // Assembles data and sends to IP layer
@@ -57,7 +84,7 @@ s32 UDP::send(Address _local, Address _remote, SegmentedBuffer * data) {
                     data->total_size());
     SegmentedBuffer sb(&hdr, sizeof(UDP::Header), data);
     hdr.checksum(_local.ip(),_remote.ip(),&sb);
-    return _ip->send(_local.ip(), _remote.ip(), &sb, ID_UDP) - 8;	// discard header
+    return ip()->send(_local.ip(), _remote.ip(), &sb, ID_UDP) - 8;	// discard header
 }
 
 // Called by IP's notify(...)
@@ -84,6 +111,13 @@ void UDP::update(Data_Observed<IP::Address> *ob, long c, IP::Address src,
            size - sizeof(Header));
 }
 
+UDP * UDP::instance(unsigned int i) {
+    static UDP * _instance[Traits<NIC>::NICS::Length];
+    if (!_instance[i])
+        _instance[i] = new UDP(IP::instance(i));
+    return _instance[i];
+}
+
 // Called by UDP's notify(...)
 
 void UDP::Socket::update(Observed *o, long c, UDP_Address src, UDP_Address dst,
@@ -93,14 +127,15 @@ void UDP::Socket::update(Observed *o, long c, UDP_Address src, UDP_Address dst,
     received(src,(const char*)data,size);
 }
 
+// UDP Channel
 
 int UDP::Channel::receive(Address * from,char * buf,unsigned int size)
 {
     _buffer_size = size;
     _buffer_data = buf;
+    _buffer_src  = from;
     _buffer_wait.lock();
     _buffer_data = 0;
-    _buffer_src = from;
     return _buffer_size;
 }
 
@@ -115,5 +150,73 @@ void UDP::Channel::received(const Address & src,
         _buffer_wait.unlock();
     }
 }
+
+void UDP::Channel::update(Data_Observed<IP::Address> *ob, long c,
+                          IP::Address src, IP::Address dst,
+                          void *data, unsigned int size)
+{
+    ICMP::Packet& packet = *reinterpret_cast<ICMP::Packet*>(data);
+    if (packet.type() == ICMP::UNREACHABLE)
+    {
+        IP::Header& ip_hdr = *reinterpret_cast<IP::Header*>(packet.data());
+        if (ip_hdr.src_ip() != (u32)_local.ip() ||
+            ip_hdr.dst_ip() != (u32)_remote.ip()) {
+            return;
+        }
+        char * ip_data = (char*)data + ip_hdr.hlength();
+        UDP::Header& udp_hdr = *reinterpret_cast<UDP::Header*>(ip_data);
+        if (udp_hdr.src_port() != _local.port() ||
+            udp_hdr.dst_port() != _remote.port()) {
+            return;    
+        }
+        
+        _error = ~(packet.code());
+    }
+}
+
+UDP::Channel_MultiNIC::Channel_MultiNIC()
+{
+    int i;
+    /* 
+     * Attention here:
+     * The correct is static_cast<>(), but it doesn't work
+     * if we are in a single-NIC case. For this reason C-style cast 
+     * is used since it falls back to reinterpret_cast and this
+     * code will not be used in single-NIC scenario anyway.
+     */
+    IP * _ip = ((Channel*)this)->udp()->ip();
+    for(i=0;i < Traits<NIC>::NICS::Length; ++i) 
+    {
+        if (IP::instance(i) == _ip) {
+            _icmp = ICMP_MultiNIC::instance(i);
+            break;
+        }
+    }
+}
+
+void UDP::Channel::operator()()
+{
+    _buffer_data = 0;
+    _buffer_size = TIMEOUT;
+    _buffer_wait.unlock();
+}
+
+UDP::Channel::Channel(const Address& local,const Address& remote)
+//TODO: mult NIC support for channels
+   : Socket(local, remote, 0), _error(0)
+{
+    icmp()->attach(this, ICMP::UNREACHABLE);
+}
+
+UDP::Channel::~Channel()
+{
+    if (_buffer_data) {
+        db<UDP>(ERR) << "UDP::Channel for "<<this<<" destroyed while receiving\n";
+        _buffer_size = DESTROYED;
+        _buffer_wait.unlock();
+    }
+    icmp()->detach(this, ICMP::UNREACHABLE);
+}
+
 __END_SYS
 

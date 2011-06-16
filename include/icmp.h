@@ -2,14 +2,41 @@
 #define ICMP_H
 
 #include <cpu.h>
-#include "ip.h"
+#include <ip.h>
 
 __BEGIN_SYS
 
-class ICMP : public IP::Observer, public Data_Observed<IP::Address> {
+class ICMP_SingleNIC {
+public:
+    static ICMP * instance();
+protected:
+    inline ICMP_SingleNIC(IP * ip) ;
+    
+    IP * ip() const { return IP::instance(); }
+private:
+    static ICMP * _instance;
+};
+
+class ICMP_MultiNIC {
+public:
+    static ICMP * instance(unsigned int i=0);
+protected:
+    ICMP_MultiNIC(IP * ip) : _ip(ip) {}
+    
+    IP * ip() const { return _ip; }
+private:
+    IP * _ip;
+    static ICMP * _instance[Traits<NIC>::NICS::Length];
+};
+
+class ICMP : public IF<IP::multiNIC, ICMP_MultiNIC, ICMP_SingleNIC>::Result,
+             public IP::Observer,
+             public Data_Observed<IP::Address> {
 public:
     typedef Data_Observer<IP::Address> Observer;
     typedef Data_Observed<IP::Address> Observed;
+    
+    typedef IF<IP::multiNIC, ICMP_MultiNIC, ICMP_SingleNIC>::Result Base;
     
     static const unsigned short ICMP_ID = 1; // IP sub-protocol identifier
 
@@ -88,25 +115,28 @@ public:
         unsigned short sequence() { return CPU::htons(_sequence); }
         unsigned short checksum() { return _checksum; }
 
+        char * data() { return _data; }
     };
 
-    ICMP(IP* ip);
+    ICMP(IP* ip = 0);
     ~ICMP();
     
-    IP * ip() { return _ip; }
-
     void update(Data_Observed<IP::Address> *ob, long c, IP::Address src,
             IP::Address dst, void *data, unsigned int size);
             
     void send(IP::Address to,Packet & pkt) {
-        send(_ip->address(),to,pkt);    
+        send(ip()->address(),to,pkt);    
     }
     
     void send(IP::Address from,IP::Address to,Packet& pkt);
     
-protected:
-    IP * _ip;
 };
+
+// This is here because we cannot use static_cast before ICMP is defined
+ICMP_SingleNIC::ICMP_SingleNIC(IP * ip) {
+    _instance = static_cast<ICMP*>(this);
+}
+    
 
 __END_SYS
 
