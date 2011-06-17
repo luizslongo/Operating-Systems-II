@@ -87,6 +87,7 @@ int main( int argc, char *argv[] ) {
   uart.send(size_ptr,4);
 
   for(unsigned int count=0; count < file_size ; count++){
+      printf("                  \r%d bytes sent!", count+1);
       if(uart.send(&sendBuffer[count], 1) != 1){
 	printf("\nError sending the file...\n");
 	exit(-1);
@@ -99,7 +100,7 @@ int main( int argc, char *argv[] ) {
   while(true)
   {
     if(uart.receive(&a, 1))
-      printf("%c",a);
+      write(STDOUT_FILENO, &a, 1);
   }
 
   printf("\nfim...\n");
