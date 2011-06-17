@@ -134,7 +134,7 @@ public:
 
 // This is here because we cannot use static_cast before ICMP is defined
 ICMP_SingleNIC::ICMP_SingleNIC(IP * ip) {
-    _instance = static_cast<ICMP*>(this);
+    _instance = (ICMP*)(this);
 }
     
 
