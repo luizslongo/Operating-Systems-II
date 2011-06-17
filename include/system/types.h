@@ -61,6 +61,7 @@ class ATMega1281;
 class AT90CAN128;
 class ML310;
 class PLASMA;
+class AIX4LITE;
 class MC13224V;
 class IntegratorCP;
 
@@ -76,6 +77,7 @@ class ATMega1281_IC;
 class AT90CAN128_IC;
 class ML310_IC;
 class PLASMA_IC;
+class AIX4LITE_IC;
 class MC13224V_IC;
 class IntegratorCP_IC;
 
@@ -95,6 +97,7 @@ class AT90CAN128_Timer_2;
 class AT90CAN128_Timer_3;
 class ML310_Timer;
 class PLASMA_Timer;
+class AIX4LITE_Timer;
 class MC13224V_Timer_0;
 class MC13224V_Timer_1;
 class MC13224V_Timer_2;
@@ -112,6 +115,7 @@ class ATMega1281_RTC;
 class AT90CAN128_RTC;
 class ML310_RTC;
 class PLASMA_RTC;
+class AIX4LITE_RTC;
 class MC13224V_RTC;
 class IntegratorCP_RTC;
 
@@ -135,6 +139,7 @@ class ATMega1281_UART;
 class AT90CAN128_UART;
 class ML310_UART;
 class PLASMA_UART;
+class AIX4LITE_UART;
 class MC13224V_UART;
 class IntegratorCP_UART;
 
@@ -171,6 +176,7 @@ class MC13224V_Radio;
 class Radio_Wrapper;
 class ML310_NIC;
 class PLASMA_NIC;
+class AIX4LITE_NIC;
 class MC13224V_NIC;
 class IntegratorCP_NIC;
 template<typename> class CMAC;
