@@ -3,7 +3,7 @@
 
 __BEGIN_SYS
 
-void AIX4LITE_IC::interrupt_dispatcher() { 
+void AXI4LITE_IC::interrupt_dispatcher() { 
    ASMV(".globl interrupt_service_routine		\n"
 	"interrupt_service_routine:					\n"
 	".set push									\n"
@@ -49,7 +49,7 @@ void AIX4LITE_IC::interrupt_dispatcher() {
 	"addi  $26, $26, -4    #backup one opcode	\n"
 	"sw    $26, 92($29)							\n"
        );
-   AIX4LITE_IC::int_handler(0);
+   AXI4LITE_IC::int_handler(0);
    ASMV("lw    $1,   4($29)    #at				\n"
    	"lw    $2,   8($29)    #v0					\n"
    	"lw    $3,  12($29)    #v1					\n"

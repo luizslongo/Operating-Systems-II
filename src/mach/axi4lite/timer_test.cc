@@ -1,4 +1,4 @@
-// EPOS AIX4LITE_Timer Test Program
+// EPOS AXI4LITE_Timer Test Program
 
 #include <utility/ostream.h>
 #include <machine.h>
@@ -31,9 +31,9 @@ void timer_handler(){
 
 int main()
 {
-    cout << "AIX4LITE_Timer test\n";
+    cout << "AXI4LITE_Timer test\n";
 
-    AIX4LITE_Timer timer(1, &timer_handler, AIX4LITE_Timer::TEST);
+    AXI4LITE_Timer timer(1, &timer_handler, AXI4LITE_Timer::TEST);
 	
 	/* For some reason, after thread_first load, interrupts are disabled. 
 	   That's why timer_test was not working properly. 

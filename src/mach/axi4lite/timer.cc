@@ -1,4 +1,4 @@
-// EPOS AIX4LITE Timer Mediator Implementation
+// EPOS AXI4LITE Timer Mediator Implementation
 
 #include <machine.h>
 #include <timer.h>
@@ -6,13 +6,13 @@
 __BEGIN_SYS
 
 // Class attributes
-AIX4LITE_Timer::Timer_Reg * AIX4LITE_Timer::_timer_reg = reinterpret_cast<AIX4LITE_Timer::Timer_Reg *>(Traits<AIX4LITE_Timer>::BASE_ADDRESS);
-AIX4LITE_Timer * AIX4LITE_Timer::_channels[CHANNELS];
+AXI4LITE_Timer::Timer_Reg * AXI4LITE_Timer::_timer_reg = reinterpret_cast<AXI4LITE_Timer::Timer_Reg *>(Traits<AXI4LITE_Timer>::BASE_ADDRESS);
+AXI4LITE_Timer * AXI4LITE_Timer::_channels[CHANNELS];
 
 // Class methods
-void AIX4LITE_Timer::int_handler(unsigned int i) 
+void AXI4LITE_Timer::int_handler(unsigned int i) 
 {
-	db<AIX4LITE_Timer>(TRC) << "<Timer::int_handler>";
+	db<AXI4LITE_Timer>(TRC) << "<Timer::int_handler>";
 	
 	//Reprogram the Timer
 	*_timer_reg = *_timer_reg + (CLOCK / FREQUENCY);

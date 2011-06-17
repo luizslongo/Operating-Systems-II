@@ -1,13 +1,13 @@
-// EPOS AIX4LITE_IC Initialization
+// EPOS AXI4LITE_IC Initialization
 
 #include <machine.h>
 
 __BEGIN_SYS
 
 // Class initialization
-void AIX4LITE_IC::init()
+void AXI4LITE_IC::init()
 {
-    db<AIX4LITE_IC>(TRC) << "AIX4LITE_IC::init()\n";
+    db<AXI4LITE_IC>(TRC) << "AXI4LITE_IC::init()\n";
 
     MIPS32::int_disable();
     disable(); //Disable all interrupts
@@ -23,7 +23,7 @@ void AIX4LITE_IC::init()
 		
 	CPU::Reg32 address;
     ASMV("la    %0, interrupt_service_routine" : "=r" (address) : );
-    db<AIX4LITE>(TRC) << "Address of interrupt dispatcher is " << (void*)address << "\n";
+    db<AXI4LITE>(TRC) << "Address of interrupt dispatcher is " << (void*)address << "\n";
 	
 	CPU::Reg32 instruction;
     // 1st instruction: or $26, $0, $0  --> 00 00 D0 24

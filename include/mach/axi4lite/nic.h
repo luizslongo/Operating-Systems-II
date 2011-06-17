@@ -1,16 +1,16 @@
-// EPOS AIX4LITE NULL NIC Mediator Declarations
+// EPOS AXI4LITE NULL NIC Mediator Declarations
 
-#ifndef __aix4lite_nic_h
-#define __aix4lite_nic_h
+#ifndef __axi4lite_nic_h
+#define __axi4lite_nic_h
 
 #include <nic.h>
 
 __BEGIN_SYS
 
-class AIX4LITE_NIC: public NIC_Common
+class AXI4LITE_NIC: public NIC_Common
 {
 private:
-    typedef Traits<AIX4LITE_NIC>::NICS NICS;
+    typedef Traits<AXI4LITE_NIC>::NICS NICS;
     static const unsigned int UNITS = NICS::Length;
   
 public:
@@ -27,9 +27,9 @@ public:
 	};
     
 public:
-    AIX4LITE_NIC(unsigned int unit = 0) {  }
+    AXI4LITE_NIC(unsigned int unit = 0) {  }
 
-    ~AIX4LITE_NIC() {}
+    ~AXI4LITE_NIC() {}
 
     int send(const Address & dst, const Protocol & prot, 
 	     const void * data, unsigned int size) {

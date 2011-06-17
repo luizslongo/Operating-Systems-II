@@ -1,14 +1,14 @@
-// EPOS AIX4LITE Interrupt Controller Mediator Declarations
+// EPOS AXI4LITE Interrupt Controller Mediator Declarations
 
-#ifndef __aix4lite_ic_h
-#define __aix4lite_ic_h
+#ifndef __axi4lite_ic_h
+#define __axi4lite_ic_h
 
 #include <cpu.h>
 #include <ic.h>
 
 __BEGIN_SYS
 
-class AIX4LITE_IC: public IC_Common
+class AXI4LITE_IC: public IC_Common
 {
 private:
     typedef CPU::Reg32 Mask;
@@ -20,11 +20,11 @@ private:
 	  volatile unsigned int pending;     // 1 -> pending; write 1's to clear pending ints
 	} MM_Reg;
 
-	static const unsigned int BASE_ADDRESS = Traits<AIX4LITE_IC>::BASE_ADDRESS;
-	static const unsigned int EDGE_ENABLE = Traits<AIX4LITE_IC>::EDGE_ENABLE;
-	static const unsigned int POLARITY = Traits<AIX4LITE_IC>::POLARITY;
-    static const unsigned int INTS = Traits<AIX4LITE_IC>::NUMBER_OF_INTERRUPTS;
-	static const unsigned int CPU_JMP_ADDRESS = Traits<AIX4LITE_IC>::CPU_JMP_ADDRESS;
+	static const unsigned int BASE_ADDRESS = Traits<AXI4LITE_IC>::BASE_ADDRESS;
+	static const unsigned int EDGE_ENABLE = Traits<AXI4LITE_IC>::EDGE_ENABLE;
+	static const unsigned int POLARITY = Traits<AXI4LITE_IC>::POLARITY;
+    static const unsigned int INTS = Traits<AXI4LITE_IC>::NUMBER_OF_INTERRUPTS;
+	static const unsigned int CPU_JMP_ADDRESS = Traits<AXI4LITE_IC>::CPU_JMP_ADDRESS;
 
 public:
 
@@ -40,13 +40,13 @@ public:
 
 public:
 
-    AIX4LITE_IC() {}
+    AXI4LITE_IC() {}
 	
 	static Interrupt_Handler int_vector(Interrupt_Id i) {
 		if (i < INTS) 
 			return _int_vector[i];
         else {
-            db<AIX4LITE>(WRN) << "Interrupt number " << i << " is greater than VECTOR_SIZE (" << INTS << ")\n";
+            db<AXI4LITE>(WRN) << "Interrupt number " << i << " is greater than VECTOR_SIZE (" << INTS << ")\n";
 			return 0;
         }
     }
@@ -56,23 +56,23 @@ public:
 	}
 		
     static void enable(Interrupt_Id irq) {
-		db<AIX4LITE_IC>(TRC) << "AIX4LITE_IC::enable(irq=" << irq << ")\n";
+		db<AXI4LITE_IC>(TRC) << "AXI4LITE_IC::enable(irq=" << irq << ")\n";
 		_regs->mask &= ~(1<<irq);
     }
 
     static void mask(unsigned int mask) {
-       db<AIX4LITE_IC>(TRC) << "AIX4LITE_IC::mask(mask=" << mask << ")\n";
+       db<AXI4LITE_IC>(TRC) << "AXI4LITE_IC::mask(mask=" << mask << ")\n";
 	   _regs->mask = mask;
     }
 
     static void disable() {
-        db<AIX4LITE_IC>(TRC) << "AIX4LITE_IC Disabling all IC interrupts!\n";
+        db<AXI4LITE_IC>(TRC) << "AXI4LITE_IC Disabling all IC interrupts!\n";
 		_regs->mask = ~0;
 		_regs->pending = ~0;
     }
 
     static void disable(Interrupt_Id irq) {
-		db<AIX4LITE_IC>(TRC) << "AIX4LITE_IC::disable(irq=" << irq << ")\n";
+		db<AXI4LITE_IC>(TRC) << "AXI4LITE_IC::disable(irq=" << irq << ")\n";
 		_regs->mask |= (1<<irq);
 		_regs->pending = (1<<irq);
     }

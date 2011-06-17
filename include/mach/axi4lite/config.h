@@ -1,7 +1,7 @@
-// EPOS AIX4LITE Mediators Configuration
+// EPOS AXI4LITE Mediators Configuration
 
-#ifndef __aix4lite_config_h
-#define __aix4lite_config_h
+#ifndef __axi4lite_config_h
+#define __axi4lite_config_h
 
 #define __CPU_H				__HEADER_ARCH(cpu)
 #define __TSC_H				__HEADER_ARCH(tsc)
@@ -20,13 +20,13 @@ typedef MIPS32				CPU;
 typedef MIPS32_MMU			MMU;
 typedef MIPS32_TSC			TSC;
 
-typedef AIX4LITE			Machine;
-typedef AIX4LITE_IC			IC;
-typedef AIX4LITE_Timer  	Timer;
-typedef AIX4LITE_RTC		RTC;
-typedef AIX4LITE_UART		UART;
+typedef AXI4LITE			Machine;
+typedef AXI4LITE_IC			IC;
+typedef AXI4LITE_Timer  	Timer;
+typedef AXI4LITE_RTC		RTC;
+typedef AXI4LITE_UART		UART;
 typedef Serial_Display		Display;
-typedef AIX4LITE_NIC		NIC;
+typedef AXI4LITE_NIC		NIC;
 
 __END_SYS
 

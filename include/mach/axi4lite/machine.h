@@ -1,7 +1,7 @@
-// EPOS AIX4LITE Mediator Declarations
+// EPOS AXI4LITE Mediator Declarations
 
-#ifndef __aix4lite_h
-#define __aix4lite_h
+#ifndef __axi4lite_h
+#define __axi4lite_h
 
 #include <utility/list.h>
 #include <arch/mips32/cpu.h>
@@ -14,7 +14,7 @@
 __BEGIN_SYS
 
 
-class AIX4LITE: public Machine_Common
+class AXI4LITE: public Machine_Common
 {
 private:
     typedef CPU::Reg32 Reg32;
@@ -23,7 +23,7 @@ private:
     typedef CPU::Reg16 Reg16;
 
 public:
-    AIX4LITE() {}
+    AXI4LITE() {}
 
     static void panic();
     static void reboot() { /*TODO*/ };

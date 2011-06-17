@@ -11,7 +11,7 @@ template <> struct Traits<MIPS32>: public Traits<void>
 template <> struct Traits<MIPS32_TSC>: public Traits<void>
 {
 	// THIS SHOULD MAP THE ADDRESS OF THE TSC COUNTER ON THE RESPECTIVELY MACHINE
-	// Default values are 0x20000060 (Plasma), 0x80000800 (AIX4LITE)
+	// Default values are 0x20000060 (Plasma), 0x80000800 (AXI4LITE)
 	static const unsigned int ADDRESS = 0x80000800;
 };
 

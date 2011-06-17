@@ -175,7 +175,7 @@ typedef struct
 #define ELFOSABI_NETBSD 2
 #define ELFOSABI_LINUX 3
 #define ELFOSABI_SOLARIS 6
-#define ELFOSABI_AIX 7
+#define ELFOSABI_AXI 7
 #define ELFOSABI_IRIX 8
 #define ELFOSABI_FREEBSD 9
 #define ELFOSABI_TRU64 10

@@ -1,7 +1,7 @@
-// EPOS AIX4LITE UART Mediator Declarations
+// EPOS AXI4LITE UART Mediator Declarations
 
-#ifndef __aix4lite_uart_h
-#define __aix4lite_uart_h
+#ifndef __axi4lite_uart_h
+#define __axi4lite_uart_h
 
 #include <uart.h>
 #include <cpu.h>
@@ -9,7 +9,7 @@
 
 __BEGIN_SYS
 
-class AIX4LITE_UART: protected UART_Common
+class AXI4LITE_UART: protected UART_Common
 {
 private:
     typedef CPU::Reg8 Reg8;
@@ -22,12 +22,12 @@ private:
 	  volatile unsigned int rxchar;  // Read received characters here
 	} MM_Reg;
 
-    static const unsigned int CLOCK = Traits<AIX4LITE_UART>::CLOCK;
-    static const unsigned int BASE_ADDRESS = Traits<AIX4LITE_UART>::BASE_ADDRESS;
-	static const unsigned int BAUDRATE = Traits<AIX4LITE_UART>::BAUDRATE;
+    static const unsigned int CLOCK = Traits<AXI4LITE_UART>::CLOCK;
+    static const unsigned int BASE_ADDRESS = Traits<AXI4LITE_UART>::BASE_ADDRESS;
+	static const unsigned int BAUDRATE = Traits<AXI4LITE_UART>::BAUDRATE;
 
 public:
-    AIX4LITE_UART(unsigned int unit = 0) : _unit(unit) { }
+    AXI4LITE_UART(unsigned int unit = 0) : _unit(unit) { }
 
     char get() {
 		while ((_regs->rxlevel) == 0);  // wait for data to be ready;

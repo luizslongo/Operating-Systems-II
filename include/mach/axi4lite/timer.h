@@ -1,7 +1,7 @@
-// EPOS AIX4LITE Timer Mediator Declarations
+// EPOS AXI4LITE Timer Mediator Declarations
 
-#ifndef __aix4lite_timer_h
-#define __aix4lite_timer_h
+#ifndef __axi4lite_timer_h
+#define __axi4lite_timer_h
 
 #include <cpu.h>
 #include <ic.h>
@@ -10,15 +10,15 @@
 
 __BEGIN_SYS
 
-class AIX4LITE_Timer:  public Timer_Common
+class AXI4LITE_Timer:  public Timer_Common
 {
 protected:
     typedef CPU::Reg32 Count;
 	typedef volatile CPU::Reg32 Timer_Reg;
 
     // Plasma Timer private imports, types and constants
-    static const unsigned int CLOCK = Traits<AIX4LITE_Timer>::CLOCK;
-	static const unsigned int FREQUENCY = Traits<AIX4LITE_Timer>::FREQUENCY;
+    static const unsigned int CLOCK = Traits<AXI4LITE_Timer>::CLOCK;
+	static const unsigned int FREQUENCY = Traits<AXI4LITE_Timer>::FREQUENCY;
     static const unsigned int CHANNELS = 3;
 
 public:
@@ -30,7 +30,7 @@ public:
   };
  
 public:
-    AIX4LITE_Timer(const Hertz & frequency,
+    AXI4LITE_Timer(const Hertz & frequency,
                  const Handler * handler,
                  const Channel & channel):
         _initial(FREQUENCY / frequency), _current(_initial), 
@@ -47,12 +47,12 @@ public:
          db<Timer>(ERR) << "Timer not installed!\n";
     }
 
-    ~AIX4LITE_Timer() {}
+    ~AXI4LITE_Timer() {}
 
     void frequency(const Hertz & f) {
 		_initial = FREQUENCY / f;
         reset();
-        db<AIX4LITE_Timer>(TRC) << "AIX4LITE_Timer::frequency(freq=" << frequency()
+        db<AXI4LITE_Timer>(TRC) << "AXI4LITE_Timer::frequency(freq=" << frequency()
 		                             << ",cnt=" << (void*)_initial << ")\n";
     }
 
@@ -75,32 +75,32 @@ protected:
     unsigned int _channel;
     Handler * _handler;
 	static Timer_Reg * _timer_reg;
-    static AIX4LITE_Timer * _channels[CHANNELS];
+    static AXI4LITE_Timer * _channels[CHANNELS];
 
 };
 
 
 // Timer used by Alarm
-class Alarm_Timer: public AIX4LITE_Timer
+class Alarm_Timer: public AXI4LITE_Timer
 {
   public:
     static const unsigned int FREQUENCY = Timer::FREQUENCY;
 
   public:
     Alarm_Timer(const Handler * handler):
-      AIX4LITE_Timer(FREQUENCY, handler, ALARM) {}
+      AXI4LITE_Timer(FREQUENCY, handler, ALARM) {}
 };
 
 
 // Timer used by Thread::Scheduler
-class Scheduler_Timer: public AIX4LITE_Timer
+class Scheduler_Timer: public AXI4LITE_Timer
 {
   private:
     typedef RTC::Microsecond Microsecond;
 
   public:
     Scheduler_Timer(const Microsecond & quantum, const Handler * handler): 
-      AIX4LITE_Timer(1000000 / quantum, handler, SCHEDULER) {}
+      AXI4LITE_Timer(1000000 / quantum, handler, SCHEDULER) {}
 };
 
 

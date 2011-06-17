@@ -1,15 +1,15 @@
-#ifndef __aix4lite_traits_h
-#define __aix4lite_traits_h
+#ifndef __axi4lite_traits_h
+#define __axi4lite_traits_h
 
 __BEGIN_SYS
 
-class AIX4LITE_Common;
-template <> struct Traits<AIX4LITE_Common>: public Traits<void>
+class AXI4LITE_Common;
+template <> struct Traits<AXI4LITE_Common>: public Traits<void>
 {
 //     static const bool debugged = true;
 };
 
-template <> struct Traits<AIX4LITE>: public Traits<AIX4LITE_Common>
+template <> struct Traits<AXI4LITE>: public Traits<AXI4LITE_Common>
 {
   static const unsigned int MAX_CPUS = 1;
 
@@ -26,7 +26,7 @@ template <> struct Traits<AIX4LITE>: public Traits<AIX4LITE_Common>
   static const unsigned int PRIORITY_HEAP_TOP_ADDR = PRIORITY_HEAP_BASE_ADDR + PRIORITY_HEAP_SIZE - 1;
 };
 
-template <> struct Traits<AIX4LITE_IC>: public Traits<AIX4LITE_Common>
+template <> struct Traits<AXI4LITE_IC>: public Traits<AXI4LITE_Common>
 {
   static const unsigned int BASE_ADDRESS = 0x80000C00;
   static const unsigned int EDGE_ENABLE = ~0; // All interrupts configured as edge enabled
@@ -36,21 +36,21 @@ template <> struct Traits<AIX4LITE_IC>: public Traits<AIX4LITE_Common>
   static const bool ATTEND_ONLY_ONE = true; //Attend only one pending interrupt at each CPU Interrupt.
 };
 
-template <> struct Traits<AIX4LITE_UART>: public Traits<AIX4LITE_Common>
+template <> struct Traits<AXI4LITE_UART>: public Traits<AXI4LITE_Common>
 {
-  static const unsigned int CLOCK = Traits<AIX4LITE>::CLOCK;
+  static const unsigned int CLOCK = Traits<AXI4LITE>::CLOCK;
   static const unsigned int BASE_ADDRESS = 0x80000000;
   static const unsigned int BAUDRATE = 57600;
 };
 
-template <> struct Traits<AIX4LITE_Timer>: public Traits<AIX4LITE_Common>
+template <> struct Traits<AXI4LITE_Timer>: public Traits<AXI4LITE_Common>
 {
-  static const unsigned int CLOCK = Traits<AIX4LITE>::CLOCK;
+  static const unsigned int CLOCK = Traits<AXI4LITE>::CLOCK;
   static const unsigned int FREQUENCY = 10000; // 10 kHz -> 100us
   static const unsigned int BASE_ADDRESS = 0x80000800;
 };
 
-template <> struct Traits<AIX4LITE_NIC>: public Traits<void>
+template <> struct Traits<AXI4LITE_NIC>: public Traits<void>
 {
   typedef LIST<> NICS;
   static const bool enabled = false;

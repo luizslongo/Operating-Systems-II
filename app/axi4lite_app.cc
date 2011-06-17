@@ -1,4 +1,4 @@
-// AIX4LITE Dummy Application
+// AXI4LITE Dummy Application
 //
 // Author: Hugo
 // Documentation: $EPOS/doc/loader			Date: 23 May 2011

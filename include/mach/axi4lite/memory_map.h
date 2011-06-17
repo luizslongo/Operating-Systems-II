@@ -1,14 +1,14 @@
-// EPOS Memory Map for the AIX4LITE
+// EPOS Memory Map for the AXI4LITE
 
-#ifndef __aix4lite_memory_map_h
-#define __aix4lite_memory_map_h
+#ifndef __axi4lite_memory_map_h
+#define __axi4lite_memory_map_h
 
 #include <system/memory_map.h>
 
 __BEGIN_SYS
 
 template <>
-struct Memory_Map<AIX4LITE>
+struct Memory_Map<AXI4LITE>
 {
     enum Memory {
         MEM_BASE =              0x10000010,

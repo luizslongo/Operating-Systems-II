@@ -1,15 +1,15 @@
-// EPOS AIX4LITE Run-Time System Information
+// EPOS AXI4LITE Run-Time System Information
 // Cancian
 
-#ifndef __aix4lite_info_h
-#define __aix4lite_info_h
+#ifndef __axi4lite_info_h
+#define __axi4lite_info_h
 
 #include <system/info.h>
 
 __BEGIN_SYS
 
 template<>
-struct System_Info<AIX4LITE>
+struct System_Info<AXI4LITE>
 {
 private:
     typedef unsigned int LAddr;
