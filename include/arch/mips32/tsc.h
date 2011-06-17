@@ -19,7 +19,7 @@ public:
     static Hertz frequency() { return CLOCK; }
 
     static Time_Stamp time_stamp() {
-		volatile unsigned int *counter = (unsigned int *)(Traits<PLASMA_Timer>::BASE_ADDRESS);
+		volatile unsigned int *counter = (unsigned int *)(Traits<MIPS32_TSC>::ADDRESS);
         return *counter;
     }
 };

@@ -40,8 +40,8 @@ public:
 	enum CP {	
 		CP0_INDEX		= 0,
 		CP0_RANDOM		= 1,
-		CP0_ENTRYLO0		= 2,
-		CP0_ENTRYLO1		= 3,
+		CP0_ENTRYLO0	= 2,
+		CP0_ENTRYLO1	= 3,
 		CP0_CONTEXT		= 4,
 		CP0_COUNT		= 9,  // R4000-only. Shame on R3000!
 		CP0_ENTRYHI		= 10,
