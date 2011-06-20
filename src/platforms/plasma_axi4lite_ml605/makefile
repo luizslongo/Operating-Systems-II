@@ -15,7 +15,7 @@ include ../../../tools/xilinx/Makefile.common
 include ../../../src/mach/common/coregen/hw.srcs
 
 # other IP sources definitions
-include ../../../src/mach/plasma/hw.srcs
+include ../../../src/mach/axi4lite/hw.srcs
 include ../../../src/mach/common/amba/hw.srcs
 include ../../../src/mach/common/amba_wishbone/hw.srcs
 include ../../../src/mach/common/simple_uart/hw.srcs
@@ -49,6 +49,7 @@ coregen_clean:
 	rm -f coregen.cgc; \
 	rm -rf tmp _xmsgs; \
 	rm -f *.xise *.gise *.ncf *.tcl *.txt *.ejp *.log *.ngc *~ *.v *.veo *.vhd *.vho *.mif
+
 
 
 # IP sources

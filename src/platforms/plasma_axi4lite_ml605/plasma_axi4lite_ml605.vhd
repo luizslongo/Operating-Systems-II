@@ -13,11 +13,10 @@ entity plasma_axi4lite_ml605 is
         gpio_leds    : out std_logic_vector(7 downto 0);
         gpio_sws     : in std_logic_vector(7 downto 0);
         dir_leds     : out std_logic_vector(3 downto 0);
-        dir_btns     : in std_logic_vector(3 downto 0)
-        );
+        dir_btns     : in std_logic_vector(3 downto 0));
 end plasma_axi4lite_ml605;
 
-architecture RTL of plasma_axi4lite_ml605 is
+architecture rtl of plasma_axi4lite_ml605 is
     component clk_xlnx_100M_diff is
         port(
             CLK_IN1_P : in std_logic;
@@ -27,27 +26,24 @@ architecture RTL of plasma_axi4lite_ml605 is
     end component;
 
     component plasma_axi4lite is
-    generic(
-        CLK_FREQ : integer);
-
-    port(clk_i          : in std_logic;
-        reset_i        : in std_logic;
-
-        uart_tx_o   : out std_logic;
-        uart_rx_i    : in std_logic;
-        uart_baud_o   : out std_logic;
-        gpio_i  : in  std_logic_vector(31 downto 0);
-        gpio_o  : out  std_logic_vector(31 downto 0);
-        ext_int_i   : in std_logic_vector(7 downto 0));
+        generic(CLK_FREQ : integer);
+        port(
+            clk_i       : in std_logic;
+            reset_i     : in std_logic;
+            uart_tx_o   : out std_logic;
+            uart_rx_i   : in std_logic;
+            uart_baud_o : out std_logic;
+            gpio_i      : in  std_logic_vector(31 downto 0);
+            gpio_o      : out  std_logic_vector(31 downto 0);
+            ext_int_i   : in std_logic_vector(7 downto 0));
     end component;
     
     component axi4_reset_control is
-        port (
-                clk_i       : in std_logic;
-                ext_reset_i : in std_logic;
-                axi_reset_o : out std_logic);
+        port(
+            clk_i       : in std_logic;
+            ext_reset_i : in std_logic;
+            axi_reset_o : out std_logic);
     end component;
-
 
     signal clk_100MHz  : std_logic;
     signal clk_50MHz   : std_logic;
@@ -77,27 +73,25 @@ begin
             axi_reset_o => sig_reset);
     
     plasma : plasma_axi4lite
-    generic map(
-        CLK_FREQ  => 50_000_000
-    )
-    port map(
-        clk_i     => clk_50MHz,
-        reset_i   => sig_reset,
-        uart_tx_o => uart_tx,
-        uart_rx_i => uart_rx,
-        uart_baud_o => open,
-        gpio_i	=> sig_gpio_i,
-        gpio_o	=> sig_gpio_o,
-        ext_int_i => sig_ext_int
-    );
+        generic map(CLK_FREQ => 50_000_000)
+        port map(
+            clk_i       => clk_50MHz,
+            reset_i     => sig_reset,
+            uart_tx_o   => uart_tx,
+            uart_rx_i   => uart_rx,
+            uart_baud_o => open,
+            gpio_i	    => sig_gpio_i,
+            gpio_o	    => sig_gpio_o,
+            ext_int_i   => sig_ext_int);
     
-    sig_gpio_i(11 downto 0) <= dir_btns & gpio_sws;
+
+    sig_gpio_i(11 downto 0)  <= dir_btns & gpio_sws;
     sig_gpio_i(31 downto 12) <= (others => '0');
+
     gpio_leds <= sig_gpio_o(7 downto 0);
-    dir_leds <= sig_gpio_o(11 downto 8);
+    dir_leds  <= sig_gpio_o(11 downto 8);
     
     sig_ext_int(3 downto 0) <= dir_btns;
     sig_ext_int(7 downto 4) <= (others => '0');
-    
 
-end RTL;
+end rtl;
