@@ -59,7 +59,7 @@ private:
     class TIM_Socket : public TCP::ClientSocket
     {
     public:
-        TIM_Socket(TCP *tcp, const IP::Address &dst) : TCP::ClientSocket(tcp, TCP::Address(dst, IEEE1451_PORT),
+        TIM_Socket(const IP::Address &dst) : TCP::ClientSocket(TCP::Address(dst, IEEE1451_PORT),
             TCP::Address(IP::instance()->address(), IEEE1451_PORT)) {}
         ~TIM_Socket() {}
 
@@ -69,7 +69,6 @@ private:
     };
 
 private:
-    TCP _tcp;
     TIM_Socket *_socket;
 
     bool _connected;

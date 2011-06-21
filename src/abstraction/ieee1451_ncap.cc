@@ -93,10 +93,10 @@ IEEE1451_TEDS_NCAP *IEEE1451_Channel::get_teds(char id)
 
 IEEE1451_NCAP *IEEE1451_NCAP::_ieee1451 = 0;
 
-IEEE1451_NCAP::IEEE1451_NCAP() : _application(0), _tcp(IP::instance())
+IEEE1451_NCAP::IEEE1451_NCAP() : _application(0)
 {
     db<IEEE1451_NCAP>(INF) << "IEEE1451_NCAP - listening...\n";
-    NCAP_Socket *socket = new NCAP_Socket(&_tcp);
+    NCAP_Socket *socket = new NCAP_Socket();
     _sockets.insert(&socket->_link);
 }
 

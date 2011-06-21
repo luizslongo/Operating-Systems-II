@@ -1,35 +1,67 @@
+// EPOS Transmission Control Protocol implementation
+
 #ifndef __tcp_h
 #define __tcp_h
+
 #include <alarm.h>
 #include <ip.h>
+#include <icmp.h>
 #include <udp.h> // TCP::Address == UDP_Address
 #include <utility/handler.h>
 #include <utility/random.h>
 
 __BEGIN_SYS
 
-class TCP: public IP::Observer, public Data_Observed < UDP_Address > {
+// Optmization for single NIC support
+class TCP_SingleNIC {
 public:
+    IP* ip() const { return IP::instance(); }
+protected:
+    TCP_SingleNIC(IP * ip) {}
+};
+
+// Generalization for multiple NICs support
+class TCP_MultiNIC {
+public:
+    IP* ip() const { return _ip; }
+    
+protected:
+    TCP_MultiNIC(IP * ip) : _ip(ip) {}
+      
+private:    
+    IP * _ip;
+};
+
+class TCP: public IF<IP::multiNIC, TCP_MultiNIC, TCP_SingleNIC>::Result,
+           public IP::Observer,
+           public Data_Observed < UDP_Address >
+{
+public:
+    typedef IF<IP::multiNIC, TCP_MultiNIC, TCP_SingleNIC>::Result Base;
     typedef UDP_Address Address;
 
     static const unsigned int ID_TCP = 6;
 
     class Header;
+    
+    class Socket_SingleNIC;
+    class Socket_MultiNIC;
+    
     class Socket;
     class ServerSocket;
     class ClientSocket;
 
+    class Channel_Common;
+    class ActiveChannel;
+    class PassiveChannel;
+    
     TCP(IP * ip = 0);
     ~TCP();
-    
-    IP * ip() { return _ip; }
-    
+          
     void update(Data_Observed<IP::Address>*, long, IP::Address,
                 IP::Address, void*, unsigned int);
-                
-protected:
-
-    IP * _ip;
+    
+    static TCP * instance(unsigned int i=0);
 };
 
 class TCP::Header {
@@ -101,9 +133,32 @@ class TCP::Header {
 // Compact bitfields istead of using 1 char for each single bit attribute
 } __attribute__((packed)); 
 
-class TCP::Socket : public Data_Observer<TCP::Address>, public Handler {
-    friend class TCP;
- public:
+class TCP::Socket_SingleNIC {
+public:
+    TCP * tcp() const { return TCP::instance(); }
+protected:
+    Socket_SingleNIC(TCP * tcp) {}
+};
+
+class TCP::Socket_MultiNIC {
+public:
+    TCP * tcp() const { return _tcp; }
+protected:
+    Socket_MultiNIC(TCP * tcp) : _tcp(tcp) {
+        if (!tcp) _tcp = TCP::instance();
+    }
+private:
+    TCP * _tcp;
+};
+
+class TCP::Socket : public IF<IP::multiNIC,
+                              Socket_MultiNIC, Socket_SingleNIC>::Result,
+                    public Data_Observer<TCP::Address>,
+                    public Handler
+{
+public:
+    typedef IF<IP::multiNIC,
+               Socket_MultiNIC, Socket_SingleNIC>::Result Base;
     typedef void (Socket::* Handler)(const Header&,const char*,u16);
     
     enum { // Erros
@@ -117,7 +172,7 @@ class TCP::Socket : public Data_Observer<TCP::Address>, public Handler {
     };
 
     Socket(const Socket& socket);    
-    Socket(TCP * tcp,const Address &local,const Address &remote);
+    Socket(const Address &local,const Address &remote,TCP * tcp);
     virtual ~Socket();
     
     // Data_Observer callback
@@ -160,7 +215,10 @@ class TCP::Socket : public Data_Observer<TCP::Address>, public Handler {
     };
     
     u8 state() { return _state; }
-    void state(u8 s) { _state = s; state_handler = handlers[s]; }
+    void state(u8 s) {
+        _state = s;
+        state_handler = handlers[s];   
+    }
 
     // state-processing functions
     void __LISTEN(const Header&,const char*,u16);
@@ -185,19 +243,19 @@ class TCP::Socket : public Data_Observer<TCP::Address>, public Handler {
     bool check_seq(const Header &h,u16 len);
     void send_ack();
     void send_fin();
+    void send_reset();
     s32 _send(Header * hdr, SegmentedBuffer * sb);
     void set_timeout();
     void clear_timeout();
     
     // attributes
-    TCP * _tcp;
     TCP::Address _remote;
     TCP::Address _local;
     volatile u8 _state;
     volatile u32 _rtt;
     
     volatile u32 snd_una, snd_nxt, snd_ini, snd_wnd;
-    volatile u32 rcv_una, rcv_nxt, rcv_ini, rcv_wnd;
+    volatile u32 rcv_nxt, rcv_ini, rcv_wnd;
 
     Alarm * _timeout;
 
@@ -207,7 +265,9 @@ class TCP::Socket : public Data_Observer<TCP::Address>, public Handler {
 
 class TCP::ClientSocket : public Socket {
  public:
-    ClientSocket(TCP * tcp,const Address &remote,const Address &local);
+    ClientSocket(const Address &remote,const Address &local,
+                 bool start = true,TCP * tcp = 0);
+    virtual ~ClientSocket() {}
     
     void reconnect() { connect(_remote); }
     void connect(const Address& to);
@@ -215,14 +275,83 @@ class TCP::ClientSocket : public Socket {
 
 class TCP::ServerSocket : public Socket {
  public:
-    ServerSocket(TCP * tcp,const Address &local);
+    ServerSocket(const Address &local,bool start = true,TCP * tcp = 0);
     ServerSocket(const TCP::ServerSocket &socket);
+    virtual ~ServerSocket() {}
     
     void listen();
     
     //* Called to notify an incoming connection
     //* Should return a copy of itself to accept the connection
     virtual Socket* incoming(const Address& from) = 0;
+    
+};
+
+
+/**
+ * Base abstract class for both ActiveChannel and PassiveChannel.
+ * 
+ * It handles send/receive, errors and timeouts.
+ */
+class TCP::Channel_Common : public ICMP::Observer {
+public:
+    typedef Alarm::Microsecond Microsecond;
+    
+    int error();
+    
+    void timeout(const Microsecond& t) { _timeout = t; }
+    Microsecond timeout() { return _timeout; }
+    
+protected:
+    Channel_Common() : _timeout(5000000) {
+        ICMP::instance()->attach(this, ICMP::UNREACHABLE);
+    }
+    virtual ~Channel_Common() {
+        ICMP::instance()->detach(this, ICMP::UNREACHABLE);
+    }
+    
+    Microsecond _timeout;
+};
+
+/**
+ * PassiveChannel is high level class for TCP/IP communication.
+ * 
+ * A passive channel is used for implementing TCP services that will
+ * listen to incoming connections.
+ */
+class TCP::PassiveChannel : public ClientSocket {
+public:
+    PassiveChannel();
+    virtual ~PassiveChannel();
+    
+    /**
+     * This method blocks for up to timeout() microseconds waiting
+     * for a remote peer connection.
+     * @Return true if connected or false if a timeout happened.
+     */
+    bool listen();
+};
+
+/**
+ * ActiveChannel is a high level class for TCP/IP communication.
+ * 
+ * An ActiveChannel is used for opening a connection to a remote peer.
+ */
+class TCP::ActiveChannel : public ServerSocket {
+public:
+    ActiveChannel();
+    virtual ~ActiveChannel();
+    
+    /**
+     * Associates this channel to a given _local_ address
+     */
+    void bind(const Address& local);
+    
+    /**
+     * Tries to connect to remote peer _to_
+     * @Return true in case of success or false if a timeout or error happens.
+     */
+    bool connect(const Address& to);
     
 };
 

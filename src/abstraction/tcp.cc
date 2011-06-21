@@ -11,16 +11,21 @@ TCP::Socket::Handler TCP::Socket::handlers[13] = {
     &TCP::Socket::__LAST_ACK,   &TCP::Socket::__TIME_WAIT,
     &TCP::Socket::__CLOSED };
 
-TCP::TCP(IP * ip) : _ip(ip)
+TCP::TCP(IP * _ip) : Base(_ip)
 {
-    if (!ip)
-        _ip = IP::instance();
-    _ip->attach(this, ID_TCP);
+    ip()->attach(this, ID_TCP);
 }
 
 TCP::~TCP()
 {
-    _ip->detach(this, ID_TCP);
+    ip()->detach(this, ID_TCP);
+}
+
+TCP * TCP::instance(unsigned int i) {
+    static TCP * _instance[Traits<NIC>::NICS::Length];
+    if (!_instance[i])
+        _instance[i] = new TCP(IP::instance(i));
+    return _instance[i];
 }
 
 // Called by IP's notify(...)
@@ -123,23 +128,25 @@ void TCP::Header::_checksum(IP::Address src,IP::Address dst,SegmentedBuffer * sb
 
 // Socket stuff
 
-TCP::Socket::Socket(TCP * tcp,const Address &remote,const Address &local)
-    : _tcp(tcp), _remote(remote), _local(local), _rtt(5000000), _timeout(0)
+TCP::Socket::Socket(const Address &remote,const Address &local,TCP * _tcp)
+    : Base(_tcp), _remote(remote), _local(local), _rtt(5000000), _timeout(0)
 {
+    rcv_wnd = tcp()->ip()->nic()->mtu() - 
+              sizeof(TCP::Header) - sizeof(IP::Header);
     state(CLOSED);
-    _tcp->attach(this, _local.port());
+    tcp()->attach(this, _local.port());
 }
 
-TCP::Socket::Socket(const TCP::Socket& socket)
-    : _tcp(socket._tcp), _remote(socket._remote), _local(socket._local), _rtt(5000000), _timeout(0)
+TCP::Socket::Socket(const TCP::Socket& socket) : Base(socket.tcp())
 {
+    memcpy(this, &socket, sizeof(Socket));
     state(CLOSED);
-    _tcp->attach(this, _local.port());
+    tcp()->attach(this, _local.port());
 }
 
 TCP::Socket::~Socket()
 {
-    _tcp->detach(this, _local.port());
+    tcp()->detach(this, _local.port());
 }
 
 s32 TCP::Socket::_send(Header * hdr, SegmentedBuffer * sb)
@@ -157,22 +164,29 @@ s32 TCP::Socket::_send(Header * hdr, SegmentedBuffer * sb)
     nsb.append(sb);
 
 
-    return _tcp->ip()->send(_local.ip(),_remote.ip(),&nsb,TCP::ID_TCP) - hdr->size();
+    return tcp()->ip()->send(_local.ip(),_remote.ip(),&nsb,TCP::ID_TCP) - hdr->size();
 }
 
 void TCP::Socket::send(const char *data,u16 len)
 {
+    int more = 0;
+    if (len > snd_wnd) { // break up into multiple segments
+        len = snd_wnd; 
+        more = len - snd_wnd;
+    }
     Header hdr(snd_nxt,rcv_nxt-1);
     hdr._ack = true;
     snd_nxt += len;
     SegmentedBuffer sb(data,len);
     _send(&hdr,&sb);
+    
+    if (more) // send next segment too
+        send(&data[len], more);
 }
 
 void TCP::Socket::set_timeout() {
-    //TODO: Not working!
-    //if (_timeout) delete _timeout;
-    //_timeout = new Alarm(2 * _rtt, this, 1);
+    if (_timeout) delete _timeout;
+    _timeout = new Alarm(2 * _rtt, this, 1);
 }
 
 void TCP::Socket::clear_timeout() {
@@ -180,8 +194,6 @@ void TCP::Socket::clear_timeout() {
 }
 
 void TCP::Socket::operator()() {
-    // timeout occured
-
     error(ERR_TIMEOUT);
 }
 
@@ -200,20 +212,22 @@ void TCP::Socket::close()
 }
 
 
-TCP::ClientSocket::ClientSocket(TCP * tcp,const Address& remote,const Address& local) 
-	: Socket(tcp,remote,local)
+TCP::ClientSocket::ClientSocket(const Address& remote,const Address& local,
+                                bool start, TCP * tcp) 
+	: Socket(remote,local,tcp)
 {
-    connect(remote);
+    snd_ini = Pseudo_Random::random() & 0x00FFFFFF;
+        
+    if (start)
+        connect(remote);
 }
 
 void TCP::ClientSocket::connect(const Address& to) {
     _remote = to;
     
     state(SYN_SENT);
-    snd_ini = Pseudo_Random::random() & 0x00FFFFFF;
     snd_una = snd_ini;
     snd_nxt = snd_ini + 1;
-    rcv_wnd = 512; // TODO: change to MTU minus headers
 
     Header hdr(snd_ini, 0);
     hdr._syn = true;
@@ -221,16 +235,16 @@ void TCP::ClientSocket::connect(const Address& to) {
     set_timeout();
 }
 
-TCP::ServerSocket::ServerSocket(TCP * tcp,const Address& local) 
-    : Socket(tcp,Address(0,0),local)
+TCP::ServerSocket::ServerSocket(const Address& local,bool start,TCP * tcp) 
+    : Socket(Address(0,0),local,tcp)
 {
-    listen();
-    rcv_wnd = 1024; // TODO: change to MTU minus headers
+    if (start)
+        listen();
 }
 
-TCP::ServerSocket::ServerSocket(const TCP::ServerSocket &socket) : Socket(socket)
+TCP::ServerSocket::ServerSocket(const TCP::ServerSocket &socket)
+    : Socket(socket)
 {
-    rcv_wnd = 1024; // TODO: change to MTU minus headers };
 }
 
 void TCP::ServerSocket::listen()
@@ -246,10 +260,7 @@ void TCP::Socket::__LISTEN(const Header& r ,const char* data,u16 len)
     if (r._syn && !r._rst && !r._fin) {
         Socket * n;
         ServerSocket *ss = static_cast<ServerSocket*>(this);
-        if (!ss) {
-            db<TCP>(ERR) << "TCP::Non-ServerSocket in LISTEN state!\n";
-            Machine::panic();
-        }
+        
         if (ss && (n = ss->incoming(_remote))) {
             n->_remote = _remote;
             n->rcv_nxt = r.seq_num()+1;
@@ -356,8 +367,11 @@ void TCP::Socket::__SNDING(const Header &r,const char* data, u16 len)
     db<TCP>(TRC) << __PRETTY_FUNCTION__ << endl;
 
     if (r._ack) {
-        //TODO: notify how many bytes were sent
-        sent(0);
+        int bytes = r.ack_num() - snd_una;
+        if (bytes < 0) // sliding window overflow
+            bytes = r.ack_num() + (0xFFFF - snd_una); 
+        sent(bytes);
+        snd_una = r.ack_num();
     }
 }
 
@@ -379,7 +393,7 @@ void TCP::Socket::__ESTABLISHED(const Header& r ,const char* data,u16 len)
         if (len)
             __RCVING(r,data,len);
 
-        else
+        if (snd_una < r.ack_num())
             __SNDING(r,data,len);
 
         if (r._fin) {
@@ -401,6 +415,9 @@ void TCP::Socket::__FIN_WAIT1(const Header& r ,const char* data,u16 len)
     if (!check_seq(r,len))
         return;
 
+    if (snd_una < r.ack_num())
+            __SNDING(r,data,len);
+    
     if (!r._fin && len) {
         __RCVING(r,data,len);
         if (r._ack)
@@ -429,8 +446,9 @@ void TCP::Socket::__FIN_WAIT2(const Header& r ,const char* data,u16 len)
     if (!check_seq(r,len))
         return;
     if (len) {
-        __RCVING(r,data,len);
+        __RCVING(r,data,len);  
     }
+
     if (r._fin) {
         state(CLOSED); // no TIME_WAIT
         send_ack();
@@ -446,7 +464,7 @@ void TCP::Socket::__CLOSE_WAIT(const Header& r ,const char* data,u16 len)
 
     if (r._rst || len) {
         if (len)
-            //TODO: send_reset()
+            send_reset();
         error(ERR_RESET);
         state(CLOSED);
         closed();
@@ -506,6 +524,16 @@ void TCP::Socket::send_fin()
     Header s(snd_nxt,rcv_nxt);
     s._fin = true;
     s._ack = true;
+    _send(&s,0);
+}
+
+void TCP::Socket::send_reset()
+{
+    Header s(snd_nxt,rcv_nxt);
+    s._fin = true;
+    s._ack = true;
+    s._psh = true;
+    s._rst = true;
     _send(&s,0);
 }
 

@@ -100,7 +100,7 @@ void IEEE1451_Transducer::receive_msg(unsigned short trans_id, const char *messa
 
 IEEE1451_TIM *IEEE1451_TIM::_ieee1451 = 0;
 
-IEEE1451_TIM::IEEE1451_TIM() : _tcp(IP::instance()), _ncap_address((unsigned long) 0x0a00000b)
+IEEE1451_TIM::IEEE1451_TIM() : _ncap_address((unsigned long) 0x0a00000b)
 {
     _socket = 0;
     _connected = false;
@@ -169,7 +169,7 @@ void IEEE1451_TIM::connect()
     db<IEEE1451_TIM>(TRC) << "IEEE1451_TIM - Connecting...\n";
     if (_socket)
         delete _socket;
-    _socket = new TIM_Socket(&_tcp, _ncap_address);
+    _socket = new TIM_Socket(_ncap_address);
 
     while (!_connected)
         Alarm::delay(500000);

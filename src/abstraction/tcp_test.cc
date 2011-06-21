@@ -8,7 +8,7 @@ OStream cout;
 
 class HTTPServer : public TCP::ServerSocket {
 public:
-    HTTPServer(TCP * tcp) : TCP::ServerSocket(tcp,TCP::Address(tcp->ip()->address(),80)) {}
+    HTTPServer() : TCP::ServerSocket(TCP::Address(tcp()->ip()->address(),80)) {}
 
     TCP::Socket* incoming(const TCP::Address& from) {
         // we can clone here to accept multiple connections
@@ -43,12 +43,12 @@ public:
 
 class WebClient : public TCP::ClientSocket {
 public:
-    WebClient(TCP * tcp) : 
-        TCP::ClientSocket(tcp,
+    WebClient() : 
+        TCP::ClientSocket(
                 TCP::Address("74.125.234.84:80"),
-                TCP::Address(tcp->ip()->address(),55000 + Pseudo_Random::random() % 10000)) 
+                TCP::Address(tcp()->ip()->address(),55000 + Pseudo_Random::random() % 10000)) 
     {
-        m.lock();
+        m.lock(); 
     }
 
     void connected() {
@@ -71,7 +71,9 @@ public:
         m.unlock();
     }
 
-    void sent(u16 size) {} 
+    void sent(u16 size) {
+        cout << "Bytes sent: " << size << endl;
+    } 
 
     void received(const char *data,u16 size) {
         cout << "Received "<<size<<" bytes: " << endl;
@@ -87,17 +89,17 @@ protected:
 
 int main()
 {
-    IP ip(0);
-    TCP tcp(&ip);
+    IP * ip = IP::instance();
 
-    ip.set_address(IP::Address(10,0,2,15));
-    ip.set_gateway(IP::Address(10,0,2,2));
-    ip.set_netmask(IP::Address(255,255,255,0));
+    ip->set_address(IP::Address(10,0,2,15));
+    ip->set_gateway(IP::Address(10,0,2,2));
+    ip->set_netmask(IP::Address(255,255,255,0));
 
     //HTTPServer httpd(&tcp);
     //Thread::self()->suspend();
 
-    WebClient web(&tcp);
+    WebClient web;
 
     web.wait();
+    delete ip; // kill IP thread
 }

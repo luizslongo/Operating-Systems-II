@@ -78,7 +78,7 @@ private:
     class NCAP_Socket : public TCP::ServerSocket
     {
     public:
-        NCAP_Socket(TCP *tcp) : TCP::ServerSocket(tcp, TCP::Address(IP::instance()->address(), IEEE1451_PORT)), _link(this) {}
+        NCAP_Socket() : TCP::ServerSocket(TCP::Address(IP::instance()->address(), IEEE1451_PORT)), _link(this) {}
         NCAP_Socket(const NCAP_Socket &socket) : TCP::ServerSocket(socket), _link(this) {}
         ~NCAP_Socket() {}
 
@@ -111,7 +111,6 @@ public:
     void set_application(Listener *application) { _application = application; }
 
 private:
-    TCP _tcp;
     Simple_List<NCAP_Socket> _sockets;
 
     static IEEE1451_NCAP *_ieee1451;
