@@ -198,9 +198,9 @@ public:
     //* Called when the peer closed his side of the connection
     virtual void closing() {} 
     
+    void abort() { send_reset(); }
     void close();
     void send(const char* data,u16 len);
-    void send(SegmentedBuffer * sb);
     
     const Address & remote() { return _remote; }
     const Address & local()  { return _local; }
@@ -271,6 +271,8 @@ class TCP::ClientSocket : public Socket {
     
     void reconnect() { connect(_remote); }
     void connect(const Address& to);
+    
+    void connect() { connect(_remote); }
 };
 
 class TCP::ServerSocket : public Socket {

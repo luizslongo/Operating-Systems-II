@@ -51,10 +51,12 @@ public:
         m.lock(); 
     }
 
+    void send_request() {
+        send("GET / HTTP/1.1\n\rHost: www.google.com\n\r\n\r",40);  
+    }
     void connected() {
         cout << "Connected to " << remote() << endl;
-        send("GET / HTTP/1.1\n\rHost: www.google.com\n\r\n\r",40);
-        close();
+        send_request();
     }
 
     void closing() {
@@ -67,12 +69,29 @@ public:
     }
 
     void error(short err) {
-        cout << "Connection error" << endl;
-        m.unlock();
+        if (err == ERR_TIMEOUT) {
+            cout << "timeout occured\n";
+            switch (state()) {
+                case SYN_SENT:
+                    connect();
+                    break;
+                case ESTABLISHED:
+                    send_request();
+                    break;
+                default:
+                    abort();
+                    m.unlock();
+            }
+        } 
+        else {
+            cout << "Connection error" << endl;
+            m.unlock();
+        }
     }
 
     void sent(u16 size) {
         cout << "Bytes sent: " << size << endl;
+        close();
     } 
 
     void received(const char *data,u16 size) {

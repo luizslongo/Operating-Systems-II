@@ -194,6 +194,7 @@ void TCP::Socket::clear_timeout() {
 }
 
 void TCP::Socket::operator()() {
+    snd_nxt = snd_una; // rollback, so the user can resend
     error(ERR_TIMEOUT);
 }
 
@@ -297,12 +298,14 @@ void TCP::Socket::__SYN_SENT(const Header& r,const char* data,u16 len)
     if (r._rst || r._fin) {
             error(ERR_REFUSED);
             state(CLOSED);
+            clear_timeout();
             closed();
     }
     else if (r._ack) {
         if ((r.ack_num() <= snd_ini) || (r.ack_num() > snd_nxt)) {
             error(ERR_RESET);
             state(CLOSED);
+            clear_timeout();
             closed();
         } else if ((r.ack_num() >= snd_una) && (r.ack_num() <= snd_nxt)) {
             if (r._syn) {
@@ -314,6 +317,7 @@ void TCP::Socket::__SYN_SENT(const Header& r,const char* data,u16 len)
                     state(SYN_RCVD);
                 } else {
                     state(ESTABLISHED);
+                    clear_timeout();
                     send_ack();
                     connected();
                 }
@@ -340,11 +344,13 @@ void TCP::Socket::__SYN_RCVD(const Header& r ,const char* data,u16 len)
     if (r._rst || r._fin) {
         error(ERR_RESET);
         state(CLOSED);
+        clear_timeout();
         closed();
     }
     else if (r._ack) {
         snd_wnd = r.wnd();
         state(ESTABLISHED);
+        clear_timeout();
         connected();
     }
 }
@@ -372,6 +378,8 @@ void TCP::Socket::__SNDING(const Header &r,const char* data, u16 len)
             bytes = r.ack_num() + (0xFFFF - snd_una); 
         sent(bytes);
         snd_una = r.ack_num();
+        if (snd_una == snd_nxt)
+            clear_timeout();
     }
 }
 
@@ -385,6 +393,7 @@ void TCP::Socket::__ESTABLISHED(const Header& r ,const char* data,u16 len)
     if (r._rst) {
         error(ERR_RESET);
         state(CLOSED);
+        clear_timeout();
         closed();
     }
     else if (r.seq_num() == rcv_nxt) { // implicit reject out-of-order segments
@@ -414,10 +423,7 @@ void TCP::Socket::__FIN_WAIT1(const Header& r ,const char* data,u16 len)
 
     if (!check_seq(r,len))
         return;
-
-    if (snd_una < r.ack_num())
-            __SNDING(r,data,len);
-    
+   
     if (!r._fin && len) {
         __RCVING(r,data,len);
         if (r._ack)
@@ -432,6 +438,7 @@ void TCP::Socket::__FIN_WAIT1(const Header& r ,const char* data,u16 len)
     if (r._ack && r._fin) {
         state(CLOSED); // no TIME_WAIT
         send_ack();
+        clear_timeout();
         closed();
     }
     if (!r._ack && r._fin) {
@@ -452,6 +459,7 @@ void TCP::Socket::__FIN_WAIT2(const Header& r ,const char* data,u16 len)
     if (r._fin) {
         state(CLOSED); // no TIME_WAIT
         send_ack();
+        clear_timeout();
         closed();
     }
 }
@@ -467,6 +475,7 @@ void TCP::Socket::__CLOSE_WAIT(const Header& r ,const char* data,u16 len)
             send_reset();
         error(ERR_RESET);
         state(CLOSED);
+        clear_timeout();
         closed();
     } 
 }
@@ -479,6 +488,7 @@ void TCP::Socket::__CLOSING(const Header& r ,const char* data,u16 len)
     
     if (r._ack) {
         state(CLOSED); // no TIME_WAIT
+        clear_timeout();
         closed();
     }
 }
@@ -502,7 +512,7 @@ void TCP::Socket::__TIME_WAIT(const Header& r ,const char* data,u16 len)
     
     if (r._fin && r._ack) {
         state(CLOSED);
-        snd_nxt++; // ?
+        clear_timeout();
         closed();
     }
 }
