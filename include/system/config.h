@@ -21,10 +21,10 @@
 //============================================================================
 // ARCHITECTURE AND MACHINE SELECTION
 //============================================================================
-#define ARCH mips32
+#define ARCH ia32
 #define __ARCH_TRAITS_H	 __HEADER_ARCH(traits)
 
-#define MACH axi4lite
+#define MACH pc
 #define __MACH_TRAITS_H	 __HEADER_MACH(traits)
 
 //============================================================================

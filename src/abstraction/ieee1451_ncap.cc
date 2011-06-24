@@ -152,7 +152,7 @@ unsigned short IEEE1451_NCAP::send_command(const IP::Address &destination, const
     }
 
     unsigned int size = sizeof(IEEE1451_Packet) + length;
-    char buffer[size];
+    char *buffer = new char[size];
 
     IEEE1451_Packet *out = (IEEE1451_Packet *) buffer;
     char *msg = buffer + sizeof(IEEE1451_Packet);
@@ -180,9 +180,35 @@ IEEE1451_NCAP::NCAP_Socket *IEEE1451_NCAP::get_socket(const IP::Address &addr)
     return 0;
 }
 
+void IEEE1451_NCAP::NCAP_Socket::send(const char *data, unsigned int length)
+{
+    if (_data)
+        delete _data;
+
+    _data = data;
+    _length = length;
+
+    TCP::ServerSocket::send(_data, _length);
+}
+
 TCP::Socket *IEEE1451_NCAP::NCAP_Socket::incoming(const TCP::Address &from)
 {
     db<IEEE1451_NCAP>(TRC) << "IEEE1451_NCAP - Server socket incoming\n";
+
+    IEEE1451_NCAP *ncap = IEEE1451_NCAP::get_instance();
+    Simple_List<NCAP_Socket>::Iterator it = ncap->_sockets.begin();
+    while (it != ncap->_sockets.end())
+    {
+        NCAP_Socket *socket = it->object();
+        it++;
+
+        if (((TCP::Address) socket->remote() == (TCP::Address) from) && (socket->state() != LISTEN))
+        {
+            db<IEEE1451_NCAP>(TRC) << "IEEE1451_NCAP - Deleting old socket...\n";
+            ncap->_sockets.remove(&socket->_link);
+            delete socket;
+        }
+    }
 
     NCAP_Socket *socket = new NCAP_Socket(*this);
     IEEE1451_NCAP::get_instance()->_sockets.insert(&socket->_link);
@@ -228,6 +254,45 @@ void IEEE1451_NCAP::NCAP_Socket::closing()
 {
     db<IEEE1451_NCAP>(TRC) << "IEEE1451_NCAP - Server socket closing\n";
     close();
+}
+
+void IEEE1451_NCAP::NCAP_Socket::error(short error)
+{
+    db<IEEE1451_NCAP>(TRC) << "IEEE1451_NCAP - Error (err=" << error << ", stt=" << state() << ")\n";
+
+    IEEE1451_NCAP *ncap = IEEE1451_NCAP::get_instance();
+
+    if (error == ERR_TIMEOUT)
+    {
+        switch (state())
+        {
+            case SYN_RCVD:
+            {
+                ncap->_sockets.remove(&_link);
+                delete this;
+                break;
+            }
+            case ESTABLISHED:
+                if ((_data) && (_length > 0))
+                    TCP::ServerSocket::send(_data, _length);
+                break;
+            default:
+                abort();
+        }
+    }
+}
+
+void IEEE1451_NCAP::NCAP_Socket::sent(u16 size)
+{
+    db<IEEE1451_NCAP>(TRC) << "IEEE1451_NCAP - Bytes sent: " << size << "\n";
+
+    if (_data)
+    {
+        delete _data;
+        _data = 0;
+    }
+
+    _length = 0;
 }
 
 __END_SYS

@@ -147,6 +147,7 @@ TCP::Socket::Socket(const TCP::Socket& socket) : Base(socket.tcp())
 TCP::Socket::~Socket()
 {
     tcp()->detach(this, _local.port());
+    clear_timeout();
 }
 
 s32 TCP::Socket::_send(Header * hdr, SegmentedBuffer * sb)
@@ -174,7 +175,7 @@ void TCP::Socket::send(const char *data,u16 len)
         len = snd_wnd; 
         more = len - snd_wnd;
     }
-    Header hdr(snd_nxt,rcv_nxt-1);
+    Header hdr(snd_nxt,rcv_nxt);
     hdr._ack = true;
     snd_nxt += len;
     SegmentedBuffer sb(data,len);
@@ -182,6 +183,8 @@ void TCP::Socket::send(const char *data,u16 len)
     
     if (more) // send next segment too
         send(&data[len], more);
+
+    set_timeout();
 }
 
 void TCP::Socket::set_timeout() {
@@ -190,10 +193,17 @@ void TCP::Socket::set_timeout() {
 }
 
 void TCP::Socket::clear_timeout() {
-    if (_timeout) delete _timeout;
+    if (_timeout)
+    {
+        delete _timeout;
+        _timeout = 0;
+    }
 }
 
 void TCP::Socket::operator()() {
+    delete _timeout;
+    _timeout = 0;
+
     snd_nxt = snd_una; // rollback, so the user can resend
     error(ERR_TIMEOUT);
 }
@@ -349,6 +359,7 @@ void TCP::Socket::__SYN_RCVD(const Header& r ,const char* data,u16 len)
     }
     else if (r._ack) {
         snd_wnd = r.wnd();
+        snd_una = r.ack_num();
         state(ESTABLISHED);
         clear_timeout();
         connected();
@@ -359,9 +370,8 @@ void TCP::Socket::__RCVING(const Header &r,const char* data,u16 len)
 {
     db<TCP>(TRC) << __PRETTY_FUNCTION__ << endl;
     if (len) {
-        rcv_nxt += len - 1;
+        rcv_nxt += len;
         send_ack();
-        ++rcv_nxt;
         received(data,len);
     } else {
         send_ack();
@@ -375,7 +385,7 @@ void TCP::Socket::__SNDING(const Header &r,const char* data, u16 len)
     if (r._ack) {
         int bytes = r.ack_num() - snd_una;
         if (bytes < 0) // sliding window overflow
-            bytes = r.ack_num() + (0xFFFF - snd_una); 
+            bytes = r.ack_num() + (0xFFFF - snd_una);
         sent(bytes);
         snd_una = r.ack_num();
         if (snd_una == snd_nxt)
@@ -388,7 +398,11 @@ void TCP::Socket::__ESTABLISHED(const Header& r ,const char* data,u16 len)
     db<TCP>(TRC) << __PRETTY_FUNCTION__ << endl;
 
     if (!check_seq(r,len))
+    {
+        if ((len) && (r.seq_num() < rcv_nxt))
+            send_ack();
         return;
+    }
 
     if (r._rst) {
         error(ERR_RESET);
@@ -399,11 +413,11 @@ void TCP::Socket::__ESTABLISHED(const Header& r ,const char* data,u16 len)
     else if (r.seq_num() == rcv_nxt) { // implicit reject out-of-order segments
         snd_wnd = r.wnd();
 
-        if (len)
-            __RCVING(r,data,len);
-
         if (snd_una < r.ack_num())
             __SNDING(r,data,len);
+
+        if (len)
+            __RCVING(r,data,len);
 
         if (r._fin) {
             send_ack();

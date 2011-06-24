@@ -201,7 +201,7 @@ void IEEE1451_TIM::send_msg(unsigned short trans_id, const char *message, unsign
     }
 
     unsigned int size = sizeof(IEEE1451_Packet) + length;
-    char buffer[size];
+    char *buffer = new char[size];
 
     IEEE1451_Packet *out = (IEEE1451_Packet *) buffer;
     char *msg = buffer + sizeof(IEEE1451_Packet);
@@ -297,6 +297,17 @@ void IEEE1451_TIM::receive_msg(unsigned short trans_id, const char *message, uns
     }
 }
 
+void IEEE1451_TIM::TIM_Socket::send(const char *data, unsigned int length)
+{
+    if (_data)
+        delete _data;
+
+    _data = data;
+    _length = length;
+
+    TCP::ClientSocket::send(_data, _length);
+}
+
 void IEEE1451_TIM::TIM_Socket::connected()
 {
     db<IEEE1451_TIM>(TRC) << "IEEE1451_TIM - Client socket connected\n";
@@ -336,6 +347,40 @@ void IEEE1451_TIM::TIM_Socket::received(const char *data, u16 size)
 
     if (in->_length > 0)
         tim->receive_msg(in->_trans_id, msg, in->_length);
+}
+
+void IEEE1451_TIM::TIM_Socket::error(short error)
+{
+    db<IEEE1451_TIM>(TRC) << "IEEE1451_TIM - Error (" << error << ", stt=" << state() << ")\n";
+
+    if (error == ERR_TIMEOUT)
+    {
+        switch (state())
+        {
+            case SYN_SENT:
+                connect();
+                break;
+            case ESTABLISHED:
+                if ((_data) && (_length > 0))
+                    TCP::ClientSocket::send(_data, _length);
+                break;
+            default:
+                abort();
+        }
+    }
+}
+
+void IEEE1451_TIM::TIM_Socket::sent(u16 size)
+{
+    db<IEEE1451_TIM>(TRC) << "IEEE1451_TIM - Bytes sent: " << size << "\n";
+
+    if (_data)
+    {
+        delete _data;
+        _data = 0;
+    }
+
+    _length = 0;
 }
 
 __END_SYS

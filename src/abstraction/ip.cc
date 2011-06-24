@@ -75,14 +75,14 @@ IP::IP(unsigned int unit)
 
     // allocate memory for receiving packets
     for(unsigned int i=0;i<MAX_FRAGMENTS;++i)
-        _packet[i] = new char[mtu()];
+        _packet[i] = new (kmalloc(mtu())) char[mtu()];
 
     start();
 }
 
 IP::~IP() {
     for(unsigned int i=0;i<MAX_FRAGMENTS;++i)
-        delete _packet[i];
+        kfree(_packet[i]);
 }
 
 void IP::process_ip(char *data, u16 size)
@@ -127,6 +127,7 @@ int IP::run()
         int size = _nic.receive(&src, &prot, _packet[0], _nic.mtu());
         if(size <= 0) {
             db<IP>(WRN) << "NIC::received error!" << endl;
+            Thread::self()->yield();
             continue;
         }
 
@@ -162,12 +163,11 @@ s32 IP::send(const Address & from,const Address & to,SegmentedBuffer * data,Prot
     pdu.copy_to(sbuf,size);   
 
     db<IP>(TRC) << "IP::send() " << size << " bytes" << endl;
-        
+
     if (_nic.send(mac,NIC::IP,sbuf,size) >= 0)
         return size;
     else
         return -1;
-
 }
 
 // From http://www.faqs.org/rfcs/rfc1071.html

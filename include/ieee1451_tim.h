@@ -60,12 +60,20 @@ private:
     {
     public:
         TIM_Socket(const IP::Address &dst) : TCP::ClientSocket(TCP::Address(dst, IEEE1451_PORT),
-            TCP::Address(IP::instance()->address(), IEEE1451_PORT)) {}
-        ~TIM_Socket() {}
+            TCP::Address(IP::instance()->address(), IEEE1451_PORT)), _data(0), _length(0) {}
+        ~TIM_Socket() { if (_data) delete _data; }
+
+        void send(const char *data, unsigned int length);
 
         void connected();
         void closed();
         void received(const char *data, u16 size);
+        void error(short error);
+        void sent(u16 size);
+
+    private:
+        const char *_data;
+        unsigned int _length;
     };
 
 private:

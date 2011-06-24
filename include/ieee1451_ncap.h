@@ -78,18 +78,26 @@ private:
     class NCAP_Socket : public TCP::ServerSocket
     {
     public:
-        NCAP_Socket() : TCP::ServerSocket(TCP::Address(IP::instance()->address(), IEEE1451_PORT)), _link(this) {}
-        NCAP_Socket(const NCAP_Socket &socket) : TCP::ServerSocket(socket), _link(this) {}
-        ~NCAP_Socket() {}
+        NCAP_Socket() : TCP::ServerSocket(TCP::Address(IP::instance()->address(), IEEE1451_PORT)), _link(this), _data(0), _length(0) {}
+        NCAP_Socket(const NCAP_Socket &socket) : TCP::ServerSocket(socket), _link(this), _data(0), _length(0) {}
+        ~NCAP_Socket() { if (_data) delete _data; }
+
+        void send(const char *data, unsigned int length);
 
         TCP::Socket *incoming(const TCP::Address &from);
         void connected();
         void closed();
         void received(const char *data, u16 size);
         void closing();
+        void error(short error);
+        void sent(u16 size);
 
     public:
         Simple_List<NCAP_Socket>::Element _link;
+
+    private:
+        const char *_data;
+        unsigned int _length;
     };
 
     NCAP_Socket *get_socket(const IP::Address &addr);
