@@ -186,6 +186,9 @@ public:
     //* Called when data arrives
     virtual void received(const char* data,u16 size) {};
     
+    //* Called when the peer signal a push flag
+    virtual void push() {};
+    
     //* Called when data was sucessfuly sent
     virtual void sent(u16 size) {};
     
@@ -335,6 +338,11 @@ public:
      */
     bool connect(const TCP::Address& to);
     
+    /**
+     * Associate this channel with a local port.
+     */
+    void bind(unsigned short port);
+    
 protected:
     
     // from TCP::Socket
@@ -345,6 +353,12 @@ protected:
     void connected();
     void sent(u16 size);
     void error(short errorcode);
+    void push();
+    
+    // ICMP callback
+    void update(Data_Observed<IP::Address> *ob, long c,
+                IP::Address src, IP::Address dst,
+                void *data, unsigned int size);
     
     // Attributes
     

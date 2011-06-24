@@ -129,7 +129,7 @@ void TCP::Header::_checksum(IP::Address src,IP::Address dst,SegmentedBuffer * sb
 // Socket stuff
 
 TCP::Socket::Socket(const Address &remote,const Address &local,TCP * _tcp)
-    : Base(_tcp), _remote(remote), _local(local), _rtt(5000000), _timeout(0)
+    : Base(_tcp), _remote(remote), _local(local), _rtt(500000), _timeout(0)
 {
     rcv_wnd = tcp()->mss();
     state(CLOSED);
@@ -383,6 +383,8 @@ void TCP::Socket::__RCVING(const Header &r,const char* data,u16 len)
         rcv_nxt += len;
         received(data,len);
         send_ack();
+        if (r._psh)
+            push();
     } else {
         send_ack();
     }
@@ -626,6 +628,12 @@ void TCP::Channel::received(const char* data,u16 size)
             _rx_block.signal();
 }
 
+void TCP::Channel::push()
+{
+    if (_receiving)
+        _rx_block.signal();
+}
+
 bool TCP::Channel::connect(const TCP::Address& to)
 {
     if (state() != CLOSED) {
@@ -655,7 +663,7 @@ int TCP::Channel::receive(char * dst,unsigned int size)
     _rx_buffer_used = 0;
     _receiving = true;
     rcv_wnd = size;
-    send_ack(); // send and window update
+    send_ack(); // send a window update
     
     _rx_block.wait();
     
@@ -689,6 +697,15 @@ int TCP::Channel::send(const char * src,unsigned int size)
     
     _sending = false;
     return _tx_bytes_sent;
+}
+
+void TCP::Channel::bind(unsigned short port)
+{
+    tcp()->detach(this, _local.port());
+    
+    _local = TCP::Address(tcp()->ip()->address(), port);
+    
+    tcp()->attach(this, port);
 }
 
 void TCP::Channel::closing()
@@ -731,6 +748,13 @@ void TCP::Channel::error(short errorcode)
             _rx_block.signal();
         
     }
+}
+
+void TCP::Channel::update(Data_Observed<IP::Address> *ob, long c,
+                IP::Address src, IP::Address dst,
+                void *data, unsigned int size)
+{
+        // TODO
 }
 __END_SYS
 
