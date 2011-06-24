@@ -51,7 +51,7 @@ public:
     class ServerSocket;
     class ClientSocket;
 
-    class Channel_Common;
+    class Channel;
     class ActiveChannel;
     class PassiveChannel;
     
@@ -62,6 +62,8 @@ public:
                 IP::Address, void*, unsigned int);
     
     static TCP * instance(unsigned int i=0);
+
+    inline u16 mss();
 };
 
 class TCP::Header {
@@ -198,8 +200,14 @@ public:
     //* Called when the peer closed his side of the connection
     virtual void closing() {} 
     
-    void abort() { send_reset(); }
+    //* Called to notify an incoming connection
+    //* Should return a copy of itself to accept the connection
+    virtual Socket* incoming(const Address& from) { return this; }
+
+    void abort();
     void close();
+    void connect();
+    void listen();
     void send(const char* data,u16 len);
     
     const Address & remote() { return _remote; }
@@ -247,7 +255,7 @@ public:
     s32 _send(Header * hdr, SegmentedBuffer * sb);
     void set_timeout();
     void clear_timeout();
-    
+
     // attributes
     TCP::Address _remote;
     TCP::Address _local;
@@ -263,30 +271,29 @@ public:
     static Handler handlers[13];
 };
 
-class TCP::ClientSocket : public Socket {
- public:
+u16 TCP::mss() {
+   return ip()->nic()->mtu() - sizeof(TCP::Header) - sizeof(IP::Header);
+}
+
+class TCP::ClientSocket : public TCP::Socket {
+public:
+
     ClientSocket(const Address &remote,const Address &local,
                  bool start = true,TCP * tcp = 0);
     virtual ~ClientSocket() {}
     
-    void reconnect() { connect(_remote); }
-    void connect(const Address& to);
-    
-    void connect() { connect(_remote); }
+    void connect(const Address& to) {
+        _local = to;
+        Socket::connect();
+    }
 };
 
-class TCP::ServerSocket : public Socket {
- public:
+class TCP::ServerSocket : public TCP::Socket {
+public:
+
     ServerSocket(const Address &local,bool start = true,TCP * tcp = 0);
     ServerSocket(const TCP::ServerSocket &socket);
     virtual ~ServerSocket() {}
-    
-    void listen();
-    
-    //* Called to notify an incoming connection
-    //* Should return a copy of itself to accept the connection
-    virtual Socket* incoming(const Address& from) = 0;
-    
 };
 
 
@@ -295,7 +302,7 @@ class TCP::ServerSocket : public Socket {
  * 
  * It handles send/receive, errors and timeouts.
  */
-class TCP::Channel_Common : public ICMP::Observer {
+class TCP::Channel : public ICMP::Observer, public TCP::Socket {
 public:
     typedef Alarm::Microsecond Microsecond;
     
@@ -304,57 +311,16 @@ public:
     void timeout(const Microsecond& t) { _timeout = t; }
     Microsecond timeout() { return _timeout; }
     
-protected:
-    Channel_Common() : _timeout(5000000) {
+    Channel() : TCP::Socket(TCP::Address(0,0),TCP::Address(0,0),0),
+                _timeout(5000000) {
         ICMP::instance()->attach(this, ICMP::UNREACHABLE);
     }
-    virtual ~Channel_Common() {
+    virtual ~Channel() {
         ICMP::instance()->detach(this, ICMP::UNREACHABLE);
     }
     
+protected:
     Microsecond _timeout;
-};
-
-/**
- * PassiveChannel is high level class for TCP/IP communication.
- * 
- * A passive channel is used for implementing TCP services that will
- * listen to incoming connections.
- */
-class TCP::PassiveChannel : public ClientSocket {
-public:
-    PassiveChannel();
-    virtual ~PassiveChannel();
-    
-    /**
-     * This method blocks for up to timeout() microseconds waiting
-     * for a remote peer connection.
-     * @Return true if connected or false if a timeout happened.
-     */
-    bool listen();
-};
-
-/**
- * ActiveChannel is a high level class for TCP/IP communication.
- * 
- * An ActiveChannel is used for opening a connection to a remote peer.
- */
-class TCP::ActiveChannel : public ServerSocket {
-public:
-    ActiveChannel();
-    virtual ~ActiveChannel();
-    
-    /**
-     * Associates this channel to a given _local_ address
-     */
-    void bind(const Address& local);
-    
-    /**
-     * Tries to connect to remote peer _to_
-     * @Return true in case of success or false if a timeout or error happens.
-     */
-    bool connect(const Address& to);
-    
 };
 
 __END_SYS

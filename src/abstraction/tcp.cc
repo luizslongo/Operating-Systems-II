@@ -131,8 +131,7 @@ void TCP::Header::_checksum(IP::Address src,IP::Address dst,SegmentedBuffer * sb
 TCP::Socket::Socket(const Address &remote,const Address &local,TCP * _tcp)
     : Base(_tcp), _remote(remote), _local(local), _rtt(5000000), _timeout(0)
 {
-    rcv_wnd = tcp()->ip()->nic()->mtu() - 
-              sizeof(TCP::Header) - sizeof(IP::Header);
+    rcv_wnd = tcp()->mss();
     state(CLOSED);
     tcp()->attach(this, _local.port());
 }
@@ -168,15 +167,28 @@ s32 TCP::Socket::_send(Header * hdr, SegmentedBuffer * sb)
     return tcp()->ip()->send(_local.ip(),_remote.ip(),&nsb,TCP::ID_TCP) - hdr->size();
 }
 
+/**
+ * The basic Socket::send() splits data into multiple segments
+ * respecting snd_wnd and mtu.
+ */
 void TCP::Socket::send(const char *data,u16 len)
 {
-    int more = 0;
-    if (len > snd_wnd) { // break up into multiple segments
-        len = snd_wnd; 
-        more = len - snd_wnd;
+	if (snd_wnd == 0) { // peer cannot receive data
+		set_timeout();
+		send_ack(); // zero-window probing
+		return;
+	}
+	// cannot send more than the peer is willing to receive
+	if (len > snd_wnd)
+		len = snd_wnd;
+
+	int more = 0,mss = tcp()->mss();
+    if (len > mss) { // break up into multiple segments
+    	more = len - mss;
+        len = mss;
     }
     Header hdr(snd_nxt,rcv_nxt);
-    hdr._ack = true;
+    hdr._ack = true; // with pidgeback ack
     snd_nxt += len;
     SegmentedBuffer sb(data,len);
     _send(&hdr,&sb);
@@ -230,12 +242,10 @@ TCP::ClientSocket::ClientSocket(const Address& remote,const Address& local,
     snd_ini = Pseudo_Random::random() & 0x00FFFFFF;
         
     if (start)
-        connect(remote);
+        Socket::connect();
 }
 
-void TCP::ClientSocket::connect(const Address& to) {
-    _remote = to;
-    
+void TCP::Socket::connect() {
     state(SYN_SENT);
     snd_una = snd_ini;
     snd_nxt = snd_ini + 1;
@@ -250,7 +260,7 @@ TCP::ServerSocket::ServerSocket(const Address& local,bool start,TCP * tcp)
     : Socket(Address(0,0),local,tcp)
 {
     if (start)
-        listen();
+        Socket::listen();
 }
 
 TCP::ServerSocket::ServerSocket(const TCP::ServerSocket &socket)
@@ -258,7 +268,7 @@ TCP::ServerSocket::ServerSocket(const TCP::ServerSocket &socket)
 {
 }
 
-void TCP::ServerSocket::listen()
+void TCP::Socket::listen()
 {
     _remote = Address(0,0);
     state(LISTEN);
@@ -572,6 +582,14 @@ bool TCP::Socket::check_seq(const Header &h,u16 len)
     db<TCP>(TRC) << "TCP: check_seq() == false\n";
     return false;
 }
+
+void TCP::Socket::abort()
+{
+    send_reset();
+    clear_timeout();
+    state(CLOSED);
+}
+
 
 __END_SYS
 
