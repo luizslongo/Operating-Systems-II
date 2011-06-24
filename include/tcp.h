@@ -4,6 +4,7 @@
 #define __tcp_h
 
 #include <alarm.h>
+#include <condition.h>
 #include <ip.h>
 #include <icmp.h>
 #include <udp.h> // TCP::Address == UDP_Address
@@ -52,8 +53,6 @@ public:
     class ClientSocket;
 
     class Channel;
-    class ActiveChannel;
-    class PassiveChannel;
     
     TCP(IP * ip = 0);
     ~TCP();
@@ -201,7 +200,7 @@ public:
     virtual void closing() {} 
     
     //* Called to notify an incoming connection
-    //* Should return a copy of itself to accept the connection
+    //* Should return a copy of (or) itself to accept the connection
     virtual Socket* incoming(const Address& from) { return this; }
 
     void abort();
@@ -312,16 +311,56 @@ public:
     void timeout(const Microsecond& t) { _timeout = t; }
     Microsecond timeout() { return _timeout; }
     
-    Channel() : TCP::Socket(TCP::Address(0,0),TCP::Address(0,0),0),
-                _timeout(5000000) {
-        ICMP::instance()->attach(this, ICMP::UNREACHABLE);
-    }
+    Channel();
     virtual ~Channel() {
         ICMP::instance()->detach(this, ICMP::UNREACHABLE);
     }
     
+    /**
+     * Waits for incoming data.
+     * @return number of bytes received
+     */
+    int receive(char * dst,unsigned int size);
+    
+    /**
+     * Sends _size_ bytes from _src_ to the remote peer.
+     * Returns upon acknownledge or timeout.
+     * @return number of bytes sent. 
+     */
+    int send(const char * src,unsigned int size);
+    
+    /**
+     * Connect to remote host.
+     * This method blocks until the connection is established.
+     */
+    bool connect(const TCP::Address& to);
+    
 protected:
+    
+    // from TCP::Socket
+    
+    void received(const char* data,u16 size);
+    void closing();
+    void closed();
+    void connected();
+    void sent(u16 size);
+    void error(short errorcode);
+    
+    // Attributes
+    
     Microsecond _timeout;
+    
+    bool _sending;
+    bool _receiving;
+    
+    Condition _rx_block;
+    Condition _tx_block;
+    
+    char * _rx_buffer_ptr;
+    unsigned int _rx_buffer_size;
+    volatile unsigned int _rx_buffer_used;
+    
+    volatile unsigned int _tx_bytes_sent;
 };
 
 __END_SYS

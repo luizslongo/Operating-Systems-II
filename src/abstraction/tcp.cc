@@ -381,8 +381,8 @@ void TCP::Socket::__RCVING(const Header &r,const char* data,u16 len)
     db<TCP>(TRC) << __PRETTY_FUNCTION__ << endl;
     if (len) {
         rcv_nxt += len;
-        send_ack();
         received(data,len);
+        send_ack();
     } else {
         send_ack();
     }
@@ -590,6 +590,147 @@ void TCP::Socket::abort()
     state(CLOSED);
 }
 
+// Channel stuff
 
+TCP::Channel::Channel() 
+    : TCP::Socket(TCP::Address(0,0),TCP::Address(0,0),0),
+      _timeout(5000000), _sending(false), _receiving(false),
+      _rx_buffer_ptr(0), _rx_buffer_size(0), _rx_buffer_used(0)
+{
+    ICMP::instance()->attach(this, ICMP::UNREACHABLE);
+}
+
+
+// Channel's implementation of Socket callbacks
+
+void TCP::Channel::received(const char* data,u16 size)
+{
+    int remaining = _rx_buffer_size - _rx_buffer_used;
+    
+    if (!_rx_buffer_ptr || (remaining == 0)) {
+        db<TCP>(WRN) << "Channel::received droping data, no buffer space\n";
+        return;
+    }
+    if (remaining < static_cast<int>(size)) {
+        db<TCP>(WRN) << "Channel::received data truncated\n";
+        size = static_cast<u16>(remaining);
+    }
+    
+    memcpy(&_rx_buffer_ptr[_rx_buffer_used], data, size);
+    
+    _rx_buffer_used += size;
+    rcv_wnd = _rx_buffer_size - _rx_buffer_used;
+    
+    if (_rx_buffer_size == _rx_buffer_used)
+        if (_receiving)
+            _rx_block.signal();
+}
+
+bool TCP::Channel::connect(const TCP::Address& to)
+{
+    if (state() != CLOSED) {
+        db<TCP>(ERR) << "TCP::Channel::connect() called for open connection!\n";
+        return false;
+    }
+    int retry = 5;
+    _remote = to;
+    do
+    {
+        Socket::connect();
+        _rx_block.wait();
+    } while (retry-- > 0 && state() != ESTABLISHED);
+    
+    return state() == ESTABLISHED;
+}
+
+int TCP::Channel::receive(char * dst,unsigned int size)
+{
+    if (_receiving) {
+        db<TCP>(ERR) << "TCP::Channel::receive already called!\n";
+        return -1;
+    }
+    
+    _rx_buffer_ptr  = dst;
+    _rx_buffer_size = size;
+    _rx_buffer_used = 0;
+    _receiving = true;
+    rcv_wnd = size;
+    send_ack(); // send and window update
+    
+    _rx_block.wait();
+    
+    int rcvd = _rx_buffer_used;
+
+    _rx_buffer_ptr  = 0;
+    _rx_buffer_size = 0;
+    _rx_buffer_used = 0;
+    _receiving = false;
+    
+    return rcvd;
+}
+
+int TCP::Channel::send(const char * src,unsigned int size)
+{
+    // congestion control not yet done
+    
+    _tx_bytes_sent = 0;
+    _sending = true;
+    
+    do {
+        int offset = _tx_bytes_sent;
+        Socket::send(&src[offset], size - offset);
+        
+        _tx_block.wait();
+        
+        if (state() != ESTABLISHED)
+            break;
+        
+    } while (_tx_bytes_sent < size);
+    
+    _sending = false;
+    return _tx_bytes_sent;
+}
+
+void TCP::Channel::closing()
+{
+    if (_receiving)
+        _rx_block.signal();
+}
+
+void TCP::Channel::closed()
+{
+    if (_receiving)
+        _rx_block.signal();
+    
+    if (_sending)
+        _tx_block.signal();
+}
+
+void TCP::Channel::connected()
+{
+    _rx_block.signal();
+}
+
+void TCP::Channel::sent(u16 size)
+{
+    if (_sending) {
+        _tx_bytes_sent += size;
+        
+        _tx_block.signal();
+    }
+}
+
+void TCP::Channel::error(short errorcode)
+{
+    if (errorcode == ERR_TIMEOUT)
+    {
+        if (_sending)
+            _tx_block.signal();
+        
+        else if (state() == SYN_SENT)
+            _rx_block.signal();
+        
+    }
+}
 __END_SYS
 
