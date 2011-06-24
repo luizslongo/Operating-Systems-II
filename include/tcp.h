@@ -281,7 +281,8 @@ public:
     ClientSocket(const Address &remote,const Address &local,
                  bool start = true,TCP * tcp = 0);
     virtual ~ClientSocket() {}
-    
+   
+    void connect() { Socket::connect(); }
     void connect(const Address& to) {
         _local = to;
         Socket::connect();
