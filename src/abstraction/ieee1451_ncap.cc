@@ -93,22 +93,15 @@ IEEE1451_TEDS_NCAP *IEEE1451_Channel::get_teds(char id)
 
 IEEE1451_NCAP *IEEE1451_NCAP::_ieee1451 = 0;
 
-IEEE1451_NCAP::IEEE1451_NCAP() : _application(0)
-{
-    db<IEEE1451_NCAP>(INF) << "IEEE1451_NCAP - listening...\n";
-    NCAP_Socket *socket = new NCAP_Socket();
-    _sockets.insert(&socket->_link);
-}
-
 IEEE1451_NCAP::~IEEE1451_NCAP()
 {
-    Simple_List<NCAP_Socket>::Iterator it = _sockets.begin();
-    while (it != _sockets.end())
+    Simple_List<TCP::Channel>::Iterator it = _channels.begin();
+    while (it != _channels.end())
     {
-        Simple_List<NCAP_Socket>::Element *el = it++;
-        NCAP_Socket *socket = el->object();
-        _sockets.remove(&socket->_link);
-        delete socket;
+        Simple_List<TCP::Channel>::Element *el = it++;
+        TCP::Channel *chn = el->object();
+        _channels.remove(&chn->_link);
+        delete chn;
     }
 }
 
@@ -144,8 +137,8 @@ unsigned short IEEE1451_NCAP::send_command(const IP::Address &destination, const
 
     db<IEEE1451_NCAP>(TRC) << "IEEE1451_NCAP - Sending command (trans_id=" << trans_id << ", dst=" << destination << ")\n";
 
-    NCAP_Socket *socket = get_socket(destination);
-    if (!socket)
+    TCP::Channel *channel = get_channel(destination);
+    if (!channel)
     {
         db<IEEE1451_NCAP>(INF) << "IEEE1451_NCAP - Failed to send command (trans_id=" << trans_id << ")\n";
         return 0;
@@ -161,138 +154,108 @@ unsigned short IEEE1451_NCAP::send_command(const IP::Address &destination, const
     out->_length = length;
     memcpy(msg, message, length);
 
-    socket->send(buffer, size);
+    int ret = channel->send(buffer, size);
+    if (ret < 0)
+        db<IEEE1451_NCAP>(INF) << "IEEE1451_NCAP - Failed sending message (trans_id=" << trans_id << ", ret=" << ret << ")\n";
+    else
+        db<IEEE1451_NCAP>(TRC) << "IEEE1451_NCAP - Sent " << ret << " bytes (trans_id=" << trans_id << ")\n";
+
     return trans_id;
 }
 
-IEEE1451_NCAP::NCAP_Socket *IEEE1451_NCAP::get_socket(const IP::Address &addr)
+TCP::Channel *IEEE1451_NCAP::get_channel(const IP::Address &addr)
 {
-    Simple_List<NCAP_Socket>::Iterator it = _sockets.begin();
-    while (it != _sockets.end())
+    Simple_List<TCP::Channel>::Iterator it = _channels.begin();
+    while (it != _channels.end())
     {
-        NCAP_Socket *socket = it->object();
+        TCP::Channel *channel = it->object();
         it++;
 
-        if (socket->remote().ip() == addr)
-            return socket;
+        if (channel->remote().ip() == addr)
+            return channel;
     }
 
     return 0;
 }
 
-void IEEE1451_NCAP::NCAP_Socket::send(const char *data, unsigned int length)
+void IEEE1451_NCAP::execute()
 {
-    if (_data)
-        delete _data;
+    db<IEEE1451_NCAP>(INF) << "IEEE1451_NCAP - Executing...\n";
 
-    _data = data;
-    _length = length;
+    TCP::Channel *channel = new TCP::Channel();
+    channel->bind(IEEE1451_PORT);
 
-    TCP::ServerSocket::send(_data, _length);
-}
-
-TCP::Socket *IEEE1451_NCAP::NCAP_Socket::incoming(const TCP::Address &from)
-{
-    db<IEEE1451_NCAP>(TRC) << "IEEE1451_NCAP - Server socket incoming\n";
-
-    IEEE1451_NCAP *ncap = IEEE1451_NCAP::get_instance();
-    Simple_List<NCAP_Socket>::Iterator it = ncap->_sockets.begin();
-    while (it != ncap->_sockets.end())
+    while (true)
     {
-        NCAP_Socket *socket = it->object();
-        it++;
+        if (!channel->listen())
+            continue;
 
-        if (((TCP::Address) socket->remote() == (TCP::Address) from) && (socket->state() != LISTEN))
+        db<IEEE1451_NCAP>(TRC) << "IEEE1451_NCAP - New channel connected (ip=" << channel->remote().ip() << ")\n";
+
+        Simple_List<TCP::Channel>::Iterator it = _channels.begin();
+        while (it != _channels.end())
         {
-            db<IEEE1451_NCAP>(TRC) << "IEEE1451_NCAP - Deleting old socket...\n";
-            ncap->_sockets.remove(&socket->_link);
-            delete socket;
-        }
-    }
+            TCP::Channel *chn = it->object();
+            it++;
 
-    NCAP_Socket *socket = new NCAP_Socket(*this);
-    IEEE1451_NCAP::get_instance()->_sockets.insert(&socket->_link);
-    return static_cast<TCP::Socket *>(socket);
-}
-
-void IEEE1451_NCAP::NCAP_Socket::connected()
-{
-    db<IEEE1451_NCAP>(TRC) << "IEEE1451_NCAP - Server socket connected\n";
-
-    IEEE1451_NCAP *ncap = IEEE1451_NCAP::get_instance();
-    ncap->_application->report_tim_connected(remote().ip());
-}
-
-void IEEE1451_NCAP::NCAP_Socket::closed()
-{
-    db<IEEE1451_NCAP>(TRC) << "IEEE1451_NCAP - Server socket closed\n";
-
-    IEEE1451_NCAP *ncap = IEEE1451_NCAP::get_instance();
-    ncap->_application->report_tim_disconnected(remote().ip());
-    ncap->_sockets.remove(&_link);
-    delete this;
-}
-
-void IEEE1451_NCAP::NCAP_Socket::received(const char *data, u16 size)
-{
-    db<IEEE1451_NCAP>(TRC) << "IEEE1451_NCAP - Server socket received message\n";
-
-    IEEE1451_NCAP *ncap = IEEE1451_NCAP::get_instance();
-    IEEE1451_Packet *in = (IEEE1451_Packet *) data;
-    const char *msg = data + sizeof(IEEE1451_Packet);
-
-    if (in->_length > 0)
-    {
-        if (in->_trans_id == 0)
-            ncap->_application->report_tim_initiated_message(remote().ip(), msg, in->_length);
-        else
-            ncap->_application->report_command_reply(remote().ip(), in->_trans_id, msg, in->_length);
-    }
-}
-
-void IEEE1451_NCAP::NCAP_Socket::closing()
-{
-    db<IEEE1451_NCAP>(TRC) << "IEEE1451_NCAP - Server socket closing\n";
-    close();
-}
-
-void IEEE1451_NCAP::NCAP_Socket::error(short error)
-{
-    db<IEEE1451_NCAP>(TRC) << "IEEE1451_NCAP - Error (err=" << error << ", stt=" << state() << ")\n";
-
-    IEEE1451_NCAP *ncap = IEEE1451_NCAP::get_instance();
-
-    if (error == ERR_TIMEOUT)
-    {
-        switch (state())
-        {
-            case SYN_RCVD:
+            if ((TCP::Address) channel->remote() == (TCP::Address) chn->remote())
             {
-                ncap->_sockets.remove(&_link);
-                delete this;
-                break;
+                db<IEEE1451_NCAP>(TRC) << "IEEE1451_NCAP - Deleting old channel...\n";
+                _channels.remove(&chn->_link);
+                delete chn;
             }
-            case ESTABLISHED:
-                if ((_data) && (_length > 0))
-                    TCP::ServerSocket::send(_data, _length);
-                break;
-            default:
-                abort();
         }
+
+        _channels.insert(&channel->_link);
+        new Thread(receive, this, channel);
+
+        channel = new TCP::Channel();
+        channel->bind(IEEE1451_PORT);
     }
 }
 
-void IEEE1451_NCAP::NCAP_Socket::sent(u16 size)
+int IEEE1451_NCAP::receive(IEEE1451_NCAP *ncap, TCP::Channel *channel)
 {
-    db<IEEE1451_NCAP>(TRC) << "IEEE1451_NCAP - Bytes sent: " << size << "\n";
+    db<IEEE1451_NCAP>(TRC) << "IEEE1451_NCAP - Receive thread created (ip=" << channel->remote().ip() << ")\n";
 
-    if (_data)
+    char data[200];
+    unsigned int size = 200;
+    int ret;
+
+    ncap->_application->report_tim_connected(channel->remote().ip());
+
+    while ((ret = channel->receive(data, size)) >= 0)
     {
-        delete _data;
-        _data = 0;
+        if (ret < sizeof(IEEE1451_Packet))
+            continue;
+
+        IEEE1451_Packet *in = (IEEE1451_Packet *) data;
+        const char *msg = data + sizeof(IEEE1451_Packet);
+
+        if (in->_length > 0)
+        {
+            if (in->_trans_id == 0)
+                ncap->_application->report_tim_initiated_message(channel->remote().ip(), msg, in->_length);
+            else
+                ncap->_application->report_command_reply(channel->remote().ip(), in->_trans_id, msg, in->_length);
+        }
     }
 
-    _length = 0;
+    db<IEEE1451_NCAP>(TRC) << "IEEE1451_NCAP - Closing channel (ip=" << channel->remote().ip() << ")...\n";
+
+    while (!channel->close())
+        Alarm::delay(TIME_500_MS);
+
+    db<IEEE1451_NCAP>(TRC) << "IEEE1451_NCAP - Channel closed (ip=" << channel->remote().ip() << ")\n";
+
+    ncap->_application->report_tim_disconnected(channel->remote().ip());
+
+    db<IEEE1451_TIM>(TRC) << "IEEE1451_NCAP - Receive thread finished (ip=" << channel->remote().ip() << ")\n";
+
+    ncap->_channels.remove(&channel->_link);
+    delete channel;
+    delete Thread::self();
+    return 0;
 }
 
 __END_SYS

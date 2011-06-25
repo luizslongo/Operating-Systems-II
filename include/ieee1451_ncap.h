@@ -8,6 +8,9 @@
 #include <utility/list.h>
 #include <utility/malloc.h>
 
+#define TIME_50_MS     50000  //1000
+#define TIME_500_MS    500000 //10000
+
 __BEGIN_SYS
 
 struct IEEE1451_TLV
@@ -64,7 +67,7 @@ struct IEEE1451_TIM_Channel : public IEEE1451_Channel
 class IEEE1451_NCAP //IEEE 1451.0 + IEEE 1451.5
 {
 private:
-    IEEE1451_NCAP();
+    IEEE1451_NCAP() : _application(0) {}
 
 public:
     ~IEEE1451_NCAP();
@@ -74,33 +77,11 @@ public:
     char *create_command(unsigned short channel_number, unsigned short command, const char *args = 0, unsigned int length = 0);
     unsigned short send_command(const IP::Address &destination, const char *message, unsigned int length);
 
+    void execute();
+
 private:
-    class NCAP_Socket : public TCP::ServerSocket
-    {
-    public:
-        NCAP_Socket() : TCP::ServerSocket(TCP::Address(IP::instance()->address(), IEEE1451_PORT)), _link(this), _data(0), _length(0) {}
-        NCAP_Socket(const NCAP_Socket &socket) : TCP::ServerSocket(socket), _link(this), _data(0), _length(0) {}
-        ~NCAP_Socket() { if (_data) delete _data; }
-
-        void send(const char *data, unsigned int length);
-
-        TCP::Socket *incoming(const TCP::Address &from);
-        void connected();
-        void closed();
-        void received(const char *data, u16 size);
-        void closing();
-        void error(short error);
-        void sent(u16 size);
-
-    public:
-        Simple_List<NCAP_Socket>::Element _link;
-
-    private:
-        const char *_data;
-        unsigned int _length;
-    };
-
-    NCAP_Socket *get_socket(const IP::Address &addr);
+    TCP::Channel *get_channel(const IP::Address &addr);
+    static int receive(IEEE1451_NCAP *ncap, TCP::Channel *channel);
 
 public:
     class Listener
@@ -119,7 +100,7 @@ public:
     void set_application(Listener *application) { _application = application; }
 
 private:
-    Simple_List<NCAP_Socket> _sockets;
+    Simple_List<TCP::Channel> _channels;
 
     static IEEE1451_NCAP *_ieee1451;
 };

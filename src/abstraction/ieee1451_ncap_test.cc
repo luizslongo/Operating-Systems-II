@@ -80,6 +80,8 @@ public:
 
     //static int read_data_set_thread(IEEE1451_NCAP_Application *ncap, IP::Address address, IEEE1451_TIM_Channel *tim);
 
+    void execute() { IEEE1451_NCAP::get_instance()->execute(); };
+
 private:
     Simple_List<TIM_Cache> _cache;
     Simple_List<IEEE1451_TEDS_Retriever> _retrievers;
@@ -500,7 +502,7 @@ unsigned short IEEE1451_NCAP_Application::send_read_data_set(const IP::Address &
 int IEEE1451_NCAP_Application::send_read_multimedia_data_set_thread(IEEE1451_NCAP_Application *ncap, IP::Address address, unsigned short channel_number)
 {
     cout << "== Send read multimedia data set thread (address=" << address << ") ==\n";
-    Alarm::delay(1000000);
+    Alarm::delay(TIME_50_MS);
 
 #ifdef USE_SIP
     TIM_Cache *tim_cache = ncap->get_tim_cache(address);
@@ -516,7 +518,7 @@ int IEEE1451_NCAP_Application::send_read_multimedia_data_set_thread(IEEE1451_NCA
 
         //cout << "-- Reading Multimedia Data Set (address=" << address << ")...\n";
         ncap->send_read_data_set(address, channel_number);
-        Alarm::delay(50000);
+        Alarm::delay(TIME_50_MS);
     }
     return 0;
 }
@@ -625,7 +627,7 @@ int IEEE1451_NCAP_Application::message_callback(SIP_Event_Callback event, SIP_Us
 
     while (1)
     {
-        Alarm::delay(2200000);
+        Alarm::delay(TIME_500_MS * 100);
         if (tim->_connected)
         {
             cout << "-- Reading DataSet (address=" << address << ")...\n";
@@ -729,7 +731,7 @@ void IEEE1451_TEDS_Retriever::execute()
 
 int main()
 {
-    //Alarm::delay(3000000);
+    Alarm::delay(TIME_500_MS * 4);
     cout << "+++++ Starting ncap +++++\n";
 
     IP *ip = IP::instance();
@@ -737,9 +739,8 @@ int main()
     ip->set_gateway(IP::Address(10, 0, 0, 1));
     ip->set_netmask(IP::Address(255, 255, 255, 0));
 
-    IEEE1451_NCAP_Application::get_instance();
-
-    Thread::self()->suspend();
+    IEEE1451_NCAP_Application *app = IEEE1451_NCAP_Application::get_instance();
+    app->execute();
     return 0;
 }
 

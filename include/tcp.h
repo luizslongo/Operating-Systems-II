@@ -357,7 +357,7 @@ public:
      * @return number of bytes sent. 
      */
     int send(const char * src,unsigned int size);
-    
+
     /**
      * Connect to remote host.
      * This method blocks until the connection is established.
@@ -376,7 +376,7 @@ public:
      * This method DOES NOT HAVE the same meaning. It will block until
      * the connection is fully closed or aborted.
      */
-    void close();
+    bool close();
     
     /**
      * Wait for a remote peer to connect.
@@ -414,6 +414,9 @@ protected:
     volatile unsigned int _rx_buffer_used;
     
     volatile unsigned int _tx_bytes_sent;
+
+public:
+    Simple_List<TCP::Channel>::Element _link;
 };
 
 __END_SYS

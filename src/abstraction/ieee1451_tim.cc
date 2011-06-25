@@ -102,18 +102,16 @@ IEEE1451_TIM *IEEE1451_TIM::_ieee1451 = 0;
 
 IEEE1451_TIM::IEEE1451_TIM() : _ncap_address((unsigned long) 0x0a00000b)
 {
-    _socket = 0;
     _connected = false;
     _transducer = 0;
+
+    _channel.bind(IEEE1451_PORT);
 
     init_teds();
 }
 
 IEEE1451_TIM::~IEEE1451_TIM()
 {
-    if (_socket)
-        delete _socket;
-
     if (_meta_array)
         kfree(_meta_array);
     if (_tim_utn_array)
@@ -167,12 +165,14 @@ void IEEE1451_TIM::connect()
     //TODO: Voltar a receber dados da rede!
 
     db<IEEE1451_TIM>(TRC) << "IEEE1451_TIM - Connecting...\n";
-    if (_socket)
-        delete _socket;
-    _socket = new TIM_Socket(_ncap_address);
 
-    while (!_connected)
-        Alarm::delay(500000);
+    TCP::Address addr(_ncap_address, IEEE1451_PORT);
+
+    while (!_channel.connect(addr))
+        Alarm::delay(TIME_500_MS);
+
+    _connected = true;
+    db<IEEE1451_TIM>(TRC) << "IEEE1451_TIM - Connected!\n";
 }
 
 void IEEE1451_TIM::disconnect()
@@ -180,23 +180,21 @@ void IEEE1451_TIM::disconnect()
     //TODO: Parar de receber dados da rede!
 
     db<IEEE1451_TIM>(TRC) << "IEEE1451_TIM - Disconnecting...\n";
-    if (_socket)
-        _socket->close();
 
-    while (_connected)
-        Alarm::delay(500000);
+    while (!_channel.close())
+        Alarm::delay(TIME_500_MS);
 
-    delete _socket;
-    _socket = 0;
+    _connected = false;
+    db<IEEE1451_TIM>(TRC) << "IEEE1451_TIM - Disconnected!\n";
 }
 
 void IEEE1451_TIM::send_msg(unsigned short trans_id, const char *message, unsigned int length)
 {
     db<IEEE1451_TIM>(TRC) << "IEEE1451_TIM - Sending message (trans_id=" << trans_id << ")\n";
 
-    if (!_socket)
+    if (!_connected)
     {
-        db<IEEE1451_TIM>(INF) << "IEEE1451_TIM - Failed to send message (trans_id=" << trans_id << ")\n";
+        db<IEEE1451_TIM>(INF) << "IEEE1451_TIM - TIM not connected (trans_id=" << trans_id << ")\n";
         return;
     }
 
@@ -210,7 +208,11 @@ void IEEE1451_TIM::send_msg(unsigned short trans_id, const char *message, unsign
     out->_length = length;
     memcpy(msg, message, length);
 
-    _socket->send(buffer, size);
+    int ret = _channel.send(buffer, size);
+    if (ret < 0)
+        db<IEEE1451_TIM>(INF) << "IEEE1451_TIM - Failed sending message (trans_id=" << trans_id << ", ret=" << ret << ")\n";
+    else
+        db<IEEE1451_TIM>(TRC) << "IEEE1451_TIM - Sent " << ret << " bytes (trans_id=" << trans_id << ")\n";
 }
 
 void IEEE1451_TIM::receive_msg(unsigned short trans_id, const char *message, unsigned int size)
@@ -297,90 +299,42 @@ void IEEE1451_TIM::receive_msg(unsigned short trans_id, const char *message, uns
     }
 }
 
-void IEEE1451_TIM::TIM_Socket::send(const char *data, unsigned int length)
+int IEEE1451_TIM::receive(IEEE1451_TIM *tim, TCP::Channel *channel)
 {
-    if (_data)
-        delete _data;
+    db<IEEE1451_TIM>(TRC) << "IEEE1451_TIM - Receive thread created (ip=" << channel->remote().ip() << ")\n";
 
-    _data = data;
-    _length = length;
+    char data[200];
+    unsigned int size = 200;
+    int ret;
 
-    TCP::ClientSocket::send(_data, _length);
-}
-
-void IEEE1451_TIM::TIM_Socket::connected()
-{
-    db<IEEE1451_TIM>(TRC) << "IEEE1451_TIM - Client socket connected\n";
-
-    IEEE1451_TIM *tim = IEEE1451_TIM::get_instance();
-    tim->_connected = true;
-}
-
-void IEEE1451_TIM::TIM_Socket::closed()
-{
-    db<IEEE1451_TIM>(TRC) << "IEEE1451_TIM - Client socket closed\n";
-
-    IEEE1451_TIM *tim = IEEE1451_TIM::get_instance();
-    tim->_connected = false;
-}
-
-void IEEE1451_TIM::TIM_Socket::received(const char *data, u16 size)
-{
-    db<IEEE1451_TIM>(TRC) << "IEEE1451_TIM - Client socket received message\n";
-
-    IEEE1451_TIM *tim = IEEE1451_TIM::get_instance();
-
-    if (!(remote().ip() == tim->_ncap_address))
+    while (true)
     {
-        db<IEEE1451_TIM>(INF) << "IEEE1451_TIM - Message source is not NCAP!\n";
-        return;
-    }
-
-    if (!tim->_connected)
-    {
-        db<IEEE1451_TIM>(INF) << "IEEE1451_TIM - TIM not connected!\n";
-        return;
-    }
-
-    IEEE1451_Packet *in = (IEEE1451_Packet *) data;
-    const char *msg = data + sizeof(IEEE1451_Packet);
-
-    if (in->_length > 0)
-        tim->receive_msg(in->_trans_id, msg, in->_length);
-}
-
-void IEEE1451_TIM::TIM_Socket::error(short error)
-{
-    db<IEEE1451_TIM>(TRC) << "IEEE1451_TIM - Error (" << error << ", stt=" << state() << ")\n";
-
-    if (error == ERR_TIMEOUT)
-    {
-        switch (state())
+        if (!tim->_connected)
         {
-            case SYN_SENT:
-                connect();
-                break;
-            case ESTABLISHED:
-                if ((_data) && (_length > 0))
-                    TCP::ClientSocket::send(_data, _length);
-                break;
-            default:
-                abort();
+            db<IEEE1451_TIM>(INF) << "IEEE1451_TIM - TIM not connected!\n";
+            Alarm::delay(TIME_50_MS);
+            continue;
         }
+
+        if ((ret = channel->receive(data, size)) < 0)
+        {
+            db<IEEE1451_TIM>(INF) << "IEEE1451_TIM - Failed receiving message\n";
+            Alarm::delay(TIME_50_MS);
+            continue;
+        }
+
+        if (ret < sizeof(IEEE1451_Packet))
+            continue;
+
+        IEEE1451_Packet *in = (IEEE1451_Packet *) data;
+        const char *msg = data + sizeof(IEEE1451_Packet);
+
+        if (in->_length > 0)
+            tim->receive_msg(in->_trans_id, msg, in->_length);
     }
-}
 
-void IEEE1451_TIM::TIM_Socket::sent(u16 size)
-{
-    db<IEEE1451_TIM>(TRC) << "IEEE1451_TIM - Bytes sent: " << size << "\n";
-
-    if (_data)
-    {
-        delete _data;
-        _data = 0;
-    }
-
-    _length = 0;
+    db<IEEE1451_TIM>(TRC) << "IEEE1451_TIM - Receive thread finished (ip=" << channel->remote().ip() << ")\n";
+    return 0;
 }
 
 __END_SYS

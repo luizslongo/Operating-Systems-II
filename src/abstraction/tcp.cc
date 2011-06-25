@@ -238,14 +238,13 @@ TCP::ClientSocket::ClientSocket(const Address& remote,const Address& local,
                                 bool start, TCP * tcp) 
 	: Socket(remote,local,tcp)
 {
-    snd_ini = Pseudo_Random::random() & 0x00FFFFFF;
-        
     if (start)
         Socket::connect();
 }
 
 void TCP::Socket::connect() {
     state(SYN_SENT);
+    snd_ini = Pseudo_Random::random() & 0x00FFFFFF;
     snd_una = snd_ini;
     snd_nxt = snd_ini + 1;
 
@@ -380,8 +379,8 @@ void TCP::Socket::__RCVING(const Header &r,const char* data,u16 len)
     db<TCP>(TRC) << __PRETTY_FUNCTION__ << endl;
     if (len) {
         rcv_nxt += len;
-        received(data,len);
         send_ack();
+        received(data,len);
         if (r._psh)
             push();
     } else {
@@ -596,7 +595,8 @@ void TCP::Socket::abort()
 TCP::Channel::Channel() 
     : TCP::Socket(TCP::Address(0,0),TCP::Address(0,0),0),
        _sending(false), _receiving(false),
-      _rx_buffer_ptr(0), _rx_buffer_size(0), _rx_buffer_used(0)
+      _rx_buffer_ptr(0), _rx_buffer_size(0), _rx_buffer_used(0),
+      _link(this)
 {
     ICMP::instance()->attach(this, ICMP::UNREACHABLE);
 }
@@ -694,15 +694,15 @@ void TCP::Channel::bind(unsigned short port)
     tcp()->attach(this, port);
 }
 
-void TCP::Channel::close()
+bool TCP::Channel::close()
 {
     if (state() == CLOSED)
-        return;
+        return true;
     
     if (state() < ESTABLISHED) {
         _rx_block.signal();
         abort();
-        return;
+        return true;
     }
     
     if (_receiving)
@@ -715,6 +715,8 @@ void TCP::Channel::close()
         Socket::close();
         _tx_block.wait();
     } while (retry-- > 0 && state() != CLOSED);
+
+    return state() == CLOSED;
 }
 
 bool TCP::Channel::listen()
@@ -798,9 +800,8 @@ void TCP::Channel::error(short errorcode)
         if (_sending)
             _tx_block.signal();
         
-        else if (state() == SYN_SENT)
+        else if ((state() == SYN_SENT) || (state() == SYN_RCVD))
             _rx_block.signal();
-        
     }
 }
 

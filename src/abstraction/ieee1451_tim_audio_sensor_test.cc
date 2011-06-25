@@ -3,7 +3,7 @@
 #include <thread.h>
 
 #define DATASET_SIZE    160
-#define READ_INTERVAL   60000000 //6000000
+#define READ_INTERVAL   TIME_500_MS * 125
 
 __USING_SYS
 
@@ -169,6 +169,7 @@ int IEEE1451_Audio_Sensor::execute()
 
     _execute_thread = Thread::self();
     IEEE1451_TIM *tim = IEEE1451_TIM::get_instance();
+    tim->execute();
 
     tim->connect();
     _execute_thread->suspend();
@@ -190,7 +191,7 @@ int IEEE1451_Audio_Sensor::execute()
             for (unsigned short i = 0; i < 30/*109 * 1*/; i++)
             {
                 send_data_set();
-                Alarm::delay(50000);
+                Alarm::delay(TIME_50_MS);
             }
 
             send_data_set(false, true);
@@ -204,13 +205,15 @@ int IEEE1451_Audio_Sensor::execute()
 
 int main()
 {
-    //Alarm::delay(3000000);
+    Alarm::delay(TIME_500_MS * 4);
     kout << "+++++ Starting wtim +++++\n";
 
     IP *ip = IP::instance();
     ip->set_address(IP::Address(10, 0, 0, 113));
     ip->set_gateway(IP::Address(10, 0, 0, 1));
     ip->set_netmask(IP::Address(255, 255, 255, 0));
+
+    Alarm::delay(TIME_500_MS * 4);
 
     IEEE1451_TIM *tim = IEEE1451_TIM::get_instance();
     tim->set_ncap_address(IP::Address(10, 0, 0, 110));

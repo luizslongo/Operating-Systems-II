@@ -6,6 +6,9 @@
 #include <ip.h>
 #include <tcp.h>
 
+#define TIME_50_MS     50000  //1000
+#define TIME_500_MS    500000 //10000
+
 __BEGIN_SYS
 
 struct IEEE1451_TEDS_TIM
@@ -55,29 +58,13 @@ public:
 
     void set_transducer(IEEE1451_Transducer *transducer) { _transducer = transducer; }
 
-private:
-    class TIM_Socket : public TCP::ClientSocket
-    {
-    public:
-        TIM_Socket(const IP::Address &dst) : TCP::ClientSocket(TCP::Address(dst, IEEE1451_PORT),
-            TCP::Address(IP::instance()->address(), IEEE1451_PORT)), _data(0), _length(0) {}
-        ~TIM_Socket() { if (_data) delete _data; }
-
-        void send(const char *data, unsigned int length);
-
-        void connected();
-        void closed();
-        void received(const char *data, u16 size);
-        void error(short error);
-        void sent(u16 size);
-
-    private:
-        const char *_data;
-        unsigned int _length;
-    };
+    void execute() { new Thread(receive, this, &_channel); }
 
 private:
-    TIM_Socket *_socket;
+    static int receive(IEEE1451_TIM *tim, TCP::Channel *channel);
+
+private:
+    TCP::Channel _channel;
 
     bool _connected;
     IP::Address _ncap_address;

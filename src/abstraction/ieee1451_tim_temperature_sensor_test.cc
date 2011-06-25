@@ -6,7 +6,7 @@
 #endif
 
 #define DATASET_SIZE    10
-#define READ_INTERVAL   10000000 //550000
+#define READ_INTERVAL   TIME_500_MS * 20
 
 __USING_SYS
 
@@ -174,6 +174,7 @@ int IEEE1451_Temperature_Sensor::execute()
 
     _execute_thread = Thread::self();
     IEEE1451_TIM *tim = IEEE1451_TIM::get_instance();
+    tim->execute();
 
     tim->connect();
     _execute_thread->suspend();
@@ -220,13 +221,15 @@ int IEEE1451_Temperature_Sensor::execute()
 
 int main()
 {
-    //Alarm::delay(3000000);
+    Alarm::delay(TIME_500_MS * 4);
     cout << "+++++ Starting wtim +++++\n";
 
     IP *ip = IP::instance();
     ip->set_address(IP::Address(10, 0, 0, 111));
     ip->set_gateway(IP::Address(10, 0, 0, 1));
     ip->set_netmask(IP::Address(255, 255, 255, 0));
+
+    Alarm::delay(TIME_500_MS * 4);
 
     IEEE1451_TIM *tim = IEEE1451_TIM::get_instance();
     tim->set_ncap_address(IP::Address(10, 0, 0, 110));
