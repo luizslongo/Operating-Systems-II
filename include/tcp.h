@@ -343,6 +343,14 @@ public:
      */
     void bind(unsigned short port);
     
+    /**
+     * Closes the connection.
+     * Attention: The meaning of the "CLOSE" function in the
+     * BSD Sockets API is: "I will not send more data, but can receive"
+     * This method DOES NOT HAVE the same meaning. It will block until
+     * the connection is fully closed or aborted.
+     */
+    void close();
 protected:
     
     // from TCP::Socket

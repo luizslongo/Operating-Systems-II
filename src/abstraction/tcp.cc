@@ -82,7 +82,6 @@ TCP::Header::Header(u32 seq,u32 ack)
 
 bool TCP::Header::validate_checksum(IP::Address src,IP::Address dst,u16 len)
 {
-    db<IP>(TRC) << __PRETTY_FUNCTION__ << endl;
     len += size();
     
     Pseudo_Header phdr((u32)src,(u32)dst,len);
@@ -100,7 +99,6 @@ bool TCP::Header::validate_checksum(IP::Address src,IP::Address dst,u16 len)
 
 void TCP::Header::_checksum(IP::Address src,IP::Address dst,SegmentedBuffer * sb)
 {
-    db<TCP>(TRC) << __PRETTY_FUNCTION__ << endl;
     u16 len;
     len = size();
 
@@ -173,18 +171,18 @@ s32 TCP::Socket::_send(Header * hdr, SegmentedBuffer * sb)
  */
 void TCP::Socket::send(const char *data,u16 len)
 {
-	if (snd_wnd == 0) { // peer cannot receive data
-		set_timeout();
-		send_ack(); // zero-window probing
-		return;
-	}
-	// cannot send more than the peer is willing to receive
-	if (len > snd_wnd)
-		len = snd_wnd;
+    if (snd_wnd == 0) { // peer cannot receive data
+        set_timeout();
+        send_ack(); // zero-window probing
+        return;
+    }
+    // cannot send more than the peer is willing to receive
+    if (len > snd_wnd)
+        len = snd_wnd;
 
-	int more = 0,mss = tcp()->mss();
+    int more = 0,mss = tcp()->mss();
     if (len > mss) { // break up into multiple segments
-    	more = len - mss;
+        more = len - mss;
         len = mss;
     }
     Header hdr(snd_nxt,rcv_nxt);
@@ -748,6 +746,20 @@ void TCP::Channel::error(short errorcode)
             _rx_block.signal();
         
     }
+}
+
+void TCP::Channel::close()
+{
+    if (_receiving)
+        _rx_block.signal();
+    
+    int retry = 5;
+    _sending = true;
+    
+    do {
+        Socket::close();
+        _tx_block.wait();
+    } while (retry-- > 0 && state() != CLOSED);
 }
 
 void TCP::Channel::update(Data_Observed<IP::Address> *ob, long c,
