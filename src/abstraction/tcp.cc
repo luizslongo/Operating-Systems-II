@@ -169,7 +169,7 @@ s32 TCP::Socket::_send(Header * hdr, SegmentedBuffer * sb)
  * The basic Socket::send() splits data into multiple segments
  * respecting snd_wnd and mtu.
  */
-void TCP::Socket::send(const char *data,u16 len)
+void TCP::Socket::send(const char *data,u16 len,bool push)
 {
     if (snd_wnd == 0) { // peer cannot receive data
         set_timeout();
@@ -186,12 +186,13 @@ void TCP::Socket::send(const char *data,u16 len)
         len = mss;
     }
     Header hdr(snd_nxt,rcv_nxt);
-    hdr._ack = true; // with pidgeback ack
+    hdr._ack = true;  // with pidgeback ack
+    hdr._psh = (push && (more == 0)); // set push flag only on the last segment
     snd_nxt += len;
     SegmentedBuffer sb(data,len);
     _send(&hdr,&sb);
     
-    if (more) // send next segment too
+    if (more > 0) // send next segment too
         send(&data[len], more);
 
     set_timeout();
@@ -594,12 +595,141 @@ void TCP::Socket::abort()
 
 TCP::Channel::Channel() 
     : TCP::Socket(TCP::Address(0,0),TCP::Address(0,0),0),
-      _timeout(5000000), _sending(false), _receiving(false),
+       _sending(false), _receiving(false),
       _rx_buffer_ptr(0), _rx_buffer_size(0), _rx_buffer_used(0)
 {
     ICMP::instance()->attach(this, ICMP::UNREACHABLE);
 }
 
+TCP::Channel::~Channel() {
+    if (state() != CLOSED) {
+        db<TCP>(ERR) << "Destroying non-closed channel!\n";
+        // This condition must REALLY not happen.
+    }
+    ICMP::instance()->detach(this, ICMP::UNREACHABLE);
+}
+
+bool TCP::Channel::connect(const TCP::Address& to)
+{
+    if (state() != CLOSED) {
+        db<TCP>(ERR) << "TCP::Channel::connect() called for open connection!\n";
+        return false;
+    }
+    int retry = 5;
+    _remote = to;
+    do
+    {
+        Socket::connect();
+        _rx_block.wait();
+    } while (retry-- > 0 && state() != ESTABLISHED);
+    
+    return state() == ESTABLISHED;
+}
+
+int TCP::Channel::receive(char * dst,unsigned int size)
+{
+    if (state() != ESTABLISHED)
+        return -ERR_NOT_CONNECTED;
+    
+    if (_receiving) {
+        db<TCP>(ERR) << "TCP::Channel::receive already called!\n";
+        return -1;
+    }
+    
+    _rx_buffer_ptr  = dst;
+    _rx_buffer_size = size;
+    _rx_buffer_used = 0;
+    _receiving = true;
+    rcv_wnd = size;
+    send_ack(); // send a window update
+    
+    _rx_block.wait();
+    
+    int rcvd = _rx_buffer_used;
+
+    _rx_buffer_ptr  = 0;
+    _rx_buffer_size = 0;
+    _rx_buffer_used = 0;
+    _receiving = false;
+    
+    return rcvd;
+}
+
+int TCP::Channel::send(const char * src,unsigned int size)
+{
+    if (state() != ESTABLISHED)
+        return -ERR_NOT_CONNECTED;
+    
+    // congestion control not yet done
+    
+    _tx_bytes_sent = 0;
+    _sending = true;
+    
+    do {
+        int offset = _tx_bytes_sent;
+        Socket::send(&src[offset], size - offset);
+        
+        _tx_block.wait();
+        
+        if (state() != ESTABLISHED)
+            break;
+        
+    } while (_tx_bytes_sent < size);
+    
+    _sending = false;
+    return _tx_bytes_sent;
+}
+
+void TCP::Channel::bind(unsigned short port)
+{
+    if (state() != CLOSED) {
+        db<TCP>(ERR) << "Cannot use TCP::Channel::bind() on open connection\n";
+        return;
+    }
+    
+    tcp()->detach(this, _local.port());
+    
+    _local = TCP::Address(tcp()->ip()->address(), port);
+    
+    tcp()->attach(this, port);
+}
+
+void TCP::Channel::close()
+{
+    if (state() == CLOSED)
+        return;
+    
+    if (state() < ESTABLISHED) {
+        _rx_block.signal();
+        abort();
+        return;
+    }
+    
+    if (_receiving)
+        _rx_block.signal();
+    
+    int retry = 5;
+    _sending = true;
+    
+    do {
+        Socket::close();
+        _tx_block.wait();
+    } while (retry-- > 0 && state() != CLOSED);
+}
+
+bool TCP::Channel::listen()
+{
+    if (state() != CLOSED) {
+        db<TCP>(ERR) << "TCP::Channel::listen() called on non-closed channel\n";
+        return false;
+    }
+    
+    Socket::listen();
+    
+    _rx_block.wait();
+    
+    return state() == ESTABLISHED;
+}
 
 // Channel's implementation of Socket callbacks
 
@@ -630,80 +760,6 @@ void TCP::Channel::push()
 {
     if (_receiving)
         _rx_block.signal();
-}
-
-bool TCP::Channel::connect(const TCP::Address& to)
-{
-    if (state() != CLOSED) {
-        db<TCP>(ERR) << "TCP::Channel::connect() called for open connection!\n";
-        return false;
-    }
-    int retry = 5;
-    _remote = to;
-    do
-    {
-        Socket::connect();
-        _rx_block.wait();
-    } while (retry-- > 0 && state() != ESTABLISHED);
-    
-    return state() == ESTABLISHED;
-}
-
-int TCP::Channel::receive(char * dst,unsigned int size)
-{
-    if (_receiving) {
-        db<TCP>(ERR) << "TCP::Channel::receive already called!\n";
-        return -1;
-    }
-    
-    _rx_buffer_ptr  = dst;
-    _rx_buffer_size = size;
-    _rx_buffer_used = 0;
-    _receiving = true;
-    rcv_wnd = size;
-    send_ack(); // send a window update
-    
-    _rx_block.wait();
-    
-    int rcvd = _rx_buffer_used;
-
-    _rx_buffer_ptr  = 0;
-    _rx_buffer_size = 0;
-    _rx_buffer_used = 0;
-    _receiving = false;
-    
-    return rcvd;
-}
-
-int TCP::Channel::send(const char * src,unsigned int size)
-{
-    // congestion control not yet done
-    
-    _tx_bytes_sent = 0;
-    _sending = true;
-    
-    do {
-        int offset = _tx_bytes_sent;
-        Socket::send(&src[offset], size - offset);
-        
-        _tx_block.wait();
-        
-        if (state() != ESTABLISHED)
-            break;
-        
-    } while (_tx_bytes_sent < size);
-    
-    _sending = false;
-    return _tx_bytes_sent;
-}
-
-void TCP::Channel::bind(unsigned short port)
-{
-    tcp()->detach(this, _local.port());
-    
-    _local = TCP::Address(tcp()->ip()->address(), port);
-    
-    tcp()->attach(this, port);
 }
 
 void TCP::Channel::closing()
@@ -746,20 +802,6 @@ void TCP::Channel::error(short errorcode)
             _rx_block.signal();
         
     }
-}
-
-void TCP::Channel::close()
-{
-    if (_receiving)
-        _rx_block.signal();
-    
-    int retry = 5;
-    _sending = true;
-    
-    do {
-        Socket::close();
-        _tx_block.wait();
-    } while (retry-- > 0 && state() != CLOSED);
 }
 
 void TCP::Channel::update(Data_Observed<IP::Address> *ob, long c,

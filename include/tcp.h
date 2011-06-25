@@ -152,6 +152,11 @@ private:
     TCP * _tcp;
 };
 
+/**
+ * The TCP::Socket is a base class for the event driven communication API.
+ * For correct usage the application should use the ClientSocket
+ * or ServerSocket instead of this class.
+ */
 class TCP::Socket : public IF<IP::multiNIC,
                               Socket_MultiNIC, Socket_SingleNIC>::Result,
                     public Data_Observer<TCP::Address>,
@@ -163,7 +168,7 @@ public:
     typedef void (Socket::* Handler)(const Header&,const char*,u16);
     
     enum { // Erros
-        ERR_NOT_CONNECTED,
+        ERR_NOT_CONNECTED = 1,
         ERR_TIMEOUT,
         ERR_RESET,
         ERR_CLOSING,
@@ -210,7 +215,7 @@ public:
     void close();
     void connect();
     void listen();
-    void send(const char* data,u16 len);
+    void send(const char* data,u16 len,bool push = true);
     
     const Address & remote() { return _remote; }
     const Address & local()  { return _local; }
@@ -277,9 +282,21 @@ u16 TCP::mss() {
    return ip()->nic()->mtu() - sizeof(TCP::Header) - sizeof(IP::Header);
 }
 
+/**
+ * The ClientSocket represents an active communicator using the
+ * TCP/IP subsystem.
+ * 
+ * Applications using this class must implement all pure virtual methods
+ * from TCP::Socket.
+ */
 class TCP::ClientSocket : public TCP::Socket {
 public:
 
+    /**
+     * Creates an active socket bound to address _local_ and remote peer
+     * address _remote_. With _start_ = true a connection attempt will
+     * be made as soon as the object is created.
+     */
     ClientSocket(const Address &remote,const Address &local,
                  bool start = true,TCP * tcp = 0);
     virtual ~ClientSocket() {}
@@ -291,9 +308,21 @@ public:
     }
 };
 
+/**
+ * The ServerSocket represents a passive communicator using the
+ * TCP/IP subsystem.
+ * 
+ * Applications using this class (by inheritance) must implement 
+ * all pure virtual methods from TCP::Socket.
+ */
 class TCP::ServerSocket : public TCP::Socket {
 public:
 
+    /**
+     * Creates a passive socket that listens on the IP:PORT specified by _local_
+     * If _start_ is true, the socket will start listening right after the
+     * object creation, otherwise the implementor should call listen().
+     */
     ServerSocket(const Address &local,bool start = true,TCP * tcp = 0);
     ServerSocket(const TCP::ServerSocket &socket);
     virtual ~ServerSocket() {}
@@ -301,23 +330,20 @@ public:
 
 
 /**
- * Base abstract class for both ActiveChannel and PassiveChannel.
+ * TCP::Channel is a blocking (synchronous) API for communication using
+ * the TCP/IP subsystem. It is built upon the event-driven TCP::Socket
+ * to offer a simple send/receive, connect/listen, stream-based, comm.
+ * framework.
  * 
- * It handles send/receive, errors and timeouts.
+ * While the TCP::Socket use is done by inheritance, TCP::Channel can be
+ * used by composition/agregation.
  */
 class TCP::Channel : public ICMP::Observer, public TCP::Socket {
 public:
     typedef Alarm::Microsecond Microsecond;
-    
-    int error();
-    
-    void timeout(const Microsecond& t) { _timeout = t; }
-    Microsecond timeout() { return _timeout; }
-    
+      
     Channel();
-    virtual ~Channel() {
-        ICMP::instance()->detach(this, ICMP::UNREACHABLE);
-    }
+    virtual ~Channel();
     
     /**
      * Waits for incoming data.
@@ -351,6 +377,13 @@ public:
      * the connection is fully closed or aborted.
      */
     void close();
+    
+    /**
+     * Wait for a remote peer to connect.
+     * @return true if connected, false otherwise
+     */
+    bool listen();
+    
 protected:
     
     // from TCP::Socket
@@ -369,9 +402,7 @@ protected:
                 void *data, unsigned int size);
     
     // Attributes
-    
-    Microsecond _timeout;
-    
+       
     bool _sending;
     bool _receiving;
     
