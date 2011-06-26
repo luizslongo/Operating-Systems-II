@@ -174,7 +174,8 @@ public:
         ERR_CLOSING,
         ERR_NO_ROUTE,
         ERR_NOT_STARTED,
-        ERR_REFUSED
+        ERR_REFUSED,
+        ERR_ILEGAL
     };
 
     Socket(const Socket& socket);    
@@ -384,7 +385,14 @@ public:
      */
     bool listen();
     
+    /**
+     * Get error condition. Zero means no error.
+     */
+    short error() { return _error; }
+    
 protected:
+    // clear internal attributes
+    void clear();
     
     // from TCP::Socket
     
@@ -414,6 +422,8 @@ protected:
     volatile unsigned int _rx_buffer_used;
     
     volatile unsigned int _tx_bytes_sent;
+    
+    volatile short _error;
 };
 
 __END_SYS

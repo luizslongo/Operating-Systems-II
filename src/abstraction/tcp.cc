@@ -222,6 +222,7 @@ void TCP::Socket::operator()() {
 void TCP::Socket::close()
 {
     send_fin();
+    set_timeout();
     if (state() == ESTABLISHED)
         state(FIN_WAIT1);
     else if (state() == CLOSE_WAIT) {
@@ -229,6 +230,7 @@ void TCP::Socket::close()
     }
     else if (state() == SYN_SENT) {
         state(CLOSED);
+        clear_timeout();
         closed();    
     }
 }
@@ -243,6 +245,11 @@ TCP::ClientSocket::ClientSocket(const Address& remote,const Address& local,
 }
 
 void TCP::Socket::connect() {
+    if (state() != CLOSED && state() != SYN_SENT) {
+        db<TCP>(ERR) << "TCP::Socket::connect() could not be called\n";
+        return;
+    }
+    
     state(SYN_SENT);
     snd_ini = Pseudo_Random::random() & 0x00FFFFFF;
     snd_una = snd_ini;
@@ -268,6 +275,11 @@ TCP::ServerSocket::ServerSocket(const TCP::ServerSocket &socket)
 
 void TCP::Socket::listen()
 {
+    if (state() != CLOSED || state() != LISTEN) {
+        db<TCP>(ERR) << "TCP::Socket::listen() called with state: " << state() << endl;
+        return;
+    }
+    
     _remote = Address(0,0);
     state(LISTEN);
 }
@@ -278,9 +290,8 @@ void TCP::Socket::__LISTEN(const Header& r ,const char* data,u16 len)
 
     if (r._syn && !r._rst && !r._fin) {
         Socket * n;
-        ServerSocket *ss = static_cast<ServerSocket*>(this);
-        
-        if (ss && (n = ss->incoming(_remote))) {
+          
+        if ((n = incoming(_remote)) != 0) {
             n->_remote = _remote;
             n->rcv_nxt = r.seq_num()+1;
             n->rcv_ini = r.seq_num();
@@ -300,6 +311,7 @@ void TCP::Socket::__LISTEN(const Header& r ,const char* data,u16 len)
 
             n->set_timeout();
         }
+        // else = connection rejected
     } 
     if (state() == LISTEN) {
         // a new socket was created to handle the incomming connection
@@ -593,11 +605,9 @@ void TCP::Socket::abort()
 // Channel stuff
 
 TCP::Channel::Channel() 
-    : TCP::Socket(TCP::Address(0,0),TCP::Address(0,0),0),
-       _sending(false), _receiving(false),
-      _rx_buffer_ptr(0), _rx_buffer_size(0), _rx_buffer_used(0)
+    : TCP::Socket(TCP::Address(0,0),TCP::Address(0,0),0)
 {
-    rcv_wnd = 0;
+    clear();
     ICMP::instance()->attach(this, ICMP::UNREACHABLE);
 }
 
@@ -615,26 +625,31 @@ bool TCP::Channel::connect(const TCP::Address& to)
         db<TCP>(ERR) << "TCP::Channel::connect() called for open connection!\n";
         return false;
     }
+    
     int retry = 5;
     _remote = to;
-    rcv_wnd = 0;
-    do
-    {
+    clear();
+    _sending = true;
+    do {
         Socket::connect();
         _rx_block.wait();
     } while (retry-- > 0 && state() != ESTABLISHED);
+    _sending = false;
     
     return state() == ESTABLISHED;
 }
 
 int TCP::Channel::receive(char * dst,unsigned int size)
 {
+    if (_error)
+        return -_error;
+    
     if (state() != ESTABLISHED)
         return -ERR_NOT_CONNECTED;
     
     if (_receiving) {
         db<TCP>(ERR) << "TCP::Channel::receive already called!\n";
-        return -1;
+        return -ERR_ILEGAL;
     }
     
     _rx_buffer_ptr  = dst;
@@ -658,6 +673,9 @@ int TCP::Channel::receive(char * dst,unsigned int size)
 
 int TCP::Channel::send(const char * src,unsigned int size)
 {
+    if (_error)
+        return -_error;
+    
     if (state() != ESTABLISHED)
         return -ERR_NOT_CONNECTED;
     
@@ -672,7 +690,7 @@ int TCP::Channel::send(const char * src,unsigned int size)
         
         _tx_block.wait();
         
-        if (state() != ESTABLISHED)
+        if (state() != ESTABLISHED || _error)
             break;
         
     } while (_tx_bytes_sent < size);
@@ -700,14 +718,16 @@ bool TCP::Channel::close()
     if (state() == CLOSED)
         return true;
     
-    if (state() < ESTABLISHED) {
+    if (state() == SYN_SENT) {
         _rx_block.signal();
         abort();
         return true;
     }
     
-    if (_receiving)
+    if (_receiving) {
+        _error = ERR_CLOSING;
         _rx_block.signal();
+    }
     
     int retry = 5;
     _sending = true;
@@ -715,8 +735,10 @@ bool TCP::Channel::close()
     do {
         Socket::close();
         _tx_block.wait();
-    } while (retry-- > 0 && state() != CLOSED);
-
+    } while (retry-- > 0 && state() != CLOSED || _error);
+    
+    _sending = false;
+    
     return state() == CLOSED;
 }
 
@@ -726,14 +748,24 @@ bool TCP::Channel::listen()
         db<TCP>(ERR) << "TCP::Channel::listen() called on non-closed channel\n";
         return false;
     }
-
-    rcv_wnd = 0;
-
-    Socket::listen();
     
+    clear();
+    Socket::listen();   
     _rx_block.wait();
     
     return state() == ESTABLISHED;
+}
+
+void TCP::Channel::clear()
+{
+    _sending   = false;
+    _receiving = false;;
+    _rx_buffer_ptr  = 0;
+    _rx_buffer_size = 0;
+    _rx_buffer_used = 0;
+    _tx_bytes_sent = 0;
+    _error = 0;
+    rcv_wnd = 0;
 }
 
 // Channel's implementation of Socket callbacks
@@ -798,14 +830,15 @@ void TCP::Channel::sent(u16 size)
 
 void TCP::Channel::error(short errorcode)
 {
-    if (errorcode == ERR_TIMEOUT)
-    {
-        if (_sending)
-            _tx_block.signal();
-        
-        else if ((state() == SYN_SENT) || (state() == SYN_RCVD))
-            _rx_block.signal();
+    if (errorcode != ERR_TIMEOUT) {
+        _error = errorcode; 
     }
+    else if (_receiving) {
+        _rx_block.signal();  
+    }
+    
+    if (_sending)
+        _tx_block.signal();  
 }
 
 void TCP::Channel::update(Data_Observed<IP::Address> *ob, long c,
