@@ -617,6 +617,7 @@ bool TCP::Channel::connect(const TCP::Address& to)
     }
     int retry = 5;
     _remote = to;
+    rcv_wnd = 0;
     do
     {
         Socket::connect();
@@ -725,7 +726,9 @@ bool TCP::Channel::listen()
         db<TCP>(ERR) << "TCP::Channel::listen() called on non-closed channel\n";
         return false;
     }
-    
+
+    rcv_wnd = 0;
+
     Socket::listen();
     
     _rx_block.wait();

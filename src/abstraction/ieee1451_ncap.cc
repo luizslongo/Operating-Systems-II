@@ -226,7 +226,7 @@ int IEEE1451_NCAP::receive(IEEE1451_NCAP *ncap, TCP::Channel *channel)
 
     while ((ret = channel->receive(data, size)) >= 0)
     {
-        if (ret < sizeof(IEEE1451_Packet))
+        if (ret < (int) sizeof(IEEE1451_Packet))
             continue;
 
         IEEE1451_Packet *in = (IEEE1451_Packet *) data;

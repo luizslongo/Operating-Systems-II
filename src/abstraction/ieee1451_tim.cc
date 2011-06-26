@@ -323,7 +323,7 @@ int IEEE1451_TIM::receive(IEEE1451_TIM *tim, TCP::Channel *channel)
             continue;
         }
 
-        if (ret < sizeof(IEEE1451_Packet))
+        if (ret < (int) sizeof(IEEE1451_Packet))
             continue;
 
         IEEE1451_Packet *in = (IEEE1451_Packet *) data;

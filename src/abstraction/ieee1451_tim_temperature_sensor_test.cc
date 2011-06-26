@@ -208,7 +208,10 @@ int IEEE1451_Temperature_Sensor::execute()
         Alarm::delay(READ_INTERVAL);
 
         if ((_tim_im) && (!_polling) && (_pos == 0))
+        {
             tim->connect();
+            _execute_thread->suspend();
+        }
 
         if ((_tim_im) && (_pos == 0))
             send_data_set();
