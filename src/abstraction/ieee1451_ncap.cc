@@ -137,7 +137,7 @@ unsigned short IEEE1451_NCAP::send_command(const IP::Address &destination, const
 
     db<IEEE1451_NCAP>(TRC) << "IEEE1451_NCAP - Sending command (trans_id=" << trans_id << ", dst=" << destination << ")\n";
 
-    TCP::Channel *channel = get_channel(destination);
+    Linked_Channel *channel = get_channel(destination);
     if (!channel)
     {
         db<IEEE1451_NCAP>(INF) << "IEEE1451_NCAP - Failed to send command (trans_id=" << trans_id << ")\n";
@@ -163,12 +163,12 @@ unsigned short IEEE1451_NCAP::send_command(const IP::Address &destination, const
     return trans_id;
 }
 
-TCP::Channel *IEEE1451_NCAP::get_channel(const IP::Address &addr)
+Linked_Channel *IEEE1451_NCAP::get_channel(const IP::Address &addr)
 {
     Simple_List<Linked_Channel>::Iterator it = _channels.begin();
     while (it != _channels.end())
     {
-        TCP::Channel *channel = it->object();
+        Linked_Channel *channel = it->object();
         it++;
 
         if (channel->remote().ip() == addr)

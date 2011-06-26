@@ -67,7 +67,7 @@ class Linked_Channel : public TCP::Channel
 {
 public:
     typedef Simple_List<Linked_Channel>::Element Element;
-    
+
     Linked_Channel() : _link(this) {}
     Element _link;
 };
@@ -88,7 +88,7 @@ public:
     void execute();
 
 private:
-    TCP::Channel *get_channel(const IP::Address &addr);
+    Linked_Channel *get_channel(const IP::Address &addr);
     static int receive(IEEE1451_NCAP *ncap, Linked_Channel *channel);
 
 public:
@@ -108,7 +108,7 @@ public:
     void set_application(Listener *application) { _application = application; }
 
 private:
-    Simple_List< Linked_Channel > _channels;
+    Simple_List<Linked_Channel> _channels;
 
     static IEEE1451_NCAP *_ieee1451;
 };

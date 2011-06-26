@@ -9,24 +9,30 @@ __USING_SYS
 
 OStream cout;
 
-//void test_decode_encode();
-void test_user_agent();
+#ifdef __pc_h
+    //void test_decode_encode();
+    void test_user_agent();
+#endif
 
 //-----------------------------------------------
 
 int main()
 {
+#ifdef __pc_h
     cout << "SIP test application.\n\n";
 
     //test_decode_encode();
     test_user_agent();
 
     while (1);
+#endif
     return 0;
 }
 
 //-----------------------------------------------
 //-----------------------------------------------
+
+#ifdef __pc_h
 
 /*void create_invite(char *invite_msg)
 {
@@ -2972,5 +2978,7 @@ int send_audio(SIP_User_Agent *ua)
     send_audio_thread = 0;
     return 0;
 }
+
+#endif
 
 //-----------------------------------------------
