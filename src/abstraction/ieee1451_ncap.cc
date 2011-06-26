@@ -95,11 +95,11 @@ IEEE1451_NCAP *IEEE1451_NCAP::_ieee1451 = 0;
 
 IEEE1451_NCAP::~IEEE1451_NCAP()
 {
-    Simple_List<TCP::Channel>::Iterator it = _channels.begin();
+    Simple_List<Linked_Channel>::Iterator it = _channels.begin();
     while (it != _channels.end())
     {
-        Simple_List<TCP::Channel>::Element *el = it++;
-        TCP::Channel *chn = el->object();
+        Simple_List<Linked_Channel>::Element *el = it++;
+        Linked_Channel *chn = el->object();
         _channels.remove(&chn->_link);
         delete chn;
     }
@@ -165,7 +165,7 @@ unsigned short IEEE1451_NCAP::send_command(const IP::Address &destination, const
 
 TCP::Channel *IEEE1451_NCAP::get_channel(const IP::Address &addr)
 {
-    Simple_List<TCP::Channel>::Iterator it = _channels.begin();
+    Simple_List<Linked_Channel>::Iterator it = _channels.begin();
     while (it != _channels.end())
     {
         TCP::Channel *channel = it->object();
@@ -182,7 +182,7 @@ void IEEE1451_NCAP::execute()
 {
     db<IEEE1451_NCAP>(INF) << "IEEE1451_NCAP - Executing...\n";
 
-    TCP::Channel *channel = new TCP::Channel();
+    Linked_Channel *channel = new Linked_Channel();
     channel->bind(IEEE1451_PORT);
 
     while (true)
@@ -192,10 +192,10 @@ void IEEE1451_NCAP::execute()
 
         db<IEEE1451_NCAP>(TRC) << "IEEE1451_NCAP - New channel connected (ip=" << channel->remote().ip() << ")\n";
 
-        Simple_List<TCP::Channel>::Iterator it = _channels.begin();
+        Simple_List<Linked_Channel>::Iterator it = _channels.begin();
         while (it != _channels.end())
         {
-            TCP::Channel *chn = it->object();
+            Linked_Channel *chn = it->object();
             it++;
 
             if ((TCP::Address) channel->remote() == (TCP::Address) chn->remote())
@@ -209,12 +209,12 @@ void IEEE1451_NCAP::execute()
         _channels.insert(&channel->_link);
         new Thread(receive, this, channel);
 
-        channel = new TCP::Channel();
+        channel = new Linked_Channel();
         channel->bind(IEEE1451_PORT);
     }
 }
 
-int IEEE1451_NCAP::receive(IEEE1451_NCAP *ncap, TCP::Channel *channel)
+int IEEE1451_NCAP::receive(IEEE1451_NCAP *ncap, Linked_Channel *channel)
 {
     db<IEEE1451_NCAP>(TRC) << "IEEE1451_NCAP - Receive thread created (ip=" << channel->remote().ip() << ")\n";
 

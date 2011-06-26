@@ -61,7 +61,7 @@ void TCP::Socket::update(Data_Observed<TCP::Address> *o, long c, TCP::Address sr
 {
     Header& hdr = *reinterpret_cast<Header*>(data);
     int len = size - hdr.size();
-
+  
     if ((_remote == src) || (_remote.port() == 0))
     {
         if (state() == LISTEN) _remote = src;
@@ -595,9 +595,9 @@ void TCP::Socket::abort()
 TCP::Channel::Channel() 
     : TCP::Socket(TCP::Address(0,0),TCP::Address(0,0),0),
        _sending(false), _receiving(false),
-      _rx_buffer_ptr(0), _rx_buffer_size(0), _rx_buffer_used(0),
-      _link(this)
+      _rx_buffer_ptr(0), _rx_buffer_size(0), _rx_buffer_used(0)
 {
+    rcv_wnd = 0;
     ICMP::instance()->attach(this, ICMP::UNREACHABLE);
 }
 

@@ -63,6 +63,14 @@ struct IEEE1451_TIM_Channel : public IEEE1451_Channel
     bool _connected;
 };
 
+class Linked_Channel : public TCP::Channel 
+{
+public:
+    typedef Simple_List<Linked_Channel>::Element Element;
+    
+    Linked_Channel() : _link(this) {}
+    Element _link;
+};
 
 class IEEE1451_NCAP //IEEE 1451.0 + IEEE 1451.5
 {
@@ -81,7 +89,7 @@ public:
 
 private:
     TCP::Channel *get_channel(const IP::Address &addr);
-    static int receive(IEEE1451_NCAP *ncap, TCP::Channel *channel);
+    static int receive(IEEE1451_NCAP *ncap, Linked_Channel *channel);
 
 public:
     class Listener
@@ -100,7 +108,7 @@ public:
     void set_application(Listener *application) { _application = application; }
 
 private:
-    Simple_List<TCP::Channel> _channels;
+    Simple_List< Linked_Channel > _channels;
 
     static IEEE1451_NCAP *_ieee1451;
 };

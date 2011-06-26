@@ -414,9 +414,6 @@ protected:
     volatile unsigned int _rx_buffer_used;
     
     volatile unsigned int _tx_bytes_sent;
-
-public:
-    Simple_List<TCP::Channel>::Element _link;
 };
 
 __END_SYS
