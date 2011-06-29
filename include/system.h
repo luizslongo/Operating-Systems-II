@@ -4,7 +4,6 @@
 #define __system_h
 
 #include <utility/heap.h>
-#include <machine.h>
 
 __BEGIN_SYS
 

@@ -1,16 +1,18 @@
 #ifndef __cmac_h
 #define __cmac_h
 
+#include <utility/observer.h>
 #include <utility/random.h>
 #include <system/kmalloc.h>
 #include <battery.h>
+#include <neighboring.h>
 #include <radio.h>
 #include <timer.h>
 
 __BEGIN_SYS
 
 template <typename T>
-class CMAC {
+class CMAC: public NIC_Common::Observed {
 public:
     enum CMAC_STATE {
         OFF,
@@ -34,155 +36,6 @@ public:
     typedef Radio_Common::Statistics Statistics;
     static const int FRAME_BUFFER_SIZE = T::FRAME_BUFFER_SIZE;
 
-    class Neighboring {
-    public:
-        class Node {
-        public:
-            Node() {}
-
-            Node(Address * addr) :
-                _address(addr), _energy(0), _lqi(0), _rssi(0) {}
-
-            Node(Address addr, unsigned int energy, unsigned int lqi, unsigned int rssi) :
-                _address(addr), _energy(energy), _lqi(lqi), _rssi(rssi) {}
-
-            ~Node() {}
-
-            Address get_address() {
-                return _address;
-            }
-
-            unsigned int get_energy() {
-                return _energy;
-            }
-
-            unsigned int get_lqi() {
-                return _lqi;
-            }
-
-            unsigned int get_rssi() {
-                return _rssi;
-            }
-
-            void set_energy(unsigned int val) {
-                _energy = val;
-            }
-
-            void set_lqi(unsigned int val) {
-                _lqi = val;
-            }
-
-            void set_rssi(unsigned int val) {
-                _rssi = val;
-            }
-
-            bool operator==(const Node & n) {
-                return _address == n.get_address();
-            }
-
-            bool operator!=(const Node & n) {
-                return _address != n.get_address();
-            }
-
-        private:
-            Address _address;
-            unsigned int _energy;
-            unsigned int _lqi;
-            unsigned int _rssi;
-        };
-
-        typedef List_Elements::Doubly_Linked<Node> element;
-
-        Neighboring() {}
-        ~Neighboring() {}
-
-        void add_node(Node * n) {
-            remove_node(n);
-
-            element * e = new(kmalloc(sizeof(element))) element(n);
-            _nodes.insert_head(e);
-
-            if (_nodes.size() > _size)
-                _nodes.remove_tail();
-        }
-
-        void remove_node(Node * n) {
-            if (_nodes.empty())
-                return;
-
-            List_Iterators::Bidirecional<element> it;
-            for (it = _nodes.begin(); it != _nodes.end(); it++) {
-                if (it->object()->get_address() == n->get_address()) {
-                    _nodes.remove(it);
-                    kfree(it->object());
-                    kfree(it);
-                    return;
-                }
-            }
-        }
-
-        Node * search(Address address) {
-            if (_nodes.empty())
-                return 0;
-
-            List_Iterators::Bidirecional<element> it;
-            for (it = _nodes.begin(); it != _nodes.end(); it++) {
-                if (it->object()->get_address() == address)
-                    return it->object();
-            }
-
-            return 0;
-        }
-
-        int get_node_energy(Address addr) {
-            Node * n = 0;
-            if (n = search(addr))
-                return n->get_energy();
-
-            return 0;
-        }
-
-        int get_node_lqi(Address addr) {
-            Node * n = 0;
-            if (n = search(addr))
-                return n->get_lqi();
-
-            return 0;
-        }
-
-        int get_node_rssi(Address addr) {
-            Node * n = 0;
-            if (n = search(addr))
-                return n->get_rssi();
-
-            return 0;
-        }
-
-        friend Debug &operator<< (Debug &out, Neighboring &n) {
-            out << "\nNeighboring size: " << n._nodes.size() << " of " << n._size << "\n";
-            if (n._nodes.empty())
-                return out;
-
-            out << "LRU node list:\n";
-
-            List_Iterators::Bidirecional<element> it;
-            for (it = n._nodes.begin(); it != n._nodes.end(); it++) {
-                out << "--------------------\n";
-                out << "Node address: " << it->object()->get_address() << "\n";
-                out << "Remaining energy: " << it->object()->get_energy() << "\n";
-                out << "LQI: " << it->object()->get_lqi() << "\n";
-                out << "RSSI: " << it->object()->get_rssi() << "\n";
-            }
-            out << "--------------------\n";
-
-            return out;
-        }
-
-    private:
-        static const unsigned int _size = Traits<CMAC<T> >::MAX_NEIGHBORS;
-        List<Node, element> _nodes;
-    };
-
 public:
     CMAC(int unit = 0) {
         _stats = new(kmalloc(sizeof(Statistics))) Statistics();
@@ -190,14 +43,7 @@ public:
         _radio = new(kmalloc(sizeof(T))) T();
         _timer = new(kmalloc(sizeof(Timer_CMAC))) Timer_CMAC(alarm_handler_function);
 
-        if (Traits<CMAC<T> >::MAX_NEIGHBORS > 0)
-            _neighboring = new(kmalloc(sizeof(Neighboring))) Neighboring();
-
         CMAC<T>::init(unit);
-    }
-
-    Neighboring * get_neighboring() {
-        return _neighboring;
     }
 
     void tx_p();
@@ -291,11 +137,6 @@ public:
             result = state_machine();
         }
 
-        if (result == RX_OK) {
-            _stats->rx_packets += 1;
-            _stats->rx_bytes += _rx_data_size;
-        }
-
         _stats->rx_time += alarm_ticks_ms - start_time;
 
         *src  = _rx_src_address;
@@ -303,10 +144,16 @@ public:
 
         _rx_pending = false;
 
-        if (result == RX_OK)
+        if (result == RX_OK) {
+            _stats->rx_packets += 1;
+            _stats->rx_bytes   += _rx_data_size;
+
+            notify((int) *prot);
+
             return _rx_data_size;
-        else
-            return result*(-1);
+
+        } else
+            return result * (-1);
     } 
 
     /**
@@ -382,8 +229,6 @@ protected:
 
 protected:
     static T * _radio;
-
-    static Neighboring * _neighboring;
 
     /* timer control variables */
     static unsigned int _sleeping_period; // ms
@@ -1321,7 +1166,7 @@ class IEEE802154_Unpack: public CMAC_State<T> {
 public:
     typedef typename CMAC<T>::CMAC_STATE_TRANSITION CMAC_STATE_TRANSITION;
     typedef typename IEEE802154_Frame<T>::data_frame_header_t data_frame_header_t;
-    typedef typename CMAC<T>::Neighboring::Node Node;
+    typedef typename Neighboring::Node Node;
 
     static CMAC_STATE_TRANSITION execute(CMAC_STATE_TRANSITION input) {
         if (CMAC<T>::_frame_buffer_size == 0) {
@@ -1382,11 +1227,12 @@ public:
             db<CMAC<T> >(TRC) << "IEEE802154_Unpack - UNPACK_OK\n";
         }
 
-        if (Traits<CMAC<T> >::MAX_NEIGHBORS > 0) {
+        if (Traits<Neighboring>::enabled) {
             Node * n = new(kmalloc(sizeof(Node))) Node(CMAC<T>::_rx_src_address, *remaining_energy_ptr, CMAC<T>::_radio->lqi(), CMAC<T>::_radio->rssi());
-            CMAC<T>::_neighboring->add_node(n);
+            Neighboring::get_instance()->add_node(n);
+
             db<CMAC<T> >(ERR) << "CMAC - Neighborhood status\n"
-                << *CMAC<T>::_neighboring;
+                << Neighboring::get_instance();
         }
 
         return input;

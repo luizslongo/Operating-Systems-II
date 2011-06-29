@@ -73,35 +73,9 @@ template <> struct Traits<ATMega1281_NIC>: public Traits<void>
 {
     static const bool enabled = true;
 
-    typedef LIST<CMAC> NICS;
+    typedef LIST<ATMega1281_Radio> NICS;
 
     static const unsigned int RADIO_UNITS = NICS::Count<ATMega1281_Radio>::Result;
-};
-
-template <> struct Traits<CMAC>: public Traits<void>
-{
-    static const bool debugged      = false;
-    static const bool SM_STEP_DEBUG = false;
-
-    static const unsigned char BROADCAST       = ~0;
-    static const unsigned int  FREQUENCY       = 0;
-    static const unsigned int  POWER           = 5;
-    static const bool          TIME_TRIGGERED  = false;
-    static const bool          COORDINATOR     = false;
-    static const unsigned int  SLEEPING_PERIOD = 1000; //ms
-    static const unsigned long TIMEOUT         = 50; //ms
-    static const unsigned char ADDRESS         = 0x0003;
-    static const unsigned int  MTU             = 118; 
-
-    typedef CMAC_States::Generic_Sync		Sync_State;
-    typedef CMAC_States::IEEE802154_Pack	Pack_State;
-    typedef CMAC_States::Unslotted_CSMA_Contention	Contention_State;
-    typedef CMAC_States::Generic_Tx		Tx_State;
-    typedef CMAC_States::IEEE802154_Ack_Rx	Ack_Rx_State;
-    typedef CMAC_States::Generic_Lpl		Lpl_State;
-    typedef CMAC_States::Generic_Rx		Rx_State;
-    typedef CMAC_States::IEEE802154_Unpack	Unpack_State;
-    typedef CMAC_States::IEEE802154_Ack_Tx	Ack_Tx_State;
 };
 
 template <> struct Traits<ATMega1281_Temperature_Sensor>: public Traits<void>

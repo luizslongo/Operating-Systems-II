@@ -256,6 +256,9 @@ class ICMP;
 template<class,class> class BCast_Router;
 template<class,class> class ARP_Router;
 
+// Abstractions - Communication - Layer integration
+class Neighboring;
+
 // Abstractions	- Sentients
 class Photo_Sentient;
 class Temperature_Sentient;

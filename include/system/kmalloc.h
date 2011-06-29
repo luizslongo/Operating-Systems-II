@@ -3,7 +3,6 @@
 #ifndef __kmalloc_h
 #define __kmalloc_h
 
-#include <utility/heap.h>
 #include <system.h>
 
 __BEGIN_SYS

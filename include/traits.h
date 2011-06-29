@@ -133,6 +133,13 @@ template <> struct Traits<CMAC<Radio_Wrapper> >: public Traits<void>
     static const unsigned int  MAX_NEIGHBORS   = 3;
 };
 
+template <> struct Traits<Neighboring>: public Traits<void>
+{
+    static const bool enabled = true;
+
+    static const unsigned int MAX_NEIGHBORS = 3;
+};
+
 __END_SYS
 
 #ifdef __ARCH_TRAITS_H

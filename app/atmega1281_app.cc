@@ -16,7 +16,7 @@ char msg[DATA_SIZE];
 void write_to_eeprom(NIC::Statistics *stats) {
     EEPROM eeprom;
 
-    NIC::Address address(Traits<CMAC>::ADDRESS);
+    NIC::Address address(1);
     unsigned char *ptr = reinterpret_cast<unsigned char*> (&address);
     for (unsigned int i = 0; i < sizeof(NIC::Address); ++i) {
         eeprom.write(i, ptr[i]);
@@ -36,11 +36,10 @@ void sensor(unsigned char id) {
 
     for (int z = 0; z < 30; z++) {
 
-        while (nic->send(SINK_ID, 0, &msg, sizeof(msg)) != CMAC::TX_OK)
-            ;
+        nic->send(SINK_ID, (NIC::Protocol) 0, &msg, sizeof(msg));
 
-        for (int x = 0; x < 0xfff; x++)
-            ;
+        for (int x = 0; x < 0xffff; x++);
+        for (int x = 0; x < 0xffff; x++);
     }
 
     NIC::Statistics stats = nic->statistics();
