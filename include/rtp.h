@@ -40,9 +40,8 @@ public:
         static const u8 CSRC_COUNT = 0;
 
     public:
-        Header() :
-            _version_number(VERSION_NUMBER), _padding(0), _extensions(0),
-            _csrc_count(CSRC_COUNT), _marker(0), _payload_type(PAYLOAD_INVALID)
+        Header() : _csrc_count(CSRC_COUNT), _extensions(0), _padding(0), _version_number(VERSION_NUMBER),
+            _payload_type(PAYLOAD_INVALID), _marker(0)
         {
             _sequence_number = CPU::htons((u16) Pseudo_Random::random() & 0x07ff);
             _timestamp = CPU::htonl((u32) Pseudo_Random::random() & 0x007fffff);

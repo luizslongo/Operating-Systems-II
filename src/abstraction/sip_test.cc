@@ -246,7 +246,6 @@ void test_user_agent()
     Alarm::delay(TIME_500_MS * 20); //10s
     cout << "+++++ Finished +++++\n";
     SIP_Manager::delete_instance();
-    t.exit(0);
 }
 
 //-----------------------------------------------

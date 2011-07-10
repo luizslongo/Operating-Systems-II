@@ -577,10 +577,10 @@ int IEEE1451_NCAP_Application::message_callback(SIP_Event_Callback event, SIP_Us
         case SIP_SESSION_INITIATED:
         {
             cout << "++ Session Initiated (" << tim_cache->_ua->get_call_status() << ") ++\n";
-            SIP_Session *session = tim_cache->_ua->get_session();
-            tim_cache->_rtp->set_local(session->_local_address, session->_local_port);
-            tim_cache->_rtp->set_remote(session->_remote_address, session->_remote_port);
-            tim_cache->_rtp->set_payload(RTP::PCMU);
+            const SIP_Session *session = tim_cache->_ua->get_session();
+            tim_cache->_rtp.set_local(session->_local_address, session->_local_port);
+            tim_cache->_rtp.set_remote(session->_remote_address, session->_remote_port);
+            tim_cache->_rtp.set_payload(RTP::PCMU);
 
             if (tim_cache->_ua->get_call_status() == SIP_CALL_STATUS_INCOMING)
                 tim_cache->_session_thread.resume();
@@ -591,7 +591,7 @@ int IEEE1451_NCAP_Application::message_callback(SIP_Event_Callback event, SIP_Us
         {
             cout << "++ Session Terminated ++\n";
             tim_cache->_session_thread.suspend();
-            tim_cache->_rtp->set_remote(Traits<IP>::BROADCAST, 0);
+            tim_cache->_rtp.set_remote(Traits<IP>::BROADCAST, 0);
             break;
         }
 
