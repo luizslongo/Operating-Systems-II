@@ -2956,7 +2956,7 @@ int send_audio(SIP_User_Agent *ua)
                 return 0;
              }
 
-             rtp.send(packet[j], sizeof(packet[j]));
+             rtp.send(packet[j], sizeof(packet[j]), ((i == 0 && j == 0) ? true : false));
              Alarm::delay(TIME_500_MS); //Alarm::delay(TIME_500_MS / 25); //20ms
         }
     }
