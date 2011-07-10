@@ -61,38 +61,6 @@ private:
     unsigned short _host_port;
 };
 
-
-class Send_RTP
-{
-public:
-    Send_RTP() : _version(0x02), _sequence(0x016a), _timestamp(0x00207a10), _ssrc(0xfdfca272), _udp(IP::instance()), _socket(&_udp) {}
-
-    void send_data(const char *destination, unsigned short port, const char *data, unsigned int size);
-
-private:
-    class My_Socket : public UDP::Socket
-    {
-    public:
-        My_Socket(UDP *udp) : UDP::Socket(UDP::Address(IP::instance()->address(), 8000), UDP::Address(Traits<IP>::BROADCAST, 8000), udp) {}
-        virtual ~My_Socket() {}
-
-        void received(const UDP::Address &src, const char *data, unsigned int size)
-        {
-            //db<Send_RTP::My_Socket>(INF) << "Send_RTP::My_Socket::received..\n";
-        }
-    };
-
-private:
-    unsigned short _version;
-    unsigned short _sequence;
-    unsigned long _timestamp;
-    unsigned long _ssrc;
-
-    char _buffer[172];
-    UDP _udp;
-    My_Socket _socket;
-};
-
 __END_SYS
 
 #endif

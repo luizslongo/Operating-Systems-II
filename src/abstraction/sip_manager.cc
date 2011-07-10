@@ -232,47 +232,4 @@ void SIP_Manager::random(char *buffer)
     itoa(value, buffer);
 }
 
-//-------------------------------------------
-
-void Send_RTP::send_data(const char *destination, unsigned short port, const char *data, unsigned int size)
-{
-    _buffer[0] = 0x80; //(_version << 6) && 0xc0;
-    _buffer[1] = (_sequence == 0x016a) ? 0x80 : 0x00;
-    _buffer[2] = _sequence >> 8;
-    _buffer[3] = _sequence;
-    _buffer[4] = _timestamp >> 24;
-    _buffer[5] = _timestamp >> 16;
-    _buffer[6] = _timestamp >> 8;
-    _buffer[7] = _timestamp;
-    _buffer[8] = _ssrc >> 24;
-    _buffer[9] = _ssrc >> 16;
-    _buffer[10] = _ssrc >> 8;
-    _buffer[11] = _ssrc;
-    memcpy(&_buffer[12], data, size);
-
-    char aux_dest[512];
-    char aux[255];
-    strcpy(aux_dest, destination);
-    match(aux_dest, ":" , aux);
-    skip(aux_dest, " \t");
-    match(aux_dest, "@" , aux);
-    skip(aux_dest, " \t");
-    destination = aux_dest;
-
-    //db<Send_RTP>(INF) << "Send_RTP::send_data -> Sending data to " << destination << ":" << port << " (size: " <<
-    //      size << ", seq: " << _sequence << ", timestamp: " << _timestamp << ")\n";
-
-    UDP::Address dst(IP::Address(destination), port);
-    _socket.remote(dst);
-
-    if (_socket.send(_buffer, size + 12) <= 0)
-    {
-        db<Send_RTP>(WRN) << "Send_RTP::send_data -> Failed to send data\n";
-        //return;
-    }
-
-    _sequence++;
-    _timestamp += 0xA0;
-}
-
 __END_SYS

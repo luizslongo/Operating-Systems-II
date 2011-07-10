@@ -283,6 +283,7 @@ class IP;
 class UDP;
 class TCP;
 class ICMP;
+class RTP;
 
 // Abstractions - Communication - Layer integration
 class Neighboring;
@@ -304,6 +305,14 @@ class Temperature_Sentient;
 class IEEE1451_NCAP;
 class IEEE1451_TIM;
 class IEEE1451_Transducer;
+
+// Abstractions - SIP
+class SIP_Body;
+class SIP_Header;
+class SIP_Manager;
+class SIP_Message;
+class SIP_Transaction;
+class SIP_User_Agent;
 
 // System Components IDs
 // The order in this enumeration defines many things in the system (e.g. init)

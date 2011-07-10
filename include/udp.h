@@ -279,7 +279,7 @@ public:
     /**
      * Sends _size_ bytes from _buf_ to destination _to_.
      */
-    int send(const Address& to,const char * buf,unsigned int size);
+    //int send(const Address& to,const char * buf,unsigned int size);
 
     
     Channel(const Address& local,const Address& remote);

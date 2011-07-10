@@ -15,6 +15,11 @@ SIP_Dialog::SIP_Dialog(SIP_Message_Type type, SIP_Call_Status call_status) :
     _local_uri = 0;
     _remote_uri = 0;
     _remote_target = 0;
+
+    _session._local_address = 0;
+    _session._remote_address = 0;
+    _session._local_port = 0;
+    _session._remote_port = 0;
 }
 
 SIP_Dialog::~SIP_Dialog()
@@ -37,12 +42,18 @@ SIP_Dialog::~SIP_Dialog()
     if (_remote_target)
         delete _remote_target;
 
+    if (_session._local_address)
+        delete _session._local_address;
+
+    if (_session._remote_address)
+        delete _session._remote_address;
+
     clear_routes();
 }
 
 void SIP_Dialog::set_dialog(const char *call_id, const char *local_tag, const char *remote_tag,
-        unsigned int local_sequence_number, unsigned int remote_sequence_number,
-        const char *local_uri, const char *remote_uri, const char *remote_target)
+                            unsigned int local_sequence_number, unsigned int remote_sequence_number,
+                            const char *local_uri, const char *remote_uri, const char *remote_target)
 {
     if (_call_id)
         delete _call_id;
@@ -78,6 +89,22 @@ void SIP_Dialog::set_remote_target(const char *remote_target)
     if (_remote_target)
         delete _remote_target;
     _remote_target = create_string(remote_target);
+}
+
+void SIP_Dialog::set_session(const char *local_address, unsigned short local_port,
+                             const char *remote_address, unsigned short remote_port)
+{
+    if (_session._local_address)
+        delete _session._local_address;
+    _session._local_address = create_string(local_address);
+
+    _session._local_port = local_port;
+
+    if (_session._remote_address)
+        delete _session._remote_address;
+    _session._remote_address = create_string(remote_address);
+
+    _session._remote_port = remote_port;
 }
 
 void SIP_Dialog::add_route_back(SIP_Header_Route *route)
@@ -421,6 +448,8 @@ SIP_Request *SIP_User_Agent::create_invite(const char *to)
     invite->add_header(header_content_disposition);
 
     SIP_SDP_Body *sdp = new SIP_SDP_Body();
+    sdp->set_address(SIP_Manager::get_instance()->get_host_ip());
+    sdp->set_port(8000);
     invite->set_body(sdp);
 
     return invite;
@@ -466,6 +495,7 @@ SIP_Request *SIP_User_Agent::create_notify(const char *to, SIP_Subscription_Stat
     notify->add_header(header_subscription_state);
 
     SIP_Pidf_Xml_Body *pidf = new SIP_Pidf_Xml_Body();
+    pidf->set_uri(_uri);
     pidf->set_element(pidf_xml_element);
     notify->set_body(pidf);
 
@@ -880,8 +910,10 @@ SIP_Dialog *SIP_User_Agent::create_dialog_client(SIP_Request *request, SIP_Respo
     SIP_Header_Contact *contact = (SIP_Header_Contact *) response->get_header(SIP_HEADER_CONTACT);
     SIP_Header_CSeq *cseq = (SIP_Header_CSeq *) request->get_header(SIP_HEADER_CSEQ);
     SIP_Header_To *to = (SIP_Header_To *) response->get_header(SIP_HEADER_TO);
+    SIP_SDP_Body *sdp_request = (SIP_SDP_Body *) request->get_body();
+    SIP_SDP_Body *sdp_response = (SIP_SDP_Body *) response->get_body();
 
-    if (!contact)
+    if ((!contact) || (!sdp_request) || (!sdp_response))
         return 0;
 
     const char *id = call_id->get_string();
@@ -891,12 +923,18 @@ SIP_Dialog *SIP_User_Agent::create_dialog_client(SIP_Request *request, SIP_Respo
     const char *remote_uri = to->get_address();
     const char *target = contact->get_address();
     unsigned int sequence_number = cseq->get_sequence();
+    const char *sdp_request_address = sdp_request->get_address();
+    unsigned short sdp_request_port = sdp_request->get_port();
+    const char *sdp_response_address = sdp_response->get_address();
+    unsigned short sdp_response_port = sdp_response->get_port();
 
-    if ((!id) || (!local_tag) || (!local_uri) || (!remote_uri) || (!target))
+    if ((!id) || (!local_tag) || (!local_uri) || (!remote_uri) || (!target) || (!sdp_request_address) ||
+        (sdp_request_port == 0) || (!sdp_response_address) || (sdp_response_port == 0))
         return 0;
 
     SIP_Dialog *dialog = add_dialog(SIP_REQUEST_INVITE, SIP_CALL_STATUS_OUTGOING);
     dialog->set_dialog(id, local_tag, remote_tag, sequence_number, 0, local_uri, remote_uri, target);
+    dialog->set_session(sdp_request_address, sdp_request_port, sdp_response_address, sdp_response_port);
 
     int record_route_num = response->get_num_header(SIP_HEADER_RECORD_ROUTE);
     for (int i = 0; i < record_route_num; i++)
@@ -918,6 +956,8 @@ SIP_Dialog *SIP_User_Agent::create_dialog_server(SIP_Request *request, SIP_Respo
     SIP_Header_To *to_request = (SIP_Header_To *) request->get_header(SIP_HEADER_TO);
     SIP_Header_To *to_response = (SIP_Header_To *) response->get_header(SIP_HEADER_TO);
 
+    SIP_Message_Type type = request->get_msg_type();
+
     if (!contact)
         return 0;
 
@@ -928,12 +968,32 @@ SIP_Dialog *SIP_User_Agent::create_dialog_server(SIP_Request *request, SIP_Respo
     const char *remote_uri = from->get_address();
     const char *target = contact->get_address();
     unsigned int sequence_number = cseq->get_sequence();
+    const char *sdp_request_address = 0;
+    unsigned short sdp_request_port = 0;
+    const char *sdp_response_address = 0;
+    unsigned short sdp_response_port = 0;
 
     if ((!id) || (!local_tag) || (!local_uri) || (!remote_uri) || (!target))
         return 0;
 
-    SIP_Message_Type type = request->get_msg_type();
-    if (type == SIP_REQUEST_SUBSCRIBE)
+    if (type == SIP_REQUEST_INVITE)
+    {
+        SIP_SDP_Body *sdp_request = (SIP_SDP_Body *) request->get_body();
+        SIP_SDP_Body *sdp_response = (SIP_SDP_Body *) response->get_body();
+
+        if ((!sdp_request) || (!sdp_response))
+            return 0;
+
+        sdp_request_address = sdp_request->get_address();
+        sdp_request_port = sdp_request->get_port();
+        sdp_response_address = sdp_response->get_address();
+        sdp_response_port = sdp_response->get_port();
+
+        if ((!sdp_request_address) || (sdp_request_port == 0) || (!sdp_response_address) ||
+            (sdp_response_port == 0))
+            return 0;
+
+    }else if (type == SIP_REQUEST_SUBSCRIBE)
     {
         SIP_Header_Event *event = (SIP_Header_Event *) request->get_header(SIP_HEADER_EVENT);
         if (!event)
@@ -950,6 +1010,9 @@ SIP_Dialog *SIP_User_Agent::create_dialog_server(SIP_Request *request, SIP_Respo
 
     SIP_Dialog *dialog = add_dialog(type, SIP_CALL_STATUS_INCOMING);
     dialog->set_dialog(id, local_tag, remote_tag, 0, sequence_number, local_uri, remote_uri, target);
+
+    if (type == SIP_REQUEST_INVITE)
+        dialog->set_session(sdp_request_address, sdp_request_port, sdp_response_address, sdp_response_port);
 
     int record_route_num = response->get_num_header(SIP_HEADER_RECORD_ROUTE);
     for (int i = 0; i < record_route_num; i++)
@@ -1047,6 +1110,15 @@ SIP_Transaction *SIP_User_Agent::matching_transaction(SIP_Message *msg)
         if (transaction->matching_transaction(msg))
             return transaction;
     }
+    return 0;
+}
+
+const SIP_Session *SIP_User_Agent::get_session()
+{
+    SIP_Dialog *dialog = get_call();
+    if (dialog)
+        return &dialog->_session;
+
     return 0;
 }
 

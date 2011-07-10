@@ -11,6 +11,7 @@ __BEGIN_SYS
 #define MAX_LINE 512
 #define MAX_REASON_PHRASE_LEN 128
 #define SIP_PORT 5060
+#define TIME_500_MS    500000 //18000
 
 enum SIP_Message_Type
 {
@@ -156,16 +157,24 @@ enum SIP_Timer
     SIP_TIMER_K,
     SIP_TIMER_COUNT,
 
-    SIP_TIMER_1 = 25000, //500000,  //500ms
-    SIP_TIMER_2 = 200000, //4000000, //4s
-    SIP_TIMER_4 = 250000, //5000000, //5s
-    SIP_TIMER_32s = 1600000, //32000000, //32s
+    SIP_TIMER_1 = TIME_500_MS,  //500ms
+    SIP_TIMER_2 = TIME_500_MS * 8, //4s
+    SIP_TIMER_4 = TIME_500_MS * 10, //5s
+    SIP_TIMER_32s = TIME_500_MS * 64, //32s
 };
 
 struct SIP_Status_Code
 {
     unsigned short _code;
     char _reason_phrase[MAX_REASON_PHRASE_LEN];
+};
+
+struct SIP_Session
+{
+    char *_local_address;
+    char *_remote_address;
+    unsigned short _local_port;
+    unsigned short _remote_port;
 };
 
 char *create_string(const char *src);

@@ -26,9 +26,11 @@ public:
     ~SIP_Dialog();
 
     void set_dialog(const char *call_id, const char *local_tag, const char *remote_tag,
-            unsigned int local_sequence_number, unsigned int remote_sequence_number,
-            const char *local_uri, const char *remote_uri, const char *remote_target);
+                    unsigned int local_sequence_number, unsigned int remote_sequence_number,
+                    const char *local_uri, const char *remote_uri, const char *remote_target);
     void set_remote_target(const char *remote_target);
+    void set_session(const char *local_address, unsigned short local_port,
+                     const char *remote_address, unsigned short remote_port);
     void add_route_back(SIP_Header_Route *route);
     void add_route_front(SIP_Header_Route *route);
     void clear_routes();
@@ -51,6 +53,8 @@ private:
     char *_remote_uri;
     char *_remote_target;
     Simple_List<SIP_Header/*Route*/> _routes;
+
+    SIP_Session _session;
 
     Simple_List<SIP_Dialog>::Element _link;
 };
@@ -127,6 +131,7 @@ public:
     SIP_Transaction *matching_transaction(SIP_Message *msg);
 
     const char *get_uri() { return _uri; }
+    const SIP_Session *get_session();
     const char *get_text_received() { return _text_received; }
     bool has_subscription() { return _subscription.is_active(); }
     const char *get_subscriber();

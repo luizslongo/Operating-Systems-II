@@ -732,7 +732,7 @@ bool SIP_Header_Via::parse(char *sip_msg)
 
         matched = match(sip_msg, ";", result);
         trim(result);
-        _port = (int) atol(result);
+        _port = (unsigned short) atol(result);
     }else
     {
         matched = match(sip_msg, ";", result);

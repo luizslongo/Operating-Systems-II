@@ -1,9 +1,10 @@
-//#define USE_SIP
+#define USE_SIP
 
 #include <ieee1451_ncap.h>
 #include <ieee1451_objects.h>
 #include <utility/list.h>
 #ifdef USE_SIP
+    #include <rtp.h>
     #include <sip_defs.h>
     #include <sip_manager.h>
     #include <sip_user_agent.h>
@@ -27,7 +28,7 @@ private:
 #ifdef USE_SIP
         SIP_User_Agent *_ua;
         Thread _session_thread;
-        Send_RTP _send_rtp;
+        RTP _rtp;
 
         TIM_Cache(IEEE1451_TIM_Channel *tim, SIP_User_Agent *ua) : _tim(tim), _link(this), _ua(ua),
                 _session_thread(&IEEE1451_NCAP_Application::send_read_multimedia_data_set_thread,
@@ -458,7 +459,7 @@ void IEEE1451_NCAP_Application::read_audio(const IP::Address &address, const cha
 
 #ifdef USE_SIP
     if ((tim_cache->_ua->has_subscription()) && (tim_cache->_ua->connected()))
-        tim_cache->_send_rtp.send_data(tim_cache->_ua->get_subscriber(), 5000, buffer, repeats);
+        tim_cache->_rtp.send(buffer, repeats);
 #endif
 }
 
@@ -576,6 +577,11 @@ int IEEE1451_NCAP_Application::message_callback(SIP_Event_Callback event, SIP_Us
         case SIP_SESSION_INITIATED:
         {
             cout << "++ Session Initiated (" << tim_cache->_ua->get_call_status() << ") ++\n";
+            SIP_Session *session = tim_cache->_ua->get_session();
+            tim_cache->_rtp->set_local(session->_local_address, session->_local_port);
+            tim_cache->_rtp->set_remote(session->_remote_address, session->_remote_port);
+            tim_cache->_rtp->set_payload(RTP::PCMU);
+
             if (tim_cache->_ua->get_call_status() == SIP_CALL_STATUS_INCOMING)
                 tim_cache->_session_thread.resume();
             break;
@@ -585,6 +591,7 @@ int IEEE1451_NCAP_Application::message_callback(SIP_Event_Callback event, SIP_Us
         {
             cout << "++ Session Terminated ++\n";
             tim_cache->_session_thread.suspend();
+            tim_cache->_rtp->set_remote(Traits<IP>::BROADCAST, 0);
             break;
         }
 

@@ -302,7 +302,7 @@ bool SIP_Request::parse_start_line(const char *sip_msg)
     _request_uri = create_string(result);
     if (!_request_uri)
     {
-        db<SIP_Request>(WRN) << "SIP_Request::parse_start_line -> Request URI parse failed\n";
+        db<SIP_Message>(WRN) << "SIP_Request::parse_start_line -> Request URI parse failed\n";
         return false;
     }
 
@@ -310,7 +310,7 @@ bool SIP_Request::parse_start_line(const char *sip_msg)
     _sip_version = create_string(line);
     if (!_sip_version)
     {
-        db<SIP_Request>(WRN) << "SIP_Request::parse_start_line -> SIP version parse failed\n";
+        db<SIP_Message>(WRN) << "SIP_Request::parse_start_line -> SIP version parse failed\n";
         return false;
     }
 
@@ -440,7 +440,7 @@ bool SIP_Response::parse_start_line(const char *sip_msg)
     _sip_version = create_string(SIP_VERSION);
     if (!_sip_version)
     {
-        db<SIP_Response>(WRN) << "SIP_Response::parse_start_line -> SIP version parse failed\n";
+        db<SIP_Message>(WRN) << "SIP_Response::parse_start_line -> SIP version parse failed\n";
         return false;
     }
 
@@ -450,7 +450,7 @@ bool SIP_Response::parse_start_line(const char *sip_msg)
     int size = strlen(result);
     if (size == 0)
     {
-        db<SIP_Response>(WRN) << "SIP_Response::parse_start_line -> Status code parse failed\n";
+        db<SIP_Message>(WRN) << "SIP_Response::parse_start_line -> Status code parse failed\n";
         return false;
     }
     _status_code = (unsigned short) atol(result);
@@ -459,7 +459,7 @@ bool SIP_Response::parse_start_line(const char *sip_msg)
     _reason_phrase = create_string(line);
     if (!_reason_phrase)
     {
-        db<SIP_Response>(WRN) << "SIP_Response::parse_start_line -> Reason phrase parse failed\n";
+        db<SIP_Message>(WRN) << "SIP_Response::parse_start_line -> Reason phrase parse failed\n";
         return false;
     }
 
