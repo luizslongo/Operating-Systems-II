@@ -135,7 +135,7 @@ unsigned short IEEE1451_NCAP::send_command(const IP::Address &destination, const
     static unsigned int id_generator = 1;
     unsigned short trans_id = id_generator++;
 
-    db<IEEE1451_NCAP>(TRC) << "IEEE1451_NCAP - Sending command (trans_id=" << trans_id << ", dst=" << destination << ")\n";
+    db<IEEE1451_NCAP>(TRC) << "IEEE1451_NCAP - Sending command (trans_id=" << trans_id << ", dst=" << destination << ", len=" << length << ")\n";
 
     Linked_Channel *channel = get_channel(destination);
     if (!channel)
@@ -187,23 +187,22 @@ void IEEE1451_NCAP::execute()
 
     while (true)
     {
+        db<IEEE1451_NCAP>(TRC) << "IEEE1451_NCAP - Listening...\n";
+
         if (!channel->listen())
+        {
+            db<IEEE1451_NCAP>(TRC) << "IEEE1451_NCAP - Failed listening\n";
             continue;
+        }
 
         db<IEEE1451_NCAP>(TRC) << "IEEE1451_NCAP - New channel connected (ip=" << channel->remote().ip() << ")\n";
 
-        Simple_List<Linked_Channel>::Iterator it = _channels.begin();
-        while (it != _channels.end())
+        Linked_Channel *chn = get_channel(channel->remote().ip());
+        if (chn)
         {
-            Linked_Channel *chn = it->object();
-            it++;
-
-            if ((TCP::Address) channel->remote() == (TCP::Address) chn->remote())
-            {
-                db<IEEE1451_NCAP>(TRC) << "IEEE1451_NCAP - Deleting old channel...\n";
-                _channels.remove(&chn->_link);
-                delete chn;
-            }
+            db<IEEE1451_NCAP>(TRC) << "IEEE1451_NCAP - Deleting old channel...\n";
+            _channels.remove(&chn->_link);
+            delete chn;
         }
 
         _channels.insert(&channel->_link);
@@ -218,8 +217,8 @@ int IEEE1451_NCAP::receive(IEEE1451_NCAP *ncap, Linked_Channel *channel)
 {
     db<IEEE1451_NCAP>(TRC) << "IEEE1451_NCAP - Receive thread created (ip=" << channel->remote().ip() << ")\n";
 
-    char data[200];
     unsigned int size = 200;
+    char *data = new (kmalloc(size)) char[size];
     int ret;
 
     ncap->_application->report_tim_connected(channel->remote().ip());
@@ -254,6 +253,7 @@ int IEEE1451_NCAP::receive(IEEE1451_NCAP *ncap, Linked_Channel *channel)
 
     ncap->_channels.remove(&channel->_link);
     delete channel;
+    kfree(data);
     delete Thread::self();
     return 0;
 }

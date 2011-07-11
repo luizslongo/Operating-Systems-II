@@ -8,8 +8,8 @@
 #include <utility/list.h>
 #include <utility/malloc.h>
 
-#define TIME_50_MS     50000  //1000
-#define TIME_500_MS    500000 //10000
+#define TIME_50_MS     50000 //1000
+#define TIME_500_MS    TIME_50_MS * 10
 
 __BEGIN_SYS
 

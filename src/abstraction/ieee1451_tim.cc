@@ -169,7 +169,7 @@ void IEEE1451_TIM::connect()
     TCP::Address addr(_ncap_address, IEEE1451_PORT);
 
     while (!_channel.connect(addr))
-        Alarm::delay(TIME_500_MS);
+        Alarm::delay(TIME_500_MS * 10);
 
     _connected = true;
     db<IEEE1451_TIM>(TRC) << "IEEE1451_TIM - Connected!\n";
@@ -180,11 +180,11 @@ void IEEE1451_TIM::disconnect()
     //TODO: Parar de receber dados da rede!
 
     db<IEEE1451_TIM>(TRC) << "IEEE1451_TIM - Disconnecting...\n";
+    _connected = false;
 
     while (!_channel.close())
-        Alarm::delay(TIME_500_MS);
+        Alarm::delay(TIME_500_MS * 10);
 
-    _connected = false;
     db<IEEE1451_TIM>(TRC) << "IEEE1451_TIM - Disconnected!\n";
 }
 
@@ -303,20 +303,23 @@ int IEEE1451_TIM::receive(IEEE1451_TIM *tim, TCP::Channel *channel)
 {
     db<IEEE1451_TIM>(TRC) << "IEEE1451_TIM - Receive thread created (ip=" << channel->remote().ip() << ")\n";
 
-    char data[200];
     unsigned int size = 200;
+    char *data = new (kmalloc(size)) char[size];
     int ret;
 
     while (true)
     {
         if (!tim->_connected)
         {
-            db<IEEE1451_TIM>(INF) << "IEEE1451_TIM - TIM not connected!\n";
+            db<IEEE1451_TIM>(TRC) << "IEEE1451_TIM - TIM not connected!\n";
             Alarm::delay(TIME_50_MS);
             continue;
         }
 
-        if ((ret = channel->receive(data, size)) < 0)
+        db<IEEE1451_TIM>(TRC) << "IEEE1451_TIM - Receiving...\n";
+        ret = channel->receive(data, size);
+
+        if (ret < 0)
         {
             db<IEEE1451_TIM>(INF) << "IEEE1451_TIM - Failed receiving message\n";
             Alarm::delay(TIME_50_MS);
@@ -334,6 +337,7 @@ int IEEE1451_TIM::receive(IEEE1451_TIM *tim, TCP::Channel *channel)
     }
 
     db<IEEE1451_TIM>(TRC) << "IEEE1451_TIM - Receive thread finished (ip=" << channel->remote().ip() << ")\n";
+    kfree(data);
     return 0;
 }
 

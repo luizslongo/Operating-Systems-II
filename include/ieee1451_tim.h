@@ -6,8 +6,8 @@
 #include <ip.h>
 #include <tcp.h>
 
-#define TIME_50_MS     50000  //1000
-#define TIME_500_MS    500000 //10000
+#define TIME_50_MS     50000 //1000
+#define TIME_500_MS    TIME_50_MS * 10
 
 __BEGIN_SYS
 
@@ -58,7 +58,7 @@ public:
 
     void set_transducer(IEEE1451_Transducer *transducer) { _transducer = transducer; }
 
-    void execute() { new Thread(receive, this, &_channel); }
+    void execute() { new Thread(receive, this, &_channel); Alarm::delay(TIME_500_MS); }
 
 private:
     static int receive(IEEE1451_TIM *tim, TCP::Channel *channel);
