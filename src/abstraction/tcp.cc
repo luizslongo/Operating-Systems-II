@@ -275,7 +275,7 @@ TCP::ServerSocket::ServerSocket(const TCP::ServerSocket &socket)
 
 void TCP::Socket::listen()
 {
-    if (state() != CLOSED || state() != LISTEN) {
+    if (state() != CLOSED && state() != LISTEN) {
         db<TCP>(ERR) << "TCP::Socket::listen() called with state: " << state() << endl;
         return;
     }
@@ -735,7 +735,7 @@ bool TCP::Channel::close()
     do {
         Socket::close();
         _tx_block.wait();
-    } while (retry-- > 0 && state() != CLOSED || _error);
+    } while (retry-- > 0 && state() != CLOSED);
     
     _sending = false;
     
@@ -831,14 +831,14 @@ void TCP::Channel::sent(u16 size)
 void TCP::Channel::error(short errorcode)
 {
     if (errorcode != ERR_TIMEOUT) {
-        _error = errorcode; 
+        _error = errorcode;
+
+        if (_receiving)
+            _rx_block.signal();
     }
-    else if (_receiving) {
-        _rx_block.signal();  
-    }
-    
+
     if (_sending)
-        _tx_block.signal();  
+        _tx_block.signal();
 }
 
 void TCP::Channel::update(Data_Observed<IP::Address> *ob, long c,
