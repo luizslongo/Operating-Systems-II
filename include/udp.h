@@ -305,7 +305,7 @@ protected:
     void operator()();
     
     Address * _buffer_src;
-    Mutex     _buffer_wait;
+    Condition    _buffer_wait;
     unsigned int _buffer_size;
     char       * _buffer_data;
     unsigned char _error;

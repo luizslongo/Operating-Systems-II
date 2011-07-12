@@ -134,7 +134,7 @@ int UDP::Channel::receive(Address * from,char * buf,unsigned int size)
     _buffer_size = size;
     _buffer_data = buf;
     _buffer_src  = from;
-    _buffer_wait.lock();
+    _buffer_wait.wait();
     _buffer_data = 0;
     return _buffer_size;
 }
@@ -147,7 +147,7 @@ void UDP::Channel::received(const Address & src,
             _buffer_size = size;
         memcpy(_buffer_data, data, _buffer_size);
         memcpy(_buffer_src, &src, sizeof(Address));
-        _buffer_wait.unlock();
+        _buffer_wait.signal();
     }
 }
 
@@ -198,7 +198,7 @@ void UDP::Channel::operator()()
 {
     _buffer_data = 0;
     _buffer_size = TIMEOUT;
-    _buffer_wait.unlock();
+    _buffer_wait.signal();
 }
 
 UDP::Channel::Channel(const Address& local,const Address& remote)
@@ -213,7 +213,7 @@ UDP::Channel::~Channel()
     if (_buffer_data) {
         db<UDP>(ERR) << "UDP::Channel for "<<this<<" destroyed while receiving\n";
         _buffer_size = DESTROYED;
-        _buffer_wait.unlock();
+        _buffer_wait.signal();
     }
     icmp()->detach(this, ICMP::UNREACHABLE);
 }
