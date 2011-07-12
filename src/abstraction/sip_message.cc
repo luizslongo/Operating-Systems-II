@@ -22,8 +22,8 @@ SIP_Message *SIP_Message::decode_msg(const char *sip_msg)
     char *p = (char *) sip_msg;
     remove_lws(p);
 
-    char type[30];
-    match(p, " ", type);
+    char type[100];
+    match(p, " ", type, true);
     trim(type);
     SIP_Message_Type msg_type = get_msg_type(type);
 

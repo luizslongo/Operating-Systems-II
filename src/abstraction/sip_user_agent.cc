@@ -394,6 +394,8 @@ SIP_Response *SIP_User_Agent::create_response(unsigned short status_code, SIP_Re
         response->add_header(header_content_disposition);
 
         SIP_SDP_Body *sdp = new SIP_SDP_Body();
+        sdp->set_address(SIP_Manager::get_instance()->get_host_ip());
+        sdp->set_port(8000);
         response->set_body(sdp);
     }
 
@@ -1012,7 +1014,7 @@ SIP_Dialog *SIP_User_Agent::create_dialog_server(SIP_Request *request, SIP_Respo
     dialog->set_dialog(id, local_tag, remote_tag, 0, sequence_number, local_uri, remote_uri, target);
 
     if (type == SIP_REQUEST_INVITE)
-        dialog->set_session(sdp_request_address, sdp_request_port, sdp_response_address, sdp_response_port);
+        dialog->set_session(sdp_response_address, sdp_response_port, sdp_request_address, sdp_request_port);
 
     int record_route_num = response->get_num_header(SIP_HEADER_RECORD_ROUTE);
     for (int i = 0; i < record_route_num; i++)

@@ -13,6 +13,8 @@ class SIP_Manager;
 
 class SIP_Message
 {
+    friend class SIP_Manager;
+
 public:
     SIP_Message() : _body(0), _can_delete(true), _link(this) {}
     virtual ~SIP_Message();

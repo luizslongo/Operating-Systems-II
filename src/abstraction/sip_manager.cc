@@ -6,9 +6,18 @@ __BEGIN_SYS
 
 USER_CALLBACK SIP_Manager::_callback = 0;
 SIP_Manager *SIP_Manager::_instance = 0;
+bool SIP_Manager::_terminated = false;
 
 SIP_Manager::~SIP_Manager()
 {
+    _terminated = true;
+
+    if (_thread_receive)
+    {
+        delete _thread_receive;
+        _thread_receive = 0;
+    }
+
     if (_host_ip)
         delete _host_ip;
 
@@ -51,6 +60,7 @@ bool SIP_Manager::init()
         return false;
     }
 
+    _thread_receive = new Thread(SIP_Manager::receive_thread);
     return true;
 }
 
@@ -122,106 +132,126 @@ int SIP_Manager::send_message(SIP_Message *msg)
         return -1;
     }
 
-    _send_buffer[0] = 0;
-    msg->encode(_send_buffer);
-    int length = strlen(_send_buffer);
+    _snd_buffer[0] = 0;
+    msg->encode(_snd_buffer);
+    int length = strlen(_snd_buffer);
 
-    return _socket.send_data(destination, port, _send_buffer, length);
-}
-
-int SIP_Manager::SIP_Socket::send_data(const char *destination, unsigned short port, const char *data, int length)
-{
     UDP::Address dst(IP::Address(destination), port);
-    remote(dst);
+    _channel.remote(dst);
 
-    db<SIP_Manager>(TRC) << "SIP_Manager::SIP_Socket::send_data -> Sending data to " << destination
-                         << ":" << port << " (size = " << length << ")..\n" << data << "\n";
+    db<SIP_Manager>(TRC) << "SIP_Manager::send_message -> Sending data to " << destination
+                         << ":" << port << " (size = " << length << ")..\n" << _snd_buffer << "\n";
 
-    if (send(data, length) <= 0)
+    if (_channel.send(_snd_buffer, length) <= 0)
     {
-        db<SIP_Manager>(WRN) << "SIP_Manager::SIP_Socket::send_data -> Failed to send data\n";
+        db<SIP_Manager>(WRN) << "SIP_Manager::send_message -> Failed to send data\n";
         return -1;
     }
 
     return 0;
 }
 
-void SIP_Manager::SIP_Socket::received(const UDP::Address &src, const char *data, unsigned int size)
+int SIP_Manager::receive_thread()
 {
+    db<SIP_Manager>(INF) << "SIP_Manager::receive_thread -> Started..\n";
+
+    SIP_Manager *manager = SIP_Manager::get_instance();
+
+    UDP::Address src;
     char remote_addr[20];
-    src.ip().to_string(remote_addr);
-    unsigned short remote_port = src.port();
-    ((char *) data)[size] = 0;
+    int size;
 
-    db<SIP_Manager>(TRC) << "SIP_Manager::SIP_Socket::received -> Received message from " << remote_addr
-                         << ":" << remote_port << " (size = " << size << ")..\n" << data << "\n";
-
-    SIP_Message *msg = SIP_Message::decode_msg(data);
-
-    if (!msg)
+    while (!_terminated)
     {
-        db<SIP_Manager>(WRN) << "SIP_Manager::SIP_Socket::received -> Failed to decode SIP message received\n";
-        return;
-    }
+        manager->_rcv_buffer[0] = 0;
 
-    SIP_Header_Via *header_via = (SIP_Header_Via *) msg->get_header(SIP_HEADER_VIA);
-
-    if ((!msg->get_header(SIP_HEADER_CSEQ)) || (!msg->get_header(SIP_HEADER_CALLID)) ||
-        (!msg->get_header(SIP_HEADER_FROM)) || (!msg->get_header(SIP_HEADER_TO)) ||
-        (!header_via))
-    {
-        db<SIP_Manager>(WRN) << "SIP_Manager::SIP_Socket::received -> Invalid SIP message received\n";
-        return;
-    }
-
-    bool ok = false;
-    const char *sent_by = header_via->get_sent_by();
-    if (sent_by)
-    {
-        if (msg->get_msg_type() == SIP_RESPONSE)
+        size = manager->_channel.receive(&src, manager->_rcv_buffer, MAX_MSG_SIZE);
+        if (size < 0)
         {
-            if (!strcmp(sent_by, SIP_Manager::get_instance()->get_host_ip()))
+            db<SIP_Manager>(INF) << "SIP_Manager::receive_thread -> Failed receiving message\n";
+            continue;
+        }
+
+        if (_terminated)
+            break;
+
+        src.ip().to_string(remote_addr);
+        unsigned short remote_port = src.port();
+        manager->_rcv_buffer[size] = 0;
+
+        db<SIP_Manager>(TRC) << "SIP_Manager::receive_thread -> Received message from " << remote_addr
+                             << ":" << remote_port << " (size = " << size << ")..\n" << manager->_rcv_buffer << "\n";
+
+        SIP_Message *msg = SIP_Message::decode_msg(manager->_rcv_buffer);
+
+        if (!msg)
+        {
+            db<SIP_Manager>(WRN) << "SIP_Manager::receive_thread -> Failed to decode SIP message received\n";
+            continue;
+        }
+
+        SIP_Header_Via *header_via = (SIP_Header_Via *) msg->get_header(SIP_HEADER_VIA);
+
+        if ((!msg->get_header(SIP_HEADER_CSEQ)) || (!msg->get_header(SIP_HEADER_CALLID)) ||
+            (!msg->get_header(SIP_HEADER_FROM)) || (!msg->get_header(SIP_HEADER_TO)) ||
+            (!header_via))
+        {
+            db<SIP_Manager>(WRN) << "SIP_Manager::receive_thread -> Invalid SIP message received\n";
+            continue;
+        }
+
+        bool ok = false;
+        const char *sent_by = header_via->get_sent_by();
+        if (sent_by)
+        {
+            if (msg->get_msg_type() == SIP_RESPONSE)
+            {
+                if (!strcmp(sent_by, manager->get_host_ip()))
+                    ok = true;
+            }else
+            {
+                if (strcmp(sent_by, remote_addr))
+                    header_via->set_received(remote_addr);
                 ok = true;
+            }
+        }
+
+        if (!ok)
+        {
+            db<SIP_Manager>(WRN) << "SIP_Manager::receive_thread -> Incorrect message...\n";
+            delete msg;
+            continue;
+        }
+
+        SIP_Message_Type type = msg->get_msg_type();
+        db<SIP_Manager>(TRC) << "SIP_Manager::receive_thread -> Message received (type=" << type << ")\n";
+
+        if (type == SIP_RESPONSE)
+        {
+            const char *uri = ((SIP_Header_From *) msg->get_header(SIP_HEADER_FROM))->get_address();
+            SIP_User_Agent *ua = manager->get_user_agent(uri);
+
+            if (!ua)
+                db<SIP_Manager>(INF) << "SIP_Manager::receive_thread -> Ignoring invalid response\n";
+            else
+                ua->receive_response((SIP_Response *) msg);
         }else
         {
-            if (strcmp(sent_by, remote_addr))
-                header_via->set_received(remote_addr);
-            ok = true;
+            const char *uri = ((SIP_Request *) msg)->get_request_uri();
+            SIP_User_Agent *ua = manager->get_user_agent(uri);
+
+            if (!ua)
+                db<SIP_Manager>(INF) << "SIP_Manager::receive_thread -> Ignoring invalid request\n";
+            else
+                ua->receive_request((SIP_Request *) msg);
         }
+
+        if (msg->get_can_delete())
+            delete msg;
     }
 
-    if (!ok)
-    {
-        db<SIP_Manager>(WRN) << "SIP_Manager::SIP_Socket::received -> Incorrect message...\n";
-        delete msg;
-        return;
-    }
-
-    SIP_Message_Type type = msg->get_msg_type();
-    db<SIP_Manager>(TRC) << "SIP_Manager::SIP_Socket::received -> Message received (type=" << type << ")\n";
-
-    if (type == SIP_RESPONSE)
-    {
-        const char *uri = ((SIP_Header_From *) msg->get_header(SIP_HEADER_FROM))->get_address();
-        SIP_User_Agent *ua = SIP_Manager::get_instance()->get_user_agent(uri);
-
-        if (!ua)
-            db<SIP_Manager>(INF) << "SIP_Manager::SIP_Socket::received -> Ignoring invalid response\n";
-        else
-            ua->receive_response((SIP_Response *) msg);
-    }else
-    {
-        const char *uri = ((SIP_Request *) msg)->get_request_uri();
-        SIP_User_Agent *ua = SIP_Manager::get_instance()->get_user_agent(uri);
-
-        if (!ua)
-            db<SIP_Manager>(INF) << "SIP_Manager::SIP_Socket::received -> Ignoring invalid request\n";
-        else
-            ua->receive_request((SIP_Request *) msg);
-    }
-
-    if (msg->get_can_delete())
-        delete msg;
+    db<SIP_Manager>(INF) << "SIP_Manager::receive_thread -> Stopped..\n";
+    return 0;
 }
 
 void SIP_Manager::random(char *buffer)

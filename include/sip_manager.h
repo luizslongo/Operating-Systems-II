@@ -16,7 +16,8 @@ typedef int (*USER_CALLBACK)(SIP_Event_Callback event, SIP_User_Agent *ua, const
 class SIP_Manager
 {
 private:
-    SIP_Manager() : _udp(IP::instance()), _socket(&_udp), _host_ip(0), _host_port(0) { _send_buffer[0] = 0; }
+    SIP_Manager() : _channel(UDP::Address(IP::instance()->address(), SIP_PORT), UDP::Address(Traits<IP>::BROADCAST, SIP_PORT)),
+        _host_ip(0), _host_port(0), _thread_receive(0) { _snd_buffer[0] = 0; _rcv_buffer[0] = 0; }
 
 public:
     ~SIP_Manager();
@@ -35,30 +36,24 @@ public:
     unsigned short get_host_port() { return _host_port; }
 
     int send_message(SIP_Message *msg);
+    static int receive_thread();
 
     static void random(char *buffer);
 
 private:
-    class SIP_Socket : public UDP::Socket
-    {
-    public:
-        SIP_Socket(UDP *udp) : UDP::Socket(UDP::Address(IP::instance()->address(), SIP_PORT), UDP::Address(Traits<IP>::BROADCAST, SIP_PORT), udp) {}
-
-        int send_data(const char *destination, unsigned short port, const char *data, int length);
-        void received(const UDP::Address &src, const char *data, unsigned int size);
-    };
-
-private:
     Simple_List<SIP_User_Agent> _ua;
 
+    static bool _terminated;
     static SIP_Manager *_instance;
 
-    char _send_buffer[MAX_MSG_SIZE + 1];
-    UDP _udp;
-    SIP_Socket _socket;
+    char _snd_buffer[MAX_MSG_SIZE + 1];
+    char _rcv_buffer[MAX_MSG_SIZE + 1];
+    UDP::Channel _channel;
 
     char *_host_ip;
     unsigned short _host_port;
+
+    Thread *_thread_receive;
 };
 
 __END_SYS
