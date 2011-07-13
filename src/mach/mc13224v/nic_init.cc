@@ -5,6 +5,8 @@
 
 __BEGIN_SYS
 
+MC13224V_NIC::OP_Mode MC13224V_NIC::_mode = 0;
+
 template <int unit>
 inline static void call_init()
 {
