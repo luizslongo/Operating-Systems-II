@@ -31,6 +31,7 @@ int Radio_Wrapper::send(unsigned char * data, unsigned int size) {
 
     device->fill_packet(p, data, size);
     device->tx_packet(p);
+    device->post_tx();
 
     return size;
 }
@@ -63,8 +64,7 @@ void Radio_Wrapper::reset() {
 }
 
 bool Radio_Wrapper::cca() {
-//    return device->cca_measurement(MC13224V_Transceiver::ENERGY_ABOVE_THRESHOLD, 0);
-    return false;
+    return device->cca_measurement();
 }
 
 unsigned int Radio_Wrapper::lqi() {
