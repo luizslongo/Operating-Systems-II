@@ -274,6 +274,7 @@ public:
     volatile u32 rcv_nxt, rcv_ini, rcv_wnd;
 
     Alarm * _timeout;
+    char _timeout_alloc[sizeof(Alarm)];
 
     // class attributes
     static Handler handlers[13];

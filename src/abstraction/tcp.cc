@@ -199,14 +199,17 @@ void TCP::Socket::send(const char *data,u16 len,bool push)
 }
 
 void TCP::Socket::set_timeout() {
-    if (_timeout) delete _timeout;
-    _timeout = new Alarm(2 * _rtt, this, 1);
+    // the needed logic to finish an alarm is int the destructor
+    // but we use preallocated memory, so we cannot use 'delete'
+    if (_timeout)
+        _timeout->Alarm::~Alarm();
+    _timeout = new (&_timeout_alloc) Alarm(2 * _rtt, this, 1);
 }
 
 void TCP::Socket::clear_timeout() {
     if (_timeout)
     {
-        delete _timeout;
+        _timeout->Alarm::~Alarm();
         _timeout = 0;
     }
 }
