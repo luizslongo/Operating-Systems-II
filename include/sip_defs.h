@@ -11,7 +11,10 @@ __BEGIN_SYS
 #define MAX_LINE 512
 #define MAX_REASON_PHRASE_LEN 128
 #define SIP_PORT 5060
-#define TIME_500_MS    500000 //18000
+
+#ifndef TIME_500_MS
+    #define TIME_500_MS    25000 //500000
+#endif
 
 enum SIP_Message_Type
 {

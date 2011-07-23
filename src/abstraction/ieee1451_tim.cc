@@ -20,27 +20,29 @@ void IEEE1451_Transducer::receive_msg(unsigned short trans_id, const char *messa
          case COMMAND_CLASS_UPDATE_TEDS:
          {
              IEEE1451_TEDS_TIM *teds = get_teds(buffer[0]);
-             IEEE1451_TEDS_Query_Reply reply;
-             reply._header._length = 12;
+             char *reply = IEEE1451_TIM::get_instance()->get_send_buffer();
+
+             IEEE1451_TEDS_Query_Reply *query_reply = (IEEE1451_TEDS_Query_Reply *) reply;
+             query_reply->_header._length = 12;
              if (teds)
              {
-                 reply._max_size = 0;
-                 reply._checksum = *((unsigned short *) teds->_payload);
-                 reply._size = teds->_size;
-                 reply._status = teds->_status;
-                 reply._atributes = teds->_atributes;
-                 reply._header._success = true;
+                 query_reply->_max_size = 0;
+                 query_reply->_checksum = *((unsigned short *) teds->_payload);
+                 query_reply->_size = teds->_size;
+                 query_reply->_status = teds->_status;
+                 query_reply->_atributes = teds->_atributes;
+                 query_reply->_header._success = true;
              }else
              {
-                 reply._max_size = 0;
-                 reply._checksum = 0;
-                 reply._size = 0;
-                 reply._status = 0;
-                 reply._atributes = 0x40;
-                 reply._header._success = false;
+                 query_reply->_max_size = 0;
+                 query_reply->_checksum = 0;
+                 query_reply->_size = 0;
+                 query_reply->_status = 0;
+                 query_reply->_atributes = 0x40;
+                 query_reply->_header._success = false;
              }
 
-             IEEE1451_TIM::get_instance()->send_msg(trans_id, (char *) &reply, sizeof(reply));
+             IEEE1451_TIM::get_instance()->send_msg(trans_id, sizeof(IEEE1451_TEDS_Query_Reply));
              break;
          }*/
 
@@ -50,7 +52,7 @@ void IEEE1451_Transducer::receive_msg(unsigned short trans_id, const char *messa
             if (teds)
             {
                 unsigned int reply_size = sizeof(IEEE1451_TEDS_Read_Reply) + teds->_size;
-                char reply[reply_size];
+                char *reply = IEEE1451_TIM::get_instance()->get_send_buffer();
 
                 IEEE1451_TEDS_Read_Reply *read_reply = (IEEE1451_TEDS_Read_Reply *) reply;
                 read_reply->_header._success = true;
@@ -61,15 +63,17 @@ void IEEE1451_Transducer::receive_msg(unsigned short trans_id, const char *messa
                 for (unsigned short i = 0; i < teds->_size; i++)
                     reply[i + sizeof(IEEE1451_TEDS_Read_Reply)] = teds_payload[i];
 
-                IEEE1451_TIM::get_instance()->send_msg(trans_id, reply, reply_size);
+                IEEE1451_TIM::get_instance()->send_msg(trans_id, reply_size);
             }else
             {
-                IEEE1451_TEDS_Read_Reply reply;
-                reply._header._success = false;
-                reply._header._length = sizeof(reply._offset);
-                reply._offset = 0;
+                char *reply = IEEE1451_TIM::get_instance()->get_send_buffer();
 
-                IEEE1451_TIM::get_instance()->send_msg(trans_id, (char *) &reply, sizeof(IEEE1451_TEDS_Read_Reply));
+                IEEE1451_TEDS_Read_Reply *read_reply = (IEEE1451_TEDS_Read_Reply *) reply;
+                read_reply->_header._success = false;
+                read_reply->_header._length = sizeof(read_reply->_offset);
+                read_reply->_offset = 0;
+
+                IEEE1451_TIM::get_instance()->send_msg(trans_id, sizeof(IEEE1451_TEDS_Read_Reply));
             }
 
             break;
@@ -102,16 +106,24 @@ IEEE1451_TIM *IEEE1451_TIM::_ieee1451 = 0;
 
 IEEE1451_TIM::IEEE1451_TIM() : _ncap_address((unsigned long) 0x0a00000b)
 {
+    _receive_thread = 0;
     _connected = false;
     _transducer = 0;
 
     _channel.bind(IEEE1451_PORT);
+    _send_buffer = new (kmalloc(MAX_BUFFER_SIZE)) char[MAX_BUFFER_SIZE];
 
     init_teds();
 }
 
 IEEE1451_TIM::~IEEE1451_TIM()
 {
+    if (_send_buffer)
+        kfree(_send_buffer);
+
+    if (_receive_thread)
+        delete _receive_thread;
+
     if (_meta_array)
         kfree(_meta_array);
     if (_tim_utn_array)
@@ -172,6 +184,7 @@ void IEEE1451_TIM::connect()
         Alarm::delay(TIME_500_MS * 10);
 
     _connected = true;
+
     db<IEEE1451_TIM>(TRC) << "IEEE1451_TIM - Connected!\n";
 }
 
@@ -180,39 +193,13 @@ void IEEE1451_TIM::disconnect()
     //TODO: Parar de receber dados da rede!
 
     db<IEEE1451_TIM>(TRC) << "IEEE1451_TIM - Disconnecting...\n";
+
     _connected = false;
 
     while (!_channel.close())
         Alarm::delay(TIME_500_MS * 10);
 
     db<IEEE1451_TIM>(TRC) << "IEEE1451_TIM - Disconnected!\n";
-}
-
-void IEEE1451_TIM::send_msg(unsigned short trans_id, const char *message, unsigned int length)
-{
-    db<IEEE1451_TIM>(TRC) << "IEEE1451_TIM - Sending message (trans_id=" << trans_id << ")\n";
-
-    if (!_connected)
-    {
-        db<IEEE1451_TIM>(INF) << "IEEE1451_TIM - TIM not connected (trans_id=" << trans_id << ")\n";
-        return;
-    }
-
-    unsigned int size = sizeof(IEEE1451_Packet) + length;
-    char *buffer = new char[size];
-
-    IEEE1451_Packet *out = (IEEE1451_Packet *) buffer;
-    char *msg = buffer + sizeof(IEEE1451_Packet);
-
-    out->_trans_id = trans_id;
-    out->_length = length;
-    memcpy(msg, message, length);
-
-    int ret = _channel.send(buffer, size);
-    if (ret < 0)
-        db<IEEE1451_TIM>(INF) << "IEEE1451_TIM - Failed sending message (trans_id=" << trans_id << ", ret=" << ret << ")\n";
-    else
-        db<IEEE1451_TIM>(TRC) << "IEEE1451_TIM - Sent " << ret << " bytes (trans_id=" << trans_id << ")\n";
 }
 
 void IEEE1451_TIM::receive_msg(unsigned short trans_id, const char *message, unsigned int size)
@@ -230,27 +217,29 @@ void IEEE1451_TIM::receive_msg(unsigned short trans_id, const char *message, uns
              case COMMAND_CLASS_UPDATE_TEDS:
              {
                  IEEE1451_TEDS_TIM *teds = get_teds(buffer[0]);
-                 IEEE1451_TEDS_Query_Reply reply;
-                 reply._header._length = 12;
+                 char *reply = get_send_buffer();
+
+                 IEEE1451_TEDS_Query_Reply *query_reply = (IEEE1451_TEDS_Query_Reply *) reply;
+                 query_reply->_header._length = 12;
                  if (teds)
                  {
-                     reply._max_size = 0;
-                     reply._checksum = *((unsigned short *) teds->_payload);
-                     reply._size = teds->_size;
-                     reply._status = teds->_status;
-                     reply._atributes = teds->_atributes;
-                     reply._header._success = true;
+                     query_reply->_max_size = 0;
+                     query_reply->_checksum = *((unsigned short *) teds->_payload);
+                     query_reply->_size = teds->_size;
+                     query_reply->_status = teds->_status;
+                     query_reply->_atributes = teds->_atributes;
+                     query_reply->_header._success = true;
                  }else
                  {
-                     reply._max_size = 0;
-                     reply._checksum = 0;
-                     reply._size = 0;
-                     reply._status = 0;
-                     reply._atributes = 0x40;
-                     reply._header._success = false;
+                     query_reply->_max_size = 0;
+                     query_reply->_checksum = 0;
+                     query_reply->_size = 0;
+                     query_reply->_status = 0;
+                     query_reply->_atributes = 0x40;
+                     query_reply->_header._success = false;
                  }
 
-                 send_msg(trans_id, (char *) &reply, sizeof(reply));
+                 send_msg(trans_id, sizeof(IEEE1451_TEDS_Query_Reply));
                  break;
              }*/
 
@@ -260,7 +249,7 @@ void IEEE1451_TIM::receive_msg(unsigned short trans_id, const char *message, uns
                 if (teds)
                 {
                     unsigned int reply_size = sizeof(IEEE1451_TEDS_Read_Reply) + teds->_size;
-                    char reply[reply_size];
+                    char *reply = get_send_buffer();
 
                     IEEE1451_TEDS_Read_Reply *read_reply = (IEEE1451_TEDS_Read_Reply *) reply;
                     read_reply->_header._success = true;
@@ -271,15 +260,17 @@ void IEEE1451_TIM::receive_msg(unsigned short trans_id, const char *message, uns
                     for (unsigned short i = 0; i < teds->_size; i++)
                         reply[i + sizeof(IEEE1451_TEDS_Read_Reply)] = teds_payload[i];
 
-                    send_msg(trans_id, reply, reply_size);
+                    send_msg(trans_id, reply_size);
                 }else
                 {
-                    IEEE1451_TEDS_Read_Reply reply;
-                    reply._header._success = false;
-                    reply._header._length = sizeof(reply._offset);
-                    reply._offset = 0;
+                    char *reply = get_send_buffer();
 
-                    send_msg(trans_id, (char *) &reply, sizeof(IEEE1451_TEDS_Read_Reply));
+                    IEEE1451_TEDS_Read_Reply *read_reply = (IEEE1451_TEDS_Read_Reply *) reply;
+                    read_reply->_header._success = false;
+                    read_reply->_header._length = sizeof(read_reply->_offset);
+                    read_reply->_offset = 0;
+
+                    send_msg(trans_id, sizeof(IEEE1451_TEDS_Read_Reply));
                 }
                 break;
             }
@@ -299,45 +290,86 @@ void IEEE1451_TIM::receive_msg(unsigned short trans_id, const char *message, uns
     }
 }
 
+void IEEE1451_TIM::send_msg(unsigned short trans_id, unsigned int length)
+{
+    db<IEEE1451_TIM>(TRC) << "IEEE1451_TIM - Sending message (trans_id=" << trans_id << ", len=" << length << ")\n";
+
+    if (!_connected)
+    {
+        db<IEEE1451_TIM>(INF) << "IEEE1451_TIM - TIM not connected (trans_id=" << trans_id << ")\n";
+        _send_buffer_mutex.unlock();
+        return;
+    }
+
+    unsigned int size = sizeof(IEEE1451_Packet) + length;
+
+    IEEE1451_Packet *out = (IEEE1451_Packet *) _send_buffer;
+
+    out->_trans_id = trans_id;
+    out->_length = length;
+
+#ifdef __mc13224v__
+    Alarm::delay(TIME_500_MS * 4);
+#endif
+
+    int ret = _channel.send(_send_buffer, size);
+
+    if (ret < 0)
+        db<IEEE1451_TIM>(INF) << "IEEE1451_TIM - Failed sending message (trans_id=" << trans_id << ", ret=" << ret << ")\n";
+    else
+        db<IEEE1451_TIM>(TRC) << "IEEE1451_TIM - Sent " << ret << " bytes (trans_id=" << trans_id << ")\n";
+
+    _send_buffer_mutex.unlock();
+}
+
 int IEEE1451_TIM::receive(IEEE1451_TIM *tim, TCP::Channel *channel)
 {
     db<IEEE1451_TIM>(TRC) << "IEEE1451_TIM - Receive thread created (ip=" << channel->remote().ip() << ")\n";
 
-    unsigned int size = 200;
-    char *data = new (kmalloc(size)) char[size];
+    char *_receive_buffer = new (kmalloc(MAX_BUFFER_SIZE)) char[MAX_BUFFER_SIZE];
+    IEEE1451_Packet *in;
+    const char *msg;
     int ret;
 
     while (true)
     {
+#ifdef __mc13224v__
+        Alarm::delay(TIME_500_MS * 2);
+#endif
+
         if (!tim->_connected)
         {
             db<IEEE1451_TIM>(TRC) << "IEEE1451_TIM - TIM not connected!\n";
-            Alarm::delay(TIME_50_MS);
+            Alarm::delay(TIME_500_MS);
             continue;
         }
+
+#ifdef __mc13224v__
+        Alarm::delay(TIME_500_MS * 2);
+#endif
 
         db<IEEE1451_TIM>(TRC) << "IEEE1451_TIM - Receiving...\n";
-        ret = channel->receive(data, size);
+        ret = channel->receive(_receive_buffer, MAX_BUFFER_SIZE);
 
-        if (ret < 0)
+        if (ret < (int) sizeof(IEEE1451_Packet))
         {
             db<IEEE1451_TIM>(INF) << "IEEE1451_TIM - Failed receiving message\n";
-            Alarm::delay(TIME_50_MS);
             continue;
         }
 
-        if (ret < (int) sizeof(IEEE1451_Packet))
-            continue;
+        in = (IEEE1451_Packet *) _receive_buffer;
+        msg = _receive_buffer + sizeof(IEEE1451_Packet);
 
-        IEEE1451_Packet *in = (IEEE1451_Packet *) data;
-        const char *msg = data + sizeof(IEEE1451_Packet);
+#ifdef __mc13224v__
+        Alarm::delay(TIME_500_MS * 4);
+#endif
 
         if (in->_length > 0)
             tim->receive_msg(in->_trans_id, msg, in->_length);
     }
 
     db<IEEE1451_TIM>(TRC) << "IEEE1451_TIM - Receive thread finished (ip=" << channel->remote().ip() << ")\n";
-    kfree(data);
+    kfree(_receive_buffer);
     return 0;
 }
 

@@ -128,7 +128,8 @@ public:
 
 private:
     NIC _nic;
-    char * _packet[MAX_FRAGMENTS];
+    char * _packet_receive[MAX_FRAGMENTS];
+    char * _packet_send;
     u16    _packet_size[MAX_FRAGMENTS];
     int    _packet_count;
 

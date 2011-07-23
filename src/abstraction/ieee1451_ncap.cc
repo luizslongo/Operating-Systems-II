@@ -5,56 +5,29 @@ __BEGIN_SYS
 //-------------------------------------------
 
 IEEE1451_TEDS_NCAP::IEEE1451_TEDS_NCAP(char id, const char *teds, unsigned short length, bool sub_block) :
-    _id(id), _link(this)
+    _id(id), _length(length), _link(this)
 {
-    unsigned short begin, end;
+    if (!sub_block)
+        _length -= 6; //4: length; 2: checksum
 
-    if (sub_block)
-    {
-        begin = 0;
-        end = length;
-    }else
-    {
-        begin = 4;
-        end = length - 2;
-    }
-
-    for (unsigned short i = begin; i < end; )
-    {
-        unsigned short type = teds[i++] & 0xff;
-        unsigned short len = teds[i++] & 0xff;
-
-        char *value = new char[len];
-        for (unsigned short j = 0; j < len; j++, i++)
-            value[j] = teds[i];
-
-        IEEE1451_TLV *tlv = new IEEE1451_TLV(type, len, value);
-        _tlvs.insert(&tlv->_link);
-    }
+    _value = new (kmalloc(_length)) char[_length];
+    memcpy(_value, &teds[sub_block ? 0 : 4], _length);
 }
 
-IEEE1451_TEDS_NCAP::~IEEE1451_TEDS_NCAP()
+char *IEEE1451_TEDS_NCAP::get_tlv(char type)
 {
-    Simple_List<IEEE1451_TLV>::Iterator it = _tlvs.begin();
-    while (it != _tlvs.end())
-    {
-        Simple_List<IEEE1451_TLV>::Element *el = it++;
-        IEEE1451_TLV *tlv = el->object();
-        _tlvs.remove(&tlv->_link);
-        delete tlv;
-    }
-}
+    unsigned short i = 0;
+    char t, len;
 
-IEEE1451_TLV *IEEE1451_TEDS_NCAP::get_tlv(char type)
-{
-    Simple_List<IEEE1451_TLV>::Iterator it = _tlvs.begin();
-    while (it != _tlvs.end())
+    while (i < _length)
     {
-        IEEE1451_TLV *tlv = it->object();
-        it++;
+        t = _value[i];
+        len = _value[i + 1];
 
-        if (tlv->_type == type)
-            return tlv;
+        if (t == type)
+            return &_value[i];
+
+        i += 2 + len;
     }
 
     return 0;
@@ -67,9 +40,9 @@ IEEE1451_Channel::~IEEE1451_Channel()
     Simple_List<IEEE1451_TEDS_NCAP>::Iterator it = _teds.begin();
     while (it != _teds.end())
     {
-        Simple_List<IEEE1451_TEDS_NCAP>::Element *el = it++;
-        IEEE1451_TEDS_NCAP *teds = el->object();
-        _teds.remove(&teds->_link);
+        IEEE1451_TEDS_NCAP *teds = it->object();
+        it++;
+        _teds.remove_head();
         delete teds;
     }
 }
@@ -79,11 +52,9 @@ IEEE1451_TEDS_NCAP *IEEE1451_Channel::get_teds(char id)
     Simple_List<IEEE1451_TEDS_NCAP>::Iterator it = _teds.begin();
     while (it != _teds.end())
     {
-        IEEE1451_TEDS_NCAP *teds = it->object();
+        if (it->object()->_id == id)
+            return it->object();
         it++;
-
-        if (teds->_id == id)
-            return teds;
     }
 
     return 0;
@@ -93,16 +64,24 @@ IEEE1451_TEDS_NCAP *IEEE1451_Channel::get_teds(char id)
 
 IEEE1451_NCAP *IEEE1451_NCAP::_ieee1451 = 0;
 
+IEEE1451_NCAP::IEEE1451_NCAP() : _application(0), id_generator(1)
+{
+    _send_buffer = new (kmalloc(MAX_BUFFER_SIZE)) char[MAX_BUFFER_SIZE];
+}
+
 IEEE1451_NCAP::~IEEE1451_NCAP()
 {
     Simple_List<Linked_Channel>::Iterator it = _channels.begin();
     while (it != _channels.end())
     {
-        Simple_List<Linked_Channel>::Element *el = it++;
-        Linked_Channel *chn = el->object();
-        _channels.remove(&chn->_link);
+        Linked_Channel *chn = it->object();
+        it++;
+        _channels.remove_head();
         delete chn;
     }
+
+    if (_send_buffer)
+        kfree(_send_buffer);
 }
 
 IEEE1451_NCAP *IEEE1451_NCAP::get_instance()
@@ -112,54 +91,49 @@ IEEE1451_NCAP *IEEE1451_NCAP::get_instance()
     return _ieee1451;
 }
 
-char *IEEE1451_NCAP::create_command(unsigned short channel_number, unsigned short command, const char *args, unsigned int length)
+unsigned short IEEE1451_NCAP::send_command(const IP::Address &destination, unsigned short channel_number, unsigned short command, const char *args, unsigned int length)
 {
-    db<IEEE1451_NCAP>(TRC) << "IEEE1451_NCAP - Creating command (type=" << hex << command << ")\n";
+    _send_buffer_mutex.lock();
 
-    unsigned int size = sizeof(IEEE1451_Command) + length;
-    char *buffer = new char[size];
-
-    IEEE1451_Command *cmd = (IEEE1451_Command *) buffer;
-    char *msg = buffer + sizeof(IEEE1451_Command);
-
-    cmd->_channel_number = channel_number;
-    cmd->_command = command;
-    cmd->_length = length;
-    memcpy(msg, args, length);
-
-    return buffer;
-}
-
-unsigned short IEEE1451_NCAP::send_command(const IP::Address &destination, const char *message, unsigned int length)
-{
-    static unsigned int id_generator = 1;
     unsigned short trans_id = id_generator++;
 
-    db<IEEE1451_NCAP>(TRC) << "IEEE1451_NCAP - Sending command (trans_id=" << trans_id << ", dst=" << destination << ", len=" << length << ")\n";
+    db<IEEE1451_NCAP>(TRC) << "IEEE1451_NCAP - Sending command (trans_id=" << trans_id << ", dst=" << destination << ", chn=" << channel_number << ", cmd=" << hex << command << ", len=" << length << ")\n";
 
     Linked_Channel *channel = get_channel(destination);
     if (!channel)
     {
         db<IEEE1451_NCAP>(INF) << "IEEE1451_NCAP - Failed to send command (trans_id=" << trans_id << ")\n";
+        _send_buffer_mutex.unlock();
         return 0;
     }
 
-    unsigned int size = sizeof(IEEE1451_Packet) + length;
-    char *buffer = new char[size];
+    unsigned int size = sizeof(IEEE1451_Packet) + sizeof(IEEE1451_Command) + length;
 
-    IEEE1451_Packet *out = (IEEE1451_Packet *) buffer;
-    char *msg = buffer + sizeof(IEEE1451_Packet);
+    IEEE1451_Packet *out = (IEEE1451_Packet *) _send_buffer;
+    IEEE1451_Command *cmd = (IEEE1451_Command *) (_send_buffer + sizeof(IEEE1451_Packet));
+    char *msg = _send_buffer + sizeof(IEEE1451_Packet) + sizeof(IEEE1451_Command);
 
     out->_trans_id = trans_id;
-    out->_length = length;
-    memcpy(msg, message, length);
+    out->_length = length + sizeof(IEEE1451_Command);
 
-    int ret = channel->send(buffer, size);
+    cmd->_channel_number = channel_number;
+    cmd->_command = command;
+    cmd->_length = length;
+
+    memcpy(msg, args, length);
+
+#ifdef __mc13224v__
+    Alarm::delay(TIME_500_MS * 4);
+#endif
+
+    int ret = channel->send(_send_buffer, size);
+
     if (ret < 0)
         db<IEEE1451_NCAP>(INF) << "IEEE1451_NCAP - Failed sending message (trans_id=" << trans_id << ", ret=" << ret << ")\n";
     else
         db<IEEE1451_NCAP>(TRC) << "IEEE1451_NCAP - Sent " << ret << " bytes (trans_id=" << trans_id << ")\n";
 
+    _send_buffer_mutex.unlock();
     return trans_id;
 }
 
@@ -168,11 +142,9 @@ Linked_Channel *IEEE1451_NCAP::get_channel(const IP::Address &addr)
     Simple_List<Linked_Channel>::Iterator it = _channels.begin();
     while (it != _channels.end())
     {
-        Linked_Channel *channel = it->object();
+        if (it->object()->remote().ip() == addr)
+            return it->object();
         it++;
-
-        if (channel->remote().ip() == addr)
-            return channel;
     }
 
     return 0;
@@ -217,19 +189,38 @@ int IEEE1451_NCAP::receive(IEEE1451_NCAP *ncap, Linked_Channel *channel)
 {
     db<IEEE1451_NCAP>(TRC) << "IEEE1451_NCAP - Receive thread created (ip=" << channel->remote().ip() << ")\n";
 
-    unsigned int size = 200;
-    char *data = new (kmalloc(size)) char[size];
+    char *_receive_buffer = new (kmalloc(MAX_BUFFER_SIZE)) char[MAX_BUFFER_SIZE];
+    IEEE1451_Packet *in;
+    const char *msg;
     int ret;
+
+#ifdef __mc13224v__
+    Alarm::delay(TIME_500_MS * 4);
+#endif
 
     ncap->_application->report_tim_connected(channel->remote().ip());
 
-    while ((ret = channel->receive(data, size)) >= 0)
+    while (true)
     {
+#ifdef __mc13224v__
+        Alarm::delay(TIME_500_MS * 4);
+#endif
+
+        db<IEEE1451_NCAP>(TRC) << "IEEE1451_NCAP - Receiving...\n";
+        ret = channel->receive(_receive_buffer, MAX_BUFFER_SIZE);
+
+        if (ret < 0)
+            break;
+
         if (ret < (int) sizeof(IEEE1451_Packet))
             continue;
 
-        IEEE1451_Packet *in = (IEEE1451_Packet *) data;
-        const char *msg = data + sizeof(IEEE1451_Packet);
+        in = (IEEE1451_Packet *) _receive_buffer;
+        msg = _receive_buffer + sizeof(IEEE1451_Packet);
+
+#ifdef __mc13224v__
+        Alarm::delay(TIME_500_MS * 4);
+#endif
 
         if (in->_length > 0)
         {
@@ -240,6 +231,10 @@ int IEEE1451_NCAP::receive(IEEE1451_NCAP *ncap, Linked_Channel *channel)
         }
     }
 
+#ifdef __mc13224v__
+    Alarm::delay(TIME_500_MS * 2);
+#endif
+
     db<IEEE1451_NCAP>(TRC) << "IEEE1451_NCAP - Closing channel (ip=" << channel->remote().ip() << ")...\n";
 
     while (!channel->close())
@@ -249,12 +244,18 @@ int IEEE1451_NCAP::receive(IEEE1451_NCAP *ncap, Linked_Channel *channel)
 
     ncap->_application->report_tim_disconnected(channel->remote().ip());
 
-    db<IEEE1451_TIM>(TRC) << "IEEE1451_NCAP - Receive thread finished (ip=" << channel->remote().ip() << ")\n";
-
-    ncap->_channels.remove(&channel->_link);
+    ncap->_channels.remove(channel);
     delete channel;
-    kfree(data);
-    delete Thread::self();
+    kfree(_receive_buffer);
+
+    char handler_alloc[sizeof(Functor_Handler<Thread>)];
+    char alarm_alloc[sizeof(Alarm)];
+
+    Functor_Handler<Thread> *handler = new (&handler_alloc) Functor_Handler<Thread>(&cleaner, Thread::self());
+    new (&alarm_alloc) Alarm(TIME_500_MS, handler, 1);
+
+    db<IEEE1451_TIM>(TRC) << "IEEE1451_NCAP - Receive thread finished (ip=" << channel->remote().ip() << ")\n";
+    Thread::self()->suspend();
     return 0;
 }
 

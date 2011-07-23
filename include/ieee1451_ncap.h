@@ -2,38 +2,26 @@
 #define __ieee1451_ncap_h
 
 #include <ieee1451_objects.h>
+#include <mutex.h>
 #include <thread.h>
 #include <ip.h>
 #include <tcp.h>
 #include <utility/list.h>
 #include <utility/malloc.h>
 
-#define TIME_50_MS     50000 //1000
-#define TIME_500_MS    TIME_50_MS * 10
-
 __BEGIN_SYS
-
-struct IEEE1451_TLV
-{
-    IEEE1451_TLV(char type, unsigned short length, char *value) : _type(type), _length(length), _value(value), _link(this) {}
-    ~IEEE1451_TLV() { delete _value; }
-
-    char _type;
-    unsigned short _length;
-    char *_value;
-    Simple_List<IEEE1451_TLV>::Element _link;
-};
-
 
 struct IEEE1451_TEDS_NCAP
 {
     IEEE1451_TEDS_NCAP(char id, const char *teds, unsigned short length, bool sub_block = false);
-    ~IEEE1451_TEDS_NCAP();
+    ~IEEE1451_TEDS_NCAP() { kfree(_value); }
 
-    IEEE1451_TLV *get_tlv(char type);
+    char *get_tlv(char type);
 
     char _id;
-    Simple_List<IEEE1451_TLV> _tlvs;
+    unsigned short _length;
+    char *_value;
+
     Simple_List<IEEE1451_TEDS_NCAP>::Element _link;
 };
 
@@ -63,33 +51,31 @@ struct IEEE1451_TIM_Channel : public IEEE1451_Channel
     bool _connected;
 };
 
-class Linked_Channel : public TCP::Channel 
+class Linked_Channel : public TCP::Channel
 {
 public:
-    typedef Simple_List<Linked_Channel>::Element Element;
-
     Linked_Channel() : _link(this) {}
-    Element _link;
+
+    Simple_List<Linked_Channel>::Element _link;
 };
 
 class IEEE1451_NCAP //IEEE 1451.0 + IEEE 1451.5
 {
 private:
-    IEEE1451_NCAP() : _application(0) {}
+    IEEE1451_NCAP();
 
 public:
     ~IEEE1451_NCAP();
 
     static IEEE1451_NCAP *get_instance();
 
-    char *create_command(unsigned short channel_number, unsigned short command, const char *args = 0, unsigned int length = 0);
-    unsigned short send_command(const IP::Address &destination, const char *message, unsigned int length);
-
+    unsigned short send_command(const IP::Address &destination, unsigned short channel_number, unsigned short command, const char *args = 0, unsigned int length = 0);
     void execute();
 
 private:
     Linked_Channel *get_channel(const IP::Address &addr);
     static int receive(IEEE1451_NCAP *ncap, Linked_Channel *channel);
+    static void cleaner(Thread *thread) { delete thread; }
 
 public:
     class Listener
@@ -109,6 +95,10 @@ public:
 
 private:
     Simple_List<Linked_Channel> _channels;
+    char *_send_buffer;
+    Mutex _send_buffer_mutex;
+
+    unsigned int id_generator;
 
     static IEEE1451_NCAP *_ieee1451;
 };

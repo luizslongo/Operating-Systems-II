@@ -36,7 +36,7 @@ private:
     bool _tim_im;
     bool _polling;
 
-    float _data_set[DATASET_SIZE * sizeof(float)];
+    float *_data_set;
     Mutex _data_set_mutex;
     int _pos;
 
@@ -62,6 +62,8 @@ IEEE1451_Temperature_Sensor::IEEE1451_Temperature_Sensor(bool tim_im, bool polli
     _pos = 0;
     _execute_thread = 0;
 
+    _data_set = new (kmalloc(DATASET_SIZE * sizeof(float))) float[DATASET_SIZE * sizeof(float)];
+
     init_teds();
 }
 
@@ -79,6 +81,9 @@ IEEE1451_Temperature_Sensor::~IEEE1451_Temperature_Sensor()
         delete _channel_teds;
     if (_temp_sensor_utn_teds)
         delete _temp_sensor_utn_teds;
+
+    if (_data_set)
+        kfree (_data_set);
 }
 
 void IEEE1451_Temperature_Sensor::init_teds()
@@ -123,7 +128,7 @@ void IEEE1451_Temperature_Sensor::read_data_set(unsigned short trans_id, unsigne
     cout << "Reading data set (polling)...\n";
 
     unsigned int size = sizeof(IEEE1451_Data_Set_Read_Reply) + DATASET_SIZE * sizeof(float);
-    char buffer[size];
+    char *buffer = IEEE1451_TIM::get_instance()->get_send_buffer();
 
     IEEE1451_Data_Set_Read_Reply *reply = (IEEE1451_Data_Set_Read_Reply *) buffer;
     float *data = (float *) (buffer + sizeof(IEEE1451_Data_Set_Read_Reply));
@@ -140,7 +145,7 @@ void IEEE1451_Temperature_Sensor::read_data_set(unsigned short trans_id, unsigne
     }
     _data_set_mutex.unlock();
 
-    IEEE1451_TIM::get_instance()->send_msg(trans_id, buffer, size);
+    IEEE1451_TIM::get_instance()->send_msg(trans_id, size);
 }
 
 void IEEE1451_Temperature_Sensor::send_data_set()
@@ -148,7 +153,7 @@ void IEEE1451_Temperature_Sensor::send_data_set()
     cout << "Sending data set (tim_im)...\n";
 
     unsigned int size = sizeof(IEEE1451_Command) + DATASET_SIZE * sizeof(float);
-    char buffer[size];
+    char *buffer = IEEE1451_TIM::get_instance()->get_send_buffer();
 
     IEEE1451_Command *cmd = (IEEE1451_Command *) buffer;
     float *data = (float *) (buffer + sizeof(IEEE1451_Command));
@@ -165,7 +170,7 @@ void IEEE1451_Temperature_Sensor::send_data_set()
     }
     _data_set_mutex.unlock();
 
-    IEEE1451_TIM::get_instance()->send_msg(0, buffer, size);
+    IEEE1451_TIM::get_instance()->send_msg(0, size);
 }
 
 int IEEE1451_Temperature_Sensor::execute()

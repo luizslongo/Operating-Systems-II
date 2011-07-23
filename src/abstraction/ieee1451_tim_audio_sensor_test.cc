@@ -116,10 +116,10 @@ void IEEE1451_Audio_Sensor::read_data_set(unsigned short trans_id, unsigned int 
     cout << "Reading data set (polling)...\n";
 
     unsigned int size = sizeof(IEEE1451_Data_Set_Read_Reply) + DATASET_SIZE;
-    char buffer[size];
+    char *buffer = IEEE1451_TIM::get_instance()->get_send_buffer();
 
     IEEE1451_Data_Set_Read_Reply *reply = (IEEE1451_Data_Set_Read_Reply *) buffer;
-    char *data = (char *) (buffer + sizeof(IEEE1451_Data_Set_Read_Reply));
+    char *data = buffer + sizeof(IEEE1451_Data_Set_Read_Reply);
 
     reply->_header._success = true;
     reply->_header._length = DATASET_SIZE + sizeof(reply->_offset);
@@ -130,7 +130,7 @@ void IEEE1451_Audio_Sensor::read_data_set(unsigned short trans_id, unsigned int 
     _pos = ((_pos + 1) >= 109) ? 0 : (_pos + 1);
     //_data_set_mutex.unlock();
 
-    IEEE1451_TIM::get_instance()->send_msg(trans_id, buffer, size);
+    IEEE1451_TIM::get_instance()->send_msg(trans_id, size);
 }
 
 void IEEE1451_Audio_Sensor::send_data_set(bool first, bool last)
@@ -138,10 +138,10 @@ void IEEE1451_Audio_Sensor::send_data_set(bool first, bool last)
     cout << "Sending data set (tim_im)...\n";
 
     unsigned int size = sizeof(IEEE1451_Command) + ((first || last) ? 1 : DATASET_SIZE);
-    char buffer[size];
+    char *buffer = IEEE1451_TIM::get_instance()->get_send_buffer();
 
     IEEE1451_Command *cmd = (IEEE1451_Command *) buffer;
-    char *data = (char *) (buffer + sizeof(IEEE1451_Command));
+    char *data = buffer + sizeof(IEEE1451_Command);
 
     cmd->_channel_number = _channel_number;
     cmd->_command = COMMAND_CLASS_READ_TRANSDUCER_CHANNEL_DATA_SET_SEGMENT;
@@ -160,7 +160,7 @@ void IEEE1451_Audio_Sensor::send_data_set(bool first, bool last)
     else if (last)
         data[0] = 2;
 
-    IEEE1451_TIM::get_instance()->send_msg(0, buffer, size);
+    IEEE1451_TIM::get_instance()->send_msg(0, size);
 }
 
 int IEEE1451_Audio_Sensor::execute()

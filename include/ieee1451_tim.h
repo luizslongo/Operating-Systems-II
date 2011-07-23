@@ -2,12 +2,10 @@
 #define __ieee1451_tim_h
 
 #include <ieee1451_objects.h>
+#include <mutex.h>
 #include <thread.h>
 #include <ip.h>
 #include <tcp.h>
-
-#define TIME_50_MS     50000 //1000
-#define TIME_500_MS    TIME_50_MS * 10
 
 __BEGIN_SYS
 
@@ -53,18 +51,23 @@ public:
 
     void connect();
     void disconnect();
-    void send_msg(unsigned short trans_id, const char *message, unsigned int length);
     void receive_msg(unsigned short trans_id, const char *message, unsigned int size);
+    void send_msg(unsigned short trans_id, unsigned int length);
 
     void set_transducer(IEEE1451_Transducer *transducer) { _transducer = transducer; }
+    char *get_send_buffer() { _send_buffer_mutex.lock(); return _send_buffer + sizeof(IEEE1451_Packet); }
 
-    void execute() { new Thread(receive, this, &_channel); Alarm::delay(TIME_500_MS); }
+    void execute() { _receive_thread = new Thread(receive, this, &_channel); Alarm::delay(TIME_500_MS); }
 
 private:
     static int receive(IEEE1451_TIM *tim, TCP::Channel *channel);
 
 private:
     TCP::Channel _channel;
+    Thread *_receive_thread;
+
+    char *_send_buffer;
+    Mutex _send_buffer_mutex;
 
     bool _connected;
     IP::Address _ncap_address;

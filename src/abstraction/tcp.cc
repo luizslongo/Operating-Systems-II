@@ -161,7 +161,6 @@ s32 TCP::Socket::_send(Header * hdr, SegmentedBuffer * sb)
     SegmentedBuffer nsb(hdr,hdr->size());
     nsb.append(sb);
 
-
     return tcp()->ip()->send(_local.ip(),_remote.ip(),&nsb,TCP::ID_TCP) - hdr->size();
 }
 
@@ -185,15 +184,17 @@ void TCP::Socket::send(const char *data,u16 len,bool push)
         more = len - mss;
         len = mss;
     }
+
     Header hdr(snd_nxt,rcv_nxt);
-    hdr._ack = true;  // with pidgeback ack
+    hdr._ack = true; // with pidgeback ack
     hdr._psh = (push && (more == 0)); // set push flag only on the last segment
     snd_nxt += len;
     SegmentedBuffer sb(data,len);
+
     _send(&hdr,&sb);
-    
-    if (more > 0) // send next segment too
-        send(&data[len], more);
+
+    //if (more > 0) // send next segment too //TODO: TCP::Channel also do it!
+    //  send(&data[len], more);
 
     set_timeout();
 }
@@ -539,6 +540,7 @@ void TCP::Socket::__LAST_ACK(const Header& r ,const char* data,u16 len)
         return;
     if (r._ack) {
         state(CLOSED);
+        clear_timeout();
         closed();
     }
 }
@@ -628,17 +630,23 @@ bool TCP::Channel::connect(const TCP::Address& to)
         db<TCP>(ERR) << "TCP::Channel::connect() called for open connection!\n";
         return false;
     }
-    
+
     int retry = 5;
     _remote = to;
     clear();
     _sending = true;
     do {
         Socket::connect();
-        _rx_block.wait();
+        _tx_block.wait();
     } while (retry-- > 0 && state() != ESTABLISHED);
     _sending = false;
-    
+
+    if (state() != ESTABLISHED)
+    {
+        clear_timeout();
+        state(CLOSED);
+    }
+
     return state() == ESTABLISHED;
 }
 
@@ -661,16 +669,19 @@ int TCP::Channel::receive(char * dst,unsigned int size)
     _receiving = true;
     rcv_wnd = size;
     send_ack(); // send a window update
-    
+
     _rx_block.wait();
-    
+
     int rcvd = _rx_buffer_used;
 
     _rx_buffer_ptr  = 0;
     _rx_buffer_size = 0;
     _rx_buffer_used = 0;
     _receiving = false;
-    
+
+    if (_error)
+        return -_error;
+
     return rcvd;
 }
 
@@ -686,18 +697,19 @@ int TCP::Channel::send(const char * src,unsigned int size)
     
     _tx_bytes_sent = 0;
     _sending = true;
-    
+
+    int offset;
+
     do {
-        int offset = _tx_bytes_sent;
+        offset = _tx_bytes_sent;
         Socket::send(&src[offset], size - offset);
-        
+
         _tx_block.wait();
-        
+
         if (state() != ESTABLISHED || _error)
             break;
-        
     } while (_tx_bytes_sent < size);
-    
+
     _sending = false;
     return _tx_bytes_sent;
 }
@@ -720,18 +732,18 @@ bool TCP::Channel::close()
 {
     if (state() == CLOSED)
         return true;
-    
+
     if (state() == SYN_SENT) {
-        _rx_block.signal();
+        _tx_block.signal();
         abort();
         return true;
     }
-    
+
     if (_receiving) {
         _error = ERR_CLOSING;
         _rx_block.signal();
     }
-    
+
     int retry = 5;
     _sending = true;
     
@@ -739,7 +751,7 @@ bool TCP::Channel::close()
         Socket::close();
         _tx_block.wait();
     } while (retry-- > 0 && state() != CLOSED);
-    
+
     _sending = false;
     
     return state() == CLOSED;
@@ -753,9 +765,13 @@ bool TCP::Channel::listen()
     }
     
     clear();
+    _sending = true;
+
     Socket::listen();   
-    _rx_block.wait();
-    
+    _tx_block.wait();
+
+    _sending = false;
+
     return state() == ESTABLISHED;
 }
 
@@ -819,7 +835,7 @@ void TCP::Channel::closed()
 
 void TCP::Channel::connected()
 {
-    _rx_block.signal();
+    _tx_block.signal();
 }
 
 void TCP::Channel::sent(u16 size)

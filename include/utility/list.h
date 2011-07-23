@@ -374,7 +374,7 @@ public:
     Element * tail() { return _tail; }
 
     Iterator begin() { return Iterator(_head); }
-    Iterator end() { return Iterator(_tail->next()); }
+    Iterator end() { return Iterator(_tail ? _tail->next() : 0); }
 
     void insert(Element * e) { insert_tail(e); }
 

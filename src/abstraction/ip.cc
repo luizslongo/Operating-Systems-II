@@ -75,14 +75,18 @@ IP::IP(unsigned int unit)
 
     // allocate memory for receiving packets
     for(unsigned int i=0;i<MAX_FRAGMENTS;++i)
-        _packet[i] = new (kmalloc(mtu())) char[mtu()];
+        _packet_receive[i] = new (kmalloc(mtu())) char[mtu()];
+
+    _packet_send = new (kmalloc(mtu())) char[mtu()];
 
     start();
 }
 
 IP::~IP() {
     for(unsigned int i=0;i<MAX_FRAGMENTS;++i)
-        kfree(_packet[i]);
+        kfree(_packet_receive[i]);
+
+    kfree(_packet_send);
 }
 
 void IP::process_ip(char *data, u16 size)
@@ -124,20 +128,21 @@ int IP::run()
     NIC::Protocol prot;
 
     while (true) {
-        int size = _nic.receive(&src, &prot, _packet[0], _nic.mtu());
+        int size = _nic.receive(&src, &prot, _packet_receive[0], _nic.mtu());
+
         if(size <= 0) {
-            db<IP>(WRN) << "NIC::received error!" << endl;
+            //db<IP>(WRN) << "NIC::received error!" << endl;
             Thread::self()->yield();
             continue;
         }
 
         if (prot == NIC::IP) {
-            _network_service.update(reinterpret_cast<Header*>(_packet[0])->src_ip(), src);
-            process_ip(_packet[0], size);
+            _network_service.update(reinterpret_cast<Header*>(_packet_receive[0])->src_ip(), src);
+            process_ip(_packet_receive[0], size);
         }
 
         // notify routing algorithm
-        _network_service.received(src, prot, _packet[0], size);
+        _network_service.received(src, prot, _packet_receive[0], size);
         
         Thread::yield();
     }
@@ -158,16 +163,21 @@ s32 IP::send(const Address & from,const Address & to,SegmentedBuffer * data,Prot
 
     //TODO: put fragmentation here
     int size = pdu.total_size();
-    char sbuf[size];
-    //TODO: possible stack overflow here, we must change NIC::send to accept SegmentedBuffers
-    pdu.copy_to(sbuf,size);   
+    pdu.copy_to(_packet_send,size);
 
     db<IP>(TRC) << "IP::send() " << size << " bytes" << endl;
 
-    if (_nic.send(mac,NIC::IP,sbuf,size) >= 0)
-        return size;
-    else
-        return -1;
+    int retry = 5, ret;
+
+    do {
+        ret = _nic.send(mac,NIC::IP,_packet_send,size);
+        if (ret >= 0)
+            return size;
+
+        Thread::self()->yield();
+    } while (retry-- > 0);
+
+    return -1;
 }
 
 // From http://www.faqs.org/rfcs/rfc1071.html

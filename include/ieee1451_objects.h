@@ -5,7 +5,16 @@
 
 __BEGIN_SYS
 
-#define IEEE1451_PORT 55667
+#define IEEE1451_PORT   55667
+#define MAX_BUFFER_SIZE 200
+
+#ifdef __mc13224v__
+    #define TIME_50_MS  50000
+#else
+    #define TIME_50_MS  2500
+#endif
+
+#define TIME_500_MS     TIME_50_MS * 10
 
 struct IEEE1451_Command
 {
