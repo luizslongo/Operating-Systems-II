@@ -174,6 +174,7 @@ void IEEE1451_NCAP::execute()
         {
             db<IEEE1451_NCAP>(TRC) << "IEEE1451_NCAP - Deleting old channel...\n";
             _channels.remove(&chn->_link);
+            chn->TCP::Channel::~Channel();
             kfree(chn);
         }
 
