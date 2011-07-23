@@ -154,7 +154,7 @@ void IEEE1451_NCAP::execute()
 {
     db<IEEE1451_NCAP>(INF) << "IEEE1451_NCAP - Executing...\n";
 
-    Linked_Channel *channel = new Linked_Channel();
+    Linked_Channel *channel = new (kmalloc(sizeof(Linked_Channel))) Linked_Channel();
     channel->bind(IEEE1451_PORT);
 
     while (true)
@@ -174,13 +174,13 @@ void IEEE1451_NCAP::execute()
         {
             db<IEEE1451_NCAP>(TRC) << "IEEE1451_NCAP - Deleting old channel...\n";
             _channels.remove(&chn->_link);
-            delete chn;
+            kfree(chn);
         }
 
         _channels.insert(&channel->_link);
         new Thread(receive, this, channel);
 
-        channel = new Linked_Channel();
+        channel = new (kmalloc(sizeof(Linked_Channel))) Linked_Channel();
         channel->bind(IEEE1451_PORT);
     }
 }
@@ -244,8 +244,9 @@ int IEEE1451_NCAP::receive(IEEE1451_NCAP *ncap, Linked_Channel *channel)
 
     ncap->_application->report_tim_disconnected(channel->remote().ip());
 
-    ncap->_channels.remove(channel);
-    delete channel;
+    ncap->_channels.remove(&channel->_link);
+    channel->TCP::Channel::~Channel();
+    kfree(channel);
     kfree(_receive_buffer);
 
     char handler_alloc[sizeof(Functor_Handler<Thread>)];

@@ -216,7 +216,7 @@ void TCP::Socket::clear_timeout() {
 }
 
 void TCP::Socket::operator()() {
-    delete _timeout;
+    _timeout->Alarm::~Alarm();
     _timeout = 0;
 
     snd_nxt = snd_una; // rollback, so the user can resend

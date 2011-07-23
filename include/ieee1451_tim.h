@@ -2,6 +2,7 @@
 #define __ieee1451_tim_h
 
 #include <ieee1451_objects.h>
+#include <condition.h>
 #include <mutex.h>
 #include <thread.h>
 #include <ip.h>
@@ -70,6 +71,7 @@ private:
     Mutex _send_buffer_mutex;
 
     bool _connected;
+    Condition _connected_cond;
     IP::Address _ncap_address;
 
     char *_meta_array;

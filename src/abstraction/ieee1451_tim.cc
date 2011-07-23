@@ -184,6 +184,7 @@ void IEEE1451_TIM::connect()
         Alarm::delay(TIME_500_MS * 10);
 
     _connected = true;
+    _connected_cond.signal();
 
     db<IEEE1451_TIM>(TRC) << "IEEE1451_TIM - Connected!\n";
 }
@@ -333,19 +334,15 @@ int IEEE1451_TIM::receive(IEEE1451_TIM *tim, TCP::Channel *channel)
 
     while (true)
     {
-#ifdef __mc13224v__
-        Alarm::delay(TIME_500_MS * 2);
-#endif
-
         if (!tim->_connected)
         {
             db<IEEE1451_TIM>(TRC) << "IEEE1451_TIM - TIM not connected!\n";
-            Alarm::delay(TIME_500_MS);
+            tim->_connected_cond.wait();
             continue;
         }
 
 #ifdef __mc13224v__
-        Alarm::delay(TIME_500_MS * 2);
+        Alarm::delay(TIME_500_MS * 4);
 #endif
 
         db<IEEE1451_TIM>(TRC) << "IEEE1451_TIM - Receiving...\n";
