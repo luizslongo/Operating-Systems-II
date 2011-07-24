@@ -62,12 +62,19 @@ IEEE1451_TEDS_NCAP *IEEE1451_Channel::get_teds(char id)
 
 //-------------------------------------------
 
-IEEE1451_NCAP *IEEE1451_NCAP::_ieee1451 = 0;
-
-IEEE1451_NCAP::IEEE1451_NCAP() : _application(0), id_generator(1)
+Linked_Channel::~Linked_Channel()
 {
-    _send_buffer = new (kmalloc(MAX_BUFFER_SIZE)) char[MAX_BUFFER_SIZE];
+    if (_send_buffer)
+        kfree(_send_buffer);
+    if (_receive_buffer)
+        kfree(_receive_buffer);
+    if (_thread)
+        delete _thread;
 }
+
+//-------------------------------------------
+
+IEEE1451_NCAP *IEEE1451_NCAP::_ieee1451 = 0;
 
 IEEE1451_NCAP::~IEEE1451_NCAP()
 {
@@ -79,9 +86,6 @@ IEEE1451_NCAP::~IEEE1451_NCAP()
         _channels.remove_head();
         delete chn;
     }
-
-    if (_send_buffer)
-        kfree(_send_buffer);
 }
 
 IEEE1451_NCAP *IEEE1451_NCAP::get_instance()
@@ -93,8 +97,6 @@ IEEE1451_NCAP *IEEE1451_NCAP::get_instance()
 
 unsigned short IEEE1451_NCAP::send_command(const IP::Address &destination, unsigned short channel_number, unsigned short command, const char *args, unsigned int length)
 {
-    _send_buffer_mutex.lock();
-
     unsigned short trans_id = id_generator++;
 
     db<IEEE1451_NCAP>(TRC) << "IEEE1451_NCAP - Sending command (trans_id=" << trans_id << ", dst=" << destination << ", chn=" << channel_number << ", cmd=" << hex << command << ", len=" << length << ")\n";
@@ -103,15 +105,14 @@ unsigned short IEEE1451_NCAP::send_command(const IP::Address &destination, unsig
     if (!channel)
     {
         db<IEEE1451_NCAP>(INF) << "IEEE1451_NCAP - Failed to send command (trans_id=" << trans_id << ")\n";
-        _send_buffer_mutex.unlock();
         return 0;
     }
 
     unsigned int size = sizeof(IEEE1451_Packet) + sizeof(IEEE1451_Command) + length;
 
-    IEEE1451_Packet *out = (IEEE1451_Packet *) _send_buffer;
-    IEEE1451_Command *cmd = (IEEE1451_Command *) (_send_buffer + sizeof(IEEE1451_Packet));
-    char *msg = _send_buffer + sizeof(IEEE1451_Packet) + sizeof(IEEE1451_Command);
+    IEEE1451_Packet *out = (IEEE1451_Packet *) channel->_send_buffer;
+    IEEE1451_Command *cmd = (IEEE1451_Command *) (channel->_send_buffer + sizeof(IEEE1451_Packet));
+    char *msg = channel->_send_buffer + sizeof(IEEE1451_Packet) + sizeof(IEEE1451_Command);
 
     out->_trans_id = trans_id;
     out->_length = length + sizeof(IEEE1451_Command);
@@ -126,14 +127,13 @@ unsigned short IEEE1451_NCAP::send_command(const IP::Address &destination, unsig
     Alarm::delay(TIME_500_MS * 4);
 #endif
 
-    int ret = channel->send(_send_buffer, size);
+    int ret = channel->send(channel->_send_buffer, size);
 
     if (ret < 0)
         db<IEEE1451_NCAP>(INF) << "IEEE1451_NCAP - Failed sending message (trans_id=" << trans_id << ", ret=" << ret << ")\n";
     else
         db<IEEE1451_NCAP>(TRC) << "IEEE1451_NCAP - Sent " << ret << " bytes (trans_id=" << trans_id << ")\n";
 
-    _send_buffer_mutex.unlock();
     return trans_id;
 }
 
@@ -154,7 +154,7 @@ void IEEE1451_NCAP::execute()
 {
     db<IEEE1451_NCAP>(INF) << "IEEE1451_NCAP - Executing...\n";
 
-    Linked_Channel *channel = new (kmalloc(sizeof(Linked_Channel))) Linked_Channel();
+    Linked_Channel *channel = new Linked_Channel();
     channel->bind(IEEE1451_PORT);
 
     while (true)
@@ -174,14 +174,16 @@ void IEEE1451_NCAP::execute()
         {
             db<IEEE1451_NCAP>(TRC) << "IEEE1451_NCAP - Deleting old channel...\n";
             _channels.remove(&chn->_link);
-            chn->TCP::Channel::~Channel();
-            kfree(chn);
+            chn->Linked_Channel::~Linked_Channel();
+            delete chn;
         }
 
         _channels.insert(&channel->_link);
-        new Thread(receive, this, channel);
+        channel->_send_buffer = new (kmalloc(MAX_BUFFER_SIZE)) char[MAX_BUFFER_SIZE];
+        channel->_receive_buffer = new (kmalloc(MAX_BUFFER_SIZE)) char[MAX_BUFFER_SIZE];
+        channel->_thread = new Thread(receive, this, channel);
 
-        channel = new (kmalloc(sizeof(Linked_Channel))) Linked_Channel();
+        channel = new Linked_Channel();
         channel->bind(IEEE1451_PORT);
     }
 }
@@ -190,7 +192,6 @@ int IEEE1451_NCAP::receive(IEEE1451_NCAP *ncap, Linked_Channel *channel)
 {
     db<IEEE1451_NCAP>(TRC) << "IEEE1451_NCAP - Receive thread created (ip=" << channel->remote().ip() << ")\n";
 
-    char *_receive_buffer = new (kmalloc(MAX_BUFFER_SIZE)) char[MAX_BUFFER_SIZE];
     IEEE1451_Packet *in;
     const char *msg;
     int ret;
@@ -208,7 +209,7 @@ int IEEE1451_NCAP::receive(IEEE1451_NCAP *ncap, Linked_Channel *channel)
 #endif
 
         db<IEEE1451_NCAP>(TRC) << "IEEE1451_NCAP - Receiving...\n";
-        ret = channel->receive(_receive_buffer, MAX_BUFFER_SIZE);
+        ret = channel->receive(channel->_receive_buffer, MAX_BUFFER_SIZE);
 
         if (ret < 0)
             break;
@@ -216,8 +217,8 @@ int IEEE1451_NCAP::receive(IEEE1451_NCAP *ncap, Linked_Channel *channel)
         if (ret < (int) sizeof(IEEE1451_Packet))
             continue;
 
-        in = (IEEE1451_Packet *) _receive_buffer;
-        msg = _receive_buffer + sizeof(IEEE1451_Packet);
+        in = (IEEE1451_Packet *) channel->_receive_buffer;
+        msg = channel->_receive_buffer + sizeof(IEEE1451_Packet);
 
 #ifdef __mc13224v__
         Alarm::delay(TIME_500_MS * 4);
@@ -244,21 +245,20 @@ int IEEE1451_NCAP::receive(IEEE1451_NCAP *ncap, Linked_Channel *channel)
     db<IEEE1451_NCAP>(TRC) << "IEEE1451_NCAP - Channel closed (ip=" << channel->remote().ip() << ")\n";
 
     ncap->_application->report_tim_disconnected(channel->remote().ip());
-
     ncap->_channels.remove(&channel->_link);
-    channel->TCP::Channel::~Channel();
-    kfree(channel);
-    kfree(_receive_buffer);
 
-    char handler_alloc[sizeof(Functor_Handler<Thread>)];
-    char alarm_alloc[sizeof(Alarm)];
-
-    Functor_Handler<Thread> *handler = new (&handler_alloc) Functor_Handler<Thread>(&cleaner, Thread::self());
-    new (&alarm_alloc) Alarm(TIME_500_MS, handler, 1);
+    Functor_Handler<Linked_Channel> handler(&cleaner, channel);
+    Alarm alarm(TIME_500_MS, &handler, 1);
 
     db<IEEE1451_TIM>(TRC) << "IEEE1451_NCAP - Receive thread finished (ip=" << channel->remote().ip() << ")\n";
     Thread::self()->suspend();
     return 0;
+}
+
+void IEEE1451_NCAP::cleaner(Linked_Channel *channel)
+{
+    channel->Linked_Channel::~Linked_Channel();
+    delete channel;
 }
 
 __END_SYS

@@ -772,6 +772,12 @@ bool TCP::Channel::listen()
 
     _sending = false;
 
+    if (state() != ESTABLISHED)
+    {
+        clear_timeout();
+        state(CLOSED);
+    }
+
     return state() == ESTABLISHED;
 }
 

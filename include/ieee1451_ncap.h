@@ -54,15 +54,19 @@ struct IEEE1451_TIM_Channel : public IEEE1451_Channel
 class Linked_Channel : public TCP::Channel
 {
 public:
-    Linked_Channel() : _link(this) {}
+    Linked_Channel() : _send_buffer(0), _receive_buffer(0), _thread(0), _link(this) {}
+    virtual ~Linked_Channel();
 
+    char *_send_buffer;
+    char *_receive_buffer;
+    Thread *_thread;
     Simple_List<Linked_Channel>::Element _link;
 };
 
 class IEEE1451_NCAP //IEEE 1451.0 + IEEE 1451.5
 {
 private:
-    IEEE1451_NCAP();
+    IEEE1451_NCAP() : _application(0), id_generator(1) {}
 
 public:
     ~IEEE1451_NCAP();
@@ -75,7 +79,7 @@ public:
 private:
     Linked_Channel *get_channel(const IP::Address &addr);
     static int receive(IEEE1451_NCAP *ncap, Linked_Channel *channel);
-    static void cleaner(Thread *thread) { delete thread; }
+    static void cleaner(Linked_Channel *channel);
 
 public:
     class Listener
@@ -95,9 +99,6 @@ public:
 
 private:
     Simple_List<Linked_Channel> _channels;
-    char *_send_buffer;
-    Mutex _send_buffer_mutex;
-
     unsigned int id_generator;
 
     static IEEE1451_NCAP *_ieee1451;
