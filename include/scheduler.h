@@ -90,7 +90,7 @@ namespace Scheduling_Criteria
 	    IDLE      = (unsigned(1) << (sizeof(int) * 8 - 1)) -1
 	};
 
-	static const bool timed = true;
+	static const bool timed = false;
 	static const bool preemptive = true;
 	static const bool energy_aware = false;
 
