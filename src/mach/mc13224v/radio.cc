@@ -9,10 +9,16 @@ __BEGIN_SYS
 
 MC13224V_Transceiver * Radio_Wrapper::device = 0;
 
+typedef IO_Map<Machine> IO;
+
 void Radio_Wrapper::init() {
     device = new(kmalloc(sizeof(MC13224V_Transceiver))) MC13224V_Transceiver();
 
     MC13224V_Transceiver::maca_init();
+
+    CPU::out32(IO::CRM_SYS_CNTL, 0x00000001);
+    CPU::out32(IO::CRM_VREG_CNTL, 0x00000f5c);
+    for (volatile unsigned int i = 0; i < 0x161a8; i++) { continue; }
 
     device->set_channel(0); /* 802.15.4 channel 11 */
     device->set_power(0x12); /* 4.5dBm */

@@ -198,6 +198,16 @@ volatile MC13224V_Transceiver::packet_t* MC13224V_Transceiver::rx_packet() {
 
     IC::enable(IC::IRQ_MACA);
 
+    CPU::out32(IO::CRM_SYS_CNTL, 0x00000008);
+
+    reset_maca();
+    radio_init();
+    init_phy();
+
+    CPU::out32(IO::CRM_SYS_CNTL, 0x00000001);
+    CPU::out32(IO::CRM_VREG_CNTL, 0x00000f5c);
+    for (volatile unsigned int i = 0; i < 0x161a8; i++) { continue; }
+
     return p;
 }
 
@@ -476,8 +486,8 @@ unsigned char MC13224V_Transceiver::get_ctov(unsigned int r0, unsigned int r1) {
 void MC13224V_Transceiver::radio_init() {
     volatile unsigned int i;
     // sequence 1
-    for (i = 0; i < MAX_SEQ1; i++)
-        *(volatile unsigned int *)(addr_seq1[i]) = data_seq1[i];
+    CPU::out32(IO::CRM_VREG_CNTL, CPU::in32(IO::CRM_VREG_CNTL) || 0x78);
+    *(volatile unsigned int *)(0x8000304c) = 0x00607707;
 
     // seq 1 delay
     for (i = 0; i < 0x161a8; i++);
@@ -508,8 +518,9 @@ void MC13224V_Transceiver::radio_init() {
         *(volatile unsigned int *)(addr_cal3_seq3[i]) = data_cal3_seq3[i];
 
     // cal 5
-    for (i=0; i<MAX_CAL5; i++)
+    for (i=0; i<MAX_CAL5 - 1; i++)
         *(volatile unsigned int *)(addr_cal5[i]) = data_cal5[i];
+    CPU::out32(IO::CRM_VREG_CNTL, CPU::in32(IO::CRM_VREG_CNTL) && 0xffffff00);
 
     //reg replacment
     for (i=0; i<MAX_DATA; i++)
