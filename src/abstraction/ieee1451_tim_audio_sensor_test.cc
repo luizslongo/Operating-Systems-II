@@ -205,6 +205,9 @@ int IEEE1451_Audio_Sensor::execute()
 
 int main()
 {
+    unsigned int *GPIO_BASE = (unsigned int *) 0x80000000;
+    *GPIO_BASE = 0;
+
     Alarm::delay(TIME_500_MS * 4);
     kout << "+++++ Starting wtim +++++\n";
 

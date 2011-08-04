@@ -123,10 +123,6 @@ unsigned short IEEE1451_NCAP::send_command(const IP::Address &destination, unsig
 
     memcpy(msg, args, length);
 
-#ifdef __mc13224v__
-    Alarm::delay(TIME_500_MS * 4);
-#endif
-
     int ret = channel->send(channel->_send_buffer, size);
 
     if (ret < 0)
@@ -181,7 +177,7 @@ void IEEE1451_NCAP::execute()
         _channels.insert(&channel->_link);
         channel->_send_buffer = new (kmalloc(MAX_BUFFER_SIZE)) char[MAX_BUFFER_SIZE];
         channel->_receive_buffer = new (kmalloc(MAX_BUFFER_SIZE)) char[MAX_BUFFER_SIZE];
-        channel->_thread = new Thread(receive, this, channel);
+        channel->_thread = new Thread(receive, this, channel, Thread::READY, Thread::NORMAL, 1100);
 
         channel = new Linked_Channel();
         channel->bind(IEEE1451_PORT);
@@ -196,18 +192,10 @@ int IEEE1451_NCAP::receive(IEEE1451_NCAP *ncap, Linked_Channel *channel)
     const char *msg;
     int ret;
 
-#ifdef __mc13224v__
-    Alarm::delay(TIME_500_MS * 4);
-#endif
-
     ncap->_application->report_tim_connected(channel->remote().ip());
 
     while (true)
     {
-#ifdef __mc13224v__
-        Alarm::delay(TIME_500_MS * 4);
-#endif
-
         db<IEEE1451_NCAP>(TRC) << "IEEE1451_NCAP - Receiving...\n";
         ret = channel->receive(channel->_receive_buffer, MAX_BUFFER_SIZE);
 
@@ -220,10 +208,6 @@ int IEEE1451_NCAP::receive(IEEE1451_NCAP *ncap, Linked_Channel *channel)
         in = (IEEE1451_Packet *) channel->_receive_buffer;
         msg = channel->_receive_buffer + sizeof(IEEE1451_Packet);
 
-#ifdef __mc13224v__
-        Alarm::delay(TIME_500_MS * 4);
-#endif
-
         if (in->_length > 0)
         {
             if (in->_trans_id == 0)
@@ -234,7 +218,7 @@ int IEEE1451_NCAP::receive(IEEE1451_NCAP *ncap, Linked_Channel *channel)
     }
 
 #ifdef __mc13224v__
-    Alarm::delay(TIME_500_MS * 2);
+    Alarm::delay(TIME_500_MS);
 #endif
 
     db<IEEE1451_NCAP>(TRC) << "IEEE1451_NCAP - Closing channel (ip=" << channel->remote().ip() << ")...\n";

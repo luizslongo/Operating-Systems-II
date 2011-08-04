@@ -93,9 +93,9 @@ void IEEE1451_Temperature_Sensor::init_teds()
     _channel_teds = new IEEE1451_TEDS_TIM(_channel_array, 123);
 
     if (!_tim_im)
-        _channel_array[120] = 0x01;
+        _channel_array[120] = DATA_XMIT_COMMANDED;
     else if (_tim_im)
-        _channel_array[120] = 0x02;
+        _channel_array[120] = DATA_XMIT_BUFFER;
 
     _temp_sensor_utn_array = new (kmalloc(43)) char[43];
     _temp_sensor_utn_array[0] = 0x00; _temp_sensor_utn_array[1] = 0x00; _temp_sensor_utn_array[2] = 0x00; _temp_sensor_utn_array[3] = 0x27; _temp_sensor_utn_array[4] = TEDS_USER_TRANSDUCER_NAME_TEDS_ID; _temp_sensor_utn_array[5] = 0x04; _temp_sensor_utn_array[6] = 0x00; _temp_sensor_utn_array[7] = TEDS_USER_TRANSDUCER_NAME; _temp_sensor_utn_array[8] = 0x01; _temp_sensor_utn_array[9] = 0x01; _temp_sensor_utn_array[10] = TEDS_USER_TRANSDUCER_NAME_FORMAT; _temp_sensor_utn_array[11] = 0x01; _temp_sensor_utn_array[12] = 0x00; _temp_sensor_utn_array[13] = TEDS_USER_TRANSDUCER_NAME_TC_NAME; _temp_sensor_utn_array[14] = 0x1a; _temp_sensor_utn_array[15] = 0x4f; _temp_sensor_utn_array[16] = 0x6e; _temp_sensor_utn_array[17] = 0x62; _temp_sensor_utn_array[18] = 0x6f; _temp_sensor_utn_array[19] = 0x61; _temp_sensor_utn_array[20] = 0x72; _temp_sensor_utn_array[21] = 0x64; _temp_sensor_utn_array[22] = 0x20; _temp_sensor_utn_array[23] = 0x54; _temp_sensor_utn_array[24] = 0x65; _temp_sensor_utn_array[25] = 0x6d; _temp_sensor_utn_array[26] = 0x70; _temp_sensor_utn_array[27] = 0x65; _temp_sensor_utn_array[28] = 0x72; _temp_sensor_utn_array[29] = 0x61; _temp_sensor_utn_array[30] = 0x74; _temp_sensor_utn_array[31] = 0x75; _temp_sensor_utn_array[32] = 0x72; _temp_sensor_utn_array[33] = 0x65; _temp_sensor_utn_array[34] = 0x20; _temp_sensor_utn_array[35] = 0x53; _temp_sensor_utn_array[36] = 0x65; _temp_sensor_utn_array[37] = 0x6e; _temp_sensor_utn_array[38] = 0x73; _temp_sensor_utn_array[39] = 0x6f; _temp_sensor_utn_array[40] = 0x72; _temp_sensor_utn_array[41] = 0xf5; _temp_sensor_utn_array[42] = 0x92; //checksum errado
@@ -229,6 +229,9 @@ int IEEE1451_Temperature_Sensor::execute()
 
 int main()
 {
+    unsigned int *GPIO_BASE = (unsigned int *) 0x80000000;
+    *GPIO_BASE = 0;
+
     Alarm::delay(TIME_500_MS * 4);
     cout << "+++++ Starting wtim +++++\n";
 

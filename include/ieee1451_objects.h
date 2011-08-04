@@ -144,6 +144,17 @@ enum IEEE1451_TEDS_Data_Block_Phy
     TEDS_PHY_RECONNECT   = 40
 };
 
+enum IEEE1451_TEDS_Transducer_Channel_Data_Xmit
+{
+    DATA_XMIT_COMMANDED                     = 1,
+    DATA_XMIT_COMMANDED_BUFFER              = 2,
+    DATA_XMIT_COMMANDED_INTERVAL            = 3,
+    DATA_XMIT_COMMANDED_BUFFER_INTERVAL     = 4,
+    DATA_XMIT_BUFFER                        = 5,
+    DATA_XMIT_INTERVAL                      = 6,
+    DATA_XMIT_BUFFER_INTERVAL               = 7
+};
+
 __END_SYS
 
 #endif

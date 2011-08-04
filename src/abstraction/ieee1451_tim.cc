@@ -106,6 +106,8 @@ IEEE1451_TIM *IEEE1451_TIM::_ieee1451 = 0;
 
 IEEE1451_TIM::IEEE1451_TIM() : _ncap_address((unsigned long) 0x0a00000b)
 {
+    MC13224V_Transceiver::maca_off();
+
     _receive_thread = 0;
     _connected = false;
     _transducer = 0;
@@ -174,7 +176,7 @@ IEEE1451_TEDS_TIM *IEEE1451_TIM::get_teds(char id)
 
 void IEEE1451_TIM::connect()
 {
-    //TODO: Voltar a receber dados da rede!
+    MC13224V_Transceiver::maca_on();
 
     db<IEEE1451_TIM>(TRC) << "IEEE1451_TIM - Connecting...\n";
 
@@ -191,14 +193,14 @@ void IEEE1451_TIM::connect()
 
 void IEEE1451_TIM::disconnect()
 {
-    //TODO: Parar de receber dados da rede!
-
     db<IEEE1451_TIM>(TRC) << "IEEE1451_TIM - Disconnecting...\n";
 
     _connected = false;
 
     while (!_channel.close())
         Alarm::delay(TIME_500_MS * 10);
+
+    MC13224V_Transceiver::maca_off();
 
     db<IEEE1451_TIM>(TRC) << "IEEE1451_TIM - Disconnected!\n";
 }
@@ -309,10 +311,6 @@ void IEEE1451_TIM::send_msg(unsigned short trans_id, unsigned int length)
     out->_trans_id = trans_id;
     out->_length = length;
 
-#ifdef __mc13224v__
-    Alarm::delay(TIME_500_MS * 4);
-#endif
-
     int ret = _channel.send(_send_buffer, size);
 
     if (ret < 0)
@@ -338,12 +336,12 @@ int IEEE1451_TIM::receive(IEEE1451_TIM *tim, TCP::Channel *channel)
         {
             db<IEEE1451_TIM>(TRC) << "IEEE1451_TIM - TIM not connected!\n";
             tim->_connected_cond.wait();
-            continue;
-        }
 
 #ifdef __mc13224v__
-        Alarm::delay(TIME_500_MS * 4);
+            Alarm::delay(TIME_500_MS * 2);
 #endif
+            continue;
+        }
 
         db<IEEE1451_TIM>(TRC) << "IEEE1451_TIM - Receiving...\n";
         ret = channel->receive(_receive_buffer, MAX_BUFFER_SIZE);
@@ -356,10 +354,6 @@ int IEEE1451_TIM::receive(IEEE1451_TIM *tim, TCP::Channel *channel)
 
         in = (IEEE1451_Packet *) _receive_buffer;
         msg = _receive_buffer + sizeof(IEEE1451_Packet);
-
-#ifdef __mc13224v__
-        Alarm::delay(TIME_500_MS * 4);
-#endif
 
         if (in->_length > 0)
             tim->receive_msg(in->_trans_id, msg, in->_length);
