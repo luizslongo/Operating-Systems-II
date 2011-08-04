@@ -106,7 +106,9 @@ IEEE1451_TIM *IEEE1451_TIM::_ieee1451 = 0;
 
 IEEE1451_TIM::IEEE1451_TIM() : _ncap_address((unsigned long) 0x0a00000b)
 {
+#ifdef __mc13224v__
     MC13224V_Transceiver::maca_off();
+#endif
 
     _receive_thread = 0;
     _connected = false;
@@ -176,7 +178,9 @@ IEEE1451_TEDS_TIM *IEEE1451_TIM::get_teds(char id)
 
 void IEEE1451_TIM::connect()
 {
+#ifdef __mc13224v__
     MC13224V_Transceiver::maca_on();
+#endif
 
     db<IEEE1451_TIM>(TRC) << "IEEE1451_TIM - Connecting...\n";
 
@@ -200,7 +204,9 @@ void IEEE1451_TIM::disconnect()
     while (!_channel.close())
         Alarm::delay(TIME_500_MS * 10);
 
+#ifdef __mc13224v__
     MC13224V_Transceiver::maca_off();
+#endif
 
     db<IEEE1451_TIM>(TRC) << "IEEE1451_TIM - Disconnected!\n";
 }
