@@ -146,19 +146,19 @@ CMAC<Radio_Wrapper>::CMAC_STATE_TRANSITION CMAC<Radio_Wrapper>::state_machine() 
             case OFF:
                 break;
         }
+    }
 
-        if ((result == TIMEOUT) || (result == TX_FAILED) || (result == CHANNEL_BUSY) ||
-                (result == TX_ERROR) || (result == RX_ERROR)){
-            ++_consecutive_failures;
-            if (_consecutive_failures >= 5) {
-                db<CMAC>(WRN) << "CMAC::state_machine - Operation failed 5 times in a row, reseting radio\n";
-                _consecutive_failures = 0;
-                _radio->reset();
-                _radio->off();
-            }
-        } else {
+    if ((result == TIMEOUT) || (result == TX_FAILED) || (result == CHANNEL_BUSY) ||
+            (result == TX_ERROR) || (result == RX_ERROR)){
+        ++_consecutive_failures;
+        if (_consecutive_failures >= 5) {
+            db<CMAC>(WRN) << "CMAC::state_machine - Operation failed 5 times in a row, reseting radio\n";
             _consecutive_failures = 0;
+            _radio->reset();
+            _radio->off();
         }
+    } else {
+        _consecutive_failures = 0;
     }
 
     db<CMAC>(TRC) << "CMAC::state_machine - state machine finished executing\n";
