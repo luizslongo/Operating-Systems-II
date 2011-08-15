@@ -242,6 +242,10 @@ class SHT11_Humidity;
 class MC13224V_Temperature_Sensor;
 class ERTJ1VG103FA;
 
+// Hardware Mediators - Encryption
+class AES_Controller;
+class ASM_Controller;
+
 // Abstractions	- Process
 class Thread;
 class Task;
