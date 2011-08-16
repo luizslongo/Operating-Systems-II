@@ -121,9 +121,6 @@ private:
     static const unsigned int ADDR_CHAN3 = ADDR_CHAN1 + 16;
     static const unsigned int ADDR_CHAN4 = ADDR_CHAN1 + 48;
 
-    static const unsigned int addr_seq1[MAX_SEQ1];
-    static const unsigned int data_seq1[MAX_SEQ1];
-
     static const unsigned int addr_seq2[MAX_SEQ2];
     static const unsigned int data_seq2[MAX_SEQ2];
 

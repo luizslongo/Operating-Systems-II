@@ -29,9 +29,6 @@ volatile unsigned char MC13224V_Transceiver::current_action = SEQ_NOP;
 
 unsigned char MC13224V_Transceiver::ram_values[4];
 
-const unsigned int MC13224V_Transceiver::addr_seq1[MAX_SEQ1] = {0x80003048,0x8000304c};
-const unsigned int MC13224V_Transceiver::data_seq1[MAX_SEQ1] = {0x00000f78,0x00607707};
-
 const unsigned int MC13224V_Transceiver::addr_seq2[MAX_SEQ2] = {0x8000a050,0x8000a054};
 const unsigned int MC13224V_Transceiver::data_seq2[MAX_SEQ2] = {0x0000047b,0x0000007b};
 
@@ -44,8 +41,8 @@ const unsigned int MC13224V_Transceiver::data_cal3_seq2[MAX_CAL3_SEQ2] = {0x8c90
 const unsigned int MC13224V_Transceiver::addr_cal3_seq3[MAX_CAL3_SEQ3] = {0x80009a00};
 const unsigned int MC13224V_Transceiver::data_cal3_seq3[MAX_CAL3_SEQ3] = {0x8c900000};
 
-const unsigned int MC13224V_Transceiver::addr_cal5[MAX_CAL5] = {0x80009400,0x8000a050,0x8000a054,0x80003048};
-const unsigned int MC13224V_Transceiver::data_cal5[MAX_CAL5] = {0x00000017,0x00000000,0x00000000,0x00000f00};
+const unsigned int MC13224V_Transceiver::addr_cal5[MAX_CAL5] = {0x80009400,0x8000a050,0x8000a054};
+const unsigned int MC13224V_Transceiver::data_cal5[MAX_CAL5] = {0x00000017,0x00000000,0x00000000};
 
 const unsigned int MC13224V_Transceiver::addr_reg_rep[MAX_DATA] = {0x80004118,0x80009204,0x80009208,0x8000920c,0x80009210,0x80009300,0x80009304,0x80009308,0x8000930c,0x80009310,0x80009314,0x80009318,0x80009380,0x80009384,0x80009388,0x8000938c,0x80009390,0x80009394,0x8000a008,0x8000a018,0x8000a01c,0x80009424,0x80009434,0x80009438,0x8000943c,0x80009440,0x80009444,0x80009448,0x8000944c,0x80009450,0x80009460,0x80009464,0x8000947c,0x800094e0,0x800094e4,0x800094e8,0x800094ec,0x800094f0,0x800094f4,0x800094f8,0x80009470,0x8000981c,0x80009828};
 const unsigned int MC13224V_Transceiver::data_reg_rep[MAX_DATA] = {0x00180012,0x00000605,0x00000504,0x00001111,0x0fc40000,0x20046000,0x4005580c,0x40075801,0x4005d801,0x5a45d800,0x4a45d800,0x40044000,0x00106000,0x00083806,0x00093807,0x0009b804,0x000db800,0x00093802,0x00000015,0x00000002,0x0000000f,0x0000aaa0,0x01002020,0x016800fe,0x8e578248,0x000000dd,0x00000946,0x0000035a,0x00100010,0x00000515,0x00397feb,0x00180358,0x00000455,0x00000001,0x00020003,0x00040014,0x00240034,0x00440144,0x02440344,0x04440544,0x0ee7fc00,0x00000082,0x0000002a};
@@ -56,7 +53,7 @@ const unsigned int MC13224V_Transceiver::PSMVAL[19] = {0x0000080f,0x0000080f,0x0
 const unsigned int MC13224V_Transceiver::PAVAL[19]  = {0x000022c0,0x000022c0,0x000022c0,0x00002280,0x00002303,0x000023c0,0x00002880,0x000029f0,0x000029f0,0x000029f0,0x000029c0,0x00002bf0,0x000029f0,0x000028a0,0x00002800,0x00002ac0,0x00002880,0x00002a00,0x00002b00};
 const unsigned int MC13224V_Transceiver::AIMVAL[19] = {0x000123a0,0x000163a0,0x0001a3a0,0x0001e3a0,0x000223a0,0x000263a0,0x0002a3a0,0x0002e3a0,0x000323a0,0x000363a0,0x0003a3a0,0x0003a3a0,0x0003e3a0,0x000423a0,0x000523a0,0x000423a0,0x0004e3a0,0x0004e3a0,0x0004e3a0};
 
-const unsigned char MC13224V_Transceiver::VCODivI[16] = {0x2f,0x2f,0x2f,0x2f,0x2f,0x2f,0x2f,0x2f,0x30,0x30,0x30,0x2f,0x30,0x30,0x30,0x30};
+const unsigned char MC13224V_Transceiver::VCODivI[16] = {0x2f,0x2f,0x2f,0x2f,0x2f,0x2f,0x2f,0x2f,0x2f,0x30,0x30,0x30,0x30,0x30,0x30,0x30};
 const unsigned int MC13224V_Transceiver::VCODivF[16]  = {0x00355555,0x006aaaaa,0x00a00000,0x00d55555,0x010aaaaa,0x01400000,0x01755555,0x01aaaaaa,0x01e00000,0x00155555,0x004aaaaa,0x00800000,0x00b55555,0x00eaaaaa,0x01200000,0x01555555};
 
 void MC13224V_Transceiver::set_event_handler(event_handler * ev_handler) {
@@ -197,16 +194,6 @@ volatile MC13224V_Transceiver::packet_t* MC13224V_Transceiver::rx_packet() {
     }
 
     IC::enable(IC::IRQ_MACA);
-
-    CPU::out32(IO::CRM_SYS_CNTL, 0x00000008);
-
-    reset_maca();
-    radio_init();
-    init_phy();
-
-    CPU::out32(IO::CRM_SYS_CNTL, 0x00000001);
-    CPU::out32(IO::CRM_VREG_CNTL, 0x00000f5c);
-    for (volatile unsigned int i = 0; i < 0x161a8; i++) { continue; }
 
     return p;
 }
@@ -486,7 +473,6 @@ unsigned char MC13224V_Transceiver::get_ctov(unsigned int r0, unsigned int r1) {
 void MC13224V_Transceiver::radio_init() {
     volatile unsigned int i;
     // sequence 1
-    CPU::out32(IO::CRM_VREG_CNTL, CPU::in32(IO::CRM_VREG_CNTL) || 0x78);
     *(volatile unsigned int *)(0x8000304c) = 0x00607707;
 
     // seq 1 delay
@@ -504,31 +490,30 @@ void MC13224V_Transceiver::radio_init() {
         *(volatile unsigned int *)(addr_cal3_seq1[i]) = data_cal3_seq1[i];
 
     // cal 3 delay
-    for (i=0; i<0x11194; i++);
+    for (i = 0; i < 0x11194; i++);
 
     // cal 3 seq 2
-    for (i=0; i<MAX_CAL3_SEQ2; i++)
+    for (i = 0; i < MAX_CAL3_SEQ2; i++)
         *(volatile unsigned int *)(addr_cal3_seq2[i]) = data_cal3_seq2[i];
 
     // cal 3 delay
-    for (i=0; i<0x11194; i++);
+    for (i = 0; i < 0x11194; i++);
 
     // cal 3 seq 3
-    for (i=0; i<MAX_CAL3_SEQ3; i++)
+    for (i = 0; i < MAX_CAL3_SEQ3; i++)
         *(volatile unsigned int *)(addr_cal3_seq3[i]) = data_cal3_seq3[i];
 
     // cal 5
-    for (i=0; i<MAX_CAL5 - 1; i++)
+    for (i = 0; i < MAX_CAL5; i++)
         *(volatile unsigned int *)(addr_cal5[i]) = data_cal5[i];
-    CPU::out32(IO::CRM_VREG_CNTL, CPU::in32(IO::CRM_VREG_CNTL) && 0xffffff00);
 
     //reg replacment
-    for (i=0; i<MAX_DATA; i++)
+    for (i = 0; i < MAX_DATA; i++)
         *(volatile unsigned int *)(addr_reg_rep[i]) = data_reg_rep[i];
 
     init_from_flash(0x1F000);
 
-    for (i=0; i<16; i++)
+    for (i = 0; i < 16; i++)
         ctov[i] = get_ctov(i,ram_values[3]);
 }
 
@@ -591,7 +576,7 @@ unsigned int MC13224V_Transceiver::exec_init_entry(volatile unsigned int *entrie
     if (entries[0] <= ROM_END) {
         if (entries[0] == 0) {
             // do delay command
-            for (i=0; i<entries[1]; i++);
+            for (i = 0; i < entries[1]; i++);
 
             return 2;
 
@@ -617,7 +602,8 @@ unsigned int MC13224V_Transceiver::exec_init_entry(volatile unsigned int *entrie
 
     } else { // address isn't in ROM space
         // do store value in address command 
-        CPU::out32(entries[0], entries[1]);
+        if ((unsigned int) entries[0] != (unsigned int) IO::CRM_VREG_CNTL)
+            CPU::out32(entries[0], entries[1]);
 
         return 2;
     }
