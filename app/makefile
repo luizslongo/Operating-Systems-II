@@ -2,13 +2,24 @@
 
 include ../makedefs
 
+ifeq ($(APPLICATION), dmec_app)
+SRC := $(shell find ./dmec/src/ -mindepth 1 -name "*.cc" -type f)
+OBJS := $(subst .cc,.do,$(SRC))
+else
+OBJS :=
+endif
+
 all:		install
 
+.SUFFIXES: .do .cc
 
-$(APPLICATION):	$(APPLICATION).o $(LIB)/*
-		$(ALD) $(ALDFLAGS) -o $@ $<
+.cc.do :	$(SRC)
+		$(CXX) $(CXXFLAGS) -o $@ $<
 
-$(APPLICATION).o: $(APPLICATION).cc 
+$(APPLICATION):	$(APPLICATION).o $(LIB)/* $(OBJS)
+		$(ALD) $(ALDFLAGS) -o $@ $(APPLICATION).o $(OBJS)
+
+$(APPLICATION).o: $(APPLICATION).cc $(SRC)
 		$(ACC) $(ACCFLAGS) -o $@ $<
 
 install: 	$(APPLICATION)
@@ -21,4 +32,4 @@ endif
 		$(CLEAN) $(APPLICATION).tmp
 
 clean:
-		$(CLEAN) *.o $(APPLICATION)
+		$(CLEAN) *.o $(APPLICATION) $(OBJS)
