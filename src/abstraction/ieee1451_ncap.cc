@@ -218,7 +218,7 @@ int IEEE1451_NCAP::receive(IEEE1451_NCAP *ncap, Linked_Channel *channel)
     }
 
 #ifdef __mc13224v__
-    Alarm::delay(TIME_500_MS);
+    Alarm::delay(TIME_500_MS * 2);
 #endif
 
     db<IEEE1451_NCAP>(TRC) << "IEEE1451_NCAP - Closing channel (ip=" << channel->remote().ip() << ")...\n";

@@ -344,7 +344,7 @@ int IEEE1451_TIM::receive(IEEE1451_TIM *tim, TCP::Channel *channel)
             tim->_connected_cond.wait();
 
 #ifdef __mc13224v__
-            Alarm::delay(TIME_500_MS * 2);
+            Alarm::delay(TIME_500_MS * 4);
 #endif
             continue;
         }

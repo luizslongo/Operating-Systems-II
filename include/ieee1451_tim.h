@@ -63,6 +63,10 @@ public:
 private:
     static int receive(IEEE1451_TIM *tim, TCP::Channel *channel);
 
+public:
+    bool _connected;
+    Condition _connected_cond;
+
 private:
     TCP::Channel _channel;
     Thread *_receive_thread;
@@ -70,8 +74,6 @@ private:
     char *_send_buffer;
     Mutex _send_buffer_mutex;
 
-    bool _connected;
-    Condition _connected_cond;
     IP::Address _ncap_address;
 
     char *_meta_array;
