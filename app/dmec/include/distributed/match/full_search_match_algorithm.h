@@ -26,6 +26,10 @@ public:
             int lambda_factor,
             LazyFlatH264PMC * flatPMC);
 
+
+    virtual ~FullSearchMatchAlgorithm();
+
+
     static int informMatchAlgorithm();
 
 private:
