@@ -27,6 +27,7 @@
 
 using namespace std;
 #else
+#include <utility/malloc.h>
 #include <utility/ostream.h>
 typedef System::OStream OStream;
 extern OStream cout;
@@ -588,6 +589,11 @@ void FullSearchMatchAlgorithm::match_algorithm_biPredictionMatch(unsigned int wo
 #endif
 
 }
+
+
+FullSearchMatchAlgorithm::~FullSearchMatchAlgorithm()
+{}
+
 
 int FullSearchMatchAlgorithm::informMatchAlgorithm()
 {
