@@ -61,6 +61,13 @@ public:
     static void deleteInstance();
 
 
+    /* For performance reasons, this method does not creates a
+     * PictureMotionCounterpart (PMC) each time it is invoked.
+     * Instead of that, it returns a PMC which is a attribute of
+     * PictureMotionEstimator.
+     * Consequently you should not delete this method's return.
+     * It will be properly deleted on the deletion of PictureMotionEstimator.
+     * */
     PictureMotionCounterpart * match(MEC_Picture * currentPicture,
     		MEC_Picture ** list0ReferencePictures,
     		unsigned int list0ReferencePicturesSize);
