@@ -27,8 +27,6 @@
 #include <string.h>
 #include <assert.h>
 
-#include "../include/dumper.h"
-
 using namespace std;
 
 #else
@@ -38,11 +36,6 @@ extern OStream cout;
 
 #endif
 
-
-#if ENABLE_CHRONOMETER
-#include <abst/chronometer.h>
-
-#endif
 
 #define __REFERENCE_FULL_SEARCH_BMA_V01_DUMP 1 && ENABLE_DUMP
 
@@ -73,26 +66,6 @@ typedef struct FullSearchMatchAlgorithm {
 // globals
 static MatchAlgorithm __algorithm[NUM_WORKERS];
 
-
-#if __REFERENCE_FULL_SEARCH_BMA_V01_DUMP
-static unsigned int __occurenceComputeMVsAndCost = 0; /* Just for debug. One for all workers. */
-static const unsigned int __maxOccurrencesComputeMVsAndCostToBeRecorded = 9999; /* 10; */  /* limiting the dumping */
-
-static unsigned int __occurenceSAD = 0; /* Just for debug. One for all workers. */
-static const unsigned int __maxOccurrencesSAD_ToBeRecorded = 100;  /* limiting the dumping */
-
-static unsigned int __occurenceGetSample = 0; /* Just for debug. One for all workers. */
-static const unsigned int __maxOccurrencesGetSampleToBeRecorded = 1000;  /* limiting the dumping */
-
-#endif
-
-
-#if ENABLE_CHRONOMETER
-#if ENABLE_CHRONO_MATCH_ALGORITHM_TIME
-extern Chronometer chrono_match_algorithm_time;
-#endif
-
-#endif
 
 
 // "private" functions --------------------------------------------------------

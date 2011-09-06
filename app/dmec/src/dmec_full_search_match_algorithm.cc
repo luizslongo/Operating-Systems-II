@@ -23,8 +23,6 @@
 #include <stdlib.h>
 #include <limits.h>
 
-#include "../include/dumper.h"
-
 using namespace std;
 #else
 #include <utility/malloc.h>
@@ -56,13 +54,6 @@ extern OStream cout;
 
 #define abs(a) ((a < 0) ? (-a) : (a))
 
-
-#if ENABLE_CHRONOMETER
-#if ENABLE_CHRONO_MATCH_ALGORITHM_TIME
-extern Chronometer chrono_match_algorithm_time;
-#endif
-
-#endif
 
 
 // "private" functions --------------------------------------------------------
