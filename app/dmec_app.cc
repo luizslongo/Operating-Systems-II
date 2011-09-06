@@ -1,10 +1,10 @@
 #include "dmec/include/traits.h"
 
 #include "dmec/include/master_tracedefs.h"
-#include "dmec/include/abst/random.h"
-#include "dmec/include/distributed/flat_h264_pmc_node.h"
-#include "dmec/include/abst/assert.h"
-#include "dmec/include/distributed/picture_partitioner.h"
+#include "dmec/include/abst_random.h"
+#include "dmec/include/flat_h264_pmc_node.h"
+#include "dmec/include/abst_assert.h"
+#include "dmec/include/picture_partitioner.h"
 #include "dmec/include/reference_bma.h"
 
 
@@ -23,7 +23,7 @@
 #include <string.h>
 #include <stdio.h>
 
-#include "dmec/include/abst/dumper.h"
+#include "dmec/include/dumper.h"
 
 using namespace std;
 
