@@ -17,7 +17,7 @@
 #ifndef WORKER_PARAMETERS_H_
 #define WORKER_PARAMETERS_H_
 
-#include "../traits.h"
+#include "traits.h"
 
 /* A instance of WorkerParameters is passed as parameter
    to spe_context_run function.

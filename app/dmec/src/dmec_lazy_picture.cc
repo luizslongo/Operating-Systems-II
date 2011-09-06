@@ -9,10 +9,10 @@
 
 #include "../include/error.h"
 
-#include "../include/abst/synchronizer.h"
+#include "../include/abst_synchronizer.h"
 
-#include "../include/distributed/lazy_picture.h"
-#include "../include/distributed/dmec_picture_internals.h"
+#include "../include/lazy_picture.h"
+#include "../include/dmec_picture_internals.h"
 #include "../include/traits.h"
 
 
@@ -23,18 +23,7 @@
 #include <limits.h>
 
 #include "../../../../linux/include/stringer.h"
-#include "../include/abst/dumper.h"
-
-#endif
-
-#if ENABLE_CHRONOMETER
-#include "../include/abst/chronometer.h"
-
-#endif
-
-
-#if ENABLE_CHRONOMETER && ENABLE_CHRONO_GET_SAMPLES_TIME
-extern Chronometer chrono_get_samples_time;
+#include "../include/dumper.h"
 
 #endif
 

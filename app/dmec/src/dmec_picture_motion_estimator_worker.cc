@@ -15,17 +15,17 @@
  ******************************************************************************
  */
 
-#include "../include/distributed/picture_motion_estimator_worker.h"
-#include "../include/distributed/flat_h264_pmc_node.h"
-#include "../include/distributed/synchronization_manager.h"
-#include "../include/distributed/lazy_flat_h264_pmc.h"
-#include "../include/distributed/lazy_picture.h"
+#include "../include/picture_motion_estimator_worker.h"
+#include "../include/flat_h264_pmc_node.h"
+#include "../include/synchronization_manager.h"
+#include "../include/lazy_flat_h264_pmc.h"
+#include "../include/lazy_picture.h"
 #include "../include/master_tracedefs.h"
 #include "../include/mec_picture.h"
 #include "../include/block_mode_type.h"
 #include "../include/traits.h"
 
-#include "../include/distributed/match/full_search_match_algorithm.h"
+#include "../include/full_search_match_algorithm.h"
 
 
 #define __WORKER_GENERAL_TRACE (1 && ENABLE_TRACE)

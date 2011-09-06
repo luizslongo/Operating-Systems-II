@@ -8,7 +8,7 @@
 #ifndef DMEC_PICTURE_INTERNALS_H_
 #define DMEC_PICTURE_INTERNALS_H_
 
-#include "../traits.h"
+#include "traits.h"
 
 struct __DMEC_Picture {
 	/* All planes (Y,Cb,Cr) must be 16 byte aligned. Besides that, the size of

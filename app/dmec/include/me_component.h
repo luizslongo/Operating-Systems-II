@@ -30,21 +30,21 @@
 #include "mec_plane.h"
 #include "mec_sample.h"
 #include "modes_partitioner.h"
-#include "distributed/match/algorithm_ids.h"
+#include "algorithm_ids.h"
 
 #include "vectorial_pmc.h"
 
 #include "reference_picture_motion_counterpart.h"
 #include "search_metric.h"
 #include "mec_search_window.h"
-#include "simple_tracer.h"
+
 
 /* Este trecho deverá ser substibuído por
  * #include <picture_motion_estimator.h"
  * (sem o uso de compilação condicional), se as interfaces forem
  * re-unificadas. (ver todo_doto...) */
 #if 1 /* DISTRIBUTED */
-#include "./distributed/picture_motion_estimator_coordinator.h"
+#include "picture_motion_estimator_coordinator.h"
 #endif
 
 #endif /* ME_COMPONENT_H_ */

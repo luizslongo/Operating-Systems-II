@@ -19,10 +19,10 @@
 
 #include "../include/master_tracedefs.h"
 #include "../include/traits.h"
-#include "../include/distributed/dmec_picture.h"
-#include "../include/distributed/picture_motion_estimator_worker_proxy.h"
-#include "../include/distributed/picture_motion_estimator_worker.h"
-#include "../include/distributed/synchronization_manager.h"
+#include "../include/dmec_picture.h"
+#include "../include/picture_motion_estimator_worker_proxy.h"
+#include "../include/picture_motion_estimator_worker.h"
+#include "../include/synchronization_manager.h"
 #include "../include/error.h"
 
 #define __PC_PICTURE_MOTION_ESTIMATOR_WORKER_PROXY_GENERAL_TRACE (0 && ENABLE_TRACE)

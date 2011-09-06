@@ -8,7 +8,7 @@
 #ifndef PICTURE_PARTITIONER_H_
 #define PICTURE_PARTITIONER_H_
 
-#include "../vectorial_pmc.h"
+#include "vectorial_pmc.h"
 #include "flat_h264_pmc_node.h"
 
 #if LINUX

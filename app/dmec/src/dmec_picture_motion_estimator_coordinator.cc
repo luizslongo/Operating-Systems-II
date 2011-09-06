@@ -18,12 +18,12 @@
 #include "../include/mec_macroblock.h"
 #include "../include/search_metric.h"
 #include "../include/block_mode_factory.h"
-#include "../include/distributed/picture_partitioner.h"
-#include "../include/distributed/picture_motion_estimator_coordinator.h"
-#include "../include/distributed/synchronization_manager.h"
-#include "../include/distributed/match/match_algorithm.h"
+#include "../include/picture_partitioner.h"
+#include "../include/picture_motion_estimator_coordinator.h"
+#include "../include/synchronization_manager.h"
+#include "../include/match_algorithm.h"
 #include "../include/error.h"
-#include "../include/abst/assert.h"
+#include "../include/abst_assert.h"
 
 #if LINUX
 #include <stdlib.h>
@@ -31,7 +31,7 @@
 #include <iostream> // trace
 #include <stdio.h>
 
-#include "../include/abst/dumper.h"
+#include "../include/dumper.h"
 
 using namespace std;
 

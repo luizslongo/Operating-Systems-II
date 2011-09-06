@@ -6,7 +6,7 @@
  *      Author: mateus
  */
 
-#include "../include/abst/synchronizer.h"
+#include "../include/abst_synchronizer.h"
 #include <utility/malloc.h>
 
 

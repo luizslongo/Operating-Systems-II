@@ -9,12 +9,12 @@
  *      Author: mateus
  */
 
-#include "../../mec_search_window.h"
+#include "mec_search_window.h"
 
-#include "../flat_h264_pmc_node.h"
-#include "../lazy_picture.h"
-#include "../lazy_flat_h264_pmc.h"
-#include "../match/algorithm_ids.h"
+#include "flat_h264_pmc_node.h"
+#include "lazy_picture.h"
+#include "lazy_flat_h264_pmc.h"
+#include "algorithm_ids.h"
 
 #ifndef MATCH_ALGORITHM_H_
 #define MATCH_ALGORITHM_H_

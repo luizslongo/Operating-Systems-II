@@ -14,7 +14,7 @@
  ******************************************************************************
  */
 
-#include "../include/distributed/flat_h264_pmc_node.h"
+#include "../include/flat_h264_pmc_node.h"
 
 bool flatH264PMC_Node_equals(FlatH264PMC_Node * thiz, FlatH264PMC_Node * other)
 {

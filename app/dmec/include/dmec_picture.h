@@ -17,7 +17,7 @@
 #ifndef DMEC_PICTURE_H_
 #define DMEC_PICTURE_H_
 
-#include "../mec_picture.h"
+#include "mec_picture.h"
 
 #include "dmec_picture_internals.h"
 

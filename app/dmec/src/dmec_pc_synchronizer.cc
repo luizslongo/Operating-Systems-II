@@ -8,7 +8,7 @@
  *      Author: mateus
  */
 
-#include "../include/distributed/synchronization_manager.h"
+#include "../include/synchronization_manager.h"
 #include "../include/traits.h"
 #include "../include/error.h"
 

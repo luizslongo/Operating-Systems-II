@@ -11,9 +11,9 @@
 #ifndef LAZY_PICTURE_H_
 #define LAZY_PICTURE_H_
 
-#include "../motion_vector.h"
-#include "../block_mode_type.h"
-#include "../traits.h"
+#include "motion_vector.h"
+#include "block_mode_type.h"
+#include "traits.h"
 
 #define USE_GOOD_AND_OLD_LAZY_PICTURE 1
 

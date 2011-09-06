@@ -17,14 +17,14 @@
 #ifndef PICTURE_MOTION_ESTIMATOR_COORDINATOR_H_
 #define PICTURE_MOTION_ESTIMATOR_COORDINATOR_H_
 
-#include "../block_mode.h"
-#include "../vectorial_pmc.h"
-#include "../mec_picture.h"
+#include "block_mode.h"
+#include "vectorial_pmc.h"
+#include "mec_picture.h"
 #include "dmec_picture.h"
-#include "../search_metric.h"
-#include "../reference_picture_motion_counterpart.h"
+#include "search_metric.h"
+#include "reference_picture_motion_counterpart.h"
 
-#include "../traits.h"
+#include "traits.h"
 #include "picture_motion_estimator_worker_proxy.h"
 
 /// << singleton >>

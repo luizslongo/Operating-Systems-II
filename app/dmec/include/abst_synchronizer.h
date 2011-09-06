@@ -15,7 +15,7 @@
  * (supposing they are in distinct memory areas, which is the CELL case).
  * */
 
-#include "../traits.h"
+#include "traits.h"
 
 #if LINUX
 #include <pthread.h>

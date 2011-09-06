@@ -10,10 +10,10 @@
 
 #include "../include/block_mode_type.h"
 #include "../include/traits.h"
-#include "../include/distributed/lazy_flat_h264_pmc.h"
-#include "../include/distributed/match/match_algorithm.h"
-#include "../include/distributed/match/full_search_match_algorithm.h"
-#include "../include/abst/assert.h"
+#include "../include/lazy_flat_h264_pmc.h"
+#include "../include/match_algorithm.h"
+#include "../include/full_search_match_algorithm.h"
+#include "../include/abst_assert.h"
 #include "../include/error.h"
 #include "../include/master_tracedefs.h"
 
@@ -23,7 +23,7 @@
 #include <stdlib.h>
 #include <limits.h>
 
-#include "../include/abst/dumper.h"
+#include "../include/dumper.h"
 
 using namespace std;
 #else

@@ -15,8 +15,8 @@
 
 #include "../include/block_mode_type.h"
 #include "../include/traits.h"
-#include "../include/abst/assert.h"
-#include "../include/distributed/lazy_flat_h264_pmc.h"
+#include "../include/abst_assert.h"
+#include "../include/lazy_flat_h264_pmc.h"
 
 #include "../include/master_tracedefs.h"
 
@@ -27,7 +27,7 @@
 #include <string.h>
 #include <assert.h>
 
-#include "../include/abst/dumper.h"
+#include "../include/dumper.h"
 
 using namespace std;
 

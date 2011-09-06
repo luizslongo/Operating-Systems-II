@@ -17,9 +17,9 @@
 #ifndef PICTURE_MOTION_ESTIMATOR_WORKER_PROXY_H_
 #define PICTURE_MOTION_ESTIMATOR_WORKER_PROXY_H_
 
-#include "../traits.h"
+#include "traits.h"
 #include "worker_parameters.h"
-#include "../mec_picture.h"
+#include "mec_picture.h"
 
 typedef enum {
     WORKER_PROXY00 = 0,

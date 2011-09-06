@@ -6,7 +6,7 @@
  */
 
 #include "../include/traits.h"
-#include "../include/abst/assert.h"
+#include "../include/abst_assert.h"
 #include "../include/error.h"
 
 #if LINUX

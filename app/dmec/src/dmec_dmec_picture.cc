@@ -16,7 +16,7 @@
 
 #include "../include/master_tracedefs.h"
 
-#include "../include/distributed/dmec_picture.h"
+#include "../include/dmec_picture.h"
 
 #define __DMEC_PICTURE_DETAILED_TRACE (0 && ENABLE_TRACE)
 

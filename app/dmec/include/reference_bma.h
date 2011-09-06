@@ -8,7 +8,7 @@
 #ifndef REFERENCE_BMA_H_
 #define REFERENCE_BMA_H_
 
-#include "distributed/flat_h264_pmc_node.h"
+#include "flat_h264_pmc_node.h"
 #include "mec_search_window.h"
 #include "mec_picture.h"
 

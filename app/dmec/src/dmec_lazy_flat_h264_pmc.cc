@@ -10,7 +10,7 @@
 //#include <limits.h>
 
 #include "../include/traits.h"
-#include "../include/distributed/lazy_flat_h264_pmc.h"
+#include "../include/lazy_flat_h264_pmc.h"
 
 #include "../include/master_tracedefs.h"
 

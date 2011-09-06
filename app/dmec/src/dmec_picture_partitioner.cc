@@ -5,8 +5,8 @@
  *      Author: mateus
  */
 
-#include "../include/distributed/picture_partitioner.h"
-#include "../include/abst/assert.h"
+#include "../include/picture_partitioner.h"
+#include "../include/abst_assert.h"
 
 #if LINUX
 #include <stdlib.h>

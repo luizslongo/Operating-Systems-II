@@ -5,15 +5,15 @@
 #ifndef PME_WORKER_INTERNALS_H_
 #define PME_WORKER_INTERNALS_H_
 
-#include "../mec_search_window.h"
+#include "mec_search_window.h"
 
 #include "lazy_picture.h"
 #include "worker_parameters.h"
-#include "../traits.h"
+#include "traits.h"
 #include "lazy_flat_h264_pmc.h"
 
-#include "../abst/synchronizer.h"
-#include "match/match_algorithm.h"
+#include "abst_synchronizer.h"
+#include "match_algorithm.h"
 
 struct __Worker {
     LazyPicture __list0[MAX_REFERENCE_PICTURE_LIST0_SIZE];

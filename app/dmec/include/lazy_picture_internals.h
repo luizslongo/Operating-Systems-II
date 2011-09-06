@@ -8,12 +8,11 @@
 #ifndef LAZY_PICTURE_INTERNALS_H_
 #define LAZY_PICTURE_INTERNALS_H_
 
-#include "../mec_sample.h"
+#include "mec_sample.h"
 
-#include "../abst/synchronizer.h"
-#include "../abst/chronometer.h"
+#include "abst_synchronizer.h"
 
-#include "../traits.h"
+#include "traits.h"
 
 #if LINUX
 #include <string>

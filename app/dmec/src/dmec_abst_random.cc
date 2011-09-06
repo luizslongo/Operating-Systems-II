@@ -7,10 +7,7 @@
 
 
 #include <utility/random.h>
-#include "../include/abst/random.h"
-//#include <stdlib.h>
-//#include <assert.h>
-//#include <stdio.h>
+#include "../include/abst_random.h"
 
 #define __RANDOM_DETAILED_TRACE 0
 

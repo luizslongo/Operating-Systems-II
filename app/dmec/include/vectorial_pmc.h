@@ -13,7 +13,7 @@
 #include "block_mode_type.h"
 #include "reference_picture_motion_counterpart.h"
 #include "traits.h"
-#include "distributed/flat_h264_pmc_node.h"
+#include "flat_h264_pmc_node.h"
 
 #define MAX_NUM_BLOCKS_PER_MODE 16
 

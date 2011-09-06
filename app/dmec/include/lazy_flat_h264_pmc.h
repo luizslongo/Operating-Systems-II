@@ -11,8 +11,8 @@
 #ifndef LAZY_FLAT_H264_PMC_H_
 #define LAZY_FLAT_H264_PMC_H_
 
-#include "../motion_vector.h"
-#include "../block_mode_type.h"
+#include "motion_vector.h"
+#include "block_mode_type.h"
 #include "flat_h264_pmc_node.h"
 #include "lazy_flat_h264_pmc_internals.h"
 

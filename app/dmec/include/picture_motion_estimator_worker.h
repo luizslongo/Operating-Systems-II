@@ -19,7 +19,7 @@
 
 #include "pme_worker_internals.h"
 
-#include "../traits.h"
+#include "traits.h"
 
 /* Works for single-thread Workers, with double buffer support.
  * It uses asynchronous DMA in Cell and synchronous memory copy in PC

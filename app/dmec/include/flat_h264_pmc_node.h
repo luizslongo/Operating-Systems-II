@@ -14,7 +14,7 @@
  ******************************************************************************
  */
 
-#include "../traits.h"
+#include "traits.h"
 
 #ifndef FLAT_H264_PMC_NODE_H_
 #define FLAT_H264_PMC_NODE_H_
