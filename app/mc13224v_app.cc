@@ -46,7 +46,7 @@ void sensor(unsigned char id) {
 
         cout << "tx done\n";
 
-        for (volatile unsigned long i = 0; i <= 50 * (Traits<Machine>::CLOCK / 1000UL); i++);
+        Alarm::delay(10000);
     }
 }
 
