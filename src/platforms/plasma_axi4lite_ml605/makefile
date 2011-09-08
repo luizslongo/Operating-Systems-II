@@ -15,6 +15,7 @@ include ../../../tools/xilinx/Makefile.common
 include ../../../src/mach/common/coregen/hw.srcs
 
 # other IP sources definitions
+include ../../../src/arch/mips32/hw.srcs
 include ../../../src/mach/axi4lite/hw.srcs
 include ../../../src/mach/common/amba/hw.srcs
 include ../../../src/mach/common/amba_wishbone/hw.srcs
@@ -60,7 +61,8 @@ $(SIMPLE_UART_SRCS) \
 $(SIMPLE_PIC_SRCS) \
 $(SIMPLE_TIMER_SRCS) \
 $(COREGEN_SRCS) \
-$(PLASMA_SRCS) \
+$(AXI4LITE_SRCS) \
+$(MIPS32_SRCS) \
 $(GPIO_SRCS)
 
 ##################################################
