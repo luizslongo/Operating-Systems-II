@@ -38,8 +38,8 @@ plasma_axi4lite_ml605.ucf
 coregen_generate: \
 clk_xlnx_100M_diff \
 ram_amba_128k \
-ram_amba_1024k
-#axi4_ddr3_contrl
+ram_amba_1024k \
+axi4_ddr3_contrl
 
 coregen_clean:
 	cd $(COREGEN_DIR); \
