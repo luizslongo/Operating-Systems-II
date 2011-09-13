@@ -107,6 +107,7 @@ module axi4lite_to_wishbone(
        sel <= 0;
        data <= 0;
        read_valid <= 1'b0;
+		 address <= 0;
     end
     else begin
         case (state)

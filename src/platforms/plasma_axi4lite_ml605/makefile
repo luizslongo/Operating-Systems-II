@@ -23,6 +23,7 @@ include ../../../src/mach/common/simple_uart/hw.srcs
 include ../../../src/mach/common/gpio/hw.srcs
 include ../../../src/mach/common/simple_pic/hw.srcs
 include ../../../src/mach/common/simple_timer/hw.srcs
+include ../../../src/mach/common/rtsnoc/hw.srcs
 
 ##################################################
 # Sources
@@ -38,18 +39,18 @@ plasma_axi4lite_ml605.ucf
 coregen_generate: \
 clk_xlnx_100M_diff \
 ram_amba_128k \
-ram_amba_1024k \
-axi4_ddr3_contrl
+ram_amba_1024k
+#axi4_ddr3_contrl
 
 coregen_clean:
 	cd $(COREGEN_DIR); \
 	rm -rf \
 	clk_xlnx_100M_diff \
-	axi4_ddr3_contrl \
 	ram_amba_128k ; \
 	rm -f coregen.cgc; \
 	rm -rf tmp _xmsgs; \
 	rm -f *.xise *.gise *.ncf *.tcl *.txt *.ejp *.log *.ngc *~ *.v *.veo *.vhd *.vho *.mif
+#axi4_ddr3_contrl \
 
 
 
@@ -63,7 +64,8 @@ $(SIMPLE_TIMER_SRCS) \
 $(COREGEN_SRCS) \
 $(AXI4LITE_SRCS) \
 $(MIPS32_SRCS) \
-$(GPIO_SRCS)
+$(GPIO_SRCS) \
+$(RTSNOC_SRCS)
 
 ##################################################
 # Project Properties

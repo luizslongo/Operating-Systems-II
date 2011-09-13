@@ -1,0 +1,12 @@
+
+##################################################
+# IP Sources
+##################################################
+RTSNOC_SRCS = $(abspath $(addprefix $(BASE_DIR)/src/mach/common/rtsnoc/, \
+ROUTER.ngc \
+rtsnoc_wishbone_slave.v \
+rtsnoc_axi4lite_slave.v \
+rtsnoc_echo_sm.v \
+rtsnoc_echo.v \
+))
+

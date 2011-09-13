@@ -2,6 +2,8 @@ library ieee;
 use ieee.std_logic_1164.all;
 use ieee.math_real.log2;
 use ieee.math_real.ceil;
+use ieee.std_logic_arith.all;
+use ieee.std_logic_unsigned.all;
 
 -- Memory Map:
 --   0x00000000 - 0x0fffffff   Internal RAM (4KB - 256MB)
@@ -11,6 +13,7 @@ use ieee.math_real.ceil;
 --   0x80000400  GPIO
 --   0x80000800  Timer
 --   0x80000C00  PIC
+--   0x80001000  RTSNoC
 
 entity plasma_axi4lite is
    generic(
@@ -30,7 +33,8 @@ entity plasma_axi4lite is
 end plasma_axi4lite;
 
 architecture RTL of plasma_axi4lite is
-    constant N_SLAVES       : integer := 6;
+    -- AXI4 constants
+    constant N_SLAVES       : integer := 7;
     constant N_SLAVES_LOG   : integer := integer(ceil(log2(real(N_SLAVES))));
 
     constant SLAVE0_ADDR_W  : integer := 4;
@@ -54,7 +58,38 @@ architecture RTL of plasma_axi4lite is
     constant SLAVE5_ADDR_W  : integer := 22;
     constant SLAVE5_ADDR    : std_logic_vector(SLAVE5_ADDR_W-1 downto 0) 
         := b"1000" & b"0000" & b"0000" & b"0000" & b"0000" & b"11";
+        
+    constant SLAVE6_ADDR_W  : integer := 22;
+    constant SLAVE6_ADDR    : std_logic_vector(SLAVE6_ADDR_W-1 downto 0) 
+        := b"1000" & b"0000" & b"0000" & b"0000" & b"0001" & b"00";
 
+    -- RTSNoC constants
+        -- Dimension of the network and router address.
+    constant NET_SIZE_X         : integer := 1;
+    constant NET_SIZE_Y         : integer := 1;
+    constant NET_SIZE_X_LOG2    : integer := 1;
+    constant NET_SIZE_Y_LOG2    : integer := 1;
+    constant ROUTER_X           : std_logic_vector(NET_SIZE_X_LOG2-1 downto 0) := "0";
+    constant ROUTER_Y           : std_logic_vector(NET_SIZE_X_LOG2-1 downto 0) := "0";
+    constant NET_DATA_WIDTH     : integer := 16;
+        -- Local addresses
+    constant ROUTER_NN  : std_logic_vector(2 downto 0) := "000";  
+    constant ROUTER_NE  : std_logic_vector(2 downto 0) := "001";
+    constant ROUTER_EE  : std_logic_vector(2 downto 0) := "010";
+    constant ROUTER_SE  : std_logic_vector(2 downto 0) := "011";
+    constant ROUTER_SS  : std_logic_vector(2 downto 0) := "100";
+    constant ROUTER_SW  : std_logic_vector(2 downto 0) := "101";
+    constant ROUTER_WW  : std_logic_vector(2 downto 0) := "110";
+    constant ROUTER_NW  : std_logic_vector(2 downto 0) := "111";
+        -- NoC node addressess
+    constant NODE_AXI_ADDR  : std_logic_vector(2 downto 0) := ROUTER_NN;
+    constant NODE_ECHO_P0   : std_logic_vector(2 downto 0) := ROUTER_NE;
+    constant NODE_ECHO_P1   : std_logic_vector(2 downto 0) := ROUTER_EE;
+    
+    
+    -- 
+    -- Declarations
+    -- 
     component axi4lite_decoder is
         generic(
             sw          : integer;
@@ -70,7 +105,9 @@ architecture RTL of plasma_axi4lite is
             s4_addr_w   : integer; 
             s4_addr     : std_logic_vector(SLAVE4_ADDR_W-1 downto 0);
             s5_addr_w   : integer; 
-            s5_addr     : std_logic_vector(SLAVE5_ADDR_W-1 downto 0));
+            s5_addr     : std_logic_vector(SLAVE5_ADDR_W-1 downto 0);
+            s6_addr_w   : integer; 
+            s6_addr     : std_logic_vector(SLAVE6_ADDR_W-1 downto 0));
         port(
             -- master write address channel
             m_awvalid_i    : in std_logic;
@@ -321,10 +358,142 @@ architecture RTL of plasma_axi4lite is
             int_o  : out  std_logic);
     end component;
 
+    COMPONENT ROUTER
+        GENERIC (
+            p_X         : integer := conv_integer(ROUTER_X);
+            p_Y         : integer := conv_integer(ROUTER_Y);
+            p_DATA      : integer := NET_DATA_WIDTH;                    
+            p_SIZE_X    : integer := NET_SIZE_X;
+            p_SIZE_Y    : integer := NET_SIZE_Y);  
+        PORT(
+            i_CLK       : IN std_logic;
+            i_RST       : IN std_logic;
+            i_DIN_NN    : IN std_logic_vector(37 downto 0);
+            i_WR_NN     : IN std_logic;
+            i_RD_NN     : IN std_logic;
+            i_DIN_NE    : IN std_logic_vector(37 downto 0);
+            i_WR_NE     : IN std_logic;
+            i_RD_NE     : IN std_logic;
+            i_DIN_EE    : IN std_logic_vector(37 downto 0);
+            i_WR_EE     : IN std_logic;
+            i_RD_EE     : IN std_logic;
+            i_DIN_SE    : IN std_logic_vector(37 downto 0);
+            i_WR_SE     : IN std_logic;
+            i_RD_SE     : IN std_logic;
+            i_DIN_SS    : IN std_logic_vector(37 downto 0);
+            i_WR_SS     : IN std_logic;
+            i_RD_SS     : IN std_logic;
+            i_DIN_SW    : IN std_logic_vector(37 downto 0);
+            i_WR_SW     : IN std_logic;
+            i_RD_SW     : IN std_logic;
+            i_DIN_WW    : IN std_logic_vector(37 downto 0);
+            i_WR_WW     : IN std_logic;
+            i_RD_WW     : IN std_logic;
+            i_DIN_NW    : IN std_logic_vector(37 downto 0);
+            i_WR_NW     : IN std_logic;
+            i_RD_NW     : IN std_logic;          
+            o_DOUT_NN   : OUT std_logic_vector(37 downto 0);
+            o_WAIT_NN   : OUT std_logic;
+            o_ND_NN     : OUT std_logic;
+            o_DOUT_NE   : OUT std_logic_vector(37 downto 0);
+            o_WAIT_NE   : OUT std_logic;
+            o_ND_NE     : OUT std_logic;
+            o_DOUT_EE   : OUT std_logic_vector(37 downto 0);
+            o_WAIT_EE   : OUT std_logic;
+            o_ND_EE     : OUT std_logic;
+            o_DOUT_SE   : OUT std_logic_vector(37 downto 0);
+            o_WAIT_SE   : OUT std_logic;
+            o_ND_SE     : OUT std_logic;
+            o_DOUT_SS   : OUT std_logic_vector(37 downto 0);
+            o_WAIT_SS   : OUT std_logic;
+            o_ND_SS     : OUT std_logic;
+            o_DOUT_SW   : OUT std_logic_vector(37 downto 0);
+            o_WAIT_SW   : OUT std_logic;
+            o_ND_SW     : OUT std_logic;
+            o_DOUT_WW   : OUT std_logic_vector(37 downto 0);
+            o_WAIT_WW   : OUT std_logic;
+            o_ND_WW     : OUT std_logic;
+            o_DOUT_NW   : OUT std_logic_vector(37 downto 0);
+            o_WAIT_NW   : OUT std_logic;
+            o_ND_NW     : OUT std_logic
+        );
+    END COMPONENT;
+    
+    component rtsnoc_axi4lite_slave is
+        generic (
+            NOC_LOCAL_ADR   : std_logic_vector(2 downto 0) := NODE_AXI_ADDR; 
+            NOC_X           : std_logic_vector(NET_SIZE_X_LOG2-1 downto 0) := ROUTER_X;
+            NOC_Y           : std_logic_vector(NET_SIZE_Y_LOG2-1 downto 0) := ROUTER_Y;
+            SOC_SIZE_X      : integer := NET_SIZE_X_LOG2;
+            SOC_SIZE_Y      : integer := NET_SIZE_Y_LOG2;
+            NOC_DATA_WIDTH  : integer := NET_DATA_WIDTH);
+        port(
+            -- AXI signals
+            clk_i       : in  std_logic;
+            axi_rst_i   : in  std_logic;
+            axi_awaddr_i          : in  std_logic_vector(31 downto 0);
+            axi_awvalid_i         : in  std_logic;
+            axi_awready_o         : out std_logic;
+            axi_wdata_i           : in  std_logic_vector(31 downto 0);
+            axi_wstrb_i           : in  std_logic_vector(3 downto 0);
+            axi_wvalid_i          : in  std_logic;
+            axi_wready_o          : out std_logic;
+            axi_bresp_o           : out std_logic_vector(1 downto 0);
+            axi_bvalid_o          : out std_logic;
+            axi_bready_i          : in  std_logic;
+            axi_araddr_i          : in  std_logic_vector(31 downto 0);
+            axi_arvalid_i         : in  std_logic;
+            axi_arready_o         : out std_logic;
+            axi_rdata_o           : out std_logic_vector(31 downto 0);
+            axi_rresp_o           : out std_logic_vector(1 downto 0);
+            axi_rvalid_o          : out std_logic;
+            axi_rready_i          : in  std_logic;
+            -- NoC signals
+            noc_reset_o : out std_logic;
+            noc_din_o   : out std_logic_vector(37 downto 0);
+            noc_dout_i  : in std_logic_vector(37 downto 0);
+            noc_wr_o    : out std_logic;
+            noc_rd_o    : out std_logic;
+            noc_wait_i  : in std_logic;
+            noc_nd_i    : in std_logic;
+            noc_int_o   : out  std_logic);
+    end component;
+    
+    component rtsnoc_echo is
+        generic (
+            P0_ADDR          : std_logic_vector(2 downto 0) := NODE_ECHO_P0; 
+            P0_ADDR_X        : std_logic_vector(NET_SIZE_X_LOG2-1 downto 0) := ROUTER_X;
+            P0_ADDR_Y        : std_logic_vector(NET_SIZE_Y_LOG2-1 downto 0) := ROUTER_Y;
+            P1_ADDR          : std_logic_vector(2 downto 0) := NODE_ECHO_P1; 
+            P1_ADDR_X        : std_logic_vector(NET_SIZE_X_LOG2-1 downto 0) := ROUTER_X;
+            P1_ADDR_Y        : std_logic_vector(NET_SIZE_Y_LOG2-1 downto 0) := ROUTER_Y;
+            SOC_SIZE_X      : integer := NET_SIZE_X_LOG2;
+            SOC_SIZE_Y      : integer := NET_SIZE_Y_LOG2;
+            NOC_DATA_WIDTH  : integer := NET_DATA_WIDTH);
+        port(
+            clk_i      : in std_logic;
+            rst_i      : in std_logic;
+            p0_din_o   : out std_logic_vector(37 downto 0);
+            p0_dout_i  : in std_logic_vector(37 downto 0);
+            p0_wr_o    : out std_logic;
+            p0_rd_o    : out std_logic;
+            p0_wait_i  : in std_logic;
+            p0_nd_i    : in std_logic;
+            p1_din_o   : out std_logic_vector(37 downto 0);
+            p1_dout_i  : in std_logic_vector(37 downto 0);
+            p1_wr_o    : out std_logic;
+            p1_rd_o    : out std_logic;
+            p1_wait_i  : in std_logic;
+            p1_nd_i    : in std_logic);
+    end component;
 
-    signal sig_intr    : std_logic;
 
+    --  
+    -- Signals
+    -- 
 
+    -- AMBA AXI4 signals
+    -- Master
     signal sig_m0_awvalid : std_logic;
     signal sig_m0_awready : std_logic;
     signal sig_m0_awaddr  : std_logic_vector(31 downto 0);
@@ -350,6 +519,8 @@ architecture RTL of plasma_axi4lite is
     signal sig_m0_rresp   : std_logic_vector(1 downto 0);
 
 
+    -- AMBA AXI4 signals
+    -- Slaves
     signal sig_awvalid  : std_logic_vector(N_SLAVES-1 downto 0);
     signal sig_awready  : std_logic_vector(N_SLAVES-1 downto 0);
     signal sig_awaddr   : std_logic_vector((N_SLAVES*32)-1 downto 0);
@@ -374,42 +545,68 @@ architecture RTL of plasma_axi4lite is
     signal sig_rdata    : std_logic_vector((N_SLAVES*32)-1 downto 0);
     signal sig_rresp    : std_logic_vector((N_SLAVES*2)-1 downto 0);
 
+    type axi_array_of_stdlogic is array(0 to N_SLAVES-1) of std_logic;
+    type axi_array_of_stdvec2 is array(0 to N_SLAVES-1) of std_logic_vector(1 downto 0);
+    type axi_array_of_stdvec3 is array(0 to N_SLAVES-1) of std_logic_vector(2 downto 0);
+    type axi_array_of_stdvec4 is array(0 to N_SLAVES-1) of std_logic_vector(3 downto 0);
+    type axi_array_of_stdvec32 is array(0 to N_SLAVES-1) of std_logic_vector(31 downto 0);
 
-    type array_of_stdlogic is array(0 to N_SLAVES-1) of std_logic;
-    type array_of_stdvec2 is array(0 to N_SLAVES-1) of std_logic_vector(1 downto 0);
-    type array_of_stdvec3 is array(0 to N_SLAVES-1) of std_logic_vector(2 downto 0);
-    type array_of_stdvec4 is array(0 to N_SLAVES-1) of std_logic_vector(3 downto 0);
-    type array_of_stdvec32 is array(0 to N_SLAVES-1) of std_logic_vector(31 downto 0);
+    signal sig_slaves_awvalid : axi_array_of_stdlogic;
+    signal sig_slaves_awready : axi_array_of_stdlogic;
+    signal sig_slaves_awaddr  : axi_array_of_stdvec32;
+    signal sig_slaves_awprot  : axi_array_of_stdvec3;
 
-    signal sig_slaves_awvalid : array_of_stdlogic;
-    signal sig_slaves_awready : array_of_stdlogic;
-    signal sig_slaves_awaddr  : array_of_stdvec32;
-    signal sig_slaves_awprot  : array_of_stdvec3;
+    signal sig_slaves_wvalid  : axi_array_of_stdlogic;
+    signal sig_slaves_wready  : axi_array_of_stdlogic;
+    signal sig_slaves_wdata   : axi_array_of_stdvec32;
+    signal sig_slaves_wstrb   : axi_array_of_stdvec4;
 
-    signal sig_slaves_wvalid  : array_of_stdlogic;
-    signal sig_slaves_wready  : array_of_stdlogic;
-    signal sig_slaves_wdata   : array_of_stdvec32;
-    signal sig_slaves_wstrb   : array_of_stdvec4;
+    signal sig_slaves_bready  : axi_array_of_stdlogic;
+    signal sig_slaves_bvalid  : axi_array_of_stdlogic;
+    signal sig_slaves_bresp   : axi_array_of_stdvec2;
 
-    signal sig_slaves_bready  : array_of_stdlogic;
-    signal sig_slaves_bvalid  : array_of_stdlogic;
-    signal sig_slaves_bresp   : array_of_stdvec2;
+    signal sig_slaves_arvalid : axi_array_of_stdlogic;
+    signal sig_slaves_arready : axi_array_of_stdlogic;
+    signal sig_slaves_araddr  : axi_array_of_stdvec32;
+    signal sig_slaves_arprot  : axi_array_of_stdvec3;
 
-    signal sig_slaves_arvalid : array_of_stdlogic;
-    signal sig_slaves_arready : array_of_stdlogic;
-    signal sig_slaves_araddr  : array_of_stdvec32;
-    signal sig_slaves_arprot  : array_of_stdvec3;
-
-    signal sig_slaves_rready  : array_of_stdlogic;
-    signal sig_slaves_rdata   : array_of_stdvec32;
-    signal sig_slaves_rresp   : array_of_stdvec2;
-    signal sig_slaves_rvalid  : array_of_stdlogic;
+    signal sig_slaves_rready  : axi_array_of_stdlogic;
+    signal sig_slaves_rdata   : axi_array_of_stdvec32;
+    signal sig_slaves_rresp   : axi_array_of_stdvec2;
+    signal sig_slaves_rvalid  : axi_array_of_stdlogic;
     
     
     signal sig_irqs         : std_logic_vector(31 downto 0);
     signal sig_int_timer    : std_logic;
     signal sig_uart_rx_int  : std_logic;
     signal sig_uart_tx_int  : std_logic;
+    
+    -- RTSNoC signals
+    signal sig_noc_reset    : std_logic;
+        --Ports 
+    signal sig_noc_nn_din   : std_logic_vector(37 downto 0);
+    signal sig_noc_nn_dout  : std_logic_vector(37 downto 0);
+    signal sig_noc_nn_wr    : std_logic;
+    signal sig_noc_nn_rd    : std_logic;
+    signal sig_noc_nn_wait  : std_logic;
+    signal sig_noc_nn_nd    : std_logic;
+    signal sig_noc_ne_din   : std_logic_vector(37 downto 0);
+    signal sig_noc_ne_dout  : std_logic_vector(37 downto 0);
+    signal sig_noc_ne_wr    : std_logic;
+    signal sig_noc_ne_rd    : std_logic;
+    signal sig_noc_ne_wait  : std_logic;
+    signal sig_noc_ne_nd    : std_logic;
+    signal sig_noc_ee_din   : std_logic_vector(37 downto 0);
+    signal sig_noc_ee_dout  : std_logic_vector(37 downto 0);
+    signal sig_noc_ee_wr    : std_logic;
+    signal sig_noc_ee_rd    : std_logic;
+    signal sig_noc_ee_wait  : std_logic;
+    signal sig_noc_ee_nd    : std_logic;
+        -- AXI port interrupt
+    signal sig_noc_int    : std_logic;
+    
+    -- Plasma signals
+    signal sig_intr    : std_logic;
 
 begin
 
@@ -432,7 +629,9 @@ begin
             s4_addr_w   => SLAVE4_ADDR_W, 
             s4_addr     => SLAVE4_ADDR,
             s5_addr_w   => SLAVE5_ADDR_W, 
-            s5_addr     => SLAVE5_ADDR)
+            s5_addr     => SLAVE5_ADDR,
+            s6_addr_w   => SLAVE6_ADDR_W, 
+            s6_addr     => SLAVE6_ADDR)
         port map(
             -- master write address channel
             m_awvalid_i => sig_m0_awvalid,
@@ -719,7 +918,8 @@ begin
     sig_irqs(1) <= sig_uart_rx_int;
     sig_irqs(2) <= sig_uart_tx_int;
     sig_irqs(10 downto 3) <= ext_int_i;
-    sig_irqs(31 downto 11) <= (others => '0');        
+    sig_irqs(11) <= sig_noc_int;
+    sig_irqs(31 downto 12) <= (others => '0');        
             
     pic: pic_axi4lite 
         port map(
@@ -747,5 +947,152 @@ begin
             -- Int
             irq_i  => sig_irqs,
             int_o  => sig_intr);
+            
+    
+    -- -----------------------------------------------------
+    -- Slave6 - SoC TDM
+    -- -----------------------------------------------------
+    rtsnoc_router_axi: rtsnoc_axi4lite_slave
+        generic map (
+            NOC_LOCAL_ADR   => NODE_AXI_ADDR, 
+            NOC_X           => ROUTER_X,
+            NOC_Y           => ROUTER_Y,
+            SOC_SIZE_X      => NET_SIZE_X_LOG2,
+            SOC_SIZE_Y      => NET_SIZE_Y_LOG2,
+            NOC_DATA_WIDTH  => NET_DATA_WIDTH)
+        port map(
+            -- System signals
+            clk_i       => clk_i,
+            axi_rst_i   => reset_i,
+            -- AXI signals
+            axi_awaddr_i    => sig_slaves_awaddr(6),
+            axi_awvalid_i   => sig_slaves_awvalid(6),
+            axi_awready_o   => sig_slaves_awready(6),
+            axi_wdata_i     => sig_slaves_wdata(6),
+            axi_wstrb_i     => sig_slaves_wstrb(6),
+            axi_wvalid_i    => sig_slaves_wvalid(6),
+            axi_wready_o    => sig_slaves_wready(6),
+            axi_bresp_o     => sig_slaves_bresp(6),
+            axi_bvalid_o    => sig_slaves_bvalid(6),
+            axi_bready_i    => sig_slaves_bready(6),
+            axi_araddr_i    => sig_slaves_araddr(6),
+            axi_arvalid_i   => sig_slaves_arvalid(6),
+            axi_arready_o   => sig_slaves_arready(6),
+            axi_rdata_o     => sig_slaves_rdata(6),
+            axi_rresp_o     => sig_slaves_rresp(6),
+            axi_rvalid_o    => sig_slaves_rvalid(6),
+            axi_rready_i    => sig_slaves_rready(6),
+            -- NoC signals
+            noc_reset_o => sig_noc_reset,
+            noc_din_o   => sig_noc_nn_din,
+            noc_dout_i  => sig_noc_nn_dout,
+            noc_wr_o    => sig_noc_nn_wr,
+            noc_rd_o    => sig_noc_nn_rd,
+            noc_wait_i  => sig_noc_nn_wait,
+            noc_nd_i    => sig_noc_nn_nd,
+            -- NoC int
+            noc_int_o   => sig_noc_int
+        );  
+    
+    
+    rtsnoc_router: ROUTER 
+        GENERIC MAP (
+            p_X         => conv_integer(ROUTER_X),
+            p_Y         => conv_integer(ROUTER_Y),
+            p_DATA      => NET_DATA_WIDTH,                    
+            p_SIZE_X    => NET_SIZE_X,
+            p_SIZE_Y    => NET_SIZE_Y)
+        PORT MAP(
+            i_CLK       => clk_i,
+            i_RST       => sig_noc_reset,
+            -- NORTH
+            i_DIN_NN    => sig_noc_nn_din,
+            o_DOUT_NN   => sig_noc_nn_dout,
+            i_WR_NN     => sig_noc_nn_wr,
+            i_RD_NN     => sig_noc_nn_rd,
+            o_WAIT_NN   => sig_noc_nn_wait,
+            o_ND_NN     => sig_noc_nn_nd,
+            -- NORTHEAST
+            i_DIN_NE    => sig_noc_ne_din,
+            o_DOUT_NE   => sig_noc_ne_dout,
+            i_WR_NE     => sig_noc_ne_wr,
+            i_RD_NE     => sig_noc_ne_rd,
+            o_WAIT_NE   => sig_noc_ne_wait,
+            o_ND_NE     => sig_noc_ne_nd,
+            -- EAST
+            i_DIN_EE    => sig_noc_ee_din,
+            o_DOUT_EE   => sig_noc_ee_dout,
+            i_WR_EE     => sig_noc_ee_wr,
+            i_RD_EE     => sig_noc_ee_rd,
+            o_WAIT_EE   => sig_noc_ee_wait,
+            o_ND_EE     => sig_noc_ee_nd,
+            -- SOUTHEAST
+            i_DIN_SE    => (others => '0'),
+            o_DOUT_SE   => open,
+            i_WR_SE     => '0',
+            i_RD_SE     => '0',
+            o_WAIT_SE   => open,
+            o_ND_SE     => open,
+            -- SOUTH
+            i_DIN_SS    => (others => '0'),
+            o_DOUT_SS   => open,
+            i_WR_SS     => '0',
+            i_RD_SS     => '0',
+            o_WAIT_SS   => open,
+            o_ND_SS     => open,
+            -- SOUTHWEST
+            i_DIN_SW    => (others => '0'),
+            o_DOUT_SW   => open,
+            i_WR_SW     => '0',
+            i_RD_SW     => '0',
+            o_WAIT_SW   => open,
+            o_ND_SW     => open,
+            -- WEST
+            i_DIN_WW    => (others => '0'),
+            o_DOUT_WW   => open,
+            i_WR_WW     => '0',
+            i_RD_WW     => '0',
+            o_WAIT_WW   => open,
+            o_ND_WW     => open,
+            -- NORTHWEST
+            i_DIN_NW    => (others => '0'),
+            o_DOUT_NW   => open,
+            i_WR_NW     => '0',
+            i_RD_NW     => '0',
+            o_WAIT_NW   => open,
+            o_ND_NW     => open 
+    );
+    
+    echo_node : rtsnoc_echo
+        generic map (
+            P0_ADDR          => NODE_ECHO_P0, 
+            P0_ADDR_X        => ROUTER_X,
+            P0_ADDR_Y        => ROUTER_Y,
+            P1_ADDR          => NODE_ECHO_P1, 
+            P1_ADDR_X        => ROUTER_X,
+            P1_ADDR_Y        => ROUTER_Y,
+            SOC_SIZE_X      => NET_SIZE_X_LOG2,
+            SOC_SIZE_Y      => NET_SIZE_Y_LOG2,
+            NOC_DATA_WIDTH  => NET_DATA_WIDTH)
+        port map(
+            -- System signals
+            clk_i       => clk_i,
+            rst_i       => sig_noc_reset,
+            -- NoC signals
+            p0_din_o   => sig_noc_ne_din,
+            p0_dout_i  => sig_noc_ne_dout,
+            p0_wr_o    => sig_noc_ne_wr,
+            p0_rd_o    => sig_noc_ne_rd,
+            p0_wait_i  => sig_noc_ne_wait,
+            p0_nd_i    => sig_noc_ne_nd,
+            p1_din_o   => sig_noc_ee_din,
+            p1_dout_i  => sig_noc_ee_dout,
+            p1_wr_o    => sig_noc_ee_wr,
+            p1_rd_o    => sig_noc_ee_rd,
+            p1_wait_i  => sig_noc_ee_wait,
+            p1_nd_i    => sig_noc_ee_nd
+        );
+
+            
 
 end RTL;
