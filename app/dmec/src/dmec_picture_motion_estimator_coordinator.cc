@@ -405,10 +405,3 @@ PictureMotionCounterpart * PictureMotionEstimator::match(MEC_Picture * currentPi
     		list0ReferencePictures, list0ReferencePicturesSize,
     		(MEC_Picture **) 0, 0);
 }
-
-
-int PictureMotionEstimator::pme_informMatchAlgorithm()
-{
-	return pictureMotionEstimatorWorkerProxy_informMatchAlgorithm();
-}
-

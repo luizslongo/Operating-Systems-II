@@ -29,28 +29,6 @@
 
 /// << singleton >>
 class PictureMotionEstimator {
-    unsigned int __pictureWidth;
-    unsigned int __pictureHeight;
-
-    BlockMode ** __modesAtLevelZero;
-    unsigned int __numberOfModesAtLevelZero;
-    PictureMotionCounterpart __pmc;
-
-    PictureMotionEstimatorWorkerProxy __workers[NUM_WORKERS];
-
-private:
-    PictureMotionEstimator();
-
-    ~PictureMotionEstimator();
-
-
-    PictureMotionEstimator(unsigned int pictureWidth,
-    		unsigned int pictureHeight,
-    		unsigned int max_reference_pictures);
-
-private:
-    static PictureMotionEstimator * __instance;
-
 
 public:
     static PictureMotionEstimator * getInstance(unsigned int pictureWidth,
@@ -73,9 +51,36 @@ public:
     		unsigned int list0ReferencePicturesSize);
 
 
-    int pme_informMatchAlgorithm();
+
+// Since this class is a singleton, constructors are private.
+private:
+    PictureMotionEstimator();
+
+    ~PictureMotionEstimator();
+
+    PictureMotionEstimator(unsigned int pictureWidth,
+    		unsigned int pictureHeight,
+    		unsigned int max_reference_pictures);
 
 
+// Singleton
+private:
+    static PictureMotionEstimator * __instance;
+
+
+// Instance attributes
+private:
+    unsigned int __pictureWidth;
+    unsigned int __pictureHeight;
+
+    BlockMode ** __modesAtLevelZero;
+    unsigned int __numberOfModesAtLevelZero;
+    PictureMotionCounterpart __pmc;
+
+    PictureMotionEstimatorWorkerProxy __workers[NUM_WORKERS];
+
+
+// Private methods
 private:
     unsigned int __computeTotalFlatPMC_Size(unsigned int list0ReferencePictureSize,
     		unsigned int list1ReferencePictureSize);
@@ -97,7 +102,6 @@ private:
     void pp_copyPartitioning(MEC_Picture * picture,
     		DMEC_Picture * partitions,
     		unsigned int numPartitions);
-
 
 };
 

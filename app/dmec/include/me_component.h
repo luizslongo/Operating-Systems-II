@@ -21,8 +21,8 @@
 #include "block_mode.h"
 #include "block_mode_factory.h"
 #include "block_mode_type.h"
-// not include (internal) #include <dummy_picture_motion_estimator.h"
-// not include (internal) #include <h264_modes_partitioner.h"
+// do not include (internal): dummy_picture_motion_estimator.h"
+// do not include (internal): h264_modes_partitioner.h"
 #include "mec_block.h"
 #include "mec_macroblock.h"
 #include "me_component_typedefs.h"
@@ -31,21 +31,16 @@
 #include "mec_sample.h"
 #include "modes_partitioner.h"
 #include "algorithm_ids.h"
-
 #include "vectorial_pmc.h"
-
 #include "reference_picture_motion_counterpart.h"
 #include "search_metric.h"
 #include "mec_search_window.h"
-
-
-/* Este trecho deverá ser substibuído por
- * #include <picture_motion_estimator.h"
- * (sem o uso de compilação condicional), se as interfaces forem
- * re-unificadas. (ver todo_doto...) */
-#if 1 /* DISTRIBUTED */
 #include "picture_motion_estimator_coordinator.h"
-#endif
+#include "abst_random.h"
+#include "abst_assert.h"
+#include "picture_partitioner.h"
+#include "reference_bma.h"
+#include "traits.h"
 
 #endif /* ME_COMPONENT_H_ */
 

@@ -116,12 +116,6 @@ void pictureMotionEstimatorWorker_run_db_sth(PictureMotionEstimatorWorker * work
 }
 
 
-int pictureMotionEstimatorWorker_informMatchAlgorithm(PictureMotionEstimatorWorker * worker)
-{
-    return ActualMatchAlgorithm::informMatchAlgorithm();
-}
-
-
 void __setUpWorker(PictureMotionEstimatorWorker * worker)
 {
     // cout << "__setUpWorker() 6\n";

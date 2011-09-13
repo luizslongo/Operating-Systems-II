@@ -713,10 +713,3 @@ void referenceBMA_match(FlatH264PMC_Node * out_flatPMC,
 #endif
 
 }
-
-
-int referenceBMA_informMatchAlgorithm()
-{
-    return REFERENCE_FULL_SEARCH_V01;
-}
-

@@ -38,12 +38,6 @@
 #define ENABLE_DEBUG_ASPECT 1
 
 
-enum ReferenceMatchAlgorithms {
-	FIXED_V1_MATCH_ALGORITHM,
-	XOR_V1_MATCH_ALGORITHM,
-	REFERENCE_FULL_SEARCH_V01
-};
-
 /* Configurations ----------------------------------------------------------- */
 
 // The Block Match Algorithm which will be used.

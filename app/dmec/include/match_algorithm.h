@@ -85,8 +85,6 @@ public:
     {}
 
 
-    static int informMatchAlgorithm();
-
 };
 
 #endif /* MATCH_ALGORITHM_H_ */

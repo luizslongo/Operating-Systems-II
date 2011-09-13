@@ -57,11 +57,17 @@ unsigned int pictureMotionEstimatorWorkerProxy_setWorkerToPerformMatch(PictureMo
 	    int lambda_factor
 	);
 
+
 void pictureMotionEstimatorWorkerProxy_waitWorkersAlive();
+
+
 void pictureMotionEstimatorWorkerProxy_signalMatchStart();
+
+
 void pictureMotionEstimatorWorkerProxy_signalCoordinatorDataReady();
+
+
 void pictureMotionEstimatorWorkerProxy_waitWorkerResultsDone();
-int pictureMotionEstimatorWorkerProxy_informMatchAlgorithm();
 
 
 #endif /* PICTURE_MOTION_ESTIMATOR_WORKER_PROXY_H_ */

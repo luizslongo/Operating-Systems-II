@@ -6,12 +6,6 @@
  *
 */
 
-//#include <stdio.h>
-//#include <stdlib.h>
-//#include <assert.h>
-//#include <stdbool.h>
-
-//#include <pthread.h>
 #include <thread.h>
 #include <machine.h>
 
@@ -206,12 +200,6 @@ void pictureMotionEstimatorWorkerProxy_waitWorkerResultsDone()
     for (i = 0; i < NUM_WORKERS; i++) {
         synchronizationManager_waitWorkerResultsDone(__workers[i].__parameters.workerID, i);
     }
-}
-
-
-int pictureMotionEstimatorWorkerProxy_informMatchAlgorithm()
-{
-    return pictureMotionEstimatorWorker_informMatchAlgorithm(&__workers[0]);
 }
 
 

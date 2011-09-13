@@ -462,7 +462,7 @@ int FullSearchMatchAlgorithm::___computeMacroblockID(int xInPicture, int yInPict
 
 /* Note:
  *  This algorithm should does not know about picture partition existence,
- *  although it operates over a picture partition (but this is done implycitly
+ *  although it operates over a picture partition (but this is done implicitly
  *  by using LazyPicture).
  *
  */
@@ -502,22 +502,11 @@ void FullSearchMatchAlgorithm::match_algorithm_biPredictionMatch(unsigned int wo
 
 #endif
 
-#if ENABLE_CHRONOMETER && ENABLE_CHRONO_MATCH_ALGORITHM_TIME
-    chrono_start(&chrono_match_algorithm_time);
-#endif
 
 #if 0 // trace
     printf("FullSeachMatchAlgorithmRV01::match_algorithm_biPredictionMatch worker:%u\n", workerID);
 #endif
 
-/* This dump works for a single match only,
- * using just one reference picture at list 0,
- * none at list1, and only one Worker.
- * */
-#if __FULLSEARCH_MATCH_ALGORITHM_RV01_DUMP // degub - begin
-    Dumper::dumpLazyPicture("lp_picture_w0_0.log", currentPicture);
-    Dumper::dumpLazyPicture("lp_picture_w0_1.log", &list0[0]);
-#endif // debug - end
 
     // __matchMacroblock - begin
 
@@ -575,18 +564,9 @@ void FullSearchMatchAlgorithm::match_algorithm_biPredictionMatch(unsigned int wo
 
     // __matchMacroblock - end
 
-#if ENABLE_CHRONOMETER && ENABLE_CHRONO_MATCH_ALGORITHM_TIME
-    chrono_pause(&chrono_match_algorithm_time);
-#endif
 
 }
 
 
 FullSearchMatchAlgorithm::~FullSearchMatchAlgorithm()
 {}
-
-
-int FullSearchMatchAlgorithm::informMatchAlgorithm()
-{
-    return FULLSEARCH_MATCH_ALGORITHM;
-}

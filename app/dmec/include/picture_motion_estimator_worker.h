@@ -28,7 +28,5 @@
 void pictureMotionEstimatorWorker_run_db_sth(PictureMotionEstimatorWorker * worker);
 
 
-int pictureMotionEstimatorWorker_informMatchAlgorithm(PictureMotionEstimatorWorker * worker);
-
 #endif
 

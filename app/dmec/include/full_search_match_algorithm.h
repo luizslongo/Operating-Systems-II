@@ -30,8 +30,6 @@ public:
     virtual ~FullSearchMatchAlgorithm();
 
 
-    static int informMatchAlgorithm();
-
 private:
     // Private methods
     inline int ___computeMacroblockID(int xInPicture, int yInPicture, unsigned int pictureWidth, unsigned int pictureHeight);
