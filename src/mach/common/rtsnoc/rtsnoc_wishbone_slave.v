@@ -1,13 +1,18 @@
 
 //Memory map
 //  0x00 - NoC header (RW)
-//  0x04 - NoC data (RW)
-//  0x08 - NoC Status 
+//  0x04 - NoC header (RW)
+//  0x08 - NoC header (RW)
+//  0x0C - NoC header (RW)
+//  0x10 - NoC header (RW)
+//  0x14 - NoC header (RW)
+//  0x18 - NoC data (RW)
+//  0x1C - NoC Status 
 //      wb_dat_o[0] = noc_wr_o (RW) (write here to transmit)
 //      wb_dat_o[1] = noc_rd_o (RW) (write here to ack an rx)
 //      wb_dat_o[2] = noc_wait_i (R-only)
 //      wb_dat_o[3] = noc_nd_i (R-only)
-//  0x0C - NoC local address (R-only)
+//  0x20 - NoC local address (R-only)
 //      wb_dat_o[2:0] = 0x0 (NN)
 //                      0x1 (NE)
 //                      0x2 (EE)
@@ -16,11 +21,11 @@
 //                      0x5 (SW)
 //                      0x6 (WW)
 //                      0x7 (NW)
-//  0x10 - NoC X address (R-only)
-//  0x14 - NoC Y address (R-only
-//  0x18 - NoC X size (Log2) (R-only)
-//  0x1C - NoC Y size (Log2) (R-only)
-//  0x20 - NoC data width (R-only)
+//  0x24 - NoC X address (R-only)
+//  0x28 - NoC Y address (R-only
+//  0x2C - NoC X size (Log2) (R-only)
+//  0x30 - NoC Y size (Log2) (R-only)
+//  0x34 - NoC data width (R-only)
 
 module rtsnoc_wishbone_slave (
     clk_i, rst_i,
@@ -124,17 +129,27 @@ module rtsnoc_wishbone_slave (
 	           if(wb_we_i) begin
 	               case (wb_adr_i[WB_ADDR_WIDTH-1:2])
                    0: begin
-                       {noc_tx_X_orig,
-                        noc_tx_Y_orig,
-                        noc_tx_local_orig, 
-                        noc_tx_X_dst,
-                        noc_tx_Y_dst,
-                        noc_tx_local_dst} <= wb_dat_i[NOC_HEADER_SIZE-1:0];
+                       noc_tx_local_dst <= wb_dat_i[2:0];
                    end
                    1: begin
-                       noc_tx_data <= wb_dat_i[NOC_DATA_WIDTH-1:0];
+                       noc_tx_Y_dst <= wb_dat_i[SOC_SIZE_Y-1:0];
                    end
                    2: begin
+                       noc_tx_X_dst <= wb_dat_i[SOC_SIZE_X-1:0];
+                   end
+                   3: begin
+                       noc_tx_local_orig <= wb_dat_i[2:0];
+                   end
+                   4: begin
+                       noc_tx_Y_orig <= wb_dat_i[SOC_SIZE_Y-1:0];
+                   end
+                   5: begin
+                       noc_tx_X_orig <= wb_dat_i[SOC_SIZE_X-1:0];
+                   end
+                   6: begin
+                       noc_tx_data <= wb_dat_i[NOC_DATA_WIDTH-1:0];
+                   end
+                   7: begin
                        noc_wr_o <= wb_dat_i[0];
                        noc_rd_o <= wb_dat_i[1];
                    end
@@ -146,43 +161,63 @@ module rtsnoc_wishbone_slave (
 	               case (wb_adr_i[WB_ADDR_WIDTH-1:2])
                    0: begin
                        wb_dat_o[WB_DATA_WIDTH-1:0] <= 
-                            {{WB_NOC_HEAD_DIFF{1'b0}},
-                             noc_rx_X_orig,
-                             noc_rx_Y_orig,
-                             noc_rx_local_orig, 
-                             noc_rx_X_dst,
-                             noc_rx_Y_dst,
+                            {{(WB_ADDR_WIDTH-2){1'b0}},
                              noc_rx_local_dst};
                    end
                    1: begin
-                       wb_dat_o[WB_DATA_WIDTH-1:0] <= {{WB_NOC_DATA_DIFF{1'b0}},noc_rx_data};
+                       wb_dat_o[WB_DATA_WIDTH-1:0] <= 
+                            {{(WB_ADDR_WIDTH-SOC_SIZE_Y){1'b0}},
+                             noc_rx_Y_dst};
                    end
                    2: begin
+                       wb_dat_o[WB_DATA_WIDTH-1:0] <= 
+                            {{(WB_ADDR_WIDTH-SOC_SIZE_X){1'b0}},
+                             noc_rx_X_dst};
+                   end
+                   3: begin
+                       wb_dat_o[WB_DATA_WIDTH-1:0] <= 
+                            {{(WB_ADDR_WIDTH-2){1'b0}},
+                             noc_rx_local_orig};
+                   end
+                   4: begin
+                       wb_dat_o[WB_DATA_WIDTH-1:0] <= 
+                            {{(WB_ADDR_WIDTH-SOC_SIZE_Y){1'b0}},
+                             noc_rx_Y_orig};
+                   end
+                   5: begin
+                       wb_dat_o[WB_DATA_WIDTH-1:0] <= 
+                            {{(WB_ADDR_WIDTH-SOC_SIZE_X){1'b0}},
+                             noc_rx_X_orig};
+                   end
+                   6: begin
+                       wb_dat_o[WB_DATA_WIDTH-1:0] <= {{WB_NOC_DATA_DIFF{1'b0}},noc_rx_data};
+                   end
+                   7: begin
                        wb_dat_o[0] <= noc_wr_o;
                        wb_dat_o[1] <= noc_rd_o;
                        wb_dat_o[2] <= noc_wait_i;
                        wb_dat_o[3] <= noc_nd_i;
                        wb_dat_o[WB_DATA_WIDTH-1:4] <= 0;
                    end
-                   3: begin
+                   8: begin
                        wb_dat_o[2:0] <= NOC_LOCAL_ADR;
                        wb_dat_o[WB_DATA_WIDTH-1:3] <= 0;
                    end
-                   4: begin
+                   9: begin
                        wb_dat_o[SOC_SIZE_X-1:0] <= NOC_X;
                        wb_dat_o[WB_DATA_WIDTH-1:SOC_SIZE_X] <= 0;
                    end
-                   5: begin
+                   10: begin
                        wb_dat_o[SOC_SIZE_Y-1:0] <= NOC_Y;
                        wb_dat_o[WB_DATA_WIDTH-1:SOC_SIZE_Y] <= 0;
                    end
-                   6: begin
+                   11: begin
                        wb_dat_o[WB_DATA_WIDTH-1:0] <= SOC_SIZE_X;
                    end
-                   7: begin
+                   12: begin
                        wb_dat_o[WB_DATA_WIDTH-1:0] <= SOC_SIZE_Y;
                    end
-                   8: begin
+                   13: begin
                        wb_dat_o[WB_DATA_WIDTH-1:0] <= NOC_DATA_WIDTH;
                    end
                    default: begin
