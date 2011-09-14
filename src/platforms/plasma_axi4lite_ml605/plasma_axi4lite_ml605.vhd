@@ -86,12 +86,12 @@ begin
     
 
     sig_gpio_i(11 downto 0)  <= dir_btns & gpio_sws;
-    sig_gpio_i(31 downto 12) <= (others => '0');
+    sig_gpio_i(31 downto 12) <= (others => '0'); --yields ERROR:PhysDesignRules:2053 ????????
 
     gpio_leds <= sig_gpio_o(7 downto 0);
     dir_leds  <= sig_gpio_o(11 downto 8);
     
     sig_ext_int(3 downto 0) <= dir_btns;
-    sig_ext_int(7 downto 4) <= (others => '0');
+    sig_ext_int(7 downto 4) <= (others => '0'); --yields ERROR:PhysDesignRules:2053 ????????
 
 end rtl;

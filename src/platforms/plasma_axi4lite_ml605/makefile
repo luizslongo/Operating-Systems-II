@@ -39,7 +39,9 @@ plasma_axi4lite_ml605.ucf
 coregen_generate: \
 clk_xlnx_100M_diff \
 ram_amba_128k \
-ram_amba_1024k
+ram_amba_1024k \
+chipscope_icon \
+chipscope_ila
 #axi4_ddr3_contrl
 
 coregen_clean:

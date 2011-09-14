@@ -35,7 +35,12 @@ public:
 		IRQ_GPIO_0		= 3,
 		IRQ_GPIO_1		= 4,
 		IRQ_GPIO_2		= 5,
-		IRQ_GPIO_3		= 6
+		IRQ_GPIO_3		= 6,
+		IRQ_GPIO_4      = 7,
+		IRQ_GPIO_5      = 8,
+		IRQ_GPIO_6      = 9,
+		IRQ_GPIO_7      = 10,
+		IRQ_NOC         = 11,
     };
 
 public:

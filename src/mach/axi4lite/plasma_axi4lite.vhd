@@ -486,6 +486,34 @@ architecture RTL of plasma_axi4lite is
             p1_wait_i  : in std_logic;
             p1_nd_i    : in std_logic);
     end component;
+    
+    -- Debugging cores
+    component chipscope_icon
+        PORT (
+            CONTROL0 : INOUT STD_LOGIC_VECTOR(35 DOWNTO 0));
+    end component;
+    
+    component chipscope_ila
+        PORT (
+            CONTROL : INOUT STD_LOGIC_VECTOR(35 DOWNTO 0);
+            CLK : IN STD_LOGIC;
+            TRIG0 : IN STD_LOGIC_VECTOR(63 DOWNTO 0);
+            TRIG1 : IN STD_LOGIC_VECTOR(63 DOWNTO 0);
+            TRIG2 : IN STD_LOGIC_VECTOR(0 TO 0);
+            TRIG3 : IN STD_LOGIC_VECTOR(0 TO 0);
+            TRIG4 : IN STD_LOGIC_VECTOR(0 TO 0);
+            TRIG5 : IN STD_LOGIC_VECTOR(0 TO 0);
+            TRIG6 : IN STD_LOGIC_VECTOR(0 TO 0);
+            TRIG7 : IN STD_LOGIC_VECTOR(0 TO 0);
+            TRIG8 : IN STD_LOGIC_VECTOR(0 TO 0);
+            TRIG9 : IN STD_LOGIC_VECTOR(0 TO 0);
+            TRIG10 : IN STD_LOGIC_VECTOR(0 TO 0);
+            TRIG11 : IN STD_LOGIC_VECTOR(0 TO 0);
+            TRIG12 : IN STD_LOGIC_VECTOR(0 TO 0);
+            TRIG13 : IN STD_LOGIC_VECTOR(0 TO 0);
+            TRIG14 : IN STD_LOGIC_VECTOR(0 TO 0);
+            TRIG15 : IN STD_LOGIC_VECTOR(0 TO 0));
+    end component;
 
 
     --  
@@ -607,6 +635,11 @@ architecture RTL of plasma_axi4lite is
     
     -- Plasma signals
     signal sig_intr    : std_logic;
+    
+    --Debug signals
+    signal sig_chipscope_ctrl       : std_logic_vector(35 downto 0);
+    signal sig_chipscope_trig_bus0  : std_logic_vector(63 downto 0);
+    signal sig_chipscope_trig_bus1  : std_logic_vector(63 downto 0);
 
 begin
 
@@ -1092,7 +1125,42 @@ begin
             p1_wait_i  => sig_noc_ee_wait,
             p1_nd_i    => sig_noc_ee_nd
         );
-
+        
+    
+    -- -----------------------------------------------------
+    -- Chipscope PRO Debugging cores
+    -- -----------------------------------------------------
+--    db_chipscope_icon : chipscope_icon
+--        port map (
+--            CONTROL0 => sig_chipscope_ctrl
+--        );
+--        
+--    db_chipscope_ila : chipscope_ila
+--        port map (
+--            CONTROL => sig_chipscope_ctrl,
+--            CLK => clk_i,
+--            TRIG0 => sig_chipscope_trig_bus0,
+--            TRIG1 => sig_chipscope_trig_bus1,
+--            TRIG2(0) => sig_noc_nn_wr,
+--            TRIG3(0) => sig_noc_ne_wr,
+--            TRIG4(0) => sig_noc_ee_wr,
+--            TRIG5(0) => sig_noc_nn_wait,
+--            TRIG6(0) => sig_noc_ne_wait,
+--            TRIG7(0) => sig_noc_ee_wait,
+--            TRIG8(0) => sig_noc_nn_nd,
+--            TRIG9(0) => sig_noc_ne_nd,
+--            TRIG10(0) => sig_noc_ee_nd,
+--            TRIG11(0) => sig_noc_nn_rd,
+--            TRIG12(0) => sig_noc_ne_rd,
+--            TRIG13(0) => sig_noc_ee_rd,
+--            TRIG14 => "0",
+--            TRIG15 => "0"
+--        );
+--        
+--    sig_chipscope_trig_bus0(37 downto 0) <= sig_noc_nn_din;
+--    sig_chipscope_trig_bus0(63 downto 38) <= (others => '0');
+--    sig_chipscope_trig_bus1(37 downto 0) <= sig_noc_nn_dout;
+--    sig_chipscope_trig_bus1(63 downto 38) <= (others => '0');        
             
 
 end RTL;
