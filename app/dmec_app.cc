@@ -83,13 +83,13 @@ void __testRandomicSimplePrediction(unsigned int timesMatch,
     		pictureHeight,
     		list0Size);
 
-    MEC_Picture * currentPicture = TestSupport::createA_Picture(pictureWidth, pictureHeight);
+    MEC_Picture * currentPicture = TestSupport::createRandomPicture(pictureWidth, pictureHeight);
 
     MEC_Picture ** list0 = (MEC_Picture **) calloc(list0Size, sizeof(MEC_Picture *));
 
     unsigned int i;
     for (i = 0; i < list0Size; ++ i) {
-    	list0[i] = TestSupport::createA_Picture(pictureWidth, pictureHeight);
+    	list0[i] = TestSupport::createRandomPicture(pictureWidth, pictureHeight);
     }
 
     PictureMotionCounterpart * pmc;
@@ -131,10 +131,10 @@ void __testFixedSimplePrediction(unsigned int timesMatch,
 {
     PictureMotionEstimator * pictureMotionEstimator = PictureMotionEstimator::getInstance(pictureWidth, pictureHeight, 1);
 
-    MEC_Picture * currentPicture = TestSupport::createSpecificPicture(pictureWidth, pictureHeight, dataSetCurrentPicture);
+    MEC_Picture * currentPicture = TestSupport::createPicture(pictureWidth, pictureHeight, dataSetCurrentPicture);
 
     MEC_Picture ** list0 = (MEC_Picture **) calloc(1, sizeof(MEC_Picture *));
-	list0[0] = TestSupport::createSpecificPicture(pictureWidth, pictureHeight, dataSetReferencePicture);
+	list0[0] = TestSupport::createPicture(pictureWidth, pictureHeight, dataSetReferencePicture);
 
     PictureMotionCounterpart * pmc;
 

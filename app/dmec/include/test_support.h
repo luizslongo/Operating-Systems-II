@@ -38,9 +38,9 @@ using namespace std;
 class TestSupport {
 
 public:
-	static MEC_Picture * createA_Picture(uint width, uint height);
+	static MEC_Picture * createRandomPicture(uint width, uint height);
 
-	static MEC_Picture * createSpecificPicture(unsigned int width, unsigned int height, unsigned int dataSet);
+	static MEC_Picture * createPicture(unsigned int width, unsigned int height, unsigned int dataSet);
 
 	static void testPictureMotionCounterpart(PictureMotionCounterpart * pmc,
 			unsigned int pictureWidth, unsigned int pictureHeight,
