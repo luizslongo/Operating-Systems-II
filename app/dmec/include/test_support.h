@@ -42,12 +42,11 @@ public:
 
 	static MEC_Picture * createSpecificPicture(unsigned int width, unsigned int height, unsigned int dataSet);
 
-	static void testPMC_and_beyond(PictureMotionCounterpart * pmc,
+	static void testPictureMotionCounterpart(PictureMotionCounterpart * pmc,
 			unsigned int pictureWidth, unsigned int pictureHeight,
 			MEC_Picture * currentPicture,
 			MEC_Picture ** list0, unsigned int list0Size,
-			MEC_Picture ** list1, unsigned int list1Size,
-			unsigned int max_reference_pictures);
+			unsigned int maxReferencePictures);
 
 private:
 	static MEC_Sample ** __createSampleMatrix(int width, int height);

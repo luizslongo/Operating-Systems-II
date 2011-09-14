@@ -103,11 +103,10 @@ void __testRandomicSimplePrediction(unsigned int timesMatch,
 		pmc = pictureMotionEstimator->match(currentPicture, list0, list0Size);
 
 		// assertions
-		TestSupport::testPMC_and_beyond(pmc,
+		TestSupport::testPictureMotionCounterpart(pmc,
 		        pictureWidth, pictureHeight,
 		        currentPicture,
 		        list0, list0Size,
-		        0, 0,
 		        max_reference_pictures);
 
     }
@@ -146,7 +145,7 @@ void __testFixedSimplePrediction(unsigned int timesMatch,
 #endif
 		pmc = pictureMotionEstimator->match(currentPicture, list0, 1);
 
-		TestSupport::testPMC_and_beyond(pmc, pictureWidth, pictureHeight, currentPicture, list0, 1, 0, 0, 1);
+		TestSupport::testPictureMotionCounterpart(pmc, pictureWidth, pictureHeight, currentPicture, list0, 1, 1);
     }
 
 	PictureMotionEstimator::deleteInstance();

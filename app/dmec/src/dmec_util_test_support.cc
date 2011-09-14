@@ -141,10 +141,6 @@ MEC_Sample ** TestSupport::__createSpecificSampleMatrix(int width, int height, u
 
 MEC_Picture * TestSupport::createA_Picture(uint width, uint height)
 {
-#if __TEST_SUPORT_GENERAL_TRACE
-	cout << "_createA_Picture\n";
-#endif
-
     MEC_Picture * picture;
 
     MEC_Sample ** Y_samples = __createSampleMatrix(width, height);
@@ -160,10 +156,6 @@ MEC_Picture * TestSupport::createA_Picture(uint width, uint height)
 
 MEC_Picture * TestSupport::createSpecificPicture(unsigned int width, unsigned int height, unsigned int dataSet)
 {
-#if __TEST_SUPORT_GENERAL_TRACE
-	printf("_createSpecificPicture\n");
-#endif
-
 	MEC_Picture * picture;
 
     MEC_Sample ** Y_samples = __createSpecificSampleMatrix(width, height, dataSet);
@@ -175,28 +167,12 @@ MEC_Picture * TestSupport::createSpecificPicture(unsigned int width, unsigned in
 
 
 /* Works with Vectorial PictureMotionCounterpart */
-void TestSupport::testPMC_and_beyond(PictureMotionCounterpart * pmc,
+void TestSupport::testPictureMotionCounterpart(PictureMotionCounterpart * pmc,
 		unsigned int pictureWidth, unsigned int pictureHeight,
 		MEC_Picture * currentPicture,
 		MEC_Picture ** list0, unsigned int list0Size,
-		MEC_Picture ** list1, unsigned int list1Size,
-		unsigned int max_reference_pictures)
+		unsigned int maxReferencePictures)
 {
-#if __TEST_SUPORT_GENERAL_TRACE &&  LINUX
-	cout << "rf_testPCM_and_beyond" << "\n";
-#endif
-
-#if __TEST_SUPORT_DETAILED_TRACE
-	cout << "...printing PMC\n";
-	printPictureMotionCounterpart(pmc);
-#endif
-
-	// partitioning
-	// trace("testPMC_and_beyond_v2");
-#if __MAIN_DETAILED_TRACE
-    cout << "testPMC_and_beyond_v2\n";
-#endif
-
 	unsigned int numPartitions[1];
 
 	enum PartitionModel partitionModel;
@@ -244,7 +220,7 @@ void TestSupport::testPMC_and_beyond(PictureMotionCounterpart * pmc,
 	setUpPictureMotionCounterpart(referencePMC,
 				pictureWidth,
 				pictureHeight,
-				max_reference_pictures);
+				maxReferencePictures);
 
 	pmc_set(referencePMC, list0, list0Size, 0, 0);
 
