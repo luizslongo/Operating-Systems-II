@@ -497,28 +497,26 @@ architecture RTL of plasma_axi4lite is
         PORT (
             CONTROL : INOUT STD_LOGIC_VECTOR(35 DOWNTO 0);
             CLK : IN STD_LOGIC;
-            TRIG0 : IN STD_LOGIC_VECTOR(63 DOWNTO 0);
-            TRIG1 : IN STD_LOGIC_VECTOR(63 DOWNTO 0);
-            TRIG2 : IN STD_LOGIC_VECTOR(0 TO 0);
-            TRIG3 : IN STD_LOGIC_VECTOR(0 TO 0);
-            TRIG4 : IN STD_LOGIC_VECTOR(0 TO 0);
-            TRIG5 : IN STD_LOGIC_VECTOR(0 TO 0);
-            TRIG6 : IN STD_LOGIC_VECTOR(0 TO 0);
-            TRIG7 : IN STD_LOGIC_VECTOR(0 TO 0);
-            TRIG8 : IN STD_LOGIC_VECTOR(0 TO 0);
-            TRIG9 : IN STD_LOGIC_VECTOR(0 TO 0);
-            TRIG10 : IN STD_LOGIC_VECTOR(0 TO 0);
-            TRIG11 : IN STD_LOGIC_VECTOR(0 TO 0);
-            TRIG12 : IN STD_LOGIC_VECTOR(0 TO 0);
-            TRIG13 : IN STD_LOGIC_VECTOR(0 TO 0);
-            TRIG14 : IN STD_LOGIC_VECTOR(0 TO 0);
-            TRIG15 : IN STD_LOGIC_VECTOR(0 TO 0));
-    end component;
+            DATA : IN STD_LOGIC_VECTOR(127 DOWNTO 0);
+            TRIG0 : IN STD_LOGIC_VECTOR(0 DOWNTO 0);
+            TRIG1 : IN STD_LOGIC_VECTOR(0 DOWNTO 0);
+            TRIG2 : IN STD_LOGIC_VECTOR(0 DOWNTO 0);
+            TRIG3 : IN STD_LOGIC_VECTOR(0 DOWNTO 0);
+            TRIG4 : IN STD_LOGIC_VECTOR(0 DOWNTO 0);
+            TRIG5 : IN STD_LOGIC_VECTOR(0 DOWNTO 0);
+            TRIG6 : IN STD_LOGIC_VECTOR(0 DOWNTO 0);
+            TRIG7 : IN STD_LOGIC_VECTOR(0 DOWNTO 0));
+
+end component;
 
 
     --  
     -- Signals
-    -- 
+    --
+    
+    --GND mng
+    signal sig_GND : std_logic;
+    --signal sig_GND64 : std_logic_vector(63 downto 0);  
 
     -- AMBA AXI4 signals
     -- Master
@@ -638,10 +636,22 @@ architecture RTL of plasma_axi4lite is
     
     --Debug signals
     signal sig_chipscope_ctrl       : std_logic_vector(35 downto 0);
-    signal sig_chipscope_trig_bus0  : std_logic_vector(63 downto 0);
-    signal sig_chipscope_trig_bus1  : std_logic_vector(63 downto 0);
+    signal sig_chipscope_data  : std_logic_vector(127 downto 0);
+    signal sig_chipscope_trig0  : std_logic_vector(0 downto 0);
+    signal sig_chipscope_trig1  : std_logic_vector(0 downto 0);
+    signal sig_chipscope_trig2  : std_logic_vector(0 downto 0);
+    signal sig_chipscope_trig3  : std_logic_vector(0 downto 0);
+    signal sig_chipscope_trig4  : std_logic_vector(0 downto 0);
+    signal sig_chipscope_trig5  : std_logic_vector(0 downto 0);
+    signal sig_chipscope_trig6  : std_logic_vector(0 downto 0);
+    signal sig_chipscope_trig7  : std_logic_vector(0 downto 0);
 
 begin
+
+    sig_GND <= '0';
+    --U_BUS_GND : for i in 0 to 63 generate begin
+    --    sig_GND64(i) <= sig_GND;
+    --end generate;
 
     -- -----------------------------------------------------
     -- AMBA interconnect
@@ -952,7 +962,7 @@ begin
     sig_irqs(2) <= sig_uart_tx_int;
     sig_irqs(10 downto 3) <= ext_int_i;
     sig_irqs(11) <= sig_noc_int;
-    sig_irqs(31 downto 12) <= (others => '0');        
+    sig_irqs(31 downto 12) <= (others => sig_GND);        
             
     pic: pic_axi4lite 
         port map(
@@ -1060,38 +1070,38 @@ begin
             o_WAIT_EE   => sig_noc_ee_wait,
             o_ND_EE     => sig_noc_ee_nd,
             -- SOUTHEAST
-            i_DIN_SE    => (others => '0'),
+            i_DIN_SE    => (others => sig_GND),
             o_DOUT_SE   => open,
-            i_WR_SE     => '0',
-            i_RD_SE     => '0',
+            i_WR_SE     => sig_GND,
+            i_RD_SE     => sig_GND,
             o_WAIT_SE   => open,
             o_ND_SE     => open,
             -- SOUTH
-            i_DIN_SS    => (others => '0'),
+            i_DIN_SS    => (others => sig_GND),
             o_DOUT_SS   => open,
-            i_WR_SS     => '0',
-            i_RD_SS     => '0',
+            i_WR_SS     => sig_GND,
+            i_RD_SS     => sig_GND,
             o_WAIT_SS   => open,
             o_ND_SS     => open,
             -- SOUTHWEST
-            i_DIN_SW    => (others => '0'),
+            i_DIN_SW    => (others => sig_GND),
             o_DOUT_SW   => open,
-            i_WR_SW     => '0',
-            i_RD_SW     => '0',
+            i_WR_SW     => sig_GND,
+            i_RD_SW     => sig_GND,
             o_WAIT_SW   => open,
             o_ND_SW     => open,
             -- WEST
-            i_DIN_WW    => (others => '0'),
+            i_DIN_WW    => (others => sig_GND),
             o_DOUT_WW   => open,
-            i_WR_WW     => '0',
-            i_RD_WW     => '0',
+            i_WR_WW     => sig_GND,
+            i_RD_WW     => sig_GND,
             o_WAIT_WW   => open,
             o_ND_WW     => open,
             -- NORTHWEST
-            i_DIN_NW    => (others => '0'),
+            i_DIN_NW    => (others => sig_GND),
             o_DOUT_NW   => open,
-            i_WR_NW     => '0',
-            i_RD_NW     => '0',
+            i_WR_NW     => sig_GND,
+            i_RD_NW     => sig_GND,
             o_WAIT_NW   => open,
             o_ND_NW     => open 
     );
@@ -1130,37 +1140,60 @@ begin
     -- -----------------------------------------------------
     -- Chipscope PRO Debugging cores
     -- -----------------------------------------------------
---    db_chipscope_icon : chipscope_icon
---        port map (
---            CONTROL0 => sig_chipscope_ctrl
---        );
---        
---    db_chipscope_ila : chipscope_ila
---        port map (
---            CONTROL => sig_chipscope_ctrl,
---            CLK => clk_i,
---            TRIG0 => sig_chipscope_trig_bus0,
---            TRIG1 => sig_chipscope_trig_bus1,
---            TRIG2(0) => sig_noc_nn_wr,
---            TRIG3(0) => sig_noc_ne_wr,
---            TRIG4(0) => sig_noc_ee_wr,
---            TRIG5(0) => sig_noc_nn_wait,
---            TRIG6(0) => sig_noc_ne_wait,
---            TRIG7(0) => sig_noc_ee_wait,
---            TRIG8(0) => sig_noc_nn_nd,
---            TRIG9(0) => sig_noc_ne_nd,
---            TRIG10(0) => sig_noc_ee_nd,
---            TRIG11(0) => sig_noc_nn_rd,
---            TRIG12(0) => sig_noc_ne_rd,
---            TRIG13(0) => sig_noc_ee_rd,
---            TRIG14 => "0",
---            TRIG15 => "0"
---        );
---        
---    sig_chipscope_trig_bus0(37 downto 0) <= sig_noc_nn_din;
---    sig_chipscope_trig_bus0(63 downto 38) <= (others => '0');
---    sig_chipscope_trig_bus1(37 downto 0) <= sig_noc_nn_dout;
---    sig_chipscope_trig_bus1(63 downto 38) <= (others => '0');        
+    db_chipscope_icon : chipscope_icon
+        port map (
+            CONTROL0 => sig_chipscope_ctrl
+        );
+        
+    db_chipscope_ila : chipscope_ila
+        port map (
+            CONTROL => sig_chipscope_ctrl,
+            CLK     => clk_i,
+            DATA    => sig_chipscope_data,
+            TRIG0 => sig_chipscope_trig0,
+            TRIG1 => sig_chipscope_trig1,
+            TRIG2 => sig_chipscope_trig2,
+            TRIG3 => sig_chipscope_trig3,
+            TRIG4 => sig_chipscope_trig4,
+            TRIG5 => sig_chipscope_trig5,
+            TRIG6 => sig_chipscope_trig6,
+            TRIG7 => sig_chipscope_trig7
+        );
+        
+    sig_chipscope_data(76 downto 0) <= 
+                          sig_noc_nn_din(31 downto 0) &
+                          sig_noc_nn_dout(31 downto 0) &
+                          sig_noc_nn_wr &
+                          sig_noc_nn_rd &
+                          sig_noc_nn_wait &
+                          sig_noc_nn_nd &
+                          sig_noc_int &
+                          sig_noc_ne_wr &
+                          sig_noc_ne_rd &
+                          sig_noc_ne_wait &
+                          sig_noc_ne_nd &
+                          sig_noc_ee_wr &
+                          sig_noc_ee_rd &
+                          sig_noc_ee_wait &
+                          sig_noc_ee_nd;
+    sig_chipscope_data(127 downto 77) <= (others => sig_GND);
+    
+    sig_chipscope_trig0(0) <= sig_noc_nn_wr;
+        
+    sig_chipscope_trig1(0) <= sig_noc_ne_wr;
+        
+    sig_chipscope_trig2(0) <= sig_noc_ee_wr;
+        
+    sig_chipscope_trig3(0) <= sig_noc_nn_nd;
+        
+    sig_chipscope_trig4(0) <= sig_noc_ne_nd;
+        
+    sig_chipscope_trig5(0) <= sig_noc_ee_nd;
+        
+    sig_chipscope_trig6(0) <= sig_noc_nn_rd;
+        
+    sig_chipscope_trig7(0) <= sig_noc_int;
+    
             
 
 end RTL;

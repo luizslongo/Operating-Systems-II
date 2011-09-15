@@ -39,10 +39,16 @@ NET "uart_rx"         LOC = "J24";    ## 25  on U34
 NET "clk_fpga_n"        LOC = "H9";     ## 5   on U11, 5 on U89 (DNP)
 NET "clk_fpga_p"        LOC = "J9";     ## 4   on U11, 4 on U89 (DNP)
 
+NET "clk_sma_n" LOC = "M22"; ## 1 on J55 SMA
+NET "clk_sma_p" LOC = "L23"; ## 1 on J58 SMA
+
 ########################
 ## Timing constraints ##
 ########################
 
 NET "clk_fpga_p" TNM_NET = "clk_fpga_p";
 TIMESPEC "TS_clk_fpga_p" = PERIOD "clk_fpga_p" 5 ns HIGH 50 %;
+
+NET "clk_sma_p" TNM_NET = "clk_sma_p";
+TIMESPEC "TS_clk_sma_p" = PERIOD "clk_sma_p" 5 ns HIGH 50 %;
 

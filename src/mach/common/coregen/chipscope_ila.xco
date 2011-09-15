@@ -1,7 +1,7 @@
 ##############################################################
 #
 # Xilinx Core Generator version 13.1
-# Date: Wed Sep 14 13:50:48 2011
+# Date: Thu Sep 15 17:28:56 2011
 #
 ##############################################################
 #
@@ -52,29 +52,29 @@ CSET counter_width_6=Disabled
 CSET counter_width_7=Disabled
 CSET counter_width_8=Disabled
 CSET counter_width_9=Disabled
-CSET data_port_width=0
-CSET data_same_as_trigger=true
+CSET data_port_width=128
+CSET data_same_as_trigger=false
 CSET disable_save_keep=false
 CSET enable_storage_qualification=true
 CSET enable_trigger_output_port=false
-CSET example_design=true
-CSET exclude_from_data_storage_1=false
-CSET exclude_from_data_storage_10=false
-CSET exclude_from_data_storage_11=false
-CSET exclude_from_data_storage_12=false
-CSET exclude_from_data_storage_13=false
-CSET exclude_from_data_storage_14=false
-CSET exclude_from_data_storage_15=false
-CSET exclude_from_data_storage_16=false
-CSET exclude_from_data_storage_2=false
-CSET exclude_from_data_storage_3=false
-CSET exclude_from_data_storage_4=false
-CSET exclude_from_data_storage_5=false
-CSET exclude_from_data_storage_6=false
-CSET exclude_from_data_storage_7=false
-CSET exclude_from_data_storage_8=false
-CSET exclude_from_data_storage_9=false
-CSET match_type_1=range_with_edges
+CSET example_design=false
+CSET exclude_from_data_storage_1=true
+CSET exclude_from_data_storage_10=true
+CSET exclude_from_data_storage_11=true
+CSET exclude_from_data_storage_12=true
+CSET exclude_from_data_storage_13=true
+CSET exclude_from_data_storage_14=true
+CSET exclude_from_data_storage_15=true
+CSET exclude_from_data_storage_16=true
+CSET exclude_from_data_storage_2=true
+CSET exclude_from_data_storage_3=true
+CSET exclude_from_data_storage_4=true
+CSET exclude_from_data_storage_5=true
+CSET exclude_from_data_storage_6=true
+CSET exclude_from_data_storage_7=true
+CSET exclude_from_data_storage_8=true
+CSET exclude_from_data_storage_9=true
+CSET match_type_1=basic_with_edges
 CSET match_type_10=extended_with_edges
 CSET match_type_11=extended_with_edges
 CSET match_type_12=extended_with_edges
@@ -82,15 +82,15 @@ CSET match_type_13=extended_with_edges
 CSET match_type_14=extended_with_edges
 CSET match_type_15=extended_with_edges
 CSET match_type_16=extended_with_edges
-CSET match_type_2=range_with_edges
-CSET match_type_3=extended_with_edges
-CSET match_type_4=extended_with_edges
-CSET match_type_5=extended_with_edges
-CSET match_type_6=extended_with_edges
-CSET match_type_7=extended_with_edges
-CSET match_type_8=extended_with_edges
+CSET match_type_2=basic_with_edges
+CSET match_type_3=basic_with_edges
+CSET match_type_4=basic_with_edges
+CSET match_type_5=basic_with_edges
+CSET match_type_6=basic_with_edges
+CSET match_type_7=basic_with_edges
+CSET match_type_8=basic_with_edges
 CSET match_type_9=extended_with_edges
-CSET match_units_1=1
+CSET match_units_1=2
 CSET match_units_10=1
 CSET match_units_11=1
 CSET match_units_12=1
@@ -98,19 +98,19 @@ CSET match_units_13=1
 CSET match_units_14=1
 CSET match_units_15=1
 CSET match_units_16=1
-CSET match_units_2=1
-CSET match_units_3=1
-CSET match_units_4=1
-CSET match_units_5=1
-CSET match_units_6=1
-CSET match_units_7=1
-CSET match_units_8=1
+CSET match_units_2=2
+CSET match_units_3=2
+CSET match_units_4=2
+CSET match_units_5=2
+CSET match_units_6=2
+CSET match_units_7=2
+CSET match_units_8=2
 CSET match_units_9=1
 CSET max_sequence_levels=1
-CSET number_of_trigger_ports=16
+CSET number_of_trigger_ports=8
 CSET sample_data_depth=16384
 CSET sample_on=Rising
-CSET trigger_port_width_1=64
+CSET trigger_port_width_1=1
 CSET trigger_port_width_10=1
 CSET trigger_port_width_11=1
 CSET trigger_port_width_12=1
@@ -118,7 +118,7 @@ CSET trigger_port_width_13=1
 CSET trigger_port_width_14=1
 CSET trigger_port_width_15=1
 CSET trigger_port_width_16=1
-CSET trigger_port_width_2=64
+CSET trigger_port_width_2=1
 CSET trigger_port_width_3=1
 CSET trigger_port_width_4=1
 CSET trigger_port_width_5=1
@@ -129,4 +129,4 @@ CSET trigger_port_width_9=1
 CSET use_rpms=true
 # END Parameters
 GENERATE
-# CRC: b05b295b
+# CRC: a29786eb

@@ -7,6 +7,9 @@ entity plasma_axi4lite_ml605 is
         
         clk_fpga_p   : in std_logic;
         clk_fpga_n   : in std_logic;
+        
+        clk_sma_p    : in std_logic;
+        clk_sma_n    : in std_logic;
 
         uart_rx      : in std_logic;
         uart_tx      : out std_logic;
@@ -21,8 +24,12 @@ architecture rtl of plasma_axi4lite_ml605 is
         port(
             CLK_IN1_P : in std_logic;
             CLK_IN1_N : in std_logic;
+            CLK_IN2_P : in std_logic;
+            CLK_IN2_N : in std_logic;
+            CLK_IN_SEL : in std_logic;
             CLK_OUT1  : out std_logic;
-            CLK_OUT2  : out std_logic);
+            CLK_OUT2  : out std_logic;
+            RESET     : in  std_logic);
     end component;
 
     component plasma_axi4lite is
@@ -45,6 +52,8 @@ architecture rtl of plasma_axi4lite_ml605 is
             axi_reset_o : out std_logic);
     end component;
 
+    signal sig_GND     : std_logic;
+    
     signal clk_100MHz  : std_logic;
     signal clk_50MHz   : std_logic;
     signal sig_reset   : std_logic;
@@ -56,13 +65,19 @@ architecture rtl of plasma_axi4lite_ml605 is
     signal sig_ext_int : std_logic_vector(7 downto 0);
    
 begin
-        
+    
+    sig_GND <= '0';
+           
     clock_manager: clk_xlnx_100M_diff
         port map(
-            CLK_IN1_P => clk_fpga_p,
-            CLK_IN1_N => clk_fpga_n,
-            CLK_OUT1  => clk_100MHz,
-            CLK_OUT2  => clk_50MHz);
+            CLK_IN1_P   => clk_fpga_p,
+            CLK_IN1_N   => clk_fpga_n,
+            CLK_IN2_P   => clk_sma_p,
+            CLK_IN2_N   => clk_sma_n,
+            CLK_IN_SEL  => '1',
+            CLK_OUT1    => clk_100MHz,
+            CLK_OUT2    => clk_50MHz,
+            RESET       => sig_GND);
 
     -- AXI reset is active-LOW
     -- Force a initial reset
@@ -86,12 +101,12 @@ begin
     
 
     sig_gpio_i(11 downto 0)  <= dir_btns & gpio_sws;
-    sig_gpio_i(31 downto 12) <= (others => '0'); --yields ERROR:PhysDesignRules:2053 ????????
+    sig_gpio_i(31 downto 12) <= (others => sig_GND);
 
     gpio_leds <= sig_gpio_o(7 downto 0);
     dir_leds  <= sig_gpio_o(11 downto 8);
     
     sig_ext_int(3 downto 0) <= dir_btns;
-    sig_ext_int(7 downto 4) <= (others => '0'); --yields ERROR:PhysDesignRules:2053 ????????
+    sig_ext_int(7 downto 4) <= (others => sig_GND);
 
 end rtl;
