@@ -6,9 +6,6 @@ module rtsnoc_echo_sm (
     );
    
    
-    parameter TX_ADDR = 0;
-    parameter TX_ADDR_X = 0;
-    parameter TX_ADDR_Y = 0;
     parameter SOC_SIZE_X = 1; //Log2
     parameter SOC_SIZE_Y = 1; //Log2
     parameter NOC_DATA_WIDTH = 16; 
@@ -86,9 +83,9 @@ module rtsnoc_echo_sm (
 	           if(nd_i) begin
 	               state <= STATE_WAITING;
 	               
-	               tx_X_orig <= TX_ADDR_X;
-                   tx_Y_orig <= TX_ADDR_Y;
-                   tx_local_orig <= TX_ADDR;
+	               tx_X_orig <= rx_X_dst;
+                   tx_Y_orig <= rx_Y_dst;
+                   tx_local_orig <= rx_local_dst;
                    tx_X_dst <= rx_X_orig;
                    tx_Y_dst <= rx_Y_orig;
                    tx_local_dst <= rx_local_orig;

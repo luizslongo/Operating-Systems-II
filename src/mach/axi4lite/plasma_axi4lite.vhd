@@ -72,20 +72,23 @@ architecture RTL of plasma_axi4lite is
     constant ROUTER_X           : std_logic_vector(NET_SIZE_X_LOG2-1 downto 0) := "0";
     constant ROUTER_Y           : std_logic_vector(NET_SIZE_X_LOG2-1 downto 0) := "0";
     constant NET_DATA_WIDTH     : integer := 16;
-        -- Local addresses
-    constant ROUTER_NN  : std_logic_vector(2 downto 0) := "000";  
-    constant ROUTER_NE  : std_logic_vector(2 downto 0) := "001";
-    constant ROUTER_EE  : std_logic_vector(2 downto 0) := "010";
-    constant ROUTER_SE  : std_logic_vector(2 downto 0) := "011";
-    constant ROUTER_SS  : std_logic_vector(2 downto 0) := "100";
-    constant ROUTER_SW  : std_logic_vector(2 downto 0) := "101";
-    constant ROUTER_WW  : std_logic_vector(2 downto 0) := "110";
-    constant ROUTER_NW  : std_logic_vector(2 downto 0) := "111";
+    constant ROUTER_N_PORTS     : integer := 8;
+        -- Local addresses (clockwise: nn, ne, ee, se, ss, sw, ww, nw)
+    type router_addr_type is array (0 to ROUTER_N_PORTS-1) of std_logic_vector(2 downto 0);
+    constant ROUTER_ADDRS   : router_addr_type := 
+            ("000", "001", "010", "011", "100", "101", "110", "111");
+    constant ROUTER_NN  : integer := 0;
+    constant ROUTER_NE  : integer := 1;
+    constant ROUTER_EE  : integer := 2;
+    constant ROUTER_SE  : integer := 3;
+    constant ROUTER_SS  : integer := 4;
+    constant ROUTER_SW  : integer := 5;
+    constant ROUTER_WW  : integer := 6;
+    constant ROUTER_NW  : integer := 7;
         -- NoC node addressess
-    constant NODE_AXI_ADDR  : std_logic_vector(2 downto 0) := ROUTER_NN;
-    constant NODE_ECHO_P0   : std_logic_vector(2 downto 0) := ROUTER_NE;
-    constant NODE_ECHO_P1   : std_logic_vector(2 downto 0) := ROUTER_EE;
-    
+    constant NODE_AXI_ADDR  : std_logic_vector(2 downto 0) := ROUTER_ADDRS(ROUTER_NN);
+    constant NODE_ECHO_P0   : std_logic_vector(2 downto 0) := ROUTER_ADDRS(ROUTER_WW);
+    constant NODE_ECHO_P1   : std_logic_vector(2 downto 0) := ROUTER_ADDRS(ROUTER_SS);
     
     -- 
     -- Declarations
@@ -461,12 +464,6 @@ architecture RTL of plasma_axi4lite is
     
     component rtsnoc_echo is
         generic (
-            P0_ADDR          : std_logic_vector(2 downto 0) := NODE_ECHO_P0; 
-            P0_ADDR_X        : std_logic_vector(NET_SIZE_X_LOG2-1 downto 0) := ROUTER_X;
-            P0_ADDR_Y        : std_logic_vector(NET_SIZE_Y_LOG2-1 downto 0) := ROUTER_Y;
-            P1_ADDR          : std_logic_vector(2 downto 0) := NODE_ECHO_P1; 
-            P1_ADDR_X        : std_logic_vector(NET_SIZE_X_LOG2-1 downto 0) := ROUTER_X;
-            P1_ADDR_Y        : std_logic_vector(NET_SIZE_Y_LOG2-1 downto 0) := ROUTER_Y;
             SOC_SIZE_X      : integer := NET_SIZE_X_LOG2;
             SOC_SIZE_Y      : integer := NET_SIZE_Y_LOG2;
             NOC_DATA_WIDTH  : integer := NET_DATA_WIDTH);
@@ -478,13 +475,13 @@ architecture RTL of plasma_axi4lite is
             p0_wr_o    : out std_logic;
             p0_rd_o    : out std_logic;
             p0_wait_i  : in std_logic;
-            p0_nd_i    : in std_logic;
-            p1_din_o   : out std_logic_vector(37 downto 0);
-            p1_dout_i  : in std_logic_vector(37 downto 0);
-            p1_wr_o    : out std_logic;
-            p1_rd_o    : out std_logic;
-            p1_wait_i  : in std_logic;
-            p1_nd_i    : in std_logic);
+            p0_nd_i    : in std_logic);
+            --p1_din_o   : out std_logic_vector(37 downto 0);
+            --p1_dout_i  : in std_logic_vector(37 downto 0);
+            --p1_wr_o    : out std_logic;
+            --p1_rd_o    : out std_logic;
+            --p1_wait_i  : in std_logic;
+            --p1_nd_i    : in std_logic);
     end component;
     
     -- Debugging cores
@@ -497,7 +494,7 @@ architecture RTL of plasma_axi4lite is
         PORT (
             CONTROL : INOUT STD_LOGIC_VECTOR(35 DOWNTO 0);
             CLK : IN STD_LOGIC;
-            DATA : IN STD_LOGIC_VECTOR(127 DOWNTO 0);
+            DATA : IN STD_LOGIC_VECTOR(255 DOWNTO 0);
             TRIG0 : IN STD_LOGIC_VECTOR(0 DOWNTO 0);
             TRIG1 : IN STD_LOGIC_VECTOR(0 DOWNTO 0);
             TRIG2 : IN STD_LOGIC_VECTOR(0 DOWNTO 0);
@@ -609,25 +606,15 @@ end component;
     
     -- RTSNoC signals
     signal sig_noc_reset    : std_logic;
-        --Ports 
-    signal sig_noc_nn_din   : std_logic_vector(37 downto 0);
-    signal sig_noc_nn_dout  : std_logic_vector(37 downto 0);
-    signal sig_noc_nn_wr    : std_logic;
-    signal sig_noc_nn_rd    : std_logic;
-    signal sig_noc_nn_wait  : std_logic;
-    signal sig_noc_nn_nd    : std_logic;
-    signal sig_noc_ne_din   : std_logic_vector(37 downto 0);
-    signal sig_noc_ne_dout  : std_logic_vector(37 downto 0);
-    signal sig_noc_ne_wr    : std_logic;
-    signal sig_noc_ne_rd    : std_logic;
-    signal sig_noc_ne_wait  : std_logic;
-    signal sig_noc_ne_nd    : std_logic;
-    signal sig_noc_ee_din   : std_logic_vector(37 downto 0);
-    signal sig_noc_ee_dout  : std_logic_vector(37 downto 0);
-    signal sig_noc_ee_wr    : std_logic;
-    signal sig_noc_ee_rd    : std_logic;
-    signal sig_noc_ee_wait  : std_logic;
-    signal sig_noc_ee_nd    : std_logic;
+        --Ports of the router (clockwise: nn, ne, ee, se, ss, sw, ww, nw) 
+    type noc_array_of_stdlogic is array(0 to ROUTER_N_PORTS-1) of std_logic;
+    type noc_array_of_stdvec38 is array(0 to ROUTER_N_PORTS-1) of std_logic_vector(37 downto 0);
+    signal sig_noc_din   : noc_array_of_stdvec38;
+    signal sig_noc_dout  : noc_array_of_stdvec38;
+    signal sig_noc_wr    : noc_array_of_stdlogic;
+    signal sig_noc_rd    : noc_array_of_stdlogic;
+    signal sig_noc_wait  : noc_array_of_stdlogic;
+    signal sig_noc_nd    : noc_array_of_stdlogic;
         -- AXI port interrupt
     signal sig_noc_int    : std_logic;
     
@@ -636,7 +623,7 @@ end component;
     
     --Debug signals
     signal sig_chipscope_ctrl       : std_logic_vector(35 downto 0);
-    signal sig_chipscope_data  : std_logic_vector(127 downto 0);
+    signal sig_chipscope_data  : std_logic_vector(255 downto 0);
     signal sig_chipscope_trig0  : std_logic_vector(0 downto 0);
     signal sig_chipscope_trig1  : std_logic_vector(0 downto 0);
     signal sig_chipscope_trig2  : std_logic_vector(0 downto 0);
@@ -997,7 +984,7 @@ begin
     -- -----------------------------------------------------
     rtsnoc_router_axi: rtsnoc_axi4lite_slave
         generic map (
-            NOC_LOCAL_ADR   => NODE_AXI_ADDR, 
+            NOC_LOCAL_ADR   => ROUTER_ADDRS(ROUTER_NN), 
             NOC_X           => ROUTER_X,
             NOC_Y           => ROUTER_Y,
             SOC_SIZE_X      => NET_SIZE_X_LOG2,
@@ -1025,16 +1012,16 @@ begin
             axi_rresp_o     => sig_slaves_rresp(6),
             axi_rvalid_o    => sig_slaves_rvalid(6),
             axi_rready_i    => sig_slaves_rready(6),
-            -- NoC signals
-            noc_reset_o => sig_noc_reset,
-            noc_din_o   => sig_noc_nn_din,
-            noc_dout_i  => sig_noc_nn_dout,
-            noc_wr_o    => sig_noc_nn_wr,
-            noc_rd_o    => sig_noc_nn_rd,
-            noc_wait_i  => sig_noc_nn_wait,
-            noc_nd_i    => sig_noc_nn_nd,
+            -- NoC interface
+            noc_din_o   => sig_noc_din(ROUTER_NN),
+            noc_dout_i  => sig_noc_dout(ROUTER_NN),
+            noc_wr_o    => sig_noc_wr(ROUTER_NN),
+            noc_rd_o    => sig_noc_rd(ROUTER_NN),
+            noc_wait_i  => sig_noc_wait(ROUTER_NN),
+            noc_nd_i    => sig_noc_nd(ROUTER_NN),
             -- NoC int
-            noc_int_o   => sig_noc_int
+            noc_int_o   => sig_noc_int,
+            noc_reset_o => sig_noc_reset
         );  
     
     
@@ -1049,71 +1036,65 @@ begin
             i_CLK       => clk_i,
             i_RST       => sig_noc_reset,
             -- NORTH
-            i_DIN_NN    => sig_noc_nn_din,
-            o_DOUT_NN   => sig_noc_nn_dout,
-            i_WR_NN     => sig_noc_nn_wr,
-            i_RD_NN     => sig_noc_nn_rd,
-            o_WAIT_NN   => sig_noc_nn_wait,
-            o_ND_NN     => sig_noc_nn_nd,
+            i_DIN_NN    => sig_noc_din(ROUTER_NN),
+            o_DOUT_NN   => sig_noc_dout(ROUTER_NN),
+            i_WR_NN     => sig_noc_wr(ROUTER_NN),
+            i_RD_NN     => sig_noc_rd(ROUTER_NN),
+            o_WAIT_NN   => sig_noc_wait(ROUTER_NN),
+            o_ND_NN     => sig_noc_nd(ROUTER_NN),
             -- NORTHEAST
-            i_DIN_NE    => sig_noc_ne_din,
-            o_DOUT_NE   => sig_noc_ne_dout,
-            i_WR_NE     => sig_noc_ne_wr,
-            i_RD_NE     => sig_noc_ne_rd,
-            o_WAIT_NE   => sig_noc_ne_wait,
-            o_ND_NE     => sig_noc_ne_nd,
+            i_DIN_NE    => sig_noc_din(ROUTER_NE),
+            o_DOUT_NE   => sig_noc_dout(ROUTER_NE),
+            i_WR_NE     => sig_noc_wr(ROUTER_NE),
+            i_RD_NE     => sig_noc_rd(ROUTER_NE),
+            o_WAIT_NE   => sig_noc_wait(ROUTER_NE),
+            o_ND_NE     => sig_noc_nd(ROUTER_NE),
             -- EAST
-            i_DIN_EE    => sig_noc_ee_din,
-            o_DOUT_EE   => sig_noc_ee_dout,
-            i_WR_EE     => sig_noc_ee_wr,
-            i_RD_EE     => sig_noc_ee_rd,
-            o_WAIT_EE   => sig_noc_ee_wait,
-            o_ND_EE     => sig_noc_ee_nd,
+            i_DIN_EE    => sig_noc_din(ROUTER_EE),
+            o_DOUT_EE   => sig_noc_dout(ROUTER_EE),
+            i_WR_EE     => sig_noc_wr(ROUTER_EE),
+            i_RD_EE     => sig_noc_rd(ROUTER_EE),
+            o_WAIT_EE   => sig_noc_wait(ROUTER_EE),
+            o_ND_EE     => sig_noc_nd(ROUTER_EE),
             -- SOUTHEAST
-            i_DIN_SE    => (others => sig_GND),
-            o_DOUT_SE   => open,
-            i_WR_SE     => sig_GND,
-            i_RD_SE     => sig_GND,
-            o_WAIT_SE   => open,
-            o_ND_SE     => open,
+            i_DIN_SE    => sig_noc_din(ROUTER_SE),
+            o_DOUT_SE   => sig_noc_dout(ROUTER_SE),
+            i_WR_SE     => sig_noc_wr(ROUTER_SE),
+            i_RD_SE     => sig_noc_rd(ROUTER_SE),
+            o_WAIT_SE   => sig_noc_wait(ROUTER_SE),
+            o_ND_SE     => sig_noc_nd(ROUTER_SE),
             -- SOUTH
-            i_DIN_SS    => (others => sig_GND),
-            o_DOUT_SS   => open,
-            i_WR_SS     => sig_GND,
-            i_RD_SS     => sig_GND,
-            o_WAIT_SS   => open,
-            o_ND_SS     => open,
+            i_DIN_SS    => sig_noc_din(ROUTER_SS),
+            o_DOUT_SS   => sig_noc_dout(ROUTER_SS),
+            i_WR_SS     => sig_noc_wr(ROUTER_SS),
+            i_RD_SS     => sig_noc_rd(ROUTER_SS),
+            o_WAIT_SS   => sig_noc_wait(ROUTER_SS),
+            o_ND_SS     => sig_noc_nd(ROUTER_SS),
             -- SOUTHWEST
-            i_DIN_SW    => (others => sig_GND),
-            o_DOUT_SW   => open,
-            i_WR_SW     => sig_GND,
-            i_RD_SW     => sig_GND,
-            o_WAIT_SW   => open,
-            o_ND_SW     => open,
+            i_DIN_SW    => sig_noc_din(ROUTER_SW),
+            o_DOUT_SW   => sig_noc_dout(ROUTER_SW),
+            i_WR_SW     => sig_noc_wr(ROUTER_SW),
+            i_RD_SW     => sig_noc_rd(ROUTER_SW),
+            o_WAIT_SW   => sig_noc_wait(ROUTER_SW),
+            o_ND_SW     => sig_noc_nd(ROUTER_SW),
             -- WEST
-            i_DIN_WW    => (others => sig_GND),
-            o_DOUT_WW   => open,
-            i_WR_WW     => sig_GND,
-            i_RD_WW     => sig_GND,
-            o_WAIT_WW   => open,
-            o_ND_WW     => open,
+            i_DIN_WW    => sig_noc_din(ROUTER_WW),
+            o_DOUT_WW   => sig_noc_dout(ROUTER_WW),
+            i_WR_WW     => sig_noc_wr(ROUTER_WW),
+            i_RD_WW     => sig_noc_rd(ROUTER_WW),
+            o_WAIT_WW   => sig_noc_wait(ROUTER_WW),
+            o_ND_WW     => sig_noc_nd(ROUTER_WW),
             -- NORTHWEST
-            i_DIN_NW    => (others => sig_GND),
-            o_DOUT_NW   => open,
-            i_WR_NW     => sig_GND,
-            i_RD_NW     => sig_GND,
-            o_WAIT_NW   => open,
-            o_ND_NW     => open 
+            i_DIN_NW    => sig_noc_din(ROUTER_NW),
+            o_DOUT_NW   => sig_noc_dout(ROUTER_NW),
+            i_WR_NW     => sig_noc_wr(ROUTER_NW),
+            i_RD_NW     => sig_noc_rd(ROUTER_NW),
+            o_WAIT_NW   => sig_noc_wait(ROUTER_NW),
+            o_ND_NW     => sig_noc_nd(ROUTER_NW) 
     );
     
     echo_node : rtsnoc_echo
         generic map (
-            P0_ADDR          => NODE_ECHO_P0, 
-            P0_ADDR_X        => ROUTER_X,
-            P0_ADDR_Y        => ROUTER_Y,
-            P1_ADDR          => NODE_ECHO_P1, 
-            P1_ADDR_X        => ROUTER_X,
-            P1_ADDR_Y        => ROUTER_Y,
             SOC_SIZE_X      => NET_SIZE_X_LOG2,
             SOC_SIZE_Y      => NET_SIZE_Y_LOG2,
             NOC_DATA_WIDTH  => NET_DATA_WIDTH)
@@ -1122,18 +1103,18 @@ begin
             clk_i       => clk_i,
             rst_i       => sig_noc_reset,
             -- NoC signals
-            p0_din_o   => sig_noc_ne_din,
-            p0_dout_i  => sig_noc_ne_dout,
-            p0_wr_o    => sig_noc_ne_wr,
-            p0_rd_o    => sig_noc_ne_rd,
-            p0_wait_i  => sig_noc_ne_wait,
-            p0_nd_i    => sig_noc_ne_nd,
-            p1_din_o   => sig_noc_ee_din,
-            p1_dout_i  => sig_noc_ee_dout,
-            p1_wr_o    => sig_noc_ee_wr,
-            p1_rd_o    => sig_noc_ee_rd,
-            p1_wait_i  => sig_noc_ee_wait,
-            p1_nd_i    => sig_noc_ee_nd
+            p0_din_o   => sig_noc_din(ROUTER_WW),
+            p0_dout_i  => sig_noc_dout(ROUTER_WW),
+            p0_wr_o    => sig_noc_wr(ROUTER_WW),
+            p0_rd_o    => sig_noc_rd(ROUTER_WW),
+            p0_wait_i  => sig_noc_wait(ROUTER_WW),
+            p0_nd_i    => sig_noc_nd(ROUTER_WW)
+            --p1_din_o   => sig_noc_din(ROUTER_SS),
+            --p1_dout_i  => sig_noc_dout(ROUTER_SS),
+            --p1_wr_o    => sig_noc_wr(ROUTER_SS),
+            --p1_rd_o    => sig_noc_rd(ROUTER_SS),
+            --p1_wait_i  => sig_noc_wait(ROUTER_SS),
+            --p1_nd_i    => sig_noc_nd(ROUTER_SS)
         );
         
     
@@ -1160,37 +1141,33 @@ begin
             TRIG7 => sig_chipscope_trig7
         );
         
-    sig_chipscope_data(76 downto 0) <= 
-                          sig_noc_nn_din(31 downto 0) &
-                          sig_noc_nn_dout(31 downto 0) &
-                          sig_noc_nn_wr &
-                          sig_noc_nn_rd &
-                          sig_noc_nn_wait &
-                          sig_noc_nn_nd &
-                          sig_noc_int &
-                          sig_noc_ne_wr &
-                          sig_noc_ne_rd &
-                          sig_noc_ne_wait &
-                          sig_noc_ne_nd &
-                          sig_noc_ee_wr &
-                          sig_noc_ee_rd &
-                          sig_noc_ee_wait &
-                          sig_noc_ee_nd;
-    sig_chipscope_data(127 downto 77) <= (others => sig_GND);
+    chipscope_data: for i in 0 to (ROUTER_N_PORTS-1) generate
+        sig_chipscope_data((i*4)+0) <= sig_noc_wr(i);
+        sig_chipscope_data((i*4)+1) <= sig_noc_rd(i);
+        sig_chipscope_data((i*4)+2) <= sig_noc_wait(i);
+        sig_chipscope_data((i*4)+3) <= sig_noc_nd(i);
+    end generate chipscope_data;
     
-    sig_chipscope_trig0(0) <= sig_noc_nn_wr;
+    sig_chipscope_data(69 downto 32) <= sig_noc_din(ROUTER_NN);
+    sig_chipscope_data(107 downto 70) <= sig_noc_dout(ROUTER_NN);
+    sig_chipscope_data(108) <= sig_noc_int;
+    sig_chipscope_data(146 downto 109) <= sig_noc_din(ROUTER_WW);
+    sig_chipscope_data(184 downto 147) <= sig_noc_dout(ROUTER_WW);
+    sig_chipscope_data(255 downto 185) <= (others => sig_GND);
+    
+    sig_chipscope_trig0(0) <= sig_noc_wr(ROUTER_NN);
         
-    sig_chipscope_trig1(0) <= sig_noc_ne_wr;
+    sig_chipscope_trig1(0) <= sig_noc_wr(ROUTER_WW);
         
-    sig_chipscope_trig2(0) <= sig_noc_ee_wr;
+    sig_chipscope_trig2(0) <= sig_noc_nd(ROUTER_NN);
         
-    sig_chipscope_trig3(0) <= sig_noc_nn_nd;
+    sig_chipscope_trig3(0) <= sig_noc_nd(ROUTER_WW);
         
-    sig_chipscope_trig4(0) <= sig_noc_ne_nd;
+    sig_chipscope_trig4(0) <= sig_noc_rd(ROUTER_NN);
         
-    sig_chipscope_trig5(0) <= sig_noc_ee_nd;
+    sig_chipscope_trig5(0) <= sig_noc_rd(ROUTER_WW);
         
-    sig_chipscope_trig6(0) <= sig_noc_nn_rd;
+    sig_chipscope_trig6(0) <= sig_noc_wait(ROUTER_NN);
         
     sig_chipscope_trig7(0) <= sig_noc_int;
     
