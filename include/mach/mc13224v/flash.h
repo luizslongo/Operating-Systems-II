@@ -20,7 +20,7 @@ private:
 
 public:
     enum nvmType_t {
-        gNvmType_NoNvm_c,
+        gNvmType_NoNvm_c = 0,
         gNvmType_SST_c,
         gNvmType_ST_c,
         gNvmType_ATM_c,
@@ -77,7 +77,7 @@ public:
     typedef void (*nvm_setsvar_func)(unsigned int zero_for_awesome);
     static nvm_setsvar_func nvm_setsvar;
 
-    typedef void (*nvm_erase_func)(nvmInterface_t nvmInterface, nvmType_t nvmType, unsigned int sectorBitfield);
+    typedef nvmErr_t (*nvm_erase_func)(nvmInterface_t nvmInterface, nvmType_t nvmType, unsigned int sectorBitfield);
     static nvm_erase_func nvm_erase;
 
     typedef void (*crm_set_spif_voltage_level_func)(

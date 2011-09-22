@@ -26,12 +26,14 @@ template <> struct Traits<MC13224V>: public Traits<MC13224V_Common>
 	static const unsigned int PRIORITY_HEAP_BASE_ADDR = 0;
 	static const unsigned int PRIORITY_HEAP_SIZE = 4;
 	static const unsigned int PRIORITY_HEAP_TOP_ADDR = PRIORITY_HEAP_BASE_ADDR + PRIORITY_HEAP_SIZE - 1;
+
+	static const bool flash_erase_checking = true;
 };
 
 template <> struct Traits<MC13224V_Battery>: public Traits<MC13224V_Common>
 {
     static const bool enabled = true;
-    static const bool buck_enabled = false;
+    static const bool buck_enabled = true;
     static const unsigned int buck_voltage_threshold = 2500; // in mV
     static const unsigned int frequency = 1; // in Hz
 };

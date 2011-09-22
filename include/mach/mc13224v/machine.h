@@ -54,6 +54,9 @@ public:
 
     static unsigned int clock() { return Traits<Machine>::CLOCK; }
 
+    static void check_flash_erase();
+    static void unbrick();
+
 private:
 
 };
@@ -67,5 +70,6 @@ __END_SYS
 #include "timer.h"
 #include "adc.h"
 #include "nic.h"
+#include "spi.h"
 
 #endif

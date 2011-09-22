@@ -9,12 +9,15 @@ void MC13224V::init()
 {
     db<Init, MC13224V>(TRC) << "MC13224V::init()\n";
 
+    if (Traits<MC13224V>::flash_erase_checking)
+        check_flash_erase();
+
     if (Traits<MC13224V_Battery>::enabled)
         MC13224V_Battery::init();
 
     if (Traits<MC13224V_NIC>::enabled)
 		MC13224V_NIC::init();
+
 }
 
 __END_SYS
-
