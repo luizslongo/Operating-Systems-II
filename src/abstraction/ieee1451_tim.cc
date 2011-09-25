@@ -94,6 +94,18 @@ void IEEE1451_Transducer::receive_msg(unsigned short trans_id, const char *messa
             stop();
             break;
 
+        case COMMAND_CLASS_START_READ_TRANSDUCER_CHANNEL_DATA_SET_SEGMENT:
+        {
+            start_read_data_set(trans_id);
+            break;
+        }
+
+        case COMMAND_CLASS_STOP_READ_TRANSDUCER_CHANNEL_DATA_SET_SEGMENT:
+        {
+            stop_read_data_set(trans_id);
+            break;
+        }
+
         default:
             db<IEEE1451_Transducer>(INF) << "IEEE1451_Transducer - Received invalid message\n";
             break;
@@ -104,7 +116,10 @@ void IEEE1451_Transducer::receive_msg(unsigned short trans_id, const char *messa
 
 IEEE1451_TIM *IEEE1451_TIM::_ieee1451 = 0;
 
-IEEE1451_TIM::IEEE1451_TIM() : _ncap_address((unsigned long) 0x0a00000b)
+IEEE1451_TIM::IEEE1451_TIM() :
+    _ncap_address((unsigned long) 0x0a00000b),
+    _udp_socket(UDP::Address(IP::instance()->address(), IEEE1451_PORT),
+                UDP::Address(Traits<IP>::BROADCAST, IEEE1451_PORT))
 {
 #ifdef __mc13224v__
     MC13224V_Transceiver::maca_off();
@@ -114,7 +129,8 @@ IEEE1451_TIM::IEEE1451_TIM() : _ncap_address((unsigned long) 0x0a00000b)
     _connected = false;
     _transducer = 0;
 
-    _channel.bind(IEEE1451_PORT);
+    _tcp_channel.bind(IEEE1451_PORT);
+    //_udp_socket.remote(UDP::Address(_ncap_address, IEEE1451_PORT));
     _send_buffer = new (kmalloc(MAX_BUFFER_SIZE)) char[MAX_BUFFER_SIZE];
 
     init_teds();
@@ -186,7 +202,7 @@ void IEEE1451_TIM::connect()
 
     TCP::Address addr(_ncap_address, IEEE1451_PORT);
 
-    while (!_channel.connect(addr))
+    while (!_tcp_channel.connect(addr))
         Alarm::delay(TIME_500_MS * 10);
 
     _connected = true;
@@ -201,7 +217,7 @@ void IEEE1451_TIM::disconnect()
 
     _connected = false;
 
-    while (!_channel.close())
+    while (!_tcp_channel.close())
         Alarm::delay(TIME_500_MS * 10);
 
 #ifdef __mc13224v__
@@ -317,10 +333,39 @@ void IEEE1451_TIM::send_msg(unsigned short trans_id, unsigned int length)
     out->_trans_id = trans_id;
     out->_length = length;
 
-    int ret = _channel.send(_send_buffer, size);
+    int ret = _tcp_channel.send(_send_buffer, size);
 
     if (ret < 0)
         db<IEEE1451_TIM>(INF) << "IEEE1451_TIM - Failed sending message (trans_id=" << trans_id << ", ret=" << ret << ")\n";
+    else
+        db<IEEE1451_TIM>(TRC) << "IEEE1451_TIM - Sent " << ret << " bytes (trans_id=" << trans_id << ")\n";
+
+    _send_buffer_mutex.unlock();
+}
+
+void IEEE1451_TIM::send_multimedia_msg(unsigned short trans_id, unsigned int length)
+{
+    db<IEEE1451_TIM>(TRC) << "IEEE1451_TIM - Sending multimedia message (trans_id=" << trans_id << ", len=" << length << ")\n";
+
+    if (!_connected)
+    {
+        db<IEEE1451_TIM>(INF) << "IEEE1451_TIM - TIM not connected (trans_id=" << trans_id << ")\n";
+        _send_buffer_mutex.unlock();
+        return;
+    }
+
+    unsigned int size = sizeof(IEEE1451_Packet) + length;
+
+    IEEE1451_Packet *out = (IEEE1451_Packet *) _send_buffer;
+
+    out->_trans_id = trans_id;
+    out->_length = length;
+
+    _udp_socket.remote(UDP::Address(_ncap_address, IEEE1451_PORT));
+    int ret = _udp_socket.send(_send_buffer, size);
+
+    if (ret < 0)
+        db<IEEE1451_TIM>(INF) << "IEEE1451_TIM - Failed sending multimedia message (trans_id=" << trans_id << ", ret=" << ret << ")\n";
     else
         db<IEEE1451_TIM>(TRC) << "IEEE1451_TIM - Sent " << ret << " bytes (trans_id=" << trans_id << ")\n";
 
@@ -344,7 +389,7 @@ int IEEE1451_TIM::receive(IEEE1451_TIM *tim, TCP::Channel *channel)
             tim->_connected_cond.wait();
 
 #ifdef __mc13224v__
-            Alarm::delay(TIME_500_MS * 4);
+            Alarm::delay(TIME_500_MS);
 #endif
             continue;
         }
@@ -353,10 +398,7 @@ int IEEE1451_TIM::receive(IEEE1451_TIM *tim, TCP::Channel *channel)
         ret = channel->receive(_receive_buffer, MAX_BUFFER_SIZE);
 
         if (ret < (int) sizeof(IEEE1451_Packet))
-        {
-            db<IEEE1451_TIM>(INF) << "IEEE1451_TIM - Failed receiving message\n";
             continue;
-        }
 
         in = (IEEE1451_Packet *) _receive_buffer;
         msg = _receive_buffer + sizeof(IEEE1451_Packet);
@@ -368,6 +410,18 @@ int IEEE1451_TIM::receive(IEEE1451_TIM *tim, TCP::Channel *channel)
     db<IEEE1451_TIM>(TRC) << "IEEE1451_TIM - Receive thread finished (ip=" << channel->remote().ip() << ")\n";
     kfree(_receive_buffer);
     return 0;
+}
+
+void IEEE1451_TIM::UDP_Socket::received(const UDP::Address &src, const char *data, unsigned int size)
+{
+    if (size < sizeof(IEEE1451_Packet))
+        return;
+
+    IEEE1451_Packet *in = (IEEE1451_Packet *) data;
+    const char *msg = data + sizeof(IEEE1451_Packet);
+
+    if (in->_length > 0)
+        IEEE1451_TIM::get_instance()->receive_msg(in->_trans_id, msg, in->_length);
 }
 
 __END_SYS

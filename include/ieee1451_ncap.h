@@ -66,7 +66,7 @@ public:
 class IEEE1451_NCAP //IEEE 1451.0 + IEEE 1451.5
 {
 private:
-    IEEE1451_NCAP() : _application(0), id_generator(1) {}
+    IEEE1451_NCAP();
 
 public:
     ~IEEE1451_NCAP();
@@ -74,6 +74,7 @@ public:
     static IEEE1451_NCAP *get_instance();
 
     unsigned short send_command(const IP::Address &destination, unsigned short channel_number, unsigned short command, const char *args = 0, unsigned int length = 0);
+    unsigned short send_multimedia_command(const IP::Address &destination, unsigned short channel_number, unsigned short command, const char *args = 0, unsigned int length = 0);
     void execute();
 
 private:
@@ -98,8 +99,17 @@ public:
     void set_application(Listener *application) { _application = application; }
 
 private:
-    Simple_List<Linked_Channel> _channels;
+    class UDP_Socket : public UDP::Socket
+    {
+    public:
+        UDP_Socket(const UDP::Address &local, const UDP::Address &remote) : UDP::Socket(local, remote) {}
+        void received(const UDP::Address &src, const char *data, unsigned int size);
+    };
+
+private:
     unsigned int id_generator;
+    Simple_List<Linked_Channel> _tcp_channels;
+    UDP_Socket _udp_socket;
 
     static IEEE1451_NCAP *_ieee1451;
 };

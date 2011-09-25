@@ -33,6 +33,8 @@ protected:
     virtual void start() = 0;
     virtual void stop() = 0;
     virtual void read_data_set(unsigned short trans_id, unsigned int offset) = 0;
+    virtual void start_read_data_set(unsigned short trans_id) {}
+    virtual void stop_read_data_set(unsigned short trans_id) {}
 };
 
 
@@ -54,27 +56,35 @@ public:
     void disconnect();
     void receive_msg(unsigned short trans_id, const char *message, unsigned int size);
     void send_msg(unsigned short trans_id, unsigned int length);
+    void send_multimedia_msg(unsigned short trans_id, unsigned int length);
 
     void set_transducer(IEEE1451_Transducer *transducer) { _transducer = transducer; }
     char *get_send_buffer() { _send_buffer_mutex.lock(); return _send_buffer + sizeof(IEEE1451_Packet); }
 
-    void execute() { _receive_thread = new Thread(receive, this, &_channel); Alarm::delay(TIME_500_MS); }
+    void execute() { _receive_thread = new Thread(receive, this, &_tcp_channel); Alarm::delay(TIME_500_MS); }
 
 private:
     static int receive(IEEE1451_TIM *tim, TCP::Channel *channel);
+
+    class UDP_Socket : public UDP::Socket
+    {
+    public:
+        UDP_Socket(const UDP::Address &local, const UDP::Address &remote) : UDP::Socket(local, remote) {}
+        void received(const UDP::Address &src, const char *data, unsigned int size);
+    };
 
 public:
     bool _connected;
     Condition _connected_cond;
 
 private:
-    TCP::Channel _channel;
+    IP::Address _ncap_address;
+    TCP::Channel _tcp_channel;
+    UDP_Socket _udp_socket;
     Thread *_receive_thread;
 
     char *_send_buffer;
     Mutex _send_buffer_mutex;
-
-    IP::Address _ncap_address;
 
     char *_meta_array;
     char *_tim_utn_array;

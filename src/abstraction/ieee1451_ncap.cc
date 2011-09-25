@@ -76,14 +76,20 @@ Linked_Channel::~Linked_Channel()
 
 IEEE1451_NCAP *IEEE1451_NCAP::_ieee1451 = 0;
 
+IEEE1451_NCAP::IEEE1451_NCAP() : _application(0), id_generator(1),
+    _udp_socket(UDP::Address(IP::instance()->address(), IEEE1451_PORT),
+                UDP::Address(IP::BROADCAST, IEEE1451_PORT))
+{
+}
+
 IEEE1451_NCAP::~IEEE1451_NCAP()
 {
-    Simple_List<Linked_Channel>::Iterator it = _channels.begin();
-    while (it != _channels.end())
+    Simple_List<Linked_Channel>::Iterator it = _tcp_channels.begin();
+    while (it != _tcp_channels.end())
     {
         Linked_Channel *chn = it->object();
         it++;
-        _channels.remove_head();
+        _tcp_channels.remove_head();
         delete chn;
     }
 }
@@ -133,10 +139,49 @@ unsigned short IEEE1451_NCAP::send_command(const IP::Address &destination, unsig
     return trans_id;
 }
 
+unsigned short IEEE1451_NCAP::send_multimedia_command(const IP::Address &destination, unsigned short channel_number, unsigned short command, const char *args, unsigned int length)
+{
+    unsigned short trans_id = id_generator++;
+
+    db<IEEE1451_NCAP>(TRC) << "IEEE1451_NCAP - Sending multimedia command (trans_id=" << trans_id << ", dst=" << destination << ", chn=" << channel_number << ", cmd=" << hex << command << ", len=" << length << ")\n";
+
+    Linked_Channel *channel = get_channel(destination);
+    if (!channel)
+    {
+        db<IEEE1451_NCAP>(INF) << "IEEE1451_NCAP - Failed to send multimedia command (trans_id=" << trans_id << ")\n";
+        return 0;
+    }
+
+    unsigned int size = sizeof(IEEE1451_Packet) + sizeof(IEEE1451_Command) + length;
+
+    IEEE1451_Packet *out = (IEEE1451_Packet *) channel->_send_buffer;
+    IEEE1451_Command *cmd = (IEEE1451_Command *) (channel->_send_buffer + sizeof(IEEE1451_Packet));
+    char *msg = channel->_send_buffer + sizeof(IEEE1451_Packet) + sizeof(IEEE1451_Command);
+
+    out->_trans_id = trans_id;
+    out->_length = length + sizeof(IEEE1451_Command);
+
+    cmd->_channel_number = channel_number;
+    cmd->_command = command;
+    cmd->_length = length;
+
+    memcpy(msg, args, length);
+
+    _udp_socket.remote(UDP::Address(destination, IEEE1451_PORT));
+    int ret = _udp_socket.send(channel->_send_buffer, size);
+
+    if (ret < 0)
+        db<IEEE1451_NCAP>(INF) << "IEEE1451_NCAP - Failed sending multimedia message (trans_id=" << trans_id << ", ret=" << ret << ")\n";
+    else
+        db<IEEE1451_NCAP>(TRC) << "IEEE1451_NCAP - Sent " << ret << " bytes (trans_id=" << trans_id << ")\n";
+
+    return trans_id;
+}
+
 Linked_Channel *IEEE1451_NCAP::get_channel(const IP::Address &addr)
 {
-    Simple_List<Linked_Channel>::Iterator it = _channels.begin();
-    while (it != _channels.end())
+    Simple_List<Linked_Channel>::Iterator it = _tcp_channels.begin();
+    while (it != _tcp_channels.end())
     {
         if (it->object()->remote().ip() == addr)
             return it->object();
@@ -169,12 +214,12 @@ void IEEE1451_NCAP::execute()
         if (chn)
         {
             db<IEEE1451_NCAP>(TRC) << "IEEE1451_NCAP - Deleting old channel...\n";
-            _channels.remove(&chn->_link);
+            _tcp_channels.remove(&chn->_link);
             chn->Linked_Channel::~Linked_Channel();
             delete chn;
         }
 
-        _channels.insert(&channel->_link);
+        _tcp_channels.insert(&channel->_link);
         channel->_send_buffer = new (kmalloc(MAX_BUFFER_SIZE)) char[MAX_BUFFER_SIZE];
         channel->_receive_buffer = new (kmalloc(MAX_BUFFER_SIZE)) char[MAX_BUFFER_SIZE];
         channel->_thread = new Thread(receive, this, channel, Thread::READY, Thread::NORMAL, 1100);
@@ -229,7 +274,7 @@ int IEEE1451_NCAP::receive(IEEE1451_NCAP *ncap, Linked_Channel *channel)
     db<IEEE1451_NCAP>(TRC) << "IEEE1451_NCAP - Channel closed (ip=" << channel->remote().ip() << ")\n";
 
     ncap->_application->report_tim_disconnected(channel->remote().ip());
-    ncap->_channels.remove(&channel->_link);
+    ncap->_tcp_channels.remove(&channel->_link);
 
     Functor_Handler<Linked_Channel> handler(&cleaner, channel);
     Alarm alarm(TIME_500_MS, &handler, 1);
@@ -243,6 +288,23 @@ void IEEE1451_NCAP::cleaner(Linked_Channel *channel)
 {
     channel->Linked_Channel::~Linked_Channel();
     delete channel;
+}
+
+void IEEE1451_NCAP::UDP_Socket::received(const UDP::Address &src, const char *data, unsigned int size)
+{
+    if (size < sizeof(IEEE1451_Packet))
+        return;
+
+    IEEE1451_Packet *in = (IEEE1451_Packet *) data;
+    const char *msg = data + sizeof(IEEE1451_Packet);
+
+    if (in->_length > 0)
+    {
+        if (in->_trans_id == 0)
+            IEEE1451_NCAP::get_instance()->_application->report_tim_initiated_message(src.ip(), msg, in->_length);
+        else
+            IEEE1451_NCAP::get_instance()->_application->report_command_reply(src.ip(), in->_trans_id, msg, in->_length);
+    }
 }
 
 __END_SYS

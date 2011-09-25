@@ -105,7 +105,7 @@ void IEEE1451_Temperature_Sensor::init_teds()
         _channel_array[120] = DATA_XMIT_COMMANDED;
 
     _temp_sensor_utn_array = new (kmalloc(43)) char[43];
-    _temp_sensor_utn_array[0] = 0x00; _temp_sensor_utn_array[1] = 0x00; _temp_sensor_utn_array[2] = 0x00; _temp_sensor_utn_array[3] = 0x27; _temp_sensor_utn_array[4] = TEDS_USER_TRANSDUCER_NAME_TEDS_ID; _temp_sensor_utn_array[5] = 0x04; _temp_sensor_utn_array[6] = 0x00; _temp_sensor_utn_array[7] = TEDS_USER_TRANSDUCER_NAME; _temp_sensor_utn_array[8] = 0x01; _temp_sensor_utn_array[9] = 0x01; _temp_sensor_utn_array[10] = TEDS_USER_TRANSDUCER_NAME_FORMAT; _temp_sensor_utn_array[11] = 0x01; _temp_sensor_utn_array[12] = 0x00; _temp_sensor_utn_array[13] = TEDS_USER_TRANSDUCER_NAME_TC_NAME; _temp_sensor_utn_array[14] = 0x1a; _temp_sensor_utn_array[15] = 0x4f; _temp_sensor_utn_array[16] = 0x6e; _temp_sensor_utn_array[17] = 0x62; _temp_sensor_utn_array[18] = 0x6f; _temp_sensor_utn_array[19] = 0x61; _temp_sensor_utn_array[20] = 0x72; _temp_sensor_utn_array[21] = 0x64; _temp_sensor_utn_array[22] = 0x20; _temp_sensor_utn_array[23] = 0x54; _temp_sensor_utn_array[24] = 0x65; _temp_sensor_utn_array[25] = 0x6d; _temp_sensor_utn_array[26] = 0x70; _temp_sensor_utn_array[27] = 0x65; _temp_sensor_utn_array[28] = 0x72; _temp_sensor_utn_array[29] = 0x61; _temp_sensor_utn_array[30] = 0x74; _temp_sensor_utn_array[31] = 0x75; _temp_sensor_utn_array[32] = 0x72; _temp_sensor_utn_array[33] = 0x65; _temp_sensor_utn_array[34] = 0x20; _temp_sensor_utn_array[35] = 0x53; _temp_sensor_utn_array[36] = 0x65; _temp_sensor_utn_array[37] = 0x6e; _temp_sensor_utn_array[38] = 0x73; _temp_sensor_utn_array[39] = 0x6f; _temp_sensor_utn_array[40] = 0x72; _temp_sensor_utn_array[41] = 0xf5; _temp_sensor_utn_array[42] = 0x92; //checksum errado
+    _temp_sensor_utn_array[0] = 0x00; _temp_sensor_utn_array[1] = 0x00; _temp_sensor_utn_array[2] = 0x00; _temp_sensor_utn_array[3] = 0x27; _temp_sensor_utn_array[4] = TEDS_USER_TRANSDUCER_NAME_TEDS_ID; _temp_sensor_utn_array[5] = 0x04; _temp_sensor_utn_array[6] = 0x00; _temp_sensor_utn_array[7] = TEDS_USER_TRANSDUCER_NAME; _temp_sensor_utn_array[8] = 0x01; _temp_sensor_utn_array[9] = 0x01; _temp_sensor_utn_array[10] = TEDS_USER_TRANSDUCER_NAME_FORMAT; _temp_sensor_utn_array[11] = 0x01; _temp_sensor_utn_array[12] = 0x00; _temp_sensor_utn_array[13] = TEDS_USER_TRANSDUCER_NAME_TC_NAME; _temp_sensor_utn_array[14] = 0x1a; _temp_sensor_utn_array[15] = 'O'; _temp_sensor_utn_array[16] = 'n'; _temp_sensor_utn_array[17] = 'b'; _temp_sensor_utn_array[18] = 'o'; _temp_sensor_utn_array[19] = 'a'; _temp_sensor_utn_array[20] = 'r'; _temp_sensor_utn_array[21] = 'd'; _temp_sensor_utn_array[22] = ' '; _temp_sensor_utn_array[23] = 'T'; _temp_sensor_utn_array[24] = 'e'; _temp_sensor_utn_array[25] = 'm'; _temp_sensor_utn_array[26] = 'p'; _temp_sensor_utn_array[27] = 'e'; _temp_sensor_utn_array[28] = 'r'; _temp_sensor_utn_array[29] = 'a'; _temp_sensor_utn_array[30] = 't'; _temp_sensor_utn_array[31] = 'u'; _temp_sensor_utn_array[32] = 'r'; _temp_sensor_utn_array[33] = 'e'; _temp_sensor_utn_array[34] = ' '; _temp_sensor_utn_array[35] = 'S'; _temp_sensor_utn_array[36] = 'e'; _temp_sensor_utn_array[37] = 'n'; _temp_sensor_utn_array[38] = 's'; _temp_sensor_utn_array[39] = 'o'; _temp_sensor_utn_array[40] = 'r'; _temp_sensor_utn_array[41] = 0xf5; _temp_sensor_utn_array[42] = 0x92; //checksum errado
     _temp_sensor_utn_teds = new IEEE1451_TEDS_TIM(_temp_sensor_utn_array, 43);
 }
 
@@ -200,7 +200,7 @@ int IEEE1451_Temperature_Sensor::execute()
         if ((_operation_mode == OM_TIM_IM) && (_pos == 0))
             tim->disconnect();
 
-        if ((_operation_mode == OM_TIM_IM_OPTIMIZED) && (_pos == 0))
+        else if ((_operation_mode == OM_TIM_IM_OPTIMIZED) && (_pos == 0))
         {
             tim->_connected = false;
 #ifdef __mc13224v__
@@ -231,9 +231,8 @@ int IEEE1451_Temperature_Sensor::execute()
         {
             tim->connect();
             _execute_thread->suspend();
-        }
 
-        if ((_operation_mode == OM_TIM_IM_OPTIMIZED) && (_pos == 0))
+        }else if ((_operation_mode == OM_TIM_IM_OPTIMIZED) && (_pos == 0))
         {
 #ifdef __mc13224v__
             MC13224V_Transceiver::maca_on();
