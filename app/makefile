@@ -2,8 +2,11 @@
 
 include ../makedefs
 
-ifeq ($(APPLICATION), dmec_app)
-SRC := $(shell find ./dmec/src/ -mindepth 1 -name "*.cc" -type f)
+APP_PATH := $(subst _app,,$(APPLICATION))
+ISDIR := $(shell test -d $(APP_PATH) && echo 0)
+
+ifeq ($(ISDIR), 0)
+SRC := $(shell find ./$(APP_PATH)/src/ -mindepth 1 -name "*.cc" -type f)
 OBJS := $(subst .cc,.do,$(SRC))
 else
 OBJS :=
