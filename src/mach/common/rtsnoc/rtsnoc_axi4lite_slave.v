@@ -24,6 +24,10 @@ module rtsnoc_axi4lite_slave(
     
     localparam ADDR_WIDTH = 32;
     localparam DATA_WIDTH = 32;
+    
+    localparam SOC_XY_SIZE = (2*SOC_SIZE_Y)+(2*SOC_SIZE_X);
+    localparam NOC_HEADER_SIZE = SOC_XY_SIZE + 6;
+    localparam NOC_BUS_SIZE = NOC_DATA_WIDTH + NOC_HEADER_SIZE;
         
         
     // Clk
@@ -51,10 +55,10 @@ module rtsnoc_axi4lite_slave(
     
     //NoC 
     output noc_int_o;
-    output [37:0] noc_din_o;
+    output [NOC_BUS_SIZE-1:0] noc_din_o;
     output noc_wr_o;
     output noc_rd_o;
-    input [37:0] noc_dout_i;
+    input [NOC_BUS_SIZE-1:0] noc_dout_i;
     input noc_wait_i;
     input noc_nd_i;
     output noc_reset_o;

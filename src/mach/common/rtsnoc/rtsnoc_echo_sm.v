@@ -19,10 +19,10 @@ module rtsnoc_echo_sm (
     input clk_i;
     input rst_i;
     
-    output [37:0] din_o;
+    output [NOC_BUS_SIZE-1:0] din_o;
     output reg wr_o;
     output reg rd_o;
-    input [37:0] dout_i;
+    input [NOC_BUS_SIZE-1:0] dout_i;
     input wait_i;
     input nd_i;
     

@@ -3,7 +3,16 @@
 # IP Sources
 ##################################################
 RTSNOC_SRCS = $(abspath $(addprefix $(BASE_DIR)/src/mach/common/rtsnoc/, \
-ROUTER.ngc \
+router/ARBITER_MACHINE.vhd \
+router/COMPARE.vhd \
+router/crossbar.vhd \
+router/FLOW_CONTROL.vhd \
+router/INPUT_INTERFACE.vhd \
+router/OUTPUT_INTERFACE.vhd \
+router/PIPELINE.vhd \
+router/PRIORITY.vhd \
+router/QUEUE.vhd \
+router/ROUTER.vhd \
 rtsnoc_wishbone_slave.v \
 rtsnoc_axi4lite_slave.v \
 rtsnoc_echo_sm.v \

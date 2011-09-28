@@ -19,17 +19,17 @@ module rtsnoc_echo (
     input clk_i;
     input rst_i;
     
-    output [37:0] p0_din_o;
+    output [NOC_BUS_SIZE-1:0] p0_din_o;
     output p0_wr_o;
     output p0_rd_o;
-    input [37:0] p0_dout_i;
+    input [NOC_BUS_SIZE-1:0] p0_dout_i;
     input p0_wait_i;
     input p0_nd_i;
     
-    //output [37:0] p1_din_o;
+    //output [NOC_BUS_SIZE-1:0] p1_din_o;
     //output p1_wr_o;
     //output p1_rd_o;
-    //input [37:0] p1_dout_i;
+    //input [NOC_BUS_SIZE-1:0] p1_dout_i;
     //input p1_wait_i;
     //input p1_nd_i;
     

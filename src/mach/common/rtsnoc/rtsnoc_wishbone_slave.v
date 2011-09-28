@@ -68,10 +68,10 @@ module rtsnoc_wishbone_slave (
     
     output reg noc_int_o;
   
-    output [37:0] noc_din_o;
+    output [NOC_BUS_SIZE-1:0] noc_din_o;
     output reg noc_wr_o;
     output reg noc_rd_o;
-    input [37:0] noc_dout_i;
+    input [NOC_BUS_SIZE-1:0] noc_dout_i;
     input noc_wait_i;
     input noc_nd_i;
     

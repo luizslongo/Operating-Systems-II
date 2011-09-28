@@ -67,12 +67,14 @@ architecture RTL of plasma_axi4lite is
         -- Dimension of the network and router address.
     constant NET_SIZE_X         : integer := 1;
     constant NET_SIZE_Y         : integer := 1;
-    constant NET_SIZE_X_LOG2    : integer := 1;
-    constant NET_SIZE_Y_LOG2    : integer := 1;
+    constant NET_SIZE_X_LOG2    : integer := 1; -- it should be "integer(ceil(log2(real(NET_SIZE_X))))" when NET_SIZE_X >= 2
+    constant NET_SIZE_Y_LOG2    : integer := 1; -- it should be "integer(ceil(log2(real(NET_SIZE_Y))))" when NET_SIZE_Y >= 2
     constant ROUTER_X           : std_logic_vector(NET_SIZE_X_LOG2-1 downto 0) := "0";
-    constant ROUTER_Y           : std_logic_vector(NET_SIZE_X_LOG2-1 downto 0) := "0";
+    constant ROUTER_Y           : std_logic_vector(NET_SIZE_Y_LOG2-1 downto 0) := "0";
     constant NET_DATA_WIDTH     : integer := 16;
     constant ROUTER_N_PORTS     : integer := 8;
+    constant NET_BUS_SIZE       : integer := NET_DATA_WIDTH+(2*NET_SIZE_X_LOG2)+(2*NET_SIZE_Y_LOG2)+6;
+    constant NET_BUS_SIZE_INV   : integer := 32 - NET_BUS_SIZE;
         -- Local addresses (clockwise: nn, ne, ee, se, ss, sw, ww, nw)
     type router_addr_type is array (0 to ROUTER_N_PORTS-1) of std_logic_vector(2 downto 0);
     constant ROUTER_ADDRS   : router_addr_type := 
@@ -366,57 +368,58 @@ architecture RTL of plasma_axi4lite is
             p_X         : integer := conv_integer(ROUTER_X);
             p_Y         : integer := conv_integer(ROUTER_Y);
             p_DATA      : integer := NET_DATA_WIDTH;                    
-            p_SIZE_X    : integer := NET_SIZE_X;
-            p_SIZE_Y    : integer := NET_SIZE_Y);  
+            p_SIZE_X    : integer := NET_SIZE_X_LOG2;
+            p_SIZE_Y    : integer := NET_SIZE_Y_LOG2);  
         PORT(
+            o_TESTE     : out std_logic_vector(NET_BUS_SIZE-1 downto 0);
             i_CLK       : IN std_logic;
             i_RST       : IN std_logic;
-            i_DIN_NN    : IN std_logic_vector(37 downto 0);
+            i_DIN_NN    : IN std_logic_vector(NET_BUS_SIZE-1 downto 0);
             i_WR_NN     : IN std_logic;
             i_RD_NN     : IN std_logic;
-            i_DIN_NE    : IN std_logic_vector(37 downto 0);
+            i_DIN_NE    : IN std_logic_vector(NET_BUS_SIZE-1 downto 0);
             i_WR_NE     : IN std_logic;
             i_RD_NE     : IN std_logic;
-            i_DIN_EE    : IN std_logic_vector(37 downto 0);
+            i_DIN_EE    : IN std_logic_vector(NET_BUS_SIZE-1 downto 0);
             i_WR_EE     : IN std_logic;
             i_RD_EE     : IN std_logic;
-            i_DIN_SE    : IN std_logic_vector(37 downto 0);
+            i_DIN_SE    : IN std_logic_vector(NET_BUS_SIZE-1 downto 0);
             i_WR_SE     : IN std_logic;
             i_RD_SE     : IN std_logic;
-            i_DIN_SS    : IN std_logic_vector(37 downto 0);
+            i_DIN_SS    : IN std_logic_vector(NET_BUS_SIZE-1 downto 0);
             i_WR_SS     : IN std_logic;
             i_RD_SS     : IN std_logic;
-            i_DIN_SW    : IN std_logic_vector(37 downto 0);
+            i_DIN_SW    : IN std_logic_vector(NET_BUS_SIZE-1 downto 0);
             i_WR_SW     : IN std_logic;
             i_RD_SW     : IN std_logic;
-            i_DIN_WW    : IN std_logic_vector(37 downto 0);
+            i_DIN_WW    : IN std_logic_vector(NET_BUS_SIZE-1 downto 0);
             i_WR_WW     : IN std_logic;
             i_RD_WW     : IN std_logic;
-            i_DIN_NW    : IN std_logic_vector(37 downto 0);
+            i_DIN_NW    : IN std_logic_vector(NET_BUS_SIZE-1 downto 0);
             i_WR_NW     : IN std_logic;
             i_RD_NW     : IN std_logic;          
-            o_DOUT_NN   : OUT std_logic_vector(37 downto 0);
+            o_DOUT_NN   : OUT std_logic_vector(NET_BUS_SIZE-1 downto 0);
             o_WAIT_NN   : OUT std_logic;
             o_ND_NN     : OUT std_logic;
-            o_DOUT_NE   : OUT std_logic_vector(37 downto 0);
+            o_DOUT_NE   : OUT std_logic_vector(NET_BUS_SIZE-1 downto 0);
             o_WAIT_NE   : OUT std_logic;
             o_ND_NE     : OUT std_logic;
-            o_DOUT_EE   : OUT std_logic_vector(37 downto 0);
+            o_DOUT_EE   : OUT std_logic_vector(NET_BUS_SIZE-1 downto 0);
             o_WAIT_EE   : OUT std_logic;
             o_ND_EE     : OUT std_logic;
-            o_DOUT_SE   : OUT std_logic_vector(37 downto 0);
+            o_DOUT_SE   : OUT std_logic_vector(NET_BUS_SIZE-1 downto 0);
             o_WAIT_SE   : OUT std_logic;
             o_ND_SE     : OUT std_logic;
-            o_DOUT_SS   : OUT std_logic_vector(37 downto 0);
+            o_DOUT_SS   : OUT std_logic_vector(NET_BUS_SIZE-1 downto 0);
             o_WAIT_SS   : OUT std_logic;
             o_ND_SS     : OUT std_logic;
-            o_DOUT_SW   : OUT std_logic_vector(37 downto 0);
+            o_DOUT_SW   : OUT std_logic_vector(NET_BUS_SIZE-1 downto 0);
             o_WAIT_SW   : OUT std_logic;
             o_ND_SW     : OUT std_logic;
-            o_DOUT_WW   : OUT std_logic_vector(37 downto 0);
+            o_DOUT_WW   : OUT std_logic_vector(NET_BUS_SIZE-1 downto 0);
             o_WAIT_WW   : OUT std_logic;
             o_ND_WW     : OUT std_logic;
-            o_DOUT_NW   : OUT std_logic_vector(37 downto 0);
+            o_DOUT_NW   : OUT std_logic_vector(NET_BUS_SIZE-1 downto 0);
             o_WAIT_NW   : OUT std_logic;
             o_ND_NW     : OUT std_logic
         );
@@ -453,8 +456,8 @@ architecture RTL of plasma_axi4lite is
             axi_rready_i          : in  std_logic;
             -- NoC signals
             noc_reset_o : out std_logic;
-            noc_din_o   : out std_logic_vector(37 downto 0);
-            noc_dout_i  : in std_logic_vector(37 downto 0);
+            noc_din_o   : out std_logic_vector(NET_BUS_SIZE-1 downto 0);
+            noc_dout_i  : in std_logic_vector(NET_BUS_SIZE-1 downto 0);
             noc_wr_o    : out std_logic;
             noc_rd_o    : out std_logic;
             noc_wait_i  : in std_logic;
@@ -470,14 +473,14 @@ architecture RTL of plasma_axi4lite is
         port(
             clk_i      : in std_logic;
             rst_i      : in std_logic;
-            p0_din_o   : out std_logic_vector(37 downto 0);
-            p0_dout_i  : in std_logic_vector(37 downto 0);
+            p0_din_o   : out std_logic_vector(NET_BUS_SIZE-1 downto 0);
+            p0_dout_i  : in std_logic_vector(NET_BUS_SIZE-1 downto 0);
             p0_wr_o    : out std_logic;
             p0_rd_o    : out std_logic;
             p0_wait_i  : in std_logic;
             p0_nd_i    : in std_logic);
-            --p1_din_o   : out std_logic_vector(37 downto 0);
-            --p1_dout_i  : in std_logic_vector(37 downto 0);
+            --p1_din_o   : out std_logic_vector(NET_BUS_SIZE-1 downto 0);
+            --p1_dout_i  : in std_logic_vector(NET_BUS_SIZE-1 downto 0);
             --p1_wr_o    : out std_logic;
             --p1_rd_o    : out std_logic;
             --p1_wait_i  : in std_logic;
@@ -608,7 +611,7 @@ end component;
     signal sig_noc_reset    : std_logic;
         --Ports of the router (clockwise: nn, ne, ee, se, ss, sw, ww, nw) 
     type noc_array_of_stdlogic is array(0 to ROUTER_N_PORTS-1) of std_logic;
-    type noc_array_of_stdvec38 is array(0 to ROUTER_N_PORTS-1) of std_logic_vector(37 downto 0);
+    type noc_array_of_stdvec38 is array(0 to ROUTER_N_PORTS-1) of std_logic_vector(NET_BUS_SIZE-1 downto 0);
     signal sig_noc_din   : noc_array_of_stdvec38;
     signal sig_noc_dout  : noc_array_of_stdvec38;
     signal sig_noc_wr    : noc_array_of_stdlogic;
@@ -632,6 +635,8 @@ end component;
     signal sig_chipscope_trig5  : std_logic_vector(0 downto 0);
     signal sig_chipscope_trig6  : std_logic_vector(0 downto 0);
     signal sig_chipscope_trig7  : std_logic_vector(0 downto 0);
+    
+    signal sig_noc_debug_aux    : std_logic_vector(NET_BUS_SIZE_INV-1 downto 0);
 
 begin
 
@@ -1030,9 +1035,10 @@ begin
             p_X         => conv_integer(ROUTER_X),
             p_Y         => conv_integer(ROUTER_Y),
             p_DATA      => NET_DATA_WIDTH,                    
-            p_SIZE_X    => NET_SIZE_X,
-            p_SIZE_Y    => NET_SIZE_Y)
+            p_SIZE_X    => NET_SIZE_X_LOG2,
+            p_SIZE_Y    => NET_SIZE_Y_LOG2)
         PORT MAP(
+            o_TESTE     => open,
             i_CLK       => clk_i,
             i_RST       => sig_noc_reset,
             -- NORTH
@@ -1148,12 +1154,14 @@ begin
         sig_chipscope_data((i*4)+3) <= sig_noc_nd(i);
     end generate chipscope_data;
     
-    sig_chipscope_data(69 downto 32) <= sig_noc_din(ROUTER_NN);
-    sig_chipscope_data(107 downto 70) <= sig_noc_dout(ROUTER_NN);
-    sig_chipscope_data(108) <= sig_noc_int;
-    sig_chipscope_data(146 downto 109) <= sig_noc_din(ROUTER_WW);
-    sig_chipscope_data(184 downto 147) <= sig_noc_dout(ROUTER_WW);
-    sig_chipscope_data(255 downto 185) <= (others => sig_GND);
+    sig_noc_debug_aux <= (others => sig_GND);
+    
+    sig_chipscope_data(63 downto 32) <= sig_noc_debug_aux & sig_noc_din(ROUTER_NN);
+    sig_chipscope_data(95 downto 64) <= sig_noc_debug_aux & sig_noc_dout(ROUTER_NN);
+    sig_chipscope_data(127 downto 96) <= sig_noc_debug_aux & sig_noc_din(ROUTER_WW);
+    sig_chipscope_data(159 downto 128) <= sig_noc_debug_aux & sig_noc_dout(ROUTER_WW);
+    sig_chipscope_data(160) <= sig_noc_int;
+    sig_chipscope_data(255 downto 161) <= (others => sig_GND);
     
     sig_chipscope_trig0(0) <= sig_noc_wr(ROUTER_NN);
         
