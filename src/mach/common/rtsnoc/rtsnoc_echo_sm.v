@@ -9,6 +9,8 @@ module rtsnoc_echo_sm (
     parameter SOC_SIZE_X = 1; //Log2
     parameter SOC_SIZE_Y = 1; //Log2
     parameter NOC_DATA_WIDTH = 16; 
+    parameter RX_ADDR = 3'b0;
+    parameter TX_ADDR = 3'b0;
     
     localparam SOC_XY_SIZE = (2*SOC_SIZE_Y)+(2*SOC_SIZE_X);
     localparam NOC_HEADER_SIZE = SOC_XY_SIZE + 6;
@@ -85,7 +87,7 @@ module rtsnoc_echo_sm (
 	               
 	               tx_X_orig <= rx_X_dst;
                    tx_Y_orig <= rx_Y_dst;
-                   tx_local_orig <= rx_local_dst;
+                   tx_local_orig <= TX_ADDR;//tx_local_orig <= rx_local_dst;
                    tx_X_dst <= rx_X_orig;
                    tx_Y_dst <= rx_Y_orig;
                    tx_local_dst <= rx_local_orig;

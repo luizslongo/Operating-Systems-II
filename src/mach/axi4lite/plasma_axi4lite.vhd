@@ -469,7 +469,9 @@ architecture RTL of plasma_axi4lite is
         generic (
             SOC_SIZE_X      : integer := NET_SIZE_X_LOG2;
             SOC_SIZE_Y      : integer := NET_SIZE_Y_LOG2;
-            NOC_DATA_WIDTH  : integer := NET_DATA_WIDTH);
+            NOC_DATA_WIDTH  : integer := NET_DATA_WIDTH;
+            P0_ADDR   : std_logic_vector(2 downto 0) := NODE_ECHO_P0;
+            P1_ADDR   : std_logic_vector(2 downto 0) := NODE_ECHO_P1);
         port(
             clk_i      : in std_logic;
             rst_i      : in std_logic;
@@ -478,13 +480,13 @@ architecture RTL of plasma_axi4lite is
             p0_wr_o    : out std_logic;
             p0_rd_o    : out std_logic;
             p0_wait_i  : in std_logic;
-            p0_nd_i    : in std_logic);
-            --p1_din_o   : out std_logic_vector(NET_BUS_SIZE-1 downto 0);
-            --p1_dout_i  : in std_logic_vector(NET_BUS_SIZE-1 downto 0);
-            --p1_wr_o    : out std_logic;
-            --p1_rd_o    : out std_logic;
-            --p1_wait_i  : in std_logic;
-            --p1_nd_i    : in std_logic);
+            p0_nd_i    : in std_logic;
+            p1_din_o   : out std_logic_vector(NET_BUS_SIZE-1 downto 0);
+            p1_dout_i  : in std_logic_vector(NET_BUS_SIZE-1 downto 0);
+            p1_wr_o    : out std_logic;
+            p1_rd_o    : out std_logic;
+            p1_wait_i  : in std_logic;
+            p1_nd_i    : in std_logic);
     end component;
     
     -- Debugging cores
@@ -1103,7 +1105,9 @@ begin
         generic map (
             SOC_SIZE_X      => NET_SIZE_X_LOG2,
             SOC_SIZE_Y      => NET_SIZE_Y_LOG2,
-            NOC_DATA_WIDTH  => NET_DATA_WIDTH)
+            NOC_DATA_WIDTH  => NET_DATA_WIDTH,
+            P0_ADDR         => NODE_ECHO_P0,
+            P1_ADDR         => NODE_ECHO_P1)
         port map(
             -- System signals
             clk_i       => clk_i,
@@ -1114,13 +1118,13 @@ begin
             p0_wr_o    => sig_noc_wr(ROUTER_WW),
             p0_rd_o    => sig_noc_rd(ROUTER_WW),
             p0_wait_i  => sig_noc_wait(ROUTER_WW),
-            p0_nd_i    => sig_noc_nd(ROUTER_WW)
-            --p1_din_o   => sig_noc_din(ROUTER_SS),
-            --p1_dout_i  => sig_noc_dout(ROUTER_SS),
-            --p1_wr_o    => sig_noc_wr(ROUTER_SS),
-            --p1_rd_o    => sig_noc_rd(ROUTER_SS),
-            --p1_wait_i  => sig_noc_wait(ROUTER_SS),
-            --p1_nd_i    => sig_noc_nd(ROUTER_SS)
+            p0_nd_i    => sig_noc_nd(ROUTER_WW),
+            p1_din_o   => sig_noc_din(ROUTER_SS),
+            p1_dout_i  => sig_noc_dout(ROUTER_SS),
+            p1_wr_o    => sig_noc_wr(ROUTER_SS),
+            p1_rd_o    => sig_noc_rd(ROUTER_SS),
+            p1_wait_i  => sig_noc_wait(ROUTER_SS),
+            p1_nd_i    => sig_noc_nd(ROUTER_SS)
         );
         
     
