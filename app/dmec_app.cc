@@ -113,10 +113,10 @@ void __testRandomicSimplePrediction(unsigned int timesMatch,
 
     // deletions
 	PictureMotionEstimator::deleteInstance();
-	delete_Picture(currentPicture);
+	delete currentPicture;
 
 	for (i = 0; i < list0Size; ++ i) {
-		delete_Picture(list0[i]);
+		delete list0[i];
 	}
 
 	free(list0);
@@ -149,7 +149,7 @@ void __testFixedSimplePrediction(unsigned int timesMatch,
     }
 
 	PictureMotionEstimator::deleteInstance();
-	delete_Picture(currentPicture);
-	delete_Picture(list0[0]);
+	delete currentPicture;
+	delete list0[0];
 	free(list0);
 }

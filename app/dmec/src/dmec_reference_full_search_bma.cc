@@ -200,71 +200,14 @@ static inline int SAD(MEC_Picture* currentPicture,
     int x, y;
     for (y = 0; y < blocksize_y; y++) {
         for (x = 0; x < blocksize_x; x++) {
-            currentSample = currentPicture->Y->samples
-            		[y + center_y]
-            		[x + center_x];
-
-#if __REFERENCE_FULL_SEARCH_BMA_V01_DUMP
-
-            /* d_dump_getSample_testSupportVersion("ts_get_sample_c.log",
-            		__occurenceGetSample, __maxOccurrencesGetSampleToBeRecorded,
-            		currentPicture, 'c',
+            currentSample = currentPicture->sample(
             		y + center_y,
-            		x + center_x,
-            		currentSample); */
-            d_dump_getSampleExtended("ts_get_sample_c.log",
-            		__occurenceGetSample, __maxOccurrencesGetSampleToBeRecorded,
-            		'c',
-            		y + center_y,
-            		x + center_x,
-            		currentSample,
-            		__occurenceComputeMVsAndCost,
-            		__occurenceSAD,
-            		center_x,
-            		center_y,
-            		candidate_x,
-            		candidate_y,
-            		__algorithm[workerID].partition_x,
-            		__algorithm[workerID].partition_y,
-            		__algorithm[workerID].partition_width,
-            		__algorithm[workerID].partition_height,
-            		mcost);
+            		x + center_x);
 
-            //__occurenceGetSample ++;
-#endif
-
-            referenceSample = referencePicture->Y->samples
-            		[y + candidate_y]
-            		[x + candidate_x];
-
-#if __REFERENCE_FULL_SEARCH_BMA_V01_DUMP
-            /*d_dump_getSample_testSupportVersion("ts_get_sample_r.log",
-            		__occurenceGetSample, __maxOccurrencesGetSampleToBeRecorded,
-					referencePicture, 'r',
-					y + candidate_y,
-					x + candidate_x,
-					referenceSample);*/
-
-            d_dump_getSampleExtended("ts_get_sample_r.log",
-            		__occurenceGetSample, __maxOccurrencesGetSampleToBeRecorded,
-            		'r',
+            referenceSample = referencePicture->sample(
             		y + candidate_y,
-            		x + candidate_x,
-            		referenceSample,
-					__occurenceComputeMVsAndCost,
-					__occurenceSAD,
-					center_x,
-					center_y,
-					candidate_x,
-					candidate_y,
-					__algorithm[workerID].partition_x,
-					__algorithm[workerID].partition_y,
-					__algorithm[workerID].partition_width,
-					__algorithm[workerID].partition_height,
-					mcost);
+            		x + candidate_x);
 
-            __occurenceGetSample ++;
-#endif
 
             int absDiff = currentSample - referenceSample < 0? referenceSample - currentSample : currentSample - referenceSample;
             mcost += absDiff;
@@ -298,67 +241,15 @@ static inline void __computeMVsAndCost(MEC_Picture * currentPicture,
             (int) candidate_y <= (int) (center_y + searchWindow->searchRange - __algorithm[workerID].block_height + 1);
             candidate_y++)
     {
-#if __REFERENCE_FULL_SEARCH_BMA_V01_DUMP
-    	d_dump_computeMVsAndCostInternalsV01("ts_compute_mvs_and_cost.log",
-    			__occurenceComputeMVsAndCost, __maxOccurrencesComputeMVsAndCostToBeRecorded,
-    			"for-y",
-    			"cy", center_y,
-    			"cany", candidate_y,
-    			"bh", __algorithm[workerID].block_height,
-    			"forinit", center_y - searchWindow->searchRange,
-    			"forcond", (int) candidate_y <= (int) (center_y + searchWindow->searchRange - __algorithm[workerID].block_height));
-#endif
-
         for (candidate_x = center_x - searchWindow->searchRange;
                 (int) candidate_x <= (int) (center_x + searchWindow->searchRange - __algorithm[workerID].block_width + 1);
                 candidate_x++)
         {
-#if __REFERENCE_FULL_SEARCH_BMA_V01_DUMP
-        	d_dump_computeMVsAndCostInternalsV01("ts_compute_mvs_and_cost.log",
-        			__occurenceComputeMVsAndCost, __maxOccurrencesComputeMVsAndCostToBeRecorded,
-        			"for-x",
-        			"cx", center_x,
-        			"canx", candidate_x,
-        			"bw", __algorithm[workerID].block_width,
-        			"forinit", center_x - searchWindow->searchRange,
-        			"forcond", (int) candidate_x <= (int) (center_x + searchWindow->searchRange - __algorithm[workerID].block_width));
-
-        	d_dump_computeMVsAndCostInternalsV02("ts_compute_mvs_and_cost.log",
-					__occurenceComputeMVsAndCost, __maxOccurrencesComputeMVsAndCostToBeRecorded,
-					"if#1",
-					"canx", candidate_x,
-					"cany", candidate_y,
-					"parx", __algorithm[workerID].partition_x,
-					"pary", __algorithm[workerID].partition_y,
-					"parw", __algorithm[workerID].partition_width,
-					"parh", __algorithm[workerID].partition_height,
-					"bw", __algorithm[workerID].block_width,
-					"bh", __algorithm[workerID].block_height,
-					"e1", candidate_x >= __algorithm[workerID].partition_x,
-					"e2", candidate_y >= __algorithm[workerID].partition_y,
-					"e3", candidate_x <= __algorithm[workerID].partition_x + __algorithm[workerID].partition_width - __algorithm[workerID].block_width,
-					"e4", candidate_y <= __algorithm[workerID].partition_y + __algorithm[workerID].partition_height - __algorithm[workerID].block_height);
-#endif
 
             if ((candidate_x >= __algorithm[workerID].partition_x)
                     && (candidate_y >= __algorithm[workerID].partition_y)
                     && (candidate_x <= __algorithm[workerID].partition_x + (int) __algorithm[workerID].partition_width - (int) __algorithm[workerID].block_width)
                     && (candidate_y <= __algorithm[workerID].partition_y + (int) __algorithm[workerID].partition_height - (int) __algorithm[workerID].block_height)) {
-
-#if __REFERENCE_FULL_SEARCH_BMA_V01_DUMP
-				d_dumpS("ts_compute_mvs_and_cost.log", __occurenceComputeMVsAndCost, __maxOccurrencesComputeMVsAndCostToBeRecorded, "if#1:true");
-				d_dumpS_SI8("ts_compute_mvs_and_cost.log",
-						__occurenceComputeMVsAndCost, __maxOccurrencesComputeMVsAndCostToBeRecorded,
-						"will call SAD using",
-						"SAD occurence", __occurenceSAD,
-						"bw", __algorithm[workerID].block_width,
-						"bh", __algorithm[workerID].block_height,
-						"cx", center_x,
-						"cy", center_y,
-						"canx", candidate_x,
-						"cany", candidate_y,
-						"mincost", min_cost);
-#endif
 
 
             	block_cost = SAD(currentPicture,
@@ -369,32 +260,7 @@ static inline void __computeMVsAndCost(MEC_Picture * currentPicture,
                         min_cost,
                         workerID);
 
-#if __REFERENCE_FULL_SEARCH_BMA_V01_DUMP
-				d_dump_sad_testSupportVersion("ts_sad.log",
-						__occurenceSAD, __maxOccurrencesSAD_ToBeRecorded,
-						currentPicture,
-						referencePicture,
-						__algorithm[workerID].block_width,
-						__algorithm[workerID].block_height,
-						center_x,
-						center_y,
-						candidate_x,
-						candidate_y,
-						min_cost,
-						block_cost);
-
-				__occurenceSAD++;
-#endif
-
                 if (min_cost > block_cost) {
-#if __REFERENCE_FULL_SEARCH_BMA_V01_DUMP
-                	d_dumpS_SI2("ts_compute_mvs_and_cost.log",
-                			__occurenceComputeMVsAndCost, __maxOccurrencesComputeMVsAndCostToBeRecorded,
-                			"if#2:true,min_cos will change",
-                			"from", min_cost,
-                			"to", block_cost);
-#endif
-
                     min_cost = block_cost;
                     x = candidate_x;
                     y = candidate_y;

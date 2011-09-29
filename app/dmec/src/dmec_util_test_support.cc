@@ -142,13 +142,9 @@ MEC_Sample ** TestSupport::__createSpecificSampleMatrix(int width, int height, u
 MEC_Picture * TestSupport::createRandomPicture(uint width, uint height)
 {
     MEC_Picture * picture;
-
     MEC_Sample ** Y_samples = __createSampleMatrix(width, height);
-    MEC_Sample ** Cb_samples = __createSampleMatrix(width / 2, height / 2);
-    MEC_Sample ** Cr_samples = __createSampleMatrix(width / 2, height / 2);
 
-    picture = new_Picture(width, height, width / 2, height / 2,
-    		Y_samples, Cb_samples, Cr_samples);
+    picture = new MEC_Picture(width, height, Y_samples);
 
     return picture;
 }
@@ -157,10 +153,9 @@ MEC_Picture * TestSupport::createRandomPicture(uint width, uint height)
 MEC_Picture * TestSupport::createPicture(unsigned int width, unsigned int height, unsigned int dataSet)
 {
 	MEC_Picture * picture;
-
     MEC_Sample ** Y_samples = __createSpecificSampleMatrix(width, height, dataSet);
 
-    picture = new_Picture(width, height, 0, 0, Y_samples, 0, 0);
+    picture = new MEC_Picture(width, height, Y_samples);
 
     return picture;
 }

@@ -26,33 +26,13 @@
 #include <utility/malloc.h>
 #endif
 
-MEC_Picture * new_Picture(
-		unsigned int width, unsigned int height,
-		unsigned int chroma_width, unsigned int chroma_height,
-		MEC_Sample ** Y_samples,
-		MEC_Sample ** Cb_samples,
-		MEC_Sample ** Cr_samples)
+MEC_Picture::MEC_Picture(unsigned int width, unsigned int height, MEC_Sample** samples)
 {
-    MEC_Picture * picture;
-    picture = (MEC_Picture *) malloc(sizeof(MEC_Picture));
-
-    picture->Y = new_Plane(width, height, Y_samples);
-
-#if ENABLE_CHROMA_PLANES
-    picture->Cb = new_Plane(chroma_width, chroma_height, Cb_samples);
-    picture->Cr = new_Plane(chroma_width, chroma_height, Cr_samples);
-#endif
-
-    return picture;
+	Y = new_Plane(width, height, samples);
 }
 
-void delete_Picture(MEC_Picture * _this) {
-    delete_Plane(_this->Y);
 
-#if ENABLE_CHROMA_PLANES
-    delete_Plane(_this->Cb);
-    delete_Plane(_this->Cr);
-#endif
-
-    free(_this);
+MEC_Picture::~MEC_Picture()
+{
+    delete_Plane(Y);
 }

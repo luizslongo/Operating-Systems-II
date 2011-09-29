@@ -14,35 +14,53 @@
  ******************************************************************************
  */
 
-#ifndef PICTURE_H_
-#define PICTURE_H_
+#ifndef MEC_PICTURE_H_
+#define MEC_PICTURE_H_
 
 #include "mec_plane.h"
 #include "traits.h"
+#include "picture.h"
 
-typedef struct {
-    MEC_Plane * Y;
+class MEC_Picture : public Picture {
 
-#if ENABLE_CHROMA_PLANES
-    MEC_Plane * Cb;
-    MEC_Plane * Cr;
-#endif
+public:
+	// Constructor and destructor
+	MEC_Picture(unsigned int width, unsigned int height, MEC_Sample** samples);
+
+	~MEC_Picture();
+
+
+	// General methods
+	MEC_Sample sample(int row, int column)
+	{
+		return Y->samples[row][column];
+	}
+
+
+	unsigned int width()
+	{
+		return Y->width;
+	}
+
+
+
+	unsigned int height()
+	{
+		return Y->height;
+	}
+
+
+
+
+// Instance variables
+private:
+	MEC_Plane* Y;
 
     /* MEC_Macroblock */
-	void *** macroblocks;
+	void*** macroblocks;
 
-} MEC_Picture;
+};
 
-MEC_Picture * new_Picture(
-		unsigned int width, unsigned int height,
-		unsigned int chroma_width, unsigned int chroma_height,
-		MEC_Sample ** Y_samples,
-		MEC_Sample ** Cb_samples,
-		MEC_Sample ** Cr_samples);
 
-void delete_Picture(MEC_Picture * _this);
-
-void mec_picture_dumpPicture(MEC_Picture * picture, char * fileName);
-
-#endif /* PICTURE_H_ */
+#endif /*MEC_PICTURE_H_ */
 
