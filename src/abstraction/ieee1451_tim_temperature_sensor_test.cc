@@ -198,9 +198,11 @@ int IEEE1451_Temperature_Sensor::execute()
     while (true)
     {
         if ((_operation_mode == OM_TIM_IM) && (_pos == 0))
+        {
+            Alarm::delay(TIME_500_MS);
             tim->disconnect();
 
-        else if ((_operation_mode == OM_TIM_IM_OPTIMIZED) && (_pos == 0))
+        }else if ((_operation_mode == OM_TIM_IM_OPTIMIZED) && (_pos == 0))
         {
             tim->_connected = false;
 #ifdef __mc13224v__

@@ -1,6 +1,6 @@
 #include <ieee1451_tim.h>
 #include <thread.h>
-//#include <g726.h>
+#include <g726.h>
 
 #ifdef __mc13224v__
     #include <mach/mc13224v/audio_sensor.h>
@@ -8,7 +8,7 @@
 
 #define SLEEP_PERIOD    TIME_500_MS * 50
 #define DATASET_SIZE    68 //30 pacotes/seg * (68 * 8 / 2) amostras/pacotes = 8160 amostras/seg
-#define SAMPLE_NO       DATASET_SIZE //DATASET_SIZE * 8 / 2 //2 bits per sample (16 kbit/s)
+#define SAMPLE_NO       DATASET_SIZE * 8 / 2 //2 bits per sample (16 kbit/s)
 
 __USING_SYS
 
@@ -55,10 +55,10 @@ private:
 #endif
 
     short *_audio_buffer;
-    /*char _law;
+    char _law;
     short _rate;
     short _reset;
-    G726_state _state;*/
+    G726_state _state;
 
     char _snd_buffer[DATASET_SIZE];
 
@@ -83,9 +83,9 @@ IEEE1451_Audio_Sensor::IEEE1451_Audio_Sensor(Operation_Mode operation_mode)
     _reading_data = false;
 
     _audio_buffer = new (kmalloc(SAMPLE_NO * sizeof(short))) short[SAMPLE_NO * sizeof(short)];
-    /*_law = '2'; //PCM
+    _law = '2'; //PCM
     _rate = 2; //2 bits per sample (16 kbit/s)
-    _reset = 1; //Yes*/
+    _reset = 1; //Yes
 
     init_teds();
 }
@@ -116,7 +116,7 @@ IEEE1451_Audio_Sensor::~IEEE1451_Audio_Sensor()
 void IEEE1451_Audio_Sensor::init_teds()
 {
     _channel_array = new (kmalloc(123)) char[123];
-    _channel_array[0] = 0x00; _channel_array[1] = 0x00; _channel_array[2] = 0x00; _channel_array[3] = 0x77; _channel_array[4] = TEDS_TRANSDUCER_CHANNEL_TEDS_ID; _channel_array[5] = 0x04; _channel_array[6] = 0x00; _channel_array[7] = TEDS_TRANSDUCER_CHANNEL; _channel_array[8] = 0x01; _channel_array[9] = 0x01; _channel_array[10] = TEDS_TRANSDUCER_CHANNEL_CAL_KEY; _channel_array[11] = 0x01; _channel_array[12] = 0x00; _channel_array[13] = TEDS_TRANSDUCER_CHANNEL_CHAN_TYPE; _channel_array[14] = 0x01; _channel_array[15] = 0x00; _channel_array[16] = TEDS_TRANSDUCER_CHANNEL_PHY_UNITS; _channel_array[17] = 0x06; _channel_array[18] = TEDS_TRANSDUCER_CHANNEL_UNIT_TYPE; _channel_array[19] = 0x01; _channel_array[20] = 0x00; _channel_array[21] = TEDS_TRANSDUCER_CHANNEL_AUDIO_STREAM; _channel_array[22] = 0x01; _channel_array[23] = 0x82; _channel_array[24] = TEDS_TRANSDUCER_CHANNEL_LOW_LIMIT; _channel_array[25] = 0x04; _channel_array[26] = 0x43; _channel_array[27] = 0x69; _channel_array[28] = 0x00; _channel_array[29] = 0x00; _channel_array[30] = TEDS_TRANSDUCER_CHANNEL_HI_LIMIT; _channel_array[31] = 0x04; _channel_array[32] = 0x43; _channel_array[33] = 0xb0; _channel_array[34] = 0x80; _channel_array[35] = 0x00; _channel_array[36] = TEDS_TRANSDUCER_CHANNEL_O_ERROR; _channel_array[37] = 0x04; _channel_array[38] = 0x3f; _channel_array[39] = 0x00; _channel_array[40] = 0x00; _channel_array[41] = 0x00; _channel_array[42] = TEDS_TRANSDUCER_CHANNEL_SELF_TEST; _channel_array[43] = 0x01; _channel_array[44] = 0x00; _channel_array[45] = TEDS_TRANSDUCER_CHANNEL_SAMPLE; _channel_array[46] = 0x09; _channel_array[47] = TEDS_TRANSDUCER_CHANNEL_DAT_MODEL; _channel_array[48] = 0x01; _channel_array[49] = 0x00; _channel_array[50] = TEDS_TRANSDUCER_CHANNEL_MOD_LENGTH; _channel_array[51] = 0x01; _channel_array[52] = 0x01; _channel_array[53] = TEDS_TRANSDUCER_CHANNEL_SIG_BITS; _channel_array[54] = 0x01; _channel_array[55] = 0x08; _channel_array[56] = TEDS_TRANSDUCER_CHANNEL_DATA_SET; _channel_array[57] = 0x1c; _channel_array[58] = TEDS_TRANSDUCER_CHANNEL_REPEATS; _channel_array[59] = 0x02; _channel_array[60] = 0x00; _channel_array[61] = SAMPLE_NO; _channel_array[62] = TEDS_TRANSDUCER_CHANNEL_S_ORIGIN; _channel_array[63] = 0x04; _channel_array[64] = 0x00; _channel_array[65] = 0x00; _channel_array[66] = 0x00; _channel_array[67] = 0x00; _channel_array[68] = TEDS_TRANSDUCER_CHANNEL_STEP_SIZE; _channel_array[69] = 0x04; _channel_array[70] = 0x41; _channel_array[71] = 0x20; _channel_array[72] = 0x00; _channel_array[73] = 0x00; _channel_array[74] = TEDS_TRANSDUCER_CHANNEL_S_UNITS; _channel_array[75] = 0x06; _channel_array[76] = TEDS_TRANSDUCER_CHANNEL_UNIT_TYPE; _channel_array[77] = 0x01; _channel_array[78] = 0x00; _channel_array[79] = TEDS_TRANSDUCER_CHANNEL_SECONDS; _channel_array[80] = 0x01; _channel_array[81] = 0x82; _channel_array[82] = TEDS_TRANSDUCER_CHANNEL_PRE_TRIGG; _channel_array[83] = 0x02; _channel_array[84] = 0x00; _channel_array[85] = 0x00; _channel_array[86] = TEDS_TRANSDUCER_CHANNEL_R_SETUP_T; _channel_array[87] = 0x04; _channel_array[88] = 0x00; _channel_array[89] = 0x00; _channel_array[90] = 0x00; _channel_array[91] = 0x00; _channel_array[92] = TEDS_TRANSDUCER_CHANNEL_S_PERIOD; _channel_array[93] = 0x04; _channel_array[94] = 0x00; _channel_array[95] = 0x00; _channel_array[96] = 0x00; _channel_array[97] = 0x00; _channel_array[98] = TEDS_TRANSDUCER_CHANNEL_WARM_UP_T; _channel_array[99] = 0x04; _channel_array[100] = 0x00; _channel_array[101] = 0x00; _channel_array[102] = 0x00; _channel_array[103] = 0x00; _channel_array[104] = TEDS_TRANSDUCER_CHANNEL_R_DELAY_T; _channel_array[105] = 0x04; _channel_array[106] = 0x3f; _channel_array[107] = 0x00; _channel_array[108] = 0x00; _channel_array[109] = 0x00; _channel_array[110] = TEDS_TRANSDUCER_CHANNEL_SAMPLING; _channel_array[111] = 0x06; _channel_array[112] = TEDS_TRANSDUCER_CHANNEL_SAMP_MODE; _channel_array[113] = 0x01; _channel_array[114] = 0x04; _channel_array[115] = TEDS_TRANSDUCER_CHANNEL_S_DEFAULT; _channel_array[116] = 0x01; _channel_array[117] = 0x04; _channel_array[118] = TEDS_TRANSDUCER_CHANNEL_DATA_XMIT; _channel_array[119] = 0x01; /*_channel_array[120] = 0x02;*/ _channel_array[121] = 0xf4; _channel_array[122] = 0xa5; //checksum errado
+    _channel_array[0] = 0x00; _channel_array[1] = 0x00; _channel_array[2] = 0x00; _channel_array[3] = 0x77; _channel_array[4] = TEDS_TRANSDUCER_CHANNEL_TEDS_ID; _channel_array[5] = 0x04; _channel_array[6] = 0x00; _channel_array[7] = TEDS_TRANSDUCER_CHANNEL; _channel_array[8] = 0x01; _channel_array[9] = 0x01; _channel_array[10] = TEDS_TRANSDUCER_CHANNEL_CAL_KEY; _channel_array[11] = 0x01; _channel_array[12] = 0x00; _channel_array[13] = TEDS_TRANSDUCER_CHANNEL_CHAN_TYPE; _channel_array[14] = 0x01; _channel_array[15] = 0x00; _channel_array[16] = TEDS_TRANSDUCER_CHANNEL_PHY_UNITS; _channel_array[17] = 0x06; _channel_array[18] = TEDS_TRANSDUCER_CHANNEL_UNIT_TYPE; _channel_array[19] = 0x01; _channel_array[20] = 0x00; _channel_array[21] = TEDS_TRANSDUCER_CHANNEL_AUDIO_STREAM; _channel_array[22] = 0x01; _channel_array[23] = 0x82; _channel_array[24] = TEDS_TRANSDUCER_CHANNEL_LOW_LIMIT; _channel_array[25] = 0x04; _channel_array[26] = 0x43; _channel_array[27] = 0x69; _channel_array[28] = 0x00; _channel_array[29] = 0x00; _channel_array[30] = TEDS_TRANSDUCER_CHANNEL_HI_LIMIT; _channel_array[31] = 0x04; _channel_array[32] = 0x43; _channel_array[33] = 0xb0; _channel_array[34] = 0x80; _channel_array[35] = 0x00; _channel_array[36] = TEDS_TRANSDUCER_CHANNEL_O_ERROR; _channel_array[37] = 0x04; _channel_array[38] = 0x3f; _channel_array[39] = 0x00; _channel_array[40] = 0x00; _channel_array[41] = 0x00; _channel_array[42] = TEDS_TRANSDUCER_CHANNEL_SELF_TEST; _channel_array[43] = 0x01; _channel_array[44] = 0x00; _channel_array[45] = TEDS_TRANSDUCER_CHANNEL_SAMPLE; _channel_array[46] = 0x09; _channel_array[47] = TEDS_TRANSDUCER_CHANNEL_DAT_MODEL; _channel_array[48] = 0x01; _channel_array[49] = 0x00; _channel_array[50] = TEDS_TRANSDUCER_CHANNEL_MOD_LENGTH; _channel_array[51] = 0x01; _channel_array[52] = 0x01; _channel_array[53] = TEDS_TRANSDUCER_CHANNEL_SIG_BITS; _channel_array[54] = 0x01; _channel_array[55] = 0x08; _channel_array[56] = TEDS_TRANSDUCER_CHANNEL_DATA_SET; _channel_array[57] = 0x1c; _channel_array[58] = TEDS_TRANSDUCER_CHANNEL_REPEATS; _channel_array[59] = 0x02; _channel_array[60] = (SAMPLE_NO >> 8) & 0xff; _channel_array[61] = SAMPLE_NO & 0xff; _channel_array[62] = TEDS_TRANSDUCER_CHANNEL_S_ORIGIN; _channel_array[63] = 0x04; _channel_array[64] = 0x00; _channel_array[65] = 0x00; _channel_array[66] = 0x00; _channel_array[67] = 0x00; _channel_array[68] = TEDS_TRANSDUCER_CHANNEL_STEP_SIZE; _channel_array[69] = 0x04; _channel_array[70] = 0x41; _channel_array[71] = 0x20; _channel_array[72] = 0x00; _channel_array[73] = 0x00; _channel_array[74] = TEDS_TRANSDUCER_CHANNEL_S_UNITS; _channel_array[75] = 0x06; _channel_array[76] = TEDS_TRANSDUCER_CHANNEL_UNIT_TYPE; _channel_array[77] = 0x01; _channel_array[78] = 0x00; _channel_array[79] = TEDS_TRANSDUCER_CHANNEL_SECONDS; _channel_array[80] = 0x01; _channel_array[81] = 0x82; _channel_array[82] = TEDS_TRANSDUCER_CHANNEL_PRE_TRIGG; _channel_array[83] = 0x02; _channel_array[84] = 0x00; _channel_array[85] = 0x00; _channel_array[86] = TEDS_TRANSDUCER_CHANNEL_R_SETUP_T; _channel_array[87] = 0x04; _channel_array[88] = 0x00; _channel_array[89] = 0x00; _channel_array[90] = 0x00; _channel_array[91] = 0x00; _channel_array[92] = TEDS_TRANSDUCER_CHANNEL_S_PERIOD; _channel_array[93] = 0x04; _channel_array[94] = 0x00; _channel_array[95] = 0x00; _channel_array[96] = 0x00; _channel_array[97] = 0x00; _channel_array[98] = TEDS_TRANSDUCER_CHANNEL_WARM_UP_T; _channel_array[99] = 0x04; _channel_array[100] = 0x00; _channel_array[101] = 0x00; _channel_array[102] = 0x00; _channel_array[103] = 0x00; _channel_array[104] = TEDS_TRANSDUCER_CHANNEL_R_DELAY_T; _channel_array[105] = 0x04; _channel_array[106] = 0x3f; _channel_array[107] = 0x00; _channel_array[108] = 0x00; _channel_array[109] = 0x00; _channel_array[110] = TEDS_TRANSDUCER_CHANNEL_SAMPLING; _channel_array[111] = 0x06; _channel_array[112] = TEDS_TRANSDUCER_CHANNEL_SAMP_MODE; _channel_array[113] = 0x01; _channel_array[114] = 0x04; _channel_array[115] = TEDS_TRANSDUCER_CHANNEL_S_DEFAULT; _channel_array[116] = 0x01; _channel_array[117] = 0x04; _channel_array[118] = TEDS_TRANSDUCER_CHANNEL_DATA_XMIT; _channel_array[119] = 0x01; /*_channel_array[120] = 0x02;*/ _channel_array[121] = 0xf4; _channel_array[122] = 0xa5; //checksum errado
     _channel_teds = new IEEE1451_TEDS_TIM(_channel_array, 123);
 
     if ((_operation_mode == OM_TIM_IM) || (_operation_mode == OM_TIM_IM_OPTIMIZED))
@@ -128,7 +128,8 @@ void IEEE1451_Audio_Sensor::init_teds()
     _audio_sensor_utn_array[0] = 0x00; _audio_sensor_utn_array[1] = 0x00; _audio_sensor_utn_array[2] = 0x00; _audio_sensor_utn_array[3] = 0x27; _audio_sensor_utn_array[4] = TEDS_USER_TRANSDUCER_NAME_TEDS_ID; _audio_sensor_utn_array[5] = 0x04; _audio_sensor_utn_array[6] = 0x00; _audio_sensor_utn_array[7] = TEDS_USER_TRANSDUCER_NAME; _audio_sensor_utn_array[8] = 0x01; _audio_sensor_utn_array[9] = 0x01; _audio_sensor_utn_array[10] = TEDS_USER_TRANSDUCER_NAME_FORMAT; _audio_sensor_utn_array[11] = 0x01; _audio_sensor_utn_array[12] = 0x00; _audio_sensor_utn_array[13] = TEDS_USER_TRANSDUCER_NAME_TC_NAME; _audio_sensor_utn_array[14] = 0x14; _audio_sensor_utn_array[15] = 'O'; _audio_sensor_utn_array[16] = 'n'; _audio_sensor_utn_array[17] = 'b'; _audio_sensor_utn_array[18] = 'o'; _audio_sensor_utn_array[19] = 'a'; _audio_sensor_utn_array[20] = 'r'; _audio_sensor_utn_array[21] = 'd'; _audio_sensor_utn_array[22] = ' '; _audio_sensor_utn_array[23] = 'A'; _audio_sensor_utn_array[24] = 'u'; _audio_sensor_utn_array[25] = 'd'; _audio_sensor_utn_array[26] = 'i'; _audio_sensor_utn_array[27] = 'o'; _audio_sensor_utn_array[28] = ' '; _audio_sensor_utn_array[29] = 'S'; _audio_sensor_utn_array[30] = 'e'; _audio_sensor_utn_array[31] = 'n'; _audio_sensor_utn_array[32] = 's'; _audio_sensor_utn_array[33] = 'o'; _audio_sensor_utn_array[34] = 'r'; _audio_sensor_utn_array[35] = 0xf5; _audio_sensor_utn_array[36] = 0x92; //checksum errado
     _audio_sensor_utn_teds = new IEEE1451_TEDS_TIM(_audio_sensor_utn_array, 37);
 
-    char text_block[] = { "<?xml version=\"1.0\" encoding=\"UTF-8\"?><UnitsExtensionDataBlock xmlns=\"http://grouper.ieee.org/groups/1451/0/1451HTTPAPI\" xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" xsi:schemaLocation=\"http://grouper.ieee.org/groups/1451/0/1451HTTPAPIUnitsExtensionDataBlock.xsd\"><UnitsExtensionText>G.726 - 16 kbits/s</UnitsExtensionText></UnitsExtensionDataBlock>" };
+    //char text_block[] = { "<?xml version=\"1.0\" encoding=\"UTF-8\"?><UnitsExtensionDataBlock xmlns=\"http://grouper.ieee.org/groups/1451/0/1451HTTPAPI\" xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" xsi:schemaLocation=\"http://grouper.ieee.org/groups/1451/0/1451HTTPAPIUnitsExtensionDataBlock.xsd\"><UnitsExtensionText>G.726 - 16 kbits/s</UnitsExtensionText></UnitsExtensionDataBlock>" }; //Too big
+    char text_block[] = { "<?xml version=\"1.0\" encoding=\"UTF-8\"?><UnitsExtensionDataBlock><UnitsExtensionText>G.726 - 16 kbits/s</UnitsExtensionText></UnitsExtensionDataBlock>" };
     unsigned int text_block_len = strlen(text_block);
     unsigned int unit_extension_len = 38 + text_block_len + 2;
 
@@ -182,7 +183,7 @@ void IEEE1451_Audio_Sensor::read_data_set(unsigned short trans_id, unsigned int 
 
     get_audio(data);
 
-    IEEE1451_TIM::get_instance()->send_multimedia_msg(trans_id, size);
+    IEEE1451_TIM::get_instance()->send_msg(trans_id, size, true);
 }
 
 void IEEE1451_Audio_Sensor::start_read_data_set(unsigned short trans_id)
@@ -214,7 +215,7 @@ void IEEE1451_Audio_Sensor::send_data_set()
 
     get_audio(data);
 
-    IEEE1451_TIM::get_instance()->send_multimedia_msg(0, size);
+    IEEE1451_TIM::get_instance()->send_msg(0, size, true);
 }
 
 void IEEE1451_Audio_Sensor::send_start_read_data_set()
@@ -269,7 +270,8 @@ int IEEE1451_Audio_Sensor::execute()
                 _execute_thread->suspend();
 
             send_data_set();
-            Alarm::delay(TIME_500_MS * 10); //Alarm::delay(TIME_50_MS);
+            _execute_thread->yield();
+            Alarm::delay(TIME_50_MS);
         }
     }else //if ((_operation_mode == OM_TIM_IM) || (_operation_mode == OM_TIM_IM_OPTIMIZED))
     {
@@ -284,11 +286,12 @@ int IEEE1451_Audio_Sensor::execute()
 
             }else if (_operation_mode == OM_TIM_IM_OPTIMIZED)
             {
+                Alarm::delay(TIME_500_MS * 10);
                 tim->_connected = false;
 #ifdef __mc13224v__
                 MC13224V_Transceiver::maca_off();
 #endif
-                Alarm::delay(SLEEP_PERIOD);
+                Alarm::delay(SLEEP_PERIOD - (TIME_500_MS * 10));
 #ifdef __mc13224v__
                 MC13224V_Transceiver::maca_on();
 #endif
@@ -298,13 +301,15 @@ int IEEE1451_Audio_Sensor::execute()
 
             send_start_read_data_set();
 
-            for (unsigned short i = 0; i < 10; i++)
+            for (unsigned short i = 0; i < 30; i++)
             {
                 send_data_set();
-                Alarm::delay(TIME_500_MS * 10); //Alarm::delay(TIME_50_MS);
+                _execute_thread->yield();
+                Alarm::delay(TIME_50_MS);
             }
 
             send_stop_read_data_set();
+            Alarm::delay(TIME_500_MS);
         }
     }
 
@@ -322,17 +327,14 @@ void IEEE1451_Audio_Sensor::get_audio(char *data)
 #endif
     }
 
-    //G726_encode(_audio_buffer, _audio_buffer, SAMPLE_NO, &_law, _reset, _rate, &_state);
-    //_reset = 0;
+    G726_encode(_audio_buffer, _audio_buffer, SAMPLE_NO, &_law, _reset, _rate, &_state);
+    _reset = 0;
 
     for (unsigned int i = 0, j = 0; i < DATASET_SIZE; i++, j += 4)
     {
-        data[i] = (char) _audio_buffer[i];
-        //data[i] = (_audio_buffer[j] << 6) | (_audio_buffer[j + 1] << 4) |
-        //          (_audio_buffer[j + 2] << 2) | (_audio_buffer[j + 3]);
-        //cout << hex << (int) data[i] << " ";
+        data[i] = (_audio_buffer[j] << 6) | (_audio_buffer[j + 1] << 4) |
+                  (_audio_buffer[j + 2] << 2) | (_audio_buffer[j + 3]);
     }
-    //cout << "\n";
 }
 
 //-------------------------------------------

@@ -2,7 +2,7 @@
 
 #include <ieee1451_ncap.h>
 #include <ieee1451_objects.h>
-//#include <g726.h>
+#include <g726.h>
 #include <utility/list.h>
 #ifdef USE_SIP
     #include <rtp.h>
@@ -25,6 +25,12 @@ private:
     {
         IEEE1451_TIM_Channel *_tim;
         Simple_List<TIM_Cache>::Element _link;
+
+        short *_audio_buffer;
+        char _law;
+        short _rate;
+        short _reset;
+        G726_state _state;
 
 #ifdef USE_SIP
         SIP_User_Agent *_ua;
@@ -68,8 +74,7 @@ public:
     unsigned short send_operate(const IP::Address &address, unsigned short channel_number);
     unsigned short send_idle(const IP::Address &address, unsigned short channel_number);
     unsigned short send_read_teds(const IP::Address &address, unsigned short channel_number, char tedsId);
-    unsigned short send_read_data_set(const IP::Address &address, unsigned short channel_number);
-    unsigned short send_read_multimedia_data_set(const IP::Address &address, unsigned short channel_number);
+    unsigned short send_read_data_set(const IP::Address &address, unsigned short channel_number, bool multimedia = false);
     unsigned short send_start_read_data_set(const IP::Address &address, unsigned short channel_number);
     unsigned short send_stop_read_data_set(const IP::Address &address, unsigned short channel_number);
     static int send_read_multimedia_data_set_thread(IEEE1451_NCAP_Application *ncap, IP::Address address, unsigned short channel_number);
@@ -84,17 +89,11 @@ public:
     static int read_data_set_thread(TIM_Cache *tim_cache, bool multimedia_sensor);
 #endif
 
-    void execute() { IEEE1451_NCAP::get_instance()->execute(); };
+    void execute() { IEEE1451_NCAP::get_instance()->execute(); }
 
 private:
     Simple_List<TIM_Cache> _cache;
     Simple_List<IEEE1451_TEDS_Retriever> _retrievers;
-
-    /*short *_audio_buffer;
-    char _law;
-    short _rate;
-    short _reset;
-    G726_state _state;*/
 
     static IEEE1451_NCAP_Application *_application;
 };
@@ -111,7 +110,8 @@ private:
         tim_transducer_name_teds = 1,
         phy_teds = 2,
         transducer_channel_teds = 3,
-        transducer_name_teds = 4
+        transducer_name_teds = 4,
+        units_extension_teds = 5
     };
 
 public:
@@ -142,11 +142,6 @@ IEEE1451_NCAP_Application::IEEE1451_NCAP_Application()
 {
     IEEE1451_NCAP::get_instance()->set_application(this);
 
-    /*_audio_buffer = new (kmalloc(SAMPLE_NO * sizeof(short))) short[SAMPLE_NO * sizeof(short)];
-    _law = '2'; //PCM
-    _rate = 2; //2 bits per sample (16 kbit/s)
-    _reset = 1; //Yes*/
-
 #ifdef USE_SIP
     SIP_Manager::get_instance()->init();
     SIP_Manager::register_user_handler(message_callback);
@@ -173,9 +168,6 @@ IEEE1451_NCAP_Application::~IEEE1451_NCAP_Application()
         delete retriever->_tim; //This TIM is not in cache yet!
         delete retriever;
     }
-
-    //if (_audio_buffer)
-    //    kfree(_audio_buffer);
 }
 
 IEEE1451_NCAP_Application *IEEE1451_NCAP_Application::get_instance()
@@ -192,6 +184,16 @@ IEEE1451_NCAP_Application::TIM_Cache::TIM_Cache(IEEE1451_TIM_Channel *tim, SIP_U
     _session_thread(&IEEE1451_NCAP_Application::send_read_multimedia_data_set_thread,
                      IEEE1451_NCAP_Application::get_instance(), _tim->_address, (unsigned short) 0x01)
 {
+    bool multimedia = tim->_transducer->_physical_unit == TEDS_TRANSDUCER_CHANNEL_AUDIO_STREAM;
+
+    if (multimedia)
+    {
+        _audio_buffer = new short[tim->_transducer->_repeats];
+        _law = '2'; //PCM
+        _rate = 2; //2 bits per sample (16 kbit/s)
+        _reset = 1; //Yes
+    }else
+        _audio_buffer = 0;
 }
 
 #else
@@ -199,6 +201,16 @@ IEEE1451_NCAP_Application::TIM_Cache::TIM_Cache(IEEE1451_TIM_Channel *tim, SIP_U
 IEEE1451_NCAP_Application::TIM_Cache::TIM_Cache(IEEE1451_TIM_Channel *tim) :
     _tim(tim), _link(this), _read_thread(0)
 {
+    bool multimedia = tim->_transducer->_physical_unit == TEDS_TRANSDUCER_CHANNEL_AUDIO_STREAM;
+
+    if (multimedia)
+    {
+        _audio_buffer = new short[tim->_transducer->_repeats];
+        _law = '2'; //PCM
+        _rate = 2; //2 bits per sample (16 kbit/s)
+        _reset = 1; //Yes
+    }else
+        _audio_buffer = 0;
 }
 
 #endif
@@ -206,6 +218,9 @@ IEEE1451_NCAP_Application::TIM_Cache::TIM_Cache(IEEE1451_TIM_Channel *tim) :
 IEEE1451_NCAP_Application::TIM_Cache::~TIM_Cache()
 {
     delete _tim;
+
+    if (_audio_buffer)
+        delete _audio_buffer;
 
 #ifdef USE_SIP
     delete _ua;
@@ -297,16 +312,9 @@ void IEEE1451_NCAP_Application::update_tim_completed(IEEE1451_TEDS_Retriever *re
     if ((data_xmit[2] == DATA_XMIT_COMMANDED) || (data_xmit[2] == DATA_XMIT_COMMANDED_BUFFER) ||
         (data_xmit[2] == DATA_XMIT_COMMANDED_INTERVAL) || (data_xmit[2] == DATA_XMIT_COMMANDED_BUFFER_INTERVAL))
     {
-        char *phy_str = channel->get_tlv(TEDS_TRANSDUCER_CHANNEL_PHY_UNITS);
-        IEEE1451_TEDS_NCAP *phy = new IEEE1451_TEDS_NCAP(phy_str[0], &phy_str[2], phy_str[1], true);
-
-        //char *kelvin = phy->get_tlv(TEDS_TRANSDUCER_CHANNEL_KELVINS);
-        char *audio = phy->get_tlv(TEDS_TRANSDUCER_CHANNEL_AUDIO_STREAM);
-
+        bool multimedia = tim->_transducer->_physical_unit == TEDS_TRANSDUCER_CHANNEL_AUDIO_STREAM;
         cout << "Polling sensor connected (address=" << address << ")\n";
-        tim_cache->_read_thread = new Thread(&read_data_set_thread, tim_cache, (audio ? true : false), Thread::READY, Thread::NORMAL, 800); //Change idle thread stack size to 256
-
-        delete phy;
+        tim_cache->_read_thread = new Thread(&read_data_set_thread, tim_cache, multimedia, Thread::READY, Thread::NORMAL, 800); //Change idle thread stack size to 256
     }
 #endif
 }
@@ -328,6 +336,10 @@ void IEEE1451_NCAP_Application::report_tim_connected(const IP::Address &address)
 #endif
 
         send_operate(address, tim_cache->_tim->_transducer->_channel_number);
+
+#ifdef __mc13224v__
+        Alarm::delay(TIME_500_MS * 10);
+#endif
     }
 }
 
@@ -395,20 +407,11 @@ void IEEE1451_NCAP_Application::report_command_reply(const IP::Address &address,
         if (!tim_cache)
             return;
 
-        IEEE1451_TEDS_NCAP *channel = tim_cache->_tim->_transducer->get_teds(TEDS_TRANSDUCER_CHANNEL);
-
-        char *phy_str = channel->get_tlv(TEDS_TRANSDUCER_CHANNEL_PHY_UNITS);
-        IEEE1451_TEDS_NCAP *phy = new IEEE1451_TEDS_NCAP(phy_str[0], &phy_str[2], phy_str[1], true);
-
-        char *kelvin = phy->get_tlv(TEDS_TRANSDUCER_CHANNEL_KELVINS);
-        char *audio = phy->get_tlv(TEDS_TRANSDUCER_CHANNEL_AUDIO_STREAM);
-
-        if (kelvin)
+        if (tim_cache->_tim->_transducer->_physical_unit == TEDS_TRANSDUCER_CHANNEL_KELVINS)
             read_temperature(address, buffer, buffer_len);
-        else if (audio)
-            read_audio(address, buffer, buffer_len);
 
-        delete phy;
+        else if (tim_cache->_tim->_transducer->_physical_unit == TEDS_TRANSDUCER_CHANNEL_AUDIO_STREAM)
+            read_audio(address, buffer, buffer_len);
     }
 }
 
@@ -425,19 +428,10 @@ void IEEE1451_NCAP_Application::report_tim_initiated_message(const IP::Address &
         if (!tim_cache)
             return;
 
-        IEEE1451_TEDS_NCAP *channel = tim_cache->_tim->_transducer->get_teds(TEDS_TRANSDUCER_CHANNEL);
-
-        char *phy_str = channel->get_tlv(TEDS_TRANSDUCER_CHANNEL_PHY_UNITS);
-        IEEE1451_TEDS_NCAP *phy = new IEEE1451_TEDS_NCAP(phy_str[0], &phy_str[2], phy_str[1], true);
-
-        char *kelvin = phy->get_tlv(TEDS_TRANSDUCER_CHANNEL_KELVINS);
-        char *audio = phy->get_tlv(TEDS_TRANSDUCER_CHANNEL_AUDIO_STREAM);
-
-        delete phy;
-
-        if (kelvin)
+        if (tim_cache->_tim->_transducer->_physical_unit == TEDS_TRANSDUCER_CHANNEL_KELVINS)
             read_temperature(address, buffer, cmd->_length);
-        else if (audio)
+
+        else if (tim_cache->_tim->_transducer->_physical_unit == TEDS_TRANSDUCER_CHANNEL_AUDIO_STREAM)
         {
 #ifdef USE_SIP
             if ((cmd->_length == 1) && (buffer[0] == 1) && (!tim_cache->_ua->connected()))
@@ -472,28 +466,20 @@ void IEEE1451_NCAP_Application::read_temperature(const IP::Address &address, con
 
     if (model == 1)
     {
-        char *data_set_str = channel->get_tlv(TEDS_TRANSDUCER_CHANNEL_DATA_SET);
-        IEEE1451_TEDS_NCAP *data_set = new IEEE1451_TEDS_NCAP(data_set_str[0], &data_set_str[2], data_set_str[1], true);
-
-        char *max_data_repetitions = data_set->get_tlv(TEDS_TRANSDUCER_CHANNEL_REPEATS);
-        unsigned short repeats = (((unsigned char) max_data_repetitions[2]) << 8) | ((unsigned char) max_data_repetitions[3]);
-
-        delete data_set;
-
         char *data = new char[50]; data[0] = 0;
         char aux[11];
 
-        for (unsigned short i = 0, j = 0; i < repeats; i++, j += 4)
+        for (unsigned short i = 0, j = 0; i < tim_cache->_tim->_transducer->_repeats; i++, j += 4)
         {
             float value = *((float *)(&buffer[j]));
 
             itoa((int) value, aux);
             strcat(data, aux);
-            if (i != (repeats - 1))
+            if (i != (tim_cache->_tim->_transducer->_repeats - 1))
                 strcat(data, ", ");
         }
 
-        cout << "Read temperature (" << repeats << "): " << data << "\n";
+        cout << "Read temperature (" << tim_cache->_tim->_transducer->_repeats << "): " << data << "\n";
 
         delete data;
 
@@ -510,39 +496,24 @@ void IEEE1451_NCAP_Application::read_audio(const IP::Address &address, const cha
     if (!tim_cache)
         return;
 
-    IEEE1451_TEDS_NCAP *channel = tim_cache->_tim->_transducer->get_teds(TEDS_TRANSDUCER_CHANNEL);
+    cout << "Read audio (" << tim_cache->_tim->_transducer->_repeats << ")\n";
 
-    char *data_set_str = channel->get_tlv(TEDS_TRANSDUCER_CHANNEL_DATA_SET);
-    IEEE1451_TEDS_NCAP *data_set = new IEEE1451_TEDS_NCAP(data_set_str[0], &data_set_str[2], data_set_str[1], true);
-
-    char *max_data_repetitions = data_set->get_tlv(TEDS_TRANSDUCER_CHANNEL_REPEATS);
-    unsigned short repeats = (((unsigned char) max_data_repetitions[2]) << 8) | ((unsigned char) max_data_repetitions[3]);
-
-    cout << "Read audio (" << repeats << ")\n";
-
-    //for (int i = 0; i < length; i++)
-    //    cout << hex << (int) buffer[i] << " ";
-    //cout << "\n";
-
-    /*unsigned int sample_no = length * 8 / 2; //2 bits per sample (16 kbit/s)
-
-    for (unsigned int i = 0, j = 0; j < length; i += 4, j++)
+    for (unsigned int i = 0, j = 0; j < (tim_cache->_tim->_transducer->_repeats / 4); i += 4, j++)
     {
-        _audio_buffer[i] = (buffer[j + 1] >> 6) & 0x03;
-        _audio_buffer[i + 1] = (buffer[j + 1] >> 4) & 0x03;
-        _audio_buffer[i + 2] = (buffer[j + 1] >> 2) & 0x03;
-        _audio_buffer[i + 3] = buffer[j + 1] & 0x03;
+        tim_cache->_audio_buffer[i] = (buffer[j] >> 6) & 0x03;
+        tim_cache->_audio_buffer[i + 1] = (buffer[j] >> 4) & 0x03;
+        tim_cache->_audio_buffer[i + 2] = (buffer[j] >> 2) & 0x03;
+        tim_cache->_audio_buffer[i + 3] = buffer[j] & 0x03;
     }
 
-    G726_decode(_audio_buffer, _audio_buffer, sample_no, &_law, _reset, _rate, &_state);
-    _reset = 0;*/
+    G726_decode(tim_cache->_audio_buffer, tim_cache->_audio_buffer, tim_cache->_tim->_transducer->_repeats,
+                &tim_cache->_law, tim_cache->_reset, tim_cache->_rate, &tim_cache->_state);
+    tim_cache->_reset = 0;
 
 #ifdef USE_SIP
     if ((tim_cache->_ua->has_subscription()) && (tim_cache->_ua->connected()))
         tim_cache->_rtp.send(buffer, repeats);
 #endif
-
-    delete data_set;
 }
 
 unsigned short IEEE1451_NCAP_Application::send_operate(const IP::Address &address, unsigned short channel_number)
@@ -560,16 +531,10 @@ unsigned short IEEE1451_NCAP_Application::send_read_teds(const IP::Address &addr
     return IEEE1451_NCAP::get_instance()->send_command(address, channel_number, COMMAND_CLASS_READ_TEDS_SEGMENT, &tedsId, 1);
 }
 
-unsigned short IEEE1451_NCAP_Application::send_read_data_set(const IP::Address &address, unsigned short channel_number)
+unsigned short IEEE1451_NCAP_Application::send_read_data_set(const IP::Address &address, unsigned short channel_number, bool multimedia)
 {
     unsigned int offset = 0;
-    return IEEE1451_NCAP::get_instance()->send_command(address, channel_number, COMMAND_CLASS_READ_TRANSDUCER_CHANNEL_DATA_SET_SEGMENT, (char *) &offset, sizeof(offset));
-}
-
-unsigned short IEEE1451_NCAP_Application::send_read_multimedia_data_set(const IP::Address &address, unsigned short channel_number)
-{
-    unsigned int offset = 0;
-    return IEEE1451_NCAP::get_instance()->send_multimedia_command(address, channel_number, COMMAND_CLASS_READ_TRANSDUCER_CHANNEL_DATA_SET_SEGMENT, (char *) &offset, sizeof(offset));
+    return IEEE1451_NCAP::get_instance()->send_command(address, channel_number, COMMAND_CLASS_READ_TRANSDUCER_CHANNEL_DATA_SET_SEGMENT, (char *) &offset, sizeof(offset), multimedia);
 }
 
 unsigned short IEEE1451_NCAP_Application::send_start_read_data_set(const IP::Address &address, unsigned short channel_number)
@@ -600,7 +565,7 @@ int IEEE1451_NCAP_Application::send_read_multimedia_data_set_thread(IEEE1451_NCA
 #endif
 
         //cout << "-- Reading Multimedia Data Set (address=" << address << ")...\n";
-        ncap->send_read_multimedia_data_set(address, channel_number);
+        ncap->send_read_data_set(address, channel_number, true);
         Alarm::delay(TIME_50_MS);
     }
     return 0;
@@ -714,14 +679,14 @@ int IEEE1451_NCAP_Application::read_data_set_thread(TIM_Cache *tim_cache, bool m
 {
     cout << "Read data set thread created (address=" << tim_cache->_tim->_address << ", multimedia=" << multimedia_sensor << ")\n";
 
-    bool optimized_polling = false;
+    bool optimized_polling = true;
 
     if (!multimedia_sensor)
     {
         while (true)
         {
-            Alarm::delay(TIME_500_MS * 55); //Alarm::delay(TIME_500_MS * 20 * 10);
-            //cout << "NCAP requesting data (address=" << tim_cache->_tim->_address << ")\n";
+            Alarm::delay(TIME_500_MS * 20 * 10);
+            cout << "NCAP requesting data (address=" << tim_cache->_tim->_address << ")\n";
 
             if (tim_cache->_tim->_connected)
                 IEEE1451_NCAP_Application::get_instance()->send_read_data_set(tim_cache->_tim->_address, 0x01);
@@ -734,15 +699,16 @@ int IEEE1451_NCAP_Application::read_data_set_thread(TIM_Cache *tim_cache, bool m
         {
             while (true)
             {
-                Alarm::delay(TIME_500_MS * 55); //Alarm::delay(TIME_500_MS * 20 * 10);
+                Alarm::delay(TIME_500_MS * 20 * 10);
                 cout << "NCAP requesting data (address=" << tim_cache->_tim->_address << ")\n";
 
                 if (tim_cache->_tim->_connected)
                 {
-                    for (unsigned short i = 0; i < 10; i++)
+                    for (unsigned short i = 0; i < 30; i++)
                     {
-                        IEEE1451_NCAP_Application::get_instance()->send_read_multimedia_data_set(tim_cache->_tim->_address, 0x01);
-                        Alarm::delay(TIME_500_MS * 10); //Alarm::delay(TIME_50_MS);
+                        IEEE1451_NCAP_Application::get_instance()->send_read_data_set(tim_cache->_tim->_address, 0x01, true);
+                        Thread::self()->yield();
+                        Alarm::delay(TIME_50_MS * 2);
                     }
                 }else
                     cout << "TIM disconnected\n";
@@ -751,13 +717,17 @@ int IEEE1451_NCAP_Application::read_data_set_thread(TIM_Cache *tim_cache, bool m
         {
             while (true)
             {
-                Alarm::delay(TIME_500_MS * 55); //Alarm::delay(TIME_500_MS * 20 * 10);
+                Alarm::delay(TIME_500_MS * 20 * 10);
                 cout << "NCAP requesting data (address=" << tim_cache->_tim->_address << ")\n";
 
                 if (tim_cache->_tim->_connected)
                 {
+                    cout << "Sending start read data set (address=" << tim_cache->_tim->_address << ")\n";
                     IEEE1451_NCAP_Application::get_instance()->send_start_read_data_set(tim_cache->_tim->_address, 0x01);
-                    Alarm::delay(TIME_500_MS * 50);
+
+                    Alarm::delay(TIME_500_MS * 20);
+
+                    cout << "Sending stop read data set (address=" << tim_cache->_tim->_address << ")\n";
                     IEEE1451_NCAP_Application::get_instance()->send_stop_read_data_set(tim_cache->_tim->_address, 0x01);
                 }else
                     cout << "TIM disconnected\n";
@@ -789,23 +759,55 @@ IEEE1451_TEDS_Retriever::IEEE1451_TEDS_Retriever(const IP::Address &address, IEE
 
 void IEEE1451_TEDS_Retriever::process(const char *message, unsigned int length)
 {
-    IEEE1451_TEDS_NCAP *teds = new IEEE1451_TEDS_NCAP(_teds_id, message, length);
-
     switch (_state)
     {
         case meta_teds:
         case tim_transducer_name_teds:
         case phy_teds:
-            _tim->add_teds(teds);
+        {
+            //IEEE1451_TEDS_NCAP *teds = new IEEE1451_TEDS_NCAP(_teds_id, message, length);
+            //_tim->add_teds(teds);
             break;
+        }
+
+        case transducer_name_teds:
+        case units_extension_teds:
+        {
+            //IEEE1451_TEDS_NCAP *teds = new IEEE1451_TEDS_NCAP(_teds_id, message, length);
+            //_transducer->add_teds(teds);
+            break;
+        }
 
         case transducer_channel_teds:
-        case transducer_name_teds:
+        {
+            IEEE1451_TEDS_NCAP *teds = new IEEE1451_TEDS_NCAP(_teds_id, message, length);
             _transducer->add_teds(teds);
+
+            char *phy_str = teds->get_tlv(TEDS_TRANSDUCER_CHANNEL_PHY_UNITS);
+            IEEE1451_TEDS_NCAP *phy = new IEEE1451_TEDS_NCAP(phy_str[0], &phy_str[2], phy_str[1], true);
+
+            char *kelvin = phy->get_tlv(TEDS_TRANSDUCER_CHANNEL_KELVINS);
+            char *audio = phy->get_tlv(TEDS_TRANSDUCER_CHANNEL_AUDIO_STREAM);
+
+            if (kelvin)
+                _transducer->_physical_unit = TEDS_TRANSDUCER_CHANNEL_KELVINS;
+            if (audio)
+                _transducer->_physical_unit = TEDS_TRANSDUCER_CHANNEL_AUDIO_STREAM;
+
+            delete phy;
+
+
+            char *data_set_str = teds->get_tlv(TEDS_TRANSDUCER_CHANNEL_DATA_SET);
+            IEEE1451_TEDS_NCAP *data_set = new IEEE1451_TEDS_NCAP(data_set_str[0], &data_set_str[2], data_set_str[1], true);
+
+            char *max_data_repetitions = data_set->get_tlv(TEDS_TRANSDUCER_CHANNEL_REPEATS);
+            _transducer->_repeats = (((unsigned char) max_data_repetitions[2]) << 8) | ((unsigned char) max_data_repetitions[3]);
+
+            delete data_set;
             break;
+        }
 
         default:
-            delete teds;
             break;
     }
 
@@ -848,6 +850,15 @@ void IEEE1451_TEDS_Retriever::execute()
             _teds_id = TEDS_USER_TRANSDUCER_NAME;
             channel_number = 0x01;
             break;
+
+        case units_extension_teds:
+            if (_transducer->_physical_unit == TEDS_TRANSDUCER_CHANNEL_AUDIO_STREAM)
+            {
+                cout << ">> Getting transducer's units extension teds...\n";
+                _teds_id = TEDS_UNITS_EXTENSION;
+                channel_number = 0x01;
+                break;
+            }
 
         default:
             cout << ">> TEDS completed...\n";

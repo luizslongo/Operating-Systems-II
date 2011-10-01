@@ -95,16 +95,12 @@ void IEEE1451_Transducer::receive_msg(unsigned short trans_id, const char *messa
             break;
 
         case COMMAND_CLASS_START_READ_TRANSDUCER_CHANNEL_DATA_SET_SEGMENT:
-        {
             start_read_data_set(trans_id);
             break;
-        }
 
         case COMMAND_CLASS_STOP_READ_TRANSDUCER_CHANNEL_DATA_SET_SEGMENT:
-        {
             stop_read_data_set(trans_id);
             break;
-        }
 
         default:
             db<IEEE1451_Transducer>(INF) << "IEEE1451_Transducer - Received invalid message\n";
@@ -315,9 +311,9 @@ void IEEE1451_TIM::receive_msg(unsigned short trans_id, const char *message, uns
     }
 }
 
-void IEEE1451_TIM::send_msg(unsigned short trans_id, unsigned int length)
+void IEEE1451_TIM::send_msg(unsigned short trans_id, unsigned int length, bool multimedia)
 {
-    db<IEEE1451_TIM>(TRC) << "IEEE1451_TIM - Sending message (trans_id=" << trans_id << ", len=" << length << ")\n";
+    //db<IEEE1451_TIM>(TRC) << "IEEE1451_TIM - Sending message (trans_id=" << trans_id << ", len=" << length << ", media=" << multimedia << ")\n";
 
     if (!_connected)
     {
@@ -333,41 +329,18 @@ void IEEE1451_TIM::send_msg(unsigned short trans_id, unsigned int length)
     out->_trans_id = trans_id;
     out->_length = length;
 
-    int ret = _tcp_channel.send(_send_buffer, size);
+    int ret;
+    if (multimedia)
+    {
+        _udp_socket.remote(UDP::Address(_ncap_address, IEEE1451_PORT));
+        ret = _udp_socket.send(_send_buffer, size);
+    }else
+        ret = _tcp_channel.send(_send_buffer, size);
 
     if (ret < 0)
         db<IEEE1451_TIM>(INF) << "IEEE1451_TIM - Failed sending message (trans_id=" << trans_id << ", ret=" << ret << ")\n";
-    else
-        db<IEEE1451_TIM>(TRC) << "IEEE1451_TIM - Sent " << ret << " bytes (trans_id=" << trans_id << ")\n";
-
-    _send_buffer_mutex.unlock();
-}
-
-void IEEE1451_TIM::send_multimedia_msg(unsigned short trans_id, unsigned int length)
-{
-    db<IEEE1451_TIM>(TRC) << "IEEE1451_TIM - Sending multimedia message (trans_id=" << trans_id << ", len=" << length << ")\n";
-
-    if (!_connected)
-    {
-        db<IEEE1451_TIM>(INF) << "IEEE1451_TIM - TIM not connected (trans_id=" << trans_id << ")\n";
-        _send_buffer_mutex.unlock();
-        return;
-    }
-
-    unsigned int size = sizeof(IEEE1451_Packet) + length;
-
-    IEEE1451_Packet *out = (IEEE1451_Packet *) _send_buffer;
-
-    out->_trans_id = trans_id;
-    out->_length = length;
-
-    _udp_socket.remote(UDP::Address(_ncap_address, IEEE1451_PORT));
-    int ret = _udp_socket.send(_send_buffer, size);
-
-    if (ret < 0)
-        db<IEEE1451_TIM>(INF) << "IEEE1451_TIM - Failed sending multimedia message (trans_id=" << trans_id << ", ret=" << ret << ")\n";
-    else
-        db<IEEE1451_TIM>(TRC) << "IEEE1451_TIM - Sent " << ret << " bytes (trans_id=" << trans_id << ")\n";
+    //else
+    //  db<IEEE1451_TIM>(TRC) << "IEEE1451_TIM - Sent " << ret << " bytes (trans_id=" << trans_id << ")\n";
 
     _send_buffer_mutex.unlock();
 }

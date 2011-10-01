@@ -55,8 +55,7 @@ public:
     void connect();
     void disconnect();
     void receive_msg(unsigned short trans_id, const char *message, unsigned int size);
-    void send_msg(unsigned short trans_id, unsigned int length);
-    void send_multimedia_msg(unsigned short trans_id, unsigned int length);
+    void send_msg(unsigned short trans_id, unsigned int length, bool multimedia = false);
 
     void set_transducer(IEEE1451_Transducer *transducer) { _transducer = transducer; }
     char *get_send_buffer() { _send_buffer_mutex.lock(); return _send_buffer + sizeof(IEEE1451_Packet); }

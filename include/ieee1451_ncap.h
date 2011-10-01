@@ -40,6 +40,8 @@ struct IEEE1451_Channel
 struct IEEE1451_Transducer_Channel : public IEEE1451_Channel
 {
     unsigned short _channel_number;
+    unsigned short _physical_unit;
+    unsigned short _repeats;
 };
 
 struct IEEE1451_TIM_Channel : public IEEE1451_Channel
@@ -73,8 +75,7 @@ public:
 
     static IEEE1451_NCAP *get_instance();
 
-    unsigned short send_command(const IP::Address &destination, unsigned short channel_number, unsigned short command, const char *args = 0, unsigned int length = 0);
-    unsigned short send_multimedia_command(const IP::Address &destination, unsigned short channel_number, unsigned short command, const char *args = 0, unsigned int length = 0);
+    unsigned short send_command(const IP::Address &destination, unsigned short channel_number, unsigned short command, const char *args = 0, unsigned int length = 0, bool multimedia = false);
     void execute();
 
 private:

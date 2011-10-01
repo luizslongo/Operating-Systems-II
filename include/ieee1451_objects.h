@@ -9,7 +9,7 @@ __BEGIN_SYS
 #define MAX_BUFFER_SIZE 200
 
 #ifdef __mc13224v__
-    #define TIME_50_MS  50000
+    #define TIME_50_MS  27000 //50000
 #else
     #define TIME_50_MS  2500
 #endif

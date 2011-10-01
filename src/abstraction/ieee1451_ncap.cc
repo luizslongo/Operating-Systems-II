@@ -101,11 +101,11 @@ IEEE1451_NCAP *IEEE1451_NCAP::get_instance()
     return _ieee1451;
 }
 
-unsigned short IEEE1451_NCAP::send_command(const IP::Address &destination, unsigned short channel_number, unsigned short command, const char *args, unsigned int length)
+unsigned short IEEE1451_NCAP::send_command(const IP::Address &destination, unsigned short channel_number, unsigned short command, const char *args, unsigned int length, bool multimedia)
 {
     unsigned short trans_id = id_generator++;
 
-    db<IEEE1451_NCAP>(TRC) << "IEEE1451_NCAP - Sending command (trans_id=" << trans_id << ", dst=" << destination << ", chn=" << channel_number << ", cmd=" << hex << command << ", len=" << length << ")\n";
+    //db<IEEE1451_NCAP>(TRC) << "IEEE1451_NCAP - Sending command (trans_id=" << trans_id << ", dst=" << destination << ", chn=" << channel_number << ", cmd=" << hex << command << ", len=" << length << ", media=" << multimedia << ")\n";
 
     Linked_Channel *channel = get_channel(destination);
     if (!channel)
@@ -129,51 +129,18 @@ unsigned short IEEE1451_NCAP::send_command(const IP::Address &destination, unsig
 
     memcpy(msg, args, length);
 
-    int ret = channel->send(channel->_send_buffer, size);
+    int ret;
+    if (multimedia)
+    {
+        _udp_socket.remote(UDP::Address(destination, IEEE1451_PORT));
+        ret = _udp_socket.send(channel->_send_buffer, size);
+    }else
+        ret = channel->send(channel->_send_buffer, size);
 
     if (ret < 0)
         db<IEEE1451_NCAP>(INF) << "IEEE1451_NCAP - Failed sending message (trans_id=" << trans_id << ", ret=" << ret << ")\n";
-    else
-        db<IEEE1451_NCAP>(TRC) << "IEEE1451_NCAP - Sent " << ret << " bytes (trans_id=" << trans_id << ")\n";
-
-    return trans_id;
-}
-
-unsigned short IEEE1451_NCAP::send_multimedia_command(const IP::Address &destination, unsigned short channel_number, unsigned short command, const char *args, unsigned int length)
-{
-    unsigned short trans_id = id_generator++;
-
-    db<IEEE1451_NCAP>(TRC) << "IEEE1451_NCAP - Sending multimedia command (trans_id=" << trans_id << ", dst=" << destination << ", chn=" << channel_number << ", cmd=" << hex << command << ", len=" << length << ")\n";
-
-    Linked_Channel *channel = get_channel(destination);
-    if (!channel)
-    {
-        db<IEEE1451_NCAP>(INF) << "IEEE1451_NCAP - Failed to send multimedia command (trans_id=" << trans_id << ")\n";
-        return 0;
-    }
-
-    unsigned int size = sizeof(IEEE1451_Packet) + sizeof(IEEE1451_Command) + length;
-
-    IEEE1451_Packet *out = (IEEE1451_Packet *) channel->_send_buffer;
-    IEEE1451_Command *cmd = (IEEE1451_Command *) (channel->_send_buffer + sizeof(IEEE1451_Packet));
-    char *msg = channel->_send_buffer + sizeof(IEEE1451_Packet) + sizeof(IEEE1451_Command);
-
-    out->_trans_id = trans_id;
-    out->_length = length + sizeof(IEEE1451_Command);
-
-    cmd->_channel_number = channel_number;
-    cmd->_command = command;
-    cmd->_length = length;
-
-    memcpy(msg, args, length);
-
-    _udp_socket.remote(UDP::Address(destination, IEEE1451_PORT));
-    int ret = _udp_socket.send(channel->_send_buffer, size);
-
-    if (ret < 0)
-        db<IEEE1451_NCAP>(INF) << "IEEE1451_NCAP - Failed sending multimedia message (trans_id=" << trans_id << ", ret=" << ret << ")\n";
-    else
-        db<IEEE1451_NCAP>(TRC) << "IEEE1451_NCAP - Sent " << ret << " bytes (trans_id=" << trans_id << ")\n";
+    //else
+    //  db<IEEE1451_NCAP>(TRC) << "IEEE1451_NCAP - Sent " << ret << " bytes (trans_id=" << trans_id << ")\n";
 
     return trans_id;
 }
@@ -237,7 +204,15 @@ int IEEE1451_NCAP::receive(IEEE1451_NCAP *ncap, Linked_Channel *channel)
     const char *msg;
     int ret;
 
+#ifdef __mc13224v__
+    Alarm::delay(TIME_500_MS * 2);
+#endif
+
     ncap->_application->report_tim_connected(channel->remote().ip());
+
+#ifdef __mc13224v__
+    Alarm::delay(TIME_500_MS * 2);
+#endif
 
     while (true)
     {
