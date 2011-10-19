@@ -25,7 +25,7 @@ int main()
 	IP ip(0);
 	
 	//QEMU IP settings
-	ip.set_address(IP::Address(10,0,2,16));
+	ip.set_address(IP::Address(10,0,2,15));
 	ip.set_gateway(IP::Address(10,0,2,2));
 	ip.set_netmask(IP::Address(255,255,255,0));
 	
@@ -38,7 +38,7 @@ int main()
 	for (int seq=0;seq < 100;++seq)
 	{
 		ICMP::Packet pkt(ICMP::ECHO,0,123123,seq);
-		icmp.send(IP::Address(10,0,2,15),pkt);
+		icmp.send(IP::Address(10,0,2,2),pkt);
 		Alarm::delay(100000);
 	}
 }
