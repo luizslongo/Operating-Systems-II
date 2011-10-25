@@ -86,10 +86,12 @@ public:
     // Methods
 
     const Address & address() { return _self; }
+    const Address & broadcast() { return _broadcast; }
     const Address & gateway() { return _gateway; }
     const Address & netmask() { return _netmask; }
     
     void set_address(const Address & addr) { _self = addr; }
+    void set_broadcast(const Address & addr) { _broadcast = addr; }
     void set_gateway(const Address & addr) { _gateway = addr; }
     void set_netmask(const Address & addr) { _netmask = addr; }
 

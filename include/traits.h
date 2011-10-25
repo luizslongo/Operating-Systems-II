@@ -21,8 +21,8 @@ template <> struct Traits<Debug>
 {
     static const bool error   = true;
     static const bool warning = true;
-    static const bool info    = true;
-    static const bool trace   = true;
+    static const bool info    = false;
+    static const bool trace   = false;
 };
 
 template <> struct Traits<Lists>: public Traits<void>
@@ -112,9 +112,9 @@ template <> struct Traits<Network>: public Traits<Services>
 
 template <> struct Traits<IP>: public Traits<Services>
 {
-    static const unsigned long ADDRESS   = 0x0a00020f;   // 192.168.10.1
+    static const unsigned long ADDRESS   = 0x0a00020f;   // 10.0.2.15
     static const unsigned long NETMASK   = 0xffffff00;   // 255.255.255.0
-    static const unsigned long BROADCAST = 0x0a0002ff;   // 192.168.10.255
+    static const unsigned long BROADCAST = 0x0a0002ff;   // 10.0.2.255
 
     static const bool forwarding    = false;
     static const bool fragmentation = false;   
