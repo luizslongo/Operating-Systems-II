@@ -66,6 +66,9 @@ private:
     char *_receive_buffer;
     UART _uart;
 
+    IEEE1451_UART _send_uart;
+    IEEE1451_Packet _send_packet;
+
     static IEEE1451_Sink *_ieee1451;
 
 public:
@@ -209,19 +212,16 @@ void IEEE1451_Sink::TCP_Socket::connected()
     //cout << "IEEE1451_Sink - Socket connected (ip=" << remote().ip() << ")\n";
     IEEE1451_Sink *sink = IEEE1451_Sink::get_instance();
 
-    IEEE1451_UART uart;
-    IEEE1451_Packet packet;
-
-    uart._address = remote().ip();
-    uart._type = PACKET_TYPE_CONNECT;
-    packet._trans_id = 0;
-    packet._length = 0;
+    sink->_send_uart._address = remote().ip();
+    sink->_send_uart._type = PACKET_TYPE_CONNECT;
+    sink->_send_packet._trans_id = 0;
+    sink->_send_packet._length = 0;
 
     for (unsigned short i = 0; i < sizeof(IEEE1451_UART); i++)
-        sink->_uart.put(((char  *) &uart)[i]);
+        sink->_uart.put(((char  *) &sink->_send_uart)[i]);
 
     for (unsigned short i = 0; i < sizeof(IEEE1451_Packet); i++)
-        sink->_uart.put(((char  *) &packet)[i]);
+        sink->_uart.put(((char  *) &sink->_send_packet)[i]);
 }
 
 void IEEE1451_Sink::TCP_Socket::received(const char *data, u16 size)
@@ -231,26 +231,29 @@ void IEEE1451_Sink::TCP_Socket::received(const char *data, u16 size)
         return;
 
     IEEE1451_Sink *sink = IEEE1451_Sink::get_instance();
-    IEEE1451_UART *uart = (IEEE1451_UART *) _send_buffer;
-    IEEE1451_Packet *packet = (IEEE1451_Packet *) (_send_buffer + sizeof(IEEE1451_UART));
+    IEEE1451_Packet *packet = (IEEE1451_Packet *) _send_buffer;
 
     if (_total_size == 0)
     {
-        uart->_address = remote().ip();
-        uart->_type = PACKET_TYPE_MESSAGE;
-
-        memcpy(_send_buffer + sizeof(IEEE1451_UART), data, size);
+        memcpy(_send_buffer, data, size);
         _total_size = size - sizeof(IEEE1451_Packet);
     }else
     {
-        memcpy(_send_buffer + sizeof(IEEE1451_UART) + sizeof(IEEE1451_Packet) + _total_size, data, size);
+        memcpy(_send_buffer + sizeof(IEEE1451_Packet) + _total_size, data, size);
         _total_size += size;
     }
 
     if (_total_size == packet->_length)
     {
-        for (unsigned short i = 0; i < sizeof(IEEE1451_UART) + sizeof(IEEE1451_Packet) + _total_size; i++)
+        sink->_send_uart._address = remote().ip();
+        sink->_send_uart._type = PACKET_TYPE_MESSAGE;
+
+        for (unsigned short i = 0; i < sizeof(IEEE1451_UART); i++)
+            sink->_uart.put(((char  *) &sink->_send_uart)[i]);
+
+        for (unsigned short i = 0; i < sizeof(IEEE1451_Packet) + _total_size; i++)
             sink->_uart.put(_send_buffer[i]);
+
         _total_size = 0;
     }
 }
@@ -259,19 +262,16 @@ void IEEE1451_Sink::TCP_Socket::closed()
 {
     IEEE1451_Sink *sink = IEEE1451_Sink::get_instance();
 
-    IEEE1451_UART uart;
-    IEEE1451_Packet packet;
-
-    uart._address = remote().ip();
-    uart._type = PACKET_TYPE_DISCONNECT;
-    packet._trans_id = 0;
-    packet._length = 0;
+    sink->_send_uart._address = remote().ip();
+    sink->_send_uart._type = PACKET_TYPE_DISCONNECT;
+    sink->_send_packet._trans_id = 0;
+    sink->_send_packet._length = 0;
 
     for (unsigned short i = 0; i < sizeof(IEEE1451_UART); i++)
-        sink->_uart.put(((char  *) &uart)[i]);
+        sink->_uart.put(((char  *) &sink->_send_uart)[i]);
 
     for (unsigned short i = 0; i < sizeof(IEEE1451_Packet); i++)
-        sink->_uart.put(((char  *) &packet)[i]);
+        sink->_uart.put(((char  *) &sink->_send_packet)[i]);
 }
 
 void IEEE1451_Sink::TCP_Socket::error(short error_code)
@@ -331,12 +331,11 @@ void IEEE1451_Sink::UDP_Socket::received(const UDP::Address &src, const char *da
 
     IEEE1451_Sink *sink = IEEE1451_Sink::get_instance();
 
-    IEEE1451_UART uart;
-    uart._address = src.ip();
-    uart._type = PACKET_TYPE_MESSAGE_MULTIMEDIA;
+    sink->_send_uart._address = src.ip();
+    sink->_send_uart._type = PACKET_TYPE_MESSAGE_MULTIMEDIA;
 
     for (unsigned short i = 0; i < sizeof(IEEE1451_UART); i++)
-        sink->_uart.put(((char  *) &uart)[i]);
+        sink->_uart.put(((char  *) &sink->_send_uart)[i]);
 
     for (unsigned short i = 0; i < size; i++)
         sink->_uart.put(data[i]);
@@ -344,21 +343,18 @@ void IEEE1451_Sink::UDP_Socket::received(const UDP::Address &src, const char *da
 
 void IEEE1451_Sink::log(const char *str)
 {
-    IEEE1451_UART uart;
-    IEEE1451_Packet packet;
-
-    uart._address = IP_Address((unsigned long) 0);
-    uart._type = PACKET_TYPE_LOG;
-    packet._trans_id = 0;
-    packet._length = strlen(str);
+    _send_uart._address = IP_Address((unsigned long) 0);
+    _send_uart._type = PACKET_TYPE_LOG;
+    _send_packet._trans_id = 0;
+    _send_packet._length = strlen(str);
 
     for (unsigned short i = 0; i < sizeof(IEEE1451_UART); i++)
-        _uart.put(((char  *) &uart)[i]);
+        _uart.put(((char  *) &_send_uart)[i]);
 
     for (unsigned short i = 0; i < sizeof(IEEE1451_Packet); i++)
-        _uart.put(((char  *) &packet)[i]);
+        _uart.put(((char  *) &_send_packet)[i]);
 
-    for (unsigned short i = 0; i < packet._length; i++)
+    for (unsigned short i = 0; i < _send_packet._length; i++)
         _uart.put(str[i]);
 }
 

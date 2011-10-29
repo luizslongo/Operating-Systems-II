@@ -7,7 +7,7 @@
 __BEGIN_SYS
 
 #define IEEE1451_PORT   55667
-#define MAX_BUFFER_SIZE 200
+#define MAX_BUFFER_SIZE 250
 
 #ifdef __mc13224v__
     #define TIME_50_MS  27000 //50000
