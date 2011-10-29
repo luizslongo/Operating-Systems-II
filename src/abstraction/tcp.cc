@@ -1,5 +1,4 @@
 #include <tcp.h>
-#include <ieee1451_objects.h>
 
 __BEGIN_SYS
 
