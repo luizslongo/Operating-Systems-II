@@ -2,6 +2,7 @@
 #define __ieee1451_objects_h
 
 #include <machine.h>
+#include <ip.h>
 
 __BEGIN_SYS
 
@@ -21,6 +22,7 @@ struct IEEE1451_Command
     unsigned short _channel_number;
     unsigned short _command;
     unsigned short _length;
+    char _padding[2];
 };
 
 struct IEEE1451_Reply
@@ -55,6 +57,22 @@ struct IEEE1451_Packet
 {
     unsigned short _trans_id;
     unsigned short _length;
+};
+
+struct IEEE1451_UART
+{
+    IP_Address _address; //4 chars
+    unsigned char _type;
+    char _padding[3];
+};
+
+enum Packet_Type
+{
+    PACKET_TYPE_CONNECT             = 0x01,
+    PACKET_TYPE_DISCONNECT          = 0x02,
+    PACKET_TYPE_MESSAGE             = 0x03,
+    PACKET_TYPE_MESSAGE_MULTIMEDIA  = 0x04,
+    PACKET_TYPE_LOG                 = 0x05
 };
 
 enum IEEE1451_Command_Class //IEEE 1451.0 (2007) -> Chapter 7

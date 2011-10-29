@@ -1,4 +1,5 @@
 #include <tcp.h>
+#include <ieee1451_objects.h>
 
 __BEGIN_SYS
 
@@ -168,12 +169,12 @@ s32 TCP::Socket::_send(Header * hdr, SegmentedBuffer * sb)
  * The basic Socket::send() splits data into multiple segments
  * respecting snd_wnd and mtu.
  */
-void TCP::Socket::send(const char *data,u16 len,bool push)
+s32 TCP::Socket::send(const char *data,u16 len,bool push)
 {
     if (snd_wnd == 0) { // peer cannot receive data
         set_timeout();
         send_ack(); // zero-window probing
-        return;
+        return -1;
     }
     // cannot send more than the peer is willing to receive
     if (len > snd_wnd)
@@ -191,12 +192,13 @@ void TCP::Socket::send(const char *data,u16 len,bool push)
     snd_nxt += len;
     SegmentedBuffer sb(data,len);
 
-    _send(&hdr,&sb);
+    s32 ret = _send(&hdr,&sb);
 
     //if (more > 0) // send next segment too //TODO: TCP::Channel also do it!
     //  send(&data[len], more);
 
     set_timeout();
+    return ret;
 }
 
 void TCP::Socket::set_timeout() {
@@ -330,16 +332,16 @@ void TCP::Socket::__SYN_SENT(const Header& r,const char* data,u16 len)
     db<TCP>(TRC) << __PRETTY_FUNCTION__ << endl;
 
     if (r._rst || r._fin) {
-            error(ERR_REFUSED);
             state(CLOSED);
             clear_timeout();
+            error(ERR_REFUSED);
             closed();
     }
     else if (r._ack) {
         if ((r.ack_num() <= snd_ini) || (r.ack_num() > snd_nxt)) {
-            error(ERR_RESET);
             state(CLOSED);
             clear_timeout();
+            error(ERR_RESET);
             closed();
         } else if ((r.ack_num() >= snd_una) && (r.ack_num() <= snd_nxt)) {
             if (r._syn) {
@@ -365,7 +367,6 @@ void TCP::Socket::__SYN_SENT(const Header& r,const char* data,u16 len)
         snd_wnd = r.wnd();
         state(SYN_RCVD);
     }
-
 }
 
 void TCP::Socket::__SYN_RCVD(const Header& r ,const char* data,u16 len)
@@ -538,10 +539,14 @@ void TCP::Socket::__LAST_ACK(const Header& r ,const char* data,u16 len)
     db<TCP>(TRC) << __PRETTY_FUNCTION__ << endl;
     if (!check_seq(r,len))
         return;
-    if (r._ack) {
+    if (r._ack && !r._fin) {
         state(CLOSED);
         clear_timeout();
         closed();
+    }else if (r._fin) {
+        send_ack();
+        clear_timeout();
+        closing();
     }
 }
 
@@ -635,10 +640,11 @@ bool TCP::Channel::connect(const TCP::Address& to)
     _remote = to;
     clear();
     _sending = true;
+
     do {
         Socket::connect();
         _tx_block.wait();
-    } while (retry-- > 0 && state() != ESTABLISHED);
+    } while (retry-- > 0 && state() == SYN_SENT);
     _sending = false;
 
     if (state() != ESTABLISHED)

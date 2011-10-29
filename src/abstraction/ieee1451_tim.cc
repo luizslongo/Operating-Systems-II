@@ -212,6 +212,7 @@ void IEEE1451_TIM::disconnect()
     db<IEEE1451_TIM>(TRC) << "IEEE1451_TIM - Disconnecting...\n";
 
     _connected = false;
+    Thread::self()->yield();
 
     while (!_tcp_channel.close())
         Alarm::delay(TIME_500_MS * 10);
@@ -313,7 +314,7 @@ void IEEE1451_TIM::receive_msg(unsigned short trans_id, const char *message, uns
 
 void IEEE1451_TIM::send_msg(unsigned short trans_id, unsigned int length, bool multimedia)
 {
-    //db<IEEE1451_TIM>(TRC) << "IEEE1451_TIM - Sending message (trans_id=" << trans_id << ", len=" << length << ", media=" << multimedia << ")\n";
+    db<IEEE1451_TIM>(TRC) << "IEEE1451_TIM - Sending message (trans_id=" << trans_id << ", len=" << length << ", media=" << multimedia << ")\n";
 
     if (!_connected)
     {
@@ -360,10 +361,6 @@ int IEEE1451_TIM::receive(IEEE1451_TIM *tim, TCP::Channel *channel)
         {
             db<IEEE1451_TIM>(TRC) << "IEEE1451_TIM - TIM not connected!\n";
             tim->_connected_cond.wait();
-
-#ifdef __mc13224v__
-            Alarm::delay(TIME_500_MS);
-#endif
             continue;
         }
 

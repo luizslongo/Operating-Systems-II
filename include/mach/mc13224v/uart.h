@@ -47,8 +47,8 @@ public:
     
 	MC13224V_UART(unsigned int baud, unsigned int data_bits,
 			unsigned int parity, unsigned int stop_bits,
-			unsigned int unit = 0) {
-		config(9600, 8, 0, 1);
+			unsigned int unit = 0) : _unit(unit) {
+	    config(baud, data_bits, parity, stop_bits);
 		func_sel();
 	}
 
@@ -72,6 +72,10 @@ public:
 		ubrcnt(9999 << UBRMOD |	(baud/150 -1) << UBRINC);
 		ucon(1 << RXE | 1 << TXE | 1 << MRXR | 1 << MTXR |
 				0 << FCE | parity << PEN | (stop_bits - 1) << ST2);
+	}
+
+	bool has_data() {
+		return urxcon();
 	}
 
 	char get() {

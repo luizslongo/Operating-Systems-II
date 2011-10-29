@@ -7,7 +7,7 @@
 #endif
 
 #define SLEEP_PERIOD    TIME_500_MS * 50
-#define DATASET_SIZE    68 //30 pacotes/seg * (68 * 8 / 2) amostras/pacotes = 8160 amostras/seg
+#define DATASET_SIZE    66 //30 pacotes/seg * (66 * 8 / 2) amostras/pacotes = 7920 amostras/seg
 #define SAMPLE_NO       DATASET_SIZE * 8 / 2 //2 bits per sample (16 kbit/s)
 
 __USING_SYS
@@ -59,6 +59,7 @@ private:
     short _rate;
     short _reset;
     G726_state _state;
+    unsigned short _counter;
 
     char _snd_buffer[DATASET_SIZE];
 
@@ -86,6 +87,7 @@ IEEE1451_Audio_Sensor::IEEE1451_Audio_Sensor(Operation_Mode operation_mode)
     _law = '2'; //PCM
     _rate = 2; //2 bits per sample (16 kbit/s)
     _reset = 1; //Yes
+    _counter = 0;
 
     init_teds();
 }
@@ -286,12 +288,11 @@ int IEEE1451_Audio_Sensor::execute()
 
             }else if (_operation_mode == OM_TIM_IM_OPTIMIZED)
             {
-                Alarm::delay(TIME_500_MS * 10);
                 tim->_connected = false;
 #ifdef __mc13224v__
                 MC13224V_Transceiver::maca_off();
 #endif
-                Alarm::delay(SLEEP_PERIOD - (TIME_500_MS * 10));
+                Alarm::delay(SLEEP_PERIOD);
 #ifdef __mc13224v__
                 MC13224V_Transceiver::maca_on();
 #endif
@@ -300,8 +301,9 @@ int IEEE1451_Audio_Sensor::execute()
             }
 
             send_start_read_data_set();
+            Alarm::delay(TIME_500_MS);
 
-            for (unsigned short i = 0; i < 30; i++)
+            for (unsigned short i = 0; i < 30 * 3; i++) //90 packets = 3 seconds
             {
                 send_data_set();
                 _execute_thread->yield();
@@ -330,10 +332,12 @@ void IEEE1451_Audio_Sensor::get_audio(char *data)
     G726_encode(_audio_buffer, _audio_buffer, SAMPLE_NO, &_law, _reset, _rate, &_state);
     _reset = 0;
 
+    ((unsigned short *) data)[0] = _counter++;
+
     for (unsigned int i = 0, j = 0; i < DATASET_SIZE; i++, j += 4)
     {
-        data[i] = (_audio_buffer[j] << 6) | (_audio_buffer[j + 1] << 4) |
-                  (_audio_buffer[j + 2] << 2) | (_audio_buffer[j + 3]);
+        data[i + 2] = (_audio_buffer[j] << 6) | (_audio_buffer[j + 1] << 4) |
+                      (_audio_buffer[j + 2] << 2) | (_audio_buffer[j + 3]);
     }
 }
 
@@ -361,17 +365,3 @@ int main()
     sensor.execute();
     return 0;
 }
-
-//-------------------------------------------
-
-
-/* IEEE 1451.0 (2007) -> Cap. 5.10
- -> TIM-Initiated Message
- Sampling modes: Continuous sampling mode
- Data transmission mode: Streaming when a buffer is full mode
- Streaming operation = Continuous sampling + Streaming when a buffer is full
-
- -> Polling
- Sampling modes: Continuous sampling mode
- Data transmission mode: Only when commanded mode */
-

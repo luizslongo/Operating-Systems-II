@@ -199,7 +199,6 @@ int IEEE1451_Temperature_Sensor::execute()
     {
         if ((_operation_mode == OM_TIM_IM) && (_pos == 0))
         {
-            Alarm::delay(TIME_500_MS);
             tim->disconnect();
 
         }else if ((_operation_mode == OM_TIM_IM_OPTIMIZED) && (_pos == 0))
@@ -212,9 +211,6 @@ int IEEE1451_Temperature_Sensor::execute()
 
         cout << "Collecting data (pos = " << _pos << ")...\n";
 
-        //while (!_temperature.enable());
-        //while (!_temperature.data_ready());
-
         _data_set_mutex.lock();
 
 #ifdef __mc13224v__
@@ -226,7 +222,6 @@ int IEEE1451_Temperature_Sensor::execute()
         _pos = (_pos + 1) % DATASET_SIZE;
         _data_set_mutex.unlock();
 
-        //_temperature.disable();
         Alarm::delay(READ_INTERVAL);
 
         if ((_operation_mode == OM_TIM_IM) && (_pos == 0))
@@ -274,14 +269,3 @@ int main()
     sensor.execute();
     return 0;
 }
-
-/* IEEE 1451.0 (2007) -> Chapter 5.10
-    -> TIM-Initiated Message
-       Sampling modes: Continuous sampling mode
-       Data transmission mode: Streaming when a buffer is full mode
-       Streaming operation = Continuous sampling + Streaming when a buffer is full
-
-    -> Polling
-       Sampling modes: Continuous sampling mode
-       Data transmission mode: Only when commanded mode */
-

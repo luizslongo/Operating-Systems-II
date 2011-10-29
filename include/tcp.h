@@ -216,7 +216,7 @@ public:
     void close();
     void connect();
     void listen();
-    void send(const char* data,u16 len,bool push = true);
+    s32 send(const char* data,u16 len,bool push = true);
     
     const Address & remote() { return _remote; }
     const Address & local()  { return _local; }
