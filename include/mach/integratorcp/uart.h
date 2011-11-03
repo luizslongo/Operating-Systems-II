@@ -22,7 +22,7 @@ class PL011_UART : public UART_Common {
         }
 
         char get() {
-            while (*_flag & RX_BUFFER_EMPTY));
+            while (*_flag & RX_BUFFER_EMPTY);
             *_flag |= RX_BUFFER_EMPTY;
             return (char)(*_base & 0xFF);
         }
