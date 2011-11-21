@@ -9,6 +9,9 @@ void MC13224V::init()
 {
     db<Init, MC13224V>(TRC) << "MC13224V::init()\n";
 
+    if (Traits<MC13224V_Flash>::enabled || Traits<MC13224V>::flash_erase_checking)
+        MC13224V_Flash::init();
+
     if (Traits<MC13224V>::flash_erase_checking)
         check_flash_erase();
 
