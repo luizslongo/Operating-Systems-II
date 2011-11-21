@@ -44,7 +44,9 @@ public:
 		CPU::int_disable();
 		for(;;);
 	}
-    static void reboot() { }
+    static void reboot() {
+        CPU::reboot();
+    }
     static void poweroff();
 
     static int irq2int(int i) { return i; }
