@@ -113,6 +113,10 @@ public:
         power(DOZE);
     }
 
+    static void reboot() {
+        ASMV("b _init\n");
+    }
+
     static void switch_context(Context * volatile * o, Context * volatile n);
 
     static Flags flags() { 
