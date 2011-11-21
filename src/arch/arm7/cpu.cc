@@ -46,7 +46,9 @@ void ARM7::switch_context(Context * volatile * o, Context * volatile n)
 void ARM7::power(ARM7::OP_Mode mode)
 {
     if (mode == _mode) return;
-    _mode = mode;
+        _mode = mode;
+    
+    typedef Machine::IO IO;
 
 #ifdef __mc13224v__ 
     switch(mode)
@@ -58,15 +60,18 @@ void ARM7::power(ARM7::OP_Mode mode)
         out32(Machine::IO::CRM_SLEEP_CNTL, in32(Machine::IO::CRM_SLEEP_CNTL) | 0x1);
         break;
     case DOZE:
-        out32(Machine::IO::CRM_SLEEP_CNTL, in32(Machine::IO::CRM_SLEEP_CNTL) | 0x2);
+        out32(IO::CRM_WU_CNTL, in32(IO::CRM_WU_CNTL) | 0x1);
+        out32(IO::CRM_SLEEP_CNTL, in32(IO::CRM_SLEEP_CNTL) | 0x1<<6 | 0x3<<4 | 0x1 );
+        while(!(in32(IO::CRM_STATUS) & 0x1));
+        out32(IO::CRM_STATUS, 0x1); //writing 1 clears the SLEEP_SYNC bit
         break;
     case FULL:
     default:
         break;
     }
+       
 #endif
 }
-
 extern "C" void __cxa_guard_acquire() {
     CPU::int_disable();
 }
