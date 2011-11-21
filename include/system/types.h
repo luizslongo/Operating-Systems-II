@@ -217,6 +217,7 @@ class AT90CAN128_ADC;
 class ATMega16_ADC;
 class ATMega128_ADC;
 class ATMega1281_ADC;
+class AVR_ADC;
 class MC13224V_ADC;
 class MC13224V_Battery_ADC;
 
@@ -241,6 +242,7 @@ class SHT11_Temperature;
 class SHT11_Humidity;
 class MC13224V_Temperature_Sensor;
 class ERTJ1VG103FA;
+class MC13224V_ADXL345;
 
 // Hardware Mediators - Encryption
 class AES_Controller;
