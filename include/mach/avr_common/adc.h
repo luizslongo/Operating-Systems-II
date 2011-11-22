@@ -13,9 +13,6 @@ __BEGIN_SYS
 class AVR_ADC : public Traits<AVR_ADC>
 {
 protected:
-    AVR_ADC() {}
-
-protected:
     typedef IO_Map<Machine> IO;
 
     typedef AVR8::Reg8 Reg8;
@@ -48,8 +45,8 @@ public:
     };
 
 public:
-    AVR_ADC(unsigned char channel, unsigned char reference,
-	    unsigned char trigger, Hertz frequency)
+    AVR_ADC(unsigned char channel = 0, unsigned char reference = 0,
+	    unsigned char trigger = 0, Hertz frequency = 0)
     {
     	if(!_in_use) _op_mode = OFF;
     	config(channel, reference, trigger, frequency);
