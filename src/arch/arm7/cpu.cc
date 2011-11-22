@@ -48,16 +48,15 @@ void ARM7::power(ARM7::OP_Mode mode)
     if (mode == _mode) return;
         _mode = mode;
     
-    typedef Machine::IO IO;
-
 #ifdef __mc13224v__ 
+    typedef Machine::IO IO;
     switch(mode)
     {
     case OFF:
         db<CPU>(WRN) << "Shutting system down! No way back from here!\n";
         int_disable();
     case HIBERNATE:
-        out32(Machine::IO::CRM_SLEEP_CNTL, in32(Machine::IO::CRM_SLEEP_CNTL) | 0x1);
+        out32(IO::CRM_SLEEP_CNTL, in32(IO::CRM_SLEEP_CNTL) | 0x1);
         break;
     case DOZE:
         out32(IO::CRM_WU_CNTL, in32(IO::CRM_WU_CNTL) | 0x1);
