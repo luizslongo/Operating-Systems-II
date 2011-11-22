@@ -144,7 +144,7 @@ $(MACH_MC13224V)_SETUP_ADDR          := 0x00000000
 $(MACH_MC13224V)_INIT_ADDR           := 0x00000000
 $(MACH_MC13224V)_SYS_DATA_ADDR       := 0x00000000
 $(MACH_MC13224V)_SYS_CODE_ADDR       := 0x00000000
-$(MACH_MC13224V)_APP_DATA_ADDR       := 0x00410000
+$(MACH_MC13224V)_APP_DATA_ADDR       := 0x00411000
 $(MACH_MC13224V)_APP_CODE_ADDR       := 0x00400000
 $(MACH_MC13224V)_BOOT_LENGTH_MIN     := 128
 $(MACH_MC13224V)_BOOT_LENGTH_MAX     := 512
@@ -323,7 +323,7 @@ CCLIB   = `$(CC) $(MACH_CC_FLAGS) -print-file-name=`
 CPP      = $(COMP_PREFIX)gcc -E
 CPPFLAGS = $(MACH_CC_FLAGS) -I$(INCLUDE)
 
-CXX      = $(COMP_PREFIX)g++ -c --no-exceptions --no-rtti --no-use-cxa-atexit 
+CXX      = $(COMP_PREFIX)g++ -c --no-exceptions --no-rtti --no-use-cxa-atexit
 CXXFLAGS = $(MACH_CC_FLAGS) -O2 -nostdinc -Wall -fdata-sections -ffunction-sections -I$(INCLUDE)
 
 LD       = $(COMP_PREFIX)ld
