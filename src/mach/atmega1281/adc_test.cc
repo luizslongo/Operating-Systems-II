@@ -8,7 +8,7 @@ int main()
 {
     OStream cout;
     
-    ATMega1281_ADC adc;
+    ADC adc;
 
     cout << "ATMega1281_ADC test\n";
 
