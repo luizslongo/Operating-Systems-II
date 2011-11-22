@@ -28,6 +28,8 @@ private:
 
 public:
     AXI4LITE_UART(unsigned int unit = 0) : _unit(unit) { }
+    AXI4LITE_UART(unsigned int baud, unsigned int data_bits, unsigned int parity,
+                  unsigned int stop_bits, unsigned int unit = 0) : _unit(unit) {}
 
     char get() {
 		while ((_regs->rxlevel) == 0);  // wait for data to be ready;
