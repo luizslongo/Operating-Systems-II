@@ -1,6 +1,8 @@
 #ifndef __avrcommon_traits_h
 #define __avrcommon_traits_h
 
+#include <system/config.h>
+
 __BEGIN_SYS
 
 class AVR_Common;
@@ -30,7 +32,7 @@ template <> struct Traits<AVR_UART>: public Traits<void>
 class AVR_ADC;
 template <> struct Traits<AVR_ADC>: public Traits<void>
 {
-    enum Power_Modes
+    typedef enum Power_Modes
     {
 		FULL                = 0,
 		LIGHT               = 1, //The same as FULL

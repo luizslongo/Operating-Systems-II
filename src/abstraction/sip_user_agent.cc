@@ -1,3 +1,7 @@
+#include <system/config.h>
+
+#ifdef __NIC_H
+
 #include <sip_user_agent.h>
 
 __BEGIN_SYS
@@ -1171,3 +1175,5 @@ SIP_Dialog *SIP_User_Agent::add_dialog(SIP_Message_Type type, SIP_Call_Status ca
 }
 
 __END_SYS
+
+#endif

@@ -1,7 +1,10 @@
 #ifndef __rtp_h
 #define __rtp_h
 
-#include <ip.h>
+#include <system/config.h>
+
+#ifdef __NIC_H
+
 #include <udp.h>
 #include <utility/random.h>
 
@@ -83,5 +86,7 @@ private:
 };
 
 __END_SYS
+
+#endif
 
 #endif

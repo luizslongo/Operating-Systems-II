@@ -1,15 +1,16 @@
 // EPOS AVR ADC Common Declarations
 
+#ifndef __avr_adc_h
+#define __avr_adc_h
+
 #include <tsc.h>
 #include <adc.h>
 #include <traits.h>
 
-#ifndef __avr_adc_h
-#define __avr_adc_h
 
 __BEGIN_SYS
 
-class AVR_ADC
+class AVR_ADC : public Traits<AVR_ADC>
 {
 protected:
     AVR_ADC() {}
@@ -19,8 +20,6 @@ protected:
 
     typedef AVR8::Reg8 Reg8;
     typedef AVR8::Reg16 Reg16;
-
-    typedef Traits<AVR_ADC> _Traits;
 
     static const unsigned long CLOCK = Traits<Machine>::CLOCK;
 
@@ -52,14 +51,14 @@ public:
     AVR_ADC(unsigned char channel, unsigned char reference,
 	    unsigned char trigger, Hertz frequency)
     {
-    	if(!_in_use) _op_mode = _Traits::OFF;
+    	if(!_in_use) _op_mode = OFF;
     	config(channel, reference, trigger, frequency);
 //    	if(!_in_use) power(_Traits::FULL);
     }
 
     ~AVR_ADC()
     {
-    	if(!_in_use) power(_Traits::OFF);
+    	if(!_in_use) power(OFF);
 		admux(0);
 		adcsra(0);
     }
@@ -102,25 +101,25 @@ public:
     void int_enable() { adcsra(adcsra() | (1 << ADIE)); }
     void int_disable() { adcsra(adcsra() & ~(1 << ADIE)); }
 
-    bool power(Traits<ADC>::Power_Modes mode)
+    bool power(Power_Modes mode)
     {
     	return do_power(this, mode);
     }
 
 private:
 
-    static bool do_power(AVR_ADC * target, Traits<ADC>::Power_Modes mode)
+    static bool do_power(AVR_ADC * target, Power_Modes mode)
     {
 //    	static bool interrupts_on = false;
 
     	switch(mode)
     	{
-    	case _Traits::OFF:
-    		if(_op_mode == _Traits::OFF) return true;
-    	case _Traits::STANDBY:
-    		if(_op_mode == _Traits::STANDBY)
+    	case OFF:
+    		if(_op_mode == OFF) return true;
+    	case STANDBY:
+    		if(_op_mode == STANDBY)
 			{
-    			if(mode == _Traits::OFF) _op_mode = mode;
+    			if(mode == OFF) _op_mode = mode;
     			return true;
 			}
 //    		interrupts_on = adcsra() & (1 << ADIE);
@@ -128,12 +127,12 @@ private:
     		target->disable();
     		break;
 
-    	case _Traits::LIGHT:
-    		if(_op_mode == _Traits::LIGHT) return true;
-    	case _Traits::FULL:
-    		if(_op_mode == _Traits::FULL)
+    	case LIGHT:
+    		if(_op_mode == LIGHT) return true;
+    	case FULL:
+    		if(_op_mode == FULL)
 			{
-    			if(mode == _Traits::LIGHT) _op_mode = mode;
+    			if(mode == LIGHT) _op_mode = mode;
     			return true;
 			}
     		if(!target->enable()) return false;
@@ -175,7 +174,7 @@ private:
     Reg8 _admux;
     Reg8 _adcsra;
     static bool _in_use;
-	static _Traits::Power_Modes _op_mode;
+	static Power_Modes _op_mode;
 };
 
 __END_SYS

@@ -1,10 +1,13 @@
 #ifndef __sip_manager_h
 #define __sip_manager_h
 
+#include <system/config.h>
+
+#ifdef __NIC_H
+
 #include <sip_defs.h>
 #include <sip_message.h>
 #include <mutex.h>
-#include <ip.h>
 #include <udp.h>
 #include <utility/list.h>
 
@@ -57,5 +60,7 @@ private:
 };
 
 __END_SYS
+
+#endif
 
 #endif

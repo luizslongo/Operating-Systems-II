@@ -1,6 +1,10 @@
 #ifndef __udp_h
 #define __udp_h
 
+#include <system/config.h>
+
+#ifdef __NIC_H
+
 #include <alarm.h>
 #include <ip.h>
 #include <icmp.h>
@@ -313,4 +317,6 @@ protected:
 
 
 __END_SYS
+#endif
+
 #endif

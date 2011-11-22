@@ -77,9 +77,7 @@ template <> struct Traits<ATMega16_NIC>: public Traits<void>
 {
     static const bool enabled = false;
 
-    typedef LIST<Radio> NICS;
-
-    static const unsigned int RADIO_UNITS = NICS::Count<Radio>::Result;
+    typedef LIST<ATMega16_NIC> NICS;
 };
 
 __END_SYS

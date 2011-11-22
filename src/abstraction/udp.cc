@@ -1,5 +1,7 @@
-#include <udp.h>
+#include <system/config.h>
+#ifdef __NIC_H
 
+#include <udp.h>
 #include <utility/string.h> // for Address constructor
 
 __BEGIN_SYS
@@ -220,3 +222,4 @@ UDP::Channel::~Channel()
 
 __END_SYS
 
+#endif

@@ -1,3 +1,7 @@
+#include <system/config.h>
+
+#ifdef __NIC_H
+
 #include <dhcp.h>
 #include <alarm.h>
 
@@ -27,4 +31,12 @@ int main()
         cout << "@result = failed\n";
     else
         cout << "@result = passed\n";
+
+    return 0;
 }
+
+#else
+
+int main() { return 0; }
+
+#endif

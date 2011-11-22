@@ -1,3 +1,7 @@
+#include <system/config.h>
+
+#ifdef __NIC_H
+
 #include <icmp.h>
 #include <alarm.h>
 
@@ -41,5 +45,12 @@ int main()
 		icmp.send(IP::Address(10,0,2,2),pkt);
 		Alarm::delay(100000);
 	}
+
+    return 0;
 }
+#else
+
+int main() { return 0; }
+
+#endif
 

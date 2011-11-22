@@ -1,8 +1,11 @@
 #ifndef __ip_h
 #define __ip_h
 
-#include <active.h>
 #include <nic.h>
+
+#ifdef __NIC_H
+
+#include <active.h>
 #include <service.h>
 #include <utility/malloc.h>
 #include <utility/debug.h>
@@ -257,6 +260,8 @@ private:
 };
 
 __END_SYS
+
+#endif // has networking
 
 #endif
 

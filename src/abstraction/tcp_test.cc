@@ -1,3 +1,7 @@
+#include <system/config.h>
+
+#ifdef __NIC_H
+
 #include <tcp.h>
 #include <utility/string.h>
 #include <mutex.h>
@@ -122,3 +126,10 @@ int main()
     web.wait();
     delete ip; // kill IP thread
 }
+
+#else
+
+int main() { return 0; }
+
+#endif
+

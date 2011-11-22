@@ -1,5 +1,7 @@
 #include <ieee1451_tim.h>
 
+#ifdef __NIC_H
+
 __BEGIN_SYS
 
 IEEE1451_Transducer::IEEE1451_Transducer()
@@ -395,3 +397,5 @@ void IEEE1451_TIM::UDP_Socket::received(const UDP::Address &src, const char *dat
 }
 
 __END_SYS
+
+#endif

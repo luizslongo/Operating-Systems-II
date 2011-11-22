@@ -3,6 +3,10 @@
 #ifndef __tcp_h
 #define __tcp_h
 
+#include <system/config.h>
+
+#ifdef __NIC_H
+
 #include <alarm.h>
 #include <condition.h>
 #include <ip.h>
@@ -430,3 +434,4 @@ protected:
 __END_SYS
 #endif
 
+#endif

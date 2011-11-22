@@ -1,3 +1,7 @@
+#include <system/config.h>
+
+#ifdef __NIC_H
+
 #include <sip_transactions.h>
 #include <sip_user_agent.h>
 
@@ -744,3 +748,5 @@ void SIP_Transaction_Server_Non_Invite::timer_J_Callback(SIP_Transaction *p)
 }
 
 __END_SYS
+
+#endif

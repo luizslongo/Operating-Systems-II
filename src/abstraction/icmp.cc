@@ -1,5 +1,7 @@
 #include <icmp.h>
 
+#ifdef __NIC_H
+
 __BEGIN_SYS
 
 ICMP * ICMP_SingleNIC::_instance;
@@ -74,3 +76,5 @@ void ICMP::send(IP::Address from,IP::Address to,Packet& pkt)
 }
 
 __END_SYS
+
+#endif

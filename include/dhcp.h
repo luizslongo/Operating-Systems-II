@@ -4,6 +4,8 @@
 #include "udp.h"
 #include <utility/random.h>
 
+#ifdef __NIC_H
+
 __BEGIN_SYS
 /*
  * Reference:
@@ -121,5 +123,7 @@ protected:
 };
 
 __END_SYS
+
+#endif
 
 #endif

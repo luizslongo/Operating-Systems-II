@@ -1,3 +1,7 @@
+#include <system/config.h>
+
+#ifdef __NIC_H
+
 #include <utility/ostream.h>
 #include <rtp.h>
 #include <sip_defs.h>
@@ -2987,3 +2991,10 @@ int send_audio(SIP_User_Agent *ua)
 #endif
 
 //-----------------------------------------------
+
+#else
+
+int main() { return 0; }
+
+#endif
+

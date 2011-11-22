@@ -1,3 +1,7 @@
+#include <system/config.h>
+
+#ifdef __NIC_H
+
 #include <ieee1451_objects.h>
 #include <ip.h>
 #include <tcp.h>
@@ -377,3 +381,10 @@ int main()
     app->execute();
     return 0;
 }
+
+#else
+
+int main() { return 0; }
+
+#endif
+

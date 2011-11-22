@@ -1,6 +1,9 @@
 // EPOS Network Abstraction Implementation
 
 #include <nic.h>
+
+#ifdef __NIC_H
+
 #include <network.h>
 #include <arp.h>
 
@@ -133,3 +136,5 @@ void Network::update(NIC_Common::Observed * o, int p)
 }
 
 __END_SYS
+
+#endif

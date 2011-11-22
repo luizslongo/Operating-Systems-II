@@ -24,7 +24,7 @@
 #define ARCH ia32
 #define __ARCH_TRAITS_H	 __HEADER_ARCH(traits)
 
-#define MACH mc13224v
+#define MACH pc
 #define __MACH_TRAITS_H	 __HEADER_MACH(traits)
 
 //============================================================================
@@ -32,8 +32,8 @@
 //============================================================================
 #include <system/types.h>
 #include <system/meta.h>
-#include <traits.h>
 #include __HEADER_MACH(config)
+#include <traits.h>
 #include <system/info.h>
 
 //============================================================================

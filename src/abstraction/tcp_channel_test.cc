@@ -1,3 +1,7 @@
+#include <system/config.h>
+
+#ifdef __NIC_H
+
 #include <tcp.h>
 #include <utility/string.h>
 
@@ -44,3 +48,10 @@ int main()
 
     delete ip; // kill IP thread
 }
+
+#else
+
+int main() { return 0; }
+
+#endif
+

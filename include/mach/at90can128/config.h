@@ -13,7 +13,6 @@
 #define __UART_H			__HEADER_MACH(uart)
 #define __RTC_H             		__HEADER_MACH(rtc)
 #define __CAN_H             		__HEADER_MACH(can)
-#define __NIC_H             		__HEADER_MACH(nic)
 
 __BEGIN_SYS
 
@@ -31,7 +30,6 @@ typedef Alarm_Timer         		Timer;
 typedef AT90CAN128_CAN      		CAN;
 typedef Serial_Display      		Display;
 typedef AT90CAN128_UART     		UART;
-typedef AT90CAN128_NIC      		NIC;
 typedef AT90CAN128_ADC         		ADC;
 
 __END_SYS

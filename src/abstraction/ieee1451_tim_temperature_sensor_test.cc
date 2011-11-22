@@ -1,4 +1,7 @@
 #include <ieee1451_tim.h>
+
+#ifdef __NIC_H
+
 #include <mutex.h>
 #include <thread.h>
 #ifdef __mc13224v__
@@ -269,3 +272,9 @@ int main()
     sensor.execute();
     return 0;
 }
+
+#else
+
+int main() { return 0; }
+
+#endif

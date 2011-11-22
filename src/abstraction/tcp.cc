@@ -1,5 +1,7 @@
 #include <tcp.h>
 
+#ifdef __NIC_H
+
 __BEGIN_SYS
 
 // static data
@@ -879,3 +881,4 @@ void TCP::Channel::update(Data_Observed<IP::Address> *ob, long c,
 }
 __END_SYS
 
+#endif

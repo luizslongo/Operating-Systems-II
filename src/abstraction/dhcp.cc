@@ -1,5 +1,7 @@
 #include <dhcp.h>
 
+#ifdef __NIC_H
+
 __BEGIN_SYS
 
 DHCP::Client::Client(UDP * udp)
@@ -137,3 +139,5 @@ void DHCP::Client::received(const UDP::Address & src,
 }
 
 __END_SYS
+
+#endif

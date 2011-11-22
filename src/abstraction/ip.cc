@@ -1,5 +1,7 @@
 #include <ip.h>
 
+#ifdef __NIC_H
+
 __BEGIN_SYS
 
 IP* IP::_instance[Traits<NIC>::NICS::Length];
@@ -202,3 +204,4 @@ u16 IP::calculate_checksum(const void* ptr, u16 count)
 
 __END_SYS
 
+#endif

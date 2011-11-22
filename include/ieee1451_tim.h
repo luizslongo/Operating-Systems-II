@@ -1,6 +1,10 @@
 #ifndef __ieee1451_tim_h
 #define __ieee1451_tim_h
 
+#include <system/config.h>
+
+#ifdef __NIC_H
+
 #include <ieee1451_objects.h>
 #include <condition.h>
 #include <mutex.h>
@@ -98,5 +102,7 @@ private:
 };
 
 __END_SYS
+
+#endif
 
 #endif

@@ -1,6 +1,10 @@
 #ifndef ICMP_H
 #define ICMP_H
 
+#include <system/config.h>
+
+#ifdef __NIC_H
+
 #include <cpu.h>
 #include <ip.h>
 
@@ -141,3 +145,5 @@ ICMP_SingleNIC::ICMP_SingleNIC(IP * ip) {
 __END_SYS
 
 #endif // ICMP_H
+
+#endif

@@ -1,5 +1,9 @@
 // EPOS PC Network Abstraction Test
 
+#include <system/config.h>
+
+#ifdef __NIC_H
+
 #include <network.h>
 
 __USING_SYS
@@ -26,3 +30,10 @@ int main()
 	 << "Rx Packets: " << stat.rx_packets << "\n"
 	 << "Rx Bytes:   " << stat.rx_bytes << "\n";
 };
+
+#else
+
+int main() { return 0; }
+
+#endif
+

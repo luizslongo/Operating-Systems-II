@@ -1,3 +1,7 @@
+#include <system/config.h>
+
+#ifdef __NIC_H
+
 #include <ieee1451_tim.h>
 #include <thread.h>
 #include <g726.h>
@@ -365,3 +369,10 @@ int main()
     sensor.execute();
     return 0;
 }
+
+#else
+
+int main() { return 0; }
+
+#endif
+

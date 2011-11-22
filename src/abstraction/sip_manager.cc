@@ -1,3 +1,7 @@
+#include <system/config.h>
+
+#ifdef __NIC_H
+
 #include <sip_manager.h>
 #include <sip_user_agent.h>
 #include <utility/random.h>
@@ -263,3 +267,5 @@ void SIP_Manager::random(char *buffer)
 }
 
 __END_SYS
+
+#endif

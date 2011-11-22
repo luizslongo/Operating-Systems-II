@@ -3,6 +3,7 @@
 #ifndef __nic_h
 #define __nic_h
 
+#include <system/config.h>
 #include <cpu.h>
 #include <utility/observer.h>
 #include <utility/crc.h>

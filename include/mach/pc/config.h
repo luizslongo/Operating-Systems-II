@@ -3,6 +3,9 @@
 #ifndef __pc_config_h
 #define __pc_config_h
 
+#include <system/meta.h>
+#include <traits.h>
+
 #define __CPU_H				__HEADER_ARCH(cpu)
 #define __TSC_H				__HEADER_ARCH(tsc)
 #define __MMU_H				__HEADER_ARCH(mmu)

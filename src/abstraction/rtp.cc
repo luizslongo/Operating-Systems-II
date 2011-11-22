@@ -1,5 +1,7 @@
 #include <rtp.h>
 
+#ifdef __NIC_H
+
 __BEGIN_SYS
 
 int RTP::receive(char *payload, u32 size)
@@ -51,3 +53,5 @@ int RTP::send(const char *payload, u32 size, u8 marker)
 }
 
 __END_SYS
+
+#endif

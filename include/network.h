@@ -3,8 +3,11 @@
 #ifndef __network_h
 #define __network_h
 
-#include <machine.h>
 #include <nic.h>
+
+#ifdef __NIC_H
+
+#include <machine.h>
 #include <arp.h>
 #include <ethernet.h>
 
@@ -87,5 +90,7 @@ private:
 };
 
 __END_SYS
+
+#endif // has networking
 
 #endif
