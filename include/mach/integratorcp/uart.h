@@ -43,6 +43,10 @@ class IntegratorCP_UART : public PL011_UART {
     public:
         IntegratorCP_UART(unsigned int unit=0) :
             PL011_UART((0x16+unit)<<24) {}
+
+        // Dummy contructor with configuration
+        IntegratorCP_UART(unsigned int baud, unsigned int data_bits, unsigned int parity,
+	    unsigned int stop_bits, unsigned int unit = 0) : PL011_UART((0x16+unit)<<20) {}
 };
 
 // Those are the same
