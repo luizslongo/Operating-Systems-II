@@ -10,7 +10,7 @@ int main()
 {
     OStream cout;
     
-    ATMega16_ADC adc;
+    ADC adc;
 
     cout << "ATMega16_ADC test\n";
 

@@ -166,7 +166,6 @@ class PC_Ethernet;
 class PCNet32;
 class C905;
 class E100;
-class ATMega16_NIC;
 class ATMega128_NIC;
 class AT90CAN128_NIC;
 class ATMega1281_NIC;

@@ -73,13 +73,6 @@ template <> struct Traits<ATMega16_Display>: public Traits<ATMega16_Common>
     static const bool on_serial = true;
 };
 
-template <> struct Traits<ATMega16_NIC>: public Traits<void>
-{
-    static const bool enabled = false;
-
-    typedef LIST<ATMega16_NIC> NICS;
-};
-
 __END_SYS
 
 #endif
