@@ -81,7 +81,7 @@ template <> struct Traits<Services>: public Traits<void>
         BCast
     };
 
-    static const int SERVICE = ARP;
+    static const int SERVICE = BCast;
 };
 
 

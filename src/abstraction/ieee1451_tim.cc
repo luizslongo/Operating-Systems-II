@@ -14,7 +14,7 @@ void IEEE1451_Transducer::receive_msg(unsigned short trans_id, const char *messa
     IEEE1451_Command *cmd = (IEEE1451_Command *) message;
     const char *buffer = message + sizeof(IEEE1451_Command);
 
-    db<IEEE1451_Transducer>(TRC) << "IEEE1451_Transducer - Message received (trans_id=" << trans_id << ", cmd=" << hex << cmd->_command << ")\n";
+    //db<IEEE1451_Transducer>(TRC) << "IEEE1451_Transducer - Message received (trans_id=" << trans_id << ", cmd=" << hex << cmd->_command << ")\n";
 
     switch (cmd->_command)
     {
@@ -216,8 +216,11 @@ void IEEE1451_TIM::disconnect()
     _connected = false;
     Thread::self()->yield();
 
-    while (!_tcp_channel.close())
-        Alarm::delay(TIME_500_MS * 10);
+    if (!_tcp_channel.close())
+    {
+        db<IEEE1451_TIM>(WRN) << "IEEE1451_TIM - Error when disconnecting...\n";
+        _tcp_channel.state(TCP::Socket::CLOSED);
+    }
 
 #ifdef __mc13224v__
     MC13224V_Transceiver::maca_off();
@@ -231,7 +234,7 @@ void IEEE1451_TIM::receive_msg(unsigned short trans_id, const char *message, uns
     IEEE1451_Command *cmd = (IEEE1451_Command *) message;
     const char *buffer = message + sizeof(IEEE1451_Command);
 
-    db<IEEE1451_TIM>(TRC) << "IEEE1451_TIM - Message received (trans_id=" << trans_id << ", cmd=" << hex << cmd->_command << ")\n";
+    //db<IEEE1451_TIM>(TRC) << "IEEE1451_TIM - Message received (trans_id=" << trans_id << ", cmd=" << hex << cmd->_command << ")\n";
 
     if (cmd->_channel_number == ADDRESS_CLASS_TIM)
     {
@@ -316,7 +319,7 @@ void IEEE1451_TIM::receive_msg(unsigned short trans_id, const char *message, uns
 
 void IEEE1451_TIM::send_msg(unsigned short trans_id, unsigned int length, bool multimedia)
 {
-    db<IEEE1451_TIM>(TRC) << "IEEE1451_TIM - Sending message (trans_id=" << trans_id << ", len=" << length << ", media=" << multimedia << ")\n";
+    //db<IEEE1451_TIM>(TRC) << "IEEE1451_TIM - Sending message (trans_id=" << trans_id << ", len=" << length << ", media=" << multimedia << ")\n";
 
     if (!_connected)
     {
@@ -366,7 +369,7 @@ int IEEE1451_TIM::receive(IEEE1451_TIM *tim, TCP::Channel *channel)
             continue;
         }
 
-        db<IEEE1451_TIM>(TRC) << "IEEE1451_TIM - Receiving...\n";
+        //db<IEEE1451_TIM>(TRC) << "IEEE1451_TIM - Receiving...\n";
         ret = channel->receive(_receive_buffer, MAX_BUFFER_SIZE);
 
         if (ret < (int) sizeof(IEEE1451_Packet))

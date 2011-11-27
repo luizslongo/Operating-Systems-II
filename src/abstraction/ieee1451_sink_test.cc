@@ -6,6 +6,7 @@
 #include <ip.h>
 #include <tcp.h>
 #include <udp.h>
+#include <thread.h>
 #include <utility/list.h>
 #include <utility/malloc.h>
 
@@ -50,11 +51,16 @@ private:
         void closed();
         void error(short error_code);
 
+        static int error_thread(TCP_Socket *socket, short error_code);
+
     public:
         char *_send_buffer;
         unsigned short _total_size;
         unsigned short _attempts;
         Simple_List<TCP_Socket>::Element _link;
+
+        Thread *_error_thread;
+        char _error_thread_alloc[sizeof(Thread)];
     };
 
     class UDP_Socket : public UDP::Socket
@@ -144,7 +150,7 @@ void IEEE1451_Sink::execute()
 
 #ifdef __mc13224v__
         while (!_uart.has_data())
-            Thread::self()->yield();
+            Thread::yield();
 #endif
 
         for (unsigned short i = 0; i < sizeof(IEEE1451_UART); i++)
@@ -205,7 +211,7 @@ TCP::Socket *IEEE1451_Sink::TCP_Socket::incoming(const TCP::Address &from)
 
     if (!socket)
     {
-        TCP_Socket *socket = new TCP_Socket(*this);
+        socket = new TCP_Socket(*this);
         sink->_tcp_sockets.insert(&socket->_link);
     }
     return socket;
@@ -280,51 +286,65 @@ void IEEE1451_Sink::TCP_Socket::closed()
 
 void IEEE1451_Sink::TCP_Socket::error(short error_code)
 {
-    IEEE1451_Sink *sink = IEEE1451_Sink::get_instance();
+    //IEEE1451_Sink *sink = IEEE1451_Sink::get_instance();
 
     if (error_code == ERR_TIMEOUT)
     {
-        if (state() == LAST_ACK)
+        if ((state() == LAST_ACK) || (state() == ESTABLISHED))
         {
-            sink->log("Socket error (LAST_ACK)");
-
-            if (_attempts >= 3)
-            {
-                sink->log("Retry limit reached");
-                state(CLOSED);
-                closed();
-            }
-
-            _attempts++;
-            close();
-
-        }else if (state() == ESTABLISHED)
-        {
-            sink->log("Socket error (ESTABLISHED)");
-
-            IEEE1451_UART *uart = (IEEE1451_UART *) sink->_receive_buffer;
-            IEEE1451_Packet *packet = (IEEE1451_Packet *) (sink->_receive_buffer + sizeof(IEEE1451_UART));
-
-            if (uart->_address == remote().ip())
-            {
-                if (_attempts >= 5)
-                {
-                    sink->log("Retry limit reached");
-                    return;
-                }
-
-                sink->log("Resending due to TIMEOUT error");
-
-                unsigned int size = sizeof(IEEE1451_Packet) + packet->_length;
-                const char *msg = sink->_receive_buffer + sizeof(IEEE1451_UART);
-                _attempts++;
-
-                int ret = send(msg, size);
-                if (ret < 0)
-                    sink->log("Failed resending message");
-            }
+            if (_error_thread)
+                _error_thread->Thread::~Thread();
+            _error_thread = new (&_error_thread_alloc) Thread(error_thread, (TCP_Socket *) this, error_code);
         }
     }
+}
+
+int IEEE1451_Sink::TCP_Socket::error_thread(TCP_Socket *socket, short error_code)
+{
+    IEEE1451_Sink *sink = IEEE1451_Sink::get_instance();
+
+    if (socket->state() == LAST_ACK)
+    {
+        sink->log("Socket error_thread (LAST_ACK)");
+
+        if (socket->_attempts >= 3)
+        {
+            sink->log("Retry limit reached");
+            socket->state(CLOSED);
+            socket->closed();
+        }
+
+        socket->_attempts++;
+        socket->close();
+
+    }else if (socket->state() == ESTABLISHED)
+    {
+        sink->log("Socket error_thread (ESTABLISHED)");
+
+        IEEE1451_UART *uart = (IEEE1451_UART *) sink->_receive_buffer;
+        IEEE1451_Packet *packet = (IEEE1451_Packet *) (sink->_receive_buffer + sizeof(IEEE1451_UART));
+
+        if (uart->_address == socket->remote().ip())
+        {
+            if (socket->_attempts >= 10)
+            {
+                sink->log("Retry limit reached");
+                return 0;
+            }
+
+            //sink->log("Resending due to TIMEOUT error");
+
+            unsigned int size = sizeof(IEEE1451_Packet) + packet->_length;
+            const char *msg = sink->_receive_buffer + sizeof(IEEE1451_UART);
+            socket->_attempts++;
+
+            int ret = socket->send(msg, size);
+            if (ret < 0)
+                sink->log("Failed resending message");
+        }
+    }
+
+    return 0;
 }
 
 void IEEE1451_Sink::UDP_Socket::received(const UDP::Address &src, const char *data, unsigned int size)
@@ -369,7 +389,7 @@ int main()
     unsigned int *GPIO_BASE = (unsigned int *) 0x80000000;
     *GPIO_BASE = 0;
 
-    Alarm::delay(TIME_500_MS * 4);
+    Alarm::delay(TIME_500_MS * 2);
     //cout << "+++++ Starting sink +++++\n";
 
     IP *ip = IP::instance();

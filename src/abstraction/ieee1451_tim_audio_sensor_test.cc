@@ -10,8 +10,8 @@
     #include <mach/mc13224v/audio_sensor.h>
 #endif
 
-#define SLEEP_PERIOD    TIME_500_MS * 50
-#define DATASET_SIZE    66 //30 pacotes/seg * (66 * 8 / 2) amostras/pacotes = 7920 amostras/seg
+#define SLEEP_PERIOD    TIME_500_MS * 20//50
+#define DATASET_SIZE    68 //15 pacotes/seg * (68 * 8 / 2) amostras/pacotes = 4080 amostras/seg
 #define SAMPLE_NO       DATASET_SIZE * 8 / 2 //2 bits per sample (16 kbit/s)
 
 __USING_SYS
@@ -130,9 +130,21 @@ void IEEE1451_Audio_Sensor::init_teds()
     else if ((_operation_mode == OM_POLLING) || (_operation_mode == OM_POLLING_OPTIMIZED))
         _channel_array[120] = DATA_XMIT_COMMANDED;
 
-    _audio_sensor_utn_array = new (kmalloc(37)) char[37];
-    _audio_sensor_utn_array[0] = 0x00; _audio_sensor_utn_array[1] = 0x00; _audio_sensor_utn_array[2] = 0x00; _audio_sensor_utn_array[3] = 0x27; _audio_sensor_utn_array[4] = TEDS_USER_TRANSDUCER_NAME_TEDS_ID; _audio_sensor_utn_array[5] = 0x04; _audio_sensor_utn_array[6] = 0x00; _audio_sensor_utn_array[7] = TEDS_USER_TRANSDUCER_NAME; _audio_sensor_utn_array[8] = 0x01; _audio_sensor_utn_array[9] = 0x01; _audio_sensor_utn_array[10] = TEDS_USER_TRANSDUCER_NAME_FORMAT; _audio_sensor_utn_array[11] = 0x01; _audio_sensor_utn_array[12] = 0x00; _audio_sensor_utn_array[13] = TEDS_USER_TRANSDUCER_NAME_TC_NAME; _audio_sensor_utn_array[14] = 0x14; _audio_sensor_utn_array[15] = 'O'; _audio_sensor_utn_array[16] = 'n'; _audio_sensor_utn_array[17] = 'b'; _audio_sensor_utn_array[18] = 'o'; _audio_sensor_utn_array[19] = 'a'; _audio_sensor_utn_array[20] = 'r'; _audio_sensor_utn_array[21] = 'd'; _audio_sensor_utn_array[22] = ' '; _audio_sensor_utn_array[23] = 'A'; _audio_sensor_utn_array[24] = 'u'; _audio_sensor_utn_array[25] = 'd'; _audio_sensor_utn_array[26] = 'i'; _audio_sensor_utn_array[27] = 'o'; _audio_sensor_utn_array[28] = ' '; _audio_sensor_utn_array[29] = 'S'; _audio_sensor_utn_array[30] = 'e'; _audio_sensor_utn_array[31] = 'n'; _audio_sensor_utn_array[32] = 's'; _audio_sensor_utn_array[33] = 'o'; _audio_sensor_utn_array[34] = 'r'; _audio_sensor_utn_array[35] = 0xf5; _audio_sensor_utn_array[36] = 0x92; //checksum errado
-    _audio_sensor_utn_teds = new IEEE1451_TEDS_TIM(_audio_sensor_utn_array, 37);
+
+    char name[] = { "audio_sensor_1" };
+    unsigned int name_len = strlen(name);
+    unsigned int _audio_sensor_utn_len = 15 + name_len + 2;
+
+    _audio_sensor_utn_array = new (kmalloc(_audio_sensor_utn_len)) char[_audio_sensor_utn_len];
+    _audio_sensor_utn_array[0] = (_audio_sensor_utn_len - 4) >> 24; _audio_sensor_utn_array[1] = (_audio_sensor_utn_len - 4) >> 16; _audio_sensor_utn_array[2] = (_audio_sensor_utn_len - 4) >> 8; _audio_sensor_utn_array[3] = _audio_sensor_utn_len - 4; _audio_sensor_utn_array[4] = TEDS_USER_TRANSDUCER_NAME_TEDS_ID; _audio_sensor_utn_array[5] = 0x04; _audio_sensor_utn_array[6] = 0x00; _audio_sensor_utn_array[7] = TEDS_USER_TRANSDUCER_NAME; _audio_sensor_utn_array[8] = 0x01; _audio_sensor_utn_array[9] = 0x01; _audio_sensor_utn_array[10] = TEDS_USER_TRANSDUCER_NAME_FORMAT; _audio_sensor_utn_array[11] = 0x01; _audio_sensor_utn_array[12] = 0x00; _audio_sensor_utn_array[13] = TEDS_USER_TRANSDUCER_NAME_TC_NAME; _audio_sensor_utn_array[14] = name_len;
+
+    unsigned int i = 15;
+    for (unsigned int j = 0; j < name_len; i++, j++)
+        _audio_sensor_utn_array[i] = name[j];
+    _audio_sensor_utn_array[i++] = 0x00; _audio_sensor_utn_array[i++] = 0x00; //checksum errado
+
+    _audio_sensor_utn_teds = new IEEE1451_TEDS_TIM(_audio_sensor_utn_array, _audio_sensor_utn_len);
+
 
     //char text_block[] = { "<?xml version=\"1.0\" encoding=\"UTF-8\"?><UnitsExtensionDataBlock xmlns=\"http://grouper.ieee.org/groups/1451/0/1451HTTPAPI\" xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" xsi:schemaLocation=\"http://grouper.ieee.org/groups/1451/0/1451HTTPAPIUnitsExtensionDataBlock.xsd\"><UnitsExtensionText>G.726 - 16 kbits/s</UnitsExtensionText></UnitsExtensionDataBlock>" }; //Too big
     char text_block[] = { "<?xml version=\"1.0\" encoding=\"UTF-8\"?><UnitsExtensionDataBlock><UnitsExtensionText>G.726 - 16 kbits/s</UnitsExtensionText></UnitsExtensionDataBlock>" };
@@ -142,7 +154,7 @@ void IEEE1451_Audio_Sensor::init_teds()
     _units_extension_array = new (kmalloc(unit_extension_len)) char[unit_extension_len];
     _units_extension_array[0] = (unit_extension_len - 4) >> 24; _units_extension_array[1] = (unit_extension_len - 4) >> 16; _units_extension_array[2] = (unit_extension_len - 4) >> 8; _units_extension_array[3] = unit_extension_len - 4; _units_extension_array[4] = TEDS_TEXT_BASED_TEDS_ID; _units_extension_array[5] = 0x04; _units_extension_array[6] = 0x00; _units_extension_array[7] = TEDS_UNITS_EXTENSION; _units_extension_array[8] = 0x01; _units_extension_array[9] = 0x01; _units_extension_array[10] = TEDS_TEXT_BASED_NUM_LANG; _units_extension_array[11] = 0x01; _units_extension_array[12] = 0x01; _units_extension_array[13] = TEDS_TEXT_BASED_DIR_BLOCK; _units_extension_array[14] = 0x13; _units_extension_array[15] = TEDS_TEXT_BASED_LANG_CODE; _units_extension_array[16] = 0x02; _units_extension_array[17] = 'e'; _units_extension_array[18] = 'n'; _units_extension_array[19] = TEDS_TEXT_BASED_OFFSET; _units_extension_array[20] = 0x04; _units_extension_array[21] = 0x00; _units_extension_array[22] = 0x00; _units_extension_array[23] = 0x00; _units_extension_array[24] = 38 - 24; _units_extension_array[25] = TEDS_TEXT_BASED_LENGTH; _units_extension_array[26] = 0x04; _units_extension_array[27] = (text_block_len + 2) >> 24; _units_extension_array[28] = (text_block_len + 2) >> 16; _units_extension_array[29] = (text_block_len + 2) >> 8; _units_extension_array[30] = text_block_len + 2; _units_extension_array[31] = TEDS_TEXT_BASED_COMPRESS; _units_extension_array[32] = 0x01; _units_extension_array[33] = 0x00; _units_extension_array[34] = TEDS_TEXT_BASED_SUB_SUM; _units_extension_array[35] = 0x02; _units_extension_array[36] = 0x00; _units_extension_array[37] = 0x00; //checksum errado
 
-    unsigned int i = 38;
+    i = 38;
     for (unsigned int j = 0; j < text_block_len; i++, j++)
         _units_extension_array[i] = text_block[j];
     _units_extension_array[i++] = 0x00; _units_extension_array[i++] = 0x00; //checksum errado
@@ -175,7 +187,7 @@ void IEEE1451_Audio_Sensor::stop()
 
 void IEEE1451_Audio_Sensor::read_data_set(unsigned short trans_id, unsigned int offset)
 {
-    cout << "Reading data set (polling)...\n";
+    //cout << "Reading data set (polling)...\n";
 
     unsigned int size = sizeof(IEEE1451_Data_Set_Read_Reply) + DATASET_SIZE;
     char *buffer = IEEE1451_TIM::get_instance()->get_send_buffer();
@@ -185,10 +197,11 @@ void IEEE1451_Audio_Sensor::read_data_set(unsigned short trans_id, unsigned int 
 
     reply->_header._success = true;
     reply->_header._length = DATASET_SIZE + sizeof(reply->_offset);
-    reply->_offset = 0;
+    reply->_offset = _counter++;
 
     get_audio(data);
 
+    for (volatile unsigned int t = 0; t < 0x200; t++);
     IEEE1451_TIM::get_instance()->send_msg(trans_id, size, true);
 }
 
@@ -207,17 +220,19 @@ void IEEE1451_Audio_Sensor::stop_read_data_set(unsigned short trans_id)
 
 void IEEE1451_Audio_Sensor::send_data_set()
 {
-    cout << "Sending data set (tim_im)...\n";
+    //cout << "Sending data set (tim_im)...\n";
 
     unsigned int size = sizeof(IEEE1451_Command) + DATASET_SIZE;
     char *buffer = IEEE1451_TIM::get_instance()->get_send_buffer();
 
     IEEE1451_Command *cmd = (IEEE1451_Command *) buffer;
-    char *data = buffer + sizeof(IEEE1451_Command);
+    unsigned long *offset = (unsigned long *) (buffer + sizeof(IEEE1451_Command));
+    char *data = buffer + sizeof(IEEE1451_Command) + sizeof(unsigned long);
 
     cmd->_channel_number = _channel_number;
     cmd->_command = COMMAND_CLASS_READ_TRANSDUCER_CHANNEL_DATA_SET_SEGMENT;
     cmd->_length = DATASET_SIZE;
+    offset[0] = _counter++;
 
     get_audio(data);
 
@@ -264,20 +279,27 @@ int IEEE1451_Audio_Sensor::execute()
     _execute_thread->suspend();
 
     if (_operation_mode == OM_POLLING)
-        return 0;
+        return 0; //15 packets = 1.0076 seconds
 
     if (_operation_mode == OM_POLLING_OPTIMIZED)
     {
-        _execute_thread->suspend();
-
+        unsigned short aux = 0;
         while (true)
         {
             if (!_reading_data)
                 _execute_thread->suspend();
 
-            send_data_set();
-            _execute_thread->yield();
-            Alarm::delay(TIME_50_MS);
+            for (int i = 0; i < 3; i++)
+                Thread::yield();
+
+            for (volatile unsigned int t = 0; t < 0x1400; t++);
+            send_data_set(); //15 packets = 1.0027 second
+
+            if (aux++ == 6)
+            {
+                Thread::yield();
+                aux = 0;
+            }
         }
     }else //if ((_operation_mode == OM_TIM_IM) || (_operation_mode == OM_TIM_IM_OPTIMIZED))
     {
@@ -305,17 +327,17 @@ int IEEE1451_Audio_Sensor::execute()
             }
 
             send_start_read_data_set();
-            Alarm::delay(TIME_500_MS);
+            Alarm::delay(TIME_50_MS);
 
-            for (unsigned short i = 0; i < 30 * 3; i++) //90 packets = 3 seconds
+            for (unsigned short i = 0; i < 15 * 10; i++)
             {
+                for (volatile unsigned int t = 0; t < 0xE500; t++); //15 packets = 1.0064 seconds
+                //for (volatile unsigned int t = 0; t < 0x1400; t++); //30 packets = 1.0820 seconds
                 send_data_set();
-                _execute_thread->yield();
-                Alarm::delay(TIME_50_MS);
             }
 
             send_stop_read_data_set();
-            Alarm::delay(TIME_500_MS);
+            Alarm::delay(TIME_50_MS);
         }
     }
 
@@ -336,12 +358,10 @@ void IEEE1451_Audio_Sensor::get_audio(char *data)
     G726_encode(_audio_buffer, _audio_buffer, SAMPLE_NO, &_law, _reset, _rate, &_state);
     _reset = 0;
 
-    ((unsigned short *) data)[0] = _counter++;
-
     for (unsigned int i = 0, j = 0; i < DATASET_SIZE; i++, j += 4)
     {
-        data[i + 2] = (_audio_buffer[j] << 6) | (_audio_buffer[j + 1] << 4) |
-                      (_audio_buffer[j + 2] << 2) | (_audio_buffer[j + 3]);
+        data[i] = (_audio_buffer[j] << 6) | (_audio_buffer[j + 1] << 4) |
+                  (_audio_buffer[j + 2] << 2) | (_audio_buffer[j + 3]);
     }
 }
 
@@ -352,20 +372,18 @@ int main()
     unsigned int *GPIO_BASE = (unsigned int *) 0x80000000;
     *GPIO_BASE = 0;
 
-    Alarm::delay(TIME_500_MS * 4);
+    Alarm::delay(TIME_500_MS * 2);
     kout << "+++++ Starting wtim +++++\n";
 
     IP *ip = IP::instance();
-    ip->set_address(IP::Address(10, 0, 0, 113));
+    ip->set_address(IP::Address(10, 0, 0, 112));
     ip->set_gateway(IP::Address(10, 0, 0, 1));
     ip->set_netmask(IP::Address(255, 255, 255, 0));
-
-    Alarm::delay(TIME_500_MS * 4);
 
     IEEE1451_TIM *tim = IEEE1451_TIM::get_instance();
     tim->set_ncap_address(IP::Address(10, 0, 0, 110));
 
-    IEEE1451_Audio_Sensor sensor(OM_TIM_IM);
+    IEEE1451_Audio_Sensor sensor(OM_TIM_IM_OPTIMIZED);
     sensor.execute();
     return 0;
 }

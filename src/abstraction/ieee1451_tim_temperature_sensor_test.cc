@@ -107,9 +107,20 @@ void IEEE1451_Temperature_Sensor::init_teds()
     else if (_operation_mode == OM_POLLING)
         _channel_array[120] = DATA_XMIT_COMMANDED;
 
-    _temp_sensor_utn_array = new (kmalloc(43)) char[43];
-    _temp_sensor_utn_array[0] = 0x00; _temp_sensor_utn_array[1] = 0x00; _temp_sensor_utn_array[2] = 0x00; _temp_sensor_utn_array[3] = 0x27; _temp_sensor_utn_array[4] = TEDS_USER_TRANSDUCER_NAME_TEDS_ID; _temp_sensor_utn_array[5] = 0x04; _temp_sensor_utn_array[6] = 0x00; _temp_sensor_utn_array[7] = TEDS_USER_TRANSDUCER_NAME; _temp_sensor_utn_array[8] = 0x01; _temp_sensor_utn_array[9] = 0x01; _temp_sensor_utn_array[10] = TEDS_USER_TRANSDUCER_NAME_FORMAT; _temp_sensor_utn_array[11] = 0x01; _temp_sensor_utn_array[12] = 0x00; _temp_sensor_utn_array[13] = TEDS_USER_TRANSDUCER_NAME_TC_NAME; _temp_sensor_utn_array[14] = 0x1a; _temp_sensor_utn_array[15] = 'O'; _temp_sensor_utn_array[16] = 'n'; _temp_sensor_utn_array[17] = 'b'; _temp_sensor_utn_array[18] = 'o'; _temp_sensor_utn_array[19] = 'a'; _temp_sensor_utn_array[20] = 'r'; _temp_sensor_utn_array[21] = 'd'; _temp_sensor_utn_array[22] = ' '; _temp_sensor_utn_array[23] = 'T'; _temp_sensor_utn_array[24] = 'e'; _temp_sensor_utn_array[25] = 'm'; _temp_sensor_utn_array[26] = 'p'; _temp_sensor_utn_array[27] = 'e'; _temp_sensor_utn_array[28] = 'r'; _temp_sensor_utn_array[29] = 'a'; _temp_sensor_utn_array[30] = 't'; _temp_sensor_utn_array[31] = 'u'; _temp_sensor_utn_array[32] = 'r'; _temp_sensor_utn_array[33] = 'e'; _temp_sensor_utn_array[34] = ' '; _temp_sensor_utn_array[35] = 'S'; _temp_sensor_utn_array[36] = 'e'; _temp_sensor_utn_array[37] = 'n'; _temp_sensor_utn_array[38] = 's'; _temp_sensor_utn_array[39] = 'o'; _temp_sensor_utn_array[40] = 'r'; _temp_sensor_utn_array[41] = 0xf5; _temp_sensor_utn_array[42] = 0x92; //checksum errado
-    _temp_sensor_utn_teds = new IEEE1451_TEDS_TIM(_temp_sensor_utn_array, 43);
+
+    char name[] = { "temperature_sensor_1" };
+    unsigned int name_len = strlen(name);
+    unsigned int _temp_sensor_utn_len = 15 + name_len + 2;
+
+    _temp_sensor_utn_array = new (kmalloc(_temp_sensor_utn_len)) char[_temp_sensor_utn_len];
+    _temp_sensor_utn_array[0] = (_temp_sensor_utn_len - 4) >> 24; _temp_sensor_utn_array[1] = (_temp_sensor_utn_len - 4) >> 16; _temp_sensor_utn_array[2] = (_temp_sensor_utn_len - 4) >> 8; _temp_sensor_utn_array[3] = _temp_sensor_utn_len - 4; _temp_sensor_utn_array[4] = TEDS_USER_TRANSDUCER_NAME_TEDS_ID; _temp_sensor_utn_array[5] = 0x04; _temp_sensor_utn_array[6] = 0x00; _temp_sensor_utn_array[7] = TEDS_USER_TRANSDUCER_NAME; _temp_sensor_utn_array[8] = 0x01; _temp_sensor_utn_array[9] = 0x01; _temp_sensor_utn_array[10] = TEDS_USER_TRANSDUCER_NAME_FORMAT; _temp_sensor_utn_array[11] = 0x01; _temp_sensor_utn_array[12] = 0x00; _temp_sensor_utn_array[13] = TEDS_USER_TRANSDUCER_NAME_TC_NAME; _temp_sensor_utn_array[14] = name_len;
+
+    unsigned int i = 15;
+    for (unsigned int j = 0; j < name_len; i++, j++)
+        _temp_sensor_utn_array[i] = name[j];
+    _temp_sensor_utn_array[i++] = 0x00; _temp_sensor_utn_array[i++] = 0x00; //checksum errado
+
+    _temp_sensor_utn_teds = new IEEE1451_TEDS_TIM(_temp_sensor_utn_array, _temp_sensor_utn_len);
 }
 
 IEEE1451_TEDS_TIM *IEEE1451_Temperature_Sensor::get_teds(char id)
@@ -162,15 +173,17 @@ void IEEE1451_Temperature_Sensor::send_data_set()
 {
     cout << "Sending data set (tim_im)...\n";
 
-    unsigned int size = sizeof(IEEE1451_Command) + DATASET_SIZE * sizeof(float);
+    unsigned int size = sizeof(IEEE1451_Command) + sizeof(unsigned long) + DATASET_SIZE * sizeof(float);
     char *buffer = IEEE1451_TIM::get_instance()->get_send_buffer();
 
     IEEE1451_Command *cmd = (IEEE1451_Command *) buffer;
-    float *data = (float *) (buffer + sizeof(IEEE1451_Command));
+    unsigned long *offset = (unsigned long *) (buffer + sizeof(IEEE1451_Command));
+    float *data = (float *) (buffer + sizeof(IEEE1451_Command) + sizeof(unsigned long));
 
     cmd->_channel_number = _channel_number;
     cmd->_command = COMMAND_CLASS_READ_TRANSDUCER_CHANNEL_DATA_SET_SEGMENT;
-    cmd->_length = DATASET_SIZE * sizeof(float);
+    cmd->_length = sizeof(unsigned long) + DATASET_SIZE * sizeof(float);
+    offset[0] = 0;
 
     _data_set_mutex.lock();
     for (int i = 0, j = _pos; i < DATASET_SIZE; i++)
@@ -255,15 +268,13 @@ int main()
     unsigned int *GPIO_BASE = (unsigned int *) 0x80000000;
     *GPIO_BASE = 0;
 
-    Alarm::delay(TIME_500_MS * 4);
+    Alarm::delay(TIME_500_MS * 2);
     cout << "+++++ Starting wtim +++++\n";
 
     IP *ip = IP::instance();
     ip->set_address(IP::Address(10, 0, 0, 111));
     ip->set_gateway(IP::Address(10, 0, 0, 1));
     ip->set_netmask(IP::Address(255, 255, 255, 0));
-
-    Alarm::delay(TIME_500_MS * 4);
 
     IEEE1451_TIM *tim = IEEE1451_TIM::get_instance();
     tim->set_ncap_address(IP::Address(10, 0, 0, 110));
