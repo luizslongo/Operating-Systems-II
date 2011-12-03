@@ -17,9 +17,9 @@ int main( int argc, char *argv[] ) {
   unsigned char START_CMD = (unsigned char)0xA5;
   int linux_uart_no = 0;
   bool usb = false;
-  char * filename;
-  filename = getenv("EPOS");
-  strcat(filename, "/img/epos.img");
+  char * filename = (char*)malloc(1000);
+  //filename = getenv("EPOS");
+  //strcat(filename, "/img/epos.img");
 
   //Processa argumentos.
   for(int i = 1; i < argc; i++){
