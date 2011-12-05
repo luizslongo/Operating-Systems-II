@@ -175,6 +175,7 @@ void MC13224V_Transceiver::post_receive() {
              (fcs_mode << CONTROL_NOFC) |
              (0 << CONTROL_AUTO)        |
              (1 << CONTROL_PRM)         |
+             (0 << CONTROL_MODE)        |
              (SEQ_RX))
             );
 
@@ -228,7 +229,7 @@ void MC13224V_Transceiver::post_tx() {
     CPU::out32(IO::MACA_CONTROL, 
             ((1 << CONTROL_PRM)      | 
              (4 << CONTROL_PRECOUNT) |
-             (1 << CONTROL_MODE)     |
+             (0 << CONTROL_MODE)     |
              (1 << CONTROL_ASAP)     |
              (SEQ_TX))
             );

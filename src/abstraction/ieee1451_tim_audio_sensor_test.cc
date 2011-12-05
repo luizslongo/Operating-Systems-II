@@ -10,8 +10,7 @@
     #include <mach/mc13224v/audio_sensor.h>
 #endif
 
-#define SLEEP_PERIOD    TIME_500_MS * 20//50
-#define DATASET_SIZE    68 //15 pacotes/seg * (68 * 8 / 2) amostras/pacotes = 4080 amostras/seg
+#define DATASET_SIZE    73 //27 pacotes/seg * (73 * 8 / 2) amostras/pacotes = 7884 amostras/seg
 #define SAMPLE_NO       DATASET_SIZE * 8 / 2 //2 bits per sample (16 kbit/s)
 
 __USING_SYS
@@ -45,7 +44,8 @@ protected:
     void send_start_read_data_set();
     void send_stop_read_data_set();
 
-    void get_audio(char *data);
+    void get_audio();
+    void convert_audio(char *data);
 
 public:
     int execute();
@@ -59,6 +59,8 @@ private:
 #endif
 
     short *_audio_buffer;
+    unsigned short _pos;
+
     char _law;
     short _rate;
     short _reset;
@@ -187,7 +189,7 @@ void IEEE1451_Audio_Sensor::stop()
 
 void IEEE1451_Audio_Sensor::read_data_set(unsigned short trans_id, unsigned int offset)
 {
-    //cout << "Reading data set (polling)...\n";
+    //cout << "Reading data set (polling, trans_id=" << trans_id << ")...\n";
 
     unsigned int size = sizeof(IEEE1451_Data_Set_Read_Reply) + DATASET_SIZE;
     char *buffer = IEEE1451_TIM::get_instance()->get_send_buffer();
@@ -199,9 +201,8 @@ void IEEE1451_Audio_Sensor::read_data_set(unsigned short trans_id, unsigned int 
     reply->_header._length = DATASET_SIZE + sizeof(reply->_offset);
     reply->_offset = _counter++;
 
-    get_audio(data);
+    convert_audio(data);
 
-    for (volatile unsigned int t = 0; t < 0x200; t++);
     IEEE1451_TIM::get_instance()->send_msg(trans_id, size, true);
 }
 
@@ -222,7 +223,7 @@ void IEEE1451_Audio_Sensor::send_data_set()
 {
     //cout << "Sending data set (tim_im)...\n";
 
-    unsigned int size = sizeof(IEEE1451_Command) + DATASET_SIZE;
+    unsigned int size = sizeof(IEEE1451_Command) + sizeof(unsigned long) + DATASET_SIZE;
     char *buffer = IEEE1451_TIM::get_instance()->get_send_buffer();
 
     IEEE1451_Command *cmd = (IEEE1451_Command *) buffer;
@@ -231,10 +232,10 @@ void IEEE1451_Audio_Sensor::send_data_set()
 
     cmd->_channel_number = _channel_number;
     cmd->_command = COMMAND_CLASS_READ_TRANSDUCER_CHANNEL_DATA_SET_SEGMENT;
-    cmd->_length = DATASET_SIZE;
+    cmd->_length = DATASET_SIZE + sizeof(unsigned long);
     offset[0] = _counter++;
 
-    get_audio(data);
+    convert_audio(data);
 
     IEEE1451_TIM::get_instance()->send_msg(0, size, true);
 }
@@ -279,38 +280,45 @@ int IEEE1451_Audio_Sensor::execute()
     _execute_thread->suspend();
 
     if (_operation_mode == OM_POLLING)
-        return 0; //15 packets = 1.0076 seconds
-
-    if (_operation_mode == OM_POLLING_OPTIMIZED)
     {
-        unsigned short aux = 0;
         while (true)
         {
-            if (!_reading_data)
-                _execute_thread->suspend();
-
-            for (int i = 0; i < 3; i++)
-                Thread::yield();
-
-            for (volatile unsigned int t = 0; t < 0x1400; t++);
-            send_data_set(); //15 packets = 1.0027 second
-
-            if (aux++ == 6)
+            Thread::yield();
+            for (unsigned int j = 0; j < SAMPLE_NO; j++)
             {
-                Thread::yield();
-                aux = 0;
+                if ((j + 1) % (SAMPLE_NO / 4) == 0)
+                    Thread::yield();
+                get_audio(); //27 packets = 1.0041 seconds
             }
+        }
+    }else if (_operation_mode == OM_POLLING_OPTIMIZED)
+    {
+        while (true)
+        {
+            for (unsigned int i = 0; i < 4; i++)
+                Thread::yield();
+
+            for (unsigned int j = 0; j < SAMPLE_NO; j++)
+            {
+                if ((j + 1) % (SAMPLE_NO / 4) == 0)
+                    Thread::yield();
+                get_audio(); //27 packets = 1.0276 seconds
+            }
+
+            Thread::yield();
+            if (_reading_data)
+                send_data_set();
         }
     }else //if ((_operation_mode == OM_TIM_IM) || (_operation_mode == OM_TIM_IM_OPTIMIZED))
     {
+        const unsigned short active_period = 10; //seconds
+        const unsigned short sleep_period = 10; //seconds
+
         while (true)
         {
             if (_operation_mode == OM_TIM_IM)
             {
                 tim->disconnect();
-                Alarm::delay(SLEEP_PERIOD);
-                tim->connect();
-                _execute_thread->suspend();
 
             }else if (_operation_mode == OM_TIM_IM_OPTIMIZED)
             {
@@ -318,7 +326,24 @@ int IEEE1451_Audio_Sensor::execute()
 #ifdef __mc13224v__
                 MC13224V_Transceiver::maca_off();
 #endif
-                Alarm::delay(SLEEP_PERIOD);
+            }
+
+            for (unsigned short i = 0; i < sleep_period * 27; i++)
+            {
+                for (unsigned int j = 0; j < SAMPLE_NO; j++)
+                {
+                    Thread::yield();
+                    get_audio();
+                }
+            }
+
+            if (_operation_mode == OM_TIM_IM)
+            {
+                tim->connect();
+                _execute_thread->suspend();
+
+            }else if (_operation_mode == OM_TIM_IM_OPTIMIZED)
+            {
 #ifdef __mc13224v__
                 MC13224V_Transceiver::maca_on();
 #endif
@@ -329,10 +354,15 @@ int IEEE1451_Audio_Sensor::execute()
             send_start_read_data_set();
             Alarm::delay(TIME_50_MS);
 
-            for (unsigned short i = 0; i < 15 * 10; i++)
+            for (unsigned short i = 0; i < active_period * 27; i++)
             {
-                for (volatile unsigned int t = 0; t < 0xE500; t++); //15 packets = 1.0064 seconds
-                //for (volatile unsigned int t = 0; t < 0x1400; t++); //30 packets = 1.0820 seconds
+                for (unsigned int j = 0; j < SAMPLE_NO; j++)
+                {
+                    if ((j + 1) % (SAMPLE_NO / 4) == 0)
+                        Thread::yield();
+                    get_audio(); //27 packets = 1.0272 seconds
+                }
+
                 send_data_set();
             }
 
@@ -344,24 +374,28 @@ int IEEE1451_Audio_Sensor::execute()
     return 0;
 }
 
-void IEEE1451_Audio_Sensor::get_audio(char *data)
+void IEEE1451_Audio_Sensor::get_audio()
 {
-    for (unsigned int i = 0; i < SAMPLE_NO; i++)
-    {
 #ifdef __mc13224v__
-        _audio_buffer[i] = (short) _audio.sample();
+    _audio_buffer[_pos] = (short) _audio.sample();
 #else
-        _audio_buffer[i] = 0x1234;
+    _audio_buffer[_pos] = 0x1234;
 #endif
-    }
 
-    G726_encode(_audio_buffer, _audio_buffer, SAMPLE_NO, &_law, _reset, _rate, &_state);
+    G726_encode(&_audio_buffer[_pos], &_audio_buffer[_pos], 1, &_law, _reset, _rate, &_state);
     _reset = 0;
 
-    for (unsigned int i = 0, j = 0; i < DATASET_SIZE; i++, j += 4)
+    ((_pos + 1) >= SAMPLE_NO) ? _pos = 0 : _pos++;
+}
+
+void IEEE1451_Audio_Sensor::convert_audio(char *data)
+{
+    for (unsigned int i = 0, j = _pos; i < DATASET_SIZE; i++)
     {
         data[i] = (_audio_buffer[j] << 6) | (_audio_buffer[j + 1] << 4) |
                   (_audio_buffer[j + 2] << 2) | (_audio_buffer[j + 3]);
+
+        ((j + 4) >= SAMPLE_NO) ? j = 0 : j += 4;
     }
 }
 
