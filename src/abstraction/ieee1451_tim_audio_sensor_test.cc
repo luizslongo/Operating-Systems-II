@@ -45,7 +45,7 @@ protected:
     void send_stop_read_data_set();
 
     void get_audio();
-    void convert_audio(char *data);
+    void pack_audio(char *data);
 
 public:
     int execute();
@@ -201,7 +201,7 @@ void IEEE1451_Audio_Sensor::read_data_set(unsigned short trans_id, unsigned int 
     reply->_header._length = DATASET_SIZE + sizeof(reply->_offset);
     reply->_offset = _counter++;
 
-    convert_audio(data);
+    pack_audio(data);
 
     IEEE1451_TIM::get_instance()->send_msg(trans_id, size, true);
 }
@@ -235,7 +235,7 @@ void IEEE1451_Audio_Sensor::send_data_set()
     cmd->_length = DATASET_SIZE + sizeof(unsigned long);
     offset[0] = _counter++;
 
-    convert_audio(data);
+    pack_audio(data);
 
     IEEE1451_TIM::get_instance()->send_msg(0, size, true);
 }
@@ -388,7 +388,7 @@ void IEEE1451_Audio_Sensor::get_audio()
     ((_pos + 1) >= SAMPLE_NO) ? _pos = 0 : _pos++;
 }
 
-void IEEE1451_Audio_Sensor::convert_audio(char *data)
+void IEEE1451_Audio_Sensor::pack_audio(char *data)
 {
     for (unsigned int i = 0, j = _pos; i < DATASET_SIZE; i++)
     {
