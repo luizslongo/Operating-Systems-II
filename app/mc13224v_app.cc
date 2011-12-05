@@ -1,6 +1,7 @@
 #include <machine.h>
 #include <alarm.h>
 #include <sensor.h>
+#include <battery.h>
 
 __USING_SYS
 
@@ -27,6 +28,7 @@ void sensor(unsigned char id) {
     cout << "Sensor id = " << (int) id << "\n";
 
     Temperature_Sensor * temp = new Temperature_Sensor();
+    Battery batt;
 
     for (unsigned int i = 0; i < DATA_SIZE; i++) {
         msg[i] = i;
@@ -39,6 +41,7 @@ void sensor(unsigned char id) {
     while (true) {
         msg[1] = c++;
         msg[2] = temp->sample();
+        msg[3] = batt.charge();
 
         int r;
         while ((r = nic->send(NIC::BROADCAST, (NIC::Protocol) 1, &msg, sizeof(msg))) != 11)
@@ -46,7 +49,7 @@ void sensor(unsigned char id) {
 
         cout << "tx done\n";
 
-        Alarm::delay(10000);
+        Alarm::delay(1000000);
     }
 }
 
@@ -65,6 +68,7 @@ void sink() {
         cout << "Sender id: "   << (int) msg[0] << "\n";
         cout << "Msg number: "  << (int) msg[1] << "\n";
         cout << "Temperature: " << (int) msg[2] << " C\n";
+        cout << "Battery: "     << (int) msg[3] << " \%\n";
         cout << "Protocol:"     << (int) prot   << "\n";
     }
 }
