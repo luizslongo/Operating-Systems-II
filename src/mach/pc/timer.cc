@@ -12,8 +12,8 @@ PC_Timer * PC_Timer::_channels[CHANNELS];
 void PC_Timer::int_handler(unsigned int i)
 {
   
-    _channels[ALARM]->_current++;
-    _channels[SCHEDULER]->_current++;
+    //_channels[ALARM]->_current++;
+    //_channels[SCHEDULER]->_current++;
     
     if((Machine::cpu_id() == 0) && _channels[ALARM])
 	_channels[ALARM]->_handler();
