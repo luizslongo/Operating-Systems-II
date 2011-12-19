@@ -1,0 +1,13 @@
+
+##################################################
+# IP Sources
+##################################################
+PLASMA_SRCS = $(abspath $(addprefix $(BASE_DIR)/hw/mach/plasma/plasma/, \
+plasma.vhd \
+ram_image.vhd \
+uart.vhd \
+eth_dma.vhd \
+cache.vhd \
+fake_external_ram.v \
+))
+
