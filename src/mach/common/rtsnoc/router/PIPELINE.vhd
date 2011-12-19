@@ -27,7 +27,7 @@ use IEEE.STD_LOGIC_UNSIGNED.ALL;
 --library UNISIM;
 --use UNISIM.VComponents.all;
 
-entity PIPELINE is
+entity PIPELINE_NOC is
     Port ( i_CLK 			: in  STD_LOGIC;
            i_RST 			: in  STD_LOGIC;
            i_EN 			: in  STD_LOGIC;
@@ -42,9 +42,9 @@ entity PIPELINE is
 			  o_PRI_7		: out STD_LOGIC_VECTOR (2 downto 0);			  
            o_CHANNEL 	: out STD_LOGIC_VECTOR (2 downto 0)
 	 );
-end PIPELINE;
+end PIPELINE_NOC;
 
-architecture Behavioral of PIPELINE is
+architecture Behavioral of PIPELINE_NOC is
 ----------------------------------------------------------------------------------
 -- Internal signals.
 ----------------------------------------------------------------------------------
