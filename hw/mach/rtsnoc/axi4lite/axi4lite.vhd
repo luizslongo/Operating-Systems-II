@@ -38,10 +38,10 @@ architecture RTL of axi4lite is
     constant NET_SIZE_Y_LOG2    : integer := 1; -- it should be "integer(ceil(log2(real(NET_SIZE_Y))))" when NET_SIZE_Y >= 2
     constant ROUTER_X           : std_logic_vector(NET_SIZE_X_LOG2-1 downto 0) := "0";
     constant ROUTER_Y           : std_logic_vector(NET_SIZE_Y_LOG2-1 downto 0) := "0";
-    constant NET_DATA_WIDTH     : integer := 16;
+    constant NET_DATA_WIDTH     : integer := 32;
     constant ROUTER_N_PORTS     : integer := 8;
     constant NET_BUS_SIZE       : integer := NET_DATA_WIDTH+(2*NET_SIZE_X_LOG2)+(2*NET_SIZE_Y_LOG2)+6;
-    constant NET_BUS_SIZE_INV   : integer := 32 - NET_BUS_SIZE;
+    --constant NET_BUS_SIZE_INV   : integer := 64 - NET_BUS_SIZE;
         -- Local addresses (clockwise: nn, ne, ee, se, ss, sw, ww, nw)
     type router_addr_type is array (0 to ROUTER_N_PORTS-1) of std_logic_vector(2 downto 0);
     constant ROUTER_ADDRS   : router_addr_type := 
@@ -140,8 +140,8 @@ architecture RTL of axi4lite is
             NET_SIZE_Y         : integer := 1;
             NET_SIZE_X_LOG2    : integer := 1; -- it should be "integer(ceil(log2(real(NET_SIZE_X))))" when NET_SIZE_X >= 2
             NET_SIZE_Y_LOG2    : integer := 1; -- it should be "integer(ceil(log2(real(NET_SIZE_Y))))" when NET_SIZE_Y >= 2
-            NET_DATA_WIDTH     : integer := 16;
-            NET_BUS_SIZE       : integer := 26;
+            NET_DATA_WIDTH     : integer := NET_DATA_WIDTH;
+            NET_BUS_SIZE       : integer := NET_BUS_SIZE;
             ROUTER_X_ADDR      : integer := 0;
             ROUTER_Y_ADDR      : integer := 0;
             ROUTER_LOCAL_ADDR  : std_logic_vector(2 downto 0) := "0");
@@ -231,26 +231,25 @@ architecture RTL of axi4lite is
     end component;
     
     -- Debugging cores
-    component chipscope_icon
-        PORT (
-            CONTROL0 : INOUT STD_LOGIC_VECTOR(35 DOWNTO 0));
-    end component;
-    
-    component chipscope_ila
-        PORT (
-            CONTROL : INOUT STD_LOGIC_VECTOR(35 DOWNTO 0);
-            CLK : IN STD_LOGIC;
-            DATA : IN STD_LOGIC_VECTOR(255 DOWNTO 0);
-            TRIG0 : IN STD_LOGIC_VECTOR(0 DOWNTO 0);
-            TRIG1 : IN STD_LOGIC_VECTOR(0 DOWNTO 0);
-            TRIG2 : IN STD_LOGIC_VECTOR(0 DOWNTO 0);
-            TRIG3 : IN STD_LOGIC_VECTOR(0 DOWNTO 0);
-            TRIG4 : IN STD_LOGIC_VECTOR(0 DOWNTO 0);
-            TRIG5 : IN STD_LOGIC_VECTOR(0 DOWNTO 0);
-            TRIG6 : IN STD_LOGIC_VECTOR(0 DOWNTO 0);
-            TRIG7 : IN STD_LOGIC_VECTOR(0 DOWNTO 0));
-
-    end component;
+    --component chipscope_icon
+    --    PORT (
+    --        CONTROL0 : INOUT STD_LOGIC_VECTOR(35 DOWNTO 0));
+    --end component;
+    --
+    --component chipscope_ila
+    --    PORT (
+    --        CONTROL : INOUT STD_LOGIC_VECTOR(35 DOWNTO 0);
+    --        CLK : IN STD_LOGIC;
+    --        DATA : IN STD_LOGIC_VECTOR(255 DOWNTO 0);
+    --        TRIG0 : IN STD_LOGIC_VECTOR(0 DOWNTO 0);
+    --        TRIG1 : IN STD_LOGIC_VECTOR(0 DOWNTO 0);
+    --        TRIG2 : IN STD_LOGIC_VECTOR(0 DOWNTO 0);
+    --        TRIG3 : IN STD_LOGIC_VECTOR(0 DOWNTO 0);
+    --        TRIG4 : IN STD_LOGIC_VECTOR(0 DOWNTO 0);
+    --        TRIG5 : IN STD_LOGIC_VECTOR(0 DOWNTO 0);
+    --        TRIG6 : IN STD_LOGIC_VECTOR(0 DOWNTO 0);
+    --        TRIG7 : IN STD_LOGIC_VECTOR(0 DOWNTO 0));
+    --end component;
 
 
     --  
@@ -298,18 +297,18 @@ architecture RTL of axi4lite is
     signal sig_ddr3_rresp   : std_logic_vector(1 downto 0);
 
     --Debug signals
-    signal sig_chipscope_ctrl       : std_logic_vector(35 downto 0);
-    signal sig_chipscope_data  : std_logic_vector(255 downto 0);
-    signal sig_chipscope_trig0  : std_logic_vector(0 downto 0);
-    signal sig_chipscope_trig1  : std_logic_vector(0 downto 0);
-    signal sig_chipscope_trig2  : std_logic_vector(0 downto 0);
-    signal sig_chipscope_trig3  : std_logic_vector(0 downto 0);
-    signal sig_chipscope_trig4  : std_logic_vector(0 downto 0);
-    signal sig_chipscope_trig5  : std_logic_vector(0 downto 0);
-    signal sig_chipscope_trig6  : std_logic_vector(0 downto 0);
-    signal sig_chipscope_trig7  : std_logic_vector(0 downto 0);
+    --signal sig_chipscope_ctrl       : std_logic_vector(35 downto 0);
+    --signal sig_chipscope_data  : std_logic_vector(255 downto 0);
+    --signal sig_chipscope_trig0  : std_logic_vector(0 downto 0);
+    --signal sig_chipscope_trig1  : std_logic_vector(0 downto 0);
+    --signal sig_chipscope_trig2  : std_logic_vector(0 downto 0);
+    --signal sig_chipscope_trig3  : std_logic_vector(0 downto 0);
+    --signal sig_chipscope_trig4  : std_logic_vector(0 downto 0);
+    --signal sig_chipscope_trig5  : std_logic_vector(0 downto 0);
+    --signal sig_chipscope_trig6  : std_logic_vector(0 downto 0);
+    --signal sig_chipscope_trig7  : std_logic_vector(0 downto 0);
     
-    signal sig_noc_debug_aux    : std_logic_vector(NET_BUS_SIZE_INV-1 downto 0);
+    --signal sig_noc_debug_aux    : std_logic_vector(NET_BUS_SIZE_INV-1 downto 0);
 
 begin
 
@@ -513,58 +512,56 @@ begin
     -- -----------------------------------------------------
     -- Chipscope PRO Debugging cores
     -- -----------------------------------------------------
-    db_chipscope_icon : chipscope_icon
-        port map (
-            CONTROL0 => sig_chipscope_ctrl
-        );
-        
-    db_chipscope_ila : chipscope_ila
-        port map (
-            CONTROL => sig_chipscope_ctrl,
-            CLK     => clk_i,
-            DATA    => sig_chipscope_data,
-            TRIG0 => sig_chipscope_trig0,
-            TRIG1 => sig_chipscope_trig1,
-            TRIG2 => sig_chipscope_trig2,
-            TRIG3 => sig_chipscope_trig3,
-            TRIG4 => sig_chipscope_trig4,
-            TRIG5 => sig_chipscope_trig5,
-            TRIG6 => sig_chipscope_trig6,
-            TRIG7 => sig_chipscope_trig7
-        );
-        
-    chipscope_data: for i in 0 to (ROUTER_N_PORTS-1) generate
-        sig_chipscope_data((i*4)+0) <= sig_noc_wr(i);
-        sig_chipscope_data((i*4)+1) <= sig_noc_rd(i);
-        sig_chipscope_data((i*4)+2) <= sig_noc_wait(i);
-        sig_chipscope_data((i*4)+3) <= sig_noc_nd(i);
-    end generate chipscope_data;
+    --db_chipscope_icon : chipscope_icon
+    --    port map (
+    --        CONTROL0 => sig_chipscope_ctrl
+    --    );
+    --    
+    --db_chipscope_ila : chipscope_ila
+    --    port map (
+    --        CONTROL => sig_chipscope_ctrl,
+    --        CLK     => clk_i,
+    --        DATA    => sig_chipscope_data,
+    --        TRIG0 => sig_chipscope_trig0,
+    --        TRIG1 => sig_chipscope_trig1,
+    --        TRIG2 => sig_chipscope_trig2,
+    --        TRIG3 => sig_chipscope_trig3,
+    --        TRIG4 => sig_chipscope_trig4,
+    --        TRIG5 => sig_chipscope_trig5,
+    --        TRIG6 => sig_chipscope_trig6,
+    --        TRIG7 => sig_chipscope_trig7
+    --    );
+    --    
+    --chipscope_data: for i in 0 to (ROUTER_N_PORTS-1) generate
+    --    sig_chipscope_data((i*4)+0) <= sig_noc_wr(i);
+    --    sig_chipscope_data((i*4)+1) <= sig_noc_rd(i);
+    --    sig_chipscope_data((i*4)+2) <= sig_noc_wait(i);
+    --    sig_chipscope_data((i*4)+3) <= sig_noc_nd(i);
+    --end generate chipscope_data;
     
-    sig_noc_debug_aux <= (others => sig_GND);
+    --sig_noc_debug_aux <= (others => sig_GND);
     
-    sig_chipscope_data(63 downto 32) <= sig_noc_debug_aux & sig_noc_din(ROUTER_NN);
-    sig_chipscope_data(95 downto 64) <= sig_noc_debug_aux & sig_noc_dout(ROUTER_NN);
-    sig_chipscope_data(127 downto 96) <= sig_noc_debug_aux & sig_noc_din(ROUTER_WW);
-    sig_chipscope_data(159 downto 128) <= sig_noc_debug_aux & sig_noc_dout(ROUTER_WW);
-    sig_chipscope_data(160) <= sig_GND;
-    sig_chipscope_data(255 downto 161) <= (others => sig_GND);
+    --sig_chipscope_data(63 downto 32) <= sig_noc_debug_aux & sig_noc_din(ROUTER_NN);
+    --sig_chipscope_data(95 downto 64) <= sig_noc_debug_aux & sig_noc_dout(ROUTER_NN);
+    --sig_chipscope_data(127 downto 96) <= sig_noc_debug_aux & sig_noc_din(ROUTER_WW);
+    --sig_chipscope_data(159 downto 128) <= sig_noc_debug_aux & sig_noc_dout(ROUTER_WW);
+    --sig_chipscope_data(160) <= sig_GND;
+    --sig_chipscope_data(255 downto 161) <= (others => sig_GND);
     
-    sig_chipscope_trig0(0) <= sig_noc_wr(ROUTER_NN);
+    --sig_chipscope_trig0(0) <= sig_noc_wr(ROUTER_NN);
         
-    sig_chipscope_trig1(0) <= sig_noc_wr(ROUTER_WW);
+    --sig_chipscope_trig1(0) <= sig_noc_wr(ROUTER_WW);
         
-    sig_chipscope_trig2(0) <= sig_noc_nd(ROUTER_NN);
+    --sig_chipscope_trig2(0) <= sig_noc_nd(ROUTER_NN);
         
-    sig_chipscope_trig3(0) <= sig_noc_nd(ROUTER_WW);
+    --sig_chipscope_trig3(0) <= sig_noc_nd(ROUTER_WW);
         
-    sig_chipscope_trig4(0) <= sig_noc_rd(ROUTER_NN);
+    --sig_chipscope_trig4(0) <= sig_noc_rd(ROUTER_NN);
         
-    sig_chipscope_trig5(0) <= sig_noc_rd(ROUTER_WW);
+    --sig_chipscope_trig5(0) <= sig_noc_rd(ROUTER_WW);
         
-    sig_chipscope_trig6(0) <= sig_noc_wait(ROUTER_NN);
+    --sig_chipscope_trig6(0) <= sig_noc_wait(ROUTER_NN);
         
-    sig_chipscope_trig7(0) <= sig_GND;
+    --sig_chipscope_trig7(0) <= sig_GND;
     
-            
-
 end RTL;

@@ -24,7 +24,7 @@ entity axi4lite_proc_node is
         NET_SIZE_Y         : integer := 1;
         NET_SIZE_X_LOG2    : integer := 1; -- it should be "integer(ceil(log2(real(NET_SIZE_X))))" when NET_SIZE_X >= 2
         NET_SIZE_Y_LOG2    : integer := 1; -- it should be "integer(ceil(log2(real(NET_SIZE_Y))))" when NET_SIZE_Y >= 2
-        NET_DATA_WIDTH     : integer := 16;
+        NET_DATA_WIDTH     : integer := 32;
         NET_BUS_SIZE       : integer := 27;
         ROUTER_X_ADDR      : integer := 0;
         ROUTER_Y_ADDR      : integer := 0;

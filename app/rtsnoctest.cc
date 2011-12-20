@@ -143,6 +143,9 @@ int main() {
         send_pkt(NOC_MY_LOCAL_ADDR, ECHO_P0_LOCAL_ADDR, i);
         send_pkt(NOC_MY_LOCAL_ADDR, ECHO_P1_LOCAL_ADDR, i);
     }
+    
+    send_pkt(NOC_MY_LOCAL_ADDR, ECHO_P0_LOCAL_ADDR, 0xFFFFFFFE);
+    send_pkt(NOC_MY_LOCAL_ADDR, ECHO_P1_LOCAL_ADDR, 0xFFFFFFFF);
 
     cout << "\nThe end!\n";
 

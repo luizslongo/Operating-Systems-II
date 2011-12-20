@@ -20,7 +20,7 @@ module rtsnoc_axi4lite_slave(
     parameter NOC_Y = 0;
     parameter SOC_SIZE_X = 1; //Log2
     parameter SOC_SIZE_Y = 1; //Log2
-    parameter NOC_DATA_WIDTH = 32; 
+    parameter NOC_DATA_WIDTH = 16; 
     
     localparam ADDR_WIDTH = 32;
     localparam DATA_WIDTH = 32;
@@ -112,7 +112,15 @@ module rtsnoc_axi4lite_slave(
     	.wb_rty_i(1'b0)
     );
     
-    rtsnoc_wishbone_slave rtsnoc_wishbone_slave(
+    rtsnoc_wishbone_slave #(
+        .NOC_LOCAL_ADR(NOC_LOCAL_ADR),
+        .NOC_X(NOC_X),
+        .NOC_Y(NOC_Y),
+        .SOC_SIZE_X(SOC_SIZE_X),
+        .SOC_SIZE_Y(SOC_SIZE_Y),
+        .NOC_DATA_WIDTH(NOC_DATA_WIDTH) 
+    )
+    rtsnoc_wishbone_slave(
     	.clk_i(clk_i),
     	.rst_i(wb_rst),
     	
