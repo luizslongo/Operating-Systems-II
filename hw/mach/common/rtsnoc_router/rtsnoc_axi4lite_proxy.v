@@ -1,4 +1,4 @@
-module rtsnoc_axi4lite_slave(
+module rtsnoc_axi4lite_proxy(
     clk_i, 
     
     axi_rst_i,
@@ -112,7 +112,7 @@ module rtsnoc_axi4lite_slave(
     	.wb_rty_i(1'b0)
     );
     
-    rtsnoc_wishbone_slave #(
+    rtsnoc_wishbone_proxy #(
         .NOC_LOCAL_ADR(NOC_LOCAL_ADR),
         .NOC_X(NOC_X),
         .NOC_Y(NOC_Y),
@@ -120,7 +120,7 @@ module rtsnoc_axi4lite_slave(
         .SOC_SIZE_Y(SOC_SIZE_Y),
         .NOC_DATA_WIDTH(NOC_DATA_WIDTH) 
     )
-    rtsnoc_wishbone_slave(
+    rtsnoc_wishbone_proxy(
     	.clk_i(clk_i),
     	.rst_i(wb_rst),
     	

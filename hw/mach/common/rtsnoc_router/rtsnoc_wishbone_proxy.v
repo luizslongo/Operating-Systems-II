@@ -27,7 +27,7 @@
 //  0x30 - NoC Y size (Log2) (R-only)
 //  0x34 - NoC data width (R-only)
 
-module rtsnoc_wishbone_slave (
+module rtsnoc_wishbone_proxy (
     clk_i, rst_i,
      
     wb_cyc_i, wb_stb_i, wb_adr_i, wb_sel_i, wb_we_i, wb_dat_i, wb_dat_o, wb_ack_o,

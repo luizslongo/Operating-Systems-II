@@ -348,7 +348,7 @@ architecture RTL of axi4lite_proc_node is
             int_o  : out  std_logic);
     end component;
     
-    component rtsnoc_axi4lite_slave is
+    component rtsnoc_axi4lite_proxy is
         generic (
             NOC_LOCAL_ADR   : std_logic_vector(2 downto 0) := ROUTER_LOCAL_ADDR; 
             NOC_X           : std_logic_vector(NET_SIZE_X_LOG2-1 downto 0) := conv_std_logic_vector(ROUTER_X_ADDR, NET_SIZE_X_LOG2);
@@ -832,7 +832,7 @@ begin
     -- -----------------------------------------------------
     -- Slave6 - SoC TDM
     -- -----------------------------------------------------
-    rtsnoc_router_axi: rtsnoc_axi4lite_slave
+    rtsnoc_router_axi: rtsnoc_axi4lite_proxy
         generic map (
             NOC_LOCAL_ADR   => ROUTER_LOCAL_ADDR, 
             NOC_X           => conv_std_logic_vector(ROUTER_X_ADDR, NET_SIZE_X_LOG2),
