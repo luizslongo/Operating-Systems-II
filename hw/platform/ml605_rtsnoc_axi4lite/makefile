@@ -1,7 +1,7 @@
 ##################################################
 # Project Setup
 ##################################################
-TOP_MODULE = plasma_axi4lite_ml605
+TOP_MODULE = ml605_rtsnoc_axi4lite
 BUILD_DIR = build
 
 ##################################################
@@ -31,8 +31,8 @@ include ../../mach/common/rtsnoc_router/hw.srcs
 
 # Top level sources
 TOP_SRCS = \
-plasma_axi4lite_ml605.vhd \
-plasma_axi4lite_ml605.ucf
+ml605_rtsnoc_axi4lite.vhd \
+ml605_rtsnoc_axi4lite.ucf
 
 
 # Coregen cores
@@ -58,16 +58,19 @@ coregen_clean:
 
 # IP sources
 SOURCES = $(abspath $(TOP_SRCS)) \
-$(AMBA_SRCS) \
-$(AXI_WB_SRCS) \
-$(SIMPLE_UART_SRCS) \
-$(SIMPLE_PIC_SRCS) \
-$(SIMPLE_TIMER_SRCS) \
-$(COREGEN_SRCS) \
-$(AXI4LITE_SRCS) \
-$(MIPS32_SRCS) \
-$(GPIO_SRCS) \
-$(RTSNOC_SRCS)
+$(ARCH_MIPS32_PLASMA_SRCS) \
+$(MACH_COMMON_AMBA_SRCS) \
+$(MACH_COMMON_AXI_WB_SRCS) \
+$(MACH_COMMON_SIMPLE_UART_SRCS) \
+$(MACH_COMMON_SIMPLE_PIC_SRCS) \
+$(MACH_COMMON_SIMPLE_TIMER_SRCS) \
+$(MACH_COMMON_COREGEN_SRCS) \
+$(MACH_COMMON_RTSNOC_ROUTER_SRCS) \
+$(MACH_COMMON_GPIO_SRCS) \
+$(MACH_RTSNOC_AXI4LITE_SRCS) \
+
+
+
 
 ##################################################
 # Project Properties

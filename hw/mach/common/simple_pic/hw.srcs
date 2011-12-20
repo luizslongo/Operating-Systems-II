@@ -1,7 +1,7 @@
 ##################################################
 # IP Sources
 ##################################################
-SIMPLE_PIC_SRCS = $(abspath $(addprefix $(BASE_DIR)/hw/mach/common/simple_pic/, \
+MACH_COMMON_SIMPLE_PIC_SRCS = $(abspath $(addprefix $(BASE_DIR)/hw/mach/common/simple_pic/, \
 priority_enc.v \
 pic.v \
 pic_axi4lite.v))

@@ -2,7 +2,7 @@
 ##################################################
 # IP Sources
 ##################################################
-RTSNOC_SRCS = $(abspath $(addprefix $(BASE_DIR)/hw/mach/common/rtsnoc_router/, \
+MACH_COMMON_RTSNOC_ROUTER_SRCS = $(abspath $(addprefix $(BASE_DIR)/hw/mach/common/rtsnoc_router/, \
 router/ARBITER_MACHINE.vhd \
 router/COMPARE.vhd \
 router/crossbar.vhd \

@@ -1,7 +1,7 @@
 library ieee;
 use ieee.std_logic_1164.all;
 
-entity plasma_axi4lite_ml605 is
+entity ml605_rtsnoc_axi4lite is
     port(
         reset_btn    : in std_logic;
         
@@ -17,9 +17,9 @@ entity plasma_axi4lite_ml605 is
         gpio_sws     : in std_logic_vector(7 downto 0);
         dir_leds     : out std_logic_vector(3 downto 0);
         dir_btns     : in std_logic_vector(3 downto 0));
-end plasma_axi4lite_ml605;
+end ml605_rtsnoc_axi4lite;
 
-architecture rtl of plasma_axi4lite_ml605 is
+architecture rtl of ml605_rtsnoc_axi4lite is
     component clk_xlnx_100M_diff is
         port(
             CLK_IN1_P : in std_logic;
@@ -32,7 +32,7 @@ architecture rtl of plasma_axi4lite_ml605 is
             RESET     : in  std_logic);
     end component;
 
-    component plasma_axi4lite is
+    component axi4lite is
         generic(CLK_FREQ : integer);
         port(
             clk_i       : in std_logic;
@@ -87,7 +87,7 @@ begin
             ext_reset_i => not reset_btn,
             axi_reset_o => sig_reset);
     
-    plasma : plasma_axi4lite
+    soc : axi4lite
         generic map(CLK_FREQ => 50_000_000)
         port map(
             clk_i       => clk_50MHz,

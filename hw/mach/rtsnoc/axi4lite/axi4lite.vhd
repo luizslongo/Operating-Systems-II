@@ -15,7 +15,7 @@ use ieee.std_logic_unsigned.all;
 --   0x80000C00  PIC
 --   0x80001000  RTSNoC
 
-entity plasma_axi4lite is
+entity axi4lite is
    generic(
         CLK_FREQ : integer := 50_000_000);
 
@@ -30,9 +30,9 @@ entity plasma_axi4lite is
         gpio_o      : out  std_logic_vector(31 downto 0);
         ext_int_i   : in std_logic_vector(7 downto 0));
 
-end plasma_axi4lite;
+end axi4lite;
 
-architecture RTL of plasma_axi4lite is
+architecture RTL of axi4lite is
     -- AXI4 constants
     constant N_SLAVES       : integer := 7;
     constant N_SLAVES_LOG   : integer := integer(ceil(log2(real(N_SLAVES))));

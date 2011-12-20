@@ -1,8 +1,8 @@
 #ChipScope Pro Analyzer Project File, Version 3.0
 #Wed Sep 28 20:38:45 BRT 2011
-device.1.configFileDir=/export/tiago/lisha_svn/openepos/trunk/src/platforms/plasma_axi4lite_ml605/build
-device.1.configFilename=plasma_axi4lite_ml605.bit
-device.1.inserterCDCFileDir=/export/tiago/lisha_svn/openepos/trunk/src/platforms/plasma_axi4lite_ml605/build
+device.1.configFileDir=/export/tiago/lisha_svn/openepos/trunk/hw/platform/ml605_rtsnoc_axi4lite/build
+device.1.configFilename=ml605_rtsnoc_axi4lite.bit
+device.1.inserterCDCFileDir=/export/tiago/lisha_svn/openepos/trunk/hw/platform/ml605_rtsnoc_axi4lite/build
 device.1.inserterCDCFilename=
 device.1.partialConfig=0
 deviceChain.deviceName0=System_ACE_CF

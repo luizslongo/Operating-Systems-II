@@ -1,6 +1,6 @@
 ##################################################
 # IP Sources
 ##################################################
-MEM_CTRL_SRCS = $(abspath $(addprefix $(BASE_DIR)/hw/mach/common/mem_ctrl/, \
+MACH_COMMON_MEM_CTRL_SRCS = $(abspath $(addprefix $(BASE_DIR)/hw/mach/common/mem_ctrl/, \
 axi4lite_ddr3_ctrl.v))
 

@@ -1,7 +1,7 @@
 ##################################################
 # IP Sources
 ##################################################
-COREGEN_SRCS = $(abspath $(addprefix $(BASE_DIR)/hw/mach/common/coregen/, \
+MACH_COMMON_COREGEN_SRCS = $(abspath $(addprefix $(BASE_DIR)/hw/mach/common/coregen/, \
 clk_xlnx_100M_diff.xco \
 clk_xlnx_125M_diff.xco \
 ram_xlnx_256k.xco \

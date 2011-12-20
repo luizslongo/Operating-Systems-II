@@ -2,8 +2,7 @@
 ##################################################
 # IP Sources
 ##################################################
-AXI4LITE_SRCS = $(abspath $(addprefix $(BASE_DIR)/hw/mach/rtsnoc/axi4lite/, \
-plasma_axi4lite_master.vhd \
-plasma_axi4lite.vhd \
+MACH_RTSNOC_AXI4LITE_SRCS = $(abspath $(addprefix $(BASE_DIR)/hw/mach/rtsnoc/axi4lite/, \
+axi4lite.vhd \
 ))
 

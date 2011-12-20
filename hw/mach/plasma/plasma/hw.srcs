@@ -2,7 +2,7 @@
 ##################################################
 # IP Sources
 ##################################################
-PLASMA_SRCS = $(abspath $(addprefix $(BASE_DIR)/hw/mach/plasma/plasma/, \
+MACH_PLASMA_SRCS = $(abspath $(addprefix $(BASE_DIR)/hw/mach/plasma/plasma/, \
 plasma.vhd \
 ram_image.vhd \
 uart.vhd \
