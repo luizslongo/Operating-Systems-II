@@ -2,13 +2,13 @@ module rtsnoc_axi4lite_slave(
     clk_i, 
     
     axi_rst_i,
+    noc_rst_i,
     
     axi_awaddr_i, axi_awvalid_i, axi_awready_o, axi_wdata_i,
     axi_wstrb_i, axi_wvalid_i, axi_wready_o, axi_bresp_o,
     axi_bvalid_o, axi_bready_i, axi_araddr_i, axi_arvalid_i,
     axi_arready_o, axi_rdata_o, axi_rresp_o, axi_rvalid_o, axi_rready_i,
     
-    noc_reset_o,
     noc_int_o, noc_din_o, noc_wr_o, noc_rd_o, noc_dout_i, noc_wait_i, noc_nd_i
 );
 
@@ -30,11 +30,12 @@ module rtsnoc_axi4lite_slave(
     localparam NOC_BUS_SIZE = NOC_DATA_WIDTH + NOC_HEADER_SIZE;
         
         
-    // Clk
-    input clk_i;        
+    // System signals
+    input clk_i;
+    input axi_rst_i;
+    input noc_rst_i;      
     
     // AXI signals
-    input axi_rst_i;
     input [ADDR_WIDTH-1:0] axi_awaddr_i;
     input axi_awvalid_i;
     output axi_awready_o;
@@ -61,8 +62,6 @@ module rtsnoc_axi4lite_slave(
     input [NOC_BUS_SIZE-1:0] noc_dout_i;
     input noc_wait_i;
     input noc_nd_i;
-    output noc_reset_o;
-    
     
     // ///////////////////////////////////////
     
@@ -134,7 +133,5 @@ module rtsnoc_axi4lite_slave(
     	.noc_wait_i(noc_wait_i),
     	.noc_nd_i(noc_nd_i)
     );
-    
-    assign noc_reset_o = wb_rst;
     
 endmodule
