@@ -4,9 +4,7 @@ module rtsnoc_to_wishbone_master (
     clk_i, rst_i,
      
     wb_cyc_o, wb_stb_o, wb_adr_o, wb_sel_o, wb_we_o, wb_dat_o, wb_dat_i, wb_ack_i,
-    
-    int_i,
-    
+        
     noc_din_o, noc_wr_o, noc_rd_o, noc_dout_i, noc_wait_i, noc_nd_i
     );
    
@@ -41,8 +39,6 @@ module rtsnoc_to_wishbone_master (
     input [WB_NOC_DATA_WIDTH-1:0] wb_dat_i;    
     input wb_ack_i;
     
-    input int_i;
-  
     output [NOC_BUS_SIZE-1:0] noc_din_o;
     output reg noc_wr_o;
     output reg noc_rd_o;
@@ -69,10 +65,10 @@ module rtsnoc_to_wishbone_master (
     reg [WB_NOC_DATA_WIDTH-1:0] noc_tx_data;
     wire [2:0] noc_tx_local_dst = NOC_LOCAL_ADR_TGT;
     wire [SOC_SIZE_Y-1:0] noc_tx_Y_dst = NOC_Y_TGT;
-    reg [SOC_SIZE_X-1:0] noc_tx_X_dst = NOC_X_TGT;
-    reg [2:0] noc_tx_local_orig = NOC_LOCAL_ADR;
-    reg [SOC_SIZE_Y-1:0] noc_tx_Y_orig = NOC_Y;
-    reg [SOC_SIZE_X-1:0] noc_tx_X_orig = NOC_X;
+    wire [SOC_SIZE_X-1:0] noc_tx_X_dst = NOC_X_TGT;
+    wire [2:0] noc_tx_local_orig = NOC_LOCAL_ADR;
+    wire [SOC_SIZE_Y-1:0] noc_tx_Y_orig = NOC_Y;
+    wire [SOC_SIZE_X-1:0] noc_tx_X_orig = NOC_X;
     assign noc_din_o[NOC_BUS_SIZE-1:0] = {noc_tx_X_orig,
                                           noc_tx_Y_orig,
                                           noc_tx_local_orig, 
@@ -86,9 +82,9 @@ module rtsnoc_to_wishbone_master (
     localparam PKT_SIZE = 3;
     localparam PKT_WRITE    = 3'h0;
     localparam PKT_READ     = 3'h1;
-    localparam PKT_INT      = 3'h2;
-    localparam PKT_ERR      = 3'h3;
-    localparam PKT_OK       = 3'h4;
+    localparam PKT_INT      = 3'h2;//handled by rtsnoc_int_tx
+    localparam PKT_ERR      = 3'h3;//not used
+    localparam PKT_OK       = 3'h4;//not used
     
     localparam PKT_FILL_SIZE = WB_NOC_DATA_WIDTH - PKT_SIZE;
    
@@ -100,11 +96,6 @@ module rtsnoc_to_wishbone_master (
     localparam MAIN_SM_WB_READ          = 3'h3;
     localparam MAIN_SM_TX_DATA          = 3'h4;
     reg [STATE_SIZE-1:0]  MAIN_SM_STATE;
-    
-    reg int_d0;
-    always @(posedge clk_i) int_d0 <= int_i;
-    wire int = int_i & ~int_d0; 
-      
  
     always @(posedge clk_i)
         if(rst_i) begin
@@ -147,11 +138,6 @@ module rtsnoc_to_wishbone_master (
                         MAIN_SM_STATE <= MAIN_SM_WAIT_CMD;
                     end
                 end
-                else if(int) begin
-                    noc_tx_data <= {PKT_INT, {PKT_FILL_SIZE{1'b0}}};
-                    noc_wr_o <= 1'b1;
-                    MAIN_SM_STATE <= MAIN_SM_TX_DATA;
-                end
                 else begin
                     noc_rd_o <= 1'b0;
                     wb_cyc_o <= 1'b0;
@@ -180,6 +166,7 @@ module rtsnoc_to_wishbone_master (
                 else MAIN_SM_STATE <= MAIN_SM_WB_WRITE;
             end
             MAIN_SM_WB_READ: begin
+                noc_rd_o <= 1'b0;
                 wb_cyc_o <= 1'b0;
                 wb_stb_o <= 1'b0;
                 if(wb_ack_i) begin

@@ -4,9 +4,7 @@ module wishbone_slave_to_rtsnoc (
     clk_i, rst_i,
      
     wb_cyc_i, wb_stb_i, wb_adr_i, wb_sel_i, wb_we_i, wb_dat_i, wb_dat_o, wb_ack_o,
-    
-    noc_int_o,
-    
+        
     noc_din_o, noc_wr_o, noc_rd_o, noc_dout_i, noc_wait_i, noc_nd_i
     );
    
@@ -40,8 +38,6 @@ module wishbone_slave_to_rtsnoc (
     output reg [WB_NOC_DATA_WIDTH-1:0] wb_dat_o;
     output reg wb_ack_o;
     
-    output reg noc_int_o;
-  
     output [NOC_BUS_SIZE-1:0] noc_din_o;
     output reg noc_wr_o;
     output reg noc_rd_o;
@@ -68,10 +64,10 @@ module wishbone_slave_to_rtsnoc (
     reg [WB_NOC_DATA_WIDTH-1:0] noc_tx_data;
     wire [2:0] noc_tx_local_dst = NOC_LOCAL_ADR_TGT;
     wire [SOC_SIZE_Y-1:0] noc_tx_Y_dst = NOC_Y_TGT;
-    reg [SOC_SIZE_X-1:0] noc_tx_X_dst = NOC_X_TGT;
-    reg [2:0] noc_tx_local_orig = NOC_LOCAL_ADR;
-    reg [SOC_SIZE_Y-1:0] noc_tx_Y_orig = NOC_Y;
-    reg [SOC_SIZE_X-1:0] noc_tx_X_orig = NOC_X;
+    wire [SOC_SIZE_X-1:0] noc_tx_X_dst = NOC_X_TGT;
+    wire [2:0] noc_tx_local_orig = NOC_LOCAL_ADR;
+    wire [SOC_SIZE_Y-1:0] noc_tx_Y_orig = NOC_Y;
+    wire [SOC_SIZE_X-1:0] noc_tx_X_orig = NOC_X;
     assign noc_din_o[NOC_BUS_SIZE-1:0] = {noc_tx_X_orig,
                                           noc_tx_Y_orig,
                                           noc_tx_local_orig, 
@@ -85,9 +81,9 @@ module wishbone_slave_to_rtsnoc (
     localparam PKT_SIZE = 3;
     localparam PKT_WRITE    = 3'h0;
     localparam PKT_READ     = 3'h1;
-    localparam PKT_INT      = 3'h2;
-    localparam PKT_ERR      = 3'h3;
-    localparam PKT_OK       = 3'h4;
+    localparam PKT_INT      = 3'h2;//handled by rtsnoc_int_rx
+    localparam PKT_ERR      = 3'h3;//not used
+    localparam PKT_OK       = 3'h4;//not used
     
     localparam PKT_FILL_SIZE = WB_NOC_DATA_WIDTH - WB_ADDR_WIDTH - PKT_SIZE;
    
@@ -100,8 +96,7 @@ module wishbone_slave_to_rtsnoc (
     localparam MAIN_SM_WAIT_DATA        = 3'h4;
     reg [STATE_SIZE-1:0]  MAIN_SM_STATE; 
  
-    reg data_received;
-    reg data_received_ack;
+    
     
     always @(posedge clk_i)
         if(rst_i) begin
@@ -110,7 +105,9 @@ module wishbone_slave_to_rtsnoc (
 	       
 	       noc_tx_data <= 0;
 	       
-	       data_received_ack <= 0;
+	       wb_dat_o <= 0;
+           
+           noc_rd_o <= 0;
            
            MAIN_SM_STATE <= MAIN_SM_WAIT_OP;
            
@@ -157,19 +154,17 @@ module wishbone_slave_to_rtsnoc (
             end
             MAIN_SM_TX_READ_CMD: begin
                 noc_wr_o <= 1'b0;
-                if(noc_wait_i) begin
-                    MAIN_SM_STATE <= MAIN_SM_TX_READ_CMD;
-                end
-                else if (data_received) begin
-                    data_received_ack <= 1'b1;
+                if(noc_nd_i) begin
+                    noc_rd_o <= 1'b1;      
+                    wb_dat_o <= noc_rx_data;
                     MAIN_SM_STATE <= MAIN_SM_WAIT_DATA;
                 end
                 else
                     MAIN_SM_STATE <= MAIN_SM_TX_READ_CMD;
             end
             MAIN_SM_WAIT_DATA: begin
-                data_received_ack <= 1'b0;
                 wb_ack_o <= 1'b1;
+                noc_rd_o <= 1'b0;
                 MAIN_SM_STATE <= MAIN_SM_WAIT_OP;
             end
             default: begin
@@ -183,34 +178,6 @@ module wishbone_slave_to_rtsnoc (
 	       
         end
         
-    
-    
-    always @(posedge clk_i)
-        if(rst_i) begin
-           wb_dat_o <= 0;
-           data_received <= 0;
-           noc_int_o <= 0;
-           noc_rd_o <= 0;
-        end
-        else begin
-            if(noc_nd_i) begin
-                noc_rd_o <= 1'b1;      
-                if((noc_rx_data[WB_NOC_DATA_WIDTH-1:WB_NOC_DATA_WIDTH-PKT_SIZE] == PKT_INT) &&
-                   (|noc_rx_data[WB_NOC_DATA_WIDTH-PKT_SIZE-1:0] == 0)) begin
-                    noc_int_o <= 1'b1;
-                end
-                else if(MAIN_SM_STATE == MAIN_SM_TX_READ_CMD) begin
-                   wb_dat_o <= noc_rx_data;
-                   data_received <= 1'b1; 
-                end
-            end
-            else begin
-                noc_rd_o <= 1'b0;
-                noc_int_o <= 1'b0;
-                if(data_received_ack)
-                    data_received <= 1'b0;
-            end
-        end
    
 endmodule // timer
 

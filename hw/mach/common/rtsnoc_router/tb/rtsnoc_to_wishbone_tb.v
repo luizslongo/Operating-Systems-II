@@ -17,15 +17,14 @@ module rtsnoc_to_wishbone_tb;
     localparam NOC_HEADER_SIZE = SOC_XY_SIZE + 6;
     localparam NOC_BUS_SIZE = WB_NOC_DATA_WIDTH + NOC_HEADER_SIZE;
     
-    reg slave_cyc = 0;
-    reg slave_stb = 0;
-    reg [WB_ADDR_WIDTH-1:0] slave_adr = 0;
-    reg [3:0] slave_sel = 0;
-    reg slave_we = 0;
-    reg [WB_NOC_DATA_WIDTH-1:0] slave_dat_i = 0;
+    reg slave_cyc;
+    reg slave_stb;
+    reg [WB_ADDR_WIDTH-1:0] slave_adr;
+    reg [3:0] slave_sel;
+    reg slave_we;
+    reg [WB_NOC_DATA_WIDTH-1:0] slave_dat_i;
     wire [WB_NOC_DATA_WIDTH-1:0] slave_dat_o;
     wire slave_ack;
-    wire slave_int;
     
     wire master_cyc;
     wire master_stb;
@@ -33,9 +32,8 @@ module rtsnoc_to_wishbone_tb;
     wire [3:0] master_sel;
     wire master_we;
     wire [WB_NOC_DATA_WIDTH-1:0] master_dat_o;
-    reg [WB_NOC_DATA_WIDTH-1:0] master_dat_i = 0;
-    reg master_ack = 0;
-    reg master_int = 0;
+    reg [WB_NOC_DATA_WIDTH-1:0] master_dat_i;
+    reg master_ack;
     
     wire [NOC_BUS_SIZE-1:0] slave_din;
     wire slave_wr;
@@ -81,7 +79,6 @@ module rtsnoc_to_wishbone_tb;
     	.wb_dat_i(slave_dat_i),
     	.wb_dat_o(slave_dat_o),
     	.wb_ack_o(slave_ack),
-    	.noc_int_o(slave_int),
     	.noc_din_o(slave_din),
     	.noc_wr_o(slave_wr),
     	.noc_rd_o(slave_rd),
@@ -113,13 +110,12 @@ module rtsnoc_to_wishbone_tb;
     	.wb_dat_o(master_dat_o),
     	.wb_dat_i(master_dat_i),
     	.wb_ack_i(master_ack),
-    	.int_i(master_int),
     	.noc_din_o(master_din),
-    	.noc_wr_o(master_wr),
-    	.noc_rd_o(master_rd),
-    	.noc_dout_i(master_dout),
-    	.noc_wait_i(master_wait),
-    	.noc_nd_i(master_nd)
+        .noc_wr_o(master_wr),
+        .noc_rd_o(master_rd),
+        .noc_dout_i(master_dout),
+        .noc_wait_i(master_wait),
+        .noc_nd_i(master_nd)
     );
     
     //NoC stuff
@@ -181,7 +177,43 @@ module rtsnoc_to_wishbone_tb;
             slave_din_data} = slave_din;                        
     
 
+    //assign master_dout = slave_din;
+    //assign master_wait = ~slave_rd;
+    //assign master_nd = slave_wr;
+    //assign slave_dout = master_din;
+    //assign slave_wait = ~master_rd;
+    //assign slave_nd = master_wr;
     
+    always @(posedge clk) begin
+        
+        if(slave_wr)
+            slave_wait_reg <= 1;
+        else if(master_rd)
+            slave_wait_reg <= 0;
+            
+        if(master_wr)
+            slave_dout <= master_din;
+            
+        if(master_wr)
+            slave_nd <= 1;
+        else
+            slave_nd <= 0;
+        
+        if(master_wr)
+            master_wait_reg <= 1;
+        else if(slave_rd)
+            master_wait_reg <= 0;
+            
+        if(slave_wr)
+            master_dout <= slave_din;
+            
+        if(slave_wr)
+            master_nd <= 1;
+        else
+            master_nd <= 0;
+        
+    end    
+    /*
     reg master_tx_free = 1;
     always begin
         @(posedge clk);
@@ -257,12 +289,75 @@ module rtsnoc_to_wishbone_tb;
             end
         end
     end
+    */
     
     
     
     
     //Testbench
     
+    //Slave WB
+    reg slave_wb_operation = 0;
+    event slave_wb_operation_end;
+    reg slave_wb_write = 0; 
+    reg [WB_ADDR_WIDTH-1:0] slave_wb_addr = 0;
+    reg [WB_NOC_DATA_WIDTH-1:0] slave_wb_data = 0;
+    
+    reg slave_wait_ack;
+    always @(posedge clk) begin
+        if(rst) begin
+            slave_adr <= 0;
+            slave_cyc <= 0;
+            slave_stb <= 0;
+            slave_we <= 0;
+            slave_dat_i <= 0;
+            slave_sel <= 4'b1111;
+            slave_wait_ack <= 0;
+        end
+        else begin
+            if(slave_wait_ack) begin
+                slave_cyc <= 0;
+                slave_stb <= 0;
+                slave_we <= 0;
+                if(slave_ack) begin
+                    slave_wait_ack <= 0;
+                    slave_wb_data = slave_dat_o;
+                    -> slave_wb_operation_end;
+                end
+            end
+            else begin
+                if(slave_wb_operation) begin
+                    slave_cyc <= 1;
+                    slave_stb <= 1;
+                    slave_we <= slave_wb_write;
+                    slave_adr <= slave_wb_addr;
+                    slave_dat_i <= slave_wb_data;
+                    slave_wait_ack <= 1;
+                end
+                else begin
+                    slave_cyc <= 0;
+                    slave_stb <= 0;
+                    slave_we <= 0;
+                end
+            end
+        end
+    end
+    
+    task slave_wb_op;
+        input [WB_ADDR_WIDTH:0] address;
+        input [WB_NOC_DATA_WIDTH:0] data;
+        input write;
+        output [WB_NOC_DATA_WIDTH:0] return;
+    begin
+        slave_wb_addr = address;
+        slave_wb_data = data;
+        slave_wb_write = write;
+        slave_wb_operation = 1;
+        @(slave_wb_operation_end);
+        slave_wb_operation = 0;
+        return = slave_wb_data;
+    end
+    endtask
     
     reg slave_start = 0;
     initial begin
@@ -288,6 +383,7 @@ module rtsnoc_to_wishbone_tb;
     end
     
     reg [31:0] data = 32'hAABBCCDD;
+    reg [31:0] data_ret;
     
     reg [WB_ADDR_WIDTH-1:0] counter = 0;
     integer max = 5;
@@ -297,85 +393,49 @@ module rtsnoc_to_wishbone_tb;
         while(slave_start == 0) @(posedge clk);
         
         for(counter = 0; counter < max; counter = counter + 1) begin
-            $display ("Starting slave write transaction: data %d, addr %d",data, counter);
-            @(posedge clk)
-            slave_adr = counter;
-            slave_cyc = 1;
-            slave_stb = 1;
-            slave_we = 1;
-            slave_dat_i = data;
+            $display ("Starting slave write transaction: data %x, addr %d",data, counter);
+            slave_wb_op(counter, data, 1, data_ret);
             data = {data[15:0],data[31:16]};
-            @(posedge clk);
-            slave_cyc = 0;
-            slave_stb = 0;
-            slave_we = 0;
-            while(~slave_ack) @(posedge clk); 
         end
         
         for(counter = 0; counter < max; counter = counter + 1) begin
             $display ("Starting slave read transaction: addr %d", counter);
-            @(posedge clk)
-            slave_adr = counter;
-            slave_cyc = 1;
-            slave_stb = 1;
-            @(posedge clk);
-            slave_cyc = 0;
-            slave_stb = 0;
-            while(~slave_ack) @(posedge clk);
-            $display ("Read from slave %d",slave_dat_o); 
+            slave_wb_op(counter, data, 0, data_ret);
+            $display ("Read from slave %x",data_ret); 
         end
         
         
         for(counter = 0; counter < max; counter = counter + 1) begin
             $display ("Starting slave read transaction: addr %d", counter);
-            @(posedge clk)
-            slave_adr = counter;
-            slave_cyc = 1;
-            slave_stb = 1;
-            @(posedge clk);
-            slave_cyc = 0;
-            slave_stb = 0;
-            while(~slave_ack) @(posedge clk);
-            $display ("Read from slave %d",slave_dat_o);
+            slave_wb_op(counter, data, 0, data_ret);
+            $display ("Read from slave %x",data_ret); 
             
-            @(posedge clk);
-            $display ("Starting slave write transaction: data %d, addr %d",data, counter);
-            @(posedge clk)
-            slave_adr = counter;
-            slave_cyc = 1;
-            slave_stb = 1;
-            slave_we = 1;
-            slave_dat_i = data;
-            data = {data[15:0],data[31:16]};
-            @(posedge clk);
-            slave_cyc = 0;
-            slave_stb = 0;
-            slave_we = 0;
-            while(~slave_ack) @(posedge clk);  
+            $display ("Starting slave write transaction: data %x, addr %d",data, counter);
+            slave_wb_op(counter, data, 1, data_ret);
+            data = {data[15:0],data[31:16]}; 
         end
         
-        $display($time, "Finish called.");
+        $display("\nFinish called.");
         $finish;
     
     end
     
     reg [31:0] data2 = 32'hEEEEFFFF;
     
-    always begin
-         @(posedge clk);
-         master_ack = 0;
+    always @(posedge clk) begin
+         master_ack <= 0;
          if(master_stb & master_cyc) begin
             if(master_we) 
-                $display ("Master wants to write data %d to addr %d",master_dat_o, master_adr);
+                $display ("Master wants to write data %x to addr %d",master_dat_o, master_adr);
             else begin 
-                $display ("Master wants to read %d from addr %d",data2, master_adr);
-                master_dat_i = data2;
-                data2 = {data2[15:0],data2[31:16]};
+                $display ("Master wants to read %x from addr %d",data2, master_adr);
+                master_dat_i <= data2;
+                data2 <= {data2[15:0],data2[31:16]};
             end
-            @(posedge clk);
-            master_ack = 1;
+            master_ack <= 1;
          end
     end
+
 
    
 endmodule
