@@ -32,7 +32,7 @@ architecture rtl of ml605_rtsnoc_axi4lite is
             RESET     : in  std_logic);
     end component;
 
-    component axi4lite is
+    component axi4lite_old is
         generic(CLK_FREQ : integer);
         port(
             clk_i       : in std_logic;
@@ -87,7 +87,11 @@ begin
             ext_reset_i => not reset_btn,
             axi_reset_o => sig_reset);
     
-    soc : axi4lite
+    -- TODO
+    -- For now using the older verison (axi4lite_old) with both processor and 
+    -- peripherals in a single node. The detached version is not working (axi4lite).
+    -- Debug and get it to work.
+    soc : axi4lite_old
         generic map(CLK_FREQ => 50_000_000)
         port map(
             clk_i       => clk_50MHz,

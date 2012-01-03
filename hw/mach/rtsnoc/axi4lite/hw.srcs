@@ -4,6 +4,10 @@
 ##################################################
 MACH_RTSNOC_AXI4LITE_SRCS = $(abspath $(addprefix $(BASE_DIR)/hw/mach/rtsnoc/axi4lite/, \
 axi4lite_proc_node.vhd \
+axi4lite_io_node.vhd \
+axi4lite_io_node.vhd \
 axi4lite.vhd \
+axi4lite_proc_io_node.vhd \
+axi4lite_old.vhd \
 ))
 

@@ -18,5 +18,9 @@ rtsnoc_axi4lite_proxy.v \
 rtsnoc_axi4lite_reset.v \
 rtsnoc_echo_sm.v \
 rtsnoc_echo.v \
+rtsnoc_to_wishbone_master.v \
+wishbone_slave_to_rtsnoc.v \
+axi4lite_slave_to_rtsnoc.v \
+rtsnoc_to_axi4lite_master.v \
 ))
 

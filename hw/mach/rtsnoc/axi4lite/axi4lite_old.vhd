@@ -5,15 +5,12 @@ use ieee.math_real.ceil;
 use ieee.std_logic_arith.all;
 use ieee.std_logic_unsigned.all;
 
--- TODO not working, debug
-
 -- Memory Map (X:Y:LOCAL):
---  Proc node   0:0:0x000, 0:0:0x001
---  IO node     0:0:0x010
+--  Proc node   0:0:0x000
 --  Echo P0     0:0:0x110
 --  Echo P1     0:0:0x100
 
-entity axi4lite is
+entity axi4lite_old is
    generic(
         CLK_FREQ : integer := 50_000_000);
 
@@ -28,9 +25,9 @@ entity axi4lite is
         gpio_o      : out  std_logic_vector(31 downto 0);
         ext_int_i   : in std_logic_vector(7 downto 0));
 
-end axi4lite;
+end axi4lite_old;
 
-architecture RTL of axi4lite is
+architecture RTL of axi4lite_old is
     
 
     -- RTSNoC constants
@@ -58,11 +55,9 @@ architecture RTL of axi4lite is
     constant ROUTER_WW  : integer := 6;
     constant ROUTER_NW  : integer := 7;
         -- NoC node addressess
-    constant NODE_PROC      : integer := ROUTER_NN;
-    constant NODE_PROC_IO   : integer := ROUTER_NE;
-    constant NODE_IO        : integer := ROUTER_EE;
-    constant NODE_ECHO_P0   : integer := ROUTER_WW;
-    constant NODE_ECHO_P1   : integer := ROUTER_SS;
+    constant NODE_AXI_ADDR  : std_logic_vector(2 downto 0) := ROUTER_ADDRS(ROUTER_NN);
+    constant NODE_ECHO_P0   : std_logic_vector(2 downto 0) := ROUTER_ADDRS(ROUTER_WW);
+    constant NODE_ECHO_P1   : std_logic_vector(2 downto 0) := ROUTER_ADDRS(ROUTER_SS);
     
     -- 
     -- Declarations
@@ -137,7 +132,7 @@ architecture RTL of axi4lite is
         );
     end component;
     
-    component axi4lite_proc_node is
+    component axi4lite_proc_io_node is
         generic(
             CLK_FREQ : integer := 50_000_000;
             -- RTSNoC generics
@@ -149,31 +144,25 @@ architecture RTL of axi4lite is
             NET_BUS_SIZE       : integer := NET_BUS_SIZE;
             ROUTER_X_ADDR      : integer := 0;
             ROUTER_Y_ADDR      : integer := 0;
-            ROUTER_LOCAL_ADDR  : std_logic_vector(2 downto 0) := "0";
-            IO_SRC_ROUTER_X_ADDR      : integer := 0;
-            IO_SRC_ROUTER_Y_ADDR      : integer := 0;
-            IO_SRC_ROUTER_LOCAL_ADDR  : std_logic_vector(2 downto 0) := "0";
-            IO_TGT_ROUTER_X_ADDR      : integer := 0;
-            IO_TGT_ROUTER_Y_ADDR      : integer := 0;
-            IO_TGT_ROUTER_LOCAL_ADDR  : std_logic_vector(2 downto 0) := "0");
+            ROUTER_LOCAL_ADDR  : std_logic_vector(2 downto 0) := "0");
         port(clk_i       : in std_logic;
             reset_axi_i     : in std_logic;
             reset_noc_i     : in std_logic;
     
+            uart_tx_o   : out std_logic;
+            uart_rx_i   : in std_logic;
+            uart_baud_o : out std_logic;
+        
+            gpio_i      : in  std_logic_vector(31 downto 0);
+            gpio_o      : out  std_logic_vector(31 downto 0);
+            ext_int_i   : in std_logic_vector(7 downto 0);
+        
             noc_din_o   : out std_logic_vector(NET_BUS_SIZE-1 downto 0);
             noc_wr_o    : out std_logic;
             noc_rd_o    : out std_logic;
             noc_dout_i  : in std_logic_vector(NET_BUS_SIZE-1 downto 0);
             noc_wait_i  : in std_logic;
             noc_nd_i    : in std_logic;
-            
-            io_int_i   : in std_logic_vector(15 downto 0);
-            io_din_o   : out std_logic_vector(NET_BUS_SIZE-1 downto 0);
-            io_wr_o    : out std_logic;
-            io_rd_o    : out std_logic;
-            io_dout_i  : in std_logic_vector(NET_BUS_SIZE-1 downto 0);
-            io_wait_i  : in std_logic;
-            io_nd_i    : in std_logic;
         
             ext_ram_awaddr_o  : out std_logic_vector(31 DOWNTO 0);
             ext_ram_awvalid_o : out std_logic;
@@ -192,44 +181,6 @@ architecture RTL of axi4lite is
             ext_ram_rresp_i   : in std_logic_vector(1 DOWNTO 0);
             ext_ram_rvalid_i  : in std_logic;
             ext_ram_rready_o  : out std_logic);
-    end component;
-    
-    component axi4lite_io_node is
-        generic(
-            CLK_FREQ : integer := 50_000_000;
-            -- RTSNoC generics
-            NET_SIZE_X         : integer := 1;
-            NET_SIZE_Y         : integer := 1;
-            NET_SIZE_X_LOG2    : integer := 1; -- it should be "integer(ceil(log2(real(NET_SIZE_X))))" when NET_SIZE_X >= 2
-            NET_SIZE_Y_LOG2    : integer := 1; -- it should be "integer(ceil(log2(real(NET_SIZE_Y))))" when NET_SIZE_Y >= 2
-            NET_DATA_WIDTH     : integer := NET_DATA_WIDTH;
-            NET_BUS_SIZE       : integer := NET_BUS_SIZE;
-            ROUTER_X_ADDR      : integer := 0;
-            ROUTER_Y_ADDR      : integer := 0;
-            ROUTER_LOCAL_ADDR  : std_logic_vector(2 downto 0) := "0";
-            PN_ROUTER_X_ADDR      : integer := 0;
-            PN_ROUTER_Y_ADDR      : integer := 0;
-            PN_ROUTER_LOCAL_ADDR  : std_logic_vector(2 downto 0) := "0");
-        port(clk_i       : in std_logic;
-            reset_axi_i     : in std_logic;
-            reset_noc_i     : in std_logic;
-    
-            uart_tx_o   : out std_logic;
-            uart_rx_i   : in std_logic;
-            uart_baud_o : out std_logic;
-        
-            gpio_i      : in  std_logic_vector(31 downto 0);
-            gpio_o      : out  std_logic_vector(31 downto 0);
-            ext_int_i   : in std_logic_vector(7 downto 0);
-            
-            io_int_o    : out std_logic_vector(15 downto 0);
-        
-            noc_din_o   : out std_logic_vector(NET_BUS_SIZE-1 downto 0);
-            noc_wr_o    : out std_logic;
-            noc_rd_o    : out std_logic;
-            noc_dout_i  : in std_logic_vector(NET_BUS_SIZE-1 downto 0);
-            noc_wait_i  : in std_logic;
-            noc_nd_i    : in std_logic);
     end component;
       
     component ram_amba_1024k is
@@ -260,8 +211,8 @@ architecture RTL of axi4lite is
             SOC_SIZE_X      : integer := NET_SIZE_X_LOG2;
             SOC_SIZE_Y      : integer := NET_SIZE_Y_LOG2;
             NOC_DATA_WIDTH  : integer := NET_DATA_WIDTH;
-            P0_ADDR   : std_logic_vector(2 downto 0) := ROUTER_ADDRS(NODE_ECHO_P0);
-            P1_ADDR   : std_logic_vector(2 downto 0) := ROUTER_ADDRS(NODE_ECHO_P1));
+            P0_ADDR   : std_logic_vector(2 downto 0) := NODE_ECHO_P0;
+            P1_ADDR   : std_logic_vector(2 downto 0) := NODE_ECHO_P1);
         port(
             clk_i      : in std_logic;
             rst_i      : in std_logic;
@@ -319,9 +270,6 @@ architecture RTL of axi4lite is
     signal sig_noc_rd    : noc_array_of_stdlogic;
     signal sig_noc_wait  : noc_array_of_stdlogic;
     signal sig_noc_nd    : noc_array_of_stdlogic;
-    
-    -- Nodes communication
-    signal io_int   : std_logic_vector(15 downto 0);
 
     -- DD3 AXI4 signals
     signal sig_ddr3_awvalid : std_logic;
@@ -447,9 +395,9 @@ begin
      
     -- ------------------------------------------------------------
     -- NODE 0:0:0x000(NN) - Proc node + External RAM (DDR3 controller)
-    --      0:0:0x001(NE)
     -- ------------------------------------------------------------
-    proc_node: axi4lite_proc_node
+    --     
+    proc_node: axi4lite_proc_io_node
         generic map (
             CLK_FREQ    => CLK_FREQ,
             -- RTSNoC generics
@@ -461,33 +409,26 @@ begin
             NET_BUS_SIZE        => NET_BUS_SIZE,
             ROUTER_X_ADDR       => conv_integer(ROUTER_X),
             ROUTER_Y_ADDR       => conv_integer(ROUTER_Y),
-            ROUTER_LOCAL_ADDR   => ROUTER_ADDRS(NODE_PROC),
-            IO_SRC_ROUTER_X_ADDR       => conv_integer(ROUTER_X),
-            IO_SRC_ROUTER_Y_ADDR       => conv_integer(ROUTER_Y),
-            IO_SRC_ROUTER_LOCAL_ADDR   => ROUTER_ADDRS(NODE_PROC_IO),
-            IO_TGT_ROUTER_X_ADDR       => conv_integer(ROUTER_X),
-            IO_TGT_ROUTER_Y_ADDR       => conv_integer(ROUTER_Y),
-            IO_TGT_ROUTER_LOCAL_ADDR   => ROUTER_ADDRS(NODE_IO))
+            ROUTER_LOCAL_ADDR   => ROUTER_ADDRS(ROUTER_NN))
         port map(
             -- System signals
             clk_i       => clk_i,
             reset_axi_i   => reset_i,
             reset_noc_i   => sig_noc_reset,
+            -- Peripherals
+            uart_tx_o   => uart_tx_o,
+            uart_rx_i   => uart_rx_i,
+            uart_baud_o => uart_baud_o,
+            gpio_i      => gpio_i,
+            gpio_o      => gpio_o,
+            ext_int_i   => ext_int_i,
             -- NoC interface
-            noc_din_o   => sig_noc_din(NODE_PROC),
-            noc_dout_i  => sig_noc_dout(NODE_PROC),
-            noc_wr_o    => sig_noc_wr(NODE_PROC),
-            noc_rd_o    => sig_noc_rd(NODE_PROC),
-            noc_wait_i  => sig_noc_wait(NODE_PROC),
-            noc_nd_i    => sig_noc_nd(NODE_PROC),
-            -- NoC IO interface
-            io_int_i   => io_int,
-            io_din_o   => sig_noc_din(NODE_PROC_IO),
-            io_dout_i  => sig_noc_dout(NODE_PROC_IO),
-            io_wr_o    => sig_noc_wr(NODE_PROC_IO),
-            io_rd_o    => sig_noc_rd(NODE_PROC_IO),
-            io_wait_i  => sig_noc_wait(NODE_PROC_IO),
-            io_nd_i    => sig_noc_nd(NODE_PROC_IO),
+            noc_din_o   => sig_noc_din(ROUTER_NN),
+            noc_dout_i  => sig_noc_dout(ROUTER_NN),
+            noc_wr_o    => sig_noc_wr(ROUTER_NN),
+            noc_rd_o    => sig_noc_rd(ROUTER_NN),
+            noc_wait_i  => sig_noc_wait(ROUTER_NN),
+            noc_nd_i    => sig_noc_nd(ROUTER_NN),
             -- EXT RAM
             ext_ram_awaddr_o    => sig_ddr3_awaddr,
             ext_ram_awvalid_o   => sig_ddr3_awvalid,
@@ -537,47 +478,6 @@ begin
 
         
     -- ------------------------------------------------------------
-    -- NODE 0:0:0x000(EE) - IO node
-    -- ------------------------------------------------------------
-    io_node: axi4lite_io_node
-        generic map (
-            CLK_FREQ    => CLK_FREQ,
-            -- RTSNoC generics
-            NET_SIZE_X          => NET_SIZE_X,
-            NET_SIZE_Y          => NET_SIZE_Y,
-            NET_SIZE_X_LOG2     => NET_SIZE_X_LOG2,
-            NET_SIZE_Y_LOG2     => NET_SIZE_Y_LOG2,
-            NET_DATA_WIDTH      => NET_DATA_WIDTH,
-            NET_BUS_SIZE        => NET_BUS_SIZE,
-            ROUTER_X_ADDR       => conv_integer(ROUTER_X),
-            ROUTER_Y_ADDR       => conv_integer(ROUTER_Y),
-            ROUTER_LOCAL_ADDR   => ROUTER_ADDRS(NODE_IO),
-            PN_ROUTER_X_ADDR       => conv_integer(ROUTER_X),
-            PN_ROUTER_Y_ADDR       => conv_integer(ROUTER_Y),
-            PN_ROUTER_LOCAL_ADDR   => ROUTER_ADDRS(NODE_PROC_IO))
-        port map(
-            -- System signals
-            clk_i       => clk_i,
-            reset_axi_i => reset_i,
-            reset_noc_i => sig_noc_reset,
-            io_int_o    => io_int,
-            -- Peripherals
-            uart_tx_o   => uart_tx_o,
-            uart_rx_i   => uart_rx_i,
-            uart_baud_o => uart_baud_o,
-            gpio_i      => gpio_i,
-            gpio_o      => gpio_o,
-            ext_int_i   => ext_int_i,
-            -- NoC interface
-            noc_din_o   => sig_noc_din(NODE_IO),
-            noc_dout_i  => sig_noc_dout(NODE_IO),
-            noc_wr_o    => sig_noc_wr(NODE_IO),
-            noc_rd_o    => sig_noc_rd(NODE_IO),
-            noc_wait_i  => sig_noc_wait(NODE_IO),
-            noc_nd_i    => sig_noc_nd(NODE_IO)
-        );
-    
-    -- ------------------------------------------------------------
     -- NODE 0:0:0x110(WW) - Echo P0
     -- NODE 0:0:0x100(SS) - Echo P1
     -- ------------------------------------------------------------
@@ -587,8 +487,8 @@ begin
             SOC_SIZE_X      => NET_SIZE_X_LOG2,
             SOC_SIZE_Y      => NET_SIZE_Y_LOG2,
             NOC_DATA_WIDTH  => NET_DATA_WIDTH,
-            P0_ADDR         => ROUTER_ADDRS(NODE_ECHO_P0),
-            P1_ADDR         => ROUTER_ADDRS(NODE_ECHO_P1))
+            P0_ADDR         => NODE_ECHO_P0,
+            P1_ADDR         => NODE_ECHO_P1)
         port map(
             -- System signals
             clk_i       => clk_i,

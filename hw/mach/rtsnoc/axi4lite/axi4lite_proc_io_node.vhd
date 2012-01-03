@@ -9,20 +9,13 @@ use ieee.std_logic_unsigned.all;
 --   0x00000000 - 0x0fffffff   Internal RAM (4KB - 256MB)
 --   0x10000000 - 0x1fffffff   External RAM (1MB - 256MB)
 --   All peripherals have a 1 KB address space
---   0x80000000
---   ...        Up to 32 external peripherals - Check IO node for mapping
---   0x80007FFF  
---   0x80008000  Timer
---   0x80008400  PIC
---   0x80008800  RTSNoC proxy
---
--- Interrupt Map:
---   0      Timer
---   1      RTSNoC proxy
---   2 - 15 Reserved
---  16 - 32 Up to 16 external peripherals interrupts - Check IO node for mapping    
+--   0x80000000  Uart
+--   0x80000400  GPIO
+--   0x80000800  Timer
+--   0x80000C00  PIC
+--   0x80001000  RTSNoC
 
-entity axi4lite_proc_node is
+entity axi4lite_proc_io_node is
    generic(
         CLK_FREQ : integer := 50_000_000;
         
@@ -35,32 +28,26 @@ entity axi4lite_proc_node is
         NET_BUS_SIZE       : integer := 27;
         ROUTER_X_ADDR      : integer := 0;
         ROUTER_Y_ADDR      : integer := 0;
-        ROUTER_LOCAL_ADDR  : std_logic_vector(2 downto 0) := "0";
-        IO_SRC_ROUTER_X_ADDR      : integer := 0;
-        IO_SRC_ROUTER_Y_ADDR      : integer := 0;
-        IO_SRC_ROUTER_LOCAL_ADDR  : std_logic_vector(2 downto 0) := "0";
-        IO_TGT_ROUTER_X_ADDR      : integer := 0;
-        IO_TGT_ROUTER_Y_ADDR      : integer := 0;
-        IO_TGT_ROUTER_LOCAL_ADDR  : std_logic_vector(2 downto 0) := "0");
+        ROUTER_LOCAL_ADDR  : std_logic_vector(2 downto 0) := "0");
 
    port(clk_i       : in std_logic;
         reset_axi_i     : in std_logic;
         reset_noc_i     : in std_logic;
-                
+
+        uart_tx_o   : out std_logic;
+        uart_rx_i   : in std_logic;
+        uart_baud_o : out std_logic;
+        
+        gpio_i      : in  std_logic_vector(31 downto 0);
+        gpio_o      : out  std_logic_vector(31 downto 0);
+        ext_int_i   : in std_logic_vector(7 downto 0);
+        
         noc_din_o   : out std_logic_vector(NET_BUS_SIZE-1 downto 0);
         noc_wr_o    : out std_logic;
         noc_rd_o    : out std_logic;
         noc_dout_i  : in std_logic_vector(NET_BUS_SIZE-1 downto 0);
         noc_wait_i  : in std_logic;
         noc_nd_i    : in std_logic;
-        
-        io_int_i   : in std_logic_vector(15 downto 0);
-        io_din_o   : out std_logic_vector(NET_BUS_SIZE-1 downto 0);
-        io_wr_o    : out std_logic;
-        io_rd_o    : out std_logic;
-        io_dout_i  : in std_logic_vector(NET_BUS_SIZE-1 downto 0);
-        io_wait_i  : in std_logic;
-        io_nd_i    : in std_logic;
         
         ext_ram_awaddr_o  : out std_logic_vector(31 DOWNTO 0);
         ext_ram_awvalid_o : out std_logic;
@@ -79,37 +66,40 @@ entity axi4lite_proc_node is
         ext_ram_rresp_i   : in std_logic_vector(1 DOWNTO 0);
         ext_ram_rvalid_i  : in std_logic;
         ext_ram_rready_o  : out std_logic);
-end axi4lite_proc_node;
+end axi4lite_proc_io_node;
 
-architecture RTL of axi4lite_proc_node is
+architecture RTL of axi4lite_proc_io_node is
     -- AXI4 constants
-    constant N_SLAVES       : integer := 6;
+    constant N_SLAVES       : integer := 7;
     constant N_SLAVES_LOG   : integer := integer(ceil(log2(real(N_SLAVES))));
 
     constant SLAVE0_ADDR_W  : integer := 4;
-    constant SLAVE0_ADDR    : std_logic_vector(SLAVE0_ADDR_W-1 downto 0) 
-        := b"0000";
+    constant SLAVE0_ADDR    : std_logic_vector(SLAVE0_ADDR_W-1 downto 0) := b"0000";
 
     constant SLAVE1_ADDR_W  : integer := 4;
-    constant SLAVE1_ADDR    : std_logic_vector(SLAVE1_ADDR_W-1 downto 0) 
-        := b"0001";
+    constant SLAVE1_ADDR    : std_logic_vector(SLAVE1_ADDR_W-1 downto 0) := b"0001";
 
-    constant SLAVE2_ADDR_W  : integer := 17;
+    constant SLAVE2_ADDR_W  : integer := 22;
     constant SLAVE2_ADDR    : std_logic_vector(SLAVE2_ADDR_W-1 downto 0) 
-        := b"1000" & b"0000" & b"0000" & b"0000" & b"0";
+        := b"1000" & b"0000" & b"0000" & b"0000" & b"0000" & b"00";
         
     constant SLAVE3_ADDR_W  : integer := 22;
     constant SLAVE3_ADDR    : std_logic_vector(SLAVE3_ADDR_W-1 downto 0) 
-        := b"1000" & b"0000" & b"0000" & b"0000" & b"1000" & b"00";
+        := b"1000" & b"0000" & b"0000" & b"0000" & b"0000" & b"01";
         
     constant SLAVE4_ADDR_W  : integer := 22;
     constant SLAVE4_ADDR    : std_logic_vector(SLAVE4_ADDR_W-1 downto 0) 
-        := b"1000" & b"0000" & b"0000" & b"0000" & b"1000" & b"01";
+        := b"1000" & b"0000" & b"0000" & b"0000" & b"0000" & b"10";
         
     constant SLAVE5_ADDR_W  : integer := 22;
     constant SLAVE5_ADDR    : std_logic_vector(SLAVE5_ADDR_W-1 downto 0) 
-        := b"1000" & b"0000" & b"0000" & b"0000" & b"1000" & b"10";
+        := b"1000" & b"0000" & b"0000" & b"0000" & b"0000" & b"11";
         
+    constant SLAVE6_ADDR_W  : integer := 22;
+    constant SLAVE6_ADDR    : std_logic_vector(SLAVE6_ADDR_W-1 downto 0) 
+        := b"1000" & b"0000" & b"0000" & b"0000" & b"0001" & b"00";
+  
+  
     -- 
     -- Declarations
     -- 
@@ -128,7 +118,9 @@ architecture RTL of axi4lite_proc_node is
             s4_addr_w   : integer; 
             s4_addr     : std_logic_vector(SLAVE4_ADDR_W-1 downto 0);
             s5_addr_w   : integer; 
-            s5_addr     : std_logic_vector(SLAVE5_ADDR_W-1 downto 0));
+            s5_addr     : std_logic_vector(SLAVE5_ADDR_W-1 downto 0);
+            s6_addr_w   : integer; 
+            s6_addr     : std_logic_vector(SLAVE6_ADDR_W-1 downto 0));
         port(
             -- master write address channel
             m_awvalid_i    : in std_logic;
@@ -242,6 +234,67 @@ architecture RTL of axi4lite_proc_node is
             s_axi_rready  : in std_logic);
     end component;
     
+    component simple_uart_axi4lite is
+        generic(
+            TXDEPTH : integer;
+            RXDEPTH : integer);
+        port(
+            -- System signals
+            clk_i       : in  std_logic;
+            axi_rst_i   : in  std_logic;
+            rx_int_o    : out std_logic;
+            tx_int_o    : out std_logic;
+            -- AXI signals
+            axi_awaddr_i          : in  std_logic_vector(31 downto 0);
+            axi_awvalid_i         : in  std_logic;
+            axi_awready_o         : out std_logic;
+            axi_wdata_i           : in  std_logic_vector(31 downto 0);
+            axi_wstrb_i           : in  std_logic_vector(3 downto 0);
+            axi_wvalid_i          : in  std_logic;
+            axi_wready_o          : out std_logic;
+            axi_bresp_o           : out std_logic_vector(1 downto 0);
+            axi_bvalid_o          : out std_logic;
+            axi_bready_i          : in  std_logic;
+            axi_araddr_i          : in  std_logic_vector(31 downto 0);
+            axi_arvalid_i         : in  std_logic;
+            axi_arready_o         : out std_logic;
+            axi_rdata_o           : out std_logic_vector(31 downto 0);
+            axi_rresp_o           : out std_logic_vector(1 downto 0);
+            axi_rvalid_o          : out std_logic;
+            axi_rready_i          : in  std_logic;
+            -- UARTLite Interface Signals
+            rx_i    : in  std_logic;
+            tx_o    : out std_logic;
+            baud_o  : out std_logic);
+    end component;
+    
+    component gpio_axi4lite is
+        port(
+            -- AXI signals
+            clk_i       : in  std_logic;
+            axi_rst_i   : in  std_logic;
+            axi_awaddr_i          : in  std_logic_vector(31 downto 0);
+            axi_awvalid_i         : in  std_logic;
+            axi_awready_o         : out std_logic;
+            axi_wdata_i           : in  std_logic_vector(31 downto 0);
+            axi_wstrb_i           : in  std_logic_vector(3 downto 0);
+            axi_wvalid_i          : in  std_logic;
+            axi_wready_o          : out std_logic;
+            axi_bresp_o           : out std_logic_vector(1 downto 0);
+            axi_bvalid_o          : out std_logic;
+            axi_bready_i          : in  std_logic;
+            axi_araddr_i          : in  std_logic_vector(31 downto 0);
+            axi_arvalid_i         : in  std_logic;
+            axi_arready_o         : out std_logic;
+            axi_rdata_o           : out std_logic_vector(31 downto 0);
+            axi_rresp_o           : out std_logic_vector(1 downto 0);
+            axi_rvalid_o          : out std_logic;
+            axi_rready_i          : in  std_logic;
+            -- GPIO
+            gpio_i  : in  std_logic_vector(31 downto 0);
+            gpio_o  : out  std_logic_vector(31 downto 0));
+    end component;
+
     component timer_axi4lite is
         port(
             -- AXI signals
@@ -334,50 +387,6 @@ architecture RTL of axi4lite_proc_node is
             noc_wait_i  : in std_logic;
             noc_nd_i    : in std_logic;
             noc_int_o   : out  std_logic);
-    end component;
-    
-    
-    component axi4lite_slave_to_rtsnoc is
-        generic (
-            NOC_LOCAL_ADR   : std_logic_vector(2 downto 0) := IO_SRC_ROUTER_LOCAL_ADDR; 
-            NOC_X           : std_logic_vector(NET_SIZE_X_LOG2-1 downto 0) := conv_std_logic_vector(IO_SRC_ROUTER_X_ADDR, NET_SIZE_X_LOG2);
-            NOC_Y           : std_logic_vector(NET_SIZE_Y_LOG2-1 downto 0) := conv_std_logic_vector(IO_SRC_ROUTER_Y_ADDR, NET_SIZE_Y_LOG2);
-            NOC_LOCAL_ADR_TGT   : std_logic_vector(2 downto 0) := IO_TGT_ROUTER_LOCAL_ADDR; 
-            NOC_X_TGT       : std_logic_vector(NET_SIZE_X_LOG2-1 downto 0) := conv_std_logic_vector(IO_TGT_ROUTER_X_ADDR, NET_SIZE_X_LOG2);
-            NOC_Y_TGT       : std_logic_vector(NET_SIZE_Y_LOG2-1 downto 0) := conv_std_logic_vector(IO_TGT_ROUTER_Y_ADDR, NET_SIZE_Y_LOG2);
-            SOC_SIZE_X      : integer := NET_SIZE_X_LOG2;
-            SOC_SIZE_Y      : integer := NET_SIZE_Y_LOG2;
-            NOC_DATA_WIDTH  : integer := NET_DATA_WIDTH);
-        port(
-            -- System signals
-            clk_i       : in  std_logic;
-            axi_rst_i   : in  std_logic;
-            noc_rst_i   : in  std_logic;
-            -- AXI signals
-            axi_awaddr_i          : in  std_logic_vector(31 downto 0);
-            axi_awvalid_i         : in  std_logic;
-            axi_awready_o         : out std_logic;
-            axi_wdata_i           : in  std_logic_vector(31 downto 0);
-            axi_wstrb_i           : in  std_logic_vector(3 downto 0);
-            axi_wvalid_i          : in  std_logic;
-            axi_wready_o          : out std_logic;
-            axi_bresp_o           : out std_logic_vector(1 downto 0);
-            axi_bvalid_o          : out std_logic;
-            axi_bready_i          : in  std_logic;
-            axi_araddr_i          : in  std_logic_vector(31 downto 0);
-            axi_arvalid_i         : in  std_logic;
-            axi_arready_o         : out std_logic;
-            axi_rdata_o           : out std_logic_vector(31 downto 0);
-            axi_rresp_o           : out std_logic_vector(1 downto 0);
-            axi_rvalid_o          : out std_logic;
-            axi_rready_i          : in  std_logic;
-            -- NoC signals
-            noc_din_o   : out std_logic_vector(NET_BUS_SIZE-1 downto 0);
-            noc_dout_i  : in std_logic_vector(NET_BUS_SIZE-1 downto 0);
-            noc_wr_o    : out std_logic;
-            noc_rd_o    : out std_logic;
-            noc_wait_i  : in std_logic;
-            noc_nd_i    : in std_logic);
     end component;
         
 
@@ -475,6 +484,8 @@ architecture RTL of axi4lite_proc_node is
     
     signal sig_irqs         : std_logic_vector(31 downto 0);
     signal sig_int_timer    : std_logic;
+    signal sig_uart_rx_int  : std_logic;
+    signal sig_uart_tx_int  : std_logic;
     
     -- RTSNoC signals
         -- AXI port interrupt
@@ -506,7 +517,9 @@ begin
             s4_addr_w   => SLAVE4_ADDR_W, 
             s4_addr     => SLAVE4_ADDR,
             s5_addr_w   => SLAVE5_ADDR_W, 
-            s5_addr     => SLAVE5_ADDR)
+            s5_addr     => SLAVE5_ADDR,
+            s6_addr_w   => SLAVE6_ADDR_W, 
+            s6_addr     => SLAVE6_ADDR)
         port map(
             -- master write address channel
             m_awvalid_i => sig_m0_awvalid,
@@ -679,24 +692,19 @@ begin
             sig_slaves_rresp(1) <= ext_ram_rresp_i;
 
     -- -----------------------------------------------------
-    -- Slave2 - IO node
+    -- Slave2 - UART
     -- -----------------------------------------------------
-    io_node: axi4lite_slave_to_rtsnoc
-        generic map (
-            NOC_LOCAL_ADR   => IO_SRC_ROUTER_LOCAL_ADDR, 
-            NOC_X           => conv_std_logic_vector(IO_SRC_ROUTER_X_ADDR, NET_SIZE_X_LOG2),
-            NOC_Y           => conv_std_logic_vector(IO_SRC_ROUTER_Y_ADDR, NET_SIZE_Y_LOG2),
-            NOC_LOCAL_ADR_TGT   => IO_TGT_ROUTER_LOCAL_ADDR, 
-            NOC_X_TGT       => conv_std_logic_vector(IO_TGT_ROUTER_X_ADDR, NET_SIZE_X_LOG2),
-            NOC_Y_TGT       => conv_std_logic_vector(IO_TGT_ROUTER_Y_ADDR, NET_SIZE_Y_LOG2),
-            SOC_SIZE_X      => NET_SIZE_X_LOG2,
-            SOC_SIZE_Y      => NET_SIZE_Y_LOG2,
-            NOC_DATA_WIDTH  => NET_DATA_WIDTH)
+
+    uart: simple_uart_axi4lite 
+        generic map(
+            TXDEPTH => 3,
+            RXDEPTH => 3)
         port map(
             -- System signals
             clk_i       => clk_i,
             axi_rst_i   => reset_axi_i,
-            noc_rst_i   => reset_noc_i,
+            rx_int_o    => sig_uart_rx_int,
+            tx_int_o    => sig_uart_tx_int,
             -- AXI signals
             axi_awaddr_i    => sig_slaves_awaddr(2),
             axi_awvalid_i   => sig_slaves_awvalid(2),
@@ -715,21 +723,17 @@ begin
             axi_rresp_o     => sig_slaves_rresp(2),
             axi_rvalid_o    => sig_slaves_rvalid(2),
             axi_rready_i    => sig_slaves_rready(2),
-            -- NoC interface
-            noc_din_o   => io_din_o,
-            noc_dout_i  => io_dout_i,
-            noc_wr_o    => io_wr_o,
-            noc_rd_o    => io_rd_o,
-            noc_wait_i  => io_wait_i,
-            noc_nd_i    => io_nd_i
-        );
-    
-    
+            -- UARTLite Interface Signals
+            rx_i    => uart_rx_i,
+            tx_o    => uart_tx_o,
+            baud_o  => uart_baud_o);
+
+
     -- -----------------------------------------------------
-    -- Slave3 - Timer
+    -- Slave3 - GPIO
     -- -----------------------------------------------------
             
-    timer: timer_axi4lite 
+    gpio: gpio_axi4lite 
         port map(
             -- System signals
             clk_i       => clk_i,
@@ -752,19 +756,15 @@ begin
             axi_rresp_o     => sig_slaves_rresp(3),
             axi_rvalid_o    => sig_slaves_rvalid(3),
             axi_rready_i    => sig_slaves_rready(3),
-            -- Int
-            int_o  => sig_int_timer); 
-            
+            -- GPIO
+            gpio_o  => gpio_o,
+            gpio_i  => gpio_i);
+
     -- -----------------------------------------------------
-    -- Slave4 - PIC
+    -- Slave4 - Timer
     -- -----------------------------------------------------
-        
-    sig_irqs(0) <= sig_int_timer;
-    sig_irqs(1) <= sig_noc_int;
-    sig_irqs(15 downto 2) <= (others => sig_GND);
-    sig_irqs(31 downto 16) <= io_int_i;       
             
-    pic: pic_axi4lite 
+    timer: timer_axi4lite 
         port map(
             -- System signals
             clk_i       => clk_i,
@@ -788,26 +788,24 @@ begin
             axi_rvalid_o    => sig_slaves_rvalid(4),
             axi_rready_i    => sig_slaves_rready(4),
             -- Int
-            irq_i  => sig_irqs,
-            int_o  => sig_intr);
+            int_o  => sig_int_timer); 
             
-    
     -- -----------------------------------------------------
-    -- Slave5 - NoC proxy
+    -- Slave5 - PIC
     -- -----------------------------------------------------
-    rtsnoc_router_axi: rtsnoc_axi4lite_proxy
-        generic map (
-            NOC_LOCAL_ADR   => ROUTER_LOCAL_ADDR, 
-            NOC_X           => conv_std_logic_vector(ROUTER_X_ADDR, NET_SIZE_X_LOG2),
-            NOC_Y           => conv_std_logic_vector(ROUTER_Y_ADDR, NET_SIZE_Y_LOG2),
-            SOC_SIZE_X      => NET_SIZE_X_LOG2,
-            SOC_SIZE_Y      => NET_SIZE_Y_LOG2,
-            NOC_DATA_WIDTH  => NET_DATA_WIDTH)
+        
+    sig_irqs(0) <= sig_int_timer;
+    sig_irqs(1) <= sig_uart_rx_int;
+    sig_irqs(2) <= sig_uart_tx_int;
+    sig_irqs(10 downto 3) <= ext_int_i;
+    sig_irqs(11) <= sig_noc_int;
+    sig_irqs(31 downto 12) <= (others => sig_GND);        
+            
+    pic: pic_axi4lite 
         port map(
             -- System signals
             clk_i       => clk_i,
             axi_rst_i   => reset_axi_i,
-            noc_rst_i   => reset_noc_i,
             -- AXI signals
             axi_awaddr_i    => sig_slaves_awaddr(5),
             axi_awvalid_i   => sig_slaves_awvalid(5),
@@ -826,6 +824,45 @@ begin
             axi_rresp_o     => sig_slaves_rresp(5),
             axi_rvalid_o    => sig_slaves_rvalid(5),
             axi_rready_i    => sig_slaves_rready(5),
+            -- Int
+            irq_i  => sig_irqs,
+            int_o  => sig_intr);
+            
+    
+    -- -----------------------------------------------------
+    -- Slave6 - SoC TDM
+    -- -----------------------------------------------------
+    rtsnoc_router_axi: rtsnoc_axi4lite_proxy
+        generic map (
+            NOC_LOCAL_ADR   => ROUTER_LOCAL_ADDR, 
+            NOC_X           => conv_std_logic_vector(ROUTER_X_ADDR, NET_SIZE_X_LOG2),
+            NOC_Y           => conv_std_logic_vector(ROUTER_Y_ADDR, NET_SIZE_Y_LOG2),
+            SOC_SIZE_X      => NET_SIZE_X_LOG2,
+            SOC_SIZE_Y      => NET_SIZE_Y_LOG2,
+            NOC_DATA_WIDTH  => NET_DATA_WIDTH)
+        port map(
+            -- System signals
+            clk_i       => clk_i,
+            axi_rst_i   => reset_axi_i,
+            noc_rst_i   => reset_noc_i,
+            -- AXI signals
+            axi_awaddr_i    => sig_slaves_awaddr(6),
+            axi_awvalid_i   => sig_slaves_awvalid(6),
+            axi_awready_o   => sig_slaves_awready(6),
+            axi_wdata_i     => sig_slaves_wdata(6),
+            axi_wstrb_i     => sig_slaves_wstrb(6),
+            axi_wvalid_i    => sig_slaves_wvalid(6),
+            axi_wready_o    => sig_slaves_wready(6),
+            axi_bresp_o     => sig_slaves_bresp(6),
+            axi_bvalid_o    => sig_slaves_bvalid(6),
+            axi_bready_i    => sig_slaves_bready(6),
+            axi_araddr_i    => sig_slaves_araddr(6),
+            axi_arvalid_i   => sig_slaves_arvalid(6),
+            axi_arready_o   => sig_slaves_arready(6),
+            axi_rdata_o     => sig_slaves_rdata(6),
+            axi_rresp_o     => sig_slaves_rresp(6),
+            axi_rvalid_o    => sig_slaves_rvalid(6),
+            axi_rready_i    => sig_slaves_rready(6),
             -- NoC interface
             noc_din_o   => noc_din_o,
             noc_dout_i  => noc_dout_i,
