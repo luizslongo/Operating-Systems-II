@@ -18,6 +18,7 @@ int main( int argc, char *argv[] ) {
   int linux_uart_no = 0;
   bool usb = false;
   char * filename = (char*)malloc(1000);
+  char * serial_port;
   //filename = getenv("EPOS");
   //strcat(filename, "/img/epos.img");
 
@@ -25,8 +26,8 @@ int main( int argc, char *argv[] ) {
   for(int i = 1; i < argc; i++){
     if(strcmp("-uart", argv[i]) == 0){
       i++;
-      if(strcmp("/dev/ttyS0", argv[i]) == 0){
-	linux_uart_no = 0;
+      /*if(strcmp("/dev/ttyS0", argv[i]) == 0){
+		linux_uart_no = 0;
         usb = false;
       } else if(strcmp("/dev/ttyS1", argv[i]) == 0){
         linux_uart_no = 1;
@@ -38,15 +39,17 @@ int main( int argc, char *argv[] ) {
         linux_uart_no = 1;
         usb = true;
       } else {
-	printf("Invalid device %s\n", argv[i]);
-      }
+		printf("Invalid device %s\n", argv[i]);
+      }*/
+      serial_port = argv[i];
     } else if (strcmp("-file", argv[i]) == 0){
       i++;
       strcpy(filename, argv[i]);
     }
   }
 
-  LinuxSerial uart(linux_uart_no, usb);
+  //LinuxSerial uart(linux_uart_no, usb);
+  LinuxSerial uart(serial_port);
 
   FILE *file;
   struct stat file_attributes;

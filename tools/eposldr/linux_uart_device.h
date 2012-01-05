@@ -14,20 +14,22 @@ class LinuxSerial
 {
 protected:
   int serial;
-  char nome_porta[255];
+  //char nome_porta[255];
   struct termios original_serial_settings, app_serial_settings;
 
 public:
-  LinuxSerial(unsigned char uart_no, bool usb) {
-    if(usb){
-      sprintf( nome_porta, "/dev/ttyUSB%d", uart_no );
-    } else {
-      sprintf( nome_porta, "/dev/ttyS%d", uart_no );
-    }
-
-    serial = open(nome_porta, O_RDWR | O_NOCTTY );
+  LinuxSerial(char* port_name) {
+  //LinuxSerial(unsigned char uart_no, bool usb) {
+    //if(usb){
+    //  sprintf( nome_porta, "/dev/ttyUSB%d", uart_no );
+    //} else {
+    //  sprintf( nome_porta, "/dev/ttyS%d", uart_no );
+    //}
+    //serial = open(nome_porta, O_RDWR | O_NOCTTY );
+    serial = open(port_name, O_RDWR | O_NOCTTY );
     if (serial < 0){
-      perror(nome_porta);
+      //perror(nome_porta);
+      perror(port_name);
       exit(-1);
     }
 
