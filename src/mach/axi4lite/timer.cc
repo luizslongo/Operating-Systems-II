@@ -14,8 +14,8 @@ void AXI4LITE_Timer::int_handler(unsigned int i)
 {
 	db<AXI4LITE_Timer>(TRC) << "<Timer::int_handler>";
 	
-	//Reprogram the Timer
-	*_timer_reg = *_timer_reg + (CLOCK / FREQUENCY);
+	//Reprogram the Timer - NOT required, timer is now periodic
+	//*_timer_reg = *_timer_reg + (CLOCK / FREQUENCY);
 			
 	//Always calls ALARM Channel - As Alarm frequency is equal to Timer Frequency, count is always 1, 
 	if(_channels[ALARM])
@@ -26,7 +26,7 @@ void AXI4LITE_Timer::int_handler(unsigned int i)
 		_channels[TEST]->_current = _channels[TEST]->_initial;
 		_channels[TEST]->_handler();
 	}	
-		
+
 	//Check if SCHEDULER channel must be handled.
 	if(_channels[SCHEDULER] && (--_channels[SCHEDULER]->_current <= 0)){
 		_channels[SCHEDULER]->_current = _channels[SCHEDULER]->_initial;

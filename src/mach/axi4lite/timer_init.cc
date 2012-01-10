@@ -15,7 +15,8 @@ void AXI4LITE_Timer::init() {
 	IC::int_vector(IC::IRQ_TIMER, &AXI4LITE_Timer::int_handler);
 	
 	//Reprogram the Timer
-	*_timer_reg = *_timer_reg + (CLOCK / FREQUENCY);
+	//*_timer_reg = *_timer_reg + (CLOCK / FREQUENCY);
+	start(CLOCK / FREQUENCY);
 	
 	IC::enable(IC::IRQ_TIMER);
 	CPU::int_enable();

@@ -68,6 +68,10 @@ public:
 
     static void init();
 
+    static void start(unsigned int cycles) {*_timer_reg = cycles;}
+
+    static void stop() { *_timer_reg = 0;}
+
 protected:
     // Plasma_Timer attributes
     Count _initial;
