@@ -77,11 +77,11 @@ void AXI4LITE_IC::interrupt_dispatcher() {
 	"mtlo  $27									\n"
 	//#restore CP0 registers
 	"lw    $26,  0($29)							\n"
-	//"ori   $26, $26, 1      # turn intr bit on	\n"
+	"ori   $26, $26, 1      # turn intr bit on	\n"
 	"lw    $27, 92($29)     # return address	\n"
 	"addi  $29, $29, 96     #adjust stack		\n"
+    "mtc0  $26, $12         #Restore Status     \n"
 	"jr    $27									\n"
-	"mtc0  $26, $12         #Restore Status		\n"
 	".set at									\n"
 	".set reorder								\n"
 	".set pop									\n"
