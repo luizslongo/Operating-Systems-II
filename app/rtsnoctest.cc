@@ -1,6 +1,7 @@
 
 #include <utility/ostream.h>
 #include <ic.h>
+#include <semaphore.h>
 
 __USING_SYS
 
@@ -102,9 +103,16 @@ void send_pkt(unsigned int src_addr, unsigned int dst_addr, unsigned int data){
     noc_data(data);
     noc_wr();
     cout << "TX: Pkt sent\n";
+    Thread::yield();
 }
 
-void receive_pkt(){
+const unsigned int N_PKTS = 16;
+
+Semaphore rx_sem(0);
+
+int receive_pkt(){
+    for (unsigned int var = 0; var < N_PKTS; ++var){
+    rx_sem.p();
     cout << "RX: Receiving pkt\n";
     cout << "RX: Waiting... \n";
     while(!noc_nd());
@@ -119,33 +127,39 @@ void receive_pkt(){
          << "DST_L="<< noc_header_dst_local_addr() << "\n";
     cout << "RX:     Data: " << noc_data() << "\n";
     noc_rd();
+    }
+
+    return 0;
 }
 
 void int_handler(unsigned int interrupt){
-    receive_pkt();
+    //receive_pkt();
+    rx_sem.v();
 }
 
 int main() {
 
     cout << "RTSNoC test\n\n";
 
-    cout << "Setup interrupt\n";
+    cout << "Setup interrupt and rx thread\n";
     CPU::int_disable();
     IC::disable(IC::IRQ_NOC);
     IC::int_vector(IC::IRQ_NOC, &int_handler);
     IC::enable(IC::IRQ_NOC);
     CPU::int_enable();
 
+    Thread *rx_thead = new Thread(&receive_pkt);
+
     print_info();
     cout << "\n";
 
-    for (unsigned int i = 0; i < 8; ++i) {
-        send_pkt(NOC_MY_LOCAL_ADDR, ECHO_P0_LOCAL_ADDR, i);
-        send_pkt(NOC_MY_LOCAL_ADDR, ECHO_P1_LOCAL_ADDR, i);
+    for (unsigned int i = 0; i < N_PKTS/2; ++i) {
+        send_pkt(NOC_MY_LOCAL_ADDR, ECHO_P0_LOCAL_ADDR, ~i);
+        send_pkt(NOC_MY_LOCAL_ADDR, ECHO_P1_LOCAL_ADDR, ~i);
     }
-    
-    send_pkt(NOC_MY_LOCAL_ADDR, ECHO_P0_LOCAL_ADDR, 0xFFFFFFFE);
-    send_pkt(NOC_MY_LOCAL_ADDR, ECHO_P1_LOCAL_ADDR, 0xFFFFFFFF);
+
+    cout << "Waiting last packets\n";
+    rx_thead->join();
 
     cout << "\nThe end!\n";
 
