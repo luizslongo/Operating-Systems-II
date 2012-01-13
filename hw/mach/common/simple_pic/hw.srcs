@@ -6,3 +6,8 @@ priority_enc.v \
 pic.v \
 pic_axi4lite.v))
 
+MACH_COMMON_SIMPLE_PIC_SC_SRCS = $(abspath $(addprefix $(BASE_DIR)/hw/mach/common/simple_pic/, \
+pic.cc))
+
+MACH_COMMON_SIMPLE_PIC_SC_INCLUDE = -I$(abspath $(BASE_DIR)/hw/mach/common/simple_pic/)
+

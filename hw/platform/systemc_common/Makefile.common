@@ -1,0 +1,27 @@
+##################################################
+# Constants
+##################################################
+BASE_DIR = $(abspath ../../..)
+BIN_FILE = $(TOP_MODULE).bin
+
+SYS_LIBS = -lsystemc -lutil
+SYS_LIBS_DIR = -L/usr/lib -L/usr/systemc-2.2/lib-linux -L/usr/systemc-2.2.0/lib-linux64
+SYS_INCLUDES = -I/usr/systemc-2.2.0/include -I/usr/include -I/usr/systemc-2.2/include
+
+CC_FLAGS = -O2 -Wall -Wfatal-errors
+
+CC = g++
+
+##################################################
+# Global Targets
+##################################################
+all: $(BIN_FILE)
+
+run: $(BIN_FILE)
+	./$(BIN_FILE)   
+
+clean:
+	$(RM) $(BIN_FILE) *.io
+
+.PHONY: all run clean
+

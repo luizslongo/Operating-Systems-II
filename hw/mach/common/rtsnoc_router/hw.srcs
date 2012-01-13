@@ -24,3 +24,5 @@ axi4lite_slave_to_rtsnoc.v \
 rtsnoc_to_axi4lite_master.v \
 ))
 
+MACH_COMMON_RTSNOC_ROUTER_SC_INCLUDE = -I$(abspath $(BASE_DIR)/hw/mach/common/rtsnoc_router/)
+
