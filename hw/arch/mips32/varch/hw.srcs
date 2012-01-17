@@ -10,7 +10,5 @@ mem.cc \
 wb.cc \
 ))
 
-ARCH_MIPS32_VARCH_SC_INCLUDE = -I$(abspath $(BASE_DIR)/hw/arch/mips32/varch/)
-
 
 

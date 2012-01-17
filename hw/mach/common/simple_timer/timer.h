@@ -9,7 +9,7 @@
 #define TIMER_H_
 
 #include <systemc.h>
-#include <module_if.h>
+#include <arch/common/module_if.h>
 
 class timer : public sc_module,
 	public module_if {

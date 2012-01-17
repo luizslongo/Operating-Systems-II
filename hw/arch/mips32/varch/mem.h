@@ -10,7 +10,7 @@
 
 #include <systemc.h>
 #include "mem_if.h"
-#include "mem_ctrl_if.h"
+#include <arch/common/mem_ctrl_if.h>
 #include "wb_if.h"
 
 //#include "memory.h"

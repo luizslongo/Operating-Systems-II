@@ -9,7 +9,7 @@
 #define RTSNOC_BUS_PROXY_H_
 
 #include <systemc.h>
-#include <module_if.h>
+#include <arch/common/module_if.h>
 
 template<
 	unsigned int X,

@@ -11,7 +11,7 @@
 #include <systemc.h>
 #include "module_if.h"
 #include "mem_ctrl_if.h"
-#include "plasma_pack.h"
+//#include "plasma_pack.h"
 
 class mem_ctrl : public sc_module,
 	public mem_ctrl_if {

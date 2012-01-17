@@ -8,7 +8,7 @@
 #include <systemc.h>
 #include <iostream>
 #include <ctime>
-#include <epos_soc.h>
+#include <mach/rtsnoc/vmach/epos_soc.h>
 
 SC_MODULE(virtual_platform) {
 

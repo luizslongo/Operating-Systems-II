@@ -10,7 +10,7 @@
 
 #include <systemc.h>
 #include <fstream>
-#include <module_if.h>
+#include <arch/common/module_if.h>
 
 class gpio : public sc_module,
 	public module_if {

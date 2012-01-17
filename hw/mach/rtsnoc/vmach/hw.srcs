@@ -5,5 +5,3 @@
 MACH_RTSNOC_VMACH_SC_SRCS = $(abspath $(addprefix $(BASE_DIR)/hw/mach/rtsnoc/vmach/, \
 memory.cpp))
 
-MACH_RTSNOC_VMACH_SC_INCLUDE = -I$(abspath $(BASE_DIR)/hw/mach/rtsnoc/vmach/)
-

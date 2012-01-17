@@ -8,7 +8,7 @@
 #include <string>
 #include <iostream>
 #include <iomanip>
-#include <plasma_pack.h>
+#include <arch/mips32/varch/plasma_pack.h>
 #include "memory.h"
 
 void memory::read(unsigned int *data, unsigned int address, int size) {

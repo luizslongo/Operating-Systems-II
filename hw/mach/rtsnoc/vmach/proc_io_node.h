@@ -13,13 +13,13 @@
 #include <fstream>
 #include <string>
 #include <string.h>
-#include <plasma.h>
-#include <mem_ctrl.h>
-#include <uart.h>
-#include <gpio.h>
-#include <timer.h>
-#include <pic.h>
-#include <rtsnoc_bus_proxy.h>
+#include <arch/mips32/varch/plasma.h>
+#include <arch/common/mem_ctrl.h>
+#include <mach/common/simple_uart/uart.h>
+#include <mach/common/gpio/gpio.h>
+#include <mach/common/simple_timer/timer.h>
+#include <mach/common/simple_pic/pic.h>
+#include <mach/common/rtsnoc_router/rtsnoc_bus_proxy.h>
 #include "memory.h"
 
 template<

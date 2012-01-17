@@ -8,7 +8,7 @@
 #include <string>
 #include <iostream>
 #include "uart.h"
-#include "plasma_pack.h"
+#include <arch/mips32/varch/plasma_pack.h>
 
 //#define uart_debug
 

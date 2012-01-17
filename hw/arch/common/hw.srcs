@@ -6,7 +6,5 @@ ARCH_COMMON_SC_SRCS = $(abspath $(addprefix $(BASE_DIR)/hw/arch/common/, \
 mem_ctrl.cc \
 ))
 
-ARCH_COMMON_SC_INCLUDE = -I$(abspath $(BASE_DIR)/hw/arch/common/)
-
 
 

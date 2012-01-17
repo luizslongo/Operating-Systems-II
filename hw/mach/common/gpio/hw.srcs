@@ -7,5 +7,3 @@ very_simple_gpio.v))
 
 MACH_COMMON_GPIO_SC_SRCS = $(abspath $(addprefix $(BASE_DIR)/hw/mach/common/gpio/, \
 gpio.cc))
-
-MACH_COMMON_GPIO_SC_INCLUDE = -I$(abspath $(BASE_DIR)/hw/mach/common/gpio/)

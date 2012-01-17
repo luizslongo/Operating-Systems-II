@@ -8,5 +8,3 @@ timer_axi4lite.v))
 MACH_COMMON_SIMPLE_TIMER_SC_SRCS = $(abspath $(addprefix $(BASE_DIR)/hw/mach/common/simple_timer/, \
 timer.cc))
 
-MACH_COMMON_SIMPLE_TIMER_SC_INCLUDE = -I$(abspath $(BASE_DIR)/hw/mach/common/simple_timer/)
-

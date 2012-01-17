@@ -9,9 +9,9 @@
 #define VIRTUAL_PLATFORM_H_
 
 #include <systemc.h>
-#include <rtsnoc_router.h>
-#include <proc_io_node.h>
-#include <rtsnoc_echo.h>
+#include <mach/common/rtsnoc_router/rtsnoc_router.h>
+#include <mach/common/rtsnoc_router/rtsnoc_echo.h>
+#include "proc_io_node.h"
 
 SC_MODULE(epos_soc) {
 

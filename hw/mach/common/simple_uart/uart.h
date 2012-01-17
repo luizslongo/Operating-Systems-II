@@ -11,7 +11,7 @@
 #include <systemc.h>
 #include <queue>
 #include <pty.h>
-#include <module_if.h>
+#include <arch/common/module_if.h>
 
 class uart_fifo : public std::queue<unsigned int>{
 	typedef std::queue<unsigned int> base;

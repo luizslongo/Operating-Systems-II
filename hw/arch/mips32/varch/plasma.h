@@ -9,8 +9,8 @@
 #define PLASMA_H_
 
 #include <systemc.h>
-#include <cpu.h>
-#include <mem_ctrl_if.h>
+#include <arch/common/cpu.h>
+#include <arch/common/mem_ctrl_if.h>
 #include "fetch.h"
 #include "decoder.h"
 #include "exec.h"

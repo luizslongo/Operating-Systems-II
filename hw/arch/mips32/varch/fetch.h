@@ -9,7 +9,7 @@
 #define FETCH_H_
 
 #include <systemc.h>
-#include "mem_ctrl_if.h"
+#include <arch/common/mem_ctrl_if.h>
 #include "fetch_if.h"
 #include "decoder_if.h"
 #include "plasma_pack.h"
