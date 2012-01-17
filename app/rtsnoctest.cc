@@ -163,5 +163,7 @@ int main() {
 
     cout << "\nThe end!\n";
 
+    *((volatile unsigned int*)0xFFFFFFFC) = 0;
+
     return 0;
 }
