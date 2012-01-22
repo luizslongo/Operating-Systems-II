@@ -279,7 +279,7 @@ int main()
     IEEE1451_TIM *tim = IEEE1451_TIM::get_instance();
     tim->set_ncap_address(IP::Address(10, 0, 0, 110));
 
-    IEEE1451_Temperature_Sensor sensor(OM_POLLING_TIM_IM);
+    IEEE1451_Temperature_Sensor sensor(OM_POLLING);
     sensor.execute();
     return 0;
 }

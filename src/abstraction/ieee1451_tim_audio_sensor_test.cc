@@ -283,10 +283,11 @@ int IEEE1451_Audio_Sensor::execute()
     {
         while (true)
         {
+            //27 * 5 packets = 5020 seconds
             Thread::yield();
             for (unsigned int j = 0; j < SAMPLE_NO; j++)
             {
-                if ((j + 1) % (SAMPLE_NO / 4) == 0)
+                if ((j + 1) % (SAMPLE_NO / 5) == 0)
                     Thread::yield();
                 get_audio(); //27 packets = 1.0041 seconds
             }
@@ -295,24 +296,27 @@ int IEEE1451_Audio_Sensor::execute()
     {
         while (true)
         {
+            //27 * 5 packets = 5120 seconds
             for (unsigned int i = 0; i < 4; i++)
                 Thread::yield();
 
             for (unsigned int j = 0; j < SAMPLE_NO; j++)
             {
-                if ((j + 1) % (SAMPLE_NO / 4) == 0)
+                if ((j + 1) % (SAMPLE_NO / 5) == 0)
                     Thread::yield();
                 get_audio(); //27 packets = 1.0276 seconds
             }
 
-            Thread::yield();
+            for (unsigned int i = 0; i < 4; i++)
+                Thread::yield();
+
             if (_reading_data)
                 send_data_set();
         }
     }else //if ((_operation_mode == OM_TIM_IM) || (_operation_mode == OM_TIM_IM_OPTIMIZED))
     {
-        const unsigned short active_period = 10; //seconds
-        const unsigned short sleep_period = 10; //seconds
+        const unsigned short active_period = 5; //seconds
+        const unsigned short sleep_period = 5; //seconds
 
         while (true)
         {
@@ -352,10 +356,10 @@ int IEEE1451_Audio_Sensor::execute()
             }
 
             send_start_read_data_set();
-            Alarm::delay(TIME_50_MS);
 
             for (unsigned short i = 0; i < active_period * 27; i++)
             {
+                //27 * 5 packets = 5108 seconds
                 for (unsigned int j = 0; j < SAMPLE_NO; j++)
                 {
                     if ((j + 1) % (SAMPLE_NO / 4) == 0)
@@ -367,7 +371,6 @@ int IEEE1451_Audio_Sensor::execute()
             }
 
             send_stop_read_data_set();
-            Alarm::delay(TIME_50_MS);
         }
     }
 
@@ -407,7 +410,7 @@ int main()
     *GPIO_BASE = 0;
 
     Alarm::delay(TIME_500_MS * 2);
-    kout << "+++++ Starting wtim +++++\n";
+    cout << "+++++ Starting wtim +++++\n";
 
     IP *ip = IP::instance();
     ip->set_address(IP::Address(10, 0, 0, 112));
@@ -417,7 +420,7 @@ int main()
     IEEE1451_TIM *tim = IEEE1451_TIM::get_instance();
     tim->set_ncap_address(IP::Address(10, 0, 0, 110));
 
-    IEEE1451_Audio_Sensor sensor(OM_TIM_IM_OPTIMIZED);
+    IEEE1451_Audio_Sensor sensor(OM_POLLING_OPTIMIZED);
     sensor.execute();
     return 0;
 }
