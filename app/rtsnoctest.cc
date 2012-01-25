@@ -5,128 +5,207 @@
 
 __USING_SYS
 
+class RTSNOC {
+
+public:
+    typedef struct{
+        unsigned int router_x;
+        unsigned int router_y;
+        unsigned int local;
+    } Address;
+
+    typedef struct{
+        unsigned int local_addr;
+        unsigned int router_x_addr;
+        unsigned int router_y_addr;
+        unsigned int net_x_size;
+        unsigned int net_y_size;
+        unsigned int data_width;
+    } Info;
+
+    RTSNOC():_info(){
+
+        _info.local_addr = local_addr();
+        _info.router_x_addr = router_x_addr();
+        _info.router_y_addr = router_y_addr();
+        _info.net_x_size = net_x_size();
+        _info.net_y_size = net_y_size();
+        _info.data_width = net_data_width();
+
+        header_src_router_x_addr(_info.router_x_addr);
+        header_src_router_y_addr(_info.router_y_addr);
+        header_src_local_addr(_info.local_addr);
+
+    }
+
+    Info const& info() const { return _info;}
+
+    void send_header(Address const* address);
+    void send(Address const* address, unsigned int const* data);
+    void send(unsigned int const* data);
+
+    void receive_header(Address* address);
+    void receive(Address* address, unsigned int* data);
+    void receive(unsigned int* data);
+
+    void receive_int(IC::Interrupt_Handler h);
+
+private:
+    Info _info;
+
+private: //HW registers
+    enum{
+        NOC_BASE = Traits<Machine>::RTSNOC_ADDRESS,
+    };
+
+    enum{
+        REG_HEADER_DST_LOCAL_ADDR = 0,
+        REG_HEADER_DST_ROUTER_Y_ADDR,
+        REG_HEADER_DST_ROUTER_X_ADDR,
+        REG_HEADER_SRC_LOCAL_ADDR,
+        REG_HEADER_SRC_ROUTER_Y_ADDR,
+        REG_HEADER_SRC_ROUTER_X_ADDR,
+        REG_DATA,
+        REG_STATUS,
+        REG_LOCAL_ADDR,
+        REG_ROUTER_X_ADDR,
+        REG_ROUTER_Y_ADDR,
+        REG_NET_X_SIZE,
+        REG_NET_Y_SIZE,
+        REG_NET_DATA_WIDTH
+    };
+
+
+    static inline unsigned int reg(unsigned int offset){
+        volatile unsigned int* aux = reinterpret_cast<volatile unsigned int*>(NOC_BASE);
+        return aux[offset];
+    }
+
+    static inline void reg(unsigned int offset, unsigned int val){
+        volatile unsigned int* aux = reinterpret_cast<volatile unsigned int*>(NOC_BASE);
+        aux[offset] = val;
+    }
+
+    static inline unsigned int header_src_router_x_addr(){return reg(REG_HEADER_SRC_ROUTER_X_ADDR);}
+    static inline unsigned int header_src_router_y_addr(){return reg(REG_HEADER_SRC_ROUTER_Y_ADDR);}
+    static inline unsigned int header_src_local_addr(){return reg(REG_HEADER_SRC_LOCAL_ADDR);}
+    static inline unsigned int header_dst_router_x_addr(){return reg(REG_HEADER_DST_ROUTER_X_ADDR);}
+    static inline unsigned int header_dst_router_y_addr(){return reg(REG_HEADER_DST_ROUTER_Y_ADDR);}
+    static inline unsigned int header_dst_local_addr(){return reg(REG_HEADER_DST_LOCAL_ADDR);}
+
+    static inline void header_src_router_x_addr(unsigned int val){reg(REG_HEADER_SRC_ROUTER_X_ADDR, val);}
+    static inline void header_src_router_y_addr(unsigned int val){reg(REG_HEADER_SRC_ROUTER_Y_ADDR, val);}
+    static inline void header_src_local_addr(unsigned int val){reg(REG_HEADER_SRC_LOCAL_ADDR, val);}
+    static inline void header_dst_router_x_addr(unsigned int val){reg(REG_HEADER_DST_ROUTER_X_ADDR, val);}
+    static inline void header_dst_router_y_addr(unsigned int val){reg(REG_HEADER_DST_ROUTER_Y_ADDR, val);}
+    static inline void header_dst_local_addr(unsigned int val){reg(REG_HEADER_DST_LOCAL_ADDR, val);}
+
+    static inline unsigned int data(){ return reg(REG_DATA);}
+    static inline void data(unsigned int val){ reg(REG_DATA, val);}
+
+    static inline void wr(){ reg(REG_STATUS, 0x1); }
+    static inline void rd(){ reg(REG_STATUS, 0x2); }
+    static inline bool wait(){return reg(REG_STATUS) & 0x4; }
+    static inline bool nd(){return reg(REG_STATUS) & 0x8; }
+
+    static inline unsigned int local_addr(){return reg(REG_LOCAL_ADDR);}
+    static inline unsigned int router_x_addr(){return reg(REG_ROUTER_X_ADDR);}
+    static inline unsigned int router_y_addr(){return reg(REG_ROUTER_Y_ADDR);}
+    static inline unsigned int net_x_size(){return reg(REG_NET_X_SIZE);}
+    static inline unsigned int net_y_size(){return reg(REG_NET_Y_SIZE);}
+    static inline unsigned int net_data_width(){return reg(REG_NET_DATA_WIDTH);}
+
+
+};
+
+void RTSNOC::send_header(Address const* address){
+    header_dst_local_addr(address->local);
+    header_dst_router_x_addr(address->router_x);
+    header_dst_router_y_addr(address->router_y);
+}
+void RTSNOC::send(unsigned int const* _data){
+    while(wait());
+     data(_data[0]);
+     wr();
+}
+void RTSNOC::send(Address const* address, unsigned int const* _data){
+    send_header(address);
+    send(_data);
+}
+void RTSNOC::receive_header(Address* address){
+    address->local = header_src_local_addr();
+    address->router_x = header_src_router_x_addr();
+    address->router_y = header_src_router_y_addr();
+}
+void RTSNOC::receive(unsigned int* _data){
+    while(!nd());
+    _data[0] = data();
+    rd();
+}
+void RTSNOC::receive(Address* address, unsigned int* _data){
+    receive_header(address);
+    receive(_data);
+}
+void RTSNOC::receive_int(IC::Interrupt_Handler h){
+    CPU::int_disable();
+    IC::disable(IC::IRQ_NOC);
+    IC::int_vector(IC::IRQ_NOC, h);
+    IC::enable(IC::IRQ_NOC);
+    CPU::int_enable();
+}
+
 
 OStream cout;
-
-enum{
-    NOC_BASE = 0x80001000,
-};
-
-enum{
-    NOC_HEADER_DST_LOCAL_ADDR = 0,
-    NOC_HEADER_DST_ROUTER_Y_ADDR,
-    NOC_HEADER_DST_ROUTER_X_ADDR,
-    NOC_HEADER_SRC_LOCAL_ADDR,
-    NOC_HEADER_SRC_ROUTER_Y_ADDR,
-    NOC_HEADER_SRC_ROUTER_X_ADDR,
-    NOC_DATA,
-    NOC_STATUS,
-    NOC_LOCAL_ADDR,
-    NOC_ROUTER_X_ADDR,
-    NOC_ROUTER_Y_ADDR,
-    NOC_NET_X_SIZE,
-    NOC_NET_Y_SIZE,
-    NOC_NET_DATA_WIDTH
-};
+RTSNOC noc;
+Semaphore rx_sem(0);
 
 enum {
-    NOC_MY_LOCAL_ADDR  = 0x0,
     ECHO_P0_LOCAL_ADDR = 0x6,
-    ECHO_P0_ROUTER_X = 0,
-    ECHO_P0_ROUTER_Y = 0,
-    ECHO_P1_LOCAL_ADDR = 0x4,
-    ECHO_P1_ROUTER_X = 0,
-    ECHO_P1_ROUTER_Y = 0,
+    ECHO_P1_LOCAL_ADDR = 0x4
 };
 
 
-inline unsigned int reg(unsigned int offset){
-    volatile unsigned int* aux = reinterpret_cast<volatile unsigned int*>(NOC_BASE);
-    return aux[offset];
-}
-
-inline void reg(unsigned int offset, unsigned int val){
-    volatile unsigned int* aux = reinterpret_cast<volatile unsigned int*>(NOC_BASE);
-    aux[offset] = val;
-}
-
-inline unsigned int noc_header_src_router_x_addr(){return reg(NOC_HEADER_SRC_ROUTER_X_ADDR);}
-inline unsigned int noc_header_src_router_y_addr(){return reg(NOC_HEADER_SRC_ROUTER_Y_ADDR);}
-inline unsigned int noc_header_src_local_addr(){return reg(NOC_HEADER_SRC_LOCAL_ADDR);}
-inline unsigned int noc_header_dst_router_x_addr(){return reg(NOC_HEADER_DST_ROUTER_X_ADDR);}
-inline unsigned int noc_header_dst_router_y_addr(){return reg(NOC_HEADER_DST_ROUTER_Y_ADDR);}
-inline unsigned int noc_header_dst_local_addr(){return reg(NOC_HEADER_DST_LOCAL_ADDR);}
-
-inline void noc_header_src_router_x_addr(unsigned int val){reg(NOC_HEADER_SRC_ROUTER_X_ADDR, val);}
-inline void noc_header_src_router_y_addr(unsigned int val){reg(NOC_HEADER_SRC_ROUTER_Y_ADDR, val);}
-inline void noc_header_src_local_addr(unsigned int val){reg(NOC_HEADER_SRC_LOCAL_ADDR, val);}
-inline void noc_header_dst_router_x_addr(unsigned int val){reg(NOC_HEADER_DST_ROUTER_X_ADDR, val);}
-inline void noc_header_dst_router_y_addr(unsigned int val){reg(NOC_HEADER_DST_ROUTER_Y_ADDR, val);}
-inline void noc_header_dst_local_addr(unsigned int val){reg(NOC_HEADER_DST_LOCAL_ADDR, val);}
-
-inline unsigned int noc_data(){ return reg(NOC_DATA);}
-inline void noc_data(unsigned int val){ reg(NOC_DATA, val);}
-
-inline void noc_wr(){ reg(NOC_STATUS, 0x1); }
-inline void noc_rd(){ reg(NOC_STATUS, 0x2); }
-inline bool noc_wait(){return reg(NOC_STATUS) & 0x4; }
-inline bool noc_nd(){return reg(NOC_STATUS) & 0x8; }
-
-inline unsigned int noc_local_addr(){return reg(NOC_LOCAL_ADDR);}
-inline unsigned int noc_router_x_addr(){return reg(NOC_ROUTER_X_ADDR);}
-inline unsigned int noc_router_y_addr(){return reg(NOC_ROUTER_Y_ADDR);}
-inline unsigned int noc_net_x_size(){return reg(NOC_NET_X_SIZE);}
-inline unsigned int noc_net_y_size(){return reg(NOC_NET_Y_SIZE);}
-inline unsigned int noc_net_data_width(){return reg(NOC_NET_DATA_WIDTH);}
-
 void print_info(){
+
+    RTSNOC::Info const& info = noc.info();
+
     cout << "NoC info: "
-         << noc_local_addr() << ", "
-         << noc_router_x_addr() << ", "
-         << noc_router_y_addr() << ", "
-         << noc_net_x_size() << ", "
-         << noc_net_y_size() << ", "
-         << noc_net_data_width() << "\n";
+         << info.local_addr << ", "
+         << info.router_x_addr << ", "
+         << info.router_y_addr << ", "
+         << info.net_x_size << ", "
+         << info.net_y_size << ", "
+         << info.data_width << "\n";
 }
 
-void wait_noc(){
-    cout << "TX: Waiting... \n";
-    while(noc_wait());
-    cout << "TX: done \n";
-}
-
-void send_pkt(unsigned int src_addr, unsigned int dst_addr, unsigned int data){
-    cout << "TX: Sending pkt: SRC_L=" << src_addr << " DST_L=" << dst_addr << " DATA=" << data << "\n";
-    wait_noc();
-    noc_header_src_local_addr(src_addr);
-    noc_header_dst_local_addr(dst_addr);
-    noc_data(data);
-    noc_wr();
+void send_pkt(unsigned int dst_addr, unsigned int data){
+    cout << "TX: Sending pkt: DST_L=" << dst_addr << " DATA=" << data << "\n";
+    RTSNOC::Address addr;
+    addr.router_x = 0;
+    addr.router_y = 0;
+    addr.local = dst_addr;
+    noc.send(&addr, &data);
     cout << "TX: Pkt sent\n";
     Thread::yield();
 }
 
 const unsigned int N_PKTS = 16;
 
-Semaphore rx_sem(0);
-
 int receive_pkt(){
+
+    RTSNOC::Address addr;
+    unsigned int data;
+
     for (unsigned int var = 0; var < N_PKTS; ++var){
-    rx_sem.p();
-    cout << "RX: Receiving pkt\n";
-    cout << "RX: Waiting... \n";
-    while(!noc_nd());
-    cout << "RX: done\n";
-    cout << "RX: Pkt received:\n";
-    cout << "RX:     Header: "
-         << "SRC_X=" << noc_header_src_router_x_addr() << ", "
-         << "SRC_Y=" << noc_header_src_router_y_addr() << ", "
-         << "SRC_L=" << noc_header_src_local_addr() << ", "
-         << "DST_X=" << noc_header_dst_router_x_addr() << ", "
-         << "DST_Y="<< noc_header_dst_router_y_addr() << ", "
-         << "DST_L="<< noc_header_dst_local_addr() << "\n";
-    cout << "RX:     Data: " << noc_data() << "\n";
-    noc_rd();
+        cout << "RX: Waiting pkt... \n";
+        rx_sem.p();
+        noc.receive(&addr, &data);
+        cout << "RX: Pkt received:\n";
+        cout << "RX:     Header: "
+                << "DST_X=" << addr.router_x << ", "
+                << "DST_Y="<< addr.router_y << ", "
+                << "DST_L="<< addr.local << "\n";
+        cout << "RX:     Data: " << data << "\n";
     }
 
     return 0;
@@ -142,11 +221,7 @@ int main() {
     cout << "RTSNoC test\n\n";
 
     cout << "Setup interrupt and rx thread\n";
-    CPU::int_disable();
-    IC::disable(IC::IRQ_NOC);
-    IC::int_vector(IC::IRQ_NOC, &int_handler);
-    IC::enable(IC::IRQ_NOC);
-    CPU::int_enable();
+    noc.receive_int(&int_handler);
 
     Thread *rx_thead = new Thread(&receive_pkt);
 
@@ -154,8 +229,8 @@ int main() {
     cout << "\n";
 
     for (unsigned int i = 0; i < N_PKTS/2; ++i) {
-        send_pkt(NOC_MY_LOCAL_ADDR, ECHO_P0_LOCAL_ADDR, ~i);
-        send_pkt(NOC_MY_LOCAL_ADDR, ECHO_P1_LOCAL_ADDR, ~i);
+        send_pkt(ECHO_P0_LOCAL_ADDR, i);
+        send_pkt(ECHO_P1_LOCAL_ADDR, ~i);
     }
 
     cout << "Waiting last packets\n";

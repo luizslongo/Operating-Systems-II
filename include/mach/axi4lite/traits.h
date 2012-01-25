@@ -19,11 +19,13 @@ template <> struct Traits<AXI4LITE>: public Traits<AXI4LITE_Common>
   static const unsigned int APPLICATION_HEAP_SIZE  = 16 * 1024;
   static const unsigned int SYSTEM_STACK_SIZE      = 4 * 1024;
   static const unsigned int SYSTEM_HEAP_SIZE       = 16 * APPLICATION_STACK_SIZE;
-  static const unsigned int LEDS_ADDRESS           = 0x80000400;
 
   static const unsigned int PRIORITY_HEAP_BASE_ADDR = 0;
   static const unsigned int PRIORITY_HEAP_SIZE = 4;
   static const unsigned int PRIORITY_HEAP_TOP_ADDR = PRIORITY_HEAP_BASE_ADDR + PRIORITY_HEAP_SIZE - 1;
+
+  static const unsigned int LEDS_ADDRESS           = 0x80000400;
+  static const unsigned int RTSNOC_ADDRESS         = 0x80001000;
 };
 
 template <> struct Traits<AXI4LITE_IC>: public Traits<AXI4LITE_Common>
