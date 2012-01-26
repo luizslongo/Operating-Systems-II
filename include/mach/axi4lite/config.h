@@ -8,6 +8,7 @@
 #define __MMU_H				__HEADER_ARCH(mmu)
 
 #define __MACH_H			__HEADER_MACH(machine)
+#define __NOC_H             __HEADER_MACH(noc)
 #define __IC_H				__HEADER_MACH(ic)
 #define __TIMER_H			__HEADER_MACH(timer)
 #define __UART_H			__HEADER_MACH(uart)
@@ -21,6 +22,7 @@ typedef MIPS32_MMU			MMU;
 typedef MIPS32_TSC			TSC;
 
 typedef AXI4LITE			Machine;
+typedef AXI4LITE_NOC        NOC;
 typedef AXI4LITE_IC			IC;
 typedef AXI4LITE_Timer  	Timer;
 typedef AXI4LITE_RTC		RTC;

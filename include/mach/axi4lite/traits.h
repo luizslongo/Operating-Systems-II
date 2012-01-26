@@ -25,7 +25,11 @@ template <> struct Traits<AXI4LITE>: public Traits<AXI4LITE_Common>
   static const unsigned int PRIORITY_HEAP_TOP_ADDR = PRIORITY_HEAP_BASE_ADDR + PRIORITY_HEAP_SIZE - 1;
 
   static const unsigned int LEDS_ADDRESS           = 0x80000400;
-  static const unsigned int RTSNOC_ADDRESS         = 0x80001000;
+};
+
+template <> struct Traits<AXI4LITE_NOC>: public Traits<AXI4LITE_Common>
+{
+    static const unsigned int BASE_ADDRESS  = 0x80001000;
 };
 
 template <> struct Traits<AXI4LITE_IC>: public Traits<AXI4LITE_Common>

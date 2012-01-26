@@ -1,29 +1,20 @@
+// EPOS ML310 PCI Mediator
 
-#include <utility/ostream.h>
-#include <ic.h>
-#include <semaphore.h>
+#ifndef __axi4lite_noc_h
+#define __axi4lite_noc_h
 
-__USING_SYS
+#include <noc.h>
 
-class RTSNOC {
+__BEGIN_SYS
 
+class AXI4LITE_NOC: public NOC_Common
+{
 public:
-    typedef struct{
-        unsigned int router_x;
-        unsigned int router_y;
-        unsigned int local;
-    } Address;
+    typedef NOC_Common::Address Address;
 
-    typedef struct{
-        unsigned int local_addr;
-        unsigned int router_x_addr;
-        unsigned int router_y_addr;
-        unsigned int net_x_size;
-        unsigned int net_y_size;
-        unsigned int data_width;
-    } Info;
+    typedef NOC_Common::Info Info;
 
-    RTSNOC():_info(){
+    AXI4LITE_NOC():NOC_Common(){
 
         _info.local_addr = local_addr();
         _info.router_x_addr = router_x_addr();
@@ -38,8 +29,6 @@ public:
 
     }
 
-    Info const& info() const { return _info;}
-
     void send_header(Address const* address);
     void send(Address const* address, unsigned int const* data);
     void send(unsigned int const* data);
@@ -50,12 +39,9 @@ public:
 
     void receive_int(IC::Interrupt_Handler h);
 
-private:
-    Info _info;
-
 private: //HW registers
     enum{
-        NOC_BASE = Traits<Machine>::RTSNOC_ADDRESS,
+        NOC_BASE = Traits<AXI4LITE_NOC>::BASE_ADDRESS,
     };
 
     enum{
@@ -118,127 +104,6 @@ private: //HW registers
 
 };
 
-void RTSNOC::send_header(Address const* address){
-    header_dst_local_addr(address->local);
-    header_dst_router_x_addr(address->router_x);
-    header_dst_router_y_addr(address->router_y);
-}
-void RTSNOC::send(unsigned int const* _data){
-    while(wait());
-     data(_data[0]);
-     wr();
-}
-void RTSNOC::send(Address const* address, unsigned int const* _data){
-    send_header(address);
-    send(_data);
-}
-void RTSNOC::receive_header(Address* address){
-    address->local = header_src_local_addr();
-    address->router_x = header_src_router_x_addr();
-    address->router_y = header_src_router_y_addr();
-}
-void RTSNOC::receive(unsigned int* _data){
-    while(!nd());
-    _data[0] = data();
-    rd();
-}
-void RTSNOC::receive(Address* address, unsigned int* _data){
-    receive_header(address);
-    receive(_data);
-}
-void RTSNOC::receive_int(IC::Interrupt_Handler h){
-    CPU::int_disable();
-    IC::disable(IC::IRQ_NOC);
-    IC::int_vector(IC::IRQ_NOC, h);
-    IC::enable(IC::IRQ_NOC);
-    CPU::int_enable();
-}
+__END_SYS
 
-
-OStream cout;
-RTSNOC noc;
-Semaphore rx_sem(0);
-
-enum {
-    ECHO_P0_LOCAL_ADDR = 0x6,
-    ECHO_P1_LOCAL_ADDR = 0x4
-};
-
-
-void print_info(){
-
-    RTSNOC::Info const& info = noc.info();
-
-    cout << "NoC info: "
-         << info.local_addr << ", "
-         << info.router_x_addr << ", "
-         << info.router_y_addr << ", "
-         << info.net_x_size << ", "
-         << info.net_y_size << ", "
-         << info.data_width << "\n";
-}
-
-void send_pkt(unsigned int dst_addr, unsigned int data){
-    cout << "TX: Sending pkt: DST_L=" << dst_addr << " DATA=" << data << "\n";
-    RTSNOC::Address addr;
-    addr.router_x = 0;
-    addr.router_y = 0;
-    addr.local = dst_addr;
-    noc.send(&addr, &data);
-    cout << "TX: Pkt sent\n";
-    Thread::yield();
-}
-
-const unsigned int N_PKTS = 16;
-
-int receive_pkt(){
-
-    RTSNOC::Address addr;
-    unsigned int data;
-
-    for (unsigned int var = 0; var < N_PKTS; ++var){
-        cout << "RX: Waiting pkt... \n";
-        rx_sem.p();
-        noc.receive(&addr, &data);
-        cout << "RX: Pkt received:\n";
-        cout << "RX:     Header: "
-                << "DST_X=" << addr.router_x << ", "
-                << "DST_Y="<< addr.router_y << ", "
-                << "DST_L="<< addr.local << "\n";
-        cout << "RX:     Data: " << data << "\n";
-    }
-
-    return 0;
-}
-
-void int_handler(unsigned int interrupt){
-    //receive_pkt();
-    rx_sem.v();
-}
-
-int main() {
-
-    cout << "RTSNoC test\n\n";
-
-    cout << "Setup interrupt and rx thread\n";
-    noc.receive_int(&int_handler);
-
-    Thread *rx_thead = new Thread(&receive_pkt);
-
-    print_info();
-    cout << "\n";
-
-    for (unsigned int i = 0; i < N_PKTS/2; ++i) {
-        send_pkt(ECHO_P0_LOCAL_ADDR, i);
-        send_pkt(ECHO_P1_LOCAL_ADDR, ~i);
-    }
-
-    cout << "Waiting last packets\n";
-    rx_thead->join();
-
-    cout << "\nThe end!\n";
-
-    *((volatile unsigned int*)0xFFFFFFFC) = 0;
-
-    return 0;
-}
+#endif

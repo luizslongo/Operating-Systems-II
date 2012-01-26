@@ -68,6 +68,16 @@ class IntegratorCP;
 // Hardware Mediators - Busses
 class PC_PCI;
 class ML310_PCI;
+class AXI4LITE_NOC;
+    class NOC_Address {
+    public:
+        NOC_Address () :router_x(0), router_y(0), local(0){}
+        NOC_Address (unsigned int _router_x, unsigned int _router_y, unsigned int _local)
+            :router_x(_router_x), router_y(_router_y), local(_local){}
+        unsigned int router_x;
+        unsigned int router_y;
+        unsigned int local;
+    };
 
 // Hardware Mediators - Interrupt Controllers
 class PC_IC;
@@ -330,6 +340,7 @@ enum
 
     MACHINE_ID,
     PCI_ID,
+    NOC_ID,
     IC_ID,
     TIMER_ID,
     RTC_ID,
