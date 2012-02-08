@@ -73,5 +73,6 @@ __END_SYS
 #include "adc.h"
 #include "nic.h"
 #include "spi.h"
+#include "sensor.h"
 
 #endif

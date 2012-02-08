@@ -39,6 +39,12 @@ template <> struct Traits<MC13224V_Battery>: public Traits<MC13224V_Common>
     static const unsigned int frequency = 1; // in Hz
 };
 
+template <> struct Traits<MC13224V_IC>: public Traits<MC13224V_Common>
+{
+    static const bool enabled = true;
+    static const bool debugged = false;
+};
+
 template <> struct Traits<MC13224V_Flash>: public Traits<MC13224V_Common>
 {
     static const bool enabled = true;
@@ -92,6 +98,7 @@ template <> struct Traits<MC13224V_ADC>: public Traits<void>
         STANDBY     = 2,
         OFF         = 3
     };
+    static const int RESOLUTION = 12; //bits
 };
 
 template <> struct Traits<MC13224V_Temperature_Sensor>: public Traits<void>
@@ -100,7 +107,7 @@ template <> struct Traits<MC13224V_Temperature_Sensor>: public Traits<void>
 
     enum {
         KELVIN = 0,
-        CELCIUS
+        CELCIUS = 1
     };
     static const int UNITS = CELCIUS;
 };

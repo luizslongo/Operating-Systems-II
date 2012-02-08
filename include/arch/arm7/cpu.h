@@ -3,6 +3,7 @@
 #ifndef __arm7_h
 #define __arm7_h
 
+#include <system/config.h>
 #include <cpu.h>
 
 __BEGIN_SYS
@@ -11,7 +12,7 @@ class ARM7: public CPU_Common
 {
 private:
     typedef Traits<CPU> _Traits;
-    static const unsigned int CLOCK = 0;//Traits<Machine>::CLOCK;
+    static const unsigned int CLOCK = Traits<Machine>::CLOCK;
 
 public:
     // CPU Flags

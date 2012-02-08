@@ -221,6 +221,9 @@ template<typename> class IEEE802154_Ack_Rx;
 template<typename> class IEEE802154_Ack_Tx;
 template<typename> class IEEE802154_Slotted_CSMA_Contention;
 
+// Hardware Mediators - GPIOs
+class MC13224V_GPIO_Pin;
+
 // Hardware Mediators - ADCs
 class AT90CAN128_ADC;
 class ATMega16_ADC;
@@ -352,6 +355,7 @@ enum
     DISPLAY_ID,
     NIC_ID,
     RADIO_ID,
+    GPIO_PIN_ID,
     ADC_ID,
     BATTERY_ID,
     TEMPERATURE_SENSOR_ID,

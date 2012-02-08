@@ -16,6 +16,7 @@
 #define __TIMER_H			__HEADER_MACH(timer)
 #define __UART_H			__HEADER_MACH(uart)
 #define __FLASH_H			__HEADER_MACH(flash)
+#define __GPIO_PIN_H        __HEADER_MACH(gpio_pin)
 #define __ADC_H             __HEADER_MACH(adc)
 #define __BATTERY_H         __HEADER_MACH(battery)
 #define __SENSOR_H          __HEADER_MACH(sensor)
@@ -38,6 +39,7 @@ typedef MC13224V_UART			UART;
 typedef Serial_Display			Display;
 typedef MC13224V_NIC			NIC;
 typedef MC13224V_ADC			ADC;
+typedef MC13224V_GPIO_Pin       GPIO_Pin;
 typedef MC13224V_Battery_ADC	Battery_ADC;
 typedef MC13224V_RTC        	RTC;
 typedef MC13224V_Battery    	Battery;
