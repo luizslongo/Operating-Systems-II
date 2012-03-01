@@ -1,3 +1,13 @@
+/*
+    In order to compile and run DMEC App for IA 32 you must:
+    - Set MEM_SIZE = 256 * 1024 * 1024                      (PC's memory_map.h)
+    - Set TOP = 0x0fffffff                                  (PC's memory_map.h)
+    - Set APPLICATION_STACK_SIZE = 64 * 1024                (PC's traits.h)
+    - Set APPLICATION_HEAP_SIZE = 128 * 1024 * 1024         (PC's traits.h)
+    - Set $(MACH_PC)_MEM_TOP               := 0x0fffffff    (makedefs)
+     
+*/
+
 #include "dmec/include/test_support.h"
 
 #if LINUX
