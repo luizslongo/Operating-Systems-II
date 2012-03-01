@@ -161,8 +161,26 @@ MEC_Picture * TestSupport::createPicture(unsigned int width, unsigned int height
 }
 
 
+void TestSupport::testPictureMotionCounterpart(PictureMotionCounterpart* pmc,
+			unsigned int pictureWidth, unsigned int pictureHeight,
+			MEC_Picture* currentPicture,
+			MEC_Picture* referencePicture)
+{
+    MEC_Picture** list0 = (MEC_Picture **) calloc(1, sizeof(MEC_Picture *));
+    list0[0] = referencePicture;   
+
+    __testPictureMotionCounterpart(pmc,
+		pictureWidth, pictureHeight,
+		currentPicture,
+		list0, 1,
+		1);
+		
+    free(list0);		
+}
+
+
 /* Works with Vectorial PictureMotionCounterpart */
-void TestSupport::testPictureMotionCounterpart(PictureMotionCounterpart * pmc,
+void TestSupport::__testPictureMotionCounterpart(PictureMotionCounterpart * pmc,
 		unsigned int pictureWidth, unsigned int pictureHeight,
 		MEC_Picture * currentPicture,
 		MEC_Picture ** list0, unsigned int list0Size,

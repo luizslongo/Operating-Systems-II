@@ -73,53 +73,38 @@ void __testRandomicSimplePrediction(unsigned int timesMatch,
 		unsigned int pictureHeight)
 {
     // creations
-    PictureMotionEstimator * pictureMotionEstimator;
-
-    uint list0Size = 1;
-    unsigned int max_reference_pictures = list0Size;
+    PictureMotionEstimator* pictureMotionEstimator;
 
     pictureMotionEstimator = PictureMotionEstimator::getInstance(
     		pictureWidth,
     		pictureHeight,
-    		list0Size);
+    		1);
 
-    MEC_Picture * currentPicture = TestSupport::createRandomPicture(pictureWidth, pictureHeight);
+    MEC_Picture* currentPicture = TestSupport::createRandomPicture(pictureWidth, pictureHeight);
+    MEC_Picture* referencePicture = TestSupport::createRandomPicture(pictureWidth, pictureHeight);
 
-    MEC_Picture ** list0 = (MEC_Picture **) calloc(list0Size, sizeof(MEC_Picture *));
-
-    unsigned int i;
-    for (i = 0; i < list0Size; ++ i) {
-    	list0[i] = TestSupport::createRandomPicture(pictureWidth, pictureHeight);
-    }
-
-    PictureMotionCounterpart * pmc;
-
+    PictureMotionCounterpart* pmc;
     unsigned int im;
     for (im = 0; im < timesMatch; ++ im) {
 		// match
 #if __MAIN_GENERAL_TRACE && LINUX
     	cout << "...match#: " << im+1 << " (of: " << timesMatch << ")\n";
 #endif
-		pmc = pictureMotionEstimator->match(currentPicture, list0, list0Size);
+		pmc = pictureMotionEstimator->match(currentPicture, referencePicture);
 
 		// assertions
 		TestSupport::testPictureMotionCounterpart(pmc,
 		        pictureWidth, pictureHeight,
 		        currentPicture,
-		        list0, list0Size,
-		        max_reference_pictures);
+		        referencePicture);
 
     }
 
     // deletions
 	PictureMotionEstimator::deleteInstance();
 	delete currentPicture;
-
-	for (i = 0; i < list0Size; ++ i) {
-		delete list0[i];
-	}
-
-	free(list0);
+    delete referencePicture;
+	
 }
 
 
@@ -131,25 +116,23 @@ void __testFixedSimplePrediction(unsigned int timesMatch,
 {
     PictureMotionEstimator * pictureMotionEstimator = PictureMotionEstimator::getInstance(pictureWidth, pictureHeight, 1);
 
-    MEC_Picture * currentPicture = TestSupport::createPicture(pictureWidth, pictureHeight, dataSetCurrentPicture);
+    MEC_Picture* currentPicture = TestSupport::createPicture(pictureWidth, pictureHeight, dataSetCurrentPicture);
+    MEC_Picture* referencePicture = TestSupport::createPicture(pictureWidth, pictureHeight, dataSetReferencePicture);
 
-    MEC_Picture ** list0 = (MEC_Picture **) calloc(1, sizeof(MEC_Picture *));
-	list0[0] = TestSupport::createPicture(pictureWidth, pictureHeight, dataSetReferencePicture);
-
-    PictureMotionCounterpart * pmc;
+    PictureMotionCounterpart* pmc;
 
     unsigned int im;
     for (im = 0; im < timesMatch; ++ im) {
 #if __MAIN_GENERAL_TRACE
     	cout << "...match#: " << im+1 << " (of: " << timesMatch << ")\n";
 #endif
-		pmc = pictureMotionEstimator->match(currentPicture, list0, 1);
+		pmc = pictureMotionEstimator->match(currentPicture, referencePicture);
 
-		TestSupport::testPictureMotionCounterpart(pmc, pictureWidth, pictureHeight, currentPicture, list0, 1, 1);
+		TestSupport::testPictureMotionCounterpart(pmc, pictureWidth, pictureHeight, currentPicture, referencePicture);
     }
 
 	PictureMotionEstimator::deleteInstance();
 	delete currentPicture;
-	delete list0[0];
-	free(list0);
+	delete referencePicture;
 }
+

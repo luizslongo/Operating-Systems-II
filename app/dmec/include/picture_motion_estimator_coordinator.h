@@ -31,6 +31,19 @@
 class PictureMotionEstimator {
 
 public:
+    // General methods
+   /* For performance reasons, this method does not creates a
+    * PictureMotionCounterpart (PMC) each time it is invoked.
+    * Instead of that, it returns a PMC which is a attribute of
+    * PictureMotionEstimator.
+    * Consequently you should not delete this method's return.
+    * It will be properly deleted on the deletion of PictureMotionEstimator.
+    * */
+    PictureMotionCounterpart* match(MEC_Picture* currentPicture, MEC_Picture* referencePicture);
+
+
+public: 
+    // Singleton access
     static PictureMotionEstimator * getInstance(unsigned int pictureWidth,
     		unsigned int pictureHeight,
     		unsigned int max_reference_pictures);
@@ -39,21 +52,8 @@ public:
     static void deleteInstance();
 
 
-    /* For performance reasons, this method does not creates a
-     * PictureMotionCounterpart (PMC) each time it is invoked.
-     * Instead of that, it returns a PMC which is a attribute of
-     * PictureMotionEstimator.
-     * Consequently you should not delete this method's return.
-     * It will be properly deleted on the deletion of PictureMotionEstimator.
-     * */
-    PictureMotionCounterpart * match(MEC_Picture * currentPicture,
-    		MEC_Picture ** list0ReferencePictures,
-    		unsigned int list0ReferencePicturesSize);
-
-
-
-// Since this class is a singleton, constructors are private.
 private:
+    // Since this class is a singleton, constructors are private.
     PictureMotionEstimator();
 
     ~PictureMotionEstimator();
@@ -63,13 +63,13 @@ private:
     		unsigned int max_reference_pictures);
 
 
-// Singleton
 private:
+    // Singleton
     static PictureMotionEstimator * __instance;
 
 
-// Instance attributes
 private:
+    // Instance attributes
     unsigned int __pictureWidth;
     unsigned int __pictureHeight;
 
@@ -80,8 +80,8 @@ private:
     PictureMotionEstimatorWorkerProxy __workers[NUM_WORKERS];
 
 
-// Private methods
 private:
+    // Private methods
     unsigned int __computeTotalFlatPMC_Size(unsigned int list0ReferencePictureSize,
     		unsigned int list1ReferencePictureSize);
 

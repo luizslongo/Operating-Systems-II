@@ -397,11 +397,17 @@ void PictureMotionEstimator::deleteInstance() {
 }
 
 
-PictureMotionCounterpart * PictureMotionEstimator::match(MEC_Picture * currentPicture,
-		MEC_Picture ** list0ReferencePictures,
-		unsigned int list0ReferencePicturesSize)
+PictureMotionCounterpart* PictureMotionEstimator::match(MEC_Picture* currentPicture, MEC_Picture* referencePicture)
 {
-    return __commonMatch(currentPicture,
-    		list0ReferencePictures, list0ReferencePicturesSize,
+    MEC_Picture** list0 = (MEC_Picture **) calloc(1, sizeof(MEC_Picture *));
+    list0[0] = referencePicture;   
+
+    PictureMotionCounterpart* pmc = __commonMatch(currentPicture,
+    		list0, 1,
     		(MEC_Picture **) 0, 0);
+    		
+    free(list0);		
+    		
+    return pmc;		
 }
+

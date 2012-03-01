@@ -38,21 +38,28 @@ using namespace std;
 class TestSupport {
 
 public:
-	static MEC_Picture * createRandomPicture(uint width, uint height);
+	static MEC_Picture* createRandomPicture(uint width, uint height);
 
-	static MEC_Picture * createPicture(unsigned int width, unsigned int height, unsigned int dataSet);
-
-	static void testPictureMotionCounterpart(PictureMotionCounterpart * pmc,
+	static MEC_Picture* createPicture(unsigned int width, unsigned int height, unsigned int dataSet);
+		
+	static void testPictureMotionCounterpart(PictureMotionCounterpart* pmc,
 			unsigned int pictureWidth, unsigned int pictureHeight,
-			MEC_Picture * currentPicture,
-			MEC_Picture ** list0, unsigned int list0Size,
-			unsigned int maxReferencePictures);
+			MEC_Picture* currentPicture,
+			MEC_Picture* referencePicture);
 
 private:
-	static MEC_Sample ** __createSampleMatrix(int width, int height);
+	static MEC_Sample** __createSampleMatrix(int width, int height);
 
-	static MEC_Sample ** __createSpecificSampleMatrix(int width, int height, unsigned int dataSet);
+	static MEC_Sample** __createSpecificSampleMatrix(int width, int height, unsigned int dataSet);
+	
+	static void __testPictureMotionCounterpart(PictureMotionCounterpart* pmc,
+		unsigned int pictureWidth, unsigned int pictureHeight,
+		MEC_Picture* currentPicture,
+		MEC_Picture** list0, unsigned int list0Size,
+		unsigned int maxReferencePictures);
+
 };
 
 
 #endif /* TEST_SUPPORT_H_ */
+
