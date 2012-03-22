@@ -12,18 +12,25 @@ else
 OBJS :=
 endif
 
+# This is used by canneal_app parsec benchmark application
+ENABLE_THREADS :=
+
+ifeq ($(APPLICATION),canneal_app)
+ENABLE_THREADS := -D ENABLE_THREADS
+endif
+
 all:		install
 
 .SUFFIXES: .do .cc
 
 .cc.do :	$(SRC)
-		$(CXX) $(CXXFLAGS) -o $@ $<
+		$(CXX) $(CXXFLAGS) -o $@ $< $(ENABLE_THREADS)
 
 $(APPLICATION):	$(APPLICATION).o $(LIB)/* $(OBJS)
 		$(ALD) $(ALDFLAGS) -o $@ $(APPLICATION).o $(OBJS)
 
 $(APPLICATION).o: $(APPLICATION).cc $(SRC)
-		$(ACC) $(ACCFLAGS) -o $@ $<
+		$(ACC) $(ACCFLAGS) -o $@ $< $(ENABLE_THREADS)
 
 install: 	$(APPLICATION)
 ifneq ($(GDB_DEBUG), 1)
