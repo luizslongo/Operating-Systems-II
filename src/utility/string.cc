@@ -461,4 +461,17 @@ extern "C"
             dst[i - 1 - j] = '0' + (v % 10);
         return i;
     }
+    
+    int atoi(const char *s)
+    {
+        int i;
+        i = 0;
+        while(*s)
+        {
+            i = (i << 3) + (i << 1) + (*s - '0');
+            s++;
+            // Dont increment i!
+        }
+        return i;
+    }
 }
