@@ -19,6 +19,7 @@ extern "C" {
     long atol(const char *s);
     char *itoa(int v, char *s);
     int utoa(unsigned long v,char * d);
+    int atoi(const char *s);
 }
 
 #endif
