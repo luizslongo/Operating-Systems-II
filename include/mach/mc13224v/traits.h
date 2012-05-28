@@ -110,6 +110,7 @@ template <> struct Traits<MC13224V_Temperature_Sensor>: public Traits<void>
         CELCIUS = 1
     };
     static const int UNITS = CELCIUS;
+    static const int ERROR = 3.7f;
 };
 
 __END_SYS

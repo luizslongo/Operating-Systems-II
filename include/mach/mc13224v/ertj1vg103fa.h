@@ -12,6 +12,7 @@ protected:
     static const float div_resistor = 20000; // 20 kohm
     static const float adc_max_value = (1 << Traits<ADC>::RESOLUTION) - 1;
     static const float to_celcius_factor = Traits<Temperature_Sensor>::UNITS * 273.15;
+    static const float ERROR = Traits<Temperature_Sensor>::ERROR;
 
     enum {
         KELVIN = 0,

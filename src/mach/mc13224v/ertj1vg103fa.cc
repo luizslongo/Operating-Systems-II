@@ -15,7 +15,7 @@ ERTJ1VG103FA::ERTJ1VG103FA(unsigned int unit)
 float ERTJ1VG103FA::convert_temperature(int value) {
     float log_R = Math::logf(resistance(value));
     float den = (A + B*log_R + C*log_R*log_R*log_R);
-    return (1.0f / den);
+    return (1.0f / den) + ERROR;
 }
 
 float ERTJ1VG103FA::resistance(int read) {
