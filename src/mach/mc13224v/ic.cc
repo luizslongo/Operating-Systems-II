@@ -7,7 +7,7 @@
 
 __BEGIN_SYS
 
-MC13224V_IC::Interrupt_Handler MC13224V_IC::vector[11];
+MC13224V_IC::Interrupt_Handler MC13224V_IC::vector[12];
 
 void MC13224V_IC::int_handler() {
     CPU::Reg16 pending = CPU::in16(IO_Map<Machine>::ITC_NIPEND);
@@ -16,6 +16,13 @@ void MC13224V_IC::int_handler() {
 
     if((1 << IRQ_TIMER) & pending)
     {
+        CPU::Reg16 r;
+        if((Traits<TSC>::enabled) && ((r = CPU::in16(IO::TIMER3_CSCTRL)) & 0x0010)) {
+            CPU::out16(IO::TIMER3_CSCTRL, r & ~0x0010);
+            db<MC13224V_IC> (INF) << "Interrupt! IRQ_TSC\n";
+            vector[IRQ_TSC]();
+            return;
+        }
         db<MC13224V_IC> (INF) << "Interrupt! IRQ_TIMER\n";
         vector[IRQ_TIMER]();
     } else if((1 << IRQ_UART1) & pending)

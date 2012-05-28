@@ -34,12 +34,14 @@ public:
 		IRQ_MACA,
 		IRQ_SSI,
 		IRQ_ADC,
-		IRQ_SPI
+		IRQ_SPI,
+		IRQ_TSC
     };
 
     static void init();
 
 	static void enable(Interrupt_Id id) {
+	    if(id == IRQ_TSC) id = IRQ_TIMER;
 		CPU::out32(IO::ITC_INTENNUM, id);
 	}
 
