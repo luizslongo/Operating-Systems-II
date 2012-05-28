@@ -1322,16 +1322,19 @@ public:
 //        unsigned char *payload_ptr = &(CMAC<T>::_frame_buffer[sizeof(data_frame_header_t) + 2 + 2 + 2]);
         unsigned char *payload_ptr = &(CMAC<T>::_buffer[CMAC<T>::_buffer_head].data[sizeof(data_frame_header_t) + 2 + 2 + 2]);
 
-        unsigned short *crc_ptr =
+        unsigned char *crc_ptr =
 //            reinterpret_cast<unsigned short*>(&(CMAC<T>::_frame_buffer[CMAC<T>::_frame_buffer_size - 2]));
-            reinterpret_cast<unsigned short*>(&(CMAC<T>::_buffer[CMAC<T>::_buffer_head].data[CMAC<T>::_buffer[CMAC<T>::_buffer_head].size - 2]));
+            reinterpret_cast<unsigned char*>(&(CMAC<T>::_buffer[CMAC<T>::_buffer_head].data[CMAC<T>::_buffer[CMAC<T>::_buffer_head].size - 2]));
+
+        unsigned short crc_frame;
+        memcpy(&crc_frame, crc_ptr, sizeof(unsigned short));
 
         db<CMAC<T> >(INF) << "IEEE802154_Unpack - Frame decoded:\n"
             << *header_ptr
             << "payload_size: " << CMAC<T>::_rx_data_size << "\n"
             << "protocol: " << CMAC<T>::_rx_protocol << "\n"
             << "remaining_energy: " << *remaining_energy_ptr << "\n"
-            << "CRC: " << *crc_ptr << "\n";
+            << "CRC: " << crc_frame << "\n";
 
 //        unsigned short crc = CRC::crc16(reinterpret_cast<char*>(CMAC<T>::_frame_buffer), CMAC<T>::_frame_buffer_size - 2);
         unsigned short crc = CRC::crc16(reinterpret_cast<char*>(CMAC<T>::_buffer[CMAC<T>::_buffer_head].data), CMAC<T>::_buffer[CMAC<T>::_buffer_head].size - 2);
@@ -1342,7 +1345,7 @@ public:
                 CMAC<T>::_buffer_empty = true;
         }
 
-        if (*crc_ptr != crc) {
+        if (crc_frame != crc) {
             db<CMAC<T> >(WRN) << "IEEE802154_Unpack - CRC error: " << crc << "\n";
             CMAC<T>::_stats->dropped_packets += 1;
             return CMAC<T>::UNPACK_FAILED;
