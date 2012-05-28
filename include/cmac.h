@@ -5,7 +5,7 @@
 #include <utility/random.h>
 #include <system/kmalloc.h>
 #include <battery.h>
-#include <neighboring.h>
+#include <neighborhood.h>
 #include <radio.h>
 #include <timer.h>
 
@@ -38,21 +38,22 @@ public:
 
 public:
     CMAC(int unit = 0) {
-        _stats = new(kmalloc(sizeof(Statistics))) Statistics();
-        _addr  = new(kmalloc(sizeof(Address))) Address(Traits<CMAC<T> >::ADDRESS);
-        _radio = new(kmalloc(sizeof(T))) T();
-        _timer = new(kmalloc(sizeof(Timer_CMAC))) Timer_CMAC(alarm_handler_function);
+        if (_instance == 0) {
+            _stats = new(kmalloc(sizeof(Statistics))) Statistics();
+            _addr  = new(kmalloc(sizeof(Address))) Address(Traits<CMAC<T> >::ADDRESS);
+            _radio = new(kmalloc(sizeof(T))) T();
+            _timer = new(kmalloc(sizeof(Timer_CMAC))) Timer_CMAC(alarm_handler_function);
 
-        CMAC<T>::init(unit);
+            CMAC<T>::init(unit);
+
+            _instance = this;
+        }
     }
-
-    void tx_p();
-    void rx_p();
 
     int send(const Address & dst, const Protocol & prot,
             const void *data, unsigned int size) {
         if (Traits<CMAC<T> >::time_triggered) {
-            if (_tx_pending || (size > mtu())) {
+            if (_tx_pending || (size > mtu()) || (_busy == true)) {
                 db<CMAC<T> >(WRN) << "CMAC::send - another TX pending or data size > MTU\n";
                 return -1;
             }
@@ -81,8 +82,10 @@ public:
 
         if (Traits<CMAC<T> >::time_triggered) {
             db<CMAC<T> >(INF) << "CMAC::send - waiting for TX handling\n";
-//            _sem_tx->p();
-            tx_p();
+
+            _busy = true;
+            while (_busy);
+
             result = _state_machine_result;
 
         } else {
@@ -105,8 +108,29 @@ public:
     int receive(Address * src, Protocol * prot,
             void * data, unsigned int size) {
 
-        if (Traits<CMAC<T> >::time_triggered) {
-            if (_rx_pending || (size > mtu())) {
+        if (!_buffer_empty) {
+            _rx_data 	  = data;
+            _rx_data_size = size;
+            _rx_pending = true;
+
+            CMAC_STATE_TRANSITION result = IEEE802154_Unpack<T>::execute(RX_END);
+
+            *src  = _rx_src_address;
+            *prot = _rx_protocol;
+
+            _rx_pending = false;
+
+            if (result == UNPACK_OK) {
+                _stats->rx_packets += 1;
+                _stats->rx_bytes   += _rx_data_size;
+
+                return _rx_data_size;
+
+            } else
+                return result * (-1);
+
+        } else if (Traits<CMAC<T> >::time_triggered) {
+            if (_rx_pending || (size > mtu()) || (_busy == true)) {
                 db<CMAC<T> >(WRN) << "CMAC::receive - another RX pending or buffer size > MTU\n";
                 return -1;
             }
@@ -128,8 +152,10 @@ public:
 
         if (Traits<CMAC<T> >::time_triggered) {
             db<CMAC<T> >(INF) << "CMAC::receive - waiting for RX handling\n";
-//            _sem_rx->p();
-            rx_p();
+
+            _busy = true;
+            while (_busy);
+
             result = _state_machine_result;
 
         } else {
@@ -148,7 +174,8 @@ public:
             _stats->rx_packets += 1;
             _stats->rx_bytes   += _rx_data_size;
 
-            notify((int) *prot);
+            if (!Traits<CMAC<T> >::time_triggered)
+                notify((int) *prot);
 
             return _rx_data_size;
 
@@ -175,6 +202,10 @@ public:
 
     const Address & address() {
         return (const Address&) *_addr;
+    }
+
+    void address(const Address & addr) {
+        *_addr = addr;
     }
 
     void reset() {}
@@ -227,7 +258,13 @@ protected:
         alarm_ev_handler = 0;
     }
 
+    typedef struct {
+        unsigned char data[FRAME_BUFFER_SIZE];
+        unsigned int  size;
+    } packet;
+
 protected:
+    static CMAC<T> * _instance;
     static T * _radio;
 
     /* timer control variables */
@@ -238,12 +275,16 @@ protected:
     static volatile CMAC_STATE _state;
 
     /* used only when TIME_TRIGGERED = true */
-    static Semaphore * _sem_rx;
-    static Semaphore * _sem_tx;
+    static volatile bool _busy;
     static CMAC_STATE_TRANSITION _state_machine_result;
     static volatile bool _last_sm_exec_tx; // true if the last execution of the state machine executed an TX
     static volatile bool _last_sm_exec_rx; // true if the last execution of the state machine executed an RX
     static volatile bool _on_active_cycle;
+
+    static bool         _buffer_empty;
+    static unsigned int _buffer_head;
+    static unsigned int _buffer_tail;
+    static packet _buffer[Traits<CMAC<T> >::BUFFER_SIZE];
 
     static unsigned char _frame_buffer[FRAME_BUFFER_SIZE];
     static unsigned int _frame_buffer_size;
@@ -472,6 +513,11 @@ public:
             db<CMAC<T> >(TRC) << "Active - TX_PENDING\n";
             return CMAC<T>::TX_PENDING;
 
+        } else if (Traits<CMAC<T> >::auto_rx) {
+            db<CMAC<T> >(TRC) << "Active - AUTO_RX\n";
+            CMAC<T>::_busy = true;
+            return CMAC<T>::RX_PENDING;
+
         } else {
             db<CMAC<T> >(TRC) << "Active - SYNC_END\n";
             return CMAC<T>::SYNC_END;
@@ -501,6 +547,11 @@ public:
         RX_CONTENTION,
     };
 
+    typedef struct {
+        unsigned int time;
+        unsigned int rank;
+    } preamble_t;
+
     static CMAC_STATE_TRANSITION execute(CMAC_STATE_TRANSITION input) {
         STATE state = BACKOFF;
         CMAC_STATE_TRANSITION result;
@@ -511,7 +562,7 @@ public:
                     Backoff<T>::execute(result);
 
                 case LISTEN:
-                    if (CMAC<T>::_rx_pending) {
+                    if (input == CMAC<T>::RX_PENDING) {
                         result = Generic_Lpl<T>::execute(result, Traits<CMAC<T> >::TIMEOUT);
 
                         if (result == CMAC<T>::CHANNEL_BUSY)
@@ -531,17 +582,79 @@ public:
                     break;
 
                 case TX_PREAMBLE:
+                    if (Traits<CMAC<T> >::time_triggered) {
+                        preamble_t * preamble = reinterpret_cast<preamble_t*>(CMAC<T>::_frame_buffer);
+
+                        preamble->time = Traits<CMAC<T> >::SLEEPING_PERIOD + (Traits<CMAC<T> >::SLEEPING_PERIOD >> 1) + 10;
+                        preamble->rank = 0;
+
+                        CMAC<T>::_frame_buffer_size = sizeof(preamble_t);
+
+                        for (int i = 0; i < Traits<CMAC<T> >::SLEEPING_PERIOD + (Traits<CMAC<T> >::SLEEPING_PERIOD >> 1) + 10; i++) {
+                            preamble->time -= 1;
+                            Generic_Tx<T>::execute(result);
+                        }
+                    }
+
                     state = TX_CONTENTION;
                     break;
+
                 case RX_ACK_PREAMBLE:
                     break;
+
                 case RX_PREAMBLE:
+                    if (Traits<CMAC<T> >::time_triggered) {
+                        bool packet   = false;
+                        bool preamble = false;
+
+                        // overrides old data
+                        if (!(CMAC<T>::_buffer_empty) && (CMAC<T>::_buffer_head == CMAC<T>::_buffer_tail))
+                            CMAC<T>::_buffer_head = (CMAC<T>::_buffer_head + 1) % Traits<CMAC<T> >::BUFFER_SIZE;
+
+                        int x = CMAC<T>::_radio->receive(&(CMAC<T>::_buffer[CMAC<T>::_buffer_tail].data[0]));
+                        CMAC<T>::_buffer[CMAC<T>::_buffer_tail].size = x;
+
+                        do {
+                            if (CMAC<T>::_buffer[CMAC<T>::_buffer_tail].size == sizeof(preamble_t)) {
+                                preamble = true;
+                                packet   = false;
+
+                                preamble_t * p = reinterpret_cast<preamble_t *>(CMAC<T>::_buffer[CMAC<T>::_buffer_tail].data);
+
+                                if (p->time <= Traits<CMAC<T> >::SLEEPING_PERIOD + (Traits<CMAC<T> >::SLEEPING_PERIOD >> 1) + 10) {
+                                    unsigned long timeout = CMAC<T>::alarm_ticks_ms + p->time * 0.706;
+                                    while (!(CMAC<T>::alarm_ticks_ms >= timeout));
+                                }
+                            }
+
+                            result = Generic_Lpl<T>::execute(result, Traits<CMAC<T> >::SLEEPING_PERIOD);
+
+                            if (result == CMAC<T>::CHANNEL_BUSY) {
+                                x = CMAC<T>::_radio->receive(&(CMAC<T>::_buffer[CMAC<T>::_buffer_tail].data[0]));
+                                CMAC<T>::_buffer[CMAC<T>::_buffer_tail].size = x;
+
+                            } else {
+                                CMAC<T>::_buffer[CMAC<T>::_buffer_tail].size = 0;
+                                return CMAC<T>::TIMEOUT;
+                            }
+
+                            if (CMAC<T>::_buffer[CMAC<T>::_buffer_tail].size > 0 && CMAC<T>::_buffer[CMAC<T>::_buffer_tail].size != sizeof(preamble_t))
+                                   packet = true;
+                        } while ((!packet) || (!preamble));
+
+                        CMAC<T>::_buffer_tail = (CMAC<T>::_buffer_tail + 1) % Traits<CMAC<T> >::BUFFER_SIZE;
+                        CMAC<T>::_buffer_empty = false;
+                    }
+
                     state = RX_CONTENTION;
                     break;
+
                 case TX_ACK_PREAMBLE:
                     break;
+
                 case TX_CONTENTION:
                     break;
+
                 case RX_CONTENTION:
                     break;
             }
@@ -646,15 +759,27 @@ public:
         int result;
 
         db<CMAC<T> >(TRC) << "Generic_Rx - receiving\n";
-        result = CMAC<T>::_radio->receive(&(CMAC<T>::_frame_buffer[0]));
 
-        if (!(result > 0)) {
-            db<CMAC<T> >(ERR) << "Generic_Rx - RX_ERROR\n";
-            CMAC<T>::_radio->off();
-            return CMAC<T>::RX_ERROR;
+        if (!Traits<CMAC<T> >::time_triggered) {
+            // overrides old data
+            if (!(CMAC<T>::_buffer_empty) && (CMAC<T>::_buffer_head == CMAC<T>::_buffer_tail))
+                CMAC<T>::_buffer_head = (CMAC<T>::_buffer_head + 1) % Traits<CMAC<T> >::BUFFER_SIZE;
+
+            //        result = CMAC<T>::_radio->receive(&(CMAC<T>::_frame_buffer[0]));
+            result = CMAC<T>::_radio->receive(&(CMAC<T>::_buffer[CMAC<T>::_buffer_tail].data[0]));
+
+            if (!(result > 0)) {
+                db<CMAC<T> >(ERR) << "Generic_Rx - RX_ERROR\n";
+                CMAC<T>::_radio->off();
+                return CMAC<T>::RX_ERROR;
+            }
+
+            //        CMAC<T>::_frame_buffer_size = result;
+            CMAC<T>::_buffer[CMAC<T>::_buffer_tail].size = result;
+
+            CMAC<T>::_buffer_tail = (CMAC<T>::_buffer_tail + 1) % Traits<CMAC<T> >::BUFFER_SIZE;
+            CMAC<T>::_buffer_empty = false;
         }
-
-        CMAC<T>::_frame_buffer_size = result;
 
         db<CMAC<T> >(TRC) << "Generic_Rx - RX_END\n";
         return CMAC<T>::RX_END;
@@ -680,7 +805,8 @@ public:
 
         bool timeout;
         if (soft_timeout == 0) {
-            while (!(timeout = CMAC<T>::timeout) && !_frame_received);
+//            while (!(timeout = CMAC<T>::timeout) && !_frame_received);
+            while (!_frame_received);
 
         } else {
             unsigned long timeout2 = CMAC<T>::alarm_ticks_ms + soft_timeout;
@@ -1166,10 +1292,11 @@ class IEEE802154_Unpack: public CMAC_State<T> {
 public:
     typedef typename CMAC<T>::CMAC_STATE_TRANSITION CMAC_STATE_TRANSITION;
     typedef typename IEEE802154_Frame<T>::data_frame_header_t data_frame_header_t;
-    typedef typename Neighboring::Node Node;
+    typedef typename Neighborhood::Node Node;
 
     static CMAC_STATE_TRANSITION execute(CMAC_STATE_TRANSITION input) {
-        if (CMAC<T>::_frame_buffer_size == 0) {
+//        if (CMAC<T>::_frame_buffer_size == 0) {
+        if (CMAC<T>::_buffer[CMAC<T>::_buffer_head].size == 0) {
             db<CMAC<T> >(ERR) << "IEEE802154_Unpack - UNPACK_FAILED - Frame size == 0\n";
             return CMAC<T>::UNPACK_FAILED;
         }
@@ -1179,19 +1306,25 @@ public:
         db<CMAC<T> >(TRC) << "IEEE802154_Unpack - Decoding frame\n";
 
         data_frame_header_t *header_ptr =
-            reinterpret_cast<data_frame_header_t*>(CMAC<T>::_frame_buffer);
+//            reinterpret_cast<data_frame_header_t*>(CMAC<T>::_frame_buffer);
+            reinterpret_cast<data_frame_header_t*>(CMAC<T>::_buffer[CMAC<T>::_buffer_head].data);
 
-        CMAC<T>::_rx_data_size = CMAC<T>::_frame_buffer[sizeof(data_frame_header_t)];
+//        CMAC<T>::_rx_data_size = CMAC<T>::_frame_buffer[sizeof(data_frame_header_t)];
+        CMAC<T>::_rx_data_size = CMAC<T>::_buffer[CMAC<T>::_buffer_head].data[sizeof(data_frame_header_t)];
 
-        CMAC<T>::_rx_protocol = CMAC<T>::_frame_buffer[sizeof(data_frame_header_t) + 2];
+//        CMAC<T>::_rx_protocol = CMAC<T>::_frame_buffer[sizeof(data_frame_header_t) + 2];
+        CMAC<T>::_rx_protocol = CMAC<T>::_buffer[CMAC<T>::_buffer_head].data[sizeof(data_frame_header_t) + 2];
 
         unsigned short *remaining_energy_ptr = 
-            reinterpret_cast<unsigned short*>(&(CMAC<T>::_frame_buffer[sizeof(data_frame_header_t) + 2 + 2]));
+//            reinterpret_cast<unsigned short*>(&(CMAC<T>::_frame_buffer[sizeof(data_frame_header_t) + 2 + 2]));
+            reinterpret_cast<unsigned short*>(&(CMAC<T>::_buffer[CMAC<T>::_buffer_head].data[sizeof(data_frame_header_t) + 2 + 2]));
 
-        unsigned char *payload_ptr = &(CMAC<T>::_frame_buffer[sizeof(data_frame_header_t) + 2 + 2 + 2]);
+//        unsigned char *payload_ptr = &(CMAC<T>::_frame_buffer[sizeof(data_frame_header_t) + 2 + 2 + 2]);
+        unsigned char *payload_ptr = &(CMAC<T>::_buffer[CMAC<T>::_buffer_head].data[sizeof(data_frame_header_t) + 2 + 2 + 2]);
 
         unsigned short *crc_ptr =
-            reinterpret_cast<unsigned short*>(&(CMAC<T>::_frame_buffer[CMAC<T>::_frame_buffer_size - 2]));
+//            reinterpret_cast<unsigned short*>(&(CMAC<T>::_frame_buffer[CMAC<T>::_frame_buffer_size - 2]));
+            reinterpret_cast<unsigned short*>(&(CMAC<T>::_buffer[CMAC<T>::_buffer_head].data[CMAC<T>::_buffer[CMAC<T>::_buffer_head].size - 2]));
 
         db<CMAC<T> >(INF) << "IEEE802154_Unpack - Frame decoded:\n"
             << *header_ptr
@@ -1200,7 +1333,14 @@ public:
             << "remaining_energy: " << *remaining_energy_ptr << "\n"
             << "CRC: " << *crc_ptr << "\n";
 
-        unsigned short crc = CRC::crc16(reinterpret_cast<char*>(CMAC<T>::_frame_buffer), CMAC<T>::_frame_buffer_size - 2);
+//        unsigned short crc = CRC::crc16(reinterpret_cast<char*>(CMAC<T>::_frame_buffer), CMAC<T>::_frame_buffer_size - 2);
+        unsigned short crc = CRC::crc16(reinterpret_cast<char*>(CMAC<T>::_buffer[CMAC<T>::_buffer_head].data), CMAC<T>::_buffer[CMAC<T>::_buffer_head].size - 2);
+
+        if (CMAC<T>::_rx_pending) {
+            CMAC<T>::_buffer_head = (CMAC<T>::_buffer_head + 1) % Traits<CMAC<T> >::BUFFER_SIZE;
+            if (CMAC<T>::_buffer_head == CMAC<T>::_buffer_tail)
+                CMAC<T>::_buffer_empty = true;
+        }
 
         if (*crc_ptr != crc) {
             db<CMAC<T> >(WRN) << "IEEE802154_Unpack - CRC error: " << crc << "\n";
@@ -1227,12 +1367,12 @@ public:
             db<CMAC<T> >(TRC) << "IEEE802154_Unpack - UNPACK_OK\n";
         }
 
-        if (Traits<Neighboring>::enabled) {
+        if (Traits<Neighborhood>::enabled) {
             Node * n = new(kmalloc(sizeof(Node))) Node(CMAC<T>::_rx_src_address, *remaining_energy_ptr, CMAC<T>::_radio->lqi(), CMAC<T>::_radio->rssi());
-            Neighboring::get_instance()->add_node(n);
+            Neighborhood::get_instance()->update(n);
 
             db<CMAC<T> >(ERR) << "CMAC - Neighborhood status\n"
-                << Neighboring::get_instance();
+                << Neighborhood::get_instance();
         }
 
         return input;

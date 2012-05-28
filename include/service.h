@@ -16,25 +16,22 @@ public:
         public SWITCH<SERVICE,
                      CASE<Traits<Services>::ADHOP,
                          ADHOP<Link_Layer,Network_Layer>,
-                     CASE<Traits<Services>::BCast,
-                         BCast<Link_Layer,Network_Layer>,
                      CASE<DEFAULT,
                          ARP<Link_Layer,Network_Layer>
-                     > > >
+                     > >
                >::Result
     {
-    public:
+    private:
         typedef typename
             SWITCH<SERVICE,
                   CASE<Traits<Services>::ADHOP,
                       ADHOP<Link_Layer,Network_Layer>,
-                  CASE<Traits<Services>::BCast,
-                      BCast<Link_Layer,Network_Layer>,
                   CASE<DEFAULT,
                       ARP<Link_Layer,Network_Layer>
-                  > > >
+                  > >
             >::Result Base;
 
+    public:
         Network_Service(Link_Layer* nic, Network_Layer* network):
             Base(nic, network)
         { }
@@ -43,5 +40,5 @@ public:
 
 __END_SYS
 
-#endif
+#endif /* __service_h */
 

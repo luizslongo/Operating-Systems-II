@@ -1,9 +1,14 @@
 #ifndef __adhop_h
 #define __adhop_h
 
+#include <network_service.h>
+
+#ifdef __network_service_h
+
+#include <alarm.h>
 #include <system/kmalloc.h>
 #include <utility/hash.h>
-#include <network_service.h>
+#include <utility/handler.h>
 
 #define MAX_LIST 3
 #define MAX_HASH 5
@@ -34,18 +39,30 @@ public:
     typedef typename Network_Layer::Header Network_Header;
 
     static const unsigned int INITIAL_PHEROMONE = 100;
-    static const unsigned int TIMER_CHECK_ROUTING_TABLES = 5000000; // 5s
+    static const unsigned int TIMER_CHECK_ROUTING_TABLES = 10000000; // 10s
 
     ADHOP(Link_Layer* nic, Network_Layer* network):
         Base(nic, network), seqNO(0)
-    { }
+    {
+        update_handler = new(kmalloc(sizeof(Functor_Handler<RTable>)))
+            Functor_Handler<RTable>(&RTable::update, &_rtable);
+        update_alarm = new(kmalloc(sizeof(Alarm)))
+            Alarm(TIMER_CHECK_ROUTING_TABLES, update_handler, Alarm::INFINITE);
+    }
 
+    ~ADHOP()
+    {
+        kfree(update_alarm);
+        kfree(update_handler);
+    }
+
+    // Ant types
     enum {
         ITA = 0,
         ETA = 1
     };
 
-    class Ant
+    class Control_Info // Ant
     {
     public:
         u32 type:1;
@@ -70,13 +87,17 @@ private:
             _neighbor = pa;
         }
 
-        bool evaporate() //EVAPORATION
+        bool to_clear()
         {
-            _link.rank((u16) (_link.rank() >> 1));
             if(_link.rank() > 4)
                 return false;
             else
                 return true;
+        }
+
+        void evaporate() //EVAPORATION
+        {
+            _link.rank((u16) (_link.rank() >> 1));
         }
         void update(u16 heuristic) //UPDATE_PHEROMONE
         {
@@ -140,7 +161,7 @@ private:
             while(Base::size()) {
                 Element* element = Base::remove();
                 if(element) {
-                    delete element->object();
+                    kfree(element->object());
                 }
             }
         }
@@ -150,7 +171,7 @@ private:
             if(Base::size() >= MAX_LIST) {
                 Element* element = Base::remove_tail();
                 if(element) {
-                    delete element->object();
+                    kfree(element->object());
                 }
             }
             if(Base::empty())
@@ -175,9 +196,12 @@ private:
         void update()
         {
             for(Element* e = Base::head(); e; e = e->next()) {
-                if (e->object()->evaporate()) {
+                if (e->object()->to_clear()) {
                     Base::remove(e);
-                    delete e->object();
+                    kfree(e->object());
+                    e = Base::head();
+                } else {
+                    e->object()->evaporate();
                 }
             }
         }
@@ -193,7 +217,7 @@ private:
             } else {
                 Object_Type* neighbor =
                     new(kmalloc(sizeof(Object_Type))) Object_Type(la, pa);
-                this->insert(&neighbor->_link);
+                this->insert(&(neighbor->_link));
             }
         }
 
@@ -259,6 +283,11 @@ private:
             }
         }
 
+        static void update(RTable* __rtable) {
+            __rtable->update();
+            return;
+        }
+
         void update()
         {
             for(int i = 0; i < MAX_HASH; i++) {
@@ -287,21 +316,22 @@ private:
         }
     };
 
-public:
-    bool update(const Network_Address& src, Ant* ant)
+private:
+    bool update(const Network_Address& src, Control_Info* ant)
     {
         if (_rtable.verify(src, ant->sequenceNO)) {
-            _rtable.update(src, ant->neighbor, ant->sequenceNO);
-        }
-        if (ant->type == ETA && ant->returning == 0)
-        {
-            ant->returning = 1;
-            return true;
+            _rtable.update(src, ant->neighbor, ant->heuristic);
+            if (ant->type == ETA && ant->returning == 0)
+            {
+                ant->neighbor = _my_nic_address;
+                ant->returning = 1;
+                return true;
+            }
         }
         return false;
     }
 
-    Link_Address resolve(const Network_Address& dst, Ant* ant)
+    Link_Address resolve(const Network_Address& dst, Control_Info* ant)
     {
         Link_Address nic_addr = _rtable.search(dst);
         if (nic_addr == Link_Layer::BROADCAST) {
@@ -317,10 +347,10 @@ public:
     }
 
     Link_Address resolve(const Network_Address& src,
-            const Network_Address& dst, Ant* ant)
+            const Network_Address& dst, Control_Info* ant)
     {
         if (_rtable.verify(src, ant->sequenceNO)) {
-            _rtable.update(src, ant->neighbor, ant->sequenceNO);
+            _rtable.update(src, ant->neighbor, ant->heuristic);
             switch ((int) ant->type) {
                 case ITA:
                     return receiving_ITA(src, dst, ant);
@@ -334,7 +364,7 @@ public:
     }
 
     Link_Address receiving_ITA(const Network_Address& src,
-            const Network_Address& dst, Ant* ant)
+            const Network_Address& dst, Control_Info* ant)
     {
         ant->neighbor = _my_nic_address;
         ant->heuristic = 0;
@@ -348,7 +378,7 @@ public:
     }
 
     Link_Address receiving_ETA(const Network_Address& src,
-            const Network_Address& dst, Ant* ant)
+            const Network_Address& dst, Control_Info* ant)
     {
         ant->neighbor = _my_nic_address;
         ant->heuristic = 0;
@@ -358,42 +388,91 @@ public:
 public:
     void update(const Network_Address& la, const Link_Address& pa)
     {
-        // do nothing
+        db<Network>(TRC) << "ADHOP::update\n";
+
+        _rtable.update(la, pa, 0);
     }
 
-    Link_Address resolve(const Network_Address& la, SegmentedBuffer * pdu)
+    Link_Address resolve(const Network_Address& la, const char * pdu)
     {
-        Ant * ant = (Ant *) ((Network_Header *) pdu->data())->get_options();
+        db<Network>(TRC) << "ADHOP::resolve\n";
+
+        Control_Info * ant =
+            (Control_Info *) ((Network_Header *) pdu)->options();
         Link_Address result = resolve(la, ant);
         return result;
     }
 
-    void received(const Link_Address& pa, Protocol proto,
-            const char* data, int size)
+    virtual Network_Address resolve(const Link_Address& pa)
     {
-        if (proto == Link_Layer::IP) {
-            Ant * ant = (Ant *) ((Network_Header *) data)->get_options();
-            Network_Address net_dst = ((Network_Header *) data)->dst_ip();
-            Network_Address net_src = ((Network_Header *) data)->src_ip();
-            if (net_dst == _my_network_address) {
-                if (update(net_src, ant)) {
-                    //TODO: it is not infoming the mode "return" to the ant
-                    _network->send(net_src, (char *) 0, 0, 0);
-                }
-            } else {
-                Link_Address next_hop =
-                    resolve(net_src, net_dst, ant);
-                ((Network_Header *) data)->calculate_checksum();
-                _nic->send(next_hop, proto, data, size);
+        // Do nothing
+        return Network_Address(0,0,0,0);
+    }
+
+    void received(const Link_Address& pa, Protocol proto,
+            const char * data, int size)
+    {
+        db<Network>(TRC) << "ADHOP::received\n";
+
+        int stat;
+
+        Control_Info * ant =
+            (Control_Info *) ((Network_Header *) data)->options();
+        Network_Address net_dst = ((Network_Header *) data)->dst();
+        Network_Address net_src = ((Network_Header *) data)->src();
+        Link_Address neighbor = ant->neighbor;
+
+        if (net_dst == _my_network_address) {
+            db<Network>(TRC) << "ADHOP::received - Destination!\n";
+
+            if (update(net_src, ant)) {
+                ((Network_Header *) data)->dst(net_src);
+                ((Network_Header *) data)->src(net_dst);
+
+                do {
+                    stat = _nic->send(neighbor, proto,
+                            data, sizeof(Network_Header));
+                    Alarm::delay(200);
+                } while ((stat == -1) || (stat == 16));
+
+                db<Network>(TRC) << "ADHOP::received - Response sent!\n";
+
+                if (stat != 11)
+                    db<Network>(ERR)
+                        << "ADHOP::received: Link address unknown!\n"
+                        << "Link status: " << stat << "\n";
             }
+        } else {
+            db<Network>(TRC) << "ADHOP::received - Router!\n";
+
+            Link_Address next_hop =
+                resolve(net_src, net_dst, ant);
+
+            do {
+                stat = _nic->send(next_hop, proto, data, size);
+                Alarm::delay(200);
+            } while ((stat == -1) || (stat == 16));
+
+            db<Network>(TRC) << "ADHOP::received - Forwarding!\n";
+
+            if (stat != 11)
+                db<Network>(ERR)
+                    << "ADHOP::received: Link address unknown!\n"
+                    << "Link status: " << stat << "\n";
         }
     }
 
 private:
     RTable _rtable;
     u16 seqNO:14;
+
+    Functor_Handler<RTable> * update_handler;
+    Alarm * update_alarm;
 };
 
 __END_SYS
 
-#endif /* ADHOP_H_ */
+#endif /* __network_service_h */
+
+#endif /* __adhop_h */
+

@@ -111,7 +111,8 @@ public:
 
     static void halt() {
         int_enable();
-        power(DOZE);
+        //power(DOZE);
+        while(true);
     }
 
     static void reboot() {

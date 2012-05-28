@@ -421,6 +421,8 @@ public:
 
     const Address & address() { return _address; }
 
+    void address(const Address & address) { _address = address; }
+
     const Statistics & statistics() { return _statistics; }
 
     static void init(unsigned int unit);

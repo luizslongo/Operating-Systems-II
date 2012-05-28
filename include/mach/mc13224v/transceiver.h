@@ -210,6 +210,7 @@ public:
     static void maca_isr();
     static void decode_status();
 
+    static void off();
     static bool cca_measurement();
     static void reset_maca();
     static void init_phy();

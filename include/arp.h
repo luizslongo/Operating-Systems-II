@@ -1,11 +1,14 @@
 #ifndef __arp_h
 #define __arp_h
 
+#include <network_service.h>
+
+#ifdef __network_service_h
+
 #include <utility/malloc.h>
 #include <utility/hash.h>
 #include <alarm.h>
 #include <condition.h>
-#include <network_service.h>
 
 __BEGIN_SYS
 
@@ -23,12 +26,19 @@ public:
     typedef typename Base::Network_Address Network_Address;
 
     typedef typename Base::Protocol Protocol;
+    enum {
+        M_ARP    = Link_Layer::ARP,
+        M_RARP   = Link_Layer::RARP,
+        P_ELP    = Link_Layer::ELP,
+        P_IP     = Link_Layer::IP,
+        P_ROUTER = Link_Layer::ROUTER
+    };
 
     ARP(Link_Layer* nic, Network_Layer* network):
         Base(nic, network)
     { }
 
-//private:
+private:
     class Entry
     {
     public:
@@ -101,21 +111,30 @@ public:
         }
     };
 
-    class Packet
+public:
+    class Control_Info // ARP Packet
     {
     public:
         // Hardware Types (HTYPE)
         enum { HTYPE_ETHERNET = 1 };
 
     public:
-        Packet(Oper op, Link_Address sha, Network_Address spa,
-                Link_Address tha, Network_Address tpa):
-            _htype(CPU::htons(HTYPE_ETHERNET)),
-            _ptype(CPU::htons(Network_Layer::PROT_IP)),
-            _hlen(sizeof(Link_Address)),
-            _plen(sizeof(Network_Address)),
-            _oper(CPU::htons(op)),
-            _sha(sha), _spa(spa), _tha(tha), _tpa(tpa) {}
+        Control_Info() {}
+        ~Control_Info() {}
+
+        void fill(Oper op, Link_Address sha, Network_Address spa,
+                Link_Address tha, Network_Address tpa)
+        {
+            _htype = CPU::htons(HTYPE_ETHERNET);
+            _ptype = CPU::htons(P_IP);
+            _hlen  = sizeof(Link_Address);
+            _plen  = sizeof(Network_Address);
+            _oper  = CPU::htons(op);
+            _sha   = sha;
+            _spa   = spa;
+            _tha   = tha;
+            _tpa   = tpa;
+        }
 
         void op(const Oper & o) { _oper = CPU::htons(o); }
         void sha(const Link_Address & a) { _sha = a; }
@@ -129,7 +148,7 @@ public:
         const Link_Address & tha() const { return _tha; }
         const Network_Address & tpa() const { return _tpa; }
 
-        friend Debug & operator<<(Debug & db, const Packet & p)
+        friend Debug & operator<<(Debug & db, const Control_Info & p)
         {
             db  << "{htype="  << CPU::ntohs(p._htype)
                 << ",ptype="  << hex << CPU::ntohs(p._ptype) << dec
@@ -154,7 +173,7 @@ public:
         Network_Address     _spa; // Sender Protocol Address (32 bits)
         Link_Address        _tha; // Target Hardware Address (48 bits)
         Network_Address     _tpa; // Target Protocol Address (32 bits)
-    };
+    } __attribute__((packed,__may_alias__));
 
 public:
     void update(const Network_Address& la, const Link_Address& pa)
@@ -162,97 +181,109 @@ public:
         _arpt.update(la, pa);
     }
 
-    Link_Address resolve(const Network_Address& addr, SegmentedBuffer * pdu)
+    Link_Address resolve(const Network_Address& la, const char * pdu)
     {
-        for(unsigned int i = 0; i < Traits<Network>::ARP_TRIES; i++) {
-            Link_Address pa = _arpt.search(addr);
+        for(unsigned int i = 0; i < Traits<Network>::TRIES; i++) {
+            Link_Address pa = _arpt.search(la);
             if(pa) {
-                db<Network_Layer>(TRC) << "ARP_Router::resolve(addr=" << addr << ") => "
-                        << pa << "\n";
+                db<Network>(TRC) << "ARP::resolve(la=" << la
+                    << ") => " << pa << "\n";
 
                 return pa;
             }
 
-            Condition * cond = _arpt.insert(addr);
-            Packet request(REQUEST, _nic->address(), _network->address(),
-                                Link_Layer::BROADCAST, addr);
+            Condition * cond = _arpt.insert(la);
+            Control_Info request;
+            request.fill(REQUEST, _nic->address(),
+                    _network->address(), Link_Layer::BROADCAST, la);
 
-            _nic->send(Link_Layer::BROADCAST, Link_Layer::ARP, &request, sizeof(Packet));
+            _nic->send(Link_Layer::BROADCAST,
+                    M_ARP, &request, sizeof(Control_Info));
 
-            db<Network_Layer>(INF) << "ARP_Router::resolve:request sent!\n";
+            db<Network>(INF) << "ARP::resolve:request sent!\n";
 
             Condition_Handler handler(cond);
-            //Alarm alarm(Traits<Network>::ARP_TIMEOUT, &handler, 1);
-            Alarm alarm(100000, &handler, 1);
+            Alarm alarm(Traits<Network>::TIMEOUT, &handler, 1);
             cond->wait();
         }
 
-        db<Network_Layer>(TRC) << "ARP_Router::resolve(addr=" << addr << ") => not found!\n";
+        db<Network>(TRC) << "ARP::resolve(la=" << la
+            << ") => not found!\n";
 
         return 0;
     }
 
-    void received(const Link_Address& src, Protocol proto,
-                  const char* data, int size)
+    virtual Network_Address resolve(const Link_Address& pa)
     {
-        if (proto == Link_Layer::ARP) {
-            const Packet& packet = *reinterpret_cast<const Packet *>(data);
-            db<Network_Layer>(INF) << "IP::update:ARP_Packet=" << packet << "\n";
+        for(unsigned int i = 0; i < Traits<Network>::TRIES; i++) {
+            Network_Address la = Network_Address(0,0,0,0);
+            if(la) {
+                db<Network>(TRC) << "ARP::resolve(pa=" << pa
+                    << ") => " << la << "\n";
 
-            if((packet.op() == REQUEST) && (packet.tpa() == _network->address())) {
-                Packet reply(REPLY, _nic->address(), _network->address(),
+                return la;
+            }
+
+            Condition * cond = _arpt.insert(la);
+            Control_Info request;
+            request.fill(RARP_REQUEST, pa, la, pa, la);
+            _nic->send(Link_Layer::BROADCAST,
+                    M_RARP, &request, sizeof(Control_Info));
+
+            db<Network>(INF) << "ARP::resolve:request sent!\n";
+
+            Condition_Handler handler(cond);
+            Alarm alarm(Traits<Network>::TIMEOUT, &handler, 1);
+            cond->wait();
+        }
+
+        db<Network>(TRC) << "ARP::resolve(pa=" << pa
+            << ") => not found!\n";
+
+        return Network_Address(0,0,0,0);
+    }
+
+    void received(const Link_Address& src, Protocol proto,
+            const char* data, int size)
+    {
+        if (proto == M_ARP) {
+            const Control_Info& packet =
+                *reinterpret_cast<const Control_Info *>(data);
+            db<Network>(INF)
+                << "ARP::update:ARP_Control_Info=" << packet << "\n";
+
+            if((packet.op() == REQUEST)
+                    && (packet.tpa() == _network->address())) {
+                Control_Info reply;
+                reply.fill(REPLY, _nic->address(), _network->address(),
                         packet.sha(), packet.spa());
 
-                db<Network_Layer>(INF) << "IP::update: ARP_Packet=" << reply << "\n";
-                _nic->send(packet.sha(), Link_Layer::ARP, &reply, sizeof(Packet));
+                db<Network>(INF)
+                    << "ARP::update: ARP_Control_Info=" << reply << "\n";
+                _nic->send(packet.sha(),
+                        M_ARP, &reply, sizeof(Control_Info));
 
-                db<Network_Layer>(INF) << "IP::update: ARP request answered!\n";
-            }
-            else if((packet.op() == REPLY) && (packet.tha() == _nic->address())) {
-                db<Network_Layer>(INF) << "IP::update: ARP reply received!\n";
+                db<Network>(INF)
+                    << "ARP::update: ARP request answered!\n";
+            } else if((packet.op() == REPLY)
+                    && (packet.tha() == _nic->address())) {
+                db<Network>(INF)
+                    << "ARP::update: ARP reply received!\n";
 
                 _arpt.update(packet.spa(), packet.sha());
             }
-        }
+        } else
+            db<Network>(WRN)
+                << "Network::update:unknown packet type (" << proto << ")\n";
     }
 
 private:
     Table _arpt;
 };
 
-
-// A dummy router that always resolves logical address to broadcast address
-template<typename Link_Layer, typename Network_Layer>
-class BCast: public Network_Service_Common<Link_Layer, Network_Layer>
-{
-public:
-    typedef Network_Service_Common<Link_Layer, Network_Layer> Base;
-
-    typedef typename Base::Link_Address Link_Address;
-    typedef typename Base::Network_Address Network_Address;
-
-    typedef typename Base::Protocol Protocol;
-
-    typedef NIC::Address MAC_Address;
-
-
-    BCast(Link_Layer* nic, Network_Layer* network): Base(nic, network) {}
-
-    void update(const Network_Address& la, const Link_Address& pa)
-    {
-        // Do nothing
-    }
-
-    Link_Address resolve(const Network_Address& addr, SegmentedBuffer * pdu)
-    {
-        return MAC_Address(Link_Layer::BROADCAST);
-    }
-
-    void received(const Link_Address& src, Protocol proto,
-                  const char* data, int size) {}
-};
-
 __END_SYS
 
-#endif
+#endif /* __network_service_h */
+
+#endif /* __arp_h */
 

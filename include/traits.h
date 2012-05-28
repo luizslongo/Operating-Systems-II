@@ -1,4 +1,4 @@
-// EPOS Configuration
+
 
 #ifndef __traits_h
 #define __traits_h
@@ -16,7 +16,11 @@ struct Traits
 };
 
 
-// Utilities
+/*
+ *
+ * Utilities
+ *
+ */
 template <> struct Traits<Debug>
 {
     static const bool error   = true;
@@ -41,7 +45,11 @@ template <> struct Traits<Heap>: public Traits<void>
 };
 
 
-// System parts
+/*
+ *
+ * System parts
+ *
+ */
 template <> struct Traits<Boot>: public Traits<void>
 {
 };
@@ -59,7 +67,11 @@ template <> struct Traits<System>: public Traits<void>
 };
 
 
-// Common Mediators 
+/*
+ *
+ * Common Mediators 
+ *
+ */
 template <> struct Traits<Serial_Display>: public Traits<void>
 {
     static const bool enabled = true;
@@ -68,24 +80,31 @@ template <> struct Traits<Serial_Display>: public Traits<void>
     static const int TAB_SIZE = 8;
 };
 
-
-// Services
-template <> struct Traits<Services>: public Traits<void>
+template <> struct Traits<CMAC<Radio_Wrapper> >: public Traits<void>
 {
-    static const bool enabled = true;
+    static const bool debugged = false;
 
-    // Network services
-    enum {
-        ARP = 0,
-        ADHOP,
-        BCast
-    };
+    static const bool time_triggered = true;
+    static const bool auto_rx        = true;    // automatically listen to the channel. obs: must have time_triggered = true
+    static const bool coordinator    = false;
+    static const bool ack            = false;
+    static const bool csma           = true;
+    static const bool rts_cts        = false;
 
-    static const int SERVICE = BCast;
+    static const unsigned long SLEEPING_PERIOD = 500;  // ms
+    static const unsigned long TIMEOUT         = 400;   // ms
+    static const unsigned long BACKOFF         = 2;     // ms
+    static const unsigned char ADDRESS         = 0x0002;
+    static const unsigned int  MTU             = 118;
+    static const unsigned int  BUFFER_SIZE     = 5;     // of packets
 };
 
 
-// Abstractions
+/*
+ *
+ * Abstractions
+ *
+ */
 template <> struct Traits<Thread>: public Traits<void>
 {
     typedef Scheduling_Criteria::Priority Criterion;
@@ -103,11 +122,49 @@ template <> struct Traits<Synchronizer>: public Traits<void>
 {
 };
 
+
+/*
+ *
+ * Network Abstractions
+ *
+ */
+
+// Services
+template <> struct Traits<Services>: public Traits<void>
+{
+    static const bool enabled = true;
+
+    // Network services
+    enum {
+        ARP = 0,
+        ADHOP
+    };
+
+    static const int SERVICE = ARP;
+};
+
+// List of Neighbors
+template <> struct Traits<Neighborhood>: public Traits<void>
+{
+    static const bool enabled = true;
+
+    static const unsigned int MAX_NEIGHBORS = 5;
+    static const unsigned int EXPIRE = 10;
+};
+
+// Network Protocols
 template <> struct Traits<Network>: public Traits<Services>
 {
-    static const unsigned short ELP = 0x8888;
-    static const unsigned int   ARP_TRIES = 3;
-    static const unsigned int   ARP_TIMEOUT = 1000000; // 1s
+    static const unsigned int   TRIES = 3;
+    static const unsigned int   TIMEOUT = 1000000; // 1s
+
+    // Network Protocols
+    enum {
+        ELP,
+        ROUTER
+    };
+
+    static const int NETWORK_PROTOCOL = ELP;
 };
 
 template <> struct Traits<IP>: public Traits<Services>
@@ -117,7 +174,7 @@ template <> struct Traits<IP>: public Traits<Services>
     static const unsigned long BROADCAST = 0x0a0002ff;   // 10.0.2.255
 
     static const bool forwarding    = false;
-    static const bool fragmentation = false;   
+    static const bool fragmentation = false;
     static const bool spawn_thread  = true;
 
     // Network configuration method
@@ -126,13 +183,19 @@ template <> struct Traits<IP>: public Traits<Services>
         LINK_LOCAL,
         DHCP
     };
-    
+
     static const short         CONFIG   = STATIC;
     static const unsigned int  OPT_SIZE = 0; // options size in 32-bit words
     static const unsigned char DEF_TTL  = 0x40; // time-to-live
     static const unsigned int  MAX_FRAGMENTS = 1;
 };
 
+template <> struct Traits<ICMP> : public Traits<IP>
+{
+    static const bool echo_reply = true;
+};
+
+// Transport Protocols
 template <> struct Traits<UDP> : public Traits<IP>
 {
     static const bool checksum = false;
@@ -141,36 +204,6 @@ template <> struct Traits<UDP> : public Traits<IP>
 template <> struct Traits<TCP> : public Traits<IP>
 {
     static const bool checksum = true;
-};
-
-template <> struct Traits<ICMP> : public Traits<IP>
-{
-    static const bool echo_reply = true; 
-};
-
-
-template <> struct Traits<CMAC<Radio_Wrapper> >: public Traits<void>
-{
-    static const bool debugged = false;
-
-    static const bool time_triggered = false;
-    static const bool coordinator    = false;
-    static const bool ack            = false;
-    static const bool csma           = true;
-    static const bool rts_cts        = false;
-
-    static const unsigned long SLEEPING_PERIOD = 1000;  // ms
-    static const unsigned long TIMEOUT         = 500;   // ms
-    static const unsigned long BACKOFF         = 2;     // ms
-    static const unsigned char ADDRESS         = 0x0001;
-    static const unsigned int  MTU             = 118; 
-};
-
-template <> struct Traits<Neighboring>: public Traits<void>
-{
-    static const bool enabled = true;
-
-    static const unsigned int MAX_NEIGHBORS = 3;
 };
 
 __END_SYS

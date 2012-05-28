@@ -52,22 +52,22 @@ template <> struct Traits<MC13224V_Flash>: public Traits<MC13224V_Common>
 
 template <> struct Traits<MC13224V_Timer_0>: public Traits<MC13224V_Common>
 {
-    static const int FREQUENCY = 10; // default system timer, in Hz
+    static const int FREQUENCY = 1000; // default system timer, in Hz
 };
 
 template <> struct Traits<MC13224V_Timer_1>: public Traits<MC13224V_Common>
 {
-	static const int FREQUENCY = 10;
+	static const int FREQUENCY = 1000;
 };
 
 template <> struct Traits<MC13224V_Timer_2>: public Traits<MC13224V_Common>
 {
-	static const int FREQUENCY = 10;
+	static const int FREQUENCY = 1000;
 };
 
 template <> struct Traits<MC13224V_Timer_3>: public Traits<MC13224V_Common>
 {
-	static const int FREQUENCY = 10;
+	static const int FREQUENCY = 1000;
 };
 
 template <> struct Traits<MC13224V_RTC>: public Traits<MC13224V_Common>

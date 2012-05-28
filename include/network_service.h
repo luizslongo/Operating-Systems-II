@@ -1,9 +1,6 @@
 #ifndef __network_service_h
 #define __network_service_h
 
-#include <utility/debug.h>
-#include <utility/buffer.h>
-
 __BEGIN_SYS
 
 template <class Link_Layer, class Network_Layer>
@@ -16,23 +13,35 @@ protected:
     typedef typename Link_Layer::Protocol   Protocol;
 
 public:
+    class Control_Info;
+
     Network_Service_Common(Link_Layer* nic, Network_Layer* network):
         _nic(nic), _network(network)
     {
         _my_nic_address = nic->address();
         _my_network_address = network->address();
     }
-    
+
     virtual ~Network_Service_Common() {}
 
     virtual void update(const Network_Address& la,
             const Link_Address& pa) = 0;
 
     virtual Link_Address resolve(const Network_Address& la,
-            SegmentedBuffer * pdu) = 0;
+            const char * pdu) = 0;
+
+    virtual Network_Address resolve(const Link_Address& pa) = 0;
 
     virtual void received(const Link_Address& pa, Protocol proto,
             const char* data, int size) = 0;
+
+    void address(const Link_Address & addr) {
+        _my_nic_address = addr;
+    }
+
+    void address(const Network_Address & addr) {
+        _my_network_address = addr;
+    }
 
 protected:
     Link_Layer* _nic;
@@ -43,5 +52,5 @@ protected:
 
 __END_SYS
 
-#endif
+#endif /* __network_service_h */
 

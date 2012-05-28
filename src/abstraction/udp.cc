@@ -161,8 +161,8 @@ void UDP::Channel::update(Data_Observed<IP::Address> *ob, long c,
     if (packet.type() == ICMP::UNREACHABLE)
     {
         IP::Header& ip_hdr = *reinterpret_cast<IP::Header*>(packet.data());
-        if (ip_hdr.src_ip() != (u32)_local.ip() ||
-            ip_hdr.dst_ip() != (u32)_remote.ip()) {
+        if (ip_hdr.src() != (u32)_local.ip() ||
+            ip_hdr.dst() != (u32)_remote.ip()) {
             return;
         }
         char * ip_data = (char*)data + ip_hdr.hlength();

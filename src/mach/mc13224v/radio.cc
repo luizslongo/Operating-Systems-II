@@ -59,6 +59,7 @@ int Radio_Wrapper::receive(unsigned char * data) {
 }
 
 void Radio_Wrapper::off() {
+    device->off();
 }
 
 void Radio_Wrapper::listen() {

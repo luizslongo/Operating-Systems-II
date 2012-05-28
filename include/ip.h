@@ -37,12 +37,42 @@ public:
 
   
     //* create from string representation in the form A.B.C.D
-    IP_Address(const char * _addr);
-   
-    friend Debug& operator<<(Debug& db,const IP_Address& addr);
+    IP_Address(const char * _addr)
+    {
+        unsigned char addr[4];
+        addr[0] = 0; addr[1] = 0; addr[2] = 0; addr[3] = 0;
+        int i;
+        for(i=0;i<4;++i) {
+            char * sep = strchr(_addr,'.');
+            addr[i] = atol(_addr);
+            if (!sep) break;
+            _addr = ++sep;
+        }
+        memcpy(this,addr,sizeof(this));
+    }
+
+    friend Debug& operator<<(Debug& db,const IP_Address& addr)
+    {
+        const u8 * _addr = reinterpret_cast<const u8*>(&addr);
+        db << dec << (int)(_addr[0]) << "." << (int)(_addr[1])
+            << "." << (int)(_addr[2]) << "." << (int)(_addr[3]);
+        return db;
+    }
 
     //* convert to string pointed by dst and return last char position
-    char* to_string(char * dst);
+    char* to_string(char * dst)
+    {
+        const u8 * _addr = reinterpret_cast<const u8*>(this);
+        char* p = dst;
+        for(int i=0;i<4;i++) {
+            p += utoa(_addr[i], p);
+            *p++ = '.';
+        }
+        // remove last dot
+        --p;
+        *p = 0;
+        return p;
+    }
     
     bool is_neighbor(IP_Address other,IP_Address mask) const
     {
@@ -53,7 +83,7 @@ public:
     
     operator u32() { return *reinterpret_cast<u32 *>(this); }
     operator u32() const { return *reinterpret_cast<const u32 *>(this); }
-};
+} __attribute__((packed,__may_alias__));
 
 class IP : public Traits<IP>,
            public Active,
@@ -66,7 +96,15 @@ public:
     typedef Data_Observer<IP_Address> Observer;
     typedef IP_Address                Address;
     typedef NIC::Address              MAC_Address;
-    typedef u8                        Protocol;
+
+    typedef NIC::Protocol             Protocol;
+    enum {
+        M_ARP    = NIC::ARP,
+        M_RARP   = NIC::RARP,
+        P_ELP    = NIC::ELP,
+        P_IP     = NIC::IP,
+        P_ROUTER = NIC::ROUTER
+    };
 
     typedef
         Service<Traits<IP>::SERVICE>::Network_Service<NIC,IP>
@@ -77,12 +115,6 @@ public:
     
     /// This flag is used for single-NIC optmizations
     static const bool multiNIC = (Traits<NIC>::NICS::Length > 1);
-
-    enum {
-        PROT_IP   = NIC::IP,
-        PROT_ARP  = NIC::ARP,
-        PROT_RARP = NIC::RARP
-    };
 
     class Header;
 
@@ -183,8 +215,8 @@ public:
         calculate_checksum();
     }
 
-    const Address & src_ip() const { return _src_ip; }
-    const Address & dst_ip() const { return _dst_ip; }
+    const Address & src() const { return _src_ip; }
+    const Address & dst() const { return _dst_ip; }
     u32 hlength() { return _ihl * 4; }
     u32 length() const { return CPU::ntohs(_length); }
     u16 flags() const {
@@ -197,7 +229,8 @@ public:
     u16 id() const { return CPU::ntohs(_id); }
 
     // setters for fragment operations
-    void set_src(const Address & src_ip){ _src_ip = src_ip; }
+    void src(const Address & src_ip){ _src_ip = src_ip; }
+    void dst(const Address & dst_ip){ _dst_ip = dst_ip; }
     void set_length(u16 length) { _length = CPU::htons(length); }
     void set_offset(u16 off) {
         u16 x = CPU::htons(flags()<<13|off);
@@ -213,7 +246,7 @@ public:
         _protocol = protocol;
     }
 
-    char* get_options() { return _opt; }
+    char* options() { return _opt; }
 
     u8 ttl() { return _ttl; }
 

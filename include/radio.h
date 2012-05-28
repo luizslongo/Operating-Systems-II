@@ -14,8 +14,24 @@ protected:
     Radio_Common() {}
 
 public:
-    typedef NIC_Common::Address<1> Address;
+    class Address: public NIC_Common::Address<1> {
+    public:
+        Address() {}
+        Address(unsigned char a0)
+            : NIC_Common::Address<1>(a0) {}
+
+        operator char() { return *reinterpret_cast<char *>(this); }
+        operator char() const { return *reinterpret_cast<const char *>(this); }
+    } __attribute__((packed,__may_alias__));
+
     typedef unsigned char Protocol;
+    enum {
+        ARP    = 0x86,
+        RARP   = 0x05,
+        ELP    = 0x88,
+        IP     = 0x80,
+        ROUTER = 0x81
+    };
 
     static const unsigned int MTU = 24;  
     static const unsigned int HEADER_SIZE = 6;
@@ -82,14 +98,6 @@ public:
     unsigned char _rss;
     char _data[MTU];
     unsigned short _crc;
-    };
-
-    // Frame types
-    enum {
-    EPOS_LP = 0x01,
-    IP,
-    ARP,
-    RARP
     };
 
     struct Statistics: public NIC_Common::Statistics {

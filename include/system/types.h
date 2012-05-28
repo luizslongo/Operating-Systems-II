@@ -294,18 +294,6 @@ class Clock;
 class Alarm;
 class Chronometer;
 
-// Abstractions	- Communication
-class Ethernet;
-class Network;
-class IP;
-class UDP;
-class TCP;
-class ICMP;
-class RTP;
-
-// Abstractions - Communication - Layer integration
-class Neighboring;
-
 // Abstractions - Service
 template <int> class Service;
 class Services;
@@ -313,7 +301,20 @@ class Services;
 // Abstractions - Service - Network service
 template <typename, typename> class ARP;
 template <typename, typename> class ADHOP;
-template <typename, typename> class BCast;
+
+// Abstractions - Communication - Protocols
+class Ethernet;
+class Network;
+class ELP;
+class Router;
+class IP;
+class ICMP;
+class UDP;
+class TCP;
+class RTP;
+
+// Abstractions - Communication - List of neighbors
+class Neighborhood;
 
 // Abstractions	- Sentients
 class Photo_Sentient;

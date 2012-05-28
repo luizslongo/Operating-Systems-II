@@ -19,18 +19,18 @@ public:
     static const unsigned int HEADER_SIZE = 14;
 
     typedef NIC_Common::Address<6> Address;
-    typedef unsigned short Protocol;
     typedef NIC_Common::Observer Observer;
     typedef NIC_Common::Observed Observed;
     typedef char PDU[MTU];
     typedef unsigned int CRC;
 
-    // Some valid Ethernet frame types
+    typedef unsigned short Protocol;
     enum {
-	IP   = 0x0800,
-	ARP  = 0x0806,
-	RARP = 0x8035,
-	ELP  = Traits<Network>::ELP
+        ARP    = 0x0806,
+        RARP   = 0x8035,
+        ELP    = 0x8888,
+        IP     = 0x0800,
+        ROUTER = 0x0801
     };
 
     // The Ethernet Frame (RFC 894)

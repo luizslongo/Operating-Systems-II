@@ -41,6 +41,8 @@ public:
     
     const Address & address() { return _dev->address(); }
 
+    void address(const Address & address) { _dev->address(address); }
+
     const Statistics & statistics() { return _dev->statistics(); }
 
     static void init();

@@ -78,9 +78,9 @@ public:
 	    return db;
 	}
 
-    private:
+    protected:
 	unsigned char _address[LENGTH];
-    } __attribute__((packed));
+    } __attribute__((packed,__may_alias__));
 
     // NIC protocol id
     typedef unsigned char Protocol;
@@ -124,6 +124,7 @@ public:
 	virtual unsigned int mtu() = 0;
 
 	virtual const Address & address() = 0;
+	virtual void address(const Address &) = 0;
 
 	virtual const Statistics & statistics() = 0;
     };
@@ -155,6 +156,8 @@ public:
 	virtual unsigned int mtu() { return NIC::mtu(); }
 
 	virtual const Address & address() { return NIC::address(); }
+
+    virtual void address(const Address & address) { NIC::address(address); }
 
 	virtual const Statistics & statistics() { return NIC::statistics(); }
     };

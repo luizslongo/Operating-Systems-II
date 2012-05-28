@@ -43,8 +43,9 @@ CMAC<Radio_Wrapper>::CMAC_STATE_TRANSITION CMAC<Radio_Wrapper>::state_machine() 
                     _state = RX_CONTENTION;
                 else if (result == TX_PENDING)
                     _state = TX_CONTENTION;
-                else if (result == TIMEOUT)
+                else if (result == TIMEOUT) {
                     _state = OFF;
+                }
 
                 break;
 
@@ -148,6 +149,7 @@ CMAC<Radio_Wrapper>::CMAC_STATE_TRANSITION CMAC<Radio_Wrapper>::state_machine() 
         }
     }
 
+    /*
     if ((result == TIMEOUT) || (result == TX_FAILED) || (result == CHANNEL_BUSY) ||
             (result == TX_ERROR) || (result == RX_ERROR)){
         ++_consecutive_failures;
@@ -160,19 +162,10 @@ CMAC<Radio_Wrapper>::CMAC_STATE_TRANSITION CMAC<Radio_Wrapper>::state_machine() 
     } else {
         _consecutive_failures = 0;
     }
+    */
 
     db<CMAC>(TRC) << "CMAC::state_machine - state machine finished executing\n";
     return result;
-}
-
-template<>
-void CMAC<Radio_Wrapper>::tx_p() {
-    _sem_tx->p();
-}
-
-template<>
-void CMAC<Radio_Wrapper>::rx_p() {
-    _sem_rx->p();
 }
 
 template<>
@@ -182,21 +175,26 @@ void CMAC<Radio_Wrapper>::state_machine_handler() {
 
         _state_machine_result = state_machine();
 
+        /*
         // kills the rest of the active cycle
         if (Traits<CMAC<Radio_Wrapper> >::TIMEOUT != 0) {
             while (!timeout);
         }
+        */
+
+        _busy = false;
 
         alarm_activate(&(CMAC<Radio_Wrapper>::state_machine_handler), _sleeping_period);
 
         if (_last_sm_exec_tx) {
             _last_sm_exec_tx = false;
-            _sem_tx->v();
 
         } else if (_last_sm_exec_rx) {
             _last_sm_exec_rx = false;
-            _sem_rx->v();
         }
+
+        if (_state_machine_result == RX_OK)
+            _instance->notify((int) _rx_protocol);
     }
 }
 
@@ -217,6 +215,7 @@ void CMAC<Radio_Wrapper>::alarm_handler_function() {
     }
 }
 
+template<> CMAC<Radio_Wrapper> * CMAC<Radio_Wrapper>::_instance = 0;
 template<> Radio_Wrapper * CMAC<Radio_Wrapper>::_radio = 0;
 
 template<> CMAC<Radio_Wrapper>::Address * CMAC<Radio_Wrapper>::_addr = 0;
@@ -225,12 +224,16 @@ template<> volatile CMAC<Radio_Wrapper>::CMAC_STATE CMAC<Radio_Wrapper>::_state 
 template<> volatile CMAC<Radio_Wrapper>::Statistics * CMAC<Radio_Wrapper>::_stats = 0;
 
 // used only when TIME_TRIGGERED = true
-template<> Semaphore * CMAC<Radio_Wrapper>::_sem_rx = 0;
-template<> Semaphore * CMAC<Radio_Wrapper>::_sem_tx = 0;
+template<> volatile bool CMAC<Radio_Wrapper>::_busy = false;
 template<> CMAC<Radio_Wrapper>::CMAC_STATE_TRANSITION CMAC<Radio_Wrapper>::_state_machine_result = CMAC<Radio_Wrapper>::UNPACK_FAILED;
 template<> volatile bool CMAC<Radio_Wrapper>::_last_sm_exec_tx = false;
 template<> volatile bool CMAC<Radio_Wrapper>::_last_sm_exec_rx = false;
 template<> volatile bool CMAC<Radio_Wrapper>::_on_active_cycle = false;
+
+template<> bool CMAC<Radio_Wrapper>::_buffer_empty = true;
+template<> unsigned int CMAC<Radio_Wrapper>::_buffer_head = 0;
+template<> unsigned int CMAC<Radio_Wrapper>::_buffer_tail = 0;
+template<> CMAC<Radio_Wrapper>::packet CMAC<Radio_Wrapper>::_buffer[Traits<CMAC<Radio_Wrapper> >::BUFFER_SIZE] = {};
 
 template<> unsigned char CMAC<Radio_Wrapper>::_frame_buffer[FRAME_BUFFER_SIZE] = {};
 template<> unsigned int CMAC<Radio_Wrapper>::_frame_buffer_size = 0;

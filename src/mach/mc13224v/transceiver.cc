@@ -13,7 +13,7 @@ MC13224V_Transceiver::get_lqi_func MC13224V_Transceiver::get_lqi = reinterpret_c
 
 MC13224V_Transceiver::event_handler * MC13224V_Transceiver::handler = 0;
 
-volatile unsigned char MC13224V_Transceiver::fcs_mode = MC13224V_Transceiver::USE_FCS;
+volatile unsigned char MC13224V_Transceiver::fcs_mode = MC13224V_Transceiver::NO_FCS;
 
 volatile MC13224V_Transceiver::packet_t MC13224V_Transceiver::packet_pool[NUM_PACKETS];
 volatile MC13224V_Transceiver::packet_t *MC13224V_Transceiver::free_head, *MC13224V_Transceiver::rx_end, *MC13224V_Transceiver::tx_end, *MC13224V_Transceiver::dma_tx, *MC13224V_Transceiver::dma_rx;
@@ -142,6 +142,8 @@ volatile MC13224V_Transceiver::packet_t* MC13224V_Transceiver::get_free_packet()
 }
 
 void MC13224V_Transceiver::post_receive() {
+    while (current_action != SEQ_NOP);
+
     ResumeMACASync();
 
     IC::disable(IC::IRQ_MACA);
@@ -172,7 +174,8 @@ void MC13224V_Transceiver::post_receive() {
     CPU::out32(IO::MACA_CONTROL, 
             ((1 << CONTROL_ASAP)        |
              (4 << CONTROL_PRECOUNT)    |
-             (fcs_mode << CONTROL_NOFC) |
+//             (fcs_mode << CONTROL_NOFC) |
+             (1 << CONTROL_NOFC) |
              (0 << CONTROL_AUTO)        |
              (1 << CONTROL_PRM)         |
              (0 << CONTROL_MODE)        |
@@ -200,6 +203,8 @@ volatile MC13224V_Transceiver::packet_t* MC13224V_Transceiver::rx_packet() {
 }
 
 void MC13224V_Transceiver::post_tx() {
+    while (current_action != SEQ_NOP);
+
     ResumeMACASync();
 
     IC::disable(IC::IRQ_MACA);
@@ -336,8 +341,20 @@ void MC13224V_Transceiver::maca_isr() {
 
     IC::disable(IC::IRQ_MACA);
 
-    if (bit_is_set(CPU::in8(IO::MACA_IRQ),IRQ_ACPL)) {
-        ResumeMACASync();
+    unsigned int maca_irq = CPU::in32(IO::MACA_IRQ);
+
+    if (bit_is_set(maca_irq,IRQ_DI)) {
+        CPU::out32(IO::MACA_CLRIRQ, (1 << IRQ_DI));
+        dma_rx->length = CPU::in32(IO::MACA_GETRXLVL) - 2; // packet length does not include FCS
+        add_to_rx(dma_rx);
+        dma_rx = 0;
+
+        if (handler != 0)
+            handler(SFD_DETECTED);
+    }
+
+    if (bit_is_set(maca_irq,IRQ_ACPL)) {
+//        ResumeMACASync();
 
         if (current_action == SEQ_TX) {
             dma_tx = 0;
@@ -348,6 +365,9 @@ void MC13224V_Transceiver::maca_isr() {
                 cca_result = false; // channel busy
             else
                 cca_result = true;  // channel idle
+
+        } else if (current_action == SEQ_RX) {
+            dma_tx = 0;
         }
 
         current_action = SEQ_NOP;
@@ -355,39 +375,29 @@ void MC13224V_Transceiver::maca_isr() {
         CPU::out32(IO::MACA_CLRIRQ, (1 << IRQ_ACPL));
     }
 
-    if (bit_is_set(CPU::in8(IO::MACA_IRQ),IRQ_DI)) {
-        CPU::out32(IO::MACA_CLRIRQ, (1 << IRQ_DI));
-        dma_rx->length = CPU::in32(IO::MACA_GETRXLVL) - 2; // packet length does not include FCS
-        add_to_rx(dma_rx);
-        dma_rx = 0;
-
-        if (handler != 0)
-            handler(SFD_DETECTED);
-    }
-
-    if (bit_is_set(CPU::in8(IO::MACA_IRQ),IRQ_FLT)) {
+    if (bit_is_set(maca_irq,IRQ_FLT)) {
         ResumeMACASync();
         CPU::out32(IO::MACA_CLRIRQ, (1 << IRQ_FLT));
     }
 
-    if (bit_is_set(CPU::in8(IO::MACA_IRQ),IRQ_CRC)) {
-        ResumeMACASync();
+    if (bit_is_set(maca_irq,IRQ_CRC)) {
+//        ResumeMACASync();
         CPU::out32(IO::MACA_CLRIRQ, (1 << IRQ_CRC));
     }
 
-    if (bit_is_set(CPU::in8(IO::MACA_IRQ),IRQ_SFT)) {
+    if (bit_is_set(maca_irq,IRQ_SFT)) {
         CPU::out32(IO::MACA_CLRIRQ, (1 << IRQ_SFT));
     }
 
-    if (bit_is_set(CPU::in8(IO::MACA_IRQ),IRQ_POLL)) {
+    if (bit_is_set(maca_irq,IRQ_POLL)) {
         CPU::out32(IO::MACA_CLRIRQ, (1 << IRQ_POLL));
     }
 
-    if (bit_is_set(CPU::in8(IO::MACA_IRQ),IRQ_SYNC)) {
+    if (bit_is_set(maca_irq,IRQ_SYNC)) {
         CPU::out32(IO::MACA_CLRIRQ, (1 << IRQ_SYNC));
     }
 
-    if (CPU::in32(IO::MACA_IRQ) != 0) {
+    if (!(maca_irq && 0xFE07)) {
         CPU::out32(IO::MACA_CLRIRQ, 0xffff);
     }
 
@@ -402,6 +412,9 @@ void MC13224V_Transceiver::init_phy() {
     CPU::out32(IO::MACA_TXCCADELAY, 0x00000025);
     CPU::out32(IO::MACA_FRAMESYNC0, 0x000000A7);
     CPU::out32(IO::MACA_CLK,        0x00000008);
+    CPU::out32(IO::MACA_RXACKDELAY, 30);
+    CPU::out32(IO::MACA_TXACKDELAY, 68);
+    CPU::out32(IO::MACA_RXEND,      180);
     CPU::out32(IO::MACA_MASKIRQ, 
             ((1 << IRQ_RST)  |
              (1 << IRQ_ACPL) |
@@ -686,6 +699,10 @@ void MC13224V_Transceiver::ResumeMACASync() {
     CPU::out32(IO::MACA_CLRIRQ, 0xFFFF);
 
     IC::enable(IC::IRQ_MACA);
+}
+
+void MC13224V_Transceiver::off() {
+    CPU::out32(IO::MACA_CONTROL, SEQ_NOP);
 }
 
 __END_SYS

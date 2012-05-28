@@ -9,41 +9,6 @@ const IP::Address IP::NULL = IP::Address((u32)0);
 
 u16 IP::Header::pktid = 0; // incremental packet id
 
-// IP::Address
-
-IP_Address::IP_Address(const char * _addr) {
-    unsigned char addr[4];
-    addr[0] = 0; addr[1] = 0; addr[2] = 0; addr[3] = 0;
-    int i;
-    for(i=0;i<4;++i) {
-        char * sep = strchr(_addr,'.');
-        addr[i] = atol(_addr);
-        if (!sep) break;
-        _addr = ++sep;
-    }
-    memcpy(this,addr,sizeof(this));
-}
-
-char* IP_Address::to_string(char * dst) {
-    const u8 * _addr = reinterpret_cast<const u8*>(this);
-    char* p = dst;
-    for(int i=0;i<4;i++) {
-        p += utoa(_addr[i], p);
-        *p++ = '.';
-    }
-    // remove last dot
-    --p;
-    *p = 0;
-    return p;
-}
-
-Debug& operator<<(Debug& db,const IP_Address& addr) {
-   const u8 * _addr = reinterpret_cast<const u8*>(&addr);
-   db << dec << (int)(_addr[0]) << "." << (int)(_addr[1])
-      << "." << (int)(_addr[2]) << "." << (int)(_addr[3]);
-   return db;
-}
-
 // IP::Header
 
 void IP::Header::calculate_checksum() {
@@ -95,10 +60,10 @@ void IP::process_ip(char *data, u16 size)
 {
     Header &pck_h = *reinterpret_cast<Header*>(data);
     if((u32)_self != (u32)0 && // We MUST accept anything if our IP address is not set
-       (u32)(pck_h.dst_ip()) != (u32)(_self) &&
-       (u32)(pck_h.dst_ip()) != (u32)(_broadcast))
+       (u32)(pck_h.dst()) != (u32)(_self) &&
+       (u32)(pck_h.dst()) != (u32)(_broadcast))
     {
-        db<IP>(INF) << "IP Packet discarded. dst= " << pck_h.dst_ip() << "\n";
+        db<IP>(INF) << "IP Packet discarded. dst= " << pck_h.dst() << "\n";
         return;
     }
     else {
@@ -114,7 +79,7 @@ void IP::process_ip(char *data, u16 size)
     if (calculate_checksum(data,pck_h.hlength()) != 0xFFFF) {
         db<IP>(TRC) << "IP checksum failed for incoming packet\n";
     } else {
-        notify(pck_h.src_ip(),pck_h.dst_ip(),(int)pck_h.protocol(),
+        notify(pck_h.src(),pck_h.dst(),(int)pck_h.protocol(),
                 &data[pck_h.hlength()], pck_h.length() - pck_h.hlength());
         if (pck_h.ttl() > 0) {
             pck_h.ttl(pck_h.ttl() - 1);
@@ -138,8 +103,8 @@ int IP::run()
             continue;
         }
 
-        if (prot == NIC::IP) {
-            _network_service.update(reinterpret_cast<Header*>(_packet_receive[0])->src_ip(), src);
+        if (prot == P_IP) {
+            _network_service.update(reinterpret_cast<Header*>(_packet_receive[0])->src(), src);
             process_ip(_packet_receive[0], size);
         }
 
@@ -159,9 +124,9 @@ s32 IP::send(const Address & from,const Address & to,SegmentedBuffer * data,Prot
 
     MAC_Address mac = NIC::BROADCAST;
     if (from.is_neighbor(to,_netmask))
-        mac = _network_service.resolve(to,&pdu);
+        mac = _network_service.resolve(to,pdu.data());
     else
-        mac = _network_service.resolve(_gateway,&pdu);
+        mac = _network_service.resolve(_gateway,pdu.data());
 
     //TODO: put fragmentation here
     int size = pdu.total_size();
@@ -172,7 +137,7 @@ s32 IP::send(const Address & from,const Address & to,SegmentedBuffer * data,Prot
     int retry = 5, ret;
 
     do {
-        ret = _nic.send(mac,NIC::IP,_packet_send,size);
+        ret = _nic.send(mac,P_IP,_packet_send,size);
         if (ret >= 0)
             return size;
 
