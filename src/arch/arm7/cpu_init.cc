@@ -10,7 +10,8 @@ void ARM7::init()
 {
     db<Init, ARM7>(TRC) << "ARM7::init()\n";
 
-	MMU::init();
+	if(Traits<MMU>::enabled) MMU::init();
+	if(Traits<TSC>::enabled) TSC::init();
 
 	return;
 }
