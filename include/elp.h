@@ -18,30 +18,20 @@ public:
     using Network_Common::_prot;
     using Network_Common::_address;
 
-    Address BROADCAST;
-
     typedef
         Service<Traits<Network>::ARP>::Network_Service<NIC,ELP>
         Network_Service;
 
 public:
-    ELP(unsigned int id = 0):
-        Network_Common(),
-        BROADCAST(~0),
+    ELP(unsigned int unit = 0):
+        Network_Common(unit),
+        BROADCAST(Traits<Network>::BROADCAST),
         _network_service(&_nic, this)
     {
         db<Network>(TRC)
             << "ELP(unit=0)\n";
 
-        const NIC::Address a((unsigned char) id);
-        _nic.address(a);
-
-        _address = Address(10,0,0,id);
-
-        _network_service.address(a);
-        _network_service.address(_address);
         _network_service.update(BROADCAST, NIC::BROADCAST);
-
 
         _nic.attach(this, M_ARP);
         _nic.attach(this, M_RARP);
@@ -105,6 +95,7 @@ public:
     }
 
 private:
+    Address BROADCAST;
     Network_Service _network_service;
 };
 

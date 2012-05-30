@@ -12,7 +12,7 @@ OStream cout;
 
 int main()
 {
-    Network net(1);
+    Network net;
     Network::Address to(10,0,1,1);
     Network::Address from;
     Network::Protocol prot;

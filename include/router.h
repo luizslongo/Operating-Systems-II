@@ -74,20 +74,12 @@ public:
         Control_Info _options;
     } __attribute__((packed,__may_alias__));
 
-    Router(unsigned int id = 0):
-        Network_Common(),
+    Router(unsigned int unit = 0):
+        Network_Common(unit),
         _network_service(&_nic, this)
     {
         db<Network>(TRC)
             << "Router(unit = 0)\n";
-
-        const NIC::Address a((unsigned char) id);
-        _nic.address(a);
-
-        _address = Address(10,0,0,id);
-
-        _network_service.address(a);
-        _network_service.address(_address);
 
         _nic.attach(this, P_ROUTER);
     }
