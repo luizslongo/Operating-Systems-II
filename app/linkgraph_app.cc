@@ -13,10 +13,10 @@ __USING_SYS
 class LinkApp: Conditional_Observer
 {
 public:
-    LinkApp(bool is_sink, unsigned int id = 0)
+    LinkApp(bool is_sink)
     {
-        _id = id;
-        net = new Network(_id);
+        _id = Traits<CMAC<Radio_Wrapper> >::ADDRESS;
+        net = new Network();
         net->protocol(PROT);
         net->attach(this,PROT);
         if (is_sink) {
@@ -81,7 +81,7 @@ private:
 
     void sensor()
     {
-        Network::Address sink(10,0,0,0);
+        Network::Address sink(10,0,1,15);
 
         for (unsigned int i = 0; i < 100; i++) {
             msg[i] = i;
@@ -129,7 +129,7 @@ private:
 
 int main() {
     LinkApp app(SINK);
-    //LinkApp app(SENSOR, 1);
+    //LinkApp app(SENSOR);
 
     return 0;
 }
