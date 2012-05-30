@@ -155,10 +155,6 @@ template <> struct Traits<Neighborhood>: public Traits<void>
 // Network Protocols
 template <> struct Traits<Network>: public Traits<Services>
 {
-    static const unsigned long ADDRESS   = 0x0a00010f;   // 10.0.1.15
-    static const unsigned long NETMASK   = 0xffffff00;   // 255.255.255.0
-    static const unsigned long BROADCAST = 0x0a0001ff;   // 10.0.1.255
-
     static const unsigned int   TRIES = 3;
     static const unsigned int   TIMEOUT = 1000000; // 1s
 

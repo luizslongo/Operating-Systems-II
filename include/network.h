@@ -27,8 +27,7 @@ public:
             > >
         >::Result Base;
 
-    Network();
-    Network(unsigned int unit);
+    Network(unsigned int id);
     ~Network();
 
     using Base::send;

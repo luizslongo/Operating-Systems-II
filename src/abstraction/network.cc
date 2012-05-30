@@ -6,11 +6,7 @@
 
 __BEGIN_SYS
 
-Network::Network():
-    Network::Base(0)
-{ }
-
-Network::Network(unsigned int id):
+Network::Network(unsigned int id = 0):
     Network::Base(id)
 { }
 

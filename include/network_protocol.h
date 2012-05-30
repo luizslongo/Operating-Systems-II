@@ -16,16 +16,9 @@ public:
     class Address: public NIC_Common::Address<4> {
     public:
         Address() {}
-        Address(unsigned long a)
-            : NIC_Common::Address<4>((a>>24) & 0xff,
-                    (a>>16) & 0xff,
-                    (a>>8) & 0xff,
-                    a & 0xff)
-        {}
         Address(unsigned char a0, unsigned char a1 = 0,
                 unsigned char a2 = 0, unsigned char a3 = 0)
-            : NIC_Common::Address<4>(a0, a1, a2, a3)
-        {}
+            : NIC_Common::Address<4>(a0, a1, a2, a3) {}
 
         operator int() { return *reinterpret_cast<int *>(this); }
         operator int() const { return *reinterpret_cast<const int *>(this); }
@@ -49,9 +42,8 @@ public:
     class Header;
 
 public:
-    Network_Common(unsigned int unit):
-        _nic(unit),
-        _address((unsigned long) Traits<Network>::ADDRESS)
+    Network_Common():
+        _nic(0)
     { }
 
     ~Network_Common() { }
