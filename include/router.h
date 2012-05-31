@@ -197,6 +197,13 @@ public:
         prot = 0;
     }
 
+    const Address & address() { return _address; }
+
+    void address(const Address & address) {
+        _address = address;
+        _network_service.address(address);
+    }
+
 private:
     Queue<Data,true> _buffer;
     Network_Service _network_service;

@@ -34,6 +34,11 @@ public:
     using Base::send;
     using Base::receive;
     using Base::update;
+
+    const Address & address() { return Base::address(); }
+
+    void address(const Address & address) { Base::address(address); }
+
 };
 
 __END_SYS

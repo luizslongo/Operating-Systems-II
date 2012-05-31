@@ -94,6 +94,13 @@ public:
         _network_service.received(src, prot, data, size);
     }
 
+    const Address & address() { return _address; }
+
+    void address(const Address & address) {
+        _address = address;
+        _network_service.address(address);
+    }
+
 private:
     Address BROADCAST;
     Network_Service _network_service;
