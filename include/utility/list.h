@@ -343,7 +343,7 @@ namespace List_Iterators
         }
         
         bool operator==(const Iterator & i) const {
-            return _current == i.current;
+            return _current == i._current;
         }
         bool operator!=(const Iterator & i) const {
             return _current != i._current;
