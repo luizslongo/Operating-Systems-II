@@ -13,10 +13,12 @@ class MC13224V_IC: public IC_Common
 {
 private:
 	typedef IO_Map<Machine> IO;
+
+public:
+	typedef void (*Interrupt_Handler)();
 	
 protected:
 
-	typedef void (*Interrupt_Handler)();
 	static Interrupt_Handler vector[];
 
     MC13224V_IC() {}
