@@ -1111,6 +1111,90 @@ private:
     Element * volatile _chosen;
 };
 
+// Doubly-Linked, Global Scheduling List
+template <typename T,
+          typename R = List_Element_Rank, 
+          typename El = List_Elements::Doubly_Linked_Scheduling<T, R> >
+class Global_Scheduling_List: private Ordered_List<T, R, El>
+{
+private:
+    typedef Ordered_List<T, R, El> Base;
+
+public:
+    typedef T Object_Type;
+    typedef R Rank_Type;
+    typedef El Element;
+    typedef typename Base::Iterator Iterator;
+
+public:
+    Global_Scheduling_List() {}
+
+    using Base::empty;
+    using Base::size;
+    using Base::head;
+    using Base::tail;
+    using Base::begin;
+    using Base::end;
+
+    void insert(Element * e) {
+        db<Lists>(TRC) << "Global_Scheduling_List::insert(e=" << e 
+                      << ") => {p=" << (e ? e->prev() : (void *) -1)
+                      << ",o=" << (e ? e->object() : (void *) -1)
+                      << ",n=" << (e ? e->next() : (void *) -1)
+                      << "}\n";
+
+        Base::insert(e);
+    }
+
+    Element * remove(Element * e) {
+        db<Lists>(TRC) << "Global_Scheduling_List::remove(e=" << e 
+                      << ") => {p=" << (e ? e->prev() : (void *) -1)
+                      << ",o=" << (e ? e->object() : (void *) -1)
+                      << ",n=" << (e ? e->next() : (void *) -1)
+                      << "}\n";
+
+        Base::remove(e);
+
+        return e;
+    }
+    
+    void remove_head() {
+        Base::remove_head();
+    }
+
+    Element * remove(const Object_Type * obj) {
+        Element * e = search(obj);
+        if(e)
+            return remove(e);
+        else
+            return 0;
+    }
+
+    Element * choose() {
+        db<Lists>(TRC) << "Global_Scheduling_List::choose()\n";
+
+        return head();
+    }
+
+    Element * choose(const Object_Type * obj) {
+        Element * e = search(obj);
+        if(e)
+            return choose(e);
+        else
+            return 0;
+    }
+
+private:
+    void reorder() {
+        // Rank might have changed, so remove and insert to reorder
+        //Element *_chosen = head();
+        //Base::remove(_chosen);
+        //Base::insert(_chosen);
+    }
+    
+private:
+    Element * volatile _chosen;
+};
 
 // Doubly-Linked, Grouping List
 template <typename T, 
