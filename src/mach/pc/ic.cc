@@ -79,20 +79,50 @@ void PC_IC::exc_fpu(unsigned int i,
 }
 
 // APIC class methods
-void APIC::ipi_start(Log_Addr entry)
+void APIC::ipi_init(System_Info<PC> *si) 
 {
-    unsigned int vector = (entry >> 12) & 0xff;
-
-    // Broadcast STARTUP IPI to all APs excluding self twice
-    write(ICR0_31, ICR_OTHERS | ICR_LEVEL | ICR_ASSERT | ICR_STARTUP | vector);
-    while((read(ICR0_31) & ICR_PENDING));
-    i8255::ms_delay(10); // ~ 10ms delay
-
-    write(ICR0_31, ICR_OTHERS | ICR_LEVEL | ICR_ASSERT | ICR_STARTUP | vector);
-    while((read(ICR0_31) & ICR_PENDING));
-
-    // Give other CPUs a time to wake up (> 100ms)
+    reinterpret_cast<volatile int &>(si->bm.aps_status[0]) = 0;
+    for(unsigned int ap_number = 1; ap_number < Traits<PC>::MAX_CPUS; ap_number++) {
+        reinterpret_cast<volatile int &>(si->bm.aps_status[ap_number]) = 0;
+        write(ICR32_63, (ap_number << 24));
+        write(ICR0_31, ICR_LEVEL | ICR_ASSERT | ICR_INIT);
+        while((read(ICR0_31) & ICR_PENDING));
+    }
     i8255::ms_delay(100);
 };
+
+void APIC::ipi_start(Log_Addr entry, System_Info<PC> *si)
+{
+    unsigned int vector = (entry >> 12) & 0xff;
+    
+    for(unsigned int ap_number = 1; ap_number < Traits<PC>::MAX_CPUS; ap_number++) {
+        write(ICR32_63, (ap_number << 24));
+        write(ICR0_31, ICR_LEVEL | ICR_ASSERT | ICR_STARTUP | vector);
+        while((read(ICR0_31) & ICR_PENDING));
+    }
+    
+    i8255::ms_delay(500);
+    
+    for(unsigned int ap_number = 1; ap_number < Traits<PC>::MAX_CPUS; ap_number++) {
+        if(reinterpret_cast<volatile int &>(si->bm.aps_status[ap_number]) == 1) { //if AP is up
+            CPU::finc(reinterpret_cast<volatile int &>(si->bm.aps_status[ap_number]));
+            i8255::ms_delay(30);
+        } else { // send a second SIPI to the AP
+            write(ICR32_63, (ap_number << 24));
+            write(ICR0_31, ICR_LEVEL | ICR_ASSERT | ICR_STARTUP | vector);
+            i8255::ms_delay(500);
+            if(reinterpret_cast<volatile int &>(si->bm.aps_status[ap_number]) == 1) //if AP is up
+              CPU::finc(reinterpret_cast<volatile int &>(si->bm.aps_status[ap_number]));
+            //else AP was not initilized
+        }        
+    }
+}
+
+void APIC::ipi_send(int dest, int interrupt)
+{
+    write(ICR32_63, (dest << 24));
+    write(ICR0_31, ICR_LEVEL | ICR_ASSERT | ICR_FIXED | interrupt);
+    while((read(ICR0_31) & ICR_PENDING));
+}
 
 __END_SYS
