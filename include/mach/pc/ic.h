@@ -42,14 +42,16 @@ public:
     enum {
 	IRQ_TIMER	= 0,
 	IRQ_KEYBOARD	= 1,
-	IRQ_CASCADE	= 2
+	IRQ_CASCADE	= 2,
+	IRQ_RESCHEDULE = 3
     };
 
     // Interrupts
     static const unsigned int INTS = 64;
     enum {
 	INT_TIMER	= HARD_INT + IRQ_TIMER,
-	INT_KEYBOARD	= HARD_INT + IRQ_KEYBOARD
+	INT_KEYBOARD	= HARD_INT + IRQ_KEYBOARD,
+	INT_RESCHEDULER = HARD_INT + IRQ_RESCHEDULE
     };
 
 public:
@@ -105,6 +107,8 @@ public:
 	    IA32::out8(SLAVE_CMD, EOI);
     	IA32::out8(MASTER_CMD, EOI); // always send EOI to master
     }
+
+	static void ipi_send(int dest, int interrupt) { }
 };
 
 // Intel IA-32 APIC (internal, not tested with 82489DX)
@@ -122,7 +126,8 @@ public:
     // Interrupts
     static const unsigned int INTS = 64;
     enum {
-	INT_TIMER	= i8259A::INT_TIMER
+	INT_TIMER	= i8259A::INT_TIMER,
+	INT_RESCHEDULER = i8259A::INT_RESCHEDULER
     };
 
     // Default mapping addresses
@@ -409,6 +414,8 @@ private:
 public:
 
     using Base::INT_TIMER;
+    using Base::ipi_send;
+	static const unsigned int INT_RESCHEDULER = Base::INT_RESCHEDULER;
 
 public:
     PC_IC() {}
