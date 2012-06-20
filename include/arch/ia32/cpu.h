@@ -378,6 +378,32 @@ public:
     static Reg32 ntohl(Reg32 v)	{ return htonl(v); }
     static Reg16 ntohs(Reg16 v)	{ return htons(v); }
 
+	static void bts(volatile unsigned int *base, const int bit) {
+    ASMV("bts %1,%0" : "+m" (*base) : "r" (bit));
+    }
+    
+    static void btr(volatile unsigned int *base, const int bit) {
+    ASMV("btr %1,%0" : "+m" (*base) : "r" (bit));
+    }
+    
+    static int bsf(unsigned int & value) {
+      register unsigned int pos;
+      ASMV("bsf %1, %0"
+        : "=a"(pos)
+        : "m"(value)
+        : ); 
+      return pos;
+    }
+
+    static int bsr(unsigned int & value) {
+      register int pos = -1;
+        ASMV("bsr %1, %0"
+        : "=a"(pos)
+        : "m"(value)
+        : ); 
+        return pos;
+    }
+
     static Context * init_stack(
 	Log_Addr stack, unsigned int size, void (* exit)(),
 	int (* entry)()) {
@@ -482,6 +508,13 @@ public:
     }
     static void cr3(const Reg32 value) {
 	ASMV("movl %0, %%cr3" : : "r"(value));
+    }
+
+	static Reg32 cr4() {
+    Reg32 value; ASMV("movl %%cr4, %0" : "=r"(value) :); return value;
+    }
+    static void cr4(const Reg32 value) {
+    ASMV("movl %0, %%cr4" : : "r"(value));
     }
 
     static void gdtr(Reg16 * limit, Reg32 * base) {
