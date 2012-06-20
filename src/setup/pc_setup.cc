@@ -122,6 +122,20 @@ PC_Setup::PC_Setup(char * boot_image)
 
     Display::remap();
 
+	/* The code below is needed to boot the system, using an Intel i7 processor.
+	 * It changes the page address in the generated binary, and for some reason,
+	 * the system is able to boot. The problem does not occur in the Intel 9950 processor.
+	 */
+	if(Traits<Thread>::smp) {
+    	kout << "si->bm.n_cpus = " << si->bm.n_cpus << endl;
+    
+    	kout << "CR0 of CPU(" << Machine::cpu_id() << ") = " << (void *) CPU::cr0() << endl;
+    
+    	for(unsigned int i = 0; i < Traits<PC>::MAX_CPUS; i++) {
+      		kout << "CPU(" << Machine::cpu_id() << ") = " << "si->bm.aps_status[" << i << "] = " << si->bm.aps_status[i] << endl;
+    	}
+    }
+
     // SMP conditional start up
     int cpu_id = Machine::cpu_id();
 
@@ -1021,13 +1035,13 @@ void _start()
 	si->bm.n_cpus = 1;
 
 	// Broadcast INIT IPI to all APs excluding self
-	APIC::ipi_init();
-
+	APIC::ipi_init(si);
+        
 	// Broadcast STARTUP IPI to all APs excluding self
 	// Non-boot CPUs will run a simplified boot strap just to
 	// trampoline them into protected mode
 	// PC_BOOT arranged for this code and stored it at 0x3000
- 	APIC::ipi_start(0x3000);
+ 	APIC::ipi_start(0x3000, si);
 
 	// Check SETUP integrity and get information about its ELF structure
 	ELF * elf = reinterpret_cast<ELF *>(&bi[si->bm.setup_offset]);
@@ -1066,8 +1080,14 @@ void _start()
 	
     } else { // Additional CPUs (APs)
 
-	// Each AP increments the CPU counter
-	CPU::finc(reinterpret_cast<volatile int &>(si->bm.n_cpus));
+    // Informs BSP that this AP is initialized 
+    CPU::finc(reinterpret_cast<volatile int &>(si->bm.aps_status[APIC::id()]));
+    
+    //Wait for BSP's ACK
+    while(reinterpret_cast<volatile int &>(si->bm.aps_status[APIC::id()]) != 2) ;
+    
+    // Each AP increments the CPU counter
+    CPU::finc(reinterpret_cast<volatile int &>(si->bm.n_cpus));
 
 	// Wait for the boot strap CPU to get us a stack
 	while(!Stacks_Ready);
@@ -1085,6 +1105,11 @@ void _start()
 
     // Pass the boot image to SETUP
     ASM("pushl %0" : : "r" (Stacks));
+    
+    if(APIC::id() != 0) { 
+        CPU::cr0(CPU::CR0_PE | CPU::CR0_ET);
+        CPU::cr4(0x0740);
+    }
 
     // Call setup()
     // the assembly is necessary because the compiler generates
