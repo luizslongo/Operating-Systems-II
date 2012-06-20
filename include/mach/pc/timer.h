@@ -7,6 +7,7 @@
 #include <ic.h>
 #include <rtc.h>
 #include <timer.h>
+#include <machine.h>
 
 __BEGIN_SYS
 
@@ -258,12 +259,15 @@ protected:
 	     const Handler * handler,
 	     const Channel & channel):
 	_channel(channel), _initial(FREQUENCY / frequency),
-	_current(_initial), _handler(handler)
+	_handler(handler)
     {
 	db<Timer>(TRC) << "Timer(f=" << frequency
 		       << ",h=" << reinterpret_cast<void*>(handler)
 		       << ",ch=" << channel 
 		       << ") => {count=" << _initial << "}\n";
+
+	for(unsigned int i = 0; i < Traits<Machine>::MAX_CPUS; i++)
+      _current[i] = _initial;
 
 	if(_initial && !_channels[channel]) 
 	    _channels[channel] = this;
@@ -277,7 +281,7 @@ public:
 	     const Channel & channel,
 	     bool retrigger):
 	_channel(channel), _initial(FREQUENCY / frequency),
-	_current(_initial), _handler(handler)
+	_handler(handler)
     {
 	db<Timer>(TRC) << "Timer(f=" << frequency
 		       << ",h=" << reinterpret_cast<void*>(handler)
@@ -288,6 +292,10 @@ public:
 	    _channels[channel] = this;
 	else
 	    db<Timer>(WRN) << "Timer not installed!\n";
+
+	for(unsigned int i = 0; i < Traits<Machine>::MAX_CPUS; i++)
+      _current[i] = _initial;
+
     }
 
     ~PC_Timer() {
@@ -302,15 +310,15 @@ public:
     Hertz frequency() const { return (FREQUENCY / _initial); }
     void frequency(const Hertz & f) { _initial = FREQUENCY / f; reset(); }
 
-    Tick read() { return _current; }
+    Tick read() { return _current[Machine::cpu_id()]; }
 
     int reset() {
 	db<Timer>(TRC) << "Timer::reset() => {f=" << frequency()
 		       << ",h=" << reinterpret_cast<void*>(_handler)
-		       << ",count=" << _current << "}\n";
+		       << ",count=" << _current[Machine::cpu_id()] << "}\n";
 
-	int percentage = _current * 100 / _initial;
-	_current = _initial;
+	int percentage = _current[Machine::cpu_id()] * 100 / _initial;
+	_current[Machine::cpu_id()] = _initial;
 
 	return percentage;
     }
@@ -336,7 +344,7 @@ private:
 protected:
     unsigned int _channel;
     Count _initial;
-    volatile Count _current;
+    volatile Count _current[Traits<Machine>::MAX_CPUS];
     Handler * _handler;
 
     static PC_Timer * _channels[CHANNELS];
