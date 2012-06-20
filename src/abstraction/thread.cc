@@ -246,14 +246,40 @@ void Thread::wakeup_all(Queue * q)
 void Thread::reschedule(bool preempt)
 {
     if(preempt) {
-	db<Thread>(TRC) << "Thread::reschedule()\n";
-    
-	Thread * prev = running();
-	Thread * next = _scheduler.choose();
-	
-	dispatch(prev, next);
+		db<Thread>(TRC) << "Thread::reschedule()\n";
+
+		Thread * prev = running();
+		Thread * next;
+		
+		if(global_scheduler) {
+		  int cpu_lowest = _scheduler.get_lowest_priority_running_cpu();
+		  //call reschedule in another processor
+		  //do not send IPI if the lowest CPU is running an idle task because it will reschedule before the IPI
+		  if(Machine::cpu_id() != cpu_lowest && prev->criterion() != IDLE && _scheduler.head_in_queue(cpu_lowest)->rank() != IDLE) {
+		    unlock();
+		    IC::ipi_send(cpu_lowest, IC::INT_RESCHEDULER);
+		  } else {
+		    next = _scheduler.choose();
+		    dispatch(prev, next);
+		  }
+		} else {
+		  next = _scheduler.choose();
+		  dispatch(prev, next);
+		}
     } else 
-	unlock();
+		  unlock();
+}
+
+void Thread::ipi_reschedule(unsigned int i)
+{
+    lock();
+
+	db<Thread>(TRC) << "Thread::ipi_reschedule()\n";
+
+    Thread * prev = running();
+    Thread * next = _scheduler.choose();
+    
+    dispatch(prev, next); //unlock()
 }
 
 void Thread::time_slicer() 
