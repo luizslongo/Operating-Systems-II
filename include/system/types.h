@@ -277,6 +277,8 @@ namespace Scheduling_Criteria
     class EARM;
     class EAEDF;
     class CPU_Affinity;
+	class GEDF;
+    class GRM;
 };
 
 // Abstractions	- Memory
