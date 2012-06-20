@@ -292,13 +292,9 @@ public:
 	return read(VERSION);
     }
 
-    static void ipi_init() {
-	// Broadcast INIT IPI to all APs excluding self
-	write(ICR0_31, ICR_OTHERS | ICR_LEVEL | ICR_ASSERT | ICR_INIT);
- 	while((read(ICR0_31) & ICR_PENDING));
-    }
-
-    static void ipi_start(Log_Addr entry);
+	static void ipi_send(int dest, int interrupt);
+    static void ipi_init(System_Info<PC> *si);
+	static void ipi_start(Log_Addr entry, System_Info<PC> *si);
 
     static void reset(Log_Addr addr = LOCAL_APIC_LOG_ADDR) {
 	// APIC must be on very early in the boot process, so it is
