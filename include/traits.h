@@ -113,9 +113,16 @@ template <> struct Traits<Thread>: public Traits<void>
     static const unsigned int QUANTUM = 10000; // us
 };
 
-template <> struct Traits<Alarm>: public Traits<void>
+template <> struct Traits<Single_Core_Alarm>: public Traits<void>
 {
     static const bool idle_waiting = true;
+    static const bool enabled = true;
+};
+
+template <> struct Traits<SMP_Alarm>: public Traits<void>
+{
+    static const bool idle_waiting = true;
+    static const bool enabled = true;
 };
 
 template <> struct Traits<Synchronizer>: public Traits<void>
