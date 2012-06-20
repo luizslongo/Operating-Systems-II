@@ -21,6 +21,8 @@ protected:
     static const bool preemptive = Traits<Thread>::Criterion::preemptive;
     static const bool energy_aware = Traits<Thread>::Criterion::energy_aware;
     static const bool smp = Traits<Thread>::smp;
+	static const bool global_scheduler = Traits<Thread>::Criterion::GLOBAL_SCHEDULER;
+	static const unsigned int MAX_CPUS = Traits<Machine>::MAX_CPUS;
 
     static const unsigned int QUANTUM = Traits<Thread>::QUANTUM;
     static const unsigned int STACK_SIZE =
@@ -162,6 +164,9 @@ protected:
     static void wakeup_all(Queue * q);
 
     static void reschedule(bool preempt = preemptive);
+
+	//IPI reschedule interrupt handler	
+	static void ipi_reschedule(unsigned int i);
 
     static void time_slicer();
 
