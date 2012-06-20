@@ -291,7 +291,8 @@ class Condition;
 
 // Abstractions	- Time
 class Clock;
-class Alarm;
+class Single_Core_Alarm;
+class SMP_Alarm;
 class Chronometer;
 
 // Abstractions - Service
