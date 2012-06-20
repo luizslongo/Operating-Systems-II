@@ -33,6 +33,11 @@ void Thread::init()
 		Scheduler_Timer(QUANTUM, &time_slicer);
     } 
 
+	if(global_scheduler) {
+        IC::int_vector(IC::INT_RESCHEDULER, (IC::Interrupt_Handler)&ipi_reschedule);
+        IC::enable(IC::INT_RESCHEDULER);
+    }
+
     db<Init, Thread>(INF) << "Dispatching the first thread: " << first
 			  << "\n";
 
