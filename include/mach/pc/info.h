@@ -33,6 +33,7 @@ public:
 	int system_offset;
 	int application_offset;
 	int extras_offset;
+	unsigned int aps_status[Traits<PC>::MAX_CPUS]; // APs initialization status
     };
 
     // Physical Memory Map (built by SETUP)
