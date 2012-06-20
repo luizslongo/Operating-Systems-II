@@ -31,6 +31,9 @@ namespace Scheduling_Criteria
 	static const bool energy_aware = false;
 
 	static const unsigned int QUEUES = 1;
+	static const bool GLOBAL_SCHEDULER = false;
+
+	static const int queue() { return 0; }
 
     public:
 	Priority(int p = NORMAL): _priority(p) {}
@@ -170,12 +173,162 @@ namespace Scheduling_Criteria
 
 	static int _next_cpu;
     };
+
+	// Global Earliest Deadline First
+    class GEDF: public EDF
+    {
+    public:
+    static const unsigned int QUEUES = 1;
+    static const bool GLOBAL_SCHEDULER = true;
+    
+    public:     
+    GEDF(int p = NORMAL): EDF(p) { } // Aperiodic
+    GEDF(const RTC::Microsecond & d): EDF(d) { }
+                
+    static int current() { return Machine::cpu_id(); }
+    };
+    
+    // Global Rate Monotonic
+    class GRM: public RM
+    {
+    public:
+    static const unsigned int QUEUES = 1;
+    static const bool GLOBAL_SCHEDULER = true;
+    
+    public:     
+    GRM(int p = NORMAL): RM(p) { } // Aperiodic
+    GRM(const RTC::Microsecond & d): RM(d) { }
+        
+    static int current() { return Machine::cpu_id(); }
+    };
 };
 
-
 // Scheduling_Queue
-template <typename T, unsigned int Q>
+// specialization for GLOBAL SCHEDULER, one queue, Q ready tasks
+template <typename T, unsigned int Q, bool GLOBAL>
 class Scheduling_Queue
+{
+private:
+    typedef typename T::Criterion Criterion;
+    typedef Global_Scheduling_List<T, Criterion> Queue;
+    
+public:
+    typedef typename Queue::Element Element;
+public:
+    Scheduling_Queue() { 
+      for(unsigned int i = 0; i < Q; i++)
+        _running_elem[i] = 0;
+      _run_size = 0;
+      _lowest_priority_cpu = 0;
+    }
+
+    unsigned int size() { return _ready.size(); }
+    
+    Element * head_in_queue(int q) {
+        return _running_elem[q];
+    }
+    
+    int get_lowest_priority_running_cpu() { 
+      update_lowest_priority_cpu();
+      return _lowest_priority_cpu;
+    }
+    
+    Element * volatile & chosen() { 
+    return _running_elem[Criterion::current()];
+    }
+
+    void insert(Element * e) {
+      if(_run_size < Q) {
+        register int cpu_id = Criterion::current();
+        if(_running_elem[cpu_id] != 0) {
+            if(_running_elem[cpu_id]->rank() > e->rank()) {
+            _ready.insert(_running_elem[cpu_id]);
+            _running_elem[cpu_id] = e;
+            } else {
+              _ready.insert(e);
+            }
+        } else {
+          _running_elem[cpu_id] = e; 
+          _run_size++;
+        }
+      } else {
+        _ready.insert(e);
+      }
+    }
+
+    Element * remove(Element * e) {
+      // removing object instead of element forces a search and renders
+      // removing inexistent objects harmless
+      //kout << "remove() e = " << (void *) e << " rank = " << e->rank();
+      register int cpu_id = Criterion::current();
+      if(_running_elem[cpu_id] == e) {
+        _running_elem[cpu_id] = _ready.head();
+        _ready.remove_head(); 
+      } else {
+        e = _ready.remove(e);
+      }
+      return e;
+    }
+
+    Element * choose() { 
+      register int cpu_id = Criterion::current();
+      if(size() > 0 && _ready.head()->rank() != Criterion::IDLE) {
+        Element *e = _ready.head(); 
+        if(e->rank() < _running_elem[cpu_id]->rank()) {
+          _ready.remove_head(); 
+          _ready.insert(_running_elem[cpu_id]);
+          _running_elem[cpu_id] = e;
+        }
+      }
+      return _running_elem[cpu_id];
+    }
+
+    Element * choose_another() {
+      register int cpu_id = Criterion::current();
+      if(size() > 0) {
+        Element *e;
+        e = _ready.head();
+        if(e->rank() < _running_elem[cpu_id]->rank()) {
+          _ready.remove_head(); //remove_head()
+          _ready.insert(_running_elem[cpu_id]);
+          _running_elem[cpu_id] = e;
+        }
+      }
+      return _running_elem[cpu_id];
+    }
+
+    Element * choose(Element * e) {
+      register int cpu_id = Criterion::current();
+      if(e != _running_elem[cpu_id]) {
+        _ready.insert(_running_elem[cpu_id]);
+        _ready.remove(e);
+        _running_elem[cpu_id] = e;
+      }
+      return _running_elem[cpu_id];
+    }
+
+private:
+    void update_lowest_priority_cpu(void) {
+        for(unsigned int  i = 0; i < Q; i++) {
+            if(_running_elem[i] == 0) {
+              _lowest_priority_cpu = i;
+              break;
+            } else {
+                if(_running_elem[i]->rank() > _running_elem[_lowest_priority_cpu]->rank())
+                    _lowest_priority_cpu = i;
+            }
+        }
+    }
+private:  
+    Element * volatile _running_elem[Q];
+    unsigned int _run_size;
+    int _lowest_priority_cpu;
+    Queue _ready;
+};
+
+//specialization for multi-queue, not GLOBAL SCHEDULER
+template <typename T, unsigned int Q>
+class Scheduling_Queue<T, Q, false>
 {
 private:
     typedef typename T::Criterion Criterion;
@@ -188,6 +341,12 @@ public:
     Scheduling_Queue() {}
 
     unsigned int size() { return _ready[Criterion::current()].size(); }
+
+	Element * head_in_queue(int q) {
+        return _ready[q].chosen();
+    }
+    
+    int get_lowest_priority_running_cpu() { return 0; }
 
     Element * volatile & chosen() { 
 	return _ready[Criterion::current()].chosen();
@@ -221,7 +380,7 @@ private:
 
 // Specialization for single-queue
 template <typename T>
-class Scheduling_Queue<T, 1>: public Scheduling_List<T, typename T::Criterion>
+class Scheduling_Queue<T, 1, false>: public Scheduling_List<T, typename T::Criterion>
 {
 private:
     typedef Scheduling_List<T, typename T::Criterion> Base;
@@ -230,6 +389,12 @@ public:
     typedef typename Base::Element Element;
 
 public:
+	Element * head_in_queue(int q) {
+        return Base::chosen();
+    }
+  
+    int get_lowest_priority_running_cpu() { return 0; }
+
     Element * remove(Element * e) {
 	// removing object instead of element forces a search and renders
 	// removing inexistent objects harmless
@@ -252,10 +417,10 @@ public:
 // operators <, >, and ==) and must also define a method "link" to export the
 // list element pointing to the object being handled.
 template <typename T>
-class Scheduler: public Scheduling_Queue<T, T::Criterion::QUEUES>
+class Scheduler: public Scheduling_Queue<T, T::Criterion::QUEUES, T::Criterion::GLOBAL_SCHEDULER>
 {
 private:
-    typedef Scheduling_Queue<T, T::Criterion::QUEUES> Base;
+    typedef Scheduling_Queue<T, T::Criterion::QUEUES, T::Criterion::GLOBAL_SCHEDULER> Base;
 
 public:
     typedef typename T::Criterion Criterion;
@@ -269,6 +434,10 @@ public:
 
     T * volatile chosen() { 
 	return const_cast<T * volatile>(Base::chosen()->object()); 
+    }
+
+	int get_lowest_priority_running_cpu() {
+    return Base::get_lowest_priority_running_cpu();   
     }
 
     void insert(T * obj) {
