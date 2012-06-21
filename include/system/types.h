@@ -53,6 +53,9 @@ class PPC32_MMU;
 class MIPS32_MMU;
 class ARM7_MMU;
 
+// Hardware Mediators - Performance Monitoring Units
+class IA32_PMU;
+
 // Hardware Mediators - Machines
 class PC;
 class ATMega16;
@@ -344,6 +347,7 @@ enum
     CPU_ID,
     TSC_ID,
     MMU_ID,
+	PMU_ID,
 
     MACHINE_ID,
     PCI_ID,
