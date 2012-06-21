@@ -2,6 +2,7 @@
 
 #include <cpu.h>
 #include <mmu.h>
+#include <pmu.h>
 #include <system.h>
 #include <system/info.h>
 
@@ -21,6 +22,12 @@ void IA32::init()
 	IA32_MMU::init();
     else
 	db<Init, IA32>(WRN) << "MMU is disabled!\n";
+
+	// Initialize the PMU
+    if(Traits<IA32_PMU>::enabled)
+    IA32_PMU::init();
+    else 
+    db<Init, IA32_PMU>(WRN) << "PMU is disabled!\n";
 }
 
 __END_SYS
