@@ -14,11 +14,7 @@ class Radio_Wrapper
 public:
     static const int FRAME_BUFFER_SIZE = AT86RF230::FRAME_MAX_LENGTH;
 
-    enum {
-	SFD_DETECTED,
-	FRAME_END
-    };
-
+    typedef AT86RF230 Radio;
     typedef AT86RF230::Event Event;
     typedef unsigned char Address;
 

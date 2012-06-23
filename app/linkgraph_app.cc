@@ -45,10 +45,10 @@ private:
         while (true) {
             Alarm::delay(5000000);
 
-            char msg[100];
+            short msg[50];
 
             unsigned int size =
-                Neighborhood::get_instance()->neighborhood(msg, 100);
+                Neighborhood::get_instance()->neighborhood(msg, 50);
 
             if (size == 0)
                 continue;
@@ -67,15 +67,15 @@ private:
     {
         Network::Address from;
 
-        int size = net->receive(&from, msg, sizeof(msg));
+        int size = net->receive(&from, msg.msg_c, sizeof(msg)) / 2;
 
-        if (size == 0)
+        if (size < 2)
             return;
 
         mut_display.lock();
-        cout << "!" << (int) from.id() << "|" << (int) size << "|";
-        for (int i = 0; i < size; i++) {
-            cout << (int) msg[i] << "|";
+        cout << "!" << (int) msg.msg_s[0] << "|" << (int) (size - 1) << "|";
+        for (int i = 1; i < size; i++) {
+            cout << (int) msg.msg_s[i] << "|";
         }
         cout << "\n";
         mut_display.unlock();
@@ -83,22 +83,26 @@ private:
 
     void sensor()
     {
-        for (unsigned int i = 0; i < 100; i++) {
-            msg[i] = i;
+        msg.msg_s[0] = _id;
+
+        for (unsigned int i = 1; i < 50; i++) {
+            msg.msg_s[i] = 0;
         }
+
+        short * p_msg_s = &(msg.msg_s[1]);
 
         while (true) {
             unsigned int size =
-                Neighborhood::get_instance()->neighborhood(msg, 100);
+                Neighborhood::get_instance()->neighborhood(p_msg_s, 48);
 
-            net->send(_sink_address, msg, size);
+            net->send(_sink_address, msg.msg_c, 2 + (size * 2));
 
             cout << "sent: ";
 
             mut_display.lock();
             cout << (int) _id << "|" << (int) size << "|";
-            for (int i = 0; i < (int) size; i++) {
-                cout << (int) msg[i] << "|";
+            for (int i = 1; i < (int) (size + 1); i++) {
+                cout << (int) msg.msg_s[i] << "|";
             }
             cout << "\n";
             mut_display.unlock();
@@ -118,8 +122,13 @@ private:
     }
 
 private:
-    char msg[100];
-    unsigned int _id;
+    union Msg {
+        char msg_c[100];
+        short msg_s[50];
+    };
+
+    Msg msg;
+    unsigned short _id;
 
     Network::Address _sink_address;
     Network::Address _my_address;
@@ -134,8 +143,8 @@ int main() {
     Network::Address sink_address(10,0,1,0);
     Network::Address my_address(10,0,1,1);
 
-    //LinkApp app(SINK, sink_address, sink_address);
-    LinkApp app(SENSOR, sink_address, my_address);
+    LinkApp app(SINK, sink_address, sink_address);
+    //LinkApp app(SENSOR, sink_address, my_address);
 
     return 0;
 }

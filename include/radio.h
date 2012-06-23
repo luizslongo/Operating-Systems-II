@@ -14,14 +14,21 @@ protected:
     Radio_Common() {}
 
 public:
-    class Address: public NIC_Common::Address<1> {
+    class Address: public NIC_Common::Address<2> {
     public:
         Address() {}
-        Address(unsigned char a0)
-            : NIC_Common::Address<1>(a0) {}
+        Address(unsigned char a[2]) 
+            : NIC_Common::Address<2>(a[1],a[0]) {}
+        Address(unsigned short a)
+            : NIC_Common::Address<2>(a & 0xff,
+                                    (a>>8) & 0xff)
+        {}
+        Address(unsigned char a0, unsigned char a1)
+            : NIC_Common::Address<2>(a1, a0)
+        {}
 
-        operator char() { return *reinterpret_cast<char *>(this); }
-        operator char() const { return *reinterpret_cast<const char *>(this); }
+        operator short() { return *reinterpret_cast<short *>(this); }
+        operator short() const { return *reinterpret_cast<const short *>(this); }
     } __attribute__((packed,__may_alias__));
 
     typedef unsigned char Protocol;

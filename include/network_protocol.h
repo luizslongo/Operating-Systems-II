@@ -16,15 +16,17 @@ public:
     class Address: public NIC_Common::Address<4> {
     public:
         Address() {}
+        Address(unsigned char a[4]) 
+            : NIC_Common::Address<4>(a[3],a[2],a[1],a[0]) {}
         Address(unsigned long a)
-            : NIC_Common::Address<4>((a>>24) & 0xff,
-                    (a>>16) & 0xff,
-                    (a>>8) & 0xff,
-                    a & 0xff)
+            : NIC_Common::Address<4>(a & 0xff,
+                                    (a>>8) & 0xff,
+                                    (a>>16) & 0xff,
+                                    (a>>24) & 0xff)
         {}
-        Address(unsigned char a0, unsigned char a1 = 0,
-                unsigned char a2 = 0, unsigned char a3 = 0)
-            : NIC_Common::Address<4>(a0, a1, a2, a3)
+        Address(unsigned char a0, unsigned char a1,
+                unsigned char a2, unsigned char a3)
+            : NIC_Common::Address<4>(a3, a2, a1, a0)
         {}
 
         operator int() { return *reinterpret_cast<int *>(this); }

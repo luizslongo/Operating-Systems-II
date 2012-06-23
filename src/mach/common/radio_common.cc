@@ -4,7 +4,7 @@
 
 __BEGIN_SYS
 
-const Radio_Common::Address Radio_Common::BROADCAST(0xff);
+const Radio_Common::Address Radio_Common::BROADCAST(0xffff);
 
 __END_SYS
 

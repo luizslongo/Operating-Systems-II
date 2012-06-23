@@ -590,7 +590,7 @@ public:
 
                         CMAC<T>::_frame_buffer_size = sizeof(preamble_t);
 
-                        for (int i = 0; i < Traits<CMAC<T> >::SLEEPING_PERIOD + (Traits<CMAC<T> >::SLEEPING_PERIOD >> 1) + 10; i++) {
+                        for (unsigned long i = 0; i < Traits<CMAC<T> >::SLEEPING_PERIOD + (Traits<CMAC<T> >::SLEEPING_PERIOD >> 1) + 10; i++) {
                             preamble->time -= 1;
                             Generic_Tx<T>::execute(result);
                         }
@@ -836,7 +836,7 @@ private:
 
     static void _event_handler(typename T::Event event) {
         wait(250);
-        if (event == T::SFD_DETECTED) {
+        if (event == T::Radio::SFD_DETECTED) {
             CMAC<T>::_radio->off();
             while (!_frame_received) _frame_received = true; // no excuses now
             db<CMAC<T> >(INF) << "Generic_Lpl::event_handler - FRAME_RECEIVED" << _frame_received << "\n";

@@ -14,13 +14,9 @@ class Radio_Wrapper
 public:
     static const int FRAME_BUFFER_SIZE = MC13224V_Transceiver::MAX_PACKET_SIZE;
 
-    enum {
-        SFD_DETECTED,
-        FRAME_END
-    };
-
+    typedef MC13224V_Transceiver Radio;
     typedef MC13224V_Transceiver::Event Event;
-    typedef unsigned char Address;
+    typedef Radio_Common::Address Address;
 
     Radio_Wrapper() {}
     ~Radio_Wrapper() {}

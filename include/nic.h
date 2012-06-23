@@ -56,26 +56,25 @@ public:
 	}
 
     friend OStream & operator << (OStream & cout, const Address & a) {
-	    cout << hex;
-	    for(unsigned int i = 0; i < LENGTH; i++) {
-		cout  << (unsigned int)(a._address[i]);
-		if(i < (LENGTH - 1))
-            cout << ":";
-	    }
-	    cout << dec;
+        cout << hex;
+        for(int i = LENGTH - 1; i >= 0; i--) {
+            cout  << (unsigned int)(a._address[i]);
+            if(i > 0)
+                cout << ":";
+        }
+        cout << dec;
         return cout;
-	}
-
+    }
 
 	friend Debug & operator << (Debug & db, const Address & a) {
-	    db << hex;
-	    for(unsigned int i = 0; i < LENGTH; i++) {
-		db << (unsigned int)(a._address[i]);
-		if(i < (LENGTH - 1))
-		    db << ":";
-	    }
-	    db << dec;
-	    return db;
+        db << hex;
+        for(int i = LENGTH - 1; i >= 0; i--) {
+            db << (unsigned int)(a._address[i]);
+            if(i > 0)
+                db << ":";
+        }
+        db << dec;
+        return db;
 	}
 
     protected:

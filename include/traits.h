@@ -91,12 +91,12 @@ template <> struct Traits<CMAC<Radio_Wrapper> >: public Traits<void>
     static const bool csma           = true;
     static const bool rts_cts        = false;
 
-    static const unsigned long SLEEPING_PERIOD = 500;  // ms
-    static const unsigned long TIMEOUT         = 400;   // ms
-    static const unsigned long BACKOFF         = 2;     // ms
-    static const unsigned char ADDRESS         = 0x0002;
-    static const unsigned int  MTU             = 118;
-    static const unsigned int  BUFFER_SIZE     = 5;     // of packets
+    static const unsigned long  SLEEPING_PERIOD = 500;  // ms
+    static const unsigned long  TIMEOUT         = 400;   // ms
+    static const unsigned long  BACKOFF         = 2;     // ms
+    static const unsigned short ADDRESS         = 0x0001;
+    static const unsigned int   MTU             = 118;
+    static const unsigned int   BUFFER_SIZE     = 5;     // of packets
 };
 
 

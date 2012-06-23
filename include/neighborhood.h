@@ -78,7 +78,7 @@ public:
         return _instance;
     }
 
-    int neighborhood(char * data, const unsigned int size) {
+    int neighborhood(short * data, const unsigned int size) {
         update();
 
         if (_nodes.empty())
@@ -87,7 +87,7 @@ public:
         unsigned int i;
         List_Iterators::Bidirecional<Element> it;
         for (i = 1, it = _nodes.begin(); (it != _nodes.end()) && (i < size); i++, it++) {
-            data[i - 1] = (char) it->object()->get_address();
+            data[i - 1] = (short) it->object()->get_address();
         }
         return i - 1;
     }

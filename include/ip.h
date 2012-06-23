@@ -26,15 +26,17 @@ class IP_Address : public NIC_Common::Address<4> {
 public:
     IP_Address() {}
     IP_Address(unsigned char addr[4]) 
-        : NIC_Common::Address<4>(addr[0],addr[1],addr[2],addr[3]) {}
-            
-    IP_Address(unsigned long addr) { 
-        addr = CPU::htonl(addr);
-        memcpy(this, &addr, sizeof(addr)); 
-    }
-    IP_Address(u8 a0, u8 a1 = 0, u8 a2 = 0, u8 a3 = 0)
-        : NIC_Common::Address<4>(a0, a1, a2, a3) {}
-
+        : NIC_Common::Address<4>(addr[3],addr[2],addr[1],addr[0]) {}
+    IP_Address(unsigned long a)
+        : NIC_Common::Address<4>(a & 0xff,
+                                (a>>8) & 0xff,
+                                (a>>16) & 0xff,
+                                (a>>24) & 0xff)
+    {}
+    IP_Address(unsigned char a0, unsigned char a1,
+            unsigned char a2, unsigned char a3)
+        : NIC_Common::Address<4>(a3, a2, a1, a0)
+    {}
   
     //* create from string representation in the form A.B.C.D
     IP_Address(const char * _addr)

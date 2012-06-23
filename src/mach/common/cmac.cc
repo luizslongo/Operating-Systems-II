@@ -240,13 +240,13 @@ template<> unsigned int CMAC<Radio_Wrapper>::_frame_buffer_size = 0;
 
 template<> void* CMAC<Radio_Wrapper>::_rx_data = 0;
 template<> unsigned int CMAC<Radio_Wrapper>::_rx_data_size = 0;
-template<> CMAC<Radio_Wrapper>::Address CMAC<Radio_Wrapper>::_rx_src_address = 0;
+template<> CMAC<Radio_Wrapper>::Address CMAC<Radio_Wrapper>::_rx_src_address = (unsigned short) 0;
 template<> volatile bool CMAC<Radio_Wrapper>::_rx_pending = false;
 template<> CMAC<Radio_Wrapper>::Protocol CMAC<Radio_Wrapper>::_rx_protocol = 0;
 
 template<> const void* CMAC<Radio_Wrapper>::_tx_data = 0;
 template<> unsigned int CMAC<Radio_Wrapper>::_tx_data_size = 0;
-template<> CMAC<Radio_Wrapper>::Address CMAC<Radio_Wrapper>::_tx_dst_address = 0;
+template<> CMAC<Radio_Wrapper>::Address CMAC<Radio_Wrapper>::_tx_dst_address = (unsigned short) 0;
 template<> volatile bool CMAC<Radio_Wrapper>::_tx_pending = false;
 template<> CMAC<Radio_Wrapper>::Protocol CMAC<Radio_Wrapper>::_tx_protocol = 0;
 

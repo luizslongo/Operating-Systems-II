@@ -107,7 +107,7 @@ private:
             if(el)
                 return el->object()->_phy_addr;
             else
-                return 0;
+                return Link_Layer::BROADCAST;
         }
     };
 
@@ -210,7 +210,7 @@ public:
         db<Network>(TRC) << "ARP::resolve(la=" << la
             << ") => not found!\n";
 
-        return 0;
+        return Link_Layer::BROADCAST;
     }
 
     virtual Network_Address resolve(const Link_Address& pa)
