@@ -144,7 +144,7 @@ architecture RTL of axi4lite_old is
             NET_BUS_SIZE       : integer := NET_BUS_SIZE;
             ROUTER_X_ADDR      : integer := 0;
             ROUTER_Y_ADDR      : integer := 0;
-            ROUTER_LOCAL_ADDR  : std_logic_vector(2 downto 0) := "0");
+            ROUTER_LOCAL_ADDR  : std_logic_vector(2 downto 0) := "000");
         port(clk_i       : in std_logic;
             reset_axi_i     : in std_logic;
             reset_noc_i     : in std_logic;

@@ -28,7 +28,7 @@ entity axi4lite_proc_io_node is
         NET_BUS_SIZE       : integer := 27;
         ROUTER_X_ADDR      : integer := 0;
         ROUTER_Y_ADDR      : integer := 0;
-        ROUTER_LOCAL_ADDR  : std_logic_vector(2 downto 0) := "0");
+        ROUTER_LOCAL_ADDR  : std_logic_vector(2 downto 0) := "000");
 
    port(clk_i       : in std_logic;
         reset_axi_i     : in std_logic;
