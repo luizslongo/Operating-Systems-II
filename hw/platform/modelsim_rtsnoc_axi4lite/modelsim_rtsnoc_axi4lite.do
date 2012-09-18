@@ -37,7 +37,8 @@ vlog ../../mach/common/simple_uart/shortfifo.v
 vlog ../../mach/common/simple_uart/medfifo.v
 vlog ../../mach/common/simple_uart/simple_uart_rx.v
 vlog ../../mach/common/simple_uart/simple_uart_tx.v
-vlog ../../mach/common/simple_uart/simple_uart.v
+#vlog ../../mach/common/simple_uart/simple_uart.v
+sccom -g ../../mach/common/simple_uart/simple_uart.cc
 vlog ../../mach/common/simple_uart/simple_uart_axi4lite.v
 
 vlog ../../mach/common/gpio/very_simple_gpio.v
@@ -73,6 +74,8 @@ vlog ../../mach/common/rtsnoc_router/rtsnoc_to_axi4lite_master.v
 vcom ../../mach/rtsnoc/axi4lite/axi4lite_proc_io_node.vhd
 vcom ../../mach/rtsnoc/axi4lite/axi4lite_old.vhd
 
+vlog ../../mach/common/simple_uart/uart_rx.v
+
 #top models
 vlog uart_rx_wrapper.v
 
@@ -83,6 +86,7 @@ scgenmod uart_rx_wrapper > uart_rx_wrapper.h
 
 #toplevel
 sccom -g modelsim_rtsnoc_axi4lite.cc
+vcom modelsim_rtsnoc_axi4lite.vhd
 
 #link systemc with modelsim
 sccom -L /usr/lib -l util -link 
@@ -91,7 +95,8 @@ sccom -L /usr/lib -l util -link
 set StdArithNoWarnings 1
 set NumericStdNoWarnings 1
 
-vsim -L unisim -L unisims_ver -L xilinxcorelib  work.virtual_platform
+#vsim -L unisim -L unisims_ver -L xilinxcorelib  work.virtual_platform
+vsim -L unisim -L unisims_ver -L xilinxcorelib  work.virtual_platform_hdl
 
 #vcd file trace_dec.vcd
 #vcd add -r -file trace_dec.vcd /*
@@ -99,4 +104,4 @@ vsim -L unisim -L unisims_ver -L xilinxcorelib  work.virtual_platform
 #vcd add -r -file trace_dec.vcd /plasma_axi4lite_testbench/plasma/pic/*
 #vcd add -file trace_dec.vcd /plasma_axi4lite_testbench/plasma/plasma_amba/*
 
-#run -all
+run -all

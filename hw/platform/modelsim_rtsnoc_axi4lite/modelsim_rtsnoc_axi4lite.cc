@@ -56,10 +56,10 @@ SC_MODULE(virtual_platform) {
 	std::time_t	real_time_start;
 
 	SC_CTOR(virtual_platform)
-		:uart_mdl("uart_model"),
-		 soc("soc", "soc", 1, (const char**)FREQ_S),
-		 rst_ctr("rst_ctr", "rst_ctr"),
-		 uart_rx("uart_rx", "uart_rx"),
+		:soc("soc", "axi4lite_old", 1, (const char**)FREQ_S),
+		 rst_ctr("rst_ctr", "axi4_reset_control"),
+		 uart_rx("uart_rx", "uart_rx_wrapper"),
+		 uart_mdl("uart_model"),
 		 bool2logic("bool2logic"),
 		 clk_period(1000/CLK, SC_NS),
 		 clk("clk", clk_period)
@@ -71,14 +71,14 @@ SC_MODULE(virtual_platform) {
 	    bool2logic.outputs[1](rst_bnt_logic);
 
 
-	    /*soc.clk_i(clk_logic);
+	    soc.clk_i(clk_logic);
 		soc.reset_i(rst);
 		soc.uart_tx_o(soc_uart_tx);
 		soc.uart_rx_i(soc_uart_rx);
 		soc.uart_baud_o(soc_uart_baud);
 		soc.gpio_i(gpio_in);
 		soc.gpio_o(gpio_out);
-		soc.ext_int_i(ext_int);*/
+		soc.ext_int_i(ext_int);
 
 		rst_ctr.clk_i(clk_logic);
 		rst_ctr.ext_reset_i(rst_bnt_logic);
