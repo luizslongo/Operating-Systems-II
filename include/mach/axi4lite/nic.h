@@ -23,7 +23,9 @@ public:
 	enum {
 		IP,
 		ARP,
-		RARP
+		RARP,
+		ELP,
+		ROUTER
 	};
     
 public:
