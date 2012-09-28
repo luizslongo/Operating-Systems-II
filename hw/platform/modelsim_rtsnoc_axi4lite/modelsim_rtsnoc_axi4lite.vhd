@@ -35,6 +35,11 @@ architecture Behavioral of virtual_platform_hdl is
         baudclk    : in std_logic;
         rxd     : in std_logic);
     end component;
+    
+    component gpio_model is
+    port (
+        gpio_i : in  std_logic_vector(31 downto 0));
+    end component;
 
 
     signal sig_uart_rx  : std_logic;
@@ -73,6 +78,11 @@ begin
         baudclk => sig_uart_baud,
         rxd  => sig_uart_tx
     );
+    
+    gpioxx: gpio_model
+    port map (
+        gpio_i => sig_gpio_o
+    );
         
     -- simulation
     clk_process: process
@@ -95,12 +105,9 @@ begin
         finish(0);
     end process;
     
-    sig_gpio_i <= "00000000000000000000000000000000";
+    sig_gpio_i <= "0000000000000000000000000000000";
+    --sig_gpio_i <= "11111111111111111111111111111111";
     sig_ext_int <= "00000000";
     
-    gpio_out_process: process (sig_gpio_o)
-    begin
-        report "GPIO_O - " & integer'image(conv_integer(sig_gpio_o));
-    end process;
-
+    
 end Behavioral;

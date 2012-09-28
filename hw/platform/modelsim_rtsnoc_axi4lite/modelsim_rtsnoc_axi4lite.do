@@ -75,6 +75,7 @@ vcom ../../mach/rtsnoc/axi4lite/axi4lite_proc_io_node.vhd
 vcom ../../mach/rtsnoc/axi4lite/axi4lite_old.vhd
 
 vlog ../../mach/common/simple_uart/uart_rx.v
+sccom -g gpio_model.cc
 
 #top models
 vlog uart_rx_wrapper.v
