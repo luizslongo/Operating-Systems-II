@@ -1,9 +1,9 @@
-// EPOS-- MMU Mediator Common Package
+// EPOS MMU Mediator Common Package
 
 #ifndef __mmu_h
 #define __mmu_h
 
-#include <system/config.h>
+#include <cpu.h>
 
 __BEGIN_SYS
 
@@ -89,6 +89,15 @@ public:
 	return addr >> DIRECTORY_SHIFT;
     }
 
+    static Log_Addr align32(Log_Addr addr) {
+        return (addr + 3) & ~3U;
+    }
+    static Log_Addr align64(Log_Addr addr) {
+        return (addr + 7) & ~7U;
+    }
+    static Log_Addr align128(Log_Addr addr) {
+        return (addr + 15) & ~15U;
+    }
     static Log_Addr align_page(Log_Addr addr) {
         return (addr + sizeof(Page) - 1) & ~(sizeof(Page) - 1);
     }
@@ -101,6 +110,8 @@ public:
 
 __END_SYS
 
-#include __HEADER_ARCH(mmu)
+#ifdef __MMU_H
+#include __MMU_H
+#endif
 
 #endif

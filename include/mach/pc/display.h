@@ -1,5 +1,4 @@
-// EPOS-- PC_Display (CGA/6845) Declarations
-//
+// EPOS PC Display Mediator Declarations
 
 #ifndef __pc_display_h
 #define __pc_display_h
@@ -8,21 +7,22 @@
 
 __BEGIN_SYS
 
-class PC_Display: public Display_Common
+// Colour Graphics Adapter based on MC6845
+class MC6845
 {
-private:
-    typedef Traits<PC_Display> _Traits;
-//    static const Type_Id TYPE = Type<PC_Display>::TYPE;
-
-    // 6845 Registers
+public:
+    // MC6845 I/O ports
+    typedef CPU::IO_Port IO_Port;
     enum {
-	ADDR_REG  = 0x03d4,
-	DATA_REG  = 0x03d5,
-	CTRL_REG  = 0x03d8,
-	COLOR_REG = 0x03d9
+	ADDR_REG  = 0x03d4, // Address 
+	DATA_REG  = 0x03d5, // Data 
+	CTRL_REG  = 0x03d8, // Control [0,0,BLK,GR_HR,VOUT,B/W,GR,TX_HR]
+	COLOR_REG = 0x03d9, // Color [0,0,PLT,BR,B-BG-FG]
+	STAT_REG  = 0x03da  // Status [0,0,0,0,VR,LPS,LPT,EN]
     };
 
-    // 6845 Internal Addresses
+    // MC6845 Internal Addresses
+    typedef CPU::Reg8 Address;
     enum {
 	ADDR_CUR_START	= 0x0a,	// cursor mask
 	ADDR_CUR_END	= 0x0b,
@@ -33,53 +33,91 @@ private:
     };
 
 public:
-    PC_Display(unsigned short * fb = reinterpret_cast<unsigned short *>(
-		   _Traits::FRAME_BUFFER_ADDRESS))
-	: _frame_buffer(fb) {}
-    ~PC_Display() {}
+    MC6845() {}
 
-    void clear() { 
-	for(unsigned int i = 0; i < lines() * columns(); i++)
-	    _frame_buffer[i] = 0x720;
-	position(0);
+    static volatile int position() {
+	CPU::out8(ADDR_REG, ADDR_CUR_POS_LO);
+	int pos = CPU::in8(DATA_REG);
+	CPU::out8(ADDR_REG, ADDR_CUR_POS_HI);
+	pos |= CPU::in8(DATA_REG) << 8;
+	return pos;
     }
-    void putc(char c){
-	unsigned int pos = position();
+    static void position(int pos) {
+	CPU::out8(ADDR_REG, ADDR_CUR_POS_LO);
+	CPU::out8(DATA_REG, pos & 0xff);
+	CPU::out8(ADDR_REG, ADDR_CUR_POS_HI);
+	CPU::out8(DATA_REG, pos >> 8);
+    }
+};
+
+class PC_Display: public Display_Common, private MC6845
+{
+private:
+    static const unsigned int FB = Traits<PC_Display>::FRAME_BUFFER_ADDRESS;
+    static const int LINES = Traits<PC_Display>::LINES;
+    static const int COLUMNS = Traits<PC_Display>::COLUMNS;
+    static const int TAB_SIZE = Traits<PC_Display>::TAB_SIZE;
+
+public:
+    // Frame Buffer
+    typedef unsigned short Cell;
+    typedef Cell * Frame_Buffer;
+
+    // Cell Attributes
+    typedef Cell Attribute;
+    enum {
+	NORMAL = 0x0700
+    };
+
+public:
+    PC_Display() {}
+
+    static void remap(Frame_Buffer fb = reinterpret_cast<Frame_Buffer>(FB)) {
+	_frame_buffer = fb; 
+    }
+
+    static void putc(char c) {
+	unsigned int pos = MC6845::position();
 
 	switch(c) {
 	case '\n':
-	    pos = (pos + columns()) / columns() * columns();
+	    pos = (pos + COLUMNS) / COLUMNS * COLUMNS;
 	    break;
 	case '\t':
-	    pos = (pos + tab_size()) / tab_size() * tab_size();
+	    pos = (pos + TAB_SIZE) / TAB_SIZE * TAB_SIZE;
 	    break;
 	default:
-	    _frame_buffer[pos++] = 0x0700 | c;
+	    _frame_buffer[pos++] = NORMAL | c;
 	}
-	if(pos >= lines() * columns()) {
+	if(pos >= LINES * COLUMNS) {
 	    scroll();
-	    pos-= columns();
+	    pos-= COLUMNS;
 	}
-	position(pos);
+	MC6845::position(pos);
     }
-    void puts(const char * s) {
+
+    static void puts(const char * s) {
 	while(*s != '\0')
 	    putc(*s++);
     }
 
-    unsigned int lines() { return _Traits::LINES; }
-    unsigned int columns() { return _Traits::COLUMNS; }
-
-    void position(int * line, int * column) {
-	unsigned int pos = position();
-	*column = pos % columns();
-	*line = pos / columns();
+    static void clear() { 
+	for(unsigned int i = 0; i < LINES * COLUMNS; i++)
+	    _frame_buffer[i] = NORMAL | ' ';
+	MC6845::position(0);
     }
-    void position(int line, int column) {
-	if(line > static_cast<int>(lines()))
-	    line = lines();
-	if(column > static_cast<int>(columns()))
-	    column = columns();
+
+    static void position(int * line, int * column) {
+	unsigned int pos = MC6845::position();
+	*column = pos % COLUMNS;
+	*line = pos / COLUMNS;
+    }
+
+    static void position(int line, int column) {
+	if(line > LINES)
+	    line = LINES;
+	if(column > COLUMNS)
+	    column = COLUMNS;
 	if((line < 0) || (column < 0)) {
 	    int old_line, old_column;
 	    position(&old_line, &old_column);
@@ -88,40 +126,24 @@ public:
 	    if(line < 0)
 		line = old_line;
 	}
-	position(line * columns() + column);
+	MC6845::position(line * COLUMNS + column);
     }
 
-    static int init(System_Info *si);
-
-private:
-    unsigned int tab_size() { return _Traits::TAB_SIZE; }
-
-    volatile int position() {
-	IA32 cpu;
-	cpu.out8(ADDR_REG, ADDR_CUR_POS_LO);
-	int pos = cpu.in8(DATA_REG);
-	cpu.out8(ADDR_REG, ADDR_CUR_POS_HI);
-	pos |= cpu.in8(DATA_REG) << 8;
-	return pos;
-    }
-    void position(int pos) {
-	IA32 cpu;
-	cpu.out8(ADDR_REG, ADDR_CUR_POS_LO);
-	cpu.out8(DATA_REG, pos & 0xff);
-	cpu.out8(ADDR_REG, ADDR_CUR_POS_HI);
-	cpu.out8(DATA_REG, pos >> 8);
-    }
-
-    void scroll() {
-	for(unsigned int i = 0; i < (lines() - 1) * columns(); i++)
-	    _frame_buffer[i] = _frame_buffer[i + columns()];
-	for(unsigned int i = (lines() - 1) * columns(); 
-	    i < lines() * columns(); i++)
-	    _frame_buffer[i] = 0x0720;
+    static void geometry(int * lines, int * columns) {
+	*lines = LINES;
+	*columns = COLUMNS;
     }
 
 private:
-    unsigned short * _frame_buffer;
+    static void scroll() {
+	for(unsigned int i = 0; i < (LINES - 1) * COLUMNS; i++)
+	    _frame_buffer[i] = _frame_buffer[i + COLUMNS];
+	for(unsigned int i = (LINES - 1) * COLUMNS; i < LINES * COLUMNS; i++)
+	    _frame_buffer[i] = NORMAL | ' ';
+    }
+
+private:
+    static Frame_Buffer _frame_buffer;
 };
 
 __END_SYS

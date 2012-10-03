@@ -1,4 +1,4 @@
-// EPOS-- IA32_MMU Test Program
+// EPOS IA32_MMU Test Program
 
 #include <utility/ostream.h>
 #include <mmu.h>

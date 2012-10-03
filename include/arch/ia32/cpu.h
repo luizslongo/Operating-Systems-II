@@ -1,24 +1,15 @@
-// EPOS-- IA32 Declarations
+// EPOS IA32 CPU Mediator Declarations
 
 #ifndef __ia32_h
 #define __ia32_h
 
 #include <cpu.h>
-#include <utility/debug.h>
 
 __BEGIN_SYS
 
 class IA32: public CPU_Common
 {
-private:
-    typedef Traits<IA32> _Traits;
-    static const Type_Id _TYPE = Type<IA32>::TYPE;
-
 public:
-    // I/O ports
-    typedef Reg16 IO_Port;
-    typedef Reg16 IO_Irq;
-
     // CPU Flags
     typedef Reg32 Flags;
     enum {
@@ -46,8 +37,9 @@ public:
 			    FLAG_RF | FLAG_VM | FLAG_AC)
     };
 
-    // Exceptions
-    enum {
+    // Exceptions 
+    enum Exceptions {  // GCC BUG (anonymous enum in templates)
+	EXC_BASE        = 0x00,
 	EXC_DIV0	= 0x00,
 	EXC_DEBUG	= 0x01,
 	EXC_NMI		= 0x02,
@@ -123,7 +115,7 @@ public:
     };
 
     // GDT Layout 
-    enum {
+    enum GDT_Layout { // GCC BUG (anonymous enum in templates)
 	GDT_NULL      = 0,
 	GDT_FLT_CODE  = 1,
 	GDT_FLT_DATA  = 2,
@@ -215,7 +207,7 @@ public:
 	Reg8  p_dpl_0_d_1_1_0;
 	Reg16 offset_31_16;
     };
-    static const int IDT_ENTRIES = 256;
+    static const unsigned int IDT_ENTRIES = 256;
 
     // TSS no longer used, since software context switch is faster
     // it's left here for reference
@@ -263,9 +255,8 @@ public:
     // CPU Context
     class Context {
     public:
-	Context(Log_Addr entry)
-	    : _edi(6), _esi(5), _ebp(7), _esp((Reg32)this), _ebx(2), _edx(4), 
-	      _ecx(3), _eax(1), _eflags(FLAG_DEFAULTS), _eip(entry) {}
+	Context(Log_Addr entry) : _eflags(FLAG_DEFAULTS), _eip(entry) {}
+
 	Context(Reg32 eflags, Reg32 eax, Reg32 ebx, Reg32 ecx, Reg32 edx, 
 		Reg32 esi, Reg32 edi, Reg32 ebp, Reg32 esp, Reg32 eip)
 	    : _edi(edi), _esi(esi), _ebp(ebp), _esp(esp), _ebx(ebx), 
@@ -309,11 +300,21 @@ public:
 	Reg32 _eip;
     };
 
+    // I/O ports
+    typedef Reg16 IO_Port;
+    typedef Reg16 IO_Irq;
+
+    // Interrupt Service Routines
+    typedef void (ISR)();
+
+    // Falut Service Routines
+    typedef void (FSR)(Reg32 error, Reg32 eip, Reg32 cs, Reg32 eflags);
+
 public:
     IA32() {}
-    ~IA32() {}
 
-    static Hertz clock() { return _Traits::CLOCK; }
+    static Hertz clock() { return _cpu_clock; }
+    static Hertz bus_clock() { return _bus_clock; }
 
     static void int_enable() { ASMV("sti"); }
     static void int_disable() { ASMV("cli"); }
@@ -322,118 +323,235 @@ public:
     static void switch_context(Context * volatile * o, Context * volatile n);
 
     static Flags flags() { return eflags(); }
-    static void flags(Flags flags) { eflags(flags); }
+    static void flags(const Flags flags) { eflags(flags); }
 
     static Reg32 sp() { return esp(); }
-    static void sp(Reg32 sp) { esp(sp); }
+    static void sp(const Reg32 sp) { esp(sp); }
 
     static Reg32 fr() { return eax(); }
-    static void fr(Reg32 sp) { eax(sp); }
+    static void fr(const Reg32 sp) { eax(sp); }
 
     static Reg32 pdp() { return cr3() ; }
-    static void pdp(Reg32 pdp) { cr3(pdp); }
+    static void pdp(const Reg32 pdp) { cr3(pdp); }
 
     static Log_Addr ip() { return eip(); }
 
     static bool tsl(volatile bool & lock) {
 	register bool old = 1;
-	ASMV("xchg %0, %2" : "=a"(old) : "a"(old), "m"(lock)); return old;
-    }
-    static int finc(volatile int & number) {
-	register int old = 1;
-	ASMV("lock\n"
-	     "xadd %0, %2" : "=a"(old) : "a"(old), "m"(number)); return old;
-    }
-    static int fdec(volatile int & number) {
-	register int old = -1;
-	ASMV("lock\n"
-	     "xadd %0, %2" : "=a"(old) : "a"(old), "m"(number)); return old;
+	ASMV("lock xchg %0, %2"
+	     : "=a"(old) 
+	     : "a"(old), "m"(lock) 
+	     : "memory"); 
+	return old;
     }
 
+    static int finc(volatile int & value) {
+	register int old = 1;
+	ASMV("lock xadd %0, %2"
+	     : "=a"(old)
+	     : "a"(old), "m"(value)
+	     : "memory"); 
+	return old;
+    }
+
+    static int fdec(volatile int & value) {
+	register int old = -1;
+	ASMV("lock xadd %0, %2"
+	     : "=a"(old)
+	     : "a"(old), "m"(value)
+	     : "memory"); 
+	return old;
+    }
+
+    static int cas(volatile int & value, int compare, int replacement) {
+	ASMV("lock cmpxchgl %2, %3\n" 
+	     : "=a"(compare) 
+	     : "a"(compare), "r"(replacement), "m"(value)
+	     : "memory");
+	return compare;
+   }
+
     static Reg32 htonl(Reg32 v)	{
-	ASMV("bswap %0" : "=r" (v) : "0" (v), "r" (v)); return v;
+ 	ASMV("bswap %0" : "=r" (v) : "0" (v), "r" (v)); return v;
     }
-    static Reg16 htons(Reg16 v)	{
-	return htons_lsb(v);
+    static Reg16 htons(Reg16 v)	{ return swap16(v); }
+    static Reg32 ntohl(Reg32 v)	{ return htonl(v); }
+    static Reg16 ntohs(Reg16 v)	{ return htons(v); }
+
+	static void bts(volatile unsigned int *base, const int bit) {
+    ASMV("bts %1,%0" : "+m" (*base) : "r" (bit));
     }
-    static Reg32 ntohl(Reg32 v)	{
-	return htonl(v);
+    
+    static void btr(volatile unsigned int *base, const int bit) {
+    ASMV("btr %1,%0" : "+m" (*base) : "r" (bit));
     }
-    static Reg16 ntohs(Reg16 v)	{
-	return htons(v);
+    
+    static int bsf(unsigned int & value) {
+      register unsigned int pos;
+      ASMV("bsf %1, %0"
+        : "=a"(pos)
+        : "m"(value)
+        : ); 
+      return pos;
     }
+
+    static int bsr(unsigned int & value) {
+      register int pos = -1;
+        ASMV("bsr %1, %0"
+        : "=a"(pos)
+        : "m"(value)
+        : ); 
+        return pos;
+    }
+
+    static Context * init_stack(
+	Log_Addr stack, unsigned int size, void (* exit)(),
+	int (* entry)()) {
+	Log_Addr sp = stack + size;
+	sp -= sizeof(int); *static_cast<int *>(sp) = Log_Addr(exit);
+	sp -= sizeof(Context);
+	return new (sp) Context(entry);
+    }
+
+    // The int left on the stack between thread's arguments and its context
+    // is due to the fact that the thread's function believes it's a normal
+    // function that will be invoked with a call, which pushes the return
+    // address on the stack
+    template<typename T1>
+    static Context * init_stack(
+	Log_Addr stack, unsigned int size, void (* exit)(),
+	int (* entry)(T1 a1), T1 a1) {
+	Log_Addr sp = stack + size;
+	sp -= sizeof(T1); *static_cast<T1 *>(sp) = a1;
+	sp -= sizeof(int); *static_cast<int *>(sp) = Log_Addr(exit);
+	sp -= sizeof(Context);
+	return new (sp) Context(entry);
+    }
+
+    template<typename T1, typename T2>
+    static Context * init_stack(
+	Log_Addr stack, unsigned int size, void (* exit)(),
+	int (* entry)(T1 a1, T2 a2), T1 a1, T2 a2) {
+	Log_Addr sp = stack + size;
+	sp -= sizeof(T2); *static_cast<T2 *>(sp) = a2;
+	sp -= sizeof(T1); *static_cast<T1 *>(sp) = a1;
+	sp -= sizeof(int); *static_cast<int *>(sp) = Log_Addr(exit);
+	sp -= sizeof(Context);
+	return new (sp) Context(entry);
+    }
+
+    template<typename T1, typename T2, typename T3>
+    static Context * init_stack(
+	Log_Addr stack, unsigned int size, void (* exit)(),
+	int (* entry)(T1 a1, T2 a2, T3 a3), T1 a1, T2 a2, T3 a3) {
+	Log_Addr sp = stack + size;
+	sp -= sizeof(T3); *static_cast<T3 *>(sp) = a3;
+	sp -= sizeof(T2); *static_cast<T2 *>(sp) = a2;
+	sp -= sizeof(T1); *static_cast<T1 *>(sp) = a1;
+	sp -= sizeof(int); *static_cast<int *>(sp) = Log_Addr(exit);
+	sp -= sizeof(Context);
+	return new (sp) Context(entry);
+    }
+
+    static void init();
+
+    // IA32 specific methods
+public:
 
     static Flags eflags() {
 	Reg32 value; ASMV("pushfl");
 	ASMV("popl %0" : "=r"(value) :); return value;
     }
-    static void eflags(Flags value) {
+    static void eflags(const Flags value) {
 	 ASMV("pushl %0" : : "r"(value)); ASMV("popfl");
     }
 
     static Reg32 esp() {
 	Reg32 value; ASMV("movl %%esp,%0" : "=r"(value) :); return value;
     }
-    static void esp(Reg32 value) {
- 	ASMV("movl %0,%%esp" : : "r"(value));
+    static void esp(const Reg32 value) {
+ 	ASMV("movl %0, %%esp" : : "r"(value));
     }
 
     static Reg32 eax() {
 	Reg32 value; ASMV("movl %%eax,%0" : "=r"(value) :); return value;
     }
-    static void eax(Reg32 value) {
- 	ASMV("movl %0,%%eax" : : "r"(value));
+    static void eax(const Reg32 value) {
+ 	ASMV("movl %0, %%eax" : : "r"(value));
     }
 
     static Log_Addr eip() {
 	Log_Addr value;
-	ASMV("	call	1f			\n"
-	     "1:	movl	(%%esp), %0	\n"
-	     "	addl	$4, %%esp" : "=r"(value) : );
+	ASMV("		push	%%eax					\n"
+	     "		call	1f					\n"
+	     "1:	popl	%%eax		# ret. addr.		\n"
+	     "		movl	%%eax,%0				\n"
+	     "		popl	%%eax					\n" 
+	     : "=o"(value)
+	     : );
 	return value;
     }
 
     static Reg32 cr0() {
-	Reg32 value; ASMV("movl %%cr0,%0" : "=r"(value) :); return value;
+	Reg32 value; ASMV("movl %%cr0, %0" : "=r"(value) :); return value;
     }
-    static void cr0(Reg32 value) {
-	ASMV("movl %0,%%cr0" : : "r"(value));
+    static void cr0(const Reg32 value) {
+	ASMV("movl %0, %%cr0" : : "r"(value));
     }
 
     static Reg32 cr2()	{
-	Reg32 value; ASMV("movl %%cr2,%0" : "=r"(value) :); return value;
+	Reg32 value; ASMV("movl %%cr2, %0" : "=r"(value) :); return value;
     }
 
     static Reg32 cr3() {
-	Reg32 value; ASMV("movl %%cr3,%0" : "=r"(value) :); return value;
+	Reg32 value; ASMV("movl %%cr3, %0" : "=r"(value) :); return value;
     }
-    static void cr3(Reg32 value) {
-	ASMV("movl %0,%%cr3" : : "r"(value));
+    static void cr3(const Reg32 value) {
+	ASMV("movl %0, %%cr3" : : "r"(value));
+    }
+
+	static Reg32 cr4() {
+    Reg32 value; ASMV("movl %%cr4, %0" : "=r"(value) :); return value;
+    }
+    static void cr4(const Reg32 value) {
+    ASMV("movl %0, %%cr4" : : "r"(value));
     }
 
     static void gdtr(Reg16 * limit, Reg32 * base) {
-	char aux[6];
+	volatile Reg8 aux[6];
+	volatile Reg16 * l = reinterpret_cast<volatile Reg16 *>(&aux[0]);
+	volatile Reg32 * b = reinterpret_cast<volatile Reg32 *>(&aux[2]);
+
 	ASMV("sgdt %0" : "=m"(aux[0]) :);
-	*limit = *((Reg16 *)&aux[0]);
-	*base = *((Reg32 *)&aux[2]);
+	*limit = *l;
+	*base = *b;
     }
-    static void gdtr(Reg16 limit, Reg32 base) {
-	char aux[6];
-	*((Reg16 *)&aux[0]) = limit;
-	*((Reg32 *)&aux[2]) = base;
-	ASMV("lgdt %0" : : "m" (aux[0]));
+    static void gdtr(const Reg16 limit, const Reg32 base) {
+	volatile Reg8 aux[6];
+	volatile Reg16 * l = reinterpret_cast<volatile Reg16 *>(&aux[0]);
+	volatile Reg32 * b = reinterpret_cast<volatile Reg32 *>(&aux[2]);
+
+	*l = limit;
+	*b = base;
+	ASMV("lgdt %0" : : "m"(aux[0]));
     }
  
     static void idtr(Reg16 * limit, Reg32 * base) {
-	char aux[6];
+	volatile Reg8 aux[6];
+	volatile Reg16 * l = reinterpret_cast<volatile Reg16 *>(&aux[0]);
+	volatile Reg32 * b = reinterpret_cast<volatile Reg32 *>(&aux[2]);
+
 	ASMV("sidt %0" : "=m"(aux[0]) :);
-	*limit = *((Reg16 *)&aux[0]);
-	*base = *((Reg32 *)&aux[2]);
+	*limit = *l;
+	*base = *b;
     }
-    static void idtr(Reg16 limit, Reg32 base) {
-	char aux[6];
-	*((Reg16 *)&aux[0]) = limit;
-	*((Reg32 *)&aux[2]) = base;
+    static void idtr(const Reg16 limit, const Reg32 base) {
+	volatile Reg8 aux[6];
+	volatile Reg16 * l = reinterpret_cast<volatile Reg16 *>(&aux[0]);
+	volatile Reg32 * b = reinterpret_cast<volatile Reg32 *>(&aux[2]);
+
+	*l = limit;
+	*b = base;
 	ASMV("lidt %0" : : "m" (aux[0]));
     }
 
@@ -456,40 +574,32 @@ public:
 	Reg16 value; ASMV("mov %%gs,%0" : "=r"(value) :); return value;
     }
 
-    static Reg64 time_stamp() {
-	Reg64 ts; ASMV("rdtsc" : "=A" (ts) : ); return ts;
-    }
-
-    static void init_fpu() {
-	ASM("fninit");
-    }
-
-    static Reg8 in8(IO_Port port) {
+    static Reg8 in8(const IO_Port port) {
 	Reg8 value;
 	ASMV("inb %1,%0" : "=a"(value) : "d"(port));
 	return value;
     }
-    static Reg16 in16(IO_Port port) {
+    static Reg16 in16(const IO_Port port) {
 	Reg16 value;
 	ASMV("inw %1,%0" : "=a"(value) : "d"(port));
 	return value;
     }
-    static Reg32 in32(IO_Port port) {
+    static Reg32 in32(const IO_Port port) {
 	Reg32 value;
 	ASMV("inl %1,%0" : "=a"(value) : "d"(port));
 	return value;
     }
-    static void out8(IO_Port port, Reg8 value) {
+    static void out8(const IO_Port port, const Reg8 value) {
 	ASMV("outb %1,%0" : : "d"(port), "a"(value));
     }
-    static void out16(IO_Port port, Reg16 value)	{
+    static void out16(const IO_Port port, const Reg16 value)	{
 	ASMV("outw %1,%0" : : "d"(port), "a"(value));
     }
-    static void out32(IO_Port port, Reg32 value)	{
+    static void out32(const IO_Port port, const Reg32 value)	{
 	ASMV("outl %1,%0" : : "d"(port), "a"(value));
     }
 
-    static void switch_tss(Reg32 tss_selector) {
+    static void switch_tss(const Reg32 tss_selector) {
 	struct {
 	    Reg32 offset;
 	    Reg32 selector;
@@ -501,10 +611,10 @@ public:
 	ASM("ljmp *%0" : "=o" (address));
     }
 
-    static int init(System_Info *si);
+private:
+    static unsigned int _cpu_clock;
+    static unsigned int _bus_clock;
 };
-
-typedef IA32 CPU;
 
 __END_SYS
 

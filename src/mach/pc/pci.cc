@@ -1,15 +1,18 @@
-// EPOS-- PC PCI Mediator
+// EPOS PC PCI Mediator
 
 #include <mach/pc/pci.h>
 
 __BEGIN_SYS
 
-CPU::Reg32 PC_PCI::base_address[Region::N] = {
+// Class attributes
+PC_PCI::Phy_Addr PC_PCI::_phy_io_mem;
+PC_PCI::Reg32 PC_PCI::_base_address[Region::N] = {
     BASE_ADDRESS_0, BASE_ADDRESS_1,
     BASE_ADDRESS_2, BASE_ADDRESS_3,
     BASE_ADDRESS_4, BASE_ADDRESS_5
 };
 
+// Methods
 void PC_PCI::header(const PC_PCI::Locator & l, PC_PCI::Header * h)
 {
     IA32 cpu;
@@ -27,22 +30,24 @@ void PC_PCI::header(const PC_PCI::Locator & l, PC_PCI::Header * h)
 	h->latency_time = cfg8(l.bus, l.dev_fn, LATENCY_TIMER);
 	h->type = cfg8(l.bus, l.dev_fn, HEADER_TYPE);
 	h->bist = cfg8(l.bus, l.dev_fn, BIST);
-	for(int i = 0; i < Region::N; i++) {
+	for(unsigned int i = 0; i < Region::N; i++) {
 	    cpu.int_disable();
-	    h->region[i].phy_addr = cfg32(l.bus, l.dev_fn, base_address[i]);
-	    cfg32(l.bus, l.dev_fn, base_address[i], ~0); 
-	    h->region[i].size = cfg32(l.bus, l.dev_fn, base_address[i]);
-	    cfg32(l.bus, l.dev_fn, base_address[i], h->region[i].phy_addr); 
+	    h->region[i].phy_addr = cfg32(l.bus, l.dev_fn, _base_address[i]);
+	    cfg32(l.bus, l.dev_fn, _base_address[i], ~0); 
+	    h->region[i].size = cfg32(l.bus, l.dev_fn, _base_address[i]);
+	    cfg32(l.bus, l.dev_fn, _base_address[i], h->region[i].phy_addr); 
 	    cpu.int_enable();
 	    if( (h->region[i].phy_addr & BASE_ADDRESS_SPACE_MASK) || 
-		( (h->type&0x7f) == HEADER_TYPE_BRIDGE || (h->type&0x7f) == HEADER_TYPE_CARDBUS) || h->class_id == 257) { // I/O
+		( (h->type&0x7f) == HEADER_TYPE_BRIDGE || (h->type&0x7f) == HEADER_TYPE_CARDBUS) || h->class_id == 257 || h->class_id == 1027 || h->class_id == 1536 || h->class_id == 1537 || h->class_id == 1920 || h->class_id == 3075 || h->class_id == 3077) { // I/O
 		h->region[i].memory = false;
 		h->region[i].phy_addr &= BASE_ADDRESS_IO_MASK;
+		h->region[i].log_addr = ~0;
 		h->region[i].size = 
 		    ~(h->region[i].size & BASE_ADDRESS_IO_MASK) + 1;
 	    } else {
 		h->region[i].memory = true;
 		h->region[i].phy_addr &= BASE_ADDRESS_MEM_MASK;
+		h->region[i].log_addr = phy2log(h->region[i].phy_addr);
 		h->region[i].size =
 		    ~(h->region[i].size & BASE_ADDRESS_MEM_MASK) + 1;
 	    }
@@ -63,7 +68,8 @@ void PC_PCI::header(const PC_PCI::Locator & l, PC_PCI::Header * h)
 
 PC_PCI::Locator PC_PCI::scan(const PC_PCI::Class_Id & c, int order)
 {
-    db<PC_PCI>(TRC) << "scan_class\n";
+    db<PCI>(TRC) << "PCI::scan(class=" << c
+		 << ",order=" << order << ")\n";
 
     for(int bus = 0 ; bus <= MAX_BUS; bus++)
 	for(int dfn = 0; dfn <= MAX_DEV_FN; dfn++)
@@ -77,7 +83,9 @@ PC_PCI::Locator PC_PCI::scan(const PC_PCI::Class_Id & c, int order)
 PC_PCI::Locator PC_PCI::scan(const PC_PCI::Vendor_Id & v, 
 			     const PC_PCI::Device_Id & d, int order)
 {
-    db<PC_PCI>(TRC) << "scan_vendor\n";
+    db<PCI>(TRC) << "PCI::scan(vend=" << v
+		 << ",dev=" << d
+		 << ",order=" << order << ")\n";
 
     for(int bus = 0 ; bus <= MAX_BUS; bus++)
 	for(int dfn = 0; dfn <= MAX_DEV_FN; dfn++)

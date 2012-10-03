@@ -1,4 +1,4 @@
-// EPOS-- Machine Mediator Common Package
+// EPOS Machine Mediator Common Package
 
 #ifndef __machine_h
 #define __machine_h
@@ -11,13 +11,12 @@ class Machine_Common
 {
 protected:
     Machine_Common() {}
-
-public:
-    typedef void (* Handler)(void);
 };
 
 __END_SYS
 
-#include __HEADER_MACH(MACH)
+#ifdef __MACH_H
+#include __MACH_H
+#endif
 
 #endif

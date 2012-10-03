@@ -1,197 +1,181 @@
-// EPOS-- Thread Abstraction Declarations
+// EPOS Thread Abstraction Declarations
 
 #ifndef __thread_h
 #define __thread_h
 
-#include <system/config.h>
+#include <system/kmalloc.h>
 #include <utility/queue.h>
-#include <utility/malloc.h>
 #include <cpu.h>
-#include <mmu.h>
+#include <machine.h>
 
 __BEGIN_SYS
 
 class Thread
 {
-private:
-    typedef Traits<Thread> Traits;
-    static const Type_Id TYPE = Type<Thread>::TYPE;
+    friend class Synchronizer_Common;
 
-    typedef Queue<Thread> Queue;
+protected:
+    static const bool active_scheduler = Traits<Thread>::active_scheduler;
+    static const bool preemptive = Traits<Thread>::preemptive;
+    static const bool energy_aware = Traits<Thread>::energy_aware;
+    static const bool smp = Traits<Thread>::smp;
+	static const unsigned int MAX_CPUS = Traits<Machine>::MAX_CPUS;
 
-    static const unsigned int STACK_SIZE = 
-	__SYS(Traits)<Machine>::APPLICATION_STACK_SIZE;
+    static const unsigned int QUANTUM = Traits<Thread>::QUANTUM;
+    static const unsigned int STACK_SIZE =
+        Traits<Machine>::APPLICATION_STACK_SIZE;
 
     typedef CPU::Log_Addr Log_Addr;
     typedef CPU::Context Context;
 
 public:
-    enum Self {SELF};
-
-    typedef short State;
-    enum  {
-        RUNNING,
+    // Thread State
+    enum State {
+        BEGINNING,
         READY,
+        RUNNING,
         SUSPENDED,
-	FINISHING
+        WAITING,
+        FINISHING
     };
 
+    // Thread Priority
     typedef short Priority;
     enum {
-	HIGH = 0,
-	NORMAL = 15,
-	LOW = 31
+        HIGH = 0,
+        NORMAL = 15,
+        LOW = 31
     };
 
+    // Thread Queue
+    typedef Queue<Thread> ThreadQueue;
+
 public:
-    // The int left on the stack between thread's arguments and its context
-    // is due to the fact that the thread's function believes it's a normal
-    // function that will be invoked with a call, which pushes the return
-    // address on the stack
     Thread(int (* entry)(), 
-	   const State & state = READY,
-	   const Priority & priority = NORMAL,
-	   unsigned int stack_size = STACK_SIZE)
-	: _stack(malloc(stack_size)), 
-	  _context(new (_stack + stack_size
-			- sizeof(int) - sizeof(Context))
-		   Context(entry)),
-	  _state(state),
-	  _priority(priority),
-	  _link(this)
+           const State & state = READY,
+           const Priority & priority = NORMAL,
+           unsigned int stack_size = STACK_SIZE)
+    : _state(state), _link(this)
     {
-	header(entry, stack_size);
-	Log_Addr sp = _stack + stack_size;
-	sp -= sizeof(int); *static_cast<unsigned int *>(sp) = 
-			       reinterpret_cast<unsigned int>(&exit);
-	body();
-    }
-    template<class T1>
-    Thread(int (* entry)(T1 a1), T1 a1,
-	   const State & state = READY,
-	   const Priority & priority = NORMAL,
-	   unsigned int stack_size = STACK_SIZE)
-	: _stack(malloc(stack_size)), 
-	  _context(new (_stack + stack_size - sizeof(T1)
-			- sizeof(int) - sizeof(Context))
-		   Context(entry)),
-	  _state(state),
-	  _priority(priority),
-	  _link(this)
-    {
-	header(entry, stack_size);
-	Log_Addr sp = _stack + stack_size;
-	sp -= sizeof(T1); *static_cast<T1 *>(sp) = a1;
-	sp -= sizeof(int); *static_cast<unsigned int *>(sp) = 
-			       reinterpret_cast<unsigned int>(&exit);
-	body();
-    }
-    template<class T1, class T2>
-    Thread(int (* entry)(T1 a1, T2 a2), T1 a1, T2 a2,
-	   const State & state = READY,
-	   const Priority & priority = NORMAL,
-	   unsigned int stack_size = STACK_SIZE)
-	: _stack(malloc(stack_size)), 
-	  _context(new (_stack + stack_size - sizeof(T2) - sizeof(T1)
-			- sizeof(int) - sizeof(Context))
-		   Context(entry)),
-	  _state(state),
-	  _priority(priority),
-	  _link(this)
-    {
-	header(entry, stack_size);
-	Log_Addr sp = _stack + stack_size;
-	sp -= sizeof(T2); *static_cast<T2 *>(sp) = a2;
-	sp -= sizeof(T1); *static_cast<T1 *>(sp) = a1;
-	sp -= sizeof(int); *static_cast<unsigned int *>(sp) = 
-			       reinterpret_cast<unsigned int>(&exit);
-	body();
-    }
-    template<class T1, class T2, class T3>
-    Thread(int (* entry)(T1 a1, T2 a2, T3 a3), T1 a1, T2 a2, T3 a3,
-	   const State & state = READY,
-	   const Priority & priority = NORMAL,
-	   unsigned int stack_size = STACK_SIZE)
-	: _stack(malloc(stack_size)), 
-	  _context(new (_stack + stack_size - sizeof(T3) - sizeof(T2) 
-			- sizeof(T1) - sizeof(int) - sizeof(Context))
-		   Context(entry)),
-	  _state(state),
-	  _priority(priority),
-	  _link(this)
-    {
-	header(entry, stack_size);
-	Log_Addr sp = _stack + stack_size;
-	sp -= sizeof(T3); *static_cast<T3 *>(sp) = a3;
-	sp -= sizeof(T2); *static_cast<T2 *>(sp) = a2;
-	sp -= sizeof(T1); *static_cast<T1 *>(sp) = a1;
-	sp -= sizeof(int); *static_cast<unsigned int *>(sp) = 
-			       reinterpret_cast<unsigned int>(&implicit_exit);
-	body();
-    }
-    ~Thread() {
-	_ready.remove(this);
-	_suspended.remove(this);
-	free(_stack);
+        lock();
+
+        _stack = kmalloc(stack_size);
+        _context = CPU::init_stack(_stack, stack_size, &implicit_exit, entry);
+
+        common_constructor(entry, stack_size);
     }
 
-    volatile const State & state() const { return _state; }
-    volatile const Priority & priority() const { return _priority; }
-    void priority(const Priority & priority);
+    template<typename T1>
+    Thread(int (* entry)(T1 a1), T1 a1,
+           const State & state = READY,
+           const Priority & priority = NORMAL,
+           unsigned int stack_size = STACK_SIZE)
+    : _state(state), _link(this)
+    {
+        lock();
+
+        _stack = kmalloc(stack_size);
+        _context = CPU::init_stack(_stack, stack_size, &implicit_exit, entry, 
+                                   a1);
+
+        common_constructor(entry, stack_size);
+    }
+
+    template<typename T1, typename T2>
+    Thread(int (* entry)(T1 a1, T2 a2), T1 a1, T2 a2,
+           const State & state = READY,
+           const Priority & priority = NORMAL,
+           unsigned int stack_size = STACK_SIZE)
+    : _state(state), _link(this)
+    {
+        lock();
+
+        _stack = kmalloc(stack_size);
+        _context = CPU::init_stack(_stack, stack_size, &implicit_exit, entry,
+                                   a1, a2);
+
+        common_constructor(entry, stack_size);
+    }
+
+    template<typename T1, typename T2, typename T3>
+    Thread(int (* entry)(T1 a1, T2 a2, T3 a3), T1 a1, T2 a2, T3 a3,
+           const State & state = READY,
+           const Priority & priority = NORMAL,
+           unsigned int stack_size = STACK_SIZE)
+    : _state(state), _link(this)
+    {
+        lock();
+
+        _stack = kmalloc(stack_size);
+        _context = CPU::init_stack(_stack, stack_size, &implicit_exit, entry, 
+                                   a1, a2, a3);
+
+        common_constructor(entry, stack_size);
+    }
+
+    ~Thread();
+
+    const volatile State & state() const { return _state; }
+
+    volatile const Priority  & priority() const { return _priority; }
 
     int join();
     void pass();
     void suspend();
     void resume();
 
+    static Thread* self() { return running(); }
     static void yield();
     static void exit(int status = 0);
 
-    static Thread * volatile  & running() { return _running; }
-    static void running(Thread * r) { _running = r; }
+    static void init();
 
-    static int init(System_Info * si);
+protected:
+    void common_constructor(Log_Addr entry, unsigned int stack_size);
 
-private:
-    void header(Log_Addr entry, unsigned int stack_size) {
-	db<Thread>(TRC) << "Thread(this=" << this 
-			<< ",entry=" << (void *)entry 
-			<< ",state=" << _state
-			<< ",priority=" << _priority
-			<< ",stack={b=" << _stack
-			<< ",s=" << stack_size
-			<< ",context={b=" << _context
-			<< "," << *_context << "})\n";
-    }
-    void body() {
-	if(Traits::active_scheduler)
-	    CPU::int_disable();
+    static Thread* volatile running() { return _running; }
 
-	switch(_state) {
-	case RUNNING: break;
-	case SUSPENDED: _suspended.insert(&_link); break;
-	default: _ready.insert(&_link);
-	}
+    ThreadQueue::Element* link() { return &_link; }
 
-	if(Traits::active_scheduler)
-	    CPU::int_enable();
+    static void lock() {
+        CPU::int_disable();
+        if(smp)
+            _lock.acquire();
     }
 
-    static void implicit_exit() { exit(CPU::fr()); }
-    static void reschedule() { yield(); }
+    static void unlock() {
+        if(smp)
+            _lock.release();
+        CPU::int_enable();
+    }
+
+
+    static void reschedule();
+
+    static void time_slicer();
+
+    static void implicit_exit();
+
     static void idle();
 
-private:
+protected:
     Log_Addr _stack;
     Context * volatile _context;
     volatile State _state;
-    volatile Priority _priority;
-    Queue::Element _link;
+    ThreadQueue::Element _link;
 
+    static Spin _lock;
+    static Scheduler_Timer * _timer;
+
+private:
+    volatile Priority _priority;
+
+private:
     static Thread * volatile _running;
-    static Queue _ready;
-    static Queue _suspended;
+    static ThreadQueue _ready;
+    static ThreadQueue _suspended;
 };
+
 
 __END_SYS
 

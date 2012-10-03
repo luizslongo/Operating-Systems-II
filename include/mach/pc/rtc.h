@@ -1,27 +1,31 @@
-// EPOS-- PC Real-Time Clock Mediator
+// EPOS PC Real-Time Clock Mediator Declarations
 
 #ifndef __pc_rtc_h
 #define __pc_rtc_h
 
+#include <cpu.h>
 #include <rtc.h>
 
 __BEGIN_SYS
 
-// The mc146818 RTC used in PCs also features an alarm and
-// a batery-backup RAM (CMOS)
-class PC_RTC: public RTC_Common
+// Motorola MC146818 RTC (features an alarm and a batery-backup RAM (CMOS) too)
+class MC146818
 {
 private:
-    typedef Traits<PC_RTC> _Traits;
-//    static const Type_Id _TYPE = Type<PC_RTC>::TYPE;
+    typedef CPU::IO_Port IO_Port;
+    typedef CPU::Reg8 Reg8;
 
-    // 146818 I/O ports
+    static const unsigned int CMOS_SIZE = 114;
+
+public:
+    // I/O ports
     enum {
-	ADDR	= 0x70,
-	DATA	= 0x71
+	ADDR		= 0x70,
+	DATA		= 0x71
     };
 
-    // 146818 addresses
+    // Register Addresses
+    typedef Reg8 Address;
     enum {
 	SECONDS		= 0x00,
 	ALARM_S		= 0x01,
@@ -29,7 +33,7 @@ private:
 	ALARM_M		= 0x03,
 	HOURS		= 0x04,
 	ALARM_H		= 0x05,
-	WEEKDAY		= 0x06, // 1 = Sunday
+	WEEK_DAY	= 0x06, // 1 = Sunday
 	DAY		= 0x07,
 	MONTH		= 0x08,
 	YEAR		= 0x09,
@@ -37,26 +41,28 @@ private:
 	REG_B		= 0x0b, // Control/Status Register B
 	REG_C		= 0x0c, // Control/Status Register C
 	REG_D		= 0x0d, // Control/Status Register D
-	CMOS_DIAGNOSTIC	= 0x0e, // POST diagnostic
-	CMOS_POWER_DONW	= 0x0f, // Status of system power-down
-	CMOS_FLOPPY	= 0x10,
-	CMOS_DISK1	= 0x11,
-	CMOS_DISK2	= 0x12,
-		       // 0x13	is reserved
-	CMOS_CONFIG	= 0x14,
-	CMOS_MEM_LSB	= 0x15,
-	CMOS_MEM_MSB	= 0x16,
-	CMOS_EX_MEM_LSB	= 0x17,
-	CMOS_EX_MEM_MSB	= 0x18,
-		       // 0x19  until
-		       // 0x2d	is reserved
-	CMOS_CHK_LSB	= 0x2e,
-	CMOS_CHK_MSB	= 0x2f,
-	CMOS_OT_MEM_LSB	= 0x30,
-	CMOS_OT_MEM_HSB	= 0x31,
-	CENTURY		= 0x32
-		       // 0x33  until
-		       // 0x3f	is reserved
+	CMOS     	= 0x0e, 
+	// Layout used by BIOS
+	CMOS_DIAGNOSTIC	= CMOS + 0, // POST diagnostic
+	CMOS_POWER_DONW	= CMOS + 1, // Status of system power-down
+	CMOS_FLOPPY	= CMOS + 2,
+	CMOS_DISK1	= CMOS + 3,
+	CMOS_DISK2	= CMOS + 4,
+		       // CMOS + 5  is reserved
+	CMOS_CONFIG	= CMOS + 6,
+	CMOS_MEM_LSB	= CMOS + 7,
+	CMOS_MEM_MSB	= CMOS + 8,
+	CMOS_EX_MEM_LSB	= CMOS + 9,
+	CMOS_EX_MEM_MSB	= CMOS + 10,
+		       // CMOS + 11  until
+		       // CMOS + 12  is reserved
+	CMOS_CHK_LSB	= CMOS + 13,
+	CMOS_CHK_MSB	= CMOS + 14,
+	CMOS_OT_MEM_LSB	= CMOS + 15,
+	CMOS_OT_MEM_HSB	= CMOS + 16,
+	CENTURY		= CMOS + 17
+		       // CMOS + 18  until
+		       // CMOS + 49  is reserved
     };
 
     // Control/Status register A
@@ -94,22 +100,47 @@ private:
     };
 
 public:
-    PC_RTC() {}
-    ~PC_RTC() {}
+    MC146818() {} 
 
-    Seconds read();
-    void write(const Seconds & time);
+    static unsigned char reg(Address a) {
+	CPU::out8(ADDR, a);
+	return bcd2bin(CPU::in8(DATA));
+    }
+    static void reg(Address a, Reg8 v) {
+	CPU::out8(ADDR, a);
+	CPU::out8(DATA, bin2bcd(v));
+    }
 
-    static int init(System_Info *si);
+    static unsigned char cmos_read(Address a) {
+	CPU::out8(ADDR, CMOS + a);
+	return CPU::in8(DATA);
+    }
+    static void cmos_write(Address a, Reg8 v) {
+	CPU::out8(ADDR, CMOS + a);
+	CPU::out8(DATA, v);
+    }
+
+    static unsigned int cmos_size() { return CMOS_SIZE; }
 
 private:
-    unsigned char reg(unsigned char a) {
-	IA32::out8(ADDR, a);
-	return IA32::in8(DATA);
-    }
-    void reg(unsigned char a, unsigned char v) {
-	IA32::out8(ADDR, a);
-	IA32::out8(DATA, v);
+    static int bcd2bin(int bcd) { return (bcd >> 4) * 10 + (bcd & 0x0f); }
+    static int bin2bcd(int bin) { return ((bin / 10) << 4) | (bin % 10); }
+};
+
+class PC_RTC: public RTC_Common, private MC146818
+{
+private:
+    static const unsigned int EPOCH_YEAR = Traits<PC_RTC>::EPOCH_YEAR;
+    static const unsigned int EPOCH_DAYS = Traits<PC_RTC>::EPOCH_DAYS;
+
+public:
+    PC_RTC() {} 
+
+    static Date date();
+    static void date(const Date & d);
+
+    static Second seconds_since_epoch() { 
+	return date().to_offset(EPOCH_DAYS); 
     }
 };
 

@@ -1,16 +1,19 @@
-# EPOS-- PC Machine Makefile
+# EPOS PC Machine Makefile
 
-include $(EPOS)/makedefs
+include ../../../makedefs
 
-OBJS := $(subst .cc,.o,$(shell find *.cc | grep -v test | grep -v init))
-INITS := $(subst .cc,.o,$(shell find *.cc | grep init))
-TESTS := $(subst .cc,,$(shell find *.cc | grep test))
+OBJS := $(subst .cc,.o,$(shell find *.cc | grep -v _test | grep -v _init))
+INITS := $(subst .cc,.o,$(shell find *.cc | grep _init))
+TESTS := $(subst .cc,,$(shell find *.cc | grep _test))
 
-all:		$(LIBSYS) $(LIBINIT)
+all:		$(LIBMACH) $(LIBINIT)
 
-$(LIBSYS):	$(LIBSYS)($(OBJS))	
+$(LIBMACH):	$(LIBMACH)($(OBJS))	
 
 $(LIBINIT):	$(LIBINIT)($(INITS))
+
+pc_interrupt.o	: pc_interrupt.cc
+		$(CXX) $(CXXFLAGS) -fomit-frame-pointer $<
 
 test:		$(TESTS)
 

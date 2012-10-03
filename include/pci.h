@@ -1,10 +1,9 @@
-// EPOS-- PCI Mediator Common Package
+// EPOS PCI Mediator Common Package
 
 #ifndef __pci_h
 #define __pci_h
 
-#include <system/config.h>
-#include <system/pci_ids-linux.h>
+#include <cpu.h>
 
 __BEGIN_SYS
 
@@ -98,7 +97,7 @@ public:
     };
 
     // PCI REGION types, address and size masks	
-    enum {
+    enum PCI_Masks {  // GCC BUG (anonymous enum in templates)
 	BASE_ADDRESS_SPACE_MASK		= 0x01, // 0 = memory, 1 = I/O
 	BASE_ADDRESS_SPACE_MEM		= 0x00,
 	BASE_ADDRESS_SPACE_IO		= 0x01,
@@ -182,26 +181,52 @@ public:
 
 	Locator() {}
 	Locator(Reg8 b, Reg8 d) : bus(b), dev_fn(d) {}
+	Locator(Reg8 b, Reg8 d, Reg8 f) : bus(b), dev_fn((d << 3) | f) {}
 
 	operator bool() { return (bus != INVALID); }
 
+	friend Debug & operator << (Debug & db, const Locator & l) {
+	    db << "[" << l.bus 
+	       << ":" << (l.dev_fn >> 3)
+	       << "." << (l.dev_fn & 0x07) << "]";
+	    return db;
+	}
+
 	Reg8 bus;
-	Reg8 dev_fn;
+	Reg8 dev_fn; // dev = 5 bits, fn = 3 bits
     };
 
     struct Region {
-	static const int N = 6;
+	static const unsigned int N = 6;
 
 	operator bool() { return (size != 0); }
 
+	friend Debug & operator << (Debug & db, const Region & r) {
+	    db << "{" << (r.memory ? "mem" : "io")
+	       << ",phy=" << r.phy_addr;
+	    if(r.memory)
+		db << ",log=" << r.log_addr;
+	    db << ",size=" << (void *)r.size << "}";
+	    return db;
+	}
+
 	bool memory;
-	Log_Addr log_addr;
 	Phy_Addr phy_addr;
+	Log_Addr log_addr;
 	Reg32 size;
     };
 
     struct Header {
 	operator bool() { return locator; }
+
+	friend Debug & operator << (Debug & db, const Header & h) {
+	    db << h.locator
+	       << "={vnd_id=" << (void *)(int)h.vendor_id
+	       << ",dev_id=" << (void *)(int)h.device_id
+	       << ",cmd=" << (void *)(int)h.command
+	       << ",stat=" << (void *)(int)h.status << "}";
+	    return db;
+	}
 
 	Locator locator;
 	Vendor_Id vendor_id;
@@ -229,6 +254,8 @@ public:
 
 __END_SYS
 
-#include __HEADER_MACH(pci)
+#ifdef __PCI_H
+#include __PCI_H
+#endif
 
 #endif

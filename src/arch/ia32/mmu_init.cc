@@ -1,49 +1,41 @@
-// EPOS-- IA32 MMU Mediator Initialization
+// EPOS IA32 MMU Mediator Initialization
 
 #include <mmu.h>
+#include <system.h>
 
 __BEGIN_SYS
 
-int IA32_MMU::init(System_Info * si)
+void IA32_MMU::init()
 {
-    db<IA32_MMU>(TRC) << "IA32_MMU::init()\n";
+    System_Info<PC> * si = System::info();
 
-    db<IA32_MMU>(INF) << "IA32_MMU:: memory size = " 
-		      << si->mem_size << " pages\n";
-    db<IA32_MMU>(INF) << "IA32_MMU:: free memory = " 
-		      << si->mem_free << " pages\n";
-    db<IA32_MMU>(INF) << "IA32_MMU:: application's memory base = " 
-		      << (void *) si->pmm.app_lo << "\n";
-    db<IA32_MMU>(INF) << "IA32_MMU:: free chunk = {base=" 
-		      << (void *) si->pmm.mach2 << ",size="
-		      << (void *) si->pmm.mach3 << "}\n";
-    db<IA32_MMU>(INF) << "IA32_MMU:: free chunk = {base=" 
-		      << (void *) si->pmm.free << ",size="
-		      << (void *) si->pmm.free_size << "}\n";
-    db<IA32_MMU>(INF) << "IA32_MMU:: physical memory logical address = "
-		      << (void *) si->lmm.phy_mem << "\n";
-
-//     db<IA32_MMU>(INF) << "IA32_MMU::free => {h=" << (void *)_free.head()
-// 		      << ",t=" << (void *)_free.head()
-// 		      << ",s=" << _free.size() 
-// 		      << ",t=" << (void *)&_free 
-// 		      << ",s=" << sizeof(_free) << "}\n";
+    db<Init, IA32_MMU>(INF) << "IA32_MMU::memory={base=" 
+			    << (void *) si->pmm.mem_base << ",size="
+			    << (si->bm.mem_top - si->bm.mem_base) / 1024
+			    << "KB}\n";
+    db<Init, IA32_MMU>(INF) << "IA32_MMU::free1={base=" 
+			    << (void *) si->pmm.free1_base << ",size="
+			    << (si->pmm.free1_top - si->pmm.free1_base) / 1024
+			    << "KB}\n";
+    db<Init, IA32_MMU>(INF) << "IA32_MMU::free2={base=" 
+			    << (void *) si->pmm.free2_base << ",size="
+			    << (si->pmm.free2_top - si->pmm.free2_base) / 1024
+			    << "KB}\n";
     
+    // BIG WARING HERE: INIT (i.e. this program) will be part of the free
+    // storage after the following is executed, but it will remain alive
+    // This only works because the _free.insert_merging() only
+    // touchs the first page of each chunk and INIT is not there
+
     // Insert all free memory into the _free list
-    List::Element * e, * m1, * m2;
-    e = new (phy2log(reinterpret_cast<void *>(si->pmm.mach2)))
-	List::Element(reinterpret_cast<Page *>(si->pmm.mach2),
-		      si->pmm.mach3);
-    _free.insert_merging(e, &m1, &m2);
+    free(si->pmm.free1_base, pages(si->pmm.free1_top - si->pmm.free1_base));
+    free(si->pmm.free2_base, pages(si->pmm.free2_top - si->pmm.free2_base));
 
-    e = new (phy2log(reinterpret_cast<void *>(si->pmm.free)))
-	List::Element(reinterpret_cast<Page *>(si->pmm.free),
-		      si->pmm.free_size);
-    _free.insert_merging(e, &m1, &m2);
+    // Remeber the master page directory (created during SETUP)
+    _master = reinterpret_cast<Page_Directory *>(CPU::pdp());
 
-    db<IA32_MMU>(INF) << "Free Frames => " << _free.grouped_size() << "\n";
-
-    return 0;
+    db<Init, IA32_MMU>(INF) << "IA32_MMU::master page directory=" 
+			    << _master << "\n";
 }
 
 __END_SYS

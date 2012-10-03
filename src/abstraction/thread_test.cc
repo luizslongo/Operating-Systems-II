@@ -1,7 +1,8 @@
-// EPOS-- Thread Test Program
+// EPOS Thread Test Program
 
 #include <utility/ostream.h>
 #include <thread.h>
+#include <alarm.h>
 
 __USING_SYS
 
@@ -20,20 +21,13 @@ int main()
 {
     cout << "Thread test\n";
 
-//    m = new Thread(Thread::SELF);
+    m = Thread::self();
 
-//    cout << "I'm the first thread of the first task created in the system.\n";
-//    cout << "I'll now create two threads and then suspend myself ...\n";
+    cout << "I'm the first thread of the first task created in the system.\n";
+    cout << "I'll now create two threads and then wait for them to finish ...\n";
 
     a = new Thread(&func_a);
     b = new Thread(&func_b);
-
-    m->suspend();
-
-    cout << "Both threads are now done and have suspended themselves. I'll now wake them up so they can exit ...\n";
-
-    a->resume();
-    b->resume();
 
     int status_a = a->join();
     int status_b = b->join();
@@ -45,7 +39,7 @@ int main()
     delete b;
     delete m;
     
-    cout << "I'm also done, bye!\n";
+    cout << "It should not be shown on the display!\n";
 
     return 0;
 }
@@ -56,11 +50,8 @@ int func_a(void)
 	for(int i = 0; i < 79; i++)
 	    cout << "a";
 	cout << "\n";
-	Thread::yield();
+	Alarm::delay(500000);
     }
-
-//     Thread self(Thread::SELF);
-//     self.suspend();
 
     return 'A';   
 }
@@ -71,13 +62,8 @@ int func_b(void)
 	for(int i = 0; i < 79; i++)
 	    cout << "b";
 	cout << "\n";
-	Thread::yield();
+	Alarm::delay(500000);
     }
-
-    m->resume();
-
-//     Thread self(Thread::SELF);
-//     self.suspend();
 
     return 'B';   
 }

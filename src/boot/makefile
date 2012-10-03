@@ -1,61 +1,37 @@
-# EPOS-- Boot Makefile
+# EPOS Boot Makefile
 
-include $(EPOS)/makedefs
+include ../../makedefs
 
-all: 		install
+TARGET := $(if $(shell find $(MACH)*), $(MACH)_install)
+ELF_HEADER_OFFSET := sh -c "$(OBJDUMP) -p $(IMG)/$(MACH)_setup | sed -n -e 's/^ *LOAD off *\(0x.*\) vaddr.*$$/\1/ p' | head -1"
 
-#PC
+all: 		$(TARGET)
+
 pc_boot:        pc_boot.o
 		ld86 -0 -s -T $(BOOT_ADDR) -o $@ $<
 
 pc_boot.o:      pc_boot.s
+		sed -e 's/^ELF_HDR_SIZE =.*$$/ELF_HDR_SIZE = $(shell $(ELF_HEADER_OFFSET))/' -i $<
 		as86 -0 -o $@ $<
 
 pc_install:	pc_boot
-		$(DD) if=$< of=$<.img ibs=32 skip=1 obs=512
+		$(DD) if=$< of=$<.tmp ibs=32 skip=1 obs=512 >& /dev/null
+		$(INSTALL) $(MACH)_boot.tmp $(IMG)/$(MACH)_boot
+		$(CLEAN) $(MACH)_boot.tmp
 
+ml310_boot:	ml310_boot.o
+		$(LD) $(LDFLAGS) -L$(CCLIB) --omagic \
+		--section-start $(MACH_CODE_NAME)=$(BOOT_ADDR) \
+		--entry=_start \
+		-o $@ $< -l$(LUTIL) -l$(LSYS) -l$(LINIT) -lgcc -lc -lgcc
 
-#RCX
-rcx_boot:	rcx_boot.o
-		$(LD) $(LDFLAGS) -L$(CCLIB) -N -Ttext $(BOOT_ADDR) -e $(BOOT_ADDR) \
-		-o $@ $< -l$(LUTIL) -l$(LSYS) -l$(LINIT) -lc -lgcc
-
-rcx_install:	rcx_boot
-		$(OBJCPY) -O binary $< $<.img
-
-
-#KHOMP
-khomp_boot:	khomp_boot.o
-		$(LD) $(LDFLAGS) -L$(CCLIB) -N -Ttext $(BOOT_ADDR) -e _start \
-		-o $@ $< -l$(LUTIL) -l$(LSYS) -l$(LINIT) -lc -lgcc  
-
-khomp_install:	khomp_boot
-		$(OBJCPY) -O binary $< $<.img
-
-
-#AT90S
-at90s_boot: FORCE
-		$(TOUCH) $(MACH)_boot
-
-at90s_install:  $(MACH)_boot
-		$(TOUCH) $(MACH)_boot.img
-
-
-#AT86RF
-at86rf_boot: FORCE
-		$(TOUCH) $(MACH)_boot
-
-at86rf_install:	$(MACH)_boot
-		$(TOUCH) $(MACH)_boot.img
-
-
-install:        $(MACH)_install
-		$(INSTALL) $(MACH)_boot.img $(IMG)/$(MACH)_boot
-		$(CLEAN) $(MACH)_boot.img
+ml310_install:	ml310_boot
+		$(OBJCPY) -O binary $< $<.tmp
+		$(INSTALL) $(MACH)_boot.tmp $(IMG)/$(MACH)_boot
+		$(CLEAN) $(MACH)_boot.tmp
 
 test:
 
 clean:
-		$(CLEAN) *.s *.o $(MACH)_boot *.tmp
+		$(CLEAN) *.s *.o *_boot *.tmp
 
-FORCE:

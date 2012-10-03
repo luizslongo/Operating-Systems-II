@@ -1,60 +1,75 @@
-// EPOS-- Address_Space Abstraction Declarations
+// EPOS Address_Space Abstraction Declarations
 
 #ifndef __address_space_h
 #define __address_space_h
 
-#include <system/config.h>
 #include <mmu.h>
 #include <segment.h>
 
 __BEGIN_SYS
 
-class Address_Space
+class Address_Space: public MMU::Directory
 {
 private:
-    typedef Traits<Address_Space> Traits;
-    static const Type_Id TYPE = Type<Address_Space>::TYPE;
-
     typedef CPU::Phy_Addr Phy_Addr;
     typedef CPU::Log_Addr Log_Addr;
     typedef MMU::Directory Directory;
 
 public:
+    // For self reference constructor
+    enum Self { SELF };
+
+public:
     Address_Space() {
-	db<Address_Space>(TRC) << "Address_Space(_dir=" << &_dir << ")\n";
+        db<Address_Space>(TRC) << "Address_Space() [Directory::pd=" 
+                               << Directory::pd() << "]\n";
     }
+
+    Address_Space(const Self & s)
+    : Directory(reinterpret_cast<MMU::Page_Table *>(CPU::pdp())) {
+        db<Address_Space>(TRC) << "Address_Space(SELF,pd=" << CPU::pdp() 
+                               << ")\n";
+    }
+
     ~Address_Space() {
-	db<Address_Space>(TRC) << "~Address_Space(_dir=" << &_dir << ")\n";
+        db<Address_Space>(TRC) << "~Address_Space() [Directory::pd=" 
+                               << Directory::pd() << "]\n";
     }
 
+    Log_Addr attach(const Segment & seg) {
+        db<Address_Space>(TRC) << "Address_Space::attach(seg=" << &seg
+                               << ")\n";
 
-    Log_Addr attach(Segment & seg, Log_Addr addr = 0U) {
-	db<Address_Space>(TRC) << "Address_Space::attach(seg=" << &seg
-			       << ",addr=" << addr << ")\n";
-
-	return _dir.attach(seg.chunk(), addr);
+        return Directory::attach(seg);
     }
-    void detach(Segment & seg) {
-	db<Address_Space>(TRC) << "Address_Space::detach(seg=" << &seg 
-			       << ")\n";
 
-	_dir.detach(seg.chunk());
+    Log_Addr attach(const Segment & seg, Log_Addr addr) {
+        db<Address_Space>(TRC) << "Address_Space::attach(seg=" << &seg
+                               << ",addr=" << addr << ")\n";
+
+        return Directory::attach(seg, addr);
+    }
+
+    void detach(const Segment & seg) {
+        db<Address_Space>(TRC) << "Address_Space::detach(seg=" << &seg 
+                               << ")\n";
+
+        Directory::detach(seg);
+    }
+
+    void activate() {
+        db<Address_Space>(TRC) 
+            << "Address_Space::activate() [Directory::pd=" 
+            << Directory::pd() << "]\n";
+
+        Directory::activate();
     }
 
     Phy_Addr physical(Log_Addr address) { 
-	return _dir.physical(address);
+        return Directory::physical(address);
     }
-
-    static int init(System_Info * si);
-
-private:
-    Directory _dir;
 };
 
 __END_SYS
 
 #endif
-
-//    Segment(const Id & id) {}
-//    Segment(const Segment & obj) {}
-//    static Address_Space * current() { return _current; }

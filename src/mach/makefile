@@ -1,8 +1,8 @@
-# EPOS-- Machine Mediators Makefile
+# EPOS Machine Mediators Makefile
 
-include		$(EPOS)/makedefs
+include	../../makedefs
 
-SUBDIRS := common $(shell find * -maxdepth 0 -type d \! -name common \! -name CVS)
+SUBDIRS := common $(MACH)
 
 all:		$(SUBDIRS)
 

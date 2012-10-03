@@ -1,61 +1,24 @@
-# EPOS-- Setup Makefile
+# EPOS Setup Makefile
 
-include $(EPOS)/makedefs
+include ../../makedefs
 
-all:		install
+TARGET := $(if $(shell find $(MACH)*), install)
 
-pc_setup:	$(MACH)_setup.o 
-		$(LD) $(LDFLAGS) -L$(CCLIB) -N -Ttext $(SETUP_ADDR) \
-		-e $(SETUP_ADDR) -o $@ $< -l$(LUTIL) -l$(LSYS) \
-		-l$(LINIT) -lgcc -lc -lgcc
+all:		$(TARGET)
 
-pc_install:	pc_setup
-		$(STRIP) -o $<.img $<
+$(MACH)_setup:	$(MACH)_setup.o
+		$(LD) $(LDFLAGS) -L$(CCLIB) --omagic -Ttext=$(SETUP_ADDR) -o $@ $^ -l$(LINIT) -l$(LMACH) -l$(LARCH) -l$(LUTIL) -lgcc
 
-
-rcx_setup:	$(MACH)_setup.o 
-		$(LD) $(LDFLAGS) -L$(CCLIB) -N -Ttext $(SETUP_ADDR) \
-		-e $(SETUP_ADDR) -o $@ $< -l$(LUTIL) -l$(LSYS) \
-		-l$(LINIT) -lgcc -lc -lgcc
-
-rcx_install:	rcx_setup
-		$(OBJCPY) -O binary $< $<.img
-
-
-khomp_setup:	$(MACH)_setup.o 
-		$(LD) $(LDFLAGS) -L$(CCLIB) -N -Ttext $(SETUP_ADDR) \
-		-e $(SETUP_ADDR) -o $@ $< -l$(LUTIL) -l$(LSYS) \
-		-l$(LINIT) -lgcc -lc -lgcc
-
-khomp_install:	khomp_setup
-	 	$(OBJCPY) -O binary $< $<.img
-
-
-at90s_setup: FORCE
-		$(TOUCH) $(MACH)_setup
-
-at90s_install:  $(MACH)_setup
-		$(TOUCH) $(MACH)_setup.img
-
-
-at86rf_setup: FORCE
-		$(TOUCH) $(MACH)_setup
-
-at86rf_install: $(MACH)_setup
-		$(TOUCH) $(MACH)_setup.img
-
-
-install:        $(MACH)_install
-		$(INSTALL) $(MACH)_setup.img $(IMG)/$(MACH)_setup
-		$(CLEAN) $(MACH)_setup.img
+install:	$(MACH)_setup
+ifneq ($(GDB_DEBUG), 1)
+		$(STRIP) -o $<.tmp $<
+else
+		cp $< $<.tmp
+endif
+		$(INSTALL) $<.tmp $(IMG)/$<
+		$(CLEAN) $<.tmp
 
 test:
 
-print:
-		$(PRINT) $(INCLUDE)/system/memory_map.h \
-		$(MACH)_setup.cc
-
 clean:
-		$(CLEAN) *.o $(MACH)_setup
-
-FORCE:
+		$(CLEAN) *.o *_setup

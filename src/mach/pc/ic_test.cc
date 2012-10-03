@@ -1,4 +1,4 @@
-// EPOS-- PC IC Test Program
+// EPOS PC IC Test Program
 
 #include <utility/ostream.h>
 #include <ic.h>

@@ -1,4 +1,4 @@
-// EPOS-- Address Space Test Program
+// EPOS Address Space Test Program
 
 #include <utility/ostream.h>
 #include <address_space.h>

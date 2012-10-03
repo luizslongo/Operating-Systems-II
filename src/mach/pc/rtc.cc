@@ -1,41 +1,38 @@
-// EPOS-- PC RTC Mediator
+// EPOS PC RTC Mediator Implementation
 
 #include <mach/pc/rtc.h>
 
 __BEGIN_SYS
 
-PC_RTC::Seconds PC_RTC::read()
+PC_RTC::Date PC_RTC::date()
 {
-    unsigned int Y, M, D, h, m, s;
+    unsigned int tmp = reg(SECONDS);
+    Date date(reg(YEAR), reg(MONTH), reg(DAY), 
+	      reg(HOURS), reg(MINUTES), tmp);
 
-    do { // Get time BINARY (not BCD) components
-	s = reg(SECONDS);
-	m = reg(MINUTES);
-	h = reg(HOURS);
-	D = reg(DAY);
-	M = reg(MONTH);
-	Y = reg(YEAR);
-    } while(s != reg(SECONDS)); // RTC update in between? read again!
-    if ((Y += 1900) < _Traits::EPOCH_YEAR)
-	Y += 100;
+    if(tmp != reg(SECONDS)) // RTC update in between?
+	date = Date(reg(YEAR), reg(MONTH), reg(DAY), 
+		    reg(HOURS), reg(MINUTES), reg(SECONDS));
 
-    return date2offset(_Traits::EPOCH_DAYS, Y, M, D, h, m, s);
+    date.adjust_year(1900);
+    if(date.year() < EPOCH_YEAR)
+	date.adjust_year(100);
+
+    db<RTC>(TRC) << "RTC::date() => " << date << "\n";
+
+    return date;
 }
 
-void PC_RTC::write(const PC_RTC::Seconds & time)
+void PC_RTC::date(const Date & d)
 {
-    db<PC_RTC>(TRC) << "PC_RTC::write(time= " << time << ")\n";
+    db<RTC>(TRC) << "RTC::date(date= " << d << ")\n";
 
-    unsigned int Y, M, D, h, m, s;
-
-    offset2date(time, _Traits::EPOCH_DAYS, &Y, &M, &D, &h, &m, &s);
-
-    reg(YEAR, Y);
-    reg(MONTH, M);
-    reg(DAY, D);
-    reg(HOURS, h);
-    reg(MINUTES, m);
-    reg(SECONDS, s);
+    reg(YEAR, d.year());
+    reg(MONTH, d.month());
+    reg(DAY, d.day());
+    reg(HOURS, d.hour());
+    reg(MINUTES, d.minute());
+    reg(SECONDS, d.second());
 }
 
 __END_SYS

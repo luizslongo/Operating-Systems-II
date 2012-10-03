@@ -1,14 +1,21 @@
-# EPOS-- IA32 Architecture Makefile
+# EPOS IA32 Architecture Makefile
 
-include $(EPOS)/makedefs
+include ../../../makedefs
 
-OBJS := $(subst .cc,.o,$(shell find *.cc | grep -v test | grep -v init))
-INITS := $(subst .cc,.o,$(shell find *.cc | grep init))
-TESTS := $(subst .cc,,$(shell find *.cc | grep test))
+OBJS := $(subst .cc,.o,$(shell find *.cc | grep -v _init | grep -v _test))
+CRTS := $(subst .S,.o,$(shell find *.S | grep crt))
+CRTSI := $(subst .S,.s,$(shell find *.S | grep crt))
+INITS := $(subst .cc,.o,$(shell find *.cc | grep _init))
+TESTS := $(subst .cc,,$(shell find *.cc | grep _test))
 
-all:		$(LIBSYS) $(LIBINIT)
+all:		crts $(LIBARCH) $(LIBINIT)
 
-$(LIBSYS):	$(LIBSYS)($(OBJS))	
+crts:		$(CRTS)
+		$(INSTALL) $^ $(LIB)
+
+.INTERMEDIATE:	$(CRTSI)
+
+$(LIBARCH):	$(LIBARCH)($(OBJS))	
 
 $(LIBINIT):	$(LIBINIT)($(INITS))
 
@@ -18,4 +25,4 @@ cpu.o		: cpu.cc
 test:		$(TESTS)
 
 clean:
-		$(CLEAN) *.o *_test
+		$(CLEAN) *.o *.s *_test

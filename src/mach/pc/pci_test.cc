@@ -1,4 +1,4 @@
-// EPOS-- PC PCI Test Program
+// EPOS PC PCI Test Program
 
 #include <utility/ostream.h>
 #include <pci.h>

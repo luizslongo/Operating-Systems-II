@@ -1,19 +1,45 @@
-# EPOS-- Application Makefile
+# EPOS Application Makefile
 
-include $(EPOS)/makedefs
+include ../makedefs
+
+APP_PATH := $(subst _app,,$(APPLICATION))
+ISDIR := $(shell test -d $(APP_PATH) && echo 0)
+
+ifeq ($(ISDIR), 0)
+SRC := $(shell find ./$(APP_PATH)/src/ -mindepth 1 -name "*.cc" -type f)
+OBJS := $(subst .cc,.do,$(SRC))
+else
+OBJS :=
+endif
+
+# This is used by canneal_app parsec benchmark application
+ENABLE_THREADS :=
+
+ifeq ($(APPLICATION),canneal_app)
+ENABLE_THREADS := -D ENABLE_THREADS
+endif
 
 all:		install
 
-$(MACH)_loader:	$(MACH)_loader.o 
-		$(ALD) $(ALDFLAGS) -o $@ $<
+.SUFFIXES: .do .cc
 
-$(MACH)_loader.o: $(MACH)_loader.cc $(SRC)/system/$(MACH)_system
-		$(ACC) $(ACCFLAGS) $<
+.cc.do :	$(SRC)
+		$(CXX) $(CXXFLAGS) -o $@ $< $(ENABLE_THREADS)
 
-install: 	$(MACH)_loader
-		$(STRIP) -o $(MACH)_loader.img $<
-		$(INSTALL) $(MACH)_loader.img $(IMG)/$(MACH)_loader
-		$(CLEAN) $(MACH)_loader.img
+$(APPLICATION):	$(APPLICATION).o $(LIB)/* $(OBJS)
+		$(ALD) $(ALDFLAGS) -o $@ $(APPLICATION).o $(OBJS)
+
+$(APPLICATION).o: $(APPLICATION).cc $(SRC)
+		$(ACC) $(ACCFLAGS) -o $@ $< $(ENABLE_THREADS)
+
+install: 	$(APPLICATION)
+ifneq ($(GDB_DEBUG), 1)
+		$(STRIP) -o $(APPLICATION).tmp $<
+else
+		cp $< $(APPLICATION).tmp
+endif
+		$(INSTALL) $(APPLICATION).tmp $(IMG)/$(APPLICATION)
+		$(CLEAN) $(APPLICATION).tmp
 
 clean:
-		$(CLEAN) *.o $(MACH)_loader
+		$(CLEAN) *.o $(APPLICATION) $(OBJS)

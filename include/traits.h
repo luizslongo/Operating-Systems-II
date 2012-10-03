@@ -1,3 +1,5 @@
+
+
 #ifndef __traits_h
 #define __traits_h
 
@@ -8,28 +10,46 @@ __BEGIN_SYS
 template <class Imp>
 struct Traits
 {
+    static const bool enabled = true;
     static const bool debugged = true;
+    static const bool power_management = false;
 };
 
-class Null_Debug;
-template <> struct Traits<Null_Debug>
+
+/*
+ *
+ * Utilities
+ *
+ */
+template <> struct Traits<Debug>
 {
-    static const bool error   = false;
-    static const bool warning = false;
+    static const bool error   = true;
+    static const bool warning = true;
     static const bool info    = false;
     static const bool trace   = false;
 };
 
-class Debug;
-template <> struct Traits<Debug>: public Traits<Null_Debug>
+template <> struct Traits<Lists>: public Traits<void>
 {
-    static const bool error   = true;
-    static const bool warning = true;
-    static const bool info    = true;
-    static const bool trace   = true;
+    static const bool debugged = false;
 };
 
-// System parts
+template <> struct Traits<Spin>: public Traits<void>
+{
+    static const bool debugged = false;
+};
+
+template <> struct Traits<Heap>: public Traits<void>
+{
+    static const bool priority_alloc = false;
+};
+
+
+/*
+ *
+ * System parts
+ *
+ */
 template <> struct Traits<Boot>: public Traits<void>
 {
 };
@@ -46,142 +66,164 @@ template <> struct Traits<System>: public Traits<void>
 {
 };
 
-template <> struct Traits<Framework>: public Traits<void>
+
+/*
+ *
+ * Common Mediators 
+ *
+ */
+template <> struct Traits<Serial_Display>: public Traits<void>
 {
-};
-
-// Mediators
-template <> struct Traits<IA32>: public Traits<void>
-{
-  static const int CLOCK = 1000000000;
-};
-
-template <> struct Traits<H8>: public Traits<void>
-{
-  static const long CLOCK = 16000000;
-};
-
-template <> struct Traits<PPC32>: public Traits<void>
-{
-  static const int CLOCK = 200000000;
-};
-
-template <> struct Traits<IA32_MMU>: public Traits<void>
-{
-    static const bool fast_log_to_phy = false;
-};
-
-template <> struct Traits<H8_MMU>: public Traits<void>
-{
-    static const bool fast_log_to_phy = false;
-};
-
-template <> struct Traits<AVR8_MMU>: public Traits<void>
-{
-    static const bool fast_log_to_phy = false;
-};
-
-template <> struct Traits<PPC32_MMU>: public Traits<void>
-{
-    static const bool fast_log_to_phy = false;
-};
-
-template <> struct Traits<PC_RTC>: public Traits<void>
-{
-    static const unsigned int EPOCH_DAY = 1;
-    static const unsigned int EPOCH_MONTH = 1;
-    static const unsigned int EPOCH_YEAR = 1970;
-    static const unsigned int EPOCH_DAYS = 719499;
-};
-
-template <> struct Traits<PC>: public Traits<void>
-{
-    static const unsigned int BOOT_IMAGE_ADDR = 0x00008000;
-    static const int INT_BASE = 0x20;
-    static const int SYSCALL_INT = 0x80;
-
-    static const unsigned int SYSTEM_STACK_SIZE = 4096;
-    static const unsigned int SYSTEM_HEAP_SIZE = 4096;
-    static const unsigned int APPLICATION_STACK_SIZE = 4096;
-    static const unsigned int APPLICATION_HEAP_SIZE = 100 * 4096;
-};
-
-template <> struct Traits<RCX>: public Traits<void>
-{
-    static const unsigned int BOOT_IMAGE_ADDR = 0x8080;	
-    static const int INT_BASE = 0x0A;
-
-    static const unsigned int SYSTEM_STACK_SIZE = 512;
-    static const unsigned int SYSTEM_HEAP_SIZE = 512;
-    static const unsigned int APPLICATION_STACK_SIZE = 512;
-    static const unsigned int APPLICATION_HEAP_SIZE = 512;
-};
-
-template <> struct Traits<Khomp>: public Traits<void>
-{
-    static const unsigned int BOOT_IMAGE_ADDR = 0x0180;	
-    static const int INT_BASE = 0x00;
-
-    static const unsigned int SYSTEM_HEAP_SIZE = 4096;
-    static const unsigned int SYSTEM_STACK_SIZE = 4096;
-    static const unsigned int APPLICATION_STACK_SIZE = 4096;
-    static const unsigned int APPLICATION_HEAP_SIZE = 4096;
-};
-
-template <> struct Traits<AT90S>: public Traits<void>
-{
-    static const unsigned int BOOT_IMAGE_ADDR = 0x0000;
-    static const int INT_BASE = 0x00; 
-
-    static const unsigned int SYSTEM_STACK_SIZE = 128;
-    static const unsigned int SYSTEM_HEAP_SIZE = 64;
-    static const unsigned int APPLICATION_STACK_SIZE = 64;
-    static const unsigned int APPLICATION_HEAP_SIZE = 64;
-};
-
-template <> struct Traits<PC_PCI>: public Traits<void>
-{
-    static const int MAX_BUS = 0;
-    static const int MAX_DEV_FN = 0xff;
-};
-
-template <> struct Traits<PC_Timer>: public Traits<void>
-{
-    static const int FREQUENCY = 100; // Hz
-};
-
-template <> struct Traits<PC_Display>: public Traits<void>
-{
+    static const bool enabled = true;
     static const int COLUMNS = 80;
-    static const int LINES = 25;
+    static const int LINES = 24;
     static const int TAB_SIZE = 8;
-    static const unsigned int FRAME_BUFFER_ADDRESS = 0xb8000;
 };
 
-template <> struct Traits<RCX_Display>: public Traits<void>
+template <> struct Traits<CMAC<Radio_Wrapper> >: public Traits<void>
 {
-    static const int COLUMNS = 5;
-    static const int LINES = 1;
-    static const int TAB_SIZE = 8;
-    static const unsigned int FRAME_BUFFER_ADDRESS = 0xef43;
-    static const int DIGIT_SEGMENTS = 7;
-    static const int SCROLL_DELAY = 2; /* (1)=FAST (2)=MEDIUM (3)=SLOW */
+    static const bool debugged = false;
+
+    static const bool time_triggered = true;
+    static const bool auto_rx        = true;    // automatically listen to the channel. obs: must have time_triggered = true
+    static const bool coordinator    = false;
+    static const bool ack            = false;
+    static const bool csma           = true;
+    static const bool rts_cts        = false;
+
+    static const unsigned long  SLEEPING_PERIOD = 500;  // ms
+    static const unsigned long  TIMEOUT         = 400;   // ms
+    static const unsigned long  BACKOFF         = 2;     // ms
+    static const unsigned short ADDRESS         = 0x0001;
+    static const unsigned int   MTU             = 118;
+    static const unsigned int   BUFFER_SIZE     = 5;     // of packets
 };
 
-// Abstractions
-template <> struct Traits<Alarm>: public Traits<void>
-{
-    static const bool visible = false;
-};
 
+/*
+ *
+ * Abstractions
+ *
+ */
 template <> struct Traits<Thread>: public Traits<void>
 {
     static const bool busy_waiting = false;
     static const bool active_scheduler = true;
-    static const unsigned int quantum = 500000; // us
     static const bool preemptive = true;
+    static const unsigned int QUANTUM = 10000; // us
+
+    static const bool smp = false;
+    static const bool trace_idle = false;
+    static const bool energy_aware = false;
+};
+
+
+template <> struct Traits<Single_Core_Alarm>: public Traits<void>
+{
+    static const bool enabled = true;
+};
+
+
+template <> struct Traits<Synchronizer>: public Traits<void>
+{
+};
+
+
+/*
+ *
+ * Network Abstractions
+ *
+ */
+
+// Services
+template <> struct Traits<Services>: public Traits<void>
+{
+    static const bool enabled = true;
+
+    // Network services
+    enum {
+        ARP = 0,
+        ADHOP
+    };
+
+    static const int SERVICE = ARP;
+};
+
+// List of Neighbors
+template <> struct Traits<Neighborhood>: public Traits<void>
+{
+    static const bool enabled = true;
+
+    static const unsigned int MAX_NEIGHBORS = 5;
+    static const unsigned int EXPIRE = 10;
+};
+
+// Network Protocols
+template <> struct Traits<Network>: public Traits<Services>
+{
+    static const unsigned long ADDRESS   = 0x0a00010f;   // 10.0.1.15
+    static const unsigned long NETMASK   = 0xffffff00;   // 255.255.255.0
+    static const unsigned long BROADCAST = 0x0a0001ff;   // 10.0.1.255
+
+    static const unsigned int   TRIES = 3;
+    static const unsigned int   TIMEOUT = 1000000; // 1s
+
+    // Network Protocols
+    enum {
+        ELP,
+        ROUTER
+    };
+
+    static const int NETWORK_PROTOCOL = ELP;
+};
+
+template <> struct Traits<IP>: public Traits<Services>
+{
+    static const unsigned long ADDRESS   = 0x0a00020f;   // 10.0.2.15
+    static const unsigned long NETMASK   = 0xffffff00;   // 255.255.255.0
+    static const unsigned long BROADCAST = 0x0a0002ff;   // 10.0.2.255
+
+    static const bool forwarding    = false;
+    static const bool fragmentation = false;
+    static const bool spawn_thread  = true;
+
+    // Network configuration method
+    enum {
+        STATIC,
+        LINK_LOCAL,
+        DHCP
+    };
+
+    static const short         CONFIG   = STATIC;
+    static const unsigned int  OPT_SIZE = 0; // options size in 32-bit words
+    static const unsigned char DEF_TTL  = 0x40; // time-to-live
+    static const unsigned int  MAX_FRAGMENTS = 1;
+};
+
+template <> struct Traits<ICMP> : public Traits<IP>
+{
+    static const bool echo_reply = true;
+};
+
+// Transport Protocols
+template <> struct Traits<UDP> : public Traits<IP>
+{
+    static const bool checksum = false;
+};
+
+template <> struct Traits<TCP> : public Traits<IP>
+{
+    static const bool checksum = true;
 };
 
 __END_SYS
+
+#ifdef __ARCH_TRAITS_H
+#include __ARCH_TRAITS_H
+#endif
+
+#ifdef __MACH_TRAITS_H
+#include __MACH_TRAITS_H
+#endif
 
 #endif

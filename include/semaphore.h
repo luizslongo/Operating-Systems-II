@@ -1,42 +1,47 @@
-// EPOS-- Semaphore Abstraction Declarations
+// EPOS Semaphore Abstraction Declarations
 
 #ifndef __semaphore_h
 #define __semaphore_h
 
-#include <common/synchronizer.h>
+#include <synchronizer.h>
 
 __BEGIN_SYS
 
-class Semaphore: public Synchronizer_Common
+class Semaphore: protected Synchronizer_Common
 {
-private:
-    typedef Traits<Semaphore> Traits;
-    static const Type_Id TYPE = Type<Semaphore>::TYPE;
-
 public:
     Semaphore(int v = 1) : _value(v) {
-	db<Semaphore>(TRC) << "Semaphore(value= " << _value << ")\n";
+	db<Synchronizer>(TRC) << "Semaphore(value=" << _value << ") => "
+			      << this << "\n";
     }
+
     ~Semaphore() {
-	db<Semaphore>(TRC) << "~Semaphore()\n";
+	db<Synchronizer>(TRC) << "~Semaphore(this=" << this << ")\n";
     }
 
-    void p() { 
-	db<Semaphore>(TRC) << "Semaphore::p(value=" << _value << ")\n";
-	while(dec(_value) < 0)
-	    sleep();
-    }
-    void v() {
-	db<Semaphore>(TRC) << "Semaphore::v(value=" << _value << ")\n";
-	if(inc(_value) < 1)
-	    wakeup();
+    void p()
+    { 
+        db<Synchronizer>(TRC) << "Semaphore::p(this=" << this 
+			      << ",value=" << _value << ")\n";
+
+        fdec(_value);
+        while(_value < 0)
+            sleep();
     }
 
-    static int init(System_Info *si);
+    void v()
+    {
+        db<Synchronizer>(TRC) << "Semaphore::v(this=" << this
+			      << ",value=" << _value << ")\n";
+
+        if(finc(_value) < 1)
+            wakeup();
+    }
 
 private:
     volatile int _value;
 };
+
 
 __END_SYS
 

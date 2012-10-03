@@ -1,36 +1,28 @@
-// EPOS-- Clock Abstraction Declarations
+// EPOS Clock Abstraction Declarations
 
-#ifndef __timepiece_h
-#define __timepiece_h
+#ifndef __clock_h
+#define __clock_h
 
-#include <system/config.h>
 #include <rtc.h>
 
 __BEGIN_SYS
 
 class Clock
 {
-private:
-    typedef Traits<Clock> Traits;
-    static const Type_Id TYPE = Type<Clock>::TYPE;
-
-    typedef RTC::Microseconds Microseconds;
-    typedef RTC::Seconds Seconds;
+public:
+    typedef RTC::Microsecond Microsecond;
+    typedef RTC::Second Second;
+    typedef RTC::Date Date;
 
 public:
-//    Clock(const Id & id) {}
-//    Clock(const Clock & obj) {}
     Clock() {}
-    ~Clock() {}
 
-//    const Id & id();
-//    bool valid();
+    Microsecond resolution() { return 1000000; }
 
-    Microseconds resolution() { return 1000000; }
+    Second now() { return RTC::seconds_since_epoch(); }
 
-    Seconds now() { RTC rtc; return rtc.read(); }
-
-    static int init(System_Info * si);
+    Date date() { return RTC::date(); }
+    void date(const Date & d) { return RTC::date(d); }
 };
 
 __END_SYS

@@ -1,168 +1,481 @@
-// EPOS-- List Utility Test Program
+// EPOS List Utility Test Program
 
 #include <utility/ostream.h>
+#include <utility/malloc.h>
 #include <utility/list.h>
 
 __USING_SYS;
 
-struct Integer1 {
-    Integer1(int _i) : i(_i), e(this) {}
-    
-    int i;
-    List<Integer1>::Element e;
-};
+const int N = 10;
 
-struct Integer2 {
-    Integer2(int _i) : i(_i), e(this) {}
-    
-    int i;
-    Ordered_List<Integer2>::Element e;
-};
+void test_simple_list();
+void test_list();
+void test_ordered_list();
+void test_relative_list();
+void test_scheduling_list();
+void test_grouping_list();
+void test_simple_grouping_list();
 
-struct Integer3 {
-    Integer3(int _i) : i(_i), e(this) {}
-    
-    int i;
-    Relative_List<Integer3>::Element e;
-};
-
-struct Integer4 {
-    Integer4(int _i, int _s) : e((Integer4 *)_i, _s) {}
-    
-    Grouping_List<Integer4>::Element e;
-};
+OStream cout;
 
 int main()
 {
-    OStream cout;
 
     cout << "List Utility Test\n";
 
-    List<Integer1> l1;
-    Integer1 i1(1), i2(2), i3(3), i4(4);
-    cout << "This is a list of integers:\n";
-    cout << "Inserting the integer " << i1.i << " into the list.\n";
-    l1.insert_tail(&i1.e);
-    cout << "Inserting the integer " << i2.i << " into the list.\n";
-    l1.insert_tail(&i2.e);
-    cout << "Inserting the integer " << i3.i << " into the list.\n";
-    l1.insert_tail(&i3.e);
-    cout << "Inserting the integer " << i4.i << " into the list.\n";
-    l1.insert_tail(&i4.e);
-    cout << "The list has now " << l1.size() << " elements.\n";
-    cout << "Removing the element whose value is " << i2.i << "(" 
-	 << l1.remove(&i2)->object()->i << ")" << " from the list.\n";
-    cout << "Removing the list's head (" << l1.remove_head()->object()->i 
-	 << ")" << ".\n";
-    cout << "Removing the element whose value is " << i4.i << "(" 
-	 << l1.remove(&i4)->object()->i << ")" << " from the list.\n";
-    cout << "Removing the list's tail (" << l1.remove_tail()->object()->i
-	 << ")" << ".\n";
-    cout << "The list has now " << l1.size() << " elements.\n";
+    test_simple_list();
+    test_simple_grouping_list();
+    test_list();
+    test_ordered_list();
+    test_relative_list();
+    test_scheduling_list();
+    test_grouping_list();
 
-    Ordered_List<Integer2> l2;
-    Integer2 j1(1), j2(2), j3(3), j4(4);
-    cout << "This is an ordered list of integers:\n";
-    cout << "Inserting the integer " << j1.i 
-	 << " into the list with order 2.\n";
-    l2.insert(&j1.e, 2);
-    cout << "Inserting the integer " << j2.i
-	 << " into the list with order 3.\n";
-    l2.insert(&j2.e, 3);
-    cout << "Inserting the integer " << j3.i
-	 << " into the list with order 4.\n";
-    l2.insert(&j3.e, 4);
-    cout << "Inserting the integer " << j4.i
-	 << " into the list with order 1.\n";
-    l2.insert(&j4.e, 1);
-    cout << "The list has now " << l2.size() << " elements.\n";
-    cout << "Removing the element whose value is " << j2.i << "(" 
-	 << l2.remove(&j2)->object()->i << ")" << " from the list.\n";
-    cout << "Removing the list's head (" << l2.remove_head()->object()->i 
-	 << ")" << ".\n";
-    cout << "Removing the list's head (" << l2.remove_head()->object()->i
-	 << ")" << ".\n";
-    cout << "Removing the list's tail (" << l2.remove_tail()->object()->i 
-	 << ")" << " from the list.\n";
-    cout << "The list has now " << l2.size() << " elements.\n";
-
-    Relative_List<Integer3> l3;
-    Integer3 k1(1), k2(2), k3(3), k4(4);
-    cout << "This is an list of integers with relative ordering:\n";
-    cout << "Inserting the integer " << k1.i 
-	 << " into the list with order 2.\n";
-    l3.insert(&k1.e, 2);
-    cout << "Inserting the integer " << k2.i 
-	 << " into the list with order 3.\n";
-    l3.insert(&k2.e, 3);
-    cout << "Inserting the integer " << k3.i
-	 << " into the list with order 4.\n";
-    l3.insert(&k3.e, 4);
-    cout << "Inserting the integer " << k4.i
-	 << " into the list with order 1.\n";
-    l3.insert(&k4.e, 1);
-    cout << "The list has now " << l3.size() << " elements.\n";
-    cout << "Removing the element whose value is " << k2.i << "(" 
-	 << l3.remove(&k2)->object()->i << ")" << " from the list.\n";
-    cout << "Removing the list's head (" << l3.remove_head()->object()->i
-	 << ")" << ".\n";
-    cout << "Removing the list's head (" << l3.remove_head()->object()->i
-	 << ")" << ".\n";
-    cout << "Removing the list's tail (" << l3.remove_tail()->object()->i
-	 << ")" << " from the list.\n";
-    cout << "The list has now " << l3.size() << " elements.\n";
-
-    Grouping_List<int> l4;
-    Grouping_List<int>::Element m1((int *)0, 2), m2((int *)16, 2), m3((int *)8, 2), m4((int *)24, 2);
-    Grouping_List<int>::Element * d1, * d2;
-    cout << "This is a grouping list of integers:\n";
-    cout << "Inserting the integer group beginning with " << m1.object()
-	 << " and spanning " << m1.size() << " elements into the list.\n";
-    l4.insert_merging(&m1, &d1, &d2);
-    if(d1)
-	cout << "Element whose valeu was " << d1->object() << " merged\n";
-    if(d2)
-	cout << "Element whose valeu was " << d2->object() << " merged\n";
-    cout << "Inserting the integer group beginning with " << m2.object()
-	 << " and spanning " << m2.size() << " elements into the list.\n";
-    l4.insert_merging(&m2, &d1, &d2);
-    if(d1)
-	cout << "Element whose valeu was " << d1->object() << " merged\n";
-    if(d2)
-	cout << "Element whose valeu was " << d2->object() << " merged\n";
-    cout << "Inserting the integer group beginning with " << m3.object()
-	 << " and spanning " << m3.size() << " elements into the list.\n";
-    l4.insert_merging(&m3, &d1, &d2);
-    if(d1)
-	cout << "Element whose valeu was " << d1->object() << " merged\n";
-    if(d2)
-	cout << "Element whose valeu was " << d2->object() << " merged\n";
-    cout << "Inserting the integer group beginning with " << m4.object()
-	 << " and spanning " << m4.size() << " elements into the list.\n";
-    l4.insert_merging(&m4, &d1, &d2);
-    if(d1)
-	cout << "Element whose valeu was " << d1->object() << " merged\n";
-    if(d2)
-	cout << "Element whose valeu was " << d2->object() << " merged\n";
-    cout << "The list has now " << l4.size() << " elements that group " 
-	 << l4.grouped_size() << " elements in total.\n";
-    cout << "Removing one element from the list: "; 
-    d1 = l4.search_decrementing(1);
-    cout << d1->object() + d1->size() << ".\n";
-    if(!d1->size())
-	cout << "Element whose valeu was " << d1->object() << " deleted\n";
-    cout << "Allocating six more elements from the list: "; 
-    d1 = l4.search_decrementing(6);
-    cout << d1->object() + d1->size() << ".\n";
-    if(!d1->size())
-	cout << "Element whose valeu was " << d1->object() << " deleted\n";
-    cout << "Allocating one element from the list: ";
-    d1 = l4.search_decrementing(1);
-    cout << d1->object() + d1->size() << ".\n";
-    if(!d1->size())
-	cout << "Element whose valeu was " << d1->object() << " deleted\n";
-    cout << "The list has now " << l4.size() << " elements that group " 
-	 << l4.grouped_size() << " elements in total.\n";
+    cout << "\nDone!\n";
 
     return 0;
+}
+
+void test_simple_list ()
+{
+    cout << "\nThis is a singly-linked list of integers:\n";
+    Simple_List<int> l;
+    int o[N];
+    Simple_List<int>::Element * e[N];
+    cout << "Inserting the following integers into the list ";
+    for(int i = 0; i < N; i++) {
+	o[i] = i;
+	e[i] = new Simple_List<int>::Element(&o[i]);
+	l.insert(e[i]);
+	cout << i;
+	if(i != N - 1)
+	    cout << ", ";
+    }
+    cout << "\n";
+    cout << "The list has now " << l.size() << " elements\n";
+    cout << "They are: ";
+    for(Simple_List<int>::Iterator i = l.begin(); i != l.end(); i++) {
+	cout << *i->object();
+	if(Simple_List<int>::Iterator(i->next()) != l.end())
+	    cout << ", ";
+    }
+    cout << "\n";
+    cout << "Removing the element whose value is " << o[N/2] << " => " 
+	 << *l.remove(&o[N/2])->object() << "\n";
+    cout << "Removing the list's head => " << *l.remove_head()->object()
+	 << "\n";
+    cout << "Removing the element whose value is " << o[N/4] << " => " 
+	 << *l.remove(&o[N/4])->object() << "\n";
+    cout << "Removing the list's tail => " << *l.remove_tail()->object()
+	 << "\n";
+    cout << "Trying to remove an element that is not on the list => " 
+	 << l.remove(&o[N+1]) << "\n";
+    cout << "Removing all remaining elements => ";
+    while(l.size() > 0) {
+	cout << *l.remove()->object();
+	if(l.size() > 0)
+	    cout << ", ";
+    }
+    cout << "\n";
+    cout << "The list has now " << l.size() << " elements\n";
+    for(int i = 0; i < N; i++)
+	delete e[i];
+}
+
+void test_simple_grouping_list() 
+{
+    cout << "\nThis is a simple grouping list of integers:\n";
+    Simple_Grouping_List<int> l;
+    int o[N * 2];
+    Simple_Grouping_List<int>::Element * e[N * 2];
+    Simple_Grouping_List<int>::Element * d1 = 0, * d2 = 0;
+    cout << "Inserting the following group of integers into the list ";
+    for(int i = 0; i < N * 2; i += 4) {
+	o[i] = i;
+	o[i + 1] = i + 1;
+	e[i] = new Simple_Grouping_List<int>::Element(&o[i], 2);
+	l.insert_merging(e[i], &d1, &d2);
+	cout << i << "(2), ";
+	if(d1) {
+	    cout << "[nm]"; // next merged
+	    delete d1;
+	}
+	if(d2) {
+	    cout << "[tm]"; // this merged
+	    delete d2;
+	}
+    }
+    for(int i = 2; i < N * 2; i += 4) {
+	o[i] = i;
+	o[i + 1] = i + 1;
+	e[i] = new Simple_Grouping_List<int>::Element(&o[i], 2);
+	l.insert_merging(e[i], &d1, &d2);
+	cout << i << "(2)";
+	if(d1) {
+	    cout << "[nm]"; // next merged
+	    delete d1;
+	}
+	if(d2) {
+	    cout << "[tm]"; // this merged
+	    delete d2;
+	}
+	if(i < (N - 1) * 2)
+	    cout << ", ";
+    }
+    cout << "\n";
+    cout << "The list has now " << l.size() << " elements that group " 
+	 << l.grouped_size() << " elements in total\n";
+    cout << "They are: ";
+    for(Simple_Grouping_List<int>::Iterator i = l.begin(); i != l.end(); i++) {
+	cout << *i->object();
+	if(Simple_Grouping_List<int>::Iterator(i->next()) != l.end())
+	    cout << ", ";
+    }
+    cout << "\n";
+    cout << "Allocating 1 element from the list => "; 
+    d1 = l.search_decrementing(1);
+    if(d1) {
+	cout << *(d1->object() + d1->size()) << "\n";
+	if(!d1->size()) {
+	    cout << "[rm]"; // removed
+	    delete d1;
+	}
+    } else
+	cout << "failed!\n";
+    cout << "Allocating 6 more elements from the list => "; 
+    d1 = l.search_decrementing(6);
+    if(d1) {
+	cout << *(d1->object() + d1->size());
+	if(!d1->size()) {
+	    cout << "[rm]"; // removed
+	    delete d1;
+	}
+	cout << "\n";
+    } else
+	cout << "failed!\n";
+    cout << "Allocating " << N * 2 << " more elements from the list => "; 
+    d1 = l.search_decrementing(N * 2);
+    if(d1) {
+	cout << *(d1->object() + d1->size());
+	if(!d1->size()) {
+	    cout << "[rm]"; // removed
+	    delete d1;
+	}
+	cout << "\n";
+    } else
+	cout << "failed!\n";
+    cout << "Allocating " << (N * 2)-7 << " more elements from the list => "; 
+    d1 = l.search_decrementing((N * 2) - 7);
+    if(d1) {
+	cout << *(d1->object() + d1->size());
+	if(!d1->size()) {
+	    cout << "[r]"; // removed
+	    delete d1;
+	}
+	cout << "\n";
+    } else
+	cout << "failed!\n";
+    cout << "The list has now " << l.size() << " elements that group " 
+	 << l.grouped_size() << " elements in total\n";
+}
+
+void test_list ()
+{
+    cout << "\nThis is a doubly-linked list of integers:\n";
+    List<int> l;
+    int o[N];
+    List<int>::Element * e[N];
+    cout << "Inserting the following integers into the list ";
+    for(int i = 0; i < N; i++) {
+	o[i] = i;
+	e[i] = new List<int>::Element(&o[i]);
+	l.insert(e[i]);
+	cout << i;
+	if(i != N - 1)
+	    cout << ", ";
+    }
+    cout << "\n";
+    cout << "The list has now " << l.size() << " elements\n";
+    cout << "They are: ";
+    for(List<int>::Iterator i = l.begin(); i != l.end(); i++) {
+	cout << *i->object();
+	if(List<int>::Iterator(i->next()) != l.end())
+	    cout << ", ";
+    }
+    cout << "\n";
+    cout << "Removing the element whose value is " << o[N/2] << " => " 
+	 << *l.remove(&o[N/2])->object() << "\n";
+    cout << "Removing the list's head => " << *l.remove_head()->object()
+	 << "\n";
+    cout << "Removing the element whose value is " << o[N/4] << " => " 
+	 << *l.remove(&o[N/4])->object() << "\n";
+    cout << "Removing the list's tail => " << *l.remove_tail()->object()
+	 << "\n";
+    cout << "Trying to remove an element that is not on the list => " 
+	 << l.remove(&o[N+1]) << "\n";
+    cout << "Removing all remaining elements => ";
+    while(l.size() > 0) {
+	cout << *l.remove()->object();
+	if(l.size() > 0)
+	    cout << ", ";
+    }
+    cout << "\n";
+    cout << "The list has now " << l.size() << " elements\n";
+    for(int i = 0; i < N; i++)
+	delete e[i];
+}
+
+void test_ordered_list ()
+{
+    cout << "\nThis is an ordered, linked list of integers:\n";
+    Ordered_List<int> l;
+    int o[N];
+    Ordered_List<int>::Element * e[N];
+    cout << "Inserting the following integers into the list ";
+    for(int i = 0; i < N; i++) {
+	o[i] = i;
+	e[i] = new Ordered_List<int>::Element(&o[i], N - i - 1);
+	l.insert(e[i]);
+	cout << i << "(" << N - i - 1 << ")";
+	if(i != N - 1)
+	    cout << ", ";
+    }
+    cout << "\n";
+    cout << "The list has now " << l.size() << " elements\n";
+    cout << "They are: ";
+    for(Ordered_List<int>::Iterator i = l.begin(); i != l.end(); i++) {
+	cout << *i->object();
+	if(Ordered_List<int>::Iterator(i->next()) != l.end())
+	    cout << ", ";
+    }
+    cout << "\n";
+    cout << "Removing the element whose value is " << o[N/2] << " => " 
+	 << *l.remove(&o[N/2])->object() << "\n";
+    cout << "Removing the list's head => " << *l.remove_head()->object()
+	 << "\n";
+    cout << "Removing the element whose value is " << o[N/4] << " => " 
+	 << *l.remove(&o[N/4])->object() << "\n";
+    cout << "Removing the list's tail => " << *l.remove_tail()->object()
+	 << "\n";
+    cout << "Trying to remove an element that is not on the list => " 
+	 << l.remove(&o[N+1]) << "\n";
+    cout << "Removing all remaining elements => ";
+    while(l.size() > 0) {
+	cout << *l.remove()->object();
+	if(l.size() > 0)
+	    cout << ", ";
+    }
+    cout << "\n";
+    cout << "The list has now " << l.size() << " elements\n";
+    for(int i = 0; i < N; i++)
+	delete e[i];
+}
+
+void test_relative_list ()
+{
+    cout << "\nThis is a realtive ordered, linked list of integers:\n";
+    Relative_List<int> l;
+    int o[N];
+    Relative_List<int>::Element * e[N];
+    cout << "Inserting the following integers into the list ";
+    for(int i = 0; i < N; i++) {
+	o[i] = i;
+	e[i] = new Relative_List<int>::Element(&o[i], N - i - 1);
+	l.insert(e[i]);
+	cout << i << "(" << N - i - 1 << ")";
+	if(i != N - 1)
+	    cout << ", ";
+    }
+    cout << "\n";
+    cout << "The list has now " << l.size() << " elements\n";
+    cout << "They are: ";
+    for(Relative_List<int>::Iterator i = l.begin(); i != l.end(); i++) {
+	cout << *i->object();
+	if(Relative_List<int>::Iterator(i->next()) != l.end())
+	    cout << ", ";
+    }
+    cout << "\n";
+    cout << "Removing the element whose value is " << o[N/2] << " => " 
+	 << *l.remove(&o[N/2])->object() << "\n";
+    cout << "Removing the list's head => " << *l.remove_head()->object()
+	 << "\n";
+    cout << "Removing the element whose value is " << o[N/4] << " => " 
+	 << *l.remove(&o[N/4])->object() << "\n";
+    cout << "Removing the list's tail => " << *l.remove_tail()->object()
+	 << "\n";
+    cout << "Trying to remove an element that is not on the list => " 
+	 << l.remove(&o[N+1]) << "\n";
+    cout << "Removing all remaining elements => ";
+    while(l.size() > 0) {
+	cout << *l.remove()->object();
+	if(l.size() > 0)
+	    cout << ", ";
+    }
+    cout << "\n";
+    cout << "The list has now " << l.size() << " elements\n";
+    for(int i = 0; i < N; i++)
+	delete e[i];
+}
+
+void test_scheduling_list ()
+{
+    cout << "\nThis is scheduling list of integers:\n";
+    Scheduling_List<int> l;
+    int o[N];
+    Scheduling_List<int>::Element * e[N];
+    cout << "Inserting the following integers into the list ";
+    for(int i = 0; i < N; i++) {
+	o[i] = i;
+	e[i] = new Scheduling_List<int>::Element(&o[i], N - i - 1);
+	l.insert(e[i]);
+	cout << i << "(" << N - i - 1 << ")";
+	if(i != N - 1)
+	    cout << ", ";
+    }
+    cout << "\n";
+    cout << "The list has now " << l.size() << " elements\n";
+    cout << "They are: ";
+    for(Scheduling_List<int>::Iterator i = l.begin(); i != l.end(); i++) {
+	cout << *i->object();
+	if(Scheduling_List<int>::Iterator(i->next()) != l.end())
+	    cout << ", ";
+    }
+    cout << "\n";
+    cout << "Scheduling the list => " << *l.choose()->object() << "\n";
+    cout << "They are: ";
+    for(Scheduling_List<int>::Iterator i = l.begin(); i != l.end(); i++) {
+	cout << *i->object();
+	if(Scheduling_List<int>::Iterator(i->next()) != l.end())
+	    cout << ", ";
+    }
+    cout << "\n";
+    cout << "Forcing scheduling of antorher element => " <<
+	*l.choose_another()->object() << "\n";
+    cout << "They are: ";
+    for(Scheduling_List<int>::Iterator i = l.begin(); i != l.end(); i++) {
+	cout << *i->object();
+	if(Scheduling_List<int>::Iterator(i->next()) != l.end())
+	    cout << ", ";
+    }
+    cout << "\n";
+    cout << "Forcing scheduling of element whose value is " << o[N/2] << " => " 
+ 	 << *l.choose(e[N/2])->object() << "\n";
+    cout << "They are: ";
+    for(Scheduling_List<int>::Iterator i = l.begin(); i != l.end(); i++) {
+	cout << *i->object();
+	if(Scheduling_List<int>::Iterator(i->next()) != l.end())
+	    cout << ", ";
+    }
+    cout << "\n";
+    cout << "Removing the list's head => " << *l.remove(l.choose())->object()
+	 << "\n";
+    cout << "Removing the element whose value is " << o[N/4] << " => " 
+	 << *l.remove(e[N/4])->object() << "\n";
+    cout << "Removing all remaining elements => ";
+    while(l.size() > 0) {
+	cout << *l.remove(l.choose())->object();
+	if(l.size() > 0)
+	    cout << ", ";
+    }
+    cout << "\n";
+    cout << "The list has now " << l.size() << " elements\n";
+    for(int i = 0; i < N; i++)
+	delete e[i];
+}
+
+void test_grouping_list() 
+{
+    cout << "\nThis is a grouping list of integers:\n";
+    Grouping_List<int> l;
+    int o[N * 2];
+    Grouping_List<int>::Element * e[N * 2];
+    Grouping_List<int>::Element * d1 = 0, * d2 = 0;
+    cout << "Inserting the following group of integers into the list ";
+    for(int i = 0; i < N * 2; i += 4) {
+	o[i] = i;
+	o[i + 1] = i + 1;
+	e[i] = new Grouping_List<int>::Element(&o[i], 2);
+	l.insert_merging(e[i], &d1, &d2);
+	cout << i << "(2), ";
+	if(d1) {
+	    cout << "[nm]"; // next merged
+	    delete d1;
+	}
+	if(d2) {
+	    cout << "[tm]"; // this merged
+	    delete d2;
+	}
+    }
+    for(int i = 2; i < N * 2; i += 4) {
+	o[i] = i;
+	o[i + 1] = i + 1;
+	e[i] = new Grouping_List<int>::Element(&o[i], 2);
+	l.insert_merging(e[i], &d1, &d2);
+	cout << i << "(2)";
+	if(d1) {
+	    cout << "[nm]"; // next merged
+	    delete d1;
+	}
+	if(d2) {
+	    cout << "[tm]"; // this merged
+	    delete d2;
+	}
+	if(i < (N - 1) * 2)
+	    cout << ", ";
+    }
+    cout << "\n";
+    cout << "The list has now " << l.size() << " elements that group " 
+	 << l.grouped_size() << " elements in total\n";
+    cout << "They are: ";
+    for(Grouping_List<int>::Iterator i = l.begin(); i != l.end(); i++) {
+	cout << *i->object();
+	if(Grouping_List<int>::Iterator(i->next()) != l.end())
+	    cout << ", ";
+    }
+    cout << "\n";
+    cout << "Allocating 1 element from the list => "; 
+    d1 = l.search_decrementing(1);
+    if(d1) {
+	cout << *(d1->object() + d1->size()) << "\n";
+	if(!d1->size()) {
+	    cout << "[rm]"; // removed
+	    delete d1;
+	}
+    } else
+	cout << "failed!\n";
+    cout << "Allocating 6 more elements from the list => "; 
+    d1 = l.search_decrementing(6);
+    if(d1) {
+	cout << *(d1->object() + d1->size());
+	if(!d1->size()) {
+	    cout << "[rm]"; // removed
+	    delete d1;
+	}
+	cout << "\n";
+    } else
+	cout << "failed!\n";
+    cout << "Allocating " << N * 2 << " more elements from the list => "; 
+    d1 = l.search_decrementing(N * 2);
+    if(d1) {
+	cout << *(d1->object() + d1->size());
+	if(!d1->size()) {
+	    cout << "[rm]"; // removed
+	    delete d1;
+	}
+	cout << "\n";
+    } else
+	cout << "failed!\n";
+    cout << "Allocating " << (N * 2)-7 << " more elements from the list => "; 
+    d1 = l.search_decrementing((N * 2) - 7);
+    if(d1) {
+	cout << *(d1->object() + d1->size());
+	if(!d1->size()) {
+	    cout << "[r]"; // removed
+	    delete d1;
+	}
+	cout << "\n";
+    } else
+	cout << "failed!\n";
+    cout << "The list has now " << l.size() << " elements that group " 
+	 << l.grouped_size() << " elements in total\n";
 }

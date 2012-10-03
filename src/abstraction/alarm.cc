@@ -1,88 +1,94 @@
-// EPOS-- Alarm Abstraction Implementation
+// EPOS Alarm Abstraction Implementation
 
+#include <system/kmalloc.h>
+#include <semaphore.h>
 #include <alarm.h>
-#include <display.h>
 
 __BEGIN_SYS
 
 // Class attributes
-Timer Alarm::_timer;
-volatile Alarm::Tick Alarm::_elapsed;
-Alarm::Handler Alarm::_master;
-Alarm::Tick Alarm::_master_ticks;
-Alarm::Queue Alarm::_requests;
+Spin Alarm_Base::_lock;
+Alarm_Timer * Single_Core_Alarm::_timer;
+volatile Single_Core_Alarm::Tick Single_Core_Alarm::_elapsed;
+Single_Core_Alarm::Queue Single_Core_Alarm::_requests;
 
 // Methods
-Alarm::Alarm(const Microseconds & time, const Handler & handler, int times)
-    : _ticks((time + period() / 2) / period()), _handler(handler),
-      _times(times), _link(this)
+Single_Core_Alarm::Single_Core_Alarm(const Microsecond & time, Handler & handler, int times):
+Alarm_Base(time, handler, times), _link(this, _ticks)
 {
-    db<Alarm>(TRC) << "Alarm(t=" << time << ",h=" << (void *)handler
-		   << ",x=" << times << ")\n";
-    if(_ticks)
-	_requests.insert(&_link, _ticks);
-    else
-	handler();
+    lock();
+
+    db<Single_Core_Alarm>(TRC) << "Alarm(t=" << time
+    << ",tk=" << _ticks
+    << ",h=" << (void *)handler
+    << ",x=" << times << ") => " << this << "\n";
+
+    if(_ticks) {
+        _requests.insert(&_link);
+        unlock();
+    } else {
+        unlock();
+        handler();
+    }
 }
 
-Alarm::~Alarm() {
-    db<Alarm>(TRC) << "~Alarm()\n";
+Single_Core_Alarm::~Single_Core_Alarm()
+{
+    lock();
+
+    db<Single_Core_Alarm>(TRC) << "~Single_Core_Alarm()\n";
+
     _requests.remove(this);
+
+    unlock();
 }
 
-void Alarm::master(const Microseconds & time, const Handler & handler)
-{
-    db<Alarm>(TRC) << "master(t=" << time << ",h="
-		   << (void *)handler << ")\n";
 
-    _master = handler;
-    _master_ticks = (time + period() / 2) / period();
+// Class methods
+void Single_Core_Alarm::delay(const Microsecond & time)
+{
+    db<Single_Core_Alarm>(TRC) << "Single_Core_Alarm::delay(time=" << time << ")\n";
+
+
+	Tick t = _elapsed + ticks(time);
+
+	while(_elapsed < t);
+
 }
 
-void Alarm::delay(const Microseconds & time)
-{
-    db<Alarm>(TRC) << "delay(t=" << time << ")\n";
-    Tick t = _elapsed + time / period();
-    while(_elapsed < t);
-}
 
-void Alarm::timer_handler(void)
+void Single_Core_Alarm::handler()
 {
-    static Tick next;
-    static Handler handler;
+    CPU::int_disable();
+    // lock(); this handler is meant to be called obly by CPU[0]
 
     _elapsed++;
-    
-    if(Traits::visible) {
-	Display display;
-	int lin, col;
-	display.position(&lin, &col);
-	display.position(0, 79);
-	display.putc(_elapsed);
-	display.position(lin, col);
+
+    Single_Core_Alarm * alarm = 0;
+
+    if(!_requests.empty()) {
+	// rank can be negative whenever multiple handlers get created for the same time tick
+        if(_requests.head()->promote() <= 0) {
+
+            Queue::Element * e = _requests.remove();
+            alarm = e->object();
+
+            if(alarm->_times != INFINITE)
+                alarm->_times--;
+
+            if(alarm->_times) {
+                e->rank(alarm->_ticks);
+                _requests.insert(e);
+            }
+        }
     }
 
-    if(_master_ticks) {
-	if(!(_elapsed % _master_ticks))
-	    _master();
-    }
+    // unlock();
+    CPU::int_enable();
 
-    if(next)
-	next--;
-    if(!next) {
-	if(handler)
-	    handler();
-	if(_requests.empty())
-	    handler = 0;
-	else {
-	    Alarm * alarm = _requests.remove()->object();
-	    next = alarm->_ticks;
-	    handler = alarm->_handler;
-	    if(alarm->_times != -1)
-		alarm->_times--;
-	    if(alarm->_times) 
-		_requests.insert(&alarm->_link, alarm->_ticks);
-	}
+    if(alarm) {
+	db<Single_Core_Alarm>(TRC) << "Single_Core_Alarm::handler(h=" << reinterpret_cast<void*>(alarm->handler) << ")\n";
+	(*alarm->_handler)();
     }
 }
 

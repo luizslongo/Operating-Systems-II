@@ -1,66 +1,97 @@
-// EPOS-- Alarm Abstraction Declarations
+// EPOS Alarm Abstraction Declarations
 
 #ifndef __alarm_h
 #define __alarm_h
 
-#include <system/config.h>
 #include <utility/queue.h>
 #include <tsc.h>
 #include <rtc.h>
 #include <timer.h>
+#include <semaphore.h>
 
 __BEGIN_SYS
 
-class Alarm
+class Alarm_Base
 {
-private:
-    typedef Traits<Alarm> Traits;
-    static const Type_Id TYPE = Type<Alarm>::TYPE;
-
-    static const int FREQUENCY = __SYS(Traits)<Timer>::FREQUENCY;
-
-    typedef Relative_Queue<Alarm> Queue;
-
-    typedef TSC::Hertz Hertz;
-    typedef TSC::Time_Stamp Time_Stamp;
-    typedef RTC::Microseconds Microseconds;
-    typedef RTC::Seconds Seconds;
-    typedef Timer::Tick Tick;
-
 public:
+    typedef TSC::Time_Stamp Time_Stamp;
+    typedef Timer::Tick Tick;  
+    
     // An alarm handler
     typedef void (* Handler)();
 
-    // Infinite times (for alarms)
-    enum { INFINITE = 0 };
-
+    static const bool smp = Traits<Thread>::smp;
+    
 public:
-    Alarm(const Microseconds & time, const Handler & handler, int times = 1);
-    ~Alarm();
-    static void master(const Microseconds & time, const Handler & handler);
+    typedef TSC::Hertz Hertz;
+    typedef RTC::Microsecond Microsecond;
 
-    static Hertz frequency() {	return _timer.frequency(); }
+    // Infinite times (for alarms)
+    enum { INFINITE = -1 };
+    
+     static Hertz resolution() { return Alarm_Timer::FREQUENCY; }
+     
+public:
+    Alarm_Base(const Microsecond & time, Handler & handler, int times) :
+    _ticks(ticks(time)), _handler(handler), _times(times) { }
+  
+    static Microsecond period() {
+        return 1000000 / resolution();
+    }
 
-    static void delay(const Microseconds & time);
+    static Tick ticks(const Microsecond & time) {
+        return (time + period() / 2) / period();
+    }
 
-    static int init(System_Info *si);
+    static void lock() {
+        CPU::int_disable();
+        if(smp)
+            _lock.acquire();
+    }
 
-private:
-    static Microseconds period() { return 1000000 / frequency(); }
-    static void timer_handler(void);
-
-private:
+    static void unlock() {
+        if(smp)
+            _lock.release();
+        CPU::int_enable();
+    }
+    
+public:
     Tick _ticks;
     Handler _handler;
-    int _times;
-    Queue::Element _link;
+    int _times; 
+    static Spin _lock;
+  
+};
 
-    static Timer _timer;
+class Single_Core_Alarm : public Alarm_Base
+{
+private:
+    typedef Relative_Queue<Single_Core_Alarm, Tick> Queue;
+
+public:    
+    Single_Core_Alarm(const Microsecond & time, Handler & handler, int times = 1);
+    ~Single_Core_Alarm();
+
+    static void delay(const Microsecond & time);
+
+    static int init();
+
+private:
+    static void handler();
+
+private:
+    Queue::Element _link; 
+  
+    static Alarm_Timer * _timer;
     static volatile Tick _elapsed;
-    static Handler _master;
-    static Tick _master_ticks;
     static Queue _requests;
 };
+
+
+
+//Define the Alarm that will be used by the rest of the system
+typedef Single_Core_Alarm Alarm;
+
 
 __END_SYS
 

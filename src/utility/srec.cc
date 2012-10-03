@@ -1,4 +1,4 @@
-// EPOS-- SREC Utility Implementation
+// EPOS SREC Utility Implementation
 
 #include <utility/srec.h>
 #include <utility/string.h>

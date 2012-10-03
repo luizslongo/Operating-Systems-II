@@ -1,19 +1,21 @@
-# EPOS-- Image Makefile
-#
-# Image layout (see command epos-mkbi):
-# - boot  : skip 32 bytes header;
-# - setup : skip ELF header
-#           seek 512 bytes (boot)
-# - kernel: seek 512 + 8K bytes (boot + setup)
-# - loader: seek 512 + 8K + 32K + 16K (boot + setup + kernel + init)
+# EPOS Image Makefile
 
-include	$(EPOS)/makedefs
+include	../makedefs
 
-all:		$(MACH)_boot $(MACH)_setup $(MACH)_system $(MACH)_loader
-		$(MKBI) $(MKBI_IMG) 
+IMAGE := $(addsuffix .img,$(APPLICATION))
+OUTPUT := $(addsuffix .out,$(APPLICATION))
 
-install:	all
+TESTS := $(shell find *_test 2> /dev/null)
+TEST_IMAGES := $(addsuffix .img,$(TESTS))
+TEST_OUTPUTS := $(addsuffix .out,$(TESTS))
 
-clean		:
-		$(CLEAN) *_boot *_setup *_system *_loader *.img *.o
+all:		$(IMAGE)
 
+test:		$(TEST_IMAGES)
+
+run:		$(OUTPUT)
+
+runtest:	$(TEST_OUTPUTS)
+
+clean:
+		$(CLEAN) *_boot *_setup *_init *_system $(APPLICATION) $(TESTS)

@@ -1,4 +1,4 @@
-// EPOS-- Memory Allocation Utility Test Program
+// EPOS Memory Allocation Utility Test Program
 
 #include <utility/ostream.h>
 #include <utility/string.h>

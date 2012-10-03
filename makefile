@@ -1,47 +1,49 @@
-# EPOS-- Main Makefile
+# EPOS Main Makefile
 
-include $(EPOS)/makedefs
+include makedefs
 
-SUBDIRS := tools src app
+SUBDIRS := etc tools src app img
 
-all:		linux_imports $(SUBDIRS) img
-
-linux_imports:	FORCE
-		$(TCPP) $(TCPPFLAGS) -dD -P /usr/include/elf.h | \
-			grep -v __ | $(SED) \
-			-e s/'typedef int int32_t'/'typedef long int32_t'/g \
-			-e s/'typedef unsigned int uint32_t'/'typedef unsigned long uint32_t'/g \
-			-e s/'typedef int int_least32_t'/'typedef long int_least32_t'/g \
-			-e s/'typedef unsigned int uint_least32_t'/'typedef unsigned long uint_least32_t'/g \
-			-e s/'typedef int int_fast16_t'/'typedef long int_fast16_t'/g \
-			-e s/'typedef int int_fast32_t'/'typedef long int_fast32_t'/g \
-			-e s/'typedef unsigned int uintptr_t'/'typedef unsigned long uintptr_t'/g >! $(INCLUDE)/utility/elf-linux.h
-		$(TCPP) $(TCPPFLAGS) -dD -P /usr/include/linux/pci_ids.h | \
-			grep -v __ >! $(INCLUDE)/system/pci_ids-linux.h
+all:	$(SUBDIRS)
 
 $(SUBDIRS):	FORCE
 		(cd $@ && $(MAKE))
 
-img:		FORCE
-		(cd $@ && $(MAKE))
+run:		FORCE
+		(cd img && $(MAKE) run)
 
-test:		all
+runtest:	test
+		(cd img && $(MAKE) runtest)
+
+test:		$(SUBDIRS)
 		(cd src && $(MAKETEST))
+		(cd img && $(MAKETEST))
 
 clean:		FORCE
 		(cd src && $(MAKECLEAN))
 		find $(LIB) -maxdepth 1 -type f -exec $(CLEAN) {} \;
 
 veryclean:
-		make MAKE:="$(MAKECLEAN)" $(SUBDIRS) img
-		$(CLEAN) $(INCLUDE)/utility/elf-linux.h
-		$(CLEAN) $(INCLUDE)/mediator/pci/pci_ids-linux.h
+		make MAKE:="$(MAKECLEAN)" $(SUBDIRS)
 		find $(LIB) -maxdepth 1 -type f -exec $(CLEAN) {} \;
 		find $(BIN) -maxdepth 1 -type f -exec $(CLEAN) {} \;
-		find $(IMG) -name "*.app" -exec $(CLEAN) {} \;
-		find $(EPOS) -name "*~" -exec $(CLEAN) {} \; 
+		find $(APP) -maxdepth 1 -type f -perm +111 -exec $(CLEAN) {} \;
+		find $(IMG) -name "*.img" -exec $(CLEAN) {} \;
+		find $(IMG) -name "*.out" -exec $(CLEAN) {} \;
+		find $(TOP) -name "*~" -exec $(CLEAN) {} \; 
 
-distclean:	veryclean
-		find $(EPOS) -name CVS -type d -print | xargs $(CLEANDIR)
+dist:		veryclean
+		find $(TOP) -name ".*project" -exec $(CLEAN) {} \;
+		find $(TOP) -name CVS -type d -print | xargs $(CLEANDIR)
+		find $(TOP) -name .svn -type d -print | xargs $(CLEANDIR)
+		find $(TOP) -name "*.h" -print | xargs sed -i "1r $(TOP)/LICENSE" 
+		find $(TOP) -name "*.cc" -print | xargs sed -i "1r $(TOP)/LICENSE" 
+		sed -e 's/^\/\//#/' LICENSE > LICENSE.mk
+		find $(TOP) -name "makedefs" -print | xargs sed -i "1r $(TOP)/LICENSE.mk" 
+		find $(TOP) -name "makefile" -print | xargs sed -i "1r $(TOP)/LICENSE.mk"
+		$(CLEAN) LICENSE.mk 
+		sed -e 's/^\/\//#/' LICENSE > LICENSE.as
+		find $(TOP) -name "*.S" -print | xargs sed -i "1r $(TOP)/LICENSE.as" 
+		$(CLEAN) LICENSE.as 
 
 FORCE:

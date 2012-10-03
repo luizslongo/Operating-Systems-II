@@ -1,37 +1,57 @@
-// EPOS-- Mutex Abstraction Declarations
+// EPOS Mutex Abstraction Declarations
 
 #ifndef __mutex_h
 #define __mutex_h
 
-#include <common/synchronizer.h>
+#include <synchronizer.h>
 
 __BEGIN_SYS
 
-class Mutex: public Synchronizer_Common
+class Mutex: protected Synchronizer_Common
 {
-private:
-    typedef Traits<Mutex> Traits;
-    static const Type_Id TYPE = Type<Mutex>::TYPE;
-
 public:
-    Mutex() : _locked(false) { db<Mutex>(TRC) << "Mutex()\n"; }
-    ~Mutex() { db<Mutex>(TRC) << "~Mutex()\n"; }
+    Mutex() : _locked(false) {
+	db<Synchronizer>(TRC) << "Mutex() => " << this << "\n"; 
+    }
+
+    ~Mutex() {
+	db<Synchronizer>(TRC) << "~Mutex(this=" << this << ")\n";
+    }
 
     void lock() { 
-	db<Mutex>(TRC) << "Mutex::lock()\n";
-	while(tsl(_locked))
-	    sleep();
-    }
-    void unlock() { 
-	db<Mutex>(TRC) << "Mutex::unlock()\n";
-	_locked = false;
-	wakeup(); 
+	db<Synchronizer>(TRC) << "Mutex::lock(this=" << this << ")\n";
+
+	begin_atomic();
+	if(tsl(_locked))
+	    sleep(); // implicit end_atomic()
+	else
+	    end_atomic();
     }
 
-    static int init(System_Info *si);
+    void unlock() { 
+	db<Synchronizer>(TRC) << "Mutex::unlock(this=" << this << ")\n";
+
+	begin_atomic();
+	_locked = false;
+	wakeup(); // implicit end_atomic()
+    }
 
 private:
     volatile bool _locked;
+};
+
+
+// An event handler that triggers a mutex (see handler.h)
+class Mutex_Handler: public Handler
+{
+public:
+    Mutex_Handler(Mutex * h) : _handler(h) {}
+    ~Mutex_Handler() {}
+
+    void operator()() { _handler->unlock(); }
+	
+private:
+    Mutex * _handler;
 };
 
 __END_SYS

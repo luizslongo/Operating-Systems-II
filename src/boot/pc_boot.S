@@ -1,23 +1,25 @@
-;========================================================================
-; BOOT STRAP                                                            =
-;                                                                       =
-; Desc: Reads system and applications from disk, initializes ix86	=
-;	protected mode, get the size of memory from BIOS and jump into	=
-;	SETUP. The boot strap is loaded by BIOS at 0x07c00		=
-;                                                                       =
-; Auth:	Guto								=
-;========================================================================
+;==============================================================================
+; EPOS BOOT STRAP
+;
+; Desc: Reads system and applications from disk, initializes ix86
+;	protected mode, get the size of memory from BIOS and jump into
+;	SETUP. The boot strap is loaded by BIOS at 0x07c00
+;==============================================================================
 
 ; CONSTANTS                                                            
-;======================================================================
+;==============================================================================
 ; FHYSICAL MEMORY MAP 
 ; 0x0000 0000 -+-----------------------+ BOOT_IDT 
 ;              | IDT (4 K)             | 
 ; 0x0000 1000 -+-----------------------+ BOOT_GDT 
 ;              | GDT (4 K)             | 
 ; 0x0000 2000 -+-----------------------+ 
+;              | SMP TRAMP. STACK (4 K)| 
+; 0x0000 3000 -+-----------------------+ TRAMPOLINE_STACK, TRAMPOLINE_CODE
+;              | SMP TRAMPOLINE (4 K)  | 
+; 0x0000 4000 -+-----------------------+ 
 ;              :                       : 
-;              | BOOT STACK (23 K)     | 
+;              | BOOT STACK (15 K)     | 
 ; 0x0000 7c00 -+-----------------------+ BOOTSTRAP_STACK, BOOTSTRAP_CODE 
 ;              | BOOT CODE (512 b)     | 
 ; 0x0000 7e00 -+-----------------------+ 
@@ -31,18 +33,20 @@
 ;              :                       : 
 ;              |                       | 
 ; 0x000f f000 -+-----------------------+ 
-BOOT_IDT        = 0x0000
-BOOT_GDT        = 0x1000
-BOOTSTRAP_STACK = 0x7c00 ; Descendent                            
-BOOTSTRAP_CODE  = 0x7c00 ; The bootstrap code (512 bytes)        
-DISK_IMAGE 	= 0x8000 ; = BOOT_IMAGE_PHY_ADDR from memory_map 
+BOOT_IDT         = 0x0000
+BOOT_GDT         = 0x1000
+TRAMPOLINE_STACK = 0x3000 ; SMP trampoline stack (descendent, 4K)
+TRAMPOLINE_CODE  = 0x3000 ; SMP trampoline code (4K) 
+BOOTSTRAP_STACK  = 0x7c00 ; Bootstrap stack (descendent, 15K)
+BOOTSTRAP_CODE   = 0x7c00 ; Bootstrap code (512 bytes)        
+DISK_IMAGE 	 = 0x8000 ; = BOOT_IMAGE_PHY_ADDR from memory_map 
 
 ; The size of a disk sector in bytes 
 DISK_SECT_SIZE =         512     
 
-; The size of ELF object's header in bytes 
-; ELF_HDR_SIZE =           116 (not stripped) 
-ELF_HDR_SIZE =           84
+; The size of ELF object's header in bytes (GCC dependent)
+; Can be determined with objdump -p $(EPOS)/src/setup/pc_setup | sed -n -e 's/^ *LOAD off *\(0x.*\) vaddr.*$/\1/ p' | head -1
+ELF_HDR_SIZE =           128
 
 ; DISK IMAGE LAYOUT 
 ; -+-----------------------+ DISK_IMAGE_SYS_INFO 
@@ -78,18 +82,18 @@ DISK_IMAGE_SETUP =       (DISK_IMAGE + DISK_SECT_SIZE)
 ; SETUP entry point 
 SETUP_ENTRY =            (DISK_IMAGE_SETUP + ELF_HDR_SIZE)
 
-;========================================================================
-; DEFINITIONS                                                           =
-;========================================================================
+;==============================================================================
+; DEFINITIONS
+;==============================================================================
 ; 8086 segment addresses
 IMAGE_SEG       = DISK_IMAGE >> 4
 INFO_SEG        = DISK_IMAGE_SYS_INFO >> 4
 	
 .text
      
-;========================================================================
-; MAIN                                                                  =
-;========================================================================
+;==============================================================================
+; MAIN
+;==============================================================================
 entry main
 main:
 		cli			; disable interrupts
@@ -98,6 +102,9 @@ main:
 		mov	es,ax
 		mov	ss,ax
                 mov     sp,#BOOTSTRAP_STACK	; set stack pointer
+
+; Prepare a trampoline for SMP initialization
+		call	setup_trampoline
 
 ; Load the boot image from the disk into "DISK_IMAGE"
                 mov     si,#msg_loading
@@ -176,14 +183,14 @@ main:
 		.long	SETUP_ENTRY
 		.word	0x0008
 		
-;=========================================================================
-; PRINT_MSG                                                              =
-;                                                                        =
-; Desc: Print a \0 terminated string on the screen using the BIOS	 =
-;       Message must end with 00h ;                                      =
-;                                                                        =
-; Parm: si  -> pointer to the string                                     =
-;=========================================================================
+;==============================================================================
+; PRINT_MSG
+;
+; Desc: Print a \0 terminated string on the screen using the BIOS
+;       Message must end with 00h
+;
+; Parm: si  -> pointer to the string
+;==============================================================================
 print_msg:
                 pushf
                 push	ax
@@ -207,11 +214,11 @@ end_print:
                 popf
                 ret
 
-;=========================================================================
-; SAY_Z                                                                  =
-;                                                                        =
-; Desc: Print 'z' on the screen.                                         =
-;=========================================================================
+;==============================================================================
+; SAY_Z
+;
+; Desc: Print 'z' on the screen.
+;==============================================================================
 say_z:
                 pushf
                 push	si
@@ -221,11 +228,11 @@ say_z:
                 popf
                 ret
 
-;=========================================================================
-; STOP_DRIVE                                                             =
-;                                                                        =
-; Desc: Stops the drive motor.                                           =
-;=========================================================================
+;==============================================================================
+; STOP_DRIVE
+;
+; Desc: Stops the drive motor.
+;==============================================================================
 stop_drive:
                 pushf
                 push	ax
@@ -238,15 +245,15 @@ stop_drive:
                 popf
                 ret
 
-;=========================================================================
-; LOAD_ONE_SECTOR                                                        =
-;                                                                        =
-; Desc: Load a single sector from disk using the BIOS.                   =
-;                                                                        =
-; Parm: es:bx  -> buffer                                                 =
-;       cx     -> track (ch) and sector number (cl)                      =
-;       dx     -> side (dh) and drive number (dl)                        =
-;=========================================================================
+;==============================================================================
+; LOAD_ONE_SECTOR
+;
+; Desc: Load a single sector from disk using the BIOS.
+;
+; Parm: es:bx  -> buffer
+;       cx     -> track (ch) and sector number (cl)
+;       dx     -> side (dh) and drive number (dl)
+;==============================================================================
 load_sector:
 		pushf
 		push	ax
@@ -268,14 +275,14 @@ ls_disk_halt:
                 jmp     ls_disk_halt   ; halt 
 
 ;========================================================================
-; LOAD_IMAGE			                                        =
-;                                                                       =
-; Desc: Load the the image from disk into a buffer.			=
-;                                                                       =
-; Parm: es:bx  -> buffer                                                =
-;       ax     -> number of sectors to load                             =
-;       cx     -> initial track (ch) and sector number (cl)             =
-;       dx     -> inital side (dh) and drive number (dl)                =
+; LOAD_IMAGE
+;
+; Desc: Load the the image from disk into a buffer.
+;
+; Parm: es:bx  -> buffer
+;       ax     -> number of sectors to load
+;       cx     -> initial track (ch) and sector number (cl)
+;       dx     -> inital side (dh) and drive number (dl)
 ;========================================================================
 load_image:	
 		pushf
@@ -318,10 +325,10 @@ li_done:
                 ret
 
 ;========================================================================
-; ENABLE_A20			                                        =
-;                                                                       =
-; Desc: Enables the 20th address bus line by writing some bytes to the  =
-;       keyboard port.                                                  =
+; ENABLE_A20
+;
+; Desc: Enables the 20th address bus line by writing some bytes to the
+;       keyboard port.
 ;========================================================================
 enable_a20:
                 pushf
@@ -340,9 +347,9 @@ enable_a20:
                 ret
 
 ;========================================================================
-; FLUSH_KEYB			                                        =
-;                                                                       =
-; Desc: Flushes the keyboard controler					=
+; FLUSH_KEYB
+;
+; Desc: Flushes the keyboard controler
 ;========================================================================
 keyb_flush:
                 pushf
@@ -363,10 +370,64 @@ kf_emptyt:      test    al,#2           ; input buffer full?
                 ret
 
 kf_delay:	ret
-	
-;=========================================================================
-; DATA SEGMENT                                                           =
-;=========================================================================
+
+;========================================================================
+; SETUP_TRAMPOLIE
+;
+; Desc: copy the SMP trampoline code to a page-aligned address
+;========================================================================
+setup_trampoline:
+		mov si,#trampoline
+		mov di,#TRAMPOLINE_CODE
+		cld
+		mov cx,#100
+		rep
+		movsb
+		ret
+
+;========================================================================
+; TRAMPOLIE
+;
+; Desc: "trampolines" additional CPUs into protected mode in SMP
+;	configurations							=
+;========================================================================
+trampoline:
+		cli ; disable interrupts
+		xor ax,ax ; data segment base = 0x00000
+		mov ds,ax
+		mov es,ax
+		mov ss,ax
+                mov sp,#TRAMPOLINE_STACK ; set stack pointer
+	;; 		mov [0xB8004], #(0x32 & 0xFF) ; 
+
+; Set GDTR
+                lgdt	GDTR
+                   
+; Enable Protected Mode
+                mov	eax,cr0
+                or	al,#0x01	; set PE flag and MP flag
+                mov	cr0,eax
+     
+; Adjust selectors
+                mov	bx,#2 * 8	; adjust data selectors to use
+                mov	ds,bx		; GDT[2] (DATA) with RPL = 00
+                mov	es,bx
+                mov     fs,bx
+                mov     gs,bx
+                mov	ss,bx
+
+; As Linux as86 can't generate 32 bit instructions, we have to code it by hand.
+; The instruction below is a inter segment jump to GDT[GDT_CODE]:SETUP.
+; Jump into "SETUP" (actually ix86 Protected Mode starts here)
+;		jmp	0x0008:#SETUP_ENTRY
+		.byte	0x66
+		.byte	0xEA
+		.long	SETUP_ENTRY
+		.word	0x0008
+			
+;==============================================================================
+; DATA SEGMENT
+;==============================================================================
 GDTR:
 		.word	0x0FFF		; GDT limit - 4K
 		.long	0x00001000	; GDT base address - also 4K

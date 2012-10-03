@@ -1,4 +1,4 @@
-// EPOS-- PC Display Mediator Test Program
+// EPOS PC Display Mediator Test Program
 
 #include <utility/ostream.h>
 #include <display.h>

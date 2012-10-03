@@ -1,5 +1,4 @@
-// EPOS-- Configuration Engine
-//
+// EPOS Configuration Engine
 
 #ifndef __config_h
 #define __config_h
@@ -13,36 +12,34 @@
 #define __USING_SYS		using namespace __SYS_NS;
 #define __SYS(X)		::__SYS_NS::X
 
-#define ASM                     __asm__
-#define ASMV                    __asm__ __volatile__
+#define ASM			__asm__
+#define ASMV			__asm__ __volatile__
+
+#define __HEADER_ARCH(X)	<arch/ARCH/X.h>
+#define __HEADER_MACH(X)	<mach/MACH/X.h>
+
+//============================================================================
+// ARCHITECTURE AND MACHINE SELECTION
+//============================================================================
+#define ARCH ia32
+#define __ARCH_TRAITS_H	 __HEADER_ARCH(traits)
+
+#define MACH pc
+#define __MACH_TRAITS_H	 __HEADER_MACH(traits)
 
 //============================================================================
 // CONFIGURATION
 //============================================================================
-#ifndef MACH
-#define MACH                    pc
-#ifndef ARCH
-#define ARCH                    ia32
-#endif
-#endif
-
-#define __HEADER_ARCH(X)        <arch/ARCH/X.h>
-#define __HEADER_MACH(X)        <mach/MACH/X.h>
+#include <system/types.h>
+#include <system/meta.h>
+#include __HEADER_MACH(config)
+#include <traits.h>
+#include <system/info.h>
 
 //============================================================================
 // THINGS EVERBODY NEEDS
 //============================================================================
-__BEGIN_SYS
-inline void * operator new(unsigned int s, void * a) { return a; }
-__END_SYS
-
-#include <system/types.h>
-#include <traits.h>
-#include <system/info.h>
 #include <utility/ostream.h>
 #include <utility/debug.h>
-#include <cpu.h>
 
 #endif
-
-

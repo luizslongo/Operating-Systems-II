@@ -1,8 +1,8 @@
-# EPOS-- Architecture Mediators Makefile
+# EPOS Architecture Mediators Makefile
 
-include		$(EPOS)/makedefs
+include	../../makedefs
 
-SUBDIRS := $(shell find * -maxdepth 0 -type d \! -name CVS)
+SUBDIRS := $(ARCH)
 
 all:		$(SUBDIRS)
 

@@ -1,4 +1,4 @@
-// EPOS-- CPU Mediator Common Package
+// EPOS CPU Mediator Common Package
 
 #ifndef __cpu_h
 #define __cpu_h
@@ -8,7 +8,7 @@
 __BEGIN_SYS
 
 class CPU_Common
-{
+{	
 protected:
     CPU_Common() {}
 
@@ -20,43 +20,44 @@ public:
 
     class Log_Addr {
     public:
-	Log_Addr() {}
-	Log_Addr(const Log_Addr & a) : _addr(a._addr) {}
-	Log_Addr(unsigned int a) : _addr(a) {}
- 	template <typename T>
-	Log_Addr(T * a) : _addr(reinterpret_cast<unsigned int>(a)) {}
+        Log_Addr() {}
+        Log_Addr(const Log_Addr & a) : _addr(a._addr) {}
+        Log_Addr(unsigned int a) : _addr(a) {}
+        template <typename T>
+        Log_Addr(T * a) : _addr(reinterpret_cast<unsigned int>(a)) {}
 
- 	operator unsigned int() const { return _addr; }
- 	template <typename T>
-	operator T *() const { return reinterpret_cast<T *>(_addr); }
+        operator unsigned int() const { return _addr; }
 
- 	template <typename T>
-	bool operator==(T a) const { return (_addr == (unsigned int)a); }
- 	template <typename T>
-	bool operator< (T a) const { return (_addr < (unsigned int)a); }
- 	template <typename T>
-	bool operator> (T a) const { return (_addr > (unsigned int)a); }
- 	template <typename T>
-	bool operator>=(T a) const { return (_addr >= (unsigned int)a); }
- 	template <typename T>
-	bool operator<=(T a) const { return (_addr <= (unsigned int)a); }
+        template <typename T>
+        operator T *() const { return reinterpret_cast<T *>(_addr); }
 
- 	template <typename T>
-	Log_Addr operator-(T a) const { return _addr - (unsigned int)a; }
- 	template <typename T>
-	Log_Addr operator+(T a) const { return _addr + (unsigned int)a; }
- 	template <typename T>
- 	Log_Addr & operator+=(T a) { _addr += a; return *this; }
- 	template <typename T>
- 	Log_Addr & operator-=(T a) { _addr -= a; return *this; }
- 	template <typename T>
-	Log_Addr & operator&=(T a) { _addr &= a; return *this; }
+        template <typename T>
+        bool operator==(T a) const { return (_addr == (unsigned int)a); }
+        template <typename T>
+        bool operator< (T a) const { return (_addr < (unsigned int)a); }
+        template <typename T>
+        bool operator> (T a) const { return (_addr > (unsigned int)a); }
+        template <typename T>
+        bool operator>=(T a) const { return (_addr >= (unsigned int)a); }
+        template <typename T>
+        bool operator<=(T a) const { return (_addr <= (unsigned int)a); }
 
-	friend Debug & operator << (Debug & db, Log_Addr a)
-	    { db << (void *)a._addr; return db; }
+        template <typename T>
+        Log_Addr operator-(T a) const { return _addr - (unsigned int)a; }
+        template <typename T>
+        Log_Addr operator+(T a) const { return _addr + (unsigned int)a; }
+        template <typename T>
+        Log_Addr & operator+=(T a) { _addr += a; return *this; }
+        template <typename T>
+        Log_Addr & operator-=(T a) { _addr -= a; return *this; }
+        template <typename T>
+        Log_Addr & operator&=(T a) { _addr &= a; return *this; }
+
+        friend Debug & operator << (Debug & db, Log_Addr a)
+        { db << (void *)a._addr; return db; }
 
     private:
-	unsigned int _addr;
+        unsigned int _addr;
     };
     typedef Log_Addr Phy_Addr;
 
@@ -68,52 +69,47 @@ public:
     static void halt() { for(;;); }
 
     static bool tsl(volatile bool & lock) {
-	bool old = lock;
-	lock = 1;
-	return old;
+        bool old = lock;
+        lock = 1;
+        return old;
     }
-    static int finc(volatile int & number) {
-	int old = number;
-	number++;
-	return old;
+
+    static int finc(volatile int & value) {
+        int old = value;
+        value++;
+        return old;
     }
-    static int fdec(volatile int & number) {
-	int old = number;
-	number--;
-	return old;
+
+    static int fdec(volatile int & value) {
+        int old = value;
+        value--;
+        return old;
+    }
+
+    static int cas(volatile int & value, int compare, int replacement) {
+        int old = value;
+        if(value == compare) {
+            value = replacement;
+        }
+        return old;
     }
 
 protected:
-    static Reg32 htonl_lsb(Reg32 v) {
-	return (((v << 24) & 0xff000000) | ((v <<  8) & 0x00ff0000) |
-		((v >>  8) & 0x0000ff00) | ((v >> 24) & 0x000000ff));
-    }
-    static Reg16 htons_lsb(Reg16 v)	{
-	return ((v << 8) & 0xFF00) | ((v >> 8) & 0x00FF);
-    }
-    static Reg32 ntohl_lsb(Reg32 v) {
-	return htonl_lsb(v);
-    }
-    static Reg16 ntohs_lsb(Reg16 v) {
-	return htons_lsb(v);
+    static Reg32 swap32(Reg32 v) {
+        return (((v << 24) & 0xff000000) | ((v <<  8) & 0x00ff0000) |
+                ((v >>  8) & 0x0000ff00) | ((v >> 24) & 0x000000ff));
     }
 
-    static Reg32 htonl_msb(Reg32 v) {
-	return v;
+    static Reg16 swap16(Reg16 v) {
+        return ((v << 8) & 0xFF00) | ((v >> 8) & 0x00FF);
     }
-    static Reg16 htons_msb(Reg16 v) {
-	return v;
-    }
-    static Reg32 ntohl_msb(Reg32 v) {
-	return v;
-    }
-    static Reg16 ntohs_msb(Reg16 v) {
-	return v;
-    }
+
 };
 
 __END_SYS
 
-#include __HEADER_ARCH(cpu)
+#ifdef __CPU_H
+#include __CPU_H
+#endif
 
 #endif

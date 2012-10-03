@@ -1,12 +1,22 @@
-// EPOS-- PC Timer Mediator
+// EPOS PC Timer Mediator Initialization
 
-#include <mach/pc/timer.h>
+#include <timer.h>
+#include <ic.h>
 
 __BEGIN_SYS
 
-int PC_Timer::init(System_Info * si)
+int PC_Timer::init()
 {
-    db<PC_Timer>(TRC) << "PC_Timer::init()\n";
+    db<Init, Timer>(TRC) << "Timer::init()\n";
+
+    CPU::int_disable();
+    
+    Engine::config(0, Engine::clock() / FREQUENCY);
+
+    IC::int_vector(IC::INT_TIMER, int_handler);
+    IC::enable(IC::INT_TIMER);
+
+    CPU::int_enable();
 
     return 0;
 }

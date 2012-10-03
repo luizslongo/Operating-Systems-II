@@ -1,4 +1,4 @@
-// EPOS-- SREC Utility Declarations
+// EPOS SREC Utility Declarations
 
 #ifndef __srec_h
 #define	__srec_h 1
@@ -35,7 +35,7 @@ private:
     static signed char ctab[];
     static int ltab[];
     
-    typedef struct srec_t {
+    struct srec_t {
       unsigned char type;
       unsigned int  addr;
       unsigned char count;

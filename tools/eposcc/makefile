@@ -1,16 +1,11 @@
-# EPOSCC Makefile
+# EPOS Compiler Wraper Makefile
 
-include	$(EPOS)/makedefs
+include	../../makedefs
 
 all:		install
 
 install:	eposcc
-		chmod a+x $^
-		$(INSTALL) $^ $(BIN)
+		$(INSTALL) -m 775 eposcc $(BIN)
+		sed -e 's/^EPOS=.*$$/EPOS=$(subst /,\/,$(EPOS))/' -i $(BIN)/eposcc
 
-eposcc:		eposcc.in eposcc.conf
-		$(CLEAN) $@
-		sed -e '/##CONF##/ r eposcc.conf' -e '/##CONF##/ d' $< > $@ 
-
-clean		:
-		$(CLEAN) eposcc
+clean:

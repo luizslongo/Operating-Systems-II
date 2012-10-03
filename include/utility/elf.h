@@ -1,4 +1,4 @@
-// EPOS-- ELF Utility Declarations
+// EPOS ELF Utility Declarations
 
 #ifndef __elf_h
 #define	__elf_h
@@ -18,13 +18,19 @@ public:
 	    && (e_ident[EI_MAG2] == ELFMAG2) && (e_ident[EI_MAG3] == ELFMAG3);
     }
 
-    void * entry() { return (void *)((int)e_entry); }
+    Elf32_Addr entry() { return e_entry; }
+
     int segments() { return e_phnum; }
-    
-    void * segment_address(int i) {
-	return (i > segments()) ? 0 :
-	    (char *)((int)(seg(i)->p_vaddr & ~(seg(i)->p_align - 1)));
+
+    Elf32_Word segment_type(int i) {
+ 	return (i > segments()) ? PT_NULL : seg(i)->p_type;
     }
+
+    Elf32_Addr segment_address(int i) {
+	return (i > segments()) ? 0 :
+	    (seg(i)->p_vaddr & ~(seg(i)->p_align - 1));
+    }
+
     int segment_size(int i) {
 	return (i > segments()) ? -1 : (int)(
 	    ((seg(i)->p_offset % seg(i)->p_align)
@@ -33,7 +39,7 @@ public:
 	    & ~(seg(i)->p_align - 1));
     }
 
-    int load_segment(int i, void * addr = 0);
+    int load_segment(int i, Elf32_Addr addr = 0);
 
 private:
     Elf32_Phdr * pht() { return (Elf32_Phdr *)(((char *) this) + e_phoff); }

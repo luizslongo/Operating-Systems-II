@@ -1,24 +1,38 @@
-// EPOS-- Thread Abstraction Initialization
+// EPOS Thread Abstraction Initialization
 
+#include <system/kmalloc.h>
+#include <system.h>
 #include <thread.h>
 #include <alarm.h>
-#include <system/kmalloc.h>
 
 __BEGIN_SYS
 
-int Thread::init(System_Info * si)
+void Thread::init()
 {
-    db<Init>(TRC) << "Thread::init(entry="
-		  << (void *)si->lmm.app_entry << ")\n";
+    int (* entry)() =
+	reinterpret_cast<int (*)()>(System::info()->lmm.app_entry);
 
-    if(Traits::active_scheduler)
-	Alarm::master(Traits::quantum, &reschedule);
+    db<Init, Thread>(TRC) << "Thread::init(entry=" << (void *)entry << ")\n";
 
-    _running = 	new(malloc(sizeof(Thread))) 
-	Thread(reinterpret_cast<int (*)()>(si->lmm.app_entry), RUNNING);
+    Machine::smp_barrier();
+
+    if(Machine::cpu_id() == 0) {
+        _running = new(kmalloc(sizeof(Thread))) Thread(entry, RUNNING, NORMAL);
+    }
+
+    Machine::smp_barrier();
+
+    if(Machine::cpu_id() == 0) {
+        if(active_scheduler)
+            _timer = new (kmalloc(sizeof(Scheduler_Timer)))
+		Scheduler_Timer(QUANTUM, &time_slicer);
+    }
+
+    db<Init, Thread>(INF) << "Dispatching the first thread: " << _running << "\n";
+
+    This_Thread::not_booting();
+
     _running->_context->load();
-
-    return 0;
 }
 
 __END_SYS

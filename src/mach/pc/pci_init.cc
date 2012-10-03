@@ -1,26 +1,28 @@
-// EPOS-- PC PCI Mediator
+// EPOS PC PCI Mediator
 
-#include <mach/pc/pci.h>
+#include <pci.h>
+#include <system.h>
 
 __BEGIN_SYS
 
-int PC_PCI::init(System_Info * si)
+void PC_PCI::init()
 {
-    int ret = 0;
+    _phy_io_mem = System::info()->pmm.io_mem_base;
 
-    db<PC_PCI>(TRC) << "PC_PCI::init()\n";
+    db<Init, PCI>(TRC) << "PCI::init(pmm.io_mem=" << _phy_io_mem 
+			  << ")\n";
 
-    IA32::int_disable();
-    IA32::out8(0xCFB, 0x01);
-    IA32::Reg32 tmp = IA32::in32(0xCF8);
-    IA32::out32(0xCF8, 0x80000000);
-    if(IA32::in32(0xCF8) != 0x80000000)
-	ret = -1;
-    IA32::out32(0xCF8, tmp);
-    
-    IA32::int_disable();
+    CPU::int_disable();
 
-    return ret;
+    CPU::out8(0xcfb, 0x01);
+    Reg32 tmp = CPU::in32(CONFADDR);
+    CPU::out32(CONFADDR, 0x80000000);
+    if(CPU::in32(CONFADDR) != 0x80000000) {
+	db<Init, PC_PCI>(WRN) << "PC_PCI::init: failed!\n";
+    }
+    CPU::out32(CONFADDR, tmp);
+
+    CPU::int_enable();
 }
 
 __END_SYS

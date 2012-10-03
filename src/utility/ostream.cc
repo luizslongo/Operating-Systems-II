@@ -1,103 +1,101 @@
-// EPOS-- OStream Implementation
+// EPOS OStream Implementation
 
-#include <display.h>
 #include <utility/ostream.h>
+#include <display.h>
 
 __BEGIN_SYS
 
-const char OStream::dec_digits[] = "0123456789";
-const char OStream::hex_digits[] = "0123456789abcdef";
+const char OStream::_digits[] = "0123456789abcdef";
 
-void OStream::print(const char * str)
+void OStream::print(const char * s)
 {
-    Display display;
+//     static volatile bool lock = false;
 
-    display.puts(str);
+//     if(Traits<Thread>::smp) while(CPU::tsl(lock));
+    Display::puts(s); 
+//     if(Traits<Thread>::smp) lock = false;
 }
 
 int OStream::itoa(int v, char * s)
 {
-    unsigned int i = 0, j;
-
-    if(!v) {
-	s[0] = dec_digits[0];
-	return 1;
-    }
+    unsigned int i = 0;
 
     if(v < 0) {
 	v = -v;
 	s[i++] = '-';
     }
 
-    for(j = v; j != 0; i++, j /= 10);
-    for(j = 0; v != 0; j++, v /= 10)
-	s[i - 1 - j] = dec_digits[v % 10];
-
-    return i;
+    return utoa(static_cast<unsigned int>(v), s, i);
 } 
 
-int OStream::utoa(unsigned int v, char * s)
+int OStream::utoa(unsigned int v, char * s, unsigned int i)
 {
-    unsigned int i = 0, j;
+    unsigned int j;
 
     if(!v) {
-	s[0] = dec_digits[0];
-	return 1;
+	s[i++] = '0';
+	return i;
     }
 
-    for(j = v; j != 0; i++, j /= 10);
-    for(j = 0; v != 0; j++, v /= 10)
-	s[i - 1 - j] = dec_digits[v % 10];
+    if(v > 256) {
+	if(_base == 8 || _base == 16)
+	    s[i++] = '0';
+	if(_base == 16)
+	    s[i++] = 'x';
+    }
+
+    for(j = v; j != 0; i++, j /= _base);
+    for(j = 0; v != 0; j++, v /= _base)
+	s[i - 1 - j] = _digits[v % _base];
 
     return i;
 }
 
 int OStream::llitoa(long long int v, char * s)
 {
-    unsigned int i = 0, j;
-
-    if(!v) {
-	s[0] = dec_digits[0];
-	return 1;
-    }
+    unsigned int i = 0;
 
     if(v < 0) {
 	v = -v;
 	s[i++] = '-';
     }
 
-    for(j = v; j != 0; i++, j /= 10);
-    for(j = 0; v != 0; j++, v /= 10)
-	s[i - 1 - j] = dec_digits[v % 10];
-
-    return i;
+    return llutoa(static_cast<unsigned long long int>(v), s, i);
 } 
 
-int OStream::llutoa(unsigned long long int v, char * s)
+int OStream::llutoa(unsigned long long int v, char * s, unsigned int i)
 {
-    unsigned int i = 0, j;
+    unsigned int j;
 
     if(!v) {
-	s[0] = dec_digits[0];
-	return 1;
+	s[i++] = '0';
+	return i;
     }
 
-    for(j = v; j != 0; i++, j /= 10);
-    for(j = 0; v != 0; j++, v /= 10)
-	s[i - 1 - j] = dec_digits[v % 10];
+    if(v > 256) {
+	if(_base == 8 || _base == 16)
+	    s[i++] = '0';
+	if(_base == 16)
+	    s[i++] = 'x';
+    }
+
+    for(j = v; j != 0; i++, j /= _base);
+    for(j = 0; v != 0; j++, v /= _base)
+	s[i - 1 - j] = _digits[v % _base];
 
     return i;
 }
 
 int OStream::ptoa(const void * p, char * s)
 {
-    unsigned int j, v = (unsigned int)p;
+    unsigned int j, v = reinterpret_cast<unsigned int>(p);
 
     s[0] = '0';
     s[1] = 'x';
+
     for(j = 0; j < sizeof(void *) * 2; j++, v >>= 4)
 	s[2 + sizeof(void *) * 2 - 1 - j]
-	    = hex_digits[v & 0xf];
+	    = _digits[v & 0xf];
 
     return j + 2;
 }    

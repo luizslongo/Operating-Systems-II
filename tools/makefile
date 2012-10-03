@@ -1,6 +1,6 @@
-# EPOS-- Tools Makefile
+# EPOS Tools Makefile
 
-include	$(EPOS)/makedefs
+include	../makedefs
 
 SUBDIRS := $(shell find * -maxdepth 0 -type d \! -name CVS)
 
