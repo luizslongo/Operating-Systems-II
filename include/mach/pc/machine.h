@@ -17,7 +17,7 @@ __BEGIN_SYS
 class PC: public Machine_Common
 {
 private:
-    static const bool smp = Traits<Thread>::smp;
+    static const bool multicore = Traits<Thread>::multicore;
     
     typedef IA32::Reg32 Reg32;
     typedef IA32::Log_Addr Log_Addr;
@@ -29,21 +29,21 @@ public:
     static void reboot();
     static void poweroff();
 
-    static unsigned int n_cpus() { return smp ? _n_cpus : 1; }
-    static unsigned int cpu_id() { return smp ? APIC::id() : 0; }
+    static unsigned int n_cpus() { return multicore ? _n_cpus : 1; }
+    static unsigned int cpu_id() { return multicore ? APIC::id() : 0; }
 
-    static void smp_init(unsigned int n_cpus) {
-	if(smp) {
+    static void multicore_init(unsigned int n_cpus) {
+	if(multicore) {
 	    _n_cpus = n_cpus;
 	    APIC::remap(); 
 	}
     };
 
-    static void smp_barrier(int n_cpus = _n_cpus) {
+    static void multicore_barrier(int n_cpus = _n_cpus) {
 	static volatile int ready[2];
 	static volatile int i;
 
-	if(smp) {
+	if(multicore) {
 	    int j = i;
 
 	    CPU::finc(ready[j]);

@@ -306,7 +306,7 @@ public:
 	// subject to memory remappings. We also cannot be sure about 
 	// global constructors here
 	remap(addr);
-	if(Traits<Thread>::smp) {
+	if(Traits<Thread>::multicore) {
 	    clear();
 	    enable();
 	    connect();
@@ -403,10 +403,10 @@ private:
 
 // PC_IC uses i8259A on single-processor machines and the APIC timer on MPs
 class PC_IC: public IC_Common, 
-	     private IF<Traits<Thread>::smp, APIC, i8259A>::Result
+	     private IF<Traits<Thread>::multicore, APIC, i8259A>::Result
 {
 private:
-    typedef IF<Traits<Thread>::smp, APIC, i8259A>::Result Base;
+    typedef IF<Traits<Thread>::multicore, APIC, i8259A>::Result Base;
 
     typedef CPU::Reg32 Reg32;
     typedef CPU::Log_Addr Log_Addr;
