@@ -4,6 +4,7 @@
 #define __alarm_h
 
 #include <utility/queue.h>
+#include <utility/handler.h>
 #include <tsc.h>
 #include <rtc.h>
 #include <timer.h>
@@ -11,87 +12,70 @@
 
 __BEGIN_SYS
 
-class Alarm_Base
+class Alarm
 {
 public:
     typedef TSC::Time_Stamp Time_Stamp;
+    typedef TSC::Hertz Hertz;
     typedef Timer::Tick Tick;  
+    typedef RTC::Microsecond Microsecond;
     
     // An alarm handler
-    typedef void (* Handler)();
-
-    static const bool smp = Traits<Thread>::smp;
-    
-public:
-    typedef TSC::Hertz Hertz;
-    typedef RTC::Microsecond Microsecond;
+    typedef Function_Handler Handler;
 
     // Infinite times (for alarms)
     enum { INFINITE = -1 };
     
-     static Hertz resolution() { return Alarm_Timer::FREQUENCY; }
-     
-public:
-    Alarm_Base(const Microsecond & time, Handler & handler, int times) :
-    _ticks(ticks(time)), _handler(handler), _times(times) { }
-  
-    static Microsecond period() {
-        return 1000000 / resolution();
-    }
-
-    static Tick ticks(const Microsecond & time) {
-        return (time + period() / 2) / period();
-    }
-
-    static void lock() {
-        CPU::int_disable();
-        if(smp)
-            _lock.acquire();
-    }
-
-    static void unlock() {
-        if(smp)
-            _lock.release();
-        CPU::int_enable();
-    }
-    
-public:
-    Tick _ticks;
-    Handler _handler;
-    int _times; 
-    static Spin _lock;
-  
-};
-
-class Single_Core_Alarm : public Alarm_Base
-{
 private:
-    typedef Relative_Queue<Single_Core_Alarm, Tick> Queue;
+    typedef Relative_Queue<Alarm, Tick> Queue;
 
-public:    
-    Single_Core_Alarm(const Microsecond & time, Handler & handler, int times = 1);
-    ~Single_Core_Alarm();
+public:
+    Alarm(const Microsecond & time, Handler handler, int times = 1);
+    ~Alarm();
+
+    static Hertz frequency() { return _timer->frequency(); }
 
     static void delay(const Microsecond & time);
 
     static int init();
 
 private:
-    static void handler();
+    static Microsecond period() {
+        return 1000000 / frequency();
+    }
+
+    static Tick ticks(const Microsecond & time) {
+        return (time + period() / 2) / period();
+    }
+
+    static void lock() { Thread::lock(); }
+    static void unlock() { Thread::unlock(); }
+
+    static void handler(void);
 
 private:
-    Queue::Element _link; 
-  
+    Tick _ticks;
+    Handler _handler;
+    int _times; 
+    Queue::Element _link;
+
     static Alarm_Timer * _timer;
     static volatile Tick _elapsed;
     static Queue _requests;
 };
 
+class Delay
+{
+private:
+    typedef RTC::Microsecond Microsecond;
 
+public:
+    Delay(const Microsecond & time): _time(time)  { Alarm::delay(_time); }
 
-//Define the Alarm that will be used by the rest of the system
-typedef Single_Core_Alarm Alarm;
+private:
+    Microsecond _time;
 
+};
 
 __END_SYS
 

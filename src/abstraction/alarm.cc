@@ -7,21 +7,20 @@
 __BEGIN_SYS
 
 // Class attributes
-Spin Alarm_Base::_lock;
-Alarm_Timer * Single_Core_Alarm::_timer;
-volatile Single_Core_Alarm::Tick Single_Core_Alarm::_elapsed;
-Single_Core_Alarm::Queue Single_Core_Alarm::_requests;
+Alarm_Timer * Alarm::_timer;
+volatile Alarm::Tick Alarm::_elapsed;
+Alarm::Queue Alarm::_requests;
 
 // Methods
-Single_Core_Alarm::Single_Core_Alarm(const Microsecond & time, Handler & handler, int times):
-Alarm_Base(time, handler, times), _link(this, _ticks)
+Alarm::Alarm(const Microsecond & time, Handler handler, int times):
+    _ticks(ticks(time)), _handler(handler), _times(times), _link(this, _ticks)
 {
     lock();
 
-    db<Single_Core_Alarm>(TRC) << "Alarm(t=" << time
-    << ",tk=" << _ticks
-    << ",h=" << (void *)handler
-    << ",x=" << times << ") => " << this << "\n";
+    db<Alarm>(TRC) << "Alarm(t=" << time
+                   << ",tk=" << _ticks
+                   << ",h=" << reinterpret_cast<void *>(handler)
+                   << ",x=" << times << ") => " << this << "\n";
 
     if(_ticks) {
         _requests.insert(&_link);
@@ -32,23 +31,21 @@ Alarm_Base(time, handler, times), _link(this, _ticks)
     }
 }
 
-Single_Core_Alarm::~Single_Core_Alarm()
+Alarm::~Alarm()
 {
     lock();
 
-    db<Single_Core_Alarm>(TRC) << "~Single_Core_Alarm()\n";
+    db<Alarm>(TRC) << "~Alarm()\n";
 
     _requests.remove(this);
 
     unlock();
 }
 
-
 // Class methods
-void Single_Core_Alarm::delay(const Microsecond & time)
+void Alarm::delay(const Microsecond & time)
 {
-    db<Single_Core_Alarm>(TRC) << "Single_Core_Alarm::delay(time=" << time << ")\n";
-
+    db<Alarm>(TRC) << "Alarm::delay(time=" << time << ")\n";
 
 	Tick t = _elapsed + ticks(time);
 
@@ -56,26 +53,43 @@ void Single_Core_Alarm::delay(const Microsecond & time)
 
 }
 
-
-void Single_Core_Alarm::handler()
+void Alarm::handler()
 {
-    CPU::int_disable();
-    // lock(); this handler is meant to be called obly by CPU[0]
+    static Tick next_tick;
+    static Handler next_handler;
+
+    lock();
 
     _elapsed++;
 
-    Single_Core_Alarm * alarm = 0;
+    if(Traits<Alarm>::visible) {
+        Display display;
+        int lin, col;
+        display.position(&lin, &col);
+        display.position(0, 79);
+        display.putc(_elapsed);
+        display.position(lin, col);
+    }
 
-    if(!_requests.empty()) {
-	// rank can be negative whenever multiple handlers get created for the same time tick
-        if(_requests.head()->promote() <= 0) {
-
+    if(next_tick)
+        next_tick--;
+    if(!next_tick) {
+        if(next_handler) {
+            db<Alarm>(TRC) << "Alarm::handler(h="
+                           << reinterpret_cast<void *>(next_handler) << ")\n";
+            unlock();
+            next_handler();
+            lock();
+        }
+        if(_requests.empty())
+            next_handler = 0;
+        else {
             Queue::Element * e = _requests.remove();
-            alarm = e->object();
-
-            if(alarm->_times != INFINITE)
+            Alarm * alarm = e->object();
+            next_tick = alarm->_ticks;
+            next_handler = alarm->_handler;
+            if(alarm->_times != -1)
                 alarm->_times--;
-
             if(alarm->_times) {
                 e->rank(alarm->_ticks);
                 _requests.insert(e);
@@ -83,13 +97,7 @@ void Single_Core_Alarm::handler()
         }
     }
 
-    // unlock();
-    CPU::int_enable();
-
-    if(alarm) {
-	db<Single_Core_Alarm>(TRC) << "Single_Core_Alarm::handler(h=" << reinterpret_cast<void*>(alarm->handler) << ")\n";
-	(*alarm->_handler)();
-    }
+    unlock();
 }
 
 __END_SYS
