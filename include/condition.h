@@ -134,20 +134,6 @@ public:
 //     volatile int _time_stamp;
 // };
 
-
-// An event handler that triggers a condition variable (see handler.h)
-class Condition_Handler: public Handler
-{
-public:
-    Condition_Handler(Condition * h) : _handler(h) {}
-    ~Condition_Handler() {}
-
-    void operator()() { _handler->signal(); }
-	
-private:
-    Condition * _handler;
-};
-
 __END_SYS
 
 #endif
