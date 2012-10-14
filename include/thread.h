@@ -149,21 +149,17 @@ protected:
 
     static void reschedule();
 
-    static void time_slicer();
-
     static void implicit_exit();
 
     static void dispatch(Thread * prev, Thread * next) {
         if(prev != next) {
-            if(!cooperative) {
-                // prev->_context->save(); // can be used to force an update
-                db<Thread>(TRC) << "Thread::dispatch(prev=" << prev
-                    << ",next=" << next << ")\n";
-                db<Thread>(INF) << "prev={" << prev << ","
-                    << *prev->_context << "}\n";
-                db<Thread>(INF) << "next={" << next << ","
-                    << *next->_context << "}\n";
-            }
+            // prev->_context->save(); // can be used to force an update
+            db<Thread>(TRC) << "Thread::dispatch(prev=" << prev
+                			<< ",next=" << next << ")\n";
+            db<Thread>(INF) << "prev={" << prev << ","
+			                << *prev->_context << "}\n";
+            db<Thread>(INF) << "next={" << next << ","
+                    		<< *next->_context << "}\n";
 
             if(multicore)
                 _lock.release();
