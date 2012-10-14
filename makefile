@@ -4,22 +4,22 @@ include makedefs
 
 SUBDIRS := etc tools src app img
 
-all:	$(SUBDIRS)
+all: $(SUBDIRS)
 
 $(SUBDIRS):	FORCE
 		(cd $@ && $(MAKE))
 
-run:		FORCE
+run: FORCE
 		(cd img && $(MAKE) run)
 
-runtest:	test
+runtest: test
 		(cd img && $(MAKE) runtest)
 
-test:		$(SUBDIRS)
+test: $(SUBDIRS)
 		(cd src && $(MAKETEST))
 		(cd img && $(MAKETEST))
 
-clean:		FORCE
+clean: FORCE
 		(cd src && $(MAKECLEAN))
 		find $(LIB) -maxdepth 1 -type f -exec $(CLEAN) {} \;
 
@@ -32,7 +32,7 @@ veryclean:
 		find $(IMG) -name "*.out" -exec $(CLEAN) {} \;
 		find $(TOP) -name "*~" -exec $(CLEAN) {} \; 
 
-dist:		veryclean
+dist: veryclean
 		find $(TOP) -name ".*project" -exec $(CLEAN) {} \;
 		find $(TOP) -name CVS -type d -print | xargs $(CLEANDIR)
 		find $(TOP) -name .svn -type d -print | xargs $(CLEANDIR)
