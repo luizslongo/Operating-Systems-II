@@ -28,10 +28,10 @@ $(MACH)_system_library: $(OBJS) $(LIBSYS)
 
 
 $(MACH)_install_builtin: $(MACH)_system_builtin
-ifneq ($(GDB_DEBUG), 1)
+ifndef 	GDB
 		$(STRIP) -o $(MACH)_system.tmp $(MACH)_system
 else
-		cp $(MACH)_system $(MACH)_system.tmp
+		$(INSTALL) $(MACH)_system $(MACH)_system.tmp
 endif
 		$(INSTALL) $(MACH)_system.tmp $(IMG)/$(MACH)_system
 		$(CLEAN) $(MACH)_system.tmp
@@ -42,7 +42,7 @@ $(MACH)_install_library: $(MACH)_system_library
 		$(INSTALL) $(MACH)_application.o $(LIB)
 
 
-install:        $(MACH)_install_$(MODE)
+install: $(MACH)_install_$(MODE)
 
 test:
 

@@ -26,37 +26,31 @@ class Setup;
 class Init;
 class System;
 
-// Hardware Mediators - CPUs
+// Hardware Mediators - CPU
 class IA32;
 class AVR8;
 class PPC32;
 class MIPS32;
 class ARM7;
 
-/*
-namespace Cpu {
-    template<bool, bool>
-    class AVR8_CPU;
-};*/
-
-// Hardware Mediators - Time-Stamp Counters
+// Hardware Mediators - Time-Stamp Counter
 class IA32_TSC;
 class AVR8_TSC;
 class PPC32_TSC;
 class MIPS32_TSC;
 class ARM7_TSC;
 
-// Hardware Mediators - Memory Management Units
+// Hardware Mediators - Memory Management Unit
 class IA32_MMU;
 class AVR8_MMU;
 class PPC32_MMU;
 class MIPS32_MMU;
 class ARM7_MMU;
 
-// Hardware Mediators - Performance Monitoring Units
+// Hardware Mediators - Performance Monitoring Unit
 class IA32_PMU;
 
-// Hardware Mediators - Machines
+// Hardware Mediators - Machine
 class PC;
 class ATMega16;
 class ATMega128;
@@ -68,7 +62,7 @@ class AXI4LITE;
 class MC13224V;
 class IntegratorCP;
 
-// Hardware Mediators - Busses
+// Hardware Mediators - Bus
 class PC_PCI;
 class ML310_PCI;
 class AXI4LITE_NOC;
@@ -82,7 +76,7 @@ class AXI4LITE_NOC;
         unsigned int local;
     };
 
-// Hardware Mediators - Interrupt Controllers
+// Hardware Mediators - Interrupt Controller
 class PC_IC;
 class ATMega16_IC;
 class ATMega128_IC;
@@ -94,7 +88,7 @@ class AXI4LITE_IC;
 class MC13224V_IC;
 class IntegratorCP_IC;
 
-// Hardware Mediators - Timers
+// Hardware Mediators - Timer
 class PC_Timer;
 class ATMega16_Timer_1;
 class ATMega16_Timer_2;
@@ -120,7 +114,7 @@ class IntegratorCP_Timer;
 // Hardware Mediators - CAN
 class AT90CAN128_CAN;
 
-// Hardware Mediators - Real Time Clocks
+// Hardware Mediators - Real-time Clock
 class PC_RTC;
 class ATMega16_RTC;
 class ATMega128_RTC;
@@ -132,19 +126,19 @@ class AXI4LITE_RTC;
 class MC13224V_RTC;
 class IntegratorCP_RTC;
 
-// Hardware Mediators - EEPROMs
+// Hardware Mediators - EEPROM
 class PC_EEPROM;
 class ATMega16_EEPROM;
 class ATMega128_EEPROM;
 class ATMega1281_EEPROM;
 
-// Hardware Mediators - FLASHs
+// Hardware Mediators - FLASH
 class ATMega128_Flash;
 class ATMega1281_Flash;
 class MC13224V_Flash;
 class IntegratorCP_Flash;
 
-// Hardware Mediators - UARTs
+// Hardware Mediators - UART
 class PC_UART;
 class ATMega16_UART;
 class ATMega128_UART;
@@ -156,16 +150,16 @@ class AXI4LITE_UART;
 class MC13224V_UART;
 class IntegratorCP_UART;
 
-// Hardware Mediators - USARTs
+// Hardware Mediators - USART
 class ATMega1281_USART;
 
-// Hardware Mediators - SPIs
+// Hardware Mediators - SPI
 class PC_SPI;
 class ATMega16_SPI;
 class ATMega128_SPI;
 class ATMega1281_SPI;
 
-// Hardware Mediators - Displays
+// Hardware Mediators - Display
 class Serial_Display;
 class PC_Display;
 class ATMega16_Display;
@@ -174,7 +168,7 @@ class ATMega1281_Display;
 class AT90CAN128_Display;
 class MC13224V_Display;
 
-// Hardware Mediators - NICs
+// Hardware Mediators - NIC
 class PC_Ethernet;
 class PCNet32;
 class C905;
@@ -191,43 +185,11 @@ class PLASMA_NIC;
 class AXI4LITE_NIC;
 class MC13224V_NIC;
 class IntegratorCP_NIC;
-template<typename> class CMAC;
-template<typename> class CMAC_State;
 
-template<typename> class Empty;
-template<typename> class Sync_Empty;
-template<typename> class Pack_Empty;
-template<typename> class Contention_Empty;
-template<typename> class Tx_Empty;
-template<typename> class Ack_Rx_Empty;
-template<typename> class Lpl_Empty;
-template<typename> class Rx_Empty;
-template<typename> class Unpack_Empty;
-template<typename> class Ack_Tx_Empty;
-
-template<typename> class Synchronous_Sync;
-template<typename> class Asynchronous_Sync;
-template<typename> class Rx_Contention;
-template<typename> class Tx_Contention;
-template<typename> class Backoff;
-template<typename> class CSMA;
-
-template<typename> class Generic_Active;
-template<typename> class Generic_Tx;
-template<typename> class Generic_Rx;
-template<typename> class Generic_Lpl;
-
-template<typename> class IEEE802154_Beacon_Sync;
-template<typename> class IEEE802154_Pack;
-template<typename> class IEEE802154_Unpack;
-template<typename> class IEEE802154_Ack_Rx;
-template<typename> class IEEE802154_Ack_Tx;
-template<typename> class IEEE802154_Slotted_CSMA_Contention;
-
-// Hardware Mediators - GPIOs
+// Hardware Mediators - GPIO
 class MC13224V_GPIO_Pin;
 
-// Hardware Mediators - ADCs
+// Hardware Mediators - ADC
 class AT90CAN128_ADC;
 class ATMega16_ADC;
 class ATMega128_ADC;
@@ -296,19 +258,10 @@ class Condition;
 
 // Abstractions	- Time
 class Clock;
-class Single_Core_Alarm;
-class SMP_Alarm;
+class Alarm;
 class Chronometer;
 
-// Abstractions - Service
-template <int> class Service;
-class Services;
-
-// Abstractions - Service - Network service
-template <typename, typename> class ARP;
-template <typename, typename> class ADHOP;
-
-// Abstractions - Communication - Protocols
+// Abstractions - Network
 class Ethernet;
 class Network;
 class ELP;
@@ -319,10 +272,7 @@ class UDP;
 class TCP;
 class RTP;
 
-// Abstractions - Communication - List of neighbors
-class Neighborhood;
-
-// Abstractions	- Sentients
+// Abstractions	- Sentient
 class Photo_Sentient;
 class Temperature_Sentient;
 
