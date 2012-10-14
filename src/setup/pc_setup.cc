@@ -126,7 +126,7 @@ PC_Setup::PC_Setup(char * boot_image)
 	 * It changes the page address in the generated binary, and for some reason,
 	 * the system is able to boot. The problem does not occur in the Intel 9950 processor.
 	 */
-	if(Traits<Thread>::smp) {
+	if(Traits<Thread>::multicore) {
     	kout << "si->bm.n_cpus = " << si->bm.n_cpus << endl;
     
     	kout << "CR0 of CPU(" << Machine::cpu_id() << ") = " << (void *) CPU::cr0() << endl;
@@ -136,14 +136,14 @@ PC_Setup::PC_Setup(char * boot_image)
     	}
     }
 
-    // SMP conditional start up
+    // multicore conditional start up
     int cpu_id = Machine::cpu_id();
 
     db<Setup>(TRC) << "PC_Setup(CPU=" << cpu_id << "/" << si->bm.n_cpus
 		   << ",bi=" << (void *)bi
 		   << ",sp=" << (void *)CPU::sp() << ")\n";
 
-    Machine::smp_barrier(si->bm.n_cpus);
+    Machine::multicore_barrier(si->bm.n_cpus);
     if(cpu_id == 0) { // Boot strap CPU (BSP)
 
 	// Disable hardware interrupt triggering at PIC
@@ -879,7 +879,7 @@ void PC_Setup::call_next()
 
     db<Setup>(INF) << "Setup ends here!\n\n";
 
-    Machine::smp_barrier(si->bm.n_cpus);
+    Machine::multicore_barrier(si->bm.n_cpus);
 
     // Set SP and call next stage
     CPU::sp(sp);
@@ -1028,7 +1028,7 @@ void _start()
     // Get the System_Info  (first thing in the boot image)
     System_Info<PC> * si = reinterpret_cast<System_Info<PC> *>(bi);
 
-    // SMP conditional start up
+    // multicore conditional start up
     if(APIC::id() == 0) { // Boot strap CPU (BSP)
 
 	// Initialize shared CPU counter
@@ -1122,10 +1122,10 @@ void setup(char * bi)
     kerr << endl;
     kout << endl;
 
-    // SMP sanity check
-    if(!Traits<Thread>::smp && (APIC::id() != 0)) {
-	db<Setup>(WRN) << "SMP disable by config, halting this CPU ("
-		       << APIC::id() << ")!\n";
+    // multicore sanity check
+    if(!Traits<Thread>::multicore && (APIC::id() != 0)) {
+	db<Setup>(WRN) << "multicore disable by config, halting this CPU ("
+		           << APIC::id() << ")!\n";
 
 	CPU::int_disable();
 	CPU::halt();

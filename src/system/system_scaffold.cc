@@ -13,12 +13,12 @@ __USING_SYS
 
 extern "C" {
     void _exit(int s) {
-	Thread::exit(s); for(;;);
+        Thread::exit(s); for(;;);
     }
 
     void __cxa_pure_virtual() {
-	db<void>(ERR) << "__cxa_pure_virtual() called!\n";
-	Machine::panic();
+        db<void>(ERR) << "__cxa_pure_virtual() called!\n";
+        Machine::panic();
     }
 }
 
@@ -31,20 +31,20 @@ class First_Object
 {
 public:
     First_Object() {
-	Display::remap();
+        Display::remap();
 
- 	if(Traits<Thread>::smp) {
-	    System_Info<Machine> * si =
-		reinterpret_cast<System_Info<Machine> *>(
-		    Memory_Map<Machine>::SYS_INFO);
+        if(Traits<Thread>::multicore) {
+            System_Info<Machine> * si =
+                reinterpret_cast<System_Info<Machine> *>(
+                    Memory_Map<Machine>::SYS_INFO);
 
-	    Machine::smp_init(si->bm.n_cpus);
-	}
+            Machine::multicore_init(si->bm.n_cpus);
+        }
     }
 };
 
 // Global objects
-// These objects might be reconstructed several times in SMP configurations,
+// These objects might be reconstructed several times in multicore configurations,
 // so their constructors must be stateless!
 First_Object __entry;
 OStream kout;
