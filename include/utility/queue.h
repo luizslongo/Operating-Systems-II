@@ -81,7 +81,7 @@ template <typename List>
 class Queue_Wrapper<List, true>: private List
 {
 private:
-    static const bool smp = Traits<Thread>::smp;
+    static const bool multicore = Traits<Thread>::multicore;
 
 public:
     typedef typename List::Object_Type Object_Type;
@@ -92,103 +92,105 @@ public:
     void unlock() { _lock.release(); }
 
     bool empty() {
-	enter();
-	bool tmp = List::empty();
-	leave();
-	return tmp;
+        enter();
+        bool tmp = List::empty();
+        leave();
+        return tmp;
     }
 
     unsigned int size() {
-	enter(); 
-	unsigned int tmp = List::size();
-	leave();
-	return tmp;
+        enter();
+        unsigned int tmp = List::size();
+        leave();
+        return tmp;
     }
 
     Element * head() { 
-	enter(); 
-	Element * tmp = List::head();
-	leave();
-	return tmp;
+        enter();
+        Element * tmp = List::head();
+        leave();
+        return tmp;
     }
 
     Element * tail() { 
-	enter(); 
-	Element * tmp = List::tail();
-	leave();
-	return tmp;
+        enter();
+        Element * tmp = List::tail();
+        leave();
+        return tmp;
     }
 
     void insert(Element * e) { 
-	enter(); 
-	List::insert(e);
-	leave();
+        enter();
+        List::insert(e);
+        leave();
     }
 
     Element * remove() { 
-	enter(); 
-	Element * tmp = List::remove();
-	leave();
-	return tmp;
+        enter();
+        Element * tmp = List::remove();
+        leave();
+        return tmp;
     }
 
     Element * remove(const Object_Type * obj) {
-	enter(); 
-	Element * tmp = List::remove(obj); 
-	leave();
-	return tmp;
+        enter();
+        Element * tmp = List::remove(obj);
+        leave();
+        return tmp;
     }
 
     Element * search(const Object_Type * obj) {
-	enter(); 
-	Element * tmp = List::search(obj);
-	leave();
-	return tmp;
+        enter();
+        Element * tmp = List::search(obj);
+        leave();
+        return tmp;
     }
 
     Element * volatile & chosen() { 
-	enter(); 
-	Element * volatile & tmp = List::chosen();
-	leave();
-	return tmp;
+        enter();
+        Element * volatile & tmp = List::chosen();
+        leave();
+        return tmp;
     }
 
     Element * choose() { 
-	enter(); 
-	Element * tmp = List::choose();
-	leave();
-	return tmp;
+        enter();
+        Element * tmp = List::choose();
+        leave();
+        return tmp;
     }
 
     Element * choose_another() { 
-	enter(); 
-	Element * tmp = List::choose_another();
-	leave();
-	return tmp;
+        enter();
+        Element * tmp = List::choose_another();
+        leave();
+        return tmp;
     }
     Element * choose(Element * e) {
-	enter(); 
-	Element * tmp = List::choose(e);
-	leave();
-	return tmp;
+        enter();
+        Element * tmp = List::choose(e);
+        leave();
+        return tmp;
     }
 
     Element * choose(const Object_Type * obj) {
-	enter(); 
-	Element * tmp = List::choose(obj);
-	leave();
-	return tmp;
+        enter();
+        Element * tmp = List::choose(obj);
+        leave();
+        return tmp;
     }
 
 private:
     void enter() {
-	CPU::int_disable();
-	if(smp) _lock.acquire(); 
+        CPU::int_disable();
+        if(multicore)
+            _lock.acquire();
     }
 
     void leave() {
-	if(smp) _lock.release();
-	CPU::int_disable();
+        if(multicore)
+            _lock.release();
+        CPU::int_disable();
     }
 
 private:
@@ -198,28 +200,28 @@ private:
 
 // Queue
 template <typename T,
-	  bool atomic = false,
-	  typename El = List_Elements::Doubly_Linked<T> >
+          bool atomic = false,
+          typename El = List_Elements::Doubly_Linked<T> >
 class Queue: public Queue_Wrapper<List<T, El>, atomic> {};
 
 
 // Ordered Queue
 template <typename T, 
-	  typename R = List_Element_Rank, 
-	  bool atomic = false,
-	  typename El = List_Elements::Doubly_Linked_Ordered<T, R> >
+          typename R = List_Element_Rank,
+          bool atomic = false,
+          typename El = List_Elements::Doubly_Linked_Ordered<T, R> >
 class Ordered_Queue:
-    public Queue_Wrapper<Ordered_List<T, R, El>, atomic> {};
+public Queue_Wrapper<Ordered_List<T, R, El>, atomic> {};
 
 
 // Relatively-Ordered Queue
 template <typename T, 
-	  typename R = List_Element_Rank, 
-	  bool atomic = false,
-	  typename El = List_Elements::Doubly_Linked_Ordered<T, R> >
+          typename R = List_Element_Rank,
+          bool atomic = false,
+          typename El = List_Elements::Doubly_Linked_Ordered<T, R> >
 class Relative_Queue:
     public Queue_Wrapper<Relative_List<T, R, El>, atomic> {};
 
 __END_SYS
- 
+
 #endif
