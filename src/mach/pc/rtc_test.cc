@@ -27,7 +27,7 @@ int main()
 	    cout << last_date.day() << '/'
 		 << last_date.month() << '/'
 		 << last_date.year() << ' ';
-	    Display::position(20, 40);
+	    Display::position(20, 42);
 	    cout << last_date.hour() << ':'
 		 << last_date.minute() << ':'
 		 << last_date.second() << "    ";
