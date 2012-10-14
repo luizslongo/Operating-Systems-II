@@ -15,7 +15,7 @@ public:
 		      << Machine::cpu_id() << ")\n";
 
 	// Only the boot CPU runs INIT_APPLICATION
-	Machine::smp_barrier();
+	Machine::multicore_barrier();
 	if(Machine::cpu_id() != 0)
 	    return;
 

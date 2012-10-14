@@ -13,7 +13,7 @@ public:
 
 	db<Init>(TRC) << "Init_First(CPU=" << Machine::cpu_id() << ")\n";
 
-	Machine::smp_barrier();
+	Machine::multicore_barrier();
 
 	// Initialize the Thread abstraction,
 	// thus creating the first application thread
