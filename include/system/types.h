@@ -280,7 +280,9 @@ namespace Scheduling_Criteria
     class EARM;
     class EAEDF;
     class CPU_Affinity;
-	class GEDF;
+    class PEDF;
+    class PRM;
+    class GEDF;
     class GRM;
 };
 

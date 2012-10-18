@@ -173,33 +173,79 @@ namespace Scheduling_Criteria
 
 	static int _next_cpu;
     };
+    
+    // Partitioned Earliest Deadline First
+    class PEDF: public EDF
+    {
+    public:
+        static const unsigned int QUEUES = Traits<Machine>::MAX_CPUS;
+  
+    public:
+        PEDF(int p = NORMAL): EDF(p),
+            _affinity(((p == IDLE) || (p == MAIN)) ? Machine::cpu_id()
+                : ++_next_cpu %= Machine::n_cpus()) {}
+
+        PEDF(int p, int a): EDF(p), _affinity(a) {}
+
+        const volatile int & queue() const volatile { return _affinity; }
+
+        static int current() { return Machine::cpu_id(); }
+
+    private:
+        volatile int _affinity;
+
+        static int _next_cpu;
+    };
+    
+    // Partitioned Rate Monotonic
+    class PRM: public RM
+    {
+    public:
+        static const unsigned int QUEUES = Traits<Machine>::MAX_CPUS;
+  
+    public:
+        PRM(int p = NORMAL): RM(p),
+            _affinity(((p == IDLE) || (p == MAIN)) ? Machine::cpu_id()
+                : ++_next_cpu %= Machine::n_cpus()) {}
+
+        PRM(int p, int a): RM(p), _affinity(a) {}
+
+        const volatile int & queue() const volatile { return _affinity; }
+
+        static int current() { return Machine::cpu_id(); }
+
+    private:
+        volatile int _affinity;
+
+        static int _next_cpu;
+    };
 
 	// Global Earliest Deadline First
     class GEDF: public EDF
     {
     public:
-    static const unsigned int QUEUES = 1;
-    static const bool GLOBAL_SCHEDULER = true;
+        static const unsigned int QUEUES = 1;
+        static const bool GLOBAL_SCHEDULER = true;
     
     public:     
-    GEDF(int p = NORMAL): EDF(p) { } // Aperiodic
-    GEDF(const RTC::Microsecond & d): EDF(d) { }
+        GEDF(int p = NORMAL): EDF(p) { } // Aperiodic
+        GEDF(const RTC::Microsecond & d): EDF(d) { }
                 
-    static int current() { return Machine::cpu_id(); }
+        static int current() { return Machine::cpu_id(); }
     };
     
     // Global Rate Monotonic
     class GRM: public RM
     {
     public:
-    static const unsigned int QUEUES = 1;
-    static const bool GLOBAL_SCHEDULER = true;
+        static const unsigned int QUEUES = 1;
+        static const bool GLOBAL_SCHEDULER = true;
     
     public:     
-    GRM(int p = NORMAL): RM(p) { } // Aperiodic
-    GRM(const RTC::Microsecond & d): RM(d) { }
+        GRM(int p = NORMAL): RM(p) { } // Aperiodic
+        GRM(const RTC::Microsecond & d): RM(d) { }
         
-    static int current() { return Machine::cpu_id(); }
+        static int current() { return Machine::cpu_id(); }
     };
 };
 
@@ -215,114 +261,43 @@ private:
 public:
     typedef typename Queue::Element Element;
 public:
-    Scheduling_Queue() { 
-      for(unsigned int i = 0; i < Q; i++)
-        _running_elem[i] = 0;
-      _run_size = 0;
-      _lowest_priority_cpu = 0;
-    }
+    Scheduling_Queue() { }
 
     unsigned int size() { return _ready.size(); }
     
-    Element * head_in_queue(int q) {
-        return _running_elem[q];
-    }
-    
-    int get_lowest_priority_running_cpu() { 
-      update_lowest_priority_cpu();
-      return _lowest_priority_cpu;
-    }
+    unsigned int get_lowest_priority_running_cpu() { return _ready.get_lowest_priority_running(); }
     
     Element * volatile & chosen() { 
-    return _running_elem[Criterion::current()];
+    return _ready.chosen(Criterion::current());
+    }
+    
+    Element * volatile & chosen(int i) { 
+    return _ready.chosen(i); 
     }
 
-    void insert(Element * e) {
-      if(_run_size < Q) {
-        register int cpu_id = Criterion::current();
-        if(_running_elem[cpu_id] != 0) {
-            if(_running_elem[cpu_id]->rank() > e->rank()) {
-            _ready.insert(_running_elem[cpu_id]);
-            _running_elem[cpu_id] = e;
-            } else {
-              _ready.insert(e);
-            }
-        } else {
-          _running_elem[cpu_id] = e; 
-          _run_size++;
-        }
-      } else {
-        _ready.insert(e);
-      }
+    void insert(Element * e) { 
+    _ready.insert(e, Criterion::current());
     }
 
     Element * remove(Element * e) {
-      // removing object instead of element forces a search and renders
-      // removing inexistent objects harmless
-      //kout << "remove() e = " << (void *) e << " rank = " << e->rank();
-      register int cpu_id = Criterion::current();
-      if(_running_elem[cpu_id] == e) {
-        _running_elem[cpu_id] = _ready.head();
-        _ready.remove_head(); 
-      } else {
-        e = _ready.remove(e);
-      }
-      return e;
+    // removing object instead of element forces a search and renders
+    // removing inexistent objects harmless      
+    return _ready.remove(e->object(), Criterion::current());
     }
 
     Element * choose() { 
-      register int cpu_id = Criterion::current();
-      if(size() > 0 && _ready.head()->rank() != Criterion::IDLE) {
-        Element *e = _ready.head(); 
-        if(e->rank() < _running_elem[cpu_id]->rank()) {
-          _ready.remove_head(); 
-          _ready.insert(_running_elem[cpu_id]);
-          _running_elem[cpu_id] = e;
-        }
-      }
-      return _running_elem[cpu_id];
+    return _ready.choose(Criterion::current()); 
     }
 
-    Element * choose_another() {
-      register int cpu_id = Criterion::current();
-      if(size() > 0) {
-        Element *e;
-        e = _ready.head();
-        if(e->rank() < _running_elem[cpu_id]->rank()) {
-          _ready.remove_head(); //remove_head()
-          _ready.insert(_running_elem[cpu_id]);
-          _running_elem[cpu_id] = e;
-        }
-      }
-      return _running_elem[cpu_id];
+    Element * choose_another() { 
+    return _ready.choose_another(Criterion::current());
     }
 
-    Element * choose(Element * e) {
-      register int cpu_id = Criterion::current();
-      if(e != _running_elem[cpu_id]) {
-        _ready.insert(_running_elem[cpu_id]);
-        _ready.remove(e);
-        _running_elem[cpu_id] = e;
-      }
-      return _running_elem[cpu_id];
+    Element * choose(Element * e) { 
+    return _ready.choose(e->object(), Criterion::current()); 
     }
 
-private:
-    void update_lowest_priority_cpu(void) {
-        for(unsigned int  i = 0; i < Q; i++) {
-            if(_running_elem[i] == 0) {
-              _lowest_priority_cpu = i;
-              break;
-            } else {
-                if(_running_elem[i]->rank() > _running_elem[_lowest_priority_cpu]->rank())
-                    _lowest_priority_cpu = i;
-            }
-        }
-    }
 private:  
-    Element * volatile _running_elem[Q];
-    unsigned int _run_size;
-    int _lowest_priority_cpu;
     Queue _ready;
 };
 
@@ -341,15 +316,15 @@ public:
     Scheduling_Queue() {}
 
     unsigned int size() { return _ready[Criterion::current()].size(); }
-
-	Element * head_in_queue(int q) {
-        return _ready[q].chosen();
-    }
     
-    int get_lowest_priority_running_cpu() { return 0; }
+    unsigned int get_lowest_priority_running_cpu() { return 0; }
 
     Element * volatile & chosen() { 
 	return _ready[Criterion::current()].chosen();
+    }
+    
+    Element * volatile & chosen(int i) { 
+    return _ready[i].chosen();
     }
 
     void insert(Element * e) {
@@ -389,24 +364,25 @@ public:
     typedef typename Base::Element Element;
 
 public:
-	Element * head_in_queue(int q) {
-        return Base::chosen();
-    }
   
-    int get_lowest_priority_running_cpu() { return 0; }
+    unsigned int get_lowest_priority_running_cpu() { return 0; }
+    
+    Element * volatile & chosen(int i) { 
+    return Base::chosen(); 
+    }
 
     Element * remove(Element * e) {
-	// removing object instead of element forces a search and renders
-	// removing inexistent objects harmless
-	return Base::remove(e->object());
+    // removing object instead of element forces a search and renders
+    // removing inexistent objects harmless
+    return Base::remove(e->object());
     }
 
     Element * choose() {
-	return Base::choose();
+    return Base::choose();
     }
 
     Element * choose(Element * e) {
-	return Base::choose(e->object());
+    return Base::choose(e->object());
     }
 };
 
@@ -435,8 +411,12 @@ public:
     T * volatile chosen() { 
 	return const_cast<T * volatile>(Base::chosen()->object()); 
     }
+    
+    T * volatile chosen(int i) { 
+    return const_cast<T * volatile>(Base::chosen(i)->object()); 
+    }
 
-	int get_lowest_priority_running_cpu() {
+	unsigned int get_lowest_priority_running_cpu() {
     return Base::get_lowest_priority_running_cpu();   
     }
 

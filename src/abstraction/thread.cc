@@ -246,35 +246,36 @@ void Thread::wakeup_all(Queue * q)
 void Thread::reschedule(bool preempt)
 {
     if(preempt) {
-		db<Thread>(TRC) << "Thread::reschedule()\n";
+        db<Thread>(TRC) << "Thread::reschedule()\n";
 
-		Thread * prev = running();
-		Thread * next;
-		
-		if(global_scheduler) {
-		  int cpu_lowest = _scheduler.get_lowest_priority_running_cpu();
-		  //call reschedule in another processor
-		  //do not send IPI if the lowest CPU is running an idle task because it will reschedule before the IPI
-		  if(Machine::cpu_id() != cpu_lowest && prev->criterion() != IDLE && _scheduler.head_in_queue(cpu_lowest)->rank() != IDLE) {
-		    unlock();
-		    IC::ipi_send(cpu_lowest, IC::INT_RESCHEDULER);
-		  } else {
-		    next = _scheduler.choose();
-		    dispatch(prev, next);
-		  }
-		} else {
-		  next = _scheduler.choose();
-		  dispatch(prev, next);
-		}
+        Thread * prev = running();
+        Thread * next;
+
+        if(global_scheduler) {
+            unsigned int cpu_lowest = _scheduler.get_lowest_priority_running_cpu();
+            // call reschedule in another processor
+            // if the current CPU is not the lowest priority CPU and the running thread is not IDLE 
+            // (scheduler may return another IDLE CPU) and there is thread to be scheduled
+            if(Machine::cpu_id() != cpu_lowest && prev->criterion() != IDLE && _scheduler.schedulables() > 0) {
+                unlock();
+                IC::ipi_send(cpu_lowest, IC::INT_RESCHEDULER);
+            } else {
+                next = _scheduler.choose();
+                dispatch(prev, next);
+            }
+        } else {
+            next = _scheduler.choose();
+            dispatch(prev, next);
+        }
     } else 
-		  unlock();
+        unlock();
 }
 
 void Thread::ipi_reschedule(unsigned int i)
 {
     lock();
 
-	db<Thread>(TRC) << "Thread::ipi_reschedule()\n";
+    db<Thread>(TRC) << "Thread::ipi_reschedule()\n";
 
     Thread * prev = running();
     Thread * next = _scheduler.choose();

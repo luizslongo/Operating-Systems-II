@@ -1127,7 +1127,11 @@ public:
     typedef typename Base::Iterator Iterator;
 
 public:
-    Global_Scheduling_List() {}
+    Global_Scheduling_List() {
+        for(unsigned int i = 0; i < R::QUEUES; i++)
+        _current[i] = 0;
+        _lowest_priority_running = 0;
+    }
 
     using Base::empty;
     using Base::size;
@@ -1135,65 +1139,136 @@ public:
     using Base::tail;
     using Base::begin;
     using Base::end;
+    using Base::remove_head;
+    
+    Element * volatile & chosen(int list) { return _current[list]; }
 
-    void insert(Element * e) {
+    void insert(Element * e, int list) {
         db<Lists>(TRC) << "Global_Scheduling_List::insert(e=" << e 
+                      << ",list=" << list
                       << ") => {p=" << (e ? e->prev() : (void *) -1)
                       << ",o=" << (e ? e->object() : (void *) -1)
                       << ",n=" << (e ? e->next() : (void *) -1)
                       << "}\n";
-
-        Base::insert(e);
+      
+        if(_current[list] != 0)
+            Base::insert(e);
+        else
+            _current[list] = e;
     }
 
-    Element * remove(Element * e) {
+    Element * remove(Element * e, int list) {
         db<Lists>(TRC) << "Global_Scheduling_List::remove(e=" << e 
+                      << ",list=" << list
                       << ") => {p=" << (e ? e->prev() : (void *) -1)
                       << ",o=" << (e ? e->object() : (void *) -1)
                       << ",n=" << (e ? e->next() : (void *) -1)
                       << "}\n";
-
-        Base::remove(e);
-
+                      
+        if(_current[list] == e)
+            _current[list] = remove_head();
+        else
+            e = Base::remove(e);
+        
         return e;
     }
-    
-    void remove_head() {
-        Base::remove_head();
-    }
 
-    Element * remove(const Object_Type * obj) {
-        Element * e = search(obj);
+    Element * remove(const Object_Type * obj, int list) {
+        Element *e;
+        
+        if(_current[list]->object() == obj) {
+            e = _current[list];
+            _current[list] = remove_head();
+            return e;
+        }
+        
+        e = search(obj);
+        
         if(e)
-            return remove(e);
+            return remove(e, list);
         else
             return 0;
     }
+    
+    Element * choose_another(int list) {
+        db<Lists>(TRC) << "Global_Scheduling_List::choose_another(list=" << list 
+                      << ")\n";
 
-    Element * choose() {
-        db<Lists>(TRC) << "Global_Scheduling_List::choose()\n";
-
-        return head();
+        if(size() > 0) {
+            Element * e = head();
+            if(e->rank() < _current[list]->rank()) {
+                Base::insert(_current[list]);
+                _current[list] = e;
+                remove_head();
+            }
+        }
+        
+        return _current[list];
     }
 
-    Element * choose(const Object_Type * obj) {
-        Element * e = search(obj);
+    Element * choose(int list) {
+        db<Lists>(TRC) << "Global_Scheduling_List::choose(list=" << list 
+                      << ")\n";
+        if(size() > 0) {
+          Element * e = head(); 
+          if(e->rank() <= _current[list]->rank() && e->rank() != R::IDLE) {
+            Base::insert(_current[list]);
+            _current[list] = e;
+            remove_head();
+          }
+        }
+        
+        return _current[list];
+    }
+
+    Element * choose(Element * e, int list) {
+        db<Lists>(TRC) << "Global_Scheduling_List::choose(e=" << e
+                      << ",list=" << list 
+                      << ")\n";
+                      
+        if(e != _current[list]) {
+            Base::insert(_current[list]);
+            Base::remove(e);
+            _current[list] = e;
+        }
+      
+        return _current[list];
+    }
+
+    Element * choose(const Object_Type * obj, int list) {
+        Element *e;
+        if(_current[list]->object() == obj) {
+            return choose(_current[list], list);
+        }
+      
+        e = search(obj);
+        
         if(e)
-            return choose(e);
+            return choose(e, list);
         else
             return 0;
     }
+    
+    unsigned int get_lowest_priority_running() {
+        update_lowest_priority_running();
+        return _lowest_priority_running;
+    }
 
 private:
-    void reorder() {
-        // Rank might have changed, so remove and insert to reorder
-        //Element *_chosen = head();
-        //Base::remove(_chosen);
-        //Base::insert(_chosen);
+    void update_lowest_priority_running(void) {
+        for(unsigned int  i = 0; i < R::QUEUES; i++) {
+            if(_current[i] == 0) {
+              _lowest_priority_running = i;
+              break;
+            } else if(_current[i]->rank() > _current[_lowest_priority_running]->rank()) {
+                    _lowest_priority_running = i;
+            }
+        }
     }
     
 private:
-    Element * volatile _chosen;
+    Element * volatile _current[R::QUEUES];
+    unsigned int _lowest_priority_running;
 };
 
 // Doubly-Linked, Grouping List
