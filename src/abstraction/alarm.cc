@@ -157,6 +157,7 @@ void SMP_Alarm::delay(const Microsecond & time)
 void SMP_Alarm::handler()
 {
     CPU::int_disable();
+    lock();
     
     _elapsed[Machine::cpu_id()]++;
     
@@ -182,6 +183,7 @@ void SMP_Alarm::handler()
       }
     }
     
+    unlock();
     CPU::int_enable();
 
     while(i-- > 0) {
