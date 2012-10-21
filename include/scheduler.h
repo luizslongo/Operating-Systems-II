@@ -270,10 +270,6 @@ public:
     Element * volatile & chosen() { 
     return _ready.chosen(Criterion::current());
     }
-    
-    Element * volatile & chosen(int i) { 
-    return _ready.chosen(i); 
-    }
 
     void insert(Element * e) { 
     _ready.insert(e, Criterion::current());
@@ -322,10 +318,6 @@ public:
     Element * volatile & chosen() { 
     return _ready[Criterion::current()].chosen();
     }
-    
-    Element * volatile & chosen(int i) { 
-    return _ready[i].chosen();
-    }
 
     void insert(Element * e) {
     _ready[e->rank().queue()].insert(e); 
@@ -366,10 +358,6 @@ public:
 public:
   
     unsigned int get_lowest_priority_running_cpu() { return 0; }
-    
-    Element * volatile & chosen(int i) { 
-    return Base::chosen(); 
-    }
 
     Element * remove(Element * e) {
     // removing object instead of element forces a search and renders
@@ -410,10 +398,6 @@ public:
 
     T * volatile chosen() { 
     return const_cast<T * volatile>(Base::chosen()->object()); 
-    }
-
-    T * volatile chosen(int i) { 
-    return const_cast<T * volatile>(Base::chosen(i)->object()); 
     }
 
     unsigned int get_lowest_priority_running_cpu() {
