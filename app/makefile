@@ -4,11 +4,11 @@ include ../makedefs
 
 all: install
 
-$(APPLICATION):	$(APPLICATION).o $(LIB)/* $(OBJS)
-		$(ALD) $(ALDFLAGS) -o $@ $(APPLICATION).o $(OBJS)
-
+$(APPLICATION):	$(APPLICATION).o $(LIB)/*
+		$(ALD) $(ALDFLAGS) -o $@ $(APPLICATION).o
+		
 $(APPLICATION).o: $(APPLICATION).cc $(SRC)
-		$(ACC) $(ACCFLAGS) -o $@ $< $(ENABLE_THREADS)
+		$(ACC) $(ACCFLAGS) -o $@ $<
 
 install: $(APPLICATION)
 ifndef  GDB
@@ -20,4 +20,4 @@ endif
 		$(CLEAN) $(APPLICATION).tmp
 
 clean:
-		$(CLEAN) *.o $(APPLICATION) $(OBJS)
+		$(CLEAN) *.o $(APPLICATION)

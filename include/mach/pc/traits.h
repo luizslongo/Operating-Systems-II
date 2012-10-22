@@ -13,6 +13,8 @@ template <> struct Traits<PC>: public Traits<PC_Common>
 {
     static const unsigned int MAX_CPUS = 8;
 
+    static const unsigned int N_HEAPS = 1;
+
     static const unsigned int BOOT_IMAGE_ADDR = 0x00008000;
 
     static const unsigned int APPLICATION_STACK_SIZE = 16 * 1024;
@@ -20,10 +22,6 @@ template <> struct Traits<PC>: public Traits<PC_Common>
 
     static const unsigned int SYSTEM_STACK_SIZE = 4096;
     static const unsigned int SYSTEM_HEAP_SIZE = 128 * APPLICATION_STACK_SIZE;
-
-    static const unsigned int PRIORITY_HEAP_BASE_ADDR = 0;
-    static const unsigned int PRIORITY_HEAP_SIZE = 4;
-    static const unsigned int PRIORITY_HEAP_TOP_ADDR = PRIORITY_HEAP_BASE_ADDR + PRIORITY_HEAP_SIZE - 1;
 };
 
 template <> struct Traits<PC_PCI>: public Traits<PC_Common>

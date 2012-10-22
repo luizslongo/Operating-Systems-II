@@ -10,6 +10,6 @@ OStream cout;
 OStream cerr;
 
 // Application class attributes
-Heap Application::_heap[IF_INT<Traits<Heap>::priority_alloc, 2, 1>::Result];
+Heap Application::_heap[Traits<Machine>::N_HEAPS];
 
 __END_SYS

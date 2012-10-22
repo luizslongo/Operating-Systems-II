@@ -2,10 +2,14 @@
 
 include	../makedefs
 
-all: eposcc.conf eposmkbi.conf $(INCLUDE)/system/config.h
+all: $(APP)/$(APPLICATION)_traits.h eposcc.conf eposmkbi.conf $(INCLUDE)/system/config.h
 		sed -e 's/^#define ARCH.*$$/#define ARCH $(ARCH)/' -i $(INCLUDE)/system/config.h
 		sed -e 's/^#define MACH.*$$/#define MACH $(MACH)/' -i $(INCLUDE)/system/config.h
+		sed -e 's/^#define APPLICATION.*$$/#define APPLICATION $(APPLICATION)/' -i $(INCLUDE)/system/config.h
 
+$(APP)/$(APPLICATION)_traits.h:
+		$(INSTALL) $(INCLUDE)/system/traits.h $@
+		
 eposcc.conf:
 		@echo "ARCH=$(ARCH)" > $@
 		@echo "MACH=$(MACH)" >> $@
@@ -30,6 +34,9 @@ eposmkbi.conf:
 		@echo "BOOT_LENGTH_MAX=$(BOOT_LENGTH_MAX)" >> $@
 
 clean:
+		sed -e 's/^#define ARCH.*$$/#define ARCH xxx/' -i $(INCLUDE)/system/config.h
+		sed -e 's/^#define MACH.*$$/#define MACH xxx/' -i $(INCLUDE)/system/config.h
+		sed -e 's/^#define APP.*$$/#define APPLICATION xxx/' -i $(INCLUDE)/system/config.h
 		$(CLEAN) *.conf
 
 		

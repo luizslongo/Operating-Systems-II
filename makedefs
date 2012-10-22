@@ -1,11 +1,5 @@
 # EPOS Makefile Definitions
 
-# Application selection
-APPLICATION = philosophers_dinner
-
-# GDB debugging support
-#GDB=1
-
 # Supported software architectures
 MODE_KERNEL     := kernel
 MODE_BUILTIN    := builtin
@@ -31,16 +25,28 @@ MACH_MC13224V   := mc13224v
 MACH_INTEGRATOR := integratorcp
 
 # System configuration
+#MODE            := $(MODE_LIBRARY)
+#ARCH            := $(ARCH_IA32)
+#MACH            := $(MACH_PC)
+#APPLICATION	 := philosophers_dinner
+#GDB			 := 1 
+
+# do not modify anything bellow this line
+###############################################################################
+# System default configuration
+ifndef MODE
 MODE            := $(MODE_LIBRARY)
+endif
 ifndef ARCH
 ARCH            := $(ARCH_IA32)
 endif
 ifndef MACH
 MACH            := $(MACH_PC)
 endif
+ifndef APPLICATION
+APPLICATION		= $(subst .cc,,$(shell find $(APP) -name \*.cc -printf "%f\n"| head -1))
+endif
 
-# do not modify anything bellow this line
-###############################################################################
 # Path to EPOS root directory 
 EPOS := $(abspath $(dir $(filter %makedefs, $(MAKEFILE_LIST))))
 
@@ -286,11 +292,6 @@ LMACH     = $(LMACHNAME)_$(ARCH)
 LSYS      = $(LSYSNAME)_$(ARCH)
 LINIT     = $(LINITNAME)_$(ARCH)
 LUTIL     = $(LUTILNAME)_$(ARCH)
-
-# Default application if not set
-ifndef APPLICATION
-APPLICATION = $(subst .cc,,$(shell find $(APP) -name \*.cc -printf "%f\n"| head -1))
-endif
 
 # Tools to adapt linux files
 SED = sed

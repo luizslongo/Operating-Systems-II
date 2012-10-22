@@ -25,6 +25,7 @@ class Boot;
 class Setup;
 class Init;
 class System;
+class Application;
 
 // Hardware Mediators - CPU
 class IA32;
@@ -65,16 +66,6 @@ class IntegratorCP;
 // Hardware Mediators - Bus
 class PC_PCI;
 class ML310_PCI;
-class AXI4LITE_NOC;
-    class NOC_Address {
-    public:
-        NOC_Address () :router_x(0), router_y(0), local(0){}
-        NOC_Address (unsigned int _router_x, unsigned int _router_y, unsigned int _local)
-            :router_x(_router_x), router_y(_router_y), local(_local){}
-        unsigned int router_x;
-        unsigned int router_y;
-        unsigned int local;
-    };
 
 // Hardware Mediators - Interrupt Controller
 class PC_IC;
@@ -242,7 +233,7 @@ namespace Scheduling_Criteria
     class EARM;
     class EAEDF;
     class CPU_Affinity;
-	class GEDF;
+    class GEDF;
     class GRM;
 };
 
@@ -297,7 +288,7 @@ enum
     CPU_ID,
     TSC_ID,
     MMU_ID,
-	PMU_ID,
+        PMU_ID,
 
     MACHINE_ID,
     PCI_ID,

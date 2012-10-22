@@ -10,13 +10,14 @@ __BEGIN_SYS
 class Application
 {
 public:
-    static Heap * const heap() { return &_heap[0]; }
-    static Heap * const priority_heap() { return &_heap[1]; }
+    static Heap * const heap(const Heap::Allocator_Type & t = Heap::BASE) {
+        return &_heap[t - Heap::BASE];
+    }
 
     static void init();
 
 private:
-    static Heap _heap[IF_INT<Traits<Heap>::priority_alloc, 2, 1>::Result];
+    static Heap _heap[Traits<Machine>::N_HEAPS];
 };
 
 __END_SYS

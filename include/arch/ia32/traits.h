@@ -6,6 +6,7 @@ __BEGIN_SYS
 // IA32
 template <> struct Traits<IA32>: public Traits<void>
 {
+    static const bool unaligned_memory_access = true;
 };
 
 template <> struct Traits<IA32_TSC>: public Traits<void>
@@ -14,11 +15,6 @@ template <> struct Traits<IA32_TSC>: public Traits<void>
 
 template <> struct Traits<IA32_MMU>: public Traits<void>
 {
-};
-
-template <> struct Traits<IA32_PMU>: public Traits<void>
-{
-  static const bool enabled = false;
 };
 
 __END_SYS

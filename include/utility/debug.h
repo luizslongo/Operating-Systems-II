@@ -19,10 +19,10 @@ public:
 class Null_Debug
 {
 public:
-    template<class T>
+    template<typename T>
     Null_Debug & operator<<(const T & o) { return *this; }
 
-    template<class T>
+    template<typename T>
     Null_Debug & operator<<(const T * o) { return *this; }
 };
 
@@ -43,11 +43,11 @@ db(Debug_Error l)
 
 template <typename T1, typename T2>
 inline Select_Debug<((Traits<T1>::debugged || Traits<T2>::debugged)
-		     && Traits<Debug>::error)> 
+        	     && Traits<Debug>::error)> 
 db(Debug_Error l)
 {
     return Select_Debug<((Traits<T1>::debugged || Traits<T2>::debugged)
-			 && Traits<Debug>::error)>(); 
+        		 && Traits<Debug>::error)>(); 
 }
 
 // Warning
@@ -62,11 +62,11 @@ db(Debug_Warning l)
 
 template <typename T1, typename T2>
 inline Select_Debug<((Traits<T1>::debugged || Traits<T2>::debugged)
-		     && Traits<Debug>::warning)> 
+        	     && Traits<Debug>::warning)> 
 db(Debug_Warning l)
 {
     return Select_Debug<((Traits<T1>::debugged || Traits<T2>::debugged)
-			 && Traits<Debug>::warning)>(); 
+        		 && Traits<Debug>::warning)>(); 
 }
 
 // Info
@@ -81,11 +81,11 @@ db(Debug_Info l)
 
 template <typename T1, typename T2>
 inline Select_Debug<((Traits<T1>::debugged || Traits<T2>::debugged)
-		     && Traits<Debug>::info)> 
+        	     && Traits<Debug>::info)> 
 db(Debug_Info l)
 {
     return Select_Debug<((Traits<T1>::debugged || Traits<T2>::debugged)
-			 && Traits<Debug>::info)>(); 
+        		 && Traits<Debug>::info)>(); 
 }
 
 // Trace
@@ -100,11 +100,11 @@ db(Debug_Trace l)
 
 template <typename T1, typename T2>
 inline Select_Debug<((Traits<T1>::debugged || Traits<T2>::debugged)
-		     && Traits<Debug>::trace)> 
+        	     && Traits<Debug>::trace)> 
 db(Debug_Trace l)
 {
     return Select_Debug<((Traits<T1>::debugged || Traits<T2>::debugged)
-			 && Traits<Debug>::trace)>(); 
+        		 && Traits<Debug>::trace)>(); 
 }
 
 union Debug_Level

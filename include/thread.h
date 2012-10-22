@@ -29,7 +29,6 @@ protected:
 public:
     // Thread State
     enum State {
-        BEGINNING,
         READY,
         RUNNING,
         SUSPENDED,
