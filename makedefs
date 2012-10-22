@@ -25,11 +25,11 @@ MACH_MC13224V   := mc13224v
 MACH_INTEGRATOR := integratorcp
 
 # System configuration
-#MODE            := $(MODE_LIBRARY)
-#ARCH            := $(ARCH_IA32)
-#MACH            := $(MACH_PC)
-#APPLICATION	 := philosophers_dinner
-#GDB			 := 1 
+MODE            := $(MODE_LIBRARY)
+ARCH            := $(ARCH_IA32)
+MACH            := $(MACH_PC)
+APPLICATION	 := philosophers_dinner
+#GDB		 := 1 
 
 # do not modify anything bellow this line
 ###############################################################################
@@ -44,7 +44,7 @@ ifndef MACH
 MACH            := $(MACH_PC)
 endif
 ifndef APPLICATION
-APPLICATION		= $(subst .cc,,$(shell find $(APP) -name \*.cc -printf "%f\n"| head -1))
+APPLICATION	= $(subst .cc,,$(shell find $(APP) -name \*.cc -printf "%f\n"| head -1))
 endif
 
 # Path to EPOS root directory 
