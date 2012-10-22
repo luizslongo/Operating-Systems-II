@@ -12,6 +12,7 @@ struct Traits
     static const bool debugged = true;
 };
 
+
 // Utilities
 template <> struct Traits<Debug>
 {
@@ -59,6 +60,7 @@ template <> struct Traits<Application>: public Traits<void>
 {
 };
 
+
 // Common Mediators
 template <> struct Traits<Serial_Display>: public Traits<void>
 {
@@ -67,6 +69,7 @@ template <> struct Traits<Serial_Display>: public Traits<void>
     static const int LINES = 24;
     static const int TAB_SIZE = 8;
 };
+
 
 // Abstractions
 template <> struct Traits<Thread>: public Traits<void>

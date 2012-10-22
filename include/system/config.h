@@ -23,13 +23,13 @@
 //============================================================================
 // ARCHITECTURE AND MACHINE SELECTION
 //============================================================================
-#define ARCH ia32
+#define ARCH xxx
 #define __ARCH_TRAITS_H	        __HEADER_ARCH(traits)
 
-#define MACH pc
+#define MACH xxx
 #define __MACH_TRAITS_H	        __HEADER_MACH(traits)
 
-#define APPLICATION producer_consumer
+#define APPLICATION xxx
 #define __APPLICATION_TRAITS_H  __HEADER_APPLICATION(APPLICATION)
 
 //============================================================================
