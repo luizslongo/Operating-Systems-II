@@ -34,6 +34,8 @@ namespace Scheduling_Criteria
 	static const bool GLOBAL_SCHEDULER = false;
 
 	static const int queue() { return 0; }
+	
+	void set_priority(int p) { _priority = p; }
 
     public:
 	Priority(int p = NORMAL): _priority(p) {}
@@ -225,6 +227,7 @@ namespace Scheduling_Criteria
     {
     public:
         static const unsigned int QUEUES = 1;
+        static const unsigned int HEADS = Traits<Machine>::MAX_CPUS;
         static const bool GLOBAL_SCHEDULER = true;
     
     public:     
@@ -239,6 +242,7 @@ namespace Scheduling_Criteria
     {
     public:
         static const unsigned int QUEUES = 1;
+        static const unsigned int HEADS = Traits<Machine>::MAX_CPUS;
         static const bool GLOBAL_SCHEDULER = true;
     
     public:     
@@ -249,57 +253,9 @@ namespace Scheduling_Criteria
     };
 };
 
-// Scheduling_Queue
-// specialization for GLOBAL SCHEDULER, one queue, Q ready tasks
-template <typename T, unsigned int Q, bool GLOBAL>
-class Scheduling_Queue
-{
-private:
-    typedef typename T::Criterion Criterion;
-    typedef Global_Scheduling_List<T, Criterion> Queue;
-    
-public:
-    typedef typename Queue::Element Element;
-public:
-    Scheduling_Queue() { }
-
-    unsigned int size() { return _ready.size(); }
-    
-    unsigned int get_lowest_priority_running_cpu() { return _ready.get_lowest_priority_running(); }
-    
-    Element * volatile & chosen() { 
-    return _ready.chosen(Criterion::current());
-    }
-
-    void insert(Element * e) { 
-    _ready.insert(e, Criterion::current());
-    }
-
-    Element * remove(Element * e) {
-    // removing object instead of element forces a search and renders
-    // removing inexistent objects harmless      
-    return _ready.remove(e->object(), Criterion::current());
-    }
-
-    Element * choose() { 
-    return _ready.choose(Criterion::current()); 
-    }
-
-    Element * choose_another() { 
-    return _ready.choose_another(Criterion::current());
-    }
-
-    Element * choose(Element * e) { 
-    return _ready.choose(e->object(), Criterion::current()); 
-    }
-
-private:  
-    Queue _ready;
-};
-
 //specialization for multi-queue, not GLOBAL SCHEDULER
 template <typename T, unsigned int Q>
-class Scheduling_Queue<T, Q, false>
+class Scheduling_Queue
 {
 private:
     typedef typename T::Criterion Criterion;
@@ -313,32 +269,30 @@ public:
 
     unsigned int size() { return _ready[Criterion::current()].size(); }
     
-    unsigned int get_lowest_priority_running_cpu() { return 0; }
-
     Element * volatile & chosen() { 
-    return _ready[Criterion::current()].chosen();
+        return _ready[Criterion::current()].chosen();
     }
 
     void insert(Element * e) {
-    _ready[e->rank().queue()].insert(e); 
+        _ready[e->rank().queue()].insert(e); 
     }
 
     Element * remove(Element * e) {
-    // removing object instead of element forces a search and renders
-    // removing inexistent objects harmless
-    return _ready[e->rank().queue()].remove(e->object());
+        // removing object instead of element forces a search and renders
+        // removing inexistent objects harmless
+        return _ready[e->rank().queue()].remove(e->object());
     }
 
     Element * choose() {
-    return _ready[Criterion::current()].choose();
+        return _ready[Criterion::current()].choose();
     }
 
     Element * choose_another() {
-    return _ready[Criterion::current()].choose_another();
+        return _ready[Criterion::current()].choose_another();
     }
 
     Element * choose(Element * e) {
-    return _ready[e->rank().queue()].choose(e->object());
+        return _ready[e->rank().queue()].choose(e->object());
     }
 
 private:
@@ -347,7 +301,7 @@ private:
 
 // Specialization for single-queue
 template <typename T>
-class Scheduling_Queue<T, 1, false>: public Scheduling_List<T, typename T::Criterion>
+class Scheduling_Queue<T, 1>: public Scheduling_List<T, typename T::Criterion>
 {
 private:
     typedef Scheduling_List<T, typename T::Criterion> Base;
@@ -357,20 +311,18 @@ public:
 
 public:
   
-    unsigned int get_lowest_priority_running_cpu() { return 0; }
-
     Element * remove(Element * e) {
-    // removing object instead of element forces a search and renders
-    // removing inexistent objects harmless
-    return Base::remove(e->object());
+        // removing object instead of element forces a search and renders
+        // removing inexistent objects harmless
+        return Base::remove(e->object());
     }
 
     Element * choose() {
-    return Base::choose();
+        return Base::choose();
     }
 
     Element * choose(Element * e) {
-    return Base::choose(e->object());
+        return Base::choose(e->object());
     }
 };
 
@@ -381,10 +333,10 @@ public:
 // operators <, >, and ==) and must also define a method "link" to export the
 // list element pointing to the object being handled.
 template <typename T>
-class Scheduler: public Scheduling_Queue<T, T::Criterion::QUEUES, T::Criterion::GLOBAL_SCHEDULER>
+class Scheduler: public Scheduling_Queue<T, T::Criterion::QUEUES>
 {
 private:
-    typedef Scheduling_Queue<T, T::Criterion::QUEUES, T::Criterion::GLOBAL_SCHEDULER> Base;
+    typedef Scheduling_Queue<T, T::Criterion::QUEUES> Base;
 
 public:
     typedef typename T::Criterion Criterion;
@@ -397,73 +349,69 @@ public:
     unsigned int schedulables() { return Base::size(); }
 
     T * volatile chosen() { 
-    return const_cast<T * volatile>(Base::chosen()->object()); 
-    }
-
-    unsigned int get_lowest_priority_running_cpu() {
-    return Base::get_lowest_priority_running_cpu();   
+        return const_cast<T * volatile>(Base::chosen()->object()); 
     }
 
     void insert(T * obj) {
-    db<Scheduler>(TRC) << "Scheduler[chosen=" << chosen()
+        db<Scheduler>(TRC) << "Scheduler[chosen=" << chosen()
                 << "]::insert(" << obj << ")\n";
 
-    Base::insert(obj->link()); 
+        Base::insert(obj->link()); 
     }
 
     T * remove(T * obj) {
-    db<Scheduler>(TRC) << "Scheduler[chosen=" << chosen()
+        db<Scheduler>(TRC) << "Scheduler[chosen=" << chosen()
                 << "]::remove(" << obj << ")\n";
 
-    return Base::remove(obj->link()) ? obj : 0;
+        return Base::remove(obj->link()) ? obj : 0;
     }
 
     void suspend(T * obj) {
-    db<Scheduler>(TRC) << "Scheduler[chosen=" << chosen()
+        db<Scheduler>(TRC) << "Scheduler[chosen=" << chosen()
                 << "]::suspend(" << obj << ")\n";
 
-    Base::remove(obj->link());
+        Base::remove(obj->link());
     }
 
     void resume(T * obj) {
-    db<Scheduler>(TRC) << "Scheduler[chosen=" << chosen() 
+        db<Scheduler>(TRC) << "Scheduler[chosen=" << chosen() 
                 << "]::resume(" << obj << ")\n";
 
-    Base::insert(obj->link());
+        Base::insert(obj->link());
     }
 
     T * choose() {
-    db<Scheduler>(TRC) << "Scheduler[chosen=" << chosen()
+        db<Scheduler>(TRC) << "Scheduler[chosen=" << chosen()
                 << "]::choose() => ";
 
-    T * obj = Base::choose()->object();
+        T * obj = Base::choose()->object();
 
-    db<Scheduler>(TRC) << obj << "\n";
+        db<Scheduler>(TRC) << obj << "\n";
 
-    return obj;
+        return obj;
     }
 
     T * choose_another() {
-    db<Scheduler>(TRC) << "Scheduler[chosen=" << chosen()
+        db<Scheduler>(TRC) << "Scheduler[chosen=" << chosen()
                 << "]::choose_another() => ";
 
-    T * obj = Base::choose_another()->object();
+        T * obj = Base::choose_another()->object();
 
-    db<Scheduler>(TRC) << obj << "\n";
+        db<Scheduler>(TRC) << obj << "\n";
 
-    return obj;
+        return obj;
     }
 
     T * choose(T * obj) {
-    db<Scheduler>(TRC) << "Scheduler[chosen=" << chosen() 
+        db<Scheduler>(TRC) << "Scheduler[chosen=" << chosen() 
                 << "]::choose(" << obj;
 
-    if(!Base::choose(obj->link()))
-        obj = 0;
+        if(!Base::choose(obj->link()))
+            obj = 0;
 
-    db<Scheduler>(TRC) << obj << "\n";
+        db<Scheduler>(TRC) << obj << "\n";
 
-    return obj;
+        return obj;
     }
 };
 
