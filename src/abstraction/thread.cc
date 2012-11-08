@@ -13,6 +13,8 @@ Spin Thread::_lock;
 unsigned int Thread::_thread_count;
 Scheduler<Thread> Thread::_scheduler;
 Scheduler_Timer * Thread::_timer;
+Thread * volatile Thread::_lowest_priority_thread = 0;
+int Thread::_lowest_priority_cpu = -1;
 
 // This_Thread class attributes
 bool This_Thread::_not_booting;
@@ -27,12 +29,12 @@ void Thread::common_constructor(Log_Addr entry, unsigned int stack_size)
 		    << ",s=" << stack_size
 		    << "},context={b=" << _context
 		    << "," << *_context << "}) => " << this << "\n";
-
+            
     _thread_count++;
 
     _scheduler.insert(this);
     if((_state != READY) && (_state != RUNNING))
-	_scheduler.suspend(this);
+        _scheduler.suspend(this);
 
     reschedule();
 }
@@ -98,13 +100,13 @@ int Thread::join()
     lock();
 
     db<Thread>(TRC) << "Thread::join(this=" << this
-		    << ",state=" << _state << ")\n";
+                    << ",state=" << _state << ")\n";
 
     if(_state != FINISHING) {
-	_joining = running();
-	_joining->suspend(true);
+        _joining = running();
+        _joining->suspend(true);
     } else
-	unlock();
+    unlock();
 
     return *static_cast<int *>(_stack);
 }
@@ -119,11 +121,11 @@ void Thread::pass()
     Thread * next = _scheduler.choose(this);
 
     if(next)
-	dispatch(prev, next, false);
+        dispatch(prev, next, false);
     else {
- 	db<Thread>(WRN) << "Thread::pass => thread (" << this 
- 			<< ") not ready\n";
-	unlock();
+        db<Thread>(WRN) << "Thread::pass => thread (" << this 
+                        << ") not ready\n";
+        unlock();
     }
 }
 
@@ -152,10 +154,10 @@ void Thread::resume()
     db<Thread>(TRC) << "Thread::resume(this=" << this << ")\n";
 
     if(_state == SUSPENDED) {
-	_state = READY;
-	_scheduler.resume(this);
+        _state = READY;
+        _scheduler.resume(this);
     } else
-	db<Thread>(WRN) << "Resume called for unsuspended object!\n";
+        db<Thread>(WRN) << "Resume called for unsuspended object!\n";
 
     reschedule();
 }
@@ -168,7 +170,7 @@ void Thread::yield()
     lock();
 
     db<Thread>(TRC) << "Thread::yield(running=" << running() << ")\n";
-	
+
     Thread * prev = running();
     Thread * next = _scheduler.choose_another();
 
@@ -180,7 +182,7 @@ void Thread::exit(int status)
     lock();
 
     db<Thread>(TRC) << "Thread::exit(running=" << running() 
-		    <<",status=" << status << ")\n";
+                    <<",status=" << status << ")\n";
 
     Thread * thr = running();
     _scheduler.remove(thr);
@@ -190,9 +192,9 @@ void Thread::exit(int status)
     _thread_count--;
 
     if(thr->_joining) {
-	thr->_joining->_state = READY;
-	_scheduler.resume(thr->_joining);
-	thr->_joining = 0;
+        thr->_joining->_state = READY;
+        _scheduler.resume(thr->_joining);
+        thr->_joining = 0;
     }
 
     dispatch(thr, _scheduler.choose());
@@ -201,7 +203,7 @@ void Thread::exit(int status)
 void Thread::sleep(Queue * q)
 {
     db<Thread>(TRC) << "Thread::sleep(running=" << running()
-		    << ",q=" << q << ")\n";
+                    << ",q=" << q << ")\n";
 
     Thread * thr = running();
 
@@ -216,13 +218,13 @@ void Thread::sleep(Queue * q)
 void Thread::wakeup(Queue * q) 
 {
     db<Thread>(TRC) << "Thread::wakeup(running=" << running()
-		    << ",q=" << q << ")\n";
+                    << ",q=" << q << ")\n";
 
     if(!q->empty()) {
-	Thread * t = q->remove()->object();
-	t->_state = READY;
-	t->_waiting = 0;
-	_scheduler.resume(t);
+        Thread * t = q->remove()->object();
+        t->_state = READY;
+        t->_waiting = 0;
+        _scheduler.resume(t);
     }
 
     reschedule();
@@ -231,13 +233,13 @@ void Thread::wakeup(Queue * q)
 void Thread::wakeup_all(Queue * q) 
 {
     db<Thread>(TRC) << "Thread::wakeup_all(running=" << running()
-		    << ",q=" << q << ")\n";
+                    << ",q=" << q << ")\n";
 
     while(!q->empty()) {
-	Thread * t = q->remove()->object();
-	t->_state = READY;
-	t->_waiting = 0;
-	_scheduler.resume(t);
+        Thread * t = q->remove()->object();
+        t->_state = READY;
+        t->_waiting = 0;
+        _scheduler.resume(t);
     }
 
     reschedule();
@@ -252,13 +254,19 @@ void Thread::reschedule(bool preempt)
         Thread * next;
 
         if(global_scheduler) {
-            unsigned int cpu_lowest = _scheduler.get_lowest_priority_running_cpu();
-            // call reschedule in another processor
-            // if the current CPU is not the lowest priority CPU and the running thread is not IDLE 
-            // (scheduler may return another IDLE CPU) and there is thread to be scheduled
-            if(Machine::cpu_id() != cpu_lowest && prev->criterion() != IDLE && _scheduler.schedulables() > 0) {
-                unlock();
-                IC::ipi_send(cpu_lowest, IC::INT_RESCHEDULER);
+            // if _thread_count is less than or equal to MAX_CPUS, it means that IDLE threads
+            // are being created (MAX CPUS idle threads + main thread)
+            if(_scheduler.schedulables() > 0 && prev->criterion() != IDLE && _thread_count > Traits<Machine>::MAX_CPUS + 1) {
+                // call reschedule in another processor
+                // if the current CPU is not the lowest priority CPU and the running thread is not IDLE 
+                // (scheduler may return another IDLE CPU) and there is a thread to be scheduled
+                if(Machine::cpu_id() != _lowest_priority_cpu) {
+                    db<Thread>(TRC) << "Thread::reschedule() CPU = " << Machine::cpu_id() 
+                                    << " sending IPI to CPU = " << _lowest_priority_cpu
+                                    << "\n";
+                    unlock();
+                    IC::ipi_send(_lowest_priority_cpu, IC::INT_RESCHEDULER);
+                }
             } else {
                 next = _scheduler.choose();
                 dispatch(prev, next);
