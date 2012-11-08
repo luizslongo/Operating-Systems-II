@@ -15,6 +15,7 @@ class Thread
 {
     friend class Scheduler<Thread>;
     friend class Synchronizer_Common;
+    friend class IPC_Semaphore;
 
 protected:
     static const bool active_scheduler = Traits<Thread>::Criterion::timed;
@@ -173,12 +174,20 @@ protected:
     static void implicit_exit();
 
     static void dispatch(Thread * prev, Thread * next, bool charge = true) {
-//	if(charge) {
-//  	    if(active_scheduler)
-//  		_timer->reset();
-//  	    if(energy_aware)
-//  		account_energy();
-//	}
+        if(charge) {
+            if(active_scheduler)
+                _timer->reset();
+//          if(energy_aware)
+//              account_energy();
+            if(global_scheduler) {
+                // Thread::init() initializes _lowest_priority_thread and _lowest_priority_cpu
+                // for the first time
+                if(_lowest_priority_thread != 0 && _lowest_priority_thread->priority() < next->priority()) {
+                    _lowest_priority_thread = next;
+                    _lowest_priority_cpu = Machine::cpu_id();
+                }
+            }
+        }
 
         if(prev != next) {
             if(prev->_state == RUNNING)
@@ -212,6 +221,8 @@ protected:
     static Scheduler_Timer * _timer;
     static unsigned int _thread_count;
     static Scheduler<Thread> _scheduler;
+    static Thread * volatile _lowest_priority_thread;
+    static int _lowest_priority_cpu;
 };
 
 // An event handler that triggers a thread (see handler.h)
