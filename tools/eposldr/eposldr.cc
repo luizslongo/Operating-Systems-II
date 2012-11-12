@@ -9,16 +9,24 @@
 /*                                                                       */
 /* Auth: Hugo                                                            */
 /*=======================================================================*/
-#include "linux_uart_device.h"
+#if defined(__unix) || defined(__unix__)
+  #include "linux_uart_device.h"
+  typedef LinuxSerial SysUartDevice;
+#else
+  #include "dummy_uart_device.h"
+  typedef DummyUartDevice SysUartDevice;
+#endif
 #include <unistd.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <sys/stat.h>
 
 int main( int argc, char *argv[] ) {
 
   unsigned char START_CMD = (unsigned char)0xA5;
-  int linux_uart_no = 0;
-  bool usb = false;
   char * filename = (char*)malloc(1000);
-  char * serial_port;
+  char * serial_port = 0;
   //filename = getenv("EPOS");
   //strcat(filename, "/img/epos.img");
 
@@ -48,8 +56,8 @@ int main( int argc, char *argv[] ) {
     }
   }
 
-  //LinuxSerial uart(linux_uart_no, usb);
-  LinuxSerial uart(serial_port);
+  //SysUartDevice uart(linux_uart_no, usb);
+  SysUartDevice uart(serial_port);
 
   FILE *file;
   struct stat file_attributes;
@@ -77,7 +85,7 @@ int main( int argc, char *argv[] ) {
   fclose( file );
 
   //Envia o arquivo pela serial...
-  printf("\nSending %d bytes...\n", file_size);
+  printf("\nSending %lu bytes...\n", file_size);
   //Start protocol
   uart.send(&START_CMD,1);
   uart.send(&START_CMD,1);
