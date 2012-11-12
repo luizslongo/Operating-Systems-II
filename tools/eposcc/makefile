@@ -6,6 +6,6 @@ all:		install
 
 install:	eposcc
 		$(INSTALL) -m 775 eposcc $(BIN)
-		sed -e 's/^EPOS=.*$$/EPOS=$(subst /,\/,$(EPOS))/' -i $(BIN)/eposcc
+		sed -e 's/^EPOS=.*$$/EPOS=$(subst /,\/,$(EPOS))/' $(SED_I) $(BIN)/eposcc
 
 clean:

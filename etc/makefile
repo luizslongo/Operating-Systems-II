@@ -3,8 +3,8 @@
 include	../makedefs
 
 all: eposcc.conf eposmkbi.conf $(INCLUDE)/system/config.h
-		sed -e 's/^#define ARCH.*$$/#define ARCH $(ARCH)/' -i $(INCLUDE)/system/config.h
-		sed -e 's/^#define MACH.*$$/#define MACH $(MACH)/' -i $(INCLUDE)/system/config.h
+		sed -e 's/^#define ARCH.*$$/#define ARCH $(ARCH)/' $(SED_I) $(INCLUDE)/system/config.h
+		sed -e 's/^#define MACH.*$$/#define MACH $(MACH)/' $(SED_I) $(INCLUDE)/system/config.h
 
 eposcc.conf:
 		@echo "ARCH=$(ARCH)" > $@
