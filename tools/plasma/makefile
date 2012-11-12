@@ -49,7 +49,7 @@ all: convert_bin.exe bintohex.exe ram_image.exe
 	bootldr, toimage, eterm
 	
 clean:
-	-$(RM) *.o *.obj *.map *.lst *.hex *.txt *.exe *.axf
+	-$(RM) *.o *.obj *.map *.lst *.hex *.txt *.exe *.axf *.dSYM
 
 #Same as "objcopy -I elf32-big -O binary test.axf test.bin"
 convert_bin.exe: convert.c
