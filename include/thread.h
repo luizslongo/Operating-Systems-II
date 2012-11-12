@@ -15,7 +15,6 @@ class Thread
 {
     friend class Scheduler<Thread>;
     friend class Synchronizer_Common;
-    friend class IPC_Semaphore;
 
 protected:
     static const bool active_scheduler = Traits<Thread>::Criterion::timed;
