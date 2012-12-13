@@ -1,17 +1,15 @@
 // EPOS-- MC13224V Mediator Implementation
 
 #include <mach/mc13224v/machine.h>
+#include <mach/mc13224v/gpio_pin.h>
 
 __BEGIN_SYS
 
 void MC13224V::check_flash_erase() {
 
-    // Check if GPIO_11 (EPOSMote-Startup button 1) is set (button is pressed)
-    CPU::out32(IO::GPIO_BASE, CPU::in32(IO::GPIO_BASE) & ~(1 << 11)); // is input
-    CPU::out32(IO::GPIO_DATA_SEL0, CPU::in32(IO::GPIO_DATA_SEL0) &  ~(1 << 11)); // input from the pad
-    CPU::out32(IO::GPIO_FUNC_SEL0, CPU::in32(IO::GPIO_FUNC_SEL0) & ~(0x3 << (11*2))); // all as GPIO
+    GPIO_Pin pin(Traits<Machine>::flash_erase_checking_pin);
 
-    if(CPU::in32(IO::GPIO_DATA0) & (1 << 11)) // read pin state
+    if(pin.get()) // read pin state
     {
         unbrick();
     }

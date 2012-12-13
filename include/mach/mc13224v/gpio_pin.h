@@ -26,6 +26,7 @@ public:
 private:
     static void input(int pin);
     static void output(int pin);
+    static void function(int pin);
     static void set(int pin);
     static void clear(int pin);
     static bool get(int pin);

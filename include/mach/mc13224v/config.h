@@ -44,7 +44,7 @@ typedef MC13224V_Battery_ADC	Battery_ADC;
 typedef MC13224V_RTC        	RTC;
 typedef MC13224V_Battery    	Battery;
 typedef MC13224V_Temperature_Sensor   Temperature_Sensor;
-typedef MC13224V_ADXL345        ADXL345;
+typedef MC13224V_ADXL345        Accelerometer;
 
 
 __END_SYS

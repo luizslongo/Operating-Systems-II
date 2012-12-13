@@ -28,7 +28,19 @@ template <> struct Traits<MC13224V>: public Traits<MC13224V_Common>
 	static const unsigned int PRIORITY_HEAP_SIZE = 4;
 	static const unsigned int PRIORITY_HEAP_TOP_ADDR = PRIORITY_HEAP_BASE_ADDR + PRIORITY_HEAP_SIZE - 1;
 
+	/*
+	 * EPOSMote Versions:
+     *  - EPOSMoteI Alfa:   0x1a;
+     *  - EPOSMoteI Beta:   0x1b;
+     *  - EPOSMoteI Final:  0x1f;
+     *  - EPOSMoteII Alfa:  0x2a;
+     *  - EPOSMoteII Beta:  0x2b;
+     *  - EPOSMoteII Final: 0x2f;
+	 */
+    static const unsigned int emote_version = 0x2f;
 	static const bool flash_erase_checking = true;
+//    static const unsigned int flash_erase_checking_pin = 11; // EPOSMoteII-ARM7 Beta
+    static const unsigned int flash_erase_checking_pin = 24; // EPOSMoteII-ARM7
 };
 
 template <> struct Traits<MC13224V_Battery>: public Traits<MC13224V_Common>
@@ -112,6 +124,13 @@ template <> struct Traits<MC13224V_Temperature_Sensor>: public Traits<void>
     static const int UNITS = CELCIUS;
     static const int ERROR = 3.7f;
 };
+
+template <> struct Traits<MC13224V_Accelerometer>: public Traits<void> 
+{
+    typedef LIST<MC13224V_ADXL345> SENSORS;
+
+};
+
 
 __END_SYS
 

@@ -14,15 +14,7 @@ __BEGIN_SYS
 class EMote2_Startup
 {
 public:
-    EMote2_Startup()
-    : _led1_r(23, true),
-      _led1_g(24, true),
-      _led1_b(25, true),
-      _led2(26, true),
-      _led3(27, true),
-      _but1(11, false),
-      _but2(10, false)
-    {}
+    EMote2_Startup();
     ~EMote2_Startup() {}
 
     // Temperature Sensor
@@ -30,10 +22,10 @@ public:
     Temperature_Sensor & temperature_sensor() { return _termistor; }
 
     // TODO: Accelerometer
-//    int x_acceleration() { return _accel.sample_x(); }
-//    int y_acceleration() { return _accel.sample_y(); }
-//    int z_acceleration() { return _accel.sample_z(); }
-//    Accelerometer & accelerometer() { return _accel; }
+    int x_acceleration() { return _accel.sample_x(); }
+    int y_acceleration() { return _accel.sample_y(); }
+    int z_acceleration() { return _accel.sample_z(); }
+    Accelerometer & accelerometer() { return _accel; }
 
     // Host/USB UART
     char get_char() { return _uart.get(); }
@@ -76,7 +68,7 @@ public:
 
 private:
     Temperature_Sensor _termistor;
-//    Accelerometer _accel;
+    Accelerometer _accel;
     UART _uart;
     GPIO_Pin _led1_r;
     GPIO_Pin _led1_g;

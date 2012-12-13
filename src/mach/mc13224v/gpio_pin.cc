@@ -9,6 +9,7 @@ volatile unsigned int MC13224V_GPIO_Pin::_data[2] = {0u, 0u};
 MC13224V_GPIO_Pin::MC13224V_GPIO_Pin(int pin, bool dir)
   : _pin(pin)
 {
+    function(_pin);
     if(dir) output(_pin);
     else input(_pin);
 }
@@ -32,6 +33,15 @@ void MC13224V_GPIO_Pin::output(int pin)
 
     // Set as output
     CPU::out32(reg, CPU::in32(reg) | (1 << bit));
+}
+
+void MC13224V_GPIO_Pin::function(int pin)
+{
+    int bit = (pin % 16) << 1;
+    unsigned int reg = IO::GPIO_FUNC_SEL0 + ((pin >> 4) << 2);
+
+    // Set as output
+    CPU::out32(reg, CPU::in32(reg) & ~(0x3 << bit));
 }
 
 void MC13224V_GPIO_Pin::set(int pin)
