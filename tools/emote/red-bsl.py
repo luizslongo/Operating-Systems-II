@@ -113,12 +113,12 @@ def main():
 			break
 
 	if options.SSL_flashprog:
-		infile = open("/Users/lisha/bin/ssl.bin")
-		filesize = os.path.getsize("/Users/lisha/bin/ssl.bin")
+		infile = open("bin/ssl.bin")
+		filesize = os.path.getsize("bin/ssl.bin")
 		print "Sending SSL flasher... (%dB)" % filesize
 	elif options.flashprog:
-		infile = open("flasher.bin")
-		filesize = os.path.getsize("flasher.bin")
+		infile = open("bin/flasher.bin")
+		filesize = os.path.getsize("bin/flasher.bin")
 		print "Sending libmc1322x flasher... (%dB)" % filesize
 	else:
 		infile = open(options.filename)
