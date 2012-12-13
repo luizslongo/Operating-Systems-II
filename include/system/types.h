@@ -164,6 +164,7 @@ class PC_SPI;
 class ATMega16_SPI;
 class ATMega128_SPI;
 class ATMega1281_SPI;
+class MC13224V_SPI;
 
 // Hardware Mediators - Displays
 class Serial_Display;
