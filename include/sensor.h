@@ -211,6 +211,16 @@ class Accelerometer_Common: public Sensor_Common
 	virtual void disable_y() = 0;
 
 	virtual bool data_ready_y() = 0;
+
+    virtual int sample_z() = 0;
+
+    virtual int get_z() = 0;
+
+    virtual bool enable_z() = 0;
+
+    virtual void disable_z() = 0;
+
+    virtual bool data_ready_z() = 0;
     
     };
     template<typename Accelerometer, bool polymorphic>
@@ -261,6 +271,26 @@ class Accelerometer_Common: public Sensor_Common
 	virtual bool data_ready_y() {
 	    return Accelerometer::data_ready_y();
 	}
+
+    virtual int sample_z() {
+        return Accelerometer::sample_z();
+    }
+
+    virtual int get_z() {
+        return Accelerometer::get_z();
+    }
+
+    virtual bool enable_z() {
+        return Accelerometer::enable_z();
+    }
+
+    virtual void disable_z() {
+        Accelerometer::disable_z();
+    }
+
+    virtual bool data_ready_z() {
+        return Accelerometer::data_ready_z();
+    }
 
     };
     template<typename Accelerometer>
