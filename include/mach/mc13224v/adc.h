@@ -33,6 +33,8 @@ protected:
 	};
 
 public:
+    static const int ADC_MAX = 4095;
+
 	MC13224V_ADC_Unit(unsigned char channel = SINGLE_ENDED_ADC0, 
 					  Hertz frequency = DEFAULT_FREQUENCY) {
 		// Must aways produce < or = 300000Hz
