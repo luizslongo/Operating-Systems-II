@@ -20,6 +20,7 @@
 #define __ADC_H             __HEADER_MACH(adc)
 #define __BATTERY_H         __HEADER_MACH(battery)
 #define __SENSOR_H          __HEADER_MACH(sensor)
+#define __SPI_H             __HEADER_MACH(spi)
 
 __BEGIN_SYS
 
