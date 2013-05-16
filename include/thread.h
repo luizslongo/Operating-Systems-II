@@ -7,6 +7,7 @@
 #include <utility/queue.h>
 #include <utility/handler.h>
 #include <cpu.h>
+#include <fpu.h>
 #include <scheduler.h>
 
 __BEGIN_SYS
@@ -30,6 +31,7 @@ protected:
 
     typedef CPU::Log_Addr Log_Addr;
     typedef CPU::Context Context;
+	typedef FPU::Context FPU_Context;
 
 public:
     // Thread State
@@ -198,6 +200,12 @@ protected:
 
             if(smp)
                 _lock.release();
+
+			if(Traits<FPU>::enabled) {
+				FPU::save(prev->_fpu_context);
+				FPU::load(next->_fpu_context);
+			}
+
             CPU::switch_context(&prev->_context, next->_context);
         } else
             if(smp)
@@ -211,6 +219,7 @@ protected:
 protected:
     Log_Addr _stack;
     Context * volatile _context;
+	volatile FPU_Context * _fpu_context;
     volatile State _state; 
     Queue * _waiting;
     Thread * volatile _joining;
