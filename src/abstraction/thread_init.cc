@@ -32,6 +32,9 @@ void Thread::init()
             _timer = new (kmalloc(sizeof(Scheduler_Timer))) 
                      Scheduler_Timer(QUANTUM, &time_slicer);
     }
+
+	if(Traits<FPU>::enabled)
+		FPU::init();
     
     Machine::smp_barrier();
 
