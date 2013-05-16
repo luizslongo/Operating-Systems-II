@@ -33,6 +33,12 @@ class PPC32;
 class MIPS32;
 class ARM7;
 
+// Hardware Mediators - FPUs
+class IA32_FPU;
+class ARM7_FPU;
+class MIPS32_FPU;
+class AVR8_FPU;
+
 /*
 namespace Cpu {
     template<bool, bool>
@@ -349,6 +355,7 @@ typedef unsigned int Type_Id;
 enum 
 {
     CPU_ID,
+	FPU_ID,
     TSC_ID,
     MMU_ID,
 	PMU_ID,
