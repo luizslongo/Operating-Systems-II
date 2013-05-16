@@ -4,6 +4,7 @@
 #define __atmega1281_config_h
 
 #define __CPU_H             __HEADER_ARCH(cpu)
+#define __FPU_H				__HEADER_ARCH(fpu)
 #define __TSC_H             __HEADER_ARCH(tsc)
 #define __MMU_H             __HEADER_ARCH(mmu)
 
@@ -25,6 +26,7 @@
 __BEGIN_SYS
 
 typedef AVR8                CPU;
+typedef AVR8_FPU			FPU;
 typedef AVR8_MMU            MMU;
 typedef AVR8_TSC            TSC;
 

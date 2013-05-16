@@ -4,10 +4,12 @@
 __BEGIN_SYS
 
 typedef ARM7      CPU;
+typedef ARM7_FPU  FPU;
 typedef ARM7_MMU  MMU;
 typedef ARM7_TSC  TSC;
 
 #define __CPU_H  __HEADER_ARCH(cpu)
+#define __FPU_H  __HEADER_ARCH(fpu)
 #define __TSC_H  __HEADER_ARCH(tsc)
 #define __MMU_H  __HEADER_ARCH(mmu)
 

@@ -4,6 +4,7 @@
 #define __axi4lite_config_h
 
 #define __CPU_H				__HEADER_ARCH(cpu)
+#define __FPU_H				__HEADER_ARCH(fpu)
 #define __TSC_H				__HEADER_ARCH(tsc)
 #define __MMU_H				__HEADER_ARCH(mmu)
 
@@ -18,6 +19,7 @@
 __BEGIN_SYS
 
 typedef MIPS32				CPU;
+typedef MIPS32_FPU			FPU;
 typedef MIPS32_MMU			MMU;
 typedef MIPS32_TSC			TSC;
 

@@ -7,6 +7,7 @@
 #include <traits.h>
 
 #define __CPU_H				__HEADER_ARCH(cpu)
+#define __FPU_H				__HEADER_ARCH(fpu)
 #define __TSC_H				__HEADER_ARCH(tsc)
 #define __MMU_H				__HEADER_ARCH(mmu)
 #define __PMU_H             __HEADER_ARCH(pmu)
@@ -24,6 +25,7 @@
 __BEGIN_SYS
 
 typedef IA32				CPU;
+typedef IA32_FPU			FPU;
 typedef IA32_MMU			MMU;
 typedef IA32_TSC			TSC;
 typedef IA32_PMU            PMU;
