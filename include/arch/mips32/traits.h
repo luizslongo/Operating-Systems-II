@@ -8,6 +8,11 @@ template <> struct Traits<MIPS32>: public Traits<void>
 {
 };
 
+template <> struct Traits<MIPS32_FPU>: public Traits<void>
+{
+	static const bool enabled = false;
+};
+
 template <> struct Traits<MIPS32_TSC>: public Traits<void>
 {
 	// THIS SHOULD MAP THE ADDRESS OF THE TSC COUNTER ON THE RESPECTIVELY MACHINE

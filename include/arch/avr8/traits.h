@@ -22,6 +22,11 @@ template <> struct Traits<AVR8>: public Traits<void>
     static const bool power_management = true;
 };
 
+template <> struct Traits<AVR8_FPU>: public Traits<void>
+{
+	static const bool enabled = false;
+};
+
 template <> struct Traits<AVR8_TSC>: public Traits<void>
 {
 	static const bool enabled = true;

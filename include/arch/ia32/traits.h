@@ -8,6 +8,11 @@ template <> struct Traits<IA32>: public Traits<void>
 {
 };
 
+template <> struct Traits<IA32_FPU>: public Traits<void>
+{
+	static const bool enabled = false;
+};
+
 template <> struct Traits<IA32_TSC>: public Traits<void>
 {
 };

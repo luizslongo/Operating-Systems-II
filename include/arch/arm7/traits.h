@@ -8,6 +8,11 @@ template <> struct Traits<ARM7>: public Traits<void>
 {
 };
 
+template <> struct Traits<ARM7_FPU>: public Traits<void>
+{
+	static const bool enabled = false;
+};
+
 template <> struct Traits<ARM7_TSC>: public Traits<void>
 {
 };
