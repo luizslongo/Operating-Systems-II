@@ -14,23 +14,20 @@ __BEGIN_SYS
 
 class Alarm
 {
-public:
-    typedef TSC::Time_Stamp Time_Stamp;
+private:
     typedef TSC::Hertz Hertz;
     typedef Timer::Tick Tick;  
-    typedef RTC::Microsecond Microsecond;
-    
-    // An alarm handler
-    typedef Function_Handler Handler;
 
-    // Infinite times (for alarms)
-    enum { INFINITE = -1 };
-    
-private:
     typedef Relative_Queue<Alarm, Tick> Queue;
 
 public:
-    Alarm(const Microsecond & time, Handler handler, int times = 1);
+    typedef RTC::Microsecond Microsecond;
+    
+    // Infinite times (for alarms)
+    enum { INFINITE = -1 };
+    
+public:
+    Alarm(const Microsecond & time, Handler * handler, int times = 1);
     ~Alarm();
 
     static Hertz frequency() { return _timer->frequency(); }
@@ -55,13 +52,13 @@ private:
 
 private:
     Tick _ticks;
-    Handler _handler;
+    Handler * _handler;
     int _times; 
     Queue::Element _link;
 
     static Alarm_Timer * _timer;
     static volatile Tick _elapsed;
-    static Queue _requests;
+    static Queue _request;
 };
 
 class Delay

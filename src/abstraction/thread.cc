@@ -8,7 +8,7 @@
 __BEGIN_SYS
 
 // Class attributes
-Spin Thread::_lock;
+volatile unsigned int Thread::_thread_count;
 Scheduler_Timer * Thread::_timer;
 
 Thread* volatile Thread::_running;
@@ -30,6 +30,8 @@ void Thread::common_constructor(Log_Addr entry, unsigned int stack_size)
                     << "},context={b=" << _context
                     << "," << *_context << "}) => " << this << "\n";
 
+    _thread_count++;
+
     switch(_state) {
         case RUNNING: break;
         case SUSPENDED: _suspended.insert(&_link); break;
@@ -49,6 +51,9 @@ Thread::~Thread()
                     << ",stack={b=" << _stack
                     << ",context={b=" << _context
                     << "," << *_context << "})\n";
+
+    if(_state != FINISHING)
+        _thread_count--;
 
     _ready.remove(this);
     _suspended.remove(this);
@@ -165,6 +170,8 @@ void Thread::exit(int status)
     prev->_state = FINISHING;
     *static_cast<int *>(prev->_stack) = status;
 
+    _thread_count--;
+
     if(prev->_joining) {
         prev->_joining->resume();
         prev->_joining = 0;
@@ -251,16 +258,23 @@ void Thread::implicit_exit()
 int Thread::idle()
 {
     while(true) {
-        db<Thread>(TRC) << "Thread::idle()\n";
+        if(Traits<Thread>::trace_idle)
+            db<Thread>(TRC) << "Thread::idle()\n";
 
-        CPU::int_enable();
-
-        if(_ready.empty() && _suspended.empty()) {
+        if(_thread_count <= 1) { // Only idle is left
+            CPU::int_disable();
             db<Thread>(WRN) << "The last thread has exited!\n";
-            db<Thread>(WRN) << "Rebooting the machine ...\n";
-            Machine::reboot();
-        } else
+            if(reboot) {
+                db<Thread>(WRN) << "Rebooting the machine ...\n";
+                Machine::reboot();
+            } else {
+                db<Thread>(WRN) << "Halting the machine ...\n";
+                CPU::halt();
+            }
+        } else {
+            CPU::int_enable();
             CPU::halt();
+        }
     }
 
     return 0;

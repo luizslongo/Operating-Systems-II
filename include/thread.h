@@ -5,6 +5,7 @@
 
 #include <system/kmalloc.h>
 #include <utility/queue.h>
+#include <utility/handler.h>
 #include <cpu.h>
 #include <machine.h>
 
@@ -175,13 +176,27 @@ protected:
     Thread * volatile _joining;
     Queue::Element _link;
 
-    static Spin _lock;
+    static volatile unsigned int _thread_count;
     static Scheduler_Timer * _timer;
 
 private:
     static Thread * volatile _running;
     static Queue _ready;
     static Queue _suspended;
+};
+
+
+// An event handler that triggers a thread (see handler.h)
+class Thread_Handler : public Handler
+{
+public:
+    Thread_Handler(Thread * h) : _handler(h) {}
+    ~Thread_Handler() {}
+
+    void operator()() { _handler->resume(); }
+
+private:
+    Thread * _handler;
 };
 
 __END_SYS
