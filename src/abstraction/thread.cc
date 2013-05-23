@@ -52,11 +52,22 @@ Thread::~Thread()
                     << ",context={b=" << _context
                     << "," << *_context << "})\n";
 
-    if(_state != FINISHING)
-        _thread_count--;
-
-    _ready.remove(this);
-    _suspended.remove(this);
+    switch(_state) {
+    case RUNNING:  // Self deleted itself!
+        exit(-1);
+        break;
+    case READY:
+        _ready.remove(this);
+        break;
+    case SUSPENDED:
+        _suspended.remove(this);
+        break;
+    case WAITING:
+        _waiting->remove(this);
+        break;
+    case FINISHING: // Already called exit()
+        break;
+    }
 
     unlock();
 
