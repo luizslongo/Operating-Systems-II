@@ -36,7 +36,7 @@ public:
 };
 
 // Global objects
-// These objects might be reconstructed several times in multicore configurations,
+// These objects might be reconstructed several times in smp configurations,
 // so their constructors must be stateless!
 First_Object __entry;
 OStream kout;
@@ -45,6 +45,8 @@ OStream kerr;
 // System class attributes
 System_Info<Machine> * System::_si =
     reinterpret_cast<System_Info<Machine> *>(Memory_Map<Machine>::SYS_INFO);
+
+Segment System::_heap_segment;
 
 Heap System::_heap;
 

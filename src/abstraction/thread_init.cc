@@ -1,6 +1,5 @@
 // EPOS Thread Abstraction Initialization
 
-#include <system/kmalloc.h>
 #include <system.h>
 #include <thread.h>
 #include <alarm.h>
@@ -15,12 +14,11 @@ void Thread::init()
 
     // Create the application's main thread
     // This must precede idle, thus avoiding implicit rescheduling
-    _running = new (kmalloc(sizeof(Thread))) Thread(entry, RUNNING, MAIN);
-    new (kmalloc(sizeof(Thread))) Thread(&idle, READY, IDLE);
+    _running = new (SYSTEM) Thread(entry, RUNNING, MAIN);
+    new (SYSTEM) Thread(&idle, READY, IDLE);
 
     if(preemptive)
-        _timer = new (kmalloc(sizeof(Scheduler_Timer)))
-                 Scheduler_Timer(QUANTUM, &reschedule);
+        _timer = new (SYSTEM) Scheduler_Timer(QUANTUM, &reschedule);
 
     db<Init, Thread>(INF) << "Dispatching the first thread: " << _running
                           << "\n";

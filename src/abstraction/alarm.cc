@@ -1,6 +1,5 @@
 // EPOS Alarm Abstraction Implementation
 
-#include <system/kmalloc.h>
 #include <semaphore.h>
 #include <alarm.h>
 
@@ -66,6 +65,15 @@ void Alarm::handler()
     lock();
 
     _elapsed++;
+
+    if(Traits<Alarm>::visible) {
+        Display display;
+        int lin, col;
+        display.position(&lin, &col);
+        display.position(0, 79);
+        display.putc(_elapsed);
+        display.position(lin, col);
+    }
 
     Alarm * alarm = 0;
 

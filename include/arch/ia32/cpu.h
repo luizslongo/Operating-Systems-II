@@ -99,24 +99,19 @@ public:
         SEG_4K		= 0x80,
         SEG_FLT_CODE    = (SEG_PRE  | SEG_NOSYS	| SEG_CODE | SEG_ACC),
         SEG_FLT_DATA    = (SEG_PRE  | SEG_NOSYS	| SEG_RW   | SEG_ACC),
-        SEG_SYS_CODE    = (SEG_PRE  | SEG_NOSYS | SEG_RW   | SEG_CODE | SEG_ACC),
-        SEG_SYS_DATA    = (SEG_PRE  | SEG_NOSYS | SEG_RW   | SEG_ACC),
         SEG_APP_CODE    = (SEG_PRE  | SEG_NOSYS | SEG_DPL2 | SEG_DPL1 |
         		   SEG_CODE | SEG_ACC),     // P, DPL=3, S, C, W, A
         SEG_APP_DATA    = (SEG_PRE  | SEG_NOSYS	| SEG_DPL2 | SEG_DPL1 |
         		   SEG_RW   | SEG_ACC),    // P, DPL=3, S, W, A
-//        SEG_SYS_CODE    = (SEG_PRE  | SEG_NOSYS | SEG_DPL2 | SEG_DPL1 |
-//                           SEG_CODE | SEG_ACC),     // P, DPL=3, S, C, W, A
-//        SEG_SYS_DATA    = (SEG_PRE  | SEG_NOSYS | SEG_DPL2 | SEG_DPL1 |
-//        		   SEG_RW   | SEG_ACC),    // P, DPL=3, S, W, A
-        SEG_IDT_ENTRY   = (SEG_PRE  | SEG_INT   )
+        SEG_SYS_CODE    = (SEG_PRE  | SEG_NOSYS	| SEG_CODE | SEG_ACC),
+        SEG_SYS_DATA    = (SEG_PRE  | SEG_NOSYS	| SEG_RW   | SEG_ACC),
+        SEG_IDT_ENTRY   = (SEG_PRE  | SEG_INT   | SEG_DPL1 | SEG_DPL2)
     };
 
     // DPL/RPL for application (user) and system (supervisor) modes 
     enum {
         PL_APP = 3, // GDT, RPL=3
         PL_SYS = 0  // GDT, RPL=0
-//        PL_SYS = 3  // GDT, RPL=0
     };
 
     // GDT Layout 
@@ -374,6 +369,32 @@ public:
     static Reg32 ntohl(Reg32 v)	{ return htonl(v); }
     static Reg16 ntohs(Reg16 v)	{ return htons(v); }
 
+        static void bts(volatile unsigned int *base, const int bit) {
+    ASMV("bts %1,%0" : "+m" (*base) : "r" (bit));
+    }
+    
+    static void btr(volatile unsigned int *base, const int bit) {
+    ASMV("btr %1,%0" : "+m" (*base) : "r" (bit));
+    }
+    
+    static int bsf(unsigned int & value) {
+      register unsigned int pos;
+      ASMV("bsf %1, %0"
+        : "=a"(pos)
+        : "m"(value)
+        : ); 
+      return pos;
+    }
+
+    static int bsr(unsigned int & value) {
+      register int pos = -1;
+        ASMV("bsr %1, %0"
+        : "=a"(pos)
+        : "m"(value)
+        : ); 
+        return pos;
+    }
+
     static Context * init_stack(
         Log_Addr stack, unsigned int size, void (* exit)(),
         int (* entry)()) {
@@ -422,23 +443,6 @@ public:
         sp -= sizeof(Context);
         return new (sp) Context(entry);
     }
-
-    static void system_call(Log_Addr addr) {
-        db<IA32>(TRC) << "system_call(" << addr << ") <= "
-            << "{MSR[IA32_SYSENTER_CS]=" << IA32::rdmsr(0x174)
-            << ",MSR[IA32_SYSENTER_EIP]=" << IA32::rdmsr(0x175)
-            << ",MSR[IA32_SYSENTER_ESP]=" << IA32::rdmsr(0x176)
-            << "}\n";
-
-        // Save return data in clobbered registers and enter kernel
-        ASMV("       movl    %0, %%eax               \n"
-             "       movl    %%esp, %%ecx            \n"
-             "       movl    RET, %%edx              \n"
-             "       sysenter                        \n"
-             "RET:                                   \n" : : "i"(0));
-    }
-
-    static void system_entry();
 
     static void init();
 

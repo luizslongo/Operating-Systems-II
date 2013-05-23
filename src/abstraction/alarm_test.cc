@@ -38,13 +38,13 @@ int main()
 void func_a()
 {
     for(int i = 0; i < 79; i++)
-	cout << "a";
+        cout << "a";
     cout << "\n";
 }
 
 void func_b(void)
 {
     for(int i = 0; i < 79; i++)
-	cout << "b";
+        cout << "b";
     cout << "\n";
 }

@@ -16,6 +16,8 @@ void PC::init()
         PC_Timer::init();
     if(Traits<PC_Ethernet>::enabled)
         PC_Ethernet::init();
+    if(Traits<PC_Scratchpad>::enabled)
+        PC_Scratchpad::init();
 }
 
 __END_SYS

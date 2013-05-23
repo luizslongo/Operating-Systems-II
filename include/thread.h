@@ -3,16 +3,17 @@
 #ifndef __thread_h
 #define __thread_h
 
-#include <system/kmalloc.h>
 #include <utility/queue.h>
 #include <utility/handler.h>
 #include <cpu.h>
 #include <machine.h>
+#include <system.h>
 
 __BEGIN_SYS
 
 class Thread
 {
+    friend class Init_First;
     friend class Synchronizer_Common;
     friend class Alarm;
 
@@ -29,8 +30,8 @@ protected:
 public:
     // Thread State
     enum State {
-        READY,
         RUNNING,
+        READY,
         SUSPENDED,
         WAITING,
         FINISHING
@@ -58,7 +59,7 @@ public:
     {
         lock();
 
-        _stack = kmalloc(stack_size);
+        _stack = new (SYSTEM) char[stack_size];
         _context = CPU::init_stack(_stack, stack_size,
                                    &implicit_exit, entry);
 
@@ -74,7 +75,7 @@ public:
     {
         lock();
 
-        _stack = kmalloc(stack_size);
+        _stack = new (SYSTEM) char[stack_size];
         _context = CPU::init_stack(_stack, stack_size,
                                    &implicit_exit, entry, a1);
 
@@ -90,7 +91,7 @@ public:
     {
         lock();
 
-        _stack = kmalloc(stack_size);
+        _stack = new (SYSTEM) char[stack_size];
         _context = CPU::init_stack(_stack, stack_size,
                                    &implicit_exit, entry, a1, a2);
 
@@ -106,7 +107,7 @@ public:
     {
         lock();
 
-        _stack = kmalloc(stack_size);
+        _stack = new (SYSTEM) char[stack_size];
         _context = CPU::init_stack(_stack, stack_size,
                                    &implicit_exit, entry, a1, a2, a3);
 
@@ -125,7 +126,7 @@ public:
     void suspend();
     void resume();
 
-    static Thread* self() { return running(); }
+    static Thread * self() { return running(); }
     static void yield();
     static void exit(int status = 0);
 
@@ -169,7 +170,7 @@ protected:
     static int idle();
 
 protected:
-    Log_Addr _stack;
+    char * _stack;
     Context * volatile _context;
     volatile State _state;
     Queue * _waiting;

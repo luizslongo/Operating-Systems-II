@@ -115,6 +115,13 @@ template <> struct Traits<C905>: public Traits<PC_Ethernet>
     static const unsigned int RECEIVE_BUFFERS = 8; // per unit
 };
 
+template <> struct Traits<PC_Scratchpad>: public Traits<PC_Common>
+{
+    static const bool enabled = false;
+    static const unsigned int ADDRESS = Traits<PC_Display>::FRAME_BUFFER_ADDRESS;
+    static const unsigned int SIZE = Traits<PC_Display>::LINES * Traits<PC_Display>::COLUMNS;
+};
+
 __END_SYS
 
 #endif

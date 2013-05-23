@@ -1,7 +1,6 @@
 // EPOS IA32 CPU Mediator Implementation
 
 #include <arch/ia32/cpu.h>
-#include <system/memory_map.h>
 
 __BEGIN_SYS
 
@@ -32,10 +31,10 @@ void IA32::Context::save() volatile
 
 void IA32::Context::load() const volatile
 {
-    // POPA ignores the ESP saved by PUSHA. ESP is just normally incremented.
-    ASM("	movl    4(%esp), %esp	# sp = this     	\n"
-        "       popal				        	\n"
-        "	popfl					        \n");
+    // POPA ignores the ESP saved by PUSHA. ESP is just normally incremented. 
+    ASM("	movl    4(%esp), %esp	# sp = this			\n"
+        "	popal							\n"
+ 	"	popfl							\n");
 }
 
 void IA32::switch_context(Context * volatile * o, Context * volatile n)

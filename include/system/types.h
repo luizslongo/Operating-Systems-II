@@ -8,12 +8,6 @@ typedef __SIZE_TYPE__ size_t;
 inline void * operator new(size_t s, void * a) { return a; }
 inline void * operator new[](size_t s, void * a) { return a; }
 
-void * operator new(size_t bytes);
-void * operator new[](size_t bytes);
-
-void operator delete(void * ptr) __attribute__ ((weak));
-void operator delete[](void * ptr) __attribute__ ((weak));
-
 __BEGIN_SYS
 
 // Dummy class for incomplete architectures and machines 
@@ -64,6 +58,9 @@ class PC_RTC;
 // Hardware Mediators - EEPROM
 class PC_EEPROM;
 
+// Hardware Mediators - Scratchpad
+class PC_Scratchpad;
+
 // Hardware Mediators - UART
 class PC_UART;
 
@@ -79,6 +76,10 @@ class E100;
 
 // Abstractions	- Process
 class Thread;
+
+// Abstractions	- Memory
+class Segment;
+class Address_Space;
 
 // Abstractions	- Synchronization
 class Synchronizer;
@@ -110,11 +111,15 @@ enum
     TIMER_ID,
     RTC_ID,
     EEPROM_ID,
+    SCRATCHPAD_ID,
     UART_ID,
     DISPLAY_ID,
     NIC_ID,
 
     THREAD_ID,
+
+    SEGMENT_ID,
+    ADDRESS_SPACE_ID,
 
     MUTEX_ID,
     SEMAPHORE_ID,

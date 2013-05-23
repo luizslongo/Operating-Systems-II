@@ -18,7 +18,6 @@ public:
     virtual ~Handler() {}
 
     virtual void operator()() = 0;
-    void operator delete(void * object) {}
 };
 
 class Function_Handler: public Handler

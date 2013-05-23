@@ -4,17 +4,27 @@
 #define __application_h
 
 #include <utility/heap.h>
+#include <segment.h>
+
+extern "C"
+{
+    void * malloc(size_t);
+    void free(void *);
+}
 
 __BEGIN_SYS
 
 class Application
 {
-public:
-    static Heap * const heap() { return &_heap; }
+    friend class Init_Application;
+    friend void * ::malloc(size_t);
+    friend void ::free(void *);
 
+public:
     static void init();
 
 private:
+    static Segment _heap_segment;
     static Heap _heap;
 };
 

@@ -93,8 +93,7 @@ template <> struct Traits<System>: public Traits<void>
     static const bool multithread = true;
     static const bool multitask = false && (mode != Traits<Build>::LIBRARY);
     static const bool multicore = false && multithread;
-    static const bool multiheap = (mode != Traits<Build>::LIBRARY)
-        || Traits<Scratchpad>::enabled;
+    static const bool multiheap = true;
 
     static const bool reboot = true;
 

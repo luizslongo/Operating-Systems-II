@@ -17,7 +17,6 @@
 #include <fcntl.h>
 #include <ctype.h>
 
-#define __EPOS_TOOL
 #include <system/info.h>
 
 // CONSTANTS

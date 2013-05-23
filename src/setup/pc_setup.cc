@@ -600,8 +600,8 @@ void PC_Setup::setup_gdt()
 
     // GDT_Entry(base, limit, {P,DPL,S,TYPE})
     gdt[CPU::GDT_NULL]      = GDT_Entry(0,       0, 0);
-    gdt[CPU::GDT_SYS_CODE]  = GDT_Entry(0, 0xfffff, CPU::SEG_SYS_CODE); // Also gdt[CPU::GDT_FLT_CODE]
-    gdt[CPU::GDT_SYS_DATA]  = GDT_Entry(0, 0xfffff, CPU::SEG_SYS_DATA); // Also gdt[CPU::GDT_FLT_DATA]
+    gdt[CPU::GDT_FLT_CODE]  = GDT_Entry(0, 0xfffff, CPU::SEG_FLT_CODE);
+    gdt[CPU::GDT_FLT_DATA]  = GDT_Entry(0, 0xfffff, CPU::SEG_FLT_DATA);
     gdt[CPU::GDT_APP_CODE]  = GDT_Entry(0, 0xfffff, CPU::SEG_APP_CODE);
     gdt[CPU::GDT_APP_DATA]  = GDT_Entry(0, 0xfffff, CPU::SEG_APP_DATA);
 
@@ -868,7 +868,7 @@ void PC_Setup::call_next()
     else
         db<Setup>(TRC) << "APPLICATION\n";
 
-    db<Setup>(INF) << "Setup ends here!\n\n";
+    db<Setup>(INF) << "SETUP ends here!\n\n";
 
     Machine::smp_barrier(si->bm.n_cpus);
 
