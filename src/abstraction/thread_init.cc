@@ -13,7 +13,10 @@ void Thread::init()
 
     db<Init, Thread>(TRC) << "Thread::init(entry=" << (void *) entry << ")\n";
 
-    _running = new (kmalloc(sizeof(Thread))) Thread(entry, RUNNING, NORMAL);
+    // Create the application's main thread
+    // This must precede idle, thus avoiding implicit rescheduling
+    _running = new (kmalloc(sizeof(Thread))) Thread(entry, RUNNING, MAIN);
+    new (kmalloc(sizeof(Thread))) Thread(&idle, READY, IDLE);
 
     if(preemptive)
         _timer = new (kmalloc(sizeof(Scheduler_Timer)))
