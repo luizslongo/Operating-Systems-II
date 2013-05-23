@@ -66,8 +66,10 @@ int Thread::join()
     db<Thread>(TRC) << "Thread::join(this=" << this
 		    << ",state=" << _state << ")\n";
 
-    while(_state != FINISHING)
-        yield(); // implicit unlock()
+    if(_state != FINISHING) {
+        _joining = running();
+        _joining->suspend();
+    }
 
     unlock();
 
@@ -107,13 +109,15 @@ void Thread::suspend()
     _state = SUSPENDED;
     _suspended.insert(&_link);
 
-    if((_running == this) && !_ready.empty()) {
+    if(_running == this) {
+        while(_ready.empty())
+            idle();
+
         _running = _ready.remove()->object();
         _running->_state = RUNNING;
 
         dispatch(this, _running);
-    } else
-        idle(); // implicit unlock()
+    }
 
     unlock();
 }
@@ -162,29 +166,37 @@ void Thread::exit(int status)
     db<Thread>(TRC) << "Thread::exit(running=" << _running
                     <<",status=" << status << ")\n";
 
-    while(_ready.empty() && !_suspended.empty())
-        idle(); // implicit unlock();
+    Thread * prev = _running;
+    prev->_state = FINISHING;
+    *static_cast<int *>(prev->_stack) = status;
+
+    if(prev->_joining) {
+        prev->_joining->resume();
+        prev->_joining = 0;
+    }
 
     lock();
 
-    if(!_ready.empty()) {
-        Thread * prev = _running;
-        prev->_state = FINISHING;
-        *static_cast<int *>(prev->_stack) = status;
-
+    if(_ready.empty()) {
+        if(!_suspended.empty()) {
+            while(_ready.empty())
+                idle(); // implicit unlock();
+            lock();
+        } else { // _ready.empty() && _suspended.empty()
+            db<Thread>(WRN) << "The last thread in the system has exited!\n";
+            if(reboot) {
+                db<Thread>(WRN) << "Rebooting the machine ...\n";
+                Machine::reboot();
+            } else {
+                db<Thread>(WRN) << "Halting the CPU ...\n";
+                CPU::halt();
+            }
+        }
+    } else {
         _running = _ready.remove()->object();
         _running->_state = RUNNING;
 
         dispatch(prev, _running);
-    } else {
-        db<Thread>(WRN) << "The last thread in the system has exited!\n";
-        if(reboot) {
-            db<Thread>(WRN) << "Rebooting the machine ...\n";
-            Machine::reboot();
-        } else {
-            db<Thread>(WRN) << "Halting the CPU ...\n";
-            CPU::halt();
-        }
     }
 
     unlock();

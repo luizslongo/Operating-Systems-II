@@ -170,6 +170,7 @@ protected:
     Context * volatile _context;
     volatile State _state;
     Queue * _waiting;
+    Thread * volatile _joining;
     Queue::Element _link;
 
     static Spin _lock;
