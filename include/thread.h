@@ -31,6 +31,7 @@ public:
         READY,
         RUNNING,
         SUSPENDED,
+        WAITING,
         FINISHING
     };
 
@@ -136,6 +137,12 @@ protected:
 
     static void unlock() { CPU::int_enable(); }
 
+    static void sleep(Queue * q);
+
+    static void wakeup(Queue * q);
+
+    static void wakeup_all(Queue * q);
+
     static void reschedule();
 
     static void implicit_exit();
@@ -162,6 +169,7 @@ protected:
     Log_Addr _stack;
     Context * volatile _context;
     volatile State _state;
+    Queue * _waiting;
     Queue::Element _link;
 
     static Spin _lock;
