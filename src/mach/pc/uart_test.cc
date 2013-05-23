@@ -17,10 +17,10 @@ int main()
     uart.loopback(true);
 
     for(int i = 0; i < 256; i++) {
-	uart.put(i);
-	int c = uart.get();
-	if(c != i)
-	    cout << " failed (" << c << ", should be " << i << ")!\n";
+        uart.put(i);
+        int c = uart.get();
+        if(c != i)
+            cout << " failed (" << c << ", should be " << i << ")!\n";
     }
     cout << " passed!\n";
 
@@ -29,11 +29,11 @@ int main()
     uart.loopback(false);
 
     for(int i = 0; i < 256; i++) {
-	uart.put(i);
+        uart.put(i);
         for(int j = 0; j < 0xffffff; j++);
-	int c = uart.get();
-	if(c != i)
-	    cout << " failed (" << c << ", should be " << i << ")!\n";
+        int c = uart.get();
+        if(c != i)
+            cout << " failed (" << c << ", should be " << i << ")!\n";
     }
     cout << " passed!\n";
     

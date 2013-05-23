@@ -15,17 +15,17 @@ __BEGIN_SYS
 class Pseudo_Random
 {
 private:
-	static const unsigned long int A = 1103515245;
-	static const unsigned long int C = 12345;
-	static const unsigned long int M = 4294967295U;
+        static const unsigned long int A = 1103515245;
+        static const unsigned long int C = 12345;
+        static const unsigned long int M = 4294967295U;
 
 public:
     Pseudo_Random() {}
-	
+        
     static unsigned long int random() {
-	    //_seed = (_seed << 1) ^ n;
+            //_seed = (_seed << 1) ^ n;
     	_seed = ((_seed * A) + C) % M;
-	    return _seed;
+            return _seed;
     }
 
     static void seed(unsigned long int value) {

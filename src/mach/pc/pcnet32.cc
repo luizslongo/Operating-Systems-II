@@ -15,11 +15,11 @@ void PCNet32::int_handler(unsigned int interrupt)
     PCNet32 * dev = get(interrupt);
 
     db<PCNet32>(TRC) << "PCNet32::int_handler(int=" << interrupt
-		     << ",dev=" << dev << ")\n";
+        	     << ",dev=" << dev << ")\n";
     if(!dev)
-	db<PCNet32>(WRN) << "PCNet32::int_handler: handler not found!\n";
+        db<PCNet32>(WRN) << "PCNet32::int_handler: handler not found!\n";
     else 
-	dev->handle_int();
+        dev->handle_int();
 }
 
 // Methods
@@ -29,15 +29,15 @@ PCNet32::PCNet32(unsigned int unit)
 
     // Share control
     if(unit >= UNITS) {
-	db<PCNet32>(WRN) << "PCNet32: requested unit (" << unit 
-			 << ") does not exist!\n";
-	return;
+        db<PCNet32>(WRN) << "PCNet32: requested unit (" << unit 
+        		 << ") does not exist!\n";
+        return;
     }
 
     // Share control
     if(_devices[unit].in_use) {
-	db<PCNet32>(WRN) << "PCNet32: device already in use!\n";
-	return;
+        db<PCNet32>(WRN) << "PCNet32: device already in use!\n";
+        return;
     }
     
     *this = *_devices[unit].device;
@@ -55,10 +55,10 @@ PCNet32::~PCNet32()
 }
 
 PCNet32::PCNet32(unsigned int unit, 
-		 IO_Port io_port, IO_Irq irq, DMA_Buffer * dma_buf)
+        	 IO_Port io_port, IO_Irq irq, DMA_Buffer * dma_buf)
 {
     db<PCNet32>(TRC) << "PCNet32(unit=" << unit << ",io=" << io_port 
-		     << ",irq=" << irq << ",dma=" << dma_buf << ")\n";
+        	     << ",irq=" << irq << ",dma=" << dma_buf << ")\n";
 
     _unit = unit;
     _io_port = io_port;
@@ -91,23 +91,23 @@ PCNet32::PCNet32(unsigned int unit,
 
     // Rx Buffers
     for(unsigned int i = 0; i < RX_BUFS; i++) {
-	_rx_buffer[i] = log;
-	_rx_ring[i].phy_addr = phy;
-	_rx_ring[i].size = Reg16(-sizeof(Frame)); // 2's comp.
-	_rx_ring[i].misc = 0;
-	_rx_ring[i].status = Desc::OWN; // Owned by NIC
-	log += MMU::align128(sizeof(Frame));
-	phy += MMU::align128(sizeof(Frame));
+        _rx_buffer[i] = log;
+        _rx_ring[i].phy_addr = phy;
+        _rx_ring[i].size = Reg16(-sizeof(Frame)); // 2's comp.
+        _rx_ring[i].misc = 0;
+        _rx_ring[i].status = Desc::OWN; // Owned by NIC
+        log += MMU::align128(sizeof(Frame));
+        phy += MMU::align128(sizeof(Frame));
     }
 
     // Tx Buffers
     for(unsigned int i = 0; i < TX_BUFS; i++) {
-	_tx_buffer[i] = log;
-	_tx_ring[i].phy_addr = phy;
-	_tx_ring[i].misc = 0;
-	_tx_ring[i].status = 0; // Owned by host
-	log += MMU::align128(sizeof(Frame));
-	phy += MMU::align128(sizeof(Frame));
+        _tx_buffer[i] = log;
+        _tx_ring[i].phy_addr = phy;
+        _tx_ring[i].misc = 0;
+        _tx_ring[i].status = 0; // Owned by host
+        log += MMU::align128(sizeof(Frame));
+        phy += MMU::align128(sizeof(Frame));
     }
 
     // Reset device
@@ -147,7 +147,7 @@ void PCNet32::reset()
 
     // Promiscuous mode
 //     csr(15, csr(15) | CSR15_PROM);
-	
+        
     // Set transmit start point to full frame	
     csr(80, csr(80) | 0x0c00); // XMTSP = 11
 
@@ -167,7 +167,7 @@ void PCNet32::reset()
     csr(0, CSR0_IENA | CSR0_INIT);
     for(int i = 0; (i < 100) && !(csr(0) & CSR0_IDON); i++);
     if(!(csr(0) & CSR0_IDON))
-	db<PCNet32>(WRN) << "PCNet32::reset: initialization failed!\n";
+        db<PCNet32>(WRN) << "PCNet32::reset: initialization failed!\n";
 
     // Get MAC address from CSR
     csr(0, CSR0_IDON | CSR0_STOP);
@@ -184,21 +184,21 @@ void PCNet32::reset()
 }
 
 int PCNet32::send(const Address & dst, const Protocol & prot,
-		  const void * data, unsigned int size)
+        	  const void * data, unsigned int size)
 {
     db<PCNet32>(TRC) << "PCNet32::send(s=" << _address
-		     << ",d=" << dst
-		     << ",p=" << hex << prot << dec
-		     << ",dt=" << data
-		     << ",sz=" << size
-		     << ")\n";
+        	     << ",d=" << dst
+        	     << ",p=" << hex << prot << dec
+        	     << ",dt=" << data
+        	     << ",sz=" << size
+        	     << ")\n";
 
     // Wait for a free buffer
     while(_tx_ring[_tx_cur].status & Rx_Desc::OWN);
 
     // Assemble the Ethernet frame
     new (_tx_buffer[_tx_cur])
-	Frame(_address, dst, CPU::htons(prot), data, size);
+        Frame(_address, dst, CPU::htons(prot), data, size);
 
     _tx_ring[_tx_cur].size = -(size + HEADER_SIZE); // 2's comp.
 
@@ -217,7 +217,7 @@ int PCNet32::send(const Address & dst, const Protocol & prot,
 }
 
 int PCNet32::receive(Address * src, Protocol * prot,
-		     void * data, unsigned int size)
+        	     void * data, unsigned int size)
 {
     // Wait for a frame in the ring buffer
     while(_rx_ring[_rx_cur].status & Rx_Desc::OWN);
@@ -240,10 +240,10 @@ int PCNet32::receive(Address * src, Protocol * prot,
     ++_rx_cur %= RX_BUFS;
 
     db<PCNet32>(TRC) << "PCNet32::receive(s=" << *src
-		     << ",p=" << hex << *prot << dec
-		     << ",dt=" << data
-		     << ",sz=" << s
-		     << ")\n";
+        	     << ",p=" << hex << *prot << dec
+        	     << ",dt=" << data
+        	     << ",sz=" << s
+        	     << ")\n";
 
     return s;
 }
@@ -253,29 +253,29 @@ void PCNet32::handle_int()
     CPU::int_disable();
 
     while(csr(0) & CSR0_INTR) {
-	int csr0 = csr(0);
-	int csr4 = csr(4);
-	int csr5 = csr(5);
+        int csr0 = csr(0);
+        int csr4 = csr(4);
+        int csr5 = csr(5);
 
-	// Clear interrupts
-	csr(0, csr0);
-	csr(4, csr4);
-	csr(5, csr5);
+        // Clear interrupts
+        csr(0, csr0);
+        csr(4, csr4);
+        csr(5, csr5);
 
-	// Initialization done?
-	if(csr0 & CSR0_IDON) {
-	    // This should never happen, since IDON is disabled in reset()
-	    // and all the initialization is conctrolled via polling, so if
-	    // we are here, it must be due to a hardware induced reset.
-	    // All we can do is to try to reset the nic!
-	    db<PCNet32>(WRN) << "PCNet32::handle_int: initialization done!\n";
-	    reset();
-	}
+        // Initialization done?
+        if(csr0 & CSR0_IDON) {
+            // This should never happen, since IDON is disabled in reset()
+            // and all the initialization is conctrolled via polling, so if
+            // we are here, it must be due to a hardware induced reset.
+            // All we can do is to try to reset the nic!
+            db<PCNet32>(WRN) << "PCNet32::handle_int: initialization done!\n";
+            reset();
+        }
 
-	// Transmition?
-	if(csr0 & CSR0_TINT) {
-	    db<PCNet32>(INF) << "PCNet32::handle_int: transmition\n";
-	}
+        // Transmition?
+        if(csr0 & CSR0_TINT) {
+            db<PCNet32>(INF) << "PCNet32::handle_int: transmition\n";
+        }
 
  	// Receive?
  	if(csr0 & CSR0_RINT) {
@@ -284,77 +284,77 @@ void PCNet32::handle_int()
  	}
 
         // Error?
-	if(csr0 & CSR0_ERR) {
-	    db<PCNet32>(INF) << "PCNet32::handle_int: ";
+        if(csr0 & CSR0_ERR) {
+            db<PCNet32>(INF) << "PCNet32::handle_int: ";
 
-	    // Memory Error?
-	    if(csr0 & CSR0_MERR) {
-		db<PCNet32>(WRN) << " memory error\n";
-	    }
-	    
-	    // Missed Frame
-	    if(csr0 & CSR0_MISS) {
-		db<PCNet32>(WRN) << " missed frame\n";
-		_statistics.rx_overruns++;
-	    }
+            // Memory Error?
+            if(csr0 & CSR0_MERR) {
+        	db<PCNet32>(WRN) << " memory error\n";
+            }
+            
+            // Missed Frame
+            if(csr0 & CSR0_MISS) {
+        	db<PCNet32>(WRN) << " missed frame\n";
+        	_statistics.rx_overruns++;
+            }
 
-	    // Collision?
-	    if(csr0 & CSR0_CERR) {
-		db<PCNet32>(INF) << " collision error\n";
-		_statistics.collisions++;
-	    }
+            // Collision?
+            if(csr0 & CSR0_CERR) {
+        	db<PCNet32>(INF) << " collision error\n";
+        	_statistics.collisions++;
+            }
 
-	    // Bable transmitter time-out?
-	    if(csr0 & CSR0_BABL) {
-		db<PCNet32>(INF) << " transmitter time-out\n";
-		_statistics.tx_overruns++;
-	    }
-	}
+            // Bable transmitter time-out?
+            if(csr0 & CSR0_BABL) {
+        	db<PCNet32>(INF) << " transmitter time-out\n";
+        	_statistics.tx_overruns++;
+            }
+        }
 
-	// Missed frame counter overflow?
-	if(csr4 & CSR4_MFCO) {
-	    db<PCNet32>(INF) << "PCNet32::handle_int: missed frame counter overflow\n";
-	}
+        // Missed frame counter overflow?
+        if(csr4 & CSR4_MFCO) {
+            db<PCNet32>(INF) << "PCNet32::handle_int: missed frame counter overflow\n";
+        }
 
-	// User interrupt?
-	if(csr4 & CSR4_UINT) {
-	    db<PCNet32>(INF) << "PCNet32::handle_int: user interrupt\n";
-	}
+        // User interrupt?
+        if(csr4 & CSR4_UINT) {
+            db<PCNet32>(INF) << "PCNet32::handle_int: user interrupt\n";
+        }
 
-	// Receive collision counter overflow?
-	if(csr4 & CSR4_RCVCCO) {
-	    db<PCNet32>(INF) << "Receive Collision Counter Overflow\n";
-	}
+        // Receive collision counter overflow?
+        if(csr4 & CSR4_RCVCCO) {
+            db<PCNet32>(INF) << "Receive Collision Counter Overflow\n";
+        }
 
-	// Transmit start?
-	if(csr4 & CSR4_TXSTRT) {
-	    db<PCNet32>(INF) << "PCNet32::handle_int: transmit start\n";
-	}
+        // Transmit start?
+        if(csr4 & CSR4_TXSTRT) {
+            db<PCNet32>(INF) << "PCNet32::handle_int: transmit start\n";
+        }
 
-	// Jabber error?
-	if(csr4 & CSR4_JAB) {
-	    db<PCNet32>(INF) << "PCNet32::handle_int: jabber error\n";
-	}
+        // Jabber error?
+        if(csr4 & CSR4_JAB) {
+            db<PCNet32>(INF) << "PCNet32::handle_int: jabber error\n";
+        }
 
-	// System interrupt?
-	if(csr5 & CSR5_SINT) {
-	    db<PCNet32>(INF) << "PCNet32::handle_int: system interrupt\n";
-	}
+        // System interrupt?
+        if(csr5 & CSR5_SINT) {
+            db<PCNet32>(INF) << "PCNet32::handle_int: system interrupt\n";
+        }
 
-	// Sleep interrupt?
-	if(csr5 & CSR5_SLPINT) {
-	    db<PCNet32>(INF) << "PCNet32::handle_int: sleep\n";
-	}
+        // Sleep interrupt?
+        if(csr5 & CSR5_SLPINT) {
+            db<PCNet32>(INF) << "PCNet32::handle_int: sleep\n";
+        }
 
-	// Excessive deferral?
-	if(csr5 & CSR5_EXDINT){
-	    db<PCNet32>(INF) << "PCNet32::handle_int: excessive deferral\n";
-	}
+        // Excessive deferral?
+        if(csr5 & CSR5_EXDINT){
+            db<PCNet32>(INF) << "PCNet32::handle_int: excessive deferral\n";
+        }
 
-	// Magic Packet interrupt?
-	if(csr5 & CSR5_MPINT) {
-	    db<PCNet32>(INF) << "PCNet32::handle_int: magic packet\n";
-	}
+        // Magic Packet interrupt?
+        if(csr5 & CSR5_MPINT) {
+            db<PCNet32>(INF) << "PCNet32::handle_int: magic packet\n";
+        }
     }
 
     CPU::int_enable();

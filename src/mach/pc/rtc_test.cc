@@ -21,17 +21,17 @@ int main()
 
     RTC::Date last_date = rtc.date();
     while(rtc.seconds_since_epoch() < t0 + TEST_DURATION) {
-	if(last_date.second() != rtc.date().second()) {
-	    last_date = rtc.date();
-	    Display::position(20, 30);
-	    cout << last_date.day() << '/'
-		 << last_date.month() << '/'
-		 << last_date.year() << ' ';
-	    Display::position(20, 42);
-	    cout << last_date.hour() << ':'
-		 << last_date.minute() << ':'
-		 << last_date.second() << "    ";
-	}
+        if(last_date.second() != rtc.date().second()) {
+            last_date = rtc.date();
+            Display::position(20, 30);
+            cout << last_date.day() << '/'
+        	 << last_date.month() << '/'
+        	 << last_date.year() << ' ';
+            Display::position(20, 42);
+            cout << last_date.hour() << ':'
+        	 << last_date.minute() << ':'
+        	 << last_date.second() << "    ";
+        }
     }
 
     cout << "\n\nSetting the time to its current value: ";

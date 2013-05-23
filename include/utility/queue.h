@@ -81,7 +81,7 @@ template <typename List>
 class Queue_Wrapper<List, true>: private List
 {
 private:
-    static const bool multicore = Traits<Thread>::multicore;
+    static const bool smp = Traits<Thread>::smp;
 
 public:
     typedef typename List::Object_Type Object_Type;
@@ -183,12 +183,12 @@ public:
 private:
     void enter() {
         CPU::int_disable();
-        if(multicore)
+        if(smp)
             _lock.acquire();
     }
 
     void leave() {
-        if(multicore)
+        if(smp)
             _lock.release();
         CPU::int_disable();
     }

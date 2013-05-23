@@ -13,121 +13,121 @@ public:
     typedef volatile unsigned long  Reg32;
 
     struct Window7 {
-	Reg16 VlanMask;
-	Reg16 reserved0;
-	Reg16 VlanEtherType;
-	Reg16 reserved1;
-	Reg32 reserved2;
-	Reg16 PowerMgmtEvent;
-	Reg16 IntStatus;
+        Reg16 VlanMask;
+        Reg16 reserved0;
+        Reg16 VlanEtherType;
+        Reg16 reserved1;
+        Reg32 reserved2;
+        Reg16 PowerMgmtEvent;
+        Reg16 IntStatus;
     };
 
     struct Window6 {
-	Reg8  CarrierLost;
-	Reg8  SqeErrors;
-	Reg8  MultipleCollisions;
-	Reg8  SingleCollisions;
-	Reg8  LateCollisions;
-	Reg8  RxOverruns;
-	Reg8  FramesXmittedOk;
-	Reg8  FramesRcvdOk;
-	Reg8  FramesDeferred;
-	Reg8  UpperFramesOk;
-	Reg16 BytesRcvdOk;
-	Reg16 BytesXmittdOk;
-	Reg16 IntStatus;
+        Reg8  CarrierLost;
+        Reg8  SqeErrors;
+        Reg8  MultipleCollisions;
+        Reg8  SingleCollisions;
+        Reg8  LateCollisions;
+        Reg8  RxOverruns;
+        Reg8  FramesXmittedOk;
+        Reg8  FramesRcvdOk;
+        Reg8  FramesDeferred;
+        Reg8  UpperFramesOk;
+        Reg16 BytesRcvdOk;
+        Reg16 BytesXmittdOk;
+        Reg16 IntStatus;
     };
-	
+        
     struct Window5 {
-	Reg16 TxStartThresh;
-	Reg16 reserved0;
-	Reg16 reserved1;
-	Reg16 RxEarlyThresh;
-	Reg8  RxFilter;
-	Reg8  TxReclaimThresh;
-	Reg16 InterruptEnable;
-	Reg16 IndicationEnable;
-	Reg16 IntStatus;
+        Reg16 TxStartThresh;
+        Reg16 reserved0;
+        Reg16 reserved1;
+        Reg16 RxEarlyThresh;
+        Reg8  RxFilter;
+        Reg8  TxReclaimThresh;
+        Reg16 InterruptEnable;
+        Reg16 IndicationEnable;
+        Reg16 IntStatus;
     };
-	
+        
     struct Window4 {
-	Reg16 reserved0;
-	Reg16 VcoDiagnostic;
-	Reg16 FifoDiagnostic;
-	Reg16 NetworkDiagnostic;
-	Reg16 PhysicalMgmt;
-	Reg16 MediaStatus;
-	Reg8  BadSSD;
-	Reg8  UpperBytesOK;
-	Reg16 IntStatus;
+        Reg16 reserved0;
+        Reg16 VcoDiagnostic;
+        Reg16 FifoDiagnostic;
+        Reg16 NetworkDiagnostic;
+        Reg16 PhysicalMgmt;
+        Reg16 MediaStatus;
+        Reg8  BadSSD;
+        Reg8  UpperBytesOK;
+        Reg16 IntStatus;
     };
-	
+        
     struct Window3 {
-	Reg32 InternalConfig;
-	Reg16 MaxPktSize;
-	Reg16 MacControl;
-	Reg16 MediaOptions;
-	Reg16 RxFree;
-	Reg16 TxFree;
-	Reg16 IntStatus;
+        Reg32 InternalConfig;
+        Reg16 MaxPktSize;
+        Reg16 MacControl;
+        Reg16 MediaOptions;
+        Reg16 RxFree;
+        Reg16 TxFree;
+        Reg16 IntStatus;
     };
 
     struct Window2 {
-	Reg16 StationAddressLo;
-	Reg16 StationAddressMid;
-	Reg16 StationAddressHi;
-	Reg16 StationMaskLo;
-	Reg16 StationMaskMid;
-	Reg16 StationMaskHi;
-	Reg16 ResetOptions;
-	Reg16 IntStatus;
+        Reg16 StationAddressLo;
+        Reg16 StationAddressMid;
+        Reg16 StationAddressHi;
+        Reg16 StationMaskLo;
+        Reg16 StationMaskMid;
+        Reg16 StationMaskHi;
+        Reg16 ResetOptions;
+        Reg16 IntStatus;
     };
 
     struct Window1 {
-	Reg8  SmbFifoData;
-	Reg8  SmbAddress;
-	Reg16 SmbStatus;
-	Reg8  SmbArb;
-	Reg8  SmbDialog;
-	Reg16 SmbRxBytes;
-	Reg16 WakeOnTimer;
-	Reg8  SosBits;
-	Reg8  reserved;
-	Reg16 TriggerBits;
-	Reg16 IntStatus;
+        Reg8  SmbFifoData;
+        Reg8  SmbAddress;
+        Reg16 SmbStatus;
+        Reg8  SmbArb;
+        Reg8  SmbDialog;
+        Reg16 SmbRxBytes;
+        Reg16 WakeOnTimer;
+        Reg8  SosBits;
+        Reg8  reserved;
+        Reg16 TriggerBits;
+        Reg16 IntStatus;
     };
-	
+        
     struct Window0 {
-	Reg32 reserved0;
-	Reg32 BiosRomAddr;
-	Reg8  BiosFormData;
-	Reg8  reserved1;
-	Reg16 EepromCommand;
-	Reg16 EepromData;
-	Reg16 IntStatus;
+        Reg32 reserved0;
+        Reg32 BiosRomAddr;
+        Reg8  BiosFormData;
+        Reg8  reserved1;
+        Reg16 EepromCommand;
+        Reg16 EepromData;
+        Reg16 IntStatus;
     };
 
     struct DPD {
-	DPD() {}
-	DPD(Reg32 a, Reg32 l) : DnNextPtr(0), FrameStartHeader(0),
-				DnFragAddress(a), DnFragLen(l) {}
-	
-	volatile DPD * DnNextPtr;
-	Reg32 FrameStartHeader;
-	Reg32 DnFragAddress;
-	Reg32 DnFragLen;
+        DPD() {}
+        DPD(Reg32 a, Reg32 l) : DnNextPtr(0), FrameStartHeader(0),
+        			DnFragAddress(a), DnFragLen(l) {}
+        
+        volatile DPD * DnNextPtr;
+        Reg32 FrameStartHeader;
+        Reg32 DnFragAddress;
+        Reg32 DnFragLen;
     };
     
 public:
     union {
-	Window0 w0;
-	Window1 w1;
-	Window2 w2;
-	Window3 w3;
-	Window4 w4;
-	Window5 w5;
-	Window6 w6;
-	Window7 w7;
+        Window0 w0;
+        Window1 w1;
+        Window2 w2;
+        Window3 w3;
+        Window4 w4;
+        Window5 w5;
+        Window6 w6;
+        Window7 w7;
     } win;
     Reg32 reserved0;
     Reg32 reserved1;

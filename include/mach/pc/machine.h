@@ -17,7 +17,7 @@ __BEGIN_SYS
 class PC: public Machine_Common
 {
 private:
-    static const bool multicore = Traits<Thread>::multicore;
+    static const bool smp = Traits<Thread>::smp;
     
     typedef IA32::Reg32 Reg32;
     typedef IA32::Log_Addr Log_Addr;
@@ -29,32 +29,32 @@ public:
     static void reboot();
     static void poweroff();
 
-    static unsigned int n_cpus() { return multicore ? _n_cpus : 1; }
-    static unsigned int cpu_id() { return multicore ? APIC::id() : 0; }
+    static unsigned int n_cpus() { return smp ? _n_cpus : 1; }
+    static unsigned int cpu_id() { return smp ? APIC::id() : 0; }
 
-    static void multicore_init(unsigned int n_cpus) {
-	if(multicore) {
-	    _n_cpus = n_cpus;
-	    APIC::remap(); 
-	}
+    static void smp_init(unsigned int n_cpus) {
+        if(smp) {
+            _n_cpus = n_cpus;
+            APIC::remap(); 
+        }
     };
 
-    static void multicore_barrier(int n_cpus = _n_cpus) {
-	static volatile int ready[2];
-	static volatile int i;
+    static void smp_barrier(int n_cpus = _n_cpus) {
+        static volatile int ready[2];
+        static volatile int i;
 
-	if(multicore) {
-	    int j = i;
+        if(smp) {
+            int j = i;
 
-	    CPU::finc(ready[j]);
+            CPU::finc(ready[j]);
 
-	    if(cpu_id() == 0) {
-		while(ready[j] < n_cpus); // wait for all CPUs to be ready
-		i = !i;                   // toggle ready
-		ready[j] = 0;             // signalizes waiting CPUs
-	    } else
-		while(ready[j]);          // wait for CPU[0] signal
-	}
+            if(cpu_id() == 0) {
+        	while(ready[j] < n_cpus); // wait for all CPUs to be ready
+        	i = !i;                   // toggle ready
+        	ready[j] = 0;             // signalizes waiting CPUs
+            } else
+        	while(ready[j]);          // wait for CPU[0] signal
+        }
     }
 
     static void init();

@@ -10,17 +10,17 @@ void IA32_MMU::init()
     System_Info<PC> * si = System::info();
 
     db<Init, IA32_MMU>(INF) << "IA32_MMU::memory={base=" 
-			    << (void *) si->pmm.mem_base << ",size="
-			    << (si->bm.mem_top - si->bm.mem_base) / 1024
-			    << "KB}\n";
+        		    << (void *) si->pmm.mem_base << ",size="
+        		    << (si->bm.mem_top - si->bm.mem_base) / 1024
+        		    << "KB}\n";
     db<Init, IA32_MMU>(INF) << "IA32_MMU::free1={base=" 
-			    << (void *) si->pmm.free1_base << ",size="
-			    << (si->pmm.free1_top - si->pmm.free1_base) / 1024
-			    << "KB}\n";
+        		    << (void *) si->pmm.free1_base << ",size="
+        		    << (si->pmm.free1_top - si->pmm.free1_base) / 1024
+        		    << "KB}\n";
     db<Init, IA32_MMU>(INF) << "IA32_MMU::free2={base=" 
-			    << (void *) si->pmm.free2_base << ",size="
-			    << (si->pmm.free2_top - si->pmm.free2_base) / 1024
-			    << "KB}\n";
+        		    << (void *) si->pmm.free2_base << ",size="
+        		    << (si->pmm.free2_top - si->pmm.free2_base) / 1024
+        		    << "KB}\n";
     
     // BIG WARING HERE: INIT (i.e. this program) will be part of the free
     // storage after the following is executed, but it will remain alive
@@ -35,7 +35,7 @@ void IA32_MMU::init()
     _master = reinterpret_cast<Page_Directory *>(CPU::pdp());
 
     db<Init, IA32_MMU>(INF) << "IA32_MMU::master page directory=" 
-			    << _master << "\n";
+        		    << _master << "\n";
 }
 
 __END_SYS

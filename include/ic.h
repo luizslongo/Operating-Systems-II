@@ -12,16 +12,16 @@ class IC_Common
 protected:
     IC_Common() {}
 public:
-	enum {
-	// it is used by the thread reschedule method when an IPI is necessary in global schedulers (SMP)
+        enum {
+        // it is used by the thread reschedule method when an IPI is necessary in global schedulers (SMP)
     INT_RESCHEDULER 
     };
 public:
     typedef unsigned int Interrupt_Id;
     typedef void (* Interrupt_Handler)(Interrupt_Id);
 
-	// it is used by the thread reschedule method when an IPI is necessary in global schedulers (SMP)
-	static void ipi_send(int dest, int interrupt) { }
+        // it is used by the thread reschedule method when an IPI is necessary in global schedulers (SMP)
+        static void ipi_send(int dest, int interrupt) { }
 };
 
 __END_SYS

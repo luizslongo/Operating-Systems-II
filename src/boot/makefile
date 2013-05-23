@@ -30,8 +30,6 @@ ml310_install:	ml310_boot
 		$(INSTALL) $(MACH)_boot.tmp $(IMG)/$(MACH)_boot
 		$(CLEAN) $(MACH)_boot.tmp
 
-test:
-
 clean:
 		$(CLEAN) *.s *.o *_boot *.tmp
 

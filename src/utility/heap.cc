@@ -6,7 +6,7 @@
 __BEGIN_SYS
 
 // Methods
-void Heap_Common::out_of_memory()
+void Heap::out_of_memory()
 {
     db<Heap>(ERR) << "Heap::alloc(this=" << this
                   << "): out of memory!\n";

@@ -33,10 +33,10 @@ eposmkbi.conf:
 		@echo "BOOT_LENGTH_MIN=$(BOOT_LENGTH_MIN)" >> $@
 		@echo "BOOT_LENGTH_MAX=$(BOOT_LENGTH_MAX)" >> $@
 
-clean:
+clean: $(APP)/$(APPLICATION)_traits.h
 		sed -e 's/^#define ARCH.*$$/#define ARCH xxx/' -i $(INCLUDE)/system/config.h
 		sed -e 's/^#define MACH.*$$/#define MACH xxx/' -i $(INCLUDE)/system/config.h
 		sed -e 's/^#define APP.*$$/#define APPLICATION xxx/' -i $(INCLUDE)/system/config.h
 		$(CLEAN) *.conf
 
-		
+FORCE:

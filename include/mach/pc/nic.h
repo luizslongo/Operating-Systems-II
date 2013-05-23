@@ -26,13 +26,13 @@ public:
     ~PC_Ethernet() { delete _dev; }
     
     int send(const Address & dst, const Protocol & prot, 
-	     const void * data, unsigned int size) {
-	return _dev->send(dst, prot, data, size); 
+             const void * data, unsigned int size) {
+        return _dev->send(dst, prot, data, size); 
     }
 
     int receive(Address * src, Protocol * prot,
-		void * data, unsigned int size) {
-	return _dev->receive(src, prot, data, size); 
+        	void * data, unsigned int size) {
+        return _dev->receive(src, prot, data, size); 
     }
 
     void reset() { _dev->reset(); }

@@ -6,7 +6,7 @@
 //============================================================================
 // DEFINITIONS
 //============================================================================
-#define __SYS_NS            System
+#define __SYS_NS            EPOS
 #define __BEGIN_SYS         namespace __SYS_NS {
 #define __END_SYS           }
 #define __USING_SYS         using namespace __SYS_NS;
@@ -15,13 +15,14 @@
 #define ASM                 __asm__
 #define ASMV                __asm__ __volatile__
 
-#define __HEADER_ARCH(X)	        <arch/ARCH/X.h>
-#define __HEADER_MACH(X)	        <mach/MACH/X.h>
+#define __HEADER_ARCH(X)	    <arch/ARCH/X.h>
+#define __HEADER_MACH(X)	    <mach/MACH/X.h>
 #define __HEADER_APPLICATION_T(X)   <../app/X##_traits.h>
 #define __HEADER_APPLICATION(X)     __HEADER_APPLICATION_T(X)
 
 //============================================================================
-// ARCHITECTURE AND MACHINE SELECTION
+// ARCHITECTURE, MACHINE, AND APPLICATION SELECTION
+// This section is generated automatically from makedefs
 //============================================================================
 #define ARCH xxx
 #define __ARCH_TRAITS_H	        __HEADER_ARCH(traits)
@@ -37,8 +38,7 @@
 //============================================================================
 #include <system/types.h>
 #include <system/meta.h>
-#include __HEADER_MACH(config)
-#include <traits.h>
+#include __APPLICATION_TRAITS_H
 #include <system/info.h>
 
 //============================================================================

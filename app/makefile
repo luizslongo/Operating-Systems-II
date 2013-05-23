@@ -6,7 +6,7 @@ all: install
 
 $(APPLICATION):	$(APPLICATION).o $(LIB)/*
 		$(ALD) $(ALDFLAGS) -o $@ $(APPLICATION).o
-		
+
 $(APPLICATION).o: $(APPLICATION).cc $(SRC)
 		$(ACC) $(ACCFLAGS) -o $@ $<
 

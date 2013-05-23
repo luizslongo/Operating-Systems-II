@@ -8,15 +8,15 @@ PC_RTC::Date PC_RTC::date()
 {
     unsigned int tmp = reg(SECONDS);
     Date date(reg(YEAR), reg(MONTH), reg(DAY), 
-	      reg(HOURS), reg(MINUTES), tmp);
+              reg(HOURS), reg(MINUTES), tmp);
 
     if(tmp != reg(SECONDS)) // RTC update in between?
-	date = Date(reg(YEAR), reg(MONTH), reg(DAY), 
-		    reg(HOURS), reg(MINUTES), reg(SECONDS));
+        date = Date(reg(YEAR), reg(MONTH), reg(DAY), 
+        	    reg(HOURS), reg(MINUTES), reg(SECONDS));
 
     date.adjust_year(1900);
     if(date.year() < EPOCH_YEAR)
-	date.adjust_year(100);
+        date.adjust_year(100);
 
     db<RTC>(TRC) << "RTC::date() => " << date << "\n";
 

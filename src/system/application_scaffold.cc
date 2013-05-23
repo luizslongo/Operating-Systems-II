@@ -10,6 +10,6 @@ OStream cout;
 OStream cerr;
 
 // Application class attributes
-Heap Application::_heap[Traits<Machine>::N_HEAPS];
+Heap Application::_heap;
 
 __END_SYS

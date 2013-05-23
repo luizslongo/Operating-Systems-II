@@ -17,11 +17,10 @@ class Thread
 
 protected:
     static const bool preemptive = Traits<Thread>::preemptive;
-    static const bool multicore = Traits<Thread>::multicore;
     static const bool reboot = Traits<System>::reboot;
 
     static const unsigned int QUANTUM = Traits<Thread>::QUANTUM;
-    static const unsigned int STACK_SIZE = Traits<Machine>::APPLICATION_STACK_SIZE;
+    static const unsigned int STACK_SIZE = Traits<Application>::STACK_SIZE;
 
     typedef CPU::Log_Addr Log_Addr;
     typedef CPU::Context Context;
@@ -32,7 +31,6 @@ public:
         READY,
         RUNNING,
         SUSPENDED,
-        WAITING,
         FINISHING
     };
 
@@ -134,17 +132,9 @@ protected:
 
     static Thread * volatile running() { return _running; }
 
-    static void lock() {
-        CPU::int_disable();
-        if(multicore)
-            _lock.acquire();
-    }
+    static void lock() { CPU::int_disable(); }
 
-    static void unlock() {
-        if(multicore)
-            _lock.release();
-        CPU::int_enable();
-    }
+    static void unlock() { CPU::int_enable(); }
 
     static void reschedule();
 
@@ -160,12 +150,8 @@ protected:
             db<Thread>(INF) << "next={" << next << ","
                     		<< *next->_context << "}\n";
 
-            if(multicore)
-                _lock.release();
             CPU::switch_context(&prev->_context, next->_context);
-        } else
-            if(multicore)
-                _lock.release();
+        }
 
         CPU::int_enable();
     }

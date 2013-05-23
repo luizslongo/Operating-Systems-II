@@ -8,7 +8,5 @@ all:		$(LIBSYS)
 
 $(LIBSYS):	$(LIBSYS)($(OBJS))	
 
-test:		
-
 clean:
 		$(CLEAN) *.o

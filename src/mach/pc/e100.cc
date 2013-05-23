@@ -14,11 +14,11 @@ void E100::int_handler(unsigned int interrupt)
     E100 * dev = get(interrupt);
 
     db<E100>(TRC) << "E100::int_handler(int=" << interrupt
-		  << ",dev=" << dev << ")\n";
+        	  << ",dev=" << dev << ")\n";
     if(!dev)
-	db<E100>(WRN) << "E100::int_handler: handler not found\n";
+        db<E100>(WRN) << "E100::int_handler: handler not found\n";
     else 
-	dev->handle_int();
+        dev->handle_int();
 }
 
 // Methods
@@ -28,15 +28,15 @@ E100::E100(unsigned int unit)
 
     // Share control
     if(unit >= UNITS) {
-	db<E100>(WRN) << "E100: requested unit (" << unit 
-		      << ") does not exist!\n";
-	return;
+        db<E100>(WRN) << "E100: requested unit (" << unit 
+        	      << ") does not exist!\n";
+        return;
     }
 
     // Share control
     if(_devices[unit].in_use) {
-	db<E100>(WRN) << "E100: device already in use!\n";
-	return;
+        db<E100>(WRN) << "E100: device already in use!\n";
+        return;
     }
 
     *this = *_devices[unit].device;
@@ -54,10 +54,10 @@ E100::~E100()
 }
 
 E100::E100(unsigned int unit, 
-	   Log_Addr io_mem, IO_Irq irq, DMA_Buffer * dma_buf)
+           Log_Addr io_mem, IO_Irq irq, DMA_Buffer * dma_buf)
 {
     db<E100>(TRC) << "E100(unit=" << unit << ",io=" << io_mem 
-		  << ",irq=" << irq << ",dma=" << dma_buf << ")\n";
+        	  << ",irq=" << irq << ",dma=" << dma_buf << ")\n";
 
     _unit = unit;
     _io_mem = io_mem;
@@ -212,7 +212,7 @@ void E100::reset()
 }
 
 int E100::send(const Address & dst, const Protocol & prot,
-	       const void * data, unsigned int size)
+               const void * data, unsigned int size)
 {
     // wait for a free TxCB
     while(!(_tx_ring[_tx_cur].status & cb_complete)) {
@@ -279,7 +279,7 @@ bool E100::verifyPendingInterrupts(void)
 }
 
 int E100::receive(Address * src, Protocol * prot,
-		  void * data, unsigned int size)
+        	  void * data, unsigned int size)
 {
     // wait until the RFD is filled up by the device
     while(!(_rx_ring[_rx_cur].status & cb_complete))
@@ -481,13 +481,13 @@ int E100::self_test()
 
     // Check results of self-test 
     if(dmadump->selftest.result != 0) {
-	db<E100>(WRN)  << "Self-test failed: result = " << dmadump->selftest.result << "\n";
-	return -1;
+        db<E100>(WRN)  << "Self-test failed: result = " << dmadump->selftest.result << "\n";
+        return -1;
     }
 
     if(dmadump->selftest.signature == 0) {
-	db<E100>(WRN)  << "Self-test failed: timed out\n";
-	return -1;
+        db<E100>(WRN)  << "Self-test failed: timed out\n";
+        return -1;
     }
 
     db<E100>(INF) << "YES, I'M HERE!\n";

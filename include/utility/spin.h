@@ -25,24 +25,24 @@ public:
     Spin(): _level(0), _owner(0) {}
 
     void acquire() {
-	int me = This_Thread::id();
+        int me = This_Thread::id();
 
-	while(CPU::cas(_owner, 0, me) != me);
-	_level++;
+        while(CPU::cas(_owner, 0, me) != me);
+        _level++;
 
-	db<Spin>(TRC) << "Spin::acquire[SPIN=" << this
-		      << ",ID=" << me
-		      << "]() => {owner=" << _owner 
-		      << ",level=" << _level << "}\n";
+        db<Spin>(TRC) << "Spin::acquire[SPIN=" << this
+        	      << ",ID=" << me
+        	      << "]() => {owner=" << _owner 
+        	      << ",level=" << _level << "}\n";
     }
 
     void release() {
     	if(--_level <= 0)
-	    _owner = 0;
+            _owner = 0;
 
-	db<Spin>(TRC) << "Spin::release[SPIN=" << this
-		      << "]() => {owner=" << _owner 
-		      << ",level=" << _level << "}\n";
+        db<Spin>(TRC) << "Spin::release[SPIN=" << this
+        	      << "]() => {owner=" << _owner 
+        	      << ",level=" << _level << "}\n";
     }
 
 private:

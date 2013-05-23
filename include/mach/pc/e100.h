@@ -269,7 +269,7 @@ public:
     };
 
     struct MACaddrCB: public Control {
-	MAC_Address iaaddr;
+        MAC_Address iaaddr;
     };
 
     // Transmit and Receive Descriptors (in the Receive Ring Buffer)
@@ -326,11 +326,11 @@ private:
     // Share control and interrupt dispatiching info
     struct Device
     {
-	E100 * device;
-	unsigned int interrupt;
-	bool in_use;
+        E100 * device;
+        unsigned int interrupt;
+        bool in_use;
     };
-	
+        
 public:
     typedef CPU::Log_Addr Log_Addr;
     typedef CPU::Phy_Addr Phy_Addr;
@@ -346,7 +346,7 @@ public:
  	     const void * data, unsigned int size);
 
     int receive(Address * src, Protocol * prot,
-		void * data, unsigned int size);
+        	void * data, unsigned int size);
 
     void reset();
 
@@ -396,28 +396,28 @@ private:
     }
 
     static inline unsigned char read8(const volatile void *addr) {
-	return *((volatile unsigned char*) addr);
+        return *((volatile unsigned char*) addr);
     };
 
     static inline void write8(unsigned char b, volatile void *addr) {
-	*((volatile unsigned char*) addr) = b;
+        *((volatile unsigned char*) addr) = b;
     };
 
     static inline unsigned short read16(const volatile void *addr) {
-	return *((volatile unsigned short*) addr);
+        return *((volatile unsigned short*) addr);
     };
 
     static inline void write16(unsigned short b, volatile void *addr) {
-	*((volatile unsigned short*) addr) = b;
+        *((volatile unsigned short*) addr) = b;
     };
 
     void i82559_configure(void);
 
     static E100 * get(unsigned int interrupt) {
-	for(unsigned int i = 0; i < UNITS; i++)
-	    if(_devices[i].interrupt == interrupt)
-		return _devices[i].device;
-	return 0;
+        for(unsigned int i = 0; i < UNITS; i++)
+            if(_devices[i].interrupt == interrupt)
+        	return _devices[i].device;
+        return 0;
     };
 
 private:

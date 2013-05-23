@@ -1,27 +1,44 @@
 #ifndef __pc_traits_h
 #define __pc_traits_h
 
+#include <system/config.h>
+
 __BEGIN_SYS
 
 class PC_Common;
 template <> struct Traits<PC_Common>: public Traits<void>
 {
-//     static const bool debugged = true;
+    static const bool debugged = Traits<void>::debugged;
 };
 
 template <> struct Traits<PC>: public Traits<PC_Common>
 {
     static const unsigned int MAX_CPUS = 8;
 
-    static const unsigned int N_HEAPS = 1;
+    // Boot Image
+    static const unsigned int BOOT_LENGTH_MIN   = 128;
+    static const unsigned int BOOT_LENGTH_MAX   = 512;
+    static const unsigned int BOOT_IMAGE_ADDR   = 0x00008000;
 
-    static const unsigned int BOOT_IMAGE_ADDR = 0x00008000;
+    // Physical Memory
+    static const unsigned int MEM_BASE  = 0x00000000;
+    static const unsigned int MEM_TOP   = 0x7f000000; // 2032 MB
 
-    static const unsigned int APPLICATION_STACK_SIZE = 16 * 1024;
-    static const unsigned int APPLICATION_HEAP_SIZE = 16 * 1024 * 1024;
+    // Logical Memory Map
+    static const unsigned int BOOT      = 0x00007c00;
+    static const unsigned int SETUP     = 0x00100000; // 1 MB
+    static const unsigned int INIT      = 0x00200000; // 2 MB
 
-    static const unsigned int SYSTEM_STACK_SIZE = 4096;
-    static const unsigned int SYSTEM_HEAP_SIZE = 128 * APPLICATION_STACK_SIZE;
+    static const unsigned int APP_LOW   = 0x00000000;
+    static const unsigned int APP_CODE  = 0x00000000;
+    static const unsigned int APP_DATA  = 0x00400000; // 4 MB
+    static const unsigned int APP_HIGH  = 0x0fffffff; // 256 MB
+
+    static const unsigned int PHY_MEM   = 0x80000000; // 2 GB
+    static const unsigned int IO_MEM    = 0xe0000000; // ???
+    static const unsigned int SYS       = 0xff400000; // 4 GB - 12 MB
+    static const unsigned int SYS_CODE  = 0xff700000;
+    static const unsigned int SYS_DATA  = 0xff740000;
 };
 
 template <> struct Traits<PC_PCI>: public Traits<PC_Common>
@@ -73,6 +90,7 @@ template <> struct Traits<PC_Display>: public Traits<PC_Common>
 
 template <> struct Traits<PC_Ethernet>: public Traits<PC_Common>
 {
+    static const bool enabled = false;
     typedef LIST<PCNet32> NICS;
 };
 

@@ -10,14 +10,12 @@ __BEGIN_SYS
 class Application
 {
 public:
-    static Heap * const heap(const Heap::Allocator_Type & t = Heap::BASE) {
-        return &_heap[t - Heap::BASE];
-    }
+    static Heap * const heap() { return &_heap; }
 
     static void init();
 
 private:
-    static Heap _heap[Traits<Machine>::N_HEAPS];
+    static Heap _heap;
 };
 
 __END_SYS

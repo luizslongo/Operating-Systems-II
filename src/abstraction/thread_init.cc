@@ -13,14 +13,9 @@ void Thread::init()
 
     db<Init, Thread>(TRC) << "Thread::init(entry=" << (void *) entry << ")\n";
 
-    Machine::multicore_barrier();
+    _running = new (kmalloc(sizeof(Thread))) Thread(entry, RUNNING, NORMAL);
 
-    if(Machine::cpu_id() == 0)
-        _running = new (kmalloc(sizeof(Thread))) Thread(entry, RUNNING, NORMAL);
-
-    Machine::multicore_barrier();
-
-    if((Machine::cpu_id() == 0) && preemptive)
+    if(preemptive)
         _timer = new (kmalloc(sizeof(Scheduler_Timer)))
                  Scheduler_Timer(QUANTUM, &reschedule);
 

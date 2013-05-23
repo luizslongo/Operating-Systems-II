@@ -36,25 +36,25 @@ public:
     // Control Register Format (8 bits)
     enum {
         SELECT_MASK	= 0xc0, // Select Counter (2 bits)
-        SC0		= 0x00, // counter 0
-        SC1		= 0x40, // counter 1
-        SC2		= 0x80, // counter 2
-        RB		= 0xc0, // read-back
+        SC0	    	= 0x00, // counter 0
+        SC1	    	= 0x40, // counter 1
+        SC2	    	= 0x80, // counter 2
+        RB	    	= 0xc0, // read-back
         RW_MASK		= 0x30, // Read/Write (2 bits)
         LATCH		= 0x00, // latch counter for reading
-        MSB		= 0x10, // read/write MSB only
-        LSB		= 0x20, // read/write LSB only
+        MSB	    	= 0x10, // read/write MSB only
+        LSB	    	= 0x20, // read/write LSB only
         LMSB		= 0x30,	// read/write LSB then MSB
         MODE_MASK	= 0x0e, // 3 bits
         IOTC		= 0x00, // Interrupt on Terminal Count
         HROS		= 0x02, // Hardware Retriggerable One-Shot
-        RG		= 0x04, // Rate generator
+        RG	    	= 0x04, // Rate generator
         CSSW		= 0x06, // Continuous Symmetrical Square Wave
-        STS		= 0x08, // Software Triggered Strobe
-        HTS		= 0x0a, // Hardware Triggered Strobe
+        STS	    	= 0x08, // Software Triggered Strobe
+        HTS	    	= 0x0a, // Hardware Triggered Strobe
         COUNT_MODE_MASK	= 0x01, // 1 bit
         BINARY		= 0x00, // Binary count
-        BCD		= 0x01, // BCD count
+        BCD		    = 0x01, // BCD count
         DEF_CTRL_C0	= SC0	| LMSB	| CSSW	| BINARY, // Counter 0 default
         DEF_CTRL_C1	= SC1	| MSB	| RG	| BINARY, // Counter 1 default
         DEF_CTRL_C2	= SC2	| LMSB	| IOTC	| BINARY  // Counter 2 default
@@ -81,11 +81,11 @@ public:
         Reg8 cnt, control;
         switch(channel) {
         case(1):
-	        cnt = CNT_1;
+                cnt = CNT_1;
         control = DEF_CTRL_C1;
         break;
         case(2):
-	        cnt = CNT_2;
+                cnt = CNT_2;
         control = DEF_CTRL_C2;
         break;
         default:
@@ -105,11 +105,11 @@ public:
         Reg8 cnt, control;
         switch(channel) {
         case(1):
-	        cnt = CNT_1;
+                cnt = CNT_1;
         control = SC1;
         break;
         case(2):
-	        cnt = CNT_2;
+                cnt = CNT_2;
         control = SC2;
         break;
         default:
@@ -134,11 +134,11 @@ public:
         Reg8 cnt, ctrl;
         switch(channel) {
         case(1):
-	        cnt = CNT_1;
+                cnt = CNT_1;
         ctrl = DEF_CTRL_C1;
         break;
         case(2):
-	        cnt = CNT_2;
+                cnt = CNT_2;
         ctrl = DEF_CTRL_C2;
         break;
         default:
@@ -169,14 +169,14 @@ public:
 
     // Port B (status/control)
     enum {
-        MEMORY_PARITY		= 0x80, // R/O
-        IO_CHECK		= 0x40, // R/O
-        I8253_OUT2		= 0x20, // R/O, i8253 CH 2 (speaker)
-        I8253_OUT1		= 0x10, // R/O, i8253 CH 1 (DRAM refresh)
-        IO_CHECK_ENABLE		= 0x08, // R/W
+        MEMORY_PARITY   		= 0x80, // R/O
+        IO_CHECK	    	    = 0x40, // R/O
+        I8253_OUT2  	    	= 0x20, // R/O, i8253 CH 2 (speaker)
+        I8253_OUT1       		= 0x10, // R/O, i8253 CH 1 (DRAM refresh)
+        IO_CHECK_ENABLE	    	= 0x08, // R/W
         MEMORY_PARITY_ENABLE	= 0x04, // R/W
-        SPEAKER			= 0x02, // R/W, speaker enable
-        I8253_GATE2		= 0x01  // R/W, i8253 CH 2 (speaker)
+        SPEAKER	    		    = 0x02, // R/W, speaker enable
+        I8253_GATE2	        	= 0x01  // R/W, i8253 CH 2 (speaker)
     };
 
 public:
@@ -224,8 +224,7 @@ public:
     static Hertz clock() { return CPU::bus_clock(); }
 
     static void config(int channel, Count count,
-                       bool interrupt = true, bool periodic = true)
-    { 
+                       bool interrupt = true, bool periodic = true) {
         APIC::config_timer(count, interrupt, periodic);
     }
 
@@ -249,7 +248,7 @@ public:
     };
 
 protected:
-    typedef IF<Traits<Thread>::multicore, APIC_Timer, i8253>::Result Engine;
+    typedef IF<Traits<Thread>::smp, APIC_Timer, i8253>::Result Engine;
     typedef Engine::Count Count;
 
     static const unsigned int CHANNELS = 2;
@@ -262,9 +261,9 @@ protected:
                  _handler(handler)
     {
         db<Timer>(TRC) << "Timer(f=" << frequency
-            << ",h=" << reinterpret_cast<void*>(handler)
-            << ",ch=" << channel
-            << ") => {count=" << _initial << "}\n";
+                       << ",h=" << reinterpret_cast<void*>(handler)
+                       << ",ch=" << channel
+                       << ") => {count=" << _initial << "}\n";
 
         for(unsigned int i = 0; i < Traits<Machine>::MAX_CPUS; i++)
             _current[i] = _initial;
@@ -284,9 +283,9 @@ public:
                  _handler(handler)
     {
         db<Timer>(TRC) << "Timer(f=" << frequency
-            << ",h=" << reinterpret_cast<void*>(handler)
-            << ",ch=" << channel
-            << ") => {count=" << _initial << "}\n";
+                       << ",h=" << reinterpret_cast<void*>(handler)
+                       << ",ch=" << channel
+                       << ") => {count=" << _initial << "}\n";
 
         if(_initial && (unsigned(channel) < CHANNELS) && !_channels[channel])
             _channels[channel] = this;
@@ -300,9 +299,9 @@ public:
 
     ~PC_Timer() {
         db<Timer>(TRC) << "~Timer(f=" << frequency()
-		           << ",h=" << reinterpret_cast<void*>(_handler)
-		           << ",ch=" << _channel
-		           << ") => {count=" << _initial << "}\n";
+        	               << ",h=" << reinterpret_cast<void*>(_handler)
+        	               << ",ch=" << _channel
+        	               << ") => {count=" << _initial << "}\n";
 
         _channels[_channel] = 0;
     }
@@ -314,8 +313,8 @@ public:
 
     int reset() {
         db<Timer>(TRC) << "Timer::reset() => {f=" << frequency()
-		           << ",h=" << reinterpret_cast<void*>(_handler)
-		           << ",count=" << _current[Machine::cpu_id()] << "}\n";
+        	               << ",h=" << reinterpret_cast<void*>(_handler)
+        	               << ",count=" << _current[Machine::cpu_id()] << "}\n";
 
         int percentage = _current[Machine::cpu_id()] * 100 / _initial;
         _current[Machine::cpu_id()] = _initial;

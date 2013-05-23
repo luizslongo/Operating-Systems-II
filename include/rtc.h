@@ -21,37 +21,37 @@ public:
     // Calendar date and time
     class Date {
     public:
-	Date() {}
-	Date(unsigned int Y, unsigned int M, unsigned int D,
-	     unsigned int h, unsigned int m, unsigned int s) 
-	    : _Y(Y), _M(M), _D(D), _h(h), _m(m), _s(s) {}
-	Date(const Second & seconds, unsigned long epoch_days = 0);
+        Date() {}
+        Date(unsigned int Y, unsigned int M, unsigned int D,
+             unsigned int h, unsigned int m, unsigned int s) 
+            : _Y(Y), _M(M), _D(D), _h(h), _m(m), _s(s) {}
+        Date(const Second & seconds, unsigned long epoch_days = 0);
  
-	operator Second() const { return to_offset(); }
-	Second to_offset(unsigned long epoch_days = 0) const;
+        operator Second() const { return to_offset(); }
+        Second to_offset(unsigned long epoch_days = 0) const;
 
-	unsigned int year() const { return _Y; };
-	unsigned int month() const { return _M; };
-	unsigned int day() const { return _D; };
-	unsigned int hour() const { return _h; };
-	unsigned int minute() const { return _m; };
-	unsigned int second() const { return _s; };
+        unsigned int year() const { return _Y; };
+        unsigned int month() const { return _M; };
+        unsigned int day() const { return _D; };
+        unsigned int hour() const { return _h; };
+        unsigned int minute() const { return _m; };
+        unsigned int second() const { return _s; };
 
-	void adjust_year(int y) { _Y += y; };
+        void adjust_year(int y) { _Y += y; };
 
-	friend Debug & operator << (Debug & db, const Date & d) {
-	    db << "{" << d._Y << "/" << d._M << "/" << d._D << " "
-	       << d._h << ":" << d._m << ":" << d._s << "}";
-	    return db;
-	}
+        friend Debug & operator << (Debug & db, const Date & d) {
+            db << "{" << d._Y << "/" << d._M << "/" << d._D << " "
+               << d._h << ":" << d._m << ":" << d._s << "}";
+            return db;
+        }
 
     private:
-	unsigned int _Y;
-	unsigned int _M;
-	unsigned int _D;
-	unsigned int _h;
-	unsigned int _m;
-	unsigned int _s;
+        unsigned int _Y;
+        unsigned int _M;
+        unsigned int _D;
+        unsigned int _h;
+        unsigned int _m;
+        unsigned int _s;
     };
 };
 

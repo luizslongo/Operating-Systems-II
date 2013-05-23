@@ -18,7 +18,5 @@ endif
 		$(INSTALL) $<.tmp $(IMG)/$<
 		$(CLEAN) $<.tmp
 
-test:
-
 clean:
 		$(CLEAN) *.o *_setup

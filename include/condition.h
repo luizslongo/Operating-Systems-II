@@ -12,34 +12,12 @@ __BEGIN_SYS
 class Condition: protected Synchronizer_Common
 {
 public:
-    Condition() {
-        db<Synchronizer>(TRC) << "Condition() => " << this << "\n";
-    }
+    Condition();
+    ~Condition();
 
-    ~Condition() {
-        db<Synchronizer>(TRC) << "~Condition(this=" << this << ")\n";
-    }
-
-    void wait() {
-        db<Synchronizer>(TRC) << "Condition::wait(this=" << this << ")\n";
-
-        begin_atomic();
-        sleep(); // implicit end_atomic()
-    }
-
-    void signal() {
-        db<Synchronizer>(TRC) << "Condition::signal(this=" << this << ")\n";
-
-        begin_atomic();
-        wakeup(); // implicit end_atomic()
-    }
-
-    void broadcast() {
-        db<Synchronizer>(TRC) << "Condition::broadcast(this=" << this << ")\n";
-
-        begin_atomic();
-        wakeup_all(); // implicit end_atomic()
-    }
+    void wait();
+    void signal();
+    void broadcast();
 };
 
 // This is an alternative implementation, which does impose ordering

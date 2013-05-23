@@ -38,6 +38,7 @@ template <typename T>
 inline Select_Debug<(Traits<T>::debugged && Traits<Debug>::error)> 
 db(Debug_Error l)
 {
+    kerr << "ERROR: ";
     return Select_Debug<(Traits<T>::debugged && Traits<Debug>::error)>(); 
 }
 
@@ -46,6 +47,7 @@ inline Select_Debug<((Traits<T1>::debugged || Traits<T2>::debugged)
         	     && Traits<Debug>::error)> 
 db(Debug_Error l)
 {
+    kerr << "ERROR: ";
     return Select_Debug<((Traits<T1>::debugged || Traits<T2>::debugged)
         		 && Traits<Debug>::error)>(); 
 }

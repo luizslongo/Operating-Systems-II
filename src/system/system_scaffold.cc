@@ -32,14 +32,6 @@ class First_Object
 public:
     First_Object() {
         Display::remap();
-
-        if(Traits<Thread>::multicore) {
-            System_Info<Machine> * si =
-                reinterpret_cast<System_Info<Machine> *>(
-                    Memory_Map<Machine>::SYS_INFO);
-
-            Machine::multicore_init(si->bm.n_cpus);
-        }
     }
 };
 

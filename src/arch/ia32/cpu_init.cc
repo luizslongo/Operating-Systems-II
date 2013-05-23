@@ -18,9 +18,9 @@ void IA32::init()
 
     // Initialize the MMU
     if(Traits<IA32_MMU>::enabled)
-	IA32_MMU::init();
+        IA32_MMU::init();
     else
-	db<Init, IA32>(WRN) << "MMU is disabled!\n";
+        db<Init, IA32>(WRN) << "MMU is disabled!\n";
 }
 
 __END_SYS

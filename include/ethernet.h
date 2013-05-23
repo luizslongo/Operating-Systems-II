@@ -36,69 +36,69 @@ public:
     // The Ethernet Frame (RFC 894)
     class Frame {
     public:
-	Frame(const Address & src, const Address & dst,
-	      const Protocol & prot): _dst(dst), _src(src), _prot(prot) { }
+        Frame(const Address & src, const Address & dst,
+              const Protocol & prot): _dst(dst), _src(src), _prot(prot) { }
 
-	Frame(const Address & src, const Address & dst,
-	      const Protocol & prot, const void * data, unsigned int size)
-	    : _dst(dst), _src(src), _prot(prot)
-	{
-	    memcpy(_data, data, size);
-	}
-	
-	friend Debug & operator << (Debug & db, const Frame & f) {
-	    db << "{" << Address(f._dst)
-	       << "," << Address(f._src)
-	       << "," << f._prot
-	       << "," << f._data << "}";
-	    return db;
-	}
-	
+        Frame(const Address & src, const Address & dst,
+              const Protocol & prot, const void * data, unsigned int size)
+            : _dst(dst), _src(src), _prot(prot)
+        {
+            memcpy(_data, data, size);
+        }
+        
+        friend Debug & operator << (Debug & db, const Frame & f) {
+            db << "{" << Address(f._dst)
+               << "," << Address(f._src)
+               << "," << f._prot
+               << "," << f._data << "}";
+            return db;
+        }
+        
     public:
-	Address _dst;
-	Address _src;
-	Protocol _prot;
-	PDU _data;
-	CRC _crc;
+        Address _dst;
+        Address _src;
+        Protocol _prot;
+        PDU _data;
+        CRC _crc;
     };
 
     // Meaningful statistics for Ethernet
     struct Statistics: public NIC_Common::Statistics {
-	Statistics() : rx_overruns(0), tx_overruns(0), frame_errors(0),
-		       carrier_errors(0), collisions(0) {}
+        Statistics() : rx_overruns(0), tx_overruns(0), frame_errors(0),
+        	       carrier_errors(0), collisions(0) {}
 
-	friend Debug & operator << (Debug & db, const Statistics & s) {
-	    db << "{rxp=" << s.rx_packets
-	       << ",rxb=" <<  s.rx_bytes
-	       << ",rxorun=" <<  s.rx_overruns
-	       << ",txp=" <<  s.tx_packets
-	       << ",txb=" <<  s.tx_bytes
-	       << ",txorun=" <<  s.tx_overruns
-	       << ",frm=" <<  s.frame_errors
-	       << ",car=" <<  s.carrier_errors
-	       << ",col=" <<  s.collisions
-	       << "}";
-	    return db;
-	}
-	
-	unsigned int rx_overruns;
-	unsigned int tx_overruns;
-	unsigned int frame_errors;
-	unsigned int carrier_errors;
-	unsigned int collisions;
+        friend Debug & operator << (Debug & db, const Statistics & s) {
+            db << "{rxp=" << s.rx_packets
+               << ",rxb=" <<  s.rx_bytes
+               << ",rxorun=" <<  s.rx_overruns
+               << ",txp=" <<  s.tx_packets
+               << ",txb=" <<  s.tx_bytes
+               << ",txorun=" <<  s.tx_overruns
+               << ",frm=" <<  s.frame_errors
+               << ",car=" <<  s.carrier_errors
+               << ",col=" <<  s.collisions
+               << "}";
+            return db;
+        }
+        
+        unsigned int rx_overruns;
+        unsigned int tx_overruns;
+        unsigned int frame_errors;
+        unsigned int carrier_errors;
+        unsigned int collisions;
     };
 
 public:
     void attach(Observer * obs, const Protocol & prot) {
-	_observed.attach(obs, prot);
+        _observed.attach(obs, prot);
     }
 
     void detach(Observer * obs, const Protocol & prot) {
-	_observed.detach(obs, prot);
+        _observed.detach(obs, prot);
     }
 
     void notify(const Protocol & prot) {
-	_observed.notify(prot);
+        _observed.notify(prot);
     }
 
 

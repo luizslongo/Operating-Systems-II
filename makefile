@@ -2,35 +2,55 @@
 
 include makedefs
 
-SUBDIRS := etc tools src app img
+SUBDIRS	:= etc tools src app img
 
-all: $(SUBDIRS)
+all: FORCE
+		$(foreach app,$(APPLICATIONS),$(MAKE) APPLICATION=$(app) $(PRECLEAN) all1;)
 
-$(SUBDIRS):	FORCE
+all1: $(SUBDIRS)
+
+$(SUBDIRS): FORCE
 		(cd $@ && $(MAKE))
 
 run: FORCE
+		$(foreach app,$(APPLICATIONS),$(MAKE) APPLICATION=$(app) $(PRECLEAN) run1;)
+
+run1: all1
 		(cd img && $(MAKE) run)
 
-runtest: test
-		(cd img && $(MAKE) runtest)
+debug: FORCE
+		$(foreach app,$(APPLICATIONS),$(MAKE) GDB=1 APPLICATION=$(app) $(PRECLEAN) all1 debug1;)
 
-test: $(SUBDIRS)
-		(cd src && $(MAKETEST))
-		(cd img && $(MAKETEST))
+debug1: FORCE
+		(cd img && $(MAKE) debug)
+
+TESTS := $(subst .cc,,$(shell find $(SRC) -name \*_test.cc -printf "%f\n"))
+TEST_SORUCES := $(shell find $(SRC) -name \*_test.cc -printf "%p\n")
+test: $(subst .cc,_traits.h,$(TEST_SORUCES))
+		$(INSTALL) $(TEST_SORUCES) $(APP)
+		$(INSTALL) $(subst .cc,_traits.h,$(TEST_SORUCES)) $(APP)
+		$(foreach tst,$(TESTS),$(MAKE) APPLICATION=$(tst) clean1 run1;)
+		$(foreach tst,$(TESTS),$(CLEAN) $(APP)/$(tst)*;)
 
 clean: FORCE
+		$(MAKE) APPLICATION=$(word 1,$(APPLICATIONS)) clean1
+
+clean1: FORCE
+		(cd etc && $(MAKECLEAN))
+		(cd app && $(MAKECLEAN))
+		(cd img && $(MAKECLEAN))
 		(cd src && $(MAKECLEAN))
 		find $(LIB) -maxdepth 1 -type f -exec $(CLEAN) {} \;
-
-veryclean:
-		make MAKE:="$(MAKECLEAN)" $(SUBDIRS)
+		
+veryclean: clean
+		(cd tools && $(MAKECLEAN))
 		find $(LIB) -maxdepth 1 -type f -exec $(CLEAN) {} \;
 		find $(BIN) -maxdepth 1 -type f -exec $(CLEAN) {} \;
 		find $(APP) -maxdepth 1 -type f -perm +111 -exec $(CLEAN) {} \;
 		find $(IMG) -name "*.img" -exec $(CLEAN) {} \;
 		find $(IMG) -name "*.out" -exec $(CLEAN) {} \;
 		find $(IMG) -maxdepth 1 -type f -perm +111 -exec $(CLEAN) {} \;
+		find $(TOP) -name "*_test_traits.h" -perm +111 -exec $(CLEAN) {} \;
 		find $(TOP) -name "*~" -exec $(CLEAN) {} \; 
 
 dist: veryclean

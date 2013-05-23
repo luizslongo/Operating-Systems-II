@@ -25,10 +25,10 @@ void Observed::notify()
     db<Observed>(TRC) << "Observed::notify()\n";
 
     for(Element * e = _observers.head(); e; e = e->next()) {
-	db<Observed>(INF) << "Observed::notify(this=" << this
-			  << ",obs=" << e->object() << ")\n";
-	
-	e->object()->update(this);
+        db<Observed>(INF) << "Observed::notify(this=" << this
+        		  << ",obs=" << e->object() << ")\n";
+        
+        e->object()->update(this);
     }
 } 
 
@@ -52,11 +52,11 @@ void Conditionally_Observed::notify(int c)
     db<Observed>(TRC) << "Observed::notify(cond=" << c << ")\n";
     
     for(Element * e = _observers.head(); e; e = e->next()) {
-	db<Observed>(INF) << "Observed::notify(this=" << this
-			  << ",obs=" << e->object() << ")\n";
-	
-	if(e->rank() == c)
-	    e->object()->update(this, c);
+        db<Observed>(INF) << "Observed::notify(this=" << this
+        		  << ",obs=" << e->object() << ")\n";
+        
+        if(e->rank() == c)
+            e->object()->update(this, c);
     }
 }
 

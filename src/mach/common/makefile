@@ -8,7 +8,5 @@ all:		$(LIBMACH)
 
 $(LIBMACH):	$(LIBMACH)($(OBJS))	
 
-test:		
-
 clean:
 		$(CLEAN) *.o

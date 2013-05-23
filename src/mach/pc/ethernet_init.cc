@@ -9,7 +9,7 @@ inline static void call_init()
 {
     typedef typename Traits<PC_Ethernet>::NICS::template Get<unit>::Result NIC;
     if(Traits<NIC>::enabled)
-	NIC::init(unit);
+        NIC::init(unit);
     call_init<unit + 1>();
 };
 

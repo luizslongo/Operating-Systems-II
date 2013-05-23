@@ -3,7 +3,7 @@
 #include <utility/ostream.h>
 #include <mmu.h>
 
-using namespace System;
+__USING_SYS
 
 int main()
 {

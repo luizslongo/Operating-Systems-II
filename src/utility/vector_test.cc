@@ -21,53 +21,53 @@ int main()
     Vector<int, N>::Element * e[N];
     cout << "Inserting the following integers into the vector ";
     for(int i = 0; i < N; i++) {
-	o[i] = i;
-	e[i] = new Vector<int, N>::Element(&o[i]);
-	v.insert(e[i], i);
-	cout << "[" << i << "]=" << i;
-	if(i != N - 1)
-	    cout << ", ";
+        o[i] = i;
+        e[i] = new Vector<int, N>::Element(&o[i]);
+        v.insert(e[i], i);
+        cout << "[" << i << "]=" << i;
+        if(i != N - 1)
+            cout << ", ";
     }
     cout << "\n";
 
     cout << "The vector has now " << v.size() << " elements:\n";
     for(int i = 0; i < N; i++) {
-	cout << "[" << i << "]=" << *v.get(i)->object();
-	if(i != N - 1)
-	    cout << ", ";
+        cout << "[" << i << "]=" << *v.get(i)->object();
+        if(i != N - 1)
+            cout << ", ";
     }
     cout << "\n";
 
     for(int i = 0; i < N; i++)
-	(*v.get(i)->object())++;
+        (*v.get(i)->object())++;
     cout << "The vector's elements were incremented and are now:\n";
     for(int i = 0; i < N; i++) {
-	cout << "[" << i << "]=" << *v.get(i)->object();
-	if(i != N - 1)
-	    cout << ", ";
+        cout << "[" << i << "]=" << *v.get(i)->object();
+        if(i != N - 1)
+            cout << ", ";
     }
     cout << "\n";
 
     cout << "Removing the element whose value is " << o[N/2] << " => " 
-	 << *v.remove(&o[N/2])->object() << "\n";
+         << *v.remove(&o[N/2])->object() << "\n";
     cout << "Removing the second element => " << *v.remove(1)->object()
-	 << "\n";
+         << "\n";
     cout << "Removing the element whose value is " << o[N/4] << " => " 
-	 << *v.remove(&o[N/4])->object() << "\n";
+         << *v.remove(&o[N/4])->object() << "\n";
     cout << "Removing the last element => " << *v.remove(N - 1)->object()
-	 << "\n";
+         << "\n";
     cout << "Trying to remove an element that is not on the vector => " 
-	 << v.remove(&o[N/2]) << "\n";
+         << v.remove(&o[N/2]) << "\n";
     cout << "Removing all remaining elements => ";
     for(int i = 0; i < N; i++) {
-	cout << *v.remove(i)->object();
-	if(i != N - 1)
-	    cout << ", ";
+        cout << *v.remove(i)->object();
+        if(i != N - 1)
+            cout << ", ";
     }
     cout << "\n";
     cout << "The vector has now " << v.size() << " elements\n";
     for(int i = 0; i < N; i++)
-	delete e[i];
+        delete e[i];
 
     cout << "\nDone!\n";
 

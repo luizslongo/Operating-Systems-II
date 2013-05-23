@@ -10,27 +10,11 @@ __BEGIN_SYS
 class Mutex: protected Synchronizer_Common
 {
 public:
-    Mutex(): _locked(false) {
-        db<Synchronizer>(TRC) << "Mutex() => " << this << "\n";
-    }
+    Mutex();
+    ~Mutex();
 
-    ~Mutex() {
-        db<Synchronizer>(TRC) << "~Mutex(this=" << this << ")\n";
-    }
-
-    void lock() { 
-        db<Synchronizer>(TRC) << "Mutex::lock(this=" << this << ")\n";
-
-        while(tsl(_locked))
-            sleep(); // implicit end_atomic()
-    }
-
-    void unlock() { 
-        db<Synchronizer>(TRC) << "Mutex::unlock(this=" << this << ")\n";
-
-        _locked = false;
-        wakeup(); // implicit end_atomic()
-    }
+    void lock();
+    void unlock();
 
 private:
     volatile bool _locked;

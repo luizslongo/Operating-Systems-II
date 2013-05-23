@@ -11,7 +11,7 @@ PC_Timer * PC_Timer::_channels[CHANNELS];
 // Class methods
 void PC_Timer::int_handler(unsigned int i)
 {
-    if(Traits<Thread>::multicore) {
+    if(Traits<Thread>::smp) {
         if(_channels[ALARM])
             _channels[ALARM]->_handler();
     } else {

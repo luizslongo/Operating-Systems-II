@@ -20,40 +20,40 @@ public:
     template<unsigned int LENGTH>
     class Address {
     public:
-	Address() {}
+        Address() {}
 
-	Address(unsigned char a0, unsigned char a1 = 0,
-		unsigned char a2 = 0, unsigned char a3 = 0,
-		unsigned char a4 = 0, unsigned char a5 = 0,
-		unsigned char a6 = 0, unsigned char a7 = 0)
-	{
-	    _address[0] =  a0;
-	    if(LENGTH > 1) _address[1] = a1;
-	    if(LENGTH > 2) _address[2] = a2;
-	    if(LENGTH > 3) _address[3] = a3;
-	    if(LENGTH > 4) _address[4] = a4;
-	    if(LENGTH > 5) _address[5] = a5;
-	    if(LENGTH > 6) _address[6] = a6;
-	    if(LENGTH > 7) _address[7] = a7;
-	}
+        Address(unsigned char a0, unsigned char a1 = 0,
+        	unsigned char a2 = 0, unsigned char a3 = 0,
+        	unsigned char a4 = 0, unsigned char a5 = 0,
+        	unsigned char a6 = 0, unsigned char a7 = 0)
+        {
+            _address[0] =  a0;
+            if(LENGTH > 1) _address[1] = a1;
+            if(LENGTH > 2) _address[2] = a2;
+            if(LENGTH > 3) _address[3] = a3;
+            if(LENGTH > 4) _address[4] = a4;
+            if(LENGTH > 5) _address[5] = a5;
+            if(LENGTH > 6) _address[6] = a6;
+            if(LENGTH > 7) _address[7] = a7;
+        }
 
-	operator bool() { 
-		unsigned int i;
-		for (i=0;i<LENGTH;++i) {
-			if (_address[i] != 0)
-				return true;
-		}
-		return false;
-	}
+        operator bool() { 
+        	unsigned int i;
+        	for (i=0;i<LENGTH;++i) {
+        		if (_address[i] != 0)
+        			return true;
+        	}
+        	return false;
+        }
 
-	bool operator ==(const Address & a) const { 
-		unsigned int i;
-		for (i=0;i<LENGTH;++i) {
-			if (_address[i] != a._address[i])
-				return false;
-		}
-		return true;
-	}
+        bool operator ==(const Address & a) const { 
+        	unsigned int i;
+        	for (i=0;i<LENGTH;++i) {
+        		if (_address[i] != a._address[i])
+        			return false;
+        	}
+        	return true;
+        }
 
     friend OStream & operator << (OStream & cout, const Address & a) {
         cout << hex;
@@ -66,7 +66,7 @@ public:
         return cout;
     }
 
-	friend Debug & operator << (Debug & db, const Address & a) {
+        friend Debug & operator << (Debug & db, const Address & a) {
         db << hex;
         for(int i = LENGTH - 1; i >= 0; i--) {
             db << (unsigned int)(a._address[i]);
@@ -75,10 +75,10 @@ public:
         }
         db << dec;
         return db;
-	}
+        }
 
     protected:
-	unsigned char _address[LENGTH];
+        unsigned char _address[LENGTH];
     } __attribute__((packed,__may_alias__));
 
     // NIC protocol id
@@ -86,13 +86,13 @@ public:
 
     // NIC statistics
     struct Statistics {
-	Statistics(): rx_packets(0), tx_packets(0), 
-		      rx_bytes(0), tx_bytes(0) {}
+        Statistics(): rx_packets(0), tx_packets(0), 
+        	      rx_bytes(0), tx_bytes(0) {}
 
-	unsigned int rx_packets;
-	unsigned int tx_packets;
-	unsigned int rx_bytes;
-	unsigned int tx_bytes;
+        unsigned int rx_packets;
+        unsigned int tx_packets;
+        unsigned int rx_bytes;
+        unsigned int tx_bytes;
     };
 
     // Observer
@@ -103,86 +103,86 @@ public:
     template<typename T>
     class NIC_Base {
     private:
-	typedef typename T::Address Address;
-	typedef typename T::Protocol Protocol;
-	typedef typename T::Statistics Statistics;
+        typedef typename T::Address Address;
+        typedef typename T::Protocol Protocol;
+        typedef typename T::Statistics Statistics;
 
     public:
-	NIC_Base(unsigned int unit = 0) {}
+        NIC_Base(unsigned int unit = 0) {}
 
-	virtual ~NIC_Base() {}
+        virtual ~NIC_Base() {}
     
-	virtual int send(const Address & dst, const Protocol & prot, 
-			 const void * data, unsigned int size) = 0; 
+        virtual int send(const Address & dst, const Protocol & prot, 
+        		 const void * data, unsigned int size) = 0; 
 
-	virtual int receive(Address * src, Protocol * prot,
-			    void * data, unsigned int size) = 0;
+        virtual int receive(Address * src, Protocol * prot,
+        		    void * data, unsigned int size) = 0;
     
-	virtual void reset() = 0;
+        virtual void reset() = 0;
     
-	virtual unsigned int mtu() = 0;
+        virtual unsigned int mtu() = 0;
 
-	virtual const Address & address() = 0;
-	virtual void address(const Address &) = 0;
+        virtual const Address & address() = 0;
+        virtual void address(const Address &) = 0;
 
-	virtual const Statistics & statistics() = 0;
+        virtual const Statistics & statistics() = 0;
     };
 
     template<typename NIC, bool polymorphic>
     class NIC_Wrapper: public NIC_Base<NIC>, private NIC {
     private:
-	typedef typename NIC::Address Address;
-	typedef typename NIC::Protocol Protocol;
-	typedef typename NIC::Statistics Statistics;
+        typedef typename NIC::Address Address;
+        typedef typename NIC::Protocol Protocol;
+        typedef typename NIC::Statistics Statistics;
 
     public:
-	NIC_Wrapper(unsigned int unit = 0): NIC(unit) {}
+        NIC_Wrapper(unsigned int unit = 0): NIC(unit) {}
 
-	virtual ~NIC_Wrapper() {}
+        virtual ~NIC_Wrapper() {}
 
-	virtual int send(const Address & dst, const Protocol & prot, 
-			 const void * data, unsigned int size) {
-	    return NIC::send(dst, prot, data, size); 
-	}
+        virtual int send(const Address & dst, const Protocol & prot, 
+        		 const void * data, unsigned int size) {
+            return NIC::send(dst, prot, data, size); 
+        }
 
-	virtual int receive(Address * src, Protocol * prot,
-			    void * data, unsigned int size) {
-	    return NIC::receive(src, prot, data, size); 
-	}
+        virtual int receive(Address * src, Protocol * prot,
+        		    void * data, unsigned int size) {
+            return NIC::receive(src, prot, data, size); 
+        }
     
-	virtual void reset() { NIC::reset(); }
+        virtual void reset() { NIC::reset(); }
     
-	virtual unsigned int mtu() { return NIC::mtu(); }
+        virtual unsigned int mtu() { return NIC::mtu(); }
 
-	virtual const Address & address() { return NIC::address(); }
+        virtual const Address & address() { return NIC::address(); }
 
     virtual void address(const Address & address) { NIC::address(address); }
 
-	virtual const Statistics & statistics() { return NIC::statistics(); }
+        virtual const Statistics & statistics() { return NIC::statistics(); }
     };
 
     template<typename NIC>
     class NIC_Wrapper<NIC, false>: public NIC {
     public:
-	NIC_Wrapper(unsigned int unit = 0): NIC(unit) {}
+        NIC_Wrapper(unsigned int unit = 0): NIC(unit) {}
     };
 
     // Meta_NIC (efficiently handles polymorphic or monomorphic lists of NICs
     template<typename NICS>
     class Meta_NIC {
     private:
-	static const bool polymorphic = NICS::Polymorphic;
+        static const bool polymorphic = NICS::Polymorphic;
 
-	typedef typename NICS::template Get<0>::Result T;
+        typedef typename NICS::template Get<0>::Result T;
 
     public:
-	typedef	typename IF<polymorphic, NIC_Base<T>, T>::Result Base;
+        typedef	typename IF<polymorphic, NIC_Base<T>, T>::Result Base;
 
-	template<int Index>
-	struct Get { 
-	    typedef NIC_Wrapper<typename NICS::template Get<Index>::Result,
-				polymorphic> Result;
-	};
+        template<int Index>
+        struct Get { 
+            typedef NIC_Wrapper<typename NICS::template Get<Index>::Result,
+        			polymorphic> Result;
+        };
     };
 };
 

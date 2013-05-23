@@ -16,9 +16,9 @@ public:
     static Hertz frequency() { return IA32::clock(); }
 
     static Time_Stamp time_stamp() {
-	Time_Stamp ts;
-	ASMV("rdtsc" : "=A" (ts) : ); // must be volatile!
-	return ts;
+        Time_Stamp ts;
+        ASMV("rdtsc" : "=A" (ts) : ); // must be volatile!
+        return ts;
     }
 };
 

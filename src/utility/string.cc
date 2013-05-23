@@ -24,289 +24,289 @@ extern "C"
 
     int memcmp(const void * m1, const void * m2, size_t n)
     {
-	unsigned char *s1 = (unsigned char *) m1;
-	unsigned char *s2 = (unsigned char *) m2;
-	unsigned long *a1;
-	unsigned long *a2;
+        unsigned char *s1 = (unsigned char *) m1;
+        unsigned char *s2 = (unsigned char *) m2;
+        unsigned long *a1;
+        unsigned long *a2;
 
-	if(!((n) < (sizeof(long))) && !(((long) s1 & (sizeof(long) - 1))
-		| ((long) s2 & (sizeof(long) - 1)))) {
+        if(!((n) < (sizeof(long))) && !(((long) s1 & (sizeof(long) - 1))
+        	| ((long) s2 & (sizeof(long) - 1)))) {
 
-	    a1 = (unsigned long*) s1;
-	    a2 = (unsigned long*) s2;
-	    while(n >= (sizeof(long))) {
-		if(*a1 != *a2)
-		    break;
-		a1++;
-		a2++;
-		n -= (sizeof(long));
-	    }
+            a1 = (unsigned long*) s1;
+            a2 = (unsigned long*) s2;
+            while(n >= (sizeof(long))) {
+        	if(*a1 != *a2)
+        	    break;
+        	a1++;
+        	a2++;
+        	n -= (sizeof(long));
+            }
 
-	    s1 = (unsigned char*) a1;
-	    s2 = (unsigned char*) a2;
-	}
+            s1 = (unsigned char*) a1;
+            s2 = (unsigned char*) a2;
+        }
 
-	while(n--) {
-	    if(*s1 != *s2)
-		return *s1 - *s2;
-	    s1++;
-	    s2++;
-	}
+        while(n--) {
+            if(*s1 != *s2)
+        	return *s1 - *s2;
+            s1++;
+            s2++;
+        }
 
-	return 0;
+        return 0;
 
     }
 
     void * memcpy(void * dst0, const void * src0, size_t len0)
     {
-	char *dst = reinterpret_cast<char *> (dst0);
-	const char *src = reinterpret_cast<const char *> (src0);
-	long *aligned_dst;
-	const long *aligned_src;
-	size_t len = len0;
+        char *dst = reinterpret_cast<char *> (dst0);
+        const char *src = reinterpret_cast<const char *> (src0);
+        long *aligned_dst;
+        const long *aligned_src;
+        size_t len = len0;
 
-	if(!((len) < (sizeof(long) << 2)) && !(((long) src & (sizeof(long) - 1))
-		| ((long) dst & (sizeof(long) - 1)))) {
-	    aligned_dst = (long*) dst;
-	    aligned_src = (long*) src;
+        if(!((len) < (sizeof(long) << 2)) && !(((long) src & (sizeof(long) - 1))
+        	| ((long) dst & (sizeof(long) - 1)))) {
+            aligned_dst = (long*) dst;
+            aligned_src = (long*) src;
 
-	    while(len >= (sizeof(long) << 2)) {
-		*aligned_dst++ = *aligned_src++;
-		*aligned_dst++ = *aligned_src++;
-		*aligned_dst++ = *aligned_src++;
-		*aligned_dst++ = *aligned_src++;
-		len -= (sizeof(long) << 2);
-	    }
+            while(len >= (sizeof(long) << 2)) {
+        	*aligned_dst++ = *aligned_src++;
+        	*aligned_dst++ = *aligned_src++;
+        	*aligned_dst++ = *aligned_src++;
+        	*aligned_dst++ = *aligned_src++;
+        	len -= (sizeof(long) << 2);
+            }
 
-	    while(len >= (sizeof(long))) {
-		*aligned_dst++ = *aligned_src++;
-		len -= (sizeof(long));
-	    }
+            while(len >= (sizeof(long))) {
+        	*aligned_dst++ = *aligned_src++;
+        	len -= (sizeof(long));
+            }
 
-	    dst = (char*) aligned_dst;
-	    src = (char*) aligned_src;
-	}
+            dst = (char*) aligned_dst;
+            src = (char*) aligned_src;
+        }
 
-	while(len--)
-	    *dst++ = *src++;
+        while(len--)
+            *dst++ = *src++;
 
-	return dst0;
+        return dst0;
 
     }
 
     void * memchr(const void * src_void, int c, size_t length)
     {
-	const unsigned char *src = (const unsigned char *) src_void;
-	unsigned char d = c;
+        const unsigned char *src = (const unsigned char *) src_void;
+        unsigned char d = c;
 
-	unsigned long *asrc;
-	unsigned long mask;
-	size_t i;
+        unsigned long *asrc;
+        unsigned long mask;
+        size_t i;
 
-	while(((long) src & (sizeof(long) - 1))) {
-	    if(!length--)
-		return 0;
-	    if(*src == d)
-		return (void *) src;
-	    src++;
-	}
+        while(((long) src & (sizeof(long) - 1))) {
+            if(!length--)
+        	return 0;
+            if(*src == d)
+        	return (void *) src;
+            src++;
+        }
 
-	if(!((length) < (sizeof(long)))) {
-	    asrc = (unsigned long *) src;
-	    mask = d << 8 | d;
-	    mask = mask << 16 | mask;
-	    for(i = 32; i < (sizeof(long)) * 8; i <<= 1)
-		mask = (mask << i) | mask;
+        if(!((length) < (sizeof(long)))) {
+            asrc = (unsigned long *) src;
+            mask = d << 8 | d;
+            mask = mask << 16 | mask;
+            for(i = 32; i < (sizeof(long)) * 8; i <<= 1)
+        	mask = (mask << i) | mask;
 
-	    while(length >= (sizeof(long))) {
-		if(((((*asrc ^ mask) - 0x01010101) & ~(*asrc ^ mask) & 0x80808080)))
-		    break;
-		length -= (sizeof(long));
-		asrc++;
-	    }
+            while(length >= (sizeof(long))) {
+        	if(((((*asrc ^ mask) - 0x01010101) & ~(*asrc ^ mask) & 0x80808080)))
+        	    break;
+        	length -= (sizeof(long));
+        	asrc++;
+            }
 
-	    src = (unsigned char *) asrc;
-	}
+            src = (unsigned char *) asrc;
+        }
 
-	while(length--) {
-	    if(*src == d)
-		return (void *) src;
-	    src++;
-	}
+        while(length--) {
+            if(*src == d)
+        	return (void *) src;
+            src++;
+        }
 
-	return 0;
+        return 0;
     }
 
     void * memset(void * m, int c, size_t n)
     {
-	char *s = (char *) m;
+        char *s = (char *) m;
 
-	size_t i;
-	unsigned long buffer;
-	unsigned long *aligned_addr;
-	unsigned int d = c & 0xff;
+        size_t i;
+        unsigned long buffer;
+        unsigned long *aligned_addr;
+        unsigned int d = c & 0xff;
 
-	while(((long) s & ((sizeof(long)) - 1))) {
-	    if(n--)
-		*s++ = (char) c;
-	    else
-		return m;
-	}
+        while(((long) s & ((sizeof(long)) - 1))) {
+            if(n--)
+        	*s++ = (char) c;
+            else
+        	return m;
+        }
 
-	if(!((n) < (sizeof(long)))) {
+        if(!((n) < (sizeof(long)))) {
 
-	    aligned_addr = (unsigned long *) s;
+            aligned_addr = (unsigned long *) s;
 
-	    buffer = (d << 8) | d;
-	    buffer |= (buffer << 16);
-	    for(i = 32; i < (sizeof(long)) * 8; i <<= 1)
-		buffer = (buffer << i) | buffer;
+            buffer = (d << 8) | d;
+            buffer |= (buffer << 16);
+            for(i = 32; i < (sizeof(long)) * 8; i <<= 1)
+        	buffer = (buffer << i) | buffer;
 
-	    while(n >= (sizeof(long)) * 4) {
-		*aligned_addr++ = buffer;
-		*aligned_addr++ = buffer;
-		*aligned_addr++ = buffer;
-		*aligned_addr++ = buffer;
-		n -= 4 * (sizeof(long));
-	    }
+            while(n >= (sizeof(long)) * 4) {
+        	*aligned_addr++ = buffer;
+        	*aligned_addr++ = buffer;
+        	*aligned_addr++ = buffer;
+        	*aligned_addr++ = buffer;
+        	n -= 4 * (sizeof(long));
+            }
 
-	    while(n >= (sizeof(long))) {
-		*aligned_addr++ = buffer;
-		n -= (sizeof(long));
-	    }
+            while(n >= (sizeof(long))) {
+        	*aligned_addr++ = buffer;
+        	n -= (sizeof(long));
+            }
 
-	    s = (char*) aligned_addr;
-	}
+            s = (char*) aligned_addr;
+        }
 
-	while(n--)
-	    *s++ = (char) c;
+        while(n--)
+            *s++ = (char) c;
 
-	return m;
+        return m;
     }
 
     int strcmp(const char * s1, const char * s2)
     {
-	unsigned long *a1;
-	unsigned long *a2;
+        unsigned long *a1;
+        unsigned long *a2;
 
-	if(!(((long) s1 & (sizeof(long) - 1)) | ((long) s2 & (sizeof(long) - 1)))) {
+        if(!(((long) s1 & (sizeof(long) - 1)) | ((long) s2 & (sizeof(long) - 1)))) {
 
-	    a1 = (unsigned long*) s1;
-	    a2 = (unsigned long*) s2;
-	    while(*a1 == *a2) {
+            a1 = (unsigned long*) s1;
+            a2 = (unsigned long*) s2;
+            while(*a1 == *a2) {
 
-		if((((*a1) - 0x01010101) & ~(*a1) & 0x80808080))
-		    return 0;
+        	if((((*a1) - 0x01010101) & ~(*a1) & 0x80808080))
+        	    return 0;
 
-		a1++;
-		a2++;
-	    }
+        	a1++;
+        	a2++;
+            }
 
-	    s1 = (char*) a1;
-	    s2 = (char*) a2;
-	}
+            s1 = (char*) a1;
+            s2 = (char*) a2;
+        }
 
-	while(*s1 != '\0' && *s1 == *s2) {
-	    s1++;
-	    s2++;
-	}
-	return (*(unsigned char *) s1) - (*(unsigned char *) s2);
+        while(*s1 != '\0' && *s1 == *s2) {
+            s1++;
+            s2++;
+        }
+        return (*(unsigned char *) s1) - (*(unsigned char *) s2);
 
     }
 
     int strncmp(const char * s1, const char * s2, size_t n)
     {
-	unsigned long *a1;
-	unsigned long *a2;
+        unsigned long *a1;
+        unsigned long *a2;
 
-	if(n == 0)
-	    return 0;
+        if(n == 0)
+            return 0;
 
-	if(!(((long) s1 & (sizeof(long) - 1)) | ((long) s2 & (sizeof(long) - 1)))) {
+        if(!(((long) s1 & (sizeof(long) - 1)) | ((long) s2 & (sizeof(long) - 1)))) {
 
-	    a1 = (unsigned long*) s1;
-	    a2 = (unsigned long*) s2;
-	    while(n >= sizeof(long) && *a1 == *a2) {
-		n -= sizeof(long);
+            a1 = (unsigned long*) s1;
+            a2 = (unsigned long*) s2;
+            while(n >= sizeof(long) && *a1 == *a2) {
+        	n -= sizeof(long);
 
-		if(n == 0 || (((*a1) - 0x01010101) & ~(*a1) & 0x80808080))
-		    return 0;
+        	if(n == 0 || (((*a1) - 0x01010101) & ~(*a1) & 0x80808080))
+        	    return 0;
 
-		a1++;
-		a2++;
-	    }
+        	a1++;
+        	a2++;
+            }
 
-	    s1 = (char*) a1;
-	    s2 = (char*) a2;
-	}
+            s1 = (char*) a1;
+            s2 = (char*) a2;
+        }
 
-	while(n-- > 0 && *s1 == *s2) {
+        while(n-- > 0 && *s1 == *s2) {
 
-	    if(n == 0 || *s1 == '\0')
-		return 0;
-	    s1++;
-	    s2++;
-	}
-	return (*(unsigned char *) s1) - (*(unsigned char *) s2);
+            if(n == 0 || *s1 == '\0')
+        	return 0;
+            s1++;
+            s2++;
+        }
+        return (*(unsigned char *) s1) - (*(unsigned char *) s2);
     }
 
     char * strcpy(char *dst0, const char *src0)
     {
-	char *dst = dst0;
-	const char *src = src0;
-	long *aligned_dst;
-	const long *aligned_src;
+        char *dst = dst0;
+        const char *src = src0;
+        long *aligned_dst;
+        const long *aligned_src;
 
-	if(!(((long) src & (sizeof(long) - 1)) | ((long) dst & (sizeof(long) - 1)))) {
-	    aligned_dst = (long*) dst;
-	    aligned_src = (long*) src;
+        if(!(((long) src & (sizeof(long) - 1)) | ((long) dst & (sizeof(long) - 1)))) {
+            aligned_dst = (long*) dst;
+            aligned_src = (long*) src;
 
-	    while(!(((*aligned_src) - 0x01010101) & ~(*aligned_src) & 0x80808080)) {
-		*aligned_dst++ = *aligned_src++;
-	    }
+            while(!(((*aligned_src) - 0x01010101) & ~(*aligned_src) & 0x80808080)) {
+        	*aligned_dst++ = *aligned_src++;
+            }
 
-	    dst = (char*) aligned_dst;
-	    src = (char*) aligned_src;
-	}
+            dst = (char*) aligned_dst;
+            src = (char*) aligned_src;
+        }
 
-	while((*dst++ = *src++))
-	    ;
-	return dst0;
+        while((*dst++ = *src++))
+            ;
+        return dst0;
 
     }
 
     char * strncpy(char *dst0, const char *src0, size_t count)
     {
-	char *dst = dst0;
-	const char *src = src0;
-	long *aligned_dst;
-	const long *aligned_src;
+        char *dst = dst0;
+        const char *src = src0;
+        long *aligned_dst;
+        const long *aligned_src;
 
-	if(!(((long) src & (sizeof(long) - 1)) | ((long) dst & (sizeof(long) - 1)))
-		&& !((count) < sizeof(long))) {
-	    aligned_dst = (long*) dst;
-	    aligned_src = (long*) src;
+        if(!(((long) src & (sizeof(long) - 1)) | ((long) dst & (sizeof(long) - 1)))
+        	&& !((count) < sizeof(long))) {
+            aligned_dst = (long*) dst;
+            aligned_src = (long*) src;
 
-	    while(count >= sizeof(long int) && !(((*aligned_src) - 0x01010101)
-		    & ~(*aligned_src) & 0x80808080)) {
-		count -= sizeof(long int);
-		*aligned_dst++ = *aligned_src++;
-	    }
+            while(count >= sizeof(long int) && !(((*aligned_src) - 0x01010101)
+        	    & ~(*aligned_src) & 0x80808080)) {
+        	count -= sizeof(long int);
+        	*aligned_dst++ = *aligned_src++;
+            }
 
-	    dst = (char*) aligned_dst;
-	    src = (char*) aligned_src;
-	}
+            dst = (char*) aligned_dst;
+            src = (char*) aligned_src;
+        }
 
-	while(count > 0) {
-	    --count;
-	    if((*dst++ = *src++) == '\0')
-		break;
-	}
+        while(count > 0) {
+            --count;
+            if((*dst++ = *src++) == '\0')
+        	break;
+        }
 
-	while(count-- > 0)
-	    *dst++ = '\0';
+        while(count-- > 0)
+            *dst++ = '\0';
 
-	return dst0;
+        return dst0;
 
     }
 
@@ -318,77 +318,77 @@ extern "C"
 
     char * strchr(const char * s1, int i)
     {
-	const unsigned char *s = (const unsigned char *) s1;
-	unsigned char c = i;
+        const unsigned char *s = (const unsigned char *) s1;
+        unsigned char c = i;
 
-	unsigned long mask, j;
-	unsigned long *aligned_addr;
+        unsigned long mask, j;
+        unsigned long *aligned_addr;
 
-	if(!c) {
-	    while(((long) s & (sizeof(long) - 1))) {
-		if(!*s)
-		    return (char *) s;
-		s++;
-	    }
+        if(!c) {
+            while(((long) s & (sizeof(long) - 1))) {
+        	if(!*s)
+        	    return (char *) s;
+        	s++;
+            }
 
-	    aligned_addr = (unsigned long *) s;
-	    while(!(((*aligned_addr) - 0x01010101) & ~(*aligned_addr) & 0x80808080))
-		aligned_addr++;
+            aligned_addr = (unsigned long *) s;
+            while(!(((*aligned_addr) - 0x01010101) & ~(*aligned_addr) & 0x80808080))
+        	aligned_addr++;
 
-	    s = (const unsigned char *) aligned_addr;
-	    while(*s)
-		s++;
-	    return (char *) s;
-	}
+            s = (const unsigned char *) aligned_addr;
+            while(*s)
+        	s++;
+            return (char *) s;
+        }
 
-	while(((long) s & (sizeof(long) - 1))) {
-	    if(!*s)
-		return 0;
-	    if(*s == c)
-		return (char *) s;
-	    s++;
-	}
+        while(((long) s & (sizeof(long) - 1))) {
+            if(!*s)
+        	return 0;
+            if(*s == c)
+        	return (char *) s;
+            s++;
+        }
 
-	mask = c;
-	for(j = 8; j < (sizeof(long)) * 8; j <<= 1)
-	    mask = (mask << j) | mask;
+        mask = c;
+        for(j = 8; j < (sizeof(long)) * 8; j <<= 1)
+            mask = (mask << j) | mask;
 
-	aligned_addr = (unsigned long *) s;
-	while(!(((*aligned_addr) - 0x01010101) & ~(*aligned_addr) & 0x80808080)
-		&& !((((*aligned_addr ^ mask) - 0x01010101) & ~(*aligned_addr
-			^ mask) & 0x80808080)))
-	    aligned_addr++;
+        aligned_addr = (unsigned long *) s;
+        while(!(((*aligned_addr) - 0x01010101) & ~(*aligned_addr) & 0x80808080)
+        	&& !((((*aligned_addr ^ mask) - 0x01010101) & ~(*aligned_addr
+        		^ mask) & 0x80808080)))
+            aligned_addr++;
 
-	s = (unsigned char *) aligned_addr;
+        s = (unsigned char *) aligned_addr;
 
-	while(*s && *s != c)
-	    s++;
-	if(*s == c)
-	    return (char *) s;
-	return 0;
+        while(*s && *s != c)
+            s++;
+        if(*s == c)
+            return (char *) s;
+        return 0;
     }
 
     size_t strlen(const char * str)
     {
-	const char *start = str;
+        const char *start = str;
 
-	unsigned long *aligned_addr;
+        unsigned long *aligned_addr;
 
-	while(((long) str & ((sizeof(long)) - 1))) {
-	    if(!*str)
-		return str - start;
-	    str++;
-	}
+        while(((long) str & ((sizeof(long)) - 1))) {
+            if(!*str)
+        	return str - start;
+            str++;
+        }
 
-	aligned_addr = (unsigned long *) str;
-	while(!(((*aligned_addr) - 0x01010101) & ~(*aligned_addr) & 0x80808080))
-	    aligned_addr++;
+        aligned_addr = (unsigned long *) str;
+        while(!(((*aligned_addr) - 0x01010101) & ~(*aligned_addr) & 0x80808080))
+            aligned_addr++;
 
-	str = (char *) aligned_addr;
+        str = (char *) aligned_addr;
 
-	while(*str)
-	    str++;
-	return str - start;
+        while(*str)
+            str++;
+        return str - start;
     }
 
     char * strrchr (const char *s, int c)

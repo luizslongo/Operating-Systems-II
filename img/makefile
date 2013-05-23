@@ -15,6 +15,10 @@ test:		$(TEST_IMAGES)
 
 run:		$(OUTPUT)
 
+debug:		$(IMAGE)
+		$(EMULATOR) $(IMAGE) | $(TEE) $(OUTPUT) &
+		$(DEBUGGER) $(APP)/$(APPLICATION)
+
 runtest:	$(TEST_OUTPUTS)
 
 clean:

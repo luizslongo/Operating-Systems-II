@@ -11,19 +11,8 @@ class Init_System
 {
 public:
     Init_System() {
-	db<Init>(TRC) << "\nInit_System(CPU=" << Machine::cpu_id() << ")\n";
+	db<Init>(TRC) << "\nInit_System()\n";
 
-	Machine::multicore_barrier();
-
-	// Only the boot CPU runs INIT_SYSTEM fully
-	if(Machine::cpu_id() != 0) {
-	    // Wait until the boot CPU has initialized the machine
-	    Machine::multicore_barrier();
-	    // For IA-32, timer is CPU-local. What about other multicores?
-	    Timer::init();
-	    Machine::multicore_barrier();
-	    return;
-	}
 	
 	// Initialize the processor
 	db<Init>(INF) << "Initializing the CPU: \n";
@@ -40,17 +29,14 @@ public:
 	// Initialize System's heap
 	db<Init>(INF) << "Initializing system's heap \n";
 	System::heap()->
-	    free(MMU::alloc(MMU::pages(Traits<Machine>::SYSTEM_HEAP_SIZE)),
-		 Traits<Machine>::SYSTEM_HEAP_SIZE);
+	    free(MMU::alloc(MMU::pages(Traits<System>::HEAP_SIZE)),
+		 Traits<System>::HEAP_SIZE);
 	db<Init>(INF) << "done!\n\n";
 
 	// Initialize the machine
 	db<Init>(INF) << "Initializing the machine: \n";
 	Machine::init();
 	db<Init>(INF) << "done!\n\n";
-
-	Machine::multicore_barrier(); // signalizes "machine ready" to other CPUs
-	Machine::multicore_barrier(); // wait for them to fihish Machine::init()
 
 	// Initialize system abstractions 
 	db<Init>(INF) << "Initializing system abstractions: \n";

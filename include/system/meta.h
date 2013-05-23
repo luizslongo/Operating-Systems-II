@@ -68,7 +68,7 @@ struct EQUAL<T, T>
 
 // LIST metaprogram
 template <typename T1 = void, typename T2 = void, typename T3 = void,
-	  typename T4 = void, typename T5 = void, typename T6 = void>
+          typename T4 = void, typename T5 = void, typename T6 = void>
 class LIST
 {
 private:
@@ -90,7 +90,7 @@ public:
     template<typename Type>
     struct Count
     { enum { Result = EQUAL<Head, Type>::Result
-	     + Tail::template Count<Type>::Result }; };
+             + Tail::template Count<Type>::Result }; };
 
     enum { Polymorphic = (int(Length) != int(Count<Head>::Result)) };
 };

@@ -1,15 +1,28 @@
-#ifndef __system_traits_h
-#define __system_traits_h
+#ifndef __traits_h
+#define __traits_h
 
 #include <system/config.h>
 
 __BEGIN_SYS
 
-template <class Imp>
+// Global Configuration
+template <typename T>
 struct Traits
 {
     static const bool enabled = true;
     static const bool debugged = true;
+};
+
+template <> struct Traits<Build>
+{
+    enum {LIBRARY};
+    static const unsigned int MODE = LIBRARY;
+
+    enum {IA32};
+    static const unsigned int ARCH = IA32;
+
+    enum {PC};
+    static const unsigned int MACH = PC;
 };
 
 
@@ -34,11 +47,10 @@ template <> struct Traits<Spin>: public Traits<void>
 
 template <> struct Traits<Heap>: public Traits<void>
 {
-    static const bool debugged = false;
 };
 
 
-// System Parts
+// System Parts (mostly to fine control debbugin)
 template <> struct Traits<Boot>: public Traits<void>
 {
 };
@@ -48,15 +60,6 @@ template <> struct Traits<Setup>: public Traits<void>
 };
 
 template <> struct Traits<Init>: public Traits<void>
-{
-};
-
-template <> struct Traits<System>: public Traits<void>
-{
-    static const bool reboot = true;
-};
-
-template <> struct Traits<Application>: public Traits<void>
 {
 };
 
@@ -70,14 +73,43 @@ template <> struct Traits<Serial_Display>: public Traits<void>
     static const int TAB_SIZE = 8;
 };
 
+__END_SYS
+
+#include __ARCH_TRAITS_H
+#include __HEADER_MACH(config)
+#include __MACH_TRAITS_H
+
+__BEGIN_SYS
+
+template <> struct Traits<Application>: public Traits<void>
+{
+    static const unsigned int STACK_SIZE = 16 * 1024;
+    static const unsigned int HEAP_SIZE = 16 * 1024 * 1024;
+};
+
+template <> struct Traits<System>: public Traits<void>
+{
+    static const unsigned int mode = Traits<Build>::MODE;
+    static const bool multithread = true;
+    static const bool multitask = false && (mode != Traits<Build>::LIBRARY);
+    static const bool multicore = false && multithread;
+
+    static const bool reboot = true;
+
+    static const unsigned int STACK_SIZE = 4 * 1024;
+    static const unsigned int HEAP_SIZE = 128 * Traits<Application>::STACK_SIZE;
+};
+
 
 // Abstractions
 template <> struct Traits<Thread>: public Traits<void>
 {
-    static const bool multicore = false;
+    static const bool smp = Traits<System>::multicore;
+
     static const bool preemptive = true;
-    static const bool trace_idle = true;
     static const unsigned int QUANTUM = 10000; // us
+
+    static const bool trace_idle = false;
 };
 
 template <> struct Traits<Alarm>: public Traits<void>
@@ -87,6 +119,7 @@ template <> struct Traits<Alarm>: public Traits<void>
 
 template <> struct Traits<Synchronizer>: public Traits<void>
 {
+    static const bool enabled = Traits<System>::multithread;
 };
 
 __END_SYS
