@@ -108,7 +108,7 @@ template <> struct Traits<Thread>: public Traits<void>
 {
     static const bool smp = Traits<System>::multicore;
 
-    static const bool preemptive = true;
+    typedef Scheduling_Criteria::Priority Criterion;
     static const unsigned int QUANTUM = 10000; // us
 
     static const bool trace_idle = false;

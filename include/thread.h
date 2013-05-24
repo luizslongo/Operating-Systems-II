@@ -8,17 +8,20 @@
 #include <cpu.h>
 #include <machine.h>
 #include <system.h>
+#include <scheduler.h>
 
 __BEGIN_SYS
 
 class Thread
 {
     friend class Init_First;
+    friend class Scheduler<Thread>;
     friend class Synchronizer_Common;
     friend class Alarm;
 
 protected:
-    static const bool preemptive = Traits<Thread>::preemptive;
+    static const bool preemptive = Traits<Thread>::Criterion::preemptive;
+    static const bool timed = Traits<Thread>::Criterion::timed;
     static const bool reboot = Traits<System>::reboot;
 
     static const unsigned int QUANTUM = Traits<Thread>::QUANTUM;
@@ -38,30 +41,29 @@ public:
     };
 
     // Thread Priority
-    typedef int Priority;
+    typedef Scheduling_Criteria::Priority Priority;
+
+    // Thread Scheduling Criterion
+    typedef Traits<Thread>::Criterion Criterion;
     enum {
-        MAIN   = 0,
-        HIGH   = 1,
-        NORMAL = (unsigned(1) << (sizeof(int) * 8 - 1)) -4,
-        LOW    = (unsigned(1) << (sizeof(int) * 8 - 1)) -3,
-        IDLE   = (unsigned(1) << (sizeof(int) * 8 - 1)) -2
+        NORMAL = Criterion::NORMAL,
+        MAIN = Criterion::MAIN,
+        IDLE = Criterion::IDLE
     };
 
     // Thread Queue
-    typedef Ordered_Queue<Thread, Priority> Queue;
+    typedef Ordered_Queue<Thread, Criterion, false, Scheduler<Thread>::Element> Queue;
 
 public:
-    Thread(int (* entry)(), 
+    Thread(int (* entry)(),
            const State & state = READY,
-           const Priority & priority = NORMAL,
+           const Criterion & criterion = NORMAL,
            unsigned int stack_size = STACK_SIZE)
-    : _state(state), _link(this, priority)
-    {
+    : _state(state), _link(this, criterion) {
         lock();
 
         _stack = new (SYSTEM) char[stack_size];
-        _context = CPU::init_stack(_stack, stack_size,
-                                   &implicit_exit, entry);
+        _context = CPU::init_stack(_stack, stack_size, &implicit_exit, entry);
 
         common_constructor(entry, stack_size); // implicit unlock
     }
@@ -69,15 +71,13 @@ public:
     template<typename T1>
     Thread(int (* entry)(T1 a1), T1 a1,
            const State & state = READY,
-           const Priority & priority = NORMAL,
+           const Criterion & criterion = NORMAL,
            unsigned int stack_size = STACK_SIZE)
-    : _state(state), _link(this, priority)
-    {
+    : _state(state), _link(this, criterion) {
         lock();
 
         _stack = new (SYSTEM) char[stack_size];
-        _context = CPU::init_stack(_stack, stack_size,
-                                   &implicit_exit, entry, a1);
+        _context = CPU::init_stack(_stack, stack_size, &implicit_exit, entry, a1);
 
         common_constructor(entry, stack_size); // implicit unlock()
     }
@@ -85,15 +85,13 @@ public:
     template<typename T1, typename T2>
     Thread(int (* entry)(T1 a1, T2 a2), T1 a1, T2 a2,
            const State & state = READY,
-           const Priority & priority = NORMAL,
+           const Criterion & criterion = NORMAL,
            unsigned int stack_size = STACK_SIZE)
-    : _state(state), _link(this, priority)
-    {
+    : _state(state), _link(this, criterion) {
         lock();
 
         _stack = new (SYSTEM) char[stack_size];
-        _context = CPU::init_stack(_stack, stack_size,
-                                   &implicit_exit, entry, a1, a2);
+        _context = CPU::init_stack(_stack, stack_size, &implicit_exit, entry, a1, a2);
 
         common_constructor(entry, stack_size); // implicit unlock()
     }
@@ -101,15 +99,14 @@ public:
     template<typename T1, typename T2, typename T3>
     Thread(int (* entry)(T1 a1, T2 a2, T3 a3), T1 a1, T2 a2, T3 a3,
            const State & state = READY,
-           const Priority & priority = NORMAL,
+           const Criterion & criterion = NORMAL,
            unsigned int stack_size = STACK_SIZE)
-    : _state(state), _link(this, priority)
+    : _state(state), _link(this, criterion)
     {
         lock();
 
         _stack = new (SYSTEM) char[stack_size];
-        _context = CPU::init_stack(_stack, stack_size,
-                                   &implicit_exit, entry, a1, a2, a3);
+        _context = CPU::init_stack(_stack, stack_size, &implicit_exit, entry, a1, a2, a3);
 
         common_constructor(entry, stack_size); // implicit unlock()
     }
@@ -118,56 +115,66 @@ public:
 
     const volatile State & state() const { return _state; }
 
+    const volatile Criterion & criterion() const { return _link.rank(); }
     const volatile Priority  & priority() const { return _link.rank(); }
     void priority(const Priority & p);
 
     int join();
     void pass();
-    void suspend();
+    void suspend() { suspend(false); }
     void resume();
 
     static Thread * self() { return running(); }
     static void yield();
     static void exit(int status = 0);
 
-    static void init();
-
 protected:
     void common_constructor(Log_Addr entry, unsigned int stack_size);
 
-    static Thread * volatile running() { return _running; }
+    static Thread * volatile running() { return _scheduler.chosen(); }
+
+    Queue::Element * link() { return &_link; }
 
     static void lock() { CPU::int_disable(); }
-
     static void unlock() { CPU::int_enable(); }
 
+    void suspend(bool locked);
+
     static void sleep(Queue * q);
-
     static void wakeup(Queue * q);
-
     static void wakeup_all(Queue * q);
 
-    static void reschedule();
-
+    static void reschedule(bool preempt = preemptive);
+    static void time_slicer();
     static void implicit_exit();
 
-    static void dispatch(Thread * prev, Thread * next) {
-        if(prev != next) {
-            // prev->_context->save(); // can be used to force an update
-            db<Thread>(TRC) << "Thread::dispatch(prev=" << prev
-                			<< ",next=" << next << ")\n";
-            db<Thread>(INF) << "prev={" << prev << ","
-			                << *prev->_context << "}\n";
-            db<Thread>(INF) << "next={" << next << ","
-                    		<< *next->_context << "}\n";
+    static void dispatch(Thread * prev, Thread * next, bool charge = true) {
+        if(charge) {
+             if(timed)
+                 _timer->reset();
+         }
 
-            CPU::switch_context(&prev->_context, next->_context);
-        }
+         if(prev != next) {
+             if(prev->_state == RUNNING)
+                 prev->_state = READY;
+             next->_state = RUNNING;
 
-        CPU::int_enable();
+             db<Thread>(TRC) << "Thread::dispatch(prev=" << prev
+                             << ",next=" << next << ")\n";
+             db<Thread>(INF) << "prev={" << prev;
+             db<Thread>(INF) << ",ctx=" << *prev->_context << "}\n";
+             db<Thread>(INF) << "next={" << next;
+             db<Thread>(INF) << ",ctx=" << *next->_context << "}\n";
+
+             CPU::switch_context(&prev->_context, next->_context);
+         }
+
+         CPU::int_enable();
     }
 
     static int idle();
+
+    static void init();
 
 protected:
     char * _stack;
@@ -179,11 +186,7 @@ protected:
 
     static volatile unsigned int _thread_count;
     static Scheduler_Timer * _timer;
-
-private:
-    static Thread * volatile _running;
-    static Queue _ready;
-    static Queue _suspended;
+    static Scheduler<Thread> _scheduler;
 };
 
 
