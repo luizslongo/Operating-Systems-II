@@ -40,6 +40,7 @@ class System
 public:
     static System_Info<Machine> * const info();
 
+private:
     static void init();
 
 private:

@@ -14,6 +14,8 @@ __BEGIN_SYS
 
 class Alarm
 {
+    friend class System;
+
 private:
     typedef TSC::Hertz Hertz;
     typedef Timer::Tick Tick;  
@@ -32,11 +34,13 @@ public:
 
     static Hertz frequency() { return _timer->frequency(); }
 
+    static Microsecond elapsed() { return _elapsed * frequency(); }
+
     static void delay(const Microsecond & time);
 
+private:
     static int init();
 
-private:
     static Microsecond period() {
         return 1000000 / frequency();
     }

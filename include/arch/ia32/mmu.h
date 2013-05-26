@@ -14,6 +14,8 @@ __BEGIN_SYS
 
 class IA32_MMU: public MMU_Common<10, 10, 12>
 {
+    friend class IA32;
+
 private:
     typedef Grouping_List<Frame> List;
 
@@ -125,9 +127,8 @@ public:
         Chunk() {}
 
         Chunk(unsigned int bytes, Flags flags)
-            : _from(0), _to(pages(bytes)), _pts(page_tables(_to - _from)),
-              _flags(IA32_Flags(flags)), _pt(calloc(_pts))
-        {
+        : _from(0), _to(pages(bytes)), _pts(page_tables(_to - _from)),
+          _flags(IA32_Flags(flags)), _pt(calloc(_pts)) {
             if(flags & IA32_Flags::CT)
         	_pt->map_contiguous(_from, _to, _flags);
             else 
@@ -135,9 +136,8 @@ public:
         }
 
         Chunk(Phy_Addr phy_addr, unsigned int bytes, Flags flags)
-            : _from(0), _to(pages(bytes)), _pts(page_tables(_to - _from)),
-              _flags(IA32_Flags(flags)), _pt(calloc(_pts))
-        {
+        : _from(0), _to(pages(bytes)), _pts(page_tables(_to - _from)),
+          _flags(IA32_Flags(flags)), _pt(calloc(_pts)) {
             _pt->remap(phy_addr, _from, _to, flags);
         }
 
@@ -286,7 +286,7 @@ public:
         }
 
         DMA_Buffer(unsigned int s, const Log_Addr & d)
-            : Chunk(s, IA32_Flags::DMA) {
+        : Chunk(s, IA32_Flags::DMA) {
             Directory dir(current());
             _log_addr = dir.attach(*this);
             memcpy(_log_addr, d, s);
@@ -368,9 +368,9 @@ public:
         ASMV("invlpg %0" : : "m"(addr));
     }
 
+private:
     static void init();
 
-private:
     static Log_Addr phy2log(Phy_Addr phy) { return phy | PHY_MEM; }
 
 private:

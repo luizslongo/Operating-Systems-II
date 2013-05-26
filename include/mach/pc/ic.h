@@ -402,9 +402,10 @@ private:
 };
 
 // PC_IC uses i8259A on single-processor machines and the APIC timer on MPs
-class PC_IC: public IC_Common, 
-             private IF<Traits<Thread>::smp, APIC, i8259A>::Result
+class PC_IC: public IC_Common, private IF<Traits<Thread>::smp, APIC, i8259A>::Result
 {
+    friend class PC;
+
 private:
     typedef IF<Traits<Thread>::smp, APIC, i8259A>::Result Base;
 
@@ -454,9 +455,9 @@ public:
     using Base::irq2int;
     using Base::int2irq;
 
+private:
     static void init();
 
-private:
     static void int_dispatch();
 
     static void int_not(Interrupt_Id i);

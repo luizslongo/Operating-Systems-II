@@ -11,6 +11,8 @@ __BEGIN_SYS
 
 class PC_Ethernet: public Ethernet
 {
+    friend class PC;
+
 private:
     typedef Traits<PC_Ethernet>::NICS NICS;
     static const unsigned int UNITS = NICS::Length;
@@ -45,6 +47,7 @@ public:
 
     const Statistics & statistics() { return _dev->statistics(); }
 
+private:
     static void init();
 
 private:

@@ -64,8 +64,8 @@ namespace List_Elements
 
     private:
         const T * _object;
-         R _rank;
-   };
+        R _rank;
+    };
 
     // Simple List Element
     template <typename T>
@@ -115,7 +115,7 @@ namespace List_Elements
 
     private:
         const T * _object;
-         R _rank;
+        R _rank;
         Element * _next;
     };
 
@@ -198,7 +198,7 @@ namespace List_Elements
 
     private:
         const T * _object;
-         R _rank;
+        R _rank;
         Element * _prev;
         Element * _next;
     };
@@ -230,7 +230,7 @@ namespace List_Elements
 
     private:
         const T * _object;
-         R _rank;
+        R _rank;
         Element * _prev;
         Element * _next;
     };

@@ -21,7 +21,6 @@ class Thread
 
 protected:
     static const bool preemptive = Traits<Thread>::Criterion::preemptive;
-    static const bool timed = Traits<Thread>::Criterion::timed;
     static const bool reboot = Traits<System>::reboot;
 
     static const unsigned int QUANTUM = Traits<Thread>::QUANTUM;
@@ -33,6 +32,7 @@ protected:
 public:
     // Thread State
     enum State {
+        BEGINNING,
         RUNNING,
         READY,
         SUSPENDED,
@@ -115,7 +115,6 @@ public:
 
     const volatile State & state() const { return _state; }
 
-    const volatile Criterion & criterion() const { return _link.rank(); }
     const volatile Priority  & priority() const { return _link.rank(); }
     void priority(const Priority & p);
 
@@ -135,6 +134,8 @@ protected:
 
     Queue::Element * link() { return &_link; }
 
+    Criterion & criterion() { return const_cast<Criterion &>(_link.rank()); }
+
     static void lock() { CPU::int_disable(); }
     static void unlock() { CPU::int_enable(); }
 
@@ -150,14 +151,18 @@ protected:
 
     static void dispatch(Thread * prev, Thread * next, bool charge = true) {
         if(charge) {
-             if(timed)
-                 _timer->reset();
-         }
+            if(Criterion::timed)
+                _timer->reset();
+            if(Criterion::dynamic) {
+                prev->criterion().update_at_job_end();
+                next->criterion().update_at_job_begin();
+            }
+        }
 
-         if(prev != next) {
-             if(prev->_state == RUNNING)
-                 prev->_state = READY;
-             next->_state = RUNNING;
+        if(prev != next) {
+            if(prev->_state == RUNNING)
+                prev->_state = READY;
+            next->_state = RUNNING;
 
              db<Thread>(TRC) << "Thread::dispatch(prev=" << prev
                              << ",next=" << next << ")\n";
@@ -166,10 +171,10 @@ protected:
              db<Thread>(INF) << "next={" << next;
              db<Thread>(INF) << ",ctx=" << *next->_context << "}\n";
 
-             CPU::switch_context(&prev->_context, next->_context);
-         }
+            CPU::switch_context(&prev->_context, next->_context);
+        }
 
-         CPU::int_enable();
+        CPU::int_enable();
     }
 
     static int idle();

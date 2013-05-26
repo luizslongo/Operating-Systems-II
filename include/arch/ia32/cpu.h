@@ -9,6 +9,8 @@ __BEGIN_SYS
 
 class IA32: public CPU_Common
 {
+    friend class Init_System;
+
 public:
     // CPU Flags
     typedef Reg32 Flags;
@@ -100,9 +102,9 @@ public:
         SEG_FLT_CODE    = (SEG_PRE  | SEG_NOSYS	| SEG_CODE | SEG_ACC),
         SEG_FLT_DATA    = (SEG_PRE  | SEG_NOSYS	| SEG_RW   | SEG_ACC),
         SEG_APP_CODE    = (SEG_PRE  | SEG_NOSYS | SEG_DPL2 | SEG_DPL1 |
-        		   SEG_CODE | SEG_ACC),     // P, DPL=3, S, C, W, A
+        		   SEG_CODE | SEG_RW    | SEG_ACC),   // P, DPL=3, S, C, W, A
         SEG_APP_DATA    = (SEG_PRE  | SEG_NOSYS	| SEG_DPL2 | SEG_DPL1 |
-        		   SEG_RW   | SEG_ACC),    // P, DPL=3, S, W, A
+        		              SEG_RW    | SEG_ACC),   // P, DPL=3, S,    W, A
         SEG_SYS_CODE    = (SEG_PRE  | SEG_NOSYS	| SEG_CODE | SEG_ACC),
         SEG_SYS_DATA    = (SEG_PRE  | SEG_NOSYS	| SEG_RW   | SEG_ACC),
         SEG_IDT_ENTRY   = (SEG_PRE  | SEG_INT   | SEG_DPL1 | SEG_DPL2)
@@ -369,49 +371,21 @@ public:
     static Reg32 ntohl(Reg32 v)	{ return htonl(v); }
     static Reg16 ntohs(Reg16 v)	{ return htons(v); }
 
-        static void bts(volatile unsigned int *base, const int bit) {
-    ASMV("bts %1,%0" : "+m" (*base) : "r" (bit));
-    }
-    
-    static void btr(volatile unsigned int *base, const int bit) {
-    ASMV("btr %1,%0" : "+m" (*base) : "r" (bit));
-    }
-    
-    static int bsf(unsigned int & value) {
-      register unsigned int pos;
-      ASMV("bsf %1, %0"
-        : "=a"(pos)
-        : "m"(value)
-        : ); 
-      return pos;
-    }
-
-    static int bsr(unsigned int & value) {
-      register int pos = -1;
-        ASMV("bsr %1, %0"
-        : "=a"(pos)
-        : "m"(value)
-        : ); 
-        return pos;
-    }
-
-    static Context * init_stack(
-        Log_Addr stack, unsigned int size, void (* exit)(),
-        int (* entry)()) {
+    // The int left on the stack between thread's arguments and its context
+    // is due to the fact that the thread's function believes it's a normal
+    // function that will be invoked with a call, which pushes the return
+    // address on the stack
+    static Context * init_stack(Log_Addr stack, unsigned int size, void (* exit)(),
+                                int (* entry)()) {
         Log_Addr sp = stack + size;
         sp -= sizeof(int); *static_cast<int *>(sp) = Log_Addr(exit);
         sp -= sizeof(Context);
         return new (sp) Context(entry);
     }
 
-    // The int left on the stack between thread's arguments and its context
-    // is due to the fact that the thread's function believes it's a normal
-    // function that will be invoked with a call, which pushes the return
-    // address on the stack
     template<typename T1>
-    static Context * init_stack(
-        Log_Addr stack, unsigned int size, void (* exit)(),
-        int (* entry)(T1 a1), T1 a1) {
+    static Context * init_stack(Log_Addr stack, unsigned int size, void (* exit)(),
+                                int (* entry)(T1 a1), T1 a1) {
         Log_Addr sp = stack + size;
         sp -= sizeof(T1); *static_cast<T1 *>(sp) = a1;
         sp -= sizeof(int); *static_cast<int *>(sp) = Log_Addr(exit);
@@ -420,9 +394,8 @@ public:
     }
 
     template<typename T1, typename T2>
-    static Context * init_stack(
-        Log_Addr stack, unsigned int size, void (* exit)(),
-        int (* entry)(T1 a1, T2 a2), T1 a1, T2 a2) {
+    static Context * init_stack(Log_Addr stack, unsigned int size, void (* exit)(),
+                                int (* entry)(T1 a1, T2 a2), T1 a1, T2 a2) {
         Log_Addr sp = stack + size;
         sp -= sizeof(T2); *static_cast<T2 *>(sp) = a2;
         sp -= sizeof(T1); *static_cast<T1 *>(sp) = a1;
@@ -432,9 +405,8 @@ public:
     }
 
     template<typename T1, typename T2, typename T3>
-    static Context * init_stack(
-        Log_Addr stack, unsigned int size, void (* exit)(),
-        int (* entry)(T1 a1, T2 a2, T3 a3), T1 a1, T2 a2, T3 a3) {
+    static Context * init_stack(Log_Addr stack, unsigned int size, void (* exit)(),
+                                int (* entry)(T1 a1, T2 a2, T3 a3), T1 a1, T2 a2, T3 a3) {
         Log_Addr sp = stack + size;
         sp -= sizeof(T3); *static_cast<T3 *>(sp) = a3;
         sp -= sizeof(T2); *static_cast<T2 *>(sp) = a2;
@@ -444,6 +416,7 @@ public:
         return new (sp) Context(entry);
     }
 
+private:
     static void init();
 
     // IA32 specific methods
@@ -573,12 +546,12 @@ public:
     }
 
     static int bsf(Log_Addr addr) {
-      register unsigned int pos;
-      ASMV("bsf %1,%0" : "=a"(pos) : "m"(addr) : );
-      return pos;
+        register unsigned int pos;
+        ASMV("bsf %1,%0" : "=a"(pos) : "m"(addr) : );
+        return pos;
     }
     static int bsr(Log_Addr addr) {
-      register int pos = -1;
+        register int pos = -1;
         ASMV("bsr %1, %0" : "=a"(pos) : "m"(addr) : );
         return pos;
     }

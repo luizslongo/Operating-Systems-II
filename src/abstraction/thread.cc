@@ -52,6 +52,10 @@ Thread::~Thread()
                     << "," << *_context << "})\n";
 
     switch(_state) {
+    case BEGINNING:
+        _scheduler.resume(this);
+        _thread_count--;
+        break;
     case RUNNING:  // Self deleted itself!
         exit(-1);
         break;

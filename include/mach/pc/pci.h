@@ -10,6 +10,8 @@ __BEGIN_SYS
 
 class PC_PCI: public PCI_Common
 {
+    friend class PC;
+
 private:
     static const int MAX_BUS = Traits<PC_PCI>::MAX_BUS;
     static const int MAX_DEV_FN = Traits<PC_PCI>::MAX_DEV_FN;
@@ -54,9 +56,9 @@ public:
         cfg16(l.bus, l.dev_fn, STATUS, v);
     }
     
+private:
     static void init();
 
-private:
     static int cmd(Reg8 bus, Reg8 dev_fn, Reg8 addr) {
         return 0x80000000 | (bus << 16) | (dev_fn << 8) | (addr & ~3);
     }

@@ -84,7 +84,10 @@ namespace Scheduling_Criteria
 {
     class Priority;
     class FCFS;
-    class Round_Robin;
+    class RR;
+    class RM;
+    class DM;
+    class EDF;
 };
 
 // Abstractions	- Memory

@@ -10,9 +10,11 @@ __BEGIN_SYS
 
 class Chronometer
 {
+private:
+    typedef TSC::Time_Stamp Time_Stamp;
+
 public:
     typedef TSC::Hertz Hertz;
-    typedef TSC::Time_Stamp Time_Stamp;
     typedef RTC::Microsecond Microsecond;
 
 public:
@@ -25,6 +27,9 @@ public:
     void lap() { if(_start != 0) _stop = tsc.time_stamp(); }
     void stop() { lap(); }
 
+    Microsecond read() { return ticks() * 1000000 / frequency(); }
+
+private:
     Time_Stamp ticks() {
         if(_start == 0)
             return 0;
@@ -32,8 +37,6 @@ public:
             return tsc.time_stamp() - _start;
         return _stop - _start;
     }
-
-    Microsecond read() { return ticks() * 1000000 / frequency(); }
 
 private:
     TSC tsc;

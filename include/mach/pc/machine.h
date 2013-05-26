@@ -16,6 +16,8 @@ __BEGIN_SYS
 
 class PC: public Machine_Common
 {
+    friend class Init_System;
+
 private:
     static const bool smp = Traits<Thread>::smp;
     
@@ -57,6 +59,7 @@ public:
         }
     }
 
+private:
     static void init();
 
 private:

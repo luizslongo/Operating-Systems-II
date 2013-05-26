@@ -9,6 +9,8 @@ __BEGIN_SYS
 
 class PC_Scratchpad: public Scratchpad_Common
 {
+    friend class PC;
+
 private:
     static const unsigned int ADDRESS = Traits<PC_Scratchpad>::ADDRESS;
     static const unsigned int SIZE = Traits<PC_Scratchpad>::SIZE;
@@ -16,6 +18,7 @@ private:
 public:
     PC_Scratchpad() {}
 
+private:
     static void init();
 };
 

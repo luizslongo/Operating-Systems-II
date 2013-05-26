@@ -20,7 +20,7 @@ class Application
     friend void * ::malloc(size_t);
     friend void ::free(void *);
 
-public:
+private:
     static void init();
 
 private:

@@ -27,6 +27,7 @@ namespace Scheduling_Criteria
         };
 
         static const bool timed = false;
+        static const bool dynamic = false;
         static const bool preemptive = true;
 
     public:
@@ -34,12 +35,16 @@ namespace Scheduling_Criteria
 
         operator const volatile int() const volatile { return _priority; }
 
+        void update_at_job_release() {}
+        void update_at_job_begin() {}
+        void update_at_job_end() {}
+
     protected:
         volatile int _priority;
     };
 
     // Round-Robin
-    class Round_Robin: public Priority
+    class RR: public Priority
     {
     public:
         enum {
@@ -49,10 +54,11 @@ namespace Scheduling_Criteria
         };
 
         static const bool timed = true;
+        static const bool dynamic = false;
         static const bool preemptive = true;
 
     public:
-        Round_Robin(int p = NORMAL): Priority(p) {}
+        RR(int p = NORMAL): Priority(p) {}
     };
 
     // First-Come, First-Served (FIFO)
@@ -66,12 +72,91 @@ namespace Scheduling_Criteria
         };
 
         static const bool timed = false;
+        static const bool dynamic = false;
         static const bool preemptive = false;
 
     public:
         FCFS(int p = NORMAL) :
             Priority((p == IDLE) ? IDLE : TSC::time_stamp()) {}
     };
+
+    // Rate Monotonic
+    class RM: public Priority
+    {
+    public:
+        enum {
+            MAIN      = 0,
+            PERIODIC  = 1,
+            APERIODIC = (unsigned(1) << (sizeof(int) * 8 - 1)) -2,
+            NORMAL    = APERIODIC,
+            IDLE      = (unsigned(1) << (sizeof(int) * 8 - 1)) -1
+        };
+
+        static const bool timed = false;
+        static const bool dynamic = false;
+        static const bool preemptive = true;
+
+    public:
+        RM(int p): Priority(p), _deadline(0) {} // Aperiodic
+        RM(const RTC::Microsecond & d): Priority(PERIODIC), _deadline(d) {}
+
+    private:
+        RTC::Microsecond _deadline;
+    };
+
+     // Deadline Monotonic
+     class DM: public Priority
+     {
+     public:
+         enum {
+             MAIN      = 0,
+             PERIODIC  = 1,
+             APERIODIC = (unsigned(1) << (sizeof(int) * 8 - 1)) -2,
+             NORMAL    = APERIODIC,
+             IDLE      = (unsigned(1) << (sizeof(int) * 8 - 1)) -1
+         };
+
+         static const bool timed = false;
+         static const bool dynamic = false;
+         static const bool preemptive = true;
+
+     public:
+         DM(int p): Priority(p), _deadline(0) {} // Aperiodic
+         DM(const RTC::Microsecond & d): Priority(d), _deadline(d) {}
+
+     private:
+         RTC::Microsecond _deadline;
+     };
+
+      // Earliest Deadline First
+      class EDF: public Priority
+      {
+      public:
+          enum {
+              MAIN      = 0,
+              PERIODIC  = 1,
+              APERIODIC = (unsigned(1) << (sizeof(int) * 8 - 1)) -2,
+              NORMAL    = APERIODIC,
+              IDLE      = (unsigned(1) << (sizeof(int) * 8 - 1)) -1
+          };
+
+          static const bool timed = false;
+          static const bool dynamic = true;
+          static const bool preemptive = true;
+
+      public:
+          EDF(int p): Priority(p), _deadline(0) {} // Aperiodic
+          EDF(const RTC::Microsecond & d): Priority(d), _deadline(d) {}
+
+          void update_at_job_release();
+          void update_at_job_begin() {}
+          void update_at_job_end() {}
+
+      private:
+          RTC::Microsecond _deadline;
+
+          static volatile RTC::Microsecond _last_release;
+      };
 }
 
 

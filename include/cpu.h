@@ -10,6 +10,9 @@ __BEGIN_SYS
 class CPU_Common
 {	
 protected:
+    static const bool BIG_ENDIAN = (Traits<CPU>::ENDIANESS == Traits<CPU>::BIG);
+
+protected:
     CPU_Common() {}
 
 public:
@@ -93,6 +96,11 @@ public:
         }
         return old;
     }
+
+    static Reg32 htonl(Reg32 v) { return (BIG_ENDIAN) ? v : swap32(v); }
+    static Reg16 htons(Reg16 v) { return (BIG_ENDIAN) ? v : swap16(v); }
+    static Reg32 ntohl(Reg32 v) { return htonl(v); }
+    static Reg16 ntohs(Reg16 v) { return htons(v); }
 
 protected:
     static Reg32 swap32(Reg32 v) {
