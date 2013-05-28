@@ -41,7 +41,7 @@ private:
 
         void operator()() {
             if(Criterion::dynamic)
-                _thread->criterion().update_at_job_release();
+                _thread->criterion().update();
 
             Semaphore_Handler::operator()();
         }
@@ -131,10 +131,8 @@ private:
 };
 
 namespace Scheduling_Criteria {
-    void EDF::update_at_job_release() {
-        RTC::Microsecond now = Alarm::elapsed();
-        _priority = _deadline + (now - _last_release);
-        _last_release = now;
+    void EDF::update() {
+        _priority = _deadline + Alarm::elapsed();
     }
 };
 

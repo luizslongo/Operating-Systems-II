@@ -153,10 +153,6 @@ protected:
         if(charge) {
             if(Criterion::timed)
                 _timer->reset();
-            if(Criterion::dynamic) {
-                prev->criterion().update_at_job_end();
-                next->criterion().update_at_job_begin();
-            }
         }
 
         if(prev != next) {
