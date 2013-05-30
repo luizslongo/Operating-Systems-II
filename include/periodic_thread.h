@@ -131,8 +131,11 @@ private:
 };
 
 namespace Scheduling_Criteria {
+    EDF::EDF(const RTC::Microsecond & d)
+    : Priority(Alarm::ticks(d)), _deadline(Alarm::ticks(d)) {}
+
     void EDF::update() {
-        _priority = _deadline + Alarm::elapsed();
+        _priority = _deadline + Alarm::_elapsed;
     }
 };
 

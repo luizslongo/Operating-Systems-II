@@ -15,6 +15,7 @@ __BEGIN_SYS
 class Alarm
 {
     friend class System;
+    friend class Scheduling_Criteria::EDF;
 
 private:
     typedef TSC::Hertz Hertz;
@@ -33,8 +34,6 @@ public:
     ~Alarm();
 
     static Hertz frequency() { return _timer->frequency(); }
-
-    static Microsecond elapsed() { return _elapsed * frequency(); }
 
     static void delay(const Microsecond & time);
 

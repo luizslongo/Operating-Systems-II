@@ -25,21 +25,23 @@ Periodic_Thread * thread_a;
 Periodic_Thread * thread_b;
 Periodic_Thread * thread_c;
 
-inline void exec(char c, Alarm::Microsecond time = 0)
+inline void exec(char c, unsigned int time = 0) // in miliseconds
 {
-    Alarm::Microsecond elapsed = Alarm::elapsed() / 1000;
+    // Delay was not used here to prevent scheduling interference due to blocking
+    Chronometer::Microsecond elapsed = chrono.read() / 1000;
+
     cout << "\n" << elapsed << "\t" << c
-         << "\t[p(A)=" << thread_a->priority() / 1000
-         << ", p(B)=" << thread_b->priority() / 1000
-         << ", p(C)=" << thread_c->priority() / 1000 << "]";
+         << "\t[p(A)=" << thread_a->priority()
+         << ", p(B)=" << thread_b->priority()
+         << ", p(C)=" << thread_c->priority() << "]";
+
     if(time) {
-        // Delay was not used here to prevent scheduling interference due to blocking
-        for(Alarm::Microsecond end = elapsed + time, last = end; end > elapsed; elapsed = Alarm::elapsed() / 1000)
+        for(Chronometer::Microsecond end = elapsed + time, last = end; end > elapsed; elapsed = chrono.read() / 1000)
             if(last != elapsed) {
                 cout << "\n" << elapsed << "\t" << c
-                    << "\t[p(A)=" << thread_a->priority() / 1000
-                    << ", p(B)=" << thread_b->priority() / 1000
-                    << ", p(C)=" << thread_c->priority() / 1000 << "]";
+                    << "\t[p(A)=" << thread_a->priority()
+                    << ", p(B)=" << thread_b->priority()
+                    << ", p(C)=" << thread_c->priority() << "]";
                 last = elapsed;
             }
     }

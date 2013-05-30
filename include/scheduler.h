@@ -21,9 +21,9 @@ namespace Scheduling_Criteria
         enum {
             MAIN   = 0,
             HIGH   = 1,
-            NORMAL = (unsigned(1) << (sizeof(int) * 8 - 1)) -3,
-            LOW    = (unsigned(1) << (sizeof(int) * 8 - 1)) -2,
-            IDLE   = (unsigned(1) << (sizeof(int) * 8 - 1)) -1
+            NORMAL = (unsigned(1) << (sizeof(int) * 8 - 1)) - 3,
+            LOW    = (unsigned(1) << (sizeof(int) * 8 - 1)) - 2,
+            IDLE   = (unsigned(1) << (sizeof(int) * 8 - 1)) - 1
         };
 
         static const bool timed = false;
@@ -48,7 +48,7 @@ namespace Scheduling_Criteria
         enum {
             MAIN   = 0,
             NORMAL = 1,
-            IDLE   = (unsigned(1) << (sizeof(int) * 8 - 1)) -1
+            IDLE   = (unsigned(1) << (sizeof(int) * 8 - 1)) - 1
         };
 
         static const bool timed = true;
@@ -66,7 +66,7 @@ namespace Scheduling_Criteria
         enum {
             MAIN   = 0,
             NORMAL = 1,
-            IDLE   = (unsigned(1) << (sizeof(int) * 8 - 1)) -1
+            IDLE   = (unsigned(1) << (sizeof(int) * 8 - 1)) - 1
         };
 
         static const bool timed = false;
@@ -85,9 +85,9 @@ namespace Scheduling_Criteria
         enum {
             MAIN      = 0,
             PERIODIC  = 1,
-            APERIODIC = (unsigned(1) << (sizeof(int) * 8 - 1)) -2,
+            APERIODIC = (unsigned(1) << (sizeof(int) * 8 - 1)) - 2,
             NORMAL    = APERIODIC,
-            IDLE      = (unsigned(1) << (sizeof(int) * 8 - 1)) -1
+            IDLE      = (unsigned(1) << (sizeof(int) * 8 - 1)) - 1
         };
 
         static const bool timed = false;
@@ -106,9 +106,9 @@ namespace Scheduling_Criteria
          enum {
              MAIN      = 0,
              PERIODIC  = 1,
-             APERIODIC = (unsigned(1) << (sizeof(int) * 8 - 1)) -2,
+             APERIODIC = (unsigned(1) << (sizeof(int) * 8 - 1)) - 2,
              NORMAL    = APERIODIC,
-             IDLE      = (unsigned(1) << (sizeof(int) * 8 - 1)) -1
+             IDLE      = (unsigned(1) << (sizeof(int) * 8 - 1)) - 1
          };
 
          static const bool timed = false;
@@ -130,9 +130,9 @@ namespace Scheduling_Criteria
           enum {
               MAIN      = 0,
               PERIODIC  = 1,
-              APERIODIC = (unsigned(1) << (sizeof(int) * 8 - 1)) -2,
+              APERIODIC = (unsigned(1) << (sizeof(int) * 8 - 1)) - 2,
               NORMAL    = APERIODIC,
-              IDLE      = (unsigned(1) << (sizeof(int) * 8 - 1)) -1
+              IDLE      = (unsigned(1) << (sizeof(int) * 8 - 1)) - 1
           };
 
           static const bool timed = false;
@@ -141,9 +141,9 @@ namespace Scheduling_Criteria
 
       public:
           EDF(int p): Priority(p), _deadline(0) {} // Aperiodic
-          EDF(const RTC::Microsecond & d): Priority(d), _deadline(d) {}
+          EDF(const RTC::Microsecond & d); // Defined at Periodic_Thread
 
-          void update();
+          void update(); // Defined at Periodic_Thread
 
       private:
           RTC::Microsecond _deadline;
@@ -173,7 +173,7 @@ public:
     }
 
     Element * choose(Element * e) {
-        return Base::choose(e->object());
+        return Base::choose(e);
     }
 };
 
@@ -200,7 +200,12 @@ public:
     unsigned int schedulables() { return Base::size(); }
 
     T * volatile chosen() { 
-        return const_cast<T * volatile>(Base::chosen()->object());
+    	// If called before insert(), chosen will dereference a null pointer!
+    	// For threads, we this won't happen (see Thread::init()).
+    	// But if you are unsure about your new use of the scheduler,
+    	// please, pay the price of the extra "if" bellow.
+//    	return const_cast<T * volatile>((Base::chosen()) ? Base::chosen()->object() : 0);
+    	return const_cast<T * volatile>(Base::chosen()->object());
     }
 
     void insert(T * obj) {
@@ -227,6 +232,7 @@ public:
     void resume(T * obj) {
         db<Scheduler>(TRC) << "Scheduler[chosen=" << chosen()
                            << "]::resume(" << obj << ")\n";
+
         Base::insert(obj->link());
     }
 
@@ -246,6 +252,7 @@ public:
 
         T * obj = Base::choose_another()->object();
         db<Scheduler>(TRC) << obj << "\n";
+
         return obj;
     }
 
