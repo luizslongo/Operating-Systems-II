@@ -1,0 +1,36 @@
+// EPOS Task Abstraction Implementation
+
+#include <task.h>
+
+__BEGIN_SYS
+
+// Class attributes
+Task * Task::_master;
+
+
+// Methods
+Task::Task(const Segment & code, const Segment & data)
+: _as (new (SYSTEM) Address_Space), _cs(&code), _ds(&data)
+{
+    db<Task>(TRC) << "Task(cs=" << _cs << ",ds=" << _ds << ") => " << this << "\n";
+
+    _as->attach(*_cs);
+    _as->attach(*_ds);
+}
+
+
+Task::~Task()
+{
+    db<Task>(TRC) << "~Task(this=" << this << ")\n";
+
+    while(!_threads.empty())
+        delete _threads.remove()->object();
+}
+
+
+const Task * Task::self()
+{
+    return Thread::self()->_task;
+}
+
+__END_SYS

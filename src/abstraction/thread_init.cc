@@ -3,6 +3,7 @@
 #include <system.h>
 #include <thread.h>
 #include <alarm.h>
+#include <task.h>
 
 __BEGIN_SYS
 
@@ -23,8 +24,14 @@ void Thread::init()
 
     // Create the application's main thread
     // This must precede idle, thus avoiding implicit rescheduling
-    Thread * first = new (SYSTEM) Thread(entry, RUNNING, MAIN);
-    new (SYSTEM) Thread(&idle, READY, IDLE);
+    Thread * first;
+    if(multitask) {
+    	first = new (SYSTEM) Thread(*Task::_master, entry, RUNNING, MAIN);
+    	new (SYSTEM) Thread(*Task::_master, &idle, READY, IDLE);
+    } else {
+    	first = new (SYSTEM) Thread(entry, RUNNING, MAIN);
+    	new (SYSTEM) Thread(&idle, READY, IDLE);
+    }
 
     db<Init, Thread>(INF) << "Dispatching the first thread: " << first << "\n";
 

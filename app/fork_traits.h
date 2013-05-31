@@ -15,8 +15,8 @@ struct Traits
 
 template <> struct Traits<Build>
 {
-    enum {LIBRARY};
-    static const unsigned int MODE = LIBRARY;
+    enum {LIBRARY, BUILTIN};
+    static const unsigned int MODE = BUILTIN;
 
     enum {IA32};
     static const unsigned int ARCH = IA32;
@@ -91,7 +91,7 @@ template <> struct Traits<System>: public Traits<void>
 {
     static const unsigned int mode = Traits<Build>::MODE;
     static const bool multithread = true;
-    static const bool multitask = false && (mode != Traits<Build>::LIBRARY);
+    static const bool multitask = true && (mode != Traits<Build>::LIBRARY);
     static const bool multicore = false && multithread;
     static const bool multiheap = (mode != Traits<Build>::LIBRARY) || Traits<Scratchpad>::enabled;
 
@@ -107,11 +107,16 @@ template <> struct Traits<System>: public Traits<void>
 
 
 // Abstractions
+template <> struct Traits<Task>: public Traits<void>
+{
+    static const bool enabled = Traits<System>::multitask;
+};
+
 template <> struct Traits<Thread>: public Traits<void>
 {
     static const bool smp = Traits<System>::multicore;
 
-    typedef Scheduling_Criteria::DM Criterion;
+    typedef Scheduling_Criteria::RR Criterion;
     static const unsigned int QUANTUM = 10000; // us
 
     static const bool trace_idle = false;

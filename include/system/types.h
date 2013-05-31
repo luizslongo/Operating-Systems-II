@@ -76,6 +76,7 @@ class E100;
 
 // Abstractions	- Process
 class Thread;
+class Task;
 class Active;
 
 // Abstractions - Scheduler
@@ -130,6 +131,7 @@ enum
     NIC_ID,
 
     THREAD_ID,
+    TASK_ID,
     ACTIVE_ID,
 
     SEGMENT_ID,

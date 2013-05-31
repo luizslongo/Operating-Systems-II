@@ -128,8 +128,7 @@ void Thread::pass()
     if(next)
         dispatch(prev, next, false);
     else {
-        db<Thread>(WRN) << "Thread::pass => thread (" << this
-                        << ") not ready\n";
+        db<Thread>(WRN) << "Thread::pass => thread (" << this << ") not ready\n";
         unlock();
     }
 }

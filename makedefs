@@ -22,6 +22,7 @@ LUTILNAME	:= util
 
 # Supported software architectures
 MODE_LIBRARY	:= library
+MODE_BUILTIN    := builtin
 
 # Supported hardware architectures
 ARCH_IA32	:= ia32
