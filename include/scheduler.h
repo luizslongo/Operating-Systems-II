@@ -99,55 +99,55 @@ namespace Scheduling_Criteria
         RM(const RTC::Microsecond & d): Priority(d) {}
     };
 
-     // Deadline Monotonic
-     class DM: public Priority
-     {
-     public:
-         enum {
-             MAIN      = 0,
-             PERIODIC  = 1,
-             APERIODIC = (unsigned(1) << (sizeof(int) * 8 - 1)) - 2,
-             NORMAL    = APERIODIC,
-             IDLE      = (unsigned(1) << (sizeof(int) * 8 - 1)) - 1
-         };
+    // Deadline Monotonic
+    class DM: public Priority
+    {
+    public:
+        enum {
+            MAIN      = 0,
+            PERIODIC  = 1,
+            APERIODIC = (unsigned(1) << (sizeof(int) * 8 - 1)) - 2,
+            NORMAL    = APERIODIC,
+            IDLE      = (unsigned(1) << (sizeof(int) * 8 - 1)) - 1
+        };
 
-         static const bool timed = false;
-         static const bool dynamic = false;
-         static const bool preemptive = true;
+        static const bool timed = false;
+        static const bool dynamic = false;
+        static const bool preemptive = true;
 
-     public:
-         DM(int p): Priority(p), _deadline(0) {} // Aperiodic
-         DM(const RTC::Microsecond & d): Priority(d), _deadline(d) {}
+    public:
+        DM(int p): Priority(p), _deadline(0) {} // Aperiodic
+        DM(const RTC::Microsecond & d): Priority(d), _deadline(d) {}
 
-     private:
-         RTC::Microsecond _deadline;
-     };
+    private:
+        RTC::Microsecond _deadline;
+    };
 
-      // Earliest Deadline First
-      class EDF: public Priority
-      {
-      public:
-          enum {
-              MAIN      = 0,
-              PERIODIC  = 1,
-              APERIODIC = (unsigned(1) << (sizeof(int) * 8 - 1)) - 2,
-              NORMAL    = APERIODIC,
-              IDLE      = (unsigned(1) << (sizeof(int) * 8 - 1)) - 1
-          };
+     // Earliest Deadline First
+    class EDF: public Priority
+    {
+    public:
+        enum {
+            MAIN      = 0,
+            PERIODIC  = 1,
+            APERIODIC = (unsigned(1) << (sizeof(int) * 8 - 1)) - 2,
+            NORMAL    = APERIODIC,
+            IDLE      = (unsigned(1) << (sizeof(int) * 8 - 1)) - 1
+        };
 
-          static const bool timed = false;
-          static const bool dynamic = true;
-          static const bool preemptive = true;
+        static const bool timed = false;
+        static const bool dynamic = true;
+        static const bool preemptive = true;
 
-      public:
-          EDF(int p): Priority(p), _deadline(0) {} // Aperiodic
-          EDF(const RTC::Microsecond & d); // Defined at Periodic_Thread
+    public:
+        EDF(int p): Priority(p), _deadline(0) {} // Aperiodic
+        EDF(const RTC::Microsecond & d); // Defined at Periodic_Thread
 
-          void update(); // Defined at Periodic_Thread
+        void update(); // Defined at Periodic_Thread
 
-      private:
-          RTC::Microsecond _deadline;
-      };
+    private:
+        RTC::Microsecond _deadline;
+    };
 }
 
 

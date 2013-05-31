@@ -59,7 +59,8 @@ public:
            const State & state = READY,
            const Criterion & criterion = NORMAL,
            unsigned int stack_size = STACK_SIZE)
-    : _state(state), _link(this, criterion) {
+    : _state(state), _waiting(0), _joining(0), _link(this, criterion)
+    {
         lock();
 
         _stack = new (SYSTEM) char[stack_size];
@@ -73,7 +74,8 @@ public:
            const State & state = READY,
            const Criterion & criterion = NORMAL,
            unsigned int stack_size = STACK_SIZE)
-    : _state(state), _link(this, criterion) {
+    : _state(state), _waiting(0), _joining(0), _link(this, criterion)
+    {
         lock();
 
         _stack = new (SYSTEM) char[stack_size];
@@ -87,7 +89,8 @@ public:
            const State & state = READY,
            const Criterion & criterion = NORMAL,
            unsigned int stack_size = STACK_SIZE)
-    : _state(state), _link(this, criterion) {
+    : _state(state), _waiting(0), _joining(0), _link(this, criterion)
+    {
         lock();
 
         _stack = new (SYSTEM) char[stack_size];
@@ -101,7 +104,7 @@ public:
            const State & state = READY,
            const Criterion & criterion = NORMAL,
            unsigned int stack_size = STACK_SIZE)
-    : _state(state), _link(this, criterion)
+    : _state(state), _waiting(0), _joining(0), _link(this, criterion)
     {
         lock();
 
@@ -175,6 +178,7 @@ protected:
 
     static int idle();
 
+private:
     static void init();
 
 protected:
