@@ -122,21 +122,7 @@ PC_Setup::PC_Setup(char * boot_image)
 
     Display::remap();
 
-        /* The code below is needed to boot the system, using an Intel i7 processor.
-         * It changes the page address in the generated binary, and for some reason,
-         * the system is able to boot. The problem does not occur in the Intel 9950 processor.
-         */
-        if(Traits<Thread>::smp) {
-    	kout << "si->bm.n_cpus = " << si->bm.n_cpus << endl;
-    
-    	kout << "CR0 of CPU(" << Machine::cpu_id() << ") = " << (void *) CPU::cr0() << endl;
-    
-    	for(unsigned int i = 0; i < Traits<PC>::MAX_CPUS; i++) {
-      		kout << "CPU(" << Machine::cpu_id() << ") = " << "si->bm.aps_status[" << i << "] = " << si->bm.aps_status[i] << endl;
-    	}
-    }
-
-    // multicore conditional start up
+    // Multicore conditional start up
     int cpu_id = Machine::cpu_id();
 
     db<Setup>(TRC) << "PC_Setup(CPU=" << cpu_id << "/" << si->bm.n_cpus
@@ -1019,20 +1005,20 @@ void _start()
     // Get the System_Info  (first thing in the boot image)
     System_Info<PC> * si = reinterpret_cast<System_Info<PC> *>(bi);
 
-    // multicore conditional start up
+    // Multicore conditional start up
     if(APIC::id() == 0) { // Boot strap CPU (BSP)
 
         // Initialize shared CPU counter
         si->bm.n_cpus = 1;
 
         // Broadcast INIT IPI to all APs excluding self
-        APIC::ipi_init(si);
+        APIC::ipi_init(si->bm.cpu_status);
         
         // Broadcast STARTUP IPI to all APs excluding self
         // Non-boot CPUs will run a simplified boot strap just to
         // trampoline them into protected mode
         // PC_BOOT arranged for this code and stored it at 0x3000
- 	APIC::ipi_start(0x3000, si);
+ 	APIC::ipi_start(0x3000, si->bm.cpu_status);
 
         // Check SETUP integrity and get information about its ELF structure
         ELF * elf = reinterpret_cast<ELF *>(&bi[si->bm.setup_offset]);
@@ -1061,8 +1047,7 @@ void _start()
         // Move the boot image to after SETUP, so there will be nothing else
         // below SETUP to be preserved
         // SETUP code + data + 1 stack per CPU)
-        register char * dst =
-            MMU::align_page(entry + size + si->bm.n_cpus * sizeof(MMU::Page));
+        register char * dst = MMU::align_page(entry + size + si->bm.n_cpus * sizeof(MMU::Page));
         memcpy(dst, bi, si->bm.img_size);
 
         // Passes a pointer to the just allocated stack pool to other CPUs
@@ -1071,18 +1056,17 @@ void _start()
         
     } else { // Additional CPUs (APs)
 
-    // Informs BSP that this AP is initialized 
-    CPU::finc(reinterpret_cast<volatile int &>(si->bm.aps_status[APIC::id()]));
-    
-    //Wait for BSP's ACK
-    while(reinterpret_cast<volatile int &>(si->bm.aps_status[APIC::id()]) != 2) ;
-    
-    // Each AP increments the CPU counter
-    CPU::finc(reinterpret_cast<volatile int &>(si->bm.n_cpus));
+        // Inform BSP that this AP has been initialized
+        CPU::finc(si->bm.cpu_status[APIC::id()]);
+
+        // Wait for BSP's ACK
+        while(si->bm.cpu_status[APIC::id()] != 2);
+
+        // Each AP increments the CPU counter
+        CPU::finc(si->bm.n_cpus);
 
         // Wait for the boot strap CPU to get us a stack
         while(!Stacks_Ready);
-
     }
 
     // Setup a single page stack for SETUP after its data segment
@@ -1090,8 +1074,7 @@ void _start()
     // SP = "entry" + "size" + #CPU * sizeof(Page)
     // Be careful: we'll loose our old stack now, so everything we still
     // need to reach PC_Setup() must be in regs or globals!
-    register char * sp = 
-        const_cast<char *>(Stacks) - sizeof(MMU::Page) * APIC::id();
+    register char * sp = const_cast<char *>(Stacks) - sizeof(MMU::Page) * APIC::id();
     ASM("movl %0, %%esp" : : "r" (sp));
 
     // Pass the boot image to SETUP
@@ -1115,8 +1098,7 @@ void setup(char * bi)
 
     // multicore sanity check
     if(!Traits<Thread>::smp && (APIC::id() != 0)) {
-        db<Setup>(WRN) << "multicore disable by config, halting this CPU ("
-        	           << APIC::id() << ")!\n";
+        db<Setup>(WRN) << "Multicore disable by config, halting this CPU (" << APIC::id() << ")!\n";
 
         CPU::int_disable();
         CPU::halt();

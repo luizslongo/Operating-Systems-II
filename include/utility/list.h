@@ -664,10 +664,10 @@ public:
 
     void insert_head(Element * e) {
         db<Lists>(TRC) << "List::insert_head(e=" << e 
-                      << ") => {p=" << (e ? e->prev() : (void *) -1)
-                      << ",o=" << (e ? e->object() : (void *) -1)
-                      << ",n=" << (e ? e->next() : (void *) -1)
-                      << "}\n";
+                       << ") => {p=" << (e ? e->prev() : (void *) -1)
+                       << ",o=" << (e ? e->object() : (void *) -1)
+                       << ",n=" << (e ? e->next() : (void *) -1)
+                       << "}\n";
 
         print_head();
         print_tail();
@@ -688,10 +688,10 @@ public:
 
     void insert_tail(Element * e) {
         db<Lists>(TRC) << "List::insert_tail(e=" << e 
-                      << ") => {p=" << (e ? e->prev() : (void *) -1)
-                      << ",o=" << (e ? e->object() : (void *) -1)
-                      << ",n=" << (e ? e->next() : (void *) -1)
-                      << "}\n";
+                       << ") => {p=" << (e ? e->prev() : (void *) -1)
+                       << ",o=" << (e ? e->object() : (void *) -1)
+                       << ",n=" << (e ? e->next() : (void *) -1)
+                       << "}\n";
 
         print_head();
         print_tail();
@@ -714,10 +714,10 @@ public:
 
     Element * remove(Element * e) {
         db<Lists>(TRC) << "List::remove(e=" << e 
-                      << ") => {p=" << (e ? e->prev() : (void *) -1)
-                      << ",o=" << (e ? e->object() : (void *) -1)
-                      << ",n=" << (e ? e->next() : (void *) -1)
-                      << "}\n";
+                       << ") => {p=" << (e ? e->prev() : (void *) -1)
+                       << ",o=" << (e ? e->object() : (void *) -1)
+                       << ",n=" << (e ? e->next() : (void *) -1)
+                       << "}\n";
 
         print_head();
         print_tail();
@@ -1024,7 +1024,7 @@ public:
     Element * volatile & chosen() { return _chosen; }
 
     void insert(Element * e) {
-        db<Lists>(TRC) << "Scheduling_List::insert(e=" << e 
+        db<Lists>(TRC) << "Scheduling_List::insert(e=" << e
                        << ") => {p=" << (e ? e->prev() : (void *) -1)
                        << ",o=" << (e ? e->object() : (void *) -1)
                        << ",n=" << (e ? e->next() : (void *) -1)
@@ -1037,7 +1037,7 @@ public:
     }
 
     Element * remove(Element * e) {
-        db<Lists>(TRC) << "Scheduling_List::remove(e=" << e 
+        db<Lists>(TRC) << "Scheduling_List::remove(e=" << e
                        << ") => {p=" << (e ? e->prev() : (void *) -1)
                        << ",o=" << (e ? e->object() : (void *) -1)
                        << ",n=" << (e ? e->next() : (void *) -1)
@@ -1088,7 +1088,7 @@ public:
     }
 
     Element * choose(Element * e) {
-        db<Lists>(TRC) << "Scheduling_List::choose(e=" << e 
+        db<Lists>(TRC) << "Scheduling_List::choose(e=" << e
                        << ") => {p=" << (e ? e->prev() : (void *) -1)
                        << ",o=" << (e ? e->object() : (void *) -1)
                        << ",n=" << (e ? e->next() : (void *) -1)
@@ -1117,6 +1117,204 @@ public:
 private:
     Element * volatile _chosen;
 };
+
+
+// Doubly-Linked, Scheduling Multihead List
+template <typename T,
+          typename R = List_Element_Rank,
+          typename El = List_Elements::Doubly_Linked_Scheduling<T, R>,
+          unsigned int N = R::QUEUES>
+class Scheduling_Multihead_List: private Ordered_List<T, R, El>
+{
+private:
+    typedef Ordered_List<T, R, El> Base;
+
+public:
+    typedef T Object_Type;
+    typedef R Rank_Type;
+    typedef El Element;
+    typedef typename Base::Iterator Iterator;
+
+public:
+    Scheduling_Multihead_List() {
+        for(unsigned int i = 0; i < N; i++)
+            _chosen[i] = 0;
+    }
+
+    using Base::empty;
+    using Base::size;
+    using Base::head;
+    using Base::tail;
+    using Base::begin;
+    using Base::end;
+
+    Element * volatile & chosen() { return _chosen[R::current()]; }
+
+    void insert(Element * e) {
+        db<Lists>(TRC) << "Scheduling_List::insert(e=" << e
+                       << ") => {p=" << (e ? e->prev() : (void *) -1)
+                       << ",o=" << (e ? e->object() : (void *) -1)
+                       << ",n=" << (e ? e->next() : (void *) -1)
+                       << "}\n";
+
+        if(_chosen[R::current()])
+            Base::insert(e);
+        else
+            _chosen[R::current()] = e;
+    }
+
+    Element * remove(Element * e) {
+        db<Lists>(TRC) << "Scheduling_List::remove(e=" << e
+                       << ") => {p=" << (e ? e->prev() : (void *) -1)
+                       << ",o=" << (e ? e->object() : (void *) -1)
+                       << ",n=" << (e ? e->next() : (void *) -1)
+                       << "}\n";
+
+        if(e == _chosen[R::current()])
+            _chosen[R::current()] = Base::remove_head();
+        else
+            e = Base::remove(e);
+
+        return e;
+    }
+
+    Element * remove(const Object_Type * obj) {
+        Element * e;
+
+        if(obj == _chosen[R::current()]->object()) {
+            e = _chosen[R::current()];
+            _chosen[R::current()] = Base::remove_head();
+        } else
+            if((e = search(obj)))
+                remove(e);
+
+        return e;
+    }
+
+    Element * choose() {
+        db<Lists>(TRC) << "Scheduling_List::choose()\n";
+
+        if(!empty()) {
+            Base::insert(_chosen[R::current()]);
+            _chosen[R::current()] = Base::remove_head();
+        }
+
+        return _chosen[R::current()];
+    }
+
+    Element * choose_another() {
+        db<Lists>(TRC) << "Scheduling_List::choose_another()\n";
+
+        if(size() > 0) {
+            Element * tmp = _chosen[R::current()];
+            _chosen[R::current()] = Base::remove_head();
+            Base::insert(tmp);
+        }
+
+        return _chosen[R::current()];
+    }
+
+    Element * choose(Element * e) {
+        db<Lists>(TRC) << "Scheduling_List::choose(e=" << e
+                       << ") => {p=" << (e ? e->prev() : (void *) -1)
+                       << ",o=" << (e ? e->object() : (void *) -1)
+                       << ",n=" << (e ? e->next() : (void *) -1)
+                       << "}\n";
+
+        if(e != _chosen[R::current()]) {
+            Base::insert(_chosen[R::current()]);
+            _chosen[R::current()] = Base::remove(e);
+        }
+
+        return _chosen[R::current()];
+    }
+
+    Element * choose(const Object_Type * obj) {
+        Element * e;
+
+        if(obj == _chosen[R::current()]->object())
+            e = _chosen[R::current()];
+        else
+            if((e = search(obj)))
+                e = choose(e);
+
+    	return e;
+    }
+
+    Element * volatile _chosen[N];
+};
+
+
+// Doubly-Linked, Scheduling MultiList
+template <typename T,
+          typename R = List_Element_Rank,
+          typename El = List_Elements::Doubly_Linked_Scheduling<T, R>,
+          unsigned int N = R::QUEUES>
+class Scheduling_Multilist
+{
+private:
+    typedef Scheduling_List<T, R, El> List;
+
+public:
+    typedef T Object_Type;
+    typedef R Rank_Type;
+    typedef El Element;
+    typedef typename List::Iterator Iterator;
+
+public:
+    Scheduling_Multilist() {}
+
+    bool empty() const { return _list[R::current()].empty(); }
+    unsigned int size() const { return _list[R::current()].size(); }
+
+    Element * head() { return _list[R::current()].head(); }
+    Element * tail() { return _list[R::current()].tail(); }
+
+    Iterator begin() { return Iterator(_list[R::current()].head()); }
+    Iterator end() { return Iterator(_list[R::current()].tail() ? _list[R::current()].tail()->next() : 0); }
+
+    Element * volatile & chosen() {
+        return _list[R::current()].chosen();
+    }
+
+    void insert(Element * e) {
+        _list[e->rank().queue()].insert(e);
+    }
+
+    Element * remove(Element * e) {
+         // Removing object instead of element forces a search and renders
+         // removing inexistent objects harmless
+         return _list[e->rank().queue()].remove(e->object());
+     }
+
+    Element * choose() {
+        return _list[R::current()].choose();
+    }
+
+    Element * choose_another() {
+        return _list[R::current()].choose_another();
+    }
+
+    Element * choose(Element * e) {
+        return _list[e->rank().queue()].choose(e->object());
+    }
+
+    Element * choose(const Object_Type * obj) {
+        Element * e;
+
+        if(obj == _list[R::current()].chosen()->object())
+            e = _list[R::current()].chosen();
+        else
+            if((e = _list[R::current()].search(obj)))
+                e = choose(e);
+
+        return e;
+    }
+
+private:
+    List _list[N];
+};
+
 
 // Doubly-Linked, Grouping List
 template <typename T, 

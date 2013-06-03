@@ -15,7 +15,7 @@ struct Traits
 
 template <> struct Traits<Build>
 {
-    enum {LIBRARY};
+    enum {LIBRARY, BUILTIN};
     static const unsigned int MODE = LIBRARY;
 
     enum {IA32};
@@ -95,6 +95,10 @@ template <> struct Traits<System>: public Traits<void>
     static const bool multicore = false && multithread;
     static const bool multiheap = true;
 
+    enum {FOREVER = 0, SECOND = 1, MINUTE = 60, HOUR = 3600, DAY = 86400,
+          WEEK = 604800, MONTH = 2592000, YEAR = 31536000};
+    static const unsigned long LIFE_SPAN = 1 * HOUR; // in seconds
+
     static const bool reboot = true;
 
     static const unsigned int STACK_SIZE = 4 * 1024;
@@ -103,11 +107,16 @@ template <> struct Traits<System>: public Traits<void>
 
 
 // Abstractions
+template <> struct Traits<Task>: public Traits<void>
+{
+    static const bool enabled = Traits<System>::multitask;
+};
+
 template <> struct Traits<Thread>: public Traits<void>
 {
     static const bool smp = Traits<System>::multicore;
 
-    static const bool preemptive = true;
+    typedef Scheduling_Criteria::Priority Criterion;
     static const unsigned int QUANTUM = 10000; // us
 
     static const bool trace_idle = false;

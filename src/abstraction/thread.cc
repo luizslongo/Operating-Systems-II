@@ -10,6 +10,7 @@ __BEGIN_SYS
 volatile unsigned int Thread::_thread_count;
 Scheduler_Timer * Thread::_timer;
 Scheduler<Thread> Thread::_scheduler;
+Spin Thread::_lock;
 
 
 // This_Thread class attributes
@@ -292,18 +293,19 @@ int Thread::idle()
 {
     while(true) {
         if(Traits<Thread>::trace_idle)
-            db<Thread>(TRC) << "Thread::idle()\n";
+            db<Thread>(TRC) << "Thread::idle(CPU=" << Machine::cpu_id() << ",this=" << running() << ")\n";
 
-        if(_thread_count <= 1) { // Only idle is left
+        if(_thread_count <= Machine::n_cpus()) { // Only idle is left
             CPU::int_disable();
-            db<Thread>(WRN) << "The last thread has exited!\n";
-            if(reboot) {
-                db<Thread>(WRN) << "Rebooting the machine ...\n";
-                Machine::reboot();
-            } else {
-                db<Thread>(WRN) << "Halting the machine ...\n";
-                CPU::halt();
+            if(Machine::cpu_id() == 0) {
+                db<Thread>(WRN) << "The last thread has exited!\n";
+                if(reboot) {
+                    db<Thread>(WRN) << "Rebooting the machine ...\n";
+                    Machine::reboot();
+                } else
+                    db<Thread>(WRN) << "Halting the machine ...\n";
             }
+            CPU::halt();
         } else {
             if(_scheduler.schedulables() > 1)
                 yield();

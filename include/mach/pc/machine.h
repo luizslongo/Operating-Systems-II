@@ -41,9 +41,9 @@ public:
         }
     };
 
-    static void smp_barrier(int n_cpus = _n_cpus) {
-        static volatile int ready[2];
-        static volatile int i;
+    static void smp_barrier(unsigned long n_cpus = _n_cpus) {
+        static volatile unsigned long ready[2];
+        static volatile unsigned long i;
 
         if(smp) {
             int j = i;

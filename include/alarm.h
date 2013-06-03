@@ -15,6 +15,7 @@ __BEGIN_SYS
 class Alarm
 {
     friend class System;
+    friend class Scheduling_Criteria::FCFS;
     friend class Scheduling_Criteria::EDF;
 
 private:
@@ -64,6 +65,7 @@ private:
     static Queue _request;
 };
 
+
 class Delay
 {
 private:
@@ -75,6 +77,19 @@ public:
 private:
     Microsecond _time;
 
+};
+
+
+// The following Scheduling Criteria depend on Alarm, which is not yet available at scheduler.h
+namespace Scheduling_Criteria {
+    inline FCFS::FCFS(int p)
+    : Priority((p == IDLE) ? IDLE : Alarm::_elapsed) {}
+
+
+    inline EDF::EDF(const RTC::Microsecond & d)
+    : Priority(Alarm::ticks(d)), _deadline(Alarm::ticks(d)) {}
+
+    inline void EDF::update() { _priority = _deadline + Alarm::_elapsed; }
 };
 
 __END_SYS

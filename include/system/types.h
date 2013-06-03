@@ -89,6 +89,7 @@ namespace Scheduling_Criteria
     class RM;
     class DM;
     class EDF;
+    class CPU_Affinity;
 };
 
 // Abstractions	- Memory

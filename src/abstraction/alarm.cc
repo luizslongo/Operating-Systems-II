@@ -47,16 +47,12 @@ Alarm::~Alarm()
 // Class methods
 void Alarm::delay(const Microsecond & time)
 {
-    lock();
-
     db<Alarm>(TRC) << "Alarm::delay(time=" << time << ")\n";
 
     Semaphore semaphore(0);
     Semaphore_Handler handler(&semaphore);
     Alarm alarm(time, &handler, 1); // if time < tick trigger v()
     semaphore.p();
-
-    unlock();
 }
 
 

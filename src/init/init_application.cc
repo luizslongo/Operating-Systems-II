@@ -16,7 +16,12 @@ private:
 
 public:
     Init_Application() {
-	db<Init>(TRC) << "\nInit_Application()\n";
+        db<Init>(TRC) << "\nInit_Application(CPU=" << Machine::cpu_id() << ")\n";
+
+        // Only the boot CPU runs INIT_APPLICATION
+        Machine::smp_barrier();
+        if(Machine::cpu_id() != 0)
+            return;
 
         // Initialize Application's heap
         db<Init>(INF) << "Initializing application's heap: \n";

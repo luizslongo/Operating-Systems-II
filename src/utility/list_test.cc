@@ -20,7 +20,6 @@ OStream cout;
 
 int main()
 {
-
     cout << "List Utility Test\n";
 
     test_simple_list();
@@ -317,16 +316,17 @@ void test_relative_list ()
         delete e[i];
 }
 
+#include<scheduler.h>
 void test_scheduling_list ()
 {
-    cout << "\nThis is scheduling list of integers:\n";
-    Scheduling_List<int> l;
+    cout << "\nThis is priority scheduling list of integers:\n";
+    Scheduling_List<int, Scheduling_Criteria::Priority> l;
     int o[N];
-    Scheduling_List<int>::Element * e[N];
+    Scheduling_List<int, Scheduling_Criteria::Priority>::Element * e[N];
     cout << "Inserting the following integers into the list ";
     for(int i = 0; i < N; i++) {
         o[i] = i;
-        e[i] = new Scheduling_List<int>::Element(&o[i], N - i - 1);
+        e[i] = new Scheduling_List<int, Scheduling_Criteria::Priority>::Element(&o[i], N - i - 1);
         l.insert(e[i]);
         cout << i << "(" << N - i - 1 << ")";
         if(i != N - 1)
@@ -335,35 +335,35 @@ void test_scheduling_list ()
     cout << "\n";
     cout << "The list has now " << l.size() << " elements\n";
     cout << "They are: ";
-    for(Scheduling_List<int>::Iterator i = l.begin(); i != l.end(); i++) {
+    for(Scheduling_List<int, Scheduling_Criteria::Priority>::Iterator i = l.begin(); i != l.end(); i++) {
         cout << *i->object();
-        if(Scheduling_List<int>::Iterator(i->next()) != l.end())
+        if(Scheduling_List<int, Scheduling_Criteria::Priority>::Iterator(i->next()) != l.end())
             cout << ", ";
     }
     cout << "\n";
     cout << "Scheduling the list => " << *l.choose()->object() << "\n";
     cout << "They are: ";
-    for(Scheduling_List<int>::Iterator i = l.begin(); i != l.end(); i++) {
+    for(Scheduling_List<int, Scheduling_Criteria::Priority>::Iterator i = l.begin(); i != l.end(); i++) {
         cout << *i->object();
-        if(Scheduling_List<int>::Iterator(i->next()) != l.end())
+        if(Scheduling_List<int, Scheduling_Criteria::Priority>::Iterator(i->next()) != l.end())
             cout << ", ";
     }
     cout << "\n";
     cout << "Forcing scheduling of antorher element => " <<
         *l.choose_another()->object() << "\n";
     cout << "They are: ";
-    for(Scheduling_List<int>::Iterator i = l.begin(); i != l.end(); i++) {
+    for(Scheduling_List<int, Scheduling_Criteria::Priority>::Iterator i = l.begin(); i != l.end(); i++) {
         cout << *i->object();
-        if(Scheduling_List<int>::Iterator(i->next()) != l.end())
+        if(Scheduling_List<int, Scheduling_Criteria::Priority>::Iterator(i->next()) != l.end())
             cout << ", ";
     }
     cout << "\n";
     cout << "Forcing scheduling of element whose value is " << o[N/2] << " => " 
  	 << *l.choose(e[N/2])->object() << "\n";
     cout << "They are: ";
-    for(Scheduling_List<int>::Iterator i = l.begin(); i != l.end(); i++) {
+    for(Scheduling_List<int, Scheduling_Criteria::Priority>::Iterator i = l.begin(); i != l.end(); i++) {
         cout << *i->object();
-        if(Scheduling_List<int>::Iterator(i->next()) != l.end())
+        if(Scheduling_List<int, Scheduling_Criteria::Priority>::Iterator(i->next()) != l.end())
             cout << ", ";
     }
     cout << "\n";

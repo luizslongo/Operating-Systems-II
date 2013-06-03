@@ -338,8 +338,9 @@ public:
         return old;
     }
 
-    static int finc(volatile int & value) {
-        register int old = 1;
+    template <typename T>
+    static T finc(volatile T & value) {
+        register T old = 1;
         ASMV("lock xadd %0, %2"
              : "=a"(old)
              : "a"(old), "m"(value)
@@ -347,8 +348,9 @@ public:
         return old;
     }
 
-    static int fdec(volatile int & value) {
-        register int old = -1;
+    template <typename T>
+    static T fdec(volatile T & value) {
+        register T old = -1;
         ASMV("lock xadd %0, %2"
              : "=a"(old)
              : "a"(old), "m"(value)
@@ -356,7 +358,8 @@ public:
         return old;
     }
 
-    static int cas(volatile int & value, int compare, int replacement) {
+    template <typename T>
+    static T cas(volatile T & value, T compare, T replacement) {
         ASMV("lock cmpxchgl %2, %3\n" 
              : "=a"(compare) 
              : "a"(compare), "r"(replacement), "m"(value)

@@ -31,20 +31,25 @@ class First_Object
 {
 public:
     First_Object() {
-        Display::remap();
+	Display::remap();
+
+	if(Traits<System>::multicore) {
+	    System_Info<Machine> * si = reinterpret_cast<System_Info<Machine> *>(Memory_Map<Machine>::SYS_INFO);
+
+	    Machine::smp_init(si->bm.n_cpus);
+	}
     }
 };
 
 // Global objects
-// These objects might be reconstructed several times in smp configurations,
+// These objects might be reconstructed several times in SMP configurations,
 // so their constructors must be stateless!
 First_Object __entry;
 OStream kout;
 OStream kerr;
 
 // System class attributes
-System_Info<Machine> * System::_si =
-    reinterpret_cast<System_Info<Machine> *>(Memory_Map<Machine>::SYS_INFO);
+System_Info<Machine> * System::_si = reinterpret_cast<System_Info<Machine> *>(Memory_Map<Machine>::SYS_INFO);
 
 Segment System::_heap_segment;
 

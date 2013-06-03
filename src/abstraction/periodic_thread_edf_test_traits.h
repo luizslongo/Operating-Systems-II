@@ -107,6 +107,11 @@ template <> struct Traits<System>: public Traits<void>
 
 
 // Abstractions
+template <> struct Traits<Task>: public Traits<void>
+{
+    static const bool enabled = Traits<System>::multitask;
+};
+
 template <> struct Traits<Thread>: public Traits<void>
 {
     static const bool smp = Traits<System>::multicore;

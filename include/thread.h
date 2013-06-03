@@ -21,8 +21,10 @@ class Thread
     friend class Task;
 
 protected:
+    static const bool smp = Traits<Thread>::smp;
     static const bool preemptive = Traits<Thread>::Criterion::preemptive;
     static const bool multitask = Traits<System>::multitask;
+
     static const bool reboot = Traits<System>::reboot;
 
     static const unsigned int QUANTUM = Traits<Thread>::QUANTUM;
@@ -54,7 +56,7 @@ public:
     };
 
     // Thread Queue
-    typedef Ordered_Queue<Thread, Criterion, false, Scheduler<Thread>::Element> Queue;
+    typedef Ordered_Queue<Thread, Criterion, Scheduler<Thread>::Element> Queue;
 
 public:
     Thread(int (* entry)(),
@@ -106,8 +108,17 @@ protected:
 
     Criterion & criterion() { return const_cast<Criterion &>(_link.rank()); }
 
-    static void lock() { CPU::int_disable(); }
-    static void unlock() { CPU::int_enable(); }
+    static void lock() {
+        CPU::int_disable();
+        if(smp)
+            _lock.acquire();
+    }
+
+    static void unlock() {
+        if(smp)
+            _lock.release();
+        CPU::int_enable();
+    }
 
     void suspend(bool locked);
 
@@ -130,15 +141,20 @@ protected:
                 prev->_state = READY;
             next->_state = RUNNING;
 
-             db<Thread>(TRC) << "Thread::dispatch(prev=" << prev
-                             << ",next=" << next << ")\n";
-             db<Thread>(INF) << "prev={" << prev;
-             db<Thread>(INF) << ",ctx=" << *prev->_context << "}\n";
-             db<Thread>(INF) << "next={" << next;
-             db<Thread>(INF) << ",ctx=" << *next->_context << "}\n";
+            db<Thread>(TRC) << "Thread::dispatch(prev=" << prev
+                            << ",next=" << next << ")\n";
+            db<Thread>(INF) << "prev={" << prev;
+            db<Thread>(INF) << ",ctx=" << *prev->_context << "}\n";
+            db<Thread>(INF) << "next={" << next;
+            db<Thread>(INF) << ",ctx=" << *next->_context << "}\n";
+
+            if(smp)
+                _lock.release();
 
             CPU::switch_context(&prev->_context, next->_context);
-        }
+        } else
+            if(smp)
+                _lock.release();
 
         CPU::int_enable();
     }
@@ -160,6 +176,7 @@ protected:
     static volatile unsigned int _thread_count;
     static Scheduler_Timer * _timer;
     static Scheduler<Thread> _scheduler;
+    static Spin _lock;
 };
 
 __END_SYS

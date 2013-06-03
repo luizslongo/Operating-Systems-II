@@ -20,20 +20,20 @@ public:
     // Modifications to this map requires adjustments at MKBI
     struct Boot_Map
     {
-        unsigned int n_cpus;     // Number of CPUs in SMPs
-        PAddr mem_base;          // Memory base address
-        PAddr mem_top;           // Memory top address
-        PAddr io_mem_base;       // I/O Memory base address
-        PAddr io_mem_top;        // I/O Memory top address
-        short node_id;           // Local node id in SAN (-1 => RARP)
-        short n_nodes;           // Number of nodes in SAN (-1 => dynamic)
-        Size img_size;           // Boot image size (in bytes)
-        int setup_offset;        // Image offsets (-1 => not present)
+        volatile unsigned int n_cpus;     // Number of CPUs in SMPs
+        PAddr mem_base;                   // Memory base address
+        PAddr mem_top;                    // Memory top address
+        PAddr io_mem_base;                // I/O Memory base address
+        PAddr io_mem_top;                 // I/O Memory top address
+        short node_id;                    // Local node id in SAN (-1 => RARP)
+        short n_nodes;                    // Number of nodes in SAN (-1 => dynamic)
+        Size img_size;                    // Boot image size (in bytes)
+        int setup_offset;                 // Image offsets (-1 => not present)
         int init_offset;
         int system_offset;
         int application_offset;
         int extras_offset;
-        unsigned int aps_status[Traits<PC>::MAX_CPUS]; // APs initialization status
+        volatile int cpu_status[Traits<PC>::MAX_CPUS]; // CPUs initialization status
     };
 
     // Physical Memory Map (built by SETUP)

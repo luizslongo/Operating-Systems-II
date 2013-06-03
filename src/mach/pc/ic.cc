@@ -80,42 +80,43 @@ void PC_IC::exc_fpu(unsigned int i,
 }
 
 // APIC class methods
-void APIC::ipi_init(System_Info<PC> *si) 
+void APIC::ipi_init(volatile int * status)
 {
-    reinterpret_cast<volatile int &>(si->bm.aps_status[0]) = 0;
+    status[0] = 0;
 
-    for(unsigned int ap_number = 1; ap_number < Traits<PC>::MAX_CPUS; ap_number++) {
-        reinterpret_cast<volatile int &>(si->bm.aps_status[ap_number]) = 0;
-        write(ICR32_63, (ap_number << 24));
+    for(unsigned int n = 1; n < Traits<PC>::MAX_CPUS; n++) {
+        status[n] = 0;
+        write(ICR32_63, n << 24);
         write(ICR0_31, ICR_LEVEL | ICR_ASSERT | ICR_INIT);
         while((read(ICR0_31) & ICR_PENDING));
     }
+
     i8255::ms_delay(100);
 };
 
-void APIC::ipi_start(Log_Addr entry, System_Info<PC> *si)
+void APIC::ipi_start(Log_Addr entry, volatile int * status)
 {
     unsigned int vector = (entry >> 12) & 0xff;
-    
-    for(unsigned int ap_number = 1; ap_number < Traits<PC>::MAX_CPUS; ap_number++) {
-        write(ICR32_63, (ap_number << 24));
+
+    for(unsigned int n = 1; n < Traits<PC>::MAX_CPUS; n++) {
+        write(ICR32_63, n << 24);
         write(ICR0_31, ICR_LEVEL | ICR_ASSERT | ICR_STARTUP | vector);
         while((read(ICR0_31) & ICR_PENDING));
     }
-    
+
     i8255::ms_delay(500);
-    
-    for(unsigned int ap_number = 1; ap_number < Traits<PC>::MAX_CPUS; ap_number++) {
-        if(reinterpret_cast<volatile int &>(si->bm.aps_status[ap_number]) == 1) { //if AP is up
-            CPU::finc(reinterpret_cast<volatile int &>(si->bm.aps_status[ap_number]));
+
+    for(unsigned int n = 1; n < Traits<PC>::MAX_CPUS; n++) {
+        if(status[n] == 1) { // CPU is up
+            CPU::finc(status[n]);
             i8255::ms_delay(30);
-        } else { // send a second SIPI to the AP
-            write(ICR32_63, (ap_number << 24));
+        } else { // send a second SIPI to the CPU
+            write(ICR32_63, n << 24);
             write(ICR0_31, ICR_LEVEL | ICR_ASSERT | ICR_STARTUP | vector);
             i8255::ms_delay(500);
-            if(reinterpret_cast<volatile int &>(si->bm.aps_status[ap_number]) == 1) //if AP is up
-              CPU::finc(reinterpret_cast<volatile int &>(si->bm.aps_status[ap_number]));
-            //else AP was not initilized
+            if(status[n] == 1) // CPU is up
+                CPU::finc(status[n]);
+            // else CPU was not initialized
         }        
     }
 }
