@@ -9,7 +9,7 @@ int Alarm::init()
 {
     db<Init, Alarm>(TRC) << "Alarm::init()\n";
     
-    _timer = new (SYSTEM) Alarm_Timer(&handler);
+    _timer = new (SYSTEM) Alarm_Timer(handler);
 
     return 0;
 }

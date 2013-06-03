@@ -240,6 +240,9 @@ public:
 // PC_Timer
 class PC_Timer: public Timer_Common
 {
+    friend class PC;
+    friend class Init_System;
+
 public:
     typedef int Channel;
     enum {
@@ -248,40 +251,31 @@ public:
     };
 
 protected:
-    typedef IF<Traits<Thread>::smp, APIC_Timer, i8253>::Result Engine;
+    typedef IF<Traits<System>::multicore, APIC_Timer, i8253>::Result Engine;
     typedef Engine::Count Count;
 
     static const unsigned int CHANNELS = 2;
     static const unsigned int FREQUENCY = Traits<PC_Timer>::FREQUENCY;
 
-    PC_Timer(const Hertz & frequency,
-             const Handler & handler,
-             const Channel & channel):
-                 _channel(channel), _initial(FREQUENCY / frequency),
-                 _handler(handler)
-    {
+    PC_Timer(const Hertz & frequency, const Handler * handler, const Channel & channel)
+    : _channel(channel), _initial(FREQUENCY / frequency), _handler(handler) {
         db<Timer>(TRC) << "Timer(f=" << frequency
                        << ",h=" << reinterpret_cast<void*>(handler)
                        << ",ch=" << channel
                        << ") => {count=" << _initial << "}\n";
 
-        for(unsigned int i = 0; i < Traits<Machine>::MAX_CPUS; i++)
-            _current[i] = _initial;
-
         if(_initial && !_channels[channel])
             _channels[channel] = this;
         else
             db<Timer>(ERR) << "Timer not installed!\n";
-    }
+
+        for(unsigned int i = 0; i < Traits<Machine>::MAX_CPUS; i++)
+            _current[i] = _initial;
+}
 
 public:
-    PC_Timer(const Hertz & frequency,
-             const Handler & handler,
-             const Channel & channel,
-             bool retrigger):
-                 _channel(channel), _initial(FREQUENCY / frequency),
-                 _handler(handler)
-    {
+    PC_Timer(const Hertz & frequency, const Handler * handler, const Channel & channel, bool retrigger)
+    : _channel(channel), _initial(FREQUENCY / frequency), _handler(handler) {
         db<Timer>(TRC) << "Timer(f=" << frequency
                        << ",h=" << reinterpret_cast<void*>(handler)
                        << ",ch=" << channel
@@ -313,8 +307,8 @@ public:
 
     int reset() {
         db<Timer>(TRC) << "Timer::reset() => {f=" << frequency()
-        	               << ",h=" << reinterpret_cast<void*>(_handler)
-        	               << ",count=" << _current[Machine::cpu_id()] << "}\n";
+        	       << ",h=" << reinterpret_cast<void*>(_handler)
+        	       << ",count=" << _current[Machine::cpu_id()] << "}\n";
 
         int percentage = _current[Machine::cpu_id()] * 100 / _initial;
         _current[Machine::cpu_id()] = _initial;
@@ -322,14 +316,14 @@ public:
         return percentage;
     }
 
-    void handler(Handler handler) { _handler = handler; }
+    void handler(const Handler * handler) { _handler = handler; }
 
     static void enable() { IC::enable(IC::INT_TIMER); }
     static void disable() { IC::enable(IC::INT_TIMER); }
 
+ private:
     static int init();
 
-private:
     static Hertz count2freq(const Count & c) {
         return c ? Engine::clock() / c : 0;
     }
@@ -344,7 +338,7 @@ protected:
     unsigned int _channel;
     Count _initial;
     volatile Count _current[Traits<Machine>::MAX_CPUS];
-    Handler _handler;
+    Handler * _handler;
 
     static PC_Timer * _channels[CHANNELS];
 };
@@ -357,8 +351,7 @@ public:
     static const unsigned int FREQUENCY = Timer::FREQUENCY;
 
 public:
-    Alarm_Timer(const Handler & handler):
-        PC_Timer(FREQUENCY, handler, ALARM) {}
+    Alarm_Timer(const Handler & handler): PC_Timer(FREQUENCY, handler, ALARM) {}
 };
 
 
@@ -369,8 +362,8 @@ private:
     typedef RTC::Microsecond Microsecond;
 
 public:
-    Scheduler_Timer(const Microsecond & quantum, const Handler & handler):
-        PC_Timer(1000000 / quantum, handler, SCHEDULER) {}
+    Scheduler_Timer(const Microsecond & quantum, const Handler & handler)
+    : PC_Timer(1000000 / quantum, handler, SCHEDULER) {}
 };
 
 __END_SYS

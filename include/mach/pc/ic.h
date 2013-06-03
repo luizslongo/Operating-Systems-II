@@ -43,7 +43,7 @@ public:
         IRQ_TIMER	= 0,
         IRQ_KEYBOARD	= 1,
         IRQ_CASCADE	= 2,
-        IRQ_RESCHEDULE = 3
+        IRQ_RESCHEDULE  = 3
     };
 
     // Interrupts
@@ -297,9 +297,9 @@ public:
         return read(VERSION);
     }
 
-    static void ipi_send(int dst, int interrupt);
-    static void ipi_init(volatile int *);
-    static void ipi_start(Log_Addr entry, volatile int *);
+    static void ipi_send(unsigned int cpu, unsigned int interrupt);
+    static void ipi_init(volatile int * status);
+    static void ipi_start(Log_Addr entry, volatile int * status);
 
     static void reset(Log_Addr addr = LOCAL_APIC_LOG_ADDR) {
         // APIC must be on very early in the boot process, so it is

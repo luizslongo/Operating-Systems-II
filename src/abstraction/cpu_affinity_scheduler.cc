@@ -5,6 +5,6 @@
 __BEGIN_SYS
 
 // Class attributes
-volatile unsigned int Scheduling_Criteria::CPU_Affinity::_next_cpu = 1;
+volatile unsigned int Scheduling_Criteria::CPU_Affinity::_next_cpu;
 
 __END_SYS

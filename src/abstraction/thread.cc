@@ -23,7 +23,7 @@ void Thread::common_constructor(Log_Addr entry, unsigned int stack_size)
     db<Thread>(TRC) << "Thread(entry=" << entry
                     << ",state=" << _state
                     << ",priority=" << _link.rank()
-                    << ",stack={b=" << _stack
+                    << ",stack={b=" << reinterpret_cast<void*>(_stack)
                     << ",s=" << stack_size
                     << "},context={b=" << _context
                     << "," << *_context << "}) => " << this << "\n";
@@ -48,7 +48,7 @@ Thread::~Thread()
     db<Thread>(TRC) << "~Thread(this=" << this 
                     << ",state=" << _state
                     << ",priority=" << _link.rank()
-                    << ",stack={b=" << _stack
+                    << ",stack={b=" << reinterpret_cast<void*>(_stack)
                     << ",context={b=" << _context
                     << "," << *_context << "})\n";
 
@@ -261,17 +261,17 @@ void Thread::wakeup_all(Queue * q)
 }
 
 
-void Thread::reschedule(bool preempt)
+void Thread::reschedule()
 {
-    if(preempt) {
-        db<Thread>(TRC) << "Thread::reschedule()\n";
+    db<Thread>(TRC) << "Thread::reschedule()\n";
 
-        Thread * prev = running();
-        Thread * next = _scheduler.choose();
+//    for(unsigned int n = 1; n < Machine::n_cpus(); n++)
+//        IC::ipi_send(n, IC::INT_TIMER);
 
-        dispatch(prev, next);
-    } else
-        unlock();
+    Thread * prev = running();
+    Thread * next = _scheduler.choose();
+
+    dispatch(prev, next);
 }
 
 
@@ -279,7 +279,7 @@ void Thread::time_slicer()
 {
     lock();
 
-    reschedule(true);
+    reschedule();
 }
 
 
@@ -307,7 +307,7 @@ int Thread::idle()
             }
             CPU::halt();
         } else {
-            if(_scheduler.schedulables() > 1)
+            if(_scheduler.schedulables() > 0)
                 yield();
             else {
                 CPU::int_enable();

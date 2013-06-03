@@ -841,8 +841,7 @@ void PC_Setup::call_next()
     // Boot CPU uses a full stack, while non-boot get reduced ones
     // The 2 integers on the stacks are room for return addresses used
     // in some EPOS architecures
-    register int sp =
-        SYS_STACK + SYS_STACK_SIZE * (cpu_id + 1) - 2 * sizeof(int);
+    register int sp = SYS_STACK + SYS_STACK_SIZE * (cpu_id + 1) - 2 * sizeof(int);
 
     db<Setup>(TRC) << "PC_Setup::call_next(CPU=" << cpu_id 
         	   << ",ip=" << ip
@@ -1018,7 +1017,12 @@ void _start()
         // Non-boot CPUs will run a simplified boot strap just to
         // trampoline them into protected mode
         // PC_BOOT arranged for this code and stored it at 0x3000
+        // ipi_start() waits for cpu_status to be incremented by the finc
+        // further down in this code
  	APIC::ipi_start(0x3000, si->bm.cpu_status);
+
+ 	if(si->bm.n_cpus > Traits<PC>::MAX_CPUS)
+ 	    si->bm.n_cpus = Traits<PC>::MAX_CPUS;
 
         // Check SETUP integrity and get information about its ELF structure
         ELF * elf = reinterpret_cast<ELF *>(&bi[si->bm.setup_offset]);
@@ -1047,7 +1051,7 @@ void _start()
         // Move the boot image to after SETUP, so there will be nothing else
         // below SETUP to be preserved
         // SETUP code + data + 1 stack per CPU)
-        register char * dst = MMU::align_page(entry + size + si->bm.n_cpus * sizeof(MMU::Page));
+        register char * dst = MMU::align_page(entry + size + Traits<PC>::MAX_CPUS * sizeof(MMU::Page));
         memcpy(dst, bi, si->bm.img_size);
 
         // Passes a pointer to the just allocated stack pool to other CPUs
@@ -1059,11 +1063,21 @@ void _start()
         // Inform BSP that this AP has been initialized
         CPU::finc(si->bm.cpu_status[APIC::id()]);
 
+        // Each AP increments the CPU counter
+        CPU::finc(si->bm.n_cpus);
+
         // Wait for BSP's ACK
         while(si->bm.cpu_status[APIC::id()] != 2);
 
-        // Each AP increments the CPU counter
-        CPU::finc(si->bm.n_cpus);
+        if(APIC::id() >= int(Traits<PC>::MAX_CPUS)) {
+            db<Setup>(WRN) << "More CPUs were detected than the current "
+                           << "configuration supports (" << Traits<PC>::MAX_CPUS
+                           << ").\n";
+            db<Setup>(WRN) << "Disabling CPU " << APIC::id() << "!\n";
+
+            CPU::int_disable();
+            CPU::halt();
+        }
 
         // Wait for the boot strap CPU to get us a stack
         while(!Stacks_Ready);
@@ -1080,11 +1094,6 @@ void _start()
     // Pass the boot image to SETUP
     ASM("pushl %0" : : "r" (Stacks));
     
-    if(APIC::id() != 0) { 
-        CPU::cr0(CPU::CR0_PE | CPU::CR0_ET);
-        CPU::cr4(0x0740);
-    }
-
     // Call setup()
     // the assembly is necessary because the compiler generates
     // relative calls and we need an absolute one
@@ -1096,26 +1105,12 @@ void setup(char * bi)
     kerr << endl;
     kout << endl;
 
-    // multicore sanity check
-    if(!Traits<Thread>::smp && (APIC::id() != 0)) {
+    // Multicore sanity check
+    if(!Traits<System>::multicore && (APIC::id() != 0)) {
         db<Setup>(WRN) << "Multicore disable by config, halting this CPU (" << APIC::id() << ")!\n";
 
         CPU::int_disable();
         CPU::halt();
-    }
-
-    System_Info<PC> * si = reinterpret_cast<System_Info<PC> *>(bi);
-    if(si->bm.n_cpus > Traits<PC>::MAX_CPUS)
-        si->bm.n_cpus = Traits<PC>::MAX_CPUS;
-
-    if(APIC::id() >= int(Traits<PC>::MAX_CPUS)) {
-        db<Setup>(WRN) << "More CPUs were detected than the current "
-        	       << "configuration supports (" << Traits<PC>::MAX_CPUS 
-        	       << ").\n";
-        db<Setup>(WRN) << "Disabling CPU " << APIC::id() << "!\n";
-
- 	CPU::int_disable();
- 	CPU::halt();
     }
 
     PC_Setup pc_setup(bi);

@@ -96,22 +96,21 @@ private:
 
 // Wrapper for non-atomic heap
 template <typename T, bool atomic>
-class Heap_Wrapper: public T {};
+class Heap_Wrapper: public T
+{
+public:
+    Heap_Wrapper() {}
+    Heap_Wrapper(void * addr, unsigned int bytes): T(addr, bytes) {}
+};
 
 
 // Wrapper for atomic heap
 template<typename T>
 class Heap_Wrapper<T, true>: public T
 {
-//private:
-//    void * operator new(size_t bytes) { enter(); return ::operator new(bytes); }
-//    void * operator new(size_t s, void * a) { enter(); return a; }
-//    void operator delete(void * ptr) { ::operator delete(ptr); leave(); }
-
 public:
-    Heap_Wrapper(): T() {}
-    Heap_Wrapper(void * addr, unsigned int bytes): T((enter(),addr), bytes) {}
-    ~Heap_Wrapper() { leave(); }
+    Heap_Wrapper() {}
+    Heap_Wrapper(void * addr, unsigned int bytes): T((enter(),addr), bytes) { leave(); }
 
     bool empty() {
         enter();

@@ -51,9 +51,6 @@ public:
     typedef typename T::Element Element;
 
 public:
-//    void lock() { }
-//    void unlock() { }
-
     bool empty() { return T::empty(); }
     unsigned int size() { return T::size(); }
 
@@ -80,17 +77,11 @@ public:
 template <typename T>
 class Queue_Wrapper<T, true>: private T
 {
-private:
-//    static const bool smp = Traits<Thread>::smp;
-
 public:
     typedef typename T::Object_Type Object_Type;
     typedef typename T::Element Element;
 
 public:
-//    void lock() { _lock.acquire(); }
-//    void unlock() { _lock.release(); }
-
     bool empty() {
         enter();
         bool tmp = T::empty();
@@ -183,13 +174,11 @@ public:
 private:
     void enter() {
         CPU::int_disable();
-//        if(smp)
-            _lock.acquire();
+        _lock.acquire();
     }
 
     void leave() {
-//        if(smp)
-            _lock.release();
+        _lock.release();
         CPU::int_disable();
     }
 

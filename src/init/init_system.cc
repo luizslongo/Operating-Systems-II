@@ -15,7 +15,7 @@ private:
 
 public:
     Init_System() {
-        db<Init>(TRC) << "\nInit_System(CPU=" << Machine::cpu_id() << ")\n";
+        db<Init>(TRC) << "\nInit_System(CPU=" << Machine::cpu_id() << "/" << Machine::n_cpus() << ")\n";
 
         Machine::smp_barrier();
 

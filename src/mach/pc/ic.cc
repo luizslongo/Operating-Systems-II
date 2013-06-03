@@ -13,8 +13,7 @@ PC_IC::Interrupt_Handler PC_IC::_int_vector[PC_IC::INTS];
 // Class methods
 void PC_IC::int_not(unsigned int i)
 {
-    db<PC>(WRN) << "\nInt " << i
-        	        << " occurred, but no handler installed\n";
+    db<PC>(WRN) << "\nInt " << i << " occurred, but no handler installed\n";
 }
 
 void PC_IC::exc_not(unsigned int i,
@@ -121,9 +120,9 @@ void APIC::ipi_start(Log_Addr entry, volatile int * status)
     }
 }
 
-void APIC::ipi_send(int dest, int interrupt)
+void APIC::ipi_send(unsigned int cpu, unsigned int interrupt)
 {
-    write(ICR32_63, (dest << 24));
+    write(ICR32_63, (cpu << 24));
     write(ICR0_31, ICR_LEVEL | ICR_ASSERT | ICR_FIXED | interrupt);
     while((read(ICR0_31) & ICR_PENDING));
 }

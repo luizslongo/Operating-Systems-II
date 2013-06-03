@@ -20,7 +20,7 @@ void Thread::init()
     // MAIN is created first and dispatch won't replace it nor by itself
     // neither by IDLE (that has a lower priority)
     if(Criterion::timed && (Machine::cpu_id() == 0))
-        _timer = new (SYSTEM) Scheduler_Timer(QUANTUM, &time_slicer);
+        _timer = new (SYSTEM) Scheduler_Timer(QUANTUM, time_slicer);
 
     Machine::smp_barrier();
 

@@ -30,9 +30,6 @@ namespace Scheduling_Criteria
         static const bool dynamic = false;
         static const bool preemptive = true;
 
-        static const unsigned int QUEUES = 1;
-        static const bool multihead = false;
-
     public:
         Priority(int p = NORMAL): _priority(p) {}
 
@@ -187,17 +184,14 @@ namespace Scheduling_Criteria
 
 
 // Scheduling_Queue
-template <typename T, unsigned int Q, bool multihead>
-class Scheduling_Queue;
+template <typename T, typename R = typename T::Criterion>
+class Scheduling_Queue: public Scheduling_List<T, R> {};
 
 template <typename T>
-class Scheduling_Queue<T, 1, false>: public Scheduling_List<T, typename T::Criterion> {};
+class Scheduling_Queue<T, Scheduling_Criteria::CPU_Affinity>: public Scheduling_Multilist<T, Scheduling_Criteria::CPU_Affinity> {};
 
-template <typename T, unsigned int Q>
-class Scheduling_Queue<T, Q, false>: public Scheduling_Multihead_List<T, typename T::Criterion> {};
-
-template <typename T, unsigned int Q>
-class Scheduling_Queue<T, Q, true>: public Scheduling_Multihead_List<T, typename T::Criterion> {};
+//template <typename T>
+//class Scheduling_Queue<T, Scheduling_Criteria::GEDF>: public Scheduling_Multihead_List<T, R> {};
 
 // Scheduler
 // Objects subject to scheduling by Scheduler must declare a type "Criterion"
@@ -205,10 +199,10 @@ class Scheduling_Queue<T, Q, true>: public Scheduling_Multihead_List<T, typename
 // operators <, >, and ==) and must also define a method "link" to export the
 // list element pointing to the object being handled.
 template <typename T>
-class Scheduler: public Scheduling_Queue<T, T::Criterion::QUEUES, T::Criterion::multihead>
+class Scheduler: public Scheduling_Queue<T>
 {
 private:
-    typedef Scheduling_Queue<T, T::Criterion::QUEUES, T::Criterion::multihead> Base;
+    typedef Scheduling_Queue<T> Base;
 
 public:
     typedef typename T::Criterion Criterion;
@@ -230,36 +224,31 @@ public:
     }
 
     void insert(T * obj) {
-        db<Scheduler>(TRC) << "Scheduler<" << Criterion::current() << ">[chosen=" << chosen()
-                           << "]::insert(" << obj << ")\n";
+        db<Scheduler>(TRC) << "Scheduler[chosen=" << chosen() << "]::insert(" << obj << ")\n";
 
         Base::insert(obj->link());
     }
 
     T * remove(T * obj) {
-        db<Scheduler>(TRC) << "Scheduler<" << Criterion::current() << ">[chosen=" << chosen()
-                           << "]::remove(" << obj << ")\n";
+        db<Scheduler>(TRC) << "Scheduler[chosen=" << chosen() << "]::remove(" << obj << ")\n";
 
         return Base::remove(obj->link()) ? obj : 0;
     }
 
     void suspend(T * obj) {
-        db<Scheduler>(TRC) << "Scheduler<" << Criterion::current() << ">[chosen=" << chosen()
-                           << "]::suspend(" << obj << ")\n";
+        db<Scheduler>(TRC) << "Scheduler[chosen=" << chosen() << "]::suspend(" << obj << ")\n";
 
         Base::remove(obj->link());
     }
 
     void resume(T * obj) {
-        db<Scheduler>(TRC) << "Scheduler<" << Criterion::current() << ">[chosen=" << chosen()
-                           << "]::resume(" << obj << ")\n";
+        db<Scheduler>(TRC) << "Scheduler[chosen=" << chosen() << "]::resume(" << obj << ")\n";
 
         Base::insert(obj->link());
     }
 
     T * choose() {
-        db<Scheduler>(TRC) << "Scheduler<" << Criterion::current() << ">[chosen=" << chosen()
-                           << "]::choose() => ";
+        db<Scheduler>(TRC) << "Scheduler[chosen=" << chosen() << "]::choose() => ";
 
         T * obj = Base::choose()->object();
         db<Scheduler>(TRC) << obj << "\n";
@@ -268,8 +257,7 @@ public:
     }
 
     T * choose_another() {
-        db<Scheduler>(TRC) << "Scheduler<" << Criterion::current() << ">[chosen=" << chosen()
-                           << "]::choose_another() => ";
+        db<Scheduler>(TRC) << "Scheduler[chosen=" << chosen() << "]::choose_another() => ";
 
         T * obj = Base::choose_another()->object();
         db<Scheduler>(TRC) << obj << "\n";
@@ -278,8 +266,7 @@ public:
     }
 
     T * choose(T * obj) {
-        db<Scheduler>(TRC) << "Scheduler<" << Criterion::current() << ">[chosen=" << chosen()
-                           << "]::choose(" << obj;
+        db<Scheduler>(TRC) << "Scheduler[chosen=" << chosen() << "]::choose(" << obj;
 
         if(!Base::choose(obj->link()))
             obj = 0;

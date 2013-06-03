@@ -126,7 +126,7 @@ protected:
     static void wakeup(Queue * q);
     static void wakeup_all(Queue * q);
 
-    static void reschedule(bool preempt = preemptive);
+    static void reschedule();
     static void time_slicer();
     static void implicit_exit();
 
@@ -141,8 +141,7 @@ protected:
                 prev->_state = READY;
             next->_state = RUNNING;
 
-            db<Thread>(TRC) << "Thread::dispatch(prev=" << prev
-                            << ",next=" << next << ")\n";
+            db<Thread>(TRC) << "Thread::dispatch<" << Machine::cpu_id() << ">(prev=" << prev << ",next=" << next << ")\n";
             db<Thread>(INF) << "prev={" << prev;
             db<Thread>(INF) << ",ctx=" << *prev->_context << "}\n";
             db<Thread>(INF) << "next={" << next;
