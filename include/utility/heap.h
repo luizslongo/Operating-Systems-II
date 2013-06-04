@@ -110,7 +110,7 @@ class Heap_Wrapper<T, true>: public T
 {
 public:
     Heap_Wrapper() {}
-    Heap_Wrapper(void * addr, unsigned int bytes): T((enter(),addr), bytes) { leave(); }
+    Heap_Wrapper(void * addr, unsigned int bytes): T(addr, bytes) {}
 
     bool empty() {
         enter();
@@ -147,13 +147,13 @@ public:
 
 private:
     void enter() {
-        CPU::int_disable();
         _lock.acquire();
+        CPU::int_disable();
     }
 
     void leave() {
         _lock.release();
-        CPU::int_disable();
+        CPU::int_enable();
     }
 
 private:
