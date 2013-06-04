@@ -109,9 +109,9 @@ protected:
     Criterion & criterion() { return const_cast<Criterion &>(_link.rank()); }
 
     static void lock() {
-        CPU::int_disable();
         if(smp)
             _lock.acquire();
+        CPU::int_disable();
     }
 
     static void unlock() {
