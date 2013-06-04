@@ -190,21 +190,21 @@ private:
 // Queue
 template <typename T,
           typename El = List_Elements::Doubly_Linked<T> >
-class Queue: public Queue_Wrapper<List<T, El>, Traits<System>::multicore> {};
+class Queue: public Queue_Wrapper<List<T, El>, false> {};
 
 
 // Ordered Queue
 template <typename T, 
           typename R = List_Element_Rank,
           typename El = List_Elements::Doubly_Linked_Ordered<T, R> >
-class Ordered_Queue: public Queue_Wrapper<Ordered_List<T, R, El>, Traits<System>::multicore> {};
+class Ordered_Queue: public Queue_Wrapper<Ordered_List<T, R, El>, false> {};
 
 
 // Relatively-Ordered Queue
 template <typename T, 
           typename R = List_Element_Rank,
           typename El = List_Elements::Doubly_Linked_Ordered<T, R> >
-class Relative_Queue: public Queue_Wrapper<Relative_List<T, R, El>, Traits<System>::multicore> {};
+class Relative_Queue: public Queue_Wrapper<Relative_List<T, R, El>, false> {};
 
 __END_SYS
 
