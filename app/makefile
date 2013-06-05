@@ -2,9 +2,6 @@
 
 include ../makedefs
 
-# Roda.
-CXXFLAGS := $(MACH_CC_FLAGS) -nostdinc -Wall -I$(INCLUDE) -g
-
 all: install
 
 $(APPLICATION):	$(APPLICATION).o $(LIB)/*
