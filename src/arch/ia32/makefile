@@ -2,6 +2,9 @@
 
 include ../../../makedefs
 
+# Roda.
+CXXFLAGS := $(MACH_CC_FLAGS) -nostdinc -Wall -I$(INCLUDE) -g
+
 OBJS := $(subst .cc,.o,$(shell find *.cc | grep -v _init | grep -v _test))
 CRTS := $(subst .S,.o,$(shell find *.S | grep crt))
 CRTSI := $(subst .S,.s,$(shell find *.S | grep crt))
