@@ -4,7 +4,10 @@ include makedefs
 
 SUBDIRS := etc tools src app img
 
-all:	$(SUBDIRS)
+all:	check
+
+epos: 	$(SUBDIRS)
+
 
 $(SUBDIRS):	FORCE
 		(cd $@ && $(MAKE))
@@ -19,11 +22,27 @@ test:		$(SUBDIRS)
 		(cd src && $(MAKETEST))
 		(cd img && $(MAKETEST))
 
+# Targets for Verification using CBMC ==========================================
+check:
+	cbmc $(SCHEDULER_FILES) $(CBMC_FLAGS) --bounds-check --pointer-check --cover-assertions
 
-# check: added by mateuskl. Do not add to EPOS's Subversion (at least not as it is).
-check: 
-	cbmc $(SCHEDULER_FILES) --bounds-check --pointer-check -I $(INCLUDE)
+simple_check:
+	cbmc $(SCHEDULER_FILES) $(CBMC_FLAGS)
 
+assertions_check: 
+	cbmc $(SCHEDULER_FILES) $(CBMC_FLAGS) --cover-assertions
+
+bounds_check:
+	cbmc $(SCHEDULER_FILES) $(CBMC_FLAGS) --bounds-check
+
+pointer_check:
+	cbmc $(SCHEDULER_FILES) $(CBMC_FLAGS) --pointer-check
+
+bounds_and_pointer_check:
+	cbmc $(SCHEDULER_FILES) $(CBMC_FLAGS) --bounds-check --pointer-check
+
+
+# ==============================================================================
 
 clean:		FORCE
 		(cd src && $(MAKECLEAN))

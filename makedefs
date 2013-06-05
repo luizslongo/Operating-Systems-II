@@ -282,14 +282,22 @@ LMACH     = $(LMACHNAME)_$(ARCH)
 LSYS      = $(LSYSNAME)_$(ARCH)
 LINIT     = $(LINITNAME)_$(ARCH)
 LUTIL     = $(LUTILNAME)_$(ARCH)
+
+APPLICATION = scheduler_verified_app
+
 ifndef APPLICATION
 APPLICATION = $(MACH)_app
 endif
 
 
 # check: added by mateuskl. Do not add to EPOS's Subversion (at least not as it is).
-SCHEDULER_FILES := $(SRC)/abstraction/scheduler2_test.cc
+# Definitions for Verification using CBMC ======================================
+SCHEDULER_FILES := app/scheduler_verified_app.cc
 
+UNWIND := 4
+CBMC_FLAGS := -DCBMC -I$(INCLUDE) --unwind $(UNWIND)
+
+# ==============================================================================
 
 # Tools to adapt linux files
 SED = sed

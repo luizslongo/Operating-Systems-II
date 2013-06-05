@@ -43,6 +43,8 @@ int main()
     cons->join();
 
     delete cons;
+    
+    while(true);
 
     return 0;
 }
