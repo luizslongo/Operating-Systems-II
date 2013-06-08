@@ -8,12 +8,12 @@ __BEGIN_SYS
 
 void E100::init(unsigned int unit)
 {
-    db<Init, E100>(TRC) << "E100::init(unit=" << unit << ")\n";
+    db<Init, E100>(TRC) << "E100::init(unit=" << unit << ")" << endl;
 
     // Scan the PCI bus for device
     PC_PCI::Locator loc = PC_PCI::scan(PCI_VENDOR_ID, PCI_DEVICE_ID, unit);
     if(!loc) {
-        db<Init, E100>(WRN) << "E100::init: PCI scan failed!\n";
+        db<Init, E100>(WRN) << "E100::init: PCI scan failed!" << endl;
         return;
     }
 
@@ -25,14 +25,14 @@ void E100::init(unsigned int unit)
     PC_PCI::Header hdr;
     PCI::header(loc, &hdr);
     if(!hdr) {
-        db<Init, E100>(WRN) << "E100::init: PCI header failed!\n";
+        db<Init, E100>(WRN) << "E100::init: PCI header failed!" << endl;
         return;
     }
     db<Init, E100>(INF) << "E100::init: PCI header=" << hdr << "}\n";
     if(!(hdr.command & PC_PCI::COMMAND_MEMORY))
-        db<Init, E100>(WRN) << "E100::init: I/O memory unaccessible!\n";
+        db<Init, E100>(WRN) << "E100::init: I/O memory unaccessible!" << endl;
     if(!(hdr.command & PC_PCI::COMMAND_MASTER))
-        db<Init, E100>(WRN) << "E100::init: not master capable!\n";
+        db<Init, E100>(WRN) << "E100::init: not master capable!" << endl;
 
     // Get I/O base port
     Log_Addr io_mem = hdr.region[PCI_REG_MEM].log_addr;

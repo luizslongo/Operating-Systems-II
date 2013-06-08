@@ -37,7 +37,7 @@ int main()
     thread_b = new Thread(&func_b);
     thread_c = new Thread(&func_c);
 
-    cout << "Threads B and C have been created!\n";
+    cout << "Threads B and C have been created!" << endl;
 
     Function_Handler handler_a(&func_a);
     Thread_Handler handler_b(thread_b);
@@ -60,12 +60,12 @@ int main()
     cout << "\n\nThread B exited with status " << status_b 
   	 << " and thread C exited with status " << status_c << "\n";
 
-    cout << "\nThe estimated time to run the test was " << max(period_a, period_b, period_c) * iterations << " ms. The measured time was " << chrono.read() / 1000 <<" ms!\n";
+    cout << "\nThe estimated time to run the test was " << max(period_a, period_b, period_c) * iterations << " ms. The measured time was " << chrono.read() / 1000 <<" ms!" << endl;
 
     delete thread_b;
     delete thread_c;
     
-    cout << "I'm also done, bye!\n";
+    cout << "I'm also done, bye!" << endl;
 
     return 0;
 }

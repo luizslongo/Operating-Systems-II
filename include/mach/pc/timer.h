@@ -27,7 +27,7 @@ public:
 
     // I/O Ports
     enum {
-        CNT_0		= 0x40, // Timekeeper
+        CNT_0		= 0x40, // Time keeper
         CNT_1		= 0x41, // Memory refresh
         CNT_2		= 0x42, // Speaker
         CTRL		= 0x43  // Control
@@ -169,14 +169,14 @@ public:
 
     // Port B (status/control)
     enum {
-        MEMORY_PARITY   		= 0x80, // R/O
-        IO_CHECK	    	    = 0x40, // R/O
+        MEMORY_PARITY   	= 0x80, // R/O
+        IO_CHECK	 	= 0x40, // R/O
         I8253_OUT2  	    	= 0x20, // R/O, i8253 CH 2 (speaker)
-        I8253_OUT1       		= 0x10, // R/O, i8253 CH 1 (DRAM refresh)
+        I8253_OUT1       	= 0x10, // R/O, i8253 CH 1 (DRAM refresh)
         IO_CHECK_ENABLE	    	= 0x08, // R/W
         MEMORY_PARITY_ENABLE	= 0x04, // R/W
-        SPEAKER	    		    = 0x02, // R/W, speaker enable
-        I8253_GATE2	        	= 0x01  // R/W, i8253 CH 2 (speaker)
+        SPEAKER	    		= 0x02, // R/W, speaker enable
+        I8253_GATE2	        = 0x01  // R/W, i8253 CH 2 (speaker)
     };
 
 public:
@@ -223,8 +223,7 @@ public:
 
     static Hertz clock() { return CPU::bus_clock(); }
 
-    static void config(int channel, Count count,
-                       bool interrupt = true, bool periodic = true) {
+    static void config(int channel, Count count, bool interrupt = true, bool periodic = true) {
         APIC::config_timer(count, interrupt, periodic);
     }
 
@@ -262,12 +261,12 @@ protected:
         db<Timer>(TRC) << "Timer(f=" << frequency
                        << ",h=" << reinterpret_cast<void*>(handler)
                        << ",ch=" << channel
-                       << ") => {count=" << _initial << "}\n";
+                       << ") => {count=" << _initial << "}" << endl;
 
         if(_initial && !_channels[channel])
             _channels[channel] = this;
         else
-            db<Timer>(ERR) << "Timer not installed!\n";
+            db<Timer>(ERR) << "Timer not installed!" << endl;
 
         for(unsigned int i = 0; i < Traits<Machine>::MAX_CPUS; i++)
             _current[i] = _initial;
@@ -279,12 +278,12 @@ public:
         db<Timer>(TRC) << "Timer(f=" << frequency
                        << ",h=" << reinterpret_cast<void*>(handler)
                        << ",ch=" << channel
-                       << ") => {count=" << _initial << "}\n";
+                       << ") => {count=" << _initial << "}" << endl;
 
         if(_initial && (unsigned(channel) < CHANNELS) && !_channels[channel])
             _channels[channel] = this;
         else
-            db<Timer>(WRN) << "Timer not installed!\n";
+            db<Timer>(WRN) << "Timer not installed!"<< endl;
 
         for(unsigned int i = 0; i < Traits<Machine>::MAX_CPUS; i++)
             _current[i] = _initial;
@@ -293,9 +292,9 @@ public:
 
     ~PC_Timer() {
         db<Timer>(TRC) << "~Timer(f=" << frequency()
-        	               << ",h=" << reinterpret_cast<void*>(_handler)
-        	               << ",ch=" << _channel
-        	               << ") => {count=" << _initial << "}\n";
+        	       << ",h=" << reinterpret_cast<void*>(_handler)
+        	       << ",ch=" << _channel
+        	       << ") => {count=" << _initial << "}" << endl;
 
         _channels[_channel] = 0;
     }
@@ -308,7 +307,7 @@ public:
     int reset() {
         db<Timer>(TRC) << "Timer::reset() => {f=" << frequency()
         	       << ",h=" << reinterpret_cast<void*>(_handler)
-        	       << ",count=" << _current[Machine::cpu_id()] << "}\n";
+        	       << ",count=" << _current[Machine::cpu_id()] << "}" << endl;
 
         int percentage = _current[Machine::cpu_id()] * 100 / _initial;
         _current[Machine::cpu_id()] = _initial;

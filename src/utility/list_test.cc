@@ -30,7 +30,7 @@ int main()
     test_scheduling_list();
     test_grouping_list();
 
-    cout << "\nDone!\n";
+    cout << "\nDone!" << endl;
 
     return 0;
 }
@@ -140,7 +140,7 @@ void test_simple_grouping_list()
             delete d1;
         }
     } else
-        cout << "failed!\n";
+        cout << "failed!" << endl;
     cout << "Allocating 6 more elements from the list => "; 
     d1 = l.search_decrementing(6);
     if(d1) {
@@ -151,7 +151,7 @@ void test_simple_grouping_list()
         }
         cout << "\n";
     } else
-        cout << "failed!\n";
+        cout << "failed!" << endl;
     cout << "Allocating " << N * 2 << " more elements from the list => "; 
     d1 = l.search_decrementing(N * 2);
     if(d1) {
@@ -162,7 +162,7 @@ void test_simple_grouping_list()
         }
         cout << "\n";
     } else
-        cout << "failed!\n";
+        cout << "failed!" << endl;
     cout << "Allocating " << (N * 2)-7 << " more elements from the list => "; 
     d1 = l.search_decrementing((N * 2) - 7);
     if(d1) {
@@ -173,7 +173,7 @@ void test_simple_grouping_list()
         }
         cout << "\n";
     } else
-        cout << "failed!\n";
+        cout << "failed!" << endl;
     cout << "The list has now " << l.size() << " elements that group " 
          << l.grouped_size() << " elements in total\n";
 }
@@ -442,7 +442,7 @@ void test_grouping_list()
             delete d1;
         }
     } else
-        cout << "failed!\n";
+        cout << "failed!" << endl;
     cout << "Allocating 6 more elements from the list => "; 
     d1 = l.search_decrementing(6);
     if(d1) {
@@ -453,7 +453,7 @@ void test_grouping_list()
         }
         cout << "\n";
     } else
-        cout << "failed!\n";
+        cout << "failed!" << endl;
     cout << "Allocating " << N * 2 << " more elements from the list => "; 
     d1 = l.search_decrementing(N * 2);
     if(d1) {
@@ -464,7 +464,7 @@ void test_grouping_list()
         }
         cout << "\n";
     } else
-        cout << "failed!\n";
+        cout << "failed!" << endl;
     cout << "Allocating " << (N * 2)-7 << " more elements from the list => "; 
     d1 = l.search_decrementing((N * 2) - 7);
     if(d1) {
@@ -475,7 +475,7 @@ void test_grouping_list()
         }
         cout << "\n";
     } else
-        cout << "failed!\n";
+        cout << "failed!" << endl;
     cout << "The list has now " << l.size() << " elements that group " 
          << l.grouped_size() << " elements in total\n";
 }

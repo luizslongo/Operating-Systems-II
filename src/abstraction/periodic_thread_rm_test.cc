@@ -75,16 +75,16 @@ int main()
 
     exec('M');
 
-    cout << "\n... done!\n";
+    cout << "\n... done!" << endl;
     cout << "\n\nThread A exited with status \"" << char(status_a)
          << "\", thread B exited with status \"" << char(status_b)
-         << "\" and thread C exited with status \"" << char(status_c) << ".\n";
+         << "\" and thread C exited with status \"" << char(status_c) << "." << endl;
 
     cout << "\nThe estimated time to run the test was "
          << max(period_a, period_b, period_c) * iterations
-         << " ms. The measured time was " << chrono.read() / 1000 <<" ms!\n";
+         << " ms. The measured time was " << chrono.read() / 1000 <<" ms!" << endl;
 
-    cout << "I'm also done, bye!\n";
+    cout << "I'm also done, bye!" << endl;
 
     return 0;
 }

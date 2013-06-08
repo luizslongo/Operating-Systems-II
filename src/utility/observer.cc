@@ -8,25 +8,24 @@ __BEGIN_SYS
 
 void Observed::attach(Observer * o)
 {
-    db<Observed>(TRC) << "Observed::attach(obs=" << o << ")\n";
+    db<Observed>(TRC) << "Observed::attach(obs=" << o << ")" << endl;
 
     _observers.insert(&o->_link);
 } 
 
 void Observed::detach(Observer * o)
 {
-    db<Observed>(TRC) << "Observed::detach(obs=" << o << ")\n";
+    db<Observed>(TRC) << "Observed::detach(obs=" << o << ")" << endl;
 
     _observers.remove(&o->_link); 
 }
 
 void Observed::notify()
 {
-    db<Observed>(TRC) << "Observed::notify()\n";
+    db<Observed>(TRC) << "Observed::notify()" << endl;
 
     for(Element * e = _observers.head(); e; e = e->next()) {
-        db<Observed>(INF) << "Observed::notify(this=" << this
-        		  << ",obs=" << e->object() << ")\n";
+        db<Observed>(INF) << "Observed::notify(this=" << this << ",obs=" << e->object() << ")" << endl;
         
         e->object()->update(this);
     }
@@ -34,7 +33,7 @@ void Observed::notify()
 
 void Conditionally_Observed::attach(Conditional_Observer * o, int c)
 {
-    db<Observed>(TRC) << "Observed::attach(o=" << o << ",c=" << c << ")\n";
+    db<Observed>(TRC) << "Observed::attach(o=" << o << ",c=" << c << ")" << endl;
 
     o->_link = Element(o, c);
     _observers.insert(&o->_link);
@@ -42,18 +41,17 @@ void Conditionally_Observed::attach(Conditional_Observer * o, int c)
 
 void Conditionally_Observed::detach(Conditional_Observer * o, int c)
 {
-    db<Observed>(TRC) << "Observed::detach(obs=" << o << ",c=" << c << ")\n";
+    db<Observed>(TRC) << "Observed::detach(obs=" << o << ",c=" << c << ")" << endl;
 
     _observers.remove(&o->_link); 
 }
 
 void Conditionally_Observed::notify(int c)
 {
-    db<Observed>(TRC) << "Observed::notify(cond=" << c << ")\n";
+    db<Observed>(TRC) << "Observed::notify(cond=" << c << ")" << endl;
     
     for(Element * e = _observers.head(); e; e = e->next()) {
-        db<Observed>(INF) << "Observed::notify(this=" << this
-        		  << ",obs=" << e->object() << ")\n";
+        db<Observed>(INF) << "Observed::notify(this=" << this << ",obs=" << e->object() << ")" << endl;
         
         if(e->rank() == c)
             e->object()->update(this, c);

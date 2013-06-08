@@ -15,7 +15,7 @@ private:
 
 public:
     Init_System() {
-        db<Init>(TRC) << "\nInit_System(CPU=" << Machine::cpu_id() << "/" << Machine::n_cpus() << ")\n";
+        db<Init>(TRC) << "Init_System()" << endl;
 
         Machine::smp_barrier();
 
@@ -30,7 +30,7 @@ public:
         }
         
         // Initialize the processor
-        db<Init>(INF) << "Initializing the CPU: \n";
+        db<Init>(INF) << "Initializing the CPU: " << endl;
         CPU::init();
         db<Init>(INF) << "done!\n\n";
 
@@ -42,7 +42,7 @@ public:
         	reinterpret_cast<unsigned int>(&__epos_library_app_entry);
 
         // Initialize System's heap
-        db<Init>(INF) << "Initializing system's heap: \n";
+        db<Init>(INF) << "Initializing system's heap: " << endl;
         if(Traits<System>::multiheap) {
             new (&System::_heap_segment) Segment(HEAP_SIZE);
             new (&System::_heap) Heap(
@@ -51,20 +51,20 @@ public:
         } else {
             new (&System::_heap) Heap(MMU::alloc(MMU::pages(HEAP_SIZE)), HEAP_SIZE);
         }
-        db<Init>(INF) << "done!\n\n";
+        db<Init>(INF) << "done!" << endl;
 
         // Initialize the machine
-        db<Init>(INF) << "Initializing the machine: \n";
+        db<Init>(INF) << "Initializing the machine: " << endl;
         Machine::init();
-        db<Init>(INF) << "done!\n\n";
+        db<Init>(INF) << "done!" << endl;
 
         Machine::smp_barrier(); // signalizes "machine ready" to other CPUs
         Machine::smp_barrier(); // wait for them to finish Machine::init()
 
         // Initialize system abstractions 
-        db<Init>(INF) << "Initializing system abstractions: \n";
+        db<Init>(INF) << "Initializing system abstractions: " << endl;
         System::init();
-        db<Init>(INF) << "done!\n\n";
+        db<Init>(INF) << "done!" << endl;
 
         // Initialization continues at init_first
     }

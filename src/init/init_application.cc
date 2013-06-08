@@ -16,7 +16,7 @@ private:
 
 public:
     Init_Application() {
-        db<Init>(TRC) << "\nInit_Application(CPU=" << Machine::cpu_id() << ")\n";
+        db<Init>(TRC) << "Init_Application()" << endl;
 
         // Only the boot CPU runs INIT_APPLICATION
         Machine::smp_barrier();
@@ -24,7 +24,7 @@ public:
             return;
 
         // Initialize Application's heap
-        db<Init>(INF) << "Initializing application's heap: \n";
+        db<Init>(INF) << "Initializing application's heap: " << endl;
         if(Traits<System>::multiheap) {
             new (&Application::_heap_segment) Segment(HEAP_SIZE);
             new (&Application::_heap) Heap(
@@ -34,7 +34,7 @@ public:
             for(unsigned int frames = MMU::allocable(); frames; frames = MMU::allocable())
                 System::_heap.free(MMU::alloc(frames), frames * sizeof(MMU::Page));
         }
-        db<Init>(INF) << "done!\n\n";
+        db<Init>(INF) << "done!" << endl;
     }
 };
 

@@ -10,7 +10,7 @@ void Task::init()
 {
     System_Info<Machine> * si = System::info();
 
-    db<Init, Task>(TRC) << "Task::init()\n";
+    db<Init, Task>(TRC) << "Task::init()" << endl;
 
     _master = new (SYSTEM) Task (new (SYSTEM) Address_Space(SELF),
                                  new (SYSTEM) Segment(Log_Addr(si->lm.app_code), si->lm.app_code_size),
@@ -21,7 +21,7 @@ void Task::init()
     if(si->bm.extras_offset != -1)
         db<Init>(INF) << "Task:: additional tasks at " 
         	      << (void *)si->pmm.ext_base 
-        	      << ":" << si->pmm.ext_top << "\n";
+        	      << ":" << si->pmm.ext_top << endl;
 }
 
 __END_SYS

@@ -17,7 +17,7 @@ extern "C" {
     }
 
     void __cxa_pure_virtual() {
-        db<void>(ERR) << "__cxa_pure_virtual() called!\n";
+        db<void>(ERR) << "__cxa_pure_virtual() called!" << endl;
         Machine::panic();
     }
 }

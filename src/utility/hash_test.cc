@@ -21,7 +21,7 @@ int main()
     test_few_synonyms_hash();
     test_many_synonyms_hash();
 
-    cout << "\nDone!\n";
+    cout << "\nDone!" << endl;
 
     return 0;
 }

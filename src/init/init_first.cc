@@ -11,13 +11,13 @@ class Init_First
 public:
     Init_First() {
 
-        db<Init>(TRC) << "Init_First(CPU=" << Machine::cpu_id() << ")\n";
+        db<Init>(TRC) << "Init_First()" << endl;
 
         Machine::smp_barrier();
 
         // Initialize the Thread abstraction,
         // thus creating the first application thread
-        db<Init>(INF) << "INIT ends here!\n\n";
+        db<Init>(INF) << "INIT ends here!" << endl;
         if(Traits<Thread>::enabled)
             Thread::init();
     }

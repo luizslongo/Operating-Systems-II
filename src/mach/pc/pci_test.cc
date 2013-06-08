@@ -53,7 +53,7 @@ int main()
         cout << "\n";
     }
 
-    cout << "Finish!\n";
+    cout << "Finish!" << endl;
 
     return 0;
 }

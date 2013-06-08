@@ -26,7 +26,7 @@ void PC_IC::exc_not(unsigned int i,
                 << ",fl=" << (void *)eflags
                 << "}]\n";
 
-    db<PC>(WRN) << "The running thread will now be terminated!\n";
+    db<PC>(WRN) << "The running thread will now be terminated!" << endl;
     _exit(-1);
 }
 
@@ -48,7 +48,7 @@ void PC_IC::exc_pf(unsigned int i,
                 << ",fl=" << (void *)eflags
                 << "}]\n";
 
-    db<PC>(WRN) << "The running thread will now be terminated!\n";
+    db<PC>(WRN) << "The running thread will now be terminated!" << endl;
     _exit(-1);
 }
 
@@ -61,7 +61,7 @@ void PC_IC::exc_gpf(unsigned int i,
         	        << ",fl=" << (void *)eflags
         	        << "}]\n";
 
-    db<PC>(WRN) << "The running thread will now be terminated!\n";
+    db<PC>(WRN) << "The running thread will now be terminated!" << endl;
     _exit(-1);
 }
 
@@ -74,7 +74,7 @@ void PC_IC::exc_fpu(unsigned int i,
         	        << ",fl=" << (void *)eflags
         	        << "}]\n";
 
-    db<PC>(WRN) << "The running thread will now be terminated!\n";
+    db<PC>(WRN) << "The running thread will now be terminated!" << endl;
     _exit(-1);
 }
 

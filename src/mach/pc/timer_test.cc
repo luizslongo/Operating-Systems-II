@@ -39,7 +39,7 @@ int main()
     for(int i = 0; i < 10000; i++);
     cout << "count = " << timer.read() << "\n";
     
-    cout << "The End!\n";
+    cout << "The End!" << endl;
 
     return 0;
 }

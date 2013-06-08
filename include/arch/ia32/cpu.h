@@ -152,11 +152,8 @@ public:
               base_31_24((Reg8)(b >> 24)) {}
 
         friend Debug & operator << (Debug & db, const GDT_Entry & g) {
-            db << "{bas=" << (void *)((g.base_31_24 << 24) | 
-        			      (g.base_23_16 << 16) |
-        			      g.base_15_00) 
-               << ",lim=" << (void *)(((g.g_d_0_a_limit_19_16 & 0xf) << 16) |
-        			      g.limit_15_00)
+            db << "{bas=" << (void *)((g.base_31_24 << 24) | (g.base_23_16 << 16) | g.base_15_00) 
+               << ",lim=" << (void *)(((g.g_d_0_a_limit_19_16 & 0xf) << 16) | g.limit_15_00)
                << ",p=" << (g.p_dpl_s_type >> 7) 
                << ",dpl=" << ((g.p_dpl_s_type >> 5) & 0x3)
                << ",s=" << ((g.p_dpl_s_type >> 4) & 0x1)
@@ -276,7 +273,7 @@ public:
                << ",gs=" << gs()
                << ",ss=" << ss()
                << ",cr3=" << reinterpret_cast<void *>(pdp())
-               << "}" ;
+               << "}";
             return db;
         }
 

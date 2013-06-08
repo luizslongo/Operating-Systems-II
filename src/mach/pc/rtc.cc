@@ -18,14 +18,14 @@ PC_RTC::Date PC_RTC::date()
     if(date.year() < EPOCH_YEAR)
         date.adjust_year(100);
 
-    db<RTC>(TRC) << "RTC::date() => " << date << "\n";
+    db<RTC>(TRC) << "RTC::date() => " << date << endl;
 
     return date;
 }
 
 void PC_RTC::date(const Date & d)
 {
-    db<RTC>(TRC) << "RTC::date(date= " << d << ")\n";
+    db<RTC>(TRC) << "RTC::date(date= " << d << ")" << endl;
 
     reg(YEAR, d.year());
     reg(MONTH, d.month());

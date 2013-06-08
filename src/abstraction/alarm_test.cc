@@ -30,7 +30,7 @@ int main()
     // of the idle thread!
     Alarm::delay(1000000 * (iterations + 1));
 
-    cout << "I'm done, bye!\n";
+    cout << "I'm done, bye!" << endl;
 
     return 0;
 }
@@ -39,12 +39,12 @@ void func_a()
 {
     for(int i = 0; i < 79; i++)
         cout << "a";
-    cout << "\n";
+    cout << endl;
 }
 
 void func_b(void)
 {
     for(int i = 0; i < 79; i++)
         cout << "b";
-    cout << "\n";
+    cout << endl;
 }

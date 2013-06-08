@@ -234,15 +234,15 @@ public:
         	    return;
         	}
             db<IA32_MMU>(WRN) << "IA32_MMU::Directory::detach(pt=" 
-        		      << chunk.pt() << ") failed!\n";
+        		      << chunk.pt() << ") failed!" << endl;
  	}
 
  	void detach(const Chunk & chunk, Log_Addr addr) {
             unsigned int from = directory(addr);
             if(indexes((*_pd)[from]) != indexes(chunk.pt())) {
         	db<IA32_MMU>(WRN) << "IA32_MMU::Directory::detach(pt=" 
-        			  << chunk.pt() << ",addr="
-        			  << addr << ") failed!\n";
+        		 	  << chunk.pt() << ",addr="
+        			  << addr << ") failed!" << endl;
         	return;
             }
             detach(from, chunk.pt(), chunk.pts());
@@ -281,8 +281,7 @@ public:
         DMA_Buffer(unsigned int s) : Chunk(s, IA32_Flags::DMA) {
             Directory dir(current());
             _log_addr = dir.attach(*this);
-            db<IA32_MMU>(TRC) << "IA32_MMU::DMA_Buffer() => " 
-        		      << *this << "\n";
+            db<IA32_MMU>(TRC) << "IA32_MMU::DMA_Buffer() => " << *this << endl;
         }
 
         DMA_Buffer(unsigned int s, const Log_Addr & d)
@@ -290,8 +289,7 @@ public:
             Directory dir(current());
             _log_addr = dir.attach(*this);
             memcpy(_log_addr, d, s);
-            db<IA32_MMU>(TRC) << "IA32_MMU::DMA_Buffer(phy=" << *this 
-        		      << " <= " << d <<"\n";
+            db<IA32_MMU>(TRC) << "IA32_MMU::DMA_Buffer(phy=" << *this << " <= " << d << endl;
         }
         
         Log_Addr log_address() const { return _log_addr; }
@@ -319,10 +317,9 @@ public:
             if(e)
         	phy = e->object() + e->size();
             else
-        	db<IA32_MMU>(WRN) << "IA32_MMU::alloc() failed!\n";
+        	db<IA32_MMU>(WRN) << "IA32_MMU::alloc() failed!" << endl;
         }
-        db<IA32_MMU>(TRC) << "IA32_MMU::alloc(frames=" << frames << ") => "
-        		  << phy << "\n";
+        db<IA32_MMU>(TRC) << "IA32_MMU::alloc(frames=" << frames << ") => " << phy << endl;
         return phy;
     }
 
@@ -336,7 +333,7 @@ public:
         // Clean up MMU flags in frame address
         frame = indexes(frame); 
 
-        db<IA32_MMU>(TRC) << "IA32_MMU::free(frame=" << frame << ",n=" << n << ")\n";
+        db<IA32_MMU>(TRC) << "IA32_MMU::free(frame=" << frame << ",n=" << n << ")" << endl;
 
         if(frame && n) {
             List::Element * e = new (phy2log(frame)) List::Element(frame, n);
@@ -358,13 +355,13 @@ public:
     }
 
     static void flush_tlb() {
-        db<IA32_MMU>(TRC) << "IA32_MMU::flush_tlb()\n";
+        db<IA32_MMU>(TRC) << "IA32_MMU::flush_tlb()" << endl;
 
         ASMV("movl %cr3,%eax");
         ASMV("movl %eax,%cr3");
     }
     static void flush_tlb(Log_Addr addr) {
-        db<IA32_MMU>(TRC) << "IA32_MMU::flush_tlb(" << addr << ")\n";
+        db<IA32_MMU>(TRC) << "IA32_MMU::flush_tlb(" << addr << ")" << endl;
         ASMV("invlpg %0" : : "m"(addr));
     }
 

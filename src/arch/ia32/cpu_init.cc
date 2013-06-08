@@ -11,7 +11,7 @@ __BEGIN_SYS
 
 void IA32::init()
 {
-    db<Init, IA32>(TRC) << "IA32::init()\n";
+    db<Init, IA32>(TRC) << "IA32::init()" << endl;
 
     _cpu_clock = System::info()->tm.cpu_clock;
     _bus_clock = System::info()->tm.bus_clock;
@@ -20,7 +20,7 @@ void IA32::init()
     if(Traits<IA32_MMU>::enabled)
         IA32_MMU::init();
     else
-        db<Init, IA32>(WRN) << "MMU is disabled!\n";
+        db<Init, IA32>(WRN) << "MMU is disabled!" << endl;
 }
 
 __END_SYS

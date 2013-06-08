@@ -69,7 +69,7 @@ int main()
     for(int i = 0; i < N; i++)
         delete e[i];
 
-    cout << "\nDone!\n";
+    cout << "\nDone!" << endl;
 
     return 0;
 }

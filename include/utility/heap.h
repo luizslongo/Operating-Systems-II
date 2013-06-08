@@ -20,12 +20,11 @@ public:
     using Grouping_List<char>::size;
 
     Simple_Heap() {
-        db<Init, Simple_Heap>(TRC) << "Heap() => " << this << "\n";
+        db<Init, Simple_Heap>(TRC) << "Heap() => " << this << endl;
     }
 
     Simple_Heap(void * addr, unsigned int bytes) {
-        db<Init, Simple_Heap>(TRC) << "Heap(addr=" << addr << ",bytes=" << bytes
-                                   << ") => " << this << "\n";
+        db<Init, Simple_Heap>(TRC) << "Heap(addr=" << addr << ",bytes=" << bytes << ") => " << this << endl;
 
         free(addr, bytes);
     }
@@ -58,7 +57,7 @@ public:
             *addr++ = reinterpret_cast<int>(this);
         *addr++ = bytes;
 
-        db<Heap>(TRC) << ") => " << reinterpret_cast<void *>(addr) << "\n";
+        db<Heap>(TRC) << ") => " << reinterpret_cast<void *>(addr) << endl;
 
         return addr;
     }
@@ -66,7 +65,7 @@ public:
     void free(void * ptr, unsigned int bytes) {
         db<Heap>(TRC) << "Heap::free(this=" << this
                       << ",ptr=" << ptr
-                      << ",bytes=" << bytes << ")\n";
+                      << ",bytes=" << bytes << ")" << endl;
 
         if(ptr && (bytes >= sizeof(Element))) {
             Element * e = new (ptr)

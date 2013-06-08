@@ -8,12 +8,12 @@ __BEGIN_SYS
 
 void PCNet32::init(unsigned int unit)
 {
-    db<Init, PCNet32>(TRC) << "PCNet32::init(unit=" << unit << ")\n";
+    db<Init, PCNet32>(TRC) << "PCNet32::init(unit=" << unit << ")" << endl;
 
     // Scan the PCI bus for device
     PC_PCI::Locator loc = PC_PCI::scan(PCI_VENDOR_ID, PCI_DEVICE_ID, unit);
     if(!loc) {
-        db<Init, PCNet32>(WRN) << "PCNet32::init: PCI scan failed!\n";
+        db<Init, PCNet32>(WRN) << "PCNet32::init: PCI scan failed!" << endl;
         return;
     }
 
@@ -25,14 +25,14 @@ void PCNet32::init(unsigned int unit)
     PC_PCI::Header hdr;
     PCI::header(loc, &hdr);
     if(!hdr) {
-        db<Init, PCNet32>(WRN) << "PCNet32::init: PCI header failed!\n";
+        db<Init, PCNet32>(WRN) << "PCNet32::init: PCI header failed!" << endl;
         return;
     }
     db<Init, PCNet32>(INF) << "PCNet32::init: PCI header=" << hdr << "}\n";
     if(!(hdr.command & PC_PCI::COMMAND_IO))
-        db<Init, PCNet32>(WRN) << "PCNet32::init: I/O unaccessible!\n";
+        db<Init, PCNet32>(WRN) << "PCNet32::init: I/O unaccessible!" << endl;
     if(!(hdr.command & PC_PCI::COMMAND_MASTER))
-        db<Init, PCNet32>(WRN) << "PCNet32::init: not master capable!\n";
+        db<Init, PCNet32>(WRN) << "PCNet32::init: not master capable!" << endl;
 
     // Get I/O base port
     IO_Port io_port = hdr.region[PCI_REG_IO].phy_addr;

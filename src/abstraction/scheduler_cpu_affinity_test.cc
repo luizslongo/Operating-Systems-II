@@ -55,7 +55,7 @@ int philosopher(int n, int l, int c)
     return(iterations);
 }
 
-int main()
+int dinner()
 {
     sem_display.p();
     Display::clear();
@@ -70,7 +70,7 @@ int main()
     phil[3] = new Thread(&philosopher, 3, 16, 21);
     phil[4] = new Thread(&philosopher, 4, 10, 17);
 
-    cout << "Philosophers are alife and hungry!\n";
+    cout << "Philosophers are alife and hungry!" << endl;
         
     cout << "The dinner is served ...\n";
     Display::position(7, 44);
@@ -99,7 +99,25 @@ int main()
     for(int i = 0; i < 5; i++)
         delete phil[i];
 
-    cout << "The end!\n";
+    cout << "The end!" << endl;
 
     return 0;
 }
+
+template<typename T>
+int run() { return dinner(); }
+
+template<>
+int run<Scheduling_Criteria::GEDF>() { return dinner(); }
+
+template<>
+int run<Scheduling_Criteria::PEDF>() { return dinner(); }
+
+template<>
+int run<Scheduling_Criteria::CEDF>() { return dinner(); }
+
+int main()
+{
+    return run<Traits<Thread>::Criterion>();
+};
+

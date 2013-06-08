@@ -148,8 +148,21 @@ namespace Scheduling_Criteria
           RTC::Microsecond _deadline;
       };
 
+      // Multicore Algorithms
+      class Variable_Queue {
+      protected:
+          Variable_Queue(unsigned int queue): _queue(queue) {};
+
+      public:
+          const volatile unsigned int & queue() const volatile { return _queue; }
+
+      protected:
+          volatile unsigned int _queue;
+          static volatile unsigned int _next_queue;
+      };
+
       // CPU Affinity
-      class CPU_Affinity: public Priority
+      class CPU_Affinity: public Priority, public Variable_Queue
       {
       public:
           enum {
@@ -167,31 +180,155 @@ namespace Scheduling_Criteria
           static const unsigned int QUEUES = Traits<Machine>::MAX_CPUS;
 
       public:
-          CPU_Affinity(int p = NORMAL): Priority(p),
-          _affinity(((p == IDLE) || (p == MAIN)) ? Machine::cpu_id() : ++_next_cpu %= Machine::n_cpus()) {}
+          CPU_Affinity(int p = NORMAL): Priority(p), Variable_Queue( // Aperiodic
+              ((_priority == IDLE) || (_priority == MAIN)) ? Machine::cpu_id() : ++_next_queue %= Machine::n_cpus()) {}
 
-          CPU_Affinity(int p, unsigned int a): Priority(p), _affinity(a) {}
+          static unsigned int current_queue() { return Machine::cpu_id(); }
+      };
 
-          const volatile unsigned int & queue() const volatile { return _affinity; }
+      // Global Earliest Deadline First (multicore)
+      class GEDF: public EDF
+      {
+      public:
+          static const unsigned int HEADS = Traits<Machine>::MAX_CPUS;
 
-          static unsigned int current() { return Machine::cpu_id(); }
+      public:
+          GEDF(int p): EDF(p) {} // Aperiodic
+          GEDF(const RTC::Microsecond & d): EDF(d) {}
 
-      private:
-          volatile unsigned int _affinity;
-          static volatile unsigned int _next_cpu;
+          static unsigned int current_head() { return Machine::cpu_id(); }
+      };
+
+      // Partitioned Earliest Deadline First (multicore)
+      class PEDF: public EDF, public Variable_Queue
+      {
+      public:
+          static const unsigned int QUEUES = Traits<Machine>::MAX_CPUS;
+
+      public:
+          PEDF(int p): EDF(p), Variable_Queue( // Aperiodic
+              ((_priority == IDLE) || (_priority == MAIN)) ? Machine::cpu_id() : 0) {} // Aperiodic
+
+          PEDF(const RTC::Microsecond & d): EDF(d), Variable_Queue(++_next_queue %= Machine::n_cpus()) {}
+
+          static unsigned int current_queue() { return Machine::cpu_id(); }
+      };
+
+      // Clustered Earliest Deadline First (multicore)
+      class CEDF: public EDF, public Variable_Queue
+      {
+      public:
+          // QUEUES x HEADS must be equal to Traits<Machine>::MAX_CPUS
+          static const unsigned int HEADS = 2;
+          static const unsigned int QUEUES = Traits<Machine>::MAX_CPUS / HEADS;
+
+      public:
+          CEDF(int p): EDF(p), Variable_Queue( // Aperiodic
+              ((_priority == IDLE) || (_priority == MAIN)) ? Machine::cpu_id() / HEADS : 0) {} // Aperiodic
+
+          CEDF(const RTC::Microsecond & d): EDF(d), Variable_Queue(++_next_queue %= (Machine::n_cpus() / HEADS)) {}
+
+          static unsigned int current_queue() { return Machine::cpu_id() % QUEUES; }
+          static unsigned int current_head() { return Machine::cpu_id() % HEADS; }
       };
 }
 
 
 // Scheduling_Queue
 template <typename T, typename R = typename T::Criterion>
-class Scheduling_Queue: public Scheduling_List<T, R> {};
+class Scheduling_Queue: public Scheduling_List<T>
+{
+private:
+    typedef Scheduling_List<T> Base;
+
+public:
+    typedef typename T::Criterion Criterion;
+    typedef typename Base::Element Element;
+
+public:
+    int insert(Element * e) {
+        db<Scheduler<T> >(TRC) << endl;
+        Base::insert(e);
+        return 0;
+    }
+};
 
 template <typename T>
-class Scheduling_Queue<T, Scheduling_Criteria::CPU_Affinity>: public Scheduling_Multilist<T, Scheduling_Criteria::CPU_Affinity> {};
+class Scheduling_Queue<T, Scheduling_Criteria::CPU_Affinity>:
+public Scheduling_Multilist<T>
+{
+private:
+    typedef Scheduling_Multilist<T> Base;
 
-//template <typename T>
-//class Scheduling_Queue<T, Scheduling_Criteria::GEDF>: public Scheduling_Multihead_List<T, R> {};
+public:
+    typedef typename T::Criterion Criterion;
+    typedef typename Base::Element Element;
+
+public:
+    int insert(Element * e) {
+        Base::insert(e);
+        db<Scheduler<T> >(TRC) << " => {Q=" << e->rank().queue() << "}" << endl;
+        return e->rank().queue();
+    }
+};
+
+template <typename T>
+class Scheduling_Queue<T, Scheduling_Criteria::GEDF>:
+public Multihead_Scheduling_List<T>
+{
+private:
+    typedef Multihead_Scheduling_List<T> Base;
+
+public:
+    typedef typename T::Criterion Criterion;
+    typedef typename Base::Element Element;
+
+public:
+    int insert(Element * e) {
+        Base::insert(e);
+        db<Scheduler<T> >(TRC) << " => {H=" << e->rank().current_head() << "}" << endl;
+        return e->rank().current_head();
+    }
+};
+
+template <typename T>
+class Scheduling_Queue<T, Scheduling_Criteria::PEDF>:
+public Scheduling_Multilist<T>
+{
+private:
+    typedef Scheduling_Multilist<T> Base;
+
+public:
+    typedef typename T::Criterion Criterion;
+    typedef typename Base::Element Element;
+
+public:
+    int insert(Element * e) {
+        Base::insert(e);
+        db<Scheduler<T> >(TRC) << " => {Q=" << e->rank().queue() << "}" << endl;
+        return e->rank().queue();
+    }
+};
+
+
+template <typename T>
+class Scheduling_Queue<T, Scheduling_Criteria::CEDF>:
+public Multihead_Scheduling_Multilist<T>
+{
+private:
+    typedef Multihead_Scheduling_Multilist<T> Base;
+
+public:
+    typedef typename T::Criterion Criterion;
+    typedef typename Base::Element Element;
+
+public:
+    int insert(Element * e) {
+        Base::insert(e);
+        db<Scheduler<T> >(TRC) << " => {Q=" << e->rank().queue() << ",H=" << e->rank().current_head() << "}" << endl;
+        return e->rank().queue();
+    }
+};
 
 // Scheduler
 // Objects subject to scheduling by Scheduler must declare a type "Criterion"
@@ -223,35 +360,35 @@ public:
     	return const_cast<T * volatile>(Base::chosen()->object());
     }
 
-    void insert(T * obj) {
-        db<Scheduler>(TRC) << "Scheduler[chosen=" << chosen() << "]::insert(" << obj << ")\n";
+    int insert(T * obj) {
+        db<Scheduler>(TRC) << "Scheduler[chosen=" << chosen() << "]::insert(" << obj << ")";
 
-        Base::insert(obj->link());
+        return Base::insert(obj->link());
     }
 
     T * remove(T * obj) {
-        db<Scheduler>(TRC) << "Scheduler[chosen=" << chosen() << "]::remove(" << obj << ")\n";
+        db<Scheduler>(TRC) << "Scheduler[chosen=" << chosen() << "]::remove(" << obj << ")" << endl;
 
         return Base::remove(obj->link()) ? obj : 0;
     }
 
     void suspend(T * obj) {
-        db<Scheduler>(TRC) << "Scheduler[chosen=" << chosen() << "]::suspend(" << obj << ")\n";
+        db<Scheduler>(TRC) << "Scheduler[chosen=" << chosen() << "]::suspend(" << obj << ")" << endl;
 
         Base::remove(obj->link());
     }
 
-    void resume(T * obj) {
-        db<Scheduler>(TRC) << "Scheduler[chosen=" << chosen() << "]::resume(" << obj << ")\n";
+    int resume(T * obj) {
+        db<Scheduler>(TRC) << "Scheduler[chosen=" << chosen() << "]::resume(" << obj << ")";
 
-        Base::insert(obj->link());
+        return Base::insert(obj->link());
     }
 
     T * choose() {
         db<Scheduler>(TRC) << "Scheduler[chosen=" << chosen() << "]::choose() => ";
 
         T * obj = Base::choose()->object();
-        db<Scheduler>(TRC) << obj << "\n";
+        db<Scheduler>(TRC) << obj << endl;
 
         return obj;
     }
@@ -260,7 +397,7 @@ public:
         db<Scheduler>(TRC) << "Scheduler[chosen=" << chosen() << "]::choose_another() => ";
 
         T * obj = Base::choose_another()->object();
-        db<Scheduler>(TRC) << obj << "\n";
+        db<Scheduler>(TRC) << obj << endl;
 
         return obj;
     }
@@ -270,7 +407,7 @@ public:
 
         if(!Base::choose(obj->link()))
             obj = 0;
-        db<Scheduler>(TRC) << obj << "\n";
+        db<Scheduler>(TRC) << obj << endl;
 
         return obj;
     }

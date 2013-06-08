@@ -58,7 +58,7 @@ public:
     friend OStream & operator << (OStream & cout, const Address & a) {
         cout << hex;
         for(int i = LENGTH - 1; i >= 0; i--) {
-            cout  << (unsigned int)(a._address[i]);
+            cout << (unsigned int)(a._address[i]);
             if(i > 0)
                 cout << ":";
         }

@@ -7,7 +7,7 @@ __BEGIN_SYS
 
 int PC_Timer::init()
 {
-    db<Init, Timer>(TRC) << "Timer::init()\n";
+    db<Init, Timer>(TRC) << "Timer::init()" << endl;
 
     CPU::int_disable();
     

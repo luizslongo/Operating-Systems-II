@@ -15,9 +15,9 @@ void PCNet32::int_handler(unsigned int interrupt)
     PCNet32 * dev = get(interrupt);
 
     db<PCNet32>(TRC) << "PCNet32::int_handler(int=" << interrupt
-        	     << ",dev=" << dev << ")\n";
+        	     << ",dev=" << dev << ")" << endl;
     if(!dev)
-        db<PCNet32>(WRN) << "PCNet32::int_handler: handler not found!\n";
+        db<PCNet32>(WRN) << "PCNet32::int_handler: handler not found!" << endl;
     else 
         dev->handle_int();
 }
@@ -25,18 +25,18 @@ void PCNet32::int_handler(unsigned int interrupt)
 // Methods
 PCNet32::PCNet32(unsigned int unit)
 {
-    db<PCNet32>(TRC) << "PCNet32(unit=" << unit << ")\n";
+    db<PCNet32>(TRC) << "PCNet32(unit=" << unit << ")" << endl;
 
     // Share control
     if(unit >= UNITS) {
         db<PCNet32>(WRN) << "PCNet32: requested unit (" << unit 
-        		 << ") does not exist!\n";
+        		 << ") does not exist!" << endl;
         return;
     }
 
     // Share control
     if(_devices[unit].in_use) {
-        db<PCNet32>(WRN) << "PCNet32: device already in use!\n";
+        db<PCNet32>(WRN) << "PCNet32: device already in use!" << endl;
         return;
     }
     
@@ -48,7 +48,7 @@ PCNet32::PCNet32(unsigned int unit)
 
 PCNet32::~PCNet32()
 {
-    db<PCNet32>(TRC) << "~PCNet32(unit=" << _unit << ")\n";
+    db<PCNet32>(TRC) << "~PCNet32(unit=" << _unit << ")" << endl;
 
     // Unlock device
     _devices[_unit].in_use = false;
@@ -57,8 +57,7 @@ PCNet32::~PCNet32()
 PCNet32::PCNet32(unsigned int unit, 
         	 IO_Port io_port, IO_Irq irq, DMA_Buffer * dma_buf)
 {
-    db<PCNet32>(TRC) << "PCNet32(unit=" << unit << ",io=" << io_port 
-        	     << ",irq=" << irq << ",dma=" << dma_buf << ")\n";
+    db<PCNet32>(TRC) << "PCNet32(unit=" << unit << ",io=" << io_port << ",irq=" << irq << ",dma=" << dma_buf << ")" << endl;
 
     _unit = unit;
     _io_port = io_port;
@@ -124,7 +123,7 @@ void PCNet32::reset()
 
     // Get MAC address from PROM
     _address = Address(prom(0), prom(1), prom(2), prom(3), prom(4), prom(5));
-    db<PCNet32>(INF) << "PCNet32::reset: MAC=" << _address << "\n";
+    db<PCNet32>(INF) << "PCNet32::reset: MAC=" << _address << endl;
 
     // Enable autoselect port
     bcr(2, BCR2_ASEL);
@@ -167,16 +166,16 @@ void PCNet32::reset()
     csr(0, CSR0_IENA | CSR0_INIT);
     for(int i = 0; (i < 100) && !(csr(0) & CSR0_IDON); i++);
     if(!(csr(0) & CSR0_IDON))
-        db<PCNet32>(WRN) << "PCNet32::reset: initialization failed!\n";
+        db<PCNet32>(WRN) << "PCNet32::reset: initialization failed!" << endl;
 
     // Get MAC address from CSR
     csr(0, CSR0_IDON | CSR0_STOP);
     Address csr_addr(csr(PADR0), csr(PADR1), csr(PADR2));
 
     if(_address != csr_addr) {
-        db<PCNet32>(WRN) << "PCNet32::reset: initialization failed!\n";
-        db<PCNet32>(WRN) << "PCNet32::reset: MAC(ROM)=" << _address << "\n";
-        db<PCNet32>(WRN) << "PCNet32::reset: MAC(CSR)=" << csr_addr << "\n";
+        db<PCNet32>(WRN) << "PCNet32::reset: initialization failed!" << endl;
+        db<PCNet32>(WRN) << "PCNet32::reset: MAC(ROM)=" << _address << endl;
+        db<PCNet32>(WRN) << "PCNet32::reset: MAC(CSR)=" << csr_addr << endl;
     }
 
     // Activate sending and receiving 
@@ -191,7 +190,7 @@ int PCNet32::send(const Address & dst, const Protocol & prot,
         	     << ",p=" << hex << prot << dec
         	     << ",dt=" << data
         	     << ",sz=" << size
-        	     << ")\n";
+        	     << ")" << endl;
 
     // Wait for a free buffer
     while(_tx_ring[_tx_cur].status & Rx_Desc::OWN);
@@ -243,7 +242,7 @@ int PCNet32::receive(Address * src, Protocol * prot,
         	     << ",p=" << hex << *prot << dec
         	     << ",dt=" << data
         	     << ",sz=" << s
-        	     << ")\n";
+        	     << ")" << endl;
 
     return s;
 }
@@ -268,18 +267,18 @@ void PCNet32::handle_int()
             // and all the initialization is conctrolled via polling, so if
             // we are here, it must be due to a hardware induced reset.
             // All we can do is to try to reset the nic!
-            db<PCNet32>(WRN) << "PCNet32::handle_int: initialization done!\n";
+            db<PCNet32>(WRN) << "PCNet32::handle_int: initialization done!" << endl;
             reset();
         }
 
         // Transmition?
         if(csr0 & CSR0_TINT) {
-            db<PCNet32>(INF) << "PCNet32::handle_int: transmition\n";
+            db<PCNet32>(INF) << "PCNet32::handle_int: transmition" << endl;
         }
 
  	// Receive?
  	if(csr0 & CSR0_RINT) {
- 	    db<PCNet32>(INF) << "PCNet32::handle_int: receive\n";
+ 	    db<PCNet32>(INF) << "PCNet32::handle_int: receive" << endl;
  	    notify(CPU::ntohs(_rx_buffer[_rx_cur]->_prot));
  	}
 

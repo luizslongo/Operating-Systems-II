@@ -47,18 +47,18 @@ int main()
     Segment ds1(ds0->size());
     CPU::Log_Addr * code1 = as0->attach(cs1);
     CPU::Log_Addr * data1 = as0->attach(ds1);
-    cout << "  code => " << code1 << " done!\n";
-    cout << "  data => " << data1 << " done!\n";
+    cout << "  code => " << code1 << " done!" << endl;
+    cout << "  data => " << data1 << " done!" << endl;
 
     cout << "Copying segments:";
     memcpy(code1, code0, cs1.size());
     memcpy(data1, data0, ds1.size());
-    cout << " done!\n";
+    cout << " done!" << endl;
 
     cout << "Detaching segments:";
     as0->detach(cs1);
     as0->detach(ds1);
-    cout << " done!\n";
+    cout << " done!" << endl;
 
     Task * task1 = new (SYSTEM) Task(cs1, ds1);
     a = new (SYSTEM) Thread(*task1, &func_a);
@@ -83,7 +83,7 @@ int main()
     delete b;
     delete m;
     
-    cout << "I'm also done, bye!\n";
+    cout << "I'm also done, bye!" << endl;
 
     return 0;
 }

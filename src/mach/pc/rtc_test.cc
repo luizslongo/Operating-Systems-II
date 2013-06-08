@@ -36,9 +36,9 @@ int main()
 
     cout << "\n\nSetting the time to its current value: ";
     rtc.date(rtc.date());
-    cout << "done!\n";
+    cout << "done!" << endl;
 
-    cout << "The End!\n";
+    cout << "The End!" << endl;
 
     return 0;
 }

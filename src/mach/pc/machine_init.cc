@@ -6,7 +6,7 @@ __BEGIN_SYS
 
 void PC::init()
 {
-    db<Init, PC>(TRC) << "PC::init()\n";
+    db<Init, PC>(TRC) << "PC::init()" << endl;
 
     if(Traits<PC_IC>::enabled)
         PC_IC::init();

@@ -126,8 +126,7 @@ int main(int argc, char **argv)
     image_size += put_file(fd_img, file);
     if(image_size > CONFIG.boot_length_max) {
         printf(" failed!\n");
-        fprintf(stderr, "Boot strap \"%s\" is too large! (%d bytes)\n", 
-        	file, image_size);
+        fprintf(stderr, "Boot strap \"%s\" is too large! (%d bytes)\n", file, image_size);
         return 1;
     } else {
         while((image_size % CONFIG.boot_length_min != 0))

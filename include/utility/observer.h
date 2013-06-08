@@ -37,12 +37,12 @@ class Observer
 
 protected: 
     Observer(): _link(this) {
-        db<Observer>(TRC) << "Observer() => " << this << "\n";
+        db<Observer>(TRC) << "Observer() => " << this << endl;
     }
 
 public: 
     virtual ~Observer() {
-        db<Observer>(TRC) << "~Observer(this=" << this << ")\n";
+        db<Observer>(TRC) << "~Observer(this=" << this << ")" << endl;
     }
 
     virtual void update(Observed * o) = 0;
@@ -65,11 +65,11 @@ private:
 
 public: 
     Conditionally_Observed() {
-        db<Observed>(TRC) << "Observed() => " << this << "\n";
+        db<Observed>(TRC) << "Observed() => " << this << endl;
     }
 
     virtual ~Conditionally_Observed() {
-        db<Observed>(TRC) << "~Observed(this=" << this << ")\n";
+        db<Observed>(TRC) << "~Observed(this=" << this << ")" << endl;
     }
 
     virtual void attach(Conditional_Observer * o, int c);
@@ -86,11 +86,11 @@ class Conditional_Observer
 
 public: 
     Conditional_Observer(): _link(this) {
-        db<Observer>(TRC) << "Observer() => " << this << "\n";
+        db<Observer>(TRC) << "Observer() => " << this << endl;
     } 
 
     virtual ~Conditional_Observer() {
-        db<Observer>(TRC) << "~Observer(this=" << this << ")\n";
+        db<Observer>(TRC) << "~Observer(this=" << this << ")" << endl;
     }
     
     virtual void update(Conditionally_Observed * o, int c) = 0;
@@ -114,31 +114,33 @@ public:
     typedef List_Elements::Singly_Linked_Ordered<Observer> Element;
 
     Data_Observed() {
-        db<Observed>(TRC) << "Observed() => " << this << "\n";
+        db<Observed>(TRC) << "Observed() => " << this << endl;
     }
 
     virtual ~Data_Observed() {
-        db<Observed>(TRC) << "~Observed(this=" << this << ")\n";
+        db<Observed>(TRC) << "~Observed(this=" << this << ")" << endl;
     }
 
     virtual void attach(Observer * o, long c) {
-    	db<Observed>(TRC) << "Observed::attach(o=" << o << ",c=" << c << ")\n";
+    	db<Observed>(TRC) << "Observed::attach(o=" << o << ",c=" << c << ")" << endl;
 
         	o->_link = Element(o, c);
         	_observers.insert(&o->_link);
     }
+    
     virtual void detach(Observer * o, long c) {
-    	db<Observed>(TRC) << "Observed::detach(obs=" << o << ",c=" << c << ")\n";
+    	db<Observed>(TRC) << "Observed::detach(obs=" << o << ",c=" << c << ")" << endl;
 
     	_observers.remove(&o->_link);
     }
+
     virtual void notify(T src,T dst,long c,void * data,unsigned int size) {
-        db<Observed>(TRC) << "Observed::notify(cond=" << c << ")\n";
+        db<Observed>(TRC) << "Observed::notify(cond=" << c << ")" << endl;
 
         for(Element * e = _observers.head(); e; e = e->next()) {
         	if(e->rank() == c) {
         		db<Observed>(INF) << "Observed::notify(this=" << this
-        			  << ",obs=" << e->object() << ")\n";
+        			 << ",obs=" << e->object() << ")" << endl;
         		e->object()->update(this, c, src, dst, data, size);
         	}
         }
@@ -157,11 +159,11 @@ public:
     typedef Data_Observed<T> Observed;
 
     Data_Observer(): _link(this) {
-        db<Observer>(TRC) << "Observer() => " << this << "\n";
+        db<Observer>(TRC) << "Observer() => " << this << endl;
     }
 
     virtual ~Data_Observer() {
-    	db<Observer>(TRC) << "~Observer(this=" << this << ")\n";
+    	db<Observer>(TRC) << "~Observer(this=" << this << ")" << endl;
     }
 
     virtual void update(Observed * o, long c,T src,T dst,void * data,unsigned int size) = 0;

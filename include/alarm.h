@@ -89,7 +89,7 @@ namespace Scheduling_Criteria {
     inline EDF::EDF(const RTC::Microsecond & d)
     : Priority(Alarm::ticks(d)), _deadline(Alarm::ticks(d)) {}
 
-    inline void EDF::update() { _priority = _deadline + Alarm::_elapsed; }
+    inline void EDF::update() { if(_deadline) _priority = _deadline + Alarm::_elapsed; }
 };
 
 __END_SYS

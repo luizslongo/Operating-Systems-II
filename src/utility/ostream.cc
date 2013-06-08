@@ -1,20 +1,56 @@
 // EPOS OStream Implementation
 
 #include <utility/ostream.h>
+#include <machine.h>
 #include <display.h>
 
 __BEGIN_SYS
 
 const char OStream::_digits[] = "0123456789abcdef";
 
+static volatile int lock = -1;
+
+void OStream::error()
+{
+    Machine::panic();
+}
+
+void OStream::preamble()
+{
+    if(Traits<System>::multicore) {
+        //        while(CPU::tsl(lock));
+
+//        int id = Machine::cpu_id();
+//        int first = CPU::cas(lock, -1, id);
+//        while(CPU::cas(lock, -1, id) != id);
+//        if(first != id) {
+            Display::putc('<');
+            Display::putc('0' + Machine::cpu_id());
+            Display::putc(':');
+            Display::putc(' ');
+//        }
+    }
+}
+
+void OStream::trailler()
+{
+    if(Traits<System>::multicore) {
+        Display::putc(' ');
+        Display::putc(':');
+        Display::putc('0' + Machine::cpu_id());
+        Display::putc('>');
+        Display::putc('\n');
+
+        lock = -1;
+    } else
+        Display::putc('\n');
+}
+
 void OStream::print(const char * s)
 {
-//     static volatile bool lock = false;
-
-//     if(Traits<Thread>::smp) while(CPU::tsl(lock));
     Display::puts(s); 
-//     if(Traits<Thread>::smp) lock = false;
 }
+
 
 int OStream::itoa(int v, char * s)
 {
@@ -27,6 +63,7 @@ int OStream::itoa(int v, char * s)
 
     return utoa(static_cast<unsigned int>(v), s, i);
 } 
+
 
 int OStream::utoa(unsigned int v, char * s, unsigned int i)
 {
@@ -51,6 +88,7 @@ int OStream::utoa(unsigned int v, char * s, unsigned int i)
     return i;
 }
 
+
 int OStream::llitoa(long long int v, char * s)
 {
     unsigned int i = 0;
@@ -62,6 +100,7 @@ int OStream::llitoa(long long int v, char * s)
 
     return llutoa(static_cast<unsigned long long int>(v), s, i);
 } 
+
 
 int OStream::llutoa(unsigned long long int v, char * s, unsigned int i)
 {
@@ -85,6 +124,7 @@ int OStream::llutoa(unsigned long long int v, char * s, unsigned int i)
 
     return i;
 }
+
 
 int OStream::ptoa(const void * p, char * s)
 {

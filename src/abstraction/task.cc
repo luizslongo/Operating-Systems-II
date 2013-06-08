@@ -12,7 +12,7 @@ Task * Task::_master;
 Task::Task(const Segment & code, const Segment & data)
 : _as (new (SYSTEM) Address_Space), _cs(&code), _ds(&data)
 {
-    db<Task>(TRC) << "Task(cs=" << _cs << ",ds=" << _ds << ") => " << this << "\n";
+    db<Task>(TRC) << "Task(cs=" << _cs << ",ds=" << _ds << ") => " << this << endl;
 
     _as->attach(*_cs);
     _as->attach(*_ds);
@@ -21,7 +21,7 @@ Task::Task(const Segment & code, const Segment & data)
 
 Task::~Task()
 {
-    db<Task>(TRC) << "~Task(this=" << this << ")\n";
+    db<Task>(TRC) << "~Task(this=" << this << ")" << endl;
 
     while(!_threads.empty())
         delete _threads.remove()->object();

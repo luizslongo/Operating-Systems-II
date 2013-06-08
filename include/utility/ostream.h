@@ -10,19 +10,25 @@ __BEGIN_SYS
 class OStream
 {
 public:
+    struct Begl {};
     struct Endl {};
     struct Hex {};
     struct Dec {};
     struct Oct {};
     struct Bin {};
-    
+    struct Err {};
+
 public:
     OStream(): _base(10) {}
 
+    OStream & operator<<(const Begl & begl) {
+        preamble();
+        return *this;
+    }
+
     OStream & operator<<(const Endl & endl) {
-        print("\n");
         _base = 10;
-        flush();
+        trailler();
         return *this;
     }
 
@@ -40,6 +46,12 @@ public:
     }
     OStream & operator<<(const Bin & bin) {
         _base = 2;
+        return *this;
+    }
+
+    OStream & operator<<(const Err & err)
+    {
+        error();
         return *this;
     }
 
@@ -149,8 +161,12 @@ public:
     }
 
 private:
+    void error();
+    void preamble();
+    void trailler();
+
     void print(const char * s);
-    void flush() {}
+
     int itoa(int v, char * s);
     int utoa(unsigned int v, char * s, unsigned int i = 0);
     int llitoa(long long int v, char * s);
@@ -163,6 +179,7 @@ private:
     static const char _digits[];
 }; 
 
+extern OStream::Begl begl;
 extern OStream::Endl endl;
 extern OStream::Hex hex;
 extern OStream::Dec dec;

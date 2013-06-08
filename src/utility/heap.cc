@@ -8,8 +8,7 @@ __BEGIN_SYS
 // Methods
 void Simple_Heap::out_of_memory()
 {
-    db<Heap>(ERR) << "Heap::alloc(this=" << this
-                  << "): out of memory!\n";
+    db<Heap>(ERR) << "Heap::alloc(this=" << this << "): out of memory!" << endl;
 
     Machine::panic();
 }

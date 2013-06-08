@@ -70,7 +70,7 @@ int main()
     phil[3] = new Thread(&philosopher, 3, 16, 24);
     phil[4] = new Thread(&philosopher, 4, 10, 20);
 
-    cout << "Philosophers are alive and hungry!\n";
+    cout << "Philosophers are alive and hungry!" << endl;
 
     Display::position(7, 44);
     cout << '/';
@@ -100,7 +100,7 @@ int main()
     for(int i = 0; i < 5; i++)
         delete phil[i];
 
-    cout << "The end!\n";
+    cout << "The end!" << endl;
 
     return 0;
 }

@@ -8,7 +8,7 @@ __BEGIN_SYS
 
 Segment::Segment()
 {
-    db<Segment>(TRC) << "Segment() => " << this << "\n";
+    db<Segment>(TRC) << "Segment() => " << this << endl;
 }
 
 
@@ -18,7 +18,7 @@ Segment::Segment(unsigned int bytes, Flags flags)
     db<Segment>(TRC) << "Segment(bytes=" << bytes
                      << ",flags=" << flags
                      << ") [Chunk::_pt=" << Chunk::pt() << "] => "
-                     << this << "\n";
+                     << this << endl;
 }
 
 
@@ -31,13 +31,13 @@ Segment::Segment(Phy_Addr phy_addr, unsigned int bytes, Flags flags)
                      << ",phy_addr=" << phy_addr
                      << ",flags=" << flags
                      << ") [Chunk::_pt=" << Chunk::pt() << "] => "
-                     << this << "\n";
+                     << this << endl;
 }
 
 
 Segment::~Segment()
 {
-    db<Segment>(TRC) << "~Segment() [Chunk::_pt=" << Chunk::pt() << "]\n";
+    db<Segment>(TRC) << "~Segment() [Chunk::_pt=" << Chunk::pt() << "]" << endl;
 }
 
 
@@ -52,7 +52,7 @@ Segment::Phy_Addr Segment::phy_address() const {
 
 
 int Segment::resize(int amount) {
-    db<Segment>(TRC) << "Segment::resize(amount=" << amount << ")\n";
+    db<Segment>(TRC) << "Segment::resize(amount=" << amount << ")" << endl;
 
     return Chunk::resize(amount);
 }

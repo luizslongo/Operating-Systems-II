@@ -95,7 +95,7 @@ ifeq ($(GDB),1)
 $(MACH_PC)_EMULATOR	= qemu -smp 2 -s -S -m $(MEM_SIZE) -nographic -no-reboot -net nic,model=pcnet -net user -fda
 else
 #$(MACH_PC)_EMULATOR	= qemu -smp $(MAX_CPUS) -m $(MEM_SIZE) -nographic -no-reboot -net nic,model=pcnet -net user -net socket,mcast=224.0.0.1:12000 -fda
-$(MACH_PC)_EMULATOR	= qemu -smp $(MAX_CPUS) -m $(MEM_SIZE) -nographic -no-reboot -net nic,model=pcnet -net user -fda
+$(MACH_PC)_EMULATOR	= qemu -smp $(MAX_CPUS) -m $(MEM_SIZE) -no-reboot -net nic,model=pcnet -net user -fda
 endif
 #$(MACH_PC)_DEBUGGER	= xterm -e gdb -ex "target remote:1234" -ex "set confirm off" -ex "add-symbol-file pc_setup $(SETUP_ADDR)"
 $(MACH_PC)_DEBUGGER	= xterm -e gdb -ex "target remote:1234" -ex "set confirm off" -ex "add-symbol-file pc_setup $(SETUP_ADDR)" -ex "add-symbol-file pc_init $(INIT_ADDR)" -ex "add-symbol-file pc_system $(SYS_CODE_ADDR)"

@@ -14,7 +14,7 @@ void E100::int_handler(unsigned int interrupt)
     E100 * dev = get(interrupt);
 
     db<E100>(TRC) << "E100::int_handler(int=" << interrupt
-        	  << ",dev=" << dev << ")\n";
+        	  << ",dev=" << dev << ")" << endl;
     if(!dev)
         db<E100>(WRN) << "E100::int_handler: handler not found\n";
     else 
@@ -24,18 +24,17 @@ void E100::int_handler(unsigned int interrupt)
 // Methods
 E100::E100(unsigned int unit)
 {
-    db<E100>(TRC) << "E100(unit=" << unit << ")\n";
+    db<E100>(TRC) << "E100(unit=" << unit << ")" << endl;
 
     // Share control
     if(unit >= UNITS) {
-        db<E100>(WRN) << "E100: requested unit (" << unit 
-        	      << ") does not exist!\n";
+        db<E100>(WRN) << "E100: requested unit (" << unit << ") does not exist!" << endl;
         return;
     }
 
     // Share control
     if(_devices[unit].in_use) {
-        db<E100>(WRN) << "E100: device already in use!\n";
+        db<E100>(WRN) << "E100: device already in use!" << endl;
         return;
     }
 
@@ -47,7 +46,7 @@ E100::E100(unsigned int unit)
 
 E100::~E100()
 {
-    db<E100>(TRC) << "~E100(unit=" << _unit << ")\n";
+    db<E100>(TRC) << "~E100(unit=" << _unit << ")" << endl;
 
     // Unlock device
     _devices[_unit].in_use = false;
@@ -56,8 +55,7 @@ E100::~E100()
 E100::E100(unsigned int unit, 
            Log_Addr io_mem, IO_Irq irq, DMA_Buffer * dma_buf)
 {
-    db<E100>(TRC) << "E100(unit=" << unit << ",io=" << io_mem 
-        	  << ",irq=" << irq << ",dma=" << dma_buf << ")\n";
+    db<E100>(TRC) << "E100(unit=" << unit << ",io=" << io_mem << ",irq=" << irq << ",dma=" << dma_buf << ")" << endl;
 
     _unit = unit;
     _io_mem = io_mem;
@@ -91,7 +89,7 @@ E100::E100(unsigned int unit,
     _rx_ring = log;
     _rx_ring_phy = phy;
 
-    db<E100> (TRC) << "E100(_rx_ring malloc of " << RX_BUFS << " units)\n";
+    db<E100> (TRC) << "E100(_rx_ring malloc of " << RX_BUFS << " units)" << endl;
 
     // Rx (RFDs)
     unsigned int i;
@@ -113,7 +111,7 @@ E100::E100(unsigned int unit,
     _tx_ring = log;
     _tx_ring_phy = phy;
 
-    db<E100> (TRC) << "E100(_tx_ring malloc of " << TX_BUFS << " units)\n";
+    db<E100> (TRC) << "E100(_tx_ring malloc of " << TX_BUFS << " units)" << endl;
     // TxCBs
     for(i = 0; i < TX_BUFS; i++) {
         log += MMU::align128(sizeof(Tx_Desc));
@@ -157,7 +155,7 @@ int E100::exec_command(Reg8 cmd, Reg32 dma_addr)
 
 void E100::reset()
 {
-    db<E100>(TRC) << "E100::reset (software reset and self-test)\n";
+    db<E100>(TRC) << "E100::reset (software reset and self-test)" << endl;
 
     // Reset the device
     software_reset();
@@ -167,7 +165,7 @@ void E100::reset()
 
     // Get MAC address from EEPROM
     _address = Address(eeprom_mac_address(0), eeprom_mac_address(1), eeprom_mac_address(2), eeprom_mac_address(3), eeprom_mac_address(4), eeprom_mac_address(5));
-    db<E100>(INF) << "E100::reset():MAC=" << _address << "\n";
+    db<E100>(INF) << "E100::reset():MAC=" << _address << endl;
 
     // load zero on NIC's internal CU
     while(exec_command(cuc_load_base, 0));
@@ -297,7 +295,7 @@ int E100::receive(Address * src, Protocol * prot,
 
     memcpy(data, frame->_data, size);
 
-    //kout << "recv (size: " << size << " prot: " << *prot <<")\n";
+    //kout << "recv (size: " << size << " prot: " << *prot <<")" << endl;
 
     _rx_ring[_rx_cur].command = cb_el;
     _rx_ring[_rx_cur].status = Rx_RFD_NOT_FILLED;
@@ -481,16 +479,15 @@ int E100::self_test()
 
     // Check results of self-test 
     if(dmadump->selftest.result != 0) {
-        db<E100>(WRN)  << "Self-test failed: result = " << dmadump->selftest.result << "\n";
+        db<E100>(WRN) << "E100:self_test() => failed with code " << dmadump->selftest.result << "!" << endl;
         return -1;
     }
 
     if(dmadump->selftest.signature == 0) {
-        db<E100>(WRN)  << "Self-test failed: timed out\n";
+        db<E100>(WRN) << "E100:self_test() => timed out!" << endl;
         return -1;
     }
 
-    db<E100>(INF) << "YES, I'M HERE!\n";
     return 0;
 }
 

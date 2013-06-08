@@ -16,7 +16,7 @@ struct Traits
 template <> struct Traits<Build>
 {
     enum {LIBRARY, BUILTIN};
-    static const unsigned int MODE = LIBRARY;
+    static const unsigned int MODE = BUILTIN;
 
     enum {IA32};
     static const unsigned int ARCH = IA32;
@@ -47,6 +47,7 @@ template <> struct Traits<Spin>: public Traits<void>
 
 template <> struct Traits<Heap>: public Traits<void>
 {
+    static const bool debugged = false;
 };
 
 
@@ -116,7 +117,7 @@ template <> struct Traits<Thread>: public Traits<void>
 {
     static const bool smp = Traits<System>::multicore;
 
-    typedef Scheduling_Criteria::CPU_Affinity Criterion;
+    typedef Scheduling_Criteria::CEDF Criterion;
     static const unsigned int QUANTUM = 10000; // us
 
     static const bool trace_idle = false;

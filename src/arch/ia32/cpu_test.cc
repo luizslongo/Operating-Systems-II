@@ -15,23 +15,21 @@ int main()
     {
         volatile bool lock = false;
         if(cpu.tsl(lock))
-            cout << "tsl(): doesn't function properly!\n";
+            cout << "tsl(): doesn't function properly!" << endl;
         else
             if(cpu.tsl(lock))
         	cout << "tsl(): ok\n";
             else
-        	cout << "tsl(): doesn't function properly!\n";
+        	cout << "tsl(): doesn't function properly!" << endl;
     }
     {
         volatile int number = 100;
         volatile int tmp;
         if((tmp = cpu.finc(number)) != 100)
-            cout << "finc(): doesn't function properly (n=" << tmp
-        	 << ", should be 100)!\n";
+            cout << "finc(): doesn't function properly (n=" << tmp << ", should be 100)!" << endl;
         else
             if((tmp = cpu.finc(number)) != 101)
-        	cout << "finc(): doesn't function properly (n=" << tmp 
-        	     << ", should be 101)!\n";
+        	cout << "finc(): doesn't function properly (n=" << tmp << ", should be 101)!" << endl;
             else
         	cout << "finc(): ok\n";
     }
@@ -39,17 +37,15 @@ int main()
         volatile int number = 100;
         volatile int tmp;
         if((tmp = cpu.fdec(number)) != 100)
-            cout << "fdec(): doesn't function properly (n=" << tmp
-        	 << ", should be 100)!\n";
+            cout << "fdec(): doesn't function properly (n=" << tmp << ", should be 100)!" << endl;
         else
             if((tmp = cpu.fdec(number)) != 99)
-        	cout << "fdec(): doesn't function properly (n=" << tmp 
-        	     << ", should be 99)!\n";
+        	cout << "fdec(): doesn't function properly (n=" << tmp << ", should be 99)!" << endl;
             else
         	cout << "fdec(): ok\n";
     }
 
-
     cout << "IA32 test finished\n";
+
     return 0;
 }

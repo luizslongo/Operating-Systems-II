@@ -7,7 +7,7 @@ __BEGIN_SYS
 
 void PC_IC::init()
 {
-    db<Init, IC>(TRC) << "IC::init()\n";
+    db<Init, IC>(TRC) << "IC::init()" << endl;
 
     CPU::int_disable();
 

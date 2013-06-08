@@ -13,12 +13,12 @@ ASMV("jmp _start");
 __USING_SYS
 extern "C" {
     void _exit(int s) { 
-        db<Setup>(ERR) << "_exit(" << s << ") called!\n"; 
+        db<Setup>(ERR) << "_exit(" << s << ") called!" << endl;
         Machine::panic(); for(;;);
     }
 
     void __cxa_pure_virtual() { 
-        db<Setup>(ERR) << "__cxa_pure_virtual() called!\n"; 
+        db<Setup>(ERR) << "__cxa_pure_virtual() called!" << endl;
         Machine::panic();
     }
 }
@@ -125,9 +125,9 @@ PC_Setup::PC_Setup(char * boot_image)
     // Multicore conditional start up
     int cpu_id = Machine::cpu_id();
 
-    db<Setup>(TRC) << "PC_Setup(CPU=" << cpu_id << "/" << si->bm.n_cpus
+    db<Setup>(TRC) << "PC_Setup("
         	   << ",bi=" << (void *)bi
-        	   << ",sp=" << (void *)CPU::sp() << ")\n";
+        	   << ",sp=" << (void *)CPU::sp() << ")" << endl;
 
     Machine::smp_barrier(si->bm.n_cpus);
     if(cpu_id == 0) { // Boot strap CPU (BSP)
@@ -207,7 +207,7 @@ void PC_Setup::build_lm()
     if(si->lm.has_stp) {
         ELF * stp_elf = reinterpret_cast<ELF *>(&bi[si->bm.setup_offset]);
         if(!stp_elf->valid()) {
-            db<Setup>(ERR) << "SETUP ELF image is corrupted!\n";
+            db<Setup>(ERR) << "SETUP ELF image is corrupted!" << endl;
             panic();
         }
 
@@ -235,7 +235,7 @@ void PC_Setup::build_lm()
     if(si->lm.has_ini) {
         ELF * ini_elf = reinterpret_cast<ELF *>(&bi[si->bm.init_offset]);
         if(!ini_elf->valid()) {
-            db<Setup>(ERR) << "INIT ELF image is corrupted!\n";
+            db<Setup>(ERR) << "INIT ELF image is corrupted!" << endl;
             panic();
         }
 
@@ -265,7 +265,7 @@ void PC_Setup::build_lm()
     if(si->lm.has_sys) {
         ELF * sys_elf = reinterpret_cast<ELF *>(&bi[si->bm.system_offset]);
         if(!sys_elf->valid()) {
-            db<Setup>(ERR) << "OS ELF image is corrupted!\n";
+            db<Setup>(ERR) << "OS ELF image is corrupted!" << endl;
             panic();
         }
 
@@ -284,29 +284,29 @@ void PC_Setup::build_lm()
 
         if(si->lm.sys_code != SYS_CODE) {
             db<Setup>(ERR) << "OS code segment address do not match "
-        		   << "the machine's memory map!\n";
+        		   << "the machine's memory map!" << endl;
             panic();
         }
         if(si->lm.sys_code + si->lm.sys_code_size > si->lm.sys_data) {
-            db<Setup>(ERR) << "OS code segment is too large!\n";
+            db<Setup>(ERR) << "OS code segment is too large!" << endl;
             panic();
         }
         if(si->lm.sys_data != SYS_DATA) {
             db<Setup>(ERR) << "OS code segment address do not match "
-        		   << "the machine's memory map!\n";
+        		   << "the machine's memory map!" << endl;
             panic();
         }
         if(si->lm.sys_data + si->lm.sys_data_size > si->lm.sys_stack) {
-            db<Setup>(ERR) << "OS data segment is too large!\n";
+            db<Setup>(ERR) << "OS data segment is too large!" << endl;
             panic();
         }
         if(si->lm.sys_data + si->lm.sys_data_size > si->lm.sys_stack) {
-            db<Setup>(ERR) << "OS data segment is too large!\n";
+            db<Setup>(ERR) << "OS data segment is too large!" << endl;
             panic();
         }
         if(MMU::page_tables(MMU::pages(si->lm.sys_stack
         			       - SYS + si->lm.sys_stack_size)) > 1) {
-            db<Setup>(ERR) << "OS stack segment is too large!\n";
+            db<Setup>(ERR) << "OS stack segment is too large!" << endl;
             panic();
         }
     }
@@ -322,7 +322,7 @@ void PC_Setup::build_lm()
         ELF * app_elf =
             reinterpret_cast<ELF *>(&bi[si->bm.application_offset]);
         if(!app_elf->valid()) {
-            db<Setup>(ERR) << "Application ELF image is corrupted!\n";
+            db<Setup>(ERR) << "Application ELF image is corrupted!" << endl;
             panic();
         }
         si->lm.app_entry = app_elf->entry();
@@ -451,57 +451,53 @@ void PC_Setup::get_node_id()
 void PC_Setup::say_hi()
 {
     if(!si->lm.has_app) {
-        db<Setup>(ERR)
-            << "No APPLICATION in boot image, you don't need EPOS!\n";
+        db<Setup>(ERR) << "No APPLICATION in boot image, you don't need EPOS!" << endl;
         panic();
     }
     if(!si->lm.has_sys)
-        db<Setup>(WRN) 
-            << "No SYSTEM in boot image, assuming EPOS is a library!\n";
+        db<Setup>(WRN) << "No SYSTEM in boot image, assuming EPOS is a library!" << endl;
 
-    kout << "Setting up this machine as follows: \n";
+    kout << "Setting up this machine as follows: " << endl;
     kout << "  Processor:    IA32 at " << si->tm.cpu_clock / 1000000
-         << " MHz (BUS clock = " << si->tm.bus_clock / 1000000 << " MHz)\n";
+         << " MHz (BUS clock = " << si->tm.bus_clock / 1000000 << " MHz)" << endl;
     kout << "  Memory:       " << (si->bm.mem_top - si->bm.mem_base) / 1024
          << " Kbytes [" << (void *)si->bm.mem_base
-         << ":" << (void *)si->bm.mem_top << "]\n";
+         << ":" << (void *)si->bm.mem_top << "]" << endl;
     kout << "  User memory:  "
          << (si->pmm.mem_top - si->pmm.mem_base) / 1024
          << " Kbytes [" << (void *)si->pmm.mem_base
-         << ":" << (void *)si->pmm.mem_top << "]\n";
-    kout << "  PCI aperture: " 
+         << ":" << (void *)si->pmm.mem_top << "]" << endl;
+    kout << "  PCI aperture: "
          << (si->pmm.io_mem_top - si->pmm.io_mem_base) / 1024
          << " Kbytes [" << (void *)si->pmm.io_mem_base 
-         << ":" << (void *)si->pmm.io_mem_top << "]\n";
+         << ":" << (void *)si->pmm.io_mem_top << "]" << endl;
     kout << "  Node Id:      ";
 
     if(si->bm.node_id != -1)
-        kout << si->bm.node_id << " (" << si->bm.n_nodes << ")\n";
+        kout << si->bm.node_id << " (" << si->bm.n_nodes << ")" << endl;
     else
-        kout << "will get from the network!\n";
+        kout << "will get from the network!" << endl;
     if(si->lm.has_stp)
-        kout << "  Setup:        "
-             << si->lm.stp_code_size + si->lm.stp_data_size << " bytes\n";
+        kout << "  Setup:        " << si->lm.stp_code_size + si->lm.stp_data_size << " bytes" << endl;
     if(si->lm.has_ini)
-        kout << "  Init:         " 
-             << si->lm.ini_code_size + si->lm.ini_data_size << " bytes\n";
+        kout << "  Init:         " << si->lm.ini_code_size + si->lm.ini_data_size << " bytes" << endl;
     if(si->lm.has_sys) {
-        kout << "  OS code:      " << si->lm.sys_code_size << " bytes";
-        kout << "\tdata: " << si->lm.sys_data_size << " bytes";
-        kout << "\tstack: " << si->lm.sys_stack_size << " bytes\n";
+        kout << "  OS code:      " << si->lm.sys_code_size << " bytes"
+             << "\tdata: " << si->lm.sys_data_size << " bytes"
+             << "\tstack: " << si->lm.sys_stack_size << " bytes" << endl;
     }
     if(si->lm.has_app) {
-        kout << "  APP code:     " << si->lm.app_code_size << " bytes";
-        kout << "\tdata: " << si->lm.app_data_size << " bytes\n";
+        kout << "  APP code:     " << si->lm.app_code_size << " bytes"
+             << "\tdata: " << si->lm.app_data_size << " bytes" << endl;
     }
     if(si->lm.has_ext) {
-        kout << "  Extras:       " << si->lm.ext_size << " bytes\n";
+        kout << "  Extras:       " << si->lm.ext_size << " bytes" << endl;
     }
 
     // Test if we didn't overlap SETUP and the boot image
     if(si->pmm.mem_top
        <= si->lm.stp_code + si->lm.stp_code_size + si->lm.stp_data_size) {
-  	db<Setup>(ERR) << "SETUP would have been overwritten!\n";
+  	db<Setup>(ERR) << "SETUP would have been overwritten!" << endl;
   	panic();
     }
 }
@@ -524,8 +520,8 @@ void PC_Setup::enable_paging()
     aux |= CPU::CR0_SET;
     CPU::cr0(aux);
 
-    db<Setup>(INF) << "CR0=" << (void *)CPU::cr0() << "\n";
-    db<Setup>(INF) << "CR3=" << (void *)CPU::cr3() << "\n";
+    db<Setup>(INF) << "CR0=" << (void *)CPU::cr0() << endl;
+    db<Setup>(INF) << "CR3=" << (void *)CPU::cr3() << endl;
 
     // The following relative jump is to break the IA32 pre-fetch queue
     // (in case cr0() was a macro and didn't do it when returning)
@@ -551,7 +547,7 @@ void PC_Setup::enable_paging()
 //========================================================================
 void PC_Setup::setup_idt()
 {
-    db<Setup>(TRC) << "setup_idt(idt=" << (void *)si->pmm.idt << ")\n";
+    db<Setup>(TRC) << "setup_idt(idt=" << (void *)si->pmm.idt << ")" << endl;
 
     // Get the physical address for the IDT
     IDT_Entry * idt = reinterpret_cast<IDT_Entry *>((void *)si->pmm.idt);
@@ -566,17 +562,15 @@ void PC_Setup::setup_idt()
     for(unsigned int i = 0; i < CPU::IDT_ENTRIES; i++)
         idt[i] = IDT_Entry(CPU::GDT_SYS_CODE, panic_h, CPU::SEG_IDT_ENTRY);
 
-    db<Setup>(INF) << "IDT[0  ]=" << idt[0]
-        	   << " (" << panic_h << ")\n";
+    db<Setup>(INF) << "IDT[0  ]=" << idt[0] << " (" << panic_h << ")" << endl;
 
-    db<Setup>(INF) << "IDT[255]=" << idt[255]
-        	   << " (" << panic_h << ")\n";
+    db<Setup>(INF) << "IDT[255]=" << idt[255] << " (" << panic_h << ")" << endl;
 }
 
 //========================================================================
 void PC_Setup::setup_gdt()
 {
-    db<Setup>(TRC) << "setup_gdt(gdt=" << (void *)si->pmm.gdt << ")\n";
+    db<Setup>(TRC) << "setup_gdt(gdt=" << (void *)si->pmm.gdt << ")" << endl;
 
     // Get the physical address for the GDT
     GDT_Entry * gdt = reinterpret_cast<GDT_Entry *>((void *)si->pmm.gdt);
@@ -591,16 +585,11 @@ void PC_Setup::setup_gdt()
     gdt[CPU::GDT_APP_CODE]  = GDT_Entry(0, 0xfffff, CPU::SEG_APP_CODE);
     gdt[CPU::GDT_APP_DATA]  = GDT_Entry(0, 0xfffff, CPU::SEG_APP_DATA);
 
-    db<Setup>(INF) << "GDT[NULL=" << CPU::GDT_NULL << "]="
-        	   << gdt[CPU::GDT_NULL] << "\n";
-    db<Setup>(INF) << "GDT[SYCD=" << CPU::GDT_SYS_CODE << "]="
-        	   << gdt[CPU::GDT_SYS_CODE] << "\n";
-    db<Setup>(INF) << "GDT[SYDT=" << CPU::GDT_SYS_DATA << "]="
-        	   << gdt[CPU::GDT_SYS_DATA] << "\n";
-    db<Setup>(INF) << "GDT[APCD=" << CPU::GDT_APP_CODE << "]="
-                   << gdt[CPU::GDT_APP_CODE] << "\n";
-    db<Setup>(INF) << "GDT[APDT=" << CPU::GDT_APP_DATA  << "]="
-                   << gdt[CPU::GDT_APP_DATA] << "\n";
+    db<Setup>(INF) << "GDT[NULL=" << CPU::GDT_NULL     << "]=" << gdt[CPU::GDT_NULL] << endl;
+    db<Setup>(INF) << "GDT[SYCD=" << CPU::GDT_SYS_CODE << "]=" << gdt[CPU::GDT_SYS_CODE] << endl;
+    db<Setup>(INF) << "GDT[SYDT=" << CPU::GDT_SYS_DATA << "]=" << gdt[CPU::GDT_SYS_DATA] << endl;
+    db<Setup>(INF) << "GDT[APCD=" << CPU::GDT_APP_CODE << "]=" << gdt[CPU::GDT_APP_CODE] << endl;
+    db<Setup>(INF) << "GDT[APDT=" << CPU::GDT_APP_DATA << "]=" << gdt[CPU::GDT_APP_DATA] << endl;
 }
 
 //========================================================================
@@ -627,7 +616,7 @@ void PC_Setup::setup_sys_pt()
         	   << ",code_size=" << MMU::pages(si->lm.sys_code_size)
         	   << ",data_size=" << MMU::pages(si->lm.sys_data_size)
         	   << ",stack_size=" << MMU::pages(si->lm.sys_stack_size)
-        	   << ")\n";
+        	   << ")" << endl;
 
     // Get the physical address for the System Page Table
     PT_Entry * sys_pt = reinterpret_cast<PT_Entry *>((void *)si->pmm.sys_pt);
@@ -671,15 +660,13 @@ void PC_Setup::setup_sys_pt()
         i++, aux = aux + sizeof(Page))
         sys_pt[MMU::page(SYS_STACK) + i] = aux | Flags::SYS;
 
-    db<Setup>(INF) << "SPT=" << *reinterpret_cast<Page_Table *>(sys_pt)
-                   << "\n";
+    db<Setup>(INF) << "SPT=" << *reinterpret_cast<Page_Table *>(sys_pt) << endl;
 }
 
 //========================================================================
 void PC_Setup::setup_apic_pt()
 {
-    db<Setup>(TRC) << "setup_apic_pt(apic=" << (void *)si->pmm.apic_pt
-        	   << ")\n";
+    db<Setup>(TRC) << "setup_apic_pt(apic=" << (void *)si->pmm.apic_pt << ")" << endl;
 
     // Get the physical address for the APIC Page Table
     PT_Entry * apic_pt = 
@@ -692,7 +679,7 @@ void PC_Setup::setup_apic_pt()
     apic_pt[0] = APIC::LOCAL_APIC_PHY_ADDR | Flags::APIC;
 
     db<Setup>(INF) << "APT=" << *reinterpret_cast<Page_Table *>(apic_pt) 
-    		   << "\n";
+    		   << endl;
 }
 
 //========================================================================
@@ -703,7 +690,7 @@ void PC_Setup::setup_sys_pd()
         	   << ",mem_top=" << (void *)si->pmm.mem_top
         	   << ",pci_base=" << (void *)si->pmm.io_mem_base
         	   << ",pci_top=" << (void *)si->pmm.io_mem_top
-        	   << ")\n";
+        	   << ")" << endl;
 
     // Get the physical address for the System Page Directory
     PT_Entry * sys_pd = reinterpret_cast<PT_Entry *>((void *)si->pmm.sys_pd);
@@ -755,8 +742,7 @@ void PC_Setup::setup_sys_pd()
     // Map the system 4M logical address space at the top of the 4Gbytes
     sys_pd[MMU::directory(SYS_CODE)] = si->pmm.sys_pt | Flags::SYS;
 
-    db<Setup>(INF) << "SPD=" << *reinterpret_cast<Page_Table *>(sys_pd)
-                   << "\n";
+    db<Setup>(INF) << "SPD=" << *reinterpret_cast<Page_Table *>(sys_pd) << endl;
 }
 
 //========================================================================
@@ -764,40 +750,35 @@ void PC_Setup::load_parts()
 {
     // Relocate System_Info
     if(sizeof(System_Info<PC>) > sizeof(Page))
-        db<Setup>(WRN) << "System_Info is bigger than a page ("
-        	       << sizeof(System_Info<PC>) << ")!\n";
+        db<Setup>(WRN) << "System_Info is bigger than a page (" << sizeof(System_Info<PC>) << ")!" << endl;
     memcpy(reinterpret_cast<void *>(SYS_INFO), bi, sizeof(System_Info<PC>));
 
     // Load INIT
     if(si->lm.has_ini) {
-        db<Setup>(TRC) << "PC_Setup::load_init()\n";
+        db<Setup>(TRC) << "PC_Setup::load_init()" << endl;
         ELF * ini_elf = reinterpret_cast<ELF *>(&bi[si->bm.init_offset]);
         if(ini_elf->load_segment(0) < 0) {
-            db<Setup>(ERR)
-        	<< "INIT code segment was corrupted during SETUP!\n";
+            db<Setup>(ERR) << "INIT code segment was corrupted during SETUP!" << endl;
             panic();
         }
         for(int i = 1; i < ini_elf->segments(); i++)
             if(ini_elf->load_segment(i) < 0) {
-        	db<Setup>(ERR)
-        	    << "INIT data segment was corrupted during SETUP!\n";
+        	db<Setup>(ERR) << "INIT data segment was corrupted during SETUP!" << endl;
         	panic();
             }
     }
 
     // Load SYSTEM
     if(si->lm.has_sys) {
-        db<Setup>(TRC) << "PC_Setup::load_os()\n";
+        db<Setup>(TRC) << "PC_Setup::load_os()" << endl;
         ELF * sys_elf = reinterpret_cast<ELF *>(&bi[si->bm.system_offset]);
         if(sys_elf->load_segment(0) < 0) {
-            db<Setup>(ERR)
-        	<< "OS code segment was corrupted during SETUP!\n";
+            db<Setup>(ERR) << "OS code segment was corrupted during SETUP!" << endl;
             panic();
         }
         for(int i = 1; i < sys_elf->segments(); i++)
             if(sys_elf->load_segment(i) < 0) {
-        	db<Setup>(ERR)
-        	    << "OS data segment was corrupted during SETUP!\n";
+        	db<Setup>(ERR) << "OS data segment was corrupted during SETUP!" << endl;
         	panic();
             }
     }
@@ -806,16 +787,15 @@ void PC_Setup::load_parts()
     if(si->lm.has_app) {
         ELF * app_elf =
             reinterpret_cast<ELF *>(&bi[si->bm.application_offset]);
-        db<Setup>(TRC) << "PC_Setup::load_app()\n";
+        db<Setup>(TRC) << "PC_Setup::load_app()" << endl;
         if(app_elf->load_segment(0) < 0) {
             db<Setup>(ERR)
-        	<< "Application code segment was corrupted during SETUP!\n";
+        	<< "Application code segment was corrupted during SETUP!" << endl;
             panic();
         }
         for(int i = 1; i < app_elf->segments(); i++)
             if(app_elf->load_segment(i) < 0) {
-        	db<Setup>(ERR) << 
-        	    "Application data segment was corrupted during SETUP!\n";
+        	db<Setup>(ERR) << "Application data segment was corrupted during SETUP!" << endl;
         	panic();
             }
     }
@@ -829,7 +809,7 @@ void PC_Setup::call_next()
     // Check for next stage and obtain the entry point
     register Log_Addr ip;
     if(si->lm.has_ini) {
-        db<Setup>(TRC) << "Executing system global constructors ...\n";
+        db<Setup>(TRC) << "Executing system global constructors ..." << endl;
         reinterpret_cast<void (*)()>((void *)si->lm.sys_entry)();
         ip = si->lm.ini_entry;
     } else if(si->lm.has_sys)
@@ -843,17 +823,15 @@ void PC_Setup::call_next()
     // in some EPOS architecures
     register int sp = SYS_STACK + SYS_STACK_SIZE * (cpu_id + 1) - 2 * sizeof(int);
 
-    db<Setup>(TRC) << "PC_Setup::call_next(CPU=" << cpu_id 
-        	   << ",ip=" << ip
-        	   << ",sp=" << (void *)sp << ") => ";
+    db<Setup>(TRC) << "PC_Setup::call_next(" << ",ip=" << ip << ",sp=" << (void *)sp << ") => ";
     if(si->lm.has_ini)
-        db<Setup>(TRC) << "INIT\n";
+        db<Setup>(TRC) << "INIT" << endl;
     else if(si->lm.has_sys)
-        db<Setup>(TRC) << "SYSTEM\n";
+        db<Setup>(TRC) << "SYSTEM" << endl;
     else
-        db<Setup>(TRC) << "APPLICATION\n";
+        db<Setup>(TRC) << "APPLICATION" << endl;
 
-    db<Setup>(INF) << "SETUP ends here!\n\n";
+    db<Setup>(INF) << "SETUP ends here!" << endl;
 
     Machine::smp_barrier(si->bm.n_cpus);
 
@@ -871,7 +849,7 @@ void PC_Setup::call_next()
 //========================================================================
 void PC_Setup::pci_aperture(unsigned int * base, unsigned int * top)
 {
-    db<Setup>(TRC) << "PC_Setup::pci_aperture()\n";
+    db<Setup>(TRC) << "PC_Setup::pci_aperture()" << endl;
 
     // Scan the PCI bus looking for devices with memory mapped regions
     *base = ~0U;
@@ -882,12 +860,11 @@ void PC_Setup::pci_aperture(unsigned int * base, unsigned int * top)
             PCI::Header hdr;
  	    PCI::header(loc, &hdr);
             if(hdr) {
-        	db<Setup>(INF) << "PCI" << hdr << "\n";
+        	db<Setup>(INF) << "PCI" << hdr << endl;
         	for(unsigned int i = 0; i < PCI::Region::N; i++) {
         	    PCI::Region * reg = &hdr.region[i];
         	    if(*reg) {
-        		db<Setup>(INF)  << "  reg[" << i << "]="
-        				<< *reg << "\n";
+        		db<Setup>(INF) << "  reg[" << i << "]=" << *reg << endl;
         		if(reg->memory) {
         		    if(reg->phy_addr < *base)
         			*base = reg->phy_addr;
@@ -907,7 +884,7 @@ void PC_Setup::pci_aperture(unsigned int * base, unsigned int * top)
 //========================================================================
 void PC_Setup::calibrate_timers()
 {
-    db<Setup>(TRC) << "PC_Setup::calibrate_timers()\n";
+    db<Setup>(TRC) << "PC_Setup::calibrate_timers()" << endl;
 
     // Disable speaker so we can use channel 2 of i8253
     i8255::port_b(i8255::port_b() & ~(i8255::SPEAKER | i8255::I8253_GATE2));
@@ -1073,7 +1050,7 @@ void _start()
             db<Setup>(WRN) << "More CPUs were detected than the current "
                            << "configuration supports (" << Traits<PC>::MAX_CPUS
                            << ").\n";
-            db<Setup>(WRN) << "Disabling CPU " << APIC::id() << "!\n";
+            db<Setup>(WRN) << "Disabling CPU " << APIC::id() << "!" << endl;
 
             CPU::int_disable();
             CPU::halt();
@@ -1102,12 +1079,14 @@ void _start()
 
 void setup(char * bi) 
 {
-    kerr << endl;
-    kout << endl;
+    if(!Traits<System>::multicore || (APIC::id() == 0)) {
+        kerr  << endl;
+        kout  << endl;
+    }
 
     // Multicore sanity check
     if(!Traits<System>::multicore && (APIC::id() != 0)) {
-        db<Setup>(WRN) << "Multicore disable by config, halting this CPU (" << APIC::id() << ")!\n";
+        db<Setup>(WRN) << "Multicore disable by config, halting this CPU (" << APIC::id() << ")!" << endl;
 
         CPU::int_disable();
         CPU::halt();

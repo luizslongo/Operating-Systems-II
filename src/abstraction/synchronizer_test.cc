@@ -46,7 +46,7 @@ int main()
     }
     cons->join();
 
-    cout << "The end!\n";
+    cout << "The end!" << endl;
 
     delete cons;
 

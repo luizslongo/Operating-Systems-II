@@ -37,8 +37,7 @@ public:
         }
         dev->_busy = true;
 
-        db<PC>(TRC) << "PC_Device::seize(type=" << type << ",unit=" << unit 
-        	    << ") => " << dev << "\n";
+        db<PC>(TRC) << "PC_Device::seize(type=" << type << ",unit=" << unit << ") => " << dev << endl;
 
         return dev->_object;
     }

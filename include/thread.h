@@ -127,6 +127,8 @@ protected:
     static void wakeup_all(Queue * q);
 
     static void reschedule();
+    static void reschedule(unsigned int cpu);
+    static void rescheduler(unsigned int irq);
     static void time_slicer();
     static void implicit_exit();
 
@@ -141,11 +143,9 @@ protected:
                 prev->_state = READY;
             next->_state = RUNNING;
 
-            db<Thread>(TRC) << "Thread::dispatch<" << Machine::cpu_id() << ">(prev=" << prev << ",next=" << next << ")\n";
-            db<Thread>(INF) << "prev={" << prev;
-            db<Thread>(INF) << ",ctx=" << *prev->_context << "}\n";
-            db<Thread>(INF) << "next={" << next;
-            db<Thread>(INF) << ",ctx=" << *next->_context << "}\n";
+            db<Thread>(TRC) << "Thread::dispatch(prev=" << prev << ",next=" << next << ")" << endl;
+            db<Thread>(INF) << "prev={" << prev << ",ctx=" << *prev->_context << "}" << endl;
+            db<Thread>(INF) << "next={" << next << ",ctx=" << *next->_context << "}" << endl;
 
             if(smp)
                 _lock.release();

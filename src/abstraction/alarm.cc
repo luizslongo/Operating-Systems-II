@@ -20,7 +20,7 @@ Alarm::Alarm(const Microsecond & time, Handler * handler, int times):
     db<Alarm>(TRC) << "Alarm(t=" << time
                    << ",tk=" << _ticks
                    << ",h=" << reinterpret_cast<void *>(handler)
-                   << ",x=" << times << ") => " << this << "\n";
+                   << ",x=" << times << ") => " << this << endl;
 
     if(_ticks) {
         _request.insert(&_link);
@@ -36,7 +36,7 @@ Alarm::~Alarm()
 {
     lock();
 
-    db<Alarm>(TRC) << "~Alarm(this=" << this << ")\n";
+    db<Alarm>(TRC) << "~Alarm(this=" << this << ")" << endl;
 
     _request.remove(this);
 
@@ -47,7 +47,7 @@ Alarm::~Alarm()
 // Class methods
 void Alarm::delay(const Microsecond & time)
 {
-    db<Alarm>(TRC) << "Alarm::delay(time=" << time << ")\n";
+    db<Alarm>(TRC) << "Alarm::delay(time=" << time << ")" << endl;
 
     Semaphore semaphore(0);
     Semaphore_Handler handler(&semaphore);
@@ -95,7 +95,7 @@ void Alarm::handler()
     if(alarm) {
         db<Alarm>(TRC) << "Alarm::handler(this=" << alarm << ", h="
                        << reinterpret_cast<void*>(alarm->handler)
-                       << ")\n";
+                       << ")" << endl;
         (*alarm->_handler)();
     }
 }
