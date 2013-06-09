@@ -127,7 +127,10 @@ protected:
     static void wakeup_all(Queue * q);
 
     static void reschedule();
+    static void reschedule(unsigned int cpu);
+    static void rescheduler(unsigned int irq);
     static void time_slicer();
+
     static void implicit_exit();
 
     static void dispatch(Thread * prev, Thread * next, bool charge = true) {

@@ -22,6 +22,10 @@ void Thread::init()
     if(Criterion::timed && (Machine::cpu_id() == 0))
         _timer = new (SYSTEM) Scheduler_Timer(QUANTUM, time_slicer);
 
+    if(Machine::cpu_id() == 0)
+        IC::int_vector(IC::INT_RESCHEDULER, rescheduler);
+    IC::enable(IC::INT_RESCHEDULER);
+
     Machine::smp_barrier();
 
     Thread * first;
@@ -38,9 +42,9 @@ void Thread::init()
         }
     } else {
         if(multitask)
-            first = new (SYSTEM) Thread(*Task::_master, &idle, READY, IDLE);
+            first = new (SYSTEM) Thread(*Task::_master, &idle, RUNNING, IDLE);
         else
-            first = new (SYSTEM) Thread(&idle, READY, IDLE);
+            first = new (SYSTEM) Thread(&idle, RUNNING, IDLE);
     }
     
     Machine::smp_barrier();

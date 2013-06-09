@@ -35,7 +35,7 @@ void Thread::common_constructor(Log_Addr entry, unsigned int stack_size)
         _scheduler.suspend(this);
 
     if(preemptive && (_state == READY) && (_link.rank() != IDLE))
-        reschedule();
+        reschedule(_link.rank().queue());
     else
         unlock();
 }
@@ -91,11 +91,17 @@ void Thread::priority(const Priority & p)
     db<Thread>(TRC) << "Thread::priority(this=" << this << ",prio=" << p << ")" << endl;
 
     _scheduler.remove(this);
-    _link.rank(int(p));
-    _scheduler.insert(this);
+    unsigned int old_cpu = _link.rank().queue();
 
-    if(preemptive)
-        reschedule();
+    _link.rank(Criterion(p));
+
+    _scheduler.insert(this);
+    unsigned int new_cpu = _link.rank().queue();
+
+    if(preemptive) {
+        reschedule(old_cpu);
+        lock(); reschedule(new_cpu);
+    }
 }
 
 
@@ -160,8 +166,9 @@ void Thread::resume()
     if(_state == SUSPENDED) {
         _state = READY;
         _scheduler.resume(this);
+        
         if(preemptive)
-            reschedule();
+            reschedule(_link.rank().queue());
     } else {
         db<Thread>(WRN) << "Resume called for unsuspended object!" << endl;
 
@@ -232,7 +239,7 @@ void Thread::wakeup(Queue * q)
         _scheduler.resume(t);
 
         if(preemptive)
-            reschedule();
+            reschedule(t->_link.rank().queue());
     } else
         unlock();
 }
@@ -242,7 +249,7 @@ void Thread::wakeup_all(Queue * q)
 {
     db<Thread>(TRC) << "Thread::wakeup_all(running=" << running() << ",q=" << q << ")" << endl;
 
-    if(!q->empty())
+    if(!q->empty()) {
         while(!q->empty()) {
             Thread * t = q->remove()->object();
             t->_state = READY;
@@ -250,11 +257,11 @@ void Thread::wakeup_all(Queue * q)
             _scheduler.resume(t);
 
             if(preemptive) {
-                reschedule();
+                reschedule(t->_link.rank().queue());
                 lock();
             }
-        }
-    else
+         }
+    } else
         unlock();
 }
 
@@ -267,6 +274,25 @@ void Thread::reschedule()
     Thread * next = _scheduler.choose();
 
     dispatch(prev, next);
+}
+
+void Thread::reschedule(unsigned int cpu)
+{
+    if(!smp || (cpu == Machine::cpu_id()))
+        reschedule();
+    else {
+        db<Thread>(TRC) << "Thread::reschedule(cpu=" << cpu << ")" << endl;
+        IC::ipi_send(cpu, IC::INT_RESCHEDULER);
+        unlock();
+    }
+}
+
+
+void Thread::rescheduler(unsigned int irq)
+{
+    lock();
+
+    reschedule();
 }
 
 
@@ -302,12 +328,10 @@ int Thread::idle()
             }
             CPU::halt();
         } else {
-            if(_scheduler.schedulables() > 0)
+            CPU::int_enable();
+            CPU::halt();
+            if(_scheduler.schedulables() > 0) // A thread might have been woken up by another CPU
                 yield();
-            else {
-                CPU::int_enable();
-                CPU::halt();
-            }
         }
     }
 
@@ -318,8 +342,7 @@ int Thread::idle()
 // Id forwarder to the spin lock
 unsigned int This_Thread::id() 
 { 
-    return _not_booting ?
-        reinterpret_cast<unsigned int>(Thread::self()) : Machine::cpu_id() + 1;
+    return _not_booting ? reinterpret_cast<unsigned int>(Thread::self()) : Machine::cpu_id() + 1;
 }
 
 __END_SYS

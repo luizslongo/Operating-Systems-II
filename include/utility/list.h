@@ -1123,7 +1123,7 @@ private:
 
 // Doubly-Linked, Multihead Scheduling List
 // Besides declaring "Criterion", objects subject to scheduling policies that
-// use the Multihead list must export the HEADS constant to indicate the
+// use the multihead list must export the HEADS constant to indicate the
 // number of heads in the list and the current_head() class method to designate
 // the head to which the current operation applies.
 template <typename T,
@@ -1253,24 +1253,22 @@ public:
 
 // Doubly-Linked, Scheduling Multilist
 // Besides declaring "Criterion", objects subject to scheduling policies that
-// use the Multilist must export the QUEUES constant to indicate the number of
+// use the multilist must export the QUEUES constant to indicate the number of
 // sublists in the list, the current_queue() class method to designate the
 // queue to which the current operation applies, and the queue() method to
 // return the queue in which the object currently resides.
 template <typename T,
           typename R = typename T::Criterion,
           typename El = List_Elements::Doubly_Linked_Scheduling<T, R>,
+          typename L = Scheduling_List<T, R, El>,
           unsigned int Q = R::QUEUES>
 class Scheduling_Multilist
 {
-private:
-    typedef Scheduling_List<T, R, El> List;
-
 public:
     typedef T Object_Type;
     typedef R Rank_Type;
     typedef El Element;
-    typedef typename List::Iterator Iterator;
+    typedef typename L::Iterator Iterator;
 
 public:
     Scheduling_Multilist() {}
@@ -1305,6 +1303,12 @@ public:
          return _list[e->rank().queue()].remove(e->object());
      }
 
+    Element * remove(const Object_Type * obj) {
+        Element * e = obj->link();
+
+        return _list[e->rank().queue()].remove(obj);
+    }
+
     Element * choose() {
         return _list[R::current_queue()].choose();
     }
@@ -1330,15 +1334,15 @@ public:
     }
 
 private:
-    List _list[Q];
+    L _list[Q];
 };
 
 // Doubly-Linked, Multihead Scheduling Multilist
 // Besides declaring "Criterion", objects subject to scheduling policies that
-// use the Multilist must export the QUEUES constant to indicate the number of
+// use the multilist must export the QUEUES constant to indicate the number of
 // sublists in the list, the HEADS constant to indicate the number of heads in
-// each of the sublists, the current_queue() class method to designate the
-// queue to which the current operation applies, the current_head() class
+// each of the sublists, the current_head() class method to designate the
+// queue to which the current operation applies, the current_queue() class
 // method to designate the head to which the current operation applies, and
 // the queue() method to return the queue in which the object currently resides.
 template <typename T,
@@ -1346,77 +1350,7 @@ template <typename T,
           typename El = List_Elements::Doubly_Linked_Scheduling<T, R>,
           unsigned int Q = R::QUEUES,
           unsigned int H = R::HEADS>
-class Multihead_Scheduling_Multilist
-{
-private:
-    typedef Multihead_Scheduling_List<T, R, El, H> List;
-
-public:
-    typedef T Object_Type;
-    typedef R Rank_Type;
-    typedef El Element;
-    typedef typename List::Iterator Iterator;
-
-public:
-    Multihead_Scheduling_Multilist() {}
-
-    bool empty() const { return _list[R::current_queue()].empty(); }
-
-    unsigned int size() const { return _list[R::current_queue()].size(); }
-    unsigned int total_size() const {
-        unsigned int s = 0;
-        for(unsigned int i = 0; i < Q; i++)
-            s += _list[i].size();
-        return s;
-    }
-
-    Element * head() { return _list[R::current_queue()].head(); }
-    Element * tail() { return _list[R::current_queue()].tail(); }
-
-    Iterator begin() { return Iterator(_list[R::current_queue()].head()); }
-    Iterator end() { return Iterator(_list[R::current_queue()].tail() ? _list[R::current_queue()].tail()->next() : 0); }
-
-    Element * volatile & chosen() {
-        return _list[R::current_queue()].chosen();
-    }
-
-    void insert(Element * e) {
-        _list[e->rank().queue()].insert(e);
-    }
-
-    Element * remove(Element * e) {
-         // Removing object instead of element forces a search and renders
-         // removing inexistent objects harmless
-         return _list[e->rank().queue()].remove(e->object());
-     }
-
-    Element * choose() {
-        return _list[R::current_queue()].choose();
-    }
-
-    Element * choose_another() {
-        return _list[R::current_queue()].choose_another();
-    }
-
-    Element * choose(Element * e) {
-        return _list[e->rank().queue()].choose(e->object());
-    }
-
-    Element * choose(const Object_Type * obj) {
-        Element * e;
-
-        if(obj == _list[R::current_queue()].chosen()->object())
-            e = _list[R::current_queue()].chosen();
-        else
-            if((e = _list[R::current_queue()].search(obj)))
-                e = choose(e);
-
-        return e;
-    }
-
-private:
-    List _list[Q];
-};
+class Multihead_Scheduling_Multilist: public Scheduling_Multilist<T, R, El, Multihead_Scheduling_List<T, R, El, H>, Q> {};
 
 // Doubly-Linked, Grouping List
 template <typename T, 
