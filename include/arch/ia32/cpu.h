@@ -308,6 +308,8 @@ public:
 
     static void int_enable() { ASMV("sti"); }
     static void int_disable() { ASMV("cli"); }
+    static bool int_enabled() { return (flags() & FLAG_IF); }
+
     static void halt() { ASMV("hlt"); }
 
     static void switch_context(Context * volatile * o, Context * volatile n);

@@ -22,13 +22,16 @@ public:
     OStream(): _base(10) {}
 
     OStream & operator<<(const Begl & begl) {
-        preamble();
+        if(Traits<System>::multicore)
+            preamble();
         return *this;
     }
-
+    
     OStream & operator<<(const Endl & endl) {
+        if(Traits<System>::multicore)
+            trailler();
+        print("\n");
         _base = 10;
-        trailler();
         return *this;
     }
 
@@ -51,7 +54,7 @@ public:
 
     OStream & operator<<(const Err & err)
     {
-        error();
+        _error = true;
         return *this;
     }
 
@@ -161,7 +164,6 @@ public:
     }
 
 private:
-    void error();
     void preamble();
     void trailler();
 
@@ -177,6 +179,8 @@ private:
     int _base;
 
     static const char _digits[];
+    static volatile int _lock;
+    static volatile bool _error;
 }; 
 
 extern OStream::Begl begl;

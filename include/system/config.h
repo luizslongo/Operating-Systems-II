@@ -24,13 +24,13 @@
 // ARCHITECTURE, MACHINE, AND APPLICATION SELECTION
 // This section is generated automatically from makedefs
 //============================================================================
-#define ARCH xxx
+#define ARCH ia32
 #define __ARCH_TRAITS_H	        __HEADER_ARCH(traits)
 
-#define MACH xxx
+#define MACH pc
 #define __MACH_TRAITS_H	        __HEADER_MACH(traits)
 
-#define APPLICATION xxx
+#define APPLICATION scheduler_test
 #define __APPLICATION_TRAITS_H  __HEADER_APPLICATION(APPLICATION)
 
 //============================================================================

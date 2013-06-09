@@ -8,42 +8,33 @@ __BEGIN_SYS
 
 const char OStream::_digits[] = "0123456789abcdef";
 
-static volatile int lock = -1;
+volatile int OStream::_lock = -1;
+volatile bool OStream::_error = false;
 
-void OStream::error()
-{
-    Machine::panic();
-}
 
 void OStream::preamble()
 {
-    if(Traits<System>::multicore) {
-        //        while(CPU::tsl(lock));
-
-//        int id = Machine::cpu_id();
-//        int first = CPU::cas(lock, -1, id);
-//        while(CPU::cas(lock, -1, id) != id);
-//        if(first != id) {
-            Display::putc('<');
-            Display::putc('0' + Machine::cpu_id());
-            Display::putc(':');
-            Display::putc(' ');
-//        }
+    int me = Machine::cpu_id();
+    int last = CPU::cas(_lock, -1, me);
+    for(int i = 0, owner = last; (i < 10) && (owner != me); i++, owner = CPU::cas(_lock, -1, me));
+    if(last != me) {
+        Display::putc('<');
+        Display::putc('0' + Machine::cpu_id());
+        Display::puts(": ");
     }
 }
 
 void OStream::trailler()
 {
-    if(Traits<System>::multicore) {
-        Display::putc(' ');
-        Display::putc(':');
+    if(_lock != -1) {
+        Display::puts(" :");
         Display::putc('0' + Machine::cpu_id());
         Display::putc('>');
-        Display::putc('\n');
 
-        lock = -1;
-    } else
-        Display::putc('\n');
+        _lock = -1;
+    }
+    if(_error)
+        Machine::panic();
 }
 
 void OStream::print(const char * s)

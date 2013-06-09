@@ -8,7 +8,7 @@ __BEGIN_SYS
 int Alarm::init()
 {
     db<Init, Alarm>(TRC) << "Alarm::init()" << endl;
-    
+
     _timer = new (SYSTEM) Alarm_Timer(handler);
 
     return 0;

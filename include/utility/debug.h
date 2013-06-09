@@ -36,24 +36,22 @@ template <typename T>
 inline Select_Debug<(Traits<T>::debugged && Traits<Debug>::error)> 
 db(Debug_Error l)
 {
-    extern OStream::Err err;
+    extern OStream::Err error;
 
-    kerr << begl;
+    Select_Debug<(Traits<T>::debugged && Traits<Debug>::error)>() << begl;
+    Select_Debug<(Traits<T>::debugged && Traits<Debug>::error)>() << error;
     return Select_Debug<(Traits<T>::debugged && Traits<Debug>::error)>(); 
-    kerr << err;
 }
 
 template <typename T1, typename T2>
-inline Select_Debug<((Traits<T1>::debugged || Traits<T2>::debugged)
-        	     && Traits<Debug>::error)> 
+inline Select_Debug<((Traits<T1>::debugged || Traits<T2>::debugged) && Traits<Debug>::error)> 
 db(Debug_Error l)
 {
-    extern OStream::Err err;
+    extern OStream::Err error;
 
-    kerr << begl;
-    return Select_Debug<((Traits<T1>::debugged || Traits<T2>::debugged)
-        		 && Traits<Debug>::error)>(); 
-    kerr << err;
+    Select_Debug<((Traits<T1>::debugged || Traits<T2>::debugged) && Traits<Debug>::error)>() << begl;
+    Select_Debug<((Traits<T1>::debugged || Traits<T2>::debugged) && Traits<Debug>::error)>() << error;
+    return Select_Debug<((Traits<T1>::debugged || Traits<T2>::debugged) && Traits<Debug>::error)>(); 
 }
 
 // Warning
@@ -63,18 +61,16 @@ template <typename T>
 inline Select_Debug<(Traits<T>::debugged && Traits<Debug>::warning)> 
 db(Debug_Warning l)
 {
-    kerr << begl;
+    Select_Debug<(Traits<T>::debugged && Traits<Debug>::warning)>() << begl;
     return Select_Debug<(Traits<T>::debugged && Traits<Debug>::warning)>(); 
 }
 
 template <typename T1, typename T2>
-inline Select_Debug<((Traits<T1>::debugged || Traits<T2>::debugged)
-        	     && Traits<Debug>::warning)> 
+inline Select_Debug<((Traits<T1>::debugged || Traits<T2>::debugged) && Traits<Debug>::warning)>
 db(Debug_Warning l)
 {
-    kerr << begl;
-    return Select_Debug<((Traits<T1>::debugged || Traits<T2>::debugged)
-        		 && Traits<Debug>::warning)>(); 
+    Select_Debug<((Traits<T1>::debugged || Traits<T2>::debugged) && Traits<Debug>::warning)>() << begl;
+    return Select_Debug<((Traits<T1>::debugged || Traits<T2>::debugged) && Traits<Debug>::warning)>();
 }
 
 // Info
@@ -84,18 +80,16 @@ template <typename T>
 inline Select_Debug<(Traits<T>::debugged && Traits<Debug>::info)> 
 db(Debug_Info l)
 {
-    kerr << begl;
+    Select_Debug<(Traits<T>::debugged && Traits<Debug>::info)>() << begl;
     return Select_Debug<(Traits<T>::debugged && Traits<Debug>::info)>(); 
 }
 
 template <typename T1, typename T2>
-inline Select_Debug<((Traits<T1>::debugged || Traits<T2>::debugged)
-        	     && Traits<Debug>::info)> 
+inline Select_Debug<((Traits<T1>::debugged || Traits<T2>::debugged) && Traits<Debug>::info)>
 db(Debug_Info l)
 {
-    kerr << begl;
-    return Select_Debug<((Traits<T1>::debugged || Traits<T2>::debugged)
-        		 && Traits<Debug>::info)>(); 
+    Select_Debug<((Traits<T1>::debugged || Traits<T2>::debugged) && Traits<Debug>::info)>() << begl;
+    return Select_Debug<((Traits<T1>::debugged || Traits<T2>::debugged) && Traits<Debug>::info)>();
 }
 
 // Trace
@@ -105,18 +99,16 @@ template <typename T>
 inline Select_Debug<(Traits<T>::debugged && Traits<Debug>::trace)> 
 db(Debug_Trace l)
 {
-    kerr << begl;
+    Select_Debug<(Traits<T>::debugged && Traits<Debug>::trace)>() << begl;
     return Select_Debug<(Traits<T>::debugged && Traits<Debug>::trace)>(); 
 }
 
 template <typename T1, typename T2>
-inline Select_Debug<((Traits<T1>::debugged || Traits<T2>::debugged)
-        	     && Traits<Debug>::trace)> 
+inline Select_Debug<((Traits<T1>::debugged || Traits<T2>::debugged) && Traits<Debug>::trace)>
 db(Debug_Trace l)
 {
-    kerr << begl;
-    return Select_Debug<((Traits<T1>::debugged || Traits<T2>::debugged)
-        		 && Traits<Debug>::trace)>(); 
+    Select_Debug<((Traits<T1>::debugged || Traits<T2>::debugged) && Traits<Debug>::trace)>() << begl;
+    return Select_Debug<((Traits<T1>::debugged || Traits<T2>::debugged) && Traits<Debug>::trace)>();
 }
 
 union Debug_Level

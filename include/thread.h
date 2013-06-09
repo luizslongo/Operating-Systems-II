@@ -109,9 +109,9 @@ protected:
     Criterion & criterion() { return const_cast<Criterion &>(_link.rank()); }
 
     static void lock() {
+        CPU::int_disable();
         if(smp)
             _lock.acquire();
-        CPU::int_disable();
     }
 
     static void unlock() {
@@ -127,8 +127,6 @@ protected:
     static void wakeup_all(Queue * q);
 
     static void reschedule();
-    static void reschedule(unsigned int cpu);
-    static void rescheduler(unsigned int irq);
     static void time_slicer();
     static void implicit_exit();
 

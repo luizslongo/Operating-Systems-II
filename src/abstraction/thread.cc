@@ -30,12 +30,12 @@ void Thread::common_constructor(Log_Addr entry, unsigned int stack_size)
 
     _thread_count++;
 
-    unsigned int cpu = _scheduler.insert(this);
+    _scheduler.insert(this);
     if((_state != READY) && (_state != RUNNING))
         _scheduler.suspend(this);
 
     if(preemptive && (_state == READY) && (_link.rank() != IDLE))
-        reschedule(cpu);
+        reschedule();
     else
         unlock();
 }
@@ -92,10 +92,10 @@ void Thread::priority(const Priority & p)
 
     _scheduler.remove(this);
     _link.rank(int(p));
-    unsigned int cpu = _scheduler.insert(this);
+    _scheduler.insert(this);
 
     if(preemptive)
-        reschedule(cpu);
+        reschedule();
 }
 
 
@@ -159,10 +159,9 @@ void Thread::resume()
 
     if(_state == SUSPENDED) {
         _state = READY;
-        unsigned int cpu =  _scheduler.resume(this);
-
+        _scheduler.resume(this);
         if(preemptive)
-            reschedule(cpu);
+            reschedule();
     } else {
         db<Thread>(WRN) << "Resume called for unsuspended object!" << endl;
 
@@ -230,10 +229,10 @@ void Thread::wakeup(Queue * q)
         Thread * t = q->remove()->object();
         t->_state = READY;
         t->_waiting = 0;
+        _scheduler.resume(t);
 
-        unsigned int cpu = _scheduler.resume(t);
         if(preemptive)
-            reschedule(cpu);
+            reschedule();
     } else
         unlock();
 }
@@ -248,10 +247,10 @@ void Thread::wakeup_all(Queue * q)
             Thread * t = q->remove()->object();
             t->_state = READY;
             t->_waiting = 0;
+            _scheduler.resume(t);
 
-            unsigned int cpu = _scheduler.resume(t);
             if(preemptive) {
-                reschedule(cpu);
+                reschedule();
                 lock();
             }
         }
@@ -268,27 +267,6 @@ void Thread::reschedule()
     Thread * next = _scheduler.choose();
 
     dispatch(prev, next);
-}
-
-
-void Thread::reschedule(unsigned int cpu)
-{
-    if(!smp || (cpu == Machine::cpu_id()))
-        reschedule();
-    else {
-        db<Thread>(TRC) << "Thread::reschedule<" << Machine::cpu_id() << ">(cpu=" << cpu << ")" << endl;
-        IC::ipi_send(cpu, IC::INT_RESCHEDULER);
-        unlock();
-    }
-}
-
-
-void Thread::rescheduler(unsigned int irq)
-{
-
-    lock();
-
-    reschedule();
 }
 
 
@@ -324,10 +302,12 @@ int Thread::idle()
             }
             CPU::halt();
         } else {
-            CPU::int_enable();
-            CPU::halt();
             if(_scheduler.schedulables() > 0)
                 yield();
+            else {
+                CPU::int_enable();
+                CPU::halt();
+            }
         }
     }
 
