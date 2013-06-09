@@ -90,17 +90,18 @@ void Thread::priority(const Priority & p)
 
     db<Thread>(TRC) << "Thread::priority(this=" << this << ",prio=" << p << ")" << endl;
 
-    _scheduler.remove(this);
     unsigned int old_cpu = _link.rank().queue();
 
+    _scheduler.remove(this);
     _link.rank(Criterion(p));
-
     _scheduler.insert(this);
-    unsigned int new_cpu = _link.rank().queue();
 
     if(preemptive) {
         reschedule(old_cpu);
-        lock(); reschedule(new_cpu);
+        if(smp) {
+            lock();
+            reschedule(_link.rank().queue());
+        }
     }
 }
 

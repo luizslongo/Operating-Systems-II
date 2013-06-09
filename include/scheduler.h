@@ -36,6 +36,7 @@ namespace Scheduling_Criteria
         operator const volatile int() const volatile { return _priority; }
 
         void update() {}
+        unsigned int queue() const { return 0; }
 
     protected:
         volatile int _priority;
@@ -182,6 +183,8 @@ namespace Scheduling_Criteria
       public:
           CPU_Affinity(int p = NORMAL): Priority(p), Variable_Queue( // Aperiodic
               ((_priority == IDLE) || (_priority == MAIN)) ? Machine::cpu_id() : ++_next_queue %= Machine::n_cpus()) {}
+
+          const volatile unsigned int & queue() const volatile { return Variable_Queue::_queue; }
 
           static unsigned int current_queue() { return Machine::cpu_id(); }
       };
