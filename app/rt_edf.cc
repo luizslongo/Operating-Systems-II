@@ -1,1 +1,1 @@
-../src/abstraction/periodic_thread_edf_test.cc
+../src/abstraction/scheduler_edf_test.cc

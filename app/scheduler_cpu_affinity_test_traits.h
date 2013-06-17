@@ -32,7 +32,7 @@ template <> struct Traits<Debug>
     static const bool error   = true;
     static const bool warning = true;
     static const bool info    = false;
-    static const bool trace   = false;
+    static const bool trace   = true;
 };
 
 template <> struct Traits<Lists>: public Traits<void>
@@ -121,6 +121,11 @@ template <> struct Traits<Thread>: public Traits<void>
     static const unsigned int QUANTUM = 10000; // us
 
     static const bool trace_idle = false;
+};
+
+template <> struct Traits<Periodic_Thread>: public Traits<void>
+{
+    static const bool simulate_capacity = false;
 };
 
 template <> struct Traits<Address_Space>: public Traits<void>

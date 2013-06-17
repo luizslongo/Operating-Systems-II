@@ -92,32 +92,38 @@ int main()
 int func_a()
 {
     exec('A');
-    for(int i = 0; i < iterations; i++) {
+
+    do {
         exec('a', wcet_a);
-        Periodic_Thread::wait_next();
-    }
+    } while (Periodic_Thread::wait_next());
+
     exec('A');
-    return 'A';   
+
+    return 'A';
 }
 
 int func_b()
 {
     exec('B');
-    for(int i = 0; i < iterations; i++) {
+
+    do {
         exec('b', wcet_b);
-        Periodic_Thread::wait_next();
-    }
+    } while (Periodic_Thread::wait_next());
+
     exec('B');
-    return 'B';   
+
+    return 'B';
 }
 
 int func_c()
 {
     exec('C');
-    for(int i = 0; i < iterations; i++) {
+
+    do {
         exec('c', wcet_c);
-        Periodic_Thread::wait_next();
-    }
+    } while (Periodic_Thread::wait_next());
+
     exec('C');
+
     return 'C';
 }

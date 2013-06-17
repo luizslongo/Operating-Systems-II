@@ -1,1 +1,0 @@
-periodic_thread_rm_test.cc

@@ -104,6 +104,31 @@ int dinner()
     return 0;
 }
 
+#include <periodic_thread.h>
+
+int rt_task(int n) {
+    cout << "Job " << n << " !" << endl;
+}
+
+int rt()
+{
+    cout << "Begin!" << endl;
+
+    Periodic_Thread * thread[1];
+
+    thread[0] = new Periodic_Thread(&rt_task, 8, 1000, 1000, 100000, 500, 10, 2);
+
+    for(int i = 0; i < 1; i++)
+        int ret = thread[i]->join();
+
+    for(int i = 0; i < 1; i++)
+        delete thread[i];
+
+    cout << "The end!" << endl;
+
+    return 0;
+}
+
 template<typename T>
 int run() { return dinner(); }
 
@@ -114,7 +139,7 @@ template<>
 int run<Scheduling_Criteria::PEDF>() { return dinner(); }
 
 template<>
-int run<Scheduling_Criteria::CEDF>() { return dinner(); }
+int run<Scheduling_Criteria::CEDF>() { return rt(); }
 
 int main()
 {
