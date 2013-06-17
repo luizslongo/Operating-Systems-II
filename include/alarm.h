@@ -15,6 +15,8 @@ __BEGIN_SYS
 class Alarm
 {
     friend class System;
+    friend class Periodic_Thread;
+    friend class RT_Thread;
     friend class Scheduling_Criteria::FCFS;
     friend class Scheduling_Criteria::EDF;
 
@@ -28,7 +30,7 @@ public:
     typedef RTC::Microsecond Microsecond;
     
     // Infinite times (for alarms)
-    enum { INFINITE = -1 };
+    enum { INFINITE = RTC::INFINITE };
     
 public:
     Alarm(const Microsecond & time, Handler * handler, int times = 1);
@@ -52,7 +54,7 @@ private:
     static void lock() { Thread::lock(); }
     static void unlock() { Thread::unlock(); }
 
-    static void handler(void);
+    static void handler();
 
 private:
     Tick _ticks;
@@ -86,10 +88,13 @@ namespace Scheduling_Criteria {
     : Priority((p == IDLE) ? IDLE : Alarm::_elapsed) {}
 
 
-    inline EDF::EDF(const RTC::Microsecond & d)
-    : Priority(Alarm::ticks(d)), _deadline(Alarm::ticks(d)) {}
+    inline EDF::EDF(const Microsecond & d, const Microsecond & p, const Microsecond & c, int cpu)
+    : RT_Common(Alarm::ticks(d), Alarm::ticks(d), p, c) {}
 
-    inline void EDF::update() { if(_deadline) _priority = _deadline + Alarm::_elapsed; }
+    inline void EDF::update() {
+        if((_priority > PERIODIC) && (_priority < APERIODIC))
+            _priority = Alarm::_elapsed + _deadline;
+    }
 };
 
 __END_SYS

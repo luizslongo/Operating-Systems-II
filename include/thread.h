@@ -36,7 +36,6 @@ protected:
 public:
     // Thread State
     enum State {
-        BEGINNING,
         RUNNING,
         READY,
         SUSPENDED,
@@ -87,8 +86,8 @@ public:
 
     const volatile State & state() const { return _state; }
 
-    const volatile Priority  & priority() const { return _link.rank(); }
-    void priority(const Priority & p);
+    const volatile Priority & priority() const { return _link.rank(); }
+    void priority(const Criterion & p);
 
     int join();
     void pass();

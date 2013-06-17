@@ -1053,19 +1053,6 @@ public:
         return e;
     }
 
-    Element * remove(const Object_Type * obj) {
-        Element * e;
-
-        if(obj == _chosen->object()) {
-            e = _chosen;
-            _chosen = Base::remove_head();
-        } else
-            if((e = search(obj)))
-                remove(e);
-
-        return e;
-    }
-
     Element * choose() {
         db<Lists>(TRC) << "Scheduling_List::choose()" << endl;
 
@@ -1102,18 +1089,6 @@ public:
         }
 
         return _chosen;
-    }
-
-    Element * choose(const Object_Type * obj) {
-        Element * e;
-
-        if(obj == _chosen->object())
-            e = _chosen;
-        else
-            if((e = search(obj)))
-                e = choose(e);
-
-    	return e;
     }
 
 private:
@@ -1176,23 +1151,14 @@ public:
                        << ",n=" << (e ? e->next() : (void *) -1)
                        << "}" << endl;
 
+//        unsigned int i = 0;
+//        for(; (i < H) && _chosen[i] != e; i++);
+//        if(i != H)
+//            _chosen[i] = Base::remove_head();
         if(e == _chosen[R::current_head()])
             _chosen[R::current_head()] = Base::remove_head();
         else
             e = Base::remove(e);
-
-        return e;
-    }
-
-    Element * remove(const Object_Type * obj) {
-        Element * e;
-
-        if(obj == _chosen[R::current_head()]->object()) {
-            e = _chosen[R::current_head()];
-            _chosen[R::current_head()] = Base::remove_head();
-        } else
-            if((e = search(obj)))
-                remove(e);
 
         return e;
     }
@@ -1235,18 +1201,7 @@ public:
         return _chosen[R::current_head()];
     }
 
-    Element * choose(const Object_Type * obj) {
-        Element * e;
-
-        if(obj == _chosen[R::current_head()]->object())
-            e = _chosen[R::current_head()];
-        else
-            if((e = search(obj)))
-                e = choose(e);
-
-    	return e;
-    }
-
+private:
     Element * volatile _chosen[H];
 };
 
@@ -1298,9 +1253,7 @@ public:
     }
 
     Element * remove(Element * e) {
-         // Removing object instead of element forces a search and renders
-         // removing inexistent objects harmless
-         return _list[e->rank().queue()].remove(e->object());
+         return _list[e->rank().queue()].remove(e);
      }
 
     Element * remove(const Object_Type * obj) {
@@ -1318,7 +1271,7 @@ public:
     }
 
     Element * choose(Element * e) {
-        return _list[e->rank().queue()].choose(e->object());
+        return _list[e->rank().queue()].choose(e);
     }
 
     Element * choose(const Object_Type * obj) {

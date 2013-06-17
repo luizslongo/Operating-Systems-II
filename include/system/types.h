@@ -76,8 +76,9 @@ class E100;
 
 // Abstractions	- Process
 class Thread;
-class Task;
 class Active;
+class Periodic_Thread;
+class Task;
 
 // Abstractions - Scheduler
 template <typename> class Scheduler;

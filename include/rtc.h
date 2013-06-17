@@ -27,6 +27,9 @@ public:
     typedef Time_Base Microsecond;
     typedef Time_Base Second;
 
+    // Infinite times (for alarms and periodic threads)
+    enum { INFINITE = -1 };
+
     // Calendar date and time
     class Date {
     public:
