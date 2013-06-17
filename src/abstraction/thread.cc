@@ -53,10 +53,6 @@ Thread::~Thread()
                     << "," << *_context << "})" << endl;
 
     switch(_state) {
-    case BEGINNING:
-        _scheduler.resume(this);
-        _thread_count--;
-        break;
     case RUNNING:  // Self deleted itself!
         exit(-1);
         break;
@@ -84,17 +80,20 @@ Thread::~Thread()
 }
 
 
-void Thread::priority(const Priority & p)
+void Thread::priority(const Criterion & c)
 {
     lock();
 
-    db<Thread>(TRC) << "Thread::priority(this=" << this << ",prio=" << p << ")" << endl;
+    db<Thread>(TRC) << "Thread::priority(this=" << this << ",prio=" << c << ")" << endl;
 
     unsigned int old_cpu = _link.rank().queue();
 
-    _scheduler.remove(this);
-    _link.rank(Criterion(p));
-    _scheduler.insert(this);
+    _link.rank(c);
+
+    if(_state != RUNNING) {
+        _scheduler.remove(this);
+        _scheduler.insert(this);
+    }
 
     if(preemptive) {
         reschedule(old_cpu);

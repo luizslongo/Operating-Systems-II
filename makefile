@@ -5,21 +5,33 @@ include makedefs
 SUBDIRS	:= etc tools src app img
 
 all: FORCE
+ifndef APPLICATION
 		$(foreach app,$(APPLICATIONS),$(MAKE) APPLICATION=$(app) $(PRECLEAN) all1;)
-
+else
+		$(MAKE) all1
+endif
+		
 all1: $(SUBDIRS)
 
 $(SUBDIRS): FORCE
 		(cd $@ && $(MAKE))
 
 run: FORCE
+ifndef APPLICATION
 		$(foreach app,$(APPLICATIONS),$(MAKE) APPLICATION=$(app) $(PRECLEAN) run1;)
+else
+		$(MAKE) run1
+endif
 
 run1: all1
 		(cd img && $(MAKE) run)
 
 debug: FORCE
+ifndef APPLICATION
 		$(foreach app,$(APPLICATIONS),$(MAKE) GDB=1 APPLICATION=$(app) $(PRECLEAN) all1 debug1;)
+else
+		$(MAKE) debug1
+endif
 
 debug1: FORCE
 		(cd img && $(MAKE) debug)
@@ -33,7 +45,11 @@ test: $(subst .cc,_traits.h,$(TEST_SORUCES))
 		$(foreach tst,$(TESTS),$(CLEAN) $(APP)/$(tst)*;)
 
 clean: FORCE
+ifndef APPLICATION
 		$(MAKE) APPLICATION=$(word 1,$(APPLICATIONS)) clean1
+else
+		$(MAKE) clean1
+endif
 
 clean1: FORCE
 		(cd etc && $(MAKECLEAN))
