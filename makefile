@@ -66,7 +66,7 @@ veryclean: clean
 		find $(IMG) -name "*.img" -exec $(CLEAN) {} \;
 		find $(IMG) -name "*.out" -exec $(CLEAN) {} \;
 		find $(IMG) -maxdepth 1 -type f -perm +111 -exec $(CLEAN) {} \;
-		find $(TOP) -name "*_test_traits.h" -perm +111 -exec $(CLEAN) {} \;
+		find $(TOP) -name "*_test_traits.h" -type f -perm +111 -exec $(CLEAN) {} \;
 		find $(TOP) -name "*~" -exec $(CLEAN) {} \; 
 
 dist: veryclean

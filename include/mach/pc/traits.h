@@ -22,7 +22,7 @@ template <> struct Traits<PC>: public Traits<PC_Common>
 
     // Physical Memory
     static const unsigned int MEM_BASE  = 0x00000000;
-    static const unsigned int MEM_TOP   = 0x7f000000; // 2032 MB
+    static const unsigned int MEM_TOP   = 0x3f000000; // 2032 MB
 
     // Logical Memory Map
     static const unsigned int BOOT      = 0x00007c00;

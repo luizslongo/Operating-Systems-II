@@ -74,9 +74,9 @@ void Alarm::handler()
     Alarm * alarm = 0;
 
     if(!_request.empty()) {
-        if(_request.head()->promote() <= 0) { // rank can be negative whenever
-                                              // multiple handlers get created
-                                              // for the same time tick
+        while(_request.head()->promote() <= 0) { // rank can be negative whenever
+                                                 // multiple handlers get created
+                                                 // for the same time tick
 
             Queue::Element * e = _request.remove();
             alarm = e->object();
@@ -87,17 +87,22 @@ void Alarm::handler()
                 e->rank(alarm->_ticks);
                 _request.insert(e);
             }
+
+            unlock();
+
+            if(alarm) {
+            	db<Alarm>(TRC) << "Alarm::handler(this=" << alarm << ", h="
+                               << reinterpret_cast<void*>(alarm->handler)
+                               << ")" << endl;
+            	(*alarm->_handler)();
+            }
+
+            lock();
         }
     }
 
     unlock();
 
-    if(alarm) {
-        db<Alarm>(TRC) << "Alarm::handler(this=" << alarm << ", h="
-                       << reinterpret_cast<void*>(alarm->handler)
-                       << ")" << endl;
-        (*alarm->_handler)();
-    }
-}
+  }
 
 __END_SYS
