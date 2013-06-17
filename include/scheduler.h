@@ -160,7 +160,7 @@ namespace Scheduling_Criteria
     public:
         RM(int p = APERIODIC): RT_Common(p) {}
         RM(const Microsecond & d, const Microsecond & p = SAME, const Microsecond & c = UNKNOWN, int cpu = ANY)
-        : RT_Common(p, d, p, c) {}
+        : RT_Common(p ? p : d, d, p, c) {}
     };
 
      // Deadline Monotonic
