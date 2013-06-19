@@ -1274,18 +1274,6 @@ public:
         return _list[e->rank().queue()].choose(e);
     }
 
-    Element * choose(const Object_Type * obj) {
-        Element * e;
-
-        if(obj == _list[R::current_queue()].chosen()->object())
-            e = _list[R::current_queue()].chosen();
-        else
-            if((e = _list[R::current_queue()].search(obj)))
-                e = choose(e);
-
-        return e;
-    }
-
 private:
     L _list[Q];
 };

@@ -15,6 +15,7 @@ __BEGIN_SYS
 class Alarm
 {
     friend class System;
+    friend class Alarm_Chronometer;
     friend class Periodic_Thread;
     friend class RT_Thread;
     friend class Scheduling_Criteria::FCFS;

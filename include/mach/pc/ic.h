@@ -404,7 +404,7 @@ private:
 };
 
 // PC_IC uses i8259A on single-processor machines and the APIC timer on MPs
-class PC_IC: public IC_Common, private IF<Traits<Thread>::smp, APIC, i8259A>::Result
+class PC_IC: public IC_Common, private IF<Traits<System>::multicore, APIC, i8259A>::Result
 {
     friend class PC;
 
