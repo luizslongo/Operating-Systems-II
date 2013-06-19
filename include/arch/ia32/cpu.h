@@ -418,6 +418,19 @@ public:
         return new (sp) Context(entry);
     }
 
+    template<typename T1, typename T2, typename T3, typename T4>
+    static Context * init_stack(Log_Addr stack, unsigned int size, void (* exit)(),
+                                int (* entry)(T1 a1, T2 a2, T3 a3, T4 a4), T1 a1, T2 a2, T3 a3, T4 a4) {
+        Log_Addr sp = stack + size;
+        sp -= sizeof(T3); *static_cast<T4 *>(sp) = a4;
+        sp -= sizeof(T3); *static_cast<T3 *>(sp) = a3;
+        sp -= sizeof(T2); *static_cast<T2 *>(sp) = a2;
+        sp -= sizeof(T1); *static_cast<T1 *>(sp) = a1;
+        sp -= sizeof(int); *static_cast<int *>(sp) = Log_Addr(exit);
+        sp -= sizeof(Context);
+        return new (sp) Context(entry);
+    }
+
 private:
     static void init();
 

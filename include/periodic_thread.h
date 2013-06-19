@@ -66,7 +66,7 @@ public:
             _state = state;
     }
 
-    template<class T1>
+    template<typename T1>
     Periodic_Thread(int (* entry)(T1 a1), T1 a1, const Microsecond & period, int times = INFINITE,
                     const State & state = READY, const Criterion & criterion = NORMAL, unsigned int stack_size = STACK_SIZE)
     : Thread(entry, a1, SUSPENDED, (criterion != NORMAL) ? criterion : Criterion(period), stack_size),
@@ -78,7 +78,7 @@ public:
             _state = state;
     }
 
-    template<class T1, class T2>
+    template<typename T1, typename T2>
     Periodic_Thread(int (* entry)(T1 a1, T2 a2), T1 a1, T2 a2, const Microsecond & period, int times = INFINITE,
                     const State & state = READY, const Criterion & criterion = NORMAL, unsigned int stack_size = STACK_SIZE)
     : Thread(entry, a1, a2, SUSPENDED, (criterion != NORMAL) ? criterion : Criterion(period), stack_size),
@@ -90,10 +90,22 @@ public:
             _state = state;
     }
 
-    template<class T1, class T2, class T3>
+    template<typename T1, typename T2, typename T3>
     Periodic_Thread(int (* entry)(T1 a1, T2 a2, T3 a3), T1 a1, T2 a2, T3 a3, const Microsecond & period, int times = INFINITE,
                     const State & state = READY, const Criterion & criterion = NORMAL, unsigned int stack_size = STACK_SIZE)
     : Thread(entry, a1, a2, a3, SUSPENDED, (criterion != NORMAL) ? criterion : Criterion(period), stack_size),
+      _semaphore(0), _handler(&_semaphore, this), _alarm(period, &_handler, times) {
+        if((state == READY) || (state == RUNNING)) {
+            _state = SUSPENDED;
+            resume();
+        } else
+            _state = state;
+    }
+
+    template<typename T1, typename T2, typename T3, typename T4>
+    Periodic_Thread(int (* entry)(T1 a1, T2 a2, T3 a3, T4 a4), T1 a1, T2 a2, T3 a3, T4 a4, const Microsecond & period, int times = INFINITE,
+                    const State & state = READY, const Criterion & criterion = NORMAL, unsigned int stack_size = STACK_SIZE)
+    : Thread(entry, a1, a2, a3, a4, SUSPENDED, (criterion != NORMAL) ? criterion : Criterion(period), stack_size),
       _semaphore(0), _handler(&_semaphore, this), _alarm(period, &_handler, times) {
         if((state == READY) || (state == RUNNING)) {
             _state = SUSPENDED;
@@ -132,7 +144,7 @@ public:
                     const Microsecond & deadline, const Microsecond & period = SAME,
                     const Microsecond & capacity = UNKNOWN, const Microsecond & activation = NOW,
                     int times = INFINITE, int cpu = ANY, unsigned int stack_size = STACK_SIZE)
-    : Periodic_Thread(&entry, this, function, activation,
+    : Periodic_Thread(&entry, this, function, activation, times,
                       activation ? activation : period ? period : deadline,
                       activation ? 1 : times,
                       SUSPENDED,
@@ -144,14 +156,14 @@ public:
     }
 
 private:
-    static int entry(RT_Thread * t, void (*f)(), const Microsecond a) {
-        if(a) {
+    static int entry(RT_Thread * t, void (*function)(), const Microsecond activation, int times) {
+        if(activation) {
             // Wait for activation time
             t->_semaphore.p();
 
             // Adjust alarm's period
             t->_alarm.~Alarm();
-            new (&t->_alarm) Alarm(t->criterion()._period, &t->_handler, t->_alarm._times);
+            new (&t->_alarm) Alarm(t->criterion()._period, &t->_handler, times);
         }
 
         // Periodic execution loop
@@ -161,7 +173,7 @@ private:
                 tick = Alarm::_elapsed + Alarm::ticks(t->criterion()._capacity);
 
             // Release job
-            f();
+            function();
 
             if(Traits<Periodic_Thread>::simulate_capacity && t->criterion()._capacity)
                 while(Alarm::_elapsed < tick);
