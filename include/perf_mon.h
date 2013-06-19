@@ -4,7 +4,6 @@
 #define __perfmon_h
 
 #include <pmu.h>
-#include <chronometer.h>
 
 __BEGIN_SYS
 
@@ -43,44 +42,21 @@ public:
         return read_pmc3();
     }
    
-    /*void pipeline_slots_retired_per_cycle(void) {
-      PMU::config(PMU::EVTSEL1, (Intel_Sandy_Bridge_PMU::UOPS_RETIRED_RETIRE_SLOTS | PMU::USR | PMU::OS | PMU::ENABLE));
-      PMU::config(PMU::EVTSEL2, (Intel_Sandy_Bridge_PMU::CPU_CLK_UNHALTED_THREAD_P | PMU::USR | PMU::OS | PMU::ENABLE));
-      instructions_retired();
-    }
-    
-    float get_pipeline_slots_retired_per_cycle(void) {
-        Reg64 uops_retired = read_pmc1();
-        Reg64 clk_unhalted = read_pmc2();   
-        //Reg64 ins_retired_any = read_pmc3();
-        Reg64 ins_retired_any = get_instructions_retired();
-        
-        kout << "uops_retired = " << uops_retired << " clk_unhalted = " << clk_unhalted << 
-        " ins_retired_any " << ins_retired_any << endl;
-        
-        return (float) (uops_retired / (4 * clk_unhalted));
-    }*/
-    
-    /*void contested_access(void) {
-        cpu_clk_unhalted_core(); //fixed counter
-        //instructions_retired(); //fixed counter
-        PMU::config(PMU::EVTSEL0, (Intel_Sandy_Bridge_PMU::XSNP_HITM | PMU::USR | PMU::OS | PMU::ENABLE));
-        PMU::config(PMU::EVTSEL1, (Intel_Sandy_Bridge_PMU::XSNP_HIT | PMU::USR | PMU::OS | PMU::ENABLE));
-    }
-    
-    void get_contested_access(void) {
-        //Reg64 inst_retired = get_instructions_retired();
-        //Reg64 cpu_unhalted = get_cpu_clk_unhalted_core();
-        Reg64 hitm = read_pmc0();
-        Reg64 hit = read_pmc1();
-        
-        //kout << "cpu_unhalted = " << _ovf_control_0.v
-        //<< " inst_retired.any = " << _ovf_control_1.v
-        kout << " XSNP_HITM = " << hitm 
-        << " XSNP_HIT = " << hit 
-        << endl;
-    }*/
-    
+	void llc_hitm(void) {
+		//XSNP_HITM counts the number of retired micro-operations
+		//which data soures were Hit Modified responses from shared Last-Level Cache
+		PMU::config(PMU::EVTSEL2, (Intel_Sandy_Bridge_PMU::XSNP_HITM | 
+                                  Intel_Sandy_Bridge_PMU::USR | Intel_Sandy_Bridge_PMU::OS |
+                                  Intel_Sandy_Bridge_PMU::ENABLE
+        ));  
+
+		Intel_Sandy_Bridge_PMU::enable_pebs_pmc2();  
+	}
+
+	Reg64 get_llc_hitm(void) {
+		return read_pmc2();
+	}
+         
     void instructions_retired(void) {
         Intel_PMU_Version3::enable_fixed_ctr0();
     }
