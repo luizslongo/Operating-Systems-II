@@ -40,6 +40,9 @@ class IA32_TSC;
 // Hardware Mediators - Memory Management Unit
 class IA32_MMU;
 
+// Hardware Mediators - Performance Monitoring Unit
+class IA32_PMU;
+
 // Hardware Mediators - Machine
 class PC;
 
