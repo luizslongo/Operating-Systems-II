@@ -99,9 +99,6 @@ def main():
 		print "You can only use one flasher binary! -s and -S are mutually exclusive."
 		sys.exit(-1)
 
-	print "Press <enter> to start..."
-	teste = sys.stdin.readline()
-
 	connected = 0
 	print "Press RESET now..."
 
@@ -129,7 +126,7 @@ def main():
 	#ser.write(chr((filesize >> 8)&255))
 	#ser.write(chr((filesize >> 16)&255))
 	#ser.write(chr((filesize >> 24)&255))
-	fileSizeBytes = pack('I',filesize+4)
+	fileSizeBytes = pack('I',filesize)
 	ser.write(fileSizeBytes)
 
 	#bytes = [i for i in infile.read()]
@@ -190,10 +187,6 @@ def main():
 		print "Speed: %.2f KBps" % (filesize/(endtime-starttime)/1000)
 
 	print "Done."
-	print "Press <enter> to start your application..."
-	final_enter_var = sys.stdin.readline()
-	ser.write("bye.")
-
 	ser.close()
 
 
