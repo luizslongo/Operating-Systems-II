@@ -4,16 +4,13 @@
 
 __BEGIN_SYS
 
-volatile unsigned int MC13224V_GPIO_Pin::_data[2] = {0u, 0u};
-
-MC13224V_GPIO_Pin::MC13224V_GPIO_Pin(int pin, bool dir)
+MC13224V_GPIO_Pin::MC13224V_GPIO_Pin(int pin)
   : _pin(pin)
 {
     function(_pin);
-    if(dir) output(_pin);
-    else input(_pin);
 }
 
+// Set pin direction as input
 void MC13224V_GPIO_Pin::input(int pin)
 {
     int bit = pin % 32;
@@ -26,6 +23,7 @@ void MC13224V_GPIO_Pin::input(int pin)
     );
 }
 
+// Set pin direction as output
 void MC13224V_GPIO_Pin::output(int pin)
 {
     int bit = pin % 32;
@@ -35,6 +33,7 @@ void MC13224V_GPIO_Pin::output(int pin)
     CPU::out32(reg, CPU::in32(reg) | (1 << bit));
 }
 
+// Set pin function as GPIO
 void MC13224V_GPIO_Pin::function(int pin)
 {
     int bit = (pin % 16) << 1;
@@ -44,32 +43,34 @@ void MC13224V_GPIO_Pin::function(int pin)
     CPU::out32(reg, CPU::in32(reg) & ~(0x3 << bit));
 }
 
+// Set pin to High
 void MC13224V_GPIO_Pin::set(int pin)
 {
     int bit = pin % 32;
     int reg = (pin >> 5);
 
-    // Set value
-    _data[reg] |= (1 << bit);
-    CPU::out32(IO::GPIO_DATA0 + (reg << 2), _data[reg]);
+    output(pin);
+    CPU::out32(IO::GPIO_DATA_SET0 + (reg << 2), (1 << bit));
 }
 
+// Set pin to Low
 void MC13224V_GPIO_Pin::clear(int pin)
 {
     int bit = pin % 32;
     int reg = (pin >> 5);
 
-    // Set value
-    _data[reg] &= ~(1 << bit);
-    CPU::out32(IO::GPIO_DATA0 + (reg << 2), _data[reg]);
+    output(pin);
+    CPU::out32(IO::GPIO_DATA_RESET0 + (reg << 2), (1 << bit));
 }
 
+// Read pin status
 bool MC13224V_GPIO_Pin::get(int pin)
 {
     int bit = pin % 32;
     int reg = IO::GPIO_DATA0 + ((pin >> 5) << 2);
 
     // Get value
+    input(pin);
     return ((1 << bit) & CPU::in32(reg));
 }
 

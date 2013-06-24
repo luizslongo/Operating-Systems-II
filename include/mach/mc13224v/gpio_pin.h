@@ -10,12 +10,12 @@ __BEGIN_SYS
 
 class MC13224V_GPIO_Pin: public GPIO_Pin_Common {
 private:
-    MC13224V_GPIO_Pin() {}
+    MC13224V_GPIO_Pin();
 
     typedef Machine::IO IO;
 
 public:
-    MC13224V_GPIO_Pin(int pin, bool dir = false); //default as input
+    MC13224V_GPIO_Pin(int pin);
     ~MC13224V_GPIO_Pin() {}
 
     void put(bool value) { value ? set(_pin) : clear(_pin); }
@@ -31,7 +31,6 @@ private:
     static void clear(int pin);
     static bool get(int pin);
 
-    static volatile unsigned int _data[2];
     int _pin;
 };
 
