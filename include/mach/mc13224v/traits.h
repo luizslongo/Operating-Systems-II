@@ -62,6 +62,14 @@ template <> struct Traits<MC13224V_Flash>: public Traits<MC13224V_Common>
     static const bool enabled = true;
 };
 
+template <> struct Traits<MC13224V_SPI>: public Traits<MC13224V_Common>
+{
+};
+
+template <> struct Traits<MC13224V_One_Wire>: public Traits<MC13224V_Common>
+{
+};
+
 template <> struct Traits<MC13224V_Timer_0>: public Traits<MC13224V_Common>
 {
     static const int FREQUENCY = 1000; // default system timer, in Hz

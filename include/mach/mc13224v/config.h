@@ -22,6 +22,7 @@
 #define __BATTERY_H         __HEADER_MACH(battery)
 #define __SENSOR_H          __HEADER_MACH(sensor)
 #define __SPI_H             __HEADER_MACH(spi)
+#define __ONE_WIRE_H         __HEADER_MACH(one_wire)
 
 __BEGIN_SYS
 
@@ -39,6 +40,8 @@ typedef MC13224V_Timer_2    	Timer_CMAC;
 typedef MC13224V_Timer_3        TSC_Timer;
 typedef Alarm_Timer		    	Timer;
 typedef MC13224V_UART			UART;
+typedef MC13224V_SPI            SPI;
+typedef MC13224V_One_Wire       One_Wire;
 typedef Serial_Display			Display;
 typedef MC13224V_NIC			NIC;
 typedef MC13224V_ADC			ADC;
@@ -53,4 +56,3 @@ typedef MC13224V_ADXL345        Accelerometer;
 __END_SYS
 
 #endif
-
