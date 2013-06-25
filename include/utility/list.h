@@ -1098,7 +1098,7 @@ private:
 
 // Doubly-Linked, Multihead Scheduling List
 // Besides declaring "Criterion", objects subject to scheduling policies that
-// use the multihead list must export the HEADS constant to indicate the
+// use the Multihead list must export the HEADS constant to indicate the
 // number of heads in the list and the current_head() class method to designate
 // the head to which the current operation applies.
 template <typename T,
@@ -1208,7 +1208,7 @@ private:
 
 // Doubly-Linked, Scheduling Multilist
 // Besides declaring "Criterion", objects subject to scheduling policies that
-// use the multilist must export the QUEUES constant to indicate the number of
+// use the Multilist must export the QUEUES constant to indicate the number of
 // sublists in the list, the current_queue() class method to designate the
 // queue to which the current operation applies, and the queue() method to
 // return the queue in which the object currently resides.
@@ -1256,12 +1256,6 @@ public:
          return _list[e->rank().queue()].remove(e);
      }
 
-    Element * remove(const Object_Type * obj) {
-        Element * e = obj->link();
-
-        return _list[e->rank().queue()].remove(obj);
-    }
-
     Element * choose() {
         return _list[R::current_queue()].choose();
     }
@@ -1280,10 +1274,10 @@ private:
 
 // Doubly-Linked, Multihead Scheduling Multilist
 // Besides declaring "Criterion", objects subject to scheduling policies that
-// use the multilist must export the QUEUES constant to indicate the number of
+// use the Multilist must export the QUEUES constant to indicate the number of
 // sublists in the list, the HEADS constant to indicate the number of heads in
-// each of the sublists, the current_head() class method to designate the
-// queue to which the current operation applies, the current_queue() class
+// each of the sublists, the current_queue() class method to designate the
+// queue to which the current operation applies, the current_head() class
 // method to designate the head to which the current operation applies, and
 // the queue() method to return the queue in which the object currently resides.
 template <typename T,
