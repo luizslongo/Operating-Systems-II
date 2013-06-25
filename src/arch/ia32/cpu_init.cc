@@ -23,11 +23,9 @@ void IA32::init()
     else
         db<Init, IA32>(WRN) << "MMU is disabled!" << endl;
 
-	// Initialize the PMU
+    // Initialize the PMU	
     if(Traits<IA32_PMU>::enabled)
-    	IA32_PMU::init();
-    else 
-    	db<Init, IA32_PMU>(WRN) << "PMU is disabled!\n";
+        IA32_PMU::init();
 }
 
 __END_SYS
