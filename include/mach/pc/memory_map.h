@@ -24,7 +24,8 @@ struct Memory_Map<PC>
         APP_HIGH =      Traits<PC>::APP_HIGH,
         PHY_MEM =       Traits<PC>::PHY_MEM,
         IO_MEM =        Traits<PC>::IO_MEM,
-        APIC_MEM =	0x2f400000,
+        APIC_MEM =      Traits<PC>::SYS - 0x00400000,
+
         SYS =		Traits<PC>::SYS,
         IDT =		SYS + 0x00000000,
         GDT =		SYS + 0x00001000,
