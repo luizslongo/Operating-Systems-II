@@ -19,7 +19,7 @@ public:
     struct Err {};
 
 public:
-    OStream(): _base(10) {}
+    OStream(): _base(10), _lock(-1), _error(false) {}
 
     OStream & operator<<(const Begl & begl) {
         if(Traits<System>::multicore)
@@ -177,10 +177,10 @@ private:
 
 private:
     int _base;
+    volatile int _lock;
+    volatile bool _error;
 
     static const char _digits[];
-    static volatile int _lock;
-    static volatile bool _error;
 }; 
 
 extern OStream::Begl begl;
