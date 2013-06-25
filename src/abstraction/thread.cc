@@ -26,7 +26,7 @@ void Thread::common_constructor(Log_Addr entry, unsigned int stack_size)
                     << ",stack={b=" << reinterpret_cast<void*>(_stack)
                     << ",s=" << stack_size
                     << "},context={b=" << _context
-                    << "," << *_context << "}) => " << this << endl;
+                    << "," << *_context << "}) => " << this << "@" << _link.rank().queue() << endl;
 
     _thread_count++;
 
@@ -249,7 +249,7 @@ void Thread::wakeup_all(Queue * q)
 {
     db<Thread>(TRC) << "Thread::wakeup_all(running=" << running() << ",q=" << q << ")" << endl;
 
-    if(!q->empty()) {
+    if(!q->empty())
         while(!q->empty()) {
             Thread * t = q->remove()->object();
             t->_state = READY;
@@ -261,7 +261,7 @@ void Thread::wakeup_all(Queue * q)
                 lock();
             }
          }
-    } else
+    else
         unlock();
 }
 
