@@ -148,10 +148,11 @@ public:
                       activation ? activation : period ? period : deadline,
                       activation ? 1 : times,
                       SUSPENDED,
-                      Criterion(deadline, period ? period : deadline, capacity, cpu),
+                      (activation && Criterion::dynamic) ?
+                          Criterion(Criterion::PERIODIC, deadline, period ? period : deadline, capacity, cpu)
+                          : Criterion(deadline, period ? period : deadline, capacity, cpu),
                       stack_size) {
-        if(activation && Criterion::dynamic)
-            _link.rank(Criterion::PERIODIC); // Will be adjusted to the correct priority by the update() in the operator()()
+        // The priority of dynamic criteria will be adjusted to the correct value by the update() in the operator()() of Handler
         resume();
     }
 
