@@ -8,10 +8,6 @@ __BEGIN_SYS
 
 const char OStream::_digits[] = "0123456789abcdef";
 
-volatile int OStream::_lock = -1;
-volatile bool OStream::_error = false;
-
-
 void OStream::preamble()
 {
     int me = Machine::cpu_id();
