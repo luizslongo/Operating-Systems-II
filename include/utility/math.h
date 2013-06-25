@@ -41,7 +41,9 @@ double mxatan(double arg);
 
 double msatan(double arg);
 
-float abs(float x) ;
+float abs(float x);
+int abs(int x);
+long long abs(long long x);
 
 float sqrt(float x);
 
