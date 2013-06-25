@@ -235,6 +235,15 @@ template <> struct IO_Map<MC13224V>
         MACA_KEY0 = MACA_BASE + 0x164,
         MACA_OPTIONS = MACA_BASE + 0x180,
 
+        I2C_BASE = 0x80006000,
+        I2C_ADR = I2C_BASE + 0x00,
+        I2C_FDR = I2C_BASE + 0x04,
+        I2C_CR = I2C_BASE + 0x08,
+        I2C_SR = I2C_BASE + 0x0C,
+        I2C_DR = I2C_BASE + 0x10,
+        I2C_DFSRR = I2C_BASE + 0x14,
+        I2C_CKER = I2C_BASE + 0x18,
+
         CRM_BASE = 0x80003000,
         CRM_SYS_CNTL = CRM_BASE + 0x00,
         CRM_WU_CNTL = CRM_BASE + 0x04,

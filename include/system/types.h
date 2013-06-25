@@ -175,6 +175,9 @@ class MC13224V_SPI;
 // Hardware Mediators - One_Wire
 class MC13224V_One_Wire;
 
+// Hardware Mediators - I2Cs
+class MC13224V_I2C;
+
 // Hardware Mediators - Displays
 class Serial_Display;
 class PC_Display;
@@ -375,6 +378,7 @@ enum
     USART_ID,
     SPI_ID,
     ONE_WIRE_ID,
+    I2C_ID,
     DISPLAY_ID,
     NIC_ID,
     RADIO_ID,

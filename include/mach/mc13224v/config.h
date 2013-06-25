@@ -23,6 +23,7 @@
 #define __SENSOR_H          __HEADER_MACH(sensor)
 #define __SPI_H             __HEADER_MACH(spi)
 #define __ONE_WIRE_H         __HEADER_MACH(one_wire)
+#define __I2C_H             __HEADER_MACH(i2c)
 
 __BEGIN_SYS
 
@@ -42,6 +43,7 @@ typedef Alarm_Timer		    	Timer;
 typedef MC13224V_UART			UART;
 typedef MC13224V_SPI            SPI;
 typedef MC13224V_One_Wire       One_Wire;
+typedef MC13224V_I2C            I2C;
 typedef Serial_Display			Display;
 typedef MC13224V_NIC			NIC;
 typedef MC13224V_ADC			ADC;

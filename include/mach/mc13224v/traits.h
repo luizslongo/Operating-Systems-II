@@ -62,12 +62,25 @@ template <> struct Traits<MC13224V_Flash>: public Traits<MC13224V_Common>
     static const bool enabled = true;
 };
 
+template <> struct Traits<MC13224V_UART>: public Traits<MC13224V_Common>
+{
+};
+
 template <> struct Traits<MC13224V_SPI>: public Traits<MC13224V_Common>
 {
 };
 
 template <> struct Traits<MC13224V_One_Wire>: public Traits<MC13224V_Common>
 {
+};
+
+template <> struct Traits<MC13224V_I2C>: public Traits<MC13224V_Common>
+{
+    static const bool enabled = true;
+    static const bool debugged = true;
+
+    static const bool BROADCAST = false;
+    static const unsigned char FREQUENCY_DIVIDER = 0x20;
 };
 
 template <> struct Traits<MC13224V_Timer_0>: public Traits<MC13224V_Common>
