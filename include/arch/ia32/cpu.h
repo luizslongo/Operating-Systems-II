@@ -78,10 +78,9 @@ public:
         CR0_CD		= 0x40000000,
         CR0_PG		= 0x80000000,
         // Mask to clear flags (by ANDing)
-        CR0_CLEAR       = (CR0_PE | CR0_EM | CR0_TS | CR0_NE | CR0_AM |
-        		   CR0_NW | CR0_CD), 
+        CR0_CLEAR       = (CR0_PE | CR0_EM | CR0_WP),
         // Mask to set flags (by ORing)
-        CR0_SET         = (CR0_PE | CR0_MP | CR0_ET | CR0_PG) 
+        CR0_SET         = (CR0_PE | CR0_PG)
     };
 
     // Segment Flags

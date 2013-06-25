@@ -355,13 +355,10 @@ public:
     }
 
     static void flush_tlb() {
-        db<IA32_MMU>(TRC) << "IA32_MMU::flush_tlb()" << endl;
-
         ASMV("movl %cr3,%eax");
         ASMV("movl %eax,%cr3");
     }
     static void flush_tlb(Log_Addr addr) {
-        db<IA32_MMU>(TRC) << "IA32_MMU::flush_tlb(" << addr << ")" << endl;
         ASMV("invlpg %0" : : "m"(addr));
     }
 
