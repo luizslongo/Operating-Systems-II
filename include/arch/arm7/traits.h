@@ -6,6 +6,7 @@ __BEGIN_SYS
 
 template <> struct Traits<ARM7>: public Traits<void>
 {
+    static const int BUSY_WAIT_10US_LOOP_COUNT = 14; // calibrated for ARMv4@24MHz
 };
 
 template <> struct Traits<ARM7_FPU>: public Traits<void>

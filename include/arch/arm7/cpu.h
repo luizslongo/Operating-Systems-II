@@ -13,6 +13,7 @@ class ARM7: public CPU_Common
 private:
     typedef Traits<CPU> _Traits;
     static const unsigned int CLOCK = Traits<Machine>::CLOCK;
+    static const int BUSY_WAIT_10US_LOOP_COUNT = Traits<ARM7>::BUSY_WAIT_10US_LOOP_COUNT;
 
 public:
     // CPU Flags
@@ -249,7 +250,15 @@ public:
             return ctx;
     }
 
-    // ARM7 specific methods
+    // ARM7 (ARMv4) specific methods
+
+    static volatile void busy_wait_10us(unsigned int rep = 1) {
+        volatile unsigned int inner_count;
+        for (volatile unsigned int i = 0; i < rep; i++) {
+            inner_count = BUSY_WAIT_10US_LOOP_COUNT;
+            while (inner_count--) {};
+        }
+    }
 
     static Reg8 in8(const Reg32 port) {
         return (*(volatile Reg8 *)port);
