@@ -125,9 +125,7 @@ PC_Setup::PC_Setup(char * boot_image)
     // Multicore conditional start up
     int cpu_id = Machine::cpu_id();
 
-    db<Setup>(TRC) << "PC_Setup("
-        	   << ",bi=" << (void *)bi
-        	   << ",sp=" << (void *)CPU::sp() << ")" << endl;
+    db<Setup>(TRC) << "PC_Setup(bi=" << reinterpret_cast<void *>(bi) << ",sp=" << reinterpret_cast<void *>(CPU::sp()) << ")" << endl;
 
     Machine::smp_barrier(si->bm.n_cpus);
     if(cpu_id == 0) { // Boot strap CPU (BSP)
@@ -155,8 +153,14 @@ PC_Setup::PC_Setup(char * boot_image)
         setup_sys_pt();
         setup_apic_pt();
         setup_sys_pd();
-   
+
         // Enable paging 
+        // We won't be able to print anything before the remap() bellow
+        db<Setup>(INF) << "IP=" << CPU::ip() << endl;
+        db<Setup>(INF) << "SP=" << reinterpret_cast<void *>(CPU::sp()) << endl;
+        db<Setup>(INF) << "CR0=" << reinterpret_cast<void *>(CPU::cr0()) << endl;
+        db<Setup>(INF) << "CR3=" << reinterpret_cast<void *>(CPU::cr3()) << endl;
+
         enable_paging();
 
         // Adjust pointers that will still be used to their logical addresses
@@ -179,6 +183,13 @@ PC_Setup::PC_Setup(char * boot_image)
         // Enable paging 
         enable_paging();
     }
+
+    Machine::smp_barrier(si->bm.n_cpus);
+
+    db<Setup>(INF) << "IP=" << CPU::ip() << endl;
+    db<Setup>(INF) << "SP=" << reinterpret_cast<void *>(CPU::sp()) << endl;
+    db<Setup>(INF) << "CR0=" << reinterpret_cast<void *>(CPU::cr0()) << endl;
+    db<Setup>(INF) << "CR3=" << reinterpret_cast<void *>(CPU::cr3()) << endl;
 
     // SETUP ends here, transfer control to next stage (INIT or APP)
     call_next();
@@ -520,9 +531,6 @@ void PC_Setup::enable_paging()
     aux |= CPU::CR0_SET;
     CPU::cr0(aux);
 
-    db<Setup>(INF) << "CR0=" << (void *)CPU::cr0() << endl;
-    db<Setup>(INF) << "CR3=" << (void *)CPU::cr3() << endl;
-
     // The following relative jump is to break the IA32 pre-fetch queue
     // (in case cr0() was a macro and didn't do it when returning)
     // and also to start using logical addresses
@@ -823,7 +831,7 @@ void PC_Setup::call_next()
     // in some EPOS architecures
     register int sp = SYS_STACK + SYS_STACK_SIZE * (cpu_id + 1) - 2 * sizeof(int);
 
-    db<Setup>(TRC) << "PC_Setup::call_next(" << ",ip=" << ip << ",sp=" << (void *)sp << ") => ";
+    db<Setup>(TRC) << "PC_Setup::call_next(ip=" << ip << ",sp=" << (void *)sp << ") => ";
     if(si->lm.has_ini)
         db<Setup>(TRC) << "INIT" << endl;
     else if(si->lm.has_sys)
@@ -877,8 +885,7 @@ void PC_Setup::pci_aperture(unsigned int * base, unsigned int * top)
         }
     }
 
-    db<Setup>(INF) << "PCI address space={base=" << (void *)*base
-        	   << ",top=" << (void *)*top << "}\n";
+    db<Setup>(INF) << "PCI address space={base=" << (void *)*base << ",top=" << (void *)*top << "}" << endl;
 }
 
 //========================================================================
@@ -905,9 +912,7 @@ void PC_Setup::calibrate_timers()
     TSC::Time_Stamp t1 = TSC::time_stamp(); // ascending
 
     si->tm.cpu_clock = (t1 - t0) * 20;
-    db<Setup>(INF) << "PC_Setup::calibrate_timers:CPU clock="
-        	   << si->tm.cpu_clock / 1000000 << " MHz\n";
-
+    db<Setup>(INF) << "PC_Setup::calibrate_timers:CPU clock=" << si->tm.cpu_clock / 1000000 << " MHz" << endl;
 
     // Disable speaker so we can use channel 2 of i8253
     i8255::port_b(i8255::port_b() & ~(i8255::SPEAKER | i8255::I8253_GATE2));
@@ -931,8 +936,7 @@ void PC_Setup::calibrate_timers()
     APIC_Timer::Count t2 = APIC_Timer::read(0);
 
     si->tm.bus_clock = (t3 - t2) * 20 * 16; // APIC_Timer is prescaled by 16
-    db<Setup>(INF) << "PC_Setup::calibrate_timers:BUS clock="
-        	   << si->tm.bus_clock / 1000000 << " MHz\n";
+    db<Setup>(INF) << "PC_Setup::calibrate_timers:BUS clock=" << si->tm.bus_clock / 1000000 << " MHz" << endl;
 }
 
 __END_SYS
@@ -1049,7 +1053,7 @@ void _start()
         if(APIC::id() >= int(Traits<PC>::MAX_CPUS)) {
             db<Setup>(WRN) << "More CPUs were detected than the current "
                            << "configuration supports (" << Traits<PC>::MAX_CPUS
-                           << ").\n";
+                           << ")." << endl;
             db<Setup>(WRN) << "Disabling CPU " << APIC::id() << "!" << endl;
 
             CPU::int_disable();
