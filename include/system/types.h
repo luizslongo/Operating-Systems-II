@@ -81,6 +81,7 @@ class E100;
 class Thread;
 class Active;
 class Periodic_Thread;
+class RT_Thread;
 class Task;
 
 // Abstractions - Scheduler
