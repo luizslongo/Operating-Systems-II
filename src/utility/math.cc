@@ -103,6 +103,16 @@ float Math::abs(float x) {
     return x;
 
 }
+int Math::abs(int x) {
+    if (x < 0) return 0 - x;
+    return x;
+
+}
+
+long long Math::abs(long long x) {
+    if (x < 0) return 0 - x;
+    return x;
+}
 
 float Math::sqrt(float x){
     OStream cout;
