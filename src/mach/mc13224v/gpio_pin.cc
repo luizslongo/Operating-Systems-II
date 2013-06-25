@@ -4,10 +4,10 @@
 
 __BEGIN_SYS
 
-MC13224V_GPIO_Pin::MC13224V_GPIO_Pin(int pin)
+MC13224V_GPIO_Pin::MC13224V_GPIO_Pin(int pin, GPIO_Functions func)
   : _pin(pin)
 {
-    function(_pin);
+    function(_pin, func);
 }
 
 // Set pin direction as input
@@ -33,14 +33,16 @@ void MC13224V_GPIO_Pin::output(int pin)
     CPU::out32(reg, CPU::in32(reg) | (1 << bit));
 }
 
-// Set pin function as GPIO
-void MC13224V_GPIO_Pin::function(int pin)
+// Set pin function
+void MC13224V_GPIO_Pin::function(int pin, GPIO_Functions func)
 {
     int bit = (pin % 16) << 1;
     unsigned int reg = IO::GPIO_FUNC_SEL0 + ((pin >> 4) << 2);
 
-    // Set as output
-    CPU::out32(reg, CPU::in32(reg) & ~(0x3 << bit));
+    // Set function
+    unsigned int mask = CPU::in32(reg) & ~(0x3 << bit);
+    mask |= (func << bit);
+    CPU::out32(reg,  mask);
 }
 
 // Set pin to High
