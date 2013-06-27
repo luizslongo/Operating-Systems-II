@@ -17,6 +17,8 @@ namespace Scheduling_Criteria
     // Priority (static and dynamic)
     class Priority
     {
+        friend class EPOS::RT_Thread;
+
     public:
         enum {
             MAIN   = 0,
@@ -161,8 +163,6 @@ namespace Scheduling_Criteria
         RM(int p = APERIODIC): RT_Common(p) {}
         RM(const Microsecond & d, const Microsecond & p = SAME, const Microsecond & c = UNKNOWN, int cpu = ANY)
         : RT_Common(p ? p : d, d, p, c) {}
-        RM(int i, const Microsecond & d, const Microsecond & p, const Microsecond & c, int cpu = ANY)
-        : RT_Common(i, d, p, c) {}
     };
 
      // Deadline Monotonic
@@ -177,8 +177,6 @@ namespace Scheduling_Criteria
          DM(int p = APERIODIC): RT_Common(p) {}
          DM(const Microsecond & d, const Microsecond & p = SAME, const Microsecond & c = UNKNOWN, int cpu = ANY)
          : RT_Common(d, d, p, c) {}
-         DM(int i, const Microsecond & d, const Microsecond & p, const Microsecond & c, int cpu = ANY)
-         : RT_Common(i, d, p, c) {}
      };
 
       // Earliest Deadline First
@@ -192,7 +190,6 @@ namespace Scheduling_Criteria
       public:
           EDF(int p = APERIODIC): RT_Common(p) {}
           EDF(const Microsecond & d, const Microsecond & p = SAME, const Microsecond & c = UNKNOWN, int cpu = ANY); // Defined at Alarm
-          EDF(int i, const Microsecond & d, const Microsecond & p, const Microsecond & c, int cpu = ANY); // Defined at Alarm
 
           void update(); // Defined at Alarm
       };
@@ -206,8 +203,6 @@ namespace Scheduling_Criteria
           GEDF(int p = APERIODIC): EDF(p) {}
           GEDF(const Microsecond & d, const Microsecond & p = SAME, const Microsecond & c = UNKNOWN, int cpu = ANY)
           : EDF(d, p, c) {}
-          GEDF(int i, const Microsecond & d, const Microsecond & p, const Microsecond & c, int cpu = ANY)
-          : EDF(i, d, p, c) {}
 
           static unsigned int queue() { return current_head(); }
           static unsigned int current_head() { return Machine::cpu_id(); }
@@ -226,8 +221,6 @@ namespace Scheduling_Criteria
           : EDF(p), Variable_Queue(((_priority == IDLE) || (_priority == MAIN)) ? Machine::cpu_id() : 0) {}
           PEDF(const Microsecond & d, const Microsecond & p = SAME, const Microsecond & c = UNKNOWN, int cpu = ANY)
           : EDF(d, p, c), Variable_Queue((cpu != ANY) ? cpu : ++_next_queue %= Machine::n_cpus()) {}
-          PEDF(int i, const Microsecond & d, const Microsecond & p, const Microsecond & c, int cpu = ANY)
-          : EDF(i, d, p, c), Variable_Queue((cpu != ANY) ? cpu : ++_next_queue %= Machine::n_cpus()) {}
 
           using Variable_Queue::queue;
 
@@ -249,8 +242,6 @@ namespace Scheduling_Criteria
           : EDF(p), Variable_Queue(((_priority == IDLE) || (_priority == MAIN)) ? current_queue() : 0) {} // Aperiodic
           CEDF(const Microsecond & d, const Microsecond & p = SAME, const Microsecond & c = UNKNOWN, int cpu = ANY)
           : EDF(d, p, c), Variable_Queue((cpu != ANY) ? cpu / HEADS : ++_next_queue %= Machine::n_cpus() / HEADS) {}
-          CEDF(int i, const Microsecond & d, const Microsecond & p, const Microsecond & c, int cpu = ANY)
-          : EDF(i, d, p, c), Variable_Queue((cpu != ANY) ? cpu / HEADS : ++_next_queue %= Machine::n_cpus() / HEADS) {}
 
           using Variable_Queue::queue;
 

@@ -92,9 +92,6 @@ namespace Scheduling_Criteria {
     inline EDF::EDF(const Microsecond & d, const Microsecond & p, const Microsecond & c, int cpu)
     : RT_Common(Alarm::ticks(d), Alarm::ticks(d), p, c) {}
 
-    inline EDF::EDF(int i, const Microsecond & d, const Microsecond & p, const Microsecond & c, int cpu)
-    : RT_Common(i, Alarm::ticks(d), p, c) {}
-
     inline void EDF::update() {
         if(_priority < APERIODIC)
             _priority = Alarm::_elapsed + _deadline;
