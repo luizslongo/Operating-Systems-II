@@ -48,15 +48,17 @@ volatile bool Paging_Ready = false;
 class PC_Setup
 {
 private:
-    static const unsigned int BOOT_IMAGE_ADDR = Traits<PC>::BOOT_IMAGE_ADDR;
-    static const unsigned int SYS_STACK_SIZE = Traits<System>::STACK_SIZE;
-
+    // Physical memory map
     static const unsigned int SYS_INFO = Memory_Map<PC>::SYS_INFO;
+    static const unsigned int MEM_BASE = Memory_Map<PC>::MEM_BASE;
+    static const unsigned int MEM_TOP = Memory_Map<PC>::MEM_TOP;
+    static const unsigned int APIC_PHY = APIC::LOCAL_APIC_PHY_ADDR;
+    static const unsigned int VGA_PHY = Traits<PC_Display>::FRAME_BUFFER_ADDRESS;
+
+    // Logical memory map
     static const unsigned int IDT = Memory_Map<PC>::IDT;
     static const unsigned int GDT = Memory_Map<PC>::GDT;
     static const unsigned int PHY_MEM = Memory_Map<PC>::PHY_MEM;
-    static const unsigned int IO_MEM = Memory_Map<PC>::IO_MEM;
-    static const unsigned int APIC_MEM = Memory_Map<PC>::APIC_MEM;
     static const unsigned int SYS_PT = Memory_Map<PC>::SYS_PT;
     static const unsigned int SYS_PD = Memory_Map<PC>::SYS_PD;
     static const unsigned int SYS = Memory_Map<PC>::SYS;
@@ -96,14 +98,14 @@ private:
     void setup_idt();
     void setup_gdt();
     void setup_sys_pt();
-    void setup_apic_pt();
     void setup_sys_pd();
     void enable_paging();
 
     void load_parts();
     void call_next();
 
-    void pci_aperture(unsigned int * base, unsigned int * top);
+    void detect_memory(unsigned int * base, unsigned int * top);
+    void detect_pci(unsigned int * base, unsigned int * top);
     void calibrate_timers();
 
     static void panic() { Machine::panic(); }
@@ -133,6 +135,9 @@ PC_Setup::PC_Setup(char * boot_image)
         // Disable hardware interrupt triggering at PIC
         i8259A::reset();
 
+        unsigned int memb, memt;
+        detect_memory(&memb, &memt);
+
         // Calibrate timers
         calibrate_timers();
 
@@ -151,7 +156,6 @@ PC_Setup::PC_Setup(char * boot_image)
         setup_idt();
         setup_gdt();
         setup_sys_pt();
-        setup_apic_pt();
         setup_sys_pd();
 
         // Enable paging 
@@ -166,8 +170,8 @@ PC_Setup::PC_Setup(char * boot_image)
         // Adjust pointers that will still be used to their logical addresses
         bi = reinterpret_cast<char *>(unsigned(bi) | PHY_MEM);
         si = reinterpret_cast<System_Info<PC> *>(SYS_INFO);
-        Display::remap();
- 	APIC::remap();
+        PC_Display::remap(Memory_Map<PC>::VGA); // Display can be Serial_Display, so PC_Display here!
+ 	APIC::remap(Memory_Map<PC>::APIC);
 
         // Load EPOS parts (e.g. INIT, SYSTEM, APP)
         load_parts();
@@ -272,7 +276,7 @@ void PC_Setup::build_lm()
     si->lm.sys_data = ~0U;
     si->lm.sys_data_size = 0;
     si->lm.sys_stack = SYS_STACK;
-    si->lm.sys_stack_size = SYS_STACK_SIZE * si->bm.n_cpus;
+    si->lm.sys_stack_size = Traits<System>::STACK_SIZE * si->bm.n_cpus;
     if(si->lm.has_sys) {
         ELF * sys_elf = reinterpret_cast<ELF *>(&bi[si->bm.system_offset]);
         if(!sys_elf->valid()) {
@@ -382,10 +386,6 @@ void PC_Setup::build_pmm()
     top_page -= 1;
     si->pmm.sys_pd = top_page * sizeof(Page);
 
-    // Page table to map APIC's address space
-    top_page -= 1;
-    si->pmm.apic_pt = top_page * sizeof(Page);
-
     // System Info (1 x sizeof(Page))
     top_page -= 1;
     si->pmm.sys_info = top_page * sizeof(Page);
@@ -402,11 +402,12 @@ void PC_Setup::build_pmm()
     // = NP/NPTE_PT * sizeof(Page)
     // NP = size of PCI address space in pages
     // NPTE_PT = number of page table entries per page table
-    pci_aperture(&si->pmm.io_mem_base, &si->pmm.io_mem_top);
-    unsigned int io_mem_size =
-        MMU::pages(si->pmm.io_mem_top - si->pmm.io_mem_base);
-    top_page -= (io_mem_size + MMU::PT_ENTRIES - 1) / MMU::PT_ENTRIES;
-    si->pmm.io_mem_pts = top_page * sizeof(Page);
+    detect_pci(&si->pmm.io_base, &si->pmm.io_top);
+    si->pmm.io_top += sizeof(Page); // Add room for APIC (4 kB)
+    si->pmm.io_top += 16 * sizeof(Page); // Add room for VGA (64 kB)
+    unsigned int io_size = MMU::pages(si->pmm.io_top - si->pmm.io_base);
+    top_page -= (io_size + MMU::PT_ENTRIES - 1) / MMU::PT_ENTRIES;
+    si->pmm.io_pts = top_page * sizeof(Page);
 
     // SYSTEM code segment
     top_page -= MMU::pages(si->lm.sys_code_size);
@@ -426,12 +427,20 @@ void PC_Setup::build_pmm()
     si->pmm.mem_top = top_page * sizeof(Page);
 
     // Free chuncks (passed to MMU::init)
-    si->pmm.free1_base =
-        MMU::align_page(si->lm.app_code + si->lm.app_code_size);
-    si->pmm.free1_top = MMU::align_page(si->lm.app_data);
-    si->pmm.free2_base =
-        MMU::align_page(si->lm.app_data + si->lm.app_data_size);
-    si->pmm.free2_top = MMU::align_page(si->pmm.mem_top);
+    si->pmm.free1_base = MMU::align_page(si->lm.app_code + si->lm.app_code_size);
+    si->pmm.free1_top = MMU::align_page(640 * 1024);
+    si->pmm.free2_base = MMU::align_page(1024 * 1024);
+    si->pmm.free2_top = MMU::align_page(si->lm.app_data);
+    si->pmm.free3_base = MMU::align_page(si->lm.app_data + si->lm.app_data_size);
+    si->pmm.free3_top = MMU::align_page(si->pmm.mem_top);
+
+    // Free chuncks (passed to MMU::init)
+//    si->pmm.free1_base =
+//        MMU::align_page(si->lm.app_code + si->lm.app_code_size);
+//    si->pmm.free1_top = MMU::align_page(si->lm.app_data);
+//    si->pmm.free2_base =
+//        MMU::align_page(si->lm.app_data + si->lm.app_data_size);
+//    si->pmm.free2_top = MMU::align_page(si->pmm.mem_top);
 
     if(si->lm.has_ext) {
         si->pmm.ext_base = si->lm.ext;
@@ -479,9 +488,9 @@ void PC_Setup::say_hi()
          << " Kbytes [" << (void *)si->pmm.mem_base
          << ":" << (void *)si->pmm.mem_top << "]" << endl;
     kout << "  PCI aperture: "
-         << (si->pmm.io_mem_top - si->pmm.io_mem_base) / 1024
-         << " Kbytes [" << (void *)si->pmm.io_mem_base 
-         << ":" << (void *)si->pmm.io_mem_top << "]" << endl;
+         << (si->pmm.io_top - si->pmm.io_base) / 1024
+         << " Kbytes [" << (void *)si->pmm.io_base
+         << ":" << (void *)si->pmm.io_top << "]" << endl;
     kout << "  Node Id:      ";
 
     if(si->bm.node_id != -1)
@@ -607,10 +616,9 @@ void PC_Setup::setup_sys_pt()
         	   << ",gdt="  << (void *)si->pmm.gdt
         	   << ",pt="   << (void *)si->pmm.sys_pt
         	   << ",pd="   << (void *)si->pmm.sys_pd
-        	   << ",apic=" << (void *)si->pmm.apic_pt
         	   << ",info=" << (void *)si->pmm.sys_info
         	   << ",mem="  << (void *)si->pmm.phy_mem_pts
-        	   << ",io="   << (void *)si->pmm.io_mem_pts
+        	   << ",io="   << (void *)si->pmm.io_pts
         	   << ",sysc=" << (void *)si->pmm.sys_code
         	   << ",sysd=" << (void *)si->pmm.sys_data
         	   << ",syss=" << (void *)si->pmm.sys_stack
@@ -672,32 +680,13 @@ void PC_Setup::setup_sys_pt()
 }
 
 //========================================================================
-void PC_Setup::setup_apic_pt()
-{
-    db<Setup>(TRC) << "setup_apic_pt(apic=" << (void *)si->pmm.apic_pt << ")" << endl;
-
-    // Get the physical address for the APIC Page Table
-    PT_Entry * apic_pt = 
-        reinterpret_cast<PT_Entry *>((void *)si->pmm.apic_pt);
-
-    // Clear the APIC Page Table
-    memset(apic_pt, 0, sizeof(Page));
-
-    // Map the Local APIC at offset "0"
-    apic_pt[0] = APIC::LOCAL_APIC_PHY_ADDR | Flags::APIC;
-
-    db<Setup>(INF) << "APT=" << *reinterpret_cast<Page_Table *>(apic_pt) 
-    		   << endl;
-}
-
-//========================================================================
 void PC_Setup::setup_sys_pd()
 {
     db<Setup>(TRC) << "setup_sys_pd(pmm={idt=" << (void *)si->pmm.idt
         	   << ",...},mem_base=" << (void *)si->pmm.mem_base
         	   << ",mem_top=" << (void *)si->pmm.mem_top
-        	   << ",pci_base=" << (void *)si->pmm.io_mem_base
-        	   << ",pci_top=" << (void *)si->pmm.io_mem_top
+        	   << ",io_base=" << (void *)si->pmm.io_base
+        	   << ",io_top=" << (void *)si->pmm.io_top
         	   << ")" << endl;
 
     // Get the physical address for the System Page Directory
@@ -719,33 +708,29 @@ void PC_Setup::setup_sys_pd()
 
     // Attach all physical memory starting at PHY_MEM
     for(int i = 0; i < n_pts; i++)
-        sys_pd[MMU::directory(PHY_MEM) + i] =
-            (si->pmm.phy_mem_pts + i * sizeof(Page)) | Flags::SYS;
+        sys_pd[MMU::directory(PHY_MEM) + i] = (si->pmm.phy_mem_pts + i * sizeof(Page)) | Flags::SYS;
 
     // Attach memory starting at MEM_BASE
-    for(unsigned int i = MMU::directory(
-            MMU::align_directory(si->pmm.mem_base));
+    for(unsigned int i = MMU::directory(MMU::align_directory(si->pmm.mem_base));
         i < MMU::directory(MMU::align_directory(si->pmm.mem_top));
         i++)
         sys_pd[i] = (si->pmm.phy_mem_pts + i * sizeof(Page)) | Flags::APP;
 
-    // Calculate the number of page tables needed to map the PCI AS
-    unsigned int io_mem_size =
-        MMU::pages(si->pmm.io_mem_top - si->pmm.io_mem_base);
-    n_pts = (io_mem_size + MMU::PT_ENTRIES - 1) / MMU::PT_ENTRIES;
+    // Calculate the number of page tables needed to map the IO address space
+    unsigned int io_size = MMU::pages(si->pmm.io_top - si->pmm.io_base);
+    n_pts = (io_size + MMU::PT_ENTRIES - 1) / MMU::PT_ENTRIES;
 
-    // Map PCI addres space into the page tables pointed by io_mem_pts
-    pts = reinterpret_cast<PT_Entry *>((void *)si->pmm.io_mem_pts);
-    for(unsigned int i = 0; i < io_mem_size; i++)
-        pts[i] = (si->pmm.io_mem_base + i * sizeof(Page)) | Flags::PCI;
+    // Map IO address space into the page tables pointed by io_pts
+    pts = reinterpret_cast<PT_Entry *>((void *)si->pmm.io_pts);
+    pts[0] = APIC_PHY | Flags::APIC;
+    for(unsigned int i = 1; i < 17; i++)
+        pts[i] = (VGA_PHY + i * sizeof(Page)) | Flags::VGA;
+    for(unsigned int i = 17; i < io_size; i++)
+        pts[i] = (si->pmm.io_base + i * sizeof(Page)) | Flags::PCI;
 
-    // Attach PCI devices' memory to IO_MEM
+    // Attach PCI devices' memory at Memory_Map<PC>::PCI
     for(int i = 0; i < n_pts; i++)
-        sys_pd[MMU::directory(IO_MEM) + i] =
-            (si->pmm.io_mem_pts + i * sizeof(Page)) | Flags::PCI;
-
-    // Attach APIC's address space to APIC_MEM
-    sys_pd[MMU::directory(APIC_MEM)] = si->pmm.apic_pt | Flags::APIC;
+        sys_pd[MMU::directory(Memory_Map<PC>::PCI) + i] = (si->pmm.io_pts + i * sizeof(Page)) | Flags::PCI;
 
     // Map the system 4M logical address space at the top of the 4Gbytes
     sys_pd[MMU::directory(SYS_CODE)] = si->pmm.sys_pt | Flags::SYS;
@@ -829,7 +814,7 @@ void PC_Setup::call_next()
     // Boot CPU uses a full stack, while non-boot get reduced ones
     // The 2 integers on the stacks are room for return addresses used
     // in some EPOS architecures
-    register int sp = SYS_STACK + SYS_STACK_SIZE * (cpu_id + 1) - 2 * sizeof(int);
+    register int sp = SYS_STACK + Traits<System>::STACK_SIZE * (cpu_id + 1) - 2 * sizeof(int);
 
     db<Setup>(TRC) << "PC_Setup::call_next(ip=" << ip << ",sp=" << (void *)sp << ") => ";
     if(si->lm.has_ini)
@@ -855,9 +840,31 @@ void PC_Setup::call_next()
 }
 
 //========================================================================
-void PC_Setup::pci_aperture(unsigned int * base, unsigned int * top)
+void PC_Setup::detect_memory(unsigned int * base, unsigned int * top)
 {
-    db<Setup>(TRC) << "PC_Setup::pci_aperture()" << endl;
+    db<Setup>(TRC) << "PC_Setup::detect_memory()" << endl;
+
+    unsigned int i;
+    unsigned int * mem = reinterpret_cast<unsigned int *>(MEM_BASE / sizeof(int));
+    for(i = Traits<PC>::INIT; i < MEM_TOP; i += 16 * sizeof(MMU::Page))
+        mem[i /  sizeof(int)] = i;
+
+    for(i = Traits<PC>::INIT; i < MEM_TOP; i += 16 * sizeof(MMU::Page))
+        if(mem[i / sizeof(int)] != i) {
+            db<Setup>(ERR) << "Less memory was detected (" << i / 1024 << " kb) than specified in the configuration (" << MEM_TOP / 1024 << " kb)!" << endl;
+            break;
+        }
+
+    *base = MEM_BASE;
+    *top = i;
+
+    db<Setup>(INF) << "Memory={base=" << reinterpret_cast<void *>(*base) << ",top=" << reinterpret_cast<void *>(*top) << "}" << endl;
+}
+
+//========================================================================
+void PC_Setup::detect_pci(unsigned int * base, unsigned int * top)
+{
+    db<Setup>(TRC) << "PC_Setup::detect_pci()" << endl;
 
     // Scan the PCI bus looking for devices with memory mapped regions
     *base = ~0U;
@@ -866,26 +873,26 @@ void PC_Setup::pci_aperture(unsigned int * base, unsigned int * top)
         for(int dev_fn = 0; dev_fn <= Traits<PCI>::MAX_DEV_FN; dev_fn++) {
             PCI::Locator loc(bus, dev_fn);
             PCI::Header hdr;
- 	    PCI::header(loc, &hdr);
+            PCI::header(loc, &hdr);
             if(hdr) {
-        	db<Setup>(INF) << "PCI" << hdr << endl;
-        	for(unsigned int i = 0; i < PCI::Region::N; i++) {
-        	    PCI::Region * reg = &hdr.region[i];
-        	    if(*reg) {
-        		db<Setup>(INF) << "  reg[" << i << "]=" << *reg << endl;
-        		if(reg->memory) {
-        		    if(reg->phy_addr < *base)
-        			*base = reg->phy_addr;
-        		    if((reg->phy_addr + reg->size) > *top)
-        			*top = reg->phy_addr + reg->size;
-        		}
-        	    }
-        	}
+                db<Setup>(INF) << "PCI" << hdr << endl;
+                for(unsigned int i = 0; i < PCI::Region::N; i++) {
+                    PCI::Region * reg = &hdr.region[i];
+                    if(*reg) {
+                        db<Setup>(INF) << "  reg[" << i << "]=" << *reg << endl;
+                        if(reg->memory) {
+                            if(reg->phy_addr < *base)
+                                *base = reg->phy_addr;
+                            if((reg->phy_addr + reg->size) > *top)
+                                *top = reg->phy_addr + reg->size;
+                        }
+                    }
+                }
             }
         }
     }
 
-    db<Setup>(INF) << "PCI address space={base=" << (void *)*base << ",top=" << (void *)*top << "}" << endl;
+    db<Setup>(INF) << "PCI address space={base=" << reinterpret_cast<void *>(*base) << ",top=" << reinterpret_cast<void *>(*top) << "}" << endl;
 }
 
 //========================================================================

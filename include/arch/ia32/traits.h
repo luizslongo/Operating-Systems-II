@@ -25,7 +25,6 @@ template <> struct Traits<IA32_MMU>: public Traits<void>
 
 template <> struct Traits<IA32_PMU>: public Traits<void>
 {
-  static const bool enabled = true;
 };
 
 __END_SYS

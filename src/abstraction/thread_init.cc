@@ -47,11 +47,14 @@ void Thread::init()
             first = new (SYSTEM) Thread(&idle, RUNNING, IDLE);
     }
     
-    Machine::smp_barrier();
-
     db<Init, Thread>(INF) << "Dispatching the first thread: " << first << endl;
 
     This_Thread::not_booting();
+
+    // This barrier is particularly important, since afterwards the temporary stacks
+    // and data structures established by SETUP and announced as "free memory" will indeed be
+    // available to user threads
+    Machine::smp_barrier();
 
     first->_context->load();
 }

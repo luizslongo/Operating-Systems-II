@@ -15,7 +15,7 @@ class PC_PCI: public PCI_Common
 private:
     static const int MAX_BUS = Traits<PC_PCI>::MAX_BUS;
     static const int MAX_DEV_FN = Traits<PC_PCI>::MAX_DEV_FN;
-    static const unsigned long LOG_IO_MEM = Memory_Map<PC>::IO_MEM;
+    static const unsigned long LOG_IO_MEM = Memory_Map<PC>::PCI;
 
     // From Intel 82443BX manual
     // CONFADDR is a 32 bit register accessed only when referenced as a Dword.

@@ -36,7 +36,7 @@ public:
             return 0;
 
         if(!Traits<CPU>::unaligned_memory_access)
-            while((bytes % sizeof(void *)) != 0)
+            while((bytes % sizeof(void *)))
                 ++bytes;
 
         if(typed)
@@ -68,8 +68,7 @@ public:
                       << ",bytes=" << bytes << ")" << endl;
 
         if(ptr && (bytes >= sizeof(Element))) {
-            Element * e = new (ptr)
-                    Element(reinterpret_cast<char *>(ptr), bytes);
+            Element * e = new (ptr) Element(reinterpret_cast<char *>(ptr), bytes);
             Element * m1, * m2;
             insert_merging(e, &m1, &m2);
         }

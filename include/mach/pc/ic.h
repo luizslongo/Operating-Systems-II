@@ -135,10 +135,9 @@ public:
     // Default mapping addresses
     enum {
         LOCAL_APIC_PHY_ADDR	= 0xfee00000,
-        LOCAL_APIC_LOG_ADDR	= Memory_Map<PC>::APIC_MEM,
+        LOCAL_APIC_LOG_ADDR	= Memory_Map<PC>::APIC,
         IO_APIC_PHY_ADDR	= 0xfec00000,
-        IO_APIC_LOG_ADDR	= Memory_Map<PC>::APIC_MEM +
-                                  (IO_APIC_PHY_ADDR - LOCAL_APIC_PHY_ADDR)
+        IO_APIC_LOG_ADDR	= Memory_Map<PC>::APIC + (IO_APIC_PHY_ADDR - LOCAL_APIC_PHY_ADDR)
     };
 
     // Memory-mapped registers

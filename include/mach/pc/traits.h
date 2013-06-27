@@ -22,7 +22,7 @@ template <> struct Traits<PC>: public Traits<PC_Common>
 
     // Physical Memory
     static const unsigned int MEM_BASE  = 0x00000000;
-    static const unsigned int MEM_TOP   = 0x7f000000; // 2032 MB (MAX for 32-bit is 0x7f000000 / 2032 MB)
+    static const unsigned int MEM_TOP   = 0x70000000; // 1792 MB (MAX for 32-bit is 0x70000000 / 1792 MB)
 
     // Logical Memory Map
     static const unsigned int BOOT      = 0x00007c00;
@@ -35,8 +35,10 @@ template <> struct Traits<PC>: public Traits<PC_Common>
     static const unsigned int APP_HIGH  = 0x0fffffff; // 256 MB
 
     static const unsigned int PHY_MEM   = 0x80000000; // 2 GB
-    static const unsigned int IO_MEM    = 0xe0000000; // ???
-    static const unsigned int SYS       = 0xff400000; // 4 GB - 12 MB
+    static const unsigned int IO_BASE   = 0xf0000000; // 4 GB - 256 MB
+    static const unsigned int IO_TOP    = 0xff400000; // 4 GB - 12 MB
+
+    static const unsigned int SYS       = IO_TOP;     // 4 GB - 12 MB
     static const unsigned int SYS_CODE  = 0xff700000;
     static const unsigned int SYS_DATA  = 0xff740000;
 };

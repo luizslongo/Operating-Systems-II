@@ -22,9 +22,12 @@ struct Memory_Map<PC>
         APP_CODE =      Traits<PC>::APP_CODE,
         APP_DATA =      Traits<PC>::APP_DATA,
         APP_HIGH =      Traits<PC>::APP_HIGH,
+
         PHY_MEM =       Traits<PC>::PHY_MEM,
-        IO_MEM =        Traits<PC>::IO_MEM,
-        APIC_MEM =      Traits<PC>::SYS - 0x00400000,
+        IO =            Traits<PC>::IO_BASE,
+        APIC =          IO,
+        VGA =           IO +  4 * 1024,
+        PCI =           IO + 68 * 1024,
 
         SYS =		Traits<PC>::SYS,
         IDT =		SYS + 0x00000000,

@@ -72,8 +72,8 @@ public:
 public:
     PC_Display() {}
 
-    static void remap(Frame_Buffer fb = reinterpret_cast<Frame_Buffer>(FB)) {
-        _frame_buffer = fb; 
+    static void remap(unsigned int fb = FB) {
+        _frame_buffer = reinterpret_cast<Frame_Buffer>(fb);
     }
 
     static void putc(char c) {
