@@ -14,8 +14,28 @@ __BEGIN_SYS
 class EMote2_Startup
 {
 public:
-    EMote2_Startup();
+    EMote2_Startup()
+	: _led1_r((Traits<MC13224V>::emote_version == 0x2f) ? 10 : 23),
+	  _led1_g((Traits<MC13224V>::emote_version == 0x2f) ?  9 : 24),
+	  _led1_b((Traits<MC13224V>::emote_version == 0x2f) ? 11 : 25),
+	  _led2  ((Traits<MC13224V>::emote_version == 0x2f) ?  8 : 26),
+	  _led3  ((Traits<MC13224V>::emote_version == 0x2f) ? 23 : 27),
+	  _but1  ((Traits<MC13224V>::emote_version == 0x2f) ? 24 : 11),
+	  _but2  ((Traits<MC13224V>::emote_version == 0x2f) ? 22 : 10)
+	{
+    	reset();
+	}
+
     ~EMote2_Startup() {}
+
+    void reset() {
+//    	_termistor.power(OFF);
+//        _accel.power(OFF);
+//        _uart.power(OFF);
+        clear_green();
+        clear_red();
+        clear_rgb();
+    }
 
     // Temperature Sensor
     int temperature() { return _termistor.sample(); }
