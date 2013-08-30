@@ -16,7 +16,7 @@ public:
         for(int i = iterations; i > 0; i--) {
             for(int i = 0; i < 79; i++)
         	cout << "a";
-            cout << endl;
+            cout << "\n";
         }
 
         return 'A';   
@@ -30,7 +30,7 @@ public:
         for(int i = iterations; i > 0; i--) {
             for(int i = 0; i < 79; i++)
         	cout << "b";
-            cout << endl;
+            cout << "\n";
         }
 
         return 'B';   
@@ -53,12 +53,12 @@ int main()
     int status_b = b->join();
 
     cout << "Thread A exited with status " << status_a 
- 	 << " and thread B exited with status " << status_b << endl;
+ 	 << " and thread B exited with status " << status_b << "\n";
 
     delete a;
     delete b;
     
-    cout << "I'm also done, bye!" << endl;
+    cout << "I'm also done, bye!\n";
 
     return 0;
 }
