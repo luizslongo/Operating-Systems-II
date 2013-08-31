@@ -4,7 +4,7 @@
 #include <address_space.h>
 #include <segment.h>
 
-__USING_SYS
+using namespace EPOS;
 
 const unsigned ES1_SIZE = 10000;
 const unsigned ES2_SIZE = 100000;
