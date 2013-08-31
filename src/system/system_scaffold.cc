@@ -3,22 +3,28 @@
 #include <utility/ostream.h>
 #include <utility/heap.h>
 #include <machine.h>
-#include <thread.h>
-#include <system.h>
 #include <display.h>
+#include <system.h>
+#include <thread.h>
 
 // LIBC Heritage
-
-__USING_SYS
-
 extern "C" {
+    using namespace EPOS;
+
+    void _panic() {
+        Machine::panic();
+    }
+
     void _exit(int s) {
         Thread::exit(s); for(;;);
     }
 
+    void _print(const char * s) {
+        Display::puts(s);
+    }
+
     void __cxa_pure_virtual() {
-        db<void>(ERR) << "__cxa_pure_virtual() called!" << endl;
-        Machine::panic();
+        db<void>(ERR) << "Pure Virtual mehtod called!" << endl;
     }
 }
 
@@ -49,12 +55,9 @@ OStream kout;
 OStream kerr;
 
 // System class attributes
+char System::_preheap[];
 System_Info<Machine> * System::_si = reinterpret_cast<System_Info<Machine> *>(Memory_Map<Machine>::SYS_INFO);
-
-Segment System::_heap_segment;
-
-Heap System::_heap;
-
-System_Info<Machine> * const System::info() { return _si; }
+Segment * System::_heap_segment;
+Heap * System::_heap;
 
 __END_SYS
