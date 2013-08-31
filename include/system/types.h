@@ -14,9 +14,6 @@ __BEGIN_SYS
 template<int>
 class Dummy;
 
-// Self reference for objects
-enum Self { SELF };
-
 // Utilities
 class Debug;
 class Lists;
