@@ -24,8 +24,8 @@ private:
     static void init();
 
 private:
-    static Segment _heap_segment;
-    static Heap _heap;
+    static char _preheap[sizeof(Heap)];
+    static Heap * _heap;
 };
 
 __END_SYS
