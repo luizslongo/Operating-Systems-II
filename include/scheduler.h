@@ -17,7 +17,7 @@ namespace Scheduling_Criteria
     // Priority (static and dynamic)
     class Priority
     {
-        friend class EPOS::RT_Thread;
+        friend class RT_Thread;
 
     public:
         enum {
