@@ -38,25 +38,27 @@ class System
     friend void ::operator delete[](void *);
 
 public:
-    static System_Info<Machine> * const info();
+    static System_Info<Machine> * const info() { return _si; }
 
 private:
     static void init();
 
 private:
     static System_Info<Machine> * _si;
-    static Segment _heap_segment;
-    static Heap _heap;
+
+    static char _preheap[(Traits<System>::multiheap ? sizeof(Segment) : 0) + sizeof(Heap)];
+    static Segment * _heap_segment;
+    static Heap * _heap;
 };
 
 __END_SYS
 
 inline void * operator new(size_t bytes, const EPOS::System_Allocator & allocator) {
-    return EPOS::System::_heap.alloc(bytes);
+    return EPOS::System::_heap->alloc(bytes);
 }
 
 inline void * operator new[](size_t bytes, const EPOS::System_Allocator & allocator) {
-    return EPOS::System::_heap.alloc(bytes);
+    return EPOS::System::_heap->alloc(bytes);
 }
 
 #endif
