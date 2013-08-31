@@ -10,11 +10,16 @@
 ASMV("jmp _start");
 
 // LIBC Heritage
-__USING_SYS
 extern "C" {
+    using namespace EPOS;
+
     void _exit(int s) { 
         db<Setup>(ERR) << "_exit(" << s << ") called!" << endl;
         Machine::panic(); for(;;);
+    }
+
+    void _print(const char * s) {
+        Display::puts(s);
     }
 
     void __cxa_pure_virtual() { 
@@ -319,8 +324,7 @@ void PC_Setup::build_lm()
             db<Setup>(ERR) << "OS data segment is too large!" << endl;
             panic();
         }
-        if(MMU::page_tables(MMU::pages(si->lm.sys_stack
-        			       - SYS + si->lm.sys_stack_size)) > 1) {
+        if(MMU::page_tables(MMU::pages(si->lm.sys_stack - SYS + si->lm.sys_stack_size)) > 1) {
             db<Setup>(ERR) << "OS stack segment is too large!" << endl;
             panic();
         }
@@ -334,8 +338,7 @@ void PC_Setup::build_lm()
     si->lm.app_data = ~0U;
     si->lm.app_data_size = 0;
     if(si->lm.has_app) {
-        ELF * app_elf =
-            reinterpret_cast<ELF *>(&bi[si->bm.application_offset]);
+        ELF * app_elf = reinterpret_cast<ELF *>(&bi[si->bm.application_offset]);
         if(!app_elf->valid()) {
             db<Setup>(ERR) << "Application ELF image is corrupted!" << endl;
             panic();
@@ -351,6 +354,13 @@ void PC_Setup::build_lm()
         	    si->lm.app_data = app_elf->segment_address(i);
         	si->lm.app_data_size += app_elf->segment_size(i);
             }
+        }
+        if(Traits<System>::multiheap) { // Application heap in data segment
+            si->lm.app_data_size = MMU::align_page(si->lm.app_data_size);
+            si->lm.app_stack = si->lm.app_data + si->lm.app_data_size;
+            si->lm.app_data_size += MMU::align_page(Traits<Application>::STACK_SIZE);
+            si->lm.app_heap = si->lm.app_data + si->lm.app_data_size;
+            si->lm.app_data_size += MMU::align_page(Traits<Application>::HEAP_SIZE);
         }
     }
 
@@ -429,18 +439,11 @@ void PC_Setup::build_pmm()
     // Free chuncks (passed to MMU::init)
     si->pmm.free1_base = MMU::align_page(si->lm.app_code + si->lm.app_code_size);
     si->pmm.free1_top = MMU::align_page(640 * 1024);
+    // Skip VRAM and ROMs
     si->pmm.free2_base = MMU::align_page(1024 * 1024);
     si->pmm.free2_top = MMU::align_page(si->lm.app_data);
     si->pmm.free3_base = MMU::align_page(si->lm.app_data + si->lm.app_data_size);
     si->pmm.free3_top = MMU::align_page(si->pmm.mem_top);
-
-    // Free chuncks (passed to MMU::init)
-//    si->pmm.free1_base =
-//        MMU::align_page(si->lm.app_code + si->lm.app_code_size);
-//    si->pmm.free1_top = MMU::align_page(si->lm.app_data);
-//    si->pmm.free2_base =
-//        MMU::align_page(si->lm.app_data + si->lm.app_data_size);
-//    si->pmm.free2_top = MMU::align_page(si->pmm.mem_top);
 
     if(si->lm.has_ext) {
         si->pmm.ext_base = si->lm.ext;
@@ -670,7 +673,7 @@ void PC_Setup::setup_sys_pt()
         i++, aux = aux + sizeof(Page))
         sys_pt[MMU::page(SYS_DATA) + i] = aux | Flags::SYS;
 
-    // SYSTEM stack (used only during init)
+    // SYSTEM stack (used only during init and for the ukernel model)
     for(i = 0, aux = si->pmm.sys_stack;
         i < MMU::pages(si->lm.sys_stack_size);
         i++, aux = aux + sizeof(Page))
@@ -813,7 +816,7 @@ void PC_Setup::call_next()
     // Arrange a stack for each CPU to support stage transition
     // Boot CPU uses a full stack, while non-boot get reduced ones
     // The 2 integers on the stacks are room for return addresses used
-    // in some EPOS architecures
+    // in some EPOS architectures
     register int sp = SYS_STACK + Traits<System>::STACK_SIZE * (cpu_id + 1) - 2 * sizeof(int);
 
     db<Setup>(TRC) << "PC_Setup::call_next(ip=" << ip << ",sp=" << (void *)sp << ") => ";
@@ -948,7 +951,7 @@ void PC_Setup::calibrate_timers()
 
 __END_SYS
 
-__USING_SYS
+using namespace EPOS;
 
 extern "C" { void _start(); }
 extern "C" { void setup(char * bi); }
