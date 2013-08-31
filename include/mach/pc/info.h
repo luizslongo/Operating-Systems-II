@@ -101,6 +101,8 @@ public:
         LAddr app_code;
         Size  app_code_size;
         LAddr app_data;
+        LAddr app_stack;
+        LAddr app_heap;
         Size  app_data_size;
         PAddr ext;
         Size  ext_size;
