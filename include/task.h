@@ -23,8 +23,7 @@ private:
     typedef class Queue<Thread> Queue;
 
 protected:
-    Task(Address_Space * as, const Segment * cs, const Segment * ds,
-         Log_Addr code, Log_Addr data)
+    Task(Address_Space * as, const Segment * cs, const Segment * ds, Log_Addr code, Log_Addr data)
     : _as(as), _cs(cs), _ds(ds), _code(code), _data(data) {}
 
 public:
