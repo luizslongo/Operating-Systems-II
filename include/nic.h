@@ -55,18 +55,7 @@ public:
         	return true;
         }
 
-    friend OStream & operator << (OStream & cout, const Address & a) {
-        cout << hex;
-        for(int i = LENGTH - 1; i >= 0; i--) {
-            cout << (unsigned int)(a._address[i]);
-            if(i > 0)
-                cout << ":";
-        }
-        cout << dec;
-        return cout;
-    }
-
-        friend Debug & operator << (Debug & db, const Address & a) {
+    friend OStream & operator << (OStream & db, const Address & a) {
         db << hex;
         for(int i = LENGTH - 1; i >= 0; i--) {
             db << (unsigned int)(a._address[i]);
@@ -86,8 +75,7 @@ public:
 
     // NIC statistics
     struct Statistics {
-        Statistics(): rx_packets(0), tx_packets(0), 
-        	      rx_bytes(0), tx_bytes(0) {}
+        Statistics(): rx_packets(0), tx_packets(0), rx_bytes(0), tx_bytes(0) {}
 
         unsigned int rx_packets;
         unsigned int tx_packets;
@@ -112,11 +100,8 @@ public:
 
         virtual ~NIC_Base() {}
     
-        virtual int send(const Address & dst, const Protocol & prot, 
-        		 const void * data, unsigned int size) = 0; 
-
-        virtual int receive(Address * src, Protocol * prot,
-        		    void * data, unsigned int size) = 0;
+        virtual int send(const Address & dst, const Protocol & prot, const void * data, unsigned int size) = 0;
+        virtual int receive(Address * src, Protocol * prot, void * data, unsigned int size) = 0;
     
         virtual void reset() = 0;
     
@@ -140,13 +125,11 @@ public:
 
         virtual ~NIC_Wrapper() {}
 
-        virtual int send(const Address & dst, const Protocol & prot, 
-        		 const void * data, unsigned int size) {
+        virtual int send(const Address & dst, const Protocol & prot, const void * data, unsigned int size) {
             return NIC::send(dst, prot, data, size); 
         }
 
-        virtual int receive(Address * src, Protocol * prot,
-        		    void * data, unsigned int size) {
+        virtual int receive(Address * src, Protocol * prot, void * data, unsigned int size) {
             return NIC::receive(src, prot, data, size); 
         }
     
@@ -156,7 +139,7 @@ public:
 
         virtual const Address & address() { return NIC::address(); }
 
-    virtual void address(const Address & address) { NIC::address(address); }
+        virtual void address(const Address & address) { NIC::address(address); }
 
         virtual const Statistics & statistics() { return NIC::statistics(); }
     };
@@ -179,10 +162,7 @@ public:
         typedef	typename IF<polymorphic, NIC_Base<T>, T>::Result Base;
 
         template<int Index>
-        struct Get { 
-            typedef NIC_Wrapper<typename NICS::template Get<Index>::Result,
-        			polymorphic> Result;
-        };
+        struct Get { typedef NIC_Wrapper<typename NICS::template Get<Index>::Result, polymorphic> Result; };
     };
 };
 

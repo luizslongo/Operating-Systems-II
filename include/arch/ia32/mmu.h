@@ -61,7 +61,7 @@ public:
 
         operator unsigned int() const { return _flags; }
 
-        friend Debug & operator << (Debug & db, IA32_Flags f)
+        friend OStream & operator << (OStream & db, IA32_Flags f)
             { db << (void *)f._flags; return db; }
 
     private:
@@ -104,7 +104,7 @@ public:
             }
         }
 
-        friend Debug & operator << (Debug & db, Page_Table & pt) {
+        friend OStream & operator << (OStream & db, Page_Table & pt) {
             db << "{\n";
             int brk = 0;
             for(unsigned int i = 0; i < PT_ENTRIES; i++)
@@ -295,8 +295,7 @@ public:
         
         Log_Addr log_address() const { return _log_addr; }
 
-        friend Debug & operator << (Debug & db,
-        			    const DMA_Buffer & b) {
+        friend OStream & operator << (OStream & db, const DMA_Buffer & b) {
             db << "{phy=" << b.phy_address()
                << ",log=" << b.log_address()
                << ",size=" << b.size() 

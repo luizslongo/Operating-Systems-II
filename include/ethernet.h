@@ -46,7 +46,7 @@ public:
             memcpy(_data, data, size);
         }
         
-        friend Debug & operator << (Debug & db, const Frame & f) {
+        friend OStream & operator << (OStream & db, const Frame & f) {
             db << "{" << Address(f._dst)
                << "," << Address(f._src)
                << "," << f._prot
@@ -67,7 +67,7 @@ public:
         Statistics() : rx_overruns(0), tx_overruns(0), frame_errors(0),
         	       carrier_errors(0), collisions(0) {}
 
-        friend Debug & operator << (Debug & db, const Statistics & s) {
+        friend OStream & operator << (OStream & db, const Statistics & s) {
             db << "{rxp=" << s.rx_packets
                << ",rxb=" <<  s.rx_bytes
                << ",rxorun=" <<  s.rx_overruns

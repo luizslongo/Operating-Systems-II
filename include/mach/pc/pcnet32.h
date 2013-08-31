@@ -278,7 +278,7 @@ public:
             BPE = 0x0080
         };
 
-        friend Debug & operator << (Debug & db, const Desc & t) {
+        friend OStream & operator << (OStream & db, const Desc & t) {
             db << "{" << (void *)CPU::ntohl(t.phy_addr)
                << "," << 65536 -CPU::ntohs(t.size)
                << "," << (void *)(unsigned)CPU::ntohs(t.status)
