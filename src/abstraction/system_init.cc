@@ -10,6 +10,7 @@ void System::init()
 {
     if(Traits<Alarm>::enabled)
         Alarm::init();
+
     if(Traits<Task>::enabled)
         Task::init();
 }

@@ -10,12 +10,10 @@ Task * Task::_master;
 
 // Methods
 Task::Task(const Segment & code, const Segment & data)
-: _as (new (SYSTEM) Address_Space), _cs(&code), _ds(&data)
+: _as (new (SYSTEM) Address_Space), _cs(&code), _ds(&data),
+  _code(_as->attach(*_cs)), _data(_as->attach(*_ds))
 {
     db<Task>(TRC) << "Task(cs=" << _cs << ",ds=" << _ds << ") => " << this << endl;
-
-    _as->attach(*_cs);
-    _as->attach(*_ds);
 }
 
 
