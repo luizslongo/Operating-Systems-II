@@ -3,7 +3,7 @@
 #include <utility/ostream.h>
 #include <active.h>
 
-__USING_SYS
+using namespace EPOS;
 
 const int iterations = 100;
 

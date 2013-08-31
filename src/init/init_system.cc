@@ -33,7 +33,7 @@ public:
         // Initialize the processor
         db<Init>(INF) << "Initializing the CPU: " << endl;
         CPU::init();
-        db<Init>(INF) << "done!\n\n";
+        db<Init>(INF) << "done!" << endl;
 
         // If EPOS is a library then adjust the application entry point (that
         // was set by SETUP) based on the ELF SYSTEM+APPLICATION image
@@ -48,9 +48,8 @@ public:
             System::_heap = new (&System::_preheap[sizeof(Segment)]) Heap(
                 Address_Space(MMU::current()).attach(*System::_heap_segment, Memory_Map<Machine>::SYS_HEAP),
                 System::_heap_segment->size());
-        } else {
-            System::_heap = new (&System::_preheap[sizeof(Segment)]) Heap(MMU::alloc(MMU::pages(HEAP_SIZE)), HEAP_SIZE);
-        }
+        } else
+            System::_heap = new (&System::_preheap[0]) Heap(MMU::alloc(MMU::pages(HEAP_SIZE)), HEAP_SIZE);
         db<Init>(INF) << "done!" << endl;
 
         // Initialize the machine

@@ -5,7 +5,7 @@
 #include <semaphore.h>
 #include <alarm.h>
 
-__USING_SYS
+using namespace EPOS;
 
 const int iterations = 100;
 

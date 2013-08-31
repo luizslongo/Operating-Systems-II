@@ -4,7 +4,7 @@
 #include <periodic_thread.h>
 #include <chronometer.h>
 
-__USING_SYS
+using namespace EPOS;
 
 const unsigned int TASKS = 3;
 const unsigned int TIMES = 5;

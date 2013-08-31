@@ -12,7 +12,7 @@
 #include <clock.h>
 #include <chronometer.h>
 
-__USING_SYS
+using namespace EPOS;
 
 #define ARRAY_SIZE 256*1024
 #define MEMORY_ACCESS 16384

@@ -56,8 +56,7 @@ public:
         template <typename T>
         Log_Addr & operator&=(T a) { _addr &= a; return *this; }
 
-        friend OStream & operator<< (OStream & db, const Log_Addr & a)
-        { db << reinterpret_cast<void *>(a._addr); return db; }
+        friend OStream & operator<< (OStream & db, const Log_Addr & a) { db << reinterpret_cast<void *>(a._addr); return db; }
 
     private:
         unsigned int _addr;

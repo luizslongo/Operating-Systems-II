@@ -61,8 +61,7 @@ public:
 
         operator unsigned int() const { return _flags; }
 
-        friend OStream & operator << (OStream & db, IA32_Flags f)
-            { db << (void *)f._flags; return db; }
+        friend OStream & operator << (OStream & db, IA32_Flags f) { db << (void *)f._flags; return db; }
 
     private:
         unsigned int _flags;

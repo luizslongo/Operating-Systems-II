@@ -4,7 +4,7 @@
 #include <periodic_thread.h>
 #include <chronometer.h>
 
-__USING_SYS
+using namespace EPOS;
 
 const unsigned int iterations = 100;
 const unsigned int period_a = 100; // ms
