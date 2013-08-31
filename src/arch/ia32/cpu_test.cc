@@ -3,7 +3,7 @@
 #include <utility/ostream.h>
 #include <cpu.h>
 
-__USING_SYS
+using namespace EPOS;
 
 int main()
 {

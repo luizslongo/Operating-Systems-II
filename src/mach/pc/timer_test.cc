@@ -5,7 +5,7 @@
 #include <display.h>
 #include <timer.h>
 
-__USING_SYS
+using namespace EPOS;
 
 OStream cout;
 

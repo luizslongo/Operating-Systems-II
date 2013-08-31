@@ -6,7 +6,7 @@
 
 const unsigned int TEST_DURATION = 20; // s
 
-__USING_SYS
+using namespace EPOS;
 
 int main()
 {
