@@ -10,7 +10,7 @@ OStream cout;
 OStream cerr;
 
 // Application class attributes
-Segment Application::_heap_segment;
-Heap Application::_heap;
+char Application::_preheap[];
+Heap * Application::_heap;
 
 __END_SYS
