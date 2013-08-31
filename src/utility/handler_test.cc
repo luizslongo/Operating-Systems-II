@@ -7,7 +7,7 @@
 #include <semaphore.h>
 #include <chronometer.h>
 
-__USING_SYS
+using namespace EPOS;
 
 const int iterations = 100;
 const int period_a = 100;

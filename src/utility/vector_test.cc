@@ -4,7 +4,7 @@
 #include <utility/malloc.h>
 #include <utility/vector.h>
 
-__USING_SYS;
+using namespace EPOS;
 
 const int N = 10;
 
