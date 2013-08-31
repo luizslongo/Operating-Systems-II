@@ -2,9 +2,10 @@
 
 #include <utility/ostream.h>
 #include <alarm.h>
+#include <thread.h>
 #include <task.h>
 
-__USING_SYS
+using namespace EPOS;
 
 const int iterations = 10;
 
@@ -27,8 +28,7 @@ int main()
 
     const Task * task0 = Task::self();
     Address_Space * as0 = task0->address_space();
-    cout << "My address space's page directory is located at "
-         << static_cast<void  *>(as0->pd()) << "\n";
+    cout << "My address space's page directory is located at " << as0 << "\n";
 
     const Segment * cs0 = task0->code_segment();
     CPU::Log_Addr code0 = task0->code();
@@ -44,16 +44,17 @@ int main()
 
     cout << "Creating and attaching segments:\n";
     Segment cs1(cs0->size());
-    Segment ds1(ds0->size());
-    CPU::Log_Addr * code1 = as0->attach(cs1);
-    CPU::Log_Addr * data1 = as0->attach(ds1);
+    CPU::Log_Addr code1 = as0->attach(cs1);
     cout << "  code => " << code1 << " done!" << endl;
+    Segment ds1(ds0->size());
+    CPU::Log_Addr data1 = as0->attach(ds1);
     cout << "  data => " << data1 << " done!" << endl;
 
     cout << "Copying segments:";
     memcpy(code1, code0, cs1.size());
+    cout << " code => done!" << endl;
     memcpy(data1, data0, ds1.size());
-    cout << " done!" << endl;
+    cout << " data => done!" << endl;
 
     cout << "Detaching segments:";
     as0->detach(cs1);
@@ -81,8 +82,9 @@ int main()
 
     delete a;
     delete b;
+    delete task1;
     delete m;
-    
+
     cout << "I'm also done, bye!" << endl;
 
     return 0;
