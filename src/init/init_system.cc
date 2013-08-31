@@ -3,6 +3,7 @@
 #include <machine.h>
 #include <system.h>
 #include <address_space.h>
+#include <segment.h>
 
 extern "C" { void __epos_library_app_entry(void); }
 
@@ -38,18 +39,17 @@ public:
         // was set by SETUP) based on the ELF SYSTEM+APPLICATION image
         System_Info<Machine> * si = System::info();
         if(!si->lm.has_sys)
-            si->lmm.app_entry =
-        	reinterpret_cast<unsigned int>(&__epos_library_app_entry);
+            si->lmm.app_entry = reinterpret_cast<unsigned int>(&__epos_library_app_entry);
 
         // Initialize System's heap
         db<Init>(INF) << "Initializing system's heap: " << endl;
         if(Traits<System>::multiheap) {
-            new (&System::_heap_segment) Segment(HEAP_SIZE);
-            new (&System::_heap) Heap(
-                Address_Space(SELF).attach(System::_heap_segment, Memory_Map<Machine>::SYS_HEAP),
-                System::_heap_segment.size());
+            System::_heap_segment = new (&System::_preheap[0]) Segment(HEAP_SIZE);
+            System::_heap = new (&System::_preheap[sizeof(Segment)]) Heap(
+                Address_Space(MMU::current()).attach(*System::_heap_segment, Memory_Map<Machine>::SYS_HEAP),
+                System::_heap_segment->size());
         } else {
-            new (&System::_heap) Heap(MMU::alloc(MMU::pages(HEAP_SIZE)), HEAP_SIZE);
+            System::_heap = new (&System::_preheap[sizeof(Segment)]) Heap(MMU::alloc(MMU::pages(HEAP_SIZE)), HEAP_SIZE);
         }
         db<Init>(INF) << "done!" << endl;
 
