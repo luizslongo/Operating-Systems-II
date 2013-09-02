@@ -5,8 +5,35 @@ typedef __SIZE_TYPE__ size_t;
 #ifndef __types_h
 #define __types_h
 
+__BEGIN_SYS
+
+// Memory allocators
+enum System_Allocator
+{
+    SYSTEM
+};
+
+enum Scratchpad_Allocator
+{
+    SCRATCHPAD
+};
+
+__END_SYS
+
+extern "C"
+{
+    void * malloc(size_t);
+    void free(void *);
+}
+
 inline void * operator new(size_t s, void * a) { return a; }
 inline void * operator new[](size_t s, void * a) { return a; }
+
+void * operator new(size_t, const EPOS::System_Allocator &);
+void * operator new[](size_t, const EPOS::System_Allocator &);
+
+void * operator new(size_t, const EPOS::Scratchpad_Allocator &);
+void * operator new[](size_t, const EPOS::Scratchpad_Allocator &);
 
 __BEGIN_SYS
 

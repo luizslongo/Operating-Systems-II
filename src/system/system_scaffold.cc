@@ -55,8 +55,8 @@ OStream kout;
 OStream kerr;
 
 // System class attributes
-char System::_preheap[];
 System_Info<Machine> * System::_si = reinterpret_cast<System_Info<Machine> *>(Memory_Map<Machine>::SYS_INFO);
+char System::_preheap[];
 Segment * System::_heap_segment;
 Heap * System::_heap;
 

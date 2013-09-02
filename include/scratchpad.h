@@ -8,18 +8,6 @@
 
 __BEGIN_SYS
 
-enum Scratchpad_Allocator
-{
-    SCRATCHPAD
-};
-
-__END_SYS
-
-void * operator new(size_t, const EPOS::Scratchpad_Allocator &);
-void * operator new[](size_t, const EPOS::Scratchpad_Allocator &);
-
-__BEGIN_SYS
-
 class Scratchpad_Common
 {
     friend void * ::operator new(size_t, const EPOS::Scratchpad_Allocator &);

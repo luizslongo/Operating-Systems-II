@@ -2,7 +2,6 @@
 
 #include <mach/pc/machine.h>
 #include <mach/pc/e100.h>
-#include <system.h>
 
 __BEGIN_SYS
 
@@ -18,8 +17,7 @@ void E100::init(unsigned int unit)
     }
 
     // Try to enable IO regions and bus master
-    PC_PCI::command(loc, PC_PCI::command(loc) 
-        	    | PC_PCI::COMMAND_MEMORY | PC_PCI::COMMAND_MASTER);
+    PC_PCI::command(loc, PC_PCI::command(loc) | PC_PCI::COMMAND_MEMORY | PC_PCI::COMMAND_MASTER);
 
     // Get the config space header and check it we got IO and MASTER
     PC_PCI::Header hdr;
@@ -39,13 +37,13 @@ void E100::init(unsigned int unit)
     db<Init, E100>(INF) << "E100::init: I/O memory at " 
         		<< hdr.region[PCI_REG_MEM].phy_addr
         		<< " mapped to " 
-        		<< hdr.region[PCI_REG_MEM].log_addr << "\n";
+        		<< hdr.region[PCI_REG_MEM].log_addr << endl;
 
     // Get I/O irq
     IO_Irq irq = hdr.interrupt_line;
     db<Init, E100>(INF) << "E100::init: PCI interrut pin "
         		<< hdr.interrupt_pin << " routed to IRQ "
-        		<< hdr.interrupt_line << "\n";
+        		<< hdr.interrupt_line << endl;
 
     // Allocate a DMA Buffer for init block, rx and tx rings
     DMA_Buffer * dma_buf = new (SYSTEM) DMA_Buffer(DMA_BUFFER_SIZE);

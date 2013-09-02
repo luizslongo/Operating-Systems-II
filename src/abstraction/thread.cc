@@ -114,8 +114,9 @@ int Thread::join()
     if(_state != FINISHING) {
         _joining = running();
         _joining->suspend(true);
-    } else
-        unlock();
+    }
+
+    unlock();
 
     return *reinterpret_cast<int *>(_stack);
 }

@@ -2,7 +2,6 @@
 
 #include <mach/pc/machine.h>
 #include <mach/pc/pcnet32.h>
-#include <system.h>
 
 __BEGIN_SYS
 
@@ -37,13 +36,13 @@ void PCNet32::init(unsigned int unit)
     // Get I/O base port
     IO_Port io_port = hdr.region[PCI_REG_IO].phy_addr;
     db<Init, PCNet32>(INF) << "PCNet32::init: I/O port at " 
-        		   << (void *)(int)io_port << "\n";
+        		   << (void *)(int)io_port << endl;
 
     // Get I/O irq
     IO_Irq irq = hdr.interrupt_line;
     db<Init, PCNet32>(INF) << "PCNet32::init: PCI interrut pin "
         		   << hdr.interrupt_pin << " routed to IRQ "
-        		   << hdr.interrupt_line << "\n";
+        		   << hdr.interrupt_line << endl;
 
     // Allocate a DMA Buffer for init block, rx and tx rings
     DMA_Buffer * dma_buf = new (SYSTEM) DMA_Buffer(DMA_BUFFER_SIZE);

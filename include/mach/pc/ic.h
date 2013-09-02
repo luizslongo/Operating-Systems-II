@@ -307,7 +307,7 @@ public:
         // subject to memory remappings. We also cannot be sure about 
         // global constructors here
         remap(addr);
-        if(Traits<Thread>::smp) {
+        if(Traits<System>::multicore) {
             clear();
             enable();
             connect();
@@ -408,7 +408,7 @@ class PC_IC: public IC_Common, private IF<Traits<System>::multicore, APIC, i8259
     friend class PC;
 
 private:
-    typedef IF<Traits<Thread>::smp, APIC, i8259A>::Result Base;
+    typedef IF<Traits<System>::multicore, APIC, i8259A>::Result Base;
 
     typedef CPU::Reg32 Reg32;
     typedef CPU::Log_Addr Log_Addr;

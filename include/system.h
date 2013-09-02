@@ -8,24 +8,6 @@
 
 __BEGIN_SYS
 
-enum System_Allocator
-{
-    SYSTEM
-};
-
-__END_SYS
-
-extern "C"
-{
-    void * malloc(size_t);
-    void free(void *);
-}
-
-inline void * operator new(size_t, const EPOS::System_Allocator &);
-inline void * operator new[](size_t, const EPOS::System_Allocator &);
-
-__BEGIN_SYS
-
 class System
 {
     friend class Init_System;
@@ -45,7 +27,6 @@ private:
 
 private:
     static System_Info<Machine> * _si;
-
     static char _preheap[(Traits<System>::multiheap ? sizeof(Segment) : 0) + sizeof(Heap)];
     static Segment * _heap_segment;
     static Heap * _heap;
