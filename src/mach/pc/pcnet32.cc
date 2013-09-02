@@ -9,18 +9,6 @@ __BEGIN_SYS
 // Class attributes
 PCNet32::Device PCNet32::_devices[UNITS];
 
-// Class Methods
-void PCNet32::int_handler(unsigned int interrupt)
-{
-    PCNet32 * dev = get(interrupt);
-
-    db<PCNet32>(TRC) << "PCNet32::int_handler(int=" << interrupt
-        	     << ",dev=" << dev << ")" << endl;
-    if(!dev)
-        db<PCNet32>(WRN) << "PCNet32::int_handler: handler not found!" << endl;
-    else 
-        dev->handle_int();
-}
 
 // Methods
 PCNet32::PCNet32(unsigned int unit)
@@ -46,16 +34,8 @@ PCNet32::PCNet32(unsigned int unit)
     _devices[unit].in_use = true;
 }
 
-PCNet32::~PCNet32()
-{
-    db<PCNet32>(TRC) << "~PCNet32(unit=" << _unit << ")" << endl;
 
-    // Unlock device
-    _devices[_unit].in_use = false;
-}
-
-PCNet32::PCNet32(unsigned int unit, 
-        	 IO_Port io_port, IO_Irq irq, DMA_Buffer * dma_buf)
+PCNet32::PCNet32(unsigned int unit, IO_Port io_port, IO_Irq irq, DMA_Buffer * dma_buf)
 {
     db<PCNet32>(TRC) << "PCNet32(unit=" << unit << ",io=" << io_port << ",irq=" << irq << ",dma=" << dma_buf << ")" << endl;
 
@@ -112,6 +92,16 @@ PCNet32::PCNet32(unsigned int unit,
     // Reset device
     reset();
 }
+
+
+PCNet32::~PCNet32()
+{
+    db<PCNet32>(TRC) << "~PCNet32(unit=" << _unit << ")" << endl;
+
+    // Unlock device
+    _devices[_unit].in_use = false;
+}
+
 
 void PCNet32::reset()
 {
@@ -182,8 +172,8 @@ void PCNet32::reset()
     csr(0, CSR0_IENA | CSR0_STRT);
 }
 
-int PCNet32::send(const Address & dst, const Protocol & prot,
-        	  const void * data, unsigned int size)
+
+int PCNet32::send(const Address & dst, const Protocol & prot, const void * data, unsigned int size)
 {
     db<PCNet32>(TRC) << "PCNet32::send(s=" << _address
         	     << ",d=" << dst
@@ -215,8 +205,8 @@ int PCNet32::send(const Address & dst, const Protocol & prot,
     return size;
 }
 
-int PCNet32::receive(Address * src, Protocol * prot,
-        	     void * data, unsigned int size)
+
+int PCNet32::receive(Address * src, Protocol * prot, void * data, unsigned int size)
 {
     // Wait for a frame in the ring buffer
     while(_rx_ring[_rx_cur].status & Rx_Desc::OWN);
@@ -246,6 +236,7 @@ int PCNet32::receive(Address * src, Protocol * prot,
 
     return s;
 }
+
 
 void PCNet32::handle_int()
 {
@@ -357,6 +348,19 @@ void PCNet32::handle_int()
     }
 
     CPU::int_enable();
+}
+
+
+void PCNet32::int_handler(unsigned int interrupt)
+{
+    PCNet32 * dev = get(interrupt);
+
+    db<PCNet32>(TRC) << "PCNet32::int_handler(int=" << interrupt
+                     << ",dev=" << dev << ")" << endl;
+    if(!dev)
+        db<PCNet32>(WRN) << "PCNet32::int_handler: handler not found!" << endl;
+    else
+        dev->handle_int();
 }
 
 __END_SYS
