@@ -339,21 +339,15 @@ public:
 
 public:
     E100(unsigned int unit = 0);
-
     ~E100();
 
-    int send(const Address & dst, const Protocol & prot,
- 	     const void * data, unsigned int size);
-
-    int receive(Address * src, Protocol * prot,
-        	void * data, unsigned int size);
+    int send(const Address & dst, const Protocol & prot, const void * data, unsigned int size);
+    int receive(Address * src, Protocol * prot, void * data, unsigned int size);
 
     void reset();
 
     unsigned int mtu() { return MTU; }
-
     const Address & address() { return _address; }
-
     const Statistics & statistics() { return _statistics; }
 
     static void init(unsigned int unit);

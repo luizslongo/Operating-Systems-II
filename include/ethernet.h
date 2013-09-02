@@ -22,7 +22,7 @@ public:
     typedef NIC_Common::Observer Observer;
     typedef NIC_Common::Observed Observed;
     typedef char PDU[MTU];
-    typedef unsigned int CRC;
+    typedef NIC_Common::CRC32 CRC;
 
     typedef unsigned short Protocol;
     enum {
@@ -36,12 +36,11 @@ public:
     // The Ethernet Frame (RFC 894)
     class Frame {
     public:
-        Frame(const Address & src, const Address & dst,
-              const Protocol & prot): _dst(dst), _src(src), _prot(prot) { }
+        Frame(const Address & src, const Address & dst, const Protocol & prot)
+        : _dst(dst), _src(src), _prot(prot) { }
 
-        Frame(const Address & src, const Address & dst,
-              const Protocol & prot, const void * data, unsigned int size)
-            : _dst(dst), _src(src), _prot(prot)
+        Frame(const Address & src, const Address & dst, const Protocol & prot, const void * data, unsigned int size)
+        : _dst(dst), _src(src), _prot(prot)
         {
             memcpy(_data, data, size);
         }

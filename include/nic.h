@@ -73,6 +73,9 @@ public:
     // NIC protocol id
     typedef unsigned char Protocol;
 
+    // NIC CRC32
+    typedef CPU::Reg32 CRC32;
+
     // NIC statistics
     struct Statistics {
         Statistics(): rx_packets(0), tx_packets(0), rx_bytes(0), tx_bytes(0) {}

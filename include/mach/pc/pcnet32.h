@@ -379,6 +379,8 @@ protected:
 
 class PCNet32: public Ethernet, private Am79C970A
 {
+    friend class PC_Ethernet;
+
 private:
     // PCI ID
     static const unsigned int PCI_VENDOR_ID = 0x1022;
@@ -406,23 +408,16 @@ private:
         
 public:
     PCNet32(unsigned int unit = 0);
-
     ~PCNet32();
 
-    int send(const Address & dst, const Protocol & prot,
- 	     const void * data, unsigned int size);
-
-    int receive(Address * src, Protocol * prot,
-        	void * data, unsigned int size);
+    int send(const Address & dst, const Protocol & prot, const void * data, unsigned int size);
+    int receive(Address * src, Protocol * prot, void * data, unsigned int size);
 
     void reset();
 
     unsigned int mtu() { return MTU; }
-
     const Address & address() { return _address; }
-
     void address(const Address & address) { _address = address; }
-
     const Statistics & statistics() { return _statistics; }
 
     static void init(unsigned int unit);
