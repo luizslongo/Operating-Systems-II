@@ -100,7 +100,7 @@ public:
     void suspend() { suspend(false); }
     void resume();
 
-    static Thread * self() { return running(); }
+    static Thread * volatile self() { return running(); }
     static void yield();
     static void exit(int status = 0);
 

@@ -1,19 +1,22 @@
 // EPOS PC SETUP
 
+// PC_BOOT assumes offset "0" to be the entry point of PC_SETUP
+// We will achieve this by declaring _start in segment .init
+
 #include <utility/elf.h>
 #include <utility/string.h>
 #include <utility/ostream.h>
 #include <utility/debug.h>
 #include <machine.h>
 
-// PC_BOOT assumes offset "0" to be the entry point of PC_SETUP
-ASMV("jmp _start");
 
 // LIBC Heritage
 extern "C" {
     using namespace EPOS;
 
-    void _exit(int s) { 
+    void _start() __attribute__ ((section (".init")));
+
+    void _exit(int s) {
         db<Setup>(ERR) << "_exit(" << s << ") called!" << endl;
         Machine::panic(); for(;;);
     }
@@ -22,7 +25,7 @@ extern "C" {
         Display::puts(s);
     }
 
-    void __cxa_pure_virtual() { 
+    void __cxa_pure_virtual() {
         db<Setup>(ERR) << "__cxa_pure_virtual() called!" << endl;
         Machine::panic();
     }

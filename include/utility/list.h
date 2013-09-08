@@ -907,6 +907,10 @@ public:
     using Base::tail;
     using Base::begin;
     using Base::end;
+    using Base::insert_first;
+    using Base::insert_head;
+    using Base::insert_tail;
+    using Base::search;
 
     void insert(Element * e) {
         db<Lists>(TRC) << "Ordered_List::insert(e=" << e 
@@ -1309,6 +1313,9 @@ public:
     using Base::tail;
     using Base::begin;
     using Base::end;
+    using Base::insert_tail;
+    using Base::remove;
+    using Base::search;
 
     unsigned int grouped_size() const { return _grouped_size; }
     

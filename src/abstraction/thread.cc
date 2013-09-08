@@ -53,7 +53,7 @@ Thread::~Thread()
                     << "," << *_context << "})" << endl;
 
     switch(_state) {
-    case RUNNING:  // Self deleted itself!
+    case RUNNING:  // Self deleted itself! Stack won't be released!
         exit(-1);
         break;
     case READY:
@@ -118,7 +118,7 @@ int Thread::join()
 
     unlock();
 
-    return *reinterpret_cast<int *>(_stack);
+    return *reinterpret_cast<int *>(&_stack[0]);
 }
 
 
@@ -200,7 +200,7 @@ void Thread::exit(int status)
 
     Thread * prev = running();
     _scheduler.remove(prev);
-    *reinterpret_cast<int *>(prev->_stack) = status;
+    *reinterpret_cast<int *>(&prev->_stack[0]) = status;
     prev->_state = FINISHING;
 
     _thread_count--;

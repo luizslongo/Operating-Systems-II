@@ -7,7 +7,7 @@ TARGET := $(if $(shell find $(MACH)*), install)
 all:		$(TARGET)
 
 $(MACH)_setup:	$(MACH)_setup.o
-		$(LD) $(LDFLAGS) -L$(CCLIB) --omagic -Ttext=$(SETUP_ADDR) -o $@ $^ -l$(LINIT) -l$(LMACH) -l$(LARCH) -l$(LUTIL) -lgcc
+		$(LD) $(LDFLAGS) -L$(CCLIB) --omagic --section-start .init=$(SETUP_ADDR) -o $@ $^ -l$(LINIT) -l$(LMACH) -l$(LARCH) -l$(LUTIL) -lgcc
 
 install:	$(MACH)_setup
 ifndef 	GDB

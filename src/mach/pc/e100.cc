@@ -350,13 +350,12 @@ unsigned short E100::eeprom_read(unsigned short *addr_len, unsigned short addr) 
 }
 
 unsigned char E100::eeprom_mac_address(Reg16 addr) {
-    Reg16 eeprom_wc, addr_len = 8;
+    Reg16 addr_len = 8;
     Reg16 two_words; // two words of 8 bits (one EEPROM word)
     Reg8 which_word; // first or second word of 8 bits
 
     // try reading with an 8-bit addr len to discover actual addr len 
     eeprom_read(&addr_len, 0);
-    eeprom_wc = 1 << addr_len;
 
     which_word = addr % 2; // read the first (0) or second (1) word of 8 bits
 
