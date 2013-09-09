@@ -103,7 +103,7 @@ public:
             }
         }
 
-        friend OStream & operator << (OStream & db, Page_Table & pt) {
+        friend Debug & operator << (Debug & db, Page_Table & pt) {
             db << "{\n";
             int brk = 0;
             for(unsigned int i = 0; i < PT_ENTRIES; i++)

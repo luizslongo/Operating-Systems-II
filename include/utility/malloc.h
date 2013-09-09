@@ -26,7 +26,7 @@ extern "C"
     }
 
     inline void free(void * ptr) {
-        if(Traits<EPOS::System>::multiheap)
+        if(Traits<System>::multiheap)
             Heap::typed_free(ptr);
         else
             Heap::untyped_free(System::_heap, ptr);

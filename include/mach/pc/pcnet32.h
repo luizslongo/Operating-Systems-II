@@ -308,63 +308,63 @@ public:
 
 public:
     Reg8 prom(int a) {
-        return IA32::in8(_io_port + PROM + a);
+        return CPU::in8(_io_port + PROM + a);
     }
     void s_reset() { // pg 96
         // Assert S_RESET
-        IA32::in16(_io_port + WIO_RESET);
+        CPU::in16(_io_port + WIO_RESET);
 
         // Wait for STOP
  	for(int i = 0; (i < 100) && !(csr(CSC) & 0x0004); i++);
     }
 
     Reg16 rap() volatile {
-        return IA32::in16(_io_port + WIO_RAP);
+        return CPU::in16(_io_port + WIO_RAP);
     }
     void rap(Reg16 v) {
-        IA32::out16(_io_port + WIO_RAP, v);
+        CPU::out16(_io_port + WIO_RAP, v);
     }
     Reg16 csr(int a) volatile {
-        IA32::out16(_io_port + WIO_RAP, a);
-        return IA32::in16(_io_port + WIO_RDP);
+        CPU::out16(_io_port + WIO_RAP, a);
+        return CPU::in16(_io_port + WIO_RDP);
     }
     void csr(int a, Reg16 v) { 
-        IA32::out16(_io_port + WIO_RAP, a);
-        IA32::out16(_io_port + WIO_RDP, v);
+        CPU::out16(_io_port + WIO_RAP, a);
+        CPU::out16(_io_port + WIO_RDP, v);
     }
     Reg16 bcr(int a) volatile {
-        IA32::out16(_io_port + WIO_RAP, a);
-        return IA32::in16(_io_port + WIO_BDP);
+        CPU::out16(_io_port + WIO_RAP, a);
+        return CPU::in16(_io_port + WIO_BDP);
     }
     void  bcr(int a, Reg16 v) { 
-        IA32::out16(_io_port + WIO_RAP, a);
-        IA32::out16(_io_port + WIO_BDP, v);
+        CPU::out16(_io_port + WIO_RAP, a);
+        CPU::out16(_io_port + WIO_BDP, v);
     }
 
     Reg16 dwio_rap() volatile { 
-        return (IA32::in32(_io_port + DWIO_RAP) & 0xffff);
+        return (CPU::in32(_io_port + DWIO_RAP) & 0xffff);
     }
     void dwio_rap(Reg16 v) { 
-        IA32::out32(_io_port + DWIO_RAP, v);
+        CPU::out32(_io_port + DWIO_RAP, v);
     }
     void dwio_s_reset() {
-        IA32::in32(_io_port + DWIO_RESET);
+        CPU::in32(_io_port + DWIO_RESET);
     }
     Reg16 dwio_csr(int a) volatile {
-        IA32::out32(_io_port + DWIO_RAP, a);
-        return (IA32::in32(_io_port + DWIO_RDP) & 0xffff);
+        CPU::out32(_io_port + DWIO_RAP, a);
+        return (CPU::in32(_io_port + DWIO_RDP) & 0xffff);
     }
     void dwio_csr(int a, Reg16 v) { 
-        IA32::out32(_io_port + DWIO_RAP, a);
-        IA32::out32(_io_port + DWIO_RDP, v);
+        CPU::out32(_io_port + DWIO_RAP, a);
+        CPU::out32(_io_port + DWIO_RDP, v);
     }
     Reg16 dwio_bcr(int a) volatile {
-        IA32::out32(_io_port + DWIO_RAP, a);
-        return (IA32::in32(_io_port + DWIO_BDP) & 0xffff);
+        CPU::out32(_io_port + DWIO_RAP, a);
+        return (CPU::in32(_io_port + DWIO_BDP) & 0xffff);
     }
     void dwio_bcr(int a, Reg16 v) volatile { 
-        IA32::out32(_io_port + DWIO_RAP, a);
-        IA32::out32(_io_port + DWIO_BDP, v);
+        CPU::out32(_io_port + DWIO_RAP, a);
+        CPU::out32(_io_port + DWIO_BDP, v);
     }
 
     int log2(int n) {

@@ -2,9 +2,8 @@
 
 #include <utility/ostream.h>
 #include <machine.h>
-#include <display.h>
 
-extern "C" { void _print(const char *s); }
+extern "C" { void _panic(); }
 
 __BEGIN_SYS
 
@@ -28,18 +27,13 @@ void OStream::trailler()
     static char tag[] = " :<0>";
 
     if(_lock != -1) {
-        tag[2] = '0' + Machine::cpu_id();
+        tag[3] = '0' + Machine::cpu_id();
         print(tag);
 
         _lock = -1;
     }
     if(_error)
-        Machine::panic();
-}
-
-void OStream::print(const char * s)
-{
-    _print(s);
+        _panic();
 }
 
 
@@ -130,6 +124,5 @@ int OStream::ptoa(const void * p, char * s)
 
     return j + 2;
 }    
-
 
 __END_SYS

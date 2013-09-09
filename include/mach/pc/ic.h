@@ -69,45 +69,45 @@ public:
 
     static void remap(Reg8 base = HARD_INT) {
         // Configure Master PIC
-        IA32::out8(MASTER_CMD, ICW1);
-        IA32::out8(MASTER_IMR, base);              // ICW2 is the base
-        IA32::out8(MASTER_IMR, 1 << IRQ_CASCADE);  // ICW3 = IRQ2 cascaded
-        IA32::out8(MASTER_IMR, ICW4);
+        CPU::out8(MASTER_CMD, ICW1);
+        CPU::out8(MASTER_IMR, base);              // ICW2 is the base
+        CPU::out8(MASTER_IMR, 1 << IRQ_CASCADE);  // ICW3 = IRQ2 cascaded
+        CPU::out8(MASTER_IMR, ICW4);
 
         // Configure Slave PIC
-        IA32::out8(SLAVE_CMD, ICW1);
-        IA32::out8(SLAVE_IMR, base + 8); // ICW2 is the base
-        IA32::out8(SLAVE_IMR, 0x02);     // ICW3 = cascaded from IRQ1
-        IA32::out8(SLAVE_IMR, ICW4);
+        CPU::out8(SLAVE_CMD, ICW1);
+        CPU::out8(SLAVE_IMR, base + 8); // ICW2 is the base
+        CPU::out8(SLAVE_IMR, 0x02);     // ICW3 = cascaded from IRQ1
+        CPU::out8(SLAVE_IMR, ICW4);
     }
 
     static void reset() { remap(); disable(); }
 
     static Reg16 irr() { // Pending interrupts
-        IA32::out8(MASTER_CMD, SELECT_IRR);
-        IA32::out8(SLAVE_CMD, SELECT_IRR);
-        return IA32::in8(MASTER_CMD) | (IA32::in8(SLAVE_CMD) << 8);
+        CPU::out8(MASTER_CMD, SELECT_IRR);
+        CPU::out8(SLAVE_CMD, SELECT_IRR);
+        return CPU::in8(MASTER_CMD) | (CPU::in8(SLAVE_CMD) << 8);
     }
 
     static Reg16 isr() { // In-service interrupts
-        IA32::out8(MASTER_CMD, SELECT_ISR);
-        IA32::out8(SLAVE_CMD, SELECT_ISR);
-        return IA32::in8(MASTER_CMD) | (IA32::in8(SLAVE_CMD) << 8);
+        CPU::out8(MASTER_CMD, SELECT_ISR);
+        CPU::out8(SLAVE_CMD, SELECT_ISR);
+        return CPU::in8(MASTER_CMD) | (CPU::in8(SLAVE_CMD) << 8);
     }
 
     static Reg16 imr() { // Interrupt mask
-        return IA32::in8(MASTER_IMR) | (IA32::in8(SLAVE_IMR) << 8);
+        return CPU::in8(MASTER_IMR) | (CPU::in8(SLAVE_IMR) << 8);
     }
 
     static void imr(Reg16 mask) {
-        IA32::out8(MASTER_IMR, mask);
-        IA32::out8(SLAVE_IMR, mask >> 8);
+        CPU::out8(MASTER_IMR, mask);
+        CPU::out8(SLAVE_IMR, mask >> 8);
     }
 
     static void eoi() { // End of interrupt
     	if(isr() & (1 << IRQ_CASCADE)) // was it an slave PIC interrupt?
-            IA32::out8(SLAVE_CMD, EOI);
-    	IA32::out8(MASTER_CMD, EOI); // always send EOI to master
+            CPU::out8(SLAVE_CMD, EOI);
+    	CPU::out8(MASTER_CMD, EOI); // always send EOI to master
     }
 
         static void ipi_send(int dest, int interrupt) { }

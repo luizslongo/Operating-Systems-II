@@ -60,7 +60,7 @@ int main()
     sem_display.p();
     Display::clear();
     cout << "The Philosopher's Dinner:\n";
-        
+
     for(int i = 0; i < 5; i++)
         chopstick[i] = new Semaphore;
         

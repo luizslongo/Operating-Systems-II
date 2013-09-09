@@ -21,8 +21,8 @@ class PC: public Machine_Common
 private:
     static const bool smp = Traits<System>::multicore;
     
-    typedef IA32::Reg32 Reg32;
-    typedef IA32::Log_Addr Log_Addr;
+    typedef CPU::Reg32 Reg32;
+    typedef CPU::Log_Addr Log_Addr;
 
 public:
     PC() {}

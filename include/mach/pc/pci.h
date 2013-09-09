@@ -64,28 +64,28 @@ private:
     }
 
     static Reg8 cfg8(Reg8 bus, Reg8 dev_fn, Reg8 addr) {
-        IA32::out32(CONFADDR, cmd(bus, dev_fn, addr));
-        return IA32::in8(CONFDATA + (addr & 3));
+        CPU::out32(CONFADDR, cmd(bus, dev_fn, addr));
+        return CPU::in8(CONFDATA + (addr & 3));
     }
     static Reg16 cfg16(Reg8 bus, Reg8 dev_fn, Reg8 addr) {
-        IA32::out32(CONFADDR, cmd(bus, dev_fn, addr));    
-        return IA32::in16(CONFDATA + (addr & 2));
+        CPU::out32(CONFADDR, cmd(bus, dev_fn, addr));    
+        return CPU::in16(CONFDATA + (addr & 2));
     }
     static Reg32 cfg32(Reg8 bus, Reg8 dev_fn, Reg8 addr) {
-        IA32::out32(CONFADDR, cmd(bus, dev_fn, addr));
-        return IA32::in32(CONFDATA);
+        CPU::out32(CONFADDR, cmd(bus, dev_fn, addr));
+        return CPU::in32(CONFDATA);
     }
     static void cfg8(Reg8 bus, Reg8 dev_fn, Reg8 addr, Reg8 value) {
-        IA32::out32(CONFADDR, cmd(bus, dev_fn, addr));    
-        IA32::out8(CONFDATA + (addr & 3), value);
+        CPU::out32(CONFADDR, cmd(bus, dev_fn, addr));    
+        CPU::out8(CONFDATA + (addr & 3), value);
     }
     static void cfg16(Reg8 bus, Reg8 dev_fn, Reg8 addr, Reg16 value) {
-        IA32::out32(CONFADDR, cmd(bus, dev_fn, addr));
-        IA32::out16(CONFDATA + (addr & 2), value);
+        CPU::out32(CONFADDR, cmd(bus, dev_fn, addr));
+        CPU::out16(CONFDATA + (addr & 2), value);
     }
     static void cfg32(Reg8 bus, Reg8 dev_fn, Reg8 addr, Reg32 value) {
-        IA32::out32(CONFADDR, cmd(bus, dev_fn, addr));
-        IA32::out32(CONFDATA, value);
+        CPU::out32(CONFADDR, cmd(bus, dev_fn, addr));
+        CPU::out32(CONFDATA, value);
     }
 
     static Reg16 vendor_id(Reg8 bus, Reg8 dev_fn) {

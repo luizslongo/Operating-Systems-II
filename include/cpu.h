@@ -20,46 +20,110 @@ public:
     typedef unsigned short Reg16;
     typedef unsigned long Reg32;
     typedef unsigned long long Reg64;
+    typedef unsigned long Reg;
 
     class Log_Addr {
     public:
+        //        Log_Addr() {}
+        //        Log_Addr(const Log_Addr & a) : _ptr(a._ptr) {}
+        //        Log_Addr(const Reg & a) : _int(a) {}
+        //        template <typename T>
+        //        Log_Addr(T * a) : _ptr(reinterpret_cast<char *>(a)) {}
+        //        template <typename T>
+        //        Log_Addr(T & a) : _int(reinterpret_cast<Reg>(a)) {}
+        //        template <typename T>
+        //        Log_Addr(T * a) : _int(reinterpret_cast<Reg>(a)) {}
+        //
+        //        operator Reg() const { return _int; }
+        //        operator void *() { return _ptr; }
+        //        template <typename T>
+        //        operator T &() { return _int; }
+        //        template <typename T>
+        //        operator T *() const { return reinterpret_cast<T *>(_ptr); }
+
+        //        template <typename T>
+        //        bool operator==(T a) const { return (_ptr == reinterpret_cast<char *>(a)); }
+        //        template <typename T>
+        //        bool operator< (T a) const { return (_ptr < reinterpret_cast<char *>(a)); }
+        //        template <typename T>
+        //        bool operator> (T a) const { return (_ptr > reinterpret_cast<char *>(a)); }
+        //        template <typename T>
+        //        bool operator>=(T a) const { return (_ptr >= reinterpret_cast<char *>(a)); }
+        //        template <typename T>
+        //        bool operator<=(T a) const { return (_ptr <= reinterpret_cast<char *>(a)); }
+
+
+                //        template <typename T>
+        //        bool operator==(T a) const { return (_addr == reinterpret_cast<char *>(a)); }
+        //        template <typename T>
+        //        bool operator< (T a) const { return (_addr < reinterpret_cast<char *>(a)); }
+        //        template <typename T>
+        //        bool operator> (T a) const { return (_addr > reinterpret_cast<char *>(a)); }
+        //        template <typename T>
+        //        bool operator>=(T a) const { return (_addr >= reinterpret_cast<char *>(a)); }
+        //        template <typename T>
+        //        bool operator<=(T a) const { return (_addr <= reinterpret_cast<char *>(a)); }
+        //
+        //        template <typename T>
+        //        Log_Addr operator+(const T & a) const { return _int + Reg(a); }
+        //        template <typename T>
+        //        Log_Addr operator-(const T & a) const { return _int - Reg(a); }
+        //        template <typename T>
+        //        Log_Addr operator|(const T & a) const { return _int | Reg(a); }
+        //        template <typename T>
+        //        Log_Addr operator&(const T & a) const { return _int & Reg(a); }
+        //        template <typename T>
+        //        Log_Addr operator<<(const T & a) const { return _int << Reg(a); }
+        //        template <typename T>
+        //        Log_Addr operator>>(const T & a) const { return _int >> Reg(a); }
+        //        template <typename T>
+        //        Log_Addr operator=(const T & a) { _int = Reg(a); return *this; }
+        //        template <typename T>
+        //        Log_Addr & operator+=(const T & a) { _int += Reg(a); return *this; }
+        //        template <typename T>
+        //        Log_Addr & operator-=(const T & a) { _int -= Reg(a); return *this; }
+        //        template <typename T>
+        //        Log_Addr & operator|=(const T & a) { _int |= Reg(a); return *this; }
+        //        template <typename T>
+        //        Log_Addr & operator&=(const T & a) { _int &= Reg(a); return *this; }
+
         Log_Addr() {}
         Log_Addr(const Log_Addr & a) : _addr(a._addr) {}
-        Log_Addr(unsigned int a) : _addr(a) {}
+        Log_Addr(const Reg & a) : _addr(a) {}
         template <typename T>
-        Log_Addr(T * a) : _addr(reinterpret_cast<unsigned int>(a)) {}
+        Log_Addr(T * a) : _addr(Reg(a)) {}
 
-        operator unsigned int() const { return _addr; }
+        operator const Reg &() const { return _addr; }
 
         template <typename T>
         operator T *() const { return reinterpret_cast<T *>(_addr); }
 
         template <typename T>
-        bool operator==(T a) const { return (_addr == (unsigned int)a); }
+        bool operator==(T a) const { return (_addr == Reg(a)); }
         template <typename T>
-        bool operator< (T a) const { return (_addr < (unsigned int)a); }
+        bool operator< (T a) const { return (_addr < Reg(a)); }
         template <typename T>
-        bool operator> (T a) const { return (_addr > (unsigned int)a); }
+        bool operator> (T a) const { return (_addr > Reg(a)); }
         template <typename T>
-        bool operator>=(T a) const { return (_addr >= (unsigned int)a); }
+        bool operator>=(T a) const { return (_addr >= Reg(a)); }
         template <typename T>
-        bool operator<=(T a) const { return (_addr <= (unsigned int)a); }
+        bool operator<=(T a) const { return (_addr <= Reg(a)); }
 
         template <typename T>
-        Log_Addr operator-(T a) const { return _addr - (unsigned int)a; }
+        Log_Addr operator-(T a) const { return _addr - Reg(a); }
         template <typename T>
-        Log_Addr operator+(T a) const { return _addr + (unsigned int)a; }
+        Log_Addr operator+(T a) const { return _addr + Reg(a); }
         template <typename T>
-        Log_Addr & operator+=(T a) { _addr += a; return *this; }
+        Log_Addr & operator+=(T a) { _addr += Reg(a); return *this; }
         template <typename T>
-        Log_Addr & operator-=(T a) { _addr -= a; return *this; }
+        Log_Addr & operator-=(T a) { _addr -= Reg(a); return *this; }
         template <typename T>
-        Log_Addr & operator&=(T a) { _addr &= a; return *this; }
+        Log_Addr & operator&=(T a) { _addr &= Reg(a); return *this; }
 
         friend OStream & operator<< (OStream & db, const Log_Addr & a) { db << reinterpret_cast<void *>(a._addr); return db; }
 
     private:
-        unsigned int _addr;
+        Reg _addr;
     };
 
     typedef Log_Addr Phy_Addr;

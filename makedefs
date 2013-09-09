@@ -23,10 +23,10 @@ LUTILNAME	:= util
 # Supported software architectures
 MODE_LIBRARY	:= library
 MODE_BUILTIN	:= builtin
-MODE_KERNEL		:= kernel
+MODE_KERNEL     := kernel
 
 # Supported hardware architectures
-ARCH_IA32	:= ia32
+ARCH_IA32       := ia32
 
 # Supported machines
 MACH_PC		:= pc
@@ -98,9 +98,11 @@ else
 #$(MACH_PC)_EMULATOR	= qemu -smp $(MAX_CPUS) -m $(MEM_SIZE) -nographic -no-reboot -net nic,model=pcnet -net user -net socket,mcast=224.0.0.1:12000 -fda
 $(MACH_PC)_EMULATOR	= qemu -smp $(MAX_CPUS) -m $(MEM_SIZE) -nographic -no-reboot -net nic,model=pcnet -net user -fda
 endif
-#$(MACH_PC)_DEBUGGER	= xterm -e gdb -ex "target remote:1234" -ex "set confirm off" -ex "add-symbol-file pc_setup $(SETUP_ADDR)"
+ifeq ($(MODE), library)
+$(MACH_PC)_DEBUGGER	= xterm -e gdb -ex "target remote:1234" -ex "set confirm off" -ex "add-symbol-file pc_setup $(SETUP_ADDR)"
+else
 $(MACH_PC)_DEBUGGER	= xterm -e gdb -ex "target remote:1234" -ex "set confirm off" -ex "add-symbol-file pc_setup $(SETUP_ADDR)" -ex "add-symbol-file pc_init $(INIT_ADDR)" -ex "add-symbol-file pc_system $(SYS_CODE_ADDR)"
-
+endif
 MACH_CC_FLAGS		= $($(MACH)_CC_FLAGS)
 MACH_AS_FLAGS		= $($(MACH)_AS_FLAGS)
 MACH_LD_FLAGS		= $($(MACH)_LD_FLAGS)
@@ -123,16 +125,16 @@ ARCH_CLOCK	= $(call GETTK,CLOCK,$(ARCH_TRAITS))
 
 # Tools and flags to compile system tools
 TCC		:= gcc -ansi -c -Werror
-TCCFLAGS	:= -m32 -Wall -O2 -I$(INCLUDE)
+TCCFLAGS	:= -Wall -O2 -I$(INCLUDE)
 
 TCXX		:= g++ -c -ansi -fno-exceptions
-TCXXFLAGS	:= -m32 -Wall -O2 -I$(INCLUDE)
+TCXXFLAGS	:= -Wall -O2 -I$(INCLUDE)
 
 TCPP		:= gcc -E 
 TCPPFLAGS	:= -I$(INCLUDE)
 
 TLD		:= gcc
-TLDFLAGS	:= -m32
+TLDFLAGS	:=
 
 # Tools and flags to compile applications
 ACC		= $(BIN)/eposcc $(MACH_CC_FLAGS) -c -ansi -O2
@@ -159,7 +161,7 @@ CXX		= $(COMP_PREFIX)g++ -c --no-exceptions --no-rtti --no-use-cxa-atexit
 CXXFLAGS	= $(MACH_CC_FLAGS) -O2 -nostdinc -Wall -Werror -fdata-sections -ffunction-sections -I$(INCLUDE)
 
 LD		= $(COMP_PREFIX)ld
-LDFLAGS		= $(MACH_LD_FLAGS) -L$(LIB) -Bstatic
+LDFLAGS		= $(MACH_LD_FLAGS) -nostdlib -L$(LIB) -Bstatic
 
 OBJCOPY		= $(COMP_PREFIX)objcopy
 OBJCOPYFLAGS	:=

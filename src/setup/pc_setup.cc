@@ -16,6 +16,10 @@ extern "C" {
 
     void _start() __attribute__ ((section (".init")));
 
+    void _panic() {
+        Machine::panic();
+    }
+
     void _exit(int s) {
         db<Setup>(ERR) << "_exit(" << s << ") called!" << endl;
         Machine::panic(); for(;;);
@@ -481,7 +485,7 @@ void PC_Setup::say_hi()
         panic();
     }
     if(!si->lm.has_sys)
-        db<Setup>(WRN) << "No SYSTEM in boot image, assuming EPOS is a library!" << endl;
+        db<Setup>(INF) << "No SYSTEM in boot image, assuming EPOS is a library!" << endl;
 
     kout << "Setting up this machine as follows: " << endl;
     kout << "  Processor:    IA32 at " << si->tm.cpu_clock / 1000000
@@ -546,7 +550,7 @@ void PC_Setup::enable_paging()
     aux |= CPU::CR0_SET;
     CPU::cr0(aux);
 
-    // The following relative jump is to break the IA32 pre-fetch queue
+    // The following relative jump is to break the IA32 prefetch queue
     // (in case cr0() was a macro and didn't do it when returning)
     // and also to start using logical addresses
     ASM("ljmp %0, %1 + 1f" : : "i"(CPU::SEL_FLT_CODE), "i"(PHY_MEM));

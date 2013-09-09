@@ -114,9 +114,8 @@ int Thread::join()
     if(_state != FINISHING) {
         _joining = running();
         _joining->suspend(true);
-    }
-
-    unlock();
+    } else
+        unlock();
 
     return *reinterpret_cast<int *>(&_stack[0]);
 }
@@ -343,7 +342,7 @@ int Thread::idle()
 // Id forwarder to the spin lock
 unsigned int This_Thread::id() 
 { 
-    return _not_booting ? reinterpret_cast<unsigned int>(Thread::self()) : Machine::cpu_id() + 1;
+    return _not_booting ? reinterpret_cast<volatile unsigned int>(Thread::self()) : Machine::cpu_id() + 1;
 }
 
 __END_SYS

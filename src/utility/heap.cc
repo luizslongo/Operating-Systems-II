@@ -1,7 +1,6 @@
 // EPOS Heap Utility Implementation
 
 #include <utility/heap.h>
-#include <machine.h>
 
 extern "C" { void _panic(); }
 
