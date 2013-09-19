@@ -24,7 +24,7 @@ int main()
 {
     cout << "PC_Timer test\n";
 
-    PC_Timer timer(1000, &handler, PC_Timer::SCHEDULER, false);
+    Timer timer(1000, &handler, PC_Timer::SCHEDULER, false);
     
     for(int i = 0; i < 10000; i++);
     cout << "count = " << timer.read() << "\n";

@@ -49,9 +49,9 @@ void task_c()
 
 int main()
 {
-    cout << "Periodic Thread Abstraction Test\n";
+    cout << "Periodic Thread Abstraction Test" << endl;
 
-    cout << "\nThis test consists in creating" << TASKS << "periodic threads as follows:\n";
+    cout << "\nThis test consists in creating" << TASKS << "periodic threads as follows:" << endl;
     for(int i = 0; i < TASKS; i++) {
         cout << "  - After " << set[i].a << " ms, thread " << char ('A' + i) << " begins to print \"" << char ('a' + i)
              << "\" periodically each " << set[i].p << " ms." << endl;
@@ -59,7 +59,7 @@ int main()
              << char ('a' + i) << "\"s as needed." << endl;
     }
 
-    cout << "Threads will now be created and I'll wait for them to finish...\n";
+    cout << "Threads will now be created and I'll wait for them to finish..." << endl;
 
     for(int i = 0; i < TASKS; i++)
         thread[i] = new RT_Thread(set[i].f, set[i].d * 1000, set[i].p * 1000, set[i].c * 1000, set[i].a * 1000, TIMES);

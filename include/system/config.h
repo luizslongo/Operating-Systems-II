@@ -34,6 +34,13 @@
 #define __APPLICATION_TRAITS_H  __HEADER_APPLICATION(APPLICATION)
 
 //============================================================================
+// ASSERT (for pre and post conditions)
+//============================================================================
+//extern void __assert_fail (const char * __assertion, const char * __file, unsigned int __line, const char * __function);
+//#define assert(expr)    ((expr) ? static_cast<void>(0) : __assert_fail (#expr, __FILE__, __LINE__, __PRETTY_FUNCTION__))
+#define assert(expr)    (static_cast<void>(0))
+
+//============================================================================
 // CONFIGURATION
 //============================================================================
 #include <system/types.h>

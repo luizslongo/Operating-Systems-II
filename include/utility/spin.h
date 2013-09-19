@@ -33,7 +33,7 @@ public:
         db<Spin>(TRC) << "Spin::acquire[SPIN=" << this
         	      << ",ID=" << me
         	      << "]() => {owner=" << _owner 
-        	      << ",level=" << _level << "}\n";
+        	      << ",level=" << _level << "}" << endl;
     }
 
     void release() {
@@ -42,7 +42,7 @@ public:
 
         db<Spin>(TRC) << "Spin::release[SPIN=" << this
         	      << "]() => {owner=" << _owner 
-        	      << ",level=" << _level << "}\n";
+        	      << ",level=" << _level << "}" << endl;
     }
 
 private:

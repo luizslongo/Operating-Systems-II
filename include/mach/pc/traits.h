@@ -13,7 +13,7 @@ template <> struct Traits<PC_Common>: public Traits<void>
 
 template <> struct Traits<PC>: public Traits<PC_Common>
 {
-    static const unsigned int MAX_CPUS = 8;
+    static const unsigned int MAX_CPUS = 1;
 
     // Boot Image
     static const unsigned int BOOT_LENGTH_MIN   = 128;
@@ -92,7 +92,7 @@ template <> struct Traits<PC_Display>: public Traits<PC_Common>
 
 template <> struct Traits<PC_Ethernet>: public Traits<PC_Common>
 {
-    static const bool enabled = false;
+    static const bool enabled = true;
     typedef LIST<PCNet32> NICS;
 };
 

@@ -50,14 +50,14 @@ inline void exec(char c, unsigned int time = 0) // in miliseconds
 
 int main()
 {
-    cout << "Periodic Thread Abstraction Test\n";
+    cout << "Periodic Thread Abstraction Test" << endl;
 
-    cout << "\nThis test consists in creating three periodic threads as follows:\n";
-    cout << "- Every " << period_a << "ms, thread A execs \"a\", waits for " << wcet_a << "ms and then execs another \"a\";\n";
-    cout << "- Every " << period_b << "ms, thread B execs \"b\", waits for " << wcet_b << "ms and then execs another \"b\";\n";
-    cout << "- Every " << period_c << "ms, thread C execs \"c\", waits for " << wcet_c << "ms and then execs another \"c\";\n";
+    cout << "\nThis test consists in creating three periodic threads as follows:" << endl;
+    cout << "- Every " << period_a << "ms, thread A execs \"a\", waits for " << wcet_a << "ms and then execs another \"a\";" << endl;
+    cout << "- Every " << period_b << "ms, thread B execs \"b\", waits for " << wcet_b << "ms and then execs another \"b\";" << endl;
+    cout << "- Every " << period_c << "ms, thread C execs \"c\", waits for " << wcet_c << "ms and then execs another \"c\";" << endl;
 
-    cout << "Threads will now be created and I'll wait for them to finish...\n";
+    cout << "Threads will now be created and I'll wait for them to finish..." << endl;
 
     thread_a = new Periodic_Thread(&func_a, period_a * 1000, iterations);
     thread_b = new Periodic_Thread(&func_b, period_b * 1000, iterations);

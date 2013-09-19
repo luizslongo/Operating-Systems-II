@@ -39,7 +39,7 @@ public:
 
 int main()
 {
-    cout << "Active Object Test\n";
+    cout << "Active Object Test" << endl;
 
     A * a = new A;
     B * b = new B;
@@ -47,7 +47,7 @@ int main()
     a->start();
     b->start();
 
-    cout << "Both threads are now done and have suspended themselves. I'll now wake them up so they can exit ...\n";
+    cout << "Both threads are now done and have suspended themselves. I'll now wake them up so they can exit ..." << endl;
 
     int status_a = a->join();
     int status_b = b->join();

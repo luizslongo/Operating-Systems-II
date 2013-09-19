@@ -1195,7 +1195,7 @@ public:
                        << ") => {p=" << (e ? e->prev() : (void *) -1)
                        << ",o=" << (e ? e->object() : (void *) -1)
                        << ",n=" << (e ? e->next() : (void *) -1)
-                       << "}\n";
+                       << "}" << endl;
 
         if(e != _chosen[R::current_head()]) {
             Base::insert(_chosen[R::current_head()]);

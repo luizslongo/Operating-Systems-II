@@ -127,8 +127,7 @@ public:
         Chunk() {}
 
         Chunk(unsigned int bytes, Flags flags)
-        : _from(0), _to(pages(bytes)), _pts(page_tables(_to - _from)),
-          _flags(IA32_Flags(flags)), _pt(calloc(_pts)) {
+        : _from(0), _to(pages(bytes)), _pts(page_tables(_to - _from)), _flags(IA32_Flags(flags)), _pt(calloc(_pts)) {
             if(flags & IA32_Flags::CT)
         	_pt->map_contiguous(_from, _to, _flags);
             else 
@@ -136,8 +135,7 @@ public:
         }
 
         Chunk(Phy_Addr phy_addr, unsigned int bytes, Flags flags)
-        : _from(0), _to(pages(bytes)), _pts(page_tables(_to - _from)),
-          _flags(IA32_Flags(flags)), _pt(calloc(_pts)) {
+        : _from(0), _to(pages(bytes)), _pts(page_tables(_to - _from)), _flags(IA32_Flags(flags)), _pt(calloc(_pts)) {
             _pt->remap(phy_addr, _from, _to, flags);
         }
 
@@ -294,7 +292,7 @@ public:
         
         Log_Addr log_address() const { return _log_addr; }
 
-        friend OStream & operator << (OStream & db, const DMA_Buffer & b) {
+        friend Debug & operator << (Debug & db, const DMA_Buffer & b) {
             db << "{phy=" << b.phy_address()
                << ",log=" << b.log_address()
                << ",size=" << b.size() 
@@ -324,7 +322,7 @@ public:
 
     static Phy_Addr calloc(unsigned int frames = 1) {
         Phy_Addr phy = alloc(frames);
-        memset(phy2log(phy), sizeof(Frame) * frames, 0);
+        memset(phy2log(phy), 0, sizeof(Frame) * frames);
         return phy;	
     }
 

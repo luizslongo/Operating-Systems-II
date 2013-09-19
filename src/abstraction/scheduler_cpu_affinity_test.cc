@@ -59,7 +59,7 @@ int main()
 {
     sem_display.p();
     Display::clear();
-    cout << "The Philosopher's Dinner:\n";
+    cout << "The Philosopher's Dinner:" << endl;
 
     for(int i = 0; i < 5; i++)
         chopstick[i] = new Semaphore;
@@ -72,7 +72,7 @@ int main()
 
     cout << "Philosophers are alife and hungry!" << endl;
         
-    cout << "The dinner is served ...\n";
+    cout << "The dinner is served ..." << endl;
     Display::position(7, 44);
     cout << '/';
     Display::position(13, 44);
@@ -90,7 +90,7 @@ int main()
         int ret = phil[i]->join();
         sem_display.p();
         Display::position(20 + i, 0);
-        cout << "Philosopher " << i << " ate " << ret << " times \n";
+        cout << "Philosopher " << i << " ate " << ret << " times " << endl;
         sem_display.v();
     }
 

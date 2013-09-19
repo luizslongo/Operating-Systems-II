@@ -1,5 +1,7 @@
 // EPOS Address_Space Abstraction Implementation
 
+#include <thread.h>
+#include <task.h>
 #include <address_space.h>
 
 __BEGIN_SYS
@@ -50,5 +52,13 @@ Address_Space::Phy_Addr Address_Space::physical(Address_Space::Log_Addr address)
 {
     return Directory::physical(address);
 }
+
+Address_Space * Address_Space::self()
+{
+    db <Address_Space> (TRC) << "Address_Space::self() => {Directory::pd=" << Thread::self()->task()->address_space()->pd() << "}" << endl;
+
+    return Thread::self()->task()->address_space();
+}
+
 
 __END_SYS

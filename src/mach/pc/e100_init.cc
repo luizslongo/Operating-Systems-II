@@ -1,5 +1,6 @@
 // EPOS PC Intel PRO/100 (i82559) Ethernet NIC Mediator Initialization
 
+#include <system.h>
 #include <mach/pc/machine.h>
 #include <mach/pc/e100.h>
 
@@ -26,7 +27,7 @@ void E100::init(unsigned int unit)
         db<Init, E100>(WRN) << "E100::init: PCI header failed!" << endl;
         return;
     }
-    db<Init, E100>(INF) << "E100::init: PCI header=" << hdr << "}\n";
+    db<Init, E100>(INF) << "E100::init: PCI header=" << hdr << endl;
     if(!(hdr.command & PC_PCI::COMMAND_MEMORY))
         db<Init, E100>(WRN) << "E100::init: I/O memory unaccessible!" << endl;
     if(!(hdr.command & PC_PCI::COMMAND_MASTER))

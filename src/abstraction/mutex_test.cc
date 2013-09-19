@@ -57,7 +57,7 @@ int main()
 {
     mutex_display.lock();
     Display::clear();
-    cout << "The Philosopher's Dinner:\n";
+    cout << "The Philosopher's Dinner:" << endl;
 
     phil[0] = new Thread(&philosopher, 0,  5, 32);
     phil[1] = new Thread(&philosopher, 1, 10, 44);
@@ -79,14 +79,14 @@ int main()
     cout << '\\';
     Display::position(18, 0);
 
-    cout << "The dinner is served ...\n";
+    cout << "The dinner is served ..." << endl;
     mutex_display.unlock();
 
     for(int i = 0; i < 5; i++) {
         int ret = phil[i]->join();
         mutex_display.lock();
         Display::position(20 + i, 0);
-        cout << "Philosopher " << i << " ate " << ret << " times \n";
+        cout << "Philosopher " << i << " ate " << ret << " times " << endl;
         mutex_display.unlock();
     }
 

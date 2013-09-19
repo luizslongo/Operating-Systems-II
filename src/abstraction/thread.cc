@@ -111,6 +111,12 @@ int Thread::join()
 
     db<Thread>(TRC) << "Thread::join(this=" << this << ",state=" << _state << ")" << endl;
 
+    // Precondition: no Thread::self()->join()
+    assert(running() != this);
+
+    // Precondition: a single joiner
+    assert(!_joining);
+
     if(_state != FINISHING) {
         _joining = running();
         _joining->suspend(true);

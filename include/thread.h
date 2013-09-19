@@ -95,6 +95,8 @@ public:
     const volatile Priority & priority() const { return _link.rank(); }
     void priority(const Criterion & p);
 
+    Task * task() const { return const_cast<Task *>(_task); }
+
     int join();
     void pass();
     void suspend() { suspend(false); }
