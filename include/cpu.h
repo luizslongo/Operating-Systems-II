@@ -22,7 +22,8 @@ public:
     typedef unsigned long long Reg64;
     typedef unsigned long Reg;
 
-    class Log_Addr {
+    class Log_Addr
+    {
     public:
         Log_Addr() {}
         Log_Addr(const Log_Addr & a) : _addr(a._addr) {}

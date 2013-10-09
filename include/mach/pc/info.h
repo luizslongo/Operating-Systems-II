@@ -33,7 +33,7 @@ public:
         int system_offset;
         int application_offset;
         int extras_offset;
-        volatile int cpu_status[Traits<PC>::MAX_CPUS]; // CPUs initialization status
+        volatile int cpu_status[Traits<PC>::CPUS]; // CPUs initialization status
     };
 
     // Physical Memory Map (built by SETUP)

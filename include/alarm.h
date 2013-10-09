@@ -93,7 +93,7 @@ namespace Scheduling_Criteria {
     : RT_Common(Alarm::ticks(d), Alarm::ticks(d), p, c) {}
 
     inline void EDF::update() {
-        if(_priority < APERIODIC)
+        if((_priority > PERIODIC) && (_priority < APERIODIC))
             _priority = Alarm::_elapsed + _deadline;
     }
 };

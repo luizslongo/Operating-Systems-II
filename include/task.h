@@ -38,7 +38,7 @@ public:
     Log_Addr code() const { return _code; }
     Log_Addr data() const { return _data; }
 
-    static const Task * self();
+    static const Task * self() { return Thread::self()->task(); }
 
 private:
     void activate() const { _as->activate(); }

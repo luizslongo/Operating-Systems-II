@@ -417,7 +417,7 @@ public:
 
     using Base::INT_TIMER;
     using Base::ipi_send;
-        static const unsigned int INT_RESCHEDULER = Base::INT_RESCHEDULER;
+    static const unsigned int INT_RESCHEDULER = Base::INT_RESCHEDULER;
 
 public:
     PC_IC() {}
@@ -462,14 +462,10 @@ private:
     static void int_dispatch();
 
     static void int_not(Interrupt_Id i);
-    static void exc_not(Interrupt_Id i,
-        		Reg32 error, Reg32 eip, Reg32 cs, Reg32 eflags);
-    static void exc_pf (Interrupt_Id i,
-        		Reg32 error, Reg32 eip, Reg32 cs, Reg32 eflags);
-    static void exc_gpf(Interrupt_Id i,
-        		Reg32 error, Reg32 eip, Reg32 cs, Reg32 eflags);
-    static void exc_fpu(Interrupt_Id i,
-        		Reg32 error, Reg32 eip, Reg32 cs, Reg32 eflags);
+    static void exc_not(Interrupt_Id i, Reg32 error, Reg32 eip, Reg32 cs, Reg32 eflags);
+    static void exc_pf (Interrupt_Id i, Reg32 error, Reg32 eip, Reg32 cs, Reg32 eflags);
+    static void exc_gpf(Interrupt_Id i, Reg32 error, Reg32 eip, Reg32 cs, Reg32 eflags);
+    static void exc_fpu(Interrupt_Id i, Reg32 error, Reg32 eip, Reg32 cs, Reg32 eflags);
 
 private:
     static Interrupt_Handler _int_vector[INTS];

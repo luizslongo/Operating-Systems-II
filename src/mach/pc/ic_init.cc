@@ -14,24 +14,20 @@ void PC_IC::init()
     // Set all IDT entries to proper int_dispatch() offsets
     CPU::IDT_Entry * idt = reinterpret_cast<CPU::IDT_Entry *>(Memory_Map<PC>::IDT);
     for(unsigned int i = 0; i < CPU::IDT_ENTRIES; i++)
-        if(i < IC::INTS)
+        if(i < INTS)
             idt[i] = CPU::IDT_Entry(CPU::GDT_SYS_CODE, Log_Addr(int_dispatch) + i * 16, CPU::SEG_IDT_ENTRY);
         else
-            idt[i] = CPU::IDT_Entry(CPU::GDT_SYS_CODE, Log_Addr(int_dispatch) + INTS, CPU::SEG_IDT_ENTRY);
+            idt[i] = CPU::IDT_Entry(CPU::GDT_SYS_CODE, Log_Addr(int_dispatch) + CPU::EXC_LAST * 16, CPU::SEG_IDT_ENTRY);
     
     // Set all interrupt handlers to int_not()
     for(unsigned int i = 0; i < INTS; i++)
  	_int_vector[i] = int_not;
 
     // Reset some important exception handlers
-    _int_vector[CPU::EXC_PF]
-        = reinterpret_cast<Interrupt_Handler>(exc_pf);
-    _int_vector[CPU::EXC_DOUBLE]
-        = reinterpret_cast<Interrupt_Handler>(exc_pf);
-    _int_vector[CPU::EXC_GPF]
-        = reinterpret_cast<Interrupt_Handler>(exc_gpf);
-    _int_vector[CPU::EXC_NODEV]
-        = reinterpret_cast<Interrupt_Handler>(exc_fpu);
+    _int_vector[CPU::EXC_PF] = reinterpret_cast<Interrupt_Handler>(exc_pf);
+    _int_vector[CPU::EXC_DOUBLE] = reinterpret_cast<Interrupt_Handler>(exc_pf);
+    _int_vector[CPU::EXC_GPF] = reinterpret_cast<Interrupt_Handler>(exc_gpf);
+    _int_vector[CPU::EXC_NODEV] = reinterpret_cast<Interrupt_Handler>(exc_fpu);
 
     remap();
     disable();

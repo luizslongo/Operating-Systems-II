@@ -37,9 +37,7 @@ PCNet32::PCNet32(unsigned int unit)
 
 PCNet32::PCNet32(unsigned int unit, IO_Port io_port, IO_Irq irq, DMA_Buffer * dma_buf)
 {
-CPU::int_disable();
-
-    db<PCNet32>(TRC) << "PCNet32(unit=" << unit << ",io=" << reinterpret_cast<void *>(io_port) << ",irq=" << irq << ",dma=" << dma_buf << ")" << endl;
+    db<PCNet32>(TRC) << "PCNet32(unit=" << unit << ",io=" << io_port << ",irq=" << irq << ",dma=" << dma_buf << ")" << endl;
 
     _unit = unit;
     _io_port = io_port;

@@ -5,21 +5,21 @@ include	../makedefs
 IMAGE := $(addsuffix .img,$(APPLICATION))
 OUTPUT := $(addsuffix .out,$(APPLICATION))
 
-TESTS := $(shell find *_test 2> /dev/null)
-TEST_IMAGES := $(addsuffix .img,$(TESTS))
-TEST_OUTPUTS := $(addsuffix .out,$(TESTS))
-
 all:		$(IMAGE)
 
-test:		$(TEST_IMAGES)
-
-run:		$(OUTPUT)
+ifeq ($(NODES),1)
+run:		$(IMAGE)
+		$(EMULATOR) $(IMAGE) | $(TEE) $(OUTPUT)
+else
+run:		$(IMAGE)
+		$(TERM) "$(EMULATOR) $(IMAGE) -net nic,model=pcnet,macaddr=56:34:12:0:54:52 -net socket,listen=:1234 | $(TEE) r-$(OUTPUT) && read -p 'Press [Enter] key to close ...'" &
+		sleep 2
+		$(TERM) "$(EMULATOR) $(IMAGE) -net nic,model=pcnet,macaddr=56:34:12:0:54:53 -net socket,connect=:1234 | $(TEE) s-$(OUTPUT) && read -p 'Press [Enter] key to close ...'" &
+endif
 
 debug:		$(IMAGE)
 		$(EMULATOR) $(IMAGE) | $(TEE) $(OUTPUT) &
 		$(DEBUGGER) $(APP)/$(APPLICATION)
 
-runtest:	$(TEST_OUTPUTS)
-
 clean:
-		$(CLEAN) *_boot *_setup *_init *_system $(APPLICATION) $(TESTS)
+		$(CLEAN) *_boot *_setup *_init *_system $(APPLICATION)

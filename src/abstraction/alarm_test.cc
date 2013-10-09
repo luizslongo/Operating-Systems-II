@@ -14,7 +14,7 @@ OStream cout;
 
 int main()
 {
-    cout << "Alarm test" < endl;
+    cout << "Alarm test" << endl;
 
     cout << "I'm the first thread of the first task created in the system." << endl;
     cout << "I'll now create two alarms and put myself in a delay ..." << endl;

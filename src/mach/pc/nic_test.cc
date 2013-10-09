@@ -1,6 +1,7 @@
 // EPOS PC_NIC Test Programs
 
 #include <utility/ostream.h>
+#include <alarm.h>
 #include <nic.h>
 
 using namespace EPOS;
@@ -14,12 +15,20 @@ int main()
     NIC::Protocol prot;
     char data[nic.mtu()];
 
-    for(int i = 0; i < 10; i++)
-//while(1)
-        nic.send(NIC::BROADCAST, 0x8888, "alguem ai?\n", 12);
-    return 0;
-    for(int i = 0; i < 10; i++) 
-	nic.receive(&src, &prot, data, nic.mtu());
+    NIC::Address self = nic.address();
+    cout << "  MAC: " << self << endl;
+
+    if(self[5] % 2) { // sender
+        for(int i = 0; i < 10; i++) {
+            nic.send(NIC::BROADCAST, 0x8888, "alguem ai?\n", 12);
+            Delay delay(1000000);
+        }
+    } else {
+        for(int i = 0; i < 10; i++) {
+           nic.receive(&src, &prot, data, nic.mtu());
+           cout << "  Data: " << data;
+        }
+    }
 
     NIC::Statistics stat = nic.statistics();
     cout << "Statistics\n"

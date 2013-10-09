@@ -74,6 +74,9 @@ Thread::~Thread()
 
     _scheduler.remove(this);
 
+    if(_joining)
+        _joining->resume();
+
     unlock();
 
     delete _stack;
@@ -123,7 +126,7 @@ int Thread::join()
     } else
         unlock();
 
-    return *reinterpret_cast<int *>(&_stack[0]);
+    return *reinterpret_cast<int *>(_stack);
 }
 
 
@@ -205,7 +208,7 @@ void Thread::exit(int status)
 
     Thread * prev = running();
     _scheduler.remove(prev);
-    *reinterpret_cast<int *>(&prev->_stack[0]) = status;
+    *reinterpret_cast<int *>(prev->_stack) = status;
     prev->_state = FINISHING;
 
     _thread_count--;

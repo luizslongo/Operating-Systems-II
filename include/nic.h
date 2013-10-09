@@ -38,32 +38,34 @@ public:
         }
 
         operator bool() { 
-        	unsigned int i;
-        	for (i=0;i<LENGTH;++i) {
-        		if (_address[i] != 0)
-        			return true;
-        	}
-        	return false;
+            unsigned int i;
+            for (i=0;i<LENGTH;++i) {
+                if (_address[i] != 0)
+                    return true;
+            }
+            return false;
         }
 
-        bool operator ==(const Address & a) const { 
-        	unsigned int i;
-        	for (i=0;i<LENGTH;++i) {
-        		if (_address[i] != a._address[i])
-        			return false;
-        	}
-        	return true;
+        bool operator==(const Address & a) const {
+            unsigned int i;
+            for (i=0;i<LENGTH;++i) {
+                if (_address[i] != a._address[i])
+                    return false;
+            }
+            return true;
         }
 
-    friend OStream & operator << (OStream & db, const Address & a) {
-        db << hex;
-        for(int i = LENGTH - 1; i >= 0; i--) {
-            db << (unsigned int)(a._address[i]);
-            if(i > 0)
-                db << ":";
-        }
-        db << dec;
-        return db;
+        unsigned char & operator[](int i) { return _address[i]; }
+
+        friend OStream & operator<<(OStream & db, const Address & a) {
+            db << hex;
+            for(int i = LENGTH - 1; i >= 0; i--) {
+                db << (unsigned int)(a._address[i]);
+                if(i > 0)
+                    db << ":";
+            }
+            db << dec;
+            return db;
         }
 
     protected:

@@ -1019,8 +1019,8 @@ void _start()
         // further down in this code
  	APIC::ipi_start(0x3000, si->bm.cpu_status);
 
- 	if(si->bm.n_cpus > Traits<PC>::MAX_CPUS)
- 	    si->bm.n_cpus = Traits<PC>::MAX_CPUS;
+ 	if(si->bm.n_cpus > Traits<PC>::CPUS)
+ 	    si->bm.n_cpus = Traits<PC>::CPUS;
 
         // Check SETUP integrity and get information about its ELF structure
         ELF * elf = reinterpret_cast<ELF *>(&bi[si->bm.setup_offset]);
@@ -1049,7 +1049,7 @@ void _start()
         // Move the boot image to after SETUP, so there will be nothing else
         // below SETUP to be preserved
         // SETUP code + data + 1 stack per CPU)
-        register char * dst = MMU::align_page(entry + size + Traits<PC>::MAX_CPUS * sizeof(MMU::Page));
+        register char * dst = MMU::align_page(entry + size + Traits<PC>::CPUS * sizeof(MMU::Page));
         memcpy(dst, bi, si->bm.img_size);
 
         // Passes a pointer to the just allocated stack pool to other CPUs
@@ -1067,9 +1067,9 @@ void _start()
         // Wait for BSP's ACK
         while(si->bm.cpu_status[APIC::id()] != 2);
 
-        if(APIC::id() >= int(Traits<PC>::MAX_CPUS)) {
+        if(APIC::id() >= int(Traits<PC>::CPUS)) {
             db<Setup>(WRN) << "More CPUs were detected than the current "
-                           << "configuration supports (" << Traits<PC>::MAX_CPUS
+                           << "configuration supports (" << Traits<PC>::CPUS
                            << ")." << endl;
             db<Setup>(WRN) << "Disabling CPU " << APIC::id() << "!" << endl;
 

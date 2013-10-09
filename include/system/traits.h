@@ -15,7 +15,7 @@ struct Traits
 
 template <> struct Traits<Build>
 {
-    enum {LIBRARY, BUILTIN};
+    enum {LIBRARY, BUILTIN, KERNEL};
     static const unsigned int MODE = LIBRARY;
 
     enum {IA32};
@@ -23,6 +23,8 @@ template <> struct Traits<Build>
 
     enum {PC};
     static const unsigned int MACH = PC;
+
+    static const unsigned int CPUS = 1;
 };
 
 
@@ -121,11 +123,6 @@ template <> struct Traits<Thread>: public Traits<void>
     static const unsigned int QUANTUM = 10000; // us
 
     static const bool trace_idle = false;
-};
-
-template <> struct Traits<Periodic_Thread>: public Traits<void>
-{
-    static const bool simulate_capacity = false;
 };
 
 template <> struct Traits<Address_Space>: public Traits<void>

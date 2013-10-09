@@ -92,8 +92,7 @@ void Alarm::handler()
 
             if(alarm) {
             	db<Alarm>(TRC) << "Alarm::handler(this=" << alarm << ",e=" << _elapsed << ",h="
-                               << reinterpret_cast<void*>(alarm->handler)
-                               << ")" << endl;
+                               << reinterpret_cast<void*>(alarm->handler) << ")" << endl;
             	(*alarm->_handler)();
             }
 

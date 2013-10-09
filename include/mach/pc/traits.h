@@ -13,7 +13,7 @@ template <> struct Traits<PC_Common>: public Traits<void>
 
 template <> struct Traits<PC>: public Traits<PC_Common>
 {
-    static const unsigned int MAX_CPUS = 1;
+    static const unsigned int CPUS = Traits<Build>::CPUS;
 
     // Boot Image
     static const unsigned int BOOT_LENGTH_MIN   = 128;
@@ -98,9 +98,11 @@ template <> struct Traits<PC_Ethernet>: public Traits<PC_Common>
 
 template <> struct Traits<PCNet32>: public Traits<PC_Ethernet>
 {
+    static const bool debugged = true;
+
     static const unsigned int UNITS = NICS::Count<PCNet32>::Result;
-    static const unsigned int SEND_BUFFERS = 8; // per unit
-    static const unsigned int RECEIVE_BUFFERS = 8; // per unit
+    static const unsigned int SEND_BUFFERS = 2; // per unit
+    static const unsigned int RECEIVE_BUFFERS = 14; // per unit
 };
 
 template <> struct Traits<E100>: public Traits<PC_Ethernet>

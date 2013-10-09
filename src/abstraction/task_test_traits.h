@@ -23,6 +23,8 @@ template <> struct Traits<Build>
 
     enum {PC};
     static const unsigned int MACH = PC;
+
+    static const unsigned int CPUS = 1;
 };
 
 

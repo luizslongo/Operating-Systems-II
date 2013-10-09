@@ -41,7 +41,7 @@ TEST_SORUCES := $(shell find $(SRC) -name \*_test.cc -printf "%p\n")
 test: $(subst .cc,_traits.h,$(TEST_SORUCES))
 		$(INSTALL) $(TEST_SORUCES) $(APP)
 		$(INSTALL) $(subst .cc,_traits.h,$(TEST_SORUCES)) $(APP)
-		$(foreach tst,$(TESTS),$(MAKE) APPLICATION=$(tst) clean1 run1;)
+		$(foreach tst,$(TESTS),$(MAKETEST) APPLICATION=$(tst) clean1 run1;)
 		$(foreach tst,$(TESTS),$(CLEAN) $(APP)/$(tst)*;)
 
 clean: FORCE

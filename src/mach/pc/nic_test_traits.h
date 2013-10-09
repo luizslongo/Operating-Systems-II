@@ -10,7 +10,7 @@ template <typename T>
 struct Traits
 {
     static const bool enabled = true;
-    static const bool debugged = true;
+    static const bool debugged = false;
 };
 
 template <> struct Traits<Build>
@@ -23,6 +23,9 @@ template <> struct Traits<Build>
 
     enum {PC};
     static const unsigned int MACH = PC;
+
+    static const unsigned int CPUS = 1;
+    static const unsigned int NODES = 2;
 };
 
 
