@@ -101,8 +101,8 @@ template <> struct Traits<PCNet32>: public Traits<PC_Ethernet>
     static const bool debugged = true;
 
     static const unsigned int UNITS = NICS::Count<PCNet32>::Result;
-    static const unsigned int SEND_BUFFERS = 2; // per unit
-    static const unsigned int RECEIVE_BUFFERS = 14; // per unit
+    static const unsigned int SEND_BUFFERS = 4; // per unit
+    static const unsigned int RECEIVE_BUFFERS = 16; // per unit
 };
 
 template <> struct Traits<E100>: public Traits<PC_Ethernet>

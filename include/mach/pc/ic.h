@@ -100,17 +100,17 @@ public:
     }
 
     static void imr(Reg16 mask) {
-        CPU::out8(MASTER_IMR, mask);
+        CPU::out8(MASTER_IMR, mask & 0xff);
         CPU::out8(SLAVE_IMR, mask >> 8);
     }
 
     static void eoi() { // End of interrupt
+        CPU::out8(MASTER_CMD, EOI); // always send EOI to master and send it first!
     	if(isr() & (1 << IRQ_CASCADE)) // was it an slave PIC interrupt?
             CPU::out8(SLAVE_CMD, EOI);
-    	CPU::out8(MASTER_CMD, EOI); // always send EOI to master
     }
 
-        static void ipi_send(int dest, int interrupt) { }
+    static void ipi_send(int dest, int interrupt) {}
 };
 
 // Intel IA-32 APIC (internal, not tested with 82489DX)
@@ -417,7 +417,7 @@ public:
 
     using Base::INT_TIMER;
     using Base::ipi_send;
-    static const unsigned int INT_RESCHEDULER = Base::INT_RESCHEDULER;
+    using Base::INT_RESCHEDULER;
 
 public:
     PC_IC() {}

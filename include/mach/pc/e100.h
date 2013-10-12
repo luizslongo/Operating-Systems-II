@@ -305,6 +305,8 @@ public:
 
 class E100: public Ethernet, private i82559
 {
+    template <int unit> friend void call_init();
+
 private:
     // PCI ID
     static const unsigned int PCI_VENDOR_ID = 0x8086;
@@ -348,9 +350,8 @@ public:
 
     unsigned int mtu() { return MTU; }
     const Address & address() { return _address; }
+    void address(const Address & address) { _address = address; }
     const Statistics & statistics() { return _statistics; }
-
-    static void init(unsigned int unit);
 
 private:
     E100(unsigned int unit, Log_Addr io_mem, IO_Irq irq, DMA_Buffer * dma);
@@ -406,6 +407,8 @@ private:
     };
 
     void i82559_configure(void);
+
+    static void init(unsigned int unit);
 
     static E100 * get(unsigned int interrupt) {
         for(unsigned int i = 0; i < UNITS; i++)

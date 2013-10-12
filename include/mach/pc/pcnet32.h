@@ -379,7 +379,7 @@ protected:
 
 class PCNet32: public Ethernet, private Am79C970A
 {
-    friend class PC_Ethernet;
+    template <int unit> friend void call_init();
 
 private:
     // PCI ID
@@ -420,12 +420,12 @@ public:
     void address(const Address & address) { _address = address; }
     const Statistics & statistics() { return _statistics; }
 
-    static void init(unsigned int unit);
-
 private:
     PCNet32(unsigned int unit, IO_Port io_port, IO_Irq irq, DMA_Buffer * dma);
 
     void handle_int();
+
+    static void init(unsigned int unit);
 
     static void int_handler(unsigned int interrupt);
 

@@ -20,10 +20,11 @@ int main()
 
     if(self[5] % 2) { // sender
         for(int i = 0; i < 10; i++) {
-            nic.send(NIC::BROADCAST, 0x8888, "alguem ai?\n", 12);
-            Delay delay(1000000);
+            memset(data, '0' + i, nic.mtu());
+            data[nic.mtu() - 1] = '\n';
+            nic.send(NIC::BROADCAST, 0x8888, data, nic.mtu());
         }
-    } else {
+    } else { // receiver
         for(int i = 0; i < 10; i++) {
            nic.receive(&src, &prot, data, nic.mtu());
            cout << "  Data: " << data;

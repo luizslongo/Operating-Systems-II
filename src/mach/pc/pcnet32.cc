@@ -17,8 +17,7 @@ PCNet32::PCNet32(unsigned int unit)
 
     // Share control
     if(unit >= UNITS) {
-        db<PCNet32>(WRN) << "PCNet32: requested unit (" << unit 
-        		 << ") does not exist!" << endl;
+        db<PCNet32>(WRN) << "PCNet32: requested unit (" << unit << ") does not exist!" << endl;
         return;
     }
 
@@ -109,7 +108,7 @@ void PCNet32::reset()
     s_reset();
 
     // Software style => PCI, 32 bits, burst mode (pg 147)
-    bcr(20, BCR20_SWSTYLE2);
+    bcr(20, BCR20_SSIZE32 | BCR20_SWSTYLE2);
 
     // Get MAC address from PROM
     _address = Address(prom(0), prom(1), prom(2), prom(3), prom(4), prom(5));
@@ -121,21 +120,20 @@ void PCNet32::reset()
     // Enable full-duplex
     bcr(9, BCR9_FDEN);
 
-    // Disable INIT interrupt and transmit stop on underflow
-    csr(3, CSR3_TINTM | CSR3_IDONM | CSR3_DXSUFLO);
+    // Disable INIT interrupt and transmit stop on underflow and two part deferral
+    csr(3, CSR3_TINTM | CSR3_IDONM | CSR3_DXMT2PD | CSR3_LAPPEN | CSR3_DXSUFLO);
 
-    // Enable auto padding of frames
-    csr(4, CSR4_DMAPLUS | CSR4_APAD_XMT);
+    // Enable frame auto padding/stripping
+    csr(4, CSR4_DMAPLUS | CSR4_DPOLL | CSR4_APAD_XMT | CSR4_ASTRP_RCV | CSR4_TXSTRTM);
 
     // Adjust interrupts
-    csr(5, CSR5_TOKINTD | /* CSR5_LTINTEN | */ CSR5_SINTE 
- 	| CSR5_SLPINTE | CSR5_EXDINTE | CSR5_MPINTE);
+    csr(5, CSR5_TOKINTD | CSR5_SINTE | CSR5_EXDINTE);
 
     // Enable burst read and write
     bcr(18, bcr(18) | BCR18_BREADE | BCR18_BWRITE);
 
     // Promiscuous mode
-//     csr(15, csr(15) | CSR15_PROM);
+    csr(15, csr(15) | CSR15_PROM);
         
     // Set transmit start point to full frame	
     csr(80, csr(80) | 0x0c00); // XMTSP = 11
@@ -151,7 +149,7 @@ void PCNet32::reset()
     _iblock->tx_ring = _tx_ring_phy;
     csr(1, _iblock_phy & 0xffff); 
     csr(2, _iblock_phy >> 16); 
- 
+
     // Initialize the device
     csr(0, CSR0_IENA | CSR0_INIT);
     for(int i = 0; (i < 100) && !(csr(0) & CSR0_IDON); i++);
@@ -186,8 +184,7 @@ int PCNet32::send(const Address & dst, const Protocol & prot, const void * data,
     while(_tx_ring[_tx_cur].status & Rx_Desc::OWN);
 
     // Assemble the Ethernet frame
-    new (_tx_buffer[_tx_cur])
-        Frame(_address, dst, CPU::htons(prot), data, size);
+    new (_tx_buffer[_tx_cur]) Frame(_address, dst, CPU::htons(prot), data, size);
 
     _tx_ring[_tx_cur].size = -(size + HEADER_SIZE); // 2's comp.
 
@@ -210,12 +207,15 @@ int PCNet32::receive(Address * src, Protocol * prot, void * data, unsigned int s
 {
     // Wait for a frame in the ring buffer
     while(_rx_ring[_rx_cur].status & Rx_Desc::OWN);
+    // Most device drivers out there assume packets can arrive out of order, but without
+    // any pipelining, the following seems overkill
+    // for(; _rx_ring[_rx_cur].status & Rx_Desc::OWN; ++_rx_cur %= RX_BUFS);
 
     // Disassemble the Ethernet frame
     Frame * frame = _rx_buffer[_rx_cur];
     *src = frame->_src;
     *prot = CPU::ntohs(frame->_prot);
-    unsigned int s = (_rx_ring[_rx_cur].misc & 0x00000fff) - HEADER_SIZE;
+    unsigned int s = (_rx_ring[_rx_cur].misc & 0x00000fff) - HEADER_SIZE - 4; // CRC
 
     // Copy data
     memcpy(data, frame->_data, (s > size) ? size : s);
@@ -262,15 +262,14 @@ void PCNet32::handle_int()
             reset();
         }
 
-        // Transmition?
+        // Transmit?
         if(csr0 & CSR0_TINT) {
-            db<PCNet32>(INF) << "PCNet32::handle_int: transmition" << endl;
+            db<PCNet32>(INF) << "PCNet32::handle_int: transmit" << endl;
         }
 
  	// Receive?
  	if(csr0 & CSR0_RINT) {
  	    db<PCNet32>(INF) << "PCNet32::handle_int: receive" << endl;
- 	    notify(CPU::ntohs(_rx_buffer[_rx_cur]->_prot));
  	}
 
         // Error?
@@ -355,8 +354,8 @@ void PCNet32::int_handler(unsigned int interrupt)
 {
     PCNet32 * dev = get(interrupt);
 
-    db<PCNet32>(TRC) << "PCNet32::int_handler(int=" << interrupt
-                     << ",dev=" << dev << ")" << endl;
+    db<PCNet32>(TRC) << "PCNet32::int_handler(int=" << interrupt << ",dev=" << dev << ")" << endl;
+
     if(!dev)
         db<PCNet32>(WRN) << "PCNet32::int_handler: handler not found!" << endl;
     else

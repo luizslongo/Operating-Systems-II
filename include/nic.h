@@ -59,9 +59,9 @@ public:
 
         friend OStream & operator<<(OStream & db, const Address & a) {
             db << hex;
-            for(int i = LENGTH - 1; i >= 0; i--) {
-                db << (unsigned int)(a._address[i]);
-                if(i > 0)
+            for(unsigned int i = 0; i < LENGTH; i++) {
+                db << static_cast<unsigned int>(a._address[i]);
+                if(i < LENGTH - 1)
                     db << ":";
             }
             db << dec;
