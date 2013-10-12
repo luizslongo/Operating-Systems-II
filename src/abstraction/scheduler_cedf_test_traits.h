@@ -25,6 +25,7 @@ template <> struct Traits<Build>
     static const unsigned int MACH = PC;
 
     static const unsigned int CPUS = 8;
+    static const unsigned int NODES = 1;
 };
 
 

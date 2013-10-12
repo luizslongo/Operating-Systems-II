@@ -25,6 +25,7 @@ template <> struct Traits<Build>
     static const unsigned int MACH = PC;
 
     static const unsigned int CPUS = 1;
+    static const unsigned int NODES = 1;
 };
 
 
@@ -49,6 +50,7 @@ template <> struct Traits<Spin>: public Traits<void>
 
 template <> struct Traits<Heap>: public Traits<void>
 {
+    static const bool debugged = false;
 };
 
 

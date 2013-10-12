@@ -170,15 +170,15 @@ private:
 
         // Periodic execution loop
         do {
-            Alarm::Tick tick;
-            if(Traits<Periodic_Thread>::simulate_capacity && t->criterion()._capacity)
-                tick = Alarm::_elapsed + Alarm::ticks(t->criterion()._capacity);
+//            Alarm::Tick tick;
+//            if(Traits<Periodic_Thread>::simulate_capacity && t->criterion()._capacity)
+//                tick = Alarm::_elapsed + Alarm::ticks(t->criterion()._capacity);
 
             // Release job
             function();
 
-            if(Traits<Periodic_Thread>::simulate_capacity && t->criterion()._capacity)
-                while(Alarm::_elapsed < tick);
+//            if(Traits<Periodic_Thread>::simulate_capacity && t->criterion()._capacity)
+//                while(Alarm::_elapsed < tick);
         } while (wait_next());
 
         return 0;
