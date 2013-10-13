@@ -18,7 +18,8 @@ protected:
 public:
     // NIC physical address (e.g. MAC)
     template<unsigned int LENGTH>
-    class Address {
+    class Address
+    {
     public:
         Address() {}
 
@@ -79,7 +80,8 @@ public:
     typedef CPU::Reg32 CRC32;
 
     // NIC statistics
-    struct Statistics {
+    struct Statistics
+    {
         Statistics(): rx_packets(0), tx_packets(0), rx_bytes(0), tx_bytes(0) {}
 
         unsigned int rx_packets;
@@ -88,13 +90,10 @@ public:
         unsigned int tx_bytes;
     };
 
-    // Observer
-    typedef Conditional_Observer Observer;
-    typedef Conditionally_Observed Observed;
-
     // Polymorphic (or not) NIC wrapper
     template<typename T>
-    class NIC_Base {
+    class NIC_Base
+    {
     private:
         typedef typename T::Address Address;
         typedef typename T::Protocol Protocol;
@@ -119,7 +118,8 @@ public:
     };
 
     template<typename NIC, bool polymorphic>
-    class NIC_Wrapper: public NIC_Base<NIC>, private NIC {
+    class NIC_Wrapper: public NIC_Base<NIC>, private NIC
+    {
     private:
         typedef typename NIC::Address Address;
         typedef typename NIC::Protocol Protocol;
@@ -133,7 +133,6 @@ public:
         virtual int send(const Address & dst, const Protocol & prot, const void * data, unsigned int size) {
             return NIC::send(dst, prot, data, size); 
         }
-
         virtual int receive(Address * src, Protocol * prot, void * data, unsigned int size) {
             return NIC::receive(src, prot, data, size); 
         }
@@ -143,21 +142,22 @@ public:
         virtual unsigned int mtu() { return NIC::mtu(); }
 
         virtual const Address & address() { return NIC::address(); }
-
         virtual void address(const Address & address) { NIC::address(address); }
 
         virtual const Statistics & statistics() { return NIC::statistics(); }
     };
 
     template<typename NIC>
-    class NIC_Wrapper<NIC, false>: public NIC {
+    class NIC_Wrapper<NIC, false>: public NIC
+    {
     public:
         NIC_Wrapper(unsigned int unit = 0): NIC(unit) {}
     };
 
     // Meta_NIC (efficiently handles polymorphic or monomorphic lists of NICs
     template<typename NICS>
-    class Meta_NIC {
+    class Meta_NIC
+    {
     private:
         static const bool polymorphic = NICS::Polymorphic;
 

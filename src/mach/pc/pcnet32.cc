@@ -270,6 +270,7 @@ void PCNet32::handle_int()
  	// Receive?
  	if(csr0 & CSR0_RINT) {
  	    db<PCNet32>(INF) << "PCNet32::handle_int: receive" << endl;
+            notify(CPU::ntohs(_rx_buffer[_rx_cur]->_prot), _rx_buffer[_rx_cur]);
  	}
 
         // Error?

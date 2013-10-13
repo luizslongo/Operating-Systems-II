@@ -398,7 +398,7 @@ private:
  	RX_BUFS * ((sizeof(Frame) + 15) & ~15U) +
  	TX_BUFS * ((sizeof(Frame) + 15) & ~15U); // GCC mess up MMU::align128
 
-    // Share control and interrupt dispatiching info
+    // Share control and interrupt dispatching info
     struct Device
     {
         PCNet32 * device;
