@@ -3,8 +3,9 @@
 #ifndef __pc_nic_h
 #define __pc_nic_h
 
-#include "machine.h"
 #include <ethernet.h>
+#include <system.h>
+#include "machine.h"
 #include "pcnet32.h"
 #include "e100.h"
 #include "c905.h"
@@ -21,7 +22,7 @@ private:
 
 public:
     PC_Ethernet(unsigned int u = 0) {
-        _dev = new Meta_NIC<NICS>::Get<0>::Result(u);
+        _dev = new (SYSTEM) Meta_NIC<NICS>::Get<0>::Result(u);
     }
 
     ~PC_Ethernet() { delete _dev; }

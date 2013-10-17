@@ -1,7 +1,6 @@
 // EPOS PC_NIC Test Programs
 
 #include <utility/ostream.h>
-#include <alarm.h>
 #include <nic.h>
 
 using namespace EPOS;

@@ -12,60 +12,85 @@ __BEGIN_SYS
 class Ethernet: private NIC_Common
 {
 protected:
-    Ethernet() {}
-
-public:
     static const unsigned int MTU = 1500;
     static const unsigned int HEADER_SIZE = 14;
 
+
+public:
     typedef NIC_Common::Address<6> Address;
-    typedef char PDU[MTU];
+    typedef unsigned char Data[MTU];
     typedef NIC_Common::CRC32 CRC;
 
     typedef unsigned short Protocol;
     enum
     {
+        IP     = 0x0800,
         ARP    = 0x0806,
         RARP   = 0x8035,
-        ELP    = 0x8888,
-        IP     = 0x0800,
-        ROUTER = 0x0801
+        PTP    = 0x88F7,
+        ELP    = 0x8888
     };
+
+    // The Ethernet Header (RFC 894)
+    class Header
+    {
+    public:
+        Header(const Address & src, const Address & dst, const Protocol & prot)
+        : _dst(dst), _src(src), _prot(prot) {}
+
+        friend OStream & operator << (OStream & db, const Header & h) {
+            db << "{" << h._dst << "," << h._src << "," << h._prot << "}";
+            return db;
+        }
+
+        const Address & src() const { return _src; }
+        const Address & dst() const { return _dst; }
+        Protocol prot() const { return _prot; }
+
+    private:
+        Address _dst;
+        Address _src;
+        Protocol _prot;
+    } __attribute__((packed, may_alias));
 
     // The Ethernet Frame (RFC 894)
     class Frame
     {
     public:
         Frame(const Address & src, const Address & dst, const Protocol & prot)
-        : _dst(dst), _src(src), _prot(prot) { }
+        : _header(src, dst, prot) {}
 
         Frame(const Address & src, const Address & dst, const Protocol & prot, const void * data, unsigned int size)
-        : _dst(dst), _src(src), _prot(prot)
-        {
+        : _header(src, dst, prot) {
             memcpy(_data, data, size);
         }
         
         friend OStream & operator << (OStream & db, const Frame & f) {
-            db << "{" << Address(f._dst)
-               << "," << Address(f._src)
-               << "," << f._prot
-               << "," << f._data << "}";
+            db << "{" << f._header.dst() << "," << f._header.src() << "," << f._header.prot() << "," << f._data << "}";
             return db;
         }
         
-    public:
-        Address _dst;
-        Address _src;
-        Protocol _prot;
-        PDU _data;
+        Header & header() { return _header; }
+        unsigned char * data() { return _data; }
+
+        const Address & src() const { return _header.src(); }
+        const Address & dst() const { return _header.dst(); }
+        Protocol prot() const { return _header.prot(); }
+
+    private:
+        Header _header;
+        Data _data;
         CRC _crc;
-    };
+    } __attribute__((packed, may_alias));
+    typedef Frame PDU;
+
+    typedef Data_Observer<Frame> Observer;
+    typedef Data_Observed<Frame> Observed;
 
     // Meaningful statistics for Ethernet
     struct Statistics: public NIC_Common::Statistics
     {
-        Statistics() : rx_overruns(0), tx_overruns(0), frame_errors(0),
-        	       carrier_errors(0), collisions(0) {}
+        Statistics() : rx_overruns(0), tx_overruns(0), frame_errors(0), carrier_errors(0), collisions(0) {}
 
         friend OStream & operator << (OStream & db, const Statistics & s) {
             db << "{rxp=" << s.rx_packets
@@ -89,6 +114,9 @@ public:
     };
 
     static const Address BROADCAST;
+
+protected:
+    Ethernet() {}
 
 public:
     void attach(Observer * obs, const Protocol & prot) {

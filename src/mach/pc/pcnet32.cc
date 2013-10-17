@@ -176,8 +176,8 @@ int PCNet32::send(const Address & dst, const Protocol & prot, const void * data,
     db<PCNet32>(TRC) << "PCNet32::send(s=" << _address
         	     << ",d=" << dst
         	     << ",p=" << hex << prot << dec
-        	     << ",dt=" << data
-        	     << ",sz=" << size
+        	     << ",d=" << data
+                     << ",s=" << size
         	     << ")" << endl;
 
     // Wait for a free buffer
@@ -186,7 +186,7 @@ int PCNet32::send(const Address & dst, const Protocol & prot, const void * data,
     // Assemble the Ethernet frame
     new (_tx_buffer[_tx_cur]) Frame(_address, dst, CPU::htons(prot), data, size);
 
-    _tx_ring[_tx_cur].size = -(size + HEADER_SIZE); // 2's comp.
+    _tx_ring[_tx_cur].size = -(size + sizeof(Header)); // 2's comp.
 
     // Status must be set last, since it can trigger a send
     _tx_ring[_tx_cur].status = Tx_Desc::OWN | Tx_Desc::STP | Tx_Desc::ENP;
@@ -213,12 +213,12 @@ int PCNet32::receive(Address * src, Protocol * prot, void * data, unsigned int s
 
     // Disassemble the Ethernet frame
     Frame * frame = _rx_buffer[_rx_cur];
-    *src = frame->_src;
-    *prot = CPU::ntohs(frame->_prot);
-    unsigned int s = (_rx_ring[_rx_cur].misc & 0x00000fff) - HEADER_SIZE - 4; // CRC
+    *src = frame->src();
+    *prot = CPU::ntohs(frame->prot());
+    unsigned int s = (_rx_ring[_rx_cur].misc & 0x00000fff) - sizeof(Header) - sizeof(CRC); // CRC
 
     // Copy data
-    memcpy(data, frame->_data, (s > size) ? size : s);
+    memcpy(data, frame->data(), (s > size) ? size : s);
  
     // Release the buffer to the NIC
     _rx_ring[_rx_cur].status = Rx_Desc::OWN;
@@ -230,8 +230,8 @@ int PCNet32::receive(Address * src, Protocol * prot, void * data, unsigned int s
 
     db<PCNet32>(TRC) << "PCNet32::receive(s=" << *src
         	     << ",p=" << hex << *prot << dec
-        	     << ",dt=" << data
-        	     << ",sz=" << s
+        	     << ",d=" << data
+        	     << ",s=" << s
         	     << ")" << endl;
 
     return s;
@@ -270,7 +270,7 @@ void PCNet32::handle_int()
  	// Receive?
  	if(csr0 & CSR0_RINT) {
  	    db<PCNet32>(INF) << "PCNet32::handle_int: receive" << endl;
-            notify(CPU::ntohs(_rx_buffer[_rx_cur]->_prot), _rx_buffer[_rx_cur]);
+            notify(CPU::ntohs(_rx_buffer[_rx_cur]->prot()), _rx_buffer[_rx_cur]);
  	}
 
         // Error?

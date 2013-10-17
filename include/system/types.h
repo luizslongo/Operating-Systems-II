@@ -141,6 +141,7 @@ class Chronometer;
 
 // Abstractions - Network
 class Ethernet;
+class IP;
 
 
 // System Components IDs

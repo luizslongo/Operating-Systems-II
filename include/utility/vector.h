@@ -46,7 +46,7 @@ public:
         return 0;
     }
     Element * remove(Element * e) {
-        for(int i = 0; i < SIZE; i++)
+        for(unsigned int i = 0; i < SIZE; i++)
             if(_vector[i] == e) {
         	_vector[i] = 0;
         	_size--;
@@ -55,7 +55,7 @@ public:
         return 0;
     }
     Element * remove(const Object_Type * obj) {
-        for(int i = 0; i < SIZE; i++)
+        for(unsigned int i = 0; i < SIZE; i++)
             if(_vector[i]->object() == obj) {
         	Element * e = _vector[i];
         	_vector[i] = 0;
@@ -66,7 +66,7 @@ public:
     }
     
     Element * search(const Object_Type * obj) {
-        for(int i = 0; i < SIZE; i++)
+        for(unsigned int i = 0; i < SIZE; i++)
             if(_vector[i]->object() == obj)
         	return _vector[i];
         return 0;

@@ -151,6 +151,27 @@ template <> struct Traits<Synchronizer>: public Traits<void>
     static const bool enabled = Traits<System>::multithread;
 };
 
+template <> struct Traits<IP>: public Traits<void>
+{
+    static const bool debugged = true;
+
+    static const unsigned long ADDRESS   = 0x0a000102;   // 10.0.1.2
+    static const unsigned long NETMASK   = 0xffffff00;   // 255.255.255.0
+    static const unsigned long BROADCAST = 0x0a0001ff;   // 10.0.1.255
+    static const unsigned long GATEWAY   = 0x0a000101;   // 10.0.1.1
+
+//    static const bool forwarding    = false;
+//    static const bool fragmentation = false;
+//    static const bool spawn_thread  = true;
+
+    enum {STATIC, DHCP};
+    static const unsigned int CONFIG = STATIC;
+
+//    static const unsigned int  OPT_SIZE = 0; // options size in 32-bit words
+    static const unsigned int TTL  = 0x20; // Time-to-live
+//    static const unsigned int  MAX_FRAGMENTS = 1;
+};
+
 __END_SYS
 
 #endif

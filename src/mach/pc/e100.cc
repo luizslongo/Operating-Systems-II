@@ -285,15 +285,15 @@ int E100::receive(Address * src, Protocol * prot,
 
     // fill up receive areas/variables
     Frame * frame = (Frame *)_rx_ring[_rx_cur].frame;
-    *src = frame->_src;
-    *prot = CPU::ntohs(frame->_prot);
+    *src = frame->src();
+    *prot = CPU::ntohs(frame->prot());
 
     if (_rx_ring[_rx_cur].actual_size & 0xC000)
         size = _rx_ring[_rx_cur].actual_size & 0x3FFF;
     else
         size = 0;
 
-    memcpy(data, frame->_data, size);
+    memcpy(data, frame->data(), size);
 
     //kout << "recv (size: " << size << " prot: " << *prot <<")" << endl;
 
