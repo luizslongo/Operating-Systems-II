@@ -36,6 +36,7 @@ public:
 //    typedef Data_Observer<Address> Observer;
 //    typedef Data_Observed<Address> Observed;
 
+
     class Header
     {
     public:
@@ -122,10 +123,10 @@ public:
         volatile u16 _checksum; // Header checksum
         Address _from;           // Source IP address
         Address _to;           // Destination IP addres
-//        char _opt[(4 * OPT_SIZE)];
 
         static u16 _next_id;
     } __attribute__((packed, may_alias));
+
 
     // Pseudo header for checksum calculations
     struct Pseudo_Header {
@@ -136,7 +137,9 @@ public:
         u16 length;
     };
 
+
     typedef unsigned char Data[MTU - sizeof(Header)];
+
 
     class Packet
     {
@@ -167,16 +170,18 @@ public:
     } __attribute__((packed, may_alias));
     typedef Packet PDU;
 
+
     class Route
     {
     private:
-        typedef Simple_Hash<Route, 10, Address> Hash;
-        typedef Simple_Hash<Route, 10, Address>::Element Element;
+        typedef Simple_List<Route> Table;
+        typedef Table::Element Element;
 
     public:
         Route(NIC * n, const Address & d, const Address & g, const Address & m, unsigned int f = 0, unsigned int w = 0)
-        : _destination(d), _gateway(g), _genmask(m), _flags(f), _metric(m), _nic(n), _link(this, d) {
+        : _destination(d), _gateway(g), _genmask(m), _flags(f), _metric(w), _nic(n), _link(this) {
             _table.insert(&_link);
+            db<IP>(INF) << "IP::Route(this=" << this << ") => " << *this << endl;
         }
         ~Route() { _table.remove(&_link); }
 
@@ -184,7 +189,24 @@ public:
 
         NIC * nic() const { return _nic; }
 
-        static const Route * get(const Address & to) { return _table.search_key(to)->object(); }
+        static const Route * get(const Address & to) { // Assume default (0.0.0.0) to have genmask 0.0.0.0 and be the last route in table
+            Element * e = _table.head();
+            for(; e && (static_cast<unsigned long>(to) & static_cast<unsigned long>(e->object()->_genmask)) != static_cast<unsigned long>(e->object()->_destination); e = e->next())
+                db<IP>(INF) << "IP::Route::search([route=" << e->object() << " => " << *e->object() << endl;
+            return e->object();
+        }
+
+        friend Debug & operator<<(Debug & db, const Route & r) {
+            db << "{d=" << r._destination
+               << ",g=" << r._gateway
+               << ",m=" << r._genmask
+               << ",f=" << r._flags
+               << ",w=" << r._metric
+               << ",nic=" << r._nic
+               << "}";
+            return db;
+        }
+
 
     private:
         Address _destination;
@@ -195,7 +217,7 @@ public:
         NIC * _nic;
         Element _link;
 
-        static Hash _table;
+        static Table _table;
     };
 
     class ARP
@@ -241,7 +263,9 @@ public:
 private:
     IP(const Address & a, const Address & m, const Address & b, const Address & g)
     : _address(a), _netmask(m), _broadcast(b), _gateway(g) {
-        new (SYSTEM) Route(_nic, (a & m), g, m);
+        new (SYSTEM) Route(_nic, (a & m), a, m);
+        new (SYSTEM) Route(_nic, 0UL, g, 0UL);
+
         new (SYSTEM) ARP(_nic, a, _nic->BROADCAST);
         new (SYSTEM) ARP(_nic, g, _nic->BROADCAST);
     }

@@ -3,7 +3,7 @@
 __BEGIN_SYS
 
 IP::u16 IP::Header::_next_id = 0;
-IP::Route::Hash IP::Route::_table;
+IP::Route::Table IP::Route::_table;
 IP::ARP::Hash IP::ARP::_table;
 
 NIC * IP::_nic;
@@ -54,15 +54,13 @@ IP::~IP() {
 
 int IP::send(const Address & to, const Protocol & prot, const void * data, unsigned int size)
 {
-//    db<IP>(TRC) << "IP::send(f=" << from <<",t=" << to << ",p=" << prot << ",d=" << data << ",s=" << size << ")" << endl;
+    db<IP>(TRC) << "IP::send(f=" << _address <<",t=" << to << ",p=" << prot << ",d=" << data << ",s=" << size << ")" << endl;
 
     Packet * pkt = new (SYSTEM) Packet(_address, to, prot, data, size);
-//    const Route * through = route(to);
-//    db<IP>(INF) << "IP::send() => through=" << through << endl;
-//    NIC * nic = through->nic();
-//    MAC_Address mac = arp(through->gateway());
-    NIC * nic = _nic;
-    MAC_Address mac = arp(_address);
+    const Route * through = route(to);
+    db<IP>(INF) << "IP::send([route=" << through << " => " << *through << endl;
+    NIC * nic = through->nic();
+    MAC_Address mac = arp(through->gateway());
 
 //    db<IP>(INF) << "IP::send() => gateway=" << through->gateway() << endl;
 

@@ -213,8 +213,8 @@ public:
 
     Address(unsigned long a) { a = CPU::htonl(a); memcpy(this, &a, sizeof(Address)); }
 
-    operator unsigned long() { return *reinterpret_cast<unsigned long *>(this); }
-    operator unsigned long() const { return *reinterpret_cast<const unsigned long *>(this); }
+    operator unsigned long() { return CPU::ntohl(*reinterpret_cast<unsigned long *>(this)); }
+    operator unsigned long() const { return CPU::ntohl(*reinterpret_cast<const unsigned long *>(this)); }
 } __attribute__((packed, may_alias));
 
 __END_SYS
