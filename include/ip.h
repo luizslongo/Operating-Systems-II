@@ -18,11 +18,13 @@ protected:
     typedef CPU::Reg16 u16;
     typedef CPU::Reg32 u32;
 
-    static const unsigned int MTU = 65536;
+    static const unsigned int MTU = 65516;
 
 public:
-    typedef NIC_Common::Address<4> Address;
     typedef NIC::Address MAC_Address;
+
+    typedef NIC_Common::Address<4> Address;
+    typedef unsigned char Data[MTU];
 
     typedef u8 Protocol;
     enum {
@@ -66,16 +68,16 @@ public:
 
         u16 id() const { return CPU::ntohs(_id); }
 
-        u16 offset() const { return CPU::ntohs(_flags << 13 | _offset) & 0x1fff; }
+        u16 offset() const { return CPU::ntohs((_flags << 13) | _offset) & 0x1fff; }
         void offset(u16 off) {
-            u16 tmp = CPU::htons(flags() << 13 | off);
+            u16 tmp = CPU::htons((flags() << 13) | off);
             _offset = tmp & 0x1fff;
             _flags  = tmp >> 13;
         }
 
-        u16 flags() const { return CPU::ntohs(_flags << 13 | _offset) >> 13; }
+        u16 flags() const { return CPU::ntohs((_flags << 13) | _offset) >> 13; }
         void flags(u16 flg) {
-            u16 tmp = CPU::htons(flg << 13 | offset());
+            u16 tmp = CPU::htons((flg << 13) | offset());
             _offset = tmp & 0x1fff;
             _flags  = tmp >> 13;
         }
@@ -97,10 +99,10 @@ public:
             db << "{ver=" << h._version
                << ",ihl=" << h._ihl
                << ",tos=" << h._tos
-               << ",len=" << CPU::ntohs(h._length)
-               << ",id="  << CPU::ntohs(h._id)
+               << ",len=" << h.length()
+               << ",id="  << h.id()
                << ",off=" << h.offset()
-               << ",flg=" << (h._flags == DF ? "DF" : (h._flags == MF ? "MF" : "--"))
+               << ",flg=" << ((h.flags() & DF) ? "DF" : (h.flags() & MF) ? "MF" : "--")
                << ",ttl=" << h._ttl
                << ",pro=" << h._protocol
                << ",chk=" << hex << h._checksum << dec
@@ -138,9 +140,6 @@ public:
     };
 
 
-    typedef unsigned char Data[MTU - sizeof(Header)];
-
-
     class Packet
     {
     public:
@@ -168,8 +167,10 @@ public:
         Header _header;
         Data _data;
     } __attribute__((packed, may_alias));
+
     typedef Packet PDU;
 
+    static const unsigned int MAX_FRAGMENT = sizeof(NIC::Data) - sizeof(Header);
 
     class Route
     {
@@ -206,7 +207,6 @@ public:
                << "}";
             return db;
         }
-
 
     private:
         Address _destination;
@@ -256,7 +256,7 @@ public:
     int send(const Address & to, const Protocol & prot, const void * data, unsigned int size);
     int receive(Address * from, Protocol * prot, void * data, unsigned int size);
 
-    unsigned int mtu() const { return MTU; }
+    static const unsigned int mtu() { return MTU; }
 
     NIC * nic() { return _nic; }
 

@@ -232,7 +232,7 @@ int PCNet32::receive(Address * src, Protocol * prot, void * data, unsigned int s
         	     << ",p=" << hex << *prot << dec
         	     << ",d=" << data
         	     << ",s=" << s
-        	     << ")" << endl;
+        	     << ") => " << endl;
 
     return s;
 }

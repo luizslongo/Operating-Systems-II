@@ -57,29 +57,29 @@ int IP::send(const Address & to, const Protocol & prot, const void * data, unsig
     db<IP>(TRC) << "IP::send(f=" << _address <<",t=" << to << ",p=" << prot << ",d=" << data << ",s=" << size << ")" << endl;
 
     Packet * pkt = new (SYSTEM) Packet(_address, to, prot, data, size);
+    db<IP>(INF) << "IP::send([pkt=" << pkt << "]) => " << *pkt << endl;
+
     const Route * through = route(to);
     db<IP>(INF) << "IP::send([route=" << through << " => " << *through << endl;
+
     NIC * nic = through->nic();
     MAC_Address mac = arp(through->gateway());
 
-//    db<IP>(INF) << "IP::send() => gateway=" << through->gateway() << endl;
-
-    unsigned int max_size = sizeof(NIC::Data) - sizeof(Header);
-
-    db<IP>(INF) << "IP::send([pkt=" << pkt << "]) => " << *pkt << endl;
-
-    if(size <= max_size)
-        _nic->send(mac, NIC::IP, pkt, sizeof(Header) + size);
+    if(size <= MAX_FRAGMENT)
+        _nic->send(mac, NIC::IP, pkt, pkt->length());
     else {
-        while(size > 0) {
-            if(size > max_size) {
+        while(static_cast<int>(size) >= 0) {
+            if(size > MAX_FRAGMENT) {
                 pkt->header().flags(Header::MF);
-                nic->send(mac, NIC::IP, pkt->data(), size);
+                pkt->header().length(MAX_FRAGMENT + sizeof(Header));
+                nic->send(mac, NIC::IP, pkt, pkt->length());
             } else {
                 pkt->header().flags(0);
-                nic->send(mac, NIC::IP, pkt->data(), size);
+                pkt->header().length(size + sizeof(Header));
+                nic->send(mac, NIC::IP, pkt, pkt->length());
             }
-            size -= max_size;
+            pkt->header().offset(pkt->header().offset() + MAX_FRAGMENT);
+            size -= MAX_FRAGMENT;
         }
     }
 
@@ -94,8 +94,8 @@ int IP::receive(Address * from, Protocol * prot, void * data, unsigned int size)
     NIC::Protocol nic_pro;
     NIC::Data nic_data;
 
-    _nic->receive(&nic_src, &nic_pro, nic_data, sizeof(Data));
-    IP::Packet * pkt = new (nic_data) IP::Packet;
+    _nic->receive(&nic_src, &nic_pro, &nic_data, sizeof(Data));
+    Packet * pkt = reinterpret_cast<Packet *>(&nic_data);
 
     db<IP>(INF) << "IP::receive([pkt=" << pkt << "]) => " << *pkt << endl;
 
