@@ -150,7 +150,7 @@ public:
         			  ((Reg8)(l >> 16))),
               base_31_24((Reg8)(b >> 24)) {}
 
-        friend OStream & operator << (OStream & db, const GDT_Entry & g) {
+        friend Debug & operator<<(Debug & db, const GDT_Entry & g) {
             db << "{bas=" << (void *)((g.base_31_24 << 24) | (g.base_23_16 << 16) | g.base_15_00) 
                << ",lim=" << (void *)(((g.g_d_0_a_limit_19_16 & 0xf) << 16) | g.limit_15_00)
                << ",p=" << (g.p_dpl_s_type >> 7) 
@@ -185,7 +185,7 @@ public:
 
         Reg32 offset() const { return (offset_31_16 << 16) | offset_15_00; }
 
-        friend OStream & operator << (OStream & db, const IDT_Entry & i) {
+        friend Debug & operator<<(Debug & db, const IDT_Entry & i) {
             db << "{sel=" << (i.selector >> 3) 
                << ",off=" << (void *)i.offset()
                << ",p=" << (i.p_dpl_0_d_1_1_0 >> 7) 
@@ -254,7 +254,7 @@ public:
         void save() volatile;
         void load() const volatile;
 
-        friend OStream & operator << (OStream & db, const Context & c) {
+        friend Debug & operator<<(Debug & db, const Context & c) {
             db << "{eflags=" << reinterpret_cast<void *>(c._eflags)
                << ",eax=" << c._eax
                << ",ebx=" << c._ebx

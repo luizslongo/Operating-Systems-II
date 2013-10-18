@@ -30,7 +30,7 @@ private:
             if(LENGTH > 7) _address[7] = a[7];
         }
         Meta_Address(unsigned char a0, unsigned char a1 = 0, unsigned char a2 = 0, unsigned char a3 = 0,
-                unsigned char a4 = 0, unsigned char a5 = 0, unsigned char a6 = 0, unsigned char a7 = 0)
+                     unsigned char a4 = 0, unsigned char a5 = 0, unsigned char a6 = 0, unsigned char a7 = 0)
         {
             _address[0] =  a0;
             if(LENGTH > 1) _address[1] = a1;

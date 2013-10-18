@@ -27,8 +27,8 @@ public:
         IP     = 0x0800,
         ARP    = 0x0806,
         RARP   = 0x8035,
-        PTP    = 0x88F7,
-        ELP    = 0x8888
+        ELP    = 0x8888,
+        PTP    = 0x88F7
     };
 
     // The Ethernet Header (RFC 894)
@@ -38,7 +38,7 @@ public:
         Header(const Address & src, const Address & dst, const Protocol & prot)
         : _dst(dst), _src(src), _prot(prot) {}
 
-        friend OStream & operator << (OStream & db, const Header & h) {
+        friend Debug & operator<<(Debug & db, const Header & h) {
             db << "{" << h._dst << "," << h._src << "," << h._prot << "}";
             return db;
         }
@@ -65,7 +65,7 @@ public:
             memcpy(_data, data, size);
         }
         
-        friend OStream & operator << (OStream & db, const Frame & f) {
+        friend Debug & operator<<(Debug & db, const Frame & f) {
             db << "{" << f._header.dst() << "," << f._header.src() << "," << f._header.prot() << "," << f._data << "}";
             return db;
         }
@@ -92,7 +92,7 @@ public:
     {
         Statistics() : rx_overruns(0), tx_overruns(0), frame_errors(0), carrier_errors(0), collisions(0) {}
 
-        friend OStream & operator << (OStream & db, const Statistics & s) {
+        friend Debug & operator<<(Debug & db, const Statistics & s) {
             db << "{rxp=" << s.rx_packets
                << ",rxb=" <<  s.rx_bytes
                << ",rxorun=" <<  s.rx_overruns
