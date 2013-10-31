@@ -113,7 +113,6 @@ protected:
     static Reg16 swap16(Reg16 v) {
         return ((v << 8) & 0xFF00) | ((v >> 8) & 0x00FF);
     }
-
 };
 
 __END_SYS
@@ -121,5 +120,16 @@ __END_SYS
 #ifdef __CPU_H
 #include __CPU_H
 #endif
+
+__BEGIN_SYS
+
+template<typename T>
+inline T align32(const T & addr) { return (addr + 3) & ~3U; }
+template<typename T>
+inline T align64(const T & addr) { return (addr + 7) & ~7U; }
+template<typename T>
+inline T align128(const T & addr) { return (addr + 15) & ~15U; }
+
+__END_SYS
 
 #endif

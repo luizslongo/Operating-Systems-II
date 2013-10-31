@@ -323,8 +323,8 @@ private:
         ((sizeof(MACaddrCB) + 15) & ~15U) +
         ((sizeof(struct mem) + 15) & ~15U) +
          RX_BUFS * ((sizeof(Rx_Desc) + 15) & ~15U) +
-         TX_BUFS * ((sizeof(Tx_Desc) + 15) & ~15U); // GCC mess up MMU::align128
-
+         TX_BUFS * ((sizeof(Tx_Desc) + 15) & ~15U); 
+         
     // Share control and interrupt dispatiching info
     struct Device
     {

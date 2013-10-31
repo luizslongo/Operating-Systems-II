@@ -12,14 +12,17 @@ __BEGIN_SYS
 
 class NIC_Common
 {
-private:
+protected:
+    NIC_Common() {}
+
+public:
     // NIC physical address (e.g. MAC)
     template<unsigned int LENGTH>
-    class Meta_Address
+    class Address
     {
     public:
-        Meta_Address() {}
-        Meta_Address(unsigned char a[LENGTH]) {
+        Address() {}
+        Address(unsigned char a[LENGTH]) {
             _address[0] =  a[0];
             if(LENGTH > 1) _address[1] = a[1];
             if(LENGTH > 2) _address[2] = a[2];
@@ -29,9 +32,8 @@ private:
             if(LENGTH > 6) _address[6] = a[6];
             if(LENGTH > 7) _address[7] = a[7];
         }
-        Meta_Address(unsigned char a0, unsigned char a1 = 0, unsigned char a2 = 0, unsigned char a3 = 0,
-                     unsigned char a4 = 0, unsigned char a5 = 0, unsigned char a6 = 0, unsigned char a7 = 0)
-        {
+        Address(unsigned char a0, unsigned char a1 = 0, unsigned char a2 = 0, unsigned char a3 = 0,
+                     unsigned char a4 = 0, unsigned char a5 = 0, unsigned char a6 = 0, unsigned char a7 = 0) {
             _address[0] =  a0;
             if(LENGTH > 1) _address[1] = a1;
             if(LENGTH > 2) _address[2] = a2;
@@ -41,7 +43,7 @@ private:
             if(LENGTH > 6) _address[6] = a6;
             if(LENGTH > 7) _address[7] = a7;
         }
-        Meta_Address(const char * s, const char c) { // Create from string in the form A.B.C.D
+        Address(const char * s, const char c) { // Create from string in the form A.B.C.D
             _address[0] =  0;
             if(LENGTH > 1) _address[1] = 0;
             if(LENGTH > 2) _address[2] = 0;
@@ -63,7 +65,7 @@ private:
             return false;
         }
 
-        bool operator==(const Meta_Address & a) const {
+        bool operator==(const Address & a) const {
             for(unsigned int i = 0; i < LENGTH; ++i) {
                 if(_address[i] != a._address[i])
                     return false;
@@ -73,7 +75,7 @@ private:
 
         unsigned char & operator[](int i) { return _address[i]; }
 
-        friend OStream & operator<<(OStream & db, const Meta_Address & a) {
+        friend OStream & operator<<(OStream & db, const Address & a) {
             db << hex;
             for(unsigned int i = 0; i < LENGTH; i++) {
                 db << static_cast<unsigned int>(a._address[i]);
@@ -88,27 +90,14 @@ private:
         unsigned char _address[LENGTH];
     } __attribute__((packed, may_alias));
 
-protected:
-    NIC_Common() {}
-
-public:
-    template<unsigned int LENGTH>
-    class Address: public Meta_Address<LENGTH>
-    {
-    public:
-        Address() {}
-        Address(unsigned char a[LENGTH]): Meta_Address<LENGTH>(a) {}
-        Address(unsigned char a0, unsigned char a1 = 0, unsigned char a2 = 0, unsigned char a3 = 0,
-                unsigned char a4 = 0, unsigned char a5 = 0, unsigned char a6 = 0, unsigned char a7 = 0)
-        : Meta_Address<LENGTH>(a0, a1, a2, a3, a4, a5, a6, a7) {}
-        Address(const char * s): Meta_Address<LENGTH>(s, ':') {}
-    } __attribute__((packed, may_alias));
-
     // NIC protocol id
-    typedef unsigned int Protocol;
+    typedef unsigned short Protocol;
 
     // NIC CRC32
     typedef CPU::Reg32 CRC32;
+
+    // Buffers used to hold frames across a zero-copy network stack
+    class Buffer;
 
     // NIC statistics
     struct Statistics
@@ -138,6 +127,8 @@ public:
         virtual int send(const Address & dst, const Protocol & prot, const void * data, unsigned int size) = 0;
         virtual int receive(Address * src, Protocol * prot, void * data, unsigned int size) = 0;
     
+        virtual void received(Buffer * buf) = 0;
+
         virtual void reset() = 0;
     
         virtual unsigned int mtu() = 0;
@@ -167,7 +158,10 @@ public:
         virtual int receive(Address * src, Protocol * prot, void * data, unsigned int size) {
             return NIC::receive(src, prot, data, size); 
         }
-    
+        virtual void received(Buffer * buf) {
+            return NIC::received(buf);
+        }
+
         virtual void reset() { NIC::reset(); }
     
         virtual unsigned int mtu() { return NIC::mtu(); }
@@ -201,21 +195,6 @@ public:
         struct Get { typedef NIC_Wrapper<typename NICS::template Get<Index>::Result, polymorphic> Result; };
     };
 };
-
-template<>
-class NIC_Common::Address<4>: public NIC_Common::Meta_Address<4>
-{
-public:
-    Address() {}
-    Address(unsigned char a[4]): Meta_Address<4>(a) {}
-    Address(unsigned char a0, unsigned char a1 = 0, unsigned char a2 = 0, unsigned char a3 = 0): Meta_Address<4>(a0, a1, a2, a3) {}
-    Address(const char * s): Meta_Address<4>(s, '.') {}
-
-    Address(unsigned long a) { a = CPU::htonl(a); memcpy(this, &a, sizeof(Address)); }
-
-    operator unsigned long() { return CPU::ntohl(*reinterpret_cast<unsigned long *>(this)); }
-    operator unsigned long() const { return CPU::ntohl(*reinterpret_cast<const unsigned long *>(this)); }
-} __attribute__((packed, may_alias));
 
 __END_SYS
 

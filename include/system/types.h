@@ -141,7 +141,12 @@ class Chronometer;
 
 // Abstractions - Network
 class Ethernet;
+class ARP;
 class IP;
+class ICMP;
+class UDP;
+class TCP;
+class DHCP;
 
 
 // System Components IDs
@@ -178,6 +183,14 @@ enum
     CLOCK_ID,
     ALARM_ID,
     CHRONOMETER_ID,
+
+    ETHERNET_ID,
+    ARP_ID,
+    IP_ID,
+    ICMP_ID,
+    UDP_ID,
+    TCP_ID,
+    DHCP_ID,
 
     UNKNOWN_TYPE_ID,
     LAST_TYPE_ID = UNKNOWN_TYPE_ID - 1

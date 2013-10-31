@@ -131,7 +131,7 @@ public:
         return _table[key % SIZE].search_rank(key);
     }
     
-    Element * remove_key(int key) {
+    Element * remove_key(const Key & key) {
         return _table[key % SIZE].remove_rank(key);
     }
 

@@ -365,9 +365,7 @@ public:
         return compare;
    }
 
-    static Reg32 htonl(Reg32 v)	{
- 	ASMV("bswap %0" : "=r" (v) : "0" (v), "r" (v)); return v;
-    }
+    static Reg32 htonl(Reg32 v)	{ ASMV("bswap %0" : "=r" (v) : "0" (v), "r" (v)); return v; }
     static Reg16 htons(Reg16 v)	{ return swap16(v); }
     static Reg32 ntohl(Reg32 v)	{ return htonl(v); }
     static Reg16 ntohs(Reg16 v)	{ return htons(v); }
@@ -430,12 +428,7 @@ public:
         return new (sp) Context(entry);
     }
 
-private:
-    static void init();
-
-    // IA32 specific methods
-public:
-
+public: // IA32 specific methods
     static Flags eflags() {
         Reg32 value; ASMV("pushfl");
         ASMV("popl %0" : "=r"(value) :); return value;
@@ -617,9 +610,17 @@ public:
     }
 
 private:
+    static void init();
+
+private:
     static unsigned int _cpu_clock;
     static unsigned int _bus_clock;
 };
+
+inline CPU::Reg32 htonl(CPU::Reg32 v) { return CPU::htonl(v); }
+inline CPU::Reg16 htons(CPU::Reg16 v) { return CPU::htons(v); }
+inline CPU::Reg32 ntohl(CPU::Reg32 v) { return CPU::ntohl(v); }
+inline CPU::Reg16 ntohs(CPU::Reg16 v) { return CPU::ntohs(v); }
 
 __END_SYS
 

@@ -87,7 +87,7 @@ __BEGIN_SYS
 
 template <> struct Traits<Application>: public Traits<void>
 {
-    static const unsigned int STACK_SIZE = 16 * 1024;
+    static const unsigned int STACK_SIZE = 256 * 1024;
     static const unsigned int HEAP_SIZE = 16 * 1024 * 1024;
 };
 
@@ -105,7 +105,7 @@ template <> struct Traits<System>: public Traits<void>
 
     static const bool reboot = true;
 
-    static const unsigned int STACK_SIZE = 4 * 1024;
+    static const unsigned int STACK_SIZE = 256 * 1024;
     static const unsigned int HEAP_SIZE = 128 * Traits<Application>::STACK_SIZE;
 };
 
@@ -124,6 +124,11 @@ template <> struct Traits<Thread>: public Traits<void>
     static const unsigned int QUANTUM = 10000; // us
 
     static const bool trace_idle = false;
+};
+
+template <> struct Traits<Scheduler<Thread> >: public Traits<void>
+{
+    static const bool debugged = false;
 };
 
 template <> struct Traits<Periodic_Thread>: public Traits<void>
@@ -170,6 +175,13 @@ template <> struct Traits<IP>: public Traits<void>
 //    static const unsigned int  OPT_SIZE = 0; // options size in 32-bit words
     static const unsigned int TTL  = 0x20; // Time-to-live
 //    static const unsigned int  MAX_FRAGMENTS = 1;
+};
+
+template <> struct Traits<UDP>: public Traits<void>
+{
+    static const bool debugged = true;
+
+    static const bool checksum = false;
 };
 
 __END_SYS

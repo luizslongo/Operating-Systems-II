@@ -1,3 +1,5 @@
+// EPOS IP Protocol Declarations
+
 #ifndef __ip_h
 #define __ip_h
 
@@ -6,27 +8,41 @@
 #include <utility/string.h>
 #include <utility/hash.h>
 #include <system.h>
+#include <semaphore.h>
 
 __BEGIN_SYS
 
-class IP// : public Traits<IP>, public Active, public Data_Observed<IP_Address>
+class IP: private NIC::Observer, public Data_Observed<NIC::Buffer>
 {
-protected:
+    friend class ICMP;
+    friend class UDP;
+    friend class TCP;
 
-    // Imports from CPU
-    typedef CPU::Reg8  u8;
-    typedef CPU::Reg16 u16;
-    typedef CPU::Reg32 u32;
-
-    static const unsigned int MTU = 65516;
+private:
+    // List to hold received NIC::Buffers
+    typedef Ordered_List<NIC::Buffer, unsigned long> List;
+    typedef List::Element Element;
 
 public:
     typedef NIC::Address MAC_Address;
 
-    typedef NIC_Common::Address<4> Address;
-    typedef unsigned char Data[MTU];
+    class Address: public NIC_Common::Address<4>
+    {
+    private:
+        typedef NIC_Common::Address<4> Base;
 
-    typedef u8 Protocol;
+    public:
+        Address() {}
+        Address(unsigned char a0, unsigned char a1 = 0, unsigned char a2 = 0, unsigned char a3 = 0): Base(a0, a1, a2, a3) {}
+        Address(const char * s): Base(s, '.') {}
+        Address(unsigned long a) { *reinterpret_cast<unsigned long *>(this) = htonl(a); }
+
+        operator unsigned long() { return ntohl(*reinterpret_cast<unsigned long *>(this)); }
+        operator unsigned long() const { return ntohl(*reinterpret_cast<const unsigned long *>(this)); }
+    } __attribute__((packed, may_alias));
+
+    // RFC 1700 Protocols
+    typedef unsigned char Protocol;
     enum {
         ICMP    = 0x01,
         TCP     = 0x06,
@@ -35,8 +51,8 @@ public:
         TTP     = 0x54
     };
 
-//    typedef Data_Observer<Address> Observer;
-//    typedef Data_Observed<Address> Observed;
+    typedef Data_Observer<NIC::Buffer> Observer;
+    typedef Data_Observed<NIC::Buffer> Observed;
 
 
     class Header
@@ -56,42 +72,41 @@ public:
         Header() {}
 
         Header(const Address & from, const Address & to, const Protocol & prot, unsigned int size) :
-            _ihl(IHL),  _version(VER), _tos(TOS), _length(CPU::htons(size)), _id(CPU::htons(_next_id++)),
-            _offset(0), _flags(0), _ttl(TTL), _protocol(prot), _checksum(0), _from(from), _to(to) {
-            _checksum = ~checksum(reinterpret_cast<const unsigned char *>(this), hlength());
-        }
+            _ihl(IHL),  _version(VER), _tos(TOS), _length(htons(size)), _id(htons(_next_id++)),
+            _offset(0), _flags(0), _ttl(TTL), _protocol(prot), _checksum(0), _from(from), _to(to) {}
 
-        u16 hlength() { return _ihl * 4; }
+        unsigned short length() const { return ntohs(_length); }
+        void length(unsigned short length) { _length = htons(length); }
 
-        u16 length() const { return CPU::ntohs(_length); }
-        void length(u16 length) { _length = CPU::htons(length); }
+        unsigned short id() const { return ntohs(_id); }
 
-        u16 id() const { return CPU::ntohs(_id); }
-
-        u16 offset() const { return CPU::ntohs((_flags << 13) | _offset) & 0x1fff; }
-        void offset(u16 off) {
-            u16 tmp = CPU::htons((flags() << 13) | off);
+        // Offsets in bytes that are converted to 8-byte unities
+        unsigned short offset() const { return (ntohs((_flags << 13) | _offset) & 0x1fff) << 3; }
+        void offset(unsigned short off) {
+            unsigned short tmp = htons((flags() << 13) | (off >> 3));
             _offset = tmp & 0x1fff;
             _flags  = tmp >> 13;
         }
 
-        u16 flags() const { return CPU::ntohs((_flags << 13) | _offset) >> 13; }
-        void flags(u16 flg) {
-            u16 tmp = CPU::htons((flg << 13) | offset());
+        unsigned short flags() const { return ntohs((_flags << 13) | _offset) >> 13; }
+        void flags(unsigned short flg) {
+            unsigned short tmp = htons((flg << 13) | (offset() >> 3));
             _offset = tmp & 0x1fff;
             _flags  = tmp >> 13;
         }
 
-        u8 ttl() { return _ttl; }
-        void ttl(u8 ttl) { _ttl = ttl; }
+        unsigned char ttl() { return _ttl; }
 
         const Protocol & protocol() const { return _protocol; }
-        void protocol(const Protocol & protocol) { _protocol = protocol; }
 
-        bool check();
+        unsigned short checksum() const { return ntohs(_checksum); }
+
+        void sum() { _checksum = 0; _checksum = htons(IP::checksum(reinterpret_cast<unsigned char *>(this), _ihl * 4)); }
+        bool check() { return !IP::checksum(reinterpret_cast<unsigned char *>(this), _ihl * 4); }
 
         const Address & from() const { return _from; }
         void from(const Address & from){ _from = from; }
+
         const Address & to() const { return _to; }
         void to(const Address & to){ _to = to; }
 
@@ -113,58 +128,47 @@ public:
         }
 
     private:
-        u8  _ihl:4;             // IP Header Length (in 32-bit words)
-        u8  _version:4;         // IP Version
-        u8  _tos;               // Type Of Service (not used -> 0)
-        u16 _length;            // Size of datagram (header + data)
-        u16 _id;                // Datagram id
-        u16 _offset:13;         // Fragment offset (x 8 bytes)
-        u16 _flags:3;           // Flags (UN, DF, MF)
-        u8  _ttl;               // Time To Live
-        Protocol  _protocol;    // RFC 1700 (1->ICMP, 6->TCP, 17->UDP)
-        volatile u16 _checksum; // Header checksum
-        Address _from;           // Source IP address
-        Address _to;           // Destination IP addres
+        unsigned char   _ihl:4;         // IP Header Length (in 32-bit words)
+        unsigned char   _version:4;     // IP Version
+        unsigned char    _tos;          // Type Of Service (not used -> 0)
+        unsigned short  _length;        // Length of datagram in bytes (header + data)
+        unsigned short  _id;            // Datagram id
+        unsigned short  _offset:13;     // Fragment offset (x 8 bytes)
+        unsigned short  _flags:3;       // Flags (DF, MF)
+        unsigned char   _ttl;           // Time To Live
+        Protocol        _protocol;      // Payload Protocol (RFC 1700)
+        unsigned short  _checksum;      // Header checksum (RFC 1071)
+        Address         _from;          // Source IP address
+        Address         _to;            // Destination IP address
 
-        static u16 _next_id;
+        static unsigned short _next_id;
     } __attribute__((packed, may_alias));
 
 
-    // Pseudo header for checksum calculations
-    struct Pseudo_Header {
-        u32 from_ip;
-        u32 to_ip;
-        u8 zero;
-        u8 protocol;
-        u16 length;
-    };
+    static const unsigned int MTU = 65536 - sizeof(Header);
+    typedef unsigned char Data[MTU];
 
 
-    class Packet
+    class Packet: public Header
     {
     public:
         Packet() {}
 
         Packet(const Address & from, const Address & to, const Protocol & prot, const void * data, unsigned int size)
-        : _header(from, to, prot, size + sizeof(Header)) {
+        : Header(from, to, prot, size + sizeof(Header)) {
+            header()->sum();
             memcpy(_data, data, size > sizeof(Data) ? sizeof(Data) : size);
         }
 
-        Header & header() { return _header; }
+        Header * header() { return this; }
         unsigned char * data() { return _data; }
 
-        u16 length() const { return _header.length(); }
-        const Protocol & protocol() const { return _header.protocol(); }
-        const Address & from() const { return _header.from(); }
-        const Address & to() const { return _header.to(); }
-
         friend Debug & operator<<(Debug & db, const Packet & p) {
-            db << "{head=" << p._header << ",data=" << p._data << "}";
+            db << "{head=" << reinterpret_cast<const Header &>(p) << ",data=" << p._data << "}";
             return db;
         }
 
     private:
-        Header _header;
         Data _data;
     } __attribute__((packed, may_alias));
 
@@ -220,6 +224,7 @@ public:
         static Table _table;
     };
 
+
     class ARP
     {
     private:
@@ -245,57 +250,29 @@ public:
     };
 
 public:
-    IP();
-    ~IP();
+    IP(NIC * nic);
+    ~IP() {}
 
     const Address & address() { return _address; }
     const Address & broadcast() { return _broadcast; }
     const Address & gateway() { return _gateway; }
     const Address & netmask() { return _netmask; }
     
-    int send(const Address & to, const Protocol & prot, const void * data, unsigned int size);
-    int receive(Address * from, Protocol * prot, void * data, unsigned int size);
+    int send(const Address & to, const Protocol & protocol, const void * data, unsigned int size);
+    int receive(Address * from, Protocol * protocol, void * data, unsigned int size);
 
     static const unsigned int mtu() { return MTU; }
 
     NIC * nic() { return _nic; }
 
 private:
-    IP(const Address & a, const Address & m, const Address & b, const Address & g)
-    : _address(a), _netmask(m), _broadcast(b), _gateway(g) {
-        new (SYSTEM) Route(_nic, (a & m), a, m);
-        new (SYSTEM) Route(_nic, 0UL, g, 0UL);
-
-        new (SYSTEM) ARP(_nic, a, _nic->BROADCAST);
-        new (SYSTEM) ARP(_nic, g, _nic->BROADCAST);
-    }
-
-    bool is_local(const Address & address) const
-    {
-        return (_address & _netmask) == (u32(address) & u32(_netmask));
-    }
+    void update(NIC::Observed * nic, int prot, NIC::Buffer * buf);
 
     static const MAC_Address & arp(const Address & log) { return ARP::get(log); }
 
-    const Route * route(const Address & to) { return Route::get(to); }
+    static const Route * route(const Address & to) { return Route::get(to); }
 
-//  void update(NIC::Observed * o, int p);
-
-    // From http://www.faqs.org/rfcs/rfc1071.html
-    static u16 checksum(const unsigned char * data, u16 size) {
-        u32 sum = 0;
-
-        for(u16 i = 0; i < size - 1; i += 2)
-            sum += (((unsigned short)(data[i + 1]) & 0x00FF) << 8) | data[i];
-
-        if(size & 1)
-            sum += data[size-1];
-
-        while(sum >> 16)
-            sum = (sum & 0xffff) + (sum >> 16);
-
-        return sum;
-    }
+    static unsigned short checksum(const void * d, unsigned int size);
 
 protected:
     Address _address;
@@ -303,7 +280,9 @@ protected:
     Address _broadcast;
     Address _gateway;
 
-    static NIC * _nic;
+    NIC * _nic;
+
+    static List _fragmented;
 };
 
 __END_SYS

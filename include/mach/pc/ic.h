@@ -45,7 +45,18 @@ public:
     enum {
         IRQ_TIMER	= 0,
         IRQ_KEYBOARD	= 1,
-        IRQ_CASCADE	= 2
+        IRQ_CASCADE	= 2,
+        IRQ_SERIAL24    = 3,
+        IRQ_SERIAL13    = 4,
+        IRQ_PARALLEL23  = 5,
+        IRQ_FLOPPY      = 6,
+        IRQ_PARALLEL1   = 7,
+        IRQ_RTC         = 8,
+        IRQ_MOUSE       = 12,
+        IRQ_MATH        = 13,
+        IRQ_DISK1       = 14,
+        IRQ_DISK2       = 15,
+        IRQ_LAST        = IRQ_DISK2
     };
 
     // Interrupts
@@ -105,9 +116,9 @@ public:
     }
 
     static void eoi() { // End of interrupt
-        CPU::out8(MASTER_CMD, EOI); // always send EOI to master and send it first!
     	if(isr() & (1 << IRQ_CASCADE)) // was it an slave PIC interrupt?
             CPU::out8(SLAVE_CMD, EOI);
+        CPU::out8(MASTER_CMD, EOI); // always send EOI to master!
     }
 
     static void ipi_send(int dest, int interrupt) {}
@@ -427,9 +438,9 @@ public:
     }
 
     static void int_vector(Interrupt_Id i, Interrupt_Handler h) {
-        db<IC>(INF) << "IC::int_vector(int=" << i << ",h=" 
-        	    << (void *)h <<")" << endl;
-        if(i < INTS) _int_vector[i] = h;
+        db<IC>(INF) << "IC::int_vector(int=" << i << ",h=" << reinterpret_cast<void *>(h) <<")" << endl;
+        if(i < INTS)
+            _int_vector[i] = h;
     }
 
     static void enable() {

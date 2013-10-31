@@ -279,10 +279,10 @@ public:
         };
 
         friend Debug & operator<<(Debug & db, const Desc & t) {
-            db << "{" << (void *)CPU::ntohl(t.phy_addr)
-               << "," << 65536 -CPU::ntohs(t.size)
-               << "," << (void *)(unsigned)CPU::ntohs(t.status)
-               << "," << (void *)CPU::ntohl(t.misc) << "}";
+            db << "{" << hex << ntohl(t.phy_addr) << dec
+               << "," << 65536 -ntohs(t.size)
+               << "," << hex << ntohs(t.status)
+               << "," << ntohl(t.misc) << dec << "}";
             return db;
         }
 
@@ -387,16 +387,15 @@ private:
     static const unsigned int PCI_DEVICE_ID = 0x2000;
     static const unsigned int PCI_REG_IO = 0;
 
-    // Transmit and Receive Ring (with buffers) sizes
+    // Transmit and Receive Ring sizes
     static const unsigned int UNITS = Traits<PCNet32>::UNITS;
     static const unsigned int TX_BUFS = Traits<PCNet32>::SEND_BUFFERS;
     static const unsigned int RX_BUFS =	Traits<PCNet32>::RECEIVE_BUFFERS;
-    static const unsigned int DMA_BUFFER_SIZE = 
-        ((sizeof(Init_Block) + 15) & ~15U) +
- 	RX_BUFS * ((sizeof(Rx_Desc) + 15) & ~15U) +
- 	TX_BUFS * ((sizeof(Tx_Desc) + 15) & ~15U) +
- 	RX_BUFS * ((sizeof(Frame) + 15) & ~15U) +
- 	TX_BUFS * ((sizeof(Frame) + 15) & ~15U); // GCC mess up MMU::align128
+
+    // Size of the DMA Buffer that will host the ring buffers and the init block
+    static const unsigned int DMA_BUFFER_SIZE = ((sizeof(Init_Block) + 15) & ~15U) +
+        RX_BUFS * ((sizeof(Rx_Desc) + 15) & ~15U) + TX_BUFS * ((sizeof(Tx_Desc) + 15) & ~15U) +
+        RX_BUFS * ((sizeof(Buffer) + 15) & ~15U) + TX_BUFS * ((sizeof(Buffer) + 15) & ~15U); // align128() cannot be used here
 
     // Share control and interrupt dispatching info
     struct Device
@@ -412,6 +411,8 @@ public:
 
     int send(const Address & dst, const Protocol & prot, const void * data, unsigned int size);
     int receive(Address * src, Protocol * prot, void * data, unsigned int size);
+
+    void received(Buffer * buf);
 
     void reset();
 
@@ -457,8 +458,8 @@ private:
     Tx_Desc * _tx_ring;
     Phy_Addr _tx_ring_phy;
 
-    Frame * _rx_buffer[RX_BUFS];
-    Frame * _tx_buffer[TX_BUFS];
+    Buffer * _rx_buffer[RX_BUFS];
+    Buffer * _tx_buffer[TX_BUFS];
 
     static Device _devices[UNITS];
 };

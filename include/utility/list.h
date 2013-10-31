@@ -552,7 +552,7 @@ public:
         return e;
     }
 
-    Element * remove_rank(int rank) {
+    Element * remove_rank(const Rank_Type & rank) {
         Element * e = search_rank(rank);
         if(e)
             return remove(e);
@@ -974,13 +974,13 @@ public:
             return 0;
     }
     
-    Element * search_rank(int rank) {
+    Element * search_rank(const Rank_Type & rank) {
         Element * e = head();
         for(; e && (e->rank() != rank); e = e->next());
         return e;
     }
 
-    Element * remove_rank(int rank) {
+    Element * remove_rank(const Rank_Type & rank) {
         db<Lists>(TRC) << "Ordered_List::remove_rank(r=" << rank << ")" << endl;
 
         Element * e = search_rank(rank);

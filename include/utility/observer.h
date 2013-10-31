@@ -175,25 +175,25 @@ public:
         db<Observed>(TRC) << "~Observed(this=" << this << ")" << endl;
     }
 
-    virtual void attach(Observer * o, long c) {
-        db<Observed>(TRC) << "Observed::attach(o=" << o << ",c=" << c << ")" << endl;
+    virtual void attach(Observer * o, int c) {
+        db<Observed>(TRC) << "Observed::attach(obs=" << o << ",cond=" << c << ")" << endl;
 
         o->_link = Element(o, c);
         _observers.insert(&o->_link);
     }
 
-    virtual void detach(Observer * o, long c) {
-        db<Observed>(TRC) << "Observed::detach(obs=" << o << ",c=" << c << ")" << endl;
+    virtual void detach(Observer * o, int c) {
+        db<Observed>(TRC) << "Observed::detach(obs=" << o << ",cond=" << c << ")" << endl;
 
         _observers.remove(&o->_link);
     }
 
     virtual void notify(int c, T * d) {
-        db<Observed>(TRC) << "Observed::notify(cond=" << c << ")" << endl;
+        db<Observed>(TRC) << "Observed::notify(cond=" << c << ",data=" << d << ")" << endl;
 
         for(Element * e = _observers.head(); e; e = e->next())
             if(e->rank() == c) {
-                db<Observed>(INF) << "Observed::notify(this=" << this << ",obs=" << e->object() << ")" << endl;
+                db<Observed>(INF) << "Observed::notify(this=" << this << ",obs=" << e->object() << ",cond=" << c << ",data=" << d << ")" << endl;
                 e->object()->update(this, c, d);
             }
     }
@@ -219,7 +219,7 @@ public:
         db<Observer>(TRC) << "~Observer(this=" << this << ")" << endl;
     }
 
-    virtual void update(Observed * o, int c, const T * d) = 0;
+    virtual void update(Observed * o, int c, T * d) = 0;
 
 private:
     typename Observed::Element _link;

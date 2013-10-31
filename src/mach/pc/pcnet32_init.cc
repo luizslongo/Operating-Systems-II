@@ -59,6 +59,7 @@ void PCNet32::init(unsigned int unit)
 
     // Enable interrupts for device
     IC::enable(_devices[unit].interrupt);
+    IC::disable(47);
 }
 
 __END_SYS

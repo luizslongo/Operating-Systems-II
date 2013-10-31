@@ -83,7 +83,7 @@ Thread::~Thread()
 }
 
 
-void Thread::priority(const Criterion & c)
+void Thread::priority(const Priority & c)
 {
     lock();
 
@@ -91,7 +91,7 @@ void Thread::priority(const Criterion & c)
 
     unsigned int old_cpu = _link.rank().queue();
 
-    _link.rank(c);
+    _link.rank(Criterion(c));
 
     if(_state != RUNNING) {
         _scheduler.remove(this);
@@ -277,7 +277,7 @@ void Thread::wakeup_all(Queue * q)
 
 void Thread::reschedule()
 {
-    db<Thread>(TRC) << "Thread::reschedule()" << endl;
+    db<Scheduler<Thread> >(TRC) << "Thread::reschedule()" << endl;
 
     Thread * prev = running();
     Thread * next = _scheduler.choose();
@@ -290,7 +290,7 @@ void Thread::reschedule(unsigned int cpu)
     if(!smp || (cpu == Machine::cpu_id()))
         reschedule();
     else {
-        db<Thread>(TRC) << "Thread::reschedule(cpu=" << cpu << ")" << endl;
+        db<Scheduler<Thread> >(TRC) << "Thread::reschedule(cpu=" << cpu << ")" << endl;
         IC::ipi_send(cpu, IC::INT_RESCHEDULER);
         unlock();
     }

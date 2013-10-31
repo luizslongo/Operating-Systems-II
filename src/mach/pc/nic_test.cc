@@ -2,6 +2,7 @@
 
 #include <utility/ostream.h>
 #include <nic.h>
+#include <alarm.h>
 
 using namespace EPOS;
 
@@ -22,8 +23,10 @@ int main()
             memset(data, '0' + i, nic.mtu());
             data[nic.mtu() - 1] = '\n';
             nic.send(NIC::BROADCAST, 0x8888, data, nic.mtu());
+            Delay(100000);
         }
     } else { // receiver
+        while(1);
         for(int i = 0; i < 10; i++) {
            nic.receive(&src, &prot, data, nic.mtu());
            cout << "  Data: " << data;

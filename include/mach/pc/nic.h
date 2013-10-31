@@ -34,6 +34,8 @@ public:
         return _dev->receive(src, prot, data, size); 
     }
 
+    void received(Buffer * buf) { _dev->received(buf); }
+
     void reset() { _dev->reset(); }
 
     unsigned int mtu() const { return _dev->mtu(); }

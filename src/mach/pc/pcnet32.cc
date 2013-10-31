@@ -50,22 +50,22 @@ PCNet32::PCNet32(unsigned int unit, IO_Port io_port, IO_Irq irq, DMA_Buffer * dm
     // Initialization Block
     _iblock = log;
     _iblock_phy = phy;
-    log += MMU::align128(sizeof(Init_Block));
-    phy += MMU::align128(sizeof(Init_Block));
+    log += align128(sizeof(Init_Block));
+    phy += align128(sizeof(Init_Block));
 
     // Rx_Desc Ring
     _rx_cur = 0;
     _rx_ring = log;
     _rx_ring_phy = phy;
-    log += RX_BUFS * MMU::align128(sizeof(Rx_Desc));
-    phy += RX_BUFS * MMU::align128(sizeof(Rx_Desc));
+    log += RX_BUFS * align128(sizeof(Rx_Desc));
+    phy += RX_BUFS * align128(sizeof(Rx_Desc));
 
     // Tx_Desc Ring
     _tx_cur = 0;
     _tx_ring = log;
     _tx_ring_phy = phy;
-    log += TX_BUFS * MMU::align128(sizeof(Tx_Desc));
-    phy += TX_BUFS * MMU::align128(sizeof(Tx_Desc));
+    log += TX_BUFS * align128(sizeof(Tx_Desc));
+    phy += TX_BUFS * align128(sizeof(Tx_Desc));
 
     // Rx Buffers
     for(unsigned int i = 0; i < RX_BUFS; i++) {
@@ -74,8 +74,9 @@ PCNet32::PCNet32(unsigned int unit, IO_Port io_port, IO_Irq irq, DMA_Buffer * dm
         _rx_ring[i].size = Reg16(-sizeof(Frame)); // 2's comp.
         _rx_ring[i].misc = 0;
         _rx_ring[i].status = Desc::OWN; // Owned by NIC
-        log += MMU::align128(sizeof(Frame));
-        phy += MMU::align128(sizeof(Frame));
+
+        log += align128(sizeof(Buffer));
+        phy += align128(sizeof(Buffer));
     }
 
     // Tx Buffers
@@ -84,8 +85,9 @@ PCNet32::PCNet32(unsigned int unit, IO_Port io_port, IO_Irq irq, DMA_Buffer * dm
         _tx_ring[i].phy_addr = phy;
         _tx_ring[i].misc = 0;
         _tx_ring[i].status = 0; // Owned by host
-        log += MMU::align128(sizeof(Frame));
-        phy += MMU::align128(sizeof(Frame));
+
+        log += align128(sizeof(Buffer));
+        phy += align128(sizeof(Buffer));
     }
 
     // Reset device
@@ -180,24 +182,26 @@ int PCNet32::send(const Address & dst, const Protocol & prot, const void * data,
                      << ",s=" << size
         	     << ")" << endl;
 
+    Tx_Desc * desc = &_tx_ring[_tx_cur];
+    Buffer * buf = _tx_buffer[_tx_cur];
+    ++_tx_cur %= TX_BUFS;
+
     // Wait for a free buffer
-    while(_tx_ring[_tx_cur].status & Rx_Desc::OWN);
+    while(desc->status & Rx_Desc::OWN);
 
     // Assemble the Ethernet frame
-    new (_tx_buffer[_tx_cur]) Frame(_address, dst, CPU::htons(prot), data, size);
+    new (buf->frame()) Frame(_address, dst, prot, data, size);
 
-    _tx_ring[_tx_cur].size = -(size + sizeof(Header)); // 2's comp.
+    desc->size = -(size + sizeof(Header)); // 2's comp.
 
     // Status must be set last, since it can trigger a send
-    _tx_ring[_tx_cur].status = Tx_Desc::OWN | Tx_Desc::STP | Tx_Desc::ENP;
+    desc->status = Tx_Desc::OWN | Tx_Desc::STP | Tx_Desc::ENP;
 
     // Trigger an immediate send poll
     csr(0, csr(0) | CSR0_TDMD);
 
     _statistics.tx_packets++;
     _statistics.tx_bytes += size;
-
-    ++_tx_cur %= TX_BUFS;
 
     return size;
 }
@@ -209,40 +213,55 @@ int PCNet32::receive(Address * src, Protocol * prot, void * data, unsigned int s
     while(_rx_ring[_rx_cur].status & Rx_Desc::OWN);
     // Most device drivers out there assume packets can arrive out of order, but without
     // any pipelining, the following seems overkill
-    // for(; _rx_ring[_rx_cur].status & Rx_Desc::OWN; ++_rx_cur %= RX_BUFS);
+//    for(; _rx_ring[_rx_cur].status & Rx_Desc::OWN; ++_rx_cur %= RX_BUFS);
+
+    Buffer * buf = _rx_buffer[_rx_cur];
+    Rx_Desc * desc = &_rx_ring[_rx_cur];
+    ++_rx_cur %= RX_BUFS;
 
     // Disassemble the Ethernet frame
-    Frame * frame = _rx_buffer[_rx_cur];
-    *src = frame->src();
-    *prot = CPU::ntohs(frame->prot());
-    unsigned int s = (_rx_ring[_rx_cur].misc & 0x00000fff) - sizeof(Header) - sizeof(CRC); // CRC
+    Frame * frame = buf->frame();
+    *src = frame->header()->src();
+    *prot = frame->header()->prot();
+    buf->size((desc->misc & 0x00000fff) - sizeof(Header) - sizeof(CRC));
 
     // Copy data
-    memcpy(data, frame->data(), (s > size) ? size : s);
+    memcpy(data, frame->data(), (buf->size() > size) ? size : buf->size());
  
     // Release the buffer to the NIC
-    _rx_ring[_rx_cur].status = Rx_Desc::OWN;
+    desc->status = Rx_Desc::OWN;
 
     _statistics.rx_packets++;
-    _statistics.rx_bytes += s;
-
-    ++_rx_cur %= RX_BUFS;
+    _statistics.rx_bytes += buf->size();
 
     db<PCNet32>(TRC) << "PCNet32::receive(s=" << *src
         	     << ",p=" << hex << *prot << dec
         	     << ",d=" << data
-        	     << ",s=" << s
+        	     << ",s=" << buf->size()
         	     << ") => " << endl;
 
-    return s;
+    return buf->size();
+}
+
+
+void PCNet32::received(Buffer * buf)
+{
+    db<PCNet32>(TRC) << "PCNet32::received(b=" << buf << ")" << endl;
+
+    // Release the buffer to the NIC
+    Rx_Desc * desc = reinterpret_cast<Rx_Desc *>(buf->back());
+
+    desc->status = Rx_Desc::OWN;
 }
 
 
 void PCNet32::handle_int()
 {
-    CPU::int_disable();
+//    CPU::int_disable();
+//    Thread::Priority pri = Thread::self()->priority();
+//    Thread::self()->priority(Thread::HIGH);
 
-    while(csr(0) & CSR0_INTR) {
+    if(csr(0) & CSR0_INTR) {
         int csr0 = csr(0);
         int csr4 = csr(4);
         int csr5 = csr(5);
@@ -255,9 +274,9 @@ void PCNet32::handle_int()
         // Initialization done?
         if(csr0 & CSR0_IDON) {
             // This should never happen, since IDON is disabled in reset()
-            // and all the initialization is conctrolled via polling, so if
+            // and all the initialization is controlled via polling, so if
             // we are here, it must be due to a hardware induced reset.
-            // All we can do is to try to reset the nic!
+            // All we can do is to try to reset the NIC!
             db<PCNet32>(WRN) << "PCNet32::handle_int: initialization done!" << endl;
             reset();
         }
@@ -269,8 +288,26 @@ void PCNet32::handle_int()
 
  	// Receive?
  	if(csr0 & CSR0_RINT) {
- 	    db<PCNet32>(INF) << "PCNet32::handle_int: receive" << endl;
-            notify(CPU::ntohs(_rx_buffer[_rx_cur]->prot()), _rx_buffer[_rx_cur]);
+ 	    Buffer * buf = _rx_buffer[_rx_cur];
+            Rx_Desc * desc = &_rx_ring[_rx_cur];
+            Frame * frame = buf->frame();
+            ++_rx_cur %= RX_BUFS;
+
+            Protocol prot = frame->header()->prot();
+            buf->size((desc->misc & 0x00000fff) - sizeof(Header) - sizeof(CRC));
+            buf->back(desc);
+
+            _statistics.rx_packets++;
+            _statistics.rx_bytes += buf->size();
+
+            db<PCNet32>(TRC) << "PCNet32::int_receive(s=" << frame->header()->src()
+                             << ",p=" << hex << prot << dec
+                             << ",d=" << frame->data()
+                             << ",s=" << buf->size()
+                             << ")" << endl;
+
+
+            notify(prot, buf);
  	}
 
         // Error?
@@ -347,7 +384,9 @@ void PCNet32::handle_int()
         }
     }
 
-    CPU::int_enable();
+//    Thread::self()->priority(pri);
+
+//    CPU::int_enable();
 }
 
 

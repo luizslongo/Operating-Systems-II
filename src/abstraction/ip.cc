@@ -1,63 +1,44 @@
+// EPOS IP Protocol Implementation
+
+#include <thread.h>
 #include <ip.h>
 
 __BEGIN_SYS
 
-IP::u16 IP::Header::_next_id = 0;
+// Class attributes
+unsigned short IP::Header::_next_id = 0;
 IP::Route::Table IP::Route::_table;
 IP::ARP::Hash IP::ARP::_table;
+IP::List IP::_fragmented;
 
-NIC * IP::_nic;
 
-IP::IP()
+// Methods
+IP::IP(NIC * nic): _nic(nic)
 {
-    _nic = new (SYSTEM) NIC;
+    if(Traits<IP>::CONFIG == Traits<IP>::STATIC) {
+        _address = Traits<IP>::ADDRESS;
+        _netmask = Traits<IP>::NETMASK;
+        _broadcast = Traits<IP>::BROADCAST;
+        _gateway = Traits<IP>::GATEWAY;
+    }
+    //    else DHCP
 
-    if(Traits<IP>::CONFIG == Traits<IP>::STATIC)
-        new (this) IP(Traits<IP>::ADDRESS, Traits<IP>::NETMASK, Traits<IP>::BROADCAST, Traits<IP>::GATEWAY);
-//    else DHCP
+    new (SYSTEM) Route(_nic, static_cast<unsigned long>(_address) & static_cast<unsigned long>(_netmask), _address, _netmask);
+    new (SYSTEM) Route(_nic, 0UL, _gateway, 0UL);
+
+    new (SYSTEM) ARP(_nic, _address, _nic->BROADCAST);
+    new (SYSTEM) ARP(_nic, _gateway, _nic->BROADCAST);
+
+    _nic->attach(this, NIC::IP);
 }
 
-IP::~IP() {
-}
-
-//void IP::process_ip(char *data, u16 size)
-//{
-//    Header &pck_h = *reinterpret_cast<Header*>(data);
-//    if((u32)_self != (u32)0 && // We MUST accept anything if our IP address is not set
-//       (u32)(pck_h.dst()) != (u32)(_self) &&
-//       (u32)(pck_h.dst()) != (u32)(_broadcast))
-//    {
-//        db<IP>(INF) << "IP Packet discarded. dst= " << pck_h.dst() << "\n";
-//        return;
-//    }
-//    else {
-//        db<IP>(TRC) << "IP: " << pck_h << "\n" ;
-//    }
-//
-//    if(!fragmentation && (pck_h.flags() == Header::MF_FLAG || pck_h.offset() != 0))
-//    {
-//        db<IP>(INF) << "IP::Fragmented packet discarded\n";
-//        return;
-//    }
-//
-//    if (calculate_checksum(data,pck_h.hlength()) != 0xFFFF) {
-//        db<IP>(TRC) << "IP checksum failed for incoming packet\n";
-//    } else {
-//        notify(pck_h.src(),pck_h.dst(),(int)pck_h.protocol(),
-//                &data[pck_h.hlength()], pck_h.length() - pck_h.hlength());
-//        if (pck_h.ttl() > 0) {
-//            pck_h.ttl(pck_h.ttl() - 1);
-//        }
-//    }
-//
-//}
 
 int IP::send(const Address & to, const Protocol & prot, const void * data, unsigned int size)
 {
     db<IP>(TRC) << "IP::send(f=" << _address <<",t=" << to << ",p=" << prot << ",d=" << data << ",s=" << size << ")" << endl;
 
-    Packet * pkt = new (SYSTEM) Packet(_address, to, prot, data, size);
-    db<IP>(INF) << "IP::send([pkt=" << pkt << "]) => " << *pkt << endl;
+    Packet packet(_address, to, prot, data, size);
+    db<IP>(INF) << "IP::send([pkt=" << &packet << "]) => " << packet << endl;
 
     const Route * through = route(to);
     db<IP>(INF) << "IP::send([route=" << through << " => " << *through << endl;
@@ -66,65 +47,146 @@ int IP::send(const Address & to, const Protocol & prot, const void * data, unsig
     MAC_Address mac = arp(through->gateway());
 
     if(size <= MAX_FRAGMENT)
-        _nic->send(mac, NIC::IP, pkt, pkt->length());
+        _nic->send(mac, NIC::IP, &packet, packet.length());
     else {
-        while(static_cast<int>(size) >= 0) {
+        unsigned int offset = 0;
+        const unsigned char * ptr = reinterpret_cast<const unsigned char *>(data);
+        while(int(size) >= 0) {
             if(size > MAX_FRAGMENT) {
-                pkt->header().flags(Header::MF);
-                pkt->header().length(MAX_FRAGMENT + sizeof(Header));
-                nic->send(mac, NIC::IP, pkt, pkt->length());
+                memcpy(packet.data(), ptr, MAX_FRAGMENT);
+                packet.length(MAX_FRAGMENT + sizeof(Header));
+                packet.offset(offset);
+                packet.flags(Header::MF);
+                packet.header()->sum();
+                nic->send(mac, NIC::IP, &packet, packet.length());
             } else {
-                pkt->header().flags(0);
-                pkt->header().length(size + sizeof(Header));
-                nic->send(mac, NIC::IP, pkt, pkt->length());
+                memcpy(packet.data(), ptr, size);
+                packet.length(size + sizeof(Header));
+                packet.offset(offset);
+                packet.flags(0);
+                packet.header()->sum();
+                nic->send(mac, NIC::IP, &packet, packet.length());
             }
-            pkt->header().offset(pkt->header().offset() + MAX_FRAGMENT);
+            offset += MAX_FRAGMENT;
+            ptr += MAX_FRAGMENT;
             size -= MAX_FRAGMENT;
         }
     }
 
-    delete pkt;
-
     return size;
 }
 
-int IP::receive(Address * from, Protocol * prot, void * data, unsigned int size)
-{
-    IP::MAC_Address nic_src;
-    NIC::Protocol nic_pro;
-    NIC::Data nic_data;
 
-    _nic->receive(&nic_src, &nic_pro, &nic_data, sizeof(Data));
-    Packet * pkt = reinterpret_cast<Packet *>(&nic_data);
-
-    db<IP>(INF) << "IP::receive([pkt=" << pkt << "]) => " << *pkt << endl;
-
-    *from = pkt->from();
-    *prot = pkt->protocol();
-    size = pkt->length() - sizeof(Header);
-    memcpy(data, pkt->data(), size);
-
-//    unsigned int max_size = sizeof(NIC::Data) - sizeof(Header);
-
-//    if(size <= max_size)
-//        _nic->send(mac, NIC::IP, pkt, sizeof(Header) + size);
-//    else {
-//        while(size > 0) {
-//            if(size > max_size) {
-//                pkt->header().flags(Header::MF);
-//                nic->send(mac, NIC::IP, pkt->data(), size);
-//            } else {
-//                pkt->header().flags(0);
-//                nic->send(mac, NIC::IP, pkt->data(), size);
-//            }
-//            size -= max_size;
+//int IP::receive(Address * from, Protocol * protocol, void * data, unsigned int size)
+//{
+//    db<IP>(TRC) << "IP::receive(f=" << from << ",p=" << *protocol << ",d=" << data << ",s=" << size << ")" << endl;
+//
+//    Element * el = 0;
+//    for(; !el; Thread::yield())
+//        if(protocol && *protocol)
+//            el = _received.remove_rank(*protocol);
+//        else
+//            el = _received.remove();
+//
+//    NIC::Buffer * buf = reinterpret_cast<NIC::Buffer *>(el);
+//    Packet * packet = reinterpret_cast<Packet *>(buf->frame()->data());
+//
+//    db<IP>(INF) << "IP::receive(...) => " << *packet << endl;
+//
+//    *from = packet->from();
+//    *protocol = packet->protocol();
+//
+//    if((packet->flags() & Header::MF) || (packet->offset() != 0)) { // Fragmented
+//        unsigned int copied = 0;
+//        for(; el; el = el->object()->link<Element>()) {
+//            buf = reinterpret_cast<NIC::Buffer *>(el);
+//            packet = reinterpret_cast<Packet *>(buf->frame()->data());
+//            copied += packet->length() - sizeof(Header);
+//            if(copied > size)
+//                break;
+//            memcpy(&reinterpret_cast<char *>(data)[packet->offset()], packet->data(), packet->length());
+//            _nic->received(buf);
 //        }
+//        size = copied;
+//    } else {
+//        if(size > packet->length() - sizeof(Header))
+//            size = packet->length() - sizeof(Header);
+//        memcpy(data, packet->data(), size);
+//        _nic->received(buf);
 //    }
 //
-//    delete pkt;
+//    return size;
+//}
 
-    db<IP>(TRC) << "IP::receive(f=" << from <<",t=" << _address << ",p=" << prot << ",d=" << data << ",s=" << size << ")" << endl;
 
-    return size;
+void IP::update(NIC::Observed * nic, int prot, NIC::Buffer * buf)
+{
+    db<IP>(TRC) << "IP::update(nic=" << nic << ",prot=" << prot << ",buf=" << buf << ")" << endl;
+
+    Packet * packet = reinterpret_cast<Packet *>(buf->frame()->data());
+
+    db<IP>(INF) << "IP::received(...) => pkt[" << packet << "]=" << *packet << endl;
+
+    if(!packet->check()) {
+        db<IP>(WRN) << "IP::received: wrong packet checksum!" << endl;
+        _nic->received(buf);
+        return;
+    }
+
+    unsigned long key = (packet->protocol() << 16) | packet->id();
+    buf->link<Element>(Element(0, key));
+
+    if((packet->flags() & Header::MF) || (packet->offset() != 0)) { // Fragment
+        Element * head = _fragmented.search_rank(key);
+        if(!head) // First fragment of this datagram
+            _fragmented.insert(buf->link<Element>());
+        else {
+            // Insert fragment at the end of the list pointed by object()
+            Element * el;
+            for(el = head; el->object(); el = el->object()->link<Element>());
+            *el = Element(buf, key);
+
+            // Check if the fragment completes a datagram
+            unsigned int total = 0;
+            unsigned int current = 0;
+            for(el = head; el; el = el->object()->link<Element>()) {
+                buf = reinterpret_cast<NIC::Buffer *>(el);
+                packet = reinterpret_cast<Packet *>(buf->frame()->data());
+                if(!(packet->flags() & Header::MF))
+                    total = packet->offset() + packet->length() - sizeof(Header);
+                current += packet->length() - sizeof(Header);
+            }
+            if(current == total) {
+                db<IP>(INF) << "IP::update() => notify fragmented datagram" << endl;
+                _fragmented.remove(head);
+                buf = reinterpret_cast<NIC::Buffer *>(head);
+                notify(packet->protocol(), buf);
+            }
+        }
+    } else {
+        db<IP>(INF) << "IP::update() => notify whole datagram" << endl;
+        notify(packet->protocol(), buf);
+    }
 }
+
+
+unsigned short IP::checksum(const void * data, unsigned int size)
+{
+    db<IP>(TRC) << "IP::checksum(d=" << data << ",s=" << size << ")" << endl;
+
+    const unsigned char * ptr = reinterpret_cast<const unsigned char *>(data);
+    unsigned long sum = 0;
+
+    for(unsigned int i = 0; i < size - 1; i += 2)
+        sum += (ptr[i] << 8) | ptr[i+1];
+
+    if(size & 1)
+        sum += ptr[size - 1];
+
+    while(sum >> 16)
+        sum = (sum & 0xffff) + (sum >> 16);
+
+    return ~sum;
+}
+
 __END_SYS
