@@ -10,7 +10,7 @@ template <typename T>
 struct Traits
 {
     static const bool enabled = true;
-    static const bool debugged = false;
+    static const bool debugged = true;
 };
 
 template <> struct Traits<Build>
@@ -34,8 +34,8 @@ template <> struct Traits<Debug>
 {
     static const bool error   = true;
     static const bool warning = true;
-    static const bool info    = true;
-    static const bool trace   = true;
+    static const bool info    = false;
+    static const bool trace   = false;
 };
 
 template <> struct Traits<Lists>: public Traits<void>
@@ -158,29 +158,19 @@ template <> struct Traits<Synchronizer>: public Traits<void>
 
 template <> struct Traits<IP>: public Traits<void>
 {
-    static const bool debugged = true;
+    enum {STATIC, DHCP};
+    static const unsigned int CONFIG = STATIC;
 
     static const unsigned long ADDRESS   = 0x0a000102;   // 10.0.1.2
     static const unsigned long NETMASK   = 0xffffff00;   // 255.255.255.0
     static const unsigned long BROADCAST = 0x0a0001ff;   // 10.0.1.255
     static const unsigned long GATEWAY   = 0x0a000101;   // 10.0.1.1
 
-//    static const bool forwarding    = false;
-//    static const bool fragmentation = false;
-//    static const bool spawn_thread  = true;
-
-    enum {STATIC, DHCP};
-    static const unsigned int CONFIG = STATIC;
-
-//    static const unsigned int  OPT_SIZE = 0; // options size in 32-bit words
     static const unsigned int TTL  = 0x20; // Time-to-live
-//    static const unsigned int  MAX_FRAGMENTS = 1;
 };
 
 template <> struct Traits<UDP>: public Traits<void>
 {
-    static const bool debugged = true;
-
     static const bool checksum = false;
 };
 

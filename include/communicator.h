@@ -22,15 +22,24 @@ private:
 
 protected:
     Communicator_Common(Network * network): _ready(0), _channel(network) {}
+
+public:
     ~Communicator_Common() {}
 
-    int send(const void * data, unsigned int size) {
-        return _channel.send(_from, _to, data, size);
+    int send(const Address & from, const Address & to, const void * data, unsigned int size) {
+        return _channel.send(from, to, data, size);
     }
     int receive(void * data, unsigned int size) {
         _ready.p();
         Buffer * buf = reinterpret_cast<Buffer *>(_received.remove());
         return _channel.receive(buf, data, size);
+    }
+
+    void bind(const Local_Address & port) {
+        _channel.attach(this, port);
+    }
+    void unbind(const Local_Address & port) {
+        _channel.detach(this, port);
     }
 
 private:
@@ -39,7 +48,7 @@ private:
         _ready.v();
     }
 
-protected:
+private:
     Semaphore _ready;
     List _received;
 
@@ -47,26 +56,29 @@ protected:
 };
 
 template<typename Channel, typename Network = typename Channel::Network>
-class Link: private Communicator_Common<Channel, Network>
+class Link: public Communicator_Common<Channel, Network>
 {
+private:
+    typedef Communicator_Common<Channel, Network> Base;
+
 public:
     // Channel imports
     typedef typename Channel::Address Address;
     typedef typename Channel::Address::Local Local_Address;
 
 public:
-    Link(Network * network, const Local_Address & from, const Address & to): Communicator_Common(network), _from(network->address(), from), _to(to) {
-        _channel.attach(this, from);
+    Link(Network * network, const Local_Address & from, const Address & to): Base(network), _from(network->address(), from), _to(to) {
+        bind(from);
     }
     ~Link() {
-        _channel.detach(this, _from.local());
+        unbind(_from.local());
     }
 
     int send(const void * data, unsigned int size) {
-        return _channel.send(_from, _to, data, size);
+        return Base::send(_from, _to, data, size);
     }
     int receive(void * data, unsigned int size) {
-        return Communicator_Common::receive(data, size);
+        return Base::receive(data, size);
     }
 
 private:
@@ -78,24 +90,27 @@ private:
 template<typename Channel, typename Network = typename Channel::Network>
 class Port: private Communicator_Common<Channel, Network>
 {
+private:
+    typedef Communicator_Common<Channel, Network> Base;
+
 public:
     // Channel imports
     typedef typename Channel::Address Address;
     typedef typename Channel::Address::Local Local_Address;
 
 public:
-    Port(Network * network, const Local_Address & port): Communicator_Common(network), _from(network->address(), port) {
-        _channel.attach(this, port);
+    Port(Network * network, const Local_Address & port): Base(network), _from(network->address(), port) {
+        bind(port);
     }
     ~Port() {
-        _channel.detach(this, _from.local());
+        unbind(_from.local());
     }
 
     int send(const Address & to, const void * data, unsigned int size) {
-        return _channel.send(_from, to, data, size);
+        return Base::send(_from, to, data, size);
     }
     int receive(void * data, unsigned int size) {
-        return Communicator_Common::receive(data, size);
+        return Base::receive(data, size);
     }
 
 private:
