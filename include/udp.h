@@ -12,9 +12,13 @@ class UDP: private IP::Observer, public Data_Observed<NIC::Buffer>
     template<typename Channel, typename Network> friend class Socket;
 
 private:
-    // List to hold received NIC::Buffers
-    typedef Ordered_List<NIC::Buffer, unsigned long> List;
+    // List to hold received Buffers
+    typedef NIC::Buffer Buffer;
+    typedef Buffer::List List;
     typedef List::Element Element;
+
+    // IP Packet
+    typedef IP::Packet Packet;
 
     // Pseudo header for checksum calculations
     struct Pseudo_Header {
@@ -64,15 +68,17 @@ public:
         Port _port;
     };
     
+
     typedef Data_Observer<NIC::Buffer> Observer;
     typedef Data_Observed<NIC::Buffer> Observed;
+
 
     class Header
     {
     public:
         Header() {}
-        Header(const Port & from, const Port & to, unsigned int size):
-            _from_port(htons(from)), _to_port(htons(to)), _length(htons(size)), _checksum(0) {}
+        Header(const Port & from, const Port & to, unsigned int size)
+        : _from_port(htons(from)), _to_port(htons(to)), _length(htons((size > sizeof(Data) ? sizeof(Data) : size) + sizeof(Header))) {}
 
         Port from_port() const { return ntohs(_from_port); }
         Port to_port() const { return ntohs(_to_port); }
@@ -90,46 +96,36 @@ public:
     protected:
         unsigned short _from_port;
         unsigned short _to_port;
-        unsigned short _length; // Length of datagram (header + data) in bytes
+        unsigned short _length;   // Length of datagram (header + data) in bytes
         unsigned short _checksum; // Pseudo header checksum (see RFC)
     };
 
+
     static const unsigned int MTU = 65536 - sizeof(Header) - sizeof(IP::Header);
+
     typedef unsigned char Data[MTU];
+
 
     class Message: public Header
     {
     public:
         Message() {}
-        Message(const Address & from, const Address & to, const void * data, unsigned int size)
-        : Header(from.port(), to.port(), (size > sizeof(Data) ? sizeof(Data) : size) + sizeof(Header)) {
-            memcpy(_data, data, size > sizeof(Data) ? sizeof(Data) : size);
-            _checksum = Traits<UDP>::checksum ? sum(from.ip(), to.ip()) : 0;
-        }
+        Message(const Port & from, const Port & to, unsigned int size): Header(from, to, size) {}
+        Message(const Port & from, const Port & to, const void * data, unsigned int size)
+        : Header(from, to, size) { memcpy(_data, data, length()); sum(); }
 
         Header * header() { return this; }
         unsigned char * data() { return _data; }
 
-        bool check(const IP::Address & from, const IP::Address & to) const {
-            return Traits<UDP>::checksum ? (_checksum == sum(from, to)) : true;
+        void sum(const void * data = 0) {
+            Pseudo_Header pseudo(from_port(), to_port(), length());
+            _checksum = Traits<UDP>::checksum ? UDP::checksum(&pseudo, data ? data : _data, length()) : 0;
         }
+        bool check() { return Traits<UDP>::checksum ? !UDP::checksum(header(), data(), length()) : true; }
 
         friend Debug & operator<<(Debug & db, const Message & m) {
             db << "{head=" << reinterpret_cast<const Header &>(m) << ",data=" << m._data << "}";
             return db;
-        }
-
-    private:
-        unsigned short sum(const IP::Address & from, const IP::Address & to) const {
-            Pseudo_Header pseudo(from, to, length());
-
-            unsigned long sum = IP::checksum(&pseudo, sizeof(Pseudo_Header));
-            sum += IP::checksum(this, length());
-
-            while(sum >> 16)
-                sum = (sum & 0xffff) + (sum >> 16);
-
-            return ~sum;
         }
 
     private:
@@ -141,12 +137,12 @@ public:
     ~UDP() { _ip->detach(this, IP::UDP); }
 
     int send(const Address & from, const Address & to, const void * data, unsigned int size);
-    int receive(Address * from, void * data, unsigned int size);
+    int receive(NIC::Buffer * buf, void * data, unsigned int size);
 
 private:
     void update(IP::Observed * ip, int port, NIC::Buffer * buf);
 
-    int receive(NIC::Buffer * buf, void * data, unsigned int size);
+    static unsigned short checksum(const void * header, const void * data, unsigned int size);
 
 private:
     IP * _ip;

@@ -3,24 +3,20 @@
 #ifndef __ip_h
 #define __ip_h
 
-#include <cpu.h>
-#include <nic.h>
 #include <utility/string.h>
 #include <utility/hash.h>
+#include <cpu.h>
+#include <nic.h>
 #include <system.h>
-#include <semaphore.h>
 
 __BEGIN_SYS
 
 class IP: private NIC::Observer, public Data_Observed<NIC::Buffer>
 {
-    friend class ICMP;
-    friend class UDP;
-    friend class TCP;
-
 private:
-    // List to hold received NIC::Buffers
-    typedef Ordered_List<NIC::Buffer, unsigned long> List;
+    // List to hold received Buffers
+    typedef NIC::Buffer Buffer;
+    typedef Buffer::List List;
     typedef List::Element Element;
 
 public:
@@ -39,6 +35,10 @@ public:
 
         operator unsigned long() { return ntohl(*reinterpret_cast<unsigned long *>(this)); }
         operator unsigned long() const { return ntohl(*reinterpret_cast<const unsigned long *>(this)); }
+
+        bool net_match(const Address & m, const Address & a) const {
+            return (static_cast<unsigned long>(*this) & static_cast<unsigned long>(m)) != static_cast<unsigned long>(a);
+        }
     } __attribute__((packed, may_alias));
 
     // RFC 1700 Protocols
@@ -51,8 +51,9 @@ public:
         TTP     = 0x54
     };
 
-    typedef Data_Observer<NIC::Buffer> Observer;
-    typedef Data_Observed<NIC::Buffer> Observed;
+
+    typedef Data_Observer<Buffer> Observer;
+    typedef Data_Observed<Buffer> Observed;
 
 
     class Header
@@ -70,7 +71,6 @@ public:
 
     public:
         Header() {}
-
         Header(const Address & from, const Address & to, const Protocol & prot, unsigned int size) :
             _ihl(IHL),  _version(VER), _tos(TOS), _length(htons(size)), _id(htons(_next_id++)),
             _offset(0), _flags(0), _ttl(TTL), _protocol(prot), _checksum(0), _from(from), _to(to) {}
@@ -145,7 +145,7 @@ public:
     } __attribute__((packed, may_alias));
 
 
-    static const unsigned int MTU = 65536 - sizeof(Header);
+    static const unsigned int MTU = 65535 - sizeof(Header);
     typedef unsigned char Data[MTU];
 
 
@@ -153,7 +153,8 @@ public:
     {
     public:
         Packet() {}
-
+        Packet(const Address & from, const Address & to, const Protocol & prot, unsigned int size)
+        : Header(from, to, prot, size + sizeof(Header)) {}
         Packet(const Address & from, const Address & to, const Protocol & prot, const void * data, unsigned int size)
         : Header(from, to, prot, size + sizeof(Header)) {
             header()->sum();
@@ -174,7 +175,9 @@ public:
 
     typedef Packet PDU;
 
+
     static const unsigned int MAX_FRAGMENT = sizeof(NIC::Data) - sizeof(Header);
+
 
     class Route
     {
@@ -196,7 +199,7 @@ public:
 
         static const Route * get(const Address & to) { // Assume default (0.0.0.0) to have genmask 0.0.0.0 and be the last route in table
             Element * e = _table.head();
-            for(; e && (static_cast<unsigned long>(to) & static_cast<unsigned long>(e->object()->_genmask)) != static_cast<unsigned long>(e->object()->_destination); e = e->next())
+            for(; e && to.net_match(e->object()->_genmask, e->object()->_destination); e = e->next())
                 db<IP>(INF) << "IP::Route::search([route=" << e->object() << " => " << *e->object() << endl;
             return e->object();
         }
@@ -229,7 +232,7 @@ public:
     {
     private:
         typedef Simple_Hash<ARP, 10, Address> Hash;
-        typedef Simple_Hash<ARP, 10, Address>::Element Element;
+        typedef Hash::Element Element;
 
     public:
         ARP(NIC * n, const Address & log, const MAC_Address & phy)
@@ -258,21 +261,20 @@ public:
     const Address & gateway() { return _gateway; }
     const Address & netmask() { return _netmask; }
     
-    int send(const Address & to, const Protocol & protocol, const void * data, unsigned int size);
-    int receive(Address * from, Protocol * protocol, void * data, unsigned int size);
+    NIC * nic() { return _nic; }
+
+    int send(const Address & to, const Protocol & protocol, Buffer * buf);
 
     static const unsigned int mtu() { return MTU; }
 
-    NIC * nic() { return _nic; }
+    static unsigned short checksum(const void * data, unsigned int size);
 
 private:
-    void update(NIC::Observed * nic, int prot, NIC::Buffer * buf);
+    void update(NIC::Observed * nic, int prot, Buffer * buf);
 
-    static const MAC_Address & arp(const Address & log) { return ARP::get(log); }
+    static const MAC_Address & arp(NIC * nic, const Address & log) { return ARP::get(log); }
 
     static const Route * route(const Address & to) { return Route::get(to); }
-
-    static unsigned short checksum(const void * d, unsigned int size);
 
 protected:
     Address _address;

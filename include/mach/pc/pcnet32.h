@@ -268,7 +268,7 @@ public:
         Reg32 tx_ring;		// Rx Ring DMA physical address
     };
 
-    // Transmit and Receive Descriptors (in the Receive Ring Buffer)
+    // Transmit and Receive Descriptors (in the Ring Buffers)
     struct Desc {
         enum {
             OWN = 0x8000,
@@ -278,19 +278,22 @@ public:
             BPE = 0x0080
         };
 
+        bool lock() { return !CPU::tsl(busy); }
+        void unlock() { busy = 0; }
+
         friend Debug & operator<<(Debug & db, const Desc & t) {
-            db << "{" << hex << ntohl(t.phy_addr) << dec
-               << "," << 65536 -ntohs(t.size)
-               << "," << hex << ntohs(t.status)
-               << "," << ntohl(t.misc) << dec << "}";
+            db << "{" << hex << t.phy_addr << dec
+               << "," << 65536 - t.size
+               << "," << hex << t.status
+               << "," << t.misc << dec << "}";
             return db;
         }
 
         Reg32 phy_addr;
-        Reg16 size;             // 2's complement
+        volatile Reg16 size; // 2's complement
         volatile Reg16 status;
-        Reg32 misc;
-        Reg32 reserved;
+        volatile Reg32 misc;
+        volatile bool busy; // 32 reserved bits
     };
 
     // Receive Descriptor
@@ -377,6 +380,8 @@ protected:
     IO_Port _io_port;
 };
 
+
+// PCNet32 PC Ethernet NIC
 class PCNet32: public Ethernet, private Am79C970A
 {
     template <int unit> friend void call_init();
@@ -387,22 +392,24 @@ private:
     static const unsigned int PCI_DEVICE_ID = 0x2000;
     static const unsigned int PCI_REG_IO = 0;
 
+
     // Transmit and Receive Ring sizes
     static const unsigned int UNITS = Traits<PCNet32>::UNITS;
     static const unsigned int TX_BUFS = Traits<PCNet32>::SEND_BUFFERS;
     static const unsigned int RX_BUFS =	Traits<PCNet32>::RECEIVE_BUFFERS;
+
 
     // Size of the DMA Buffer that will host the ring buffers and the init block
     static const unsigned int DMA_BUFFER_SIZE = ((sizeof(Init_Block) + 15) & ~15U) +
         RX_BUFS * ((sizeof(Rx_Desc) + 15) & ~15U) + TX_BUFS * ((sizeof(Tx_Desc) + 15) & ~15U) +
         RX_BUFS * ((sizeof(Buffer) + 15) & ~15U) + TX_BUFS * ((sizeof(Buffer) + 15) & ~15U); // align128() cannot be used here
 
-    // Share control and interrupt dispatching info
+
+    // Interrupt dispatching info
     struct Device
     {
         PCNet32 * device;
         unsigned int interrupt;
-        bool in_use;
     };
         
 public:
@@ -410,16 +417,18 @@ public:
     ~PCNet32();
 
     int send(const Address & dst, const Protocol & prot, const void * data, unsigned int size);
+    int send(const Address & dst, const Protocol & prot, Buffer * buf);
     int receive(Address * src, Protocol * prot, void * data, unsigned int size);
 
-    void received(Buffer * buf);
+    Buffer * alloc(unsigned int once, unsigned int always, unsigned int payload);
+    void free(Buffer * buf);
 
-    void reset();
-
-    unsigned int mtu() { return MTU; }
     const Address & address() { return _address; }
     void address(const Address & address) { _address = address; }
+
     const Statistics & statistics() { return _statistics; }
+
+    void reset();
 
 private:
     PCNet32(unsigned int unit, IO_Port io_port, IO_Irq irq, DMA_Buffer * dma);

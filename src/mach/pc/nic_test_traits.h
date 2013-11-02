@@ -10,7 +10,7 @@ template <typename T>
 struct Traits
 {
     static const bool enabled = true;
-    static const bool debugged = true;
+    static const bool debugged = false;
 };
 
 template <> struct Traits<Build>

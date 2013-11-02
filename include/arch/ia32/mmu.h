@@ -156,8 +156,7 @@ public:
         unsigned int size() const { return (_to - _from) * sizeof(Page); }
 
         Phy_Addr phy_address() const {
-            return (_flags & IA32_Flags::CT) ?
-        	Phy_Addr(indexes((*_pt)[_from])) : Phy_Addr(false);
+            return (_flags & IA32_Flags::CT) ? Phy_Addr(indexes((*_pt)[_from])) : Phy_Addr(false);
         }
 
         int resize(unsigned int amount) {

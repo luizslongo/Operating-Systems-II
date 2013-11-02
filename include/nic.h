@@ -3,9 +3,6 @@
 #ifndef __nic_h
 #define __nic_h
 
-#include <cpu.h>
-#include <utility/observer.h>
-#include <utility/crc.h>
 #include <utility/string.h>
 
 __BEGIN_SYS
@@ -33,7 +30,7 @@ public:
             if(LENGTH > 7) _address[7] = a[7];
         }
         Address(unsigned char a0, unsigned char a1 = 0, unsigned char a2 = 0, unsigned char a3 = 0,
-                     unsigned char a4 = 0, unsigned char a5 = 0, unsigned char a6 = 0, unsigned char a7 = 0) {
+                unsigned char a4 = 0, unsigned char a5 = 0, unsigned char a6 = 0, unsigned char a7 = 0) {
             _address[0] =  a0;
             if(LENGTH > 1) _address[1] = a1;
             if(LENGTH > 2) _address[2] = a2;
@@ -93,11 +90,9 @@ public:
     // NIC protocol id
     typedef unsigned short Protocol;
 
-    // NIC CRC32
-    typedef CPU::Reg32 CRC32;
-
-    // Buffers used to hold frames across a zero-copy network stack
-    class Buffer;
+    // NIC CRCs
+    typedef unsigned short CRC16;
+    typedef unsigned long CRC32;
 
     // NIC statistics
     struct Statistics
@@ -111,13 +106,14 @@ public:
     };
 
     // Polymorphic (or not) NIC wrapper
-    template<typename T>
+    template<typename NIC>
     class NIC_Base
     {
     private:
-        typedef typename T::Address Address;
-        typedef typename T::Protocol Protocol;
-        typedef typename T::Statistics Statistics;
+        typedef typename NIC::Address Address;
+        typedef typename NIC::Protocol Protocol;
+        typedef typename NIC::Statistics Statistics;
+        typedef typename NIC::Buffer Buffer;
 
     public:
         NIC_Base(unsigned int unit = 0) {}
@@ -125,18 +121,21 @@ public:
         virtual ~NIC_Base() {}
     
         virtual int send(const Address & dst, const Protocol & prot, const void * data, unsigned int size) = 0;
+        virtual int send(const Address & dst, const Protocol & prot, Buffer * buf) = 0;
         virtual int receive(Address * src, Protocol * prot, void * data, unsigned int size) = 0;
     
-        virtual void received(Buffer * buf) = 0;
+        virtual Buffer * alloc(unsigned int once, unsigned int always, unsigned int payload) = 0;
+        virtual void free(Buffer * buf) = 0;
 
-        virtual void reset() = 0;
-    
-        virtual unsigned int mtu() = 0;
+        virtual const unsigned int mtu() = 0;
+        virtual const Address broadcast() = 0;
 
         virtual const Address & address() = 0;
         virtual void address(const Address &) = 0;
 
         virtual const Statistics & statistics() = 0;
+
+        virtual void reset() = 0;
     };
 
     template<typename NIC, bool polymorphic>
@@ -146,6 +145,7 @@ public:
         typedef typename NIC::Address Address;
         typedef typename NIC::Protocol Protocol;
         typedef typename NIC::Statistics Statistics;
+        typedef typename NIC::Buffer Buffer;
 
     public:
         NIC_Wrapper(unsigned int unit = 0): NIC(unit) {}
@@ -155,21 +155,29 @@ public:
         virtual int send(const Address & dst, const Protocol & prot, const void * data, unsigned int size) {
             return NIC::send(dst, prot, data, size); 
         }
+        virtual int send(const Address & dst, const Protocol & prot, Buffer * buf) {
+            return NIC::send(dst, prot, buf);
+        }
         virtual int receive(Address * src, Protocol * prot, void * data, unsigned int size) {
             return NIC::receive(src, prot, data, size); 
         }
-        virtual void received(Buffer * buf) {
-            return NIC::received(buf);
+
+        virtual Buffer * alloc(unsigned int once, unsigned int always, unsigned int payload) {
+            return NIC::alloc(once, always, payload);
+        }
+        virtual void free(Buffer * buf) {
+            return NIC::free(buf);
         }
 
-        virtual void reset() { NIC::reset(); }
-    
-        virtual unsigned int mtu() { return NIC::mtu(); }
+        virtual const unsigned int mtu() const { return NIC::mtu(); }
+        virtual const Address broadcast() const { return NIC::broadcast(); }
 
         virtual const Address & address() { return NIC::address(); }
         virtual void address(const Address & address) { NIC::address(address); }
 
         virtual const Statistics & statistics() { return NIC::statistics(); }
+
+        virtual void reset() { NIC::reset(); }
     };
 
     template<typename NIC>

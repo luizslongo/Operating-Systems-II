@@ -27,6 +27,9 @@ public:
 
     ~PC_Ethernet() { delete _dev; }
     
+    int send(const Address & dst, const Protocol & prot, Buffer * buf) {
+        return _dev->send(dst, prot, buf);
+    }
     int send(const Address & dst, const Protocol & prot, const void * data, unsigned int size) {
         return _dev->send(dst, prot, data, size); 
     }
@@ -34,16 +37,18 @@ public:
         return _dev->receive(src, prot, data, size); 
     }
 
-    void received(Buffer * buf) { _dev->received(buf); }
+    Buffer * alloc(unsigned int once, unsigned int always, unsigned int payload) { return _dev->alloc(once, always, payload); }
+    void free(Buffer * buf) { _dev->free(buf); }
 
-    void reset() { _dev->reset(); }
-
-    unsigned int mtu() const { return _dev->mtu(); }
+    const unsigned int mtu() const { return _dev->mtu(); }
+    const Address broadcast() const { return _dev->broadcast(); }
     
     const Address & address() { return _dev->address(); }
     void address(const Address & address) { _dev->address(address); }
 
     const Statistics & statistics() { return _dev->statistics(); }
+
+    void reset() { _dev->reset(); }
 
 private:
     static void init();

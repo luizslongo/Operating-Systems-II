@@ -13,78 +13,74 @@ int UDP::send(const Address & from, const Address & to, const void * data, unsig
 {
     db<UDP>(TRC) << "UDP::send(f=" << from << ",t=" << to << ",d=" << data << ",s=" << size << ")" << endl;
 
-    Message message(from, to, data, size);
+    unsigned int ret = (size > sizeof(Data)) ? sizeof(Data) : size;
 
-    db<UDP>(INF) << "UDP::send([msg=" << &message << "]) => " << message << endl;
+    NIC::Buffer * pool = _ip->nic()->alloc(sizeof(Header), sizeof(IP::Header), ret);
 
-    return _ip->send(to.ip(), IP::UDP, &message, message.length()) - sizeof(Header);
-}
-
-//int UDP::receive(Address * from, void * data, unsigned int size)
-//{
-//    db<UDP>(TRC) << "UDP::receive(f=" << *from << ",d=" << data << ",s=" << size << ")" << endl;
-//
-//    Element * el = _received.remove();
-//    NIC::Buffer * buf = reinterpret_cast<NIC::Buffer *>(el);
-//    IP::Packet * packet = reinterpret_cast<IP::Packet *>(buf->frame()->data());
-//    Message * message = reinterpret_cast<Message *>(packet->data());
-//
-//    *from = Address(packet->from(), message->from_port());
-//
-//    if(size > message->length() - sizeof(IP::Header) - sizeof(Header))
-//        size = message->length() - sizeof(IP::Header) - sizeof(Header);
-//
-//    if((packet->flags() & IP::Header::MF) || (packet->offset() != 0)) // Fragmented
-//        while(el) {
-//            buf = reinterpret_cast<NIC::Buffer *>(el);
-//            packet = reinterpret_cast<IP::Packet *>(buf->frame()->data());
-//            message = reinterpret_cast<Message *>(packet->data());
-//
-//            memcpy((char *)data + packet->offset() - sizeof(Header), message->data(), message->length() - sizeof(Header)); // Fragmentation still to be handled
-//
-//            _ip->nic()->received(buf);
-//            el = reinterpret_cast<Element *>(el->object());
-//        }
-//    else {
-//        memcpy(data, message->data(), size);
-//        _ip->nic()->received(buf);
-//    }
-//
-//    return size;
-//}
-
-
-int UDP::receive(NIC::Buffer * buf, void * data, unsigned int size)
-{
-    db<UDP>(TRC) << "UDP::receive(buf=" << buf << ",d=" << data << ",s=" << size << ")" << endl;
-
-    Element * el = reinterpret_cast<Element *>(buf);
-    IP::Packet * packet = reinterpret_cast<IP::Packet *>(buf->frame()->data());
+    NIC::Buffer * buf = pool;
+    Packet * packet = reinterpret_cast<Packet *>(buf->frame()->data());
     Message * message = reinterpret_cast<Message *>(packet->data());
 
-    if(size > message->length() - sizeof(Header))
-        size = message->length() - sizeof(Header);
+    db<UDP>(INF) << "UDP::send:msg=" << message << " => " << *message << endl;
 
-    if((packet->flags() & IP::Header::MF) || (packet->offset() != 0)) { // Fragmented
-        unsigned char * ptr = reinterpret_cast<unsigned char *>(data);
-        while(el) {
-            buf = reinterpret_cast<NIC::Buffer *>(el);
-            packet = reinterpret_cast<IP::Packet *>(buf->frame()->data());
+    const unsigned char * src = reinterpret_cast<const unsigned char *>(data);
+    unsigned char * dst = message->data();
+    unsigned int length = IP::MAX_FRAGMENT - sizeof(Header);
 
-            if(packet->offset())
-                memcpy(&ptr[packet->offset() - sizeof(Header)], packet->data(), packet->length() - sizeof(IP::Header));
-            else
-                memcpy(ptr, message->data(), packet->length() - sizeof(IP::Header) - sizeof(Header));
+    new(packet->data()) Header(from.port(), to.port(), size);
+    message->sum(data);
 
-            _ip->nic()->received(buf);
-            el = reinterpret_cast<Element *>(el->object());
-        }
-    } else {
-        memcpy(data, message->data(), size);
-        _ip->nic()->received(buf);
+    do {
+        memcpy(dst, src, length);
+
+        buf = buf->next();
+        packet = reinterpret_cast<Packet *>(buf->frame()->data());
+
+        size -= length;
+        src += length;
+        dst = packet->data();
+        length = (size > IP::MAX_FRAGMENT) ? IP::MAX_FRAGMENT : size;
+    } while(buf);
+
+    _ip->send(to.ip(), IP::UDP, pool);
+
+    return ret;
+}
+
+
+int UDP::receive(NIC::Buffer * buf, void * d, unsigned int s)
+{
+    unsigned char * data = reinterpret_cast<unsigned char *>(d);
+
+    db<UDP>(TRC) << "UDP::receive(buf=" << buf << ",d=" << d << ",s=" << s << ")" << endl;
+
+    Packet * packet = reinterpret_cast<Packet *>(buf->frame()->data());
+    Message * message = reinterpret_cast<Message *>(packet->data());
+
+    unsigned int size =  message->length() - sizeof(Header);
+    if(size > s)
+        size = s;
+    unsigned int ret = size;
+
+    unsigned int frag = packet->length() - sizeof(IP::Header) - sizeof(Header);
+    if(frag > size)
+        frag = size;
+
+    memcpy(data, message->data(), frag);
+    size -= frag;
+
+    for(buf = buf->next(); buf && (size > 0); buf = buf->next()) { // Fragmented
+        packet = reinterpret_cast<Packet *>(buf->frame()->data());
+        frag = packet->length() - sizeof(IP::Header);
+        if(frag > size)
+            frag = size;
+        memcpy(&data[packet->offset() - sizeof(Header)], packet->data(), frag);
+        size -= frag;
+
+        _ip->nic()->free(buf);
     }
 
-    return size;
+    return ret;
 }
 
 
@@ -92,17 +88,29 @@ void UDP::update(IP::Observed * ip, int port, NIC::Buffer * buf)
 {
     db<UDP>(TRC) << "UDP::update(buf=" << buf << ")" << endl;
 
-    IP::Packet * packet = reinterpret_cast<IP::Packet *>(buf->frame()->data());
+    Packet * packet = reinterpret_cast<Packet *>(buf->frame()->data());
     Message * message = reinterpret_cast<Message *>(packet->data());
 
-    db<UDP>(INF) << "UDP::received(msg=" << message << ") => " << *message << endl;
+    db<UDP>(INF) << "UDP::update:msg=" << message << " => " << *message << endl;
 
-    if(!message->check(packet->from(), packet->to())) {
-        db<UDP>(WRN) << "UDP::received: wrong message checksum!" << endl;
+    if(!message->check()) {
+        db<UDP>(WRN) << "UDP::update: wrong message checksum!" << endl;
         return;
     }
 
     notify(message->to_port(), buf);
+}
+
+
+unsigned short UDP::checksum(const void * header, const void * data, unsigned int size)
+{
+    unsigned long sum = IP::checksum(header, sizeof(Pseudo_Header));
+    sum += IP::checksum(data, size);
+
+    while(sum >> 16)
+        sum = (sum & 0xffff) + (sum >> 16);
+
+    return ~sum;
 }
 
 __END_SYS

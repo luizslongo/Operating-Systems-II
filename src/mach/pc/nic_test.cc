@@ -22,7 +22,7 @@ int main()
         for(int i = 0; i < 10; i++) {
             memset(data, '0' + i, nic.mtu());
             data[nic.mtu() - 1] = '\n';
-            nic.send(NIC::BROADCAST, 0x8888, data, nic.mtu());
+            nic.send(NIC::broadcast(), 0x8888, data, nic.mtu());
             Delay(100000);
         }
     } else { // receiver

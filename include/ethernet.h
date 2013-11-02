@@ -5,7 +5,9 @@
 #ifndef __ethernet_h
 #define __ethernet_h
 
-#include <utility/string.h>
+#include <cpu.h>
+#include <utility/list.h>
+#include <utility/observer.h>
 
 __BEGIN_SYS
 
@@ -17,9 +19,20 @@ protected:
 
 
 public:
-    typedef NIC_Common::Address<6> Address;
-    typedef unsigned char Data[MTU];
-    typedef NIC_Common::CRC32 CRC;
+    class Address: public NIC_Common::Address<6>
+    {
+    private:
+        typedef NIC_Common::Address<6> Base;
+
+    public:
+        enum Broadcast { BROADCAST };
+
+    public:
+        Address() {}
+        Address(unsigned char a0, unsigned char a1 = 0, unsigned char a2 = 0, unsigned char a3 = 0, unsigned char a4 = 0, unsigned char a5 = 0): Base(a0, a1, a2, a3, a4, a5) {}
+        Address(const char * s): Base(s, ':') {}
+        Address(const Broadcast & b): Base(0xff, 0xff, 0xff, 0xff, 0xff, 0xff) {}
+    } __attribute__((packed, may_alias));
 
     typedef unsigned short Protocol;
     enum
@@ -31,14 +44,13 @@ public:
         PTP    = 0x88F7
     };
 
+    typedef unsigned char Data[MTU];
+    typedef NIC_Common::CRC32 CRC;
 
-    class Buffer;
 
     // The Ethernet Header (RFC 894)
     class Header
     {
-        friend class Buffer;
-
     public:
         Header() {}
         Header(const Address & src, const Address & dst, const Protocol & prot)
@@ -54,7 +66,7 @@ public:
 
         Protocol prot() const { return ntohs(_prot); }
 
-    private:
+    protected:
         Address _dst;
         Address _src;
         Protocol _prot;
@@ -62,54 +74,55 @@ public:
 
 
     // The Ethernet Frame (RFC 894)
-    class Frame
+    class Frame: public Header
     {
     public:
         Frame() {}
-        Frame(const Address & src, const Address & dst, const Protocol & prot)
-        : _header(src, dst, prot) {}
-
-        Frame(const Address & src, const Address & dst, const Protocol & prot, const void * data, unsigned int size)
-        : _header(src, dst, prot) {
+        Frame(const Address & src, const Address & dst, const Protocol & prot) : Header(src, dst, prot) {}
+        Frame(const Address & src, const Address & dst, const Protocol & prot, const void * data, unsigned int size): Header(src, dst, prot) {
             memcpy(_data, data, size);
         }
         
+        Header * header() { return this; }
+        unsigned char * data() { return _data; }
+
         friend Debug & operator<<(Debug & db, const Frame & f) {
-            db << "{" << f._header.dst() << "," << f._header.src() << "," << f._header.prot() << "," << f._data << "}";
+            db << "{" << f.dst() << "," << f.src() << "," << f.prot() << "," << f._data << "}";
             return db;
         }
         
-        Header * header() { return &_header; }
-        unsigned char * data() { return _data; }
-
     protected:
-        Header _header;
         Data _data;
         CRC _crc;
     } __attribute__((packed, may_alias));
+
     typedef Frame PDU;
 
 
     // Buffers used to hold frames across a zero-copy network stack
-    // Everything but the data will be overwritten with buffer metainfo
-    // The sizeof(List::Element) must ALWAYS be less than 12!
+    // Everything but the data is meant to be overwritten with meta info
     class Buffer: private Frame
     {
+    public:
+        typedef Simple_Ordered_List<Buffer, unsigned long> List;
+        typedef List::Element Element;
+
     public:
         Buffer() {}
 
         Frame * frame() { return this; }
 
-        unsigned short size() const { return _header._prot; }
-        void size(unsigned short s) { _header._prot = s; }
+        unsigned short size() const { return _prot; }
+        void size(unsigned short s) { _prot = s; }
 
         void * back() const { return reinterpret_cast<void *>(_crc); }
         void back(void * b) { _crc = reinterpret_cast<CRC>(b); }
 
-        template<typename T>
-        T * link() { return reinterpret_cast<T *>(this); }
-        template<typename T>
-        void link(const T & e) { *reinterpret_cast<T *>(this) = e; }
+        Element * link() { return reinterpret_cast<Element *>(this); }
+        void link(const Element & e) { *reinterpret_cast<Element *>(this) = e; }
+
+        Buffer * next() { return link()->object(); }
+        void next(const Buffer * b) { link(Element(b, link()->rank())); }
     };
 
 
@@ -144,12 +157,13 @@ public:
         unsigned int collisions;
     };
 
-    static const Address BROADCAST;
-
 protected:
     Ethernet() {}
 
 public:
+    static const unsigned int mtu() { return MTU; }
+    static const Address broadcast() { return Address(Address::BROADCAST); }
+
     void attach(Observer * obs, const Protocol & prot) {
         _observed.attach(obs, prot);
     }
@@ -169,4 +183,3 @@ private:
 __END_SYS
 
 #endif
-
