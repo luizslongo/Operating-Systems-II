@@ -278,22 +278,11 @@ public:
             BPE = 0x0080
         };
 
-        bool lock() { return !CPU::tsl(busy); }
-        void unlock() { busy = 0; }
-
-        friend Debug & operator<<(Debug & db, const Desc & t) {
-            db << "{" << hex << t.phy_addr << dec
-               << "," << 65536 - t.size
-               << "," << hex << t.status
-               << "," << t.misc << dec << "}";
-            return db;
-        }
-
         Reg32 phy_addr;
         volatile Reg16 size; // 2's complement
         volatile Reg16 status;
         volatile Reg32 misc;
-        volatile bool busy; // 32 reserved bits
+        volatile Reg32 reserved;
     };
 
     // Receive Descriptor
@@ -304,10 +293,26 @@ public:
             OFLO = 0x1000,
             FRAM = 0x2000
         };
+
+        friend Debug & operator<<(Debug & db, const Rx_Desc & d) {
+            db << "{" << hex << d.phy_addr << dec
+               << "," << 65536 - d.size
+               << "," << hex << d.status
+               << "," << d.misc << dec << "}";
+            return db;
+        }
     };
 
     // Transmit Descriptor
-    struct Tx_Desc: public Desc {};
+    struct Tx_Desc: public Desc {
+        friend Debug & operator<<(Debug & db, const Tx_Desc & d) {
+            db << "{" << hex << d.phy_addr << dec
+               << "," << 65536 - d.size
+               << "," << hex << d.status
+               << "," << d.misc << dec << "}";
+            return db;
+        }
+    };
 
 public:
     Reg8 prom(int a) {
@@ -413,15 +418,14 @@ private:
     };
         
 public:
-    PCNet32(unsigned int unit = 0);
     ~PCNet32();
+
+    Buffer * alloc(unsigned int once, unsigned int always, unsigned int payload);
+    void free(Buffer * buf);
 
     int send(const Address & dst, const Protocol & prot, const void * data, unsigned int size);
     int send(const Address & dst, const Protocol & prot, Buffer * buf);
     int receive(Address * src, Protocol * prot, void * data, unsigned int size);
-
-    Buffer * alloc(unsigned int once, unsigned int always, unsigned int payload);
-    void free(Buffer * buf);
 
     const Address & address() { return _address; }
     void address(const Address & address) { _address = address; }
@@ -430,6 +434,8 @@ public:
 
     void reset();
 
+    static PCNet32 * get(unsigned int unit = 0) { return get_by_unit(unit); }
+
 private:
     PCNet32(unsigned int unit, IO_Port io_port, IO_Irq irq, DMA_Buffer * dma);
 
@@ -437,15 +443,23 @@ private:
 
     static void init(unsigned int unit);
 
-    static void int_handler(unsigned int interrupt);
+    static PCNet32 * get_by_unit(unsigned int unit) {
+        if(unit >= UNITS) {
+            db<PCNet32>(WRN) << "PCNet32::get: requested unit (" << unit << ") does not exist!" << endl;
+            return 0;
+        } else
+            return _devices[unit].device;
+    }
 
-    static PCNet32 * get(unsigned int interrupt) {
+    static PCNet32 * get_by_interrupt(unsigned int interrupt) {
         for(unsigned int i = 0; i < UNITS; i++)
             if(_devices[i].interrupt == interrupt)
         	return _devices[i].device;
 
         return 0;
     };
+
+    static void int_handler(unsigned int interrupt);
 
 private:
     unsigned int _unit;

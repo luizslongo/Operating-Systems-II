@@ -15,9 +15,9 @@ void PC_IC::init()
     CPU::IDT_Entry * idt = reinterpret_cast<CPU::IDT_Entry *>(Memory_Map<PC>::IDT);
     for(unsigned int i = 0; i < CPU::IDT_ENTRIES; i++)
         if(i < INTS)
-            idt[i] = CPU::IDT_Entry(CPU::GDT_SYS_CODE, Log_Addr(int_dispatch) + i * 16, CPU::SEG_IDT_ENTRY);
+            idt[i] = CPU::IDT_Entry(CPU::GDT_SYS_CODE, Log_Addr(entry) + i * 16, CPU::SEG_IDT_ENTRY);
         else
-            idt[i] = CPU::IDT_Entry(CPU::GDT_SYS_CODE, Log_Addr(int_dispatch) + CPU::EXC_LAST * 16, CPU::SEG_IDT_ENTRY);
+            idt[i] = CPU::IDT_Entry(CPU::GDT_SYS_CODE, Log_Addr(entry) + CPU::EXC_LAST * 16, CPU::SEG_IDT_ENTRY);
     
     // Set all interrupt handlers to int_not()
     for(unsigned int i = 0; i < INTS; i++)

@@ -9,87 +9,87 @@ UDP::List UDP::_received;
 
 
 // Methods
-int UDP::send(const Address & from, const Address & to, const void * data, unsigned int size)
+int UDP::send(const Port & from, const Address & to, const void * d, unsigned int s)
 {
+    const unsigned char * data = reinterpret_cast<const unsigned char *>(d);
+    unsigned int size = (s > sizeof(Data)) ? sizeof(Data) : s;
+
     db<UDP>(TRC) << "UDP::send(f=" << from << ",t=" << to << ",d=" << data << ",s=" << size << ")" << endl;
 
-    unsigned int ret = (size > sizeof(Data)) ? sizeof(Data) : size;
+    Buffer * pool = IP::route(to.ip())->nic()->alloc(sizeof(Header), sizeof(IP::Header), size);
 
-    NIC::Buffer * pool = _ip->nic()->alloc(sizeof(Header), sizeof(IP::Header), ret);
+    for(Buffer::Element * el = &pool->link(); el; el = el->next()) {
+        Buffer * buf = el->object();
+        Packet * packet = buf->frame()->data<Packet>();
 
-    NIC::Buffer * buf = pool;
-    Packet * packet = reinterpret_cast<Packet *>(buf->frame()->data());
-    Message * message = reinterpret_cast<Message *>(packet->data());
+        db<UDP>(INF) << "UDP::send:buf=" << buf << " => " << *buf<< endl;
 
-    db<UDP>(INF) << "UDP::send:msg=" << message << " => " << *message << endl;
+        if(el == &pool->link()) {
+            Message * message = packet->data<Message>();
+            new(packet->data<void>()) Header(from, to.port(), size);
+            message->sum(data);
+            memcpy(message->data<void>(), data, buf->size() - sizeof(Header) - sizeof(IP::Header));
+            data += buf->size() - sizeof(Header) - sizeof(IP::Header);
 
-    const unsigned char * src = reinterpret_cast<const unsigned char *>(data);
-    unsigned char * dst = message->data();
-    unsigned int length = IP::MAX_FRAGMENT - sizeof(Header);
+            db<UDP>(INF) << "UDP::send:msg=" << message << " => " << *message << endl;
+        } else {
+            memcpy(packet->data<void>(), data, buf->size() - sizeof(IP::Header));
+            data += buf->size() - sizeof(IP::Header);
+        }
+    }
 
-    new(packet->data()) Header(from.port(), to.port(), size);
-    message->sum(data);
-
-    do {
-        memcpy(dst, src, length);
-
-        buf = buf->next();
-        packet = reinterpret_cast<Packet *>(buf->frame()->data());
-
-        size -= length;
-        src += length;
-        dst = packet->data();
-        length = (size > IP::MAX_FRAGMENT) ? IP::MAX_FRAGMENT : size;
-    } while(buf);
-
-    _ip->send(to.ip(), IP::UDP, pool);
-
-    return ret;
+    return IP::send(to.ip(), IP::UDP, pool); // Calls nic->free(&pool)
 }
 
 
-int UDP::receive(NIC::Buffer * buf, void * d, unsigned int s)
+int UDP::receive(Buffer * buf, void * d, unsigned int s)
 {
+    for(Buffer::Element * el = &buf->link(); el; el = el->next()) {
+        Buffer * b = el->object();
+        db<PCNet32>(INF) << "PCNet32::alloc:buf=" << b << " => " << *b << endl;
+    }
+
     unsigned char * data = reinterpret_cast<unsigned char *>(d);
 
     db<UDP>(TRC) << "UDP::receive(buf=" << buf << ",d=" << d << ",s=" << s << ")" << endl;
 
-    Packet * packet = reinterpret_cast<Packet *>(buf->frame()->data());
-    Message * message = reinterpret_cast<Message *>(packet->data());
+    Buffer::Element * head = &buf->link();
+    unsigned int size = 0;
 
-    unsigned int size =  message->length() - sizeof(Header);
-    if(size > s)
-        size = s;
-    unsigned int ret = size;
+    for(Buffer::Element * el = head; el && (size <= s); el = el->next()) {
+        db<UDP>(INF) << "UDP::receive:buf=" << buf << " => " << *buf << endl;
 
-    unsigned int frag = packet->length() - sizeof(IP::Header) - sizeof(Header);
-    if(frag > size)
-        frag = size;
+        Buffer * buf = el->object();
+        Packet * packet = buf->frame()->data<Packet>();
 
-    memcpy(data, message->data(), frag);
-    size -= frag;
+        unsigned int len = buf->size() - sizeof(IP::Header);
+        if(el == head) {
+            Message * message = packet->data<Message>();
+            len -= sizeof(Header);
+            memcpy(data, message->data<void>(), len);
 
-    for(buf = buf->next(); buf && (size > 0); buf = buf->next()) { // Fragmented
-        packet = reinterpret_cast<Packet *>(buf->frame()->data());
-        frag = packet->length() - sizeof(IP::Header);
-        if(frag > size)
-            frag = size;
-        memcpy(&data[packet->offset() - sizeof(Header)], packet->data(), frag);
-        size -= frag;
+            db<UDP>(INF) << "UDP::receive:msg=" << message << " => " << *message << endl;
+        } else
+            memcpy(data, packet->data<void>(), len);
 
-        _ip->nic()->free(buf);
+        db<UDP>(INF) << "UDP::receive:len=" << len << endl;
+
+        data += len;
+        size += len;
+
+        buf->nic()->free(buf);
     }
 
-    return ret;
+    return size;
 }
 
 
-void UDP::update(IP::Observed * ip, int port, NIC::Buffer * buf)
+void UDP::update(IP::Observed * ip, int port, Buffer * buf)
 {
     db<UDP>(TRC) << "UDP::update(buf=" << buf << ")" << endl;
 
-    Packet * packet = reinterpret_cast<Packet *>(buf->frame()->data());
-    Message * message = reinterpret_cast<Message *>(packet->data());
+    Packet * packet = buf->frame()->data<Packet>();
+    Message * message = packet->data<Message>();
 
     db<UDP>(INF) << "UDP::update:msg=" << message << " => " << *message << endl;
 

@@ -21,11 +21,12 @@ private:
     static const unsigned int UNITS = NICS::Length;
 
 public:
-    PC_Ethernet(unsigned int u = 0) {
-        _dev = new (SYSTEM) Meta_NIC<NICS>::Get<0>::Result(u);
+    template<unsigned int UNIT = 0>
+    PC_Ethernet(unsigned int u = UNIT) {
+        _dev = Meta_NIC<NICS>::Get<UNIT>::Result::get(u);
     }
 
-    ~PC_Ethernet() { delete _dev; }
+    ~PC_Ethernet() { _dev = 0; }
     
     int send(const Address & dst, const Protocol & prot, Buffer * buf) {
         return _dev->send(dst, prot, buf);
@@ -37,7 +38,9 @@ public:
         return _dev->receive(src, prot, data, size); 
     }
 
-    Buffer * alloc(unsigned int once, unsigned int always, unsigned int payload) { return _dev->alloc(once, always, payload); }
+    Buffer * alloc(unsigned int once, unsigned int always, unsigned int payload) {
+        return _dev->alloc(once, always, payload);
+    }
     void free(Buffer * buf) { _dev->free(buf); }
 
     const unsigned int mtu() const { return _dev->mtu(); }

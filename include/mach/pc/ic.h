@@ -64,6 +64,7 @@ public:
     enum {
         INT_TIMER	= HARD_INT + IRQ_TIMER,
         INT_KEYBOARD	= HARD_INT + IRQ_KEYBOARD,
+        INT_LAST_HARD   = HARD_INT + IRQ_LAST,
         INT_RESCHEDULER = SOFT_INT
     };
 
@@ -115,10 +116,13 @@ public:
         CPU::out8(SLAVE_IMR, mask >> 8);
     }
 
-    static void eoi() { // End of interrupt
-    	if(isr() & (1 << IRQ_CASCADE)) // was it an slave PIC interrupt?
-            CPU::out8(SLAVE_CMD, EOI);
+    static void eoi(unsigned int i) { // End of interrupt
         CPU::out8(MASTER_CMD, EOI); // always send EOI to master!
+        if(i > 7) // was it an slave PIC interrupt?
+            CPU::out8(SLAVE_CMD, EOI);
+//        CPU::out8(0x20, 0x20);       /* send EOI to master */
+//        if(isr() & 4)   /* if servicing IRQ2 ... */
+//            CPU::out8(0xa0, 0x20);     /* send EOI to slave */
     }
 
     static void ipi_send(int dest, int interrupt) {}
@@ -470,7 +474,8 @@ public:
 private:
     static void init();
 
-    static void int_dispatch();
+    static void entry();
+    static void dispatch(unsigned int i);
 
     static void int_not(Interrupt_Id i);
     static void exc_not(Interrupt_Id i, Reg32 error, Reg32 eip, Reg32 cs, Reg32 eflags);

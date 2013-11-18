@@ -157,7 +157,7 @@ CCLIB		= `$(CC) $(MACH_CC_FLAGS) -print-file-name=`
 CPP		= $(COMP_PREFIX)gcc -E
 CPPFLAGS	= $(MACH_CC_FLAGS) -I$(INCLUDE)
 
-CXX		= $(COMP_PREFIX)g++ -c --no-exceptions --no-rtti --no-use-cxa-atexit
+CXX		= $(COMP_PREFIX)g++ -c --no-exceptions --no-rtti --no-use-cxa-atexit -std=c++0x
 CXXFLAGS	= $(MACH_CC_FLAGS) -O2 -nostdinc -Wall -Werror -fdata-sections -ffunction-sections -I$(INCLUDE)
 
 LD		= $(COMP_PREFIX)ld

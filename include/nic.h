@@ -114,6 +114,7 @@ public:
         typedef typename NIC::Protocol Protocol;
         typedef typename NIC::Statistics Statistics;
         typedef typename NIC::Buffer Buffer;
+        typedef typename NIC::Pool Pool;
 
     public:
         NIC_Base(unsigned int unit = 0) {}
@@ -166,7 +167,7 @@ public:
             return NIC::alloc(once, always, payload);
         }
         virtual void free(Buffer * buf) {
-            return NIC::free(buf);
+            NIC::free(buf);
         }
 
         virtual const unsigned int mtu() const { return NIC::mtu(); }

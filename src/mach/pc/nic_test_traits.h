@@ -11,6 +11,7 @@ struct Traits
 {
     static const bool enabled = true;
     static const bool debugged = true;
+    static const bool hysterically_debugged = false;
 };
 
 template <> struct Traits<Build>
@@ -40,17 +41,17 @@ template <> struct Traits<Debug>
 
 template <> struct Traits<Lists>: public Traits<void>
 {
-    static const bool debugged = false;
+    static const bool debugged = hysterically_debugged;
 };
 
 template <> struct Traits<Spin>: public Traits<void>
 {
-    static const bool debugged = false;
+    static const bool debugged = hysterically_debugged;
 };
 
 template <> struct Traits<Heap>: public Traits<void>
 {
-    static const bool debugged = false;
+    static const bool debugged = hysterically_debugged;
 };
 
 
@@ -123,12 +124,12 @@ template <> struct Traits<Thread>: public Traits<void>
     typedef Scheduling_Criteria::RR Criterion;
     static const unsigned int QUANTUM = 10000; // us
 
-    static const bool trace_idle = false;
+    static const bool trace_idle = hysterically_debugged;
 };
 
 template <> struct Traits<Scheduler<Thread> >: public Traits<void>
 {
-    static const bool debugged = false;
+    static const bool debugged = hysterically_debugged;
 };
 
 template <> struct Traits<Periodic_Thread>: public Traits<void>

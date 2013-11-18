@@ -115,13 +115,15 @@ public:
         : Header(from, to, size) { memcpy(_data, data, length()); sum(); }
 
         Header * header() { return this; }
-        unsigned char * data() { return _data; }
+
+        template<typename T>
+        T * data() { return reinterpret_cast<T *>(&_data); }
 
         void sum(const void * data = 0) {
             Pseudo_Header pseudo(from_port(), to_port(), length());
             _checksum = Traits<UDP>::checksum ? UDP::checksum(&pseudo, data ? data : _data, length()) : 0;
         }
-        bool check() { return Traits<UDP>::checksum ? !UDP::checksum(header(), data(), length()) : true; }
+        bool check() { return Traits<UDP>::checksum ? !UDP::checksum(header(), data<void>(), length()) : true; }
 
         friend Debug & operator<<(Debug & db, const Message & m) {
             db << "{head=" << reinterpret_cast<const Header &>(m) << ",data=" << m._data << "}";
@@ -133,10 +135,10 @@ public:
     } __attribute__((packed, may_alias));
 
 public:
-    UDP(IP * ip): _ip(ip) { _ip->attach(this, IP::UDP); }
-    ~UDP() { _ip->detach(this, IP::UDP); }
+    UDP() { IP::attach(this, IP::UDP); }
+    ~UDP() { IP::detach(this, IP::UDP); }
 
-    int send(const Address & from, const Address & to, const void * data, unsigned int size);
+    int send(const Port & from, const Address & to, const void * data, unsigned int size);
     int receive(NIC::Buffer * buf, void * data, unsigned int size);
 
 private:
@@ -145,7 +147,7 @@ private:
     static unsigned short checksum(const void * header, const void * data, unsigned int size);
 
 private:
-    IP * _ip;
+    IP _ip;
 
     static List _received;
 };

@@ -41,8 +41,7 @@ PCNet32::PCNet32(unsigned int unit, IO_Port io_port, IO_Irq irq, DMA_Buffer * dm
 
     // Rx_Buffer Ring
     for(unsigned int i = 0; i < RX_BUFS; i++) {
-        _rx_buffer[i] = log;
-        _rx_buffer[i]->back(&_rx_ring[i]);
+        _rx_buffer[i] = new (log) Buffer(&_rx_ring[i]);
         _rx_ring[i].phy_addr = phy;
         _rx_ring[i].size = Reg16(-sizeof(Frame)); // 2's comp.
         _rx_ring[i].misc = 0;
@@ -54,12 +53,11 @@ PCNet32::PCNet32(unsigned int unit, IO_Port io_port, IO_Irq irq, DMA_Buffer * dm
 
     // Tx_Buffer Ring
     for(unsigned int i = 0; i < TX_BUFS; i++) {
-        _tx_buffer[i] = log;
-        _tx_buffer[i]->back(&_tx_ring[i]);
+        _tx_buffer[i] = new (log) Buffer(&_tx_ring[i]);
         _tx_ring[i].phy_addr = phy;
+        _tx_ring[i].size = 0;
         _tx_ring[i].misc = 0;
         _tx_ring[i].status = 0; // Owned by host
-        _tx_ring[i].busy = 0; // Not locked
 
         log += align128(sizeof(Buffer));
         phy += align128(sizeof(Buffer));

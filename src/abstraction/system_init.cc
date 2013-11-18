@@ -2,6 +2,7 @@
 
 #include <system.h>
 #include <alarm.h>
+#include <ip.h>
 #include <task.h>
 
 __BEGIN_SYS
@@ -11,6 +12,9 @@ void System::init()
     if(Traits<Alarm>::enabled)
         Alarm::init();
 
+//    if(Traits<IP>::enabled)
+//        IP::init();
+//
     if(Traits<Task>::enabled)
         Task::init();
 }

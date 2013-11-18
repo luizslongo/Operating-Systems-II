@@ -276,8 +276,7 @@ bool E100::verifyPendingInterrupts(void)
     return false;
 }
 
-int E100::receive(Address * src, Protocol * prot,
-        	  void * data, unsigned int size)
+int E100::receive(Address * src, Protocol * prot, void * data, unsigned int size)
 {
     // wait until the RFD is filled up by the device
     while(!(_rx_ring[_rx_cur].status & cb_complete))
@@ -293,7 +292,7 @@ int E100::receive(Address * src, Protocol * prot,
     else
         size = 0;
 
-    memcpy(data, frame->data(), size);
+    memcpy(data, frame->data<void>(), size);
 
     //kout << "recv (size: " << size << " prot: " << *prot <<")" << endl;
 

@@ -2,7 +2,6 @@
 
 #include <utility/string.h>
 #include <ip.h>
-#include <alarm.h>
 
 __BEGIN_SYS
 
@@ -10,11 +9,12 @@ __BEGIN_SYS
 unsigned short IP::Header::_next_id = 0;
 IP::Route::Table IP::Route::_table;
 IP::ARP::Hash IP::ARP::_table;
-IP::List IP::_fragmented;
+IP::Fragmented IP::_fragmented;
+IP::Observed IP::_observed;
 
 
 // Methods
-IP::IP(NIC * nic): _nic(nic)
+IP::IP()
 {
     if(Traits<IP>::CONFIG == Traits<IP>::STATIC) {
         _address = Traits<IP>::ADDRESS;
@@ -24,62 +24,45 @@ IP::IP(NIC * nic): _nic(nic)
     } else
         ; // DHCP
 
-    new (SYSTEM) Route(_nic, static_cast<unsigned long>(_address) & static_cast<unsigned long>(_netmask), _address, _netmask);
-    new (SYSTEM) Route(_nic, 0UL, _gateway, 0UL); // Default route must be the last one in table
+        new (SYSTEM) Route(Traits<IP>::ADDRESS, &_nic, Traits<IP>::ADDRESS & Traits<IP>::NETMASK, Traits<IP>::ADDRESS, Traits<IP>::NETMASK);
+        new (SYSTEM) Route(Traits<IP>::ADDRESS, &_nic, 0UL, Traits<IP>::GATEWAY, 0UL); // Default route must be the last one in table
 
-    new (SYSTEM) ARP(_nic, _address, _nic->broadcast());
-    new (SYSTEM) ARP(_nic, _gateway, _nic->broadcast());
+    new (SYSTEM) ARP(&_nic, Traits<IP>::ADDRESS, _nic.broadcast());
+    new (SYSTEM) ARP(&_nic, Traits<IP>::GATEWAY, _nic.broadcast());
 
-    _nic->attach(this, NIC::IP);
+    _nic.attach(this, NIC::IP);
 }
 
 
 int IP::send(const Address & to, const Protocol & prot, Buffer * buf)
 {
-    db<IP>(TRC) << "IP::send(to=" << to << ",prot=" << prot << ",buf=" << buf << ",size=" << buf->size() << ")" << endl;
-
-    Header header(_address, to, prot, 0); // length will be defined latter for each fragment
-    Packet * packet = reinterpret_cast<Packet *>(buf->frame()->data());
-    db<IP>(INF) << "IP::send:pkt=" << packet << " => " << *packet << endl;
+    db<IP>(TRC) << "IP::send(to=" << to << ",prot=" << prot << ",buf=" << buf << ")" << endl;
 
     const Route * through = route(to);
     db<IP>(INF) << "IP::send:route=" << through << " => " << *through << endl;
 
     NIC * nic = through->nic();
     MAC_Address mac = arp(nic, through->gateway());
-    db<IP>(INF) << "IP::send:dst=" << mac << endl;
+    db<IP>(INF) << "IP::ARP(to=" << to << ") => " << mac << endl;
 
-    unsigned int ret = buf->size();
+    Header header(through->from(), to, prot, 0); // length will be defined latter for each fragment
 
-    int size = ret;
-    int offset = 0;
-    while(size > 0) {
-        Buffer * next = buf->next();
+    unsigned int offset = 0;
+    for(Buffer::Element * el = &buf->link(); el; el = el->next()) {
+        Packet * packet = el->object()->frame()->data<Packet>();
 
+        // Setup header
         memcpy(packet->header(), &header, sizeof(Header));
-
-        if(size > int(MAX_FRAGMENT)) {
-            packet->length(MAX_FRAGMENT + sizeof(Header));
-            packet->flags(Header::MF);
-        } else {
-            packet->length(size + sizeof(Header));
-            packet->flags(0);
-        }
-
+        packet->flags(el->next() ? Header::MF : 0);
+        packet->length(buf->size());
         packet->offset(offset);
         packet->header()->sum();
-        buf->size(packet->length());
-        nic->send(mac, NIC::IP, buf); // Release buffer
-        Delay(100000);
+        db<IP>(INF) << "IP::send:pkt=" << packet << " => " << *packet << endl;
 
         offset += MAX_FRAGMENT;
-        size -= MAX_FRAGMENT;
-
-        buf = next;
-        packet = reinterpret_cast<Packet *>(buf->frame()->data());
     }
 
-    return ret;
+    return nic->send(mac, NIC::IP, buf); // Release pool
 }
 
 
@@ -87,51 +70,47 @@ void IP::update(NIC::Observed * nic, int prot, Buffer * buf)
 {
     db<IP>(TRC) << "IP::update(nic=" << nic << ",prot=" << prot << ",buf=" << buf << ")" << endl;
 
-    Packet * packet = reinterpret_cast<Packet *>(buf->frame()->data());
+    Packet * packet = buf->frame()->data<Packet>();
 
     db<IP>(INF) << "IP::update:pkt=" << packet << " => " << *packet << endl;
 
     if(!packet->check()) {
         db<IP>(WRN) << "IP::update: wrong packet checksum!" << endl;
-        _nic->free(buf);
+        _nic.free(buf);
         return;
     }
 
-    unsigned long key = (packet->protocol() << 16) | packet->id();
-    buf->link(Element(0, key));
+    unsigned long key = (packet->protocol() << 24) | (packet->id() << 8);
+    buf->nic(&_nic);
 
     if((packet->flags() & Header::MF) || (packet->offset() != 0)) { // Fragment
-        Element * head = _fragmented.search_rank(key);
-        if(!head) // First fragment of this datagram
-            _fragmented.insert(buf->link());
-        else {
-            // Sum the lengths of the received fragments and find the last element
-            unsigned int total = 0;
-            unsigned int accumulated = 0;
-            Buffer * current, * last;
-            for(current = reinterpret_cast<Buffer *>(head); current; last = current, current = current->next()) {
-                packet = reinterpret_cast<Packet *>(current->frame()->data());
-                if(!(packet->flags() & Header::MF))
-                    total = packet->offset() + packet->length() - sizeof(Header);
-                accumulated += packet->length() - sizeof(Header);
-            }
+        Element * el = _fragmented.search_key(key);
+        if(!el) {
+            el = new (SYSTEM) Fragmented::Element(new (SYSTEM) Buffer::List, key);
+            _fragmented.insert(el);
+        }
+        el->object()->insert(&buf->link());
 
-            // Insert fragment at the end of the list
-            last->next(buf);
+        // Sum the lengths of the received fragments and find the last element
+        unsigned int total = 0;
+        unsigned int accumulated = 0;
+        for(Buffer::Element * el2 = el->object()->head(); el2; el2 = el2->next()) {
+            db<IP>(INF) << "IP::update:buf=" << el2->object() << " => " << *el2->object() << endl;
 
-            // Add this fragment
-            packet = reinterpret_cast<Packet *>(buf->frame()->data());
+            packet = el2->object()->frame()->data<Packet>();
             if(!(packet->flags() & Header::MF))
                 total = packet->offset() + packet->length() - sizeof(Header);
             accumulated += packet->length() - sizeof(Header);
+        }
 
-            // If the datagram is complete, report it to the upper layer
-            if(accumulated == total) {
-                db<IP>(INF) << "IP::update: notify fragmented datagram" << endl;
-                _fragmented.remove(head);
-                buf = reinterpret_cast<Buffer *>(head);
-                notify(packet->protocol(), buf);
-            }
+        // If the datagram is complete, report it to the upper layer
+        if(accumulated == total) {
+            db<IP>(INF) << "IP::update: notify fragmented datagram" << endl;
+            buf = el->object()->head()->object();
+            _fragmented.remove(el);
+            delete el->object();
+            delete el;
+            notify(packet->protocol(), buf);
         }
     } else {
         db<IP>(INF) << "IP::update: notify whole datagram" << endl;

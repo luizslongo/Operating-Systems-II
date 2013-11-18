@@ -327,8 +327,9 @@ public:
 
     static Log_Addr ip() { return eip(); }
 
-    static bool tsl(volatile bool & lock) {
-        register bool old = 1;
+    template <typename T>
+    static T tsl(volatile T & lock) {
+        register T old = 1;
         ASMV("lock xchg %0, %2"
              : "=a"(old) 
              : "a"(old), "m"(lock) 

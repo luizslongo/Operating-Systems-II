@@ -4,10 +4,10 @@
 
 __BEGIN_SYS
 
-void PC_IC::int_dispatch()
+void PC_IC::entry()
 {
     // id must be static because we don't have a stack frame
-    static int id; 
+    static int id;
 
     ASM("        .align 16              \n"
         "        movl        $0, %0     \n"
@@ -778,16 +778,24 @@ void PC_IC::int_dispatch()
         //        "        .align 16              \n"
         //        "        movl        $255, %0   \n"
         ".L1:    pushal                 \n"
-        : : "m"(id));
+        : "=m"(id) : );
 
-    ASM("        call   *%2             \n"
-        "        movl   %0, %%eax       \n"
-        "        pushl  %%eax           \n"
-        "        call   *%1(,%%eax,4)   \n"
+    ASM("        pushl  %0              \n"
+        "        call   *%1             \n"
         "        popl   %%eax           \n"
         "        popal                  \n"
         "        iret                   \n"
-        : : "m"(id), "m"(_int_vector[0]), "r"(PC_IC::eoi));
-}
+        : : "m"(id), "c"(dispatch));
 
+//    ASM("        movl   %0, %%eax       \n"
+//        "        pushl  %%eax           \n"
+//        "        call   *%2             \n"
+//        "        popl   %%eax           \n"
+//        "        pushl  %%eax           \n"
+//        "        call   *%1(,%%eax,4)   \n"
+//        "        popl   %%eax           \n"
+//        "        popal                  \n"
+//        "        iret                   \n"
+//        : : "m"(id), "m"(_int_vector[0]), "c"(PC_IC::eoi));
+}
 __END_SYS

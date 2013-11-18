@@ -10,53 +10,72 @@ __BEGIN_SYS
 APIC::Log_Addr APIC::_base;
 PC_IC::Interrupt_Handler PC_IC::_int_vector[PC_IC::INTS];
 
+
 // Class methods
+void PC_IC::dispatch(unsigned int i)
+{
+    if((i == INT_LAST_HARD) && !(isr() & (1 << IRQ_LAST))) {
+        CPU::out8(MASTER_CMD, EOI); // always send EOI to master!
+        return;
+    }
+
+    if((i != INT_TIMER) || Traits<IC>::hysterically_debugged) {
+        db<PC>(TRC) << "IC::dispatch(i=" << i << ")" << endl;
+        db<IC>(INF) << "IC::isr=" << bin << isr() << endl;
+        db<IC>(INF) << "IC::irr=" << bin << irr() << endl;
+    }
+
+    eoi(i);
+    _int_vector[i](i);
+}
+
+
 void PC_IC::int_not(unsigned int i)
 {
-    db<PC>(WRN) << "IC::int_not(i=" << i << ")" << endl;
+    db<IC>(WRN) << "IC::int_not(i=" << i << ")" << endl;
 }
 
 void PC_IC::exc_not(unsigned int i, Reg32 error, Reg32 eip, Reg32 cs, Reg32 eflags)
 {
-    db<PC>(WRN) << "IC::exc_not(i=" << i << ") => [err=" << hex << error
+    db<IC>(WRN) << "IC::exc_not(i=" << i << ") => [err=" << hex << error
                 << ",ctx={cs=" << cs << ",ip=" << eip << ",fl=" << eflags << "}]" << endl;
 
-    db<PC>(WRN) << "The running thread will now be terminated!" << endl;
+    db<IC>(WRN) << "The running thread will now be terminated!" << endl;
     _exit(-1);
 }
 
 void PC_IC::exc_pf(unsigned int i, Reg32 error, Reg32 eip, Reg32 cs, Reg32 eflags)
 {  
-    db<PC>(WRN) << "IC::exc_pf(i=" << i << ") => [address=" << hex << CPU::cr2() << ",err={";
+    db<IC>(WRN) << "IC::exc_pf(i=" << i << ") => [address=" << hex << CPU::cr2() << ",err={";
     if(error & (1 << 0))
-        db<PC>(WRN) << "P";
+        db<IC>(WRN) << "P";
     if(error & (1 << 1))
-        db<PC>(WRN) << "W";
+        db<IC>(WRN) << "W";
     if(error & (1 << 2))
-        db<PC>(WRN) << "S";
+        db<IC>(WRN) << "S";
     if(error & (1 << 3))
-        db<PC>(WRN) << "R";
-    db<PC>(WRN) << "},ctx={cs=" << hex << cs << ",ip=" << eip << ",fl=" << eflags << "}]" << endl;
+        db<IC>(WRN) << "R";
+    db<IC>(WRN) << "},ctx={cs=" << hex << cs << ",ip=" << eip << ",fl=" << eflags << "}]" << endl;
 
-    db<PC>(WRN) << "The running thread will now be terminated!" << endl;
+    db<IC>(WRN) << "The running thread will now be terminated!" << endl;
     _exit(-1);
 }
 
 void PC_IC::exc_gpf(unsigned int i, Reg32 error, Reg32 eip, Reg32 cs, Reg32 eflags)
 {  
-    db<PC>(WRN) << "IC::exc_gpf(i=" << i << ")[err=" << hex << error << ",ctx={cs=" << (void *)cs
+    db<IC>(WRN) << "IC::exc_gpf(i=" << i << ")[err=" << hex << error << ",ctx={cs=" << (void *)cs
                 << ",ip=" << (void *)eip << ",fl=" << (void *)eflags << "}]" << endl;
 
-    db<PC>(WRN) << "The running thread will now be terminated!" << endl;
+    db<IC>(WRN) << "The running thread will now be terminated!" << endl;
     _exit(-1);
 }
 
 void PC_IC::exc_fpu(unsigned int i, Reg32 error, Reg32 eip, Reg32 cs, Reg32 eflags)
 {
-    db<PC>(WRN) << "IC::exc_fpu(i=" << i << ") => [err=" << hex << error
+    db<IC>(WRN) << "IC::exc_fpu(i=" << i << ") => [err=" << hex << error
                 << ",ctx={cs=" << cs << ",ip=" << eip << ",fl=" << eflags << "}]" << endl;
 
-    db<PC>(WRN) << "The running thread will now be terminated!" << endl;
+    db<IC>(WRN) << "The running thread will now be terminated!" << endl;
     _exit(-1);
 }
 

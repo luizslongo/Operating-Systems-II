@@ -11,13 +11,15 @@
 
 __BEGIN_SYS
 
-class IP: private NIC::Observer, public Data_Observed<NIC::Buffer>
+class IP: private NIC::Observer
 {
+    friend class System;
+
 private:
     // List to hold received Buffers
     typedef NIC::Buffer Buffer;
-    typedef Buffer::List List;
-    typedef List::Element Element;
+    typedef Simple_Hash<NIC::Buffer::List, 4, unsigned long> Fragmented;
+    typedef Fragmented::Element Element;
 
 public:
     typedef NIC::Address MAC_Address;
@@ -162,7 +164,9 @@ public:
         }
 
         Header * header() { return this; }
-        unsigned char * data() { return _data; }
+
+        template<typename T>
+        T * data() { return reinterpret_cast<T *>(&_data); }
 
         friend Debug & operator<<(Debug & db, const Packet & p) {
             db << "{head=" << reinterpret_cast<const Header &>(p) << ",data=" << p._data << "}";
@@ -186,14 +190,15 @@ public:
         typedef Table::Element Element;
 
     public:
-        Route(NIC * n, const Address & d, const Address & g, const Address & m, unsigned int f = 0, unsigned int w = 0)
-        : _destination(d), _gateway(g), _genmask(m), _flags(f), _metric(w), _nic(n), _link(this) {
+        Route(const Address & f, NIC * n, const Address & d, const Address & g, const Address & m, unsigned int t = 0, unsigned int w = 0)
+        : _destination(d), _gateway(g), _genmask(m), _flags(t), _metric(w), _from(f), _nic(n), _link(this) {
             _table.insert(&_link);
             db<IP>(INF) << "IP::Route(this=" << this << ") => " << *this << endl;
         }
         ~Route() { _table.remove(&_link); }
 
         const Address & gateway() const { return _gateway; }
+        const Address & from() const { return _from; }
 
         NIC * nic() const { return _nic; }
 
@@ -221,6 +226,7 @@ public:
         Address _genmask;
         unsigned int _flags;
         unsigned int _metric;
+        Address _from;
         NIC * _nic;
         Element _link;
 
@@ -253,7 +259,7 @@ public:
     };
 
 public:
-    IP(NIC * nic);
+    IP();
     ~IP() {}
 
     const Address & address() { return _address; }
@@ -261,20 +267,25 @@ public:
     const Address & gateway() { return _gateway; }
     const Address & netmask() { return _netmask; }
     
-    NIC * nic() { return _nic; }
+    NIC * nic(const Address & to) { return &_nic; }
 
-    int send(const Address & to, const Protocol & protocol, Buffer * buf);
+    static int send(const Address & to, const Protocol & protocol, Buffer * buf);
 
     static const unsigned int mtu() { return MTU; }
 
     static unsigned short checksum(const void * data, unsigned int size);
 
-private:
-    void update(NIC::Observed * nic, int prot, Buffer * buf);
-
     static const MAC_Address & arp(NIC * nic, const Address & log) { return ARP::get(log); }
-
     static const Route * route(const Address & to) { return Route::get(to); }
+
+    static void attach(Observer * obs, const Protocol & prot) { _observed.attach(obs, prot); }
+    static void detach(Observer * obs, const Protocol & prot) { _observed.detach(obs, prot); }
+    void notify(const Protocol & prot, Buffer * buf) { _observed.notify(prot, buf); }
+
+private:
+    static void init();
+
+    void update(NIC::Observed * nic, int prot, Buffer * buf);
 
 protected:
     Address _address;
@@ -282,9 +293,10 @@ protected:
     Address _broadcast;
     Address _gateway;
 
-    NIC * _nic;
+    NIC _nic;
 
-    static List _fragmented;
+    static Fragmented _fragmented;
+    static Observed _observed;
 };
 
 __END_SYS

@@ -21,17 +21,19 @@ private:
     typedef typename Channel::Address::Local Local_Address;
 
 protected:
-    Communicator_Common(Network * network): _ready(0), _channel(network) {}
+    Communicator_Common(): _ready(0) {}
 
 public:
     ~Communicator_Common() {}
 
-    int send(const Address & from, const Address & to, const void * data, unsigned int size) {
+    int send(const Local_Address & from, const Address & to, const void * data, unsigned int size) {
         return _channel.send(from, to, data, size);
     }
     int receive(void * data, unsigned int size) {
         _ready.p();
-        Buffer * buf = reinterpret_cast<Buffer *>(_received.remove());
+        Element * el = _received.remove();
+        Buffer * buf = el->object();
+        delete el;
         return _channel.receive(buf, data, size);
     }
 
@@ -44,7 +46,7 @@ public:
 
 private:
     void update(typename Channel::Observed * channel, int local, Buffer * buf) {
-        _received.insert(buf->link());
+        _received.insert(new (SYSTEM) Element(buf));
         _ready.v();
     }
 
@@ -67,22 +69,16 @@ public:
     typedef typename Channel::Address::Local Local_Address;
 
 public:
-    Link(Network * network, const Local_Address & from, const Address & to): Base(network), _from(network->address(), from), _to(to) {
-        bind(from);
-    }
-    ~Link() {
-        unbind(_from.local());
-    }
+    Link(const Local_Address & from, const Address & to): _from(from), _to(to) { bind(from); }
+    ~Link() { unbind(_from); }
 
-    int send(const void * data, unsigned int size) {
-        return Base::send(_from, _to, data, size);
-    }
-    int receive(void * data, unsigned int size) {
-        return Base::receive(data, size);
-    }
+    int send(const void * data, unsigned int size) { return Base::send(_from, _to, data, size); }
+    int receive(void * data, unsigned int size) { return Base::receive(data, size); }
+
+    const Address & peer() const { return _to;}
 
 private:
-    Address _from;
+    Local_Address _from;
     Address _to;
 };
 
