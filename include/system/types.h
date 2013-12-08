@@ -141,7 +141,9 @@ class Chronometer;
 
 // Abstractions - Network
 class Ethernet;
+template<typename NIC, typename Network, unsigned int HTYPE = 1>
 class ARP;
+class Network;
 class IP;
 class ICMP;
 class UDP;

@@ -1,77 +1,99 @@
 // EPOS IP Protocol Implementation
 
 #include <utility/string.h>
+#include <arp.h>
 #include <ip.h>
+#include <udp.h>
+#include <dhcp.h>
 
 __BEGIN_SYS
 
 // Class attributes
 unsigned short IP::Header::_next_id = 0;
-IP::Route::Table IP::Route::_table;
-IP::ARP::Hash IP::ARP::_table;
+IP::Router IP::_router;
 IP::Fragmented IP::_fragmented;
 IP::Observed IP::_observed;
 
 
 // Methods
-IP::IP()
+void IP::config_by_info()
 {
-    if(Traits<IP>::CONFIG == Traits<IP>::STATIC) {
-        _address = Traits<IP>::ADDRESS;
-        _netmask = Traits<IP>::NETMASK;
-        _broadcast = Traits<IP>::BROADCAST;
-        _gateway = Traits<IP>::GATEWAY;
-    } else
-        ; // DHCP
+    _address = System::info()->bm.node_id;
 
-        new (SYSTEM) Route(Traits<IP>::ADDRESS, &_nic, Traits<IP>::ADDRESS & Traits<IP>::NETMASK, Traits<IP>::ADDRESS, Traits<IP>::NETMASK);
-        new (SYSTEM) Route(Traits<IP>::ADDRESS, &_nic, 0UL, Traits<IP>::GATEWAY, 0UL); // Default route must be the last one in table
+    if(!_address)
+        db<IP>(WRN) << "IP::config_by_info: no valid address found in System_Info!" << endl;
+}
 
-    new (SYSTEM) ARP(&_nic, Traits<IP>::ADDRESS, _nic.broadcast());
-    new (SYSTEM) ARP(&_nic, Traits<IP>::GATEWAY, _nic.broadcast());
+void IP::config_by_dhcp()
+{
+    db<IP>(TRC) << "IP::config_by_dhcp()" << endl;
 
-    _nic.attach(this, NIC::IP);
+    _arp.insert(Address::BROADCAST, _nic.broadcast());
+    _router.insert(&_nic, this, &_arp, Address::NULL, Address::BROADCAST, Address::NULL);
+    DHCP::Client(_nic.address(), this);
+    _router.remove(Address::BROADCAST);
+    _arp.remove(Address::BROADCAST);
+
+    db<IP>(TRC) << "IP::config_by_dhcp() => " << *this << endl;
 }
 
 
-int IP::send(const Address & to, const Protocol & prot, Buffer * buf)
+IP::~IP()
 {
-    db<IP>(TRC) << "IP::send(to=" << to << ",prot=" << prot << ",buf=" << buf << ")" << endl;
+    _nic.detach(this, NIC::IP);
+}
 
-    const Route * through = route(to);
-    db<IP>(INF) << "IP::send:route=" << through << " => " << *through << endl;
 
+IP::Buffer * IP::alloc(const Address & to, const Protocol & prot, unsigned int once, unsigned int payload)
+{
+    db<IP>(TRC) << "IP::alloc(to=" << to << ",prot=" << prot << ",on=" << once<< ",pl=" << payload << ")" << endl;
+
+    Route * through = _router.search(to);
+    IP * ip = through->ip();
     NIC * nic = through->nic();
-    MAC_Address mac = arp(nic, through->gateway());
-    db<IP>(INF) << "IP::ARP(to=" << to << ") => " << mac << endl;
 
-    Header header(through->from(), to, prot, 0); // length will be defined latter for each fragment
+    MAC_Address mac = through->arp()->resolve((through->gateway() == through->ip()->address()) ? to : through->gateway());
+    if(!mac) {
+         db<IP>(WRN) << "IP::alloc: destination host (" << to << ") unreachable!" << endl;
+         return 0;
+    }
+
+    Buffer * pool = nic->alloc(nic, mac, NIC::IP, once, sizeof(IP::Header), payload);
+
+    Header header(ip->address(), to, prot, 0); // length will be defined latter for each fragment
 
     unsigned int offset = 0;
-    for(Buffer::Element * el = &buf->link(); el; el = el->next()) {
+    for(Buffer::Element * el = &pool->link(); el; el = el->next()) {
         Packet * packet = el->object()->frame()->data<Packet>();
 
         // Setup header
         memcpy(packet->header(), &header, sizeof(Header));
         packet->flags(el->next() ? Header::MF : 0);
-        packet->length(buf->size());
+        packet->length(el->object()->size());
         packet->offset(offset);
         packet->header()->sum();
-        db<IP>(INF) << "IP::send:pkt=" << packet << " => " << *packet << endl;
+        db<IP>(INF) << "IP::alloc:pkt=" << packet << " => " << *packet << endl;
 
         offset += MAX_FRAGMENT;
     }
 
-    return nic->send(mac, NIC::IP, buf); // Release pool
+    return pool;
+}
+
+
+int IP::send(Buffer * buf)
+{
+    db<IP>(TRC) << "IP::send(buf=" << buf << ")" << endl;
+
+    return buf->nic()->send(buf); // implicitly releases the pool
 }
 
 
 void IP::update(NIC::Observed * nic, int prot, Buffer * buf)
 {
-    db<IP>(TRC) << "IP::update(nic=" << nic << ",prot=" << prot << ",buf=" << buf << ")" << endl;
+    db<IP>(TRC) << "IP::update(nic=" << nic << ",prot=" << hex << prot << dec << ",buf=" << buf << ")" << endl;
 
     Packet * packet = buf->frame()->data<Packet>();
-
     db<IP>(INF) << "IP::update:pkt=" << packet << " => " << *packet << endl;
 
     if(!packet->check()) {
@@ -110,11 +132,13 @@ void IP::update(NIC::Observed * nic, int prot, Buffer * buf)
             _fragmented.remove(el);
             delete el->object();
             delete el;
-            notify(packet->protocol(), buf);
+            if(!notify(packet->protocol(), buf))
+                buf->nic()->free(buf);
         }
     } else {
         db<IP>(INF) << "IP::update: notify whole datagram" << endl;
-        notify(packet->protocol(), buf);
+        if(!notify(packet->protocol(), buf))
+            buf->nic()->free(buf);
     }
 }
 

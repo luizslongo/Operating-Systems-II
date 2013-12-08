@@ -18,69 +18,13 @@ PCNet32::~PCNet32()
 }
 
 
-PCNet32::Buffer * PCNet32::alloc(unsigned int once, unsigned int always, unsigned int payload)
-{
-    db<PCNet32>(TRC) << "PCNet32::alloc(on=" << once << ",al=" << always << ",ld=" << payload << ")" << endl;
-
-    if((payload + once) / (MTU - always) > TX_BUFS) {
-        db<PCNet32>(WRN) << "PCNet32::alloc: sizeof(Network::Packet::Data) > sizeof(NIC::Frame::Data) * TX_BUFS!" << endl;
-        return 0;
-    }
-
-    Buffer::List pool;
-
-    // Calculate how many frames are needed to hold the transport PDU and allocate enough buffers
-    int max_data = MTU - always;
-    for(int size = once + payload; size > 0; size -= max_data, ++_tx_cur %= TX_BUFS) {
-        // Wait for a free buffer and seize it
-        for(; _tx_ring[_tx_cur].status & Tx_Desc::OWN; ++_tx_cur %= TX_BUFS)
-            if(!_tx_buffer[_tx_cur]->lock())
-                break;
-
-        Buffer * buf = _tx_buffer[_tx_cur];
-        buf->size((size > max_data) ? MTU : size + always);
-
-        pool.insert(&buf->link());
-    }
-
-    for(Buffer::Element * el = pool.head(); el; el = el->next()) {
-        Buffer * buf = el->object();
-        db<PCNet32>(INF) << "PCNet32::alloc:buf=" << buf << " => " << *buf << endl;
-        db<PCNet32>(INF) << "PCNet32::alloc:desc=" << buf->back<Tx_Desc>() << " => " << *buf->back<Tx_Desc>() << endl;
-    }
-
-    return pool.head()->object();
-}
-
-
-void PCNet32::free(Buffer * buf)
-{
-    db<PCNet32>(TRC) << "PCNet32::free(buf=" << buf << ")" << endl;
-
-    Rx_Desc * desc = buf->back<Rx_Desc>();
-
-    _statistics.rx_packets++;
-    _statistics.rx_bytes += buf->size();
-
-    // Release the buffer to the NIC
-    db<PCNet32>(INF) << "PCNet32::free:desc=" << desc << " => " << *desc << endl;
-    desc->size = Reg16(-sizeof(Frame)); // 2's comp.
-    desc->misc = 0;
-    desc->status = Rx_Desc::OWN; // Owned by NIC
-    db<PCNet32>(INF) << "PCNet32::free:desc=" << desc << " => " << *desc << endl;
-}
-
-
 int PCNet32::send(const Address & dst, const Protocol & prot, const void * data, unsigned int size)
 {
-    // Wait for a free buffer and seize it
-    for(; _tx_ring[_tx_cur].status & Tx_Desc::OWN; ++_tx_cur %= TX_BUFS)
-        if(!_tx_buffer[_tx_cur]->lock())
-            break;
-
+    // Wait for the next buffer to become free and seize it
+    while(_tx_ring[_tx_cur].status & Rx_Desc::OWN);
+    while(_tx_buffer[_tx_cur]->lock());
     Tx_Desc * desc = &_tx_ring[_tx_cur];
     Buffer * buf = _tx_buffer[_tx_cur];
-    ++_tx_cur %= TX_BUFS;
 
     db<PCNet32>(TRC) << "PCNet32::send(s=" << _address << ",d=" << dst << ",p=" << hex << prot << dec
                      << ",d=" << data << ",s=" << size << ")" << endl;
@@ -96,32 +40,99 @@ int PCNet32::send(const Address & dst, const Protocol & prot, const void * data,
     // Trigger an immediate send poll
     csr(0, csr(0) | CSR0_TDMD);
 
-    db<PCNet32>(INF) << "PCNet32::send:desc=" << desc << " => " << *desc << endl;
+    _statistics.tx_packets++;
+    _statistics.tx_bytes += size;
+
+    // Wait for packet to be sent
+    while(desc->status & Tx_Desc::OWN);
+
+    db<PCNet32>(INF) << "PCNet32::send:desc[" << _tx_cur << "]=" << desc << " => " << *desc << endl;
 
     buf->unlock();
 
-    _statistics.tx_packets++;
-    _statistics.tx_bytes += size;
+    ++_tx_cur %= TX_BUFS;
 
     return size;
 }
 
-int PCNet32::send(const Address & dst, const Protocol & prot, Buffer * buf)
-{
-    db<PCNet32>(TRC) << "PCNet32::send(s=" << _address << ",d=" << dst << ",p=" << hex << prot << dec
-                     << ",buf=" << buf << ")" << endl;
 
+int PCNet32::receive(Address * src, Protocol * prot, void * data, unsigned int size)
+{
+    db<PCNet32>(TRC) << "PCNet32::receive(s=" << *src << ",p=" << hex << *prot << dec
+                     << ",d=" << data << ",s=" << size << ") => " << endl;
+
+    // Wait for a received frame
+    while(_rx_ring[_rx_cur].status & Rx_Desc::OWN);
+    Buffer * buf = _rx_buffer[_rx_cur];
+    Rx_Desc * desc = &_rx_ring[_rx_cur];
+
+    // Disassemble the Ethernet frame
+    Frame * frame = buf->frame();
+    *src = frame->src();
+    *prot = frame->prot();
+    buf->size((desc->misc & 0x00000fff) - sizeof(Header) - sizeof(CRC));
+
+    // Copy the data
+    memcpy(data, frame->data<void>(), (buf->size() > size) ? size : buf->size());
+
+    // Release the buffer to the NIC
+    desc->status = Rx_Desc::OWN;
+
+    _statistics.rx_packets++;
+    _statistics.rx_bytes += buf->size();
+
+    db<PCNet32>(INF) << "PCNet32::receive:desc[" << _rx_cur << "]=" << desc << " => " << *desc << endl;
+
+    ++_rx_cur %= RX_BUFS;
+
+    return buf->size();
+}
+
+
+// Allocated buffers must be sent or release IN ORDER as assumed by the PCNet32
+PCNet32::Buffer * PCNet32::alloc(NIC * nic, const Address & dst, const Protocol & prot, unsigned int once, unsigned int always, unsigned int payload)
+{
+    db<PCNet32>(TRC) << "PCNet32::alloc(s=" << _address << ",d=" << dst << ",p=" << hex << prot << dec << ",on=" << once << ",al=" << always << ",ld=" << payload << ")" << endl;
+
+    int max_data = MTU - always;
+
+    if((payload + once) / max_data > TX_BUFS) {
+        db<PCNet32>(WRN) << "PCNet32::alloc: sizeof(Network::Packet::Data) > sizeof(NIC::Frame::Data) * TX_BUFS!" << endl;
+        return 0;
+    }
+
+    Buffer::List pool;
+
+    // Calculate how many frames are needed to hold the transport PDU and allocate enough buffers
+    for(int size = once + payload; size > 0; size -= max_data) {
+        // Wait for the next buffer to become free and seize it
+        while(_tx_ring[_tx_cur].status & Rx_Desc::OWN);
+        while(_tx_buffer[_tx_cur]->lock());
+        Tx_Desc * desc = &_tx_ring[_tx_cur];
+        Buffer * buf = _tx_buffer[_tx_cur];
+
+        // Initialize the buffer and assemble the Ethernet Frame Header
+        new (buf) Buffer(nic, _address, dst, prot, (size > max_data) ? MTU : size + always);
+
+        db<PCNet32>(INF) << "PCNet32::alloc:desc[" << _tx_cur << "]=" << desc << " => " << *desc << endl;
+
+        ++_tx_cur %= TX_BUFS;
+
+        pool.insert(&buf->link());
+    }
+
+    return pool.head()->object();
+}
+
+int PCNet32::send(Buffer * buf)
+{
     unsigned int size = 0;
 
     for(Buffer::Element * el = &buf->link(); el; el = el->next()) {
         buf = el->object();
         Tx_Desc * desc = buf->back<Tx_Desc>();
 
-        db<PCNet32>(TRC) << "PCNet32::send(s=" << _address << ",d=" << dst << ",p=" << hex << prot << dec
-                         << ",b=" << buf << ",s=" << buf->size() << ")" << endl;
-
-        // Assemble the Ethernet frame
-        new (buf->frame()) Frame(_address, dst, prot); // Data is already in buf!
+        db<PCNet32>(TRC) << "PCNet32::send(buf=" << buf << ")" << endl;
 
         desc->size = -(buf->size() + sizeof(Header)); // 2's comp.
 
@@ -131,50 +142,36 @@ int PCNet32::send(const Address & dst, const Protocol & prot, Buffer * buf)
         // Trigger an immediate send poll
         csr(0, csr(0) | CSR0_TDMD);
 
-        db<PCNet32>(INF) << "PCNet32::send:desc=" << desc << " => " << *desc << endl;
-
         size += buf->size();
 
         _statistics.tx_packets++;
         _statistics.tx_bytes += buf->size();
 
-        buf->unlock();
+        db<PCNet32>(INF) << "PCNet32::send:desc=" << desc << " => " << *desc << endl;
 
-        Delay(100000);
+        // Wait for packet to be sent and unlock the respective buffer
+        while(desc->status & Tx_Desc::OWN);
+
+        buf->unlock();
     }
 
     return size;
 }
 
-
-int PCNet32::receive(Address * src, Protocol * prot, void * data, unsigned int size)
+void PCNet32::free(Buffer * buf)
 {
-    // Wait for a received frame
-    for(; _rx_ring[_rx_cur].status & Rx_Desc::OWN; ++_rx_cur %= RX_BUFS);
+    db<PCNet32>(TRC) << "PCNet32::free(buf=" << buf << ")" << endl;
 
-    Buffer * buf = _rx_buffer[_rx_cur];
-    Rx_Desc * desc = &_rx_ring[_rx_cur];
-    ++_rx_cur %= RX_BUFS;
-
-    // Disassemble the Ethernet frame
-    Frame * frame = buf->frame();
-    *src = frame->src();
-    *prot = frame->prot();
-    buf->size((desc->misc & 0x00000fff) - sizeof(Header) - sizeof(CRC));
-
-    // Copy data
-    memcpy(data, frame->data<void>(), (buf->size() > size) ? size : buf->size());
- 
-    // Release the buffer to the NIC
-    desc->status = Rx_Desc::OWN;
+    Rx_Desc * desc = buf->back<Rx_Desc>();
 
     _statistics.rx_packets++;
     _statistics.rx_bytes += buf->size();
 
-    db<PCNet32>(TRC) << "PCNet32::receive(s=" << *src << ",p=" << hex << *prot << dec
-        	     << ",d=" << data << ",s=" << buf->size() << ") => " << endl;
+    // Release the buffer to the NIC
+    desc->size = Reg16(-sizeof(Frame)); // 2's comp.
+    desc->status = Rx_Desc::OWN; // Owned by NIC
 
-    return buf->size();
+    db<PCNet32>(INF) << "PCNet32::free:desc=" << desc << " => " << *desc << endl;
 }
 
 
@@ -189,7 +186,12 @@ void PCNet32::reset()
     bcr(20, BCR20_SSIZE32 | BCR20_SWSTYLE2);
 
     // Get MAC address from PROM
-    _address = Address(prom(0), prom(1), prom(2), prom(3), prom(4), prom(5));
+    _address[0] = prom(0);
+    _address[1] = prom(1);
+    _address[2] = prom(2);
+    _address[3] = prom(3);
+    _address[4] = prom(4);
+    _address[5] = prom(5);
     db<PCNet32>(INF) << "PCNet32::reset: MAC=" << _address << endl;
 
     // Enable auto-select port
@@ -236,7 +238,13 @@ void PCNet32::reset()
 
     // Get MAC address from CSR
     csr(0, CSR0_IDON | CSR0_STOP);
-    Address csr_addr(csr(PADR0), csr(PADR1), csr(PADR2));
+    Address csr_addr;
+    csr_addr[0] = csr(PADR0) & 0x00ff;
+    csr_addr[1] = (csr(PADR0) & 0xff00) >> 8;
+    csr_addr[2] = csr(PADR1) & 0x00ff;
+    csr_addr[3] = (csr(PADR1) & 0xff00) >> 8;
+    csr_addr[4] = csr(PADR2) & 0x00ff;
+    csr_addr[5] = (csr(PADR2) & 0xff00) >> 8;
 
     if(_address != csr_addr) {
         db<PCNet32>(WRN) << "PCNet32::reset: initialization failed!" << endl;
@@ -265,14 +273,15 @@ void PCNet32::handle_int()
  	    Buffer * buf = _rx_buffer[_rx_cur];
             Rx_Desc * desc = &_rx_ring[_rx_cur];
             Frame * frame = buf->frame();
-            ++_rx_cur %= RX_BUFS;
-
-            db<PCNet32>(INF) << "PCNet32::handle_int:desc=" << desc << " => " << *desc << endl;
 
             buf->size((desc->misc & 0x00000fff) - sizeof(Header) - sizeof(CRC));
 
             db<PCNet32>(TRC) << "PCNet32::int:receive(s=" << frame->src() << ",p=" << hex << frame->header()->prot() << dec
                              << ",d=" << frame->data<void>() << ",s=" << buf->size() << ")" << endl;
+
+            db<PCNet32>(INF) << "PCNet32::handle_int:desc[" << _rx_cur << "]=" << desc << " => " << *desc << endl;
+
+            ++_rx_cur %= RX_BUFS;
 
             notify(frame->header()->prot(), buf);
  	}

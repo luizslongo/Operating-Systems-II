@@ -8,7 +8,7 @@ __BEGIN_SYS
 class PC_Common;
 template <> struct Traits<PC_Common>: public Traits<void>
 {
-    static const bool debugged = Traits<void>::debugged;
+    static const bool debugged = true;
 };
 
 template <> struct Traits<PC>: public Traits<PC_Common>
@@ -51,6 +51,7 @@ template <> struct Traits<PC_PCI>: public Traits<PC_Common>
 
 template <> struct Traits<PC_IC>: public Traits<PC_Common>
 {
+    static const bool debugged = true;
 };
 
 template <> struct Traits<PC_Timer>: public Traits<PC_Common>
@@ -94,6 +95,8 @@ template <> struct Traits<PC_Display>: public Traits<PC_Common>
 
 template <> struct Traits<PC_Ethernet>: public Traits<PC_Common>
 {
+    static const bool enabled = (Traits<Build>::NETWORKING != Traits<Build>::NO);
+
     typedef LIST<PCNet32> NICS;
 };
 

@@ -19,20 +19,7 @@ protected:
 
 
 public:
-    class Address: public NIC_Common::Address<6>
-    {
-    private:
-        typedef NIC_Common::Address<6> Base;
-
-    public:
-        enum Broadcast { BROADCAST };
-
-    public:
-        Address() {}
-        Address(unsigned char a0, unsigned char a1 = 0, unsigned char a2 = 0, unsigned char a3 = 0, unsigned char a4 = 0, unsigned char a5 = 0): Base(a0, a1, a2, a3, a4, a5) {}
-        Address(const char * s): Base(s, ':') {}
-        Address(const Broadcast & b): Base(0xff, 0xff, 0xff, 0xff, 0xff, 0xff) {}
-    } __attribute__((packed, may_alias));
+    typedef NIC_Common::Address<6> Address;
 
     typedef unsigned short Protocol;
     enum
@@ -102,7 +89,6 @@ public:
 
 
     // Buffers used to hold frames across a zero-copy network stack
-    // Everything but the data is meant to be overwritten with meta info
     class Buffer: private Frame
     {
     public:
@@ -110,47 +96,25 @@ public:
         typedef List::Element Element;
 
     public:
-        Buffer(void * b): _lock(false), _size(sizeof(Frame)), _back(b), _link(this) {}
+        Buffer(void * back): _lock(false), _nic(0), _back(back), _size(sizeof(Frame)), _link(this) {}
+        Buffer(NIC * nic, const Address & src, const Address & dst, const Protocol & prot, unsigned int size):
+            Frame(src, dst, prot), _lock(false), _nic(nic), _size(size), _link(this) {}
 
         Frame * frame() { return this; }
-
-//        unsigned short size() const { return _prot; }
-//        void size(unsigned short s) { _prot = s; }
-//
-//        void * back() const { return reinterpret_cast<void *>(_crc); }
-//        void back(void * b) { _crc = reinterpret_cast<CRC>(b); }
-//
-//        NIC * nic() const { return _nic; }
-//        void nic(NIC * n) { _nic = n; }
-//
-//        bool lock() { return !CPU::tsl(_lock); }
-//        void unlock() { _lock = 0; }
-//
-//        Element * link() { return reinterpret_cast<Element *>(this); }
-//        void link(const Element & e) { *reinterpret_cast<Element *>(this) = e; }
-//
-//        Buffer * next() { return link()->object(); }
-//        void next(const Buffer * b) { link(Element(b, link()->rank())); }
-
-        NIC * nic() const { return _nic; }
-        void nic(NIC * n) { _nic = n; }
 
         bool lock() { return !CPU::tsl(_lock); }
         void unlock() { _lock = 0; }
 
-        unsigned int size() const { return _size; }
-        void size(unsigned int s) { _size = s; }
+        NIC * nic() const { return _nic; }
+        void nic(NIC * n) { _nic = n; }
 
         template<typename T>
         T * back() const { return reinterpret_cast<T *>(_back); }
-//        template<typename T>
-//        void back(T * b) { _back = b; }
+
+        unsigned int size() const { return _size; }
+        void size(unsigned int s) { _size = s; }
 
         Element & link() { return _link; }
-//        void link(const Element & e) { _link1 = e; }
-//
-//        Buffer * next() { return _link2.object(); }
-//        void next(const Buffer * b) { _link2 = Element(b, _link2.rank()); }
 
         friend Debug & operator<<(Debug & db, const Buffer & b) {
             db << "{nc=" << b._nic << ",lk=" << b._lock << ",sz=" << b._size << ",bl=" << b._back << "}";
@@ -158,10 +122,10 @@ public:
         }
 
     private:
-        NIC * _nic;
         volatile bool _lock;
-        unsigned int _size;
+        NIC * _nic;
         void * _back;
+        unsigned int _size;
         Element _link;
     };
 
@@ -202,14 +166,7 @@ protected:
 
 public:
     static const unsigned int mtu() { return MTU; }
-    static const Address broadcast() { return Address(Address::BROADCAST); }
-
-    void attach(Observer * obs, const Protocol & prot) { _observed.attach(obs, prot); }
-    void detach(Observer * obs, const Protocol & prot) { _observed.detach(obs, prot); }
-    void notify(const Protocol & prot, Buffer * buf) { _observed.notify(prot, buf); }
-
-private:
-    static Observed _observed; // Shared by all units of all models
+    static const Address broadcast() { return Address::BROADCAST; }
 };
 
 __END_SYS

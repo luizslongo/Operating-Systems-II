@@ -246,35 +246,20 @@ public:
     typedef int Channel;
     enum {
         SCHEDULER,
-        ALARM
+        ALARM,
+        USER
     };
 
 protected:
     typedef IF<Traits<System>::multicore, APIC_Timer, i8253>::Result Engine;
     typedef Engine::Count Count;
 
-    static const unsigned int CHANNELS = 2;
+    static const unsigned int CHANNELS = 3;
     static const unsigned int FREQUENCY = Traits<PC_Timer>::FREQUENCY;
 
-    PC_Timer(const Hertz & frequency, const Handler * handler, const Channel & channel)
-    : _channel(channel), _initial(FREQUENCY / frequency), _handler(handler) {
-        db<Timer>(TRC) << "Timer(f=" << frequency
-                       << ",h=" << reinterpret_cast<void*>(handler)
-                       << ",ch=" << channel
-                       << ") => {count=" << _initial << "}" << endl;
-
-        if(_initial && !_channels[channel])
-            _channels[channel] = this;
-        else
-            db<Timer>(ERR) << "Timer not installed!" << endl;
-
-        for(unsigned int i = 0; i < Traits<Machine>::CPUS; i++)
-            _current[i] = _initial;
-}
-
 public:
-    PC_Timer(const Hertz & frequency, const Handler * handler, const Channel & channel, bool retrigger)
-    : _channel(channel), _initial(FREQUENCY / frequency), _handler(handler) {
+    PC_Timer(const Hertz & frequency, const Handler & handler, const Channel & channel, bool retrigger = true)
+    : _channel(channel), _initial(FREQUENCY / frequency), _retrigger(retrigger), _handler(handler) {
         db<Timer>(TRC) << "Timer(f=" << frequency
                        << ",h=" << reinterpret_cast<void*>(handler)
                        << ",ch=" << channel
@@ -336,10 +321,23 @@ public:
 protected:
     unsigned int _channel;
     Count _initial;
+    bool _retrigger;
     volatile Count _current[Traits<Machine>::CPUS];
     Handler * _handler;
 
     static PC_Timer * _channels[CHANNELS];
+};
+
+
+// Timer used by Thread::Scheduler
+class Scheduler_Timer: public PC_Timer
+{
+private:
+    typedef RTC::Microsecond Microsecond;
+
+public:
+    Scheduler_Timer(const Microsecond & quantum, const Handler & handler)
+    : PC_Timer(1000000 / quantum, handler, SCHEDULER) {}
 };
 
 
@@ -354,15 +352,15 @@ public:
 };
 
 
-// Timer used by Thread::Scheduler
-class Scheduler_Timer: public PC_Timer
+// Timer available for users
+class User_Timer: public PC_Timer
 {
 private:
     typedef RTC::Microsecond Microsecond;
 
 public:
-    Scheduler_Timer(const Microsecond & quantum, const Handler & handler)
-    : PC_Timer(1000000 / quantum, handler, SCHEDULER) {}
+    User_Timer(const Microsecond & quantum, const Handler & handler)
+    : PC_Timer(1000000 / quantum, handler, USER, true) {}
 };
 
 __END_SYS

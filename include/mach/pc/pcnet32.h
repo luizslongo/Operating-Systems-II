@@ -387,7 +387,7 @@ protected:
 
 
 // PCNet32 PC Ethernet NIC
-class PCNet32: public Ethernet, private Am79C970A
+class PCNet32: public Ethernet, public Ethernet::Observed, private Am79C970A
 {
     template <int unit> friend void call_init();
 
@@ -417,15 +417,18 @@ private:
         unsigned int interrupt;
     };
         
+protected:
+    PCNet32(unsigned int unit, IO_Port io_port, IO_Irq irq, DMA_Buffer * dma);
+
 public:
     ~PCNet32();
 
-    Buffer * alloc(unsigned int once, unsigned int always, unsigned int payload);
-    void free(Buffer * buf);
-
     int send(const Address & dst, const Protocol & prot, const void * data, unsigned int size);
-    int send(const Address & dst, const Protocol & prot, Buffer * buf);
     int receive(Address * src, Protocol * prot, void * data, unsigned int size);
+
+    Buffer * alloc(NIC * nic, const Address & dst, const Protocol & prot, unsigned int once, unsigned int always, unsigned int payload);
+    void free(Buffer * buf);
+    int send(Buffer * buf);
 
     const Address & address() { return _address; }
     void address(const Address & address) { _address = address; }
@@ -437,11 +440,9 @@ public:
     static PCNet32 * get(unsigned int unit = 0) { return get_by_unit(unit); }
 
 private:
-    PCNet32(unsigned int unit, IO_Port io_port, IO_Irq irq, DMA_Buffer * dma);
-
     void handle_int();
 
-    static void init(unsigned int unit);
+    static void int_handler(unsigned int interrupt);
 
     static PCNet32 * get_by_unit(unsigned int unit) {
         if(unit >= UNITS) {
@@ -459,7 +460,7 @@ private:
         return 0;
     };
 
-    static void int_handler(unsigned int interrupt);
+    static void init(unsigned int unit);
 
 private:
     unsigned int _unit;

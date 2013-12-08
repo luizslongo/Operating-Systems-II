@@ -25,7 +25,7 @@ public:
     bool empty() const { return (_size == 0); }
     unsigned int size() const { return _size; }
 
-    Element * get(int i) const { return _vector[i]; }
+    Element * operator[](unsigned int i) const { return (i < SIZE) ? _vector[i] : 0; }
 
     bool insert(Element * e, unsigned int i) {
         if(_vector[i])

@@ -164,7 +164,12 @@ void E100::reset()
     self_test();
 
     // Get MAC address from EEPROM
-    _address = Address(eeprom_mac_address(0), eeprom_mac_address(1), eeprom_mac_address(2), eeprom_mac_address(3), eeprom_mac_address(4), eeprom_mac_address(5));
+    _address[0] = eeprom_mac_address(0);
+    _address[1] = eeprom_mac_address(1);
+    _address[2] = eeprom_mac_address(2);
+    _address[3] = eeprom_mac_address(3);
+    _address[4] = eeprom_mac_address(4);
+    _address[5] = eeprom_mac_address(5);
     db<E100>(INF) << "E100::reset():MAC=" << _address << endl;
 
     // load zero on NIC's internal CU

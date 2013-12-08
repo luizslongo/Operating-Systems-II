@@ -46,8 +46,8 @@ public:
         Address() {}
         Address(const IP::Address & ip, const Port & port): _ip(ip), _port(port) {}
         Address(const char * addr): _ip(addr) { // a.b.c.d:port
-            char * sep = strchr(addr, ':');
-            _port = sep ? atol(++sep) : 0;
+            char * token = strchr(addr, ':');
+            _port = token ? atol(++token) : 0;
         }
 
         const IP::Address & ip() const { return _ip; }
@@ -147,7 +147,7 @@ private:
     static unsigned short checksum(const void * header, const void * data, unsigned int size);
 
 private:
-    IP _ip;
+   // IP _ip;
 
     static List _received;
 };

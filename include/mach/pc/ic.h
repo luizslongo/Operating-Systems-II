@@ -25,10 +25,12 @@ private:
 public:
     // I/O Ports
     enum {
-        MASTER_CMD	= 0x20,
-        MASTER_IMR	= 0x21,
-        SLAVE_CMD	= 0xa0,
-        SLAVE_IMR	= 0xa1
+        MASTER          = 0x20,
+        MASTER_CMD	= MASTER,
+        MASTER_DAT	= MASTER + 1,
+        SLAVE           = 0xa0,
+        SLAVE_CMD	= SLAVE,
+        SLAVE_DAT	= SLAVE + 1
     };
 
     // Commands
@@ -62,6 +64,7 @@ public:
     // Interrupts
     static const unsigned int INTS = 64;
     enum {
+        INT_FIRST_HARD  = HARD_INT,
         INT_TIMER	= HARD_INT + IRQ_TIMER,
         INT_KEYBOARD	= HARD_INT + IRQ_KEYBOARD,
         INT_LAST_HARD   = HARD_INT + IRQ_LAST,
@@ -80,17 +83,23 @@ public:
     static void disable(int i) { imr(imr() | (1 << int2irq(i))); }
 
     static void remap(Reg8 base = HARD_INT) {
+        Reg8 m_imr = CPU::in8(MASTER_DAT);      // save IMRs
+        Reg8 s_imr = CPU::in8(SLAVE_DAT);
+
         // Configure Master PIC
         CPU::out8(MASTER_CMD, ICW1);
-        CPU::out8(MASTER_IMR, base);              // ICW2 is the base
-        CPU::out8(MASTER_IMR, 1 << IRQ_CASCADE);  // ICW3 = IRQ2 cascaded
-        CPU::out8(MASTER_IMR, ICW4);
+        CPU::out8(MASTER_DAT, base);              // ICW2 is the base
+        CPU::out8(MASTER_DAT, 1 << IRQ_CASCADE);  // ICW3 = IRQ2 cascaded
+        CPU::out8(MASTER_DAT, ICW4);
 
         // Configure Slave PIC
         CPU::out8(SLAVE_CMD, ICW1);
-        CPU::out8(SLAVE_IMR, base + 8); // ICW2 is the base
-        CPU::out8(SLAVE_IMR, 0x02);     // ICW3 = cascaded from IRQ1
-        CPU::out8(SLAVE_IMR, ICW4);
+        CPU::out8(SLAVE_DAT, base + 8); // ICW2 is the base
+        CPU::out8(SLAVE_DAT, 0x02);     // ICW3 = cascaded from IRQ1
+        CPU::out8(SLAVE_DAT, ICW4);
+
+        CPU::out8(MASTER_DAT, m_imr);           // restore saved IMRs
+        CPU::out8(SLAVE_DAT, s_imr);
     }
 
     static void reset() { remap(); disable(); }
@@ -108,21 +117,28 @@ public:
     }
 
     static Reg16 imr() { // Interrupt mask
-        return CPU::in8(MASTER_IMR) | (CPU::in8(SLAVE_IMR) << 8);
+        return CPU::in8(MASTER_DAT) | (CPU::in8(SLAVE_DAT) << 8);
     }
 
     static void imr(Reg16 mask) {
-        CPU::out8(MASTER_IMR, mask & 0xff);
-        CPU::out8(SLAVE_IMR, mask >> 8);
+        CPU::out8(MASTER_DAT, mask & 0xff);
+        CPU::out8(SLAVE_DAT, mask >> 8);
     }
 
-    static void eoi(unsigned int i) { // End of interrupt
-        CPU::out8(MASTER_CMD, EOI); // always send EOI to master!
-        if(i > 7) // was it an slave PIC interrupt?
-            CPU::out8(SLAVE_CMD, EOI);
-//        CPU::out8(0x20, 0x20);       /* send EOI to master */
-//        if(isr() & 4)   /* if servicing IRQ2 ... */
-//            CPU::out8(0xa0, 0x20);     /* send EOI to slave */
+    static bool eoi(unsigned int i) {
+        int irq = int2irq(i);
+
+        if(!(isr() & (1 << irq))) {           // spurious interrupt?
+            if(isr() & (1 << IRQ_CASCADE))    // cascade?
+                CPU::out8(MASTER_CMD, EOI);   // send EOI to master
+            return false;
+        }
+
+        if(irq >= 8)                    // slave interrupt?
+            CPU::out8(SLAVE_CMD, EOI);  // send EOI to slave
+        CPU::out8(MASTER_CMD, EOI);     // always send EOI to master
+
+        return true;
     }
 
     static void ipi_send(int dest, int interrupt) {}
@@ -143,8 +159,10 @@ public:
     // Interrupts
     static const unsigned int INTS = i8259A::INTS;
     enum {
+        INT_FIRST_HARD  = i8259A::INT_FIRST_HARD,
         INT_TIMER	= i8259A::INT_TIMER,
-        INT_RESCHEDULER = i8259A::INT_RESCHEDULER
+        INT_RESCHEDULER = i8259A::INT_RESCHEDULER, // in multicores, reschedule goes via IPI, which must be acknowledged just like hardware
+        INT_LAST_HARD   = INT_RESCHEDULER
     };
 
     // Default mapping addresses
@@ -330,8 +348,9 @@ public:
             disable();
     }
 
-    static void eoi() { // End of interrupt
-    	APIC::write(APIC::EOI, 0);
+    static int eoi(unsigned int i) { // End of interrupt
+    	write(APIC::EOI, 0);
+    	return true;
     }
 
     static void config_timer(Reg32 count, bool interrupt, bool periodic) {
@@ -429,10 +448,10 @@ private:
     typedef CPU::Log_Addr Log_Addr;
 
 public:
-
     using Base::INT_TIMER;
-    using Base::ipi_send;
     using Base::INT_RESCHEDULER;
+
+    using Base::ipi_send;
 
 public:
     PC_IC() {}
@@ -472,16 +491,27 @@ public:
     using Base::int2irq;
 
 private:
-    static void init();
+    static void dispatch(unsigned int i) {
+        bool not_spurious = true;
+        if((i >= INT_FIRST_HARD) && (i <= INT_LAST_HARD))
+            not_spurious = eoi(i);
+        if(not_spurious) {
+            if((i != INT_TIMER) || Traits<IC>::hysterically_debugged)
+                db<IC>(TRC) << "IC::dispatch(i=" << i << ")" << endl;
+            _int_vector[i](i);
+        } else
+            db<IC>(TRC) << "IC::spurious interrupt (" << i << ")" << endl;
+    }
 
     static void entry();
-    static void dispatch(unsigned int i);
 
     static void int_not(Interrupt_Id i);
     static void exc_not(Interrupt_Id i, Reg32 error, Reg32 eip, Reg32 cs, Reg32 eflags);
     static void exc_pf (Interrupt_Id i, Reg32 error, Reg32 eip, Reg32 cs, Reg32 eflags);
     static void exc_gpf(Interrupt_Id i, Reg32 error, Reg32 eip, Reg32 cs, Reg32 eflags);
     static void exc_fpu(Interrupt_Id i, Reg32 error, Reg32 eip, Reg32 cs, Reg32 eflags);
+
+    static void init();
 
 private:
     static Interrupt_Handler _int_vector[INTS];

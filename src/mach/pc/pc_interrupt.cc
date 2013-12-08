@@ -786,16 +786,6 @@ void PC_IC::entry()
         "        popal                  \n"
         "        iret                   \n"
         : : "m"(id), "c"(dispatch));
+};
 
-//    ASM("        movl   %0, %%eax       \n"
-//        "        pushl  %%eax           \n"
-//        "        call   *%2             \n"
-//        "        popl   %%eax           \n"
-//        "        pushl  %%eax           \n"
-//        "        call   *%1(,%%eax,4)   \n"
-//        "        popl   %%eax           \n"
-//        "        popal                  \n"
-//        "        iret                   \n"
-//        : : "m"(id), "m"(_int_vector[0]), "c"(PC_IC::eoi));
-}
 __END_SYS

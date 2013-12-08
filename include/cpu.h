@@ -58,7 +58,7 @@ public:
         template <typename T>
         Log_Addr & operator&=(T a) { _addr &= Reg(a); return *this; }
 
-        friend Debug & operator<<(Debug & db, const Log_Addr & a) { db << reinterpret_cast<void *>(a._addr); return db; }
+        friend OStream & operator<<(OStream & os, const Log_Addr & a) { os << reinterpret_cast<void *>(a._addr); return os; }
 
     private:
         Reg _addr;
@@ -106,12 +106,11 @@ public:
 
 protected:
     static Reg32 swap32(Reg32 v) {
-        return (((v << 24) & 0xff000000) | ((v <<  8) & 0x00ff0000) |
-                ((v >>  8) & 0x0000ff00) | ((v >> 24) & 0x000000ff));
+        return (v & 0xff000000) >> 24 | (v & 0x00ff0000) >> 8 | (v & 0x0000ff00) << 8 | (v & 0x000000ff) << 24;
     }
 
     static Reg16 swap16(Reg16 v) {
-        return ((v << 8) & 0xFF00) | ((v >> 8) & 0x00FF);
+        return (v & 0xff00) >> 8 | (v & 0x00ff) << 8;
     }
 };
 

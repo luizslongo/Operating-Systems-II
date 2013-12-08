@@ -16,8 +16,11 @@ int UDP::send(const Port & from, const Address & to, const void * d, unsigned in
 
     db<UDP>(TRC) << "UDP::send(f=" << from << ",t=" << to << ",d=" << data << ",s=" << size << ")" << endl;
 
-    Buffer * pool = IP::route(to.ip())->nic()->alloc(sizeof(Header), sizeof(IP::Header), size);
+    Buffer * pool = IP::alloc(to.ip(), IP::UDP, sizeof(Header), size);
+    if(!pool)
+        return 0;
 
+    unsigned int headers = sizeof(Header);
     for(Buffer::Element * el = &pool->link(); el; el = el->next()) {
         Buffer * buf = el->object();
         Packet * packet = buf->frame()->data<Packet>();
@@ -36,19 +39,16 @@ int UDP::send(const Port & from, const Address & to, const void * d, unsigned in
             memcpy(packet->data<void>(), data, buf->size() - sizeof(IP::Header));
             data += buf->size() - sizeof(IP::Header);
         }
+
+        headers += sizeof(IP::Header);
     }
 
-    return IP::send(to.ip(), IP::UDP, pool); // Calls nic->free(&pool)
+    return IP::send(pool) - headers; // implicitly releases the pool
 }
 
 
 int UDP::receive(Buffer * buf, void * d, unsigned int s)
 {
-    for(Buffer::Element * el = &buf->link(); el; el = el->next()) {
-        Buffer * b = el->object();
-        db<PCNet32>(INF) << "PCNet32::alloc:buf=" << b << " => " << *b << endl;
-    }
-
     unsigned char * data = reinterpret_cast<unsigned char *>(d);
 
     db<UDP>(TRC) << "UDP::receive(buf=" << buf << ",d=" << d << ",s=" << s << ")" << endl;
@@ -98,7 +98,8 @@ void UDP::update(IP::Observed * ip, int port, Buffer * buf)
         return;
     }
 
-    notify(message->to_port(), buf);
+    if(!notify(message->to_port(), buf))
+        buf->nic()->free(buf);
 }
 
 

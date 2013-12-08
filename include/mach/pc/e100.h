@@ -303,7 +303,7 @@ public:
 
 };
 
-class E100: public Ethernet, private i82559
+class E100: public Ethernet, public Ethernet::Observed, private i82559
 {
     template <int unit> friend void call_init();
 

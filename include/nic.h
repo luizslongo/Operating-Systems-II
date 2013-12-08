@@ -4,6 +4,7 @@
 #define __nic_h
 
 #include <utility/string.h>
+#include <cpu.h>
 
 __BEGIN_SYS
 
@@ -18,45 +19,57 @@ public:
     class Address
     {
     public:
+        enum Null { NULL = 0 };
+        enum Broadcast { BROADCAST = 255 };
+
+    public:
         Address() {}
-        Address(unsigned char a[LENGTH]) {
-            _address[0] =  a[0];
-            if(LENGTH > 1) _address[1] = a[1];
-            if(LENGTH > 2) _address[2] = a[2];
-            if(LENGTH > 3) _address[3] = a[3];
-            if(LENGTH > 4) _address[4] = a[4];
-            if(LENGTH > 5) _address[5] = a[5];
-            if(LENGTH > 6) _address[6] = a[6];
-            if(LENGTH > 7) _address[7] = a[7];
-        }
-        Address(unsigned char a0, unsigned char a1 = 0, unsigned char a2 = 0, unsigned char a3 = 0,
-                unsigned char a4 = 0, unsigned char a5 = 0, unsigned char a6 = 0, unsigned char a7 = 0) {
-            _address[0] =  a0;
-            if(LENGTH > 1) _address[1] = a1;
-            if(LENGTH > 2) _address[2] = a2;
-            if(LENGTH > 3) _address[3] = a3;
-            if(LENGTH > 4) _address[4] = a4;
-            if(LENGTH > 5) _address[5] = a5;
-            if(LENGTH > 6) _address[6] = a6;
-            if(LENGTH > 7) _address[7] = a7;
-        }
-        Address(const char * s, const char c) { // Create from string in the form A.B.C.D
-            _address[0] =  0;
-            if(LENGTH > 1) _address[1] = 0;
-            if(LENGTH > 2) _address[2] = 0;
-            if(LENGTH > 3) _address[3] = 0;
-            if(LENGTH > 4) _address[4] = 0;
-            if(LENGTH > 5) _address[5] = 0;
-            if(LENGTH > 6) _address[6] = 0;
-            if(LENGTH > 7) _address[7] = 0;
-            char * sep = strchr(s, c);
-            for(unsigned int i = 0; i < LENGTH; i++, s = ++sep, sep = strchr(s, c))
-                _address[i] = atol(s);
+
+        Address(const Null &) {
+            for(unsigned int i = 0; i < LENGTH; i++)
+                _address[i] =  NULL;
         }
 
-        operator bool() {
+        Address(const Broadcast &) {
+            for(unsigned int i = 0; i < LENGTH; i++)
+                _address[i] = BROADCAST;
+        }
+
+        Address(const char * str) { // String formated as A.B.C.D or A:B:C:D:E:F
+            static const char sep = (LENGTH == 4) ? '.' : ':';
+            char * token = strchr(str, sep);
+            for(unsigned int i = 0; i < LENGTH; i++, ++token, str = token, token = strchr(str, sep))
+                _address[i] = atol(str);
+        }
+
+        Address(unsigned long a) {
+            if(LENGTH != sizeof(long))
+                return;
+            a = htonl(a);
+            memcpy(this, &a, sizeof(long));
+        }
+
+        Address operator=(const Address & a) {
+            for(unsigned int i = 0; i < LENGTH; ++i)
+                _address[i] = a._address[i];
+            return a;
+        }
+        Address operator=(const Address & a) volatile {
+            for(unsigned int i = 0; i < LENGTH; ++i)
+                _address[i] = a._address[i];
+            return a;
+        }
+
+        operator bool() const {
             for(unsigned int i = 0; i < LENGTH; ++i) {
-                if(_address[i] != 0)
+                if(_address[i])
+                    return true;
+            }
+            return false;
+        }
+        operator bool() const volatile {
+            for(unsigned int i = 0; i < LENGTH; ++i) {
+                if(_address[i])
                     return true;
             }
             return false;
@@ -70,12 +83,46 @@ public:
             return true;
         }
 
-        unsigned char & operator[](int i) { return _address[i]; }
+        bool operator!=(const Address & a) const {
+            for(unsigned int i = 0; i < LENGTH; ++i) {
+                if(_address[i] != a._address[i])
+                    return true;
+            }
+            return false;
+        }
+
+        Address operator&(const Address & a) const {
+            Address ret;
+            for(unsigned int i = 0; i < LENGTH; ++i)
+                ret[i] = _address[i] & a._address[i];
+            return ret;
+        }
+
+        Address operator|(const Address & a) const {
+            Address ret;
+            for(unsigned int i = 0; i < LENGTH; ++i)
+                ret[i] = _address[i] | a._address[i];
+            return ret;
+        }
+
+        Address operator~() const {
+            Address ret;
+            for(unsigned int i = 0; i < LENGTH; ++i)
+                ret[i] = ~_address[i];
+            return ret;
+        }
+
+        unsigned int operator%(unsigned int i) const {
+            return _address[LENGTH - 1] % i;
+        }
+
+        unsigned char & operator[](const size_t i) { return _address[i]; }
+        const unsigned char & operator[](const size_t i) const { return _address[i]; }
 
         friend OStream & operator<<(OStream & db, const Address & a) {
             db << hex;
             for(unsigned int i = 0; i < LENGTH; i++) {
-                db << static_cast<unsigned int>(a._address[i]);
+                db << a._address[i];
                 if(i < LENGTH - 1)
                     db << ((LENGTH == 4) ? "." : ":");
             }
@@ -83,9 +130,9 @@ public:
             return db;
         }
 
-    protected:
+    private:
         unsigned char _address[LENGTH];
-    } __attribute__((packed, may_alias));
+    } __attribute__((packed));
 
     // NIC protocol id
     typedef unsigned short Protocol;
@@ -122,10 +169,10 @@ public:
         virtual ~NIC_Base() {}
     
         virtual int send(const Address & dst, const Protocol & prot, const void * data, unsigned int size) = 0;
-        virtual int send(const Address & dst, const Protocol & prot, Buffer * buf) = 0;
         virtual int receive(Address * src, Protocol * prot, void * data, unsigned int size) = 0;
     
-        virtual Buffer * alloc(unsigned int once, unsigned int always, unsigned int payload) = 0;
+        virtual Buffer * alloc(NIC * nic, const Address & dst, const Protocol & prot, unsigned int once, unsigned int always, unsigned int payload) = 0;
+        virtual int send(Buffer * buf) = 0;
         virtual void free(Buffer * buf) = 0;
 
         virtual const unsigned int mtu() = 0;
@@ -156,19 +203,15 @@ public:
         virtual int send(const Address & dst, const Protocol & prot, const void * data, unsigned int size) {
             return NIC::send(dst, prot, data, size); 
         }
-        virtual int send(const Address & dst, const Protocol & prot, Buffer * buf) {
-            return NIC::send(dst, prot, buf);
-        }
         virtual int receive(Address * src, Protocol * prot, void * data, unsigned int size) {
             return NIC::receive(src, prot, data, size); 
         }
 
-        virtual Buffer * alloc(unsigned int once, unsigned int always, unsigned int payload) {
-            return NIC::alloc(once, always, payload);
+        virtual Buffer * alloc(NIC * nic, const Address & dst, const Protocol & prot, unsigned int once, unsigned int always, unsigned int payload) {
+            return NIC::alloc(nic, once, always, payload);
         }
-        virtual void free(Buffer * buf) {
-            NIC::free(buf);
-        }
+        virtual int send(Buffer * buf) { return NIC::send(buf); }
+        virtual void free(Buffer * buf) { NIC::free(buf); }
 
         virtual const unsigned int mtu() const { return NIC::mtu(); }
         virtual const Address broadcast() const { return NIC::broadcast(); }

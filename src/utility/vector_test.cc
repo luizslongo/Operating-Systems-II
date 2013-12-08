@@ -32,17 +32,17 @@ int main()
 
     cout << "The vector has now " << v.size() << " elements:\n";
     for(int i = 0; i < N; i++) {
-        cout << "[" << i << "]=" << *v.get(i)->object();
+        cout << "[" << i << "]=" << *v[i]->object();
         if(i != N - 1)
             cout << ", ";
     }
     cout << "\n";
 
     for(int i = 0; i < N; i++)
-        (*v.get(i)->object())++;
+        (*v[i]->object())++;
     cout << "The vector's elements were incremented and are now:\n";
     for(int i = 0; i < N; i++) {
-        cout << "[" << i << "]=" << *v.get(i)->object();
+        cout << "[" << i << "]=" << *v[i]->object();
         if(i != N - 1)
             cout << ", ";
     }

@@ -12,24 +12,6 @@ PC_IC::Interrupt_Handler PC_IC::_int_vector[PC_IC::INTS];
 
 
 // Class methods
-void PC_IC::dispatch(unsigned int i)
-{
-    if((i == INT_LAST_HARD) && !(isr() & (1 << IRQ_LAST))) {
-        CPU::out8(MASTER_CMD, EOI); // always send EOI to master!
-        return;
-    }
-
-    if((i != INT_TIMER) || Traits<IC>::hysterically_debugged) {
-        db<PC>(TRC) << "IC::dispatch(i=" << i << ")" << endl;
-        db<IC>(INF) << "IC::isr=" << bin << isr() << endl;
-        db<IC>(INF) << "IC::irr=" << bin << irr() << endl;
-    }
-
-    eoi(i);
-    _int_vector[i](i);
-}
-
-
 void PC_IC::int_not(unsigned int i)
 {
     db<IC>(WRN) << "IC::int_not(i=" << i << ")" << endl;

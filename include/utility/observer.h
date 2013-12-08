@@ -28,7 +28,7 @@ public:
 
     virtual void attach(Observer * o);
     virtual void detach(Observer * o);
-    virtual void notify();
+    virtual bool notify();
 
 private: 
     Simple_List<Observer> _observers;
@@ -68,15 +68,21 @@ inline void Observed::detach(Observer * o)
     _observers.remove(&o->_link);
 }
 
-inline void Observed::notify()
+inline bool Observed::notify()
 {
     db<Observed>(TRC) << "Observed::notify()" << endl;
+
+    bool notified = false;
 
     for(Element * e = _observers.head(); e; e = e->next()) {
         db<Observed>(INF) << "Observed::notify(this=" << this << ",obs=" << e->object() << ")" << endl;
 
         e->object()->update(this);
+
+        notified = true;
     }
+
+    return notified;
 }
 
 
@@ -101,7 +107,7 @@ public:
 
     virtual void attach(Conditional_Observer * o, int c);
     virtual void detach(Conditional_Observer * o, int c);
-    virtual void notify(int c);
+    virtual bool notify(int c);
 
 private: 
     Simple_Ordered_List<Conditional_Observer> _observers;
@@ -141,15 +147,21 @@ inline void Conditionally_Observed::detach(Conditional_Observer * o, int c)
     _observers.remove(&o->_link);
 }
 
-inline void Conditionally_Observed::notify(int c)
+inline bool Conditionally_Observed::notify(int c)
 {
     db<Observed>(TRC) << "Observed::notify(cond=" << hex << c << ")" << endl;
+
+    bool notified = false;
 
     for(Element * e = _observers.head(); e; e = e->next())
         if(e->rank() == c) {
             db<Observed>(INF) << "Observed::notify(this=" << this << ",obs=" << e->object() << ")" << endl;
             e->object()->update(this, c);
+
+            notified = true;
         }
+
+    return notified;
 }
 
 
@@ -188,14 +200,20 @@ public:
         _observers.remove(&o->_link);
     }
 
-    virtual void notify(int c, T * d) {
+    virtual bool notify(int c, T * d) {
         db<Observed>(TRC) << "Observed::notify(cond=" << c << ",data=" << d << ")" << endl;
+
+        bool notified = false;
 
         for(Element * e = _observers.head(); e; e = e->next())
             if(e->rank() == c) {
                 db<Observed>(INF) << "Observed::notify(this=" << this << ",obs=" << e->object() << ",cond=" << c << ",data=" << d << ")" << endl;
                 e->object()->update(this, c, d);
+
+                notified = true;
             }
+
+        return notified;
     }
 
 private:
