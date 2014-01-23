@@ -334,6 +334,7 @@ class ICMP;
 class UDP;
 class TCP;
 class RTP;
+class Modbus_ASCII;
 
 // Abstractions - Communication - List of neighbors
 class Neighborhood;
@@ -409,6 +410,7 @@ enum
     ARP_ID,
     UDP_ID,
     CAN_ID,
+    MODBUS_ASCII_ID,
 
     UNKNOWN_TYPE_ID,
     LAST_TYPE_ID = UNKNOWN_TYPE_ID - 1
