@@ -32,7 +32,7 @@ public:
     const unsigned short sample();
     const unsigned short charge();
 
-    static MC13224V_Battery & sys_batt();
+    static MC13224V_Battery * sys_batt();
 
 private:
     static const unsigned short read_to_voltage(unsigned short value);

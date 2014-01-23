@@ -1266,7 +1266,7 @@ public:
 
         *protocol_ptr = CMAC<T>::_tx_protocol;
 
-        *remaining_energy_ptr = Battery::sys_batt().sample();
+        *remaining_energy_ptr = Battery::sys_batt()->sample();
 
         *crc_ptr = CRC::crc16(reinterpret_cast<char*>(CMAC<T>::_frame_buffer), CMAC<T>::_frame_buffer_size - 2);
 

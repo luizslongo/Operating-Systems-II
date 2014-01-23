@@ -8,10 +8,6 @@ __BEGIN_SYS
 
 MC13224V_Battery * MC13224V_Battery::system_battery;
 
-__END_SYS
-
-__USING_SYS
-
 MC13224V_Battery::MC13224V_Battery()
  : _adc()
 {
@@ -39,11 +35,11 @@ const unsigned short MC13224V_Battery::charge()
     return read_to_charge(get());
 }
 
-MC13224V_Battery & MC13224V_Battery::sys_batt()
+MC13224V_Battery * MC13224V_Battery::sys_batt()
 {
     db<MC13224V_Battery>(TRC) << "MC13224V_Battery::sys_batt()\n";
 
-    return *system_battery;
+    return system_battery;
 }
 const unsigned short MC13224V_Battery::read_to_voltage(unsigned short value)
 {
@@ -125,3 +121,5 @@ const void MC13224V_Battery::battery_under_threshold_disable()
 
     // TODO: clear 0x0100 in ?
 }
+
+__END_SYS
