@@ -22,14 +22,15 @@ void Thread::init()
     if(Criterion::timed && (Machine::cpu_id() == 0))
         _timer = new (SYSTEM) Scheduler_Timer(QUANTUM, time_slicer);
 
-    if(Machine::cpu_id() == 0)
-        IC::int_vector(IC::INT_RESCHEDULER, rescheduler);
-    IC::enable(IC::INT_RESCHEDULER);
+    if(smp) {
+        if(Machine::cpu_id() == 0)
+            IC::int_vector(IC::INT_RESCHEDULER, rescheduler);
+        IC::enable(IC::INT_RESCHEDULER);
 
-    Machine::smp_barrier();
+        Machine::smp_barrier();
+    }
 
     Thread * first;
-
     if(Machine::cpu_id() == 0) {
         if(multitask) {
             // Create the application's main thread

@@ -7,25 +7,28 @@
 
 __BEGIN_SYS
 
-// Observer
+// Observer x Observed
 class Observer;
 
-class Observed // Subject
+class Observed
 { 
     friend class Observer;
 
 private:
     typedef Simple_List<Observer>::Element Element;
 
-protected: 
-    Observed() {}
+public:
+    Observed() {
+        db<Observed>(TRC) << "Observed() => " << this << endl;
+    }
 
-public: 
-    virtual ~Observed() {}
+    ~Observed() {
+        db<Observed>(TRC) << "~Observed(this=" << this << ")" << endl;
+    }
 
     virtual void attach(Observer * o);
     virtual void detach(Observer * o);
-    virtual void notify();
+    virtual bool notify();
 
 private: 
     Simple_List<Observer> _observers;
@@ -41,7 +44,7 @@ protected:
     }
 
 public: 
-    virtual ~Observer() {
+    ~Observer() {
         db<Observer>(TRC) << "~Observer(this=" << this << ")" << endl;
     }
 
@@ -51,40 +54,70 @@ private:
     Observed::Element _link;
 };
 
+inline void Observed::attach(Observer * o)
+{
+    db<Observed>(TRC) << "Observed::attach(obs=" << o << ")" << endl;
 
-// Conditionally Observed
+    _observers.insert(&o->_link);
+}
+
+inline void Observed::detach(Observer * o)
+{
+    db<Observed>(TRC) << "Observed::detach(obs=" << o << ")" << endl;
+
+    _observers.remove(&o->_link);
+}
+
+inline bool Observed::notify()
+{
+    db<Observed>(TRC) << "Observed::notify()" << endl;
+
+    bool notified = false;
+
+    for(Element * e = _observers.head(); e; e = e->next()) {
+        db<Observed>(INF) << "Observed::notify(this=" << this << ",obs=" << e->object() << ")" << endl;
+
+        e->object()->update(this);
+
+        notified = true;
+    }
+
+    return notified;
+}
+
+
+// Observer x Conditionally Observed
 class Conditional_Observer;
 
-class Conditionally_Observed // Subject
+class Conditionally_Observed
 {
     friend class Conditional_Observer;
 
 private:
-    typedef
-    List_Elements::Singly_Linked_Ordered<Conditional_Observer> Element;
+    typedef Simple_Ordered_List<Conditional_Observer>::Element Element;
 
-public: 
+public:
     Conditionally_Observed() {
         db<Observed>(TRC) << "Observed() => " << this << endl;
     }
 
-    virtual ~Conditionally_Observed() {
+    ~Conditionally_Observed() {
         db<Observed>(TRC) << "~Observed(this=" << this << ")" << endl;
     }
 
     virtual void attach(Conditional_Observer * o, int c);
     virtual void detach(Conditional_Observer * o, int c);
-    virtual void notify(int c);
+    virtual bool notify(int c);
 
 private: 
-    Simple_List<Conditional_Observer, Element> _observers;
+    Simple_Ordered_List<Conditional_Observer> _observers;
 }; 
 
 class Conditional_Observer
 {
     friend class Conditionally_Observed;
 
-public: 
+public:
     Conditional_Observer(): _link(this) {
         db<Observer>(TRC) << "Observer() => " << this << endl;
     } 
@@ -99,74 +132,112 @@ private:
     Conditionally_Observed::Element _link;
 };
 
-// Conditional Data Observer
-// An Observer that receives useful data
+inline void Conditionally_Observed::attach(Conditional_Observer * o, int c)
+{
+    db<Observed>(TRC) << "Observed::attach(o=" << o << ",c=" << c << ")" << endl;
+
+    o->_link = Element(o, c);
+    _observers.insert(&o->_link);
+}
+
+inline void Conditionally_Observed::detach(Conditional_Observer * o, int c)
+{
+    db<Observed>(TRC) << "Observed::detach(obs=" << o << ",c=" << c << ")" << endl;
+
+    _observers.remove(&o->_link);
+}
+
+inline bool Conditionally_Observed::notify(int c)
+{
+    db<Observed>(TRC) << "Observed::notify(cond=" << hex << c << ")" << endl;
+
+    bool notified = false;
+
+    for(Element * e = _observers.head(); e; e = e->next())
+        if(e->rank() == c) {
+            db<Observed>(INF) << "Observed::notify(this=" << this << ",obs=" << e->object() << ")" << endl;
+            e->object()->update(this, c);
+
+            notified = true;
+        }
+
+    return notified;
+}
+
+
+// Conditional Observer with Data
 template<typename T>
 class Data_Observer;
 
 template<typename T>
-class Data_Observed // Subject
+class Data_Observed
 {
     friend class Data_Observer<T>;
 
-public:
+private:
     typedef Data_Observer<T> Observer;
-    typedef List_Elements::Singly_Linked_Ordered<Observer> Element;
+    typedef typename Simple_Ordered_List<Observer>::Element Element;
 
+public:
     Data_Observed() {
         db<Observed>(TRC) << "Observed() => " << this << endl;
     }
 
-    virtual ~Data_Observed() {
+    ~Data_Observed() {
         db<Observed>(TRC) << "~Observed(this=" << this << ")" << endl;
     }
 
-    virtual void attach(Observer * o, long c) {
-    	db<Observed>(TRC) << "Observed::attach(o=" << o << ",c=" << c << ")" << endl;
+    virtual void attach(Observer * o, int c) {
+        db<Observed>(TRC) << "Observed::attach(obs=" << o << ",cond=" << c << ")" << endl;
 
-        	o->_link = Element(o, c);
-        	_observers.insert(&o->_link);
-    }
-    
-    virtual void detach(Observer * o, long c) {
-    	db<Observed>(TRC) << "Observed::detach(obs=" << o << ",c=" << c << ")" << endl;
-
-    	_observers.remove(&o->_link);
+        o->_link = Element(o, c);
+        _observers.insert(&o->_link);
     }
 
-    virtual void notify(T src,T dst,long c,void * data,unsigned int size) {
-        db<Observed>(TRC) << "Observed::notify(cond=" << c << ")" << endl;
+    virtual void detach(Observer * o, int c) {
+        db<Observed>(TRC) << "Observed::detach(obs=" << o << ",cond=" << c << ")" << endl;
 
-        for(Element * e = _observers.head(); e; e = e->next()) {
-        	if(e->rank() == c) {
-        		db<Observed>(INF) << "Observed::notify(this=" << this
-        			 << ",obs=" << e->object() << ")" << endl;
-        		e->object()->update(this, c, src, dst, data, size);
-        	}
-        }
+        _observers.remove(&o->_link);
+    }
 
+    virtual bool notify(int c, T * d) {
+        db<Observed>(TRC) << "Observed::notify(cond=" << c << ",data=" << d << ")" << endl;
+
+        bool notified = false;
+
+        for(Element * e = _observers.head(); e; e = e->next())
+            if(e->rank() == c) {
+                db<Observed>(INF) << "Observed::notify(this=" << this << ",obs=" << e->object() << ",cond=" << c << ",data=" << d << ")" << endl;
+                e->object()->update(this, c, d);
+
+                notified = true;
+            }
+
+        return notified;
     }
 
 private:
-    Simple_List<Observer, Element> _observers;
+    Simple_Ordered_List<Observer> _observers;
 };
 
 template<typename T>
 class Data_Observer
 {
-public:
     friend class Data_Observed<T>;
+
+private:
     typedef Data_Observed<T> Observed;
 
+public:
     Data_Observer(): _link(this) {
         db<Observer>(TRC) << "Observer() => " << this << endl;
     }
 
     virtual ~Data_Observer() {
-    	db<Observer>(TRC) << "~Observer(this=" << this << ")" << endl;
+        db<Observer>(TRC) << "~Observer(this=" << this << ")" << endl;
     }
 
-    virtual void update(Observed * o, long c,T src,T dst,void * data,unsigned int size) = 0;
+    virtual void update(Observed * o, int c, T * d) = 0;
 
 private:
     typename Observed::Element _link;

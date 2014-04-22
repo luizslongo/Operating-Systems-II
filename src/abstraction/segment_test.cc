@@ -17,7 +17,7 @@ int main()
 
     cout << "My address space's page directory is located at "
          << reinterpret_cast<void *>(CPU::pdp()) << "\n";
-    Address_Space self(SELF);
+    Address_Space * self = Address_Space::self();
 
     cout << "Creating two extra data segments:\n";
     Segment * es1 = new Segment(ES1_SIZE);
@@ -26,8 +26,8 @@ int main()
     cout << "  extra segment 2 => " << ES2_SIZE << " bytes, done!" << endl;
 
     cout << "Attaching segments:\n";
-    CPU::Log_Addr * extra1 = self.attach(*es1);
-    CPU::Log_Addr * extra2 = self.attach(*es2);
+    CPU::Log_Addr * extra1 = self->attach(*es1);
+    CPU::Log_Addr * extra2 = self->attach(*es2);
     cout << "  extra segment 1 => " << extra1 << " done!" << endl;
     cout << "  extra segment 2 => " << extra2 << " done!" << endl;
 
@@ -37,8 +37,8 @@ int main()
     cout << "  done!" << endl;
 
     cout << "Detaching segments:";
-    self.detach(*es1);
-    self.detach(*es2);
+    self->detach(*es1);
+    self->detach(*es2);
     cout << "  done!" << endl;
 
     cout << "Deleting segments:";

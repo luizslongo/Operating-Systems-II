@@ -9,22 +9,20 @@
 
 // LIBC Heritage
 extern "C" {
-    using namespace EPOS;
-
     void _panic() {
-        Machine::panic();
+        EPOS::Machine::panic();
     }
 
     void _exit(int s) {
-        Thread::exit(s); for(;;);
+        EPOS::Thread::exit(s); for(;;);
     }
 
     void _print(const char * s) {
-        Display::puts(s);
+        EPOS::Display::puts(s);
     }
 
     void __cxa_pure_virtual() {
-        db<void>(ERR) << "Pure Virtual mehtod called!" << endl;
+        EPOS::db<void>(EPOS::ERR) << "Pure Virtual mehtod called!" << EPOS::endl;
     }
 }
 

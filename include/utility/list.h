@@ -1,7 +1,7 @@
 // EPOS List Utility Declarations
 
 #ifndef __list_h
-#define        __list_h
+#define __list_h
 
 #include <system/config.h>
 
@@ -99,8 +99,7 @@ namespace List_Elements
         typedef Singly_Linked_Ordered Element;
 
     public:
-        Singly_Linked_Ordered(const T * o, const R & r = 0)
-        : _object(o), _rank(r), _next(0) {}
+        Singly_Linked_Ordered(const T * o, const R & r = 0): _object(o), _rank(r), _next(0) {}
     
         T * object() const { return const_cast<T *>(_object); }
 
@@ -128,8 +127,7 @@ namespace List_Elements
         typedef Singly_Linked_Grouping Element;
 
     public:
-        Singly_Linked_Grouping(const T * o, int s)
-        : _object(o), _size(s), _next(0) {}
+        Singly_Linked_Grouping(const T * o, int s): _object(o), _size(s), _next(0) {}
 
         T * object() const { return const_cast<T *>(_object); }
 
@@ -181,8 +179,7 @@ namespace List_Elements
         typedef Doubly_Linked_Ordered Element;
 
     public:
-        Doubly_Linked_Ordered(const T * o,  const R & r = 0)
-        : _object(o), _rank(r), _prev(0), _next(0) {}
+        Doubly_Linked_Ordered(const T * o,  const R & r = 0): _object(o), _rank(r), _prev(0), _next(0) {}
     
         T * object() const { return const_cast<T *>(_object); }
 
@@ -213,8 +210,7 @@ namespace List_Elements
         typedef Doubly_Linked_Scheduling Element;
 
     public:
-        Doubly_Linked_Scheduling(const T * o,  const R & r = 0)
-        : _object(o), _rank(r), _prev(0), _next(0) {}
+        Doubly_Linked_Scheduling(const T * o,  const R & r = 0): _object(o), _rank(r), _prev(0), _next(0) {}
     
         T * object() const { return const_cast<T *>(_object); }
 
@@ -245,8 +241,7 @@ namespace List_Elements
         typedef Doubly_Linked_Grouping Element;
 
     public:
-        Doubly_Linked_Grouping(const T * o, int s)
-        : _object(o), _size(s), _prev(0), _next(0) {}
+        Doubly_Linked_Grouping(const T * o, int s): _object(o), _size(s), _prev(0), _next(0) {}
 
         T * object() const { return const_cast<T *>(_object); }
 
@@ -291,25 +286,17 @@ namespace List_Iterators
         Element & operator*() const { return *_current; }
         Element * operator->() const { return _current; }
 
-        Iterator & operator++() {
-            _current = _current->next(); return *this;
-        }
-        Iterator operator++(int) {
-            Iterator tmp = *this; ++*this; return tmp;
-        }
+        Iterator & operator++() { _current = _current->next(); return *this; }
+        Iterator operator++(int) { Iterator tmp = *this; ++*this; return tmp; }
 
-        bool operator==(const Iterator & i) const {
-            return _current == i._current;
-        }
-        bool operator!=(const Iterator & i) const {
-            return _current != i._current;
-        }
+        bool operator==(const Iterator & i) const { return _current == i._current; }
+        bool operator!=(const Iterator & i) const { return _current != i._current; }
 
-    private:
+    protected:
         Element * _current;
     };
 
-    // Bidireacional Iterator (for doubly linked lists)
+    // Bidirectional Iterator (for doubly linked lists)
     template<typename El>
     class Bidirecional
     {
@@ -328,26 +315,14 @@ namespace List_Iterators
         Element & operator*() const { return *_current; }
         Element * operator->() const { return _current; }
 
-        Iterator & operator++() {
-            _current = _current->next(); return *this;
-        }
-        Iterator operator++(int) {
-            Iterator tmp = *this; ++*this; return tmp;
-        }
+        Iterator & operator++() { _current = _current->next(); return *this; }
+        Iterator operator++(int) { Iterator tmp = *this; ++*this; return tmp; }
 
-        Iterator & operator--() {
-            _current = _current->prev(); return *this;
-        }
-        Iterator operator--(int) {
-            Iterator tmp = *this; --*this; return tmp;
-        }
+        Iterator & operator--() { _current = _current->prev(); return *this; }
+        Iterator operator--(int) { Iterator tmp = *this; --*this; return tmp; }
         
-        bool operator==(const Iterator & i) const {
-            return _current == i._current;
-        }
-        bool operator!=(const Iterator & i) const {
-            return _current != i._current;
-        }
+        bool operator==(const Iterator & i) const { return _current == i._current; }
+        bool operator!=(const Iterator & i) const { return _current != i._current; }
 
     private:
         Element * _current;
@@ -355,8 +330,7 @@ namespace List_Iterators
 }
 
 // Singly-Linked List
-template <typename T, 
-          typename El = List_Elements::Singly_Linked<T> >
+template <typename T, typename El = List_Elements::Singly_Linked<T> >
 class Simple_List
 {
 public:
@@ -374,7 +348,7 @@ public:
     Element * tail() { return _tail; }
 
     Iterator begin() { return Iterator(_head); }
-    Iterator end() { return Iterator(_tail ? _tail->next() : 0); }
+    Iterator end() { return Iterator(0); }
 
     void insert(Element * e) { insert_tail(e); }
 
@@ -546,13 +520,13 @@ public:
         return 0;
     }
     
-    Element * search_rank(int rank) {
+    Element * search_rank(const Rank_Type & rank) {
         Element * e = head();
         for(; e && (e->rank() != rank); e = e->next());
         return e;
     }
 
-    Element * remove_rank(int rank) {
+    Element * remove_rank(const Rank_Type & rank) {
         Element * e = search_rank(rank);
         if(e)
             return remove(e);
@@ -658,7 +632,7 @@ public:
     Element * tail() { return _tail; }
     
     Iterator begin() { return Iterator(_head); }
-    Iterator end() { return Iterator(_tail->next()); }
+    Iterator end() { return Iterator(0); }
 
     void insert(Element * e) { insert_tail(e); }
 
@@ -974,13 +948,13 @@ public:
             return 0;
     }
     
-    Element * search_rank(int rank) {
+    Element * search_rank(const Rank_Type & rank) {
         Element * e = head();
         for(; e && (e->rank() != rank); e = e->next());
         return e;
     }
 
-    Element * remove_rank(int rank) {
+    Element * remove_rank(const Rank_Type & rank) {
         db<Lists>(TRC) << "Ordered_List::remove_rank(r=" << rank << ")" << endl;
 
         Element * e = search_rank(rank);
@@ -1246,7 +1220,7 @@ public:
     Element * tail() { return _list[R::current_queue()].tail(); }
 
     Iterator begin() { return Iterator(_list[R::current_queue()].head()); }
-    Iterator end() { return Iterator(_list[R::current_queue()].tail() ? _list[R::current_queue()].tail()->next() : 0); }
+    Iterator end() { return Iterator(0); }
 
     Element * volatile & chosen() {
         return _list[R::current_queue()].chosen();

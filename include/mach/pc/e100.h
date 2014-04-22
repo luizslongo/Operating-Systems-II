@@ -303,8 +303,10 @@ public:
 
 };
 
-class E100: public Ethernet, private i82559
+class E100: public Ethernet, public Ethernet::Observed, private i82559
 {
+    template <int unit> friend void call_init();
+
 private:
     // PCI ID
     static const unsigned int PCI_VENDOR_ID = 0x8086;
@@ -321,8 +323,8 @@ private:
         ((sizeof(MACaddrCB) + 15) & ~15U) +
         ((sizeof(struct mem) + 15) & ~15U) +
          RX_BUFS * ((sizeof(Rx_Desc) + 15) & ~15U) +
-         TX_BUFS * ((sizeof(Tx_Desc) + 15) & ~15U); // GCC mess up MMU::align128
-
+         TX_BUFS * ((sizeof(Tx_Desc) + 15) & ~15U); 
+         
     // Share control and interrupt dispatiching info
     struct Device
     {
@@ -348,9 +350,8 @@ public:
 
     unsigned int mtu() { return MTU; }
     const Address & address() { return _address; }
+    void address(const Address & address) { _address = address; }
     const Statistics & statistics() { return _statistics; }
-
-    static void init(unsigned int unit);
 
 private:
     E100(unsigned int unit, Log_Addr io_mem, IO_Irq irq, DMA_Buffer * dma);
@@ -406,6 +407,8 @@ private:
     };
 
     void i82559_configure(void);
+
+    static void init(unsigned int unit);
 
     static E100 * get(unsigned int interrupt) {
         for(unsigned int i = 0; i < UNITS; i++)

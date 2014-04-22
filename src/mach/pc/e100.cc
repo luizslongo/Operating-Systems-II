@@ -70,18 +70,18 @@ E100::E100(unsigned int unit,
     // Initialization Block
     _configCB_phy = phy;
     configCB = log;
-    log += MMU::align128(sizeof(ConfigureCB));
-    phy += MMU::align128(sizeof(ConfigureCB));
+    log += align128(sizeof(ConfigureCB));
+    phy += align128(sizeof(ConfigureCB));
 
     _macAddrCB_phy = phy;
     macAddrCB = log;
-    log += MMU::align128(sizeof(macAddrCB));
-    phy += MMU::align128(sizeof(macAddrCB));
+    log += align128(sizeof(macAddrCB));
+    phy += align128(sizeof(macAddrCB));
 
     _dmadump_phy = phy;
     dmadump = log;
-    log += MMU::align128(sizeof(struct mem));
-    phy += MMU::align128(sizeof(struct mem));
+    log += align128(sizeof(struct mem));
+    phy += align128(sizeof(struct mem));
 
     // Rx_Desc Ring
     _rx_cur = 0;
@@ -94,8 +94,8 @@ E100::E100(unsigned int unit,
     // Rx (RFDs)
     unsigned int i;
     for(i = 0; i < RX_BUFS; i++) {
-        log += MMU::align128(sizeof(Rx_Desc));
-        phy += MMU::align128(sizeof(Rx_Desc));
+        log += align128(sizeof(Rx_Desc));
+        phy += align128(sizeof(Rx_Desc));
         _rx_ring[i].command = 0;
         _rx_ring[i].size = sizeof(Frame);
         _rx_ring[i].status = Rx_RFD_AVAILABLE;
@@ -114,8 +114,8 @@ E100::E100(unsigned int unit,
     db<E100> (TRC) << "E100(_tx_ring malloc of " << TX_BUFS << " units)" << endl;
     // TxCBs
     for(i = 0; i < TX_BUFS; i++) {
-        log += MMU::align128(sizeof(Tx_Desc));
-        phy += MMU::align128(sizeof(Tx_Desc));
+        log += align128(sizeof(Tx_Desc));
+        phy += align128(sizeof(Tx_Desc));
         _tx_ring[i].command = cb_s | cb_cid;
         _tx_ring[i].status = cb_complete; 
         _tx_ring[i].tbd_array = 0xFFFFFFFF; // simplified mode
@@ -164,7 +164,12 @@ void E100::reset()
     self_test();
 
     // Get MAC address from EEPROM
-    _address = Address(eeprom_mac_address(0), eeprom_mac_address(1), eeprom_mac_address(2), eeprom_mac_address(3), eeprom_mac_address(4), eeprom_mac_address(5));
+    _address[0] = eeprom_mac_address(0);
+    _address[1] = eeprom_mac_address(1);
+    _address[2] = eeprom_mac_address(2);
+    _address[3] = eeprom_mac_address(3);
+    _address[4] = eeprom_mac_address(4);
+    _address[5] = eeprom_mac_address(5);
     db<E100>(INF) << "E100::reset():MAC=" << _address << endl;
 
     // load zero on NIC's internal CU
@@ -226,7 +231,7 @@ int E100::send(const Address & dst, const Protocol & prot,
     _tx_ring[_tx_cur].tcb_byte_count = (size + HEADER_SIZE);
 
     // put the ethernet frame into de TxCB
-    new (_tx_ring[_tx_cur].frame) Frame(_address, dst, CPU::htons(prot), data, size);
+    new (_tx_ring[_tx_cur].frame) Frame(_address, dst, htons(prot), data, size);
 
     _tx_ring[_tx_cur].command = cb_s; // suspend bit
     _tx_ring[_tx_cur].command |= (cb_tx | cb_cid); // transmit command
@@ -276,8 +281,7 @@ bool E100::verifyPendingInterrupts(void)
     return false;
 }
 
-int E100::receive(Address * src, Protocol * prot,
-        	  void * data, unsigned int size)
+int E100::receive(Address * src, Protocol * prot, void * data, unsigned int size)
 {
     // wait until the RFD is filled up by the device
     while(!(_rx_ring[_rx_cur].status & cb_complete))
@@ -285,15 +289,15 @@ int E100::receive(Address * src, Protocol * prot,
 
     // fill up receive areas/variables
     Frame * frame = (Frame *)_rx_ring[_rx_cur].frame;
-    *src = frame->_src;
-    *prot = CPU::ntohs(frame->_prot);
+    *src = frame->header()->src();
+    *prot = ntohs(frame->header()->prot());
 
     if (_rx_ring[_rx_cur].actual_size & 0xC000)
         size = _rx_ring[_rx_cur].actual_size & 0x3FFF;
     else
         size = 0;
 
-    memcpy(data, frame->_data, size);
+    memcpy(data, frame->data<void>(), size);
 
     //kout << "recv (size: " << size << " prot: " << *prot <<")" << endl;
 

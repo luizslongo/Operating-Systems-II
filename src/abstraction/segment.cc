@@ -5,13 +5,6 @@
 __BEGIN_SYS
 
 // Methods
-
-Segment::Segment()
-{
-    db<Segment>(TRC) << "Segment() => " << this << endl;
-}
-
-
 Segment::Segment(unsigned int bytes, Flags flags)
 : Chunk(bytes, flags)
 {

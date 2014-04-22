@@ -57,7 +57,7 @@ public:
 
         operator unsigned int() const { return _flags; }
 
-        friend OStream & operator << (OStream & db, Flags f) { db << (void *)f._flags; return db; }
+        friend Debug & operator<<(Debug & db, Flags f) { db << (void *)f._flags; return db; }
 
     private:
         unsigned int _flags;
@@ -68,51 +68,17 @@ public:
     static const unsigned int PD_ENTRIES = PT_ENTRIES;
 
 public:
-    static unsigned int pages(unsigned int bytes) {
-        return (bytes + sizeof(Page) - 1) / sizeof(Page);
-    }
+    static unsigned int pages(unsigned int bytes) { return (bytes + sizeof(Page) - 1) / sizeof(Page); }
+    static unsigned int page_tables(unsigned int pages) { return (pages + PT_ENTRIES - 1) / PT_ENTRIES; }
 
-    static unsigned int page_tables(unsigned int pages) {
-        return (pages + PT_ENTRIES - 1) / PT_ENTRIES;
-    }
+    static unsigned int offset(const Log_Addr & addr) { return addr & (sizeof(Page) - 1); }
+    static unsigned int indexes(const Log_Addr & addr) { return addr & ~(sizeof(Page) - 1); }
 
-    static unsigned int offset(Log_Addr addr) {
-        return addr & (sizeof(Page) - 1);
-    }
+    static unsigned int page(const Log_Addr & addr) { return (addr >> PAGE_SHIFT) & (PT_ENTRIES - 1); }
+    static unsigned int directory(const Log_Addr & addr) { return addr >> DIRECTORY_SHIFT; }
 
-    static unsigned int indexes(Log_Addr addr) {
-        return addr & ~(sizeof(Page) - 1);
-    }
-
-    static unsigned int page(Log_Addr addr) {
-        return (addr >> PAGE_SHIFT) & (PT_ENTRIES - 1);
-    }
-
-    static unsigned int directory(Log_Addr addr) {
-        return addr >> DIRECTORY_SHIFT;
-    }
-
-    static Log_Addr align32(Log_Addr addr) {
-        return (addr + 3) & ~3U;
-    }
-
-    static Log_Addr align64(Log_Addr addr) {
-        return (addr + 7) & ~7U;
-    }
-
-    static Log_Addr align128(Log_Addr addr) {
-        return (addr + 15) & ~15U;
-    }
-
-    static Log_Addr align_page(Log_Addr addr) {
-        return (addr + sizeof(Page) - 1) & ~(sizeof(Page) - 1);
-    }
-
-    static Log_Addr align_directory(Log_Addr addr) {
-        return (addr + sizeof(Page) * sizeof(Page) - 1) & 
-            ~(sizeof(Page) * sizeof(Page) - 1);
-    }
-
+    static Log_Addr align_page(const Log_Addr & addr) { return (addr + sizeof(Page) - 1) & ~(sizeof(Page) - 1); }
+    static Log_Addr align_directory(const Log_Addr & addr) { return (addr + sizeof(Page) * sizeof(Page) - 1) &  ~(sizeof(Page) * sizeof(Page) - 1); }
 };
 
 __END_SYS

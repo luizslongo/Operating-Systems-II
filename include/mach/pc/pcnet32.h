@@ -268,7 +268,7 @@ public:
         Reg32 tx_ring;		// Rx Ring DMA physical address
     };
 
-    // Transmit and Receive Descriptors (in the Receive Ring Buffer)
+    // Transmit and Receive Descriptors (in the Ring Buffers)
     struct Desc {
         enum {
             OWN = 0x8000,
@@ -278,19 +278,11 @@ public:
             BPE = 0x0080
         };
 
-        friend OStream & operator << (OStream & db, const Desc & t) {
-            db << "{" << (void *)CPU::ntohl(t.phy_addr)
-               << "," << 65536 -CPU::ntohs(t.size)
-               << "," << (void *)(unsigned)CPU::ntohs(t.status)
-               << "," << (void *)CPU::ntohl(t.misc) << "}";
-            return db;
-        }
-
         Reg32 phy_addr;
-        Reg16 size;             // 2's complement
+        volatile Reg16 size; // 2's complement
         volatile Reg16 status;
-        Reg32 misc;
-        Reg32 reserved;
+        volatile Reg32 misc;
+        volatile Reg32 reserved;
     };
 
     // Receive Descriptor
@@ -301,10 +293,26 @@ public:
             OFLO = 0x1000,
             FRAM = 0x2000
         };
+
+        friend Debug & operator<<(Debug & db, const Rx_Desc & d) {
+            db << "{" << hex << d.phy_addr << dec
+               << "," << 65536 - d.size
+               << "," << hex << d.status
+               << "," << d.misc << dec << "}";
+            return db;
+        }
     };
 
     // Transmit Descriptor
-    struct Tx_Desc: public Desc {};
+    struct Tx_Desc: public Desc {
+        friend Debug & operator<<(Debug & db, const Tx_Desc & d) {
+            db << "{" << hex << d.phy_addr << dec
+               << "," << 65536 - d.size
+               << "," << hex << d.status
+               << "," << d.misc << dec << "}";
+            return db;
+        }
+    };
 
 public:
     Reg8 prom(int a) {
@@ -377,9 +385,11 @@ protected:
     IO_Port _io_port;
 };
 
-class PCNet32: public Ethernet, private Am79C970A
+
+// PCNet32 PC Ethernet NIC
+class PCNet32: public Ethernet, public Ethernet::Observed, private Am79C970A
 {
-    friend class PC_Ethernet;
+    template <int unit> friend void call_init();
 
 private:
     // PCI ID
@@ -387,55 +397,70 @@ private:
     static const unsigned int PCI_DEVICE_ID = 0x2000;
     static const unsigned int PCI_REG_IO = 0;
 
-    // Transmit and Receive Ring (with buffers) sizes
+
+    // Transmit and Receive Ring sizes
     static const unsigned int UNITS = Traits<PCNet32>::UNITS;
     static const unsigned int TX_BUFS = Traits<PCNet32>::SEND_BUFFERS;
     static const unsigned int RX_BUFS =	Traits<PCNet32>::RECEIVE_BUFFERS;
-    static const unsigned int DMA_BUFFER_SIZE = 
-        ((sizeof(Init_Block) + 15) & ~15U) +
- 	RX_BUFS * ((sizeof(Rx_Desc) + 15) & ~15U) +
- 	TX_BUFS * ((sizeof(Tx_Desc) + 15) & ~15U) +
- 	RX_BUFS * ((sizeof(Frame) + 15) & ~15U) +
- 	TX_BUFS * ((sizeof(Frame) + 15) & ~15U); // GCC mess up MMU::align128
 
-    // Share control and interrupt dispatiching info
+
+    // Size of the DMA Buffer that will host the ring buffers and the init block
+    static const unsigned int DMA_BUFFER_SIZE = ((sizeof(Init_Block) + 15) & ~15U) +
+        RX_BUFS * ((sizeof(Rx_Desc) + 15) & ~15U) + TX_BUFS * ((sizeof(Tx_Desc) + 15) & ~15U) +
+        RX_BUFS * ((sizeof(Buffer) + 15) & ~15U) + TX_BUFS * ((sizeof(Buffer) + 15) & ~15U); // align128() cannot be used here
+
+
+    // Interrupt dispatching info
     struct Device
     {
         PCNet32 * device;
         unsigned int interrupt;
-        bool in_use;
     };
         
+protected:
+    PCNet32(unsigned int unit, IO_Port io_port, IO_Irq irq, DMA_Buffer * dma);
+
 public:
-    PCNet32(unsigned int unit = 0);
     ~PCNet32();
 
     int send(const Address & dst, const Protocol & prot, const void * data, unsigned int size);
     int receive(Address * src, Protocol * prot, void * data, unsigned int size);
 
-    void reset();
+    Buffer * alloc(NIC * nic, const Address & dst, const Protocol & prot, unsigned int once, unsigned int always, unsigned int payload);
+    void free(Buffer * buf);
+    int send(Buffer * buf);
 
-    unsigned int mtu() { return MTU; }
     const Address & address() { return _address; }
     void address(const Address & address) { _address = address; }
+
     const Statistics & statistics() { return _statistics; }
 
-    static void init(unsigned int unit);
+    void reset();
+
+    static PCNet32 * get(unsigned int unit = 0) { return get_by_unit(unit); }
 
 private:
-    PCNet32(unsigned int unit, IO_Port io_port, IO_Irq irq, DMA_Buffer * dma);
-
     void handle_int();
 
     static void int_handler(unsigned int interrupt);
 
-    static PCNet32 * get(unsigned int interrupt) {
+    static PCNet32 * get_by_unit(unsigned int unit) {
+        if(unit >= UNITS) {
+            db<PCNet32>(WRN) << "PCNet32::get: requested unit (" << unit << ") does not exist!" << endl;
+            return 0;
+        } else
+            return _devices[unit].device;
+    }
+
+    static PCNet32 * get_by_interrupt(unsigned int interrupt) {
         for(unsigned int i = 0; i < UNITS; i++)
             if(_devices[i].interrupt == interrupt)
         	return _devices[i].device;
 
         return 0;
     };
+
+    static void init(unsigned int unit);
 
 private:
     unsigned int _unit;
@@ -457,8 +482,8 @@ private:
     Tx_Desc * _tx_ring;
     Phy_Addr _tx_ring_phy;
 
-    Frame * _rx_buffer[RX_BUFS];
-    Frame * _tx_buffer[TX_BUFS];
+    Buffer * _rx_buffer[RX_BUFS];
+    Buffer * _tx_buffer[TX_BUFS];
 
     static Device _devices[UNITS];
 };

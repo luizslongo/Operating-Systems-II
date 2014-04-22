@@ -3,8 +3,11 @@
 #ifndef __hash_h
 #define	__hash_h
 
+#include <system/config.h>
 #include "list.h"
 #include "vector.h"
+
+extern "C" { void _panic(); }
 
 __BEGIN_SYS
 
@@ -18,8 +21,60 @@ public:
     typedef T Object_Type;
     typedef typename List_Elements::Singly_Linked_Ordered<T, Key> Element;
 
+    class Forward: public List_Iterators::Forward<Element>
+    {
+        typedef List_Iterators::Forward<Element> Base;
+        using Base::_current;
+
+    public:
+        enum Begin { BEGIN = 0 };
+        enum End { END = -1 };
+
+    public:
+        Forward(Simple_Hash * hash, const Begin & b): _hash(hash), _counter(0) {}
+        Forward(Simple_Hash * hash, const End & e): _hash(hash), _counter(END) {}
+
+        Forward & operator++() {
+            for(; (_counter < SIZE) && !_hash->_vector[_counter]; _counter++);
+
+            if(_counter < SIZE) {
+                _current = _hash->_vector[_counter];
+                _counter++;
+            } else if(_counter == SIZE) {
+                _current = _hash->_synonyms.head();
+                _counter++;
+            } else
+                _current = _current->next();
+
+            if(!_current)
+                _counter = END;
+
+            return *this;
+        }
+        Forward operator++(int) {
+            Forward tmp = *this; ++*this; return tmp;
+        }
+
+        bool operator==(const Forward & i) const {
+            return _counter == i._counter;
+        }
+        bool operator!=(const Forward & i) const {
+            return _counter != i._counter;
+        }
+
+    private:
+        Simple_Hash * _hash;
+        unsigned int _counter;
+    };
+
+    typedef Forward Iterator;
+
+
 public:
     Simple_Hash() {}
+
+    Iterator begin() { return Iterator(this, Iterator::BEGIN); }
+    Iterator end() { return Iterator(this, Iterator::END); }
 
     bool empty() const {
         return (_vector.size() == 0) && (_synonyms.size() == 0);
@@ -53,14 +108,14 @@ public:
     }
     
     Element * search_key(const Key & key) {
-        Element * e = _vector.get(key % SIZE);
+        Element * e = _vector[key % SIZE];
         if(e && (e->key() == key))
             return e;
         return _synonyms.search_rank(key);
     }
     
     Element * remove_key(const Key & key) {
-        Element * e = _vector.get(key % SIZE);
+        Element * e = _vector[key % SIZE];
         if(e && (e->key() == key))
             return _vector.remove(key % SIZE);
         return _synonyms.remove_rank(key);
@@ -131,7 +186,7 @@ public:
         return _table[key % SIZE].search_rank(key);
     }
     
-    Element * remove_key(int key) {
+    Element * remove_key(const Key & key) {
         return _table[key % SIZE].remove_rank(key);
     }
 

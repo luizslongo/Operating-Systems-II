@@ -150,7 +150,7 @@ public:
         			  ((Reg8)(l >> 16))),
               base_31_24((Reg8)(b >> 24)) {}
 
-        friend OStream & operator << (OStream & db, const GDT_Entry & g) {
+        friend Debug & operator<<(Debug & db, const GDT_Entry & g) {
             db << "{bas=" << (void *)((g.base_31_24 << 24) | (g.base_23_16 << 16) | g.base_15_00) 
                << ",lim=" << (void *)(((g.g_d_0_a_limit_19_16 & 0xf) << 16) | g.limit_15_00)
                << ",p=" << (g.p_dpl_s_type >> 7) 
@@ -185,7 +185,7 @@ public:
 
         Reg32 offset() const { return (offset_31_16 << 16) | offset_15_00; }
 
-        friend OStream & operator << (OStream & db, const IDT_Entry & i) {
+        friend Debug & operator<<(Debug & db, const IDT_Entry & i) {
             db << "{sel=" << (i.selector >> 3) 
                << ",off=" << (void *)i.offset()
                << ",p=" << (i.p_dpl_0_d_1_1_0 >> 7) 
@@ -254,7 +254,7 @@ public:
         void save() volatile;
         void load() const volatile;
 
-        friend OStream & operator << (OStream & db, const Context & c) {
+        friend Debug & operator<<(Debug & db, const Context & c) {
             db << "{eflags=" << reinterpret_cast<void *>(c._eflags)
                << ",eax=" << c._eax
                << ",ebx=" << c._ebx
@@ -327,8 +327,9 @@ public:
 
     static Log_Addr ip() { return eip(); }
 
-    static bool tsl(volatile bool & lock) {
-        register bool old = 1;
+    template <typename T>
+    static T tsl(volatile T & lock) {
+        register T old = 1;
         ASMV("lock xchg %0, %2"
              : "=a"(old) 
              : "a"(old), "m"(lock) 
@@ -430,12 +431,7 @@ public:
         return new (sp) Context(entry);
     }
 
-private:
-    static void init();
-
-    // IA32 specific methods
-public:
-
+public: // IA32 specific methods
     static Flags eflags() {
         Reg32 value; ASMV("pushfl");
         ASMV("popl %0" : "=r"(value) :); return value;
@@ -617,9 +613,17 @@ public:
     }
 
 private:
+    static void init();
+
+private:
     static unsigned int _cpu_clock;
     static unsigned int _bus_clock;
 };
+
+inline CPU::Reg32 htonl(CPU::Reg32 v) { return CPU::htonl(v); }
+inline CPU::Reg16 htons(CPU::Reg16 v) { return CPU::htons(v); }
+inline CPU::Reg32 ntohl(CPU::Reg32 v) { return CPU::ntohl(v); }
+inline CPU::Reg16 ntohs(CPU::Reg16 v) { return CPU::ntohs(v); }
 
 __END_SYS
 

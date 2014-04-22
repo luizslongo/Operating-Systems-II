@@ -2,7 +2,6 @@
 
 #include <utility/elf.h>
 #include <utility/string.h>
-#include "uintptr/stdint.h"
 
 __BEGIN_SYS
 
@@ -10,8 +9,8 @@ int ELF::load_segment(int i, Elf32_Addr addr)
 {
     if((i > segments()) || (segment_type(i) != PT_LOAD))
         return 0;
-    uintptr_t tmp = reinterpret_cast<uintptr_t>(this);
-    char * src = (char *)(unsigned(tmp) + seg(i)->p_offset);
+    
+    char * src = (char *)(unsigned(this) + seg(i)->p_offset);
     char * dst = (char *)((addr) ? addr : segment_address(i));
     
     memcpy(dst, src, seg(i)->p_filesz);

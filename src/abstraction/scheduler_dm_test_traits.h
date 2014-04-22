@@ -28,8 +28,8 @@ template <> struct Traits<Build>
     enum {STAND_ALONE, NETWORKED};
     static const bool NETWORKING = STAND_ALONE;
 
-    static const unsigned int CPUS = 8;
-    static const unsigned int NODES = 1; // assumes NETWORKING = NETWORKED
+    static const unsigned int CPUS = 1;
+    static const unsigned int NODES = 1;
 };
 
 
@@ -99,8 +99,8 @@ template <> struct Traits<System>: public Traits<void>
 {
     static const unsigned int mode = Traits<Build>::MODE;
     static const bool multithread = true;
-    static const bool multitask = false && (mode != Traits<Build>::LIBRARY);
-    static const bool multicore = true && multithread;
+    static const bool multitask = (mode != Traits<Build>::LIBRARY);
+    static const bool multicore = multithread && (Traits<Build>::CPUS > 1);
     static const bool multiheap = (mode != Traits<Build>::LIBRARY) || Traits<Scratchpad>::enabled;
 
     enum {FOREVER = 0, SECOND = 1, MINUTE = 60, HOUR = 3600, DAY = 86400,
@@ -124,7 +124,7 @@ template <> struct Traits<Thread>: public Traits<void>
 {
     static const bool smp = Traits<System>::multicore;
 
-    typedef Scheduling_Criteria::PEDF Criterion;
+    typedef Scheduling_Criteria::DM Criterion;
     static const unsigned int QUANTUM = 10000; // us
 
     static const bool trace_idle = hysterically_debugged;

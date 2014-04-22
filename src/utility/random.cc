@@ -2,6 +2,6 @@
 
 __BEGIN_SYS
 
-unsigned long int Pseudo_Random::_seed;
+unsigned long int Random::_seed;
 
 __END_SYS

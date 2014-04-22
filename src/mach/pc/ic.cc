@@ -10,71 +10,54 @@ __BEGIN_SYS
 APIC::Log_Addr APIC::_base;
 PC_IC::Interrupt_Handler PC_IC::_int_vector[PC_IC::INTS];
 
+
 // Class methods
 void PC_IC::int_not(unsigned int i)
 {
-    db<PC>(WRN) << "\nInt " << i << " occurred, but no handler installed\n";
+    db<IC>(WRN) << "IC::int_not(i=" << i << ")" << endl;
 }
 
-void PC_IC::exc_not(unsigned int i,
-        	    Reg32 error, Reg32 eip, Reg32 cs, Reg32 eflags)
+void PC_IC::exc_not(unsigned int i, Reg32 error, Reg32 eip, Reg32 cs, Reg32 eflags)
 {
-    db<PC>(WRN) << "\nAn exception has occurred for which no handler"
-                << " is installed [err=" << (void *)error
-                << ",ctx={cs=" << (void *)cs
-                << ",ip=" << (void *)eip
-                << ",fl=" << (void *)eflags
-                << "}]\n";
+    db<IC>(WRN) << "IC::exc_not(i=" << i << ") => [err=" << hex << error
+                << ",ctx={cs=" << cs << ",ip=" << eip << ",fl=" << eflags << "}]" << endl;
 
-    db<PC>(WRN) << "The running thread will now be terminated!" << endl;
+    db<IC>(WRN) << "The running thread will now be terminated!" << endl;
     _exit(-1);
 }
 
-void PC_IC::exc_pf(unsigned int i,
-        	   Reg32 error, Reg32 eip, Reg32 cs, Reg32 eflags)
+void PC_IC::exc_pf(unsigned int i, Reg32 error, Reg32 eip, Reg32 cs, Reg32 eflags)
 {  
-    db<PC>(WRN) << "\nPage fault [address=" << (void *)CPU::cr2()
-        	        << ",err={";
+    db<IC>(WRN) << "IC::exc_pf(i=" << i << ") => [address=" << hex << CPU::cr2() << ",err={";
     if(error & (1 << 0))
-        db<PC>(WRN) << "P";
+        db<IC>(WRN) << "P";
     if(error & (1 << 1))
-        db<PC>(WRN) << "W";
+        db<IC>(WRN) << "W";
     if(error & (1 << 2))
-        db<PC>(WRN) << "S";
+        db<IC>(WRN) << "S";
     if(error & (1 << 3))
-        db<PC>(WRN) << "R";
-    db<PC>(WRN) << "},ctx={cs=" << (void *)cs
-                << ",ip=" << (void *)eip
-                << ",fl=" << (void *)eflags
-                << "}]\n";
+        db<IC>(WRN) << "R";
+    db<IC>(WRN) << "},ctx={cs=" << hex << cs << ",ip=" << eip << ",fl=" << eflags << "}]" << endl;
 
-    db<PC>(WRN) << "The running thread will now be terminated!" << endl;
+    db<IC>(WRN) << "The running thread will now be terminated!" << endl;
     _exit(-1);
 }
 
-void PC_IC::exc_gpf(unsigned int i,
-        	    Reg32 error, Reg32 eip, Reg32 cs, Reg32 eflags)
+void PC_IC::exc_gpf(unsigned int i, Reg32 error, Reg32 eip, Reg32 cs, Reg32 eflags)
 {  
-    db<PC>(WRN) << "\nGeneral protection fault [err=" << (void *)error
-        	        << ",ctx={cs=" << (void *)cs
-        	        << ",ip=" << (void *)eip
-        	        << ",fl=" << (void *)eflags
-        	        << "}]\n";
+    db<IC>(WRN) << "IC::exc_gpf(i=" << i << ")[err=" << hex << error << ",ctx={cs=" << (void *)cs
+                << ",ip=" << (void *)eip << ",fl=" << (void *)eflags << "}]" << endl;
 
-    db<PC>(WRN) << "The running thread will now be terminated!" << endl;
+    db<IC>(WRN) << "The running thread will now be terminated!" << endl;
     _exit(-1);
 }
 
-void PC_IC::exc_fpu(unsigned int i,
-                    Reg32 error, Reg32 eip, Reg32 cs, Reg32 eflags)
+void PC_IC::exc_fpu(unsigned int i, Reg32 error, Reg32 eip, Reg32 cs, Reg32 eflags)
 {
-    db<PC>(WRN) << "\nFPU fault [err=" << (void *)error
-        	        << ",ctx={cs=" << (void *)cs
-        	        << ",ip=" << (void *)eip
-        	        << ",fl=" << (void *)eflags
-        	        << "}]\n";
+    db<IC>(WRN) << "IC::exc_fpu(i=" << i << ") => [err=" << hex << error
+                << ",ctx={cs=" << cs << ",ip=" << eip << ",fl=" << eflags << "}]" << endl;
 
-    db<PC>(WRN) << "The running thread will now be terminated!" << endl;
+    db<IC>(WRN) << "The running thread will now be terminated!" << endl;
     _exit(-1);
 }
 
@@ -88,7 +71,7 @@ void APIC::ipi_init(volatile int * status)
     status[0] = 0;
 
     // Send INIT IPI to all APs excluding self
-    for(unsigned int n = 1; n < Traits<PC>::MAX_CPUS; n++) {
+    for(unsigned int n = 1; n < Traits<PC>::CPUS; n++) {
         status[n] = 0;
         write(ICR32_63, n << 24);
         write(ICR0_31, ICR_LEVEL | ICR_ASSERT | ICR_INIT);
@@ -117,7 +100,7 @@ void APIC::ipi_start(Log_Addr entry, volatile int * status)
     unsigned int vector = (entry >> 12) & 0xff;
 
     // Send STARTUP IPI to all APs
-    for(unsigned int n = 1; n < Traits<PC>::MAX_CPUS; n++) {
+    for(unsigned int n = 1; n < Traits<PC>::CPUS; n++) {
         write(ICR32_63, n << 24);
         write(ICR0_31, ICR_LEVEL | ICR_ASSERT | ICR_STARTUP | vector);
         while((read(ICR0_31) & ICR_PENDING));
@@ -126,7 +109,7 @@ void APIC::ipi_start(Log_Addr entry, volatile int * status)
     // Give them time to wake up (> 100ms)
     i8255::ms_delay(500);
 
-    for(unsigned int n = 1; n < Traits<PC>::MAX_CPUS; n++) {
+    for(unsigned int n = 1; n < Traits<PC>::CPUS; n++) {
         if(status[n] == 1) { // CPU is up
             CPU::finc(status[n]);
             i8255::ms_delay(30);

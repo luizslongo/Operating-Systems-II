@@ -67,8 +67,8 @@ public:
     };
 
     static void puts(const char * s) {
-        //while(*s != '\0')
-        //    putc(*s++);
+        while(*s != '\0')
+            putc(*s++);
     }
 
     static void geometry(int * lines, int * columns) {

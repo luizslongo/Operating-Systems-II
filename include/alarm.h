@@ -9,7 +9,6 @@
 #include <rtc.h>
 #include <timer.h>
 #include <semaphore.h>
-#include <display.h>
 
 __BEGIN_SYS
 
@@ -43,7 +42,7 @@ public:
     static void delay(const Microsecond & time);
 
 private:
-    static int init();
+    static void init();
 
     static Microsecond period() {
         return 1000000 / frequency();
@@ -94,7 +93,7 @@ namespace Scheduling_Criteria {
     : RT_Common(Alarm::ticks(d), Alarm::ticks(d), p, c) {}
 
     inline void EDF::update() {
-        if(_priority < APERIODIC)
+        if((_priority > PERIODIC) && (_priority < APERIODIC))
             _priority = Alarm::_elapsed + _deadline;
     }
 };

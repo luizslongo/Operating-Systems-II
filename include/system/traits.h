@@ -16,14 +16,20 @@ struct Traits
 
 template <> struct Traits<Build>
 {
-    enum {LIBRARY, BUILTIN};
+    enum {LIBRARY, BUILTIN, KERNEL};
     static const unsigned int MODE = LIBRARY;
 
-    enum {IA32,ARMV7};
-    static const unsigned int ARCH = ARMV7;
+    enum {IA32};
+    static const unsigned int ARCH = IA32;
 
-    enum {PC,ZYNQ};
-    static const unsigned int MACH = ZYNQ;
+    enum {PC};
+    static const unsigned int MACH = PC;
+
+    enum {STAND_ALONE, NETWORKED};
+    static const bool NETWORKING = STAND_ALONE;
+
+    static const unsigned int CPUS = 1;
+    static const unsigned int NODES = 1; // > 1 => NETWORKING
 };
 
 
@@ -93,9 +99,9 @@ template <> struct Traits<System>: public Traits<void>
 {
     static const unsigned int mode = Traits<Build>::MODE;
     static const bool multithread = true;
-    static const bool multitask = false && (mode != Traits<Build>::LIBRARY);
-    static const bool multicore = false && multithread;
-    static const bool multiheap = (mode != Traits<Build>::LIBRARY);//|| Traits<Scratchpad>::enabled;
+    static const bool multitask = (mode != Traits<Build>::LIBRARY);
+    static const bool multicore = multithread && (Traits<Build>::CPUS > 1);
+    static const bool multiheap = (mode != Traits<Build>::LIBRARY) || Traits<Scratchpad>::enabled;
 
     enum {FOREVER = 0, SECOND = 1, MINUTE = 60, HOUR = 3600, DAY = 86400,
           WEEK = 604800, MONTH = 2592000, YEAR = 31536000};
@@ -121,7 +127,12 @@ template <> struct Traits<Thread>: public Traits<void>
     typedef Scheduling_Criteria::RR Criterion;
     static const unsigned int QUANTUM = 10000; // us
 
-    static const bool trace_idle = false;
+    static const bool trace_idle = hysterically_debugged;
+};
+
+template <> struct Traits<Scheduler<Thread> >: public Traits<void>
+{
+    static const bool debugged = hysterically_debugged;
 };
 
 template <> struct Traits<Periodic_Thread>: public Traits<void>

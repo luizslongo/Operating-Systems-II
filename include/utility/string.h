@@ -3,6 +3,8 @@
 #ifndef __string_h
 #define __string_h
 
+#include <system/config.h>
+
 extern "C" {
     int memcmp(const void * m1, const void * m2, size_t n);
     void * memcpy(void * d, const void * s, size_t n);

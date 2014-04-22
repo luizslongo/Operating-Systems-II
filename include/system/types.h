@@ -57,37 +57,30 @@ class Application;
 
 // Hardware Mediators - CPU
 class IA32;
-class ARMV7;
 
 // Hardware Mediators - Time-Stamp Counter
 class IA32_TSC;
-class ARMV7_TSC;
 
 // Hardware Mediators - Memory Management Unit
 class IA32_MMU;
-class ARMV7_MMU;
 
 // Hardware Mediators - Performance Monitoring Unit
 class IA32_PMU;
 
 // Hardware Mediators - Machine
 class PC;
-class Zynq;
 
 // Hardware Mediators - Bus
 class PC_PCI;
 
 // Hardware Mediators - Interrupt Controller
 class PC_IC;
-class Zynq_IC;
 
 // Hardware Mediators - Timer
 class PC_Timer;
-class Zynq_Timer;
 
 // Hardware Mediators - Real-time Clock
 class PC_RTC;
-class PandaBoard_RTC;
 
 // Hardware Mediators - EEPROM
 class PC_EEPROM;
@@ -97,7 +90,6 @@ class PC_Scratchpad;
 
 // Hardware Mediators - UART
 class PC_UART;
-class Zynq_UART;
 
 // Hardware Mediators - Display
 class Serial_Display;
@@ -108,7 +100,6 @@ class PC_Ethernet;
 class PCNet32;
 class C905;
 class E100;
-class PandaBoard_NIC;
 
 // Abstractions	- Process
 class Thread;
@@ -184,8 +175,8 @@ enum
     TASK_ID,
     ACTIVE_ID,
 
-    SEGMENT_ID,
     ADDRESS_SPACE_ID,
+    SEGMENT_ID,
 
     MUTEX_ID,
     SEMAPHORE_ID,
@@ -195,9 +186,37 @@ enum
     ALARM_ID,
     CHRONOMETER_ID,
 
+    ETHERNET_ID,
+    ARP_ID,
+    IP_ID,
+    ICMP_ID,
+    UDP_ID,
+    TCP_ID,
+    DHCP_ID,
+
     UNKNOWN_TYPE_ID,
     LAST_TYPE_ID = UNKNOWN_TYPE_ID - 1
 };
+
+// Type IDs for system components
+template<typename T> struct Type { static const Type_Id ID = UNKNOWN_TYPE_ID; };
+
+template<> struct Type<IA32> { static const Type_Id ID = CPU_ID; };
+template<> struct Type<IA32_TSC> { static const Type_Id ID = TSC_ID; };
+template<> struct Type<IA32_MMU> { static const Type_Id ID = MMU_ID; };
+
+template<> struct Type<PC> { static const Type_Id ID = MACHINE_ID; };
+template<> struct Type<PC_IC> { static const Type_Id ID = IC_ID; };
+template<> struct Type<PC_Timer> { static const Type_Id ID = TIMER_ID; };
+template<> struct Type<PC_UART> { static const Type_Id ID = UART_ID; };
+template<> struct Type<PC_RTC> { static const Type_Id ID = RTC_ID; };
+template<> struct Type<PC_PCI> { static const Type_Id ID = PCI_ID; };
+template<> struct Type<PC_Display> { static const Type_Id ID = DISPLAY_ID; };
+
+template<> struct Type<Thread> { static const Type_Id ID = THREAD_ID; };
+template<> struct Type<Task> { static const Type_Id ID = TASK_ID; };
+template<> struct Type<Address_Space> { static const Type_Id ID = ADDRESS_SPACE_ID; };
+template<> struct Type<Segment> { static const Type_Id ID = SEGMENT_ID; };
 
 __END_SYS
 

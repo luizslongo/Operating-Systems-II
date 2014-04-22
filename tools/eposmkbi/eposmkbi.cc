@@ -103,7 +103,6 @@ int main(int argc, char **argv)
         	"Error: library mode supports a single application!\n");
         return 1;
     }
-
     
     // Show configuration
     printf("  EPOS mode: %s\n", CONFIG.mode);
@@ -245,76 +244,76 @@ bool parse_config(FILE * cfg_file, Configuration * cfg)
     char * token;
 
     // EPOS Mode
-    if(!fgets(line, 256, cfg_file)) return false;
+    fgets(line, 256, cfg_file);
     token = strtok(line, "=");
     if(strcmp(token, "MODE")) return false;
     token = strtok(NULL, "\n");
     strtolower(cfg->mode, token);						
     // Machine
-    if(!fgets(line, 256, cfg_file)) return false;
+    fgets(line, 256, cfg_file);
     token = strtok(line, "=");
     if(strcmp(token, "MACH")) return false;
     token = strtok(NULL, "\n");		
     strtolower(cfg->mach, token);	
 
     // Arch
-    if(!fgets(line, 256, cfg_file)) return false;
+    fgets(line, 256, cfg_file);
     token = strtok(line, "=");
     if(strcmp(token, "ARCH")) return false;
     token = strtok(NULL, "\n");
     strtolower(cfg->arch, token);
 
     // Clock
-    if(!fgets(line, 256, cfg_file)) return false;
+    fgets(line, 256, cfg_file);
     token = strtok(line, "=");
     if(strcmp(token, "CLOCK")) return false;
     token = strtok(NULL, "\n");
     cfg->clock = atoi(token);	
 
     // Word Size
-    if(!fgets(line, 256, cfg_file)) return false;
+    fgets(line, 256, cfg_file);
     token = strtok(line, "=");
     if(strcmp(token, "WORD_SIZE")) return false;
     token = strtok(NULL, "\n");
     cfg->word_size = atoi(token);
 
     // Endianess
-    if(!fgets(line, 256, cfg_file)) return false;
+    fgets(line, 256, cfg_file);
     token = strtok(line, "=");
     if(strcmp(token, "ENDIANESS")) return false;
     token = strtok(NULL, "\n");
     cfg->endianess = !strcmp(token, "little");
 
     // Memory Base
-    if(!fgets(line, 256, cfg_file)) return false;
+    fgets(line, 256, cfg_file);
     token = strtok(line, "=");
     if(strcmp(token, "MEM_BASE")) return false;
     token = strtok(NULL, "\n");
     cfg->mem_base = strtol(token, 0, 16);
 
     // Memory Top
-    if(!fgets(line, 256, cfg_file)) return false;
+    fgets(line, 256, cfg_file);
     token = strtok(line, "=");
     if(strcmp(token, "MEM_TOP")) return false;
     token = strtok(NULL, "\n");
     cfg->mem_top=strtol(token, 0, 16);
 
     // Boot Lenght Min
-    if(!fgets(line, 256, cfg_file)) return false;
+    fgets(line, 256, cfg_file);
     token = strtok(line, "=");
     if(strcmp(token, "BOOT_LENGTH_MIN")) return false;
     token = strtok(NULL, "\n");
     cfg->boot_length_min=atoi(token);
 
     // Boot Lenght Max
-    if(!fgets(line, 256, cfg_file)) return false;
+    fgets(line, 256, cfg_file);
     token = strtok(line, "=");
-   	if(strcmp(token, "BOOT_LENGTH_MAX")) return false;
+    if(strcmp(token, "BOOT_LENGTH_MAX")) return false;
     token = strtok(NULL, "\n");
     cfg->boot_length_max=atoi(token);
 
     // Node Id
-    if(!fgets(line, 256, cfg_file)) ;
+    fgets(line, 256, cfg_file);
     token = strtok(line, "=");
     if(!strcmp(token, "NODE_ID")) {
         token = strtok(NULL, "\n");
@@ -323,7 +322,7 @@ bool parse_config(FILE * cfg_file, Configuration * cfg)
         cfg->node_id = -1; // get from net
 
     // Number of Nodes in SAN
-    if(!fgets(line, 256, cfg_file)) ;
+    fgets(line, 256, cfg_file);
     token = strtok(line, "=");
     if(!strcmp(token, "N_NODES")) {
         token = strtok(NULL, "\n");

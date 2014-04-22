@@ -26,10 +26,9 @@ MODE_BUILTIN	:= builtin
 MODE_KERNEL     := kernel
 
 # Supported hardware architectures
-ARCH_ARMV7		:= armv7
 ARCH_IA32       := ia32
+
 # Supported machines
-MACH_ZYNQ		:= zynq
 MACH_PC		    := pc
 
 # Makefile hacks
@@ -70,13 +69,11 @@ LSYS		= $(LSYSNAME)_$(ARCH)
 LINIT		= $(LINITNAME)_$(ARCH)
 LUTIL		= $(LUTILNAME)_$(ARCH)
 # Compiler prefixes
-$(ARCH_IA32)_COMP_PREFIX	:= /remote/usr/local/ia32/gcc-4.4.4/bin/ia32-
-$(ARCH_ARMV7)_COMP_PREFIX	:= /usr/local/arm/gcc-4.4.4/bin/arm-
+$(ARCH_IA32)_COMP_PREFIX	:= /usr/local/ia32/gcc-4.4.4/bin/ia32-
 COMP_PREFIX			= $($(ARCH)_COMP_PREFIX)
 
 # Boot Memory Map
 MACH_TRAITS	= $(INCLUDE)/mach/$(MACH)/traits.h 
-MAX_CPUS	= $(call GETTK,MAX_CPUS,$(MACH_TRAITS))
 MEM_BASE	= $(call GETTK,MEM_BASE,$(MACH_TRAITS))
 MEM_TOP		= $(call GETTK,MEM_TOP,$(MACH_TRAITS))
 MEM_SIZE	= $(shell echo "(`printf "%d" $(MEM_TOP)` - `printf "%d" $(MEM_BASE)`) / 1024 / 1024"|bc)
@@ -96,31 +93,16 @@ $(MACH_PC)_AS_FLAGS	:= --32
 $(MACH_PC)_LD_FLAGS	:= 
 $(MACH_PC)_CODE_NAME	:= .init
 $(MACH_PC)_DATA_NAME	:= .ctors
-
 ifeq ($(GDB),1)
-$(MACH_PC)_EMULATOR	= qemu -smp $(MAX_CPUS) -s -S -m $(MEM_SIZE) -nographic -no-reboot -net nic,model=pcnet -net user -fda
+$(MACH_PC)_EMULATOR	= qemu -s -S -m $(MEM_SIZE) -nographic -no-reboot -fda
 else
-#$(MACH_PC)_EMULATOR	= qemu -smp $(MAX_CPUS) -m $(MEM_SIZE) -nographic -no-reboot -net nic,model=pcnet -net user -net socket,mcast=224.0.0.1:12000 -fda
-$(MACH_PC)_EMULATOR	= qemu -smp $(MAX_CPUS) -m $(MEM_SIZE) -nographic -no-reboot -net nic,model=pcnet -net dump,file=/tmp/vm0.pcap -net user -fda
+$(MACH_PC)_EMULATOR	= qemu -smp $(CPUS) -m $(MEM_SIZE) -nographic -no-reboot -fda
 endif
 ifeq ($(MODE), library)
-$(MACH_PC)_DEBUGGER	= xterm -e gdb -ex "target remote:1234" -ex "set confirm off" -ex "add-symbol-file pc_setup $(SETUP_ADDR)"
+$(MACH_PC)_DEBUGGER	= $(TERM) gdb -ex "target remote:1234" -ex "set confirm off" -ex "add-symbol-file pc_setup $(SETUP_ADDR)"
 else
-$(MACH_PC)_DEBUGGER	= xterm -e gdb -ex "target remote:1234" -ex "set confirm off" -ex "add-symbol-file pc_setup $(SETUP_ADDR)" -ex "add-symbol-file pc_init $(INIT_ADDR)" -ex "add-symbol-file pc_system $(SYS_CODE_ADDR)"
+$(MACH_PC)_DEBUGGER	= $(TERM) gdb -ex "target remote:1234" -ex "set confirm off" -ex "add-symbol-file pc_setup $(SETUP_ADDR)" -ex "add-symbol-file pc_init $(INIT_ADDR)" -ex "add-symbol-file pc_system $(SYS_CODE_ADDR)"
 endif
-
-#Zynq
-$(MACH_ZYNQ)_CC_FLAGS	:= -mcpu=cortex-a9 -mfpu=fpa #-mthumb-interwork
-$(MACH_ZYNQ)_AS_FLAGS	:= -mcpu=cortex-a9 -mfpu=fpa #-mthumb-interwork
-$(MACH_ZYNQ)_LD_FLAGS	:= 
-$(MACH_ZYNQ)_CODE_NAME	:= .init
-$(MACH_ZYNQ)_DATA_NAME	:= .ctors
-#$(MACH_ZYNQ)_EMULATOR	:= qemu-system-arm -no-reboot -nographic -s -S -machine xilinx-zynq-a9 -cpu cortex-a9 -kernel $(APPLICATION) -fda 
-#$(MACH_ZYNQ)_DEBUGGER	:= gnome-terminal -x arm-xilinx-eabi-gdb -ex "set confirm off"
-$(MACH_ZYNQ)_EMULATOR	:= $(TOP)/dummy.sh
-$(MACH_ZYNQ)_DEBUGGER	:= $(TOP)/dummy.sh
-
-
 MACH_CC_FLAGS		= $($(MACH)_CC_FLAGS)
 MACH_AS_FLAGS		= $($(MACH)_AS_FLAGS)
 MACH_LD_FLAGS		= $($(MACH)_LD_FLAGS)
@@ -128,13 +110,8 @@ MACH_CODE_NAME		= $($(MACH)_CODE_NAME)
 MACH_DATA_NAME		= $($(MACH)_DATA_NAME)
 MACH_EMULATOR		= $($(MACH)_EMULATOR)
 MACH_DEBUGGER		= $($(MACH)_DEBUGGER)
-
-OPTIMIZATION2		= -O2
-OPTIMIZATIONS		= -O2
 ifeq ($(GDB),1)
-OPTIMIZATION2		=
-OPTIMIZATIONS		=   -O1
-MACH_CC_FLAGS		:= -g $(MACH_CC_FLAGS)
+MACH_CC_FLAGS		:= -g -feliminate-unused-debug-symbols $(MACH_CC_FLAGS)
 MACH_AS_FLAGS		:= -g $(MACH_AS_FLAGS)
 endif
 
@@ -148,21 +125,21 @@ ARCH_CLOCK	= $(call GETTK,CLOCK,$(ARCH_TRAITS))
 
 # Tools and flags to compile system tools
 TCC		:= gcc -ansi -c -Werror
-TCCFLAGS	:= -Wall $(OPTIMIZATION2) -I$(INCLUDE)
+TCCFLAGS	:= -m32 -Wall -O2 -I$(INCLUDE)
 
 TCXX		:= g++ -c -ansi -fno-exceptions
-TCXXFLAGS	:= -Wall $(OPTIMIZATION2) -I$(INCLUDE)
+TCXXFLAGS	:= -m32 -Wall -O2 -I$(INCLUDE)
 
 TCPP		:= gcc -E 
 TCPPFLAGS	:= -I$(INCLUDE)
 
 TLD		:= gcc
-TLDFLAGS	:=
+TLDFLAGS	:= -m32
 
 # Tools and flags to compile applications
-ACC		= $(BIN)/eposcc $(MACH_CC_FLAGS) -c -ansi $(OPTIMIZATION2)
-ACXX		= $(BIN)/eposcc $(MACH_CC_FLAGS) -c -ansi $(OPTIMIZATION2)
-AF77		= $(BIN)/eposcc $(MACH_CC_FLAGS) -c -ansi $(OPTIMIZATION2)
+ACC		= $(BIN)/eposcc $(MACH_CC_FLAGS) -c -ansi -O2
+ACXX		= $(BIN)/eposcc $(MACH_CC_FLAGS) -c -ansi -O2
+AF77		= $(BIN)/eposcc $(MACH_CC_FLAGS) -c -ansi -O2
 ALD		= $(BIN)/eposcc --$(MODE) $(MACH_LD_FLAGS)
 ALDFLAGS	:= --gc-sections 
 
@@ -174,14 +151,14 @@ AS		= $(COMP_PREFIX)as
 ASFLAGS		= $(MACH_AS_FLAGS)
 
 CC		= $(COMP_PREFIX)gcc -ansi -c 
-CCFLAGS		= $(MACH_CC_FLAGS) $(OPTIMIZATION2) -nostdinc -Wall -Werror -I$(INCLUDE)
+CCFLAGS		= $(MACH_CC_FLAGS) -O2 -nostdinc -Wall -Werror -I$(INCLUDE)
 CCLIB		= `$(CC) $(MACH_CC_FLAGS) -print-file-name=`
 
 CPP		= $(COMP_PREFIX)gcc -E
 CPPFLAGS	= $(MACH_CC_FLAGS) -I$(INCLUDE)
 
-CXX		= $(COMP_PREFIX)g++ -c --no-exceptions --no-rtti --no-use-cxa-atexit
-CXXFLAGS	= $(MACH_CC_FLAGS) $(OPTIMIZATIONS) -nostdinc -Wall -Werror -fdata-sections -ffunction-sections -I$(INCLUDE)
+CXX		= $(COMP_PREFIX)g++ -c --no-exceptions --no-rtti --no-use-cxa-atexit -std=c++0x
+CXXFLAGS	= $(MACH_CC_FLAGS) -O2 -nostdinc -Wall -Werror -fdata-sections -ffunction-sections -I$(INCLUDE)
 
 LD		= $(COMP_PREFIX)ld
 LDFLAGS		= $(MACH_LD_FLAGS) -L$(LIB) -Bstatic
@@ -192,10 +169,10 @@ OBJCOPYFLAGS	:=
 OBJDUMP		= $(COMP_PREFIX)objdump
 OBJDUMPFLAGS	:=
 
-MAKE		:= make
+MAKE		:= make --print-directory
 MAKECLEAN	:= make -i clean
-MAKETEST	:= make test
-MAKEFLAGS	:= --no-builtin-rules --print-directory
+MAKETEST	:= make --no-print-directory --silent
+MAKEFLAGS	:= --no-builtin-rules
 
 MKBI		:= $(BIN)/eposmkbi $(EPOS)
 
@@ -213,6 +190,8 @@ CLEANDIR	:= rm -rf
 TOUCH		:= touch
 
 TEE		:= tee
+
+TERM		:= xterm -e
 
 EMULATOR	= $(MACH_EMULATOR) 
 

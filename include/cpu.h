@@ -22,7 +22,8 @@ public:
     typedef unsigned long long Reg64;
     typedef unsigned long Reg;
 
-    class Log_Addr {
+    class Log_Addr
+    {
     public:
         Log_Addr() {}
         Log_Addr(const Log_Addr & a) : _addr(a._addr) {}
@@ -57,7 +58,7 @@ public:
         template <typename T>
         Log_Addr & operator&=(T a) { _addr &= Reg(a); return *this; }
 
-        friend OStream & operator<< (OStream & db, const Log_Addr & a) { db << reinterpret_cast<void *>(a._addr); return db; }
+        friend OStream & operator<<(OStream & os, const Log_Addr & a) { os << reinterpret_cast<void *>(a._addr); return os; }
 
     private:
         Reg _addr;
@@ -105,14 +106,12 @@ public:
 
 protected:
     static Reg32 swap32(Reg32 v) {
-        return (((v << 24) & 0xff000000) | ((v <<  8) & 0x00ff0000) |
-                ((v >>  8) & 0x0000ff00) | ((v >> 24) & 0x000000ff));
+        return (v & 0xff000000) >> 24 | (v & 0x00ff0000) >> 8 | (v & 0x0000ff00) << 8 | (v & 0x000000ff) << 24;
     }
 
     static Reg16 swap16(Reg16 v) {
-        return ((v << 8) & 0xFF00) | ((v >> 8) & 0x00FF);
+        return (v & 0xff00) >> 8 | (v & 0x00ff) << 8;
     }
-
 };
 
 __END_SYS
@@ -120,5 +119,16 @@ __END_SYS
 #ifdef __CPU_H
 #include __CPU_H
 #endif
+
+__BEGIN_SYS
+
+template<typename T>
+inline T align32(const T & addr) { return (addr + 3) & ~3U; }
+template<typename T>
+inline T align64(const T & addr) { return (addr + 7) & ~7U; }
+template<typename T>
+inline T align128(const T & addr) { return (addr + 15) & ~15U; }
+
+__END_SYS
 
 #endif

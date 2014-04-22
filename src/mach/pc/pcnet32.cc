@@ -3,6 +3,7 @@
 #include <mach/pc/machine.h>
 #include <mach/pc/pcnet32.h>
 #include <utility/malloc.h>
+#include <alarm.h>
 
 __BEGIN_SYS
 
@@ -11,196 +12,43 @@ PCNet32::Device PCNet32::_devices[UNITS];
 
 
 // Methods
-PCNet32::PCNet32(unsigned int unit)
-{
-    db<PCNet32>(TRC) << "PCNet32(unit=" << unit << ")" << endl;
-
-    // Share control
-    if(unit >= UNITS) {
-        db<PCNet32>(WRN) << "PCNet32: requested unit (" << unit 
-        		 << ") does not exist!" << endl;
-        return;
-    }
-
-    // Share control
-    if(_devices[unit].in_use) {
-        db<PCNet32>(WRN) << "PCNet32: device already in use!" << endl;
-        return;
-    }
-    
-    *this = *_devices[unit].device;
-
-    // Lock device
-    _devices[unit].in_use = true;
-}
-
-
-PCNet32::PCNet32(unsigned int unit, IO_Port io_port, IO_Irq irq, DMA_Buffer * dma_buf)
-{
-CPU::int_disable();
-
-    db<PCNet32>(TRC) << "PCNet32(unit=" << unit << ",io=" << reinterpret_cast<void *>(io_port) << ",irq=" << irq << ",dma=" << dma_buf << ")" << endl;
-
-    _unit = unit;
-    _io_port = io_port;
-    _irq = irq;
-    _dma_buf = dma_buf;
-
-    // Distribute the DMA_Buffer allocated by init()
-    Log_Addr log = _dma_buf->log_address();
-    Phy_Addr phy = _dma_buf->phy_address();
-
-    // Initialization Block
-    _iblock = log;
-    _iblock_phy = phy;
-    log += MMU::align128(sizeof(Init_Block));
-    phy += MMU::align128(sizeof(Init_Block));
-
-    // Rx_Desc Ring
-    _rx_cur = 0;
-    _rx_ring = log;
-    _rx_ring_phy = phy;
-    log += RX_BUFS * MMU::align128(sizeof(Rx_Desc));
-    phy += RX_BUFS * MMU::align128(sizeof(Rx_Desc));
-
-    // Tx_Desc Ring
-    _tx_cur = 0;
-    _tx_ring = log;
-    _tx_ring_phy = phy;
-    log += TX_BUFS * MMU::align128(sizeof(Tx_Desc));
-    phy += TX_BUFS * MMU::align128(sizeof(Tx_Desc));
-
-    // Rx Buffers
-    for(unsigned int i = 0; i < RX_BUFS; i++) {
-        _rx_buffer[i] = log;
-        _rx_ring[i].phy_addr = phy;
-        _rx_ring[i].size = Reg16(-sizeof(Frame)); // 2's comp.
-        _rx_ring[i].misc = 0;
-        _rx_ring[i].status = Desc::OWN; // Owned by NIC
-        log += MMU::align128(sizeof(Frame));
-        phy += MMU::align128(sizeof(Frame));
-    }
-
-    // Tx Buffers
-    for(unsigned int i = 0; i < TX_BUFS; i++) {
-        _tx_buffer[i] = log;
-        _tx_ring[i].phy_addr = phy;
-        _tx_ring[i].misc = 0;
-        _tx_ring[i].status = 0; // Owned by host
-        log += MMU::align128(sizeof(Frame));
-        phy += MMU::align128(sizeof(Frame));
-    }
-
-    // Reset device
-    reset();
-}
-
-
 PCNet32::~PCNet32()
 {
     db<PCNet32>(TRC) << "~PCNet32(unit=" << _unit << ")" << endl;
-
-    // Unlock device
-    _devices[_unit].in_use = false;
-}
-
-
-void PCNet32::reset()
-{
-    // Reset the device
-    s_reset();
-
-    // Software style => PCI, 32 bits, burst mode (pg 147)
-    bcr(20, BCR20_SWSTYLE2);
-
-    // Get MAC address from PROM
-    _address = Address(prom(0), prom(1), prom(2), prom(3), prom(4), prom(5));
-    db<PCNet32>(INF) << "PCNet32::reset: MAC=" << _address << endl;
-
-    // Enable autoselect port
-    bcr(2, BCR2_ASEL);
-
-    // Enable full-duplex
-    bcr(9, BCR9_FDEN);
-
-    // Disable INIT interrupt and transmit stop on underflow
-    csr(3, CSR3_TINTM | CSR3_IDONM | CSR3_DXSUFLO);
-
-    // Enable auto padding of frames
-    csr(4, CSR4_DMAPLUS | CSR4_APAD_XMT);
-
-    // Adjust interrupts
-    csr(5, CSR5_TOKINTD | /* CSR5_LTINTEN | */ CSR5_SINTE 
- 	| CSR5_SLPINTE | CSR5_EXDINTE | CSR5_MPINTE);
-
-    // Enable burst read and write
-    bcr(18, bcr(18) | BCR18_BREADE | BCR18_BWRITE);
-
-    // Promiscuous mode
-//     csr(15, csr(15) | CSR15_PROM);
-        
-    // Set transmit start point to full frame	
-    csr(80, csr(80) | 0x0c00); // XMTSP = 11
-
-    // Setup a init block
-    _iblock->mode = 0x0000;
-    _iblock->rlen = log2(RX_BUFS) << 4;
-    _iblock->tlen = log2(TX_BUFS) << 4;
-    _iblock->mac_addr = _address;        
-    _iblock->filter1 = 0;             
-    _iblock->filter2 = 0;             
-    _iblock->rx_ring = _rx_ring_phy;
-    _iblock->tx_ring = _tx_ring_phy;
-    csr(1, _iblock_phy & 0xffff); 
-    csr(2, _iblock_phy >> 16); 
- 
-    // Initialize the device
-    csr(0, CSR0_IENA | CSR0_INIT);
-    for(int i = 0; (i < 100) && !(csr(0) & CSR0_IDON); i++);
-    if(!(csr(0) & CSR0_IDON))
-        db<PCNet32>(WRN) << "PCNet32::reset: initialization failed!" << endl;
-
-    // Get MAC address from CSR
-    csr(0, CSR0_IDON | CSR0_STOP);
-    Address csr_addr(csr(PADR0), csr(PADR1), csr(PADR2));
-
-    if(_address != csr_addr) {
-        db<PCNet32>(WRN) << "PCNet32::reset: initialization failed!" << endl;
-        db<PCNet32>(WRN) << "PCNet32::reset: MAC(ROM)=" << _address << endl;
-        db<PCNet32>(WRN) << "PCNet32::reset: MAC(CSR)=" << csr_addr << endl;
-    }
-
-    // Activate sending and receiving 
-    csr(0, CSR0_IENA | CSR0_STRT);
 }
 
 
 int PCNet32::send(const Address & dst, const Protocol & prot, const void * data, unsigned int size)
 {
-    db<PCNet32>(TRC) << "PCNet32::send(s=" << _address
-        	     << ",d=" << dst
-        	     << ",p=" << hex << prot << dec
-        	     << ",dt=" << data
-        	     << ",sz=" << size
-        	     << ")" << endl;
-
-    // Wait for a free buffer
+    // Wait for the next buffer to become free and seize it
     while(_tx_ring[_tx_cur].status & Rx_Desc::OWN);
+    while(_tx_buffer[_tx_cur]->lock());
+    Tx_Desc * desc = &_tx_ring[_tx_cur];
+    Buffer * buf = _tx_buffer[_tx_cur];
+
+    db<PCNet32>(TRC) << "PCNet32::send(s=" << _address << ",d=" << dst << ",p=" << hex << prot << dec
+                     << ",d=" << data << ",s=" << size << ")" << endl;
 
     // Assemble the Ethernet frame
-    new (_tx_buffer[_tx_cur])
-        Frame(_address, dst, CPU::htons(prot), data, size);
+    new (buf->frame()) Frame(_address, dst, prot, data, size);
 
-    _tx_ring[_tx_cur].size = -(size + HEADER_SIZE); // 2's comp.
+    desc->size = -(size + sizeof(Header)); // 2's comp.
 
     // Status must be set last, since it can trigger a send
-    _tx_ring[_tx_cur].status = Tx_Desc::OWN | Tx_Desc::STP | Tx_Desc::ENP;
+    desc->status = Tx_Desc::OWN | Tx_Desc::STP | Tx_Desc::ENP;
 
     // Trigger an immediate send poll
     csr(0, csr(0) | CSR0_TDMD);
 
     _statistics.tx_packets++;
     _statistics.tx_bytes += size;
+
+    // Wait for packet to be sent
+    while(desc->status & Tx_Desc::OWN);
+
+    db<PCNet32>(INF) << "PCNet32::send:desc[" << _tx_cur << "]=" << desc << " => " << *desc << endl;
+
+    buf->unlock();
 
     ++_tx_cur %= TX_BUFS;
 
@@ -210,41 +58,208 @@ int PCNet32::send(const Address & dst, const Protocol & prot, const void * data,
 
 int PCNet32::receive(Address * src, Protocol * prot, void * data, unsigned int size)
 {
-    // Wait for a frame in the ring buffer
+    db<PCNet32>(TRC) << "PCNet32::receive(s=" << *src << ",p=" << hex << *prot << dec
+                     << ",d=" << data << ",s=" << size << ") => " << endl;
+
+    // Wait for a received frame
     while(_rx_ring[_rx_cur].status & Rx_Desc::OWN);
+    Buffer * buf = _rx_buffer[_rx_cur];
+    Rx_Desc * desc = &_rx_ring[_rx_cur];
 
     // Disassemble the Ethernet frame
-    Frame * frame = _rx_buffer[_rx_cur];
-    *src = frame->_src;
-    *prot = CPU::ntohs(frame->_prot);
-    unsigned int s = (_rx_ring[_rx_cur].misc & 0x00000fff) - HEADER_SIZE;
+    Frame * frame = buf->frame();
+    *src = frame->src();
+    *prot = frame->prot();
+    buf->size((desc->misc & 0x00000fff) - sizeof(Header) - sizeof(CRC));
 
-    // Copy data
-    memcpy(data, frame->_data, (s > size) ? size : s);
- 
+    // Copy the data
+    memcpy(data, frame->data<void>(), (buf->size() > size) ? size : buf->size());
+
     // Release the buffer to the NIC
-    _rx_ring[_rx_cur].status = Rx_Desc::OWN;
+    desc->status = Rx_Desc::OWN;
 
     _statistics.rx_packets++;
-    _statistics.rx_bytes += s;
+    _statistics.rx_bytes += buf->size();
+
+    db<PCNet32>(INF) << "PCNet32::receive:desc[" << _rx_cur << "]=" << desc << " => " << *desc << endl;
 
     ++_rx_cur %= RX_BUFS;
 
-    db<PCNet32>(TRC) << "PCNet32::receive(s=" << *src
-        	     << ",p=" << hex << *prot << dec
-        	     << ",dt=" << data
-        	     << ",sz=" << s
-        	     << ")" << endl;
+    return buf->size();
+}
 
-    return s;
+
+// Allocated buffers must be sent or release IN ORDER as assumed by the PCNet32
+PCNet32::Buffer * PCNet32::alloc(NIC * nic, const Address & dst, const Protocol & prot, unsigned int once, unsigned int always, unsigned int payload)
+{
+    db<PCNet32>(TRC) << "PCNet32::alloc(s=" << _address << ",d=" << dst << ",p=" << hex << prot << dec << ",on=" << once << ",al=" << always << ",ld=" << payload << ")" << endl;
+
+    int max_data = MTU - always;
+
+    if((payload + once) / max_data > TX_BUFS) {
+        db<PCNet32>(WRN) << "PCNet32::alloc: sizeof(Network::Packet::Data) > sizeof(NIC::Frame::Data) * TX_BUFS!" << endl;
+        return 0;
+    }
+
+    Buffer::List pool;
+
+    // Calculate how many frames are needed to hold the transport PDU and allocate enough buffers
+    for(int size = once + payload; size > 0; size -= max_data) {
+        // Wait for the next buffer to become free and seize it
+        while(_tx_ring[_tx_cur].status & Rx_Desc::OWN);
+        while(_tx_buffer[_tx_cur]->lock());
+        Tx_Desc * desc = &_tx_ring[_tx_cur];
+        Buffer * buf = _tx_buffer[_tx_cur];
+
+        // Initialize the buffer and assemble the Ethernet Frame Header
+        new (buf) Buffer(nic, _address, dst, prot, (size > max_data) ? MTU : size + always);
+
+        db<PCNet32>(INF) << "PCNet32::alloc:desc[" << _tx_cur << "]=" << desc << " => " << *desc << endl;
+
+        ++_tx_cur %= TX_BUFS;
+
+        pool.insert(&buf->link());
+    }
+
+    return pool.head()->object();
+}
+
+int PCNet32::send(Buffer * buf)
+{
+    unsigned int size = 0;
+
+    for(Buffer::Element * el = &buf->link(); el; el = el->next()) {
+        buf = el->object();
+        Tx_Desc * desc = buf->back<Tx_Desc>();
+
+        db<PCNet32>(TRC) << "PCNet32::send(buf=" << buf << ")" << endl;
+
+        desc->size = -(buf->size() + sizeof(Header)); // 2's comp.
+
+        // Status must be set last, since it can trigger a send
+        desc->status = Tx_Desc::OWN | Tx_Desc::STP | Tx_Desc::ENP;
+
+        // Trigger an immediate send poll
+        csr(0, csr(0) | CSR0_TDMD);
+
+        size += buf->size();
+
+        _statistics.tx_packets++;
+        _statistics.tx_bytes += buf->size();
+
+        db<PCNet32>(INF) << "PCNet32::send:desc=" << desc << " => " << *desc << endl;
+
+        // Wait for packet to be sent and unlock the respective buffer
+        while(desc->status & Tx_Desc::OWN);
+
+        buf->unlock();
+    }
+
+    return size;
+}
+
+void PCNet32::free(Buffer * buf)
+{
+    db<PCNet32>(TRC) << "PCNet32::free(buf=" << buf << ")" << endl;
+
+    Rx_Desc * desc = buf->back<Rx_Desc>();
+
+    _statistics.rx_packets++;
+    _statistics.rx_bytes += buf->size();
+
+    // Release the buffer to the NIC
+    desc->size = Reg16(-sizeof(Frame)); // 2's comp.
+    desc->status = Rx_Desc::OWN; // Owned by NIC
+
+    db<PCNet32>(INF) << "PCNet32::free:desc=" << desc << " => " << *desc << endl;
+}
+
+
+void PCNet32::reset()
+{
+    db<PCNet32>(TRC) << "PCNet32::reset()" << endl;
+
+    // Reset the device
+    s_reset();
+
+    // Software style => PCI, 32 bits, burst mode (pg 147)
+    bcr(20, BCR20_SSIZE32 | BCR20_SWSTYLE2);
+
+    // Get MAC address from PROM
+    _address[0] = prom(0);
+    _address[1] = prom(1);
+    _address[2] = prom(2);
+    _address[3] = prom(3);
+    _address[4] = prom(4);
+    _address[5] = prom(5);
+    db<PCNet32>(INF) << "PCNet32::reset: MAC=" << _address << endl;
+
+    // Enable auto-select port
+    bcr(2, BCR2_ASEL);
+
+    // Enable full-duplex
+    bcr(9, BCR9_FDEN);
+
+    // Disable INIT interrupt and transmit stop on underflow and two part deferral
+    csr(3, CSR3_TINTM | CSR3_IDONM | CSR3_DXMT2PD | CSR3_LAPPEN | CSR3_DXSUFLO);
+
+    // Enable frame auto padding/stripping and auto CRC handling
+    csr(4, CSR4_DMAPLUS | CSR4_DPOLL | CSR4_APAD_XMT | CSR4_ASTRP_RCV | CSR4_TXSTRTM);
+
+    // Adjust interrupts
+    csr(5, CSR5_TOKINTD | CSR5_SINTE | CSR5_EXDINTE);
+
+    // Enable burst read and write
+    bcr(18, bcr(18) | BCR18_BREADE | BCR18_BWRITE);
+
+    // Promiscuous mode
+    csr(15, csr(15) | CSR15_PROM);
+
+    // Set transmit start point to full frame
+    csr(80, csr(80) | 0x0c00); // XMTSP = 11
+
+    // Setup a init block
+    _iblock->mode = 0x0000;
+    _iblock->rlen = log2(RX_BUFS) << 4;
+    _iblock->tlen = log2(TX_BUFS) << 4;
+    _iblock->mac_addr = _address;
+    _iblock->filter1 = 0;
+    _iblock->filter2 = 0;
+    _iblock->rx_ring = _rx_ring_phy;
+    _iblock->tx_ring = _tx_ring_phy;
+    csr(1, _iblock_phy & 0xffff);
+    csr(2, _iblock_phy >> 16);
+
+    // Initialize the device
+    csr(0, CSR0_IENA | CSR0_INIT);
+    for(int i = 0; (i < 100) && !(csr(0) & CSR0_IDON); i++);
+    if(!(csr(0) & CSR0_IDON))
+        db<PCNet32>(WRN) << "PCNet32::reset: initialization failed!" << endl;
+
+    // Get MAC address from CSR
+    csr(0, CSR0_IDON | CSR0_STOP);
+    Address csr_addr;
+    csr_addr[0] = csr(PADR0) & 0x00ff;
+    csr_addr[1] = (csr(PADR0) & 0xff00) >> 8;
+    csr_addr[2] = csr(PADR1) & 0x00ff;
+    csr_addr[3] = (csr(PADR1) & 0xff00) >> 8;
+    csr_addr[4] = csr(PADR2) & 0x00ff;
+    csr_addr[5] = (csr(PADR2) & 0xff00) >> 8;
+
+    if(_address != csr_addr) {
+        db<PCNet32>(WRN) << "PCNet32::reset: initialization failed!" << endl;
+        db<PCNet32>(WRN) << "PCNet32::reset: MAC(ROM)=" << _address << endl;
+        db<PCNet32>(WRN) << "PCNet32::reset: MAC(CSR)=" << csr_addr << endl;
+    }
+
+    // Activate sending and receiving
+    csr(0, CSR0_IENA | CSR0_STRT);
 }
 
 
 void PCNet32::handle_int()
 {
-    CPU::int_disable();
-
-    while(csr(0) & CSR0_INTR) {
+    if(csr(0) & CSR0_INTR) {
         int csr0 = csr(0);
         int csr4 = csr(4);
         int csr5 = csr(5);
@@ -254,113 +269,59 @@ void PCNet32::handle_int()
         csr(4, csr4);
         csr(5, csr5);
 
-        // Initialization done?
-        if(csr0 & CSR0_IDON) {
-            // This should never happen, since IDON is disabled in reset()
-            // and all the initialization is conctrolled via polling, so if
-            // we are here, it must be due to a hardware induced reset.
-            // All we can do is to try to reset the nic!
-            db<PCNet32>(WRN) << "PCNet32::handle_int: initialization done!" << endl;
-            reset();
-        }
+ 	if(csr0 & CSR0_RINT) { // Frame received
+ 	    Buffer * buf = _rx_buffer[_rx_cur];
+            Rx_Desc * desc = &_rx_ring[_rx_cur];
+            Frame * frame = buf->frame();
 
-        // Transmition?
-        if(csr0 & CSR0_TINT) {
-            db<PCNet32>(INF) << "PCNet32::handle_int: transmition" << endl;
-        }
+            buf->size((desc->misc & 0x00000fff) - sizeof(Header) - sizeof(CRC));
 
- 	// Receive?
- 	if(csr0 & CSR0_RINT) {
- 	    db<PCNet32>(INF) << "PCNet32::handle_int: receive" << endl;
- 	    notify(CPU::ntohs(_rx_buffer[_rx_cur]->_prot));
+            db<PCNet32>(TRC) << "PCNet32::int:receive(s=" << frame->src() << ",p=" << hex << frame->header()->prot() << dec
+                             << ",d=" << frame->data<void>() << ",s=" << buf->size() << ")" << endl;
+
+            db<PCNet32>(INF) << "PCNet32::handle_int:desc[" << _rx_cur << "]=" << desc << " => " << *desc << endl;
+
+            ++_rx_cur %= RX_BUFS;
+
+            notify(frame->header()->prot(), buf);
  	}
 
-        // Error?
-        if(csr0 & CSR0_ERR) {
-            db<PCNet32>(INF) << "PCNet32::handle_int: ";
+        if(csr0 & CSR0_ERR) { // Error
+            db<PCNet32>(WRN) << "PCNet32::int:error =>";
 
-            // Memory Error?
-            if(csr0 & CSR0_MERR) {
-        	db<PCNet32>(WRN) << " memory error\n";
+            if(csr0 & CSR0_MERR) { // Memory
+        	db<PCNet32>(WRN) << " memory";
             }
             
-            // Missed Frame
-            if(csr0 & CSR0_MISS) {
-        	db<PCNet32>(WRN) << " missed frame\n";
+            if(csr0 & CSR0_MISS) { // Missed Frame
+        	db<PCNet32>(WRN) << " missed frame";
         	_statistics.rx_overruns++;
             }
 
-            // Collision?
-            if(csr0 & CSR0_CERR) {
-        	db<PCNet32>(INF) << " collision error\n";
+            if(csr0 & CSR0_CERR) { // Collision
+        	db<PCNet32>(WRN) << " collision";
         	_statistics.collisions++;
             }
 
-            // Bable transmitter time-out?
-            if(csr0 & CSR0_BABL) {
-        	db<PCNet32>(INF) << " transmitter time-out\n";
+            if(csr0 & CSR0_BABL) { // Bable transmitter time-out
+        	db<PCNet32>(WRN) << " overrun";
         	_statistics.tx_overruns++;
             }
-        }
 
-        // Missed frame counter overflow?
-        if(csr4 & CSR4_MFCO) {
-            db<PCNet32>(INF) << "PCNet32::handle_int: missed frame counter overflow\n";
-        }
-
-        // User interrupt?
-        if(csr4 & CSR4_UINT) {
-            db<PCNet32>(INF) << "PCNet32::handle_int: user interrupt\n";
-        }
-
-        // Receive collision counter overflow?
-        if(csr4 & CSR4_RCVCCO) {
-            db<PCNet32>(INF) << "Receive Collision Counter Overflow\n";
-        }
-
-        // Transmit start?
-        if(csr4 & CSR4_TXSTRT) {
-            db<PCNet32>(INF) << "PCNet32::handle_int: transmit start\n";
-        }
-
-        // Jabber error?
-        if(csr4 & CSR4_JAB) {
-            db<PCNet32>(INF) << "PCNet32::handle_int: jabber error\n";
-        }
-
-        // System interrupt?
-        if(csr5 & CSR5_SINT) {
-            db<PCNet32>(INF) << "PCNet32::handle_int: system interrupt\n";
-        }
-
-        // Sleep interrupt?
-        if(csr5 & CSR5_SLPINT) {
-            db<PCNet32>(INF) << "PCNet32::handle_int: sleep\n";
-        }
-
-        // Excessive deferral?
-        if(csr5 & CSR5_EXDINT){
-            db<PCNet32>(INF) << "PCNet32::handle_int: excessive deferral\n";
-        }
-
-        // Magic Packet interrupt?
-        if(csr5 & CSR5_MPINT) {
-            db<PCNet32>(INF) << "PCNet32::handle_int: magic packet\n";
+            db<PCNet32>(WRN) << endl;
         }
     }
-
-    CPU::int_enable();
 }
 
 
 void PCNet32::int_handler(unsigned int interrupt)
 {
-    PCNet32 * dev = get(interrupt);
+    PCNet32 * dev = get_by_interrupt(interrupt);
 
-    db<PCNet32>(TRC) << "PCNet32::int_handler(int=" << interrupt
-                     << ",dev=" << dev << ")" << endl;
+    db<PCNet32>(TRC) << "PCNet32::int_handler(int=" << interrupt << ",dev=" << dev << ")" << endl;
+
     if(!dev)
-        db<PCNet32>(WRN) << "PCNet32::int_handler: handler not found!" << endl;
+        db<PCNet32>(WRN) << "PCNet32::int_handler: handler not assigned!" << endl;
     else
         dev->handle_int();
 }

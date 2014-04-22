@@ -49,9 +49,11 @@ public:
     // Thread Scheduling Criterion
     typedef Traits<Thread>::Criterion Criterion;
     enum {
-        NORMAL = Criterion::NORMAL,
-        MAIN = Criterion::MAIN,
-        IDLE = Criterion::IDLE
+        NORMAL  = Criterion::NORMAL,
+        HIGH    = Criterion::HIGH,
+        MAIN    = Criterion::MAIN,
+        LOW     = Criterion::LOW,
+        IDLE    = Criterion::IDLE
     };
 
     // Thread Queue
@@ -93,7 +95,7 @@ public:
     const volatile State & state() const { return _state; }
 
     const volatile Priority & priority() const { return _link.rank(); }
-    void priority(const Criterion & p);
+    void priority(const Priority & p);
 
     Task * task() const { return const_cast<Task *>(_task); }
 
@@ -337,4 +339,3 @@ private:
 __END_SYS
 
 #endif
-

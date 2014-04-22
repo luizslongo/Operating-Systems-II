@@ -14,7 +14,7 @@ template<typename Then, typename Else>
 struct IF<false, Then, Else>
 { typedef Else Result; };
 
-// IF metaprograms for integer
+// IF metaprogram for integer
 template<bool condition, int Then, int Else>
 struct IF_INT
 { enum { Result = Then }; };
@@ -80,8 +80,7 @@ public:
 
     template<int Index, int Current = 0, bool Stop = (Index == Current)>
     struct Get
-    { typedef typename Tail::template Get<Index, Current + 1>::Result
-      Result; };
+    { typedef typename Tail::template Get<Index, Current + 1>::Result Result; };
 
     template<int Index, int Current>
     struct Get<Index, Current, true>
@@ -89,8 +88,7 @@ public:
 
     template<typename Type>
     struct Count
-    { enum { Result = EQUAL<Head, Type>::Result
-             + Tail::template Count<Type>::Result }; };
+    { enum { Result = EQUAL<Head, Type>::Result + Tail::template Count<Type>::Result }; };
 
     enum { Polymorphic = (int(Length) != int(Count<Head>::Result)) };
 };

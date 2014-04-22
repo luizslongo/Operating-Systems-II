@@ -41,7 +41,7 @@ TEST_SORUCES := $(shell find $(SRC) -name \*_test.cc -printf "%p\n")
 test: $(subst .cc,_traits.h,$(TEST_SORUCES))
 		$(INSTALL) $(TEST_SORUCES) $(APP)
 		$(INSTALL) $(subst .cc,_traits.h,$(TEST_SORUCES)) $(APP)
-		$(foreach tst,$(TESTS),$(MAKE) APPLICATION=$(tst) clean1 run1;)
+		$(foreach tst,$(TESTS),$(MAKETEST) APPLICATION=$(tst) clean1 run1;)
 		$(foreach tst,$(TESTS),$(CLEAN) $(APP)/$(tst)*;)
 
 clean: FORCE
@@ -65,6 +65,7 @@ veryclean: clean
 		find $(APP) -maxdepth 1 -type f -perm +111 -exec $(CLEAN) {} \;
 		find $(IMG) -name "*.img" -exec $(CLEAN) {} \;
 		find $(IMG) -name "*.out" -exec $(CLEAN) {} \;
+		find $(IMG) -name "*.pcap" -exec $(CLEAN) {} \;
 		find $(IMG) -maxdepth 1 -type f -perm +111 -exec $(CLEAN) {} \;
 		find $(TOP) -name "*_test_traits.h" -type f -perm +111 -exec $(CLEAN) {} \;
 		find $(TOP) -name "*~" -exec $(CLEAN) {} \; 
