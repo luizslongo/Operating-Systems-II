@@ -272,6 +272,7 @@ class MC13224V_Temperature_Sensor;
 class ERTJ1VG103FA;
 class MC13224V_Accelerometer;
 class MC13224V_ADXL345;
+class ACS712;
 
 // Hardware Mediators - Encryption
 class AES_Controller;

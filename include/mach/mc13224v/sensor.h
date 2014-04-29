@@ -6,6 +6,7 @@
 #include <sensor.h>
 #include "ertj1vg103fa.h"
 #include "adxl345.h"
+#include "acs712.h"
 
 __BEGIN_SYS
 
