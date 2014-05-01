@@ -8,7 +8,7 @@ __BEGIN_SYS
 class Modbus_ASCII
 {
 private:
-	static char char_map[16]; //FIXME: static initialization
+	static const char char_map[16];
 
 public:
 	static const int MSG_LEN = 96;
@@ -49,22 +49,6 @@ public:
 		_data_in = new unsigned char [max_data_size];
 		_data_out = new char [max_data_size];
 		int i = 0;
-		char_map[i++] = '0'; //FIXME: static initialization
-		char_map[i++] = '1';
-		char_map[i++] = '2';
-		char_map[i++] = '3';
-		char_map[i++] = '4';
-		char_map[i++] = '5';
-		char_map[i++] = '6';
-		char_map[i++] = '7';
-		char_map[i++] = '8';
-		char_map[i++] = '9';
-		char_map[i++] = 'A';
-		char_map[i++] = 'B';
-		char_map[i++] = 'C';
-		char_map[i++] = 'D';
-		char_map[i++] = 'E';
-		char_map[i++] = 'F';
     }
 
 	virtual ~Modbus_ASCII()
@@ -124,12 +108,17 @@ public:
 		*ascii2 = char_map[c&0x0f];
 		*ascii1 = char_map[c>>4];
 	}
-	static char dec_one(char c)
+	static unsigned char dec_one(unsigned char c)
 	{
-		if(c < 0x40) return (c - 0x30);
-		else return (c - 0x37);
+		if(c >= '0' && c <= '9')
+			return c - '0';
+		else if(c >= 'A' && c <= 'F')
+			return c - 'A' + 0x0a;
+		else if(c >= 'a' && c <= 'f')
+			return c - 'a' + 0x0a;
+		return c;
 	}
-	static char decode(char h, char l)
+	static unsigned char decode(unsigned char h, unsigned char l)
 	{
 		return ((dec_one(h) << 4) | dec_one(l));
 	}
@@ -147,7 +136,7 @@ private:
 	char STATE;
 	unsigned char buff;
 
-	int state_machine(char c)
+	int state_machine(unsigned char c)
 	{
 		switch(STATE) {
 		case 0:
