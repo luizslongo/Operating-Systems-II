@@ -208,7 +208,7 @@ void CMAC<Radio_Wrapper>::alarm_handler_function() {
     CPU::int_enable();
 
     if ((alarm_ev_handler != 0) && (alarm_ticks_ms >= alarm_event_time_ms)) {
-        db<CMAC>(INF) << "CMAC::alarm_handler_function - calling alarm_ev_handler\n";
+        //db<CMAC>(INF) << "CMAC::alarm_handler_function - calling alarm_ev_handler\n";
         event_handler *tmp = alarm_ev_handler;
         alarm_ev_handler = 0;
         (tmp());

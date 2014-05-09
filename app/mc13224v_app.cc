@@ -53,12 +53,44 @@ void sensor(unsigned char id) {
     }
 }
 
+class Sink1: Conditional_Observer
+{
+	public:
+	Sink1(){nic->attach(this, (NIC::Protocol) 1); };
+	void update(Conditionally_Observed * o, int p)
+	{
+		cout << "Update\n";
+		NIC::Protocol prot;
+		NIC::Address src;
+		if(p == 1)
+		{
+			while(!(nic->receive(&src, &prot, &msg, sizeof(msg)) > 0))
+				cout << "failed\n";
+
+			cout << "\n##########\n";
+			cout << "Sender id: "   << (int) msg[0] << "\n";
+			cout << "Msg number: "  << (int) msg[1] << "\n";
+			cout << "Temperature: " << (int) msg[2] << " C\n";
+			cout << "Battery: "     << (int) msg[3] << " \%\n";
+			cout << "Protocol:"     << (int) prot   << "\n";
+		}
+	}
+};
+
 void sink() {
     NIC::Protocol prot;
     NIC::Address src;
 
     turn_on_led2();
     cout << "Sink\n";
+
+	if(Traits<CMAC<Radio_Wrapper> >::time_triggered) {
+		Sink1 *s = new Sink1();
+		while(true) {
+			Alarm::delay(3000000);
+			cout << "Dropped packets: " << nic->statistics().dropped_packets << endl;
+		}
+	}
 
     while (true) {
         while(!(nic->receive(&src, &prot, &msg, sizeof(msg)) > 0))
@@ -76,7 +108,7 @@ void sink() {
 int main() {
     nic = new NIC();
 
-    sink();
-//    sensor(1);
-}
 
+//    sink();
+    sensor(1);
+}

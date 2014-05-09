@@ -88,7 +88,7 @@ template <> struct Traits<CMAC<Radio_Wrapper> >: public Traits<void>
     static const bool auto_rx        = false;    // automatically listen to the channel. obs: must have time_triggered = true
     static const bool coordinator    = false;
     static const bool ack            = false;
-    static const bool csma           = true;
+    static const bool csma           = false;
     static const bool rts_cts        = false;
 
     static const unsigned long  SLEEPING_PERIOD = 500;  // ms

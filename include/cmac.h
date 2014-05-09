@@ -8,6 +8,8 @@
 #include <neighborhood.h>
 #include <radio.h>
 #include <timer.h>
+#include <rtc.h>
+#include <tsc.h>
 
 __BEGIN_SYS
 
@@ -37,6 +39,7 @@ public:
     static const int FRAME_BUFFER_SIZE = T::FRAME_BUFFER_SIZE;
 
 public:
+
     CMAC(int unit = 0) {
         if (_instance == 0) {
             _stats = new(kmalloc(sizeof(Statistics))) Statistics();
@@ -52,30 +55,24 @@ public:
 
     int send(const Address & dst, const Protocol & prot,
             const void *data, unsigned int size) {
-        if (Traits<CMAC<T> >::time_triggered) {
-            if (_tx_pending || (size > mtu()) || (_busy == true)) {
-                db<CMAC<T> >(WRN) << "CMAC::send - another TX pending or data size > MTU\n";
-                return -1;
-            }
-
-        } else {
-            if (_tx_pending || _rx_pending || (size > mtu())) {
-                db<CMAC<T> >(WRN) << "CMAC::send - another TX or RX pending or data size > MTU\n";
-                return -1;
-            }
-        }
-
-        if (size == 0) {
+		if(size > mtu())
+		{
+			db<CMAC<T> >(WRN) << "CMAC::send - data size > MTU\n";
+			return -1;
+		}
+		if(size == 0)
+		{
             db<CMAC<T> >(ERR) << "CMAC::send - data size = 0\n";
-            return 0;
-        }
+			return 0;
+		}
+		while (_busy || _tx_pending || _rx_pending);
+        _tx_pending     = true;
 
         CMAC_STATE_TRANSITION result;
 
         _tx_data 	    = data;
         _tx_data_size   = size;
         _tx_dst_address = dst;
-        _tx_pending     = true;
         _tx_protocol    = prot;
 
         unsigned long start_time = alarm_ticks_ms;
@@ -107,6 +104,13 @@ public:
 
     int receive(Address * src, Protocol * prot,
             void * data, unsigned int size) {
+
+		if(size == 0)
+		{
+            db<CMAC<T> >(ERR) << "CMAC::receive - data size = 0\n";
+			return 0;
+		}
+		while (_busy || _tx_pending || _rx_pending);
 
         if (!_buffer_empty) {
             _rx_data 	  = data;
@@ -555,11 +559,12 @@ public:
     static CMAC_STATE_TRANSITION execute(CMAC_STATE_TRANSITION input) {
         STATE state = BACKOFF;
         CMAC_STATE_TRANSITION result;
+		bool got_preamble = !Traits<CMAC<T> >::time_triggered;
 
         while ((state != TX_CONTENTION) && (state != RX_CONTENTION)) {
             switch (state) {
                 case BACKOFF:
-                    Backoff<T>::execute(result);
+					Backoff<T>::execute(result);
 
                 case LISTEN:
                     if (input == CMAC<T>::RX_PENDING) {
@@ -590,10 +595,16 @@ public:
 
                         CMAC<T>::_frame_buffer_size = sizeof(preamble_t);
 
-                        for (unsigned long i = 0; i < Traits<CMAC<T> >::SLEEPING_PERIOD + (Traits<CMAC<T> >::SLEEPING_PERIOD >> 1) + 10; i++) {
-                            preamble->time -= 1;
+						// Actually Millisecond
+						RTC::Microsecond begin = TSC::time_stamp() / (TSC::frequency() / 1000UL);
+						RTC::Microsecond end = begin + preamble->time;
+						RTC::Microsecond last = begin;
+						while(last < end)
+						{
+							last = TSC::time_stamp() / (TSC::frequency() / 1000UL);
+							preamble->time = end - last;
                             Generic_Tx<T>::execute(result);
-                        }
+						}
                     }
 
                     state = TX_CONTENTION;
@@ -605,28 +616,29 @@ public:
                 case RX_PREAMBLE:
                     if (Traits<CMAC<T> >::time_triggered) {
                         bool packet   = false;
-                        bool preamble = false;
 
                         // overrides old data
                         if (!(CMAC<T>::_buffer_empty) && (CMAC<T>::_buffer_head == CMAC<T>::_buffer_tail))
                             CMAC<T>::_buffer_head = (CMAC<T>::_buffer_head + 1) % Traits<CMAC<T> >::BUFFER_SIZE;
 
-                        int x = CMAC<T>::_radio->receive(&(CMAC<T>::_buffer[CMAC<T>::_buffer_tail].data[0]));
-                        CMAC<T>::_buffer[CMAC<T>::_buffer_tail].size = x;
+						int x = CMAC<T>::_radio->receive(&(CMAC<T>::_buffer[CMAC<T>::_buffer_tail].data[0]));
+						CMAC<T>::_buffer[CMAC<T>::_buffer_tail].size = x;
 
-                        do {
-                            if (CMAC<T>::_buffer[CMAC<T>::_buffer_tail].size == sizeof(preamble_t)) {
-                                preamble = true;
-                                packet   = false;
+						if (CMAC<T>::_buffer[CMAC<T>::_buffer_tail].size == sizeof(preamble_t)) {
+							preamble_t * p = reinterpret_cast<preamble_t *>(CMAC<T>::_buffer[CMAC<T>::_buffer_tail].data);
 
-                                preamble_t * p = reinterpret_cast<preamble_t *>(CMAC<T>::_buffer[CMAC<T>::_buffer_tail].data);
+							if (p->time <= Traits<CMAC<T> >::SLEEPING_PERIOD + (Traits<CMAC<T> >::SLEEPING_PERIOD >> 1) + 10) {
+								CMAC<T>::_radio->off();
+								wait_ms(p->time);
+							}
+						}
+						else
+						{
+							state = LISTEN;
+							break;
+						}
 
-                                if (p->time <= Traits<CMAC<T> >::SLEEPING_PERIOD + (Traits<CMAC<T> >::SLEEPING_PERIOD >> 1) + 10) {
-                                    unsigned long timeout = CMAC<T>::alarm_ticks_ms + p->time * 0.706;
-                                    while (!(CMAC<T>::alarm_ticks_ms >= timeout));
-                                }
-                            }
-
+						do {
                             result = Generic_Lpl<T>::execute(result, Traits<CMAC<T> >::SLEEPING_PERIOD);
 
                             if (result == CMAC<T>::CHANNEL_BUSY) {
@@ -640,7 +652,7 @@ public:
 
                             if (CMAC<T>::_buffer[CMAC<T>::_buffer_tail].size > 0 && CMAC<T>::_buffer[CMAC<T>::_buffer_tail].size != sizeof(preamble_t))
                                    packet = true;
-                        } while ((!packet) || (!preamble));
+                        } while (!packet);
 
                         CMAC<T>::_buffer_tail = (CMAC<T>::_buffer_tail + 1) % Traits<CMAC<T> >::BUFFER_SIZE;
                         CMAC<T>::_buffer_empty = false;
@@ -662,6 +674,22 @@ public:
 
         return input;
     }
+private:
+    static inline void wait_us(unsigned int us) {
+		// To prevent overflow
+		TSC::Time_Stamp start = TSC::time_stamp();
+		RTC::Microsecond end = us * (TSC::frequency() / 1000000UL);
+		volatile TSC::Time_Stamp now;
+		while((now = (TSC::time_stamp() - start)) < end);
+    }
+    static inline void wait_ms(unsigned int ms) {
+		// To prevent overflow
+		TSC::Time_Stamp start = TSC::time_stamp();
+		// Actually Millisecond
+		RTC::Microsecond end = ms * (TSC::frequency() / 1000UL);
+		volatile TSC::Time_Stamp now;
+		while((now = (TSC::time_stamp() - start)) < end);
+    }
 };
 
 template<typename T>
@@ -677,9 +705,18 @@ public:
     }
 
     static CMAC_STATE_TRANSITION execute(CMAC_STATE_TRANSITION input, unsigned long ms) {
-        for (unsigned long i = 0; i <= ms * (Traits<Machine>::CLOCK / 1000UL); i++);
+		wait_ms(ms);
 
         return input;
+    }
+
+    static inline void wait_ms(unsigned int ms) {
+		// To prevent overflow
+		TSC::Time_Stamp start = TSC::time_stamp();
+		// Actually Millisecond
+		RTC::Microsecond end = ms * (TSC::frequency() / 1000UL);
+		volatile TSC::Time_Stamp now;
+		while((now = (TSC::time_stamp() - start)) < end);
     }
 };
 
@@ -705,6 +742,7 @@ public:
     static CMAC_STATE_TRANSITION execute(CMAC_STATE_TRANSITION input) {
         if (!Traits<CMAC<T> >::rts_cts)
             return CMAC<T>::TX_CONTENTION_OK;
+
 
         // TODO
         return CMAC<T>::TX_CONTENTION_OK;
@@ -760,7 +798,7 @@ public:
 
         db<CMAC<T> >(TRC) << "Generic_Rx - receiving\n";
 
-        if (!Traits<CMAC<T> >::time_triggered) {
+      if (!Traits<CMAC<T> >::time_triggered) {
             // overrides old data
             if (!(CMAC<T>::_buffer_empty) && (CMAC<T>::_buffer_head == CMAC<T>::_buffer_tail))
                 CMAC<T>::_buffer_head = (CMAC<T>::_buffer_head + 1) % Traits<CMAC<T> >::BUFFER_SIZE;
@@ -810,7 +848,7 @@ public:
 
         } else {
             unsigned long timeout2 = CMAC<T>::alarm_ticks_ms + soft_timeout;
-            //		while (!(timeout = (CMAC<T>::alarm_ticks_ms >= timeout2) || CMAC<T>::timeout) && !_frame_received);
+            //while (!(timeout = (CMAC<T>::alarm_ticks_ms >= timeout2) || CMAC<T>::timeout) && !_frame_received);
             while (!(timeout = (CMAC<T>::alarm_ticks_ms >= timeout2)) && !_frame_received);
         }
 
@@ -830,12 +868,16 @@ public:
     }
 
 private:
-    static void wait(unsigned int us) {
-        for (unsigned int i = 0; i <= us * (Traits<Machine>::CLOCK / 1000000UL); i++); 
+    static inline void wait_us(unsigned int us) {				
+		// To prevent overflow
+		TSC::Time_Stamp start = TSC::time_stamp();
+		RTC::Microsecond end = us * (TSC::frequency() / 1000000UL);
+		volatile TSC::Time_Stamp now;
+		while((now = (TSC::time_stamp() - start)) < end);		
     }
 
     static void _event_handler(typename T::Event event) {
-        wait(250);
+        //wait_us(250);
         if (event == T::Radio::SFD_DETECTED) {
             CMAC<T>::_radio->off();
             while (!_frame_received) _frame_received = true; // no excuses now
@@ -870,7 +912,8 @@ public:
             if (delay == 0) 
                 delay = static_cast<unsigned long>(UNIT_BACKOFF_PERIOD);
 
-            CMAC<T>::alarm_busy_delay(delay);
+//            CMAC<T>::alarm_busy_delay(delay);
+			wait_ms(delay);
 
             /* Clear Channel Assesment(CCA) */
             bool aux = CMAC<T>::_radio->cca();
@@ -897,6 +940,15 @@ private:
         MAX_BACKOFFS  	    = 8,
         UNIT_BACKOFF_PERIOD = 15 /* ms */
     };
+
+    static inline void wait_ms(unsigned int ms) {
+		// To prevent overflow
+		TSC::Time_Stamp start = TSC::time_stamp();
+		// Actually Millisecond
+		RTC::Microsecond end = ms * (TSC::frequency() / 1000UL);
+		volatile TSC::Time_Stamp now;
+		while((now = (TSC::time_stamp() - start)) < end);
+    }
 };
 
 /**
@@ -1298,7 +1350,7 @@ public:
 //        if (CMAC<T>::_frame_buffer_size == 0) {
         if (CMAC<T>::_buffer[CMAC<T>::_buffer_head].size == 0) {
             db<CMAC<T> >(ERR) << "IEEE802154_Unpack - UNPACK_FAILED - Frame size == 0\n";
-            return CMAC<T>::UNPACK_FAILED;
+            return unpack_failed();
         }
 
         input = CMAC<T>::UNPACK_OK;
@@ -1347,16 +1399,15 @@ public:
 
         if (crc_frame != crc) {
             db<CMAC<T> >(WRN) << "IEEE802154_Unpack - CRC error: " << crc << "\n";
-            CMAC<T>::_stats->dropped_packets += 1;
-            return CMAC<T>::UNPACK_FAILED;
+			return unpack_failed();
 
         } else if (header_ptr->frame_control.frameType != IEEE802154_Frame<T>::FRAME_TYPE_DATA) {
             db<CMAC<T> >(WRN) << "IEEE802154_Unpack - UNPACK_FAILED - Incorrect frame type\n";
-            input = CMAC<T>::UNPACK_FAILED;
+			input = unpack_failed();
 
         } else if (!(header_ptr->destination_address == *CMAC<T>::_addr) && !(header_ptr->destination_address == Radio_Common::BROADCAST)) {
             db<CMAC<T> >(INF) << "IEEE802154_Unpack - UNPACK_FAILED - Wrong address\n";
-            input = CMAC<T>::UNPACK_FAILED;
+			input = unpack_failed();
 
         } else {
             CMAC<T>::_data_sequence_number = header_ptr->data_sequence_n;
@@ -1380,6 +1431,20 @@ public:
 
         return input;
     }
+		private:
+    static CMAC_STATE_TRANSITION unpack_failed() 
+	{
+		CMAC<T>::_stats->dropped_packets += 1;
+        if (!CMAC<T>::_rx_pending) {
+			if(CMAC<T>::_buffer_tail == 0)
+				CMAC<T>::_buffer_tail = Traits<CMAC<T> >::BUFFER_SIZE - 1;
+			else
+	            CMAC<T>::_buffer_tail--;
+            if (CMAC<T>::_buffer_head == CMAC<T>::_buffer_tail)
+                CMAC<T>::_buffer_empty = true;
+        }
+		return CMAC<T>::UNPACK_FAILED;
+	}
 };
 
 template<typename T>
@@ -1403,7 +1468,7 @@ public:
         memcpy(aux, CMAC<T>::_frame_buffer, size);
 
         while (result != CMAC<T>::UNPACK_OK) {
-            wait(250);
+            //wait_us(250);
             result = Generic_Lpl<T>::execute(result, ACK_TIMEOUT);
             if (result == CMAC<T>::CHANNEL_IDLE) {
                 if (CMAC<T>::_transmission_count < MAX_TRANSMISSION_COUNT) {
@@ -1435,8 +1500,12 @@ public:
     }
 
 private:
-    static void wait(unsigned int us) {
-        for (unsigned int i = 0; i <= us * (Traits<Machine>::CLOCK / 1000000UL); i++); 
+    static inline void wait_us(unsigned int us) {
+		// To prevent overflow
+		TSC::Time_Stamp start = TSC::time_stamp();
+		RTC::Microsecond end = us * (TSC::frequency() / 1000000UL);
+		volatile TSC::Time_Stamp now;
+		while((now = (TSC::time_stamp() - start)) < end);
     }
 
     static CMAC_STATE_TRANSITION unpack_ack(CMAC_STATE_TRANSITION input) {
@@ -1489,9 +1558,9 @@ public:
         CMAC_STATE_TRANSITION result = CMAC<T>::TX_PENDING;
 
         result = pack_ack(result);
-        CMAC<T>::_radio->off();
+        CMAC<T>::_radio->on();
         result = Generic_Tx<T>::execute(result);
-        wait(100);
+        //wait_us(100);
         CMAC<T>::_radio->off();
 
         db<CMAC<T> >(TRC) << "IEEE802154_Ack_Tx - RX_OK\n";
@@ -1499,8 +1568,12 @@ public:
     }
 
 private:
-    static void wait(unsigned int us) {
-        for (unsigned int i = 0; i <= us * (Traits<Machine>::CLOCK / 1000000UL); i++); 
+    static inline void wait_us(unsigned int us) {
+		// To prevent overflow
+		TSC::Time_Stamp start = TSC::time_stamp();
+		RTC::Microsecond end = us * (TSC::frequency() / 1000000UL);
+		volatile TSC::Time_Stamp now;
+		while((now = (TSC::time_stamp() - start)) < end);
     }
 
     static CMAC_STATE_TRANSITION pack_ack(CMAC_STATE_TRANSITION input) {
