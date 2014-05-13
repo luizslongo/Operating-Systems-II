@@ -10,8 +10,9 @@ __BEGIN_SYS
 
 // Class attributes
 unsigned short IP::Header::_next_id = 0;
+IP * IP::_networks[];
 IP::Router IP::_router;
-IP::Fragmented IP::_fragmented;
+IP::Reassembling IP::_reassembling;
 IP::Observed IP::_observed;
 
 
@@ -63,7 +64,7 @@ IP::Buffer * IP::alloc(const Address & to, const Protocol & prot, unsigned int o
     Header header(ip->address(), to, prot, 0); // length will be defined latter for each fragment
 
     unsigned int offset = 0;
-    for(Buffer::Element * el = &pool->link(); el; el = el->next()) {
+    for(Buffer::Element * el = pool->link(); el; el = el->next()) {
         Packet * packet = el->object()->frame()->data<Packet>();
 
         // Setup header
@@ -102,41 +103,33 @@ void IP::update(NIC::Observed * nic, int prot, Buffer * buf)
         return;
     }
 
-    unsigned long key = (packet->protocol() << 24) | (packet->id() << 8);
     buf->nic(&_nic);
 
-    if((packet->flags() & Header::MF) || (packet->offset() != 0)) { // Fragment
-        Element * el = _fragmented.search_key(key);
-        if(!el) {
-            el = new (SYSTEM) Fragmented::Element(new (SYSTEM) Buffer::List, key);
-            _fragmented.insert(el);
-        }
-        el->object()->insert(&buf->link());
+    unsigned long key = (packet->protocol() << 24) | (packet->id() << 8);
 
-        // Sum the lengths of the received fragments and find the last element
-        unsigned int total = 0;
-        unsigned int accumulated = 0;
-        for(Buffer::Element * el2 = el->object()->head(); el2; el2 = el2->next()) {
-            db<IP>(INF) << "IP::update:buf=" << el2->object() << " => " << *el2->object() << endl;
+    if((packet->flags() & Header::MF) || (packet->offset() != 0)) { // Fragmented
+        Fragmented * frag;
+        Reassembling::Element * el = _reassembling.search_key(key);
 
-            packet = el2->object()->frame()->data<Packet>();
-            if(!(packet->flags() & Header::MF))
-                total = packet->offset() + packet->length() - sizeof(Header);
-            accumulated += packet->length() - sizeof(Header);
+        if(el)
+            frag = el->object();
+        else {
+            frag = new (SYSTEM) Fragmented(key);
+            _reassembling.insert(frag->link());
         }
 
-        // If the datagram is complete, report it to the upper layer
-        if(accumulated == total) {
-            db<IP>(INF) << "IP::update: notify fragmented datagram" << endl;
-            buf = el->object()->head()->object();
-            _fragmented.remove(el);
-            delete el->object();
-            delete el;
+        frag->insert(buf);
+
+        if(frag->reassembled()) {
+            db<IP>(INF) << "IP::update: notifying reassembled datagram" << endl;
+            buf = frag->pool();
+            _reassembling.remove(frag->link());
+            delete frag;
             if(!notify(packet->protocol(), buf))
                 buf->nic()->free(buf);
         }
     } else {
-        db<IP>(INF) << "IP::update: notify whole datagram" << endl;
+        db<IP>(INF) << "IP::update: notifying whole datagram" << endl;
         if(!notify(packet->protocol(), buf))
             buf->nic()->free(buf);
     }

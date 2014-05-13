@@ -21,13 +21,13 @@ int UDP::send(const Port & from, const Address & to, const void * d, unsigned in
         return 0;
 
     unsigned int headers = sizeof(Header);
-    for(Buffer::Element * el = &pool->link(); el; el = el->next()) {
+    for(Buffer::Element * el = pool->link(); el; el = el->next()) {
         Buffer * buf = el->object();
         Packet * packet = buf->frame()->data<Packet>();
 
         db<UDP>(INF) << "UDP::send:buf=" << buf << " => " << *buf<< endl;
 
-        if(el == &pool->link()) {
+        if(el == pool->link()) {
             Message * message = packet->data<Message>();
             new(packet->data<void>()) Header(from, to.port(), size);
             message->sum(data);
@@ -53,7 +53,7 @@ int UDP::receive(Buffer * buf, void * d, unsigned int s)
 
     db<UDP>(TRC) << "UDP::receive(buf=" << buf << ",d=" << d << ",s=" << s << ")" << endl;
 
-    Buffer::Element * head = &buf->link();
+    Buffer::Element * head = buf->link();
     unsigned int size = 0;
 
     for(Buffer::Element * el = head; el && (size <= s); el = el->next()) {
