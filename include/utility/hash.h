@@ -7,8 +7,6 @@
 #include "list.h"
 #include "vector.h"
 
-extern "C" { void _panic(); }
-
 __BEGIN_SYS
 
 // Hash Table with a single Synonym List
@@ -19,6 +17,7 @@ class Simple_Hash
 {
 public:
     typedef T Object_Type;
+    typedef Key Rank_Type;
     typedef typename List_Elements::Singly_Linked_Ordered<T, Key> Element;
 
     class Forward: public List_Iterators::Forward<Element>

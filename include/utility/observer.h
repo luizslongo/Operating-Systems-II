@@ -1,5 +1,12 @@
 // EPOS Observer Utility Declarations
 
+// Observation about the lack of virtual destructors in the following classes:
+// Observed x Observer is used in mediators, so they appear very early in the system.
+// To be more precise, they are used in SETUP, where we cannot yet handle a heap.
+// Since the purpose of the destructors is only to trace the classes, we accepted to
+// declare them as non-virtual. But it must be clear that this is one of the few uses
+// for them.
+
 #ifndef __observer_h
 #define	__observer_h
 
@@ -17,11 +24,12 @@ class Observed
 private:
     typedef Simple_List<Observer>::Element Element;
 
-public:
+protected:
     Observed() {
         db<Observed>(TRC) << "Observed() => " << this << endl;
     }
 
+public: 
     ~Observed() {
         db<Observed>(TRC) << "~Observed(this=" << this << ")" << endl;
     }
@@ -70,15 +78,14 @@ inline void Observed::detach(Observer * o)
 
 inline bool Observed::notify()
 {
-    db<Observed>(TRC) << "Observed::notify()" << endl;
-
     bool notified = false;
+
+    db<Observed>(TRC) << "Observed::notify()" << endl;
 
     for(Element * e = _observers.head(); e; e = e->next()) {
         db<Observed>(INF) << "Observed::notify(this=" << this << ",obs=" << e->object() << ")" << endl;
 
         e->object()->update(this);
-
         notified = true;
     }
 
@@ -96,11 +103,12 @@ class Conditionally_Observed
 private:
     typedef Simple_Ordered_List<Conditional_Observer>::Element Element;
 
-public:
+protected:
     Conditionally_Observed() {
         db<Observed>(TRC) << "Observed() => " << this << endl;
     }
 
+public:
     ~Conditionally_Observed() {
         db<Observed>(TRC) << "~Observed(this=" << this << ")" << endl;
     }
@@ -122,7 +130,7 @@ public:
         db<Observer>(TRC) << "Observer() => " << this << endl;
     } 
 
-    virtual ~Conditional_Observer() {
+    ~Conditional_Observer() {
         db<Observer>(TRC) << "~Observer(this=" << this << ")" << endl;
     }
     
@@ -149,17 +157,17 @@ inline void Conditionally_Observed::detach(Conditional_Observer * o, int c)
 
 inline bool Conditionally_Observed::notify(int c)
 {
-    db<Observed>(TRC) << "Observed::notify(cond=" << hex << c << ")" << endl;
-
     bool notified = false;
 
-    for(Element * e = _observers.head(); e; e = e->next())
+    db<Observed>(TRC) << "Observed::notify(cond=" << hex << c << ")" << endl;
+
+    for(Element * e = _observers.head(); e; e = e->next()) {
         if(e->rank() == c) {
             db<Observed>(INF) << "Observed::notify(this=" << this << ",obs=" << e->object() << ")" << endl;
             e->object()->update(this, c);
-
             notified = true;
         }
+    }
 
     return notified;
 }
@@ -201,17 +209,17 @@ public:
     }
 
     virtual bool notify(int c, T * d) {
-        db<Observed>(TRC) << "Observed::notify(cond=" << c << ",data=" << d << ")" << endl;
-
         bool notified = false;
 
-        for(Element * e = _observers.head(); e; e = e->next())
-            if(e->rank() == c) {
-                db<Observed>(INF) << "Observed::notify(this=" << this << ",obs=" << e->object() << ",cond=" << c << ",data=" << d << ")" << endl;
-                e->object()->update(this, c, d);
+        db<Observed>(TRC) << "Observed::notify(cond=" << c << ")" << endl;
 
+        for(Element * e = _observers.head(); e; e = e->next()) {
+            if(e->rank() == c) {
+                db<Observed>(INF) << "Observed::notify(this=" << this << ",obs=" << e->object() << ")" << endl;
+                e->object()->update(this, c, d);
                 notified = true;
             }
+        }
 
         return notified;
     }
@@ -233,7 +241,7 @@ public:
         db<Observer>(TRC) << "Observer() => " << this << endl;
     }
 
-    virtual ~Data_Observer() {
+    ~Data_Observer() {
         db<Observer>(TRC) << "~Observer(this=" << this << ")" << endl;
     }
 
