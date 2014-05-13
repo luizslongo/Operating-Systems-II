@@ -50,7 +50,7 @@ $(MACH)_init_builtin: $(SRC)/system/$(MACH)_system $(OBJS) $(LIBINIT)
 		$(LIB)/$(ARCH)_crtn.o \
 		-l$(LINIT) \
 		-R $(SRC)/system/$(MACH)_system \
-		-l$(LUTIL) -lgcc -lc -lgcc
+		-l$(LUTIL) -lgcc 
 		$(INSTALL) init_application.o $(MACH)_init_application.o
 
 $(MACH)_init_kernel: $(SRC)/system/$(MACH)_system $(OBJS) $(LIBINIT)
@@ -64,7 +64,7 @@ $(MACH)_init_kernel: $(SRC)/system/$(MACH)_system $(OBJS) $(LIBINIT)
 		$(LIB)/$(ARCH)_crtn.o \
 		-l$(LINIT) \
 		-R $(SRC)/system/$(MACH)_system \
-		-l$(LUTIL) -lgcc -lc -lgcc
+		-l$(LUTIL) -lgcc 
 		$(INSTALL) init_application.o $(MACH)_init_application.o
 
 

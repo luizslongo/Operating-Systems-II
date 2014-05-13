@@ -11,6 +11,7 @@ struct Traits
 {
     static const bool enabled = true;
     static const bool debugged = true;
+    static const bool hysterically_debugged = false;
 };
 
 template <> struct Traits<Build>
@@ -23,6 +24,9 @@ template <> struct Traits<Build>
 
     enum {PC};
     static const unsigned int MACH = PC;
+
+    static const unsigned int CPUS = 4;
+    static const unsigned int NODES = 1; // > 1 => NETWORKING
 };
 
 
@@ -37,21 +41,21 @@ template <> struct Traits<Debug>
 
 template <> struct Traits<Lists>: public Traits<void>
 {
-    static const bool debugged = false;
+    static const bool debugged = hysterically_debugged;
 };
 
 template <> struct Traits<Spin>: public Traits<void>
 {
-    static const bool debugged = false;
+    static const bool debugged = hysterically_debugged;
 };
 
 template <> struct Traits<Heap>: public Traits<void>
 {
-    static const bool debugged = false;
+    static const bool debugged = hysterically_debugged;
 };
 
 
-// System Parts (mostly to fine control debbugin)
+// System Parts (mostly to fine control debugging)
 template <> struct Traits<Boot>: public Traits<void>
 {
 };
@@ -68,7 +72,6 @@ template <> struct Traits<Init>: public Traits<void>
 // Common Mediators
 template <> struct Traits<Serial_Display>: public Traits<void>
 {
-	//enabled should be false when running on a real processor
     static const bool enabled = true;
     static const int COLUMNS = 80;
     static const int LINES = 24;
@@ -86,19 +89,18 @@ __BEGIN_SYS
 template <> struct Traits<Application>: public Traits<void>
 {
     static const unsigned int STACK_SIZE = 16 * 1024;
-    static const unsigned int HEAP_SIZE = 64 * 1024 * 1024;
+    static const unsigned int HEAP_SIZE = 16 * 1024 * 1024;
 };
 
 template <> struct Traits<System>: public Traits<void>
 {
     static const unsigned int mode = Traits<Build>::MODE;
     static const bool multithread = true;
-    static const bool multitask = false && (mode != Traits<Build>::LIBRARY);
-    static const bool multicore = true && multithread;
+    static const bool multitask = (mode != Traits<Build>::LIBRARY);
+    static const bool multicore = (Traits<Build>::CPUS > 1) && multithread;
     static const bool multiheap = (mode != Traits<Build>::LIBRARY) || Traits<Scratchpad>::enabled;
 
-    enum {FOREVER = 0, SECOND = 1, MINUTE = 60, HOUR = 3600, DAY = 86400,
-          WEEK = 604800, MONTH = 2592000, YEAR = 31536000};
+    enum {FOREVER = 0, SECOND = 1, MINUTE = 60, HOUR = 3600, DAY = 86400, WEEK = 604800, MONTH = 2592000, YEAR = 31536000};
     static const unsigned long LIFE_SPAN = 1 * HOUR; // in seconds
 
     static const bool reboot = true;
@@ -121,10 +123,15 @@ template <> struct Traits<Thread>: public Traits<void>
     typedef Scheduling_Criteria::PEDF Criterion;
     static const unsigned int QUANTUM = 10000; // us
 
-    static const bool trace_idle = false;
+    static const bool trace_idle = hysterically_debugged;
 };
 
-template <> struct Traits<Periodic_Thread>: public Traits<void>
+template<> struct Traits<Scheduler<Thread> >: public Traits<void>
+{
+    static const bool debugged = hysterically_debugged;
+};
+
+template<> struct Traits<Periodic_Thread>: public Traits<void>
 {
     static const bool simulate_capacity = false;
 };
@@ -141,7 +148,7 @@ template <> struct Traits<Segment>: public Traits<void>
 
 template <> struct Traits<Alarm>: public Traits<void>
 {
-    static const bool visible = false;
+    static const bool visible = hysterically_debugged;
 };
 
 template <> struct Traits<Synchronizer>: public Traits<void>
@@ -151,4 +158,7 @@ template <> struct Traits<Synchronizer>: public Traits<void>
 
 __END_SYS
 
+#include <net_traits.h>
+
 #endif
+

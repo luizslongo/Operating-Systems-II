@@ -20,9 +20,12 @@ PCNet32::~PCNet32()
 
 int PCNet32::send(const Address & dst, const Protocol & prot, const void * data, unsigned int size)
 {
-    // Wait for the next buffer to become free and seize it
-    while(_tx_ring[_tx_cur].status & Rx_Desc::OWN);
-    while(_tx_buffer[_tx_cur]->lock());
+    // Wait for a buffer to become free and seize it
+    for(bool locked = false; !locked; ) {
+        for(; _tx_ring[_tx_cur].status & Tx_Desc::OWN; ++_tx_cur %= TX_BUFS);
+        locked = _tx_buffer[_tx_cur]->lock();
+    }
+
     Tx_Desc * desc = &_tx_ring[_tx_cur];
     Buffer * buf = _tx_buffer[_tx_cur];
 
@@ -44,7 +47,7 @@ int PCNet32::send(const Address & dst, const Protocol & prot, const void * data,
     _statistics.tx_bytes += size;
 
     // Wait for packet to be sent
-    while(desc->status & Tx_Desc::OWN);
+    // while(desc->status & Tx_Desc::OWN);
 
     db<PCNet32>(INF) << "PCNet32::send:desc[" << _tx_cur << "]=" << desc << " => " << *desc << endl;
 
@@ -61,8 +64,11 @@ int PCNet32::receive(Address * src, Protocol * prot, void * data, unsigned int s
     db<PCNet32>(TRC) << "PCNet32::receive(s=" << *src << ",p=" << hex << *prot << dec
                      << ",d=" << data << ",s=" << size << ") => " << endl;
 
-    // Wait for a received frame
-    while(_rx_ring[_rx_cur].status & Rx_Desc::OWN);
+    // Wait for a received frame and seize it
+    for(bool locked = false; !locked; ) {
+        for(; _rx_ring[_rx_cur].status & Rx_Desc::OWN; ++_rx_cur %= RX_BUFS);
+        locked = _rx_buffer[_rx_cur]->lock();
+    }
     Buffer * buf = _rx_buffer[_rx_cur];
     Rx_Desc * desc = &_rx_ring[_rx_cur];
 
@@ -82,8 +88,6 @@ int PCNet32::receive(Address * src, Protocol * prot, void * data, unsigned int s
     _statistics.rx_bytes += buf->size();
 
     db<PCNet32>(INF) << "PCNet32::receive:desc[" << _rx_cur << "]=" << desc << " => " << *desc << endl;
-
-    ++_rx_cur %= RX_BUFS;
 
     return buf->size();
 }
@@ -106,8 +110,10 @@ PCNet32::Buffer * PCNet32::alloc(NIC * nic, const Address & dst, const Protocol 
     // Calculate how many frames are needed to hold the transport PDU and allocate enough buffers
     for(int size = once + payload; size > 0; size -= max_data) {
         // Wait for the next buffer to become free and seize it
-        while(_tx_ring[_tx_cur].status & Rx_Desc::OWN);
-        while(_tx_buffer[_tx_cur]->lock());
+        for(bool locked = false; !locked; ) {
+            for(; _tx_ring[_tx_cur].status & Tx_Desc::OWN; ++_tx_cur %= TX_BUFS);
+            locked = _tx_buffer[_tx_cur]->lock();
+        }
         Tx_Desc * desc = &_tx_ring[_tx_cur];
         Buffer * buf = _tx_buffer[_tx_cur];
 
@@ -118,7 +124,7 @@ PCNet32::Buffer * PCNet32::alloc(NIC * nic, const Address & dst, const Protocol 
 
         ++_tx_cur %= TX_BUFS;
 
-        pool.insert(&buf->link());
+        pool.insert(buf->link());
     }
 
     return pool.head()->object();
@@ -128,7 +134,7 @@ int PCNet32::send(Buffer * buf)
 {
     unsigned int size = 0;
 
-    for(Buffer::Element * el = &buf->link(); el; el = el->next()) {
+    for(Buffer::Element * el = buf->link(); el; el = el->next()) {
         buf = el->object();
         Tx_Desc * desc = buf->back<Tx_Desc>();
 
@@ -170,6 +176,9 @@ void PCNet32::free(Buffer * buf)
     // Release the buffer to the NIC
     desc->size = Reg16(-sizeof(Frame)); // 2's comp.
     desc->status = Rx_Desc::OWN; // Owned by NIC
+
+    // Release the buffer to the OS
+    buf->unlock();
 
     db<PCNet32>(INF) << "PCNet32::free:desc=" << desc << " => " << *desc << endl;
 }
@@ -264,26 +273,39 @@ void PCNet32::handle_int()
         int csr4 = csr(4);
         int csr5 = csr(5);
 
-        // Clear interrupts
-        csr(0, csr0);
-        csr(4, csr4);
-        csr(5, csr5);
+        if(csr0 & CSR0_IDON) { // Initialization done
+            // This should never happen, since IDON is disabled in reset()
+            // and all the initialization is conctrolled via polling, so if
+            // we are here, it must be due to a hardware induced reset.
+            // All we can do is to try to reset the nic!
+            db<PCNet32>(WRN) << "PCNet32::handle_int: initialization done!" << endl;
+            reset();
+        }
 
- 	if(csr0 & CSR0_RINT) { // Frame received
- 	    Buffer * buf = _rx_buffer[_rx_cur];
-            Rx_Desc * desc = &_rx_ring[_rx_cur];
-            Frame * frame = buf->frame();
+        if(csr0 & CSR0_RINT) { // Frame received (possibly multiple, let's handle a whole round on the ring buffer)
 
-            buf->size((desc->misc & 0x00000fff) - sizeof(Header) - sizeof(CRC));
+            // Note that ISRs in EPOS are reentrant, that's why locking was carefully made atomic
+            // Therefore, several instances of this could compete to handle received buffers
+            // But since we only acknowledge interrupts at the end (by clearing flags), it should not happen
 
-            db<PCNet32>(TRC) << "PCNet32::int:receive(s=" << frame->src() << ",p=" << hex << frame->header()->prot() << dec
-                             << ",d=" << frame->data<void>() << ",s=" << buf->size() << ")" << endl;
+            for(int count = RX_BUFS; count && !(_rx_ring[_rx_cur].status & Rx_Desc::OWN); count--, ++_rx_cur %= RX_BUFS) {
+                // NIC received a frame in _rx_buffer[_rx_cur], let's check if it has already been handled
+                if(_rx_buffer[_rx_cur]->lock()) { // if it wasn't, let's handle it
+                    Buffer * buf = _rx_buffer[_rx_cur];
+                    Rx_Desc * desc = &_rx_ring[_rx_cur];
+                    Frame * frame = buf->frame();
 
-            db<PCNet32>(INF) << "PCNet32::handle_int:desc[" << _rx_cur << "]=" << desc << " => " << *desc << endl;
+                    buf->size((desc->misc & 0x00000fff) - sizeof(Header) - sizeof(CRC));
 
-            ++_rx_cur %= RX_BUFS;
+                    db<PCNet32>(TRC) << "PCNet32::int:receive(s=" << frame->src() << ",p=" << hex << frame->header()->prot() << dec
+                                     << ",d=" << frame->data<void>() << ",s=" << buf->size() << ")" << endl;
 
-            notify(frame->header()->prot(), buf);
+                    db<PCNet32>(INF) << "PCNet32::handle_int:desc[" << _rx_cur << "]=" << desc << " => " << *desc << endl;
+
+                    if(!notify(frame->header()->prot(), buf)) // No one was waiting for this frame, so let it free for receive()
+                        buf->unlock();
+                }
+            }
  	}
 
         if(csr0 & CSR0_ERR) { // Error
@@ -292,7 +314,7 @@ void PCNet32::handle_int()
             if(csr0 & CSR0_MERR) { // Memory
         	db<PCNet32>(WRN) << " memory";
             }
-            
+
             if(csr0 & CSR0_MISS) { // Missed Frame
         	db<PCNet32>(WRN) << " missed frame";
         	_statistics.rx_overruns++;
@@ -310,6 +332,11 @@ void PCNet32::handle_int()
 
             db<PCNet32>(WRN) << endl;
         }
+
+        // Clear interrupts (i.e. acknowledge them)
+        csr(0, csr0);
+        csr(4, csr4);
+        csr(5, csr5);
     }
 }
 

@@ -8,6 +8,12 @@ __BEGIN_SYS
 volatile unsigned int PC::_n_cpus;
 
 // Class methods
+void PC::delay(const RTC::Microsecond & time)
+{
+    TSC::Time_Stamp end = TSC::time_stamp() + time * (TSC::frequency() / 1000000);
+    while(end > TSC::time_stamp());
+}
+
 void PC::panic()
 {
     CPU::int_disable(); 
