@@ -12,23 +12,23 @@ void test_simple_list();
 void test_list();
 void test_ordered_list();
 void test_relative_list();
-void test_scheduling_list();
 void test_grouping_list();
 void test_simple_grouping_list();
+void test_scheduling_list();
 
 OStream cout;
 
 int main()
 {
-    cout << "List Utility Test\n";
+    cout << "List Utility Test" << endl;
 
     test_simple_list();
     test_simple_grouping_list();
     test_list();
     test_ordered_list();
     test_relative_list();
-    test_scheduling_list();
     test_grouping_list();
+    test_scheduling_list();
 
     cout << "\nDone!" << endl;
 
@@ -37,7 +37,7 @@ int main()
 
 void test_simple_list ()
 {
-    cout << "\nThis is a singly-linked list of integers:\n";
+    cout << "\nThis is a singly-linked list of integers:" << endl;
     Simple_List<int> l;
     int o[N];
     Simple_List<int>::Element * e[N];
@@ -51,7 +51,7 @@ void test_simple_list ()
             cout << ", ";
     }
     cout << endl;
-    cout << "The list has now " << l.size() << " elements\n";
+    cout << "The list has now " << l.size() << " elements" << endl;
     cout << "They are: ";
     for(Simple_List<int>::Iterator i = l.begin(); i != l.end(); i++) {
         cout << *i->object();
@@ -76,14 +76,14 @@ void test_simple_list ()
             cout << ", ";
     }
     cout << endl;
-    cout << "The list has now " << l.size() << " elements\n";
+    cout << "The list has now " << l.size() << " elements" << endl;
     for(int i = 0; i < N; i++)
         delete e[i];
 }
 
 void test_simple_grouping_list() 
 {
-    cout << "\nThis is a simple grouping list of integers:\n";
+    cout << "\nThis is a simple grouping list of integers:" << endl;
     Simple_Grouping_List<int> l;
     int o[N * 2];
     Simple_Grouping_List<int>::Element * e[N * 2];
@@ -123,7 +123,7 @@ void test_simple_grouping_list()
     }
     cout << endl;
     cout << "The list has now " << l.size() << " elements that group " 
-         << l.grouped_size() << " elements in total\n";
+         << l.grouped_size() << " elements in total" << endl;
     cout << "They are: ";
     for(Simple_Grouping_List<int>::Iterator i = l.begin(); i != l.end(); i++) {
         cout << *i->object();
@@ -175,12 +175,12 @@ void test_simple_grouping_list()
     } else
         cout << "failed!" << endl;
     cout << "The list has now " << l.size() << " elements that group " 
-         << l.grouped_size() << " elements in total\n";
+         << l.grouped_size() << " elements in total" << endl;
 }
 
 void test_list ()
 {
-    cout << "\nThis is a doubly-linked list of integers:\n";
+    cout << "\nThis is a doubly-linked list of integers:" << endl;
     List<int> l;
     int o[N];
     List<int>::Element * e[N];
@@ -194,7 +194,7 @@ void test_list ()
             cout << ", ";
     }
     cout << endl;
-    cout << "The list has now " << l.size() << " elements\n";
+    cout << "The list has now " << l.size() << " elements" << endl;
     cout << "They are: ";
     for(List<int>::Iterator i = l.begin(); i != l.end(); i++) {
         cout << *i->object();
@@ -219,14 +219,14 @@ void test_list ()
             cout << ", ";
     }
     cout << endl;
-    cout << "The list has now " << l.size() << " elements\n";
+    cout << "The list has now " << l.size() << " elements" << endl;
     for(int i = 0; i < N; i++)
         delete e[i];
 }
 
 void test_ordered_list ()
 {
-    cout << "\nThis is an ordered, linked list of integers:\n";
+    cout << "\nThis is an ordered, linked list of integers:" << endl;
     Ordered_List<int> l;
     int o[N];
     Ordered_List<int>::Element * e[N];
@@ -240,7 +240,7 @@ void test_ordered_list ()
             cout << ", ";
     }
     cout << endl;
-    cout << "The list has now " << l.size() << " elements\n";
+    cout << "The list has now " << l.size() << " elements" << endl;
     cout << "They are: ";
     for(Ordered_List<int>::Iterator i = l.begin(); i != l.end(); i++) {
         cout << *i->object();
@@ -265,14 +265,14 @@ void test_ordered_list ()
             cout << ", ";
     }
     cout << endl;
-    cout << "The list has now " << l.size() << " elements\n";
+    cout << "The list has now " << l.size() << " elements" << endl;
     for(int i = 0; i < N; i++)
         delete e[i];
 }
 
 void test_relative_list ()
 {
-    cout << "\nThis is a realtive ordered, linked list of integers:\n";
+    cout << "\nThis is a realtive ordered, linked list of integers:" << endl;
     Relative_List<int> l;
     int o[N];
     Relative_List<int>::Element * e[N];
@@ -286,7 +286,7 @@ void test_relative_list ()
             cout << ", ";
     }
     cout << endl;
-    cout << "The list has now " << l.size() << " elements\n";
+    cout << "The list has now " << l.size() << " elements" << endl;
     cout << "They are: ";
     for(Relative_List<int>::Iterator i = l.begin(); i != l.end(); i++) {
         cout << *i->object();
@@ -311,81 +311,14 @@ void test_relative_list ()
             cout << ", ";
     }
     cout << endl;
-    cout << "The list has now " << l.size() << " elements\n";
-    for(int i = 0; i < N; i++)
-        delete e[i];
-}
-
-#include<scheduler.h>
-void test_scheduling_list ()
-{
-    cout << "\nThis is priority scheduling list of integers:\n";
-    Scheduling_List<int, Scheduling_Criteria::Priority> l;
-    int o[N];
-    Scheduling_List<int, Scheduling_Criteria::Priority>::Element * e[N];
-    cout << "Inserting the following integers into the list ";
-    for(int i = 0; i < N; i++) {
-        o[i] = i;
-        e[i] = new Scheduling_List<int, Scheduling_Criteria::Priority>::Element(&o[i], N - i - 1);
-        l.insert(e[i]);
-        cout << i << "(" << N - i - 1 << ")";
-        if(i != N - 1)
-            cout << ", ";
-    }
-    cout << endl;
-    cout << "The list has now " << l.size() << " elements\n";
-    cout << "They are: ";
-    for(Scheduling_List<int, Scheduling_Criteria::Priority>::Iterator i = l.begin(); i != l.end(); i++) {
-        cout << *i->object();
-        if(Scheduling_List<int, Scheduling_Criteria::Priority>::Iterator(i->next()) != l.end())
-            cout << ", ";
-    }
-    cout << endl;
-    cout << "Scheduling the list => " << *l.choose()->object() << endl;
-    cout << "They are: ";
-    for(Scheduling_List<int, Scheduling_Criteria::Priority>::Iterator i = l.begin(); i != l.end(); i++) {
-        cout << *i->object();
-        if(Scheduling_List<int, Scheduling_Criteria::Priority>::Iterator(i->next()) != l.end())
-            cout << ", ";
-    }
-    cout << endl;
-    cout << "Forcing scheduling of antorher element => " <<
-        *l.choose_another()->object() << endl;
-    cout << "They are: ";
-    for(Scheduling_List<int, Scheduling_Criteria::Priority>::Iterator i = l.begin(); i != l.end(); i++) {
-        cout << *i->object();
-        if(Scheduling_List<int, Scheduling_Criteria::Priority>::Iterator(i->next()) != l.end())
-            cout << ", ";
-    }
-    cout << endl;
-    cout << "Forcing scheduling of element whose value is " << o[N/2] << " => " 
- 	 << *l.choose(e[N/2])->object() << endl;
-    cout << "They are: ";
-    for(Scheduling_List<int, Scheduling_Criteria::Priority>::Iterator i = l.begin(); i != l.end(); i++) {
-        cout << *i->object();
-        if(Scheduling_List<int, Scheduling_Criteria::Priority>::Iterator(i->next()) != l.end())
-            cout << ", ";
-    }
-    cout << endl;
-    cout << "Removing the list's head => " << *l.remove(l.choose())->object()
-         << endl;
-    cout << "Removing the element whose value is " << o[N/4] << " => " 
-         << *l.remove(e[N/4])->object() << endl;
-    cout << "Removing all remaining elements => ";
-    while(l.size() > 0) {
-        cout << *l.remove(l.choose())->object();
-        if(l.size() > 0)
-            cout << ", ";
-    }
-    cout << endl;
-    cout << "The list has now " << l.size() << " elements\n";
+    cout << "The list has now " << l.size() << " elements" << endl;
     for(int i = 0; i < N; i++)
         delete e[i];
 }
 
 void test_grouping_list() 
 {
-    cout << "\nThis is a grouping list of 32-byte buffers:\n";
+    cout << "\nThis is a grouping list of 32-byte buffers:" << endl;
     Grouping_List<char> l;
     char o[N][32];
     Grouping_List<char>::Element * e[N];
@@ -423,7 +356,7 @@ void test_grouping_list()
     }
     cout << endl;
     cout << "The list has now " << l.size() << " elements that group "
-         << l.grouped_size() << " bytes in total\n";
+         << l.grouped_size() << " bytes in total" << endl;
     cout << "Allocating 1 byte from the list => ";
     d1 = l.search_decrementing(1);
     if(d1) {
@@ -469,5 +402,72 @@ void test_grouping_list()
     } else
         cout << "failed!" << endl;
     cout << "The list has now " << l.size() << " elements that group " 
-         << l.grouped_size() << " elements in total\n";
+         << l.grouped_size() << " elements in total" << endl;
+}
+
+#include<scheduler.h>
+void test_scheduling_list ()
+{
+    cout << "\nThis is priority scheduling list of integers:" << endl;
+    Scheduling_List<int, Scheduling_Criteria::Priority> l;
+    int o[N];
+    Scheduling_List<int, Scheduling_Criteria::Priority>::Element * e[N];
+    cout << "Inserting the following integers into the list ";
+    for(int i = 0; i < N; i++) {
+        o[i] = i;
+        e[i] = new Scheduling_List<int, Scheduling_Criteria::Priority>::Element(&o[i], N - i - 1);
+        l.insert(e[i]);
+        cout << i << "(" << N - i - 1 << ")";
+        if(i != N - 1)
+            cout << ", ";
+    }
+    cout << endl;
+    cout << "The list has now " << l.size() << " elements" << endl;
+    cout << "They are: ";
+    for(Scheduling_List<int, Scheduling_Criteria::Priority>::Iterator i = l.begin(); i != l.end(); i++) {
+        cout << *i->object();
+        if(Scheduling_List<int, Scheduling_Criteria::Priority>::Iterator(i->next()) != l.end())
+            cout << ", ";
+    }
+    cout << endl;
+    cout << "Scheduling the list => " << *l.choose()->object() << endl;
+    cout << "They are: ";
+    for(Scheduling_List<int, Scheduling_Criteria::Priority>::Iterator i = l.begin(); i != l.end(); i++) {
+        cout << *i->object();
+        if(Scheduling_List<int, Scheduling_Criteria::Priority>::Iterator(i->next()) != l.end())
+            cout << ", ";
+    }
+    cout << endl;
+    cout << "Forcing scheduling of antorher element => " <<
+        *l.choose_another()->object() << endl;
+    cout << "They are: ";
+    for(Scheduling_List<int, Scheduling_Criteria::Priority>::Iterator i = l.begin(); i != l.end(); i++) {
+        cout << *i->object();
+        if(Scheduling_List<int, Scheduling_Criteria::Priority>::Iterator(i->next()) != l.end())
+            cout << ", ";
+    }
+    cout << endl;
+    cout << "Forcing scheduling of element whose value is " << o[N/2] << " => " 
+ 	 << *l.choose(e[N/2])->object() << endl;
+    cout << "They are: ";
+    for(Scheduling_List<int, Scheduling_Criteria::Priority>::Iterator i = l.begin(); i != l.end(); i++) {
+        cout << *i->object();
+        if(Scheduling_List<int, Scheduling_Criteria::Priority>::Iterator(i->next()) != l.end())
+            cout << ", ";
+    }
+    cout << endl;
+    cout << "Removing the list's head => " << *l.remove(l.choose())->object()
+         << endl;
+    cout << "Removing the element whose value is " << o[N/4] << " => " 
+         << *l.remove(e[N/4])->object() << endl;
+    cout << "Removing all remaining elements => ";
+    while(l.size() > 0) {
+        cout << *l.remove(l.choose())->object();
+        if(l.size() > 0)
+            cout << ", ";
+    }
+    cout << endl;
+    cout << "The list has now " << l.size() << " elements" << endl;
+    for(int i = 0; i < N; i++)
+        delete e[i];
 }

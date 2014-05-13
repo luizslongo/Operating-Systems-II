@@ -49,7 +49,7 @@ $(MACH)_system_builtin: $(OBJS)
 		--whole-archive \
 		-l$(LSYS) -l$(LMACH) -l$(LARCH) \
 		--no-whole-archive \
-		-l$(LUTIL) -lgcc -lc -lgcc
+		-l$(LUTIL) -lgcc 
 		$(INSTALL) application_scaffold.o $(MACH)_application.o
 
 $(MACH)_system_kernel: $(OBJS) 
@@ -65,7 +65,7 @@ $(MACH)_system_kernel: $(OBJS)
 		--whole-archive \
 		-l$(LSYS) -l$(LMACH) -l$(LARCH) \
 		--no-whole-archive \
-		-l$(LUTIL) -lgcc -lc -lgcc
+		-l$(LUTIL) -lgcc 
 		$(INSTALL) application_scaffold.o $(MACH)_application.o
 		
 clean:
