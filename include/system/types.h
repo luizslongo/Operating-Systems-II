@@ -212,8 +212,10 @@ template<> struct Type<PC_UART> { static const Type_Id ID = UART_ID; };
 template<> struct Type<PC_RTC> { static const Type_Id ID = RTC_ID; };
 template<> struct Type<PC_PCI> { static const Type_Id ID = PCI_ID; };
 template<> struct Type<PC_Display> { static const Type_Id ID = DISPLAY_ID; };
+template<> struct Type<PC_Ethernet> { static const Type_Id ID = ETHERNET_ID; };
 
 template<> struct Type<Thread> { static const Type_Id ID = THREAD_ID; };
+template<> struct Type<Active> { static const Type_Id ID = ACTIVE_ID; };
 template<> struct Type<Task> { static const Type_Id ID = TASK_ID; };
 template<> struct Type<Address_Space> { static const Type_Id ID = ADDRESS_SPACE_ID; };
 template<> struct Type<Segment> { static const Type_Id ID = SEGMENT_ID; };

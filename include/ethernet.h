@@ -114,7 +114,7 @@ public:
         unsigned int size() const { return _size; }
         void size(unsigned int s) { _size = s; }
 
-        Element & link() { return _link; }
+        Element * link() { return &_link; }
 
         friend Debug & operator<<(Debug & db, const Buffer & b) {
             db << "{nc=" << b._nic << ",lk=" << b._lock << ",sz=" << b._size << ",bl=" << b._back << "}";

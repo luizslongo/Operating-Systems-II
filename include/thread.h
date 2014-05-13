@@ -49,10 +49,10 @@ public:
     // Thread Scheduling Criterion
     typedef Traits<Thread>::Criterion Criterion;
     enum {
-        NORMAL  = Criterion::NORMAL,
         HIGH    = Criterion::HIGH,
-        MAIN    = Criterion::MAIN,
+        NORMAL  = Criterion::NORMAL,
         LOW     = Criterion::LOW,
+        MAIN    = Criterion::MAIN,
         IDLE    = Criterion::IDLE
     };
 
