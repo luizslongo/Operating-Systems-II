@@ -499,8 +499,10 @@ private:
             if((i != INT_TIMER) || Traits<IC>::hysterically_debugged)
                 db<IC>(TRC) << "IC::dispatch(i=" << i << ")" << endl;
             _int_vector[i](i);
-        } else
-            db<IC>(TRC) << "IC::spurious interrupt (" << i << ")" << endl;
+        } else {
+            if(i != INT_LAST_HARD)
+                db<IC>(TRC) << "IC::spurious interrupt (" << i << ")" << endl;
+        }
     }
 
     static void entry();
