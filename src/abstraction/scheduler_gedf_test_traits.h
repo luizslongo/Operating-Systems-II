@@ -16,7 +16,7 @@ struct Traits
 
 template <> struct Traits<Build>
 {
-    enum {LIBRARY, BUILTIN, KERNEL};
+    enum {LIBRARY, BUILTIN};
     static const unsigned int MODE = LIBRARY;
 
     enum {IA32};
@@ -25,11 +25,8 @@ template <> struct Traits<Build>
     enum {PC};
     static const unsigned int MACH = PC;
 
-    enum {STAND_ALONE, NETWORKED};
-    static const bool NETWORKING = STAND_ALONE;
-
     static const unsigned int CPUS = 3;
-    static const unsigned int NODES = 1; // assumes NETWORKING = NETWORKED
+    static const unsigned int NODES = 1; // > 1 => NETWORKING
 };
 
 
@@ -58,7 +55,7 @@ template <> struct Traits<Heap>: public Traits<void>
 };
 
 
-// System Parts (mostly to fine control debbugin)
+// System Parts (mostly to fine control debugging)
 template <> struct Traits<Boot>: public Traits<void>
 {
 };
@@ -99,12 +96,11 @@ template <> struct Traits<System>: public Traits<void>
 {
     static const unsigned int mode = Traits<Build>::MODE;
     static const bool multithread = true;
-    static const bool multitask = false && (mode != Traits<Build>::LIBRARY);
-    static const bool multicore = true && multithread;
+    static const bool multitask = (mode != Traits<Build>::LIBRARY);
+    static const bool multicore = (Traits<Build>::CPUS > 1) && multithread;
     static const bool multiheap = (mode != Traits<Build>::LIBRARY) || Traits<Scratchpad>::enabled;
 
-    enum {FOREVER = 0, SECOND = 1, MINUTE = 60, HOUR = 3600, DAY = 86400,
-          WEEK = 604800, MONTH = 2592000, YEAR = 31536000};
+    enum {FOREVER = 0, SECOND = 1, MINUTE = 60, HOUR = 3600, DAY = 86400, WEEK = 604800, MONTH = 2592000, YEAR = 31536000};
     static const unsigned long LIFE_SPAN = 1 * HOUR; // in seconds
 
     static const bool reboot = true;
@@ -130,12 +126,12 @@ template <> struct Traits<Thread>: public Traits<void>
     static const bool trace_idle = hysterically_debugged;
 };
 
-template <> struct Traits<Scheduler<Thread> >: public Traits<void>
+template<> struct Traits<Scheduler<Thread> >: public Traits<void>
 {
     static const bool debugged = hysterically_debugged;
 };
 
-template <> struct Traits<Periodic_Thread>: public Traits<void>
+template<> struct Traits<Periodic_Thread>: public Traits<void>
 {
     static const bool simulate_capacity = false;
 };
@@ -162,4 +158,7 @@ template <> struct Traits<Synchronizer>: public Traits<void>
 
 __END_SYS
 
+#include <net_traits.h>
+
 #endif
+

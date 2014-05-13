@@ -47,7 +47,7 @@ void Thread::init()
         else
             first = new (SYSTEM) Thread(&idle, RUNNING, IDLE);
     }
-    
+
     db<Init, Thread>(INF) << "Dispatching the first thread: " << first << endl;
 
     This_Thread::not_booting();

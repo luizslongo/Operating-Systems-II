@@ -23,7 +23,7 @@ void Thread::common_constructor(Log_Addr entry, unsigned int stack_size)
     db<Thread>(TRC) << "Thread(entry=" << entry
                     << ",state=" << _state
                     << ",priority=" << _link.rank()
-                    << ",stack={b=" << reinterpret_cast<void*>(_stack)
+                    << ",stack={b=" << reinterpret_cast<void *>(_stack)
                     << ",s=" << stack_size
                     << "},context={b=" << _context
                     << "," << *_context << "}) => " << this << "@" << _link.rank().queue() << endl;
@@ -52,8 +52,11 @@ Thread::~Thread()
                     << ",context={b=" << _context
                     << "," << *_context << "})" << endl;
 
+    // The running thread cannot delete itself!
+    assert(_state != RUNNING);
+    
     switch(_state) {
-    case RUNNING:  // Self deleted itself! Stack won't be released!
+    case RUNNING:  // For switch completion only: the running thread would have deleted itself! Stack wouldn't have been released!
         exit(-1);
         break;
     case READY:
@@ -227,6 +230,9 @@ void Thread::sleep(Queue * q)
 {
     db<Thread>(TRC) << "Thread::sleep(running=" << running() << ",q=" << q << ")" << endl;
 
+    // lock() must be called before entering this method
+    assert(locked());
+
     Thread * prev = running();
     _scheduler.suspend(prev);
     prev->_state = WAITING;
@@ -240,6 +246,9 @@ void Thread::sleep(Queue * q)
 void Thread::wakeup(Queue * q)
 {
     db<Thread>(TRC) << "Thread::wakeup(running=" << running() << ",q=" << q << ")" << endl;
+
+    // lock() must be called before entering this method
+    assert(locked());
 
     if(!q->empty()) {
         Thread * t = q->remove()->object();
@@ -257,6 +266,9 @@ void Thread::wakeup(Queue * q)
 void Thread::wakeup_all(Queue * q)
 {
     db<Thread>(TRC) << "Thread::wakeup_all(running=" << running() << ",q=" << q << ")" << endl;
+
+    // lock() must be called before entering this method
+    assert(locked());
 
     if(!q->empty())
         while(!q->empty()) {
@@ -278,6 +290,9 @@ void Thread::wakeup_all(Queue * q)
 void Thread::reschedule()
 {
     db<Scheduler<Thread> >(TRC) << "Thread::reschedule()" << endl;
+
+    // lock() must be called before entering this method
+    assert(locked());
 
     Thread * prev = running();
     Thread * next = _scheduler.choose();

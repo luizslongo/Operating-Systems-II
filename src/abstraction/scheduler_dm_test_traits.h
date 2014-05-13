@@ -16,7 +16,7 @@ struct Traits
 
 template <> struct Traits<Build>
 {
-    enum {LIBRARY, BUILTIN, KERNEL};
+    enum {LIBRARY, BUILTIN};
     static const unsigned int MODE = LIBRARY;
 
     enum {IA32};
@@ -25,11 +25,8 @@ template <> struct Traits<Build>
     enum {PC};
     static const unsigned int MACH = PC;
 
-    enum {STAND_ALONE, NETWORKED};
-    static const bool NETWORKING = STAND_ALONE;
-
     static const unsigned int CPUS = 1;
-    static const unsigned int NODES = 1;
+    static const unsigned int NODES = 1; // > 1 => NETWORKING
 };
 
 
@@ -58,7 +55,7 @@ template <> struct Traits<Heap>: public Traits<void>
 };
 
 
-// System Parts (mostly to fine control debbugin)
+// System Parts (mostly to fine control debugging)
 template <> struct Traits<Boot>: public Traits<void>
 {
 };
@@ -162,4 +159,7 @@ template <> struct Traits<Synchronizer>: public Traits<void>
 
 __END_SYS
 
+#include <net_traits.h>
+
 #endif
+

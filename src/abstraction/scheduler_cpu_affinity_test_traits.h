@@ -11,12 +11,12 @@ struct Traits
 {
     static const bool enabled = true;
     static const bool debugged = true;
-    static const bool hysterically_debugged = true;
+    static const bool hysterically_debugged = false;
 };
 
 template <> struct Traits<Build>
 {
-    enum {LIBRARY, BUILTIN, KERNEL};
+    enum {LIBRARY, BUILTIN};
     static const unsigned int MODE = LIBRARY;
 
     enum {IA32};
@@ -25,11 +25,8 @@ template <> struct Traits<Build>
     enum {PC};
     static const unsigned int MACH = PC;
 
-    enum {STAND_ALONE, NETWORKED};
-    static const bool NETWORKING = STAND_ALONE;
-
-    static const unsigned int CPUS = 4;
-    static const unsigned int NODES = 1; // assumes NETWORKING = NETWORKED
+    static const unsigned int CPUS = 8;
+    static const unsigned int NODES = 1; // > 1 => NETWORKING    
 };
 
 
@@ -38,8 +35,8 @@ template <> struct Traits<Debug>
 {
     static const bool error   = true;
     static const bool warning = true;
-    static const bool info    = true;
-    static const bool trace   = true;
+    static const bool info    = false;
+    static const bool trace   = false;
 };
 
 template <> struct Traits<Lists>: public Traits<void>
@@ -59,7 +56,7 @@ template <> struct Traits<Heap>: public Traits<void>
 
 
 // System Parts (mostly to fine controlling tracing)
-template <> struct Traits<Boot>: public Traits<void>
+template<> struct Traits<Boot>: public Traits<void>
 {
 };
 
@@ -99,20 +96,19 @@ template <> struct Traits<System>: public Traits<void>
 {
     static const unsigned int mode = Traits<Build>::MODE;
     static const bool multithread = true;
-    static const bool multitask = false && (mode != Traits<Build>::LIBRARY);
-    static const bool multicore = multithread && (Traits<Build>::CPUS > 1);
-    static const bool networking = (Traits<Build>::NETWORKED != Traits<Build>::STAND_ALONE);
+    static const bool multitask = (mode != Traits<Build>::LIBRARY);
+    static const bool multicore = (Traits<Build>::CPUS > 1) && multithread;
     static const bool multiheap = (mode != Traits<Build>::LIBRARY) || Traits<Scratchpad>::enabled;
 
-    enum {FOREVER = 0, SECOND = 1, MINUTE = 60, HOUR = 3600, DAY = 86400,
-          WEEK = 604800, MONTH = 2592000, YEAR = 31536000};
+    enum {FOREVER = 0, SECOND = 1, MINUTE = 60, HOUR = 3600, DAY = 86400, WEEK = 604800, MONTH = 2592000, YEAR = 31536000};
     static const unsigned long LIFE_SPAN = 1 * HOUR; // in seconds
 
     static const bool reboot = true;
 
-    static const unsigned int STACK_SIZE = 256 * 1024;
+    static const unsigned int STACK_SIZE = 4 * 1024;
     static const unsigned int HEAP_SIZE = 128 * Traits<Application>::STACK_SIZE;
 };
+
 
 // Abstractions
 template <> struct Traits<Task>: public Traits<void>
@@ -130,12 +126,12 @@ template <> struct Traits<Thread>: public Traits<void>
     static const bool trace_idle = hysterically_debugged;
 };
 
-template <> struct Traits<Scheduler<Thread> >: public Traits<void>
+template<> struct Traits<Scheduler<Thread> >: public Traits<void>
 {
     static const bool debugged = hysterically_debugged;
 };
 
-template <> struct Traits<Periodic_Thread>: public Traits<void>
+template<> struct Traits<Periodic_Thread>: public Traits<void>
 {
     static const bool simulate_capacity = false;
 };
@@ -160,43 +156,9 @@ template <> struct Traits<Synchronizer>: public Traits<void>
     static const bool enabled = Traits<System>::multithread;
 };
 
-template <> struct Traits<Network>: public Traits<void>
-{
-    static const bool enabled = Traits<System>::networking;
-
-    static const unsigned int RETRIES = 3;
-    static const unsigned int TIMEOUT = 10; // s
-};
-
-template <> struct Traits<IP>: public Traits<Network>
-{
-    static const bool enabled = Traits<System>::networking;
-
-    enum {STATIC, INFO, RARP, DHCP};
-    static const unsigned int CONFIG = STATIC;
-
-    static const unsigned long ADDRESS   = 0x0a000100;   // 10.0.1.x x=MAC[5]
-    static const unsigned long NETMASK   = 0xffffff00;   // 255.255.255.0
-    static const unsigned long BROADCAST = 0x0a0001ff;   // 10.0.1.255
-    static const unsigned long GATEWAY   = 0x0a000101;   // 10.0.1.1
-
-    static const unsigned int TTL  = 0x40; // Time-to-live
-};
-
-template <> struct Traits<ARP<NIC, IP> >: public Traits<Network>
-{
-};
-
-template <> struct Traits<UDP>: public Traits<Network>
-{
-    static const bool checksum = false;
-};
-
-template <> struct Traits<DHCP>: public Traits<Network>
-{
-};
-
-
 __END_SYS
 
+#include <net_traits.h>
+
 #endif
+

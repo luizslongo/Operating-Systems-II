@@ -101,7 +101,6 @@ void Alarm::handler()
     }
 
     unlock();
-
 }
 
 __END_SYS
