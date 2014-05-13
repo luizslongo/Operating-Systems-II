@@ -222,9 +222,9 @@ int pollute_job(unsigned int repetitions, int id)
 {
     int sum = 0;
     Chronometer c;
-    Pseudo_Random * rand;
+    Random * rand;
     
-    rand = new Pseudo_Random();
+    rand = new Random();
     
     rand->seed(clock.now());
       
@@ -253,7 +253,7 @@ int job(unsigned int repetitions, int id)
 {
     int sum = 0;
     Chronometer c;
-    Pseudo_Random * rand;
+    Random * rand;
 	unsigned long long llc_misses = 0;
 	unsigned long long llc_hit = 0;
 	//Perf_Mon perf;
@@ -262,7 +262,7 @@ int job(unsigned int repetitions, int id)
 	cout << "Starting thread = " << id << " CPU = " << Machine::cpu_id() << "\n";
 	sem.v();
 
-    rand = new Pseudo_Random();
+    rand = new Random();
         
     rand->seed(clock.now() + id);
 	  
