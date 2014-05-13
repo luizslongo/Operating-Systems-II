@@ -36,8 +36,7 @@ typedef PC_Timer        Timer;
 typedef PC_RTC          RTC;
 typedef PC_EEPROM       EEPROM;
 typedef PC_UART         UART;
-typedef IF<Traits<Serial_Display>::enabled,
-           Serial_Display, PC_Display>::Result Display;
+typedef IF<Traits<Serial_Display>::enabled, Serial_Display, PC_Display>::Result Display;
 typedef PC_Ethernet     NIC;
 typedef PC_Scratchpad   Scratchpad;
 

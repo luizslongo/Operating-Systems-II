@@ -410,7 +410,7 @@ private:
         RX_BUFS * ((sizeof(Buffer) + 15) & ~15U) + TX_BUFS * ((sizeof(Buffer) + 15) & ~15U); // align128() cannot be used here
 
 
-    // Interrupt dispatching info
+    // Interrupt dispatching binding
     struct Device
     {
         PCNet32 * device;

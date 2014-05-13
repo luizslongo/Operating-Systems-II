@@ -8,6 +8,7 @@
 #include <mmu.h>
 #include <tsc.h>
 #include <machine.h>
+#include <rtc.h>
 #include "info.h"
 #include "memory_map.h"
 #include "ic.h"
@@ -27,6 +28,8 @@ private:
 public:
     PC() {}
   
+    static void delay(const RTC::Microsecond & time);
+
     static void panic();
     static void reboot();
     static void poweroff();

@@ -95,7 +95,7 @@ template <> struct Traits<PC_Display>: public Traits<PC_Common>
 
 template <> struct Traits<PC_Ethernet>: public Traits<PC_Common>
 {
-    static const bool enabled = (Traits<Build>::NETWORKING != Traits<Build>::NO);
+    static const bool enabled = (Traits<Build>::NODES > 1);
 
     typedef LIST<PCNet32> NICS;
 };
