@@ -9,8 +9,6 @@ __BEGIN_SYS
 
 class UDP: private IP::Observer, public Data_Observed<NIC::Buffer>
 {
-    template<typename Channel, typename Network> friend class Socket;
-
 private:
     // List to hold received Buffers
     typedef NIC::Buffer Buffer;
@@ -135,8 +133,14 @@ public:
     } __attribute__((packed, may_alias));
 
 public:
-    UDP() { IP::attach(this, IP::UDP); }
-    ~UDP() { IP::detach(this, IP::UDP); }
+    UDP() {
+        db<UDP>(TRC) << "UDP::DUP()" << endl;
+        IP::attach(this, IP::UDP);
+    }
+    ~UDP() {
+        db<UDP>(TRC) << "UDP::~DUP()" << endl;
+        IP::detach(this, IP::UDP);
+    }
 
     int send(const Port & from, const Address & to, const void * data, unsigned int size);
     int receive(NIC::Buffer * buf, void * data, unsigned int size);
@@ -147,8 +151,6 @@ private:
     static unsigned short checksum(const void * header, const void * data, unsigned int size);
 
 private:
-   // IP _ip;
-
     static List _received;
 };
 

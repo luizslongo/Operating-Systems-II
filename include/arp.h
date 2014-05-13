@@ -199,10 +199,11 @@ public:
             db<ARP>(TRC) << "ARP::resolve(pa=" << pa << ") => ";
         }
 
+        // Even being declared volatile, "ha" gets messed up and a PF occurs without the memcpy
         HA ha2;
         memcpy(&ha2, const_cast<HA *>(&ha), sizeof(HA));
 
-        db<ARP>(TRC) << ha << ha2 << endl;
+        db<ARP>(TRC) << ha2 << endl;
 
         return ha2;
     }
@@ -257,17 +258,17 @@ public:
         buf->nic()->free(buf);
     }
 
-//    void dump() {
-//        db<ARP>(INF) << "ARP::Table => {" << endl;
-//        for(typename Table::Iterator it = _table.begin(); it != _table.end(); it++) {
-//            if(it)
-//                db<ARP>(INF) << hex << it << " => {" << it->key() << "," << it->object()->ha() << "}" << endl;
-//            else
-//                db<ARP>(INF) << hex << it << " => EMPTY" << endl;
-//        }
-//        db<ARP>(INF) << "}" << endl;
-//
-//    }
+    void dump() {
+        db<ARP>(INF) << "ARP::Table => {" << endl;
+        for(typename Table::Iterator it = _table.begin(); it != _table.end(); it++) {
+            if(it)
+                db<ARP>(INF) << hex << it << " => {" << it->key() << "," << it->object()->ha() << "}" << endl;
+            else
+                db<ARP>(INF) << hex << it << " => EMPTY" << endl;
+        }
+        db<ARP>(INF) << "}" << endl;
+
+    }
 
 private:
     void lock() {

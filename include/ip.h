@@ -12,12 +12,99 @@ __BEGIN_SYS
 class IP: private NIC::Observer
 {
     friend class System;
+    template <int unit> friend void call_init();
 
 private:
-    // List to hold received Buffers
+    // List to hold received Buffers containing datagram fragments
     typedef NIC::Buffer Buffer;
-    typedef Simple_Hash<NIC::Buffer::List, 4, unsigned long> Fragmented;
-    typedef Fragmented::Element Element;
+    class Fragmented;
+    typedef Simple_Hash<Fragmented, Traits<Build>::NODES, unsigned long> Reassembling;
+
+    template<unsigned int SIZE, unsigned int UNIT_SIZE>
+    class Bitmap
+    {
+    public:
+        Bitmap(): _size(SIZE / UNIT_SIZE) { memset(&_map, 0, SIZE / UNIT_SIZE / 8); }
+
+        bool set(unsigned int index) {
+            if(_map[index / UNIT_SIZE])
+                return false;
+            else {
+                _map[index / UNIT_SIZE] = true;
+                return true;
+            }
+        }
+
+        bool reset(unsigned int index) {
+            if(!_map[index / UNIT_SIZE])
+                return false;
+            else {
+                _map[index / UNIT_SIZE] = false;
+                return true;
+            }
+        }
+
+        void resize(unsigned int size) {
+            if(size < SIZE)
+                _size = size / UNIT_SIZE;
+        }
+
+        bool full() const {
+            for(unsigned int i = 0; i < _size; i++)
+                if(!_map[i])
+                    return false;
+            return true;
+        }
+
+        bool empty() const {
+            for(unsigned int i = 0; i < _size; i++)
+                if(_map[i])
+                    return false;
+            return true;
+        }
+
+    private:
+        unsigned int _size;
+        bool _map[SIZE / UNIT_SIZE];
+    };
+
+    class Fragmented
+    {
+    public:
+        typedef Buffer::List::Element Element;
+
+    public:
+        Fragmented(const Reassembling::Rank_Type & key): _link(this, key) {}
+
+        void insert(Buffer * buf) {
+            Packet * packet = buf->frame()->data<Packet>();
+
+            db<IP>(TRC) << "IP::Fragmented::insert(buf=" << buf << ") => " << *packet << endl;
+
+            if(_bitmap.set(packet->offset()))
+                _list.insert(buf->link());
+
+//            _received += packet->length() - sizeof(Header);
+
+            if(!(packet->flags() & Header::MF))
+                _bitmap.resize(packet->offset() + packet->length() - sizeof(Header));
+//                _size = packet->offset() + packet->length() - sizeof(Header);
+        }
+
+//        bool reassembled() const { return _size && (_size == _received); }
+        bool reassembled() const { return _bitmap.full(); }
+
+        Buffer * pool() { return _list.head()->object(); }
+
+        Reassembling::Element * link() { return &_link; }
+
+    private:
+        Bitmap<65536, 1480> _bitmap;
+//        unsigned int _size;
+//        unsigned int _received;
+        Buffer::List _list;
+        Reassembling::Element _link;
+    };
 
 public:
     static const unsigned int PROTOCOL = NIC::IP;
@@ -130,6 +217,7 @@ public:
     } __attribute__((packed, may_alias));
 
 
+    static const unsigned int MAX_FRAGMENT = sizeof(NIC::Data) - sizeof(Header);
     static const unsigned int MTU = 65535 - sizeof(Header);
     typedef unsigned char Data[MTU];
 
@@ -161,9 +249,6 @@ public:
     } __attribute__((packed));
 
     typedef Packet PDU;
-
-
-    static const unsigned int MAX_FRAGMENT = sizeof(NIC::Data) - sizeof(Header);
 
 
     class Router;
@@ -257,31 +342,7 @@ public:
 
 public:
     template<unsigned int UNIT = 0>
-    IP(unsigned int nic = UNIT): _nic(nic), _arp(&_nic, this),
-    _address(Traits<IP>::Config<UNIT>::ADDRESS),
-    _netmask(Traits<IP>::Config<UNIT>::NETMASK),
-    _broadcast((_address & _netmask) | ~_netmask),
-    _gateway(Traits<IP>::Config<UNIT>::GATEWAY)
-    {
-        db<IP>(TRC) << "IP::IP(nic=" << &_nic << ")" << endl;
-
-        _nic.attach(this, NIC::IP);
-
-        if(Traits<IP>::Config<UNIT>::TYPE == Traits<IP>::MAC)
-            _address[sizeof(Address) -1] = _nic.address()[sizeof(MAC_Address) - 1];
-        else if(Traits<IP>::Config<UNIT>::TYPE == Traits<IP>::INFO)
-            config_by_info();
-        else if(Traits<IP>::Config<UNIT>::TYPE == Traits<IP>::RARP)
-            config_by_rarp();
-        else if(Traits<IP>::Config<UNIT>::TYPE == Traits<IP>::DHCP)
-            config_by_dhcp();
-
-        _router.insert(&_nic, this, &_arp, _address & _netmask, _address, _netmask);
-        if(_gateway) {
-            _router.insert(&_nic, this, &_arp, Address::NULL, _gateway, Address::NULL); // Default route must be the last one in table
-            _arp.resolve(_gateway);
-        }
-    }
+    IP(unsigned int nic = UNIT);
     ~IP();
 
     void reconfigure(const Address & a, const Address & m, const Address & g) {
@@ -299,6 +360,14 @@ public:
     const Address & broadcast() const { return _broadcast; }
     const Address & gateway() const { return _gateway; }
     const Address & netmask() const { return _netmask; }
+
+    static IP * get_by_nic(unsigned int unit) {
+        if(unit >= Traits<NIC>::UNITS) {
+            db<IP>(WRN) << "IP::get_by_nic: requested unit (" << unit << ") does not exist!" << endl;
+            return 0;
+        } else
+            return _networks[unit];
+    }
 
     static Route * route(const Address & to) { return _router.search(to); }
 
@@ -330,7 +399,7 @@ private:
 
     void update(NIC::Observed * nic, int prot, Buffer * buf);
 
-    static void init();
+    static void init(unsigned int unit);
 
 protected:
     NIC _nic;
@@ -341,13 +410,12 @@ protected:
     Address _broadcast;
     Address _gateway;
 
+    static IP * _networks[Traits<NIC>::UNITS];
     static Router _router;
-    static Fragmented _fragmented;
+    static Reassembling _reassembling;
     static Observed _observed; // shared by all IP instances, so the default for binding on a port is for all IPs
 };
-
 
 __END_SYS
 
 #endif
-

@@ -3,6 +3,7 @@
 #ifndef __communicator_h
 #define __communicator_h
 
+#include <network.h>
 #include <udp.h>
 
 __BEGIN_SYS 
