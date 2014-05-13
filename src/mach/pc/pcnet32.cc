@@ -222,7 +222,7 @@ void PCNet32::reset()
     bcr(18, bcr(18) | BCR18_BREADE | BCR18_BWRITE);
 
     // Promiscuous mode
-    csr(15, csr(15) | CSR15_PROM);
+//    csr(15, csr(15) | CSR15_PROM);
 
     // Set transmit start point to full frame
     csr(80, csr(80) | 0x0c00); // XMTSP = 11
@@ -268,10 +268,19 @@ void PCNet32::reset()
 
 void PCNet32::handle_int()
 {
+//    CPU::int_disable();
+
+    db<PCNet32>(WRN) << "PCNet32::handle_int()" << endl;
+
     if(csr(0) & CSR0_INTR) {
         int csr0 = csr(0);
         int csr4 = csr(4);
         int csr5 = csr(5);
+
+        // Clear interrupts (i.e. acknowledge them)
+        csr(0, csr0);
+        csr(4, csr4);
+        csr(5, csr5);
 
         if(csr0 & CSR0_IDON) { // Initialization done
             // This should never happen, since IDON is disabled in reset()
@@ -332,12 +341,12 @@ void PCNet32::handle_int()
 
             db<PCNet32>(WRN) << endl;
         }
-
-        // Clear interrupts (i.e. acknowledge them)
-        csr(0, csr0);
-        csr(4, csr4);
-        csr(5, csr5);
     }
+
+//    CPU::int_enable();
+
+    db<PCNet32>(WRN) << "PCNet32::handle_int():end" << endl;
+
 }
 
 

@@ -176,26 +176,29 @@ MAKEFLAGS	:= --no-builtin-rules
 
 MKBI		:= $(BIN)/eposmkbi $(EPOS)
 
-DD		:= dd
+CLEAN		:= rm -f
+CLEANDIR	:= rm -rf
 
-STRIP		= $(COMP_PREFIX)strip -R .note -R .comment
+DD			:= dd
+
+DEBUGGER	= $(MACH_DEBUGGER) 
+
+EMULATOR	= $(MACH_EMULATOR) 
 
 INSTALL		:= install
 
 SHELL		:= bash
 
-CLEAN		:= rm -f
-CLEANDIR	:= rm -rf
+STRIP		= $(COMP_PREFIX)strip -R .note -R .comment
 
-TOUCH		:= touch
+TCPDUMP		:= tcpdump -tttttennvvvXXr
 
-TEE		:= tee
+TEE			:= tee
 
 TERM		:= xterm -e
 
-EMULATOR	= $(MACH_EMULATOR) 
+TOUCH		:= touch
 
-DEBUGGER	= $(MACH_DEBUGGER) 
 
 # Rules
 lib%.o: lib%.cc
@@ -219,6 +222,9 @@ lib%.o: lib%.cc
 
 %.out: %.img
 		$(EMULATOR) $< | $(TEE) $@
+
+%.net: %.pcap
+		$(TCPDUMP) $< > $@
 
 %.o: %.cc
 		$(CXX) $(CXXFLAGS) $<
