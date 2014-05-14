@@ -1,53 +1,15 @@
 // EPOS IP Protocol Test Program
 
 #include <utility/ostream.h>
-#include <alarm.h>
-#include <nic.h>
-#include <ip.h>
-#include <udp.h>
 #include <communicator.h>
 
 using namespace EPOS;
 
-const int ITERATIONS = 1;
+const int ITERATIONS = 3;
 
 OStream cout;
-//NIC nic;
-//
-//int nic_test()
-//{
-//    NIC::Address src, dst;
-//    NIC::Protocol prot;
-//    char data[nic.mtu()];
-//
-//    NIC::Address mac = nic.address();
-//    cout << "  MAC: " << mac << endl;
-//
-//    if(mac[5] % 2) { // sender
-//        for(int i = 0; i < ITERATIONS; i++) {
-//            memset(data, '0' + i, nic.mtu());
-//            data[nic.mtu() - 1] = '\n';
-//            nic.send(nic.broadcast(), 0x8888, data, nic.mtu());
-//            cout << "  Data: " << data;
-//        }
-//    } else { // receiver
-//        for(int i = 0; i < ITERATIONS; i++) {
-//           nic.receive(&src, &prot, data, nic.mtu());
-//           cout << "  Data: " << data;
-//        }
-//    }
-//
-//    NIC::Statistics stat = nic.statistics();
-//    cout << "Statistics\n"
-//         << "Tx Packets: " << stat.tx_packets << "\n"
-//         << "Tx Bytes:   " << stat.tx_bytes << "\n"
-//         << "Rx Packets: " << stat.rx_packets << "\n"
-//         << "Rx Bytes:   " << stat.rx_bytes << "\n";
-//
-//    return stat.tx_bytes + stat.rx_bytes;
-//}
 
-int link_test()
+int udp_test()
 {
     char data[20000];
     Link<UDP> * comm;
@@ -136,7 +98,7 @@ int main()
     cout << "  IP::Header => " << sizeof(IP::Header) << endl;
     cout << "  UDP::Header => " << sizeof(UDP::Header) << endl;
 
-    link_test();
+    udp_test();
 
     return 0;
 }

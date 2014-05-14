@@ -1,0 +1,151 @@
+Reading storage using BIOS interrupts (Real Mode)
+================================================================================
+
+There's a problem reading data from Storage when you are in real mode. Since
+there are no drivers when powering up the PC, the only way to read/write data
+on/to storage is using the BIOS interrupts.
+
+There are (basically) two ways to access disk storage: LBA (Logical Block
+Addressing) and CHS (Cylinder, Head, Sector). Disks usually use LBA, but since
+some drives doesn't (like floppy disks and flash drives emulating floppy), it
+is easier to use CHS for everything.
+
+Because the BIOS have an interrupt that give us Sectors per track and Number of
+heads (SPT and NH) values (and there is no known way to easily get CHS values
+directly), our idea now is to do the following:
+
+------------------     ----------------------     ---------------------         
+| Get SPT and NH | --> | Convert LBA in CHS | --> | Load from storage |         
+------------------     ----------------------     ---------------------         
+
+For that, it is useful to understand a little bit more about LBA. Logical Block
+Adressing organize the disk in blocks, and uses a single number, an index, to
+address data. Important to say that each block has 512 bytes.
+
+There is an simple algorithm to transform LBA to CHS. This will be used, since
+it is easy to get LBA information from BIOS interrupts:
+
+LBA = input value
+SPT = Sectors per track
+NH = Number of heads
+Sector   = (LBA % SPT) + 1     ; Sector is 1-based, not 0-based!
+Head     = (LBA / SPT) % NH
+Cylinder = (LBA / SPT) / NH
+
+This should be enought to us to continue, but if you want more information about
+LBA, take a look at the references of this report.
+Now, let's understand the BIOS Drive Geometry information interrupt. Just set
+AH=0x08 before running int 0x13 and the BIOS will return the following:
+
+CF set on error
+    AH = status (07h)
+
+CF clear if successful
+    AH = 0x00
+    AL = 0x00 on at least some BIOSes
+
+    BL = drive type (AT/PS2 floppies only)
+         Values for diskette drive type:
+         0x01    360K
+         0x02    1.2M
+         0x03    720K
+         0x04    1.44M
+         0x05    (reportedly an obscure drive shipped on some IBM machines)
+                 2.88M on some machines (at least AMI 486 BIOS)
+         0x06    2.88M
+         0x10    ATAPI Removable Media Device
+
+    CH = low eight bits of maximum cylinder number
+    CL = maximum sector number (bits 5-0)
+         high two bits of maximum cylinder number (bits 7-6)
+
+    DH = maximum head number
+    DL = number of drives
+
+    ES:DI -> drive parameter table (floppies only)
+
+And then you can calculate the NH and SPT values:
+
+NH  = DH + 1
+SPT = CL & 0x3F
+
+Before finally read the values using BIOS interrupt, let's do some math to see
+if we totally understand the theory. Say we want to read 1474560 bytes of data
+from storage (this is the acctually size of a 1.44MB floppy disk). So we want to
+read the first 2880 LBA blocks from disk in two situations:
+
+1) BIOS reported dx = 0x0f01, cx = 0x003f and CF clear.
+
+DH = 0x0F
+CL = 0x3F
+
+NH  = DH + 1 = 0x10
+SPT = CL & 0x3F = 0x3F
+
+We want to read LBA = 0 to LBA = 2879:
+
+LBA = 0
+Sector   = (0 % 0x3F) + 1     = 1
+Head     = (0 / 0x3F) % 0x10  = 0
+Cylinder = (0 / 0x3F) / 0x10  = 0
+CHS = (1, 0, 0)
+
+LBA = 2879
+Sector   = (2879 % 0x3F) + 1     = 45
+Head     = (2879 / 0x3F) % 0x10  = 13
+Cylinder = (2879 / 0x3F) / 0x10  = 2
+CHS = (45, 13, 2)
+
+
+2) BIOS reported dx = 0x0101, cx = 0x4F12 and CF clear.
+
+DH = 0x01
+CL = 0x12
+
+NH  = DH + 1 = 0x02
+SPT = CL & 0x3F = 0x12
+
+We want to read LBA = 0 to LBA = 2879:
+
+LBA = 0
+Sector   = (0 % 0x12) + 1     = 1
+Head     = (0 / 0x12) % 0x02  = 0
+Cylinder = (0 / 0x12) / 0x02  = 0
+CHS = (1, 0, 0)
+
+LBA = 297
+Sector   = (297 % 0x12) + 1     = 10
+Head     = (297 / 0x12) % 0x02  = 0
+Cylinder = (297 / 0x12) / 0x02  = 8
+CHS = (10, 0, 8)
+
+LBA = 2879
+Sector   = (2879 % 0x12) + 1     = 18
+Head     = (2879 / 0x12) % 0x02  = 1
+Cylinder = (2879 / 0x12) / 0x02  = 79
+CHS = (18, 1, 79)
+
+
+Now for the reading part, we must use AH=0x02 with int 0x13 to BIOS and we need
+the folowing parameters:
+
+AH = 0x02
+AL = number of sectors to read (must be nonzero)
+CH = low eight bits of cylinder number
+CL = sector number 1-63 (bits 0-5)
+     high two bits of cylinder (bits 6-7, hard disk only)
+DH = head number
+DL = drive number (0x00 = floppy, 0x80 = hard disk drive)
+ES:BX -> data buffer
+
+Note: It is usually easier to read one sector at a time, so you can keep track
+of the cylinder and track count.
+
+[References]
+http://wiki.osdev.org/ATA_read/write_sectors
+http://wiki.osdev.org/ATA_PIO_Mode
+http://wiki.osdev.org/ATA_in_x86_RealMode_(BIOS)
+http://en.wikipedia.org/wiki/Logical_block_addressing
+http://superuser.com/questions/418211/lba-and-sector-size
+http://www.ctyme.com/intr/rb-0621.htm
+http://support.microsoft.com/kb/75131

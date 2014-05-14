@@ -268,10 +268,6 @@ void PCNet32::reset()
 
 void PCNet32::handle_int()
 {
-//    CPU::int_disable();
-
-    db<PCNet32>(WRN) << "PCNet32::handle_int()" << endl;
-
     if(csr(0) & CSR0_INTR) {
         int csr0 = csr(0);
         int csr4 = csr(4);
@@ -342,11 +338,6 @@ void PCNet32::handle_int()
             db<PCNet32>(WRN) << endl;
         }
     }
-
-//    CPU::int_enable();
-
-    db<PCNet32>(WRN) << "PCNet32::handle_int():end" << endl;
-
 }
 
 
