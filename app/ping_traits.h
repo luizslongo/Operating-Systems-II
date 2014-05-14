@@ -1,1 +1,1 @@
-../src/mach/pc/nic_test_traits.h
+../src/abstraction/ip_test_traits.h
