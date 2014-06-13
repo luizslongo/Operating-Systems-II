@@ -1,7 +1,7 @@
 # EPOS Makefile Definitions
 
 # Functions
-GETTK		= $(shell sed -n -e '/^.* $(1)[ ]*=.*;.*$$/s/^.* =[ ]*\(.*\)[ ]*;.*$$/\1/p' $(2))
+GETTK		= $(shell sed -n -e '/^.* $(1)[ ]*=.*;.*$$/s/^.* =[ ]*\(.*\)[ ]*;.*$$/\1/p' $(2) 2> /dev/null)
 
 # Paths, prefixes and suffixes
 EPOS		:= $(abspath $(dir $(filter %makedefs, $(MAKEFILE_LIST))))
