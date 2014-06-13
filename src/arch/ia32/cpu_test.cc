@@ -8,7 +8,7 @@ using namespace EPOS;
 int main()
 {
     OStream cout;
-    cout << "IA32 test\n";
+    cout << "IA32 test" << endl;
 
     IA32 cpu;
 
@@ -18,7 +18,7 @@ int main()
             cout << "tsl(): doesn't function properly!" << endl;
         else
             if(cpu.tsl(lock))
-        	cout << "tsl(): ok\n";
+        	cout << "tsl(): ok" << endl;
             else
         	cout << "tsl(): doesn't function properly!" << endl;
     }
@@ -31,7 +31,7 @@ int main()
             if((tmp = cpu.finc(number)) != 101)
         	cout << "finc(): doesn't function properly (n=" << tmp << ", should be 101)!" << endl;
             else
-        	cout << "finc(): ok\n";
+        	cout << "finc(): ok" << endl;
     }
     {
         volatile int number = 100;
@@ -42,10 +42,10 @@ int main()
             if((tmp = cpu.fdec(number)) != 99)
         	cout << "fdec(): doesn't function properly (n=" << tmp << ", should be 99)!" << endl;
             else
-        	cout << "fdec(): ok\n";
+        	cout << "fdec(): ok" << endl;
     }
 
-    cout << "IA32 test finished\n";
+    cout << "IA32 test finished" << endl;
 
     return 0;
 }
