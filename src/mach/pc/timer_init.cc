@@ -5,7 +5,7 @@
 
 __BEGIN_SYS
 
-int PC_Timer::init()
+void PC_Timer::init()
 {
     db<Init, Timer>(TRC) << "Timer::init()" << endl;
 
@@ -17,8 +17,6 @@ int PC_Timer::init()
     IC::enable(IC::INT_TIMER);
 
     CPU::int_enable();
-
-    return 0;
 }
 
 __END_SYS

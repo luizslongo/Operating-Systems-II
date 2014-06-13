@@ -1,7 +1,8 @@
 // EPOS PC Timer Mediator Implementation
 
 #include <machine.h>
-#include <timer.h>
+#include <ic.h>
+#include <mach/pc/timer.h>
 
 __BEGIN_SYS
 
@@ -9,7 +10,7 @@ __BEGIN_SYS
 PC_Timer * PC_Timer::_channels[CHANNELS];
 
 // Class methods
-void PC_Timer::int_handler(unsigned int i)
+void PC_Timer::int_handler(const Interrupt_Id & i)
 {
     if(_channels[SCHEDULER] && (--_channels[SCHEDULER]->_current[Machine::cpu_id()] <= 0)) {
         _channels[SCHEDULER]->_current[Machine::cpu_id()] = _channels[SCHEDULER]->_initial;

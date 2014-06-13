@@ -9,7 +9,7 @@ int main()
 {
     OStream cout;
 
-    cout << "PC_PCI test\n";
+    cout << "PC_PCI test" << endl;
 
     PC_PCI pci;
 
@@ -29,7 +29,7 @@ int main()
         		cout << " #" << i 
         		     << "(" << (void *)hdr.region[i].phy_addr
         		     << "," << (void *)hdr.region[i].size << ")";
-        	cout << "\n";
+        	cout << "" << endl;
             }
         }
     }
@@ -50,7 +50,7 @@ int main()
         	cout << " #" << i 
         	     << "(" << (void *)hdr.region[i].phy_addr
         	     << "," << (void *)hdr.region[i].size << ")";
-        cout << "\n";
+        cout << "" << endl;
     }
 
     cout << "Finish!" << endl;

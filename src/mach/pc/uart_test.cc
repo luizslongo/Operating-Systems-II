@@ -9,7 +9,7 @@ int main()
 {
     OStream cout;
 
-    cout << "PC_UART test\n\n";
+    cout << "PC_UART test\n" << endl;
 
     PC_UART uart(115200, 8, 0, 1);
 

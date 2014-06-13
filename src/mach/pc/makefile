@@ -11,7 +11,7 @@ $(LIBMACH):	$(LIBMACH)($(OBJS))
 
 $(LIBINIT):	$(LIBINIT)($(INITS))
 
-pc_interrupt.o	: pc_interrupt.cc
+ic_entry.o	: ic_entry.cc
 		$(CXX) $(CXXFLAGS) -fomit-frame-pointer $<
 
 clean:

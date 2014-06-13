@@ -22,22 +22,22 @@ void handler()
 
 int main()
 {
-    cout << "PC_Timer test\n";
+    cout << "PC_Timer test" << endl;
 
     User_Timer timer(10000, handler);
     
     for(int i = 0; i < 10000; i++);
-    cout << "count = " << timer.read() << "\n";
+    cout << "count = " << timer.read() << "" << endl;
     for(int i = 0; i < 10000; i++);
-    cout << "count = " << timer.read() << "\n";
+    cout << "count = " << timer.read() << "" << endl;
     for(int i = 0; i < 10000; i++);
-    cout << "count = " << timer.read() << "\n";
+    cout << "count = " << timer.read() << "" << endl;
     for(int i = 0; i < 10000; i++);
-    cout << "count = " << timer.read() << "\n";
+    cout << "count = " << timer.read() << "" << endl;
     for(int i = 0; i < 10000; i++);
-    cout << "count = " << timer.read() << "\n";
+    cout << "count = " << timer.read() << "" << endl;
     for(int i = 0; i < 10000; i++);
-    cout << "count = " << timer.read() << "\n";
+    cout << "count = " << timer.read() << "" << endl;
     
     cout << "The End!" << endl;
 

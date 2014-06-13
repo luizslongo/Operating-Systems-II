@@ -9,7 +9,7 @@ __BEGIN_SYS
 E100::Device E100::_devices[UNITS];
 
 // Class Methods
-void E100::int_handler(unsigned int interrupt)
+void E100::int_handler(const IC::Interrupt_Id & interrupt)
 {
     E100 * dev = get(interrupt);
 

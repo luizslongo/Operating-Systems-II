@@ -12,12 +12,12 @@ int main()
 {
     OStream cout;
 
-    cout << "PC_RTC test\n";
+    cout << "PC_RTC test" << endl;
 
     RTC rtc;
     RTC::Second t0 = rtc.seconds_since_epoch();
 
-    cout << "It's now " << t0 << " seconds since epoch.\n";
+    cout << "It's now " << t0 << " seconds since epoch." << endl;
 
     RTC::Date last_date = rtc.date();
     while(rtc.seconds_since_epoch() < t0 + TEST_DURATION) {
