@@ -2,7 +2,7 @@
 
 include ../../makedefs
 
-TARGET := $(if $(shell find $(MACH)*), install)
+TARGET := $(if $(shell find $(MACH)* 2> /dev/null), install)
 
 all:		$(TARGET)
 

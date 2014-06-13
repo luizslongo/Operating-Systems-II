@@ -2,7 +2,7 @@
 
 include ../../makedefs
 
-TARGET := $(if $(shell find $(MACH)*), $(MACH)_install)
+TARGET := $(if $(shell find $(MACH)* 2> /dev/null), $(MACH)_install)
 ELF_HEADER_OFFSET := sh -c "$(OBJDUMP) -p $(IMG)/$(MACH)_setup | sed -n -e 's/^ *LOAD off *\(0x.*\) vaddr.*$$/\1/ p' | head -1"
 
 all: 		$(TARGET)

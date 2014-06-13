@@ -41,6 +41,7 @@ __BEGIN_SYS
 // manually initialized before use (at setup())
 OStream kout, kerr;
 OStream::Endl endl;
+OStream::Begl begl;
 
 // "_start" Synchronization Globals
 volatile char * Stacks;
@@ -134,12 +135,14 @@ PC_Setup::PC_Setup(char * boot_image)
     bi = reinterpret_cast<char *>(boot_image);
     si = reinterpret_cast<System_Info<PC> *>(bi);
 
-    Display::remap();
+    Display::init();
 
     // Multicore conditional start up
     int cpu_id = Machine::cpu_id();
 
     db<Setup>(TRC) << "PC_Setup(bi=" << reinterpret_cast<void *>(bi) << ",sp=" << reinterpret_cast<void *>(CPU::sp()) << ")" << endl;
+
+    db<Setup>(INF) << "System_Info=" << *si << endl;
 
     Machine::smp_barrier(si->bm.n_cpus);
     if(cpu_id == 0) { // Boot strap CPU (BSP)
@@ -227,6 +230,7 @@ void PC_Setup::build_lm()
 
     // Check SETUP integrity and get the size of its segments
     si->lm.stp_entry = 0;
+    si->lm.stp_segments = 0;
     si->lm.stp_code = ~0U;
     si->lm.stp_code_size = 0;
     si->lm.stp_data = ~0U;
@@ -239,6 +243,7 @@ void PC_Setup::build_lm()
         }
 
         si->lm.stp_entry = stp_elf->entry();
+        si->lm.stp_segments = stp_elf->segments();
         si->lm.stp_code = stp_elf->segment_address(0);
         si->lm.stp_code_size = stp_elf->segment_size(0);
         if(stp_elf->segments() > 1) {
@@ -267,6 +272,7 @@ void PC_Setup::build_lm()
         }
 
         si->lm.ini_entry = ini_elf->entry();
+        si->lm.ini_segments = ini_elf->segments();
         si->lm.ini_code = ini_elf->segment_address(0);
         si->lm.ini_code_size = ini_elf->segment_size(0);
         if(ini_elf->segments() > 1) {
@@ -297,6 +303,7 @@ void PC_Setup::build_lm()
         }
 
         si->lm.sys_entry = sys_elf->entry();
+        si->lm.sys_segments = sys_elf->segments();
         si->lm.sys_code = sys_elf->segment_address(0);
         si->lm.sys_code_size = sys_elf->segment_size(0);
         if(sys_elf->segments() > 1) {
@@ -310,8 +317,7 @@ void PC_Setup::build_lm()
         }
 
         if(si->lm.sys_code != SYS_CODE) {
-            db<Setup>(ERR) << "OS code segment address do not match "
-        		   << "the machine's memory map!" << endl;
+            db<Setup>(ERR) << "OS code segment address (" << si->lm.sys_code << ") does not match the machine's memory map (" << SYS_CODE << ")!" << endl;
             panic();
         }
         if(si->lm.sys_code + si->lm.sys_code_size > si->lm.sys_data) {
@@ -319,12 +325,7 @@ void PC_Setup::build_lm()
             panic();
         }
         if(si->lm.sys_data != SYS_DATA) {
-            db<Setup>(ERR) << "OS code segment address do not match "
-        		   << "the machine's memory map!" << endl;
-            panic();
-        }
-        if(si->lm.sys_data + si->lm.sys_data_size > si->lm.sys_stack) {
-            db<Setup>(ERR) << "OS data segment is too large!" << endl;
+            db<Setup>(ERR) << "OS data segment address does not match the machine's memory map!" << endl;
             panic();
         }
         if(si->lm.sys_data + si->lm.sys_data_size > si->lm.sys_stack) {
@@ -812,7 +813,7 @@ void PC_Setup::call_next()
     // Check for next stage and obtain the entry point
     register Log_Addr ip;
     if(si->lm.has_ini) {
-        db<Setup>(TRC) << "Executing system global constructors ..." << endl;
+        db<Setup>(TRC) << "Executing system's global constructors ..." << endl;
         reinterpret_cast<void (*)()>((void *)si->lm.sys_entry)();
         ip = si->lm.ini_entry;
     } else if(si->lm.has_sys)
@@ -824,15 +825,17 @@ void PC_Setup::call_next()
     // Boot CPU uses a full stack, while non-boot get reduced ones
     // The 2 integers on the stacks are room for return addresses used
     // in some EPOS architectures
-    register int sp = SYS_STACK + Traits<System>::STACK_SIZE * (cpu_id + 1) - 2 * sizeof(int);
+    register Log_Addr sp = SYS_STACK + Traits<System>::STACK_SIZE * (cpu_id + 1) - 2 * sizeof(int);
 
-    db<Setup>(TRC) << "PC_Setup::call_next(ip=" << ip << ",sp=" << (void *)sp << ") => ";
+    db<Setup>(TRC) << "PC_Setup::call_next(ip=" << ip << ",sp=" << sp << ") => ";
     if(si->lm.has_ini)
         db<Setup>(TRC) << "INIT" << endl;
     else if(si->lm.has_sys)
         db<Setup>(TRC) << "SYSTEM" << endl;
     else
         db<Setup>(TRC) << "APPLICATION" << endl;
+
+    db<Setup>(INF) << "System_Info=" << *si << endl;
 
     db<Setup>(INF) << "SETUP ends here!" << endl;
 

@@ -41,27 +41,23 @@ $(MACH)_init_library: $(OBJS)
 
 $(MACH)_init_builtin: $(SRC)/system/$(MACH)_system $(OBJS) $(LIBINIT)
 		$(LD) $(LDFLAGS) -L$(CCLIB) --omagic \
-		--section-start .init=$(INIT_ADDR) \
+		--section-start $(MACH_CODE_NAME)=$(INIT_ADDR) \
 		--entry=_init -o $(MACH)_init \
-		$(LIB)/$(ARCH)_crti.o \
 		$(LIB)/$(ARCH)_crtbegin.o \
 		init_first.o init_system.o \
 		$(LIB)/$(ARCH)_crtend.o \
-		$(LIB)/$(ARCH)_crtn.o \
 		-l$(LINIT) \
 		-R $(SRC)/system/$(MACH)_system \
-		-l$(LUTIL) -lgcc 
+		-l$(LUTIL) -lgcc
 		$(INSTALL) init_application.o $(MACH)_init_application.o
 
 $(MACH)_init_kernel: $(SRC)/system/$(MACH)_system $(OBJS) $(LIBINIT)
 		$(LD) $(LDFLAGS) -L$(CCLIB) --omagic \
 		--section-start .init=$(INIT_ADDR) \
 		--entry=_init -o $(MACH)_init \
-		$(LIB)/$(ARCH)_crti.o \
 		$(LIB)/$(ARCH)_crtbegin.o \
 		init_first.o init_system.o \
 		$(LIB)/$(ARCH)_crtend.o \
-		$(LIB)/$(ARCH)_crtn.o \
 		-l$(LINIT) \
 		-R $(SRC)/system/$(MACH)_system \
 		-l$(LUTIL) -lgcc 

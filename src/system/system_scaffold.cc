@@ -14,7 +14,7 @@ extern "C" {
     }
 
     void _exit(int s) {
-        EPOS::Thread::exit(s); for(;;);
+        EPOS::Thread::exit(s);
     }
 
     void _print(const char * s) {
@@ -22,7 +22,7 @@ extern "C" {
     }
 
     void __cxa_pure_virtual() {
-        EPOS::db<void>(EPOS::ERR) << "Pure Virtual mehtod called!" << EPOS::endl;
+        EPOS::db<void>(EPOS::ERR) << "Pure Virtual method called!" << EPOS::endl;
     }
 }
 
@@ -35,7 +35,7 @@ class First_Object
 {
 public:
     First_Object() {
-	Display::remap();
+	Display::init();
 
 	if(Traits<System>::multicore) {
 	    System_Info<Machine> * si = reinterpret_cast<System_Info<Machine> *>(Memory_Map<Machine>::SYS_INFO);

@@ -36,8 +36,8 @@ endif
 debug1: FORCE
 		(cd img && $(MAKE) debug)
 
-TESTS := $(subst .cc,,$(shell find $(SRC) -name \*_test.cc -printf "%f\n"))
-TEST_SORUCES := $(shell find $(SRC) -name \*_test.cc -printf "%p\n")
+TESTS := $(subst .cc,,$(shell find $(SRC)/abstraction -name \*_test.cc -printf "%f\n"))
+TEST_SORUCES := $(shell find $(SRC)/abstraction -name \*_test.cc -printf "%p\n")
 test: $(subst .cc,_traits.h,$(TEST_SORUCES))
 		$(INSTALL) $(TEST_SORUCES) $(APP)
 		$(INSTALL) $(subst .cc,_traits.h,$(TEST_SORUCES)) $(APP)

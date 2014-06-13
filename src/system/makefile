@@ -40,28 +40,24 @@ $(MACH)_system_builtin: $(OBJS)
 		$(LD) $(LDFLAGS) -L$(CCLIB) --nmagic \
 		--section-start $(MACH_CODE_NAME)=$(SYS_CODE_ADDR) \
 		--section-start $(MACH_DATA_NAME)=$(SYS_DATA_ADDR) \
-		--entry=__do_global_ctors_aux -o $(MACH)_system \
-		$(LIB)/$(ARCH)_crti.o \
+		--entry=_init -o $(MACH)_system \
 		$(LIB)/$(ARCH)_crtbegin.o \
 		system_scaffold.o \
 		$(LIB)/$(ARCH)_crtend.o \
-		$(LIB)/$(ARCH)_crtn.o \
 		--whole-archive \
 		-l$(LSYS) -l$(LMACH) -l$(LARCH) \
 		--no-whole-archive \
-		-l$(LUTIL) -lgcc 
+		-l$(LUTIL) -lgcc
 		$(INSTALL) application_scaffold.o $(MACH)_application.o
 
 $(MACH)_system_kernel: $(OBJS) 
 		$(LD) $(LDFLAGS) -L$(CCLIB) --nmagic \
 		--section-start $(MACH_CODE_NAME)=$(SYS_CODE_ADDR) \
 		--section-start $(MACH_DATA_NAME)=$(SYS_DATA_ADDR) \
-		--entry=__do_global_ctors_aux -o $(MACH)_system \
-		$(LIB)/$(ARCH)_crti.o \
+		--entry=_init -o $(MACH)_system \
 		$(LIB)/$(ARCH)_crtbegin.o \
 		system_scaffold.o \
 		$(LIB)/$(ARCH)_crtend.o \
-		$(LIB)/$(ARCH)_crtn.o \
 		--whole-archive \
 		-l$(LSYS) -l$(LMACH) -l$(LARCH) \
 		--no-whole-archive \
