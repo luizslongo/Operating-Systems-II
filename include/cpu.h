@@ -57,6 +57,10 @@ public:
         Log_Addr & operator-=(T a) { _addr -= Reg(a); return *this; }
         template <typename T>
         Log_Addr & operator&=(T a) { _addr &= Reg(a); return *this; }
+        template <typename T>
+        Log_Addr & operator|=(T a) { _addr |= Reg(a); return *this; }
+
+        Log_Addr & operator[](int i) { return *(this + i); }
 
         friend OStream & operator<<(OStream & os, const Log_Addr & a) { os << reinterpret_cast<void *>(a._addr); return os; }
 

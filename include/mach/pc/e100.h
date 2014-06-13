@@ -3,6 +3,7 @@
 #ifndef __e100_h
 #define __e100_h
 
+#include <ic.h>
 #include <ethernet.h>
 
 __BEGIN_SYS
@@ -358,11 +359,11 @@ private:
 
     void handle_int();
 
-    static void int_handler(unsigned int interrupt);
+    static void int_handler(const IC::Interrupt_Id & interrupt);
 
     bool verifyPendingInterrupts(void);
 
-    unsigned short eeprom_read(unsigned short *addr_len, unsigned short addr);
+    unsigned short eeprom_read(unsigned short * addr_len, unsigned short addr);
     unsigned char eeprom_mac_address(Reg16 addr);
 
     int exec_command(Reg8 cmd, Reg32 dma_addr);

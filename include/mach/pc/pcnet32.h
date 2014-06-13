@@ -442,7 +442,7 @@ public:
 private:
     void handle_int();
 
-    static void int_handler(unsigned int interrupt);
+    static void int_handler(const IC::Interrupt_Id & interrupt);
 
     static PCNet32 * get_by_unit(unsigned int unit) {
         if(unit >= UNITS) {

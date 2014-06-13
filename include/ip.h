@@ -109,6 +109,7 @@ private:
 public:
     static const unsigned int PROTOCOL = NIC::IP;
 
+    // Addresses
     typedef NIC::Address MAC_Address;
     typedef NIC_Common::Address<4> Address;
 
@@ -128,6 +129,7 @@ public:
     typedef Data_Observed<Buffer> Observed;
 
 
+    // IP Header
     class Header
     {
     public:
@@ -214,22 +216,22 @@ public:
         Address         _to;            // Destination IP address
 
         static unsigned short _next_id;
-    } __attribute__((packed, may_alias));
+    } __attribute__((packed));
 
 
     static const unsigned int MAX_FRAGMENT = sizeof(NIC::Data) - sizeof(Header);
     static const unsigned int MTU = 65535 - sizeof(Header);
     typedef unsigned char Data[MTU];
 
-
+    // IP Packet
     class Packet: public Header
     {
     public:
         Packet() {}
-        Packet(const Address & from, const Address & to, const Protocol & prot, unsigned int size)
-        : Header(from, to, prot, size + sizeof(Header)) {}
-        Packet(const Address & from, const Address & to, const Protocol & prot, const void * data, unsigned int size)
-        : Header(from, to, prot, size + sizeof(Header)) {
+        Packet(const Address & from, const Address & to, const Protocol & prot, unsigned int size):
+            Header(from, to, prot, size + sizeof(Header)) {}
+        Packet(const Address & from, const Address & to, const Protocol & prot, const void * data, unsigned int size):
+            Header(from, to, prot, size + sizeof(Header)) {
             header()->sum();
             memcpy(_data, data, size > sizeof(Data) ? sizeof(Data) : size);
         }

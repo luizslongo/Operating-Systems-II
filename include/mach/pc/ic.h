@@ -437,58 +437,60 @@ private:
 };
 
 // PC_IC uses i8259A on single-processor machines and the APIC timer on MPs
-class PC_IC: public IC_Common, private IF<Traits<System>::multicore, APIC, i8259A>::Result
+class PC_IC: private IC_Common, private IF<Traits<System>::multicore, APIC, i8259A>::Result
 {
     friend class PC;
 
 private:
-    typedef IF<Traits<System>::multicore, APIC, i8259A>::Result Base;
+    typedef IF<Traits<System>::multicore, APIC, i8259A>::Result Engine;
 
     typedef CPU::Reg32 Reg32;
     typedef CPU::Log_Addr Log_Addr;
 
 public:
-    using Base::INT_TIMER;
-    using Base::INT_RESCHEDULER;
+    using IC_Common::Interrupt_Id;
+    using IC_Common::Interrupt_Handler;
+    using Engine::INT_TIMER;
+    using Engine::INT_RESCHEDULER;
 
-    using Base::ipi_send;
+    using Engine::ipi_send;
 
 public:
     PC_IC() {}
 
-    static Interrupt_Handler int_vector(Interrupt_Id i) {
+    static Interrupt_Handler int_vector(const Interrupt_Id & i) {
         return (i < INTS) ? _int_vector[i] : 0;
     }
 
-    static void int_vector(Interrupt_Id i, Interrupt_Handler h) {
-        db<IC>(INF) << "IC::int_vector(int=" << i << ",h=" << reinterpret_cast<void *>(h) <<")" << endl;
+    static void int_vector(const Interrupt_Id & i, const Interrupt_Handler & h) {
+        db<IC>(TRC) << "IC::int_vector(int=" << i << ",h=" << reinterpret_cast<void *>(h) <<")" << endl;
         if(i < INTS)
             _int_vector[i] = h;
     }
 
     static void enable() {
-        db<IC>(INF) << "IC::enable()" << endl;
-        Base::enable();
+        db<IC>(TRC) << "IC::enable()" << endl;
+        Engine::enable();
     }
 
     static void enable(int i) {
-        db<IC>(INF) << "IC::enable(int=" << i << ")" << endl;
-        Base::enable(i);
+        db<IC>(TRC) << "IC::enable(int=" << i << ")" << endl;
+        Engine::enable(i);
     }
 
     static void disable() {
-        db<IC>(INF) << "IC::disable()" << endl;
-        Base::disable();
+        db<IC>(TRC) << "IC::disable()" << endl;
+        Engine::disable();
     }
 
     static void disable(int i) {
-        db<IC>(INF) << "IC::disable(int=" << i << ")" << endl;
-        Base::disable(i);
+        db<IC>(TRC) << "IC::disable(int=" << i << ")" << endl;
+        Engine::disable(i);
     }
 
-    using Base::eoi;
-    using Base::irq2int;
-    using Base::int2irq;
+    using Engine::eoi;
+    using Engine::irq2int;
+    using Engine::int2irq;
 
 private:
     static void dispatch(unsigned int i) {
@@ -507,11 +509,11 @@ private:
 
     static void entry();
 
-    static void int_not(Interrupt_Id i);
-    static void exc_not(Interrupt_Id i, Reg32 error, Reg32 eip, Reg32 cs, Reg32 eflags);
-    static void exc_pf (Interrupt_Id i, Reg32 error, Reg32 eip, Reg32 cs, Reg32 eflags);
-    static void exc_gpf(Interrupt_Id i, Reg32 error, Reg32 eip, Reg32 cs, Reg32 eflags);
-    static void exc_fpu(Interrupt_Id i, Reg32 error, Reg32 eip, Reg32 cs, Reg32 eflags);
+    static void int_not(const Interrupt_Id & i);
+    static void exc_not(const Interrupt_Id & i, Reg32 error, Reg32 eip, Reg32 cs, Reg32 eflags);
+    static void exc_pf (const Interrupt_Id & i, Reg32 error, Reg32 eip, Reg32 cs, Reg32 eflags);
+    static void exc_gpf(const Interrupt_Id & i, Reg32 error, Reg32 eip, Reg32 cs, Reg32 eflags);
+    static void exc_fpu(const Interrupt_Id & i, Reg32 error, Reg32 eip, Reg32 cs, Reg32 eflags);
 
     static void init();
 

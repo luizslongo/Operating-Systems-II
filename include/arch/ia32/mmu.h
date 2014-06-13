@@ -126,16 +126,14 @@ public:
     public:
         Chunk() {}
 
-        Chunk(unsigned int bytes, Flags flags)
-        : _from(0), _to(pages(bytes)), _pts(page_tables(_to - _from)), _flags(IA32_Flags(flags)), _pt(calloc(_pts)) {
+        Chunk(unsigned int bytes, Flags flags): _from(0), _to(pages(bytes)), _pts(page_tables(_to - _from)), _flags(IA32_Flags(flags)), _pt(calloc(_pts)) {
             if(flags & IA32_Flags::CT)
         	_pt->map_contiguous(_from, _to, _flags);
             else 
         	_pt->map(_from, _to, _flags);
         }
 
-        Chunk(Phy_Addr phy_addr, unsigned int bytes, Flags flags)
-        : _from(0), _to(pages(bytes)), _pts(page_tables(_to - _from)), _flags(IA32_Flags(flags)), _pt(calloc(_pts)) {
+        Chunk(Phy_Addr phy_addr, unsigned int bytes, Flags flags): _from(0), _to(pages(bytes)), _pts(page_tables(_to - _from)), _flags(IA32_Flags(flags)), _pt(calloc(_pts)) {
             _pt->remap(phy_addr, _from, _to, flags);
         }
 
@@ -281,8 +279,7 @@ public:
             db<IA32_MMU>(TRC) << "IA32_MMU::DMA_Buffer() => " << *this << endl;
         }
 
-        DMA_Buffer(unsigned int s, const Log_Addr & d)
-        : Chunk(s, IA32_Flags::DMA) {
+        DMA_Buffer(unsigned int s, const Log_Addr & d): Chunk(s, IA32_Flags::DMA) {
             Directory dir(current());
             _log_addr = dir.attach(*this);
             memcpy(_log_addr, d, s);
@@ -308,6 +305,7 @@ public:
 
     static Phy_Addr alloc(unsigned int frames = 1) {
         Phy_Addr phy(false);
+
         if(frames) {
             List::Element * e = _free.search_decrementing(frames);
             if(e)
@@ -315,13 +313,17 @@ public:
             else
         	db<IA32_MMU>(WRN) << "IA32_MMU::alloc() failed!" << endl;
         }
+
         db<IA32_MMU>(TRC) << "IA32_MMU::alloc(frames=" << frames << ") => " << phy << endl;
+
         return phy;
     }
 
     static Phy_Addr calloc(unsigned int frames = 1) {
         Phy_Addr phy = alloc(frames);
+
         memset(phy2log(phy), 0, sizeof(Frame) * frames);
+
         return phy;	
     }
 
@@ -351,11 +353,11 @@ public:
     }
 
     static void flush_tlb() {
-        ASMV("movl %cr3,%eax");
-        ASMV("movl %eax,%cr3");
+        ASM("movl %cr3,%eax");
+        ASM("movl %eax,%cr3");
     }
     static void flush_tlb(Log_Addr addr) {
-        ASMV("invlpg %0" : : "m"(addr));
+        ASM("invlpg %0" : : "m"(addr));
     }
 
 private:

@@ -39,38 +39,39 @@ public:
     // Physical Memory Map (built by SETUP)
     struct Physical_Memory_Map
     {
-        PAddr mem_base;      // Memory base address
-        PAddr mem_top;       // Memory top address
-        PAddr io_base;       // I/O Memory base address
-        PAddr io_top;        // I/O Memory top address
- 	PAddr ext_base;      // Boot Image EXTRA segment base address
- 	PAddr ext_top;       // Boot Image EXTRA segment top address
-        PAddr idt;           // IDT
-        PAddr gdt;           // GDT
-        PAddr sys_pt;        // System Page Table
-        PAddr sys_pd;        // System Page Directory
-        PAddr sys_info;      // System Info
-        PAddr phy_mem_pts;   // Page tables to map the whole physical memory
-        PAddr io_pts;        // Page tables to map the I/O address space
-        PAddr sys_code;      // OS Code Segment
-        PAddr sys_data;      // OS Data Segment
-        PAddr sys_stack;     // OS Stack Segment
-        PAddr free1_base;    // First free memory chunk base address
-        PAddr free1_top;     // First free memory chunk top address
-        PAddr free2_base;    // Second free memory chunk base address
-        PAddr free2_top;     // Second free memory chunk top address
-        PAddr free3_base;    // Third free memory chunk base address
-        PAddr free3_top;     // Third free memory chunk top address
+        PAddr mem_base;         // Memory base address
+        PAddr mem_top;          // Memory top address
+        PAddr io_base;          // I/O Memory base address
+        PAddr io_top;           // I/O Memory top address
+ 	PAddr ext_base;         // Boot Image EXTRA segment base address
+ 	PAddr ext_top;          // Boot Image EXTRA segment top address
+        PAddr idt;              // IDT
+        PAddr gdt;              // GDT
+        PAddr sys_pt;           // System Page Table
+        PAddr sys_pd;           // System Page Directory
+        PAddr sys_info;         // System Info
+        PAddr phy_mem_pts;      // Page tables to map the whole physical memory
+        PAddr io_pts;           // Page tables to map the I/O address space
+        PAddr sys_code;         // OS Code Segment
+        PAddr sys_data;         // OS Data Segment
+        PAddr sys_stack;        // OS Stack Segment
+        PAddr free1_base;       // First free memory chunk base address
+        PAddr free1_top;        // First free memory chunk top address
+        PAddr free2_base;       // Second free memory chunk base address
+        PAddr free2_top;        // Second free memory chunk top address
+        PAddr free3_base;       // Third free memory chunk base address
+        PAddr free3_top;        // Third free memory chunk top address
     };
 
     // Logical Memory Map (built by SETUP)
     struct Logical_Memory_Map
     {
-        LAddr app_entry;       // First application's entry point
+        LAddr app_entry;        // First application's entry point
     };
 
     // Load Map (built by SETUP)
-    struct Load_Map {
+    struct Load_Map
+    {
         bool  has_stp;
         bool  has_ini;
         bool  has_sys;
@@ -109,11 +110,15 @@ public:
     };
 
     // Time Map (built by SETUP)
-    struct Time_Map {
+    struct Time_Map
+    {
         unsigned int cpu_clock;
         unsigned int bus_clock;
     };
         
+public:
+    friend Debug & operator<<(Debug & db, const System_Info<PC> & si);
+
 public:
     Boot_Map bm;
     Physical_Memory_Map pmm;

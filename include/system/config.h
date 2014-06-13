@@ -10,8 +10,7 @@
 #define __END_SYS               }
 #define _SYS                    ::EPOS
 
-#define ASM                     __asm__
-#define ASMV                    __asm__ __volatile__
+#define ASM                     __asm__ __volatile__
 
 #define __HEADER_ARCH(X)            <arch/ARCH/X.h>
 #define __HEADER_MACH(X)            <mach/MACH/X.h>
@@ -34,8 +33,7 @@
 //============================================================================
 // ASSERT (for pre and post conditions)
 //============================================================================
-//extern void __assert_fail (const char * __assertion, const char * __file, unsigned int __line, const char * __function);
-//#define assert(expr)    ((expr) ? static_cast<void>(0) : __assert_fail (#expr, __FILE__, __LINE__, __PRETTY_FUNCTION__))
+//#define assert(expr)    ((expr) ? static_cast<void>(0) : Assert::fail (#expr, __FILE__, __LINE__, __PRETTY_FUNCTION__))
 #define assert(expr)    (static_cast<void>(0))
 
 //============================================================================

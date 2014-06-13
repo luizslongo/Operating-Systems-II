@@ -72,8 +72,7 @@ public:
 
     static Hertz clock() { return CLOCK; }
 
-    static void config(int channel, Count count, 
-                       bool interrupt = true, bool periodic = true)
+    static void config(int channel, Count count, bool interrupt = true, bool periodic = true)
     {
         if(channel > 2)
             return;
@@ -243,7 +242,6 @@ class PC_Timer: public Timer_Common
     friend class Init_System;
 
 public:
-    typedef int Channel;
     enum {
         SCHEDULER,
         ALARM,
@@ -253,17 +251,16 @@ public:
 protected:
     typedef IF<Traits<System>::multicore, APIC_Timer, i8253>::Result Engine;
     typedef Engine::Count Count;
+    typedef IC::Interrupt_Id Interrupt_Id;
 
     static const unsigned int CHANNELS = 3;
     static const unsigned int FREQUENCY = Traits<PC_Timer>::FREQUENCY;
 
 public:
-    PC_Timer(const Hertz & frequency, const Handler & handler, const Channel & channel, bool retrigger = true)
-    : _channel(channel), _initial(FREQUENCY / frequency), _retrigger(retrigger), _handler(handler) {
-        db<Timer>(TRC) << "Timer(f=" << frequency
-                       << ",h=" << reinterpret_cast<void*>(handler)
-                       << ",ch=" << channel
-                       << ") => {count=" << _initial << "}" << endl;
+    PC_Timer(const Hertz & frequency, const Handler & handler, const Channel & channel, bool retrigger = true):
+        _channel(channel), _initial(FREQUENCY / frequency), _retrigger(retrigger), _handler(handler) {
+        db<Timer>(TRC) << "Timer(f=" << frequency << ",h=" << reinterpret_cast<void*>(handler)
+                       << ",ch=" << channel << ") => {count=" << _initial << "}" << endl;
 
         if(_initial && (unsigned(channel) < CHANNELS) && !_channels[channel])
             _channels[channel] = this;
@@ -272,7 +269,6 @@ public:
 
         for(unsigned int i = 0; i < Traits<Machine>::CPUS; i++)
             _current[i] = _initial;
-
     }
 
     ~PC_Timer() {
@@ -303,11 +299,9 @@ public:
     void handler(const Handler * handler) { _handler = handler; }
 
     static void enable() { IC::enable(IC::INT_TIMER); }
-    static void disable() { IC::enable(IC::INT_TIMER); }
+    static void disable() { IC::disable(IC::INT_TIMER); }
 
  private:
-    static int init();
-
     static Hertz count2freq(const Count & c) {
         return c ? Engine::clock() / c : 0;
     }
@@ -316,7 +310,9 @@ public:
         return f ? Engine::clock() / f : 0;
     }
 
-    static void int_handler(unsigned int irq);
+    static void int_handler(const Interrupt_Id & i);
+
+    static void init();
 
 protected:
     unsigned int _channel;
@@ -336,8 +332,7 @@ private:
     typedef RTC::Microsecond Microsecond;
 
 public:
-    Scheduler_Timer(const Microsecond & quantum, const Handler & handler)
-    : PC_Timer(1000000 / quantum, handler, SCHEDULER) {}
+    Scheduler_Timer(const Microsecond & quantum, const Handler & handler): PC_Timer(1000000 / quantum, handler, SCHEDULER) {}
 };
 
 
@@ -359,8 +354,7 @@ private:
     typedef RTC::Microsecond Microsecond;
 
 public:
-    User_Timer(const Microsecond & quantum, const Handler & handler)
-    : PC_Timer(1000000 / quantum, handler, USER, true) {}
+    User_Timer(const Microsecond & quantum, const Handler & handler): PC_Timer(1000000 / quantum, handler, USER, true) {}
 };
 
 __END_SYS

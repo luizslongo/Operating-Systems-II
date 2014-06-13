@@ -8,16 +8,20 @@
 
 __BEGIN_SYS
 
-class IA32_TSC: public TSC_Common
+class IA32_TSC: private TSC_Common
 {
+public:
+    using TSC_Common::Hertz;
+    using TSC_Common::Time_Stamp;
+
 public:
     IA32_TSC() {}
 
-    static Hertz frequency() { return IA32::clock(); }
+    static Hertz frequency() { return CPU::clock(); }
 
     static Time_Stamp time_stamp() {
         Time_Stamp ts;
-        ASMV("rdtsc" : "=A" (ts) : ); // must be volatile!
+        ASM("rdtsc" : "=A" (ts) : ); // must be volatile!
         return ts;
     }
 };
