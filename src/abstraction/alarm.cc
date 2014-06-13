@@ -2,6 +2,7 @@
 
 #include <semaphore.h>
 #include <alarm.h>
+#include <display.h>
 
 __BEGIN_SYS
 
@@ -12,14 +13,12 @@ Alarm::Queue Alarm::_request;
 
 
 // Methods
-Alarm::Alarm(const Microsecond & time, Handler * handler, int times)
-: _ticks(ticks(time)), _handler(handler), _times(times), _link(this, _ticks)
+Alarm::Alarm(const Microsecond & time, Handler * handler, int times):
+    _ticks(ticks(time)), _handler(handler), _times(times), _link(this, _ticks)
 {
     lock();
 
-    db<Alarm>(TRC) << "Alarm(t=" << time
-                   << ",tk=" << _ticks
-                   << ",h=" << reinterpret_cast<void *>(handler)
+    db<Alarm>(TRC) << "Alarm(t=" << time << ",tk=" << _ticks << ",h=" << reinterpret_cast<void *>(handler)
                    << ",x=" << times << ") => " << this << endl;
 
     if(_ticks) {
@@ -74,33 +73,27 @@ void Alarm::handler()
     Alarm * alarm = 0;
 
     if(!_request.empty()) {
-        while(_request.head()->promote() <= 0) { // rank can be negative whenever
-                                                 // multiple handlers get created
-                                                 // for the same time tick
-
+        // Replacing the following "if" by a "while" loop is tempting, but recovering the lock and dispatching the handler is
+        // troublesome if the Alarm gets destroyed in between, like is the case for the idle thread returning to shutdown the machine
+        if(_request.head()->promote() <= 0) { // rank can be negative whenever multiple handlers get created for the same time tick
             Queue::Element * e = _request.remove();
             alarm = e->object();
-
             if(alarm->_times != INFINITE)
                 alarm->_times--;
             if(alarm->_times) {
                 e->rank(alarm->_ticks);
                 _request.insert(e);
             }
-
-            unlock();
-
-            if(alarm) {
-            	db<Alarm>(TRC) << "Alarm::handler(this=" << alarm << ",e=" << _elapsed << ",h="
-                               << reinterpret_cast<void*>(alarm->handler) << ")" << endl;
-            	(*alarm->_handler)();
-            }
-
-            lock();
         }
     }
 
     unlock();
+
+    if(alarm) {
+        db<Alarm>(TRC) << "Alarm::handler(this=" << alarm << ",e=" << _elapsed << ",h="
+                       << reinterpret_cast<void*>(alarm->handler) << ")" << endl;
+        (*alarm->_handler)();
+    }
 }
 
 __END_SYS

@@ -60,22 +60,23 @@ Thread::~Thread()
         exit(-1);
         break;
     case READY:
+        _scheduler.remove(this);
         _thread_count--;
         break;
     case SUSPENDED:
         _scheduler.resume(this);
+        _scheduler.remove(this);
         _thread_count--;
         break;
     case WAITING:
         _waiting->remove(this);
         _scheduler.resume(this);
+        _scheduler.remove(this);
         _thread_count--;
         break;
     case FINISHING: // Already called exit()
         break;
     }
-
-    _scheduler.remove(this);
 
     if(_joining)
         _joining->resume();
@@ -312,7 +313,7 @@ void Thread::reschedule(unsigned int cpu)
 }
 
 
-void Thread::rescheduler(unsigned int irq)
+void Thread::rescheduler(const IC::Interrupt_Id & interrupt)
 {
     lock();
 
