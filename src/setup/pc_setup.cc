@@ -94,7 +94,6 @@ private:
     // System_Info Imports
     typedef System_Info<PC>::Boot_Map BM;
     typedef System_Info<PC>::Physical_Memory_Map PMM;
-    typedef System_Info<PC>::Logical_Memory_Map LMM;
     typedef System_Info<PC>::Load_Map LM;
 
 public:
@@ -103,7 +102,6 @@ public:
 private:
     void build_lm();
     void build_pmm();
-    void build_lmm();
     void get_node_id();
 
     void say_hi();
@@ -159,7 +157,6 @@ PC_Setup::PC_Setup(char * boot_image)
     	// Build the memory model
         build_lm();
         build_pmm();
-        build_lmm();
 
         // Try to obtain a node id for this machine
         get_node_id();
@@ -460,12 +457,6 @@ void PC_Setup::build_pmm()
         si->pmm.ext_base = 0;
         si->pmm.ext_top = 0;
     }	
-}
-
-//========================================================================
-void PC_Setup::build_lmm()
-{
-    si->lmm.app_entry = si->lm.app_entry;
 }
 
 //========================================================================

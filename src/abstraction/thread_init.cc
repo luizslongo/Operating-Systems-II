@@ -5,11 +5,20 @@
 #include <alarm.h>
 #include <task.h>
 
+extern "C" { void __epos_app_entry(); }
+
 __BEGIN_SYS
 
 void Thread::init()
 {
-    int (* entry)() = reinterpret_cast<int (*)()>(System::info()->lmm.app_entry);
+    // If EPOS is a library, then adjust the application entry point to __epos_app_entry,
+    // which will directly call main(). In this case, _init will have already been called,
+    // before Init_Application, to construct main()'s global objects.
+    int (* entry)();
+    if(Traits<Build>::MODE == Traits<Build>::LIBRARY)
+        entry = reinterpret_cast<int (*)()>(__epos_app_entry);
+    else
+        entry = reinterpret_cast<int (*)()>(System::info()->lm.app_entry);
 
     db<Init, Thread>(TRC) << "Thread::init(entry=" << reinterpret_cast<void *>(entry) << ")" << endl;
 

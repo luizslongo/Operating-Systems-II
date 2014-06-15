@@ -272,10 +272,8 @@ public:
     }
 
     ~PC_Timer() {
-        db<Timer>(TRC) << "~Timer(f=" << frequency()
-        	       << ",h=" << reinterpret_cast<void*>(_handler)
-        	       << ",ch=" << _channel
-        	       << ") => {count=" << _initial << "}" << endl;
+        db<Timer>(TRC) << "~Timer(f=" << frequency() << ",h=" << reinterpret_cast<void*>(_handler)
+        	       << ",ch=" << _channel << ") => {count=" << _initial << "}" << endl;
 
         _channels[_channel] = 0;
     }

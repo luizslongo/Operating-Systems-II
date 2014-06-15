@@ -63,12 +63,6 @@ public:
         PAddr free3_top;        // Third free memory chunk top address
     };
 
-    // Logical Memory Map (built by SETUP)
-    struct Logical_Memory_Map
-    {
-        LAddr app_entry;        // First application's entry point
-    };
-
     // Load Map (built by SETUP)
     struct Load_Map
     {
@@ -122,7 +116,6 @@ public:
 public:
     Boot_Map bm;
     Physical_Memory_Map pmm;
-    Logical_Memory_Map lmm;
     Load_Map lm;
     Time_Map tm;
 };
