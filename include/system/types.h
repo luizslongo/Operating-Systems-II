@@ -108,6 +108,7 @@ class eMote3_Display;
 
 // Hardware Mediators - NIC
 class PC_Ethernet;
+class eMote3_Radio;
 class PCNet32;
 class C905;
 class E100;

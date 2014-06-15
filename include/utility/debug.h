@@ -111,14 +111,6 @@ db(Debug_Trace l)
     return Select_Debug<((Traits<T1>::debugged || Traits<T2>::debugged) && Traits<Debug>::trace)>();
 }
 
-union Debug_Level
-{
-    Debug_Error err;
-    Debug_Warning wrn;
-    Debug_Info inf;
-    Debug_Trace trc;
-};
-
 
 class Assert
 {

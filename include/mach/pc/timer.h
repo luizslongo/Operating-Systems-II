@@ -80,12 +80,12 @@ public:
         Reg8 cnt, control;
         switch(channel) {
         case(1):
-                cnt = CNT_1;
-        control = DEF_CTRL_C1;
+            cnt = CNT_1;
+            control = DEF_CTRL_C1;
         break;
         case(2):
-                cnt = CNT_2;
-        control = DEF_CTRL_C2;
+            cnt = CNT_2;
+            control = DEF_CTRL_C2;
         break;
         default:
             cnt = CNT_0;
@@ -133,12 +133,12 @@ public:
         Reg8 cnt, ctrl;
         switch(channel) {
         case(1):
-                cnt = CNT_1;
-        ctrl = DEF_CTRL_C1;
+            cnt = CNT_1;
+            ctrl = DEF_CTRL_C1;
         break;
         case(2):
-                cnt = CNT_2;
-        ctrl = DEF_CTRL_C2;
+            cnt = CNT_2;
+            ctrl = DEF_CTRL_C2;
         break;
         default:
             cnt = CNT_0;

@@ -20,45 +20,45 @@ void PC_IC::int_not(const Interrupt_Id & i)
 
 void PC_IC::exc_not(const Interrupt_Id & i, Reg32 error, Reg32 eip, Reg32 cs, Reg32 eflags)
 {
-    db<IC>(WRN) << "IC::exc_not(i=" << i << ") => [err=" << hex << error
+    db<PC>(WRN) << "IC::exc_not(i=" << i << ") => [err=" << hex << error
                 << ",ctx={cs=" << cs << ",ip=" << eip << ",fl=" << eflags << "}]" << endl;
 
-    db<IC>(WRN) << "The running thread will now be terminated!" << endl;
+    db<PC>(WRN) << "The running thread will now be terminated!" << endl;
     _exit(-1);
 }
 
 void PC_IC::exc_pf(const Interrupt_Id & i, Reg32 error, Reg32 eip, Reg32 cs, Reg32 eflags)
 {  
-    db<IC>(WRN) << "IC::exc_pf(i=" << i << ") => [address=" << hex << CPU::cr2() << ",err={";
+    db<PC>(WRN) << "IC::exc_pf(i=" << i << ") => [address=" << hex << CPU::cr2() << ",err={";
     if(error & (1 << 0))
-        db<IC>(WRN) << "P";
+        db<PC>(WRN) << "P";
     if(error & (1 << 1))
-        db<IC>(WRN) << "W";
+        db<PC>(WRN) << "W";
     if(error & (1 << 2))
-        db<IC>(WRN) << "S";
+        db<PC>(WRN) << "S";
     if(error & (1 << 3))
-        db<IC>(WRN) << "R";
-    db<IC>(WRN) << "},ctx={cs=" << hex << cs << ",ip=" << eip << ",fl=" << eflags << "}]" << endl;
+        db<PC>(WRN) << "R";
+    db<PC>(WRN) << "},ctx={cs=" << hex << cs << ",ip=" << eip << ",fl=" << eflags << "}]" << endl;
 
-    db<IC>(WRN) << "The running thread will now be terminated!" << endl;
+    db<PC>(WRN) << "The running thread will now be terminated!" << endl;
     _exit(-1);
 }
 
 void PC_IC::exc_gpf(const Interrupt_Id & i, Reg32 error, Reg32 eip, Reg32 cs, Reg32 eflags)
 {  
-    db<IC>(WRN) << "IC::exc_gpf(i=" << i << ")[err=" << hex << error << ",ctx={cs=" << (void *)cs
+    db<PC>(WRN) << "IC::exc_gpf(i=" << i << ")[err=" << hex << error << ",ctx={cs=" << (void *)cs
                 << ",ip=" << (void *)eip << ",fl=" << (void *)eflags << "}]" << endl;
 
-    db<IC>(WRN) << "The running thread will now be terminated!" << endl;
+    db<PC>(WRN) << "The running thread will now be terminated!" << endl;
     _exit(-1);
 }
 
 void PC_IC::exc_fpu(const Interrupt_Id & i, Reg32 error, Reg32 eip, Reg32 cs, Reg32 eflags)
 {
-    db<IC>(WRN) << "IC::exc_fpu(i=" << i << ") => [err=" << hex << error
+    db<PC>(WRN) << "IC::exc_fpu(i=" << i << ") => [err=" << hex << error
                 << ",ctx={cs=" << cs << ",ip=" << eip << ",fl=" << eflags << "}]" << endl;
 
-    db<IC>(WRN) << "The running thread will now be terminated!" << endl;
+    db<PC>(WRN) << "The running thread will now be terminated!" << endl;
     _exit(-1);
 }
 

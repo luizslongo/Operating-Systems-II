@@ -1,4 +1,3 @@
-// EPOS PC Machine Metainfo and Configuration
 #ifndef __pc_traits_h
 #define __pc_traits_h
 
@@ -44,7 +43,7 @@ template <> struct Traits<PC>: public Traits<PC_Common>
     static const unsigned int SYS_DATA  = 0xff740000;
 
     // Default Sizes and Quantities
-    static const unsigned int STACK_SIZE = 16 * 1024;
+    static const unsigned int STACK_SIZE = 256 * 1024;
     static const unsigned int HEAP_SIZE = MEM_TOP / 2;
     static const unsigned int MAX_THREADS = 32;
 };
@@ -119,7 +118,7 @@ template <> struct Traits<PCNet32>: public Traits<PC_Ethernet>
 {
     static const unsigned int UNITS = NICS::Count<PCNet32>::Result;
     static const unsigned int SEND_BUFFERS = 64; // per unit
-    static const unsigned int RECEIVE_BUFFERS = 64; // per unit
+    static const unsigned int RECEIVE_BUFFERS = 256; // per unit
 };
 
 template <> struct Traits<E100>: public Traits<PC_Ethernet>

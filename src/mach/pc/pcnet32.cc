@@ -271,6 +271,9 @@ void PCNet32::reset()
 
     // Activate sending and receiving
     csr(0, CSR0_IENA | CSR0_STRT);
+
+    // Reset statistics
+    new (&_statistics) Statistics;
 }
 
 

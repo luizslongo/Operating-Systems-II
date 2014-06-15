@@ -12,6 +12,7 @@ class System
 {
     friend class Init_System;
     friend class Init_Application;
+    friend void CPU::Context::load() const volatile;
     friend void * ::malloc(size_t);
     friend void ::free(void *);
     friend void * ::operator new(size_t, const EPOS::System_Allocator &);
