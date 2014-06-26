@@ -6,15 +6,14 @@ __BEGIN_SYS
 
 template<unsigned int UNIT>
 IP::IP(unsigned int nic): _nic(nic), _arp(&_nic, this), _address(Traits<IP>::Config<UNIT>::ADDRESS),
-                                 _netmask(Traits<IP>::Config<UNIT>::NETMASK), _broadcast((_address & _netmask) | ~_netmask),
-                                 _gateway(Traits<IP>::Config<UNIT>::GATEWAY)
+    _netmask(Traits<IP>::Config<UNIT>::NETMASK), _broadcast((_address & _netmask) | ~_netmask), _gateway(Traits<IP>::Config<UNIT>::GATEWAY)
 {
     db<IP>(TRC) << "IP::IP(nic=" << &_nic << ")" << endl;
 
     _nic.attach(this, NIC::IP);
 
     if(Traits<IP>::Config<UNIT>::TYPE == Traits<IP>::MAC)
-        _address[sizeof(Address) -1] = _nic.address()[sizeof(MAC_Address) - 1];
+        config_by_mac();
     else if(Traits<IP>::Config<UNIT>::TYPE == Traits<IP>::INFO)
         config_by_info();
     else if(Traits<IP>::Config<UNIT>::TYPE == Traits<IP>::RARP)

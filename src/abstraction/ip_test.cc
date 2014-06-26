@@ -11,7 +11,7 @@ OStream cout;
 
 int udp_test()
 {
-    char data[20000];
+    char data[1000];
     Link<UDP> * comm;
 
     IP * ip = IP::get_by_nic(0);
@@ -40,7 +40,7 @@ int udp_test()
 
             for(int j = 8; j < sizeof(data) - 8; j += 8) {
                 data[j+0] = ' ';
-                data[j+1] = '0' + (j / 1000000 % 10);
+                data[j+1] = '0' + i + (j / 1000000 % 10);
                 data[j+2] = '0' + (j / 100000 % 10);
                 data[j+3] = '0' + (j / 10000 % 10);
                 data[j+4] = '0' + (j / 1000 % 10);
@@ -62,7 +62,7 @@ int udp_test()
             if(sent == sizeof(data))
                 cout << "  Data: " << data << endl;
             else
-                cout << "  Data was not correctly sent. It was " << sizeof(data) << ", but only " << sent << "bytes were sent!"<< endl;
+                cout << "  Data was not correctly sent. It was " << sizeof(data) << " bytes long, but only " << sent << "bytes were sent!"<< endl;
         }
     } else { // receiver
         cout << "Receiver:" << endl;
@@ -73,8 +73,11 @@ int udp_test()
         comm = new Link<UDP>(8000, Link<UDP>::Address(peer_ip, UDP::Port(8000)));
 
         for(int i = 0; i < ITERATIONS; i++) {
-            comm->receive(&data, sizeof(data));
-            cout << "  Data: " << data << endl;
+            int received = comm->receive(&data, sizeof(data));
+            if(received == sizeof(data))
+                cout << "  Data: " << data << endl;
+            else
+                cout << "  Data was not correctly received. It was " << sizeof(data) << " bytes long, but " << received << " bytes were received!"<< endl;
         }
     }
 
@@ -83,7 +86,7 @@ int udp_test()
          << "Tx Packets: " << stat.tx_packets << "\n"
          << "Tx Bytes:   " << stat.tx_bytes << "\n"
          << "Rx Packets: " << stat.rx_packets << "\n"
-         << "Rx Bytes:   " << stat.rx_bytes << "\n";
+         << "Rx Bytes:   " << stat.rx_bytes << endl;
 
     return stat.tx_bytes + stat.rx_bytes;
 }

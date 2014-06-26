@@ -15,7 +15,6 @@ IP::Router IP::_router;
 IP::Reassembling IP::_reassembling;
 IP::Observed IP::_observed;
 
-
 // Methods
 void IP::config_by_info()
 {
@@ -29,6 +28,8 @@ void IP::config_by_dhcp()
 {
     db<IP>(TRC) << "IP::config_by_dhcp()" << endl;
 
+    _address = Address::BROADCAST;
+    _broadcast = Address::BROADCAST;
     _arp.insert(Address::BROADCAST, _nic.broadcast());
     _router.insert(&_nic, this, &_arp, Address::NULL, Address::BROADCAST, Address::NULL);
     DHCP::Client(_nic.address(), this);
@@ -97,36 +98,46 @@ void IP::update(NIC::Observed * nic, int prot, Buffer * buf)
     Packet * packet = buf->frame()->data<Packet>();
     db<IP>(INF) << "IP::update:pkt=" << packet << " => " << *packet << endl;
 
+    if((packet->to() != _address) && (packet->to() != _broadcast)) {
+        db<IP>(INF) << "IP::update: datagram was not for me!" << endl;
+        if(packet->to() != Address(Address::BROADCAST))
+            db<IP>(WRN) << "IP::update: routing not implemented!" << endl;
+        _nic.free(buf);
+        return;
+    }
+
     if(!packet->check()) {
-        db<IP>(WRN) << "IP::update: wrong packet checksum!" << endl;
+        db<IP>(WRN) << "IP::update: wrong packet header checksum!" << endl;
         _nic.free(buf);
         return;
     }
 
     buf->nic(&_nic);
 
-    unsigned long key = (packet->protocol() << 24) | (packet->id() << 8);
+    // The Ethernet Frame in Buffer might have been padded, so we need to adjust it to the datagram length
+    buf->size(packet->length());
 
     if((packet->flags() & Header::MF) || (packet->offset() != 0)) { // Fragmented
-        Fragmented * frag;
+        Key key = ((packet->from() & ~_netmask) << 16) | packet->id();
         Reassembling::Element * el = _reassembling.search_key(key);
 
+        Fragmented * frag;
         if(el)
             frag = el->object();
         else {
-            frag = new (SYSTEM) Fragmented(key);
+            frag = new (SYSTEM) Fragmented(key); // the Alarm created within Fragmented will reenable interrupts
             _reassembling.insert(frag->link());
         }
-
         frag->insert(buf);
 
         if(frag->reassembled()) {
             db<IP>(INF) << "IP::update: notifying reassembled datagram" << endl;
-            buf = frag->pool();
+            Buffer * pool = frag->pool();
             _reassembling.remove(frag->link());
             delete frag;
-            if(!notify(packet->protocol(), buf))
-                buf->nic()->free(buf);
+            // TODO: reorder pool
+            if(!notify(packet->protocol(), pool))
+                pool->nic()->free(pool);
         }
     } else {
         db<IP>(INF) << "IP::update: notifying whole datagram" << endl;

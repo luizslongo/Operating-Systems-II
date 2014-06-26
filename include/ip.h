@@ -3,6 +3,7 @@
 #ifndef __ip_h
 #define __ip_h
 
+#include <utility/bitmap.h>
 #include <nic.h>
 #include <system.h>
 #include <arp.h>
@@ -14,99 +15,8 @@ class IP: private NIC::Observer
     friend class System;
     template <int unit> friend void call_init();
 
-private:
-    // List to hold received Buffers containing datagram fragments
-    typedef NIC::Buffer Buffer;
-    class Fragmented;
-    typedef Simple_Hash<Fragmented, Traits<Build>::NODES, unsigned long> Reassembling;
-
-    template<unsigned int SIZE, unsigned int UNIT_SIZE>
-    class Bitmap
-    {
-    public:
-        Bitmap(): _size(SIZE / UNIT_SIZE) { memset(&_map, 0, SIZE / UNIT_SIZE / 8); }
-
-        bool set(unsigned int index) {
-            if(_map[index / UNIT_SIZE])
-                return false;
-            else {
-                _map[index / UNIT_SIZE] = true;
-                return true;
-            }
-        }
-
-        bool reset(unsigned int index) {
-            if(!_map[index / UNIT_SIZE])
-                return false;
-            else {
-                _map[index / UNIT_SIZE] = false;
-                return true;
-            }
-        }
-
-        void resize(unsigned int size) {
-            if(size < SIZE)
-                _size = size / UNIT_SIZE;
-        }
-
-        bool full() const {
-            for(unsigned int i = 0; i < _size; i++)
-                if(!_map[i])
-                    return false;
-            return true;
-        }
-
-        bool empty() const {
-            for(unsigned int i = 0; i < _size; i++)
-                if(_map[i])
-                    return false;
-            return true;
-        }
-
-    private:
-        unsigned int _size;
-        bool _map[SIZE / UNIT_SIZE];
-    };
-
-    class Fragmented
-    {
-    public:
-        typedef Buffer::List::Element Element;
-
-    public:
-        Fragmented(const Reassembling::Rank_Type & key): _link(this, key) {}
-
-        void insert(Buffer * buf) {
-            Packet * packet = buf->frame()->data<Packet>();
-
-            db<IP>(TRC) << "IP::Fragmented::insert(buf=" << buf << ") => " << *packet << endl;
-
-            if(_bitmap.set(packet->offset()))
-                _list.insert(buf->link());
-
-//            _received += packet->length() - sizeof(Header);
-
-            if(!(packet->flags() & Header::MF))
-                _bitmap.resize(packet->offset() + packet->length() - sizeof(Header));
-//                _size = packet->offset() + packet->length() - sizeof(Header);
-        }
-
-//        bool reassembled() const { return _size && (_size == _received); }
-        bool reassembled() const { return _bitmap.full(); }
-
-        Buffer * pool() { return _list.head()->object(); }
-
-        Reassembling::Element * link() { return &_link; }
-
-    private:
-        Bitmap<65536, 1480> _bitmap;
-//        unsigned int _size;
-//        unsigned int _received;
-        Buffer::List _list;
-        Reassembling::Element _link;
-    };
-
 public:
+    // IP Protocol Id
     static const unsigned int PROTOCOL = NIC::IP;
 
     // Addresses
@@ -125,8 +35,9 @@ public:
     };
 
 
-    typedef Data_Observer<Buffer> Observer;
-    typedef Data_Observed<Buffer> Observed;
+    // IP and NIC observer/d
+    typedef Data_Observer<NIC::Buffer> Observer;
+    typedef Data_Observed<NIC::Buffer> Observed;
 
 
     // IP Header
@@ -176,7 +87,7 @@ public:
         unsigned short checksum() const { return ntohs(_checksum); }
 
         void sum() { _checksum = 0; _checksum = htons(IP::checksum(reinterpret_cast<unsigned char *>(this), _ihl * 4)); }
-        bool check() { return !IP::checksum(reinterpret_cast<unsigned char *>(this), _ihl * 4); }
+        bool check() { return (IP::checksum(reinterpret_cast<unsigned char *>(this), _ihl * 4) != 0xffff); }
 
         const Address & from() const { return _from; }
         void from(const Address & from){ _from = from; }
@@ -230,11 +141,6 @@ public:
         Packet() {}
         Packet(const Address & from, const Address & to, const Protocol & prot, unsigned int size):
             Header(from, to, prot, size + sizeof(Header)) {}
-        Packet(const Address & from, const Address & to, const Protocol & prot, const void * data, unsigned int size):
-            Header(from, to, prot, size + sizeof(Header)) {
-            header()->sum();
-            memcpy(_data, data, size > sizeof(Data) ? sizeof(Data) : size);
-        }
 
         Header * header() { return this; }
 
@@ -253,6 +159,60 @@ public:
     typedef Packet PDU;
 
 
+private:
+    // Buffers received by the NIC, eventually linked into a list
+    typedef NIC::Buffer Buffer;
+
+    // Fragment key = f(from, id) = (from & ~_netmask) << 16 | id (fragmentation can only happen on localnet)
+    typedef unsigned long Key;
+
+    // List to hold received Buffers containing datagram fragments
+    class Fragmented;
+    typedef Simple_Hash<Fragmented, Traits<Build>::NODES, Key> Reassembling;
+
+    class Fragmented
+    {
+    private:
+        static const unsigned int MAX_SIZE = (MTU + MAX_FRAGMENT - 1) / MAX_FRAGMENT;
+        typedef Reassembling::Element Element;
+
+    public:
+        Fragmented(const Key & key): _size(MAX_SIZE), _handler(&timeout, this), _alarm(Traits<IP>::TIMEOUT * 1000000, &_handler), _link(this, key) {}
+
+        void insert(Buffer * buf) {
+            Packet * packet = buf->frame()->data<Packet>();
+
+            db<IP>(TRC) << "IP::Fragmented::insert(bms=" << _size << ",buf=" << buf << ") => " << *packet << endl;
+
+            if(_bitmap.set(packet->offset() / MAX_FRAGMENT))
+                _list.insert(buf->link());
+
+            if(!(packet->flags() & Header::MF))
+                _size = (packet->offset() + MAX_FRAGMENT) / MAX_FRAGMENT;
+        }
+
+        bool reassembled() const { return _bitmap.full(_size); }
+
+        Buffer * pool() { return _list.head()->object(); }
+
+        Element * link() { return &_link; }
+
+    private:
+        static void timeout(Fragmented * frag) {
+            frag->pool()->nic()->free(frag->pool());
+            delete frag;
+        }
+
+    private:
+        unsigned int _size;
+        Bitmap<MAX_SIZE> _bitmap;
+        Buffer::List _list;
+        Functor_Handler<Fragmented> _handler;
+        Alarm _alarm;
+        Element _link;
+    };
+
+
     class Router;
 
     class Route
@@ -264,8 +224,8 @@ public:
         typedef Table::Element Element;
 
     public:
-        Route(NIC * nic, IP * ip, ARP<NIC, IP> * arp, const Address & d, const Address & g, const Address & m, unsigned int t = 0, unsigned int w = 0)
-        : _destination(d), _gateway(g), _genmask(m), _flags(t), _metric(w), _nic(nic), _ip(ip), _arp(arp), _link(this) {}
+        Route(NIC * nic, IP * ip, ARP<NIC, IP> * arp, const Address & d, const Address & g, const Address & m, unsigned int t = 0, unsigned int w = 0):
+            _destination(d), _gateway(g), _genmask(m), _flags(t), _metric(w), _nic(nic), _ip(ip), _arp(arp), _link(this) {}
 
         const Address & gateway() const { return _gateway; }
         NIC * nic() { return _nic; }
@@ -325,7 +285,9 @@ public:
             }
         }
 
-        Route * search(Address to) { // Assume default (0.0.0.0) to have genmask 0.0.0.0 and be the last route in table
+        Route * search(Address to) {
+            // Assume default (0.0.0.0) to have genmask 0.0.0.0 and be the last route in table
+            // Assume all routes to be network routes (i.g. flags "G")
             db<IP>(TRC) << "IP::Route::search(to=" << to << ")" << endl;
 
             Element * e = _table.head();
@@ -395,6 +357,7 @@ public:
     }
 
 private:
+    void config_by_mac() { _address[sizeof(Address) -1] = _nic.address()[sizeof(MAC_Address) - 1]; }
     void config_by_info();
     void config_by_rarp();
     void config_by_dhcp();

@@ -83,7 +83,6 @@ int main()
     delete a;
     delete b;
     delete task1;
-//    delete m;
 
     cout << "I'm also done, bye!" << endl;
 

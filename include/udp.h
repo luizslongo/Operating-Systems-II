@@ -18,16 +18,19 @@ private:
     // IP Packet
     typedef IP::Packet Packet;
 
-    // Pseudo header for checksum calculations
-    struct Pseudo_Header {
-        unsigned long from;
-        unsigned long to;
-        unsigned char zero;
-        unsigned char protocol;
-        unsigned short length;
+    // Pseudo IP header for checksum calculations
+    class Pseudo_Header
+    {
+    public:
+        Pseudo_Header(const IP::Address & f, const IP::Address & t, unsigned short l):
+            _from(f), _to(t), _zero(0), _protocol(IP::UDP), _length(htons(l)) {};
 
-        Pseudo_Header(unsigned long f, unsigned long t, unsigned short l)
-        : from(f), to(t), zero(0), protocol(IP::UDP), length(htons(l)) {};
+    private:
+        IP::Address _from;
+        IP::Address _to;
+        unsigned char _zero;
+        unsigned char _protocol;
+        unsigned short _length;
     };
 
 public:
@@ -75,28 +78,28 @@ public:
     {
     public:
         Header() {}
-        Header(const Port & from, const Port & to, unsigned int size)
-        : _from_port(htons(from)), _to_port(htons(to)), _length(htons((size > sizeof(Data) ? sizeof(Data) : size) + sizeof(Header))) {}
+        Header(const Port & from, const Port & to, unsigned int size):
+            _from(htons(from)), _to(htons(to)), _length(htons((size > sizeof(Data) ? sizeof(Data) : size) + sizeof(Header))) {}
 
-        Port from_port() const { return ntohs(_from_port); }
-        Port to_port() const { return ntohs(_to_port); }
+        Port from() const { return ntohs(_from); }
+        Port to() const { return ntohs(_to); }
 
         unsigned short length() const { return ntohs(_length); }
 
         unsigned short checksum() const { return ntohs(_checksum); }
 
         friend OStream & operator<<(OStream & db, const Header & h) {
-            db << "{sp=" << ntohs(h._from_port) << ",dp=" << ntohs(h._to_port)
+            db << "{sp=" << ntohs(h._from) << ",dp=" << ntohs(h._to)
                << ",len=" << ntohs(h._length) << ",chk=" << hex << ntohs(h._checksum) << dec << "}";
             return db;
         }
 
     protected:
-        unsigned short _from_port;
-        unsigned short _to_port;
+        Port _from;
+        Port _to;
         unsigned short _length;   // Length of datagram (header + data) in bytes
         unsigned short _checksum; // Pseudo header checksum (see RFC)
-    };
+    } __attribute__((packed));
 
 
     static const unsigned int MTU = 65536 - sizeof(Header) - sizeof(IP::Header);
@@ -109,19 +112,14 @@ public:
     public:
         Message() {}
         Message(const Port & from, const Port & to, unsigned int size): Header(from, to, size) {}
-        Message(const Port & from, const Port & to, const void * data, unsigned int size)
-        : Header(from, to, size) { memcpy(_data, data, length()); sum(); }
 
         Header * header() { return this; }
 
         template<typename T>
         T * data() { return reinterpret_cast<T *>(&_data); }
 
-        void sum(const void * data = 0) {
-            Pseudo_Header pseudo(from_port(), to_port(), length());
-            _checksum = Traits<UDP>::checksum ? UDP::checksum(&pseudo, data ? data : _data, length()) : 0;
-        }
-        bool check() { return Traits<UDP>::checksum ? !UDP::checksum(header(), data<void>(), length()) : true; }
+        void sum(const IP::Address & from, const IP::Address & to, const void * data);
+        bool check() { return Traits<UDP>::checksum ? (IP::checksum(this, length()) != 0xffff) : true; }
 
         friend Debug & operator<<(Debug & db, const Message & m) {
             db << "{head=" << reinterpret_cast<const Header &>(m) << ",data=" << m._data << "}";
@@ -130,7 +128,7 @@ public:
 
     private:
         Data _data;
-    } __attribute__((packed, may_alias));
+    } __attribute__((packed));
 
 public:
     UDP() {
@@ -148,7 +146,7 @@ public:
 private:
     void update(IP::Observed * ip, int port, NIC::Buffer * buf);
 
-    static unsigned short checksum(const void * header, const void * data, unsigned int size);
+    static unsigned short checksum(const Pseudo_Header * pseudo, const Header * header, const void * data, unsigned int size);
 
 private:
     static List _received;

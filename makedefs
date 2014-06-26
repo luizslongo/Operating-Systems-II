@@ -23,15 +23,15 @@ LUTILNAME	:= util
 # Supported software architectures
 MODE_LIBRARY	:= library
 MODE_BUILTIN    := builtin
-MODE_KERNEL		:= kernel
+MODE_KERNEL	:= kernel
 
 # Supported hardware architectures
 ARCH_IA32       := ia32
 ARCH_ARMv7      := armv7
 
 # Supported machines
-MACH_PC			:= pc
-MACH_eMote3		:= emote3
+MACH_PC		:= pc
+MACH_eMote3	:= emote3
 
 # Makefile hacks
 APPLICATIONS	:= $(subst .cc,,$(shell find $(APP) -name \*.cc -printf "%f\n"))
@@ -95,16 +95,15 @@ BOOT_LENGTH_MAX = $(call GETTK,BOOT_LENGTH_MAX,$(MACH_TRAITS))
 $(MACH_PC)_CC_FLAGS     := -Wa,--32
 $(MACH_PC)_AS_FLAGS     := --32
 $(MACH_PC)_LD_FLAGS     := 
-$(MACH_PC)_CODE_NAME    := .init
-$(MACH_PC)_DATA_NAME    := .ctors
 $(MACH_PC)_EMULATOR     = qemu-system-i386 -smp $(CPUS) -m $(MEM_SIZE)k -nographic -no-reboot -fda
+
 $(MACH_eMote3)_CC_FLAGS := -mcpu=cortex-m3 -mthumb -mno-thumb-interwork -mfpu=fpa #-Wa,-mimplicit-it=arm -marm 
 $(MACH_eMote3)_AS_FLAGS := -mcpu=cortex-m3 -mthumb -mfpu=fpa
 $(MACH_eMote3)_LD_FLAGS := 
-$(MACH_eMote3)_CODE_NAME:= .init
-$(MACH_eMote3)_DATA_NAME:= .ctors
 $(MACH_eMote3)_EMULATOR = qemu-system-arm -cpu cortex-m3 -machine lm3s811evb -m $(MEM_SIZE)k -nographic -no-reboot -kernel
 
+$(MACH)_CODE_NAME       := .init
+$(MACH)_DATA_NAME       := .ctors
 ifeq ($(GDB),1)
 MACH_CC_FLAGS           := -g -feliminate-unused-debug-symbols $($(MACH)_CC_FLAGS)
 MACH_AS_FLAGS           := -g $($(MACH)_AS_FLAGS)
@@ -149,34 +148,34 @@ TCXXFLAGS	:= -m32 -Wall -O2 -I$(INCLUDE)
 TCPP		:= gcc -E 
 TCPPFLAGS	:= -I$(INCLUDE)
 
-TLD			:= gcc
+TLD		:= gcc
 TLDFLAGS	:= -m32
 
 # Tools and flags to compile applications
-ACC			= $(BIN)/eposcc $(MACH_CC_FLAGS) -c -ansi -O2
+ACC		= $(BIN)/eposcc $(MACH_CC_FLAGS) -c -ansi -O2
 ACXX		= $(BIN)/eposcc $(MACH_CC_FLAGS) -c -ansi -O2
 AF77		= $(BIN)/eposcc $(MACH_CC_FLAGS) -c -ansi -O2
-ALD			= $(BIN)/eposcc --$(MODE) $(MACH_LD_FLAGS)
+ALD		= $(BIN)/eposcc --$(MODE) $(MACH_LD_FLAGS)
 ALDFLAGS	:= --gc-sections 
 
 # Tools and flags to compile the system
-AR			= $(COMP_PREFIX)ar
+AR		= $(COMP_PREFIX)ar
 ARFLAGS		:= rcs
 
-AS			= $(COMP_PREFIX)as
+AS		= $(COMP_PREFIX)as
 ASFLAGS		= $(MACH_AS_FLAGS)
 
-CC			= $(COMP_PREFIX)gcc -ansi -c 
+CC		= $(COMP_PREFIX)gcc -ansi -c 
 CCFLAGS		= $(MACH_CC_FLAGS) -O2 -nostdinc -Wall -Werror -I$(INCLUDE)
 CCLIB		= `$(CC) $(MACH_CC_FLAGS) -print-file-name=`
 
-CPP			= $(COMP_PREFIX)gcc -E
+CPP		= $(COMP_PREFIX)gcc -E
 CPPFLAGS	= $(MACH_CC_FLAGS) -I$(INCLUDE)
 
-CXX			= $(COMP_PREFIX)g++ -c --no-exceptions --no-rtti --no-use-cxa-atexit -std=c++0x
+CXX		= $(COMP_PREFIX)g++ -c --no-exceptions --no-rtti --no-use-cxa-atexit -std=c++0x
 CXXFLAGS	= $(MACH_CC_FLAGS) -O2 -nostdinc -Wall -Werror -fdata-sections -ffunction-sections -I$(INCLUDE)
 
-LD			= $(COMP_PREFIX)ld
+LD		= $(COMP_PREFIX)ld
 LDFLAGS		= $(MACH_LD_FLAGS) -nostdlib -L$(LIB) -Bstatic
 
 OBJCOPY		= $(COMP_PREFIX)objcopy
@@ -195,7 +194,7 @@ MKBI		:= $(BIN)/eposmkbi $(EPOS)
 CLEAN		:= rm -f
 CLEANDIR	:= rm -rf
 
-DD			:= dd
+DD		:= dd
 
 DEBUGGER	= $(MACH_DEBUGGER) 
 
@@ -209,7 +208,7 @@ STRIP		= $(COMP_PREFIX)strip -R .note -R .comment
 
 TCPDUMP		:= tcpdump -tttttennvvvXXr
 
-TEE			:= tee
+TEE		:= tee
 
 TERM		:= xterm -e
 

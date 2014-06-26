@@ -126,12 +126,12 @@ template <> struct Traits<Thread>: public Traits<void>
     static const bool trace_idle = hysterically_debugged;
 };
 
-template<> struct Traits<Scheduler<Thread> >: public Traits<void>
+template <> struct Traits<Scheduler<Thread> >: public Traits<void>
 {
-    static const bool debugged = hysterically_debugged;
+    static const bool debugged = Traits<Thread>::trace_idle || hysterically_debugged;
 };
 
-template<> struct Traits<Periodic_Thread>: public Traits<void>
+template <> struct Traits<Periodic_Thread>: public Traits<void>
 {
     static const bool simulate_capacity = false;
 };

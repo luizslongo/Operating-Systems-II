@@ -76,6 +76,8 @@ int PCNet32::receive(Address * src, Protocol * prot, void * data, unsigned int s
     Frame * frame = buf->frame();
     *src = frame->src();
     *prot = frame->prot();
+
+    // For the upper layers, size will represent the size of frame->data<T>()
     buf->size((desc->misc & 0x00000fff) - sizeof(Header) - sizeof(CRC));
 
     // Copy the data
@@ -164,7 +166,6 @@ int PCNet32::send(Buffer * buf)
 
         // Wait for packet to be sent and unlock the respective buffer
         while(desc->status & Tx_Desc::OWN);
-
         buf->unlock();
     }
 
@@ -176,19 +177,22 @@ void PCNet32::free(Buffer * buf)
 {
     db<PCNet32>(TRC) << "PCNet32::free(buf=" << buf << ")" << endl;
 
-    Rx_Desc * desc = buf->back<Rx_Desc>();
+    for(Buffer::Element * el = buf->link(); el; el = el->next()) {
+        buf = el->object();
+        Rx_Desc * desc = buf->back<Rx_Desc>();
 
-    _statistics.rx_packets++;
-    _statistics.rx_bytes += buf->size();
+        _statistics.rx_packets++;
+        _statistics.rx_bytes += buf->size();
 
-    // Release the buffer to the NIC
-    desc->size = Reg16(-sizeof(Frame)); // 2's comp.
-    desc->status = Rx_Desc::OWN; // Owned by NIC
+        // Release the buffer to the NIC
+        desc->size = Reg16(-sizeof(Frame)); // 2's comp.
+        desc->status = Rx_Desc::OWN; // Owned by NIC
 
-    // Release the buffer to the OS
-    buf->unlock();
+        // Release the buffer to the OS
+        buf->unlock();
 
-    db<PCNet32>(INF) << "PCNet32::free:desc=" << desc << " => " << *desc << endl;
+        db<PCNet32>(INF) << "PCNet32::free:desc=" << desc << " => " << *desc << endl;
+    }
 }
 
 
@@ -310,6 +314,7 @@ void PCNet32::handle_int()
                     Rx_Desc * desc = &_rx_ring[_rx_cur];
                     Frame * frame = buf->frame();
 
+                    // For the upper layers, size will represent the size of frame->data<T>()
                     buf->size((desc->misc & 0x00000fff) - sizeof(Header) - sizeof(CRC));
 
                     db<PCNet32>(TRC) << "PCNet32::int:receive(s=" << frame->src() << ",p=" << hex << frame->header()->prot() << dec
@@ -317,8 +322,11 @@ void PCNet32::handle_int()
 
                     db<PCNet32>(INF) << "PCNet32::handle_int:desc[" << _rx_cur << "]=" << desc << " => " << *desc << endl;
 
+                    IC::disable(IC::irq2int(_irq));
                     if(!notify(frame->header()->prot(), buf)) // No one was waiting for this frame, so let it free for receive()
-                        buf->unlock();
+                        free(buf);
+                    // TODO: this serialization is much too restrictive. It was done this way for students to play with
+                    IC::enable(IC::irq2int(_irq));
                 }
             }
  	}

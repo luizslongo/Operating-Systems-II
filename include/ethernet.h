@@ -40,8 +40,8 @@ public:
     {
     public:
         Header() {}
-        Header(const Address & src, const Address & dst, const Protocol & prot)
-        : _dst(dst), _src(src), _prot(htons(prot)) {}
+        Header(const Address & src, const Address & dst, const Protocol & prot):
+            _dst(dst), _src(src), _prot(htons(prot)) {}
 
         friend Debug & operator<<(Debug & db, const Header & h) {
             db << "{" << h._dst << "," << h._src << "," << h.prot() << "}";
@@ -83,7 +83,7 @@ public:
     protected:
         Data _data;
         CRC _crc;
-    } __attribute__((packed, may_alias));
+    } __attribute__((packed));
 
     typedef Frame PDU;
 
