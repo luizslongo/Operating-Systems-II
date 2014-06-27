@@ -3,27 +3,19 @@
 
 __USING_SYS
 
-// TODO: Peterson, faz uma classe decente :)
 class AC_Control {
+private:
+	char _temperature;
 public:
-	AC_Control() : _pin(13), data0_mask(0) {}
+	AC_Control() : _pin(13), data0_mask(0), _temperature(16) {clear_pin();}
 	~AC_Control() {}
 
 	typedef Machine::IO IO;
 
+	char temperature() { return _temperature; }
+
 	enum status {
 		keep_on = 0x24, turn_off = 0x4
-	};
-
-	enum temperatures {
-		plus = 0xE8, minus = 0xE4, neither = 0xE0
-	};
-
-	enum commands {
-		command_on = 0x52,
-		command_off = 0x62,
-		command_plus = 0x5A,
-		command_minus = 0x56
 	};
 
 	void set_pin() {
@@ -43,49 +35,25 @@ public:
 		}
 	}
 
-	void fulfil_set_command(int iterations, int calibration) {
-
-		for (int i = 0; i < iterations; i++) {
-			set_pin();
-			delay10u(calibration);
-			clear_pin();
-			delay10u(calibration);
-		}
-
-	}
-
-	void fulfil_clear_command(int iterations, float calibration) {
-
-		for (int i = 0; i < iterations; i++) {
-			clear_pin();
-			delay10u(calibration);
-			set_pin();
-			delay10u(calibration);
-		}
-
-	}
-
-	void put_L(int calibration = 0) {
-		fulfil_clear_command(200, 1.2);
+	void fulfil_set_command(int interval=40) {
 		set_pin();
-		delay10u(192 + 7);
-	}
-
-	void put_S(int calibration = 0) {
-		fulfil_set_command(13, 1.2);
-		set_pin();
-		delay10u(840 + 18);
+		delay10u(interval);
 		clear_pin();
 	}
 
+	void put_L(int calibration = 0) {
+		set_pin();
+		delay10u(380);
+	}
+
 	void put_0(int calibration = 0) {
-		fulfil_set_command(13, 1.2);
-		delay10u(53 + calibration);
+		fulfil_set_command();
+		delay10u(50);
 	}
 
 	void put_1(int calibration = 0) {
-		fulfil_set_command(13, 1.2);
-		delay10u(137 + 7);
+		fulfil_set_command();
+		delay10u(136);
 	}
 
 	void put_either(char either) {
@@ -100,40 +68,65 @@ public:
 			put_either(c & (1 << i));
 		}
 	}
+	void put_c_inverted(char c) {
+		for (int i = 0; i <= 7; i++) {
+			put_either(c & (1 << i));
+		}
+	}
+	void put_half(char c) {
+		for (int i = 3; i >= 0; i--) {
+			put_either(c & (1 << i));
+		}
+	}
+	void put_half_inverted(char c) {
+		for (int i = 0; i <= 3; i++) {
+			put_either(c & (1 << i));
+		}
+	}
 
-	void send_command(char on_off, char temperature, char command) {
+	void send_command(char on_off, char temperature) {
 		put_L();
-		put_c(0xC4);
+		clear_pin();
+		delay10u(188);
+		put_c(0xC4);		
 		put_c(0xD3);
 		put_c(0x64);
 		put_c(0x80);
 		put_c(0x0);
 		put_c(on_off);
-		put_c(0x10);
-		put_c(temperature);
-		put_c(0x40);
+		put_c(0xC0);
+		put_half_inverted(31-temperature);
+		put_half(0x0);
+		put_c(0x1C);
 		put_c(0x0);
 		put_c(0x0);
 		put_c(0x0);
 		put_c(0x0);
-		put_c(command);
-		put_S();
+		if(on_off == turn_off)
+			put_c(0x9E);
+		else
+			put_c_inverted(147-temperature);
+		put_0();
 	}
 
 	void turn_ac_off() {
-		send_command(turn_off, neither, command_off);
+		send_command(turn_off, 22);
 	}
 
 	void turn_ac_on() {
-		send_command(keep_on, neither, command_on);
+		send_command(keep_on, _temperature);
 	}
 
 	void increase_temperature() {
-		send_command(keep_on, plus, command_plus);
+		_temperature++;
+		if(_temperature > 32) _temperature = 32;
+		send_command(keep_on, _temperature);
 	}
 
 	void decrease_temperature() {
-		send_command(keep_on, minus, command_minus);
+		_temperature--;
+		if(_temperature < 16) _temperature = 16;
+		send_command(keep_on, _temperature);
 	}
 
 private:

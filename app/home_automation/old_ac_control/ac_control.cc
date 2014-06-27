@@ -88,7 +88,6 @@ public:
 			value = (((unsigned short)data[2]) << 8) | data[3];
 			kout << "Write single coil " << coil << " " << value << endl;
 			led_debug(value);
-//			if(coil == 0x00) value ? _ac.set_pin() : _ac.clear_pin();
 			if(coil == 0x00) value ? _ac.turn_ac_on() : _ac.turn_ac_off();
 			break;
 //		case WRITE_MULTIPLE_COILS:
