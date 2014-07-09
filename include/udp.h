@@ -1,4 +1,4 @@
-// EPOS UDP Protocol Declarations
+// EPOS UDP (RFC 768) Protocol Declarations
 
 #ifndef __udp_h
 #define __udp_h
@@ -132,11 +132,11 @@ public:
 
 public:
     UDP() {
-        db<UDP>(TRC) << "UDP::DUP()" << endl;
+        db<UDP>(TRC) << "UDP::UDP()" << endl;
         IP::attach(this, IP::UDP);
     }
     ~UDP() {
-        db<UDP>(TRC) << "UDP::~DUP()" << endl;
+        db<UDP>(TRC) << "UDP::~UDP()" << endl;
         IP::detach(this, IP::UDP);
     }
 

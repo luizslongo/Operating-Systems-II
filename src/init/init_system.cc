@@ -1,5 +1,6 @@
 // EPOS System Initializer
 
+#include <utility/random.h>
 #include <machine.h>
 #include <system.h>
 #include <address_space.h>
@@ -56,6 +57,24 @@ public:
         db<Init>(INF) << "Initializing system abstractions: " << endl;
         System::init();
         db<Init>(INF) << "done!" << endl;
+
+        // Randomize the Random Numbers Generator's seed
+        if(Traits<Random>::enabled) {
+            db<Init>(INF) << "Randomizing the Random Numbers Generator's seed: " << endl;
+            if(Traits<TSC>::enabled)
+                Random::seed(TSC::time_stamp());
+            if(Traits<NIC>::enabled) {
+                NIC nic;
+                Random::seed(Random::random() ^ nic.address());
+            }
+//            if(Traits<ADC>::enabled) {
+//                ADC adc;
+//                Random::seed(Random::random() ^ adc.read);
+//            }
+            if(!Traits<TSC>::enabled && !Traits<NIC>::enabled)
+                db<Init>(WRN) << "Due to lack of entropy, Random is a pseudo random numbers generator!" << endl;
+            db<Init>(INF) << "done!" << endl;
+        }
 
         // Initialization continues at init_first
     }

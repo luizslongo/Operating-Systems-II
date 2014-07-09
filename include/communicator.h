@@ -27,15 +27,26 @@ protected:
 public:
     ~Communicator_Common() {}
 
+    int send(const Address & to, const void * data, unsigned int size) {
+        return _channel.send(to, data, size);
+    }
     int send(const Local_Address & from, const Address & to, const void * data, unsigned int size) {
         return _channel.send(from, to, data, size);
     }
+
     int receive(void * data, unsigned int size) {
         _ready.p();
         Element * el = _received.remove();
         Buffer * buf = el->object();
         delete el;
         return _channel.receive(buf, data, size);
+    }
+    int receive(Address * from, void * data, unsigned int size) {
+        _ready.p();
+        Element * el = _received.remove();
+        Buffer * buf = el->object();
+        delete el;
+        return _channel.receive(buf, from, data, size);
     }
 
     void bind(const Local_Address & port) {
@@ -85,7 +96,7 @@ private:
 
 
 template<typename Channel, typename Network = typename Channel::Network>
-class Port: private Communicator_Common<Channel, Network>
+class Port: public Communicator_Common<Channel, Network>
 {
 private:
     typedef Communicator_Common<Channel, Network> Base;
@@ -96,18 +107,14 @@ public:
     typedef typename Channel::Address::Local Local_Address;
 
 public:
-    Port(Network * network, const Local_Address & port): Base(network), _from(network->address(), port) {
-        bind(port);
-    }
-    ~Port() {
-        unbind(_from.local());
-    }
+    Port(const Local_Address & from): _from(from) { bind(from); }
+    ~Port() { unbind(_from); }
 
     int send(const Address & to, const void * data, unsigned int size) {
         return Base::send(_from, to, data, size);
     }
-    int receive(void * data, unsigned int size) {
-        return Base::receive(data, size);
+    int receive(Address * from, void * data, unsigned int size) {
+        return Base::receive(from, data, size);
     }
 
 private:

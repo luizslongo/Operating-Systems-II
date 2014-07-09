@@ -130,11 +130,11 @@ public:
     } __attribute__((packed));
 
 
+    // IP Packet
     static const unsigned int MAX_FRAGMENT = sizeof(NIC::Data) - sizeof(Header);
     static const unsigned int MTU = 65535 - sizeof(Header);
     typedef unsigned char Data[MTU];
 
-    // IP Packet
     class Packet: public Header
     {
     public:
@@ -382,5 +382,7 @@ protected:
 };
 
 __END_SYS
+
+#include <icmp.h>
 
 #endif

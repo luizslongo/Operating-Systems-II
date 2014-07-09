@@ -1,11 +1,11 @@
-#include <dhcp.h>
+// EPOS DHCP (RFCs 2131 and 2132) Protocol Implementation
 
-#ifdef __NIC_H
+#include <dhcp.h>
 
 __BEGIN_SYS
 
-DHCP::Client::Client(const MAC_Address & mac, IP * ip)
-: Link<UDP>(68, Link<UDP>::Address(~0UL, 67)), _xid(Random::random() * mac[sizeof(MAC_Address) - 1])
+DHCP::Client::Client(const MAC_Address & mac, IP * ip):
+Link<UDP>(68, Link<UDP>::Address(~0UL, 67)), _xid(Random::random())
 {
     IP::Address address = IP::Address::NULL;
     IP::Address netmask = IP::Address::NULL;
@@ -13,7 +13,7 @@ DHCP::Client::Client(const MAC_Address & mac, IP * ip)
     IP::Address gateway = IP::Address::NULL;
     IP::Address nameserver = IP::Address::NULL;
 
-    Packet<255> packet;
+    Packet<> packet;
 
     db<DHCP>(TRC) << "DHCP::Client()" << endl;
 
@@ -51,11 +51,11 @@ DHCP::Client::Client(const MAC_Address & mac, IP * ip)
     ip->reconfigure(address, netmask, gateway);
 }
 
-void DHCP::Client::parse_options(Packet<255> * packet, IP::Address * netmask, IP::Address * broadcast, IP::Address * gateway, IP::Address * nameserver)
+void DHCP::Client::parse_options(Packet<> * packet, IP::Address * netmask, IP::Address * broadcast, IP::Address * gateway, IP::Address * nameserver)
 {
     unsigned char * opt = packet->options();
 
-    for(int i = 0; i < 255; i++) {
+    for(unsigned int i = 0; i < Packet<>::MAX_OPTIONS_LENGTH; i++) {
         switch(opt[i]) {
         case 0: // padding
             break;
@@ -123,5 +123,3 @@ void DHCP::Client::parse_options(Packet<255> * packet, IP::Address * netmask, IP
 }
 
 __END_SYS
-
-#endif

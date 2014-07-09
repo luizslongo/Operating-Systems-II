@@ -25,12 +25,14 @@ public:
         RELEASE
     };
 
-    template<unsigned int OPTIONS>
+    template<unsigned int OPTIONS = 306>
     class Packet
     {
     public:
-        Packet()
-        {
+        static const unsigned int MAX_OPTIONS_LENGTH = 306;
+
+    public:
+        Packet() {
             memset(this, 0, sizeof(Packet));
             _magic[0] = 0x63;
             _magic[1] = 0x82;
@@ -66,7 +68,7 @@ public:
         unsigned char  _options[OPTIONS];
         unsigned char  _end;            // 255 -> end of options
         unsigned char  _padding[312 - 5 - OPTIONS]; // MAX (312) - _magic - _end - _options
-    };
+    } __attribute__((packed));;
 
     class Discover: public Packet<3>
     {
@@ -83,7 +85,7 @@ public:
         }
     };
 
-    class Offer: public Packet<255> {};
+    class Offer: public Packet<> {};
 
     class Request: public Packet<8>
     {
@@ -107,18 +109,19 @@ public:
         }
     };
 
-    class Ack: public Packet<255> {};
+    class Ack: public Packet<> {};
 
     class Client: private Link<UDP>
     {
     public:
         Client(const MAC_Address & mac, IP * ip);
-        ~Client() { /* release(); */ }
+        ~Client() { /* release() only if renew() active and the client is a thread */ }
 
         void renew();
         void release();
 
-        void parse_options(Packet<255> * packet, IP::Address * a, IP::Address * m, IP::Address * g, IP::Address * n);
+    private:
+        void parse_options(Packet<> * packet, IP::Address * a, IP::Address * m, IP::Address * g, IP::Address * n);
 
     protected:
         unsigned long _xid;

@@ -10,12 +10,16 @@ void PC::init()
 
     if(Traits<PC_IC>::enabled)
         PC_IC::init();
+
     if(Traits<PC_PCI>::enabled)
         PC_PCI::init();
+
     if(Traits<PC_Timer>::enabled)
         PC_Timer::init();
+
     if(Traits<PC_Scratchpad>::enabled)
         PC_Scratchpad::init();
+
     if(Traits<PC_Ethernet>::enabled)
         PC_Ethernet::init();
 }

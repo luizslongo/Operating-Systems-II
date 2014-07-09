@@ -1,4 +1,4 @@
-// EPOS ICMP Protocol Declarations
+// EPOS ICMP (RFC 792) Protocol Declarations
 
 #ifndef __icmp_h
 #define __icmp_h
@@ -10,13 +10,16 @@ __BEGIN_SYS
 class ICMP: private IP::Observer, public Data_Observed<NIC::Buffer>
 {
 private:
-    // Imports from IP
-    typedef IP::Address Address;
+    // Buffers received from IP
+    typedef NIC::Buffer Buffer;
+
+public:
+    // Network to be used by Communicator
+    typedef IP Network;
 
     // ICMP Packet Types
     typedef unsigned char Type;
-    enum
-    {
+    enum {
         ECHO_REPLY              = 0,
         UNREACHABLE             = 3,
         SOURCE_QUENCH           = 4,
@@ -47,8 +50,7 @@ private:
 
     // ICMP Packet Codes
     typedef unsigned char Code;
-    enum
-    {
+    enum {
         NETWORK_UNREACHABLE     = 0,
         HOST_UNREACHABLE        = 1,
         PROTOCOL_UNREACHABLE    = 2,
@@ -67,89 +69,111 @@ private:
         PRECEDENCE_CUTOFF       = 15
     };
 
+    // ICMP addresses are ordinary IP addresses, but Type will be used by Communicator as local address
+    class Address: public IP::Address
+    {
+    public:
+        typedef int Local;
+
+    public:
+        Address() {}
+        Address(const IP::Address & ip): IP::Address(ip) {}
+
+        Local local() const { return 0; }
+    };
+
+    typedef Data_Observer<NIC::Buffer> Observer;
+    typedef Data_Observed<NIC::Buffer> Observed;
+
+    // ICMP Header
     class Header
     {
     public:
+        Header() {}
+        Header(const Type & type, const Code & code): _type(type), _code(code) {}
         Header(const Type & type, const Code & code, unsigned short id, unsigned short seq):
             _type(type), _code(code), _checksum(0), _id(htons(id)), _sequence(htons(seq)) {}
 
         Type & type() { return _type; }
         Code & code() { return _code; }
         unsigned short checksum() { return _checksum; }
-        unsigned short id() { return htons(_id); }
-        unsigned short sequence() { return htons(_sequence); }
 
-    private:
+        unsigned short id() { return htons(_id); }
+        void id(unsigned short id) { _id = htons(id); }
+
+        unsigned short sequence() { return htons(_sequence); }
+        void sequence(unsigned short seq) { _sequence = htons(seq); }
+
+        const Address & ip();
+        void ip (const Address & ip);
+
+        friend Debug & operator<<(Debug & db, const Header & h) {
+            db << "{typ=" << h._type
+               << ",cod=" << h._code
+               << ",chk=" << hex << h._checksum << dec
+               << ",id=" << h._id
+               << ",seq=" << h._sequence
+               << "}";
+            return db;
+        }
+
+    protected:
         unsigned char  _type;
         unsigned char  _code;
         unsigned short _checksum;
         unsigned short _id;
         unsigned short _sequence;
-    };
+    } __attribute__((packed));
 
-    class Packet
+
+    // ICMP Packet
+    static const unsigned int MTU = 56; // to make a traditional 64-byte packet
+    typedef unsigned char Data[MTU];
+
+    class Packet: public Header
     {
     private:
         static const unsigned int DATA_SIZE = 56;
 
     public:
-        Packet(const Type & type, const Code & code, unsigned short id, unsigned short seq, const char * data = 0, unsigned int size = DATA_SIZE)
-        : _header(type, code, id, seq) {
-            if(data)
-                memcpy(_data, data, size < DATA_SIZE ? size : DATA_SIZE);
-            else
-                memset(_data, 0, DATA_SIZE);
+        Packet(){}
+        Packet(const Type & type, const Code & code): Header(type, code) {}
+        Packet(const Type & type, const Code & code, unsigned short id, unsigned short seq): Header(type, code, id, seq) {}
+
+        Header * header() { return this; }
+
+        template<typename T>
+        T * data() { return reinterpret_cast<T *>(&_data); }
+
+        void sum() { _checksum = 0; _checksum = htons(IP::checksum(reinterpret_cast<unsigned char *>(this), sizeof(Packet))); }
+        bool check() { return (IP::checksum(reinterpret_cast<unsigned char *>(this), sizeof(Packet)) != 0xffff); }
+
+        friend Debug & operator<<(Debug & db, const Packet & p) {
+            db << "{head=" << reinterpret_cast<const Header &>(p) << ",data=" << p._data << "}";
+            return db;
         }
 
-        void checksum() {}
-
-        unsigned char * data() { return _data; }
-
     private:
-        Header _header;
-        unsigned char  _data[DATA_SIZE];
-    };
+        Data _data;
+    } __attribute__((packed));
+
+    typedef Packet PDU;
 
 public:
-    ICMP(IP * ip): _ip(ip) {
-        _ip->attach(this, IP::ICMP);
+    ICMP() {
+        db<ICMP>(TRC) << "ICMP::ICMP()" << endl;
+        IP::attach(this, IP::ICMP);
     }
-
     ~ICMP() {
-        _ip->detach(this, IP::ICMP);
+        db<ICMP>(TRC) << "ICMP::ICMP()" << endl;
+        IP::detach(this, IP::ICMP);
     }
 
-    void update(IP::Observed * ip, int c, NIC::Buffer * buf) {
-
-//        Packet * packet = reinterpret_cast<Packet *>(dgram->data());
-//
-//        if(!check(packet)) {
-//            db<ICMP>(TRC) << "ICMP::update() => checksum error!" << endl;
-//            return;
-//        }
-//
-//        if(packet.type() == ECHO) { // PONG
-//            db<ICMP>(TRC) << "ICMP::echo sending automatic reply to " << src << endl;
-//            Packet reply(ECHO_REPLY, 0, packet.id(), packet.sequence(), packet._data);
-//            send(packet.dst(), packet.src(), reply);
-//        }
-//
-//        if (packet.type() == ECHO_REPLY) {
-//            db<ICMP>(TRC) << "ICMP::echo reply from " << src << endl;
-//        }
-
-        //         notify(src, dst, packet.type(), data, size);
-
-    }
-            
-    void send(const Address & to, Packet & packet)
-    {
-        packet.checksum();
-        _ip->send(to, IP::ICMP, &packet, sizeof(Packet));
-    }
+    int send(const Address::Local & from, const Address & to, const void * data, unsigned int size);
+    int receive(Buffer * buf, Address * from, void * data, unsigned int size);
 
 private:
-    IP * _ip;
+    void update(IP::Observed * ip, int port, NIC::Buffer * buf);
 };
 
 __END_SYS
