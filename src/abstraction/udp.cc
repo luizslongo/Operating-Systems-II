@@ -5,8 +5,7 @@
 __BEGIN_SYS
 
 // Class attributes
-UDP::List UDP::_received;
-
+UDP::Observed UDP::_observed;
 
 // Methods
 int UDP::send(const Port & from, const Address & to, const void * d, unsigned int s)
@@ -91,9 +90,9 @@ int UDP::receive(Buffer * pool, void * d, unsigned int s)
 }
 
 
-void UDP::update(IP::Observed * ip, int port, Buffer * pool)
+void UDP::update(IP::Observed * obs, IP::Protocol prot, Buffer * pool)
 {
-    db<UDP>(TRC) << "UDP::update(buf=" << pool << ")" << endl;
+    db<UDP>(TRC) << "UDP::update(obs=" << obs << ",prot=" << prot << ",buf=" << pool << ")" << endl;
 
     Packet * packet = pool->frame()->data<Packet>();
     Message * message = packet->data<Message>();
@@ -109,11 +108,11 @@ void UDP::Message::sum(const IP::Address & from, const IP::Address & to, const v
 {
     _checksum = 0;
     if(Traits<UDP>::checksum) {
-        Pseudo_Header pseudo(from, to, length());
+        IP::Pseudo_Header pseudo(from, to, IP::UDP, length());
         unsigned long sum = 0;
 
         const unsigned char * ptr = reinterpret_cast<const unsigned char *>(&pseudo);
-        for(unsigned int i = 0; i < sizeof(Pseudo_Header); i += 2)
+        for(unsigned int i = 0; i < sizeof(IP::Pseudo_Header); i += 2)
             sum += (ptr[i] << 8) | ptr[i+1];
 
         ptr = reinterpret_cast<const unsigned char *>(header());
@@ -122,7 +121,7 @@ void UDP::Message::sum(const IP::Address & from, const IP::Address & to, const v
 
         ptr = reinterpret_cast<const unsigned char *>(data);
         unsigned int size = length() - sizeof(Header);
-        for(unsigned int i = 0; i < size - 1; i += 2)
+        for(unsigned int i = 0; i < size; i += 2)
             sum += (ptr[i] << 8) | ptr[i+1];
         if(size & 1)
             sum += ptr[size - 1];

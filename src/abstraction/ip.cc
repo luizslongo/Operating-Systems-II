@@ -91,9 +91,9 @@ int IP::send(Buffer * buf)
 }
 
 
-void IP::update(NIC::Observed * nic, int prot, Buffer * buf)
+void IP::update(NIC::Observed * obs, NIC::Protocol prot, Buffer * buf)
 {
-    db<IP>(TRC) << "IP::update(nic=" << nic << ",prot=" << hex << prot << dec << ",buf=" << buf << ")" << endl;
+    db<IP>(TRC) << "IP::update(obs=" << obs << ",prot=" << hex << prot << dec << ",buf=" << buf << ")" << endl;
 
     Packet * packet = buf->frame()->data<Packet>();
     db<IP>(INF) << "IP::update:pkt=" << packet << " => " << *packet << endl;
@@ -154,7 +154,7 @@ unsigned short IP::checksum(const void * data, unsigned int size)
     const unsigned char * ptr = reinterpret_cast<const unsigned char *>(data);
     unsigned long sum = 0;
 
-    for(unsigned int i = 0; i < size - 1; i += 2)
+    for(unsigned int i = 0; i < size; i += 2)
         sum += (ptr[i] << 8) | ptr[i+1];
 
     if(size & 1)

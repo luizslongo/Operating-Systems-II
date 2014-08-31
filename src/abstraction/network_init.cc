@@ -1,6 +1,9 @@
 // EPOS Network Abstraction Initialization
 
 #include <network.h>
+#include <icmp.h>
+#include <udp.h>
+#include <tcp.h>
 
 __BEGIN_SYS
 
@@ -26,6 +29,16 @@ void Network::init()
     db<Init, Network>(TRC) << "Network::init()" << endl;
 
     call_init<0>();
+
+    // If IP was initialized, initialize also the rest of the stack
+    if(Traits<Network>::NETWORKS::Count<IP>::Result) {
+        if(Traits<ICMP>::enabled)
+            new (SYSTEM) ICMP;
+        if(Traits<UDP>::enabled)
+            new (SYSTEM) UDP;
+        if(Traits<TCP>::enabled)
+            new (SYSTEM) TCP;
+    }
 }
 
 __END_SYS

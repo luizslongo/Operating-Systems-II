@@ -4,6 +4,9 @@
 
 __BEGIN_SYS
 
+// Class attributes
+ICMP::Observed ICMP::_observed;
+
 // Methods
 int ICMP::send(const Address::Local & from, const Address & to, const void * data, unsigned int s)
 {
@@ -46,9 +49,9 @@ int ICMP::receive(Buffer * buf, Address * from, void * data, unsigned int s)
     return size;
 }
 
-void ICMP::update(IP::Observed * ip, int port, NIC::Buffer * buf)
+void ICMP::update(IP::Observed * obs, IP::Protocol prot, NIC::Buffer * buf)
 {
-    db<ICMP>(TRC) << "ICMP::update(buf=" << buf << ")" << endl;
+    db<ICMP>(TRC) << "ICMP::update(obs=" << obs << ",prot=" << prot << ",buf=" << buf << ")" << endl;
 
     if(!notify(0, buf))
         buf->nic()->free(buf);
