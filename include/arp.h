@@ -229,9 +229,9 @@ public:
 //        return ha;
 //    }
 
-    void update(typename NIC::Observed * nic, int prot, typename NIC::Buffer * buf)
+    void update(typename NIC::Observed * obs, typename NIC::Protocol prot, typename NIC::Buffer * buf)
     {
-        db<ARP>(TRC) << "ARP::update(nic=" << nic << ",prot=" << prot << ",buf=" << buf << ")" << endl;
+        db<ARP>(TRC) << "ARP::update(obs=" << obs << ",prot=" << prot << ",buf=" << buf << ")" << endl;
 
         Packet * packet = buf->frame()->template data<Packet>();
         db<ARP>(INF) << "ARP::update:pkt=" << packet << " => " << *packet << endl;

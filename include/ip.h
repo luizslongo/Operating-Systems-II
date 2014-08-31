@@ -36,8 +36,8 @@ public:
 
 
     // IP and NIC observer/d
-    typedef Data_Observer<NIC::Buffer> Observer;
-    typedef Data_Observed<NIC::Buffer> Observed;
+    typedef Data_Observer<NIC::Buffer, Protocol> Observer;
+    typedef Data_Observed<NIC::Buffer, Protocol> Observed;
 
 
     // IP Header
@@ -49,6 +49,7 @@ public:
         static const unsigned int TOS = 0;
         static const unsigned int TTL = Traits<IP>::TTL;
 
+        // Flags
         enum {
             MF = 1, // More Fragments
             DF = 2  // Don't Fragment
@@ -102,7 +103,7 @@ public:
                << ",len=" << h.length()
                << ",id="  << h.id()
                << ",off=" << h.offset()
-               << ",flg=" << ((h.flags() & DF) ? "DF" : (h.flags() & MF) ? "MF" : "--")
+               << ",flg=" << ((h.flags() & DF) ? 'D' : '-') << ((h.flags() & MF) ? 'M' : '-')
                << ",ttl=" << h._ttl
                << ",pro=" << h._protocol
                << ",chk=" << hex << h._checksum << dec
@@ -130,6 +131,22 @@ public:
     } __attribute__((packed));
 
 
+    // IP Pseudo Header for checksum calculations
+    class Pseudo_Header
+    {
+    public:
+        Pseudo_Header(const Address & from, const Address & to, const Protocol & prot, unsigned int size) :
+            _from(from), _to(to), _zero(0), _protocol(prot), _length(htons(size)) {};
+
+    private:
+        IP::Address _from;
+        IP::Address _to;
+        unsigned char _zero;
+        unsigned char _protocol;
+        unsigned short _length;
+    };
+
+
     // IP Packet
     static const unsigned int MAX_FRAGMENT = sizeof(NIC::Data) - sizeof(Header);
     static const unsigned int MTU = 65535 - sizeof(Header);
@@ -139,8 +156,6 @@ public:
     {
     public:
         Packet() {}
-        Packet(const Address & from, const Address & to, const Protocol & prot, unsigned int size):
-            Header(from, to, prot, size + sizeof(Header)) {}
 
         Header * header() { return this; }
 
@@ -304,9 +319,11 @@ private:
     };
 
 
-public:
+protected:
     template<unsigned int UNIT = 0>
     IP(unsigned int nic = UNIT);
+
+public:
     ~IP();
 
     void reconfigure(const Address & a, const Address & m, const Address & g) {
@@ -344,7 +361,7 @@ public:
 
     static void attach(Observer * obs, const Protocol & prot) { _observed.attach(obs, prot); }
     static void detach(Observer * obs, const Protocol & prot) { _observed.detach(obs, prot); }
-    bool notify(const Protocol & prot, Buffer * buf) { return _observed.notify(prot, buf); }
+    static bool notify(const Protocol & prot, Buffer * buf) { return _observed.notify(prot, buf); }
 
     friend Debug & operator<<(Debug & db, const IP & ip) {
         db << "{a=" << ip._address
@@ -362,7 +379,7 @@ private:
     void config_by_rarp();
     void config_by_dhcp();
 
-    void update(NIC::Observed * nic, int prot, Buffer * buf);
+    void update(NIC::Observed * obs, NIC::Protocol prot, Buffer * buf);
 
     static void init(unsigned int unit);
 

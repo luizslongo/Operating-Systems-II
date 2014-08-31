@@ -7,33 +7,21 @@
 
 __BEGIN_SYS 
 
-class UDP: private IP::Observer, public Data_Observed<NIC::Buffer>
+class UDP: private IP::Observer
 {
+    friend class Network;
+    friend class TCP;
+
 private:
     // List to hold received Buffers
     typedef NIC::Buffer Buffer;
-    typedef Buffer::List List;
-    typedef List::Element Element;
 
     // IP Packet
     typedef IP::Packet Packet;
 
-    // Pseudo IP header for checksum calculations
-    class Pseudo_Header
-    {
-    public:
-        Pseudo_Header(const IP::Address & f, const IP::Address & t, unsigned short l):
-            _from(f), _to(t), _zero(0), _protocol(IP::UDP), _length(htons(l)) {};
-
-    private:
-        IP::Address _from;
-        IP::Address _to;
-        unsigned char _zero;
-        unsigned char _protocol;
-        unsigned short _length;
-    };
-
 public:
+    static const bool connectionless = true;
+
     typedef IP Network;
 
     typedef unsigned short Port;
@@ -43,8 +31,11 @@ public:
     public:
         typedef Port Local;
 
+        enum Null { NULL = IP::Address::NULL };
+
     public:
         Address() {}
+        Address(const Null &): _ip(NULL), _port(0) {}
         Address(const IP::Address & ip, const Port & port): _ip(ip), _port(port) {}
         Address(const char * addr): _ip(addr) { // a.b.c.d:port
             char * token = strchr(addr, ':');
@@ -55,12 +46,16 @@ public:
         const Port & port() const { return _port; }
         const Local & local() const { return _port; }
 
+        operator bool() const {
+            return (_ip || _port);
+        }
+
         bool operator==(const Address & a) {
             return (_ip == a._ip) && (_port == a._port);
         }
 
         friend OStream & operator<<(OStream & db, const Address & a) {
-            db << a._ip << ":" << a._port;
+            db << a._ip << ":" << hex << a._port;
             return db;
         }
 
@@ -70,8 +65,8 @@ public:
     };
     
 
-    typedef Data_Observer<NIC::Buffer> Observer;
-    typedef Data_Observed<NIC::Buffer> Observed;
+    typedef Data_Observer<NIC::Buffer, Port> Observer;
+    typedef Data_Observed<NIC::Buffer, Port> Observed;
 
 
     class Header
@@ -101,17 +96,14 @@ public:
         unsigned short _checksum; // Pseudo header checksum (see RFC)
     } __attribute__((packed));
 
-
     static const unsigned int MTU = 65536 - sizeof(Header) - sizeof(IP::Header);
 
     typedef unsigned char Data[MTU];
-
 
     class Message: public Header
     {
     public:
         Message() {}
-        Message(const Port & from, const Port & to, unsigned int size): Header(from, to, size) {}
 
         Header * header() { return this; }
 
@@ -130,26 +122,29 @@ public:
         Data _data;
     } __attribute__((packed));
 
-public:
+protected:
     UDP() {
         db<UDP>(TRC) << "UDP::UDP()" << endl;
         IP::attach(this, IP::UDP);
     }
+
+public:
     ~UDP() {
         db<UDP>(TRC) << "UDP::~UDP()" << endl;
         IP::detach(this, IP::UDP);
     }
 
-    int send(const Port & from, const Address & to, const void * data, unsigned int size);
-    int receive(NIC::Buffer * buf, void * data, unsigned int size);
+    static int send(const Port & from, const Address & to, const void * data, unsigned int size);
+    static int receive(NIC::Buffer * buf, void * data, unsigned int size);
+
+    static void attach(Observer * obs, const Port & port) { _observed.attach(obs, port); }
+    static void detach(Observer * obs, const Port & port) { _observed.detach(obs, port); }
+    static bool notify(const Port & port, Buffer * buf) { return _observed.notify(port, buf); }
 
 private:
-    void update(IP::Observed * ip, int port, NIC::Buffer * buf);
+    void update(IP::Observed * obs, IP::Protocol prot, NIC::Buffer * buf);
 
-    static unsigned short checksum(const Pseudo_Header * pseudo, const Header * header, const void * data, unsigned int size);
-
-private:
-    static List _received;
+    static Observed _observed; // Channel protocols are singletons
 };
 
 __END_SYS

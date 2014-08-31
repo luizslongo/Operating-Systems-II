@@ -4,6 +4,7 @@
 #define __dhdcp_h
 
 #include <utility/random.h>
+#include <utility/string.h>
 #include <communicator.h>
 
 __BEGIN_SYS

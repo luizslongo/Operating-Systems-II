@@ -7,13 +7,17 @@
 
 __BEGIN_SYS
 
-class ICMP: private IP::Observer, public Data_Observed<NIC::Buffer>
+class ICMP: private IP::Observer
 {
+    friend class Network;
+
 private:
     // Buffers received from IP
     typedef NIC::Buffer Buffer;
 
 public:
+    static const bool connectionless = true;
+
     // Network to be used by Communicator
     typedef IP Network;
 
@@ -73,7 +77,7 @@ public:
     class Address: public IP::Address
     {
     public:
-        typedef int Local;
+        typedef Type Local;
 
     public:
         Address() {}
@@ -82,8 +86,8 @@ public:
         Local local() const { return 0; }
     };
 
-    typedef Data_Observer<NIC::Buffer> Observer;
-    typedef Data_Observed<NIC::Buffer> Observed;
+    typedef Data_Observer<NIC::Buffer, Type> Observer;
+    typedef Data_Observed<NIC::Buffer, Type> Observed;
 
     // ICMP Header
     class Header
@@ -159,21 +163,29 @@ public:
 
     typedef Packet PDU;
 
-public:
+protected:
     ICMP() {
         db<ICMP>(TRC) << "ICMP::ICMP()" << endl;
         IP::attach(this, IP::ICMP);
     }
+
+public:
     ~ICMP() {
         db<ICMP>(TRC) << "ICMP::ICMP()" << endl;
         IP::detach(this, IP::ICMP);
     }
 
-    int send(const Address::Local & from, const Address & to, const void * data, unsigned int size);
-    int receive(Buffer * buf, Address * from, void * data, unsigned int size);
+    static int send(const Address::Local & from, const Address & to, const void * data, unsigned int size);
+    static int receive(Buffer * buf, Address * from, void * data, unsigned int size);
+
+    static void attach(Observer * obs, const Type & type) { _observed.attach(obs, type); }
+    static void detach(Observer * obs, const Type & type) { _observed.detach(obs, type); }
+    static bool notify(const Type & type, Buffer * buf) { return _observed.notify(type, buf); }
 
 private:
-    void update(IP::Observed * ip, int port, NIC::Buffer * buf);
+    void update(IP::Observed * ip, IP::Protocol prot, NIC::Buffer * buf);
+
+    static Observed _observed; // Channel protocols are singletons
 };
 
 __END_SYS

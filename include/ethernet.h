@@ -131,8 +131,8 @@ public:
 
 
     // Observers of a protocol get a also a pointer to the received buffer
-    typedef Data_Observer<Buffer> Observer;
-    typedef Data_Observed<Buffer> Observed;
+    typedef Data_Observer<Buffer, Protocol> Observer;
+    typedef Data_Observed<Buffer, Protocol> Observed;
 
 
     // Meaningful statistics for Ethernet
