@@ -89,7 +89,7 @@ int OStream::llitoa(long long int v, char * s)
 
 int OStream::llutoa(unsigned long long int v, char * s, unsigned int i)
 {
-    unsigned int j;
+    unsigned long long int j;
 
     if(!v) {
         s[i++] = '0';
