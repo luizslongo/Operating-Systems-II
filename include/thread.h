@@ -122,11 +122,13 @@ protected:
         if(smp)
             _lock.acquire();
     }
+
     static void unlock() {
         if(smp)
             _lock.release();
         CPU::int_enable();
     }
+    
     static bool locked() { return CPU::int_disabled(); }
 
     void suspend(bool locked);
@@ -194,10 +196,8 @@ __END_SYS
 
 __BEGIN_SYS
 
-
-inline Thread::Thread(int (* entry)(),
-                      const State & state, const Criterion & criterion, unsigned int stack_size):
-    _task(multitask ? Task::self() : 0), _state(state), _waiting(0), _joining(0), _link(this, criterion)
+inline Thread::Thread(int (* entry)(), const State & state, const Criterion & criterion, unsigned int stack_size)
+: _task(Task::self()), _state(state), _waiting(0), _joining(0), _link(this, criterion)
 {
     lock();
 
@@ -208,9 +208,8 @@ inline Thread::Thread(int (* entry)(),
 }
 
 template<typename T1>
-inline Thread::Thread(int (* entry)(T1 a1), T1 a1,
-                      const State & state, const Criterion & criterion, unsigned int stack_size):
-    _task(multitask ? Task::self() : 0), _state(state), _waiting(0), _joining(0), _link(this, criterion)
+inline Thread::Thread(int (* entry)(T1 a1), T1 a1, const State & state, const Criterion & criterion, unsigned int stack_size)
+: _task(Task::self()), _state(state), _waiting(0), _joining(0), _link(this, criterion)
 {
     lock();
 
@@ -221,9 +220,8 @@ inline Thread::Thread(int (* entry)(T1 a1), T1 a1,
 }
 
 template<typename T1, typename T2>
-inline Thread::Thread(int (* entry)(T1 a1, T2 a2), T1 a1, T2 a2,
-                      const State & state, const Criterion & criterion, unsigned int stack_size):
-    _task(multitask ? Task::self() : 0), _state(state), _waiting(0), _joining(0), _link(this, criterion)
+inline Thread::Thread(int (* entry)(T1 a1, T2 a2), T1 a1, T2 a2, const State & state, const Criterion & criterion, unsigned int stack_size)
+: _task(Task::self()), _state(state), _waiting(0), _joining(0), _link(this, criterion)
 {
     lock();
 
@@ -234,9 +232,8 @@ inline Thread::Thread(int (* entry)(T1 a1, T2 a2), T1 a1, T2 a2,
 }
 
 template<typename T1, typename T2, typename T3>
-inline Thread::Thread(int (* entry)(T1 a1, T2 a2, T3 a3), T1 a1, T2 a2, T3 a3,
-                      const State & state, const Criterion & criterion, unsigned int stack_size):
-    _task(multitask ? Task::self() : 0), _state(state), _waiting(0), _joining(0), _link(this, criterion)
+inline Thread::Thread(int (* entry)(T1 a1, T2 a2, T3 a3), T1 a1, T2 a2, T3 a3, const State & state, const Criterion & criterion, unsigned int stack_size)
+: _task(Task::self()), _state(state), _waiting(0), _joining(0), _link(this, criterion)
 {
     lock();
 
@@ -247,9 +244,8 @@ inline Thread::Thread(int (* entry)(T1 a1, T2 a2, T3 a3), T1 a1, T2 a2, T3 a3,
 }
 
 template<typename T1, typename T2, typename T3, typename T4>
-inline Thread::Thread(int (* entry)(T1 a1, T2 a2, T3 a3, T4 a4), T1 a1, T2 a2, T3 a3, T4 a4,
-                      const State & state, const Criterion & criterion, unsigned int stack_size):
-    _task(multitask ? Task::self() : 0), _state(state), _waiting(0), _joining(0), _link(this, criterion)
+inline Thread::Thread(int (* entry)(T1 a1, T2 a2, T3 a3, T4 a4), T1 a1, T2 a2, T3 a3, T4 a4, const State & state, const Criterion & criterion, unsigned int stack_size)
+: _task(Task::self()), _state(state), _waiting(0), _joining(0), _link(this, criterion)
 {
     lock();
 
@@ -259,8 +255,7 @@ inline Thread::Thread(int (* entry)(T1 a1, T2 a2, T3 a3, T4 a4), T1 a1, T2 a2, T
     common_constructor(entry, stack_size); // implicit unlock()
 }
 
-inline Thread::Thread(const Task & task, int (* entry)(),
-                      const State & state, const Criterion & criterion, unsigned int stack_size)
+inline Thread::Thread(const Task & task, int (* entry)(), const State & state, const Criterion & criterion, unsigned int stack_size)
 : _task(&task), _state(state), _waiting(0), _joining(0), _link(this, criterion)
 {
     lock();
@@ -272,8 +267,7 @@ inline Thread::Thread(const Task & task, int (* entry)(),
 }
 
 template<typename T1>
-inline Thread::Thread(const Task & task, int (* entry)(T1 a1), T1 a1,
-                      const State & state, const Criterion & criterion, unsigned int stack_size)
+inline Thread::Thread(const Task & task, int (* entry)(T1 a1), T1 a1, const State & state, const Criterion & criterion, unsigned int stack_size)
 : _task(&task), _state(state), _waiting(0), _joining(0), _link(this, criterion)
 {
     lock();
@@ -285,8 +279,7 @@ inline Thread::Thread(const Task & task, int (* entry)(T1 a1), T1 a1,
 }
 
 template<typename T1, typename T2>
-inline Thread::Thread(const Task & task, int (* entry)(T1 a1, T2 a2), T1 a1, T2 a2,
-                      const State & state, const Criterion & criterion, unsigned int stack_size)
+inline Thread::Thread(const Task & task, int (* entry)(T1 a1, T2 a2), T1 a1, T2 a2, const State & state, const Criterion & criterion, unsigned int stack_size)
 : _task(&task), _state(state), _waiting(0), _joining(0), _link(this, criterion)
 {
     lock();
@@ -298,8 +291,7 @@ inline Thread::Thread(const Task & task, int (* entry)(T1 a1, T2 a2), T1 a1, T2 
 }
 
 template<typename T1, typename T2, typename T3>
-inline Thread::Thread(const Task & task, int (* entry)(T1 a1, T2 a2, T3 a3), T1 a1, T2 a2, T3 a3,
-                      const State & state, const Criterion & criterion, unsigned int stack_size)
+inline Thread::Thread(const Task & task, int (* entry)(T1 a1, T2 a2, T3 a3), T1 a1, T2 a2, T3 a3, const State & state, const Criterion & criterion, unsigned int stack_size)
 : _task(&task), _state(state), _waiting(0), _joining(0), _link(this, criterion)
 {
     lock();
@@ -311,8 +303,7 @@ inline Thread::Thread(const Task & task, int (* entry)(T1 a1, T2 a2, T3 a3), T1 
 }
 
 template<typename T1, typename T2, typename T3, typename T4>
-inline Thread::Thread(const Task & task, int (* entry)(T1 a1, T2 a2, T3 a3, T4 a4), T1 a1, T2 a2, T3 a3, T4 a4,
-                      const State & state, const Criterion & criterion, unsigned int stack_size)
+inline Thread::Thread(const Task & task, int (* entry)(T1 a1, T2 a2, T3 a3, T4 a4), T1 a1, T2 a2, T3 a3, T4 a4, const State & state, const Criterion & criterion, unsigned int stack_size)
 : _task(&task), _state(state), _waiting(0), _joining(0), _link(this, criterion)
 {
     lock();

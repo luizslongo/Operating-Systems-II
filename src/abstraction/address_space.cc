@@ -7,15 +7,14 @@
 __BEGIN_SYS
 
 // Methods
-
 Address_Space::Address_Space(MMU::Page_Directory * pd) : MMU::Directory(pd)
 {
-    db <Address_Space> (TRC) << "Address_Space(pd=" << pd << ") [Directory::pd=" << Directory::pd() << "] => " << this << endl;
+    db<Address_Space> (TRC) << "Address_Space(pd=" << pd << ") [Directory::pd=" << Directory::pd() << "] => " << this << endl;
 }
 
 Address_Space::Address_Space()
 {
-    db <Address_Space> (TRC) << "Address_Space() [Directory::pd=" << Directory::pd() << "] => " << this << endl;
+    db<Address_Space> (TRC) << "Address_Space() [Directory::pd=" << Directory::pd() << "] => " << this << endl;
 }
 
 Address_Space::~Address_Space()
@@ -27,7 +26,7 @@ Address_Space::Log_Addr Address_Space::attach(const Segment & seg)
 {
     Log_Addr tmp = Directory::attach(seg);
 
-    db <Address_Space> (TRC) << "Address_Space::attach(seg=" << &seg << ") => " << tmp << endl;
+    db<Address_Space> (TRC) << "Address_Space::attach(seg=" << &seg << ") => " << tmp << endl;
 
     return tmp;
 }
@@ -36,14 +35,14 @@ Address_Space::Log_Addr Address_Space::attach(const Segment & seg, Address_Space
 {
     Log_Addr tmp = Directory::attach(seg, addr);
 
-    db <Address_Space> (TRC) << "Address_Space::attach(seg=" << &seg << ",addr=" << addr << ") => " << tmp << endl;
+    db<Address_Space> (TRC) << "Address_Space::attach(seg=" << &seg << ",addr=" << addr << ") => " << tmp << endl;
 
     return tmp;
 }
 
 void Address_Space::detach(const Segment & seg)
 {
-    db <Address_Space> (TRC) << "Address_Space::detach(seg=" << &seg << ")" << endl;
+    db<Address_Space> (TRC) << "Address_Space::detach(seg=" << &seg << ")" << endl;
 
     Directory::detach(seg);
 }
@@ -52,13 +51,5 @@ Address_Space::Phy_Addr Address_Space::physical(Address_Space::Log_Addr address)
 {
     return Directory::physical(address);
 }
-
-Address_Space * Address_Space::self()
-{
-    db <Address_Space> (TRC) << "Address_Space::self() => {Directory::pd=" << Thread::self()->task()->address_space()->pd() << "}" << endl;
-
-    return Thread::self()->task()->address_space();
-}
-
 
 __END_SYS
