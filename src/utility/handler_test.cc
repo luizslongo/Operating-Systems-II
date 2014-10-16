@@ -58,7 +58,7 @@ int main()
     chrono.stop();
 
     cout << "\n\nThread B exited with status " << status_b 
-  	 << " and thread C exited with status " << status_c << "" << endl;
+  	 << " and thread C exited with status " << status_c << endl;
 
     cout << "\nThe estimated time to run the test was " << max(period_a, period_b, period_c) * iterations << " ms. The measured time was " << chrono.read() / 1000 <<" ms!" << endl;
 

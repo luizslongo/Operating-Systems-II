@@ -13,7 +13,6 @@ class Init_Application
 {
 private:
     static const unsigned int HEAP_SIZE = Traits<Application>::HEAP_SIZE;
-    static const unsigned int STACK_SIZE = Traits<Application>::STACK_SIZE;
 
 public:
     Init_Application() {
