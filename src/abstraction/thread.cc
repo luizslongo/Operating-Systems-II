@@ -48,7 +48,7 @@ Thread::~Thread()
     db<Thread>(TRC) << "~Thread(this=" << this
                     << ",state=" << _state
                     << ",priority=" << _link.rank()
-                    << ",stack={b=" << reinterpret_cast<void*>(_stack)
+                    << ",stack={b=" << reinterpret_cast<void *>(_stack)
                     << ",context={b=" << _context
                     << "," << *_context << "})" << endl;
 
@@ -300,6 +300,7 @@ void Thread::reschedule()
 
     dispatch(prev, next);
 }
+
 
 void Thread::reschedule(unsigned int cpu)
 {
