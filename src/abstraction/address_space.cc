@@ -1,7 +1,5 @@
 // EPOS Address_Space Abstraction Implementation
 
-#include <thread.h>
-#include <task.h>
 #include <address_space.h>
 
 __BEGIN_SYS

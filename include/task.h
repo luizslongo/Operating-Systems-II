@@ -40,7 +40,7 @@ public:
     Log_Addr code() const { return _code; }
     Log_Addr data() const { return _data; }
 
-    static const Task * self() { assert(_master); return multitask ? Thread::self()->task() : _master; }
+    static const Task * self() { assert(_master || !Traits<Task>::enabled); return multitask ? Thread::self()->task() : _master; }
 
 private:
     void activate() const { _as->activate(); }

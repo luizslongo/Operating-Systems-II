@@ -12,8 +12,7 @@ class This_Thread
 {
 public:
     static unsigned int id();
-    static void booting_finished() { _not_booting = true; }
-    static bool booting() { return !_not_booting; }
+    static void not_booting() { _not_booting = true; }
 
 private:
     static bool _not_booting; 

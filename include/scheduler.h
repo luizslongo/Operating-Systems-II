@@ -303,9 +303,6 @@ public:
     	// But if you are unsure about your new use of the scheduler,
     	// please, pay the price of the extra "if" bellow.
 //    	return const_cast<T * volatile>((Base::chosen()) ? Base::chosen()->object() : 0);
-
-        assert(Base::chosen() || This_Thread::booting());
-
     	return const_cast<T * volatile>(Base::chosen()->object());
     }
 

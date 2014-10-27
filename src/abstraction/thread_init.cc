@@ -59,7 +59,7 @@ void Thread::init()
 
     db<Init, Thread>(INF) << "Dispatching the first thread: " << first << endl;
 
-    This_Thread::booting_finished();
+    This_Thread::not_booting();
 
     // This barrier is particularly important, since afterwards the temporary stacks
     // and data structures established by SETUP and announced as "free memory" will indeed be

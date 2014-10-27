@@ -25,6 +25,9 @@ template <> struct Traits<Build>
     enum {PC};
     static const unsigned int MACH = PC;
 
+    enum {Legacy};
+    static const unsigned int MODEL = Legacy;
+
     static const unsigned int CPUS = 1;
     static const unsigned int NODES = 2; // > 1 => NETWORKING
 };
@@ -95,7 +98,7 @@ template <> struct Traits<Application>: public Traits<void>
 template <> struct Traits<System>: public Traits<void>
 {
     static const unsigned int mode = Traits<Build>::MODE;
-    static const bool multithread = true;
+    static const bool multithread = (Traits<Application>::MAX_THREADS > 1);
     static const bool multitask = (mode != Traits<Build>::LIBRARY);
     static const bool multicore = (Traits<Build>::CPUS > 1) && multithread;
     static const bool multiheap = (mode != Traits<Build>::LIBRARY) || Traits<Scratchpad>::enabled;
@@ -105,8 +108,8 @@ template <> struct Traits<System>: public Traits<void>
 
     static const bool reboot = true;
 
-    static const unsigned int STACK_SIZE = 4 * 1024;
-    static const unsigned int HEAP_SIZE = 128 * Traits<Application>::STACK_SIZE;
+    static const unsigned int STACK_SIZE = Traits<Machine>::STACK_SIZE;
+    static const unsigned int HEAP_SIZE = (Traits<Application>::MAX_THREADS + 1) * Traits<Application>::STACK_SIZE;
 };
 
 
