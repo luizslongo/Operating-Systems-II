@@ -7,12 +7,12 @@
 #include "list.h"
 #include "vector.h"
 
-__BEGIN_SYS
+__BEGIN_UTIL
 
 // Hash Table with a single Synonym List
 // In order to change the hash function, simply redefine the operator % for
 // objects of type T and Key.
-template <typename T, unsigned int SIZE, typename Key = int>
+template<typename T, unsigned int SIZE, typename Key = int>
 class Simple_Hash
 {
 public:
@@ -127,7 +127,7 @@ private:
 
 
 // Hash Table with a Synonym List for each Key
-template <typename T,
+template<typename T,
          unsigned int SIZE,
          typename Key = int,
          typename El = List_Elements::Singly_Linked_Ordered<T, Key>,
@@ -198,6 +198,6 @@ private:
     List _table[SIZE];
 };
 
-__END_SYS
+__END_UTIL
  
 #endif

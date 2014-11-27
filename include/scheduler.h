@@ -17,7 +17,7 @@ namespace Scheduling_Criteria
     // Priority (static and dynamic)
     class Priority
     {
-        friend class EPOS::RT_Thread;
+        friend class _SYS::RT_Thread;
 
     public:
         enum {
@@ -255,23 +255,23 @@ namespace Scheduling_Criteria
 
 
 // Scheduling_Queue
-template <typename T, typename R = typename T::Criterion>
+template<typename T, typename R = typename T::Criterion>
 class Scheduling_Queue: public Scheduling_List<T> {};
 
-template <typename T>
+template<typename T>
 class Scheduling_Queue<T, Scheduling_Criteria::CPU_Affinity>:
 public Scheduling_Multilist<T> {};
 
-template <typename T>
+template<typename T>
 class Scheduling_Queue<T, Scheduling_Criteria::GEDF>:
 public Multihead_Scheduling_List<T> {};
 
-template <typename T>
+template<typename T>
 class Scheduling_Queue<T, Scheduling_Criteria::PEDF>:
 public Scheduling_Multilist<T> {};
 
 
-template <typename T>
+template<typename T>
 class Scheduling_Queue<T, Scheduling_Criteria::CEDF>:
 public Multihead_Scheduling_Multilist<T> {};
 
@@ -281,7 +281,7 @@ public Multihead_Scheduling_Multilist<T> {};
 // that will be used as the scheduling queue sorting criterion (viz, through
 // operators <, >, and ==) and must also define a method "link" to export the
 // list element pointing to the object being handled.
-template <typename T>
+template<typename T>
 class Scheduler: public Scheduling_Queue<T>
 {
 private:

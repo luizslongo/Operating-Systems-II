@@ -7,25 +7,6 @@
 #include <system.h>
 #include <thread.h>
 
-// LIBC Heritage
-extern "C" {
-    void _panic() {
-        EPOS::Machine::panic();
-    }
-
-    void _exit(int s) {
-        EPOS::Thread::exit(s);
-    }
-
-    void _print(const char * s) {
-        EPOS::Display::puts(s);
-    }
-
-    void __cxa_pure_virtual() {
-        EPOS::db<void>(EPOS::ERR) << "Pure Virtual method called!" << EPOS::endl;
-    }
-}
-
 __BEGIN_SYS
 
 // This class purpose is simply to define a well-known entry point for 
@@ -59,3 +40,24 @@ Segment * System::_heap_segment;
 Heap * System::_heap;
 
 __END_SYS
+
+__USING_SYS;
+
+extern "C" {
+    void _panic() {
+        Machine::panic();
+    }
+
+    void _exit(int s) {
+        Thread::exit(s);
+    }
+
+     void _print(const char * s) {
+        Display::puts(s);
+    }
+
+    // LIBC Heritage
+    void __cxa_pure_virtual() {
+        db<void>(ERR) << "Pure Virtual method called!" << endl;
+    }
+}

@@ -5,7 +5,7 @@
 
 #include <system/config.h>
 
-__BEGIN_SYS
+__BEGIN_UTIL
 
 // List Element Rank (for ordered lists)
 class List_Element_Rank
@@ -26,7 +26,7 @@ namespace List_Elements
     typedef List_Element_Rank Rank;
 
     // Vector Element
-    template <typename T>
+    template<typename T>
     class Pointer
     {
     public:
@@ -43,7 +43,7 @@ namespace List_Elements
     };
 
     // Hash Table Element
-    template <typename T, typename R = Rank>
+    template<typename T, typename R = Rank>
     class Ranked
     {
     public:
@@ -68,7 +68,7 @@ namespace List_Elements
     };
 
     // Simple List Element
-    template <typename T>
+    template<typename T>
     class Singly_Linked
     {
     public:
@@ -90,7 +90,7 @@ namespace List_Elements
 
     // Simple Ordered List Element
     // Hash Table's Synonym List Element
-    template <typename T, typename R = Rank>
+    template<typename T, typename R = Rank>
     class Singly_Linked_Ordered
     {
     public:
@@ -119,7 +119,7 @@ namespace List_Elements
     };
 
     // Simple Grouping List Element
-    template <typename T>
+    template<typename T>
     class Singly_Linked_Grouping
     {
     public:
@@ -146,7 +146,7 @@ namespace List_Elements
     };
 
     // List Element
-    template <typename T>
+    template<typename T>
     class Doubly_Linked
     {
     public:
@@ -170,7 +170,7 @@ namespace List_Elements
     };
 
     // Ordered List Element
-    template <typename T, typename R = Rank>
+    template<typename T, typename R = Rank>
     class Doubly_Linked_Ordered
     {
     public:
@@ -201,7 +201,7 @@ namespace List_Elements
     };
     
     // Scheduling List Element
-    template <typename T, typename R = Rank>
+    template<typename T, typename R = Rank>
     class Doubly_Linked_Scheduling
     {
     public:
@@ -233,7 +233,7 @@ namespace List_Elements
 
 
     // Grouping List Element
-    template <typename T>
+    template<typename T>
     class Doubly_Linked_Grouping
     {
     public:
@@ -330,7 +330,7 @@ namespace List_Iterators
 }
 
 // Singly-Linked List
-template <typename T, typename El = List_Elements::Singly_Linked<T> >
+template<typename T, typename El = List_Elements::Singly_Linked<T> >
 class Simple_List
 {
 public:
@@ -455,7 +455,7 @@ private:
 
 
 // Singly-Linked, Ordered List
-template <typename T, 
+template<typename T, 
           typename R = List_Element_Rank, 
           typename El = List_Elements::Singly_Linked_Ordered<T, R>,
           bool relative = false>
@@ -536,14 +536,14 @@ public:
 
 
 // Singly-Linked, Relative Ordered List
-template <typename T, 
+template<typename T, 
           typename R = List_Element_Rank,
           typename El = List_Elements::Singly_Linked_Ordered<T, R> >
 class Simple_Relative_List: public Simple_Ordered_List<T, R, El, true> {};
 
 
 // Singly-Linked, Grouping List
-template <typename T,
+template<typename T,
           typename El = List_Elements::Singly_Linked_Grouping<T> >
 class Simple_Grouping_List: public Simple_List<T, El>
 {
@@ -613,7 +613,7 @@ private:
 
 
 // Doubly-Linked List
-template <typename T,
+template<typename T,
           typename El = List_Elements::Doubly_Linked<T> >
 class List
 {
@@ -859,7 +859,7 @@ private:
 
 
 // Doubly-Linked, Ordered List
-template <typename T,
+template<typename T,
           typename R = List_Element_Rank,
           typename El = List_Elements::Doubly_Linked_Ordered<T, R>,
           bool relative = false>
@@ -966,7 +966,7 @@ public:
 
 
 // Doubly-Linked, Relative Ordered List
-template <typename T,
+template<typename T,
           typename R = List_Element_Rank,
           typename El = List_Elements::Doubly_Linked_Ordered<T, R> >
 class Relative_List: public Ordered_List<T, R, El, true> {};
@@ -977,7 +977,7 @@ class Relative_List: public Ordered_List<T, R, El, true> {};
 // with those available at scheduler.h .
 // In this implementation, the chosen element is kept outside the list
 // referenced by the _chosen attribute.
-template <typename T,
+template<typename T,
           typename R = typename T::Criterion,
           typename El = List_Elements::Doubly_Linked_Scheduling<T, R> >
 class Scheduling_List: private Ordered_List<T, R, El>
@@ -1079,7 +1079,7 @@ private:
 // use the Multihead list must export the HEADS constant to indicate the
 // number of heads in the list and the current_head() class method to designate
 // the head to which the current operation applies.
-template <typename T,
+template<typename T,
           typename R = typename T::Criterion,
           typename El = List_Elements::Doubly_Linked_Scheduling<T, R>,
           unsigned int H = R::HEADS>
@@ -1190,7 +1190,7 @@ private:
 // sublists in the list, the current_queue() class method to designate the
 // queue to which the current operation applies, and the queue() method to
 // return the queue in which the object currently resides.
-template <typename T,
+template<typename T,
           typename R = typename T::Criterion,
           typename El = List_Elements::Doubly_Linked_Scheduling<T, R>,
           typename L = Scheduling_List<T, R, El>,
@@ -1258,7 +1258,7 @@ private:
 // queue to which the current operation applies, the current_head() class
 // method to designate the head to which the current operation applies, and
 // the queue() method to return the queue in which the object currently resides.
-template <typename T,
+template<typename T,
           typename R = typename T::Criterion,
           typename El = List_Elements::Doubly_Linked_Scheduling<T, R>,
           unsigned int Q = R::QUEUES,
@@ -1266,7 +1266,7 @@ template <typename T,
 class Multihead_Scheduling_Multilist: public Scheduling_Multilist<T, R, El, Multihead_Scheduling_List<T, R, El, H>, Q> {};
 
 // Doubly-Linked, Grouping List
-template <typename T, 
+template<typename T, 
           typename El = List_Elements::Doubly_Linked_Grouping<T> >
 class Grouping_List: public List<T, El>
 {
@@ -1290,6 +1290,8 @@ public:
     using Base::insert_tail;
     using Base::remove;
     using Base::search;
+    using Base::print_head;
+    using Base::print_tail;
 
     unsigned int grouped_size() const { return _grouped_size; }
     
@@ -1328,6 +1330,8 @@ public:
     
     Element * search_decrementing(unsigned int s) {
         db<Lists>(TRC) << "Grouping_List::search_decrementing(s=" << s << ")" << endl;
+        print_head();
+        print_tail();
 
         Element * e = search_size(s);
         if(e) {
@@ -1344,6 +1348,6 @@ private:
     unsigned int _grouped_size;
 };
 
-__END_SYS
+__END_UTIL
  
 #endif

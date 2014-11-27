@@ -7,7 +7,7 @@
 #include <utility/list.h>
 #include <utility/spin.h>
 
-__BEGIN_SYS
+__BEGIN_UTIL
 
 // Heap
 class Simple_Heap: private Grouping_List<char>
@@ -30,7 +30,7 @@ public:
     }
 
     void * alloc(unsigned int bytes) {
-        db<Heap>(TRC) << "Heap::alloc(this=" << this << ",bytes=" << bytes;
+        db<Heaps>(TRC) << "Heap::alloc(this=" << this << ",bytes=" << bytes;
 
         if(!bytes)
             return 0;
@@ -57,15 +57,13 @@ public:
             *addr++ = reinterpret_cast<int>(this);
         *addr++ = bytes;
 
-        db<Heap>(TRC) << ") => " << reinterpret_cast<void *>(addr) << endl;
+        db<Heaps>(TRC) << ") => " << reinterpret_cast<void *>(addr) << endl;
 
         return addr;
     }
 
     void free(void * ptr, unsigned int bytes) {
-        db<Heap>(TRC) << "Heap::free(this=" << this
-                      << ",ptr=" << ptr
-                      << ",bytes=" << bytes << ")" << endl;
+        db<Heaps>(TRC) << "Heap::free(this=" << this << ",ptr=" << ptr << ",bytes=" << bytes << ")" << endl;
 
         if(ptr && (bytes >= sizeof(Element))) {
             Element * e = new (ptr) Element(reinterpret_cast<char *>(ptr), bytes);
@@ -93,7 +91,7 @@ private:
 
 
 // Wrapper for non-atomic heap
-template <typename T, bool atomic>
+template<typename T, bool atomic>
 class Heap_Wrapper: public T
 {
 public:
@@ -170,6 +168,6 @@ public:
     Heap(void * addr, unsigned int bytes): Base(addr, bytes) {}
 };
 
-__END_SYS
+__END_UTIL
 
 #endif

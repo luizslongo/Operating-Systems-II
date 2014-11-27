@@ -4,6 +4,11 @@
 #include <thread.h>
 #include <alarm.h>
 
+// This_Thread class attributes
+__BEGIN_UTIL
+bool This_Thread::_not_booting;
+__END_UTIL
+
 __BEGIN_SYS
 
 // Class attributes
@@ -11,11 +16,6 @@ volatile unsigned int Thread::_thread_count;
 Scheduler_Timer * Thread::_timer;
 Scheduler<Thread> Thread::_scheduler;
 Spin Thread::_lock;
-
-
-// This_Thread class attributes
-bool This_Thread::_not_booting;
-
 
 // Methods
 void Thread::common_constructor(Log_Addr entry, unsigned int stack_size) 
@@ -364,11 +364,12 @@ int Thread::idle()
     return 0;
 }
 
+__END_SYS
 
 // Id forwarder to the spin lock
+__BEGIN_UTIL
 unsigned int This_Thread::id() 
 { 
     return _not_booting ? reinterpret_cast<volatile unsigned int>(Thread::self()) : Machine::cpu_id() + 1;
 }
-
-__END_SYS
+__END_UTIL

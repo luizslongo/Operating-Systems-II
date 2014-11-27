@@ -36,11 +36,11 @@ private:
 __END_SYS
 
 inline void * operator new(size_t bytes, const EPOS::System_Allocator & allocator) {
-    return EPOS::System::_heap->alloc(bytes);
+    return _SYS::System::_heap->alloc(bytes);
 }
 
 inline void * operator new[](size_t bytes, const EPOS::System_Allocator & allocator) {
-    return EPOS::System::_heap->alloc(bytes);
+    return _SYS::System::_heap->alloc(bytes);
 }
 
 #endif

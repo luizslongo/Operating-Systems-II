@@ -6,7 +6,7 @@
 
 __BEGIN_SYS
 
-template <> struct Traits<IA32>: public Traits<void>
+template<> struct Traits<IA32>: public Traits<void>
 {
     enum {LITTLE, BIG};
     static const unsigned int ENDIANESS         = LITTLE;
@@ -15,15 +15,15 @@ template <> struct Traits<IA32>: public Traits<void>
     static const bool unaligned_memory_access   = true;
 };
 
-template <> struct Traits<IA32_TSC>: public Traits<void>
+template<> struct Traits<IA32_TSC>: public Traits<void>
 {
 };
 
-template <> struct Traits<IA32_MMU>: public Traits<void>
+template<> struct Traits<IA32_MMU>: public Traits<void>
 {
 };
 
-template <> struct Traits<IA32_PMU>: public Traits<void>
+template<> struct Traits<IA32_PMU>: public Traits<void>
 {
 };
 

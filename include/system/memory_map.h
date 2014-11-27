@@ -7,10 +7,10 @@
 
 __BEGIN_SYS
 
-template <class Machine>
+template<class Machine>
 struct Memory_Map {};
 
-template <class Machine>
+template<class Machine>
 struct IO_Map {};
 
 __END_SYS

@@ -12,7 +12,7 @@
 
 #include <utility/list.h>
 
-__BEGIN_SYS
+__BEGIN_UTIL
 
 // Observer x Observed
 class Observer;
@@ -266,6 +266,6 @@ private:
     typename Data_Observed<T1, T2>::Element _link;
 };
 
-__END_SYS
+__END_UTIL
  
 #endif

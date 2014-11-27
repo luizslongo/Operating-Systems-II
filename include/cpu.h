@@ -28,36 +28,36 @@ public:
         Log_Addr() {}
         Log_Addr(const Log_Addr & a) : _addr(a._addr) {}
         Log_Addr(const Reg & a) : _addr(a) {}
-        template <typename T>
+        template<typename T>
         Log_Addr(T * a) : _addr(Reg(a)) {}
 
         operator const Reg &() const { return _addr; }
 
-        template <typename T>
+        template<typename T>
         operator T *() const { return reinterpret_cast<T *>(_addr); }
 
-        template <typename T>
+        template<typename T>
         bool operator==(T a) const { return (_addr == Reg(a)); }
-        template <typename T>
+        template<typename T>
         bool operator< (T a) const { return (_addr < Reg(a)); }
-        template <typename T>
+        template<typename T>
         bool operator> (T a) const { return (_addr > Reg(a)); }
-        template <typename T>
+        template<typename T>
         bool operator>=(T a) const { return (_addr >= Reg(a)); }
-        template <typename T>
+        template<typename T>
         bool operator<=(T a) const { return (_addr <= Reg(a)); }
 
-        template <typename T>
+        template<typename T>
         Log_Addr operator-(T a) const { return _addr - Reg(a); }
-        template <typename T>
+        template<typename T>
         Log_Addr operator+(T a) const { return _addr + Reg(a); }
-        template <typename T>
+        template<typename T>
         Log_Addr & operator+=(T a) { _addr += Reg(a); return *this; }
-        template <typename T>
+        template<typename T>
         Log_Addr & operator-=(T a) { _addr -= Reg(a); return *this; }
-        template <typename T>
+        template<typename T>
         Log_Addr & operator&=(T a) { _addr &= Reg(a); return *this; }
-        template <typename T>
+        template<typename T>
         Log_Addr & operator|=(T a) { _addr |= Reg(a); return *this; }
 
         Log_Addr & operator[](int i) { return *(this + i); }

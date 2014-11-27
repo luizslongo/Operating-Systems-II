@@ -332,28 +332,28 @@ public:
     static Reg32 pdp() { return cr3() ; }
     static void pdp(const Reg32 pdp) { cr3(pdp); }
 
-    template <typename T>
+    template<typename T>
     static T tsl(volatile T & lock) {
         register T old = 1;
         ASM("lock xchg %0, %2" : "=a"(old) : "a"(old), "m"(lock) : "memory");
         return old;
     }
 
-    template <typename T>
+    template<typename T>
     static T finc(volatile T & value) {
         register T old = 1;
         ASM("lock xadd %0, %2" : "=a"(old) : "a"(old), "m"(value) : "memory");
         return old;
     }
 
-    template <typename T>
+    template<typename T>
     static T fdec(volatile T & value) {
         register T old = -1;
         ASM("lock xadd %0, %2" : "=a"(old) : "a"(old), "m"(value) : "memory");
         return old;
     }
 
-    template <typename T>
+    template<typename T>
     static T cas(volatile T & value, T compare, T replacement) {
         ASM("lock cmpxchgl %2, %3\n" : "=a"(compare) : "a"(compare), "r"(replacement), "m"(value) : "memory");
         return compare;

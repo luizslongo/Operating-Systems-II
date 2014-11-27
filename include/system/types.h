@@ -5,13 +5,11 @@ typedef __SIZE_TYPE__ size_t;
 #ifndef __types_h
 #define __types_h
 
-__BEGIN_SYS
-
 // Memory allocators
+__BEGIN_API
 enum System_Allocator { SYSTEM };
 enum Scratchpad_Allocator { SCRATCHPAD };
-
-__END_SYS
+__END_API
 
 extern "C"
 {
@@ -28,82 +26,68 @@ void * operator new[](size_t, const EPOS::System_Allocator &);
 void * operator new(size_t, const EPOS::Scratchpad_Allocator &);
 void * operator new[](size_t, const EPOS::Scratchpad_Allocator &);
 
-__BEGIN_SYS
-
-// Dummy class for incomplete architectures and machines 
-template<int>
-class Dummy;
-
 // Utilities
+__BEGIN_UTIL
+class Bitmaps;
+class CRC;
+class ELF;
+class Handler;
+class Hashes;
+class Heaps;
 class Debug;
 class Lists;
-class Spin;
-class Heap;
+class Observers;
+class Observeds;
+class OStream;
+class Queues;
 class Random;
+class Spin;
+class SREC;
+class Vectors;
+__END_UTIL
+
+__BEGIN_SYS
 
 // System parts
 class Build;
 class Boot;
 class Setup;
 class Init;
-class System;
-class Application;
 
-// Hardware Mediators - CPU
+// Architecture Hardware Mediators
 class IA32;
-
-// Hardware Mediators - Time-Stamp Counter
 class IA32_TSC;
-
-// Hardware Mediators - Memory Management Unit
 class IA32_MMU;
-
-// Hardware Mediators - Performance Monitoring Unit
 class IA32_PMU;
 
-// Hardware Mediators - Machine
+// Machine Hardware Mediators
 class PC;
-
-// Hardware Mediators - Bus
 class PC_PCI;
-
-// Hardware Mediators - Interrupt Controller
 class PC_IC;
-
-// Hardware Mediators - Timer
 class PC_Timer;
-
-// Hardware Mediators - Real-time Clock
 class PC_RTC;
-
-// Hardware Mediators - EEPROM
 class PC_EEPROM;
-
-// Hardware Mediators - Scratchpad
 class PC_Scratchpad;
-
-// Hardware Mediators - UART
 class PC_UART;
-
-// Hardware Mediators - Display
-class Serial_Display;
 class PC_Display;
-
-// Hardware Mediators - NIC
 class PC_Ethernet;
 class PCNet32;
 class C905;
 class E100;
 
-// Abstractions	- Process
+class Serial_Display;
+
+// Abstractions
+class System;
+class Application;
+
 class Thread;
 class Active;
 class Periodic_Thread;
 class RT_Thread;
 class Task;
 
-// Abstractions - Scheduler
-template <typename> class Scheduler;
+template<typename> class Scheduler;
 namespace Scheduling_Criteria
 {
     class Priority;
@@ -118,22 +102,18 @@ namespace Scheduling_Criteria
     class CEDF;
 };
 
-// Abstractions	- Memory
 class Segment;
 class Address_Space;
 
-// Abstractions	- Synchronization
 class Synchronizer;
 class Mutex;
 class Semaphore;
 class Condition;
 
-// Abstractions	- Time
 class Clock;
 class Alarm;
 class Chronometer;
 
-// Abstractions - Network
 template<typename NIC, typename Network, unsigned int HTYPE = 1>
 class ARP;
 class Network;
@@ -143,6 +123,15 @@ class UDP;
 class TCP;
 class DHCP;
 
+// Framework
+class Framework;
+template<typename Component> class Handle;
+template<typename Component> class Adapter;
+
+// Aspects
+template<typename Component> class Identified;
+template<typename Component> class Shared;
+template<typename Component> class Remote;
 
 // System Components IDs
 // The order in this enumeration defines many things in the system (e.g. init)

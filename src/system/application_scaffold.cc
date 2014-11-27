@@ -3,14 +3,14 @@
 #include <utility/ostream.h>
 #include <application.h>
 
-__BEGIN_SYS
-
-// Global objects
-OStream cout;
-OStream cerr;
-
 // Application class attributes
+__BEGIN_SYS
 char Application::_preheap[];
 Heap * Application::_heap;
-
 __END_SYS
+
+// Global objects
+__BEGIN_API
+OStream cout;
+OStream cerr;
+__END_API

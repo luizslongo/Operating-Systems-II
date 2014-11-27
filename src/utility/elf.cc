@@ -3,7 +3,7 @@
 #include <utility/elf.h>
 #include <utility/string.h>
 
-__BEGIN_SYS
+__BEGIN_UTIL
 
 int ELF::load_segment(int i, Elf32_Addr addr)
 {
@@ -19,4 +19,4 @@ int ELF::load_segment(int i, Elf32_Addr addr)
     return seg(i)->p_memsz;
 }
 
-__END_SYS
+__END_UTIL

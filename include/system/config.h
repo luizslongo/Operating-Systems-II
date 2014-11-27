@@ -6,8 +6,24 @@
 //============================================================================
 // DEFINITIONS
 //============================================================================
+
+namespace EPOS {
+    namespace U {}
+    using namespace U;
+}
+
+#define __BEGIN_API             namespace EPOS {
+#define __END_API               }
+#define _API                    ::EPOS
+
+#define __BEGIN_UTIL            namespace EPOS { namespace U {
+#define __END_UTIL              }}
+#define __USING_UTIL            using U;
+#define _UTIL                   ::EPOS::U
+
 #define __BEGIN_SYS             namespace EPOS {
 #define __END_SYS               }
+#define __USING_SYS             using namespace EPOS;
 #define _SYS                    ::EPOS
 
 #define ASM                     __asm__ __volatile__
@@ -38,8 +54,8 @@
 //============================================================================
 // ASSERT (for pre and post conditions)
 //============================================================================
-#define assert(expr)    ((expr) ? static_cast<void>(0) : Assert::fail (#expr, __FILE__, __LINE__, __PRETTY_FUNCTION__))
-//#define assert(expr)    (static_cast<void>(0))
+//#define assert(expr)    ((expr) ? static_cast<void>(0) : Assert::fail (#expr, __FILE__, __LINE__, __PRETTY_FUNCTION__))
+#define assert(expr)    (static_cast<void>(0))
 
 //============================================================================
 // CONFIGURATION

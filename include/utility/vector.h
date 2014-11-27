@@ -5,10 +5,10 @@
 
 #include "list.h"
 
-__BEGIN_SYS
+__BEGIN_UTIL
 
 // Vector
-template <typename T, unsigned int SIZE, 
+template<typename T, unsigned int SIZE, 
           typename El = List_Elements::Pointer<T> >
 class Vector
 {
@@ -77,6 +77,6 @@ private:
     Element * _vector[SIZE];
 };
 
-__END_SYS
+__END_UTIL
  
 #endif

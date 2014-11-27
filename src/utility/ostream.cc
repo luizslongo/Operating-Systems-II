@@ -5,7 +5,7 @@
 
 extern "C" { void _panic(); }
 
-__BEGIN_SYS
+__BEGIN_UTIL
 
 const char OStream::_digits[] = "0123456789abcdef";
 
@@ -125,4 +125,4 @@ int OStream::ptoa(const void * p, char * s)
     return j + 2;
 }    
 
-__END_SYS
+__END_UTIL

@@ -12,7 +12,7 @@
 
 // LIBC Heritage
 extern "C" {
-    using namespace EPOS;
+    __USING_SYS;
 
     void _start() __attribute__ ((section (".init")));
 
@@ -35,13 +35,16 @@ extern "C" {
     }
 }
 
+__BEGIN_UTIL
+OStream::Endl endl;
+OStream::Begl begl;
+__END_UTIL
+
 __BEGIN_SYS
 
 // SETUP does not handle global constructors, so kout and kerr must be
 // manually initialized before use (at setup())
 OStream kout, kerr;
-OStream::Endl endl;
-OStream::Begl begl;
 
 // "_start" Synchronization Globals
 volatile char * Stacks;

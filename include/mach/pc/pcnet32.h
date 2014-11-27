@@ -389,7 +389,7 @@ protected:
 // PCNet32 PC Ethernet NIC
 class PCNet32: public Ethernet, public Ethernet::Observed, private Am79C970A
 {
-    template <int unit> friend void call_init();
+    template<int unit> friend void call_init();
 
 private:
     // PCI ID

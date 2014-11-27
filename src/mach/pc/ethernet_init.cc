@@ -4,7 +4,7 @@
 
 __BEGIN_SYS
 
-template <int unit>
+template<int unit>
 inline static void call_init()
 {
     typedef typename Traits<PC_Ethernet>::NICS::template Get<unit>::Result NIC;
@@ -16,7 +16,7 @@ inline static void call_init()
     call_init<unit + 1>();
 };
 
-template <>
+template<>
 inline void call_init<Traits<PC_Ethernet>::NICS::Length>()
 {
 };

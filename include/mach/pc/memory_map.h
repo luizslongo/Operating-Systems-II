@@ -7,7 +7,7 @@
 
 __BEGIN_SYS
 
-template <>
+template<>
 struct Memory_Map<PC>
 {
     // Physical Memory

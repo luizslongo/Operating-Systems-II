@@ -4,7 +4,7 @@
 
 extern "C" { void _panic(); }
 
-__BEGIN_SYS
+__BEGIN_UTIL
 
 // Methods
 void Simple_Heap::out_of_memory()
@@ -14,4 +14,4 @@ void Simple_Heap::out_of_memory()
     _panic();
 }
 
-__END_SYS
+__END_UTIL

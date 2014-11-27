@@ -13,7 +13,7 @@ __BEGIN_SYS
 class IP: private NIC::Observer
 {
     friend class System;
-    template <int unit> friend void call_init();
+    template<int unit> friend void call_init();
 
 public:
     // IP Protocol Id

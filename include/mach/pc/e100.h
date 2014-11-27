@@ -306,7 +306,7 @@ public:
 
 class E100: public Ethernet, public Ethernet::Observed, private i82559
 {
-    template <int unit> friend void call_init();
+    template<int unit> friend void call_init();
 
 private:
     // PCI ID

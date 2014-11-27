@@ -5,7 +5,7 @@
 
 __BEGIN_SYS
 
-// IF metaprogram
+// Conditional Type
 template<bool condition, typename Then, typename Else>
 struct IF 
 { typedef Then Result; };
@@ -14,7 +14,8 @@ template<typename Then, typename Else>
 struct IF<false, Then, Else>
 { typedef Else Result; };
 
-// IF metaprogram for integer
+
+// Conditional Integer
 template<bool condition, int Then, int Else>
 struct IF_INT
 { enum { Result = Then }; };
@@ -23,12 +24,13 @@ template<int Then, int Else>
 struct IF_INT<false, Then, Else>
 { enum { Result = Else }; };
 
-//SWITCH-CASE metaprogram
-const int DEFAULT = ~(~0u >> 1); //Initialize with the smallest int
+
+// SWITCH-CASE of Types
+const int DEFAULT = ~(~0u >> 1); // Initialize with the smallest int
 
 struct Nil_Case {};
 
-template <int tag_, typename Type_, typename Next_ = Nil_Case>
+template<int tag_, typename Type_, typename Next_ = Nil_Case>
 struct CASE
 { 
     enum { tag = tag_ }; 
@@ -56,7 +58,8 @@ public:
     typedef Nil_Case Result;
 };
 
-// EQUAL metaprogram
+
+// EQUALty of Types
 template<typename T1, typename T2>
 struct EQUAL 
 { enum { Result = false }; };
@@ -66,14 +69,14 @@ struct EQUAL<T, T>
 { enum { Result = true }; };
 
 
-// LIST metaprogram
-template <typename T1 = void, typename T2 = void, typename T3 = void,
-          typename T4 = void, typename T5 = void, typename T6 = void>
-class LIST
+// LIST of Types
+template<typename ...Tn> class LIST;
+template<typename T1, typename ...Tn>
+class LIST<T1, Tn...>
 {
-private:
+protected:
     typedef T1 Head;
-    typedef LIST<T2, T3, T4, T5, T6> Tail;
+    typedef LIST<Tn...> Tail;
 
 public:
     enum { Length = Tail::Length + 1 };
@@ -90,12 +93,16 @@ public:
     struct Count
     { enum { Result = EQUAL<Head, Type>::Result + Tail::template Count<Type>::Result }; };
 
+    struct Recur: public Tail::Recur::Result
+    { typedef Head Result; };
+
     enum { Polymorphic = (int(Length) != int(Count<Head>::Result)) };
 };
 
-template <>
-struct LIST<void, void, void, void, void, void>
+template<>
+class LIST<>
 { 
+public:
     enum { Length = 0 }; 
 
     template<int Index, int Current = 0>
@@ -106,7 +113,33 @@ struct LIST<void, void, void, void, void, void>
     struct Count
     { enum { Result = 0 }; };
 
+    struct Recur
+    { class Result {}; };
+
     enum { Polymorphic = false };
+};
+
+
+// LIST of Templates
+template<template<typename T> class ...Tn> class TLIST;
+template<template<typename T> class T1, template<typename T> class ...Tn>
+class TLIST<T1, Tn...>
+{
+public:
+    enum { Length = TLIST<Tn...>::Length + 1 };
+
+    template<typename T>
+    struct Recur: public T1<T>, public TLIST<Tn...>::template Recur<T> {};
+};
+
+template<>
+class TLIST<>
+{
+public:
+    enum { Length = 0 };
+
+    template<typename T>
+    struct Recur {};
 };
 
 __END_SYS
