@@ -101,13 +101,12 @@ public:
         SEG_4K		= 0x80,
         SEG_FLT_CODE    = (SEG_PRE  | SEG_NOSYS	| SEG_CODE | SEG_ACC),
         SEG_FLT_DATA    = (SEG_PRE  | SEG_NOSYS	| SEG_RW   | SEG_ACC),
-        SEG_APP_CODE    = (SEG_PRE  | SEG_NOSYS | SEG_DPL2 | SEG_DPL1 |
-        		   SEG_CODE | SEG_RW    | SEG_ACC),   // P, DPL=3, S, C, W, A
-        SEG_APP_DATA    = (SEG_PRE  | SEG_NOSYS	| SEG_DPL2 | SEG_DPL1 |
-        		              SEG_RW    | SEG_ACC),   // P, DPL=3, S,    W, A
+        SEG_APP_CODE    = (SEG_PRE  | SEG_NOSYS | SEG_DPL2 | SEG_DPL1 | SEG_CODE | SEG_RW    | SEG_ACC),   // P, DPL=3, S, C, W, A
+        SEG_APP_DATA    = (SEG_PRE  | SEG_NOSYS	| SEG_DPL2 | SEG_DPL1 | SEG_RW    | SEG_ACC),   // P, DPL=3, S,    W, A
         SEG_SYS_CODE    = (SEG_PRE  | SEG_NOSYS	| SEG_CODE | SEG_ACC),
         SEG_SYS_DATA    = (SEG_PRE  | SEG_NOSYS	| SEG_RW   | SEG_ACC),
-        SEG_IDT_ENTRY   = (SEG_PRE  | SEG_INT   | SEG_DPL1 | SEG_DPL2)
+        SEG_IDT_ENTRY   = (SEG_PRE  | SEG_INT   | SEG_DPL2 | SEG_DPL1 | SEG_ACC),
+        SEG_TSS0        = (SEG_PRE  | SEG_TSS   | SEG_ACC)
     };
 
     // DPL/RPL for application (user) and system (supervisor) modes 
@@ -125,7 +124,8 @@ public:
         GDT_SYS_DATA  =	GDT_FLT_DATA,
         GDT_APP_CODE  = 3,
         GDT_APP_DATA  = 4,
-        GDT_LAST      = GDT_APP_DATA
+        GDT_TSS0      = 5,
+        GDT_LAST      = GDT_TSS0
     };
 
     // GDT Selectors
@@ -135,7 +135,8 @@ public:
         SEL_APP_CODE  = (GDT_APP_CODE << 3)  | PL_APP,
         SEL_APP_DATA  = (GDT_APP_DATA << 3)  | PL_APP,
         SEL_SYS_CODE  = (GDT_SYS_CODE << 3)  | PL_SYS,
-        SEL_SYS_DATA  = (GDT_SYS_DATA << 3)  | PL_SYS
+        SEL_SYS_DATA  = (GDT_SYS_DATA << 3)  | PL_SYS,
+        SEL_TSS0      = (GDT_TSS0     << 3)  | PL_SYS
     };
 
     // GDT Entry
@@ -315,6 +316,8 @@ public:
 
     static void halt() { ASM("hlt"); }
 
+    static void switch_context(Context * volatile * o, Context * volatile n);
+
     static Flags flags() { return eflags(); }
     static void flags(const Flags flags) { eflags(flags); }
 
@@ -362,8 +365,6 @@ public:
     static Reg16 htons(Reg16 v)	{ return swap16(v); }
     static Reg32 ntohl(Reg32 v)	{ return htonl(v); }
     static Reg16 ntohs(Reg16 v)	{ return htons(v); }
-
-    static void switch_context(Context * volatile * o, Context * volatile n);
 
     // The int left on the stack between thread's arguments and its context
     // is due to the fact that the thread's function believes it's a normal

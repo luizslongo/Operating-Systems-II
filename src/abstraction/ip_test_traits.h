@@ -19,13 +19,13 @@ template <> struct Traits<Build>
     enum {LIBRARY, BUILTIN, KERNEL};
     static const unsigned int MODE = LIBRARY;
 
-    enum {IA32, ARMv7};
-    static const unsigned int ARCH = IA32;
+    enum {IA32};
+    static const unsigned int ARCHITECTURE = IA32;
 
-    enum {PC, eMote3};
-    static const unsigned int MACH = PC;
+    enum {PC};
+    static const unsigned int MACHINE = PC;
 
-    enum {Legacy, Cortex_M3, Cortex_A8, Cortex_A9};
+    enum {Legacy};
     static const unsigned int MODEL = Legacy;
 
     static const unsigned int CPUS = 1;
@@ -84,7 +84,7 @@ template <> struct Traits<Serial_Display>: public Traits<void>
 __END_SYS
 
 #include __ARCH_TRAITS_H
-#include __HEADER_MACH(config)
+#include __MACH_CONFIG_H
 #include __MACH_TRAITS_H
 
 __BEGIN_SYS

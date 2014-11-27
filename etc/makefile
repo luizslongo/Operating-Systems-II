@@ -5,7 +5,8 @@ include	../makedefs
 all: $(APP)/$(APPLICATION)_traits.h eposcc.conf eposmkbi.conf $(INCLUDE)/system/config.h
 		sed -e 's/^#define ARCH.*$$/#define ARCH $(ARCH)/' -i $(INCLUDE)/system/config.h
 		sed -e 's/^#define MACH.*$$/#define MACH $(MACH)/' -i $(INCLUDE)/system/config.h
-		sed -e 's/^#define APPLICATION.*$$/#define APPLICATION $(APPLICATION)/' -i $(INCLUDE)/system/config.h
+		sed -e 's/^#define MMOD.*$$/#define MMOD $(MMOD)/' -i $(INCLUDE)/system/config.h
+		sed -e 's/^#define APPL.*$$/#define APPL $(APPLICATION)/' -i $(INCLUDE)/system/config.h
 
 $(APP)/$(APPLICATION)_traits.h:
 		$(INSTALL) $(INCLUDE)/system/traits.h $@
@@ -36,7 +37,8 @@ eposmkbi.conf:
 clean: $(APP)/$(APPLICATION)_traits.h
 		sed -e 's/^#define ARCH.*$$/#define ARCH xxx/' -i $(INCLUDE)/system/config.h
 		sed -e 's/^#define MACH.*$$/#define MACH xxx/' -i $(INCLUDE)/system/config.h
-		sed -e 's/^#define APP.*$$/#define APPLICATION xxx/' -i $(INCLUDE)/system/config.h
+		sed -e 's/^#define MMOD.*$$/#define MMOD xxx/' -i $(INCLUDE)/system/config.h
+		sed -e 's/^#define APPL.*$$/#define APPL xxx/' -i $(INCLUDE)/system/config.h
 		$(CLEAN) *.conf
 
 FORCE:

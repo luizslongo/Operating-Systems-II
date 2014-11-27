@@ -16,16 +16,19 @@ struct Traits
 
 template <> struct Traits<Build>
 {
-    enum {LIBRARY, BUILTIN};
+    enum {LIBRARY, BUILTIN, KERNEL};
     static const unsigned int MODE = LIBRARY;
 
     enum {IA32};
-    static const unsigned int ARCH = IA32;
+    static const unsigned int ARCHITECTURE = IA32;
 
     enum {PC};
-    static const unsigned int MACH = PC;
+    static const unsigned int MACHINE = PC;
 
-    static const unsigned int CPUS = 1;
+    enum {Legacy};
+    static const unsigned int MODEL = Legacy;
+
+    static const unsigned int CPUS = 4;
     static const unsigned int NODES = 1; // > 1 => NETWORKING
 };
 
@@ -81,7 +84,7 @@ template <> struct Traits<Serial_Display>: public Traits<void>
 __END_SYS
 
 #include __ARCH_TRAITS_H
-#include __HEADER_MACH(config)
+#include __MACH_CONFIG_H
 #include __MACH_TRAITS_H
 
 __BEGIN_SYS
@@ -120,7 +123,7 @@ template <> struct Traits<Thread>: public Traits<void>
 {
     static const bool smp = Traits<System>::multicore;
 
-    typedef Scheduling_Criteria::RR Criterion;
+    typedef Scheduling_Criteria::CPU_Affinity Criterion;
     static const unsigned int QUANTUM = 10000; // us
 
     static const bool trace_idle = hysterically_debugged;

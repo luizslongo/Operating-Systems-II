@@ -1,4 +1,5 @@
 // EPOS PC Machine Metainfo and Configuration
+
 #ifndef __pc_traits_h
 #define __pc_traits_h
 

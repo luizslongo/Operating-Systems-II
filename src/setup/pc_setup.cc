@@ -71,6 +71,7 @@ private:
     // Logical memory map
     static const unsigned int IDT = Memory_Map<PC>::IDT;
     static const unsigned int GDT = Memory_Map<PC>::GDT;
+    static const unsigned int TSS0 = Memory_Map<PC>::TSS0;
     static const unsigned int PHY_MEM = Memory_Map<PC>::PHY_MEM;
     static const unsigned int SYS_PT = Memory_Map<PC>::SYS_PT;
     static const unsigned int SYS_PD = Memory_Map<PC>::SYS_PD;
@@ -85,11 +86,12 @@ private:
     typedef CPU::Log_Addr Log_Addr;
     typedef CPU::GDT_Entry GDT_Entry;
     typedef CPU::IDT_Entry IDT_Entry;
+    typedef CPU::TSS TSS;
+    typedef MMU::IA32_Flags Flags;
     typedef MMU::Page Page;
     typedef MMU::Page_Table Page_Table;
     typedef MMU::Page_Directory Page_Directory;
     typedef MMU::PT_Entry PT_Entry;
-    typedef MMU::IA32_Flags Flags;
 
     // System_Info Imports
     typedef System_Info<PC>::Boot_Map BM;
@@ -111,6 +113,7 @@ private:
     void setup_sys_pt();
     void setup_sys_pd();
     void enable_paging();
+    void setup_tss0();
 
     void load_parts();
     void call_next();
@@ -184,6 +187,9 @@ PC_Setup::PC_Setup(char * boot_image)
         si = reinterpret_cast<System_Info<PC> *>(SYS_INFO);
         PC_Display::remap(Memory_Map<PC>::VGA); // Display can be Serial_Display, so PC_Display here!
  	APIC::remap(Memory_Map<PC>::APIC);
+
+        // Configure a TSS for system calls and inter-level interrupt handling
+ 	setup_tss0();
 
         // Load EPOS parts (e.g. INIT, SYSTEM, APP)
         load_parts();
@@ -371,8 +377,8 @@ void PC_Setup::build_lm()
 
     // Check for EXTRA data in the boot image		
     if(si->lm.has_ext) {
-        si->lm.ext = Phy_Addr(&bi[si->bm.extras_offset]);
-        si->lm.ext_size = si->bm.img_size - si->bm.extras_offset;
+        si->lm.app_extra = Phy_Addr(&bi[si->bm.extras_offset]);
+        si->lm.app_extra_size = si->bm.img_size - si->bm.extras_offset;
     }
 }
 
@@ -404,6 +410,10 @@ void PC_Setup::build_pmm()
     // System Info (1 x sizeof(Page))
     top_page -= 1;
     si->pmm.sys_info = top_page * sizeof(Page);
+
+    // TSS0 (1 x sizeof(Page))
+    top_page -= 1;
+    si->pmm.tss0 = top_page * sizeof(Page);
 
     // Page tables to map the whole physical memory
     // = NP/NPTE_PT * sizeof(Page)
@@ -451,8 +461,8 @@ void PC_Setup::build_pmm()
     si->pmm.free3_top = MMU::align_page(si->pmm.mem_top);
 
     if(si->lm.has_ext) {
-        si->pmm.ext_base = si->lm.ext;
-        si->pmm.ext_top = si->lm.ext + si->lm.ext_size;
+        si->pmm.ext_base = si->lm.app_extra;
+        si->pmm.ext_top = si->lm.app_extra + si->lm.app_extra_size;
     } else {
         si->pmm.ext_base = 0;
         si->pmm.ext_top = 0;
@@ -513,7 +523,7 @@ void PC_Setup::say_hi()
              << "\tdata: " << si->lm.app_data_size << " bytes" << endl;
     }
     if(si->lm.has_ext) {
-        kout << "  Extras:       " << si->lm.ext_size << " bytes" << endl;
+        kout << "  Extras:       " << si->lm.app_extra_size << " bytes" << endl;
     }
 
     // Test if we didn't overlap SETUP and the boot image
@@ -598,17 +608,19 @@ void PC_Setup::setup_gdt()
     memset(gdt, 0, sizeof(Page));
 
     // GDT_Entry(base, limit, {P,DPL,S,TYPE})
-    gdt[CPU::GDT_NULL]      = GDT_Entry(0,       0, 0);
-    gdt[CPU::GDT_FLT_CODE]  = GDT_Entry(0, 0xfffff, CPU::SEG_FLT_CODE);
-    gdt[CPU::GDT_FLT_DATA]  = GDT_Entry(0, 0xfffff, CPU::SEG_FLT_DATA);
-    gdt[CPU::GDT_APP_CODE]  = GDT_Entry(0, 0xfffff, CPU::SEG_APP_CODE);
-    gdt[CPU::GDT_APP_DATA]  = GDT_Entry(0, 0xfffff, CPU::SEG_APP_DATA);
+    gdt[CPU::GDT_NULL]      = GDT_Entry(0,        0, 0);
+    gdt[CPU::GDT_FLT_CODE]  = GDT_Entry(0,  0xfffff, CPU::SEG_FLT_CODE);
+    gdt[CPU::GDT_FLT_DATA]  = GDT_Entry(0,  0xfffff, CPU::SEG_FLT_DATA);
+    gdt[CPU::GDT_APP_CODE]  = GDT_Entry(0,  0xfffff, CPU::SEG_APP_CODE);
+    gdt[CPU::GDT_APP_DATA]  = GDT_Entry(0,  0xfffff, CPU::SEG_APP_DATA);
+    gdt[CPU::GDT_TSS0]      = GDT_Entry(TSS0, 0xfff, CPU::SEG_TSS0);
 
     db<Setup>(INF) << "GDT[NULL=" << CPU::GDT_NULL     << "]=" << gdt[CPU::GDT_NULL] << endl;
     db<Setup>(INF) << "GDT[SYCD=" << CPU::GDT_SYS_CODE << "]=" << gdt[CPU::GDT_SYS_CODE] << endl;
     db<Setup>(INF) << "GDT[SYDT=" << CPU::GDT_SYS_DATA << "]=" << gdt[CPU::GDT_SYS_DATA] << endl;
     db<Setup>(INF) << "GDT[APCD=" << CPU::GDT_APP_CODE << "]=" << gdt[CPU::GDT_APP_CODE] << endl;
     db<Setup>(INF) << "GDT[APDT=" << CPU::GDT_APP_DATA << "]=" << gdt[CPU::GDT_APP_DATA] << endl;
+    db<Setup>(INF) << "GDT[TSS0=" << CPU::GDT_TSS0     << "]=" << gdt[CPU::GDT_TSS0] << endl;
 }
 
 //========================================================================
@@ -619,6 +631,7 @@ void PC_Setup::setup_sys_pt()
         	   << ",pt="   << (void *)si->pmm.sys_pt
         	   << ",pd="   << (void *)si->pmm.sys_pd
         	   << ",info=" << (void *)si->pmm.sys_info
+        	   << ",tss0=" << Phy_Addr(si->pmm.tss0) 
         	   << ",mem="  << (void *)si->pmm.phy_mem_pts
         	   << ",io="   << (void *)si->pmm.io_pts
         	   << ",sysc=" << (void *)si->pmm.sys_code
@@ -647,6 +660,9 @@ void PC_Setup::setup_sys_pt()
 
     // GDT
     sys_pt[MMU::page(GDT)] = si->pmm.gdt | Flags::SYS;
+
+    // TSS0
+    sys_pt[MMU::page(TSS0)] = si->pmm.tss0 | Flags::SYS;
 
     // Set an entry to this page table, so the system can access it later
     sys_pt[MMU::page(SYS_PT)] = si->pmm.sys_pt | Flags::SYS;
@@ -741,6 +757,29 @@ void PC_Setup::setup_sys_pd()
 }
 
 //========================================================================
+void PC_Setup::setup_tss0()
+{
+    db<Setup>(TRC) << "setup_tss0(tss0=" << Log_Addr(TSS0) << ")" << endl;
+
+    // Get TSS0's logical address (after enabling paging)
+    TSS * tss0 = reinterpret_cast<TSS *>(TSS0);
+
+    // Clear TSS0
+    memset(tss0, 0, sizeof(Page));
+
+    // Configure only the kernel stack on the bootstrap CPU
+    tss0->ss0 = CPU::SEL_SYS_DATA;
+    tss0->esp0 = SYS_STACK + Traits<System>::STACK_SIZE - 1;
+
+    // Load TR with TSS0
+    CPU::Reg16 tr = CPU::SEL_TSS0;
+    ASM("ltr %0" : : "r"(tr));
+    ASM("str %0" : "=r"(tr) :);
+
+    db<Setup>(INF) << "TR=" << tr << ",TSS0={ss0=" << tss0->ss0 << ",esp0=" << Log_Addr(tss0->esp0) << "}" << endl;
+}
+
+//========================================================================
 void PC_Setup::load_parts()
 {
     // Relocate System_Info
@@ -813,7 +852,7 @@ void PC_Setup::call_next()
         ip = si->lm.app_entry;
 
     // Arrange a stack for each CPU to support stage transition
-    // Boot CPU uses a full stack, while non-boot get reduced ones
+    // Bootstrap CPU uses a full stack, while non-boot get reduced ones
     // The 2 integers on the stacks are room for return addresses used
     // in some EPOS architectures
     register Log_Addr sp = SYS_STACK + Traits<System>::STACK_SIZE * (cpu_id + 1) - 2 * sizeof(int);

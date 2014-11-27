@@ -4,7 +4,7 @@
 #define __pc_config_h
 
 #include <system/meta.h>
-#include __APPLICATION_TRAITS_H
+#include __APPL_TRAITS_H
 
 #define __CPU_H         __HEADER_ARCH(cpu)
 #define __TSC_H         __HEADER_ARCH(tsc)

@@ -80,8 +80,8 @@ Debug & operator<<(Debug & db, const System_Info<PC> & si)
        << ",app_stack=" << reinterpret_cast<void *>(si.lm.app_stack)
        << ",app_heap=" << reinterpret_cast<void *>(si.lm.app_heap)
        << ",app_data_size=" << si.lm.app_data_size
-       << ",ext=" << reinterpret_cast<void *>(si.lm.ext)
-       << ",ext_size=" << si.lm.ext_size
+       << ",app_extra=" << reinterpret_cast<void *>(si.lm.app_extra)
+       << ",app_extra_size=" << si.lm.app_extra_size
        << "}"
        << "\nTime_Map={"
        << "cpu_clock=" << si.tm.cpu_clock

@@ -20,7 +20,7 @@ void Task::init()
                                  CPU::Log_Addr(Memory_Map<Machine>::APP_DATA));
 
     if(si->bm.extras_offset != -1)
-        db<Init>(INF) << "Task:: additional tasks at "  << reinterpret_cast<void *>(si->pmm.ext_base) << ":" << si->pmm.ext_top << endl;
+        db<Init>(INF) << "Task:: additional tasks at "  << reinterpret_cast<void *>(si->lm.app_extra) << ":" << si->lm.app_extra_size << endl;
 
 }
 

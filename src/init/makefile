@@ -60,7 +60,7 @@ $(MACH)_init_kernel: $(SRC)/system/$(MACH)_system $(OBJS) $(LIBINIT)
 		$(LIB)/$(ARCH)_crtend.o \
 		-l$(LINIT) \
 		-R $(SRC)/system/$(MACH)_system \
-		-l$(LUTIL) -lgcc 
+		-l$(LUTIL) -lgcc
 		$(INSTALL) init_application.o $(MACH)_init_application.o
 
 

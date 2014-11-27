@@ -21,7 +21,7 @@ public:
 
     static Time_Stamp time_stamp() {
         Time_Stamp ts;
-        ASM("rdtsc" : "=A" (ts) : );
+        ASM("rdtsc" : "=A" (ts) : ); // must be volatile!
         return ts;
     }
 };

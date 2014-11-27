@@ -47,6 +47,7 @@ public:
  	PAddr ext_top;          // Boot Image EXTRA segment top address
         PAddr idt;              // IDT
         PAddr gdt;              // GDT
+        PAddr tss0;             // TSS0 (only for system call)
         PAddr sys_pt;           // System Page Table
         PAddr sys_pd;           // System Page Directory
         PAddr sys_info;         // System Info
@@ -99,8 +100,8 @@ public:
         LAddr app_stack;
         LAddr app_heap;
         Size  app_data_size;
-        PAddr ext;
-        Size  ext_size;
+        PAddr app_extra;
+        Size  app_extra_size;
     };
 
     // Time Map (built by SETUP)

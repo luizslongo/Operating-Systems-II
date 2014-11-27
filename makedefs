@@ -2,6 +2,7 @@
 
 # Functions
 GETTK		= $(shell sed -n -e '/^.* $(1)[ ]*=.*;.*$$/s/^.* =[ ]*\(.*\)[ ]*;.*$$/\1/p' $(2) 2> /dev/null)
+TOLOWER         = $(shell echo $(1) | tr A-Z a-z)
 
 # Paths, prefixes and suffixes
 EPOS		:= $(abspath $(dir $(filter %makedefs, $(MAKEFILE_LIST))))
@@ -19,19 +20,6 @@ LMACHNAME	:= mach
 LSYSNAME	:= system
 LINITNAME	:= init
 LUTILNAME	:= util
-
-# Supported software architectures
-MODE_LIBRARY	:= library
-MODE_BUILTIN    := builtin
-MODE_KERNEL	:= kernel
-
-# Supported hardware architectures
-ARCH_IA32       := ia32
-ARCH_ARMv7      := armv7
-
-# Supported machines
-MACH_PC		:= pc
-MACH_eMote3	:= emote3
 
 # Makefile hacks
 APPLICATIONS	:= $(subst .cc,,$(shell find $(APP) -name \*.cc -printf "%f\n"))
@@ -55,9 +43,10 @@ endif
 
 # System configuration
 TRAITS		= $(APP)/$(APPLICATION)_traits.h
-MODE		= $(MODE_$(call GETTK,MODE,$(TRAITS)))
-ARCH		= $(ARCH_$(call GETTK,ARCH,$(TRAITS)))
-MACH		= $(MACH_$(call GETTK,MACH,$(TRAITS)))
+MODE		= $(call TOLOWER,$(call GETTK,MODE,$(TRAITS)))
+ARCH		= $(call TOLOWER,$(call GETTK,ARCHITECTURE,$(TRAITS)))
+MACH            = $(call TOLOWER,$(call GETTK,MACHINE,$(TRAITS)))
+MMOD            = $(call TOLOWER,$(call GETTK,MODEL,$(TRAITS)))
 CPUS		= $(call GETTK,CPUS,$(TRAITS))
 NODES		= $(call GETTK,NODES,$(TRAITS))
 LIBARCH		= $(LIB)/lib$(LARCHNAME)_$(ARCH).a
@@ -72,12 +61,12 @@ LINIT		= $(LINITNAME)_$(ARCH)
 LUTIL		= $(LUTILNAME)_$(ARCH)
 
 # Compiler prefixes
-$(ARCH_IA32)_COMP_PREFIX	:= /usr/local/ia32/gcc-4.4.4/bin/ia32-
-$(ARCH_ARMv7)_COMP_PREFIX	:= /usr/local/arm/gcc-4.4.4/bin/arm-
-COMP_PREFIX			= $($(ARCH)_COMP_PREFIX)
+ia32_COMP_PREFIX	:= /usr/local/ia32/gcc-4.4.4/bin/ia32-
+armv7_COMP_PREFIX	:= /usr/local/arm/gcc-4.4.4/bin/arm-
+COMP_PREFIX		= $($(ARCH)_COMP_PREFIX)
 
 # Boot Memory Map
-MACH_TRAITS	= $(INCLUDE)/mach/$(MACH)/traits.h 
+MACH_TRAITS	= $(INCLUDE)/mach/$(MACH)/$(MMOD)_traits.h 
 MEM_BASE	= $(call GETTK,MEM_BASE,$(MACH_TRAITS))
 MEM_TOP		= $(call GETTK,MEM_TOP,$(MACH_TRAITS))
 MEM_SIZE	= $(shell echo "(`printf "%d" $(MEM_TOP)` + 1 - `printf "%d" $(MEM_BASE)`) / 1024"|bc)
@@ -92,15 +81,15 @@ BOOT_LENGTH_MIN	= $(call GETTK,BOOT_LENGTH_MIN,$(MACH_TRAITS))
 BOOT_LENGTH_MAX = $(call GETTK,BOOT_LENGTH_MAX,$(MACH_TRAITS))
 
 #Machine specifics
-$(MACH_PC)_CC_FLAGS     := -Wa,--32
-$(MACH_PC)_AS_FLAGS     := --32
-$(MACH_PC)_LD_FLAGS     := 
-$(MACH_PC)_EMULATOR     = qemu-system-i386 -smp $(CPUS) -m $(MEM_SIZE)k -nographic -no-reboot -fda
+pc_CC_FLAGS             := -Wa,--32
+pc_AS_FLAGS             := --32
+pc_LD_FLAGS             := 
+pc_EMULATOR             = qemu-system-i386 -smp $(CPUS) -m $(MEM_SIZE)k -nographic -no-reboot -fda
 
-$(MACH_eMote3)_CC_FLAGS := -mcpu=cortex-m3 -mthumb -mno-thumb-interwork -mfpu=fpa #-Wa,-mimplicit-it=arm -marm 
-$(MACH_eMote3)_AS_FLAGS := -mcpu=cortex-m3 -mthumb -mfpu=fpa
-$(MACH_eMote3)_LD_FLAGS := 
-$(MACH_eMote3)_EMULATOR = qemu-system-arm -cpu cortex-m3 -machine lm3s811evb -m $(MEM_SIZE)k -nographic -no-reboot -kernel
+cortex_m_CC_FLAGS       := -mcpu=cortex-m3 -mthumb -mno-thumb-interwork -mfpu=fpa #-Wa,-mimplicit-it=arm -marm 
+cortex_m_AS_FLAGS       := -mcpu=cortex-m3 -mthumb -mfpu=fpa
+cortex_m_LD_FLAGS       := 
+cortex_m_EMULATOR       = qemu-system-arm -cpu cortex-m3 -machine lm3s811evb -m $(MEM_SIZE)k -nographic -no-reboot -kernel
 
 $(MACH)_CODE_NAME       := .init
 $(MACH)_DATA_NAME       := .ctors
@@ -201,6 +190,10 @@ DEBUGGER	= $(MACH_DEBUGGER)
 EMULATOR	= $(MACH_EMULATOR) 
 
 INSTALL		:= install
+
+OBJCOPY         = $(COMP_PREFIX)objcopy -I elf32-$(ARCH_ENDIANESS)
+
+OBJDUMP         = $(COMP_PREFIX)objdump
 
 SHELL		:= bash
 
