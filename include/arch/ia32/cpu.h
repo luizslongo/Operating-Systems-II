@@ -360,60 +360,20 @@ public:
     static Reg32 ntohl(Reg32 v)	{ return htonl(v); }
     static Reg16 ntohs(Reg16 v)	{ return htons(v); }
 
-    // The int left on the stack between thread's arguments and its context
-    // is due to the fact that the thread's function believes it's a normal
-    // function that will be invoked with a call, which pushes the return
-    // address on the stack
-    static Context * init_stack(Log_Addr stack, unsigned int size, void (* exit)(), int (* entry)()) {
-        Log_Addr sp = stack + size;
-        sp -= sizeof(int); *static_cast<int *>(sp) = Log_Addr(exit);
+    // IA32 first decrements the stack pointer and then writes into the stack, that's why we decrement it by an int
+    template<typename ... Tn>
+    static Context * init_stack(Log_Addr stack, unsigned int size, void (* exit)(), int (* entry)(Tn ...), Tn ... an) {
+        Log_Addr sp = stack + size - sizeof(int);
+        sp -= SIZEOF<Tn ... >::Result;
+        init_stack_helper(sp, an ...);
+        sp -= sizeof(int *);
+        *static_cast<int *>(sp) = Log_Addr(exit);
         sp -= sizeof(Context);
         return new (sp) Context(entry);
     }
 
-    template<typename T1>
-    static Context * init_stack(Log_Addr stack, unsigned int size, void (* exit)(), int (* entry)(T1 a1), T1 a1) {
-        Log_Addr sp = stack + size;
-        sp -= sizeof(T1); *static_cast<T1 *>(sp) = a1;
-        sp -= sizeof(int); *static_cast<int *>(sp) = Log_Addr(exit);
-        sp -= sizeof(Context);
-        return new (sp) Context(entry);
-    }
-
-    template<typename T1, typename T2>
-    static Context * init_stack(Log_Addr stack, unsigned int size, void (* exit)(), int (* entry)(T1 a1, T2 a2), T1 a1, T2 a2) {
-        Log_Addr sp = stack + size;
-        sp -= sizeof(T2); *static_cast<T2 *>(sp) = a2;
-        sp -= sizeof(T1); *static_cast<T1 *>(sp) = a1;
-        sp -= sizeof(int); *static_cast<int *>(sp) = Log_Addr(exit);
-        sp -= sizeof(Context);
-        return new (sp) Context(entry);
-    }
-
-    template<typename T1, typename T2, typename T3>
-    static Context * init_stack(Log_Addr stack, unsigned int size, void (* exit)(), int (* entry)(T1 a1, T2 a2, T3 a3), T1 a1, T2 a2, T3 a3) {
-        Log_Addr sp = stack + size;
-        sp -= sizeof(T3); *static_cast<T3 *>(sp) = a3;
-        sp -= sizeof(T2); *static_cast<T2 *>(sp) = a2;
-        sp -= sizeof(T1); *static_cast<T1 *>(sp) = a1;
-        sp -= sizeof(int); *static_cast<int *>(sp) = Log_Addr(exit);
-        sp -= sizeof(Context);
-        return new (sp) Context(entry);
-    }
-
-    template<typename T1, typename T2, typename T3, typename T4>
-    static Context * init_stack(Log_Addr stack, unsigned int size, void (* exit)(), int (* entry)(T1 a1, T2 a2, T3 a3, T4 a4), T1 a1, T2 a2, T3 a3, T4 a4) {
-        Log_Addr sp = stack + size;
-        sp -= sizeof(T4); *static_cast<T4 *>(sp) = a4;
-        sp -= sizeof(T3); *static_cast<T3 *>(sp) = a3;
-        sp -= sizeof(T2); *static_cast<T2 *>(sp) = a2;
-        sp -= sizeof(T1); *static_cast<T1 *>(sp) = a1;
-        sp -= sizeof(int); *static_cast<int *>(sp) = Log_Addr(exit);
-        sp -= sizeof(Context);
-        return new (sp) Context(entry);
-    }
-
-public: // IA32 specific methods
+public:
+    // IA32 specific methods
     static Flags eflags() {
         Reg32 value; ASM("pushfl");
         ASM("popl %0" : "=r"(value) :); return value;
@@ -603,6 +563,13 @@ public: // IA32 specific methods
     }
 
 private:
+    template<typename Head, typename ... Tail>
+    static void init_stack_helper(Log_Addr sp, Head head, Tail ... tail) {
+        *static_cast<Head *>(sp) = head;
+        init_stack_helper(sp + sizeof(Head), tail ...);
+    }
+    static void init_stack_helper(Log_Addr sp) {}
+
     static void init();
 
 private:

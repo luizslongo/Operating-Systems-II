@@ -69,14 +69,22 @@ struct EQUAL<T, T>
 { enum { Result = true }; };
 
 
+// SIZEOF Type Package
+template<typename ... Tn>
+struct SIZEOF
+{ static const unsigned int  Result = 0; };
+template<typename T1, typename ... Tn>
+struct SIZEOF<T1, Tn ...>
+{ static const unsigned int Result = sizeof(T1) + SIZEOF<Tn ...>::Result ; };
+
 // LIST of Types
-template<typename ...Tn> class LIST;
-template<typename T1, typename ...Tn>
-class LIST<T1, Tn...>
+template<typename ... Tn> class LIST;
+template<typename T1, typename ... Tn>
+class LIST<T1, Tn ...>
 {
 protected:
     typedef T1 Head;
-    typedef LIST<Tn...> Tail;
+    typedef LIST<Tn ...> Tail;
 
 public:
     enum { Length = Tail::Length + 1 };
@@ -121,15 +129,15 @@ public:
 
 
 // LIST of Templates
-template<template<typename T> class ...Tn> class TLIST;
-template<template<typename T> class T1, template<typename T> class ...Tn>
-class TLIST<T1, Tn...>
+template<template<typename T> class ... Tn> class TLIST;
+template<template<typename T> class T1, template<typename T> class ... Tn>
+class TLIST<T1, Tn ...>
 {
 public:
-    enum { Length = TLIST<Tn...>::Length + 1 };
+    enum { Length = TLIST<Tn ...>::Length + 1 };
 
     template<typename T>
-    struct Recur: public T1<T>, public TLIST<Tn...>::template Recur<T> {};
+    struct Recur: public T1<T>, public TLIST<Tn ...>::template Recur<T> {};
 };
 
 template<>
