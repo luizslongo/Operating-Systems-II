@@ -62,13 +62,14 @@ public:
     };
 
     // Interrupts
-    static const unsigned int INTS = 64;
+    static const unsigned int INTS = 50;
     enum {
         INT_FIRST_HARD  = HARD_INT,
         INT_TIMER	= HARD_INT + IRQ_TIMER,
         INT_KEYBOARD	= HARD_INT + IRQ_KEYBOARD,
         INT_LAST_HARD   = HARD_INT + IRQ_LAST,
-        INT_RESCHEDULER = SOFT_INT
+        INT_RESCHEDULER = SOFT_INT,
+        INT_SYSCALL
     };
 
 public:
@@ -162,6 +163,7 @@ public:
         INT_FIRST_HARD  = i8259A::INT_FIRST_HARD,
         INT_TIMER	= i8259A::INT_TIMER,
         INT_RESCHEDULER = i8259A::INT_RESCHEDULER, // in multicores, reschedule goes via IPI, which must be acknowledged just like hardware
+        INT_SYSCALL     = i8259A::INT_SYSCALL,
         INT_LAST_HARD   = INT_RESCHEDULER
     };
 
@@ -452,6 +454,7 @@ public:
     using IC_Common::Interrupt_Handler;
     using Engine::INT_TIMER;
     using Engine::INT_RESCHEDULER;
+    using Engine::INT_SYSCALL;
 
     using Engine::ipi_send;
 

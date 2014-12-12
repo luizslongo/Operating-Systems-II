@@ -28,7 +28,7 @@ public:
             Machine::smp_barrier();
             return;
         }
-        
+
         // Initialize the processor
         db<Init>(INF) << "Initializing the CPU: " << endl;
         CPU::init();
@@ -51,7 +51,7 @@ public:
         Machine::smp_barrier(); // signalizes "machine ready" to other CPUs
         Machine::smp_barrier(); // wait for them to finish Machine::init()
 
-        // Initialize system abstractions 
+        // Initialize system abstractions
         db<Init>(INF) << "Initializing system abstractions: " << endl;
         System::init();
         db<Init>(INF) << "done!" << endl;

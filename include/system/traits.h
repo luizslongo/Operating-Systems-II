@@ -12,7 +12,7 @@ struct Traits
     static const bool enabled = true;
     static const bool debugged = true;
     static const bool hysterically_debugged = false;
-    typedef LIST<> ASPECTS;
+    typedef TLIST<> ASPECTS;
 };
 
 template<> struct Traits<Build>

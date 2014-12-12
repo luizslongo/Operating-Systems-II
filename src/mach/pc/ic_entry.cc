@@ -155,10 +155,11 @@ void PC_IC::entry()
         "        jmp        .GO         \n"
         "        .align 16              \n"
         "        movl        $48, %0    \n"
+        "        jmp        .GO         \n"
+        "        .align 16              \n"
+        "        movl        $49, %0    \n"
         // On a regular PC, only the first 32 exceptions and the subsequent 16 interrupts are useful
-        //        "        jmp        .GO         \n"
-        //        "        .align 16              \n"
-        //        "        movl        $49, %0    \n"
+        // We also left two spare entries for multicore IPIs and an interrupt-based system call mechanism
         //        "        jmp        .GO         \n"
         //        "        .align 16              \n"
         //        "        movl        $50, %0    \n"

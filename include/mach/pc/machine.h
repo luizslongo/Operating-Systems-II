@@ -28,7 +28,10 @@ private:
 public:
     PC() {}
   
-    static void delay(const RTC::Microsecond & time);
+    static void delay(const RTC::Microsecond & time) {
+        TSC::Time_Stamp end = TSC::time_stamp() + time * (TSC::frequency() / 1000000);
+        while(end > TSC::time_stamp());
+    }
 
     static void panic();
     static void reboot();

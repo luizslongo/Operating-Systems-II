@@ -2,12 +2,13 @@
 
 include	../makedefs
 
-IMAGE := $(addsuffix .img,$(APPLICATION))
+SYSTEM := $(shell find . -name $(MACH)_\* -and -not -name $(MACH)_boot)
+IMAGE  := $(addsuffix .img,$(APPLICATION))
 OUTPUT := $(addsuffix .out,$(APPLICATION))
 
-all:		$(IMAGE)
+all:		strip $(IMAGE)
 
-run:		$(IMAGE)
+run:		strip $(IMAGE)
 ifeq ($(NODES),1)
 		$(EMULATOR) $(IMAGE) | $(TEE) $(OUTPUT)
 else
@@ -25,5 +26,8 @@ debug:		$(IMAGE)
 		$(EMULATOR) $(IMAGE) | $(TEE) $(OUTPUT) &
 		$(DEBUGGER) $(APP)/$(APPLICATION)
 
+strip:		$(SYSTEM) $(APPLICATION)
+		@for file in $^; do $(STRIP) "$${file}"; done;
+		
 clean:
-		$(CLEAN) *_boot *_setup *_init *_system $(APPLICATION)
+		$(CLEAN) $(SYSTEM) $(APPLICATION)

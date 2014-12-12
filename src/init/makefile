@@ -14,23 +14,11 @@ $(MACH)_install_library: $(MACH)_init_library
 		$(INSTALL) $(MACH)_init_application.o $(LIB)
 
 $(MACH)_install_builtin: $(MACH)_init_builtin
-ifndef 	GDB
-		$(STRIP) -o $(MACH)_init.tmp $(MACH)_init
-else
-		$(INSTALL) $(MACH)_init $(MACH)_init.tmp
-endif
-		$(INSTALL) $(MACH)_init.tmp $(IMG)/$(MACH)_init
-		$(CLEAN) $(MACH)_init.tmp
+		$(INSTALL) $(MACH)_init $(IMG)
 		$(INSTALL) $(MACH)_init_application.o $(LIB)
 
 $(MACH)_install_kernel: $(MACH)_init_kernel
-ifndef 	GDB
-		$(STRIP) -o $(MACH)_init.tmp $(MACH)_init
-else
-		$(INSTALL) $(MACH)_init $(MACH)_init.tmp
-endif
-		$(INSTALL) $(MACH)_init.tmp $(IMG)/$(MACH)_init
-		$(CLEAN) $(MACH)_init.tmp
+		$(INSTALL) $(MACH)_init $(IMG)
 		$(INSTALL) $(MACH)_init_application.o $(LIB)
 
 

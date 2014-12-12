@@ -770,14 +770,20 @@ void PC_Setup::setup_tss0()
     // Clear TSS0
     memset(tss0, 0, sizeof(Page));
 
-    // Configure only the kernel stack on the bootstrap CPU
+    // Configure only the segment selectors and the kernel stack on the bootstrap CPU
     tss0->ss0 = CPU::SEL_SYS_DATA;
-    tss0->esp0 = SYS_STACK + Traits<System>::STACK_SIZE - 1;
+    tss0->esp0 = SYS_STACK + Traits<System>::STACK_SIZE;
+    tss0->cs = (CPU::GDT_SYS_CODE << 3)  | CPU::PL_APP;
+    tss0->ss = (CPU::GDT_SYS_DATA << 3)  | CPU::PL_APP;
+    tss0->ds = tss0->ss;
+    tss0->es = tss0->ss;
+    tss0->fs = tss0->ss;
+    tss0->gs = tss0->ss;
 
     // Load TR with TSS0
     CPU::Reg16 tr = CPU::SEL_TSS0;
-    ASM("ltr %0" : : "r"(tr));
-    ASM("str %0" : "=r"(tr) :);
+    CPU::tr(tr);
+    tr = CPU::tr();
 
     db<Setup>(INF) << "TR=" << tr << ",TSS0={ss0=" << tss0->ss0 << ",esp0=" << Log_Addr(tss0->esp0) << "}" << endl;
 }

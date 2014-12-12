@@ -31,21 +31,26 @@ void IA32::Context::save() volatile
 
 void IA32::Context::load() const volatile
 {
-    // POPA ignores the ESP saved by PUSHA. ESP is just normally incremented. 
-    ASM("	movl    4(%esp), %esp	# sp = this			\n"
-        "	popal							\n"
- 	"	popfl							\n");
+    // Pop the context pushed into the stack during thread creation to initialize the CPU's context, discarding user-level stack pointer
+    // Obs: POPA ignores the ESP saved by PUSHA. ESP is just normally incremented
+    ASM("	mov     4(%esp), %esp	# sp = this			\n"
+        "	popa							\n"
+ 	"	popf							\n");
 }
 
 void IA32::switch_context(Context * volatile * o, Context * volatile n)
 {
-    // PUSHA saves an extra "esp" (which is always "this"),
-    // but saves several instruction fetchs.
-    ASM("	pushfl				\n"
-        "	pushal				\n"
-        "	movl    40(%esp), %eax	# old	\n" 
-        "	movl    %esp, (%eax)		\n"
-        "	movl    44(%esp), %esp	# new	\n"
+    // Save the previously running thread context ("o") into its stack (including the user-level stack pointer stored in the dummy TSS)
+    // and updates the its _context attribute
+    // PUSHA saves an extra "esp" (which is always "this"), but saves several instruction fetches
+    ASM("	pushf				\n"
+        "	pusha				\n"
+        "	mov     40(%esp), %eax	# old	\n" 
+        "	mov     %esp, (%eax)		\n");
+        
+    // Restore the next thread context ("n") from its stack (and the user-level stack pointer, updating the dummy TSS)
+        
+    ASM("	movl    44(%esp), %esp	# new	\n"
         "	popal				\n"
         "	popfl				\n");
 }

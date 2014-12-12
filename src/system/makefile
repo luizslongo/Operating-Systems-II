@@ -13,23 +13,12 @@ $(MACH)_install_library: $(MACH)_system_library
 		$(INSTALL) $(MACH)_application.o $(LIB)
 
 $(MACH)_install_builtin: $(MACH)_system_builtin
-ifndef 	GDB
-		$(STRIP) -o $(MACH)_system.tmp $(MACH)_system
-else
-		$(INSTALL) $(MACH)_system $(MACH)_system.tmp
-endif
-		$(INSTALL) $(MACH)_system.tmp $(IMG)/$(MACH)_system
-		$(CLEAN) $(MACH)_system.tmp
+		$(OBJCOPY) -L _end $(MACH)_system
+		$(INSTALL) $(MACH)_system $(IMG)
 		$(INSTALL) $(MACH)_application.o $(LIB)
 
 $(MACH)_install_kernel: $(MACH)_system_kernel
-ifndef 	GDB
-		$(STRIP) -o $(MACH)_system.tmp $(MACH)_system
-else
-		$(INSTALL) $(MACH)_system $(MACH)_system.tmp
-endif
-		$(INSTALL) $(MACH)_system.tmp $(IMG)/$(MACH)_system
-		$(CLEAN) $(MACH)_system.tmp
+		$(INSTALL) $(MACH)_system $(IMG)
 		$(INSTALL) $(MACH)_application.o $(LIB)
 
 $(MACH)_system_library: $(OBJS)

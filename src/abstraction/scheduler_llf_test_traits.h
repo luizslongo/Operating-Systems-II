@@ -18,7 +18,7 @@ struct Traits
 template<> struct Traits<Build>
 {
     enum {LIBRARY, BUILTIN, KERNEL};
-    static const unsigned int MODE = BUILTIN;
+    static const unsigned int MODE = LIBRARY;
 
     enum {IA32};
     static const unsigned int ARCHITECTURE = IA32;
@@ -105,7 +105,7 @@ template<> struct Traits<System>: public Traits<void>
     static const bool multithread = (Traits<Application>::MAX_THREADS > 1);
     static const bool multitask = (mode != Traits<Build>::LIBRARY);
     static const bool multicore = (Traits<Build>::CPUS > 1) && multithread;
-    static const bool multiheap = true;
+    static const bool multiheap = (mode != Traits<Build>::LIBRARY) || Traits<Scratchpad>::enabled;
 
     enum {FOREVER = 0, SECOND = 1, MINUTE = 60, HOUR = 3600, DAY = 86400, WEEK = 604800, MONTH = 2592000, YEAR = 31536000};
     static const unsigned long LIFE_SPAN = 1 * HOUR; // in seconds
@@ -125,7 +125,7 @@ template<> struct Traits<Thread>: public Traits<void>
 {
     static const bool smp = Traits<System>::multicore;
 
-    typedef Scheduling_Criteria::RR Criterion;
+    typedef Scheduling_Criteria::EDF Criterion;
     static const unsigned int QUANTUM = 10000; // us
 
     static const bool trace_idle = hysterically_debugged;
@@ -164,6 +164,7 @@ template<> struct Traits<Synchronizer>: public Traits<void>
 template<> struct Traits<Network>: public Traits<void>
 {
     static const bool enabled = (Traits<Build>::NODES > 1);
+
 
     static const unsigned int RETRIES = 3;
     static const unsigned int TIMEOUT = 10; // s
