@@ -141,10 +141,10 @@ TLD		:= gcc
 TLDFLAGS	:= -m32
 
 # Tools and flags to compile applications
-ACC			= $(BIN)/eposcc $(MACH_CC_FLAGS) -c -ansi -O2
+ACC		= $(BIN)/eposcc $(MACH_CC_FLAGS) -c -ansi -O2
 ACXX		= $(BIN)/eposcc $(MACH_CC_FLAGS) -c -ansi -O2
 AF77		= $(BIN)/eposcc $(MACH_CC_FLAGS) -c -ansi -O2
-ALD			= $(BIN)/eposcc --$(MODE) $(MACH_LD_FLAGS)
+ALD		= $(BIN)/eposcc --$(MODE) $(MACH_LD_FLAGS)
 ALDFLAGS	:= --gc-sections 
 
 # Tools and flags to compile the system

@@ -31,8 +31,11 @@ ANL_COMP_FLGS="-DANALYZE"
 
 CONFIGURATOR=eposcfg
 
-COMP_FLGS="-include $INC/application.h"
+COMP_FLGS=""
 COMP_HDRS="$INC"
+if [ "$MODE" = "kernel" ] ; then
+COMP_FLGS="$COMP_FLGS -include $INC/system/framework.h"
+fi
 
 C_COMPILER="$TOOLS_PREFIX""gcc"
 C_COMP_FLGS="$MACH_CC_FLAGS"
@@ -73,7 +76,7 @@ LINKER_KERNEL=$LINKER
 LINK_FLGS_KERNEL="-L$LIB -L`$C_COMPILER $C_COMP_FLGS -print-file-name=` -static --nmagic --section-start $MACH_CODE_NAME=$APP_CODE --section-start $MACH_DATA_NAME=$APP_DATA"
 LINK_OBJI_KERNEL="$LIB/$ARCH""_crt0.o $LIB/$ARCH""_crtbegin.o $LIB/$MACH""_init_application.o  $LIB/$MACH""_application.o"
 LINK_OBJN_KERNEL="$LIB/$ARCH""_crtend.o"
-LINK_LIBS_KERNEL="util_$ARCH gcc"
+LINK_LIBS_KERNEL="util_$ARCH arch_$ARCH gcc"
 
 #=========================================================================
 # VARIABLES

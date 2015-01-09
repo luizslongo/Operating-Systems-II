@@ -25,7 +25,7 @@ endif
 
 run1: all1
 		(cd img && $(MAKE) run)
-		
+
 debug: FORCE
 ifndef APPLICATION
 		$(foreach app,$(APPLICATIONS),$(MAKE) GDB=1 APPLICATION=$(app) $(PRECLEAN) all1 debug1;)

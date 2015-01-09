@@ -4,29 +4,45 @@
 #define __config_h
 
 //============================================================================
-// DEFINITIONS
+// ARCHITECTURE, MACHINE, AND APPLICATION SELECTION
+// This section is generated automatically from makedefs
 //============================================================================
+#define MODExxx
+#define ARCH xxx
+#define MACH xxx
+#define MMOD xxx
+#define APPL xxx
 
+//============================================================================
+// NAMESPACES AND DEFINITIONS
+//============================================================================
 namespace EPOS {
-    namespace U {}
-    using namespace U;
+    namespace S {
+        namespace U {}
+        using namespace U;
+    }
 }
 
 #define __BEGIN_API             namespace EPOS {
 #define __END_API               }
 #define _API                    ::EPOS
 
-#define __BEGIN_UTIL            namespace EPOS { namespace U {
-#define __END_UTIL              }}
-#define __USING_UTIL            using U;
-#define _UTIL                   ::EPOS::U
+#define __BEGIN_UTIL            namespace EPOS { namespace S { namespace U {
+#define __END_UTIL              }}}
+#define __USING_UTIL            using namespace S::U;
+#define _UTIL                   ::EPOS::S::U
 
-#define __BEGIN_SYS             namespace EPOS {
-#define __END_SYS               }
-#define __USING_SYS             using namespace EPOS;
-#define _SYS                    ::EPOS
+#define __BEGIN_SYS             namespace EPOS { namespace S {
+#define __END_SYS               }}
+#define __USING_SYS             using namespace EPOS::S;
+#define _SYS                    ::EPOS::S
 
-#define ASM                     __asm__ __volatile__
+#ifndef MODEkernel
+namespace EPOS {
+    using namespace S;
+    using namespace S::U;
+}
+#endif
 
 #define __HEADER_ARCH(X)        <arch/ARCH/X.h>
 #define __HEADER_MACH(X)        <mach/MACH/X.h>
@@ -37,19 +53,12 @@ namespace EPOS {
 #define __APPL_TRAITS_T(X)      <../app/X##_traits.h>
 #define __APPL_TRAITS(X)        __APPL_TRAITS_T(X)
 
-//============================================================================
-// ARCHITECTURE, MACHINE, AND APPLICATION SELECTION
-// This section is generated automatically from makedefs
-//============================================================================
-#define ARCH xxx
-#define MACH xxx
-#define MMOD xxx
-#define APPL xxx
-
 #define __ARCH_TRAITS_H         __HEADER_ARCH(traits)
 #define __MACH_TRAITS_H         __MACH_TRAITS(MMOD)
 #define __MACH_CONFIG_H         __MACH_CONFIG(MMOD)
 #define __APPL_TRAITS_H         __APPL_TRAITS(APPL)
+
+#define ASM                     __asm__ __volatile__
 
 //============================================================================
 // ASSERT (for pre and post conditions)
