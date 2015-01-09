@@ -103,8 +103,8 @@ namespace Scheduling_Criteria
     class CEDF;
 };
 
-class Segment;
 class Address_Space;
+class Segment;
 
 class Synchronizer;
 class Mutex;
@@ -112,10 +112,11 @@ class Semaphore;
 class Condition;
 
 class Clock;
-class Alarm;
 class Chronometer;
+class Alarm;
+class Delay;
 
-template<typename NIC, typename Network, unsigned int HTYPE = 1>
+template<typename NIC, typename Network, unsigned int HTYPE>
 class ARP;
 class Network;
 class IP;
@@ -123,6 +124,11 @@ class ICMP;
 class UDP;
 class TCP;
 class DHCP;
+
+template<typename Channel, typename Network, bool connectionless>
+class Link;
+template<typename Channel, typename Network, bool connectionless>
+class Port;
 
 // Framework
 class Framework;
@@ -175,6 +181,9 @@ enum
     TCP_ID,
     DHCP_ID,
 
+    LINK_ID,
+    PORT_ID,
+
     UTILITY_ID = 50,
 
     UNKNOWN_TYPE_ID,
@@ -199,11 +208,23 @@ template<> struct Type<PC_Scratchpad> { static const Type_Id ID = SCRATCHPAD_ID;
 template<> struct Type<PC_Ethernet> { static const Type_Id ID = NIC_ID; };
 
 template<> struct Type<Thread> { static const Type_Id ID = THREAD_ID; };
+template<> struct Type<Periodic_Thread> { static const Type_Id ID = THREAD_ID; };
+template<> struct Type<RT_Thread> { static const Type_Id ID = THREAD_ID; };
 template<> struct Type<Active> { static const Type_Id ID = ACTIVE_ID; };
 template<> struct Type<Task> { static const Type_Id ID = TASK_ID; };
+
 template<> struct Type<Address_Space> { static const Type_Id ID = ADDRESS_SPACE_ID; };
 template<> struct Type<Segment> { static const Type_Id ID = SEGMENT_ID; };
+
+template<> struct Type<Mutex> { static const Type_Id ID = MUTEX_ID; };
+template<> struct Type<Semaphore> { static const Type_Id ID = SEMAPHORE_ID; };
+template<> struct Type<Condition> { static const Type_Id ID = CONDITION_ID; };
+
+template<> struct Type<Clock> { static const Type_Id ID = CLOCK_ID; };
+template<> struct Type<Chronometer> { static const Type_Id ID = CHRONOMETER_ID; };
 template<> struct Type<Alarm> { static const Type_Id ID = ALARM_ID; };
+template<> struct Type<Delay> { static const Type_Id ID = ALARM_ID; };
+
 template<> struct Type<IP> { static const Type_Id ID = IP_ID; };
 template<> struct Type<ICMP> { static const Type_Id ID = ICMP_ID; };
 template<> struct Type<UDP> { static const Type_Id ID = UDP_ID; };

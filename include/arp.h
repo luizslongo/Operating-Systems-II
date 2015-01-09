@@ -11,7 +11,7 @@
 
 __BEGIN_SYS
 
-template<typename NIC, typename Network, unsigned int HTYPE>  // Ethernet Hardware Type (HTYPE) = 1
+template<typename NIC, typename Network, unsigned int HTYPE = 1>  // Ethernet Hardware Type (HTYPE) = 1
 class ARP: private NIC::Observer
 {
 public:
