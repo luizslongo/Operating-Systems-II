@@ -30,7 +30,7 @@ template<> struct Traits<Build>
     static const unsigned int MODEL = Legacy;
 
     static const unsigned int CPUS = 1;
-    static const unsigned int NODES = 1; // > 1 => NETWORKING
+    static const unsigned int NODES = 1; // > 1 => NETWORKING    
 };
 
 
@@ -165,16 +165,11 @@ template<> struct Traits<Network>: public Traits<void>
 {
     static const bool enabled = (Traits<Build>::NODES > 1);
 
-
     static const unsigned int RETRIES = 3;
     static const unsigned int TIMEOUT = 10; // s
 
     // This list is positional, with one network for each NIC in traits<NIC>::NICS
     typedef LIST<IP> NETWORKS;
-};
-
-template<> struct Traits<ARP<NIC, IP> >: public Traits<Network>
-{
 };
 
 template<> struct Traits<IP>: public Traits<Network>
@@ -223,4 +218,3 @@ template<> struct Traits<DHCP>: public Traits<Network>
 __END_SYS
 
 #endif
-

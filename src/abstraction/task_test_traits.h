@@ -18,7 +18,7 @@ struct Traits
 template<> struct Traits<Build>
 {
     enum {LIBRARY, BUILTIN, KERNEL};
-    static const unsigned int MODE = BUILTIN;
+    static const unsigned int MODE = KERNEL;
 
     enum {IA32};
     static const unsigned int ARCHITECTURE = IA32;
@@ -170,10 +170,6 @@ template<> struct Traits<Network>: public Traits<void>
 
     // This list is positional, with one network for each NIC in traits<NIC>::NICS
     typedef LIST<IP> NETWORKS;
-};
-
-template<> struct Traits<ARP<NIC, IP> >: public Traits<Network>
-{
 };
 
 template<> struct Traits<IP>: public Traits<Network>
