@@ -19,6 +19,7 @@ int UDP::send(const Port & from, const Address & to, const void * d, unsigned in
     if(!pool)
         return 0;
 
+    Message * message = 0;
     unsigned int headers = sizeof(Header);
     for(Buffer::Element * el = pool->link(); el; el = el->next()) {
         Buffer * buf = el->object();
@@ -27,20 +28,24 @@ int UDP::send(const Port & from, const Address & to, const void * d, unsigned in
         db<UDP>(INF) << "UDP::send:buf=" << buf << " => " << *buf<< endl;
 
         if(el == pool->link()) {
-            Message * message = packet->data<Message>();
+            message = packet->data<Message>();
             new(packet->data<void>()) Header(from, to.port(), size);
-            message->sum(packet->from(), packet->to(), data);
+            message->sum_header(packet->from(), packet->to());
             memcpy(message->data<void>(), data, buf->size() - sizeof(Header) - sizeof(IP::Header));
+            message->sum_data(data, buf->size() - sizeof(Header) - sizeof(IP::Header));
             data += buf->size() - sizeof(Header) - sizeof(IP::Header);
 
             db<UDP>(INF) << "UDP::send:msg=" << message << " => " << *message << endl;
         } else {
             memcpy(packet->data<void>(), data, buf->size() - sizeof(IP::Header));
+            message->sum_data(data, buf->size() - sizeof(IP::Header));
             data += buf->size() - sizeof(IP::Header);
         }
 
         headers += sizeof(IP::Header);
     }
+
+    message->sum_trailer();
 
     return IP::send(pool) - headers; // implicitly releases the pool
 }
@@ -104,7 +109,7 @@ void UDP::update(IP::Observed * obs, IP::Protocol prot, Buffer * pool)
 }
 
 
-void UDP::Message::sum(const IP::Address & from, const IP::Address & to, const void * data)
+void UDP::Message::sum_header(const IP::Address & from, const IP::Address & to)
 {
     _checksum = 0;
     if(Traits<UDP>::checksum) {
@@ -119,12 +124,29 @@ void UDP::Message::sum(const IP::Address & from, const IP::Address & to, const v
         for(unsigned int i = 0; i < sizeof(Header); i += 2)
             sum += (ptr[i] << 8) | ptr[i+1];
 
-        ptr = reinterpret_cast<const unsigned char *>(data);
-        unsigned int size = length() - sizeof(Header);
+        _checksum = sum;
+    }
+}
+
+void UDP::Message::sum_data(const void * data, unsigned int size)
+{
+    if(Traits<UDP>::checksum) {
+        unsigned long sum = _checksum;
+
+        const unsigned char * ptr = reinterpret_cast<const unsigned char *>(data);
         for(unsigned int i = 0; i < size; i += 2)
             sum += (ptr[i] << 8) | ptr[i+1];
         if(size & 1)
             sum += ptr[size - 1];
+
+        _checksum = sum;
+    }
+}
+
+void UDP::Message::sum_trailer()
+{
+    if(Traits<UDP>::checksum) {
+        unsigned long sum = _checksum;
 
         while(sum >> 16)
             sum = (sum & 0xffff) + (sum >> 16);

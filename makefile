@@ -25,7 +25,7 @@ endif
 
 run1: all1
 		(cd img && $(MAKE) run)
-
+		
 debug: FORCE
 ifndef APPLICATION
 		$(foreach app,$(APPLICATIONS),$(MAKE) GDB=1 APPLICATION=$(app) $(PRECLEAN) all1 debug1;)
@@ -41,8 +41,16 @@ TEST_SORUCES := $(shell find $(SRC)/abstraction -name \*_test.cc -printf "%p\n")
 test: $(subst .cc,_traits.h,$(TEST_SORUCES))
 		$(INSTALL) $(TEST_SORUCES) $(APP)
 		$(INSTALL) $(subst .cc,_traits.h,$(TEST_SORUCES)) $(APP)
-		$(foreach tst,$(TESTS),$(MAKETEST) APPLICATION=$(tst) clean1 run1;)
+		$(foreach tst,$(TESTS),$(MAKETEST) APPLICATION=$(tst) prebuild_$(tst) clean1 all1 posbuild_$(tst) prerun_$(tst) run1 posbuild_$(tst);)
 		$(foreach tst,$(TESTS),$(CLEAN) $(APP)/$(tst)*;)
+
+.PHONY: prebuild_$(APPLICATION) posbuild_$(APPLICATION) prerun_$(APPLICATION)
+prebuild_$(APPLICATION):
+		@echo "Building $(APPLICATION) ..."
+posbuild_$(APPLICATION):
+		@echo "done!"
+prerun_$(APPLICATION):
+		@echo "Running $(APPLICATION) ..."
 
 clean: FORCE
 ifndef APPLICATION

@@ -25,7 +25,7 @@ int ICMP::send(const Address::Local & from, const Address & to, const void * dat
 
     IP::send(buf);
 
-    return sizeof(Data);
+    return size;
 }
 
 int ICMP::receive(Buffer * buf, Address * from, void * data, unsigned int s)

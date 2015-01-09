@@ -56,6 +56,31 @@ public:
         return Channel::receive(buf, from, data, size);
     }
 
+    int receive_all(void * data, unsigned int size) {
+        for(unsigned int received = 0; received <= size; received = 0) {
+            _ready.p();
+            for(List::Element* el = _received.head(); el; el = el->next())
+                received += el->object()->size();
+        }
+
+        Element * el = _received.remove();
+        Buffer * buf = el->object();
+        delete el;
+        return Channel::receive(buf, data, size);
+    }
+    int receive_all(Address * from, void * data, unsigned int size) {
+        for(unsigned int received = 0; received <= size; received = 0) {
+            _ready.p();
+            for(List::Element* el = _received.head(); el; el = el->next())
+                received += el->object()->size();
+        }
+
+        Element * el = _received.remove();
+        Buffer * buf = el->object();
+        delete el;
+        return Channel::receive(buf, from, data, size);
+    }
+
 private:
     void update(typename Channel::Observed * obs, Observing_Condition c, Buffer * buf) {
         _received.insert(new (SYSTEM) Element(buf));
@@ -97,12 +122,27 @@ public:
         return _connection->send(data, size);
     }
 
-    int receive(void * data, unsigned int size) {
+    int receive_some(void * data, unsigned int size) {
         _ready.p();
         Element * el = _received.remove();
         Buffer * buf = el->object();
         delete el;
         return _connection->receive(buf, data, size);
+    }
+
+    int receive(void * d, unsigned int size) {
+        char * data = reinterpret_cast<char *>(d);
+        unsigned int received = 0;
+        do {
+            _ready.p();
+            Element * el = _received.remove();
+            Buffer * buf = el->object();
+            delete el;
+            unsigned int segment_size = _connection->receive(buf, data, size);
+            data += segment_size;
+            received += segment_size;
+        } while(received <= size);
+        return size;
     }
 
 private:
@@ -138,6 +178,7 @@ public:
 
     int send(const void * data, unsigned int size) { return Base::send(_peer, data, size); }
     int receive(void * data, unsigned int size) { return Base::receive(data, size); }
+    int receive_all(void * data, unsigned int size) { return Base::receive_all(data, size); }
 
     int read(void * data, unsigned int size) { return receive(data, size); }
     int write(const void * data, unsigned int size) { return send(data, size); }
@@ -166,6 +207,7 @@ public:
 
     int send(const void * data, unsigned int size) { return Base::send(data, size); }
     int receive(void * data, unsigned int size) { return Base::receive(data, size); }
+    int receive_all(void * data, unsigned int size) { return Base::receive_all(data, size); }
 
     int read(void * data, unsigned int size) { return receive(data, size); }
     int write(const void * data, unsigned int size) { return send(data, size); }

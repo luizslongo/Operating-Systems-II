@@ -16,6 +16,8 @@ class IP: private NIC::Observer
     template<int unit> friend void call_init();
 
 public:
+    static const unsigned int TIMEOUT = Traits<IP>::TIMEOUT * 1000000;
+
     // IP Protocol Id
     static const unsigned int PROTOCOL = NIC::IP;
 
@@ -148,7 +150,7 @@ public:
 
 
     // IP Packet
-    static const unsigned int MAX_FRAGMENT = sizeof(NIC::Data) - sizeof(Header);
+    static const unsigned int MFS = sizeof(NIC::Data) - sizeof(Header); // Maximum Fragment Size (1480 for Ethernet)
     static const unsigned int MTU = 65535 - sizeof(Header);
     typedef unsigned char Data[MTU];
 
@@ -187,26 +189,30 @@ private:
 
     class Fragmented
     {
+        friend class IP;
+    
     private:
-        static const unsigned int MAX_SIZE = (MTU + MAX_FRAGMENT - 1) / MAX_FRAGMENT;
+        static const unsigned int MAX_FRAGMENTS = (MTU + MFS - 1) / MFS; // 45 for Ethernet
         typedef Reassembling::Element Element;
 
     public:
-        Fragmented(const Key & key): _size(MAX_SIZE), _handler(&timeout, this), _alarm(Traits<IP>::TIMEOUT * 1000000, &_handler), _link(this, key) {}
+        Fragmented(const Key & key): _frags(MAX_FRAGMENTS), _handler(&timeout, this), _alarm(TIMEOUT, &_handler), _link(this, key) {}
 
         void insert(Buffer * buf) {
             Packet * packet = buf->frame()->data<Packet>();
 
-            db<IP>(TRC) << "IP::Fragmented::insert(bms=" << _size << ",buf=" << buf << ") => " << *packet << endl;
-
-            if(_bitmap.set(packet->offset() / MAX_FRAGMENT))
+            if(_bitmap.set(packet->offset() / MFS)) // if not a dup, then insert
                 _list.insert(buf->link());
 
             if(!(packet->flags() & Header::MF))
-                _size = (packet->offset() + MAX_FRAGMENT) / MAX_FRAGMENT;
+                _frags = (packet->offset() + MFS) / MFS;
+
+            db<IP>(TRC) << "IP::Fragmented::insert(frags=" << _frags << ",buf=" << buf << ") => " << *packet << endl;
         }
 
-        bool reassembled() const { return _bitmap.full(_size); }
+        bool reassembled() const { return _bitmap.full(_frags); }
+
+        void reorder();
 
         Buffer * pool() { return _list.head()->object(); }
 
@@ -219,8 +225,8 @@ private:
         }
 
     private:
-        unsigned int _size;
-        Bitmap<MAX_SIZE> _bitmap;
+        unsigned int _frags;
+        Bitmap<MAX_FRAGMENTS> _bitmap;
         Buffer::List _list;
         Functor_Handler<Fragmented> _handler;
         Alarm _alarm;

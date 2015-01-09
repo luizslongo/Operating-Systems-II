@@ -110,7 +110,9 @@ public:
         template<typename T>
         T * data() { return reinterpret_cast<T *>(&_data); }
 
-        void sum(const IP::Address & from, const IP::Address & to, const void * data);
+        void sum_header(const IP::Address & from, const IP::Address & to);
+        void sum_data(const void * data, unsigned int size);
+        void sum_trailer();
         bool check() { return Traits<UDP>::checksum ? (IP::checksum(this, length()) != 0xffff) : true; }
 
         friend Debug & operator<<(Debug & db, const Message & m) {

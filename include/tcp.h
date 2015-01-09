@@ -15,8 +15,6 @@ __BEGIN_SYS
 
 class TCP: private IP::Observer
 {
-//    friend class Connection;
-
 private:
     // List to hold received Buffers
     typedef NIC::Buffer Buffer;
@@ -27,22 +25,23 @@ private:
 public:
     static const bool connectionless = false;
     static const unsigned int RETRIES = Traits<TCP>::RETRIES;
+    static const unsigned int TIMEOUT = Traits<TCP>::TIMEOUT * 1000000;
     static const unsigned int WINDOW = Traits<TCP>::WINDOW;
 
     typedef IP Network;
 
-    typedef unsigned short Port;
+    typedef UDP::Port Port;
 
     typedef UDP::Address Address;
 
-    typedef Data_Observer<NIC::Buffer, unsigned long long> Observer;
+    typedef Data_Observer<NIC::Buffer, unsigned long long> Observer; // Condition = Connection::id()
     typedef Data_Observed<NIC::Buffer, unsigned long long> Observed;
 
 
     class Header
     {
     public:
-        static const unsigned int DO = 5;
+        static const unsigned int DO = 5; // size of TCP header in 32-bit words
 
         typedef unsigned char Flags;
         enum {
@@ -58,8 +57,8 @@ public:
 
     public:
         Header() {}
-        Header(const Port & from, const Port & to, unsigned int sequence, unsigned short window):
-            _from(htons(from)), _to(htons(to)), _sequence(htonl(sequence)), _acknowledgment(0), _data_offset(DO), _flags(0), _window(htons(window)), _checksum(0), _urgent_pointer(0) {}
+        Header(const Port & from, const Port & to, unsigned int sequence, unsigned short window)
+        : _from(htons(from)), _to(htons(to)), _sequence(htonl(sequence)), _acknowledgment(0), _data_offset(DO), _flags(0), _window(htons(window)), _checksum(0), _urgent_pointer(0) {}
 
         Port from() const { return ntohs(_from); }
         Port to() const { return ntohs(_to); }
@@ -93,9 +92,10 @@ public:
     } __attribute__((packed));
 
     static const unsigned int MTU = 65536 - sizeof(Header) - sizeof(IP::Header);
+    static const unsigned int MSS = IP::MFS - sizeof(Header);
 
     typedef unsigned char Data[MTU];
-    
+
     class Segment: public Header
     {
     public:
@@ -107,7 +107,7 @@ public:
         T * data() { return reinterpret_cast<T *>(&_data); }
 
         void sum(const IP::Address & from, const IP::Address & to, const void * data, unsigned int length);
-        bool check(unsigned int length) { return Traits<UDP>::checksum ? (IP::checksum(this, length) != 0xffff) : true; }
+        bool check(unsigned int length) { return IP::checksum(this, length) != 0xffff; } // FIXME
 
         friend Debug & operator<<(Debug & db, const Segment & m) {
             db << "{head=" << reinterpret_cast<const Header &>(m) << ",data=" << m._data << "}";
@@ -141,9 +141,11 @@ public:
         typedef void (Connection:: * State_Handler)();
 
     public:
-        Connection(const Port & from, const Address & to): Header(from, to.port(), Random::random() & 0x00ffffff, WINDOW),
-            _peer(to.ip()), _peer_window(0), _unacknowledged(_sequence), _state(CLOSED), _handler(&Connection::closed), _current(0), _length(0), _observer(0) {}
-        ~Connection() { close(); }
+        Connection(const Port & from, const Address & to)
+        : Header(from, to.port(), Random::random() & 0x00ffffff, WINDOW), _peer(to.ip()), _peer_window(0), _next(ntohl(_sequence)),
+          _unacknowledged(_next), _initial(_next), _state(CLOSED), _handler(&Connection::closed), _current(0), _length(0), _valid(false),
+          _streaming(false), _retransmiting(false), _timeout_handler(&timeout,this), _alarm(0), _tries(0), _observer(0) {}
+        ~Connection() { if(_alarm) delete _alarm; close(); }
 
         const volatile State & state() const { return _state; }
         const Header * header() const { return this; }
@@ -179,7 +181,7 @@ public:
             db << *c.header()
                << ",peer=" << c._peer << ",pwin=" << c._peer_window << ",uack=" << ntohl(c._unacknowledged) << ",stat=" << c._state;
             if(c._current)
-                db << "\n" << "curr=" << c._current << " => " << *c._current << ",len=" << c._length;
+                db << ",curr=" << c._current << " => " << *c._current << ",len=" << c._length;
             return db;
         }
 
@@ -209,26 +211,43 @@ public:
         void time_wait();
         void closed();
 
-        void send(const Flags & flags);
+        void fsend(const Flags & flags);
+        int dsend(const void * data, unsigned int size);
+
+        bool check_sequence();
+        void process_fin();
+
+        static void timeout(Connection * c);
+        void set_timeout(const Alarm::Microsecond & time = TIMEOUT);
 
     private:
         IP::Address _peer;
-        unsigned short  _peer_window;
-        unsigned int _unacknowledged;
+        unsigned short  _peer_window;   // (host endianness)
+        unsigned int _next;             // next regular sequence number to be sent, it tells how far the conversation has gone (host endianness)
+        unsigned int _unacknowledged;   // earliest unacknowledged sequence number sent (host endianness)
+        const unsigned int _initial;    // initial sequence number (host endianness)
 
         volatile State _state;
         volatile State_Handler _handler;
 
-        Segment * _current;
-        unsigned int _length;
-
-        TCP::Observer * _observer;
-//        Semaphore _sem(0);
-//        Semaphore_Handler _handler(&_sem);
-//        Alarm _alarm(Traits<Network>::TIMEOUT * 1000000, &_handler, 1);
-
         Condition _transition;
         static State_Handler _handlers[];
+
+        Segment * _current;
+        unsigned int _length;
+        volatile bool _valid;
+
+        // Stream stuff
+        volatile bool _streaming;
+        volatile bool _retransmiting;
+        Condition _stream;
+
+        // Timeout stuff
+        Functor_Handler<Connection> _timeout_handler;
+        Alarm * _alarm;
+        volatile int _tries; // either for close() or open() calls
+
+        TCP::Observer * _observer;
     };
 
 public:

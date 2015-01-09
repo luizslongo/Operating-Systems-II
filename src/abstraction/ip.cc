@@ -39,12 +39,10 @@ void IP::config_by_dhcp()
     db<IP>(TRC) << "IP::config_by_dhcp() => " << *this << endl;
 }
 
-
 IP::~IP()
 {
     _nic.detach(this, NIC::IP);
 }
-
 
 IP::Buffer * IP::alloc(const Address & to, const Protocol & prot, unsigned int once, unsigned int payload)
 {
@@ -76,12 +74,11 @@ IP::Buffer * IP::alloc(const Address & to, const Protocol & prot, unsigned int o
         packet->header()->sum();
         db<IP>(INF) << "IP::alloc:pkt=" << packet << " => " << *packet << endl;
 
-        offset += MAX_FRAGMENT;
+        offset += MFS;
     }
 
     return pool;
 }
-
 
 int IP::send(Buffer * buf)
 {
@@ -89,7 +86,6 @@ int IP::send(Buffer * buf)
 
     return buf->nic()->send(buf); // implicitly releases the pool
 }
-
 
 void IP::update(NIC::Observed * obs, NIC::Protocol prot, Buffer * buf)
 {
@@ -125,17 +121,17 @@ void IP::update(NIC::Observed * obs, NIC::Protocol prot, Buffer * buf)
         if(el)
             frag = el->object();
         else {
-            frag = new (SYSTEM) Fragmented(key); // the Alarm created within Fragmented will reenable interrupts
+            frag = new (SYSTEM) Fragmented(key); // the Alarm created within Fragmented will re-enable interrupts
             _reassembling.insert(frag->link());
         }
         frag->insert(buf);
 
         if(frag->reassembled()) {
             db<IP>(INF) << "IP::update: notifying reassembled datagram" << endl;
+            frag->reorder();
             Buffer * pool = frag->pool();
             _reassembling.remove(frag->link());
             delete frag;
-            // TODO: reorder pool
             if(!notify(packet->protocol(), pool))
                 pool->nic()->free(pool);
         }
@@ -146,6 +142,26 @@ void IP::update(NIC::Observed * obs, NIC::Protocol prot, Buffer * buf)
     }
 }
 
+void IP::Fragmented::reorder() {
+    db<IP>(TRC) << "IP::Fragmented::reorder(this=" << this << ")" << endl;
+
+    if(_list.size() > 1) {
+        Buffer::List tmp;
+        unsigned int i = 0;
+        while(!_list.empty()) {
+            Buffer * buf = _list.remove()->object();
+
+            if((buf->frame()->data<Packet>()->offset() / MFS) == i) {
+                tmp.insert(buf->link());
+                i++;
+            } else
+                _list.insert(buf->link());
+        };
+
+        while(!tmp.empty())
+            _list.insert(tmp.remove()->object()->link());
+    }
+}
 
 unsigned short IP::checksum(const void * data, unsigned int size)
 {

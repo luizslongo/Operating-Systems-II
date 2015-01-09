@@ -7,6 +7,7 @@
 using namespace EPOS;
 
 const int ITERATIONS = 3;
+const int PDU = 2000;
 
 OStream cout;
 
@@ -81,7 +82,7 @@ int udp_test()
 {
     cout << "UDP Test" << endl;
 
-    char data[2000];
+    char data[PDU];
     Link<UDP> * com;
 
     IP * ip = IP::get_by_nic(0);
@@ -166,7 +167,7 @@ int tcp_test()
 {
     cout << "TCP Test" << endl;
 
-    char data[200];
+    char data[PDU];
     Link<TCP> * com;
 
     IP * ip = IP::get_by_nic(0);
@@ -258,9 +259,9 @@ int main()
     cout << "  UDP::Header => " << sizeof(UDP::Header) << endl;
 
     icmp_test();
-//    Alarm::delay(2000000);
-//    udp_test();
-//    Alarm::delay(2000000);
+    Alarm::delay(2000000);
+    udp_test();
+    Alarm::delay(2000000);
     tcp_test();
 
     return 0;

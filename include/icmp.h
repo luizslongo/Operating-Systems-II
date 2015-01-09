@@ -136,9 +136,6 @@ public:
 
     class Packet: public Header
     {
-    private:
-        static const unsigned int DATA_SIZE = 56;
-
     public:
         Packet(){}
         Packet(const Type & type, const Code & code): Header(type, code) {}
