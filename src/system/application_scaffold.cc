@@ -1,7 +1,7 @@
 // EPOS Application Scaffold and Application Abstraction Implementation
 
 #include <application.h>
-#include <framework/run.h>
+#include <framework/main.h>
 
 // Application class attributes
 __BEGIN_SYS

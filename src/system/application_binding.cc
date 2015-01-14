@@ -3,7 +3,7 @@
 #include <utility/ostream.h>
 #include <application.h>
 #include <cpu.h>
-#include <framework/run.h>
+#include <framework/main.h>
 
 extern "C" {
     void _panic() {

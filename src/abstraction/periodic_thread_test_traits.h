@@ -12,13 +12,13 @@ struct Traits
     static const bool enabled = true;
     static const bool debugged = true;
     static const bool hysterically_debugged = false;
-    typedef TLIST<Shared, Authenticated> ASPECTS;
+    typedef TLIST<> ASPECTS;
 };
 
 template<> struct Traits<Build>
 {
     enum {LIBRARY, BUILTIN, KERNEL};
-    static const unsigned int MODE = KERNEL;
+    static const unsigned int MODE = LIBRARY;
 
     enum {IA32};
     static const unsigned int ARCHITECTURE = IA32;
@@ -72,14 +72,6 @@ template<> struct Traits<Init>: public Traits<void>
 {
 };
 
-template<> struct Traits<Framework>: public Traits<void>
-{
-};
-
-template<> struct Traits<Aspect>: public Traits<void>
-{
-    static const bool debugged = hysterically_debugged;
-};
 
 // Mediators
 template<> struct Traits<Serial_Display>: public Traits<void>
@@ -133,7 +125,7 @@ template<> struct Traits<Thread>: public Traits<void>
 {
     static const bool smp = Traits<System>::multicore;
 
-    typedef Scheduling_Criteria::FCFS Criterion;
+    typedef Scheduling_Criteria::RM Criterion;
     static const unsigned int QUANTUM = 10000; // us
 
     static const bool trace_idle = hysterically_debugged;

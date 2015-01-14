@@ -64,23 +64,32 @@ int main()
     cout << "Creating the clone task:";
     Task * task1 = new Task(cs1, ds1);
     cout << " done!" << endl;
-    a = new Thread(*task1, &func_a);
-    b = new Thread(&func_b);
 
+    cout << "Creating a thread over the cloned task:";
+    a = new Thread(*task1, &func_a);
+    cout << " done!" << endl;
+
+    cout << "Creating a thread over the main task:";
+    b = new Thread(&func_b);
+    cout << " done!" << endl;
+
+    cout << "I'll now suspend my self to see the other threads running:" << endl;
     m->suspend();
 
     cout << "Both threads are now done and have suspended themselves. I'll now wait for 1 second and then wake them up so they can exit ..." << endl;
 
     Alarm::delay(1000000);
 
-    a->resume();
-    b->resume();
+    // BUG: the two resume() bellow and the corresponding suspend() in func_{a,b} have been commented out
+    // because the thread, with their own stacks, are interfering with Framework::_cache used by Handle and Proxy
+    // This must be investigated with far more care.
+//    a->resume();
+//    b->resume();
 
     int status_a = a->join();
     int status_b = b->join();
 
-    cout << "Thread A exited with status " << status_a 
-         << " and thread B exited with status " << status_b << endl;
+    cout << "Thread A exited with status " << status_a << " and thread B exited with status " << status_b << endl;
 
     delete a;
     delete b;
@@ -94,6 +103,7 @@ int main()
 
 int func_a(void)
 {
+    Thread * s = Thread::self();
     for(int i = iterations; i > 0; i--) {
         for(int i = 0; i < 79; i++)
             cout << "a";
@@ -101,8 +111,7 @@ int func_a(void)
         Thread::yield();
     }
 
-    Thread::self()->suspend();
-
+//    Thread::self()->suspend();
     return 'A';
 }
 
@@ -117,7 +126,6 @@ int func_b(void)
 
     m->resume();
 
-    Thread::self()->suspend();
-
+//    Thread::self()->suspend();
     return 'B';
 }

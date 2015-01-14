@@ -7,7 +7,7 @@
 #include <system.h>
 #include <alarm.h>
 #include <thread.h>
-#include <framework/run.h>
+#include <framework/main.h>
 #include <framework/agent.h>
 
 __USING_SYS;
