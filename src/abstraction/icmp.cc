@@ -1,80 +1,61 @@
-#include <icmp.h>
+// EPOS ICMP Protocol Implementation
 
-#ifdef __NIC_H
+#include <icmp.h>
 
 __BEGIN_SYS
 
-ICMP * ICMP_SingleNIC::_instance;
+// Class attributes
+ICMP::Observed ICMP::_observed;
 
-ICMP * ICMP_MultiNIC::_instance[Traits<NIC>::NICS::Length];
-
-ICMP * ICMP_SingleNIC::instance()
+// Methods
+int ICMP::send(const Address::Local & from, const Address & to, const void * data, unsigned int s)
 {
-    if (!_instance)
-        _instance = new ICMP(IP::instance());
-    return _instance;
+    db<ICMP>(TRC) << "ICMP::send(t=" << to << ",d=" << data << ",s=" << s << ")" << endl;
+
+    Buffer * buf = IP::alloc(to, IP::ICMP, sizeof(Header), sizeof(Data));
+    if(!buf)
+        return 0;
+
+    IP::Packet * dgram = buf->frame()->data<IP::Packet>();
+    Packet * packet = dgram->data<Packet>();
+    unsigned int size = (s >= sizeof(Packet)) ? sizeof(Packet) : s;
+
+    memcpy(packet, data, size);
+    packet->sum();
+
+    IP::send(buf);
+
+    return size;
 }
 
-ICMP * ICMP_MultiNIC::instance(unsigned int i)
+int ICMP::receive(Buffer * buf, Address * from, void * data, unsigned int s)
 {
-    if (!_instance[i])
-        _instance[i] = new ICMP(IP::instance(i));
-    return _instance[i];
-}
+    db<ICMP>(TRC) << "ICMP::receive(buf=" << buf << ",d=" << data << ",s=" << s << ")" << endl;
 
-ICMP::ICMP(IP* _ip) : Base(_ip)
-{
-    ip()->attach(this, ICMP_ID);
-}
+    IP::Packet * dgram = buf->frame()->data<IP::Packet>();
+    Packet * packet = dgram->data<Packet>();
+    unsigned int size = (s >= sizeof(Packet)) ? sizeof(Packet) : s;
 
-ICMP::~ICMP()
-{
-    ip()->detach(this, ICMP_ID);
-}
-
-void ICMP::update(Data_Observed<IP::Address> *ob, long c, IP::Address src,
-                  IP::Address dst, void *data, unsigned int size)
-{
-    Packet& packet = *reinterpret_cast<Packet*>(data);
-    if (IP::calculate_checksum(data,size) != 0xFFFF) {
-        db<ICMP>(TRC) << "ICMP::checksum error\n";
-        return;
+    if(!packet->check()) {
+        db<ICMP>(INF) << "ICMP::update: wrong checksum!" << endl;
+        buf->nic()->free(buf);
+        return 0;
     }
 
-    if (Traits<ICMP>::echo_reply && (packet.type() == ECHO)) { // PONG
-        db<ICMP>(TRC) << "ICMP::echo sending automatic reply to " << src << endl;
-        Packet reply(ECHO_REPLY,0,packet.id(),packet.sequence(),packet._data);
-        send(dst,src,reply);
-    }
+    *from = dgram->from();
+    memcpy(data, packet, size);
+    buf->nic()->free(buf);
 
-    if (packet.type() == ECHO_REPLY) {
-        db<ICMP>(TRC) << "ICMP::echo reply from " << src << endl;
-    }
-
-    notify(src,dst,packet.type(),data,size);
+    return size;
 }
 
-ICMP::Packet::Packet(Type type,Code code, unsigned short id,unsigned short seq,
-                     const char * data,short size)
-    : _type(type),
-      _code(code),
-      _checksum(0),
-      _id(CPU::htons(id)),
-      _sequence(CPU::htons(seq))
+void ICMP::update(IP::Observed * obs, IP::Protocol prot, NIC::Buffer * buf)
 {
-    if (data) memcpy(_data,data,size < 56 ? size : 56);
-    else memset(_data, 0, 56);
-}
+    db<ICMP>(TRC) << "ICMP::update(obs=" << obs << ",prot=" << prot << ",buf=" << buf << ")" << endl;
 
-void ICMP::send(IP::Address from,IP::Address to,Packet& pkt)
-{
-    // Thou shall not calculate the checksum in ctor body!
-    pkt._checksum = 0;
-    pkt._checksum = ~(IP::calculate_checksum(&pkt, sizeof(pkt)));
-    SegmentedBuffer sb(pkt.raw(),sizeof(pkt));
-    ip()->send(from,to,&sb,ICMP_ID);
+    if(!notify(0, buf))
+        buf->nic()->free(buf);
 }
 
 __END_SYS
 
-#endif

@@ -5,7 +5,7 @@
 
 #include <system/config.h>
 
-__BEGIN_SYS
+__BEGIN_UTIL
 
 class Handler
 {
@@ -18,7 +18,6 @@ public:
     virtual ~Handler() {}
 
     virtual void operator()() = 0;
-    void operator delete(void * object) {}
 };
 
 class Function_Handler: public Handler
@@ -39,7 +38,7 @@ class Functor_Handler: public Handler
 public:
     typedef void (Functor)(T *);
 
-	Functor_Handler(Functor * h, T * p): _handler(h), _ptr(p) {}
+    Functor_Handler(Functor * h, T * p): _handler(h), _ptr(p) {}
     ~Functor_Handler() {}
 
     void operator()() { _handler(_ptr); }
@@ -49,6 +48,6 @@ private:
     T * _ptr;
 };
 
-__END_SYS
+__END_UTIL
 
 #endif

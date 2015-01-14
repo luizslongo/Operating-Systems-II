@@ -11,36 +11,11 @@ __BEGIN_SYS
 class Semaphore: protected Synchronizer_Common
 {
 public:
-    Semaphore(int v = 1) : _value(v) {
-	db<Synchronizer>(TRC) << "Semaphore(value=" << _value << ") => "
-			      << this << "\n";
-    }
+    Semaphore(int v = 1);
+    ~Semaphore();
 
-    ~Semaphore() {
-	db<Synchronizer>(TRC) << "~Semaphore(this=" << this << ")\n";
-    }
-
-    void p() { 
-	db<Synchronizer>(TRC) << "Semaphore::p(this=" << this 
-			      << ",value=" << _value << ")\n";
-
-	begin_atomic();
-	if(fdec(_value) < 1)
-	    sleep(); // implicit end_atomic()
-	else
-	    end_atomic();
-    }
-
-    void v() {
-	db<Synchronizer>(TRC) << "Semaphore::v(this=" << this
-			      << ",value=" << _value << ")\n";
-
-	begin_atomic();
-	if(finc(_value) < 0)
-	    wakeup();  // implicit end_atomic()
-	else
-	    end_atomic();
-    }
+    void p();
+    void v();
 
 private:
     volatile int _value;
@@ -55,7 +30,7 @@ public:
     ~Semaphore_Handler() {}
 
     void operator()() { _handler->v(); }
-	
+
 private:
     Semaphore * _handler;
 };

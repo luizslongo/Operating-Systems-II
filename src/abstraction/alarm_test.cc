@@ -3,7 +3,7 @@
 #include <utility/ostream.h>
 #include <alarm.h>
 
-__USING_SYS
+using namespace EPOS;
 
 const int iterations = 10;
 
@@ -14,13 +14,13 @@ OStream cout;
 
 int main()
 {
-    cout << "Alarm test\n";
+    cout << "Alarm test" << endl;
 
-    cout << "I'm the first thread of the first task created in the system.\n";
-    cout << "I'll now create two alarms and put myself in a delay ...\n";
+    cout << "I'm the first thread of the first task created in the system." << endl;
+    cout << "I'll now create two alarms and put myself in a delay ..." << endl;
 
     Function_Handler handler_a(&func_a);
-    Alarm alarm_a(1000000, &handler_a, iterations);
+    Alarm alarm_a(2000000, &handler_a, iterations);
  
     Function_Handler handler_b(&func_b);
     Alarm alarm_b(1000000, &handler_b, iterations);
@@ -30,7 +30,7 @@ int main()
     // of the idle thread!
     Alarm::delay(1000000 * (iterations + 1));
 
-    cout << "I'm done, bye!\n";
+    cout << "I'm done, bye!" << endl;
 
     return 0;
 }
@@ -38,13 +38,13 @@ int main()
 void func_a()
 {
     for(int i = 0; i < 79; i++)
-	cout << "a";
-    cout << "\n";
+        cout << "a";
+    cout << endl;
 }
 
 void func_b(void)
 {
     for(int i = 0; i < 79; i++)
-	cout << "b";
-    cout << "\n";
+        cout << "b";
+    cout << endl;
 }

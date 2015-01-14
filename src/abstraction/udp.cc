@@ -1,225 +1,159 @@
-#include <system/config.h>
-#ifdef __NIC_H
+// EPOS UDP Protocol Implementation
 
 #include <udp.h>
-#include <utility/string.h> // for Address constructor
 
 __BEGIN_SYS
 
-// UDP::Address
-UDP_Address::UDP_Address(const char *addr) : _ip(addr)
+// Class attributes
+UDP::Observed UDP::_observed;
+
+// Methods
+int UDP::send(const Port & from, const Address & to, const void * d, unsigned int s)
 {
-    char *sep = strchr(addr,':');
-    if (sep) {
-        _port = atol(++sep);
-    } else {
-        _port = 0;
+    const unsigned char * data = reinterpret_cast<const unsigned char *>(d);
+    unsigned int size = (s > sizeof(Data)) ? sizeof(Data) : s;
+
+    db<UDP>(TRC) << "UDP::send(f=" << from << ",t=" << to << ",d=" << data << ",s=" << size << ")" << endl;
+
+    Buffer * pool = IP::alloc(to.ip(), IP::UDP, sizeof(Header), size);
+    if(!pool)
+        return 0;
+
+    Message * message = 0;
+    unsigned int headers = sizeof(Header);
+    for(Buffer::Element * el = pool->link(); el; el = el->next()) {
+        Buffer * buf = el->object();
+        Packet * packet = buf->frame()->data<Packet>();
+
+        db<UDP>(INF) << "UDP::send:buf=" << buf << " => " << *buf<< endl;
+
+        if(el == pool->link()) {
+            message = packet->data<Message>();
+            new(packet->data<void>()) Header(from, to.port(), size);
+            message->sum_header(packet->from(), packet->to());
+            memcpy(message->data<void>(), data, buf->size() - sizeof(Header) - sizeof(IP::Header));
+            message->sum_data(data, buf->size() - sizeof(Header) - sizeof(IP::Header));
+            data += buf->size() - sizeof(Header) - sizeof(IP::Header);
+
+            db<UDP>(INF) << "UDP::send:msg=" << message << " => " << *message << endl;
+        } else {
+            memcpy(packet->data<void>(), data, buf->size() - sizeof(IP::Header));
+            message->sum_data(data, buf->size() - sizeof(IP::Header));
+            data += buf->size() - sizeof(IP::Header);
+        }
+
+        headers += sizeof(IP::Header);
     }
+
+    message->sum_trailer();
+
+    return IP::send(pool) - headers; // implicitly releases the pool
 }
 
-char* UDP_Address::to_string(char * dst)
+
+int UDP::receive(Buffer * pool, void * d, unsigned int s)
 {
-    char *p = _ip.to_string(dst);
-    *p++ = ':';
-    p += utoa(_port,p);
-    *p = 0;
-    return p;
+    unsigned char * data = reinterpret_cast<unsigned char *>(d);
+
+    db<UDP>(TRC) << "UDP::receive(buf=" << pool << ",d=" << d << ",s=" << s << ")" << endl;
+
+    Buffer::Element * head = pool->link();
+    Packet * packet = head->object()->frame()->data<Packet>();
+    Message * message = packet->data<Message>();
+    unsigned int size = 0;
+
+    for(Buffer::Element * el = head; el && (size <= s); el = el->next()) {
+        Buffer * buf = el->object();
+
+        db<UDP>(INF) << "UDP::receive:buf=" << buf << " => " << *buf << endl;
+
+        packet = buf->frame()->data<Packet>();
+
+        unsigned int len = buf->size() - sizeof(IP::Header);
+        if(el == head) {
+            len -= sizeof(Header);
+            memcpy(data, message->data<void>(), len);
+
+            db<UDP>(INF) << "UDP::receive:msg=" << message << " => " << *message << endl;
+        } else
+            memcpy(data, packet->data<void>(), len);
+
+        db<UDP>(INF) << "UDP::receive:len=" << len << endl;
+
+        data += len;
+        size += len;
+    }
+
+    pool->nic()->free(pool);
+
+    if(!message->check()) {
+        db<UDP>(WRN) << "UDP::update: wrong message checksum!" << endl;
+        size = 0;
+    }
+
+    return size;
 }
 
 
-// TCP's checksum was added to UDP, we should merge this to avoid code redundancy
-void UDP::Header::checksum(IP::Address src,IP::Address dst,SegmentedBuffer * sb)
+void UDP::update(IP::Observed * obs, IP::Protocol prot, Buffer * pool)
 {
-    if (!Traits<UDP>::checksum) {
-        _checksum = 0;
-        return;
-    }
+    db<UDP>(TRC) << "UDP::update(obs=" << obs << ",prot=" << prot << ",buf=" << pool << ")" << endl;
 
-    db<UDP>(TRC) << __PRETTY_FUNCTION__ << endl;
-    u16 len;
-    len = sizeof(this);
+    Packet * packet = pool->frame()->data<Packet>();
+    Message * message = packet->data<Message>();
 
-    if (sb) len += sb->total_size();
+    db<UDP>(INF) << "UDP::update:msg=" << message << " => " << *message << endl;
 
-    Pseudo_Header phdr((u32)src,(u32)dst,len);
+    if(!notify(message->to(), pool))
+        pool->nic()->free(pool);
+}
 
+
+void UDP::Message::sum_header(const IP::Address & from, const IP::Address & to)
+{
     _checksum = 0;
+    if(Traits<UDP>::checksum) {
+        IP::Pseudo_Header pseudo(from, to, IP::UDP, length());
+        unsigned long sum = 0;
 
-    u32 sum = 0;
+        const unsigned char * ptr = reinterpret_cast<const unsigned char *>(&pseudo);
+        for(unsigned int i = 0; i < sizeof(IP::Pseudo_Header); i += 2)
+            sum += (ptr[i] << 8) | ptr[i+1];
 
-    sum = IP::calculate_checksum(&phdr, sizeof(phdr));
-    sum += IP::calculate_checksum(this, sizeof(this));
+        ptr = reinterpret_cast<const unsigned char *>(header());
+        for(unsigned int i = 0; i < sizeof(Header); i += 2)
+            sum += (ptr[i] << 8) | ptr[i+1];
 
-    while (sb) {
-        sum += IP::calculate_checksum(sb->data(), sb->size());
-        sb = sb->next();
-    }
-    
-    while (sum >> 16)
-        sum = (sum & 0xFFFF) + (sum >> 16);
-
-    _checksum = ~sum;
-}
-
-UDP::UDP(IP * _ip) : Base(_ip) {
-    ip()->attach(this, ID_UDP);
-}
-
-UDP::~UDP() {
-    ip()->detach(this, ID_UDP);
-}
-
-UDP::Socket::Socket(Address local, Address remote, UDP * _udp)
-    : Base(_udp), _local(local), _remote(remote)
-{
-    udp()->attach(this, _local.port());
-}
-
-UDP::Socket::~Socket() {
-    udp()->detach(this, _local.port());
-}
-
-// Assembles data and sends to IP layer
-
-s32 UDP::send(Address _local, Address _remote, SegmentedBuffer * data) {
-    UDP::Header hdr(_local.port(), _remote.port(),
-                    data->total_size());
-    SegmentedBuffer sb(&hdr, sizeof(UDP::Header), data);
-    hdr.checksum(_local.ip(),_remote.ip(),&sb);
-    return ip()->send(_local.ip(), _remote.ip(), &sb, ID_UDP) - 8;	// discard header
-}
-
-// Called by IP's notify(...)
-
-void UDP::update(Data_Observed<IP::Address> *ob, long c, IP::Address src,
-                 IP::Address dst, void *data, unsigned int size)
-{
-    Header& hdr = *reinterpret_cast<Header*>(data);
-
-    db<UDP>(INF) << "UDP::update: received "<< size <<" bytes from " 
-                 << src << " to " << dst << "\n";
-
-    if (Traits<UDP>::checksum && hdr._checksum != 0) {
-        SegmentedBuffer sb(static_cast<char*>(data) + sizeof(Header), size - sizeof(Header));
-        u16 csum = hdr._checksum;
-        hdr.checksum(src,dst,&sb);
-        if (hdr._checksum != csum) {
-            db<UDP>(INF) << "UDP::checksum failed for incomming data\n";
-            return;
-        }
-    }
-    notify(UDP::Address(src,hdr.src_port()),UDP::Address(dst,hdr.dst_port()),
-           (int) hdr.dst_port(), &((char*)data)[sizeof(Header)],
-           size - sizeof(Header));
-}
-
-UDP * UDP::instance(unsigned int i) {
-    static UDP * _instance[Traits<NIC>::NICS::Length];
-    if (!_instance[i])
-        _instance[i] = new UDP(IP::instance(i));
-    return _instance[i];
-}
-
-// Called by UDP's notify(...)
-
-void UDP::Socket::update(Observed *o, long c, UDP_Address src, UDP_Address dst,
-                         void *data, unsigned int size)
-{
-    // virtual call
-    received(src,(const char*)data,size);
-}
-
-// UDP Channel
-
-int UDP::Channel::receive(Address * from,char * buf,unsigned int size)
-{
-    _buffer_size = size;
-    _buffer_data = buf;
-    _buffer_src  = from;
-    _buffer_wait.wait();
-    _buffer_data = 0;
-    return _buffer_size;
-}
-
-void UDP::Channel::received(const Address & src,
-                                const char *data, unsigned int size)
-{
-    if (_buffer_data) {
-        if (size < _buffer_size)
-            _buffer_size = size;
-        memcpy(_buffer_data, data, _buffer_size);
-        memcpy(_buffer_src, &src, sizeof(Address));
-        _buffer_wait.signal();
+        _checksum = sum;
     }
 }
 
-void UDP::Channel::update(Data_Observed<IP::Address> *ob, long c,
-                          IP::Address src, IP::Address dst,
-                          void *data, unsigned int size)
+void UDP::Message::sum_data(const void * data, unsigned int size)
 {
-    ICMP::Packet& packet = *reinterpret_cast<ICMP::Packet*>(data);
-    if (packet.type() == ICMP::UNREACHABLE)
-    {
-        IP::Header& ip_hdr = *reinterpret_cast<IP::Header*>(packet.data());
-        if (ip_hdr.src() != (u32)_local.ip() ||
-            ip_hdr.dst() != (u32)_remote.ip()) {
-            return;
-        }
-        char * ip_data = (char*)data + ip_hdr.hlength();
-        UDP::Header& udp_hdr = *reinterpret_cast<UDP::Header*>(ip_data);
-        if (udp_hdr.src_port() != _local.port() ||
-            udp_hdr.dst_port() != _remote.port()) {
-            return;    
-        }
-        
-        _error = ~(packet.code());
+    if(Traits<UDP>::checksum) {
+        unsigned long sum = _checksum;
+
+        const unsigned char * ptr = reinterpret_cast<const unsigned char *>(data);
+        for(unsigned int i = 0; i < size; i += 2)
+            sum += (ptr[i] << 8) | ptr[i+1];
+        if(size & 1)
+            sum += ptr[size - 1];
+
+        _checksum = sum;
     }
 }
 
-UDP::Channel_MultiNIC::Channel_MultiNIC()
+void UDP::Message::sum_trailer()
 {
-    int i;
-    /* 
-     * Attention here:
-     * The correct is static_cast<>(), but it doesn't work
-     * if we are in a single-NIC case. For this reason C-style cast 
-     * is used since it falls back to reinterpret_cast and this
-     * code will not be used in single-NIC scenario anyway.
-     */
-    IP * _ip = ((Channel*)this)->udp()->ip();
-    for(i=0;i < Traits<NIC>::NICS::Length; ++i) 
-    {
-        if (IP::instance(i) == _ip) {
-            _icmp = ICMP_MultiNIC::instance(i);
-            break;
-        }
+    if(Traits<UDP>::checksum) {
+        unsigned long sum = _checksum;
+
+        while(sum >> 16)
+            sum = (sum & 0xffff) + (sum >> 16);
+
+        _checksum = htons(~sum);
     }
-}
-
-void UDP::Channel::operator()()
-{
-    _buffer_data = 0;
-    _buffer_size = TIMEOUT;
-    _buffer_wait.signal();
-}
-
-UDP::Channel::Channel(const Address& local,const Address& remote)
-//TODO: mult NIC support for channels
-   : Socket(local, remote, 0), _error(0)
-{
-    icmp()->attach(this, ICMP::UNREACHABLE);
-}
-
-UDP::Channel::~Channel()
-{
-    if (_buffer_data) {
-        db<UDP>(ERR) << "UDP::Channel for "<<this<<" destroyed while receiving\n";
-        _buffer_size = DESTROYED;
-        _buffer_wait.signal();
-    }
-    icmp()->detach(this, ICMP::UNREACHABLE);
 }
 
 __END_SYS
 
-#endif

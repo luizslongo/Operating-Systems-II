@@ -2,7 +2,7 @@
 
 include ../../makedefs
 
-TARGET := $(if $(shell find $(MACH)*), $(MACH)_install)
+TARGET := $(if $(shell find $(MACH)* 2> /dev/null), $(MACH)_install)
 ELF_HEADER_OFFSET := sh -c "$(OBJDUMP) -p $(IMG)/$(MACH)_setup | sed -n -e 's/^ *LOAD off *\(0x.*\) vaddr.*$$/\1/ p' | head -1"
 
 all: 		$(TARGET)
@@ -23,14 +23,12 @@ ml310_boot:	ml310_boot.o
 		$(LD) $(LDFLAGS) -L$(CCLIB) --omagic \
 		--section-start $(MACH_CODE_NAME)=$(BOOT_ADDR) \
 		--entry=_start \
-		-o $@ $< -l$(LUTIL) -l$(LSYS) -l$(LINIT) -lgcc -lc -lgcc
+		-o $@ $< -l$(LUTIL) -l$(LSYS) -l$(LINIT) -lgcc 
 
 ml310_install:	ml310_boot
 		$(OBJCPY) -O binary $< $<.tmp
 		$(INSTALL) $(MACH)_boot.tmp $(IMG)/$(MACH)_boot
 		$(CLEAN) $(MACH)_boot.tmp
-
-test:
 
 clean:
 		$(CLEAN) *.s *.o *_boot *.tmp

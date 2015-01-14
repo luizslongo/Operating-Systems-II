@@ -4,152 +4,152 @@
 #define __heap_h
 
 #include <utility/debug.h>
-#include <utility/string.h>
 #include <utility/list.h>
 #include <utility/spin.h>
 
-__BEGIN_SYS
+__BEGIN_UTIL
 
-// Priority allocation type definitions
-typedef enum {
-    ALLOC_P_HIGH,
-    ALLOC_P_LOW,
-    ALLOC_P_NORMAL,
-} alloc_priority;
-
-
-// Heap Common Packages (actually the non-atomic heap)
-class Heap_Common: private Grouping_List<char>
+// Heap
+class Simple_Heap: private Grouping_List<char>
 {
+protected:
+    static const bool typed = Traits<System>::multiheap;
+
 public:
     using Grouping_List<char>::empty;
     using Grouping_List<char>::size;
 
-    Heap_Common() {
-	db<Init, Heap>(TRC) << "Heap() => " << this << "\n";
+    Simple_Heap() {
+        db<Init, Simple_Heap>(TRC) << "Heap() => " << this << endl;
     }
 
-    Heap_Common(void * addr, unsigned int bytes) {
-	db<Init, Heap>(TRC) << "Heap(addr=" << addr << ",bytes=" << bytes 
-			    << ") => " << this << "\n";  
+    Simple_Heap(void * addr, unsigned int bytes) {
+        db<Init, Simple_Heap>(TRC) << "Heap(addr=" << addr << ",bytes=" << bytes << ") => " << this << endl;
+
+        free(addr, bytes);
     }
 
-    void * alloc(unsigned int bytes); 
+    void * alloc(unsigned int bytes) {
+        db<Heaps>(TRC) << "Heap::alloc(this=" << this << ",bytes=" << bytes;
 
-    void * calloc(unsigned int bytes); 
+        if(!bytes)
+            return 0;
 
-    void free(void * ptr); 
+        if(!Traits<CPU>::unaligned_memory_access)
+            while((bytes % sizeof(void *)))
+                ++bytes;
 
-    void free(void * ptr, unsigned int bytes);
+        if(typed)
+            bytes += sizeof(void *);  // add room for heap pointer
+        bytes += sizeof(int);         // add room for size
+        if(bytes < sizeof(Element))
+            bytes = sizeof(Element);
 
-    unsigned int allocated();
-    void allocated(unsigned int bytes);
+        Element * e = search_decrementing(bytes);
+        if(!e) {
+            out_of_memory();
+            return 0;
+        }
 
-    unsigned int max_depth();
-    void max_depth(unsigned int bytes);
+        int * addr = reinterpret_cast<int *>(e->object() + e->size());
 
-    static bool to_priority_heap(unsigned int bytes, alloc_priority p);
-    static bool from_priority_heap(void * ptr);
+        if(typed)
+            *addr++ = reinterpret_cast<int>(this);
+        *addr++ = bytes;
+
+        db<Heaps>(TRC) << ") => " << reinterpret_cast<void *>(addr) << endl;
+
+        return addr;
+    }
+
+    void free(void * ptr, unsigned int bytes) {
+        db<Heaps>(TRC) << "Heap::free(this=" << this << ",ptr=" << ptr << ",bytes=" << bytes << ")" << endl;
+
+        if(ptr && (bytes >= sizeof(Element))) {
+            Element * e = new (ptr) Element(reinterpret_cast<char *>(ptr), bytes);
+            Element * m1, * m2;
+            insert_merging(e, &m1, &m2);
+        }
+    }
+
+    static void typed_free(void * ptr) {
+        int * addr = reinterpret_cast<int *>(ptr);
+        unsigned int bytes = *--addr;
+        Simple_Heap * heap = reinterpret_cast<Simple_Heap *>(*--addr);
+        heap->free(addr, bytes);
+    }
+
+    static void untyped_free(Simple_Heap * heap, void * ptr) {
+        int * addr = reinterpret_cast<int *>(ptr);
+        unsigned int bytes = *--addr;
+        heap->free(addr, bytes);
+    }
 
 private:
     void out_of_memory();
 };
 
 
-//Heap used when priority allocation is enabled
-class Heap_Profiled : public Heap_Common {
-
+// Wrapper for non-atomic heap
+template<typename T, bool atomic>
+class Heap_Wrapper: public T
+{
 public:
-    Heap_Profiled()
-        :Heap_Common(),
-         _allocated(0),
-         _max_depth(0)
-    {}
-
-    Heap_Profiled(void * addr, unsigned int bytes)
-        :Heap_Common(addr, bytes),
-        _allocated(0),
-        _max_depth(0)
-    {}
-
-    void * alloc(unsigned int bytes){
-        void* aux = Heap_Common::alloc(bytes);
-        if(aux){
-            _allocated += bytes;
-            _max_depth = _allocated > _max_depth ? _allocated : _max_depth;
-        }
-        return aux;
-    }
-
-    void free(void * ptr, unsigned int bytes){
-        Heap_Common::free(ptr, bytes);
-        _allocated -= bytes;
-    }
-
-    void * calloc(unsigned int bytes) {return Heap_Common::calloc(bytes);}
-
-    void free(void * ptr){
-        int * addr = reinterpret_cast<int *>(ptr);
-        free(&addr[-1], addr[-1]);
-    }
-
-    static bool to_priority_heap(unsigned int bytes, alloc_priority p);
-    static bool from_priority_heap(void * ptr);
-
-    unsigned int allocated() { return _allocated; }
-    void allocated(unsigned int bytes) { _allocated = bytes; }
-
-    unsigned int max_depth() { return _max_depth; }
-    void max_depth(unsigned int bytes) { _max_depth = bytes; }
-
-private:
-    unsigned int _allocated;
-    unsigned int _max_depth;
+    Heap_Wrapper() {}
+    Heap_Wrapper(void * addr, unsigned int bytes): T(addr, bytes) {}
 };
 
 
-// Wrapper for non-atomic heap  
-template <bool atomic>
-class Heap_Wrapper: public IF<Traits<Heap>::priority_alloc, Heap_Profiled, Heap_Common>::Result {};
-
-
 // Wrapper for atomic heap
-template<>
-class Heap_Wrapper<true>: public IF<Traits<Heap>::priority_alloc, Heap_Profiled, Heap_Common>::Result
+template<typename T>
+class Heap_Wrapper<T, true>: public T
 {
 public:
-    typedef IF<Traits<Heap>::priority_alloc, Heap_Profiled, Heap_Common>::Result Base;
-
     Heap_Wrapper() {}
+    Heap_Wrapper(void * addr, unsigned int bytes): T(addr, bytes) {}
 
-    Heap_Wrapper(void * addr, unsigned int bytes): Base(addr, bytes) {
-	free(addr, bytes); 
+    bool empty() {
+        enter();
+        bool tmp = T::empty();
+        leave();
+        return tmp;
+    }
+
+    unsigned int size() {
+        enter();
+        unsigned int tmp = T::size();
+        leave();
+        return tmp;
     }
 
     void * alloc(unsigned int bytes) {
-	_lock.acquire();
-	void * tmp = Base::alloc(bytes);
-	_lock.release();
-	return tmp;
-    }
-
-    void * calloc(unsigned int bytes) {
-	_lock.acquire();
-	void * tmp = Base::calloc(bytes);
-	_lock.release();
+	enter();
+	void * tmp = T::alloc(bytes);
+	leave();
 	return tmp;
     }
 
     void free(void * ptr) {
-	_lock.acquire();
-	Base::free(ptr);
-	_lock.release();
+	enter();
+	T::free(ptr);
+	leave();
     }
 
     void free(void * ptr, unsigned int bytes) {
-	_lock.acquire();
-	Base::free(ptr, bytes);
-	_lock.release();
+	enter();
+	T::free(ptr, bytes);
+	leave();
+    }
+
+private:
+    void enter() {
+        _lock.acquire();
+        CPU::int_disable();
+    }
+
+    void leave() {
+        _lock.release();
+        CPU::int_enable();
     }
 
 private:
@@ -158,8 +158,16 @@ private:
 
 
 // Heap
-class Heap: public Heap_Wrapper<Traits<Thread>::smp> {};
+class Heap: public Heap_Wrapper<Simple_Heap, Traits<System>::multicore>
+{
+private:
+    typedef Heap_Wrapper<Simple_Heap, Traits<System>::multicore> Base;
 
-__END_SYS
+public:
+    Heap() {}
+    Heap(void * addr, unsigned int bytes): Base(addr, bytes) {}
+};
+
+__END_UTIL
 
 #endif

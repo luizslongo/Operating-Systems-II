@@ -1,15 +1,17 @@
 // EPOS Application Scaffold and Application Abstraction Implementation
 
-#include <utility/ostream.h>
 #include <application.h>
-
-__BEGIN_SYS
-
-// Global objects
-OStream cout;
-OStream cerr;
+#include <framework/run.h>
 
 // Application class attributes
-Heap Application::_heap[IF_INT<Traits<Heap>::priority_alloc, 2, 1>::Result];
-
+__BEGIN_SYS
+char Application::_preheap[];
+Heap * Application::_heap;
+Framework::Cache Framework::_cache;
 __END_SYS
+
+// Global objects
+__BEGIN_API
+OStream cout;
+OStream cerr;
+__END_API

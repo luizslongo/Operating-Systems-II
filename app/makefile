@@ -2,44 +2,16 @@
 
 include ../makedefs
 
-APP_PATH := $(subst _app,,$(APPLICATION))
-ISDIR := $(shell test -d $(APP_PATH) && echo 0)
+all: install
 
-ifeq ($(ISDIR), 0)
-SRC := $(shell find ./$(APP_PATH)/src/ -mindepth 1 -name "*.cc" -type f)
-OBJS := $(subst .cc,.do,$(SRC))
-else
-OBJS :=
-endif
-
-# This is used by canneal_app parsec benchmark application
-ENABLE_THREADS :=
-
-ifeq ($(APPLICATION),canneal_app)
-ENABLE_THREADS := -D ENABLE_THREADS
-endif
-
-all:		install
-
-.SUFFIXES: .do .cc
-
-.cc.do :	$(SRC)
-		$(CXX) $(CXXFLAGS) -o $@ $< $(ENABLE_THREADS)
-
-$(APPLICATION):	$(APPLICATION).o $(LIB)/* $(OBJS)
-		$(ALD) $(ALDFLAGS) -o $@ $(APPLICATION).o $(OBJS)
+$(APPLICATION):	$(APPLICATION).o $(LIB)/*
+		$(ALD) $(ALDFLAGS) -o $@ $(APPLICATION).o
 
 $(APPLICATION).o: $(APPLICATION).cc $(SRC)
-		$(ACC) $(ACCFLAGS) -o $@ $< $(ENABLE_THREADS)
+		$(ACC) $(ACCFLAGS) -o $@ $<
 
-install: 	$(APPLICATION)
-ifneq ($(GDB_DEBUG), 1)
-		$(STRIP) -o $(APPLICATION).tmp $<
-else
-		cp $< $(APPLICATION).tmp
-endif
-		$(INSTALL) $(APPLICATION).tmp $(IMG)/$(APPLICATION)
-		$(CLEAN) $(APPLICATION).tmp
-
+install: $(APPLICATION)
+		$(INSTALL) $(APPLICATION) $(IMG)
+		
 clean:
-		$(CLEAN) *.o $(APPLICATION) $(OBJS)
+		$(CLEAN) *.o $(APPLICATION)

@@ -3,7 +3,7 @@
 #include <utility/srec.h>
 #include <utility/string.h>
 
-__BEGIN_SYS
+__BEGIN_UTIL
 
 void * SREC::entry() 
 {
@@ -49,7 +49,7 @@ int SREC::segment_size(int i)
             seg_size += srec.count;
           else
             return(-1);
-	  break;
+          break;
 
         default:
           return(-1);
@@ -86,7 +86,7 @@ int SREC::load_segment(int i, void * addr)
           if (!(srec_decode(&srec,&s_image[pos])))
             return(-1);
           else {
-	    dst = (addr) ? ( (void *) (((int) addr) + seg_size) ) : ((void *) srec.addr);
+            dst = (addr) ? ( (void *) (((int) addr) + seg_size) ) : ((void *) srec.addr);
             seg_size += srec.count;
             memcpy(dst,srec.data,srec.count);
           }
@@ -168,4 +168,4 @@ signed char SREC::ctab[] = {
 int SREC::ltab[] = {4,4,6,8,0,4,0,8,6,4};
 
 
-__END_SYS
+__END_UTIL

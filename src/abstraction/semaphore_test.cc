@@ -2,15 +2,16 @@
 
 #include <utility/ostream.h>
 #include <thread.h>
+#include <mutex.h>
 #include <semaphore.h>
 #include <alarm.h>
 #include <display.h>
 
-__USING_SYS
+using namespace EPOS;
 
 const int iterations = 10;
 
-Semaphore sem_display;
+Mutex table;
 
 Thread * phil[5];
 Semaphore * chopstick[5];
@@ -24,53 +25,53 @@ int philosopher(int n, int l, int c)
 
     for(int i = iterations; i > 0; i--) {
 
-	sem_display.p();
-	Display::position(l, c);
- 	cout << "thinking";
-	sem_display.v();
+        table.lock();
+        Display::position(l, c);
+        cout << "thinking";
+        table.unlock();
 
-	Delay thinking(100000);
+        Delay thinking(2000000);
 
-	chopstick[first]->p();   // get first chopstick
-	chopstick[second]->p();   // get second chopstick
+        chopstick[first]->p();   // get first chopstick
+        chopstick[second]->p();   // get second chopstick
 
-	sem_display.p();
-	Display::position(l, c);
-	cout << " eating ";
-	sem_display.v();
+        table.lock();
+        Display::position(l, c);
+        cout << " eating ";
+        table.unlock();
 
-	Delay eating(500000);
+        Delay eating(1000000);
 
-	chopstick[first]->v();   // release first chopstick
-	chopstick[second]->v();   // release second chopstick
+        chopstick[first]->v();   // release first chopstick
+        chopstick[second]->v();   // release second chopstick
     }
 
-    sem_display.p();
+    table.lock();
     Display::position(l, c);
     cout << "  done  ";
-    sem_display.v();
+    table.unlock();
 
-    return(iterations);
+    return iterations;
 }
 
 int main()
 {
-    sem_display.p();
+    table.lock();
     Display::clear();
-    cout << "The Philosopher's Dinner:\n";
-	
+    Display::position(0, 0);
+    cout << "The Philosopher's Dinner:" << endl;
+
     for(int i = 0; i < 5; i++)
-	chopstick[i] = new Semaphore;
-	
+        chopstick[i] = new Semaphore;
+
     phil[0] = new Thread(&philosopher, 0,  5, 32);
     phil[1] = new Thread(&philosopher, 1, 10, 44);
     phil[2] = new Thread(&philosopher, 2, 16, 39);
     phil[3] = new Thread(&philosopher, 3, 16, 24);
     phil[4] = new Thread(&philosopher, 4, 10, 20);
 
-    cout << "Philosophers are alive and hungry!\n";
-	
-    cout << "The dinner is served ...\n";
+    cout << "Philosophers are alive and hungry!" << endl;
+
     Display::position(7, 44);
     cout << '/';
     Display::position(13, 44);
@@ -81,22 +82,25 @@ int main()
     cout << '/';
     Display::position(7, 27);
     cout << '\\';
-    sem_display.v();
+    Display::position(19, 0);
+
+    cout << "The dinner is served ..." << endl;
+    table.unlock();
 
     for(int i = 0; i < 5; i++) {
-	int ret = phil[i]->join();
-	sem_display.p();
-	Display::position(20 + i, 0);
-	cout << "Philosopher " << i << " ate " << ret << " times \n";
-	sem_display.v();
+        int ret = phil[i]->join();
+        table.lock();
+        Display::position(20 + i, 0);
+        cout << "Philosopher " << i << " ate " << ret << " times " << endl;
+        table.unlock();
     }
 
     for(int i = 0; i < 5; i++)
-	delete chopstick[i];
+        delete chopstick[i];
     for(int i = 0; i < 5; i++)
-	delete phil[i];
+        delete phil[i];
 
-    cout << "The end!\n";
+    cout << "The end!" << endl;
 
     return 0;
 }

@@ -3,24 +3,8 @@
 #include <utility/ostream.h>
 #include <utility/heap.h>
 #include <machine.h>
-#include <thread.h>
-#include <system.h>
 #include <display.h>
-
-// LIBC Heritage
-
-__USING_SYS
-
-extern "C" {
-    void _exit(int s) {
-	Thread::exit(s); for(;;);
-    }
-
-    void __cxa_pure_virtual() {
-	db<void>(ERR) << "__cxa_pure_virtual() called!\n";
-	Machine::panic();
-    }
-}
+#include <system.h>
 
 __BEGIN_SYS
 
@@ -31,12 +15,10 @@ class First_Object
 {
 public:
     First_Object() {
-	Display::remap();
+	Display::init();
 
- 	if(Traits<Thread>::smp) {
-	    System_Info<Machine> * si =
-		reinterpret_cast<System_Info<Machine> *>(
-		    Memory_Map<Machine>::SYS_INFO);
+	if(Traits<System>::multicore) {
+	    System_Info<Machine> * si = reinterpret_cast<System_Info<Machine> *>(Memory_Map<Machine>::SYS_INFO);
 
 	    Machine::smp_init(si->bm.n_cpus);
 	}
@@ -51,11 +33,9 @@ OStream kout;
 OStream kerr;
 
 // System class attributes
-System_Info<Machine> * System::_si =
-    reinterpret_cast<System_Info<Machine> *>(Memory_Map<Machine>::SYS_INFO);
-
-Heap System::_heap;
-
-System_Info<Machine> * const System::info() { return _si; }
+System_Info<Machine> * System::_si = reinterpret_cast<System_Info<Machine> *>(Memory_Map<Machine>::SYS_INFO);
+char System::_preheap[];
+Segment * System::_heap_segment;
+Heap * System::_heap;
 
 __END_SYS

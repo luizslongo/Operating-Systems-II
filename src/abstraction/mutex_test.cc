@@ -6,7 +6,7 @@
 #include <alarm.h>
 #include <display.h>
 
-__USING_SYS
+using namespace EPOS;
 
 const int iterations = 10;
 
@@ -24,25 +24,25 @@ int philosopher(int n, int l, int c)
 
     for(int i = iterations; i > 0; i--) {
 
-	mutex_display.lock();
-	Display::position(l, c);
- 	cout << "thinking";
-	mutex_display.unlock();
+        mutex_display.lock();
+        Display::position(l, c);
+        cout << "thinking";
+        mutex_display.unlock();
 
-	Delay thinking(100000);
+        Delay thinking(2000000);
 
-	chopstick[first].lock();   // get first chopstick
-	chopstick[second].lock();   // get second chopstick
+        chopstick[first].lock();   // get first chopstick
+        chopstick[second].lock();   // get second chopstick
 
-	mutex_display.lock();
-	Display::position(l, c);
-	cout << " eating ";
-	mutex_display.unlock();
+        mutex_display.lock();
+        Display::position(l, c);
+        cout << " eating ";
+        mutex_display.unlock();
 
-	Delay eating(500000);
+        Delay eating(1000000);
 
-	chopstick[first].unlock();   // release first chopstick
-	chopstick[second].unlock();   // release second chopstick
+        chopstick[first].unlock();   // release first chopstick
+        chopstick[second].unlock();   // release second chopstick
     }
 
     mutex_display.lock();
@@ -57,17 +57,16 @@ int main()
 {
     mutex_display.lock();
     Display::clear();
-    cout << "The Philosopher's Dinner:\n";
-	
+    cout << "The Philosopher's Dinner:" << endl;
+
     phil[0] = new Thread(&philosopher, 0,  5, 32);
     phil[1] = new Thread(&philosopher, 1, 10, 44);
     phil[2] = new Thread(&philosopher, 2, 16, 39);
     phil[3] = new Thread(&philosopher, 3, 16, 24);
     phil[4] = new Thread(&philosopher, 4, 10, 20);
 
-    cout << "Philosophers are alive and hungry!\n";
-	
-    cout << "The dinner is served ...\n";
+    cout << "Philosophers are alive and hungry!" << endl;
+
     Display::position(7, 44);
     cout << '/';
     Display::position(13, 44);
@@ -78,21 +77,23 @@ int main()
     cout << '/';
     Display::position(7, 27);
     cout << '\\';
+    Display::position(18, 0);
+
+    cout << "The dinner is served ..." << endl;
     mutex_display.unlock();
 
-
     for(int i = 0; i < 5; i++) {
-	int ret = phil[i]->join();
-	mutex_display.lock();
-	Display::position(20 + i, 0);
-	cout << "Philosopher " << i << " ate " << ret << " times \n";
-	mutex_display.unlock();
+        int ret = phil[i]->join();
+        mutex_display.lock();
+        Display::position(20 + i, 0);
+        cout << "Philosopher " << i << " ate " << ret << " times " << endl;
+        mutex_display.unlock();
     }
 
     for(int i = 0; i < 5; i++)
-	delete phil[i];
+        delete phil[i];
 
-    cout << "The end!\n";
+    cout << "The end!" << endl;
 
     return 0;
 }

@@ -12,141 +12,62 @@
 
 __BEGIN_SYS
 
-class Alarm_Base
+class Alarm
 {
-public:
-    typedef TSC::Time_Stamp Time_Stamp;
-    typedef Timer::Tick Tick;  
-    
-    static const bool smp = Traits<Thread>::smp;
-    
-public:
-    typedef TSC::Hertz Hertz;
-    typedef RTC::Microsecond Microsecond;
+    friend class System;
+    friend class Alarm_Chronometer;
+    friend class Periodic_Thread;
+    friend class RT_Thread;
+    friend class Scheduling_Criteria::FCFS;
+    friend class Scheduling_Criteria::EDF;
 
-    // Infinite times (for alarms)
-    enum { INFINITE = -1 };
-    
-     static Hertz resolution() { return Alarm_Timer::FREQUENCY; }
-     
+private:
+    typedef TSC::Hertz Hertz;
+    typedef Timer::Tick Tick;  
+
+    typedef Relative_Queue<Alarm, Tick> Queue;
+
 public:
-    Alarm_Base(const Microsecond & time, Handler * handler, int times) :
-    _ticks(ticks(time)), _handler(handler), _times(times) { }
-  
+    typedef RTC::Microsecond Microsecond;
+    
+    // Infinite times (for alarms)
+    enum { INFINITE = RTC::INFINITE };
+    
+public:
+    Alarm(const Microsecond & time, Handler * handler, int times = 1);
+    ~Alarm();
+
+    static Hertz frequency() { return _timer->frequency(); }
+
+    static void delay(const Microsecond & time);
+
+private:
+    static void init();
+
     static Microsecond period() {
-        return 1000000 / resolution();
+        return 1000000 / frequency();
     }
 
     static Tick ticks(const Microsecond & time) {
         return (time + period() / 2) / period();
     }
 
-    static void lock() {
-        CPU::int_disable();
-        if(smp)
-            _lock.acquire();
-    }
+    static void lock() { Thread::lock(); }
+    static void unlock() { Thread::unlock(); }
 
-    static void unlock() {
-        if(smp)
-            _lock.release();
-        CPU::int_enable();
-    }
-    
-public:
+    static void handler();
+
+private:
     Tick _ticks;
     Handler * _handler;
     int _times; 
-    static Spin _lock;
-  
-};
+    Queue::Element _link;
 
-class Single_Core_Alarm : public Alarm_Base
-{
-private:
-    static const bool idle_waiting = Traits<Single_Core_Alarm>::idle_waiting;
-
-    typedef Relative_Queue<Single_Core_Alarm, Tick> Queue;
-
-public:    
-    Single_Core_Alarm(const Microsecond & time, Handler * handler, int times = 1);
-    ~Single_Core_Alarm();
-
-    static void delay(const Microsecond & time);
-
-    static int init();
-
-private:
-    static void handler();
-
-private:
-    Queue::Element _link; 
-  
     static Alarm_Timer * _timer;
     static volatile Tick _elapsed;
-    static Queue _requests;
+    static Queue _request;
 };
 
-class SMP_Alarm : public Alarm_Base
-{
-private:
-    static const bool idle_waiting = Traits<SMP_Alarm>::idle_waiting;
-    static const unsigned int MAX_CPUS = Traits<Machine>::MAX_CPUS;
-    static const unsigned int MAX_ELAPSED = 100000;
-	static const unsigned int MAX_ALARMS = 10;
-    
-    typedef Relative_Queue<SMP_Alarm, Tick> Queue;  
-
-public:
-    SMP_Alarm(const Microsecond & time, Handler * handler, int times = 1);
-    ~SMP_Alarm();
-
-    static void delay(const Microsecond & time);
-
-    static int init();
-
-private:
-    static void handler();
-    static volatile Tick _elapsed[MAX_CPUS];
-private:
-    Queue::Element _link; 
-  
-    // only one timer is needed because the timer interrupt is shared among cores
-    // and the "tick" couting is done by the SMP_Alarm::handler()
-    static Alarm_Timer * _timer; 
-    static Queue _requests[MAX_CPUS];
-    static int _lowest_priority_queue;
-};
-
-//Define the Alarm that will be used by the rest of the system
-typedef IF<Traits<Thread>::smp, 
-          SMP_Alarm, 
-          Single_Core_Alarm>::Result Alarm;
-
-template<typename Timer>
-class Private_Alarm: private Timer
-{
-public:
-    typedef TSC::Hertz Hertz;
-    typedef RTC::Microsecond Microsecond;
-
-public:
-    Private_Alarm(const Microsecond & time, 
-                  Handler * handler, 
-                  bool retrigger = true) 
-    : Timer(1000000 / time, handler, retrigger)
-    {
-        db<Alarm>(TRC) << "Alarm(t=" << time
-                       << ",h=" << (void *)handler
-                       << ",r=" << retrigger << ") => " << this << "\n";
-    }
-
-    ~Private_Alarm() {
-        db<Alarm>(TRC) << "~Alarm()\n";
-    }
-
-    static Hertz resolution() { return Timer::FREQUENCY; }
-};
 
 class Delay
 {
@@ -154,12 +75,26 @@ private:
     typedef RTC::Microsecond Microsecond;
 
 public:
-    Delay(const Microsecond & time): _time(time) { repeat(); }
-
-    void repeat() { Alarm::delay(_time); }
+    Delay(const Microsecond & time): _time(time)  { Alarm::delay(_time); }
 
 private:
     Microsecond _time;
+};
+
+
+// The following Scheduling Criteria depend on Alarm, which is not yet available at scheduler.h
+namespace Scheduling_Criteria {
+    inline FCFS::FCFS(int p):
+        Priority((p == IDLE) ? IDLE : Alarm::_elapsed) {}
+
+
+    inline EDF::EDF(const Microsecond & d, const Microsecond & p, const Microsecond & c, int cpu):
+        RT_Common(Alarm::ticks(d), Alarm::ticks(d), p, c) {}
+
+    inline void EDF::update() {
+        if((_priority > PERIODIC) && (_priority < APERIODIC))
+            _priority = Alarm::_elapsed + _deadline;
+    }
 };
 
 __END_SYS

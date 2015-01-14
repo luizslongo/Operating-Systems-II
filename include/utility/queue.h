@@ -40,155 +40,146 @@
 #include "list.h"
 #include "spin.h"
 
-__BEGIN_SYS
+__BEGIN_UTIL
 
 // Wrapper for non-atomic queues  
-template <typename List, bool atomic>
-class Queue_Wrapper: private List
+template<typename T, bool atomic>
+class Queue_Wrapper: private T
 {
 public:
-    typedef typename List::Object_Type Object_Type;
-    typedef typename List::Element Element;
+    typedef typename T::Object_Type Object_Type;
+    typedef typename T::Element Element;
 
 public:
-    void lock() { }
-    void unlock() { }
+    bool empty() { return T::empty(); }
+    unsigned int size() { return T::size(); }
 
-    bool empty() { return List::empty(); }
-    unsigned int size() { return List::size(); }
+    Element * head() { return T::head(); }
+    Element * tail() { return T::tail(); }
 
-    Element * head() { return List::head(); }
-    Element * tail() { return List::tail(); }
+    void insert(Element * e) { T::insert(e); }
 
-    void insert(Element * e) { List::insert(e); }
+    Element * remove() { return T::remove(); }
+    Element * remove(Element * e) { return T::remove(e); }
+    Element * remove(const Object_Type * obj) { return T::remove(obj); }
 
-    Element * remove() { return List::remove(); }
-    Element * remove(Element * e) { return List::remove(e); }
-    Element * remove(const Object_Type * obj) { return List::remove(obj); }
+    Element * search(const Object_Type * obj) {	return T::search(obj); }
 
-    Element * search(const Object_Type * obj) {	return List::search(obj); }
+    Element * volatile & chosen() { return T::chosen(); }
 
-    Element * volatile & chosen() { return List::chosen(); }
-
-    Element * choose() { return List::choose(); }
-    Element * choose_another() { return List::choose_another(); }
-    Element * choose(Element * e) { return List::choose(e); }
-    Element * choose(const Object_Type * obj) {	return List::choose(obj); }
+    Element * choose() { return T::choose(); }
+    Element * choose_another() { return T::choose_another(); }
+    Element * choose(Element * e) { return T::choose(e); }
+    Element * choose(const Object_Type * obj) {	return T::choose(obj); }
 };
 
 // Wrapper for atomic queues  
-template <typename List>
-class Queue_Wrapper<List, true>: private List
+template<typename T>
+class Queue_Wrapper<T, true>: private T
 {
-private:
-    static const bool smp = Traits<Thread>::smp;
+public:
+    typedef typename T::Object_Type Object_Type;
+    typedef typename T::Element Element;
 
 public:
-    typedef typename List::Object_Type Object_Type;
-    typedef typename List::Element Element;
-
-public:
-    void lock() { _lock.acquire(); }
-    void unlock() { _lock.release(); }
-
     bool empty() {
-	enter();
-	bool tmp = List::empty();
-	leave();
-	return tmp;
+        enter();
+        bool tmp = T::empty();
+        leave();
+        return tmp;
     }
 
     unsigned int size() {
-	enter(); 
-	unsigned int tmp = List::size();
-	leave();
-	return tmp;
+        enter();
+        unsigned int tmp = T::size();
+        leave();
+        return tmp;
     }
 
     Element * head() { 
-	enter(); 
-	Element * tmp = List::head();
-	leave();
-	return tmp;
+        enter();
+        Element * tmp = T::head();
+        leave();
+        return tmp;
     }
 
     Element * tail() { 
-	enter(); 
-	Element * tmp = List::tail();
-	leave();
-	return tmp;
+        enter();
+        Element * tmp = T::tail();
+        leave();
+        return tmp;
     }
 
     void insert(Element * e) { 
-	enter(); 
-	List::insert(e);
-	leave();
+        enter();
+        T::insert(e);
+        leave();
     }
 
     Element * remove() { 
-	enter(); 
-	Element * tmp = List::remove();
-	leave();
-	return tmp;
+        enter();
+        Element * tmp = T::remove();
+        leave();
+        return tmp;
     }
 
     Element * remove(const Object_Type * obj) {
-	enter(); 
-	Element * tmp = List::remove(obj); 
-	leave();
-	return tmp;
+        enter();
+        Element * tmp = T::remove(obj);
+        leave();
+        return tmp;
     }
 
     Element * search(const Object_Type * obj) {
-	enter(); 
-	Element * tmp = List::search(obj);
-	leave();
-	return tmp;
+        enter();
+        Element * tmp = T::search(obj);
+        leave();
+        return tmp;
     }
 
     Element * volatile & chosen() { 
-	enter(); 
-	Element * volatile & tmp = List::chosen();
-	leave();
-	return tmp;
+        enter();
+        Element * volatile & tmp = T::chosen();
+        leave();
+        return tmp;
     }
 
     Element * choose() { 
-	enter(); 
-	Element * tmp = List::choose();
-	leave();
-	return tmp;
+        enter();
+        Element * tmp = T::choose();
+        leave();
+        return tmp;
     }
 
     Element * choose_another() { 
-	enter(); 
-	Element * tmp = List::choose_another();
-	leave();
-	return tmp;
+        enter();
+        Element * tmp = T::choose_another();
+        leave();
+        return tmp;
     }
     Element * choose(Element * e) {
-	enter(); 
-	Element * tmp = List::choose(e);
-	leave();
-	return tmp;
+        enter();
+        Element * tmp = T::choose(e);
+        leave();
+        return tmp;
     }
 
     Element * choose(const Object_Type * obj) {
-	enter(); 
-	Element * tmp = List::choose(obj);
-	leave();
-	return tmp;
+        enter();
+        Element * tmp = T::choose(obj);
+        leave();
+        return tmp;
     }
 
 private:
     void enter() {
-	CPU::int_disable();
-	if(smp) _lock.acquire(); 
+        CPU::int_disable();
+        _lock.acquire();
     }
 
     void leave() {
-	if(smp) _lock.release();
-	CPU::int_disable();
+        _lock.release();
+        CPU::int_disable();
     }
 
 private:
@@ -197,29 +188,24 @@ private:
 
 
 // Queue
-template <typename T,
-	  bool atomic = false,
-	  typename El = List_Elements::Doubly_Linked<T> >
-class Queue: public Queue_Wrapper<List<T, El>, atomic> {};
+template<typename T,
+          typename El = List_Elements::Doubly_Linked<T> >
+class Queue: public Queue_Wrapper<List<T, El>, false> {};
 
 
 // Ordered Queue
-template <typename T, 
-	  typename R = List_Element_Rank, 
-	  bool atomic = false,
-	  typename El = List_Elements::Doubly_Linked_Ordered<T, R> >
-class Ordered_Queue:
-    public Queue_Wrapper<Ordered_List<T, R, El>, atomic> {};
+template<typename T, 
+          typename R = List_Element_Rank,
+          typename El = List_Elements::Doubly_Linked_Ordered<T, R> >
+class Ordered_Queue: public Queue_Wrapper<Ordered_List<T, R, El>, false> {};
 
 
 // Relatively-Ordered Queue
-template <typename T, 
-	  typename R = List_Element_Rank, 
-	  bool atomic = false,
-	  typename El = List_Elements::Doubly_Linked_Ordered<T, R> >
-class Relative_Queue:
-    public Queue_Wrapper<Relative_List<T, R, El>, atomic> {};
+template<typename T, 
+          typename R = List_Element_Rank,
+          typename El = List_Elements::Doubly_Linked_Ordered<T, R> >
+class Relative_Queue: public Queue_Wrapper<Relative_List<T, R, El>, false> {};
 
-__END_SYS
- 
+__END_UTIL
+
 #endif

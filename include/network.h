@@ -3,45 +3,19 @@
 #ifndef __network_h
 #define __network_h
 
-#include <elp.h>
-#include <router.h>
+#include <ip.h>
 
 __BEGIN_SYS
 
-class Network:
-    public SWITCH<Traits<Network>::NETWORK_PROTOCOL,
-                CASE<Traits<Network>::ROUTER,
-                    Router,
-                CASE<DEFAULT,
-                    ELP
-                > >
-           >::Result
+class Network
 {
+protected:
+    Network() {}
+
 public:
-    typedef
-        SWITCH<Traits<Network>::NETWORK_PROTOCOL,
-            CASE<Traits<Network>::ROUTER,
-                Router,
-            CASE<DEFAULT,
-                ELP
-            > >
-        >::Result Base;
-
-    Network();
-    Network(unsigned int unit);
-    ~Network();
-
-    using Base::send;
-    using Base::receive;
-    using Base::update;
-
-    const Address & address() { return Base::address(); }
-
-    void address(const Address & address) { Base::address(address); }
-
+    static void init();
 };
 
 __END_SYS
 
-#endif /* __network_h */
-
+#endif

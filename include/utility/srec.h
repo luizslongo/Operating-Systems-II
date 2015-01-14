@@ -5,7 +5,7 @@
 
 #include <system/config.h>
 
-__BEGIN_SYS 
+__BEGIN_UTIL 
 
 class SREC
 {
@@ -14,7 +14,7 @@ public:
     
     bool valid() { 
       return ((((char*)this)[0] == 'S') && 
-	      (((char*)this)[1] == '0')); 
+              (((char*)this)[1] == '0')); 
     }
 
     void * entry(); 
@@ -54,7 +54,7 @@ private:
     
 };
 
-__END_SYS 
+__END_UTIL 
  
 #endif
 

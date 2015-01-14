@@ -4,19 +4,28 @@
 #define __application_h
 
 #include <utility/heap.h>
+#include <segment.h>
+
+extern "C"
+{
+    void * malloc(size_t);
+    void free(void *);
+}
 
 __BEGIN_SYS
 
 class Application
 {
-public:
-    static Heap * const heap() { return &_heap[0]; }
-    static Heap * const priority_heap() { return &_heap[1]; }
+    friend class Init_Application;
+    friend void * ::malloc(size_t);
+    friend void ::free(void *);
 
+private:
     static void init();
 
 private:
-    static Heap _heap[IF_INT<Traits<Heap>::priority_alloc, 2, 1>::Result];
+    static char _preheap[sizeof(Heap)];
+    static Heap * _heap;
 };
 
 __END_SYS

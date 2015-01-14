@@ -3,7 +3,6 @@
 #ifndef __timer_h
 #define __timer_h
 
-#include <utility/handler.h>
 #include <tsc.h>
 
 __BEGIN_SYS
@@ -17,6 +16,7 @@ public:
     typedef TSC::Hertz Hertz;
     typedef TSC::Hertz Tick;
     typedef void (Handler)();
+    typedef unsigned int Channel;
 };
 
 __END_SYS

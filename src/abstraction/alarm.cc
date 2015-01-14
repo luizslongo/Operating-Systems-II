@@ -1,193 +1,98 @@
 // EPOS Alarm Abstraction Implementation
 
-#include <system/kmalloc.h>
 #include <semaphore.h>
 #include <alarm.h>
+#include <display.h>
 
 __BEGIN_SYS
 
 // Class attributes
-Spin Alarm_Base::_lock;
-Alarm_Timer * Single_Core_Alarm::_timer;
-volatile Single_Core_Alarm::Tick Single_Core_Alarm::_elapsed;
-Single_Core_Alarm::Queue Single_Core_Alarm::_requests;
+Alarm_Timer * Alarm::_timer;
+volatile Alarm::Tick Alarm::_elapsed;
+Alarm::Queue Alarm::_request;
+
 
 // Methods
-Single_Core_Alarm::Single_Core_Alarm(const Microsecond & time, Handler * handler, int times):
-Alarm_Base(time, handler, times), _link(this, _ticks)
+Alarm::Alarm(const Microsecond & time, Handler * handler, int times)
+: _ticks(ticks(time)), _handler(handler), _times(times), _link(this, _ticks)
 {
     lock();
 
-    db<Single_Core_Alarm>(TRC) << "Alarm(t=" << time
-    << ",tk=" << _ticks
-    << ",h=" << (void *)handler
-    << ",x=" << times << ") => " << this << "\n";
+    db<Alarm>(TRC) << "Alarm(t=" << time << ",tk=" << _ticks << ",h=" << reinterpret_cast<void *>(handler)
+                   << ",x=" << times << ") => " << this << endl;
 
     if(_ticks) {
-	_requests.insert(&_link);
-	unlock();
+        _request.insert(&_link);
+        unlock();
     } else {
-	unlock();
-	(*handler)();
+        unlock();
+        (*handler)();
     }
 }
 
-Single_Core_Alarm::~Single_Core_Alarm()
+
+Alarm::~Alarm()
 {
     lock();
 
-    db<Single_Core_Alarm>(TRC) << "~Single_Core_Alarm()\n";
+    db<Alarm>(TRC) << "~Alarm(this=" << this << ")" << endl;
 
-    _requests.remove(this);
+    _request.remove(this);
 
     unlock();
 }
+
 
 // Class methods
-void Single_Core_Alarm::delay(const Microsecond & time)
+void Alarm::delay(const Microsecond & time)
 {
-    db<Single_Core_Alarm>(TRC) << "Single_Core_Alarm::delay(time=" << time << ")\n";
-
-    if(idle_waiting) {
-
-	Semaphore semaphore(0);
-	Semaphore_Handler handler(&semaphore);
-	Alarm alarm(time, &handler, 1); // if time < tick trigger v()
-	semaphore.p();
-
-    } else {
-
-	Tick t = _elapsed + ticks(time);
-	while(_elapsed < t);
-
-    }
-}
-
-void Single_Core_Alarm::handler()
-{
-    CPU::int_disable();
-    // lock(); this handler is meant to be called obly by CPU[0]
-
-    _elapsed++;
-
-    Single_Core_Alarm * alarm = 0;
-
-    if(!_requests.empty()) {
-	// rank can be negative whenever multiple handlers get created for the same time tick
-	if(_requests.head()->promote() <= 0) {
-
-	    Queue::Element * e = _requests.remove();
-	    alarm = e->object();
-
-	    if(alarm->_times != INFINITE)
-		alarm->_times--;
-	    if(alarm->_times) {
-		e->rank(alarm->_ticks);
-		_requests.insert(e);
-	    }
-	}
-    }
-
-    // unlock();
-    CPU::int_enable();
-
-    if(alarm) {
-	db<Single_Core_Alarm>(TRC) << "Single_Core_Alarm::handler(h=" << reinterpret_cast<void*>(alarm->handler) << ")\n";
-	(*alarm->_handler)();
-    }
-}
-
-// Class attributes
-Alarm_Timer * SMP_Alarm::_timer;
-volatile SMP_Alarm::Tick SMP_Alarm::_elapsed[MAX_CPUS];
-SMP_Alarm::Queue SMP_Alarm::_requests[MAX_CPUS];
-int SMP_Alarm::_lowest_priority_queue = 0;
-
-// Methods
-SMP_Alarm::SMP_Alarm(const Microsecond & time, Handler * handler, int times):
-Alarm_Base(time, handler, times), _link(this, _ticks)
-{
-    lock();
-    
-    db<SMP_Alarm>(TRC) << "SMP_Alarm(t=" << time
-    << ",tk=" << _ticks
-    << ",h=" << (void *)handler
-    << ",x=" << times << ") => " << this << "\n";
-
-    if(_ticks) {
-    _requests[(_lowest_priority_queue++ % MAX_CPUS)].insert(&_link);
-    unlock();
-    } else {
-    unlock();
-    (*handler)();
-    }
-}
-
-SMP_Alarm::~SMP_Alarm()
-{
-    lock();
-    
-    db<SMP_Alarm>(TRC) << "~SMP_Alarm()\n";
-
-    _requests[Machine::cpu_id()].remove(this);
-    
-    unlock();
-}
-
-// Class methods
-void SMP_Alarm::delay(const Microsecond & time)
-{
-    db<SMP_Alarm>(TRC) << "SMP_Alarm::delay(time=" << time << ")\n";
-
-    if(idle_waiting) {
+    db<Alarm>(TRC) << "Alarm::delay(time=" << time << ")" << endl;
 
     Semaphore semaphore(0);
     Semaphore_Handler handler(&semaphore);
-    SMP_Alarm alarm(time, &handler, 1); // if time < tick trigger v()
+    Alarm alarm(time, &handler, 1); // if time < tick trigger v()
     semaphore.p();
-
-    } else {
-
-    Tick t = _elapsed[Machine::cpu_id()] + ticks(time);
-    while(_elapsed[Machine::cpu_id()] < t);
-
-    }
 }
 
-void SMP_Alarm::handler()
+
+void Alarm::handler()
 {
-    CPU::int_disable();
     lock();
-    
-    _elapsed[Machine::cpu_id()]++;
-    
-    SMP_Alarm * alarms[MAX_ALARMS];
-    alarms[0] = 0;
-    int i = 0;
 
-    if(!_requests[Machine::cpu_id()].empty()) {
-      _requests[Machine::cpu_id()].head()->promote();
-      //release all tasks that have reached 0 ticks
-      while(_requests[Machine::cpu_id()].head()->rank() <= 0) {
-        Queue::Element * e = _requests[Machine::cpu_id()].remove();
-        alarms[i] = e->object();
-        if(alarms[i]->_times != INFINITE)
-          alarms[i]->_times--;
-        if(alarms[i]->_times) {
-          e->rank(alarms[i]->_ticks);
-          _requests[Machine::cpu_id()].insert(e);
-        }
-        i++;
-        if(_requests[Machine::cpu_id()].empty())
-          break;
-      }
+    _elapsed++;
+
+    if(Traits<Alarm>::visible) {
+        Display display;
+        int lin, col;
+        display.position(&lin, &col);
+        display.position(0, 79);
+        display.putc(_elapsed);
+        display.position(lin, col);
     }
-    
-    unlock();
-    CPU::int_enable();
 
-    while(i-- > 0) {
-      (*alarms[i]->_handler)();
+    Alarm * alarm = 0;
+
+    if(!_request.empty()) {
+        // Replacing the following "if" by a "while" loop is tempting, but recovering the lock and dispatching the handler is
+        // troublesome if the Alarm gets destroyed in between, like is the case for the idle thread returning to shutdown the machine
+        if(_request.head()->promote() <= 0) { // rank can be negative whenever multiple handlers get created for the same time tick
+            Queue::Element * e = _request.remove();
+            alarm = e->object();
+            if(alarm->_times != INFINITE)
+                alarm->_times--;
+            if(alarm->_times) {
+                e->rank(alarm->_ticks);
+                _request.insert(e);
+            }
+        }
+    }
+
+    unlock();
+
+    if(alarm) {
+        db<Alarm>(TRC) << "Alarm::handler(this=" << alarm << ",e=" << _elapsed << ",h="
+                       << reinterpret_cast<void*>(alarm->handler) << ")" << endl;
+        (*alarm->_handler)();
     }
 }
 

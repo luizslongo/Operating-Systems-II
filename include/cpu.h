@@ -10,6 +10,9 @@ __BEGIN_SYS
 class CPU_Common
 {	
 protected:
+    static const bool BIG_ENDIAN = (Traits<CPU>::ENDIANESS == Traits<CPU>::BIG);
+
+protected:
     CPU_Common() {}
 
 public:
@@ -17,48 +20,54 @@ public:
     typedef unsigned short Reg16;
     typedef unsigned long Reg32;
     typedef unsigned long long Reg64;
+    typedef unsigned long Reg;
 
-    class Log_Addr {
+    class Log_Addr
+    {
     public:
         Log_Addr() {}
         Log_Addr(const Log_Addr & a) : _addr(a._addr) {}
-        Log_Addr(unsigned int a) : _addr(a) {}
-        template <typename T>
-        Log_Addr(T * a) : _addr(reinterpret_cast<unsigned int>(a)) {}
+        Log_Addr(const Reg & a) : _addr(a) {}
+        template<typename T>
+        Log_Addr(T * a) : _addr(Reg(a)) {}
 
-        operator unsigned int() const { return _addr; }
+        operator const Reg &() const { return _addr; }
 
-        template <typename T>
+        template<typename T>
         operator T *() const { return reinterpret_cast<T *>(_addr); }
 
-        template <typename T>
-        bool operator==(T a) const { return (_addr == (unsigned int)a); }
-        template <typename T>
-        bool operator< (T a) const { return (_addr < (unsigned int)a); }
-        template <typename T>
-        bool operator> (T a) const { return (_addr > (unsigned int)a); }
-        template <typename T>
-        bool operator>=(T a) const { return (_addr >= (unsigned int)a); }
-        template <typename T>
-        bool operator<=(T a) const { return (_addr <= (unsigned int)a); }
+        template<typename T>
+        bool operator==(T a) const { return (_addr == Reg(a)); }
+        template<typename T>
+        bool operator< (T a) const { return (_addr < Reg(a)); }
+        template<typename T>
+        bool operator> (T a) const { return (_addr > Reg(a)); }
+        template<typename T>
+        bool operator>=(T a) const { return (_addr >= Reg(a)); }
+        template<typename T>
+        bool operator<=(T a) const { return (_addr <= Reg(a)); }
 
-        template <typename T>
-        Log_Addr operator-(T a) const { return _addr - (unsigned int)a; }
-        template <typename T>
-        Log_Addr operator+(T a) const { return _addr + (unsigned int)a; }
-        template <typename T>
-        Log_Addr & operator+=(T a) { _addr += a; return *this; }
-        template <typename T>
-        Log_Addr & operator-=(T a) { _addr -= a; return *this; }
-        template <typename T>
-        Log_Addr & operator&=(T a) { _addr &= a; return *this; }
+        template<typename T>
+        Log_Addr operator-(T a) const { return _addr - Reg(a); }
+        template<typename T>
+        Log_Addr operator+(T a) const { return _addr + Reg(a); }
+        template<typename T>
+        Log_Addr & operator+=(T a) { _addr += Reg(a); return *this; }
+        template<typename T>
+        Log_Addr & operator-=(T a) { _addr -= Reg(a); return *this; }
+        template<typename T>
+        Log_Addr & operator&=(T a) { _addr &= Reg(a); return *this; }
+        template<typename T>
+        Log_Addr & operator|=(T a) { _addr |= Reg(a); return *this; }
 
-        friend Debug & operator << (Debug & db, Log_Addr a)
-        { db << (void *)a._addr; return db; }
+        Log_Addr & operator[](int i) { return *(this + i); }
+
+        friend OStream & operator<<(OStream & os, const Log_Addr & a) { os << reinterpret_cast<void *>(a._addr); return os; }
 
     private:
-        unsigned int _addr;
+        Reg _addr;
     };
+
     typedef Log_Addr Phy_Addr;
 
     typedef unsigned long Hertz;
@@ -94,16 +103,19 @@ public:
         return old;
     }
 
+    static Reg32 htonl(Reg32 v) { return (BIG_ENDIAN) ? v : swap32(v); }
+    static Reg16 htons(Reg16 v) { return (BIG_ENDIAN) ? v : swap16(v); }
+    static Reg32 ntohl(Reg32 v) { return htonl(v); }
+    static Reg16 ntohs(Reg16 v) { return htons(v); }
+
 protected:
     static Reg32 swap32(Reg32 v) {
-        return (((v << 24) & 0xff000000) | ((v <<  8) & 0x00ff0000) |
-                ((v >>  8) & 0x0000ff00) | ((v >> 24) & 0x000000ff));
+        return (v & 0xff000000) >> 24 | (v & 0x00ff0000) >> 8 | (v & 0x0000ff00) << 8 | (v & 0x000000ff) << 24;
     }
 
     static Reg16 swap16(Reg16 v) {
-        return ((v << 8) & 0xFF00) | ((v >> 8) & 0x00FF);
+        return (v & 0xff00) >> 8 | (v & 0x00ff) << 8;
     }
-
 };
 
 __END_SYS
@@ -111,5 +123,16 @@ __END_SYS
 #ifdef __CPU_H
 #include __CPU_H
 #endif
+
+__BEGIN_SYS
+
+template<typename T>
+inline T align32(const T & addr) { return (addr + 3) & ~3U; }
+template<typename T>
+inline T align64(const T & addr) { return (addr + 7) & ~7U; }
+template<typename T>
+inline T align128(const T & addr) { return (addr + 15) & ~15U; }
+
+__END_SYS
 
 #endif

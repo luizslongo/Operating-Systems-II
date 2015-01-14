@@ -4,12 +4,12 @@
 #include <periodic_thread.h>
 #include <chronometer.h>
 
-__USING_SYS
+using namespace EPOS;
 
-const int iterations = 10;
+const int iterations = 100;
 const long period_a = 100; // ms
-const long period_b = 200; // ms
-const long period_c = 400; // ms
+const long period_b = 300; // ms
+const long period_c = 500; // ms
 
 int func_a(void);
 int func_b(void);
@@ -43,10 +43,12 @@ int main()
     chrono.stop();
 
     cout << "\n\nThread A exited with status " << status_a 
-  	 << ", thread B exited with status " << status_b
-  	 << " and thread C exited with status " << status_c << ".\n";
+         << ", thread B exited with status " << status_b
+         << " and thread C exited with status " << status_c << ".\n";
 
-    cout << "\nThe estimated time to run the test was " << max(period_a, period_b, period_c) * iterations << " ms. The measured time was " << chrono.read() / 1000 <<" ms!\n";
+    cout << "\nThe estimated time to run the test was "
+         << max(period_a, period_b, period_c) * iterations
+         << " ms. The measured time was " << chrono.read() / 1000 <<" ms!\n";
 
     cout << "I'm also done, bye!\n";
 
@@ -57,8 +59,8 @@ int func_a()
 {
     cout << "A";
     for(int i = 0; i < iterations; i++) {
-	Periodic_Thread::wait_next();
-	cout << "a";
+        Periodic_Thread::wait_next();
+        cout << "a";
     }
     cout << "A";
     return 'A';   
@@ -68,8 +70,8 @@ int func_b(void)
 {
     cout << "B";
     for(int i = 0; i < iterations; i++) {
-	Periodic_Thread::wait_next();
-	cout << "b";
+        Periodic_Thread::wait_next();
+        cout << "b";
     }
     cout << "B";
     return 'B';   
@@ -79,8 +81,8 @@ int func_c(void)
 {
     cout << "C";
     for(int i = 0; i < iterations; i++) {
-	Periodic_Thread::wait_next();
-	cout << "c";
+        Periodic_Thread::wait_next();
+        cout << "c";
     }
     cout << "C";
     return 'C';   

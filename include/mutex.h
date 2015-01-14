@@ -3,6 +3,7 @@
 #ifndef __mutex_h
 #define __mutex_h
 
+#include <utility/handler.h>
 #include <synchronizer.h>
 
 __BEGIN_SYS
@@ -10,31 +11,11 @@ __BEGIN_SYS
 class Mutex: protected Synchronizer_Common
 {
 public:
-    Mutex() : _locked(false) {
-	db<Synchronizer>(TRC) << "Mutex() => " << this << "\n"; 
-    }
+    Mutex();
+    ~Mutex();
 
-    ~Mutex() {
-	db<Synchronizer>(TRC) << "~Mutex(this=" << this << ")\n";
-    }
-
-    void lock() { 
-	db<Synchronizer>(TRC) << "Mutex::lock(this=" << this << ")\n";
-
-	begin_atomic();
-	if(tsl(_locked))
-	    sleep(); // implicit end_atomic()
-	else
-	    end_atomic();
-    }
-
-    void unlock() { 
-	db<Synchronizer>(TRC) << "Mutex::unlock(this=" << this << ")\n";
-
-	begin_atomic();
-	_locked = false;
-	wakeup(); // implicit end_atomic()
-    }
+    void lock();
+    void unlock();
 
 private:
     volatile bool _locked;
@@ -49,7 +30,7 @@ public:
     ~Mutex_Handler() {}
 
     void operator()() { _handler->unlock(); }
-	
+
 private:
     Mutex * _handler;
 };

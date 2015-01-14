@@ -4,23 +4,23 @@
 #include <chronometer.h>
 #include <alarm.h>
 
-__USING_SYS;
+using namespace EPOS;
 
 int main()
 {
     OStream cout;
 
-    cout << "Chronometer test\n";
+    cout << "Chronometer test" << endl;
 
     Chronometer timepiece;
 
-    cout << "Chronometer start.\n";
+    cout << "Chronometer start." << endl;
     timepiece.start();
     Alarm::delay(1500000);
     timepiece.stop();
-    cout << "Chronometer stop.\n";
+    cout << "Chronometer stop." << endl;
 
-    cout << "\nElapsed time = " << timepiece.read() << " us\n";
+    cout << "\nElapsed time = " << timepiece.read() << " us" << endl;
 
     return 0;
 }

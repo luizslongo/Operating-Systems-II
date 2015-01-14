@@ -1,129 +1,135 @@
-#ifndef DHCPC_H
-#define DHCPC_H
+// EPOS DHCP (RFCs 2131 and 2132) Protocol Declarations
 
-#include "udp.h"
+#ifndef __dhdcp_h
+#define __dhdcp_h
+
 #include <utility/random.h>
-
-#ifdef __NIC_H
+#include <utility/string.h>
+#include <communicator.h>
 
 __BEGIN_SYS
-/*
- * Reference:
- * DHCP:         http://www.ietf.org/rfc/rfc2131.txt
- * DHCP options: http://www.ietf.org/rfc/rfc2132.txt
- */
-class DHCP {
+
+class DHCP
+{
 public:
-    // Limited to opt_size = 308
+    typedef NIC::Address MAC_Address;
+    typedef IP::Address Address;
 
-    template<int opt_size> class Packet {
-    public:
-        u8 _op, _htype, _hlen, _hopts;
-        u32 _xid;
-        u16 _secs, _flags;
-        u32 _ciaddr, _yiaddr, _siaddr, _giaddr;
-        u8 _chaddr[16];
-        u8 _sname[64];
-        u8 _file[128];
-        u8 _magic[4];
-        u8 _options[opt_size];
-        u8 _end;
-        u8 _padding[312 - 5 - opt_size];
-
-        u8 op() const { return _op; }
-        u32 xid() const { return _xid; }
-        u16 secs() const { return CPU::ntohs(_secs); }
-        u32 your_address() const { return CPU::ntohl(_yiaddr); }
-        u32 server_address() const { return CPU::ntohl(_siaddr); }
-        u8 * options() const { return const_cast<u8 * const>(_options); }
-
-        Packet()
-        {
-            memset(&_op, 0, sizeof(Packet));
-            _magic[0] =  99; // magic cookie
-            _magic[1] = 130;
-            _magic[2] =  83;
-            _magic[3] =  99;
-            _end = 255; // end of options
-        }
-
-    };
-
-    class Discover : public Packet<3> {
-    public:
-        Discover(IP * _net) : Packet<3>() {
-            _op = 1;
-            _htype = 1;
-            _hlen = _net->hw_address_len();
-            _xid = Pseudo_Random::random();
-            memcpy(_chaddr, &_net->hw_address(), _hlen);
-            _options[0] = 53; // DHCPMSG
-            _options[1] = 1;  // message size
-            _options[2] = 1;  // dhcp discover
-        }
-
-    };
-
-    class Request : public Packet<8> {
-    public:
-        Request(IP * _net,const Packet<255> * discovered) : Packet<8>() {
-            _op = 1;
-            _htype = 1;
-            _hlen = _net->hw_address_len();
-            _xid = discovered->_xid;
-            _ciaddr = discovered->_ciaddr;
-            _siaddr = discovered->_siaddr;
-            memcpy(_chaddr, &_net->hw_address(), _hlen);
-            _options[0] = 53; // DHCP message
-            _options[1] = 1;  // size
-            _options[2] = 3;  // dhcp discover
-            _options[3] = 55; // parameter request
-            _options[4] = 3;  // size
-            _options[5] = 1;  // subnet
-            _options[6] = 3;  // router
-            _options[7] = 6;  // dns
-        }
-    };
-
-    class Client;
-};
-
-class DHCP::Client : public UDP::Socket {
-public:
+    // DHCP Message Types
     enum {
-        IDLE,
-        DISCOVER,
+        DISCOVER = 1,
+        OFFER,
         REQUEST,
-        RENEW,
+        DECLINE,
+        ACK,
+        NAK,
         RELEASE
     };
-   
-    Client(UDP * udp = 0);
-    
-    ~Client() {}
 
-    void received(const UDP::Address & src,const char *data, unsigned int size);
+    template<unsigned int OPTIONS = 306>
+    class Packet
+    {
+    public:
+        static const unsigned int MAX_OPTIONS_LENGTH = 306;
 
-    void configure();
-    void parse_options(const Packet<255> * packet);
-    void renew();
-    void release();
+    public:
+        Packet() {
+            memset(this, 0, sizeof(Packet));
+            _magic[0] = 0x63;
+            _magic[1] = 0x82;
+            _magic[2] = 0x53;
+            _magic[3] = 0x63;
+            _end = 255;
+        }
 
-    IP::Address address() { return _ip; }
-    IP::Address netmask() { return _mask; }
-    IP::Address gateway() { return _gw; }
-    IP::Address brodcast() { return _bcast; }
-    IP::Address nameserver() { return _ns; }
-    
-protected:
-    short _state;
-    u32 _xid;
-    u32 _lease_time;
-    IP::Address _ip, _mask, _gw, _bcast, _ns;
+        unsigned char op() const { return _op; }
+        unsigned long xid() const { return _xid; }
+        unsigned short secs() const { return ntohs(_secs); }
+        const Address & yiaddr() const { return _yiaddr; }
+        const Address & siaddr() const { return _siaddr; }
+        unsigned char type() { return _options[2]; }
+        unsigned char * options() { return _options; }
+
+    protected:
+        unsigned char  _op;             // Message type: 1 = Request, 2 = Reply
+        unsigned char  _htype;          // Hardware address type: 1 = Ethernet
+        unsigned char  _hlen;           // Hardware address length in bytes
+        unsigned char  _hops;           // Hops: 0 for clients
+        unsigned long  _xid;            // Transaction id (random)
+        unsigned short _secs;           // Seconds elapsed since client started trying to boot
+        unsigned short _flags;          // Bit 0: broadcast, 1-15: reserved
+        Address        _ciaddr;         // Client IP address for Request
+        Address        _yiaddr;         // Client IP address offered by Server
+        Address        _siaddr;         // Server IP address
+        Address        _giaddr;         // Relay Server IP address
+        unsigned char  _chaddr[16];     // Client MAC address
+        unsigned char  _server[64];     // Server name (C string)
+        unsigned char  _file[128];      // Boot file name (C string)
+        unsigned char  _magic[4];       // BOOTP Magic Cookie
+        unsigned char  _options[OPTIONS];
+        unsigned char  _end;            // 255 -> end of options
+        unsigned char  _padding[312 - 5 - OPTIONS]; // MAX (312) - _magic - _end - _options
+    } __attribute__((packed));;
+
+    class Discover: public Packet<3>
+    {
+    public:
+        Discover(const NIC::Address & mac, unsigned long xid) {
+            _op = 1;
+            _htype = 1;
+            _hlen = sizeof(NIC::Address);
+            _xid = xid;
+            memcpy(_chaddr, &mac, sizeof(NIC::Address));
+            _options[0] = 53; // Code: 53 -> DHCP Message Type
+            _options[1] = 1;  // Size
+            _options[2] = DISCOVER;
+        }
+    };
+
+    class Offer: public Packet<> {};
+
+    class Request: public Packet<8>
+    {
+    public:
+        Request(const NIC::Address & mac, unsigned long xid, const Address & yiaddr, const Address & siaddr) {
+            _op = 1;
+            _htype = 1;
+            _hlen = sizeof(MAC_Address);
+            _xid = xid;
+            _ciaddr = yiaddr;
+            _siaddr = siaddr;
+            memcpy(_chaddr, &mac, sizeof(MAC_Address));
+            _options[0] = 53; // Code: 53 -> DHCP Message Type
+            _options[1] = 1;  // Size
+            _options[2] = REQUEST;
+            _options[3] = 55; // Code: 55 -> Parameter Request List
+            _options[4] = 3;  // Size
+            _options[5] = 1;  // Code: 1 -> Netmask
+            _options[6] = 3;  // Code: 3 -> Gateway
+            _options[7] = 6;  // Code: 6 -> DNS
+        }
+    };
+
+    class Ack: public Packet<> {};
+
+    class Client: private Link<UDP>
+    {
+    public:
+        Client(const MAC_Address & mac, IP * ip);
+        ~Client() { /* release() only if renew() active and the client is a thread */ }
+
+        void renew();
+        void release();
+
+    private:
+        void parse_options(Packet<> * packet, IP::Address * a, IP::Address * m, IP::Address * g, IP::Address * n);
+
+    protected:
+        unsigned long _xid;
+        unsigned long _lease_time;
+    };
 };
 
 __END_SYS
-
-#endif
 
 #endif

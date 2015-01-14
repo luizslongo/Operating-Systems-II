@@ -5,67 +5,64 @@
 
 #include <system/config.h>
 
-__BEGIN_SYS
+__BEGIN_UTIL
 
 namespace Math {
 
 static const float E = 2.71828183;
-static const float PI =  3.14159265;
-static const float PIO2 = 1.570796326;
-static const float nan = (0.0/0.0);
 
+float logf(float num, float base = E, float epsilon = 1e-12) {
+    float integer = 0;
+    if (num == 0) return 1;
 
-int findMedianInt(short *data, int arraySize);
-float filterSmooth(float currentData, float previousData, float smoothFactor);
+    if (num < 1  && base < 1) return 0;
 
-static const double sq2p1 = 2.414213562373095048802e0;
-   static const double sq2m1  = .414213562373095048802e0;
+    while (num < 1) {
+        integer--;
+        num *= base;
+    }
 
+    while (num >= base) {
+        integer++;
+        num /= base;
+    }
 
-   static const double p4  = .161536412982230228262e2;
-       static const double p3  = .26842548195503973794141e3;
-       static const double p2  = .11530293515404850115428136e4;
-       static const double p1  = .178040631643319697105464587e4;
-       static const double p0  = .89678597403663861959987488e3;
-       static const double q4  = .5895697050844462222791e2;
-       static const double q3  = .536265374031215315104235e3;
-       static const double q2  = .16667838148816337184521798e4;
-       static const double q1  = .207933497444540981287275926e4;
-       static const double q0  = .89678597403663861962481162e3;
-
-float logf(float num, float base = E , float epsilon = 1e-12) ;
-float radians(float);
-float degrees(float radians);
-
-double mxatan(double arg);
-
-double msatan(double arg);
-
-float abs(float x);
-int abs(int x);
-long long abs(long long x);
-
-float sqrt(float x);
-
-double atan(double arg);
-
-float pow(float num, float expo);
-
-float factorial(int num);
-
-float cosineTaylor(float num, float precision = 10);
-
-double atan2(double arg1, double arg2) ;
-
-double asin(double arg);
-
-float fast_log2(float val);
-
-float fast_log(const float &val);
-
+    float partial = 0.5;
+    num *= num;
+    float decimal = 0.0;
+    while (partial > epsilon) {
+        if (num >= base) {
+            decimal += partial;
+            num /= base;
+        }
+        partial *= 0.5;
+        num *= num;
+    }
+    return (integer + decimal);
 }
 
+float fast_log2(float val)
+{
+   int * const exp_ptr = reinterpret_cast <int *> (&val);
+   int x = *exp_ptr;
+   const int log_2 = ((x >> 23) & 255) - 128;
+   x &= ~(255 << 23);
+   x += 127 << 23;
+   (*exp_ptr) = x;
 
-__END_SYS
+   val = ((-1.0f/3) * val + 2) * val - 2.0f/3;
+
+   return (val + log_2);
+}
+
+float fast_log(const float &val)
+{
+    static const float ln_2 = 0.69314718f;
+    return (fast_log2(val) * ln_2);
+}
+
+};
+
+__END_UTIL
 
 #endif

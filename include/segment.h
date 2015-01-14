@@ -17,35 +17,13 @@ public:
     typedef CPU::Phy_Addr Phy_Addr;
 
 public:
-    Segment(unsigned int bytes, Flags flags = Flags::APP)
-	: Chunk(bytes, flags)
-    {
-	    db<Segment>(TRC) << "Segment(bytes=" << bytes 
-			     << ",flags=" << flags 
-			     << ") [Chunk::_pt=" << Chunk::pt() << "]\n";
-    }
-    Segment(Phy_Addr phy_addr, unsigned int bytes, Flags flags = Flags::APP)
-	: Chunk(phy_addr, bytes, flags | Flags::IO)
-    // The MMU::IO flag signalizes the MMU that the attached memory shall
-    // not be released when the chunk is deleted
-    {
-	db<Segment>(TRC) << "Segment(bytes=" << bytes 
-			 << ",phy_addr=" << phy_addr
-			 << ",flags=" << flags
-			 << ") [Chunk::_pt=" << Chunk::pt() << "]\n";
-    }
-    ~Segment() {
-	db<Segment>(TRC) << "~Segment() [Chunk::_pt=" << Chunk::pt() << "]\n";
-    }
+    Segment(unsigned int bytes, Flags flags = Flags::APP);
+    Segment(Phy_Addr phy_addr, unsigned int bytes, Flags flags = Flags::APP);
+    ~Segment();
 
-    unsigned int size() const { return Chunk::size(); }
-    Phy_Addr phy_address() const { return Chunk::phy_address(); }
-
-    int resize(int amount) {
-	db<Segment>(TRC) << "Segment::resize(amount=" << amount << ")\n";
-
-	return Chunk::resize(amount);
-    }
+    unsigned int size() const;
+    Phy_Addr phy_address() const;
+    int resize(int amount);
 };
 
 __END_SYS

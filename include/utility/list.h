@@ -1,11 +1,11 @@
 // EPOS List Utility Declarations
 
 #ifndef __list_h
-#define        __list_h
+#define __list_h
 
 #include <system/config.h>
 
-__BEGIN_SYS
+__BEGIN_UTIL
 
 // List Element Rank (for ordered lists)
 class List_Element_Rank
@@ -26,7 +26,7 @@ namespace List_Elements
     typedef List_Element_Rank Rank;
 
     // Vector Element
-    template <typename T>
+    template<typename T>
     class Pointer
     {
     public:
@@ -43,7 +43,7 @@ namespace List_Elements
     };
 
     // Hash Table Element
-    template <typename T, typename R = Rank>
+    template<typename T, typename R = Rank>
     class Ranked
     {
     public:
@@ -64,11 +64,11 @@ namespace List_Elements
 
     private:
         const T * _object;
-         R _rank;
-   };
+        R _rank;
+    };
 
     // Simple List Element
-    template <typename T>
+    template<typename T>
     class Singly_Linked
     {
     public:
@@ -90,7 +90,7 @@ namespace List_Elements
 
     // Simple Ordered List Element
     // Hash Table's Synonym List Element
-    template <typename T, typename R = Rank>
+    template<typename T, typename R = Rank>
     class Singly_Linked_Ordered
     {
     public:
@@ -99,8 +99,7 @@ namespace List_Elements
         typedef Singly_Linked_Ordered Element;
 
     public:
-        Singly_Linked_Ordered(const T * o, const R & r = 0):
-            _object(o), _rank(r), _next(0) {}
+        Singly_Linked_Ordered(const T * o, const R & r = 0): _object(o), _rank(r), _next(0) {}
     
         T * object() const { return const_cast<T *>(_object); }
 
@@ -115,12 +114,12 @@ namespace List_Elements
 
     private:
         const T * _object;
-         R _rank;
+        R _rank;
         Element * _next;
     };
 
     // Simple Grouping List Element
-    template <typename T>
+    template<typename T>
     class Singly_Linked_Grouping
     {
     public:
@@ -128,8 +127,7 @@ namespace List_Elements
         typedef Singly_Linked_Grouping Element;
 
     public:
-        Singly_Linked_Grouping(const T * o, int s):
-            _object(o), _size(s), _next(0) {}
+        Singly_Linked_Grouping(const T * o, int s): _object(o), _size(s), _next(0) {}
 
         T * object() const { return const_cast<T *>(_object); }
 
@@ -148,7 +146,7 @@ namespace List_Elements
     };
 
     // List Element
-    template <typename T>
+    template<typename T>
     class Doubly_Linked
     {
     public:
@@ -172,7 +170,7 @@ namespace List_Elements
     };
 
     // Ordered List Element
-    template <typename T, typename R = Rank>
+    template<typename T, typename R = Rank>
     class Doubly_Linked_Ordered
     {
     public:
@@ -181,8 +179,7 @@ namespace List_Elements
         typedef Doubly_Linked_Ordered Element;
 
     public:
-        Doubly_Linked_Ordered(const T * o,  const R & r = 0):
-            _object(o), _rank(r), _prev(0), _next(0) {}
+        Doubly_Linked_Ordered(const T * o,  const R & r = 0): _object(o), _rank(r), _prev(0), _next(0) {}
     
         T * object() const { return const_cast<T *>(_object); }
 
@@ -198,13 +195,13 @@ namespace List_Elements
 
     private:
         const T * _object;
-         R _rank;
+        R _rank;
         Element * _prev;
         Element * _next;
     };
     
     // Scheduling List Element
-    template <typename T, typename R = Rank>
+    template<typename T, typename R = Rank>
     class Doubly_Linked_Scheduling
     {
     public:
@@ -213,8 +210,7 @@ namespace List_Elements
         typedef Doubly_Linked_Scheduling Element;
 
     public:
-        Doubly_Linked_Scheduling(const T * o,  const R & r = 0):
-            _object(o), _rank(r), _prev(0), _next(0) {}
+        Doubly_Linked_Scheduling(const T * o,  const R & r = 0): _object(o), _rank(r), _prev(0), _next(0) {}
     
         T * object() const { return const_cast<T *>(_object); }
 
@@ -230,14 +226,14 @@ namespace List_Elements
 
     private:
         const T * _object;
-         R _rank;
+        R _rank;
         Element * _prev;
         Element * _next;
     };
 
 
     // Grouping List Element
-    template <typename T>
+    template<typename T>
     class Doubly_Linked_Grouping
     {
     public:
@@ -245,8 +241,7 @@ namespace List_Elements
         typedef Doubly_Linked_Grouping Element;
 
     public:
-        Doubly_Linked_Grouping(const T * o, int s): _object(o), _size(s),
-                                                    _prev(0), _next(0) {}
+        Doubly_Linked_Grouping(const T * o, int s): _object(o), _size(s), _prev(0), _next(0) {}
 
         T * object() const { return const_cast<T *>(_object); }
 
@@ -291,25 +286,17 @@ namespace List_Iterators
         Element & operator*() const { return *_current; }
         Element * operator->() const { return _current; }
 
-        Iterator & operator++() {
-            _current = _current->next(); return *this;
-        }
-        Iterator operator++(int) {
-            Iterator tmp = *this; ++*this; return tmp;
-        }
+        Iterator & operator++() { _current = _current->next(); return *this; }
+        Iterator operator++(int) { Iterator tmp = *this; ++*this; return tmp; }
 
-        bool operator==(const Iterator & i) const {
-            return _current == i._current;
-        }
-        bool operator!=(const Iterator & i) const {
-            return _current != i._current;
-        }
+        bool operator==(const Iterator & i) const { return _current == i._current; }
+        bool operator!=(const Iterator & i) const { return _current != i._current; }
 
-    private:
+    protected:
         Element * _current;
     };
 
-    // Bidireacional Iterator (for doubly linked lists)
+    // Bidirectional Iterator (for doubly linked lists)
     template<typename El>
     class Bidirecional
     {
@@ -328,26 +315,14 @@ namespace List_Iterators
         Element & operator*() const { return *_current; }
         Element * operator->() const { return _current; }
 
-        Iterator & operator++() {
-            _current = _current->next(); return *this;
-        }
-        Iterator operator++(int) {
-            Iterator tmp = *this; ++*this; return tmp;
-        }
+        Iterator & operator++() { _current = _current->next(); return *this; }
+        Iterator operator++(int) { Iterator tmp = *this; ++*this; return tmp; }
 
-        Iterator & operator--() {
-            _current = _current->prev(); return *this;
-        }
-        Iterator operator--(int) {
-            Iterator tmp = *this; --*this; return tmp;
-        }
+        Iterator & operator--() { _current = _current->prev(); return *this; }
+        Iterator operator--(int) { Iterator tmp = *this; --*this; return tmp; }
         
-        bool operator==(const Iterator & i) const {
-            return _current == i._current;
-        }
-        bool operator!=(const Iterator & i) const {
-            return _current != i._current;
-        }
+        bool operator==(const Iterator & i) const { return _current == i._current; }
+        bool operator!=(const Iterator & i) const { return _current != i._current; }
 
     private:
         Element * _current;
@@ -355,8 +330,7 @@ namespace List_Iterators
 }
 
 // Singly-Linked List
-template <typename T, 
-          typename El = List_Elements::Singly_Linked<T> >
+template<typename T, typename El = List_Elements::Singly_Linked<T> >
 class Simple_List
 {
 public:
@@ -374,7 +348,7 @@ public:
     Element * tail() { return _tail; }
 
     Iterator begin() { return Iterator(_head); }
-    Iterator end() { return Iterator(_tail ? _tail->next() : 0); }
+    Iterator end() { return Iterator(0); }
 
     void insert(Element * e) { insert_tail(e); }
 
@@ -481,7 +455,7 @@ private:
 
 
 // Singly-Linked, Ordered List
-template <typename T, 
+template<typename T, 
           typename R = List_Element_Rank, 
           typename El = List_Elements::Singly_Linked_Ordered<T, R>,
           bool relative = false>
@@ -546,13 +520,13 @@ public:
         return 0;
     }
     
-    Element * search_rank(int rank) {
+    Element * search_rank(const Rank_Type & rank) {
         Element * e = head();
         for(; e && (e->rank() != rank); e = e->next());
         return e;
     }
 
-    Element * remove_rank(int rank) {
+    Element * remove_rank(const Rank_Type & rank) {
         Element * e = search_rank(rank);
         if(e)
             return remove(e);
@@ -562,14 +536,14 @@ public:
 
 
 // Singly-Linked, Relative Ordered List
-template <typename T, 
+template<typename T, 
           typename R = List_Element_Rank,
           typename El = List_Elements::Singly_Linked_Ordered<T, R> >
 class Simple_Relative_List: public Simple_Ordered_List<T, R, El, true> {};
 
 
 // Singly-Linked, Grouping List
-template <typename T,
+template<typename T,
           typename El = List_Elements::Singly_Linked_Grouping<T> >
 class Simple_Grouping_List: public Simple_List<T, El>
 {
@@ -639,7 +613,7 @@ private:
 
 
 // Doubly-Linked List
-template <typename T,
+template<typename T,
           typename El = List_Elements::Doubly_Linked<T> >
 class List
 {
@@ -658,16 +632,16 @@ public:
     Element * tail() { return _tail; }
     
     Iterator begin() { return Iterator(_head); }
-    Iterator end() { return Iterator(_tail->next()); }
+    Iterator end() { return Iterator(0); }
 
     void insert(Element * e) { insert_tail(e); }
 
     void insert_head(Element * e) {
         db<Lists>(TRC) << "List::insert_head(e=" << e 
-                      << ") => {p=" << (e ? e->prev() : (void *) -1)
-                      << ",o=" << (e ? e->object() : (void *) -1)
-                      << ",n=" << (e ? e->next() : (void *) -1)
-                      << "}\n";
+                       << ") => {p=" << (e ? e->prev() : (void *) -1)
+                       << ",o=" << (e ? e->object() : (void *) -1)
+                       << ",n=" << (e ? e->next() : (void *) -1)
+                       << "}" << endl;
 
         print_head();
         print_tail();
@@ -688,10 +662,10 @@ public:
 
     void insert_tail(Element * e) {
         db<Lists>(TRC) << "List::insert_tail(e=" << e 
-                      << ") => {p=" << (e ? e->prev() : (void *) -1)
-                      << ",o=" << (e ? e->object() : (void *) -1)
-                      << ",n=" << (e ? e->next() : (void *) -1)
-                      << "}\n";
+                       << ") => {p=" << (e ? e->prev() : (void *) -1)
+                       << ",o=" << (e ? e->object() : (void *) -1)
+                       << ",n=" << (e ? e->next() : (void *) -1)
+                       << "}" << endl;
 
         print_head();
         print_tail();
@@ -714,10 +688,10 @@ public:
 
     Element * remove(Element * e) {
         db<Lists>(TRC) << "List::remove(e=" << e 
-                      << ") => {p=" << (e ? e->prev() : (void *) -1)
-                      << ",o=" << (e ? e->object() : (void *) -1)
-                      << ",n=" << (e ? e->next() : (void *) -1)
-                      << "}\n";
+                       << ") => {p=" << (e ? e->prev() : (void *) -1)
+                       << ",o=" << (e ? e->object() : (void *) -1)
+                       << ",n=" << (e ? e->next() : (void *) -1)
+                       << "}" << endl;
 
         print_head();
         print_tail();
@@ -741,7 +715,7 @@ public:
     }
 
     Element * remove_head() {
-        db<Lists>(TRC) << "List::remove_head()\n";
+        db<Lists>(TRC) << "List::remove_head()" << endl;
 
         print_head();
         print_tail();
@@ -762,7 +736,7 @@ public:
     }
 
     Element * remove_tail() {
-        db<Lists>(TRC) << "List::remove_tail()\n";
+        db<Lists>(TRC) << "List::remove_tail()" << endl;
 
         print_head();
         print_tail();
@@ -800,16 +774,16 @@ protected:
 
     void insert(Element * e, Element * p,  Element * n) {
         db<Lists>(TRC) << "List::insert(e=" << e << ",p=" << p << ",n=" << n
-                      << ") => {p=" << (e ? e->prev() : (void *) -1)
-                      << ",o=" << (e ? e->object() : (void *) -1)
-                      << ",n=" << (e ? e->next() : (void *) -1)
-                      << "},{p=" << (p ? p->prev() : (void *) -1)
-                      << ",o=" << (p ? p->object() : (void *) -1)
-                      << ",n=" << (p ? p->next() : (void *) -1)
-                      << "},{p=" << (n ? n->prev() : (void *) -1)
-                      << ",o=" << (n ? n->object() : (void *) -1)
-                      << ",n=" << (n ? n->next() : (void *) -1)
-                      << "}\n";
+                       << ") => {p=" << (e ? e->prev() : (void *) -1)
+                       << ",o=" << (e ? e->object() : (void *) -1)
+                       << ",n=" << (e ? e->next() : (void *) -1)
+                       << "},{p=" << (p ? p->prev() : (void *) -1)
+                       << ",o=" << (p ? p->object() : (void *) -1)
+                       << ",n=" << (p ? p->next() : (void *) -1)
+                       << "},{p=" << (n ? n->prev() : (void *) -1)
+                       << ",o=" << (n ? n->object() : (void *) -1)
+                       << ",n=" << (n ? n->next() : (void *) -1)
+                       << "}" << endl;
 
         print_head();
         print_tail();
@@ -826,10 +800,10 @@ protected:
 
     void insert_first(Element * e) {
         db<Lists>(TRC) << "List::insert_first(e=" << e 
-                      << ") => {p=" << (e ? e->prev() : (void *) -1)
-                      << ",o=" << (e ? e->object() : (void *) -1)
-                      << ",n=" << (e ? e->next() : (void *) -1)
-                      << "}\n";
+                       << ") => {p=" << (e ? e->prev() : (void *) -1)
+                       << ",o=" << (e ? e->object() : (void *) -1)
+                       << ",n=" << (e ? e->next() : (void *) -1)
+                       << "}" << endl;
 
         print_head();
         print_tail();
@@ -845,7 +819,7 @@ protected:
     }
 
     Element * remove_last() {
-        db<Lists>(TRC) << "List::remove_last()\n";
+        db<Lists>(TRC) << "List::remove_last()" << endl;
 
         print_head();
         print_tail();
@@ -863,10 +837,10 @@ protected:
 
     void print_head() {
         db<Lists>(INF) << "List[" << this << "]::head=" << head() 
-                      << " => {p=" << (head() ? head()->prev() : (void *) -1)
-                      << ",o=" << (head() ? head()->object() : (void *) -1)
-                      << ",n=" << (head() ? head()->next() : (void *) -1)
-                      << "}\n";
+                       << " => {p=" << (head() ? head()->prev() : (void *) -1)
+                       << ",o=" << (head() ? head()->object() : (void *) -1)
+                       << ",n=" << (head() ? head()->next() : (void *) -1)
+                       << "}" << endl;
     }
 
     void print_tail() {
@@ -874,7 +848,7 @@ protected:
                        << " => {p=" << (tail() ? tail()->prev() : (void *) -1)
                        << ",o=" << (tail() ? tail()->object() : (void *) -1)
                        << ",n=" << (tail() ? tail()->next() : (void *) -1)
-                       << "}\n";
+                       << "}" << endl;
     }
 
 private:
@@ -885,7 +859,7 @@ private:
 
 
 // Doubly-Linked, Ordered List
-template <typename T,
+template<typename T,
           typename R = List_Element_Rank,
           typename El = List_Elements::Doubly_Linked_Ordered<T, R>,
           bool relative = false>
@@ -907,13 +881,17 @@ public:
     using Base::tail;
     using Base::begin;
     using Base::end;
+    using Base::insert_first;
+    using Base::insert_head;
+    using Base::insert_tail;
+    using Base::search;
 
     void insert(Element * e) {
         db<Lists>(TRC) << "Ordered_List::insert(e=" << e 
-                      << ") => {p=" << (e ? e->prev() : (void *) -1)
-                      << ",o=" << (e ? e->object() : (void *) -1)
-                      << ",n=" << (e ? e->next() : (void *) -1)
-                      << "}\n";
+                       << ") => {p=" << (e ? e->prev() : (void *) -1)
+                       << ",o=" << (e ? e->object() : (void *) -1)
+                       << ",n=" << (e ? e->next() : (void *) -1)
+                       << "}" << endl;
 
         if(empty())
             insert_first(e);
@@ -941,17 +919,17 @@ public:
     }
     
     Element * remove() { 
-        db<Lists>(TRC) << "Ordered_List::remove()\n";
+        db<Lists>(TRC) << "Ordered_List::remove()" << endl;
 
         return Base::remove_head();
     }
 
     Element * remove(Element * e) {
         db<Lists>(TRC) << "Ordered_List::remove(e=" << e 
-                      << ") => {p=" << (e ? e->prev() : (void *) -1)
-                      << ",o=" << (e ? e->object() : (void *) -1)
-                      << ",n=" << (e ? e->next() : (void *) -1)
-                      << "}\n";
+                       << ") => {p=" << (e ? e->prev() : (void *) -1)
+                       << ",o=" << (e ? e->object() : (void *) -1)
+                       << ",n=" << (e ? e->next() : (void *) -1)
+                       << "}" << endl;
 
         Base::remove(e);
         if(relative && e->next())
@@ -961,22 +939,23 @@ public:
     }
 
     Element * remove(const Object_Type * obj) {
-        db<Lists>(TRC) << "Ordered_List::remove(o=" << obj << ")\n";
+        db<Lists>(TRC) << "Ordered_List::remove(o=" << obj << ")" << endl;
 
         Element * e = search(obj);
         if(e)
             return remove(e);
-        return 0;
+        else
+            return 0;
     }
     
-    Element * search_rank(int rank) {
+    Element * search_rank(const Rank_Type & rank) {
         Element * e = head();
         for(; e && (e->rank() != rank); e = e->next());
         return e;
     }
 
-    Element * remove_rank(int rank) {
-        db<Lists>(TRC) << "Ordered_List::remove_rank(r=" << rank << ")\n";
+    Element * remove_rank(const Rank_Type & rank) {
+        db<Lists>(TRC) << "Ordered_List::remove_rank(r=" << rank << ")" << endl;
 
         Element * e = search_rank(rank);
         if(e)
@@ -987,17 +966,20 @@ public:
 
 
 // Doubly-Linked, Relative Ordered List
-template <typename T,
+template<typename T,
           typename R = List_Element_Rank,
           typename El = List_Elements::Doubly_Linked_Ordered<T, R> >
 class Relative_List: public Ordered_List<T, R, El, true> {};
 
 
 // Doubly-Linked, Scheduling List
-template <typename T,
-          typename R = List_Element_Rank, 
-          typename El = List_Elements::Doubly_Linked_Scheduling<T, R>,
-          bool Global = R::GLOBAL_SCHEDULER>
+// Objects subject to scheduling must export a type "Criterion" compatible
+// with those available at scheduler.h .
+// In this implementation, the chosen element is kept outside the list
+// referenced by the _chosen attribute.
+template<typename T,
+          typename R = typename T::Criterion,
+          typename El = List_Elements::Doubly_Linked_Scheduling<T, R> >
 class Scheduling_List: private Ordered_List<T, R, El>
 {
 private:
@@ -1022,57 +1004,50 @@ public:
     Element * volatile & chosen() { return _chosen; }
 
     void insert(Element * e) {
-        db<Lists>(TRC) << "Scheduling_List::insert(e=" << e 
-                      << ") => {p=" << (e ? e->prev() : (void *) -1)
-                      << ",o=" << (e ? e->object() : (void *) -1)
-                      << ",n=" << (e ? e->next() : (void *) -1)
-                      << "}\n";
+        db<Lists>(TRC) << "Scheduling_List::insert(e=" << e
+                       << ") => {p=" << (e ? e->prev() : (void *) -1)
+                       << ",o=" << (e ? e->object() : (void *) -1)
+                       << ",n=" << (e ? e->next() : (void *) -1)
+                       << "}" << endl;
 
-        Base::insert(e);
-          if(!_chosen)
-             _chosen = head();
+        if(_chosen)
+            Base::insert(e);
+        else
+            _chosen = e;
     }
 
     Element * remove(Element * e) {
-        db<Lists>(TRC) << "Scheduling_List::remove(e=" << e 
-                      << ") => {p=" << (e ? e->prev() : (void *) -1)
-                      << ",o=" << (e ? e->object() : (void *) -1)
-                      << ",n=" << (e ? e->next() : (void *) -1)
-                      << "}\n";
+        db<Lists>(TRC) << "Scheduling_List::remove(e=" << e
+                       << ") => {p=" << (e ? e->prev() : (void *) -1)
+                       << ",o=" << (e ? e->object() : (void *) -1)
+                       << ",n=" << (e ? e->next() : (void *) -1)
+                       << "}" << endl;
 
-        Base::remove(e);
         if(e == _chosen)
-            _chosen = head();
+            _chosen = Base::remove_head();
+        else
+            e = Base::remove(e);
 
         return e;
     }
 
-    Element * remove(const Object_Type * obj) {
-        Element * e = search(obj);
-        if(e)
-            return remove(e);
-        else
-            return 0;
-    }
-
     Element * choose() {
-        db<Lists>(TRC) << "Scheduling_List::choose()\n";
+        db<Lists>(TRC) << "Scheduling_List::choose()" << endl;
 
         if(!empty()) {
-            reorder();
-            _chosen = head();
+            Base::insert(_chosen);
+            _chosen = Base::remove_head();
         }
 
         return _chosen;
     }
 
     Element * choose_another() {
-        db<Lists>(TRC) << "Scheduling_List::choose_another()\n";
+        db<Lists>(TRC) << "Scheduling_List::choose_another()" << endl;
 
-        if(size() > 1) {
+        if(!empty() && head()->rank() != R::IDLE) {
             Element * tmp = _chosen;
-            Base::remove(tmp);
-            _chosen = Base::head();
+            _chosen = Base::remove_head();
             Base::insert(tmp);
         }
 
@@ -1080,43 +1055,35 @@ public:
     }
 
     Element * choose(Element * e) {
-        db<Lists>(TRC) << "Scheduling_List::choose(e=" << e 
-                      << ") => {p=" << (e ? e->prev() : (void *) -1)
-                      << ",o=" << (e ? e->object() : (void *) -1)
-                      << ",n=" << (e ? e->next() : (void *) -1)
-                      << "}\n";
+        db<Lists>(TRC) << "Scheduling_List::choose(e=" << e
+                       << ") => {p=" << (e ? e->prev() : (void *) -1)
+                       << ",o=" << (e ? e->object() : (void *) -1)
+                       << ",n=" << (e ? e->next() : (void *) -1)
+                       << "}" << endl;
 
-        if(_chosen)
-            reorder();
-        _chosen = e;
+        if(e != _chosen) {
+            Base::insert(_chosen);
+            _chosen = Base::remove(e);
+        }
 
         return _chosen;
     }
 
-    Element * choose(const Object_Type * obj) {
-        Element * e = search(obj);
-        if(e)
-            return choose(e);
-        else
-            return 0;
-    }
-
-private:
-    void reorder() {
-        // Rank might have changed, so remove and insert to reorder
-        Base::remove(_chosen);
-        Base::insert(_chosen);
-    }
-    
 private:
     Element * volatile _chosen;
 };
 
-// Doubly-Linked, Global Scheduling List
-template <typename T,
-          typename R, 
-          typename El>
-class Scheduling_List<T, R, El, true>: private Ordered_List<T, R, El> 
+
+// Doubly-Linked, Multihead Scheduling List
+// Besides declaring "Criterion", objects subject to scheduling policies that
+// use the Multihead list must export the HEADS constant to indicate the
+// number of heads in the list and the current_head() class method to designate
+// the head to which the current operation applies.
+template<typename T,
+          typename R = typename T::Criterion,
+          typename El = List_Elements::Doubly_Linked_Scheduling<T, R>,
+          unsigned int H = R::HEADS>
+class Multihead_Scheduling_List: private Ordered_List<T, R, El>
 {
 private:
     typedef Ordered_List<T, R, El> Base;
@@ -1128,8 +1095,8 @@ public:
     typedef typename Base::Iterator Iterator;
 
 public:
-    Scheduling_List() {
-        for(unsigned int i = 0; i < R::HEADS; i++)
+    Multihead_Scheduling_List() {
+        for(unsigned int i = 0; i < H; i++)
             _chosen[i] = 0;
     }
 
@@ -1139,116 +1106,167 @@ public:
     using Base::tail;
     using Base::begin;
     using Base::end;
-    using Base::remove_head;
-    
-    Element * volatile & chosen() { return _chosen[R::current()]; }
+
+    Element * volatile & chosen() { return _chosen[R::current_head()]; }
 
     void insert(Element * e) {
-        db<Lists>(TRC) << "Scheduling_List::insert(e=" << e 
-                      << ") => {p=" << (e ? e->prev() : (void *) -1)
-                      << ",o=" << (e ? e->object() : (void *) -1)
-                      << ",n=" << (e ? e->next() : (void *) -1)
-                      << "}\n";
-        
-        if(_chosen[R::current()] != 0)
+        db<Lists>(TRC) << "Scheduling_List::insert(e=" << e
+                       << ") => {p=" << (e ? e->prev() : (void *) -1)
+                       << ",o=" << (e ? e->object() : (void *) -1)
+                       << ",n=" << (e ? e->next() : (void *) -1)
+                       << "}" << endl;
+
+        if(_chosen[R::current_head()])
             Base::insert(e);
         else
-            _chosen[R::current()] = e;
+            _chosen[R::current_head()] = e;
     }
 
     Element * remove(Element * e) {
-        db<Lists>(TRC) << "Scheduling_List::remove(e=" << e 
-                      << ") => {p=" << (e ? e->prev() : (void *) -1)
-                      << ",o=" << (e ? e->object() : (void *) -1)
-                      << ",n=" << (e ? e->next() : (void *) -1)
-                      << "}\n";
-                      
-        if(_chosen[R::current()] == e)
-            _chosen[R::current()] = remove_head();
+        db<Lists>(TRC) << "Scheduling_List::remove(e=" << e
+                       << ") => {p=" << (e ? e->prev() : (void *) -1)
+                       << ",o=" << (e ? e->object() : (void *) -1)
+                       << ",n=" << (e ? e->next() : (void *) -1)
+                       << "}" << endl;
+
+//        unsigned int i = 0;
+//        for(; (i < H) && _chosen[i] != e; i++);
+//        if(i != H)
+//            _chosen[i] = Base::remove_head();
+        if(e == _chosen[R::current_head()])
+            _chosen[R::current_head()] = Base::remove_head();
         else
             e = Base::remove(e);
-        
+
         return e;
     }
 
-    Element * remove(const Object_Type * obj) {
-        Element *e;
-        
-        if(_chosen[R::current()]->object() == obj) {
-            e = _chosen[R::current()];
-            _chosen[R::current()] = remove_head();
-            return e;
-        }
-        
-        if(size() == 0) return 0;
-        
-        e = search(obj);
-        
-        if(e)
-            return remove(e);
-        else
-            return 0;
-    }
-    
-    Element * choose_another() {
-        db<Lists>(TRC) << "Scheduling_List::choose_another()\n";
-
-        if(size() > 0) {
-            if(head()->rank() < _chosen[R::current()]->rank()) {
-                Base::insert(_chosen[R::current()]);
-                _chosen[R::current()] = remove_head();
-            }
-        }
-        
-        return _chosen[R::current()];
-    }
-
     Element * choose() {
-        db<Lists>(TRC) << "Scheduling_List::choose()\n";
-        if(size() > 0) {
-          if(head()->rank() <= _chosen[R::current()]->rank() && head()->rank() != R::IDLE) {
-            Base::insert(_chosen[R::current()]);
-            _chosen[R::current()] = remove_head();
-          }
+        db<Lists>(TRC) << "Scheduling_List::choose()" << endl;
+
+        if(!empty()) {
+            Base::insert(_chosen[R::current_head()]);
+            _chosen[R::current_head()] = Base::remove_head();
         }
-        
-        return _chosen[R::current()];
+
+        return _chosen[R::current_head()];
+    }
+
+    Element * choose_another() {
+        db<Lists>(TRC) << "Scheduling_List::choose_another()" << endl;
+
+        if(!empty() && head()->rank() != R::IDLE) {
+            Element * tmp = _chosen[R::current_head()];
+            _chosen[R::current_head()] = Base::remove_head();
+            Base::insert(tmp);
+        }
+
+        return _chosen[R::current_head()];
     }
 
     Element * choose(Element * e) {
-        db<Lists>(TRC) << "Scheduling_List::choose(e=" << e << ")\n";
-                      
-        if(e != _chosen[R::current()]) {
-            Base::insert(_chosen[R::current()]);
-            Base::remove(e);
-            _chosen[R::current()] = e;
+        db<Lists>(TRC) << "Scheduling_List::choose(e=" << e
+                       << ") => {p=" << (e ? e->prev() : (void *) -1)
+                       << ",o=" << (e ? e->object() : (void *) -1)
+                       << ",n=" << (e ? e->next() : (void *) -1)
+                       << "}" << endl;
+
+        if(e != _chosen[R::current_head()]) {
+            Base::insert(_chosen[R::current_head()]);
+            _chosen[R::current_head()] = Base::remove(e);
         }
-      
-        return _chosen[R::current()];
+
+        return _chosen[R::current_head()];
     }
 
-    Element * choose(const Object_Type * obj) {
-        Element *e;
-        if(_chosen[R::current()]->object() == obj) {
-            return choose(_chosen[R::current()]);
-        }
-        
-        if(size() == 0) return 0;
-      
-        e = search(obj);
-        
-        if(e)
-            return choose(e);
-        else
-            return 0;
-    }
-    
 private:
-    Element * volatile _chosen[R::HEADS];
+    Element * volatile _chosen[H];
 };
 
+
+// Doubly-Linked, Scheduling Multilist
+// Besides declaring "Criterion", objects subject to scheduling policies that
+// use the Multilist must export the QUEUES constant to indicate the number of
+// sublists in the list, the current_queue() class method to designate the
+// queue to which the current operation applies, and the queue() method to
+// return the queue in which the object currently resides.
+template<typename T,
+          typename R = typename T::Criterion,
+          typename El = List_Elements::Doubly_Linked_Scheduling<T, R>,
+          typename L = Scheduling_List<T, R, El>,
+          unsigned int Q = R::QUEUES>
+class Scheduling_Multilist
+{
+public:
+    typedef T Object_Type;
+    typedef R Rank_Type;
+    typedef El Element;
+    typedef typename L::Iterator Iterator;
+
+public:
+    Scheduling_Multilist() {}
+
+    bool empty() const { return _list[R::current_queue()].empty(); }
+
+    unsigned int size() const { return _list[R::current_queue()].size(); }
+    unsigned int total_size() const {
+        unsigned int s = 0;
+        for(unsigned int i = 0; i < Q; i++)
+            s += _list[i].size();
+        return s;
+    }
+
+    Element * head() { return _list[R::current_queue()].head(); }
+    Element * tail() { return _list[R::current_queue()].tail(); }
+
+    Iterator begin() { return Iterator(_list[R::current_queue()].head()); }
+    Iterator end() { return Iterator(0); }
+
+    Element * volatile & chosen() {
+        return _list[R::current_queue()].chosen();
+    }
+
+    void insert(Element * e) {
+        _list[e->rank().queue()].insert(e);
+    }
+
+    Element * remove(Element * e) {
+         return _list[e->rank().queue()].remove(e);
+     }
+
+    Element * choose() {
+        return _list[R::current_queue()].choose();
+    }
+
+    Element * choose_another() {
+        return _list[R::current_queue()].choose_another();
+    }
+
+    Element * choose(Element * e) {
+        return _list[e->rank().queue()].choose(e);
+    }
+
+private:
+    L _list[Q];
+};
+
+// Doubly-Linked, Multihead Scheduling Multilist
+// Besides declaring "Criterion", objects subject to scheduling policies that
+// use the Multilist must export the QUEUES constant to indicate the number of
+// sublists in the list, the HEADS constant to indicate the number of heads in
+// each of the sublists, the current_queue() class method to designate the
+// queue to which the current operation applies, the current_head() class
+// method to designate the head to which the current operation applies, and
+// the queue() method to return the queue in which the object currently resides.
+template<typename T,
+          typename R = typename T::Criterion,
+          typename El = List_Elements::Doubly_Linked_Scheduling<T, R>,
+          unsigned int Q = R::QUEUES,
+          unsigned int H = R::HEADS>
+class Multihead_Scheduling_Multilist: public Scheduling_Multilist<T, R, El, Multihead_Scheduling_List<T, R, El, H>, Q> {};
+
 // Doubly-Linked, Grouping List
-template <typename T, 
+template<typename T, 
           typename El = List_Elements::Doubly_Linked_Grouping<T> >
 class Grouping_List: public List<T, El>
 {
@@ -1269,6 +1287,11 @@ public:
     using Base::tail;
     using Base::begin;
     using Base::end;
+    using Base::insert_tail;
+    using Base::remove;
+    using Base::search;
+    using Base::print_head;
+    using Base::print_tail;
 
     unsigned int grouped_size() const { return _grouped_size; }
     
@@ -1285,8 +1308,8 @@ public:
     }
     
     void insert_merging(Element * e, Element ** m1, Element ** m2) {
-        db<Lists>(TRC) << "Grouping_List::insert_merging(e=" << e 
-            << ")    \n";
+        db<Lists>(TRC) << "Grouping_List::insert_merging(e=" << e << ")" << endl;
+
         _grouped_size += e->size();
         *m1 = *m2 = 0;
         Element * r = search(e->object() + e->size());
@@ -1306,8 +1329,9 @@ public:
     }
     
     Element * search_decrementing(unsigned int s) {
-        db<Lists>(TRC) << "Grouping_List::search_decrementing(s=" 
-            << s << ")\n";
+        db<Lists>(TRC) << "Grouping_List::search_decrementing(s=" << s << ")" << endl;
+        print_head();
+        print_tail();
 
         Element * e = search_size(s);
         if(e) {
@@ -1324,6 +1348,6 @@ private:
     unsigned int _grouped_size;
 };
 
-__END_SYS
+__END_UTIL
  
 #endif

@@ -1,884 +1,978 @@
-#include <tcp.h>
+// EPOS Transmission Control Protocol (RFC 793) Implementation
 
-#ifdef __NIC_H
+#include <tcp.h>
 
 __BEGIN_SYS
 
-// static data
-TCP::Socket::Handler TCP::Socket::handlers[13] = { 
-    &TCP::Socket::__LISTEN,     &TCP::Socket::__SYN_SENT,
-    &TCP::Socket::__SYN_RCVD,   &TCP::Socket::__ESTABLISHED,
-    &TCP::Socket::__FIN_WAIT1,  &TCP::Socket::__FIN_WAIT2,
-    &TCP::Socket::__CLOSE_WAIT, &TCP::Socket::__CLOSING,
-    &TCP::Socket::__LAST_ACK,   &TCP::Socket::__TIME_WAIT,
-    &TCP::Socket::__CLOSED };
+// Class attributes
+TCP::Observed TCP::_observed;
 
-TCP::TCP(IP * _ip) : Base(_ip)
+TCP::Connection::State_Handler TCP::Connection::_handlers[] = {&TCP::Connection::listening,
+                                                               &TCP::Connection::syn_sent,
+                                                               &TCP::Connection::syn_received,
+                                                               &TCP::Connection::established,
+                                                               &TCP::Connection::fin_wait1,
+                                                               &TCP::Connection::fin_wait2,
+                                                               &TCP::Connection::close_wait,
+                                                               &TCP::Connection::closing,
+                                                               &TCP::Connection::last_ack,
+                                                               &TCP::Connection::time_wait,
+                                                               &TCP::Connection::closed};
+
+// Methods
+void TCP::update(IP::Observed * obs, IP::Protocol prot, NIC::Buffer * pool)
 {
-    ip()->attach(this, ID_TCP);
-}
+    db<TCP>(TRC) << "TCP::update(obs=" << obs << ",prot=" << prot << ",buf=" << pool << ")" << endl;
+    db<TCP>(INF) << "TCP::update:buf=" << pool << " => " << *pool << endl;
 
-TCP::~TCP()
-{
-    ip()->detach(this, ID_TCP);
-}
+    Packet * packet = pool->frame()->data<Packet>();
+    Segment * segment = packet->data<Segment>();
 
-TCP * TCP::instance(unsigned int i) {
-    static TCP * _instance[Traits<NIC>::NICS::Length];
-    if (!_instance[i])
-        _instance[i] = new TCP(IP::instance(i));
-    return _instance[i];
-}
-
-// Called by IP's notify(...)
-
-void TCP::update(Data_Observed<IP::Address> *ob, long c, IP::Address src,
-                 IP::Address dst, void *data, unsigned int size)
-{
-    Header& hdr = *reinterpret_cast<Header*>(data);
-
-    db<TCP>(TRC) << "TCP::update: "<< hdr << endl;
-
-    if (!(hdr.validate_checksum(src,dst,size - hdr.size()))) {
-        db<TCP>(INF) << "TCP checksum failed for incoming packet!\n";
+    unsigned int size = pool->size() - sizeof(IP::Header) - sizeof(TCP::Header);
+    if(size && !segment->check(size)) { // FIXME there should not be a check for "size", it should always check the sum. However, it doesn't seem to work when size == 0
+        db<TCP>(WRN) << "TCP::update: wrong message checksum!" << endl;
+        pool->nic()->free(pool);
         return;
     }
 
-    int len = size - hdr.size();
-    if (len < 0) {
-        db<TCP>(INF) << "Misformed TCP segment received\n";
+    unsigned long long id;
+    if(segment->header()->flags() == Header::SYN) // try to notify any eventual listener
+        id = Connection::id(segment->header()->to(), 0, IP::Address::NULL);
+    else
+        id = Connection::id(segment->header()->to(), segment->header()->from(), packet->header()->from());
+
+    db<TCP>(INF) << "TCP::update::condition=" << hex << id << endl;
+
+    if(!_observed.notify(id, pool))
+        pool->nic()->free(pool);
+}
+
+void TCP::Segment::sum(const IP::Address & from, const IP::Address & to, const void * data, unsigned int size)
+{
+    _checksum = 0;
+
+    IP::Pseudo_Header pseudo(from, to, IP::TCP, sizeof(Header) + size);
+
+    unsigned long sum = 0;
+    const unsigned char * ptr = reinterpret_cast<const unsigned char *>(&pseudo);
+    for(unsigned int i = 0; i < sizeof(IP::Pseudo_Header); i += 2)
+        sum += (ptr[i] << 8) | ptr[i+1];
+
+    ptr = reinterpret_cast<const unsigned char *>(header());
+    for(unsigned int i = 0; i < sizeof(Header); i += 2)
+        sum += (ptr[i] << 8) | ptr[i+1];
+
+    if(data) {
+        ptr = reinterpret_cast<const unsigned char *>(data);
+        for(unsigned int i = 0; i < size; i += 2)
+            sum += (ptr[i] << 8) | ptr[i+1];
+        if(size & 1)
+            sum += ptr[size - 1];
+    }
+
+    while(sum >> 16)
+        sum = (sum & 0xffff) + (sum >> 16);
+
+    _checksum = htons(~sum);
+}
+
+void TCP::Connection::fsend(const Flags & flags)
+{
+    _flags = flags;
+    if(!_retransmiting) _sequence = htonl(_next);
+
+    db<TCP>(TRC) << "TCP::Connection::send(flags=" << ((flags & ACK) ? 'A' : '-') << ((flags & RST) ? 'R' : '-') << ((flags & SYN) ? 'S' : '-') << ((flags & FIN) ? 'F' : '-') << "): SND.NXT=" << _next << ",SND.SEQ=" << sequence() << endl;
+
+    Buffer * buf = IP::alloc(peer(), IP::TCP, sizeof(Header), 0);
+    if(!buf) {
+        db<TCP>(WRN) << "TCP::send: failed to alloc a NIC buffer to send a TCP control segment!" << endl;
         return;
     }
+    db<TCP>(INF) << "TCP::send:buf=" << buf << " => " << *buf<< endl;
 
-    notify(TCP::Address(src,hdr.src_port()),
-           TCP::Address(dst,hdr.dst_port()),
-           (int) hdr.dst_port(), data, size);
+    Packet * packet = buf->frame()->data<Packet>();
+    Segment * segment = packet->data<Segment>();
+    memcpy(segment, header(), sizeof(Header));
+    segment->sum(packet->from(), packet->to(), 0, 0);
+
+    db<TCP>(INF) << "TCP::Connection::send:conn=" << this << " => " << *this << endl;
+
+    if((_flags & FIN) || (_flags & SYN))
+        _next++; // We do not test if there's a retransmission going on, because there's no chance whatsoever in this current implementation
+    // a flag such as FIN or SYN to be sent whilst a stream (solo case in which there could be a retransmission) is going on
+
+    // FIXME what if we increment the SND.NXT and soon after we receive a segment with data?
+    // We'd ack it with incremented sequence number and only then send the segment that caused the SND.NXT variable to be incremented
+
+    IP::send(buf); // implicitly releases the buffer
 }
 
-
-// Called by TCP's notify(...)
-
-void TCP::Socket::update(Data_Observed<TCP::Address> *o, long c, TCP::Address src,
-                         TCP::Address dst, void *data, unsigned int size)
+int TCP::Connection::send(const void * d, unsigned int size)
 {
-    Header& hdr = *reinterpret_cast<Header*>(data);
-    int len = size - hdr.size();
-  
-    if ((_remote == src) || (_remote.port() == 0))
-    {
-        if (state() == LISTEN) _remote = src;
-        (this->*state_handler)(hdr,&((char*)data)[hdr.size()],len);
-    } else {
-        db<TCP>(TRC) << "TCP Segment does not belong to us\n";          
+    const unsigned char * data = reinterpret_cast<const unsigned char *>(d);
+
+    db<TCP>(TRC) << "TCP::Connection::send(f=" << from() << ",t=" << peer() << ":" << to() << ",d=" << data << ",s=" << size << ")" << endl;
+
+    unsigned int allowed = WINDOW;
+    unsigned int left = size; // bytes that have not been sent at all
+    unsigned int acknowledged = 0; // bytes that were sent AND acknowledged
+    unsigned int initial_seq = sequence(); // sequence number when stream is started
+
+    unsigned int tries = 0;
+    for(; (tries < RETRIES) && (acknowledged != size) && (_state == ESTABLISHED || _state == CLOSE_WAIT);
+        acknowledged = _current->header()->acknowledgment() - initial_seq, allowed = _peer_window - (sequence() - _current->header()->acknowledgment())) {
+        _streaming = true;
+        allowed = (allowed > MSS) ? MSS: allowed;
+
+        if(allowed && left) {
+            db<TCP>(TRC) << "TCP::Connection::send: send" << endl;
+
+            int payload = (allowed > left) ? left : allowed;
+
+            if(!dsend(d, payload)) // FIXME we should wait until there are available buffers
+                return -1;
+
+            data += payload;
+            left -= payload;
+            if(sequence() == _next)
+                _retransmiting = false;
+        } else { // Either window's full or we've sent all there was to
+            db<TCP>(TRC) << "TCP::Connection::send: wait" << endl;
+
+            unsigned int old_ack = _current->header()->acknowledgment();
+
+            Condition_Handler h(&_stream);
+            Alarm a(TIMEOUT, &h);
+
+            _stream.wait();
+
+            if(_current->header()->acknowledgment() == old_ack) {
+                // Retransmission
+                db<TCP>(TRC) << "TCP::Connection::send: retransmission" << endl;
+
+                _retransmiting = true;
+                _sequence = htonl(_current->header()->acknowledgment());
+                _unacknowledged = _current->header()->acknowledgment();
+                data = reinterpret_cast<const unsigned char*>(d) + acknowledged;
+                left = size - acknowledged;
+
+                tries++;
+            } else
+                tries = 0;
+        }
     }
-}
 
-// Header stuff
+    _streaming = false;
+    _retransmiting = false;
 
-TCP::Header::Header(u32 seq,u32 ack)
-{
-    memset(this,0,sizeof(Header));
-    seq_num(seq);
-    ack_num(ack);
-}
+    if(tries == RETRIES) {
+        db<TCP>(TRC) << "TCP::send: Enough tries already!" << endl;
 
-bool TCP::Header::validate_checksum(IP::Address src,IP::Address dst,u16 len)
-{
-    len += size();
-    
-    Pseudo_Header phdr((u32)src,(u32)dst,len);
+        return -1;
+    } else if(_state != ESTABLISHED && _state != CLOSE_WAIT) {
+        db<TCP>(TRC) << "TCP::send: The connection is not open. It is not possible to stream." << endl;
 
-    u32 sum = 0;
-
-    sum = IP::calculate_checksum(this, len);
-    sum += IP::calculate_checksum(&phdr, sizeof(phdr));
-    
-    while (sum >> 16)
-        sum = (sum & 0xFFFF) + (sum >> 16);
-
-    return sum == 0xFFFF;
-}
-
-void TCP::Header::_checksum(IP::Address src,IP::Address dst,SegmentedBuffer * sb)
-{
-    u16 len;
-    len = size();
-
-    if (sb) len += sb->total_size();
-
-    Pseudo_Header phdr((u32)src,(u32)dst,len);
-
-    _chksum = 0;
-
-    u32 sum = 0;
-
-    sum = IP::calculate_checksum(&phdr, sizeof(phdr));
-    sum += IP::calculate_checksum(this, size());
-
-    while (sb) {
-        sum += IP::calculate_checksum(sb->data(), sb->size());
-        sb = sb->next();
-    }
-    
-    while (sum >> 16)
-        sum = (sum & 0xFFFF) + (sum >> 16);
-
-    _chksum = ~sum;
-}
-
-// Socket stuff
-
-TCP::Socket::Socket(const Address &remote,const Address &local,TCP * _tcp)
-    : Base(_tcp), _remote(remote), _local(local), _rtt(500000), _timeout(0)
-{
-    rcv_wnd = tcp()->mss();
-    state(CLOSED);
-    tcp()->attach(this, _local.port());
-}
-
-TCP::Socket::Socket(const TCP::Socket& socket) : Base(socket.tcp())
-{
-    memcpy(this, &socket, sizeof(Socket));
-    state(CLOSED);
-    tcp()->attach(this, _local.port());
-}
-
-TCP::Socket::~Socket()
-{
-    tcp()->detach(this, _local.port());
-    clear_timeout();
-}
-
-s32 TCP::Socket::_send(Header * hdr, SegmentedBuffer * sb)
-{
-    // fill header
-    hdr->src_port(_local.port());
-    hdr->dst_port(_remote.port());
-    hdr->_hdr_off = 5; // our header is always 20 bytes
-    hdr->wnd(rcv_wnd);
-    hdr->chksum(0);
-    hdr->_checksum(_local.ip(),_remote.ip(),sb);
-
-    // hdr + sb
-    SegmentedBuffer nsb(hdr,hdr->size());
-    nsb.append(sb);
-
-    return tcp()->ip()->send(_local.ip(),_remote.ip(),&nsb,TCP::ID_TCP) - hdr->size();
-}
-
-/**
- * The basic Socket::send() splits data into multiple segments
- * respecting snd_wnd and mtu.
- */
-s32 TCP::Socket::send(const char *data,u16 len,bool push)
-{
-    if (snd_wnd == 0) { // peer cannot receive data
-        set_timeout();
-        send_ack(); // zero-window probing
         return -1;
     }
-    // cannot send more than the peer is willing to receive
-    if (len > snd_wnd)
-        len = snd_wnd;
 
-    int more = 0,mss = tcp()->mss();
-    if (len > mss) { // break up into multiple segments
-        more = len - mss;
-        len = mss;
-    }
 
-    Header hdr(snd_nxt,rcv_nxt);
-    hdr._ack = true; // with pidgeback ack
-    hdr._psh = (push && (more == 0)); // set push flag only on the last segment
-    snd_nxt += len;
-    SegmentedBuffer sb(data,len);
-
-    s32 ret = _send(&hdr,&sb);
-
-    //if (more > 0) // send next segment too //TODO: TCP::Channel also do it!
-    //  send(&data[len], more);
-
-    set_timeout();
-    return ret;
+    return size;
 }
 
-void TCP::Socket::set_timeout() {
-    // the needed logic to finish an alarm is int the destructor
-    // but we use preallocated memory, so we cannot use 'delete'
-    if (_timeout)
-        _timeout->Alarm::~Alarm();
-    _timeout = new (&_timeout_alloc) Alarm(2 * _rtt, this, 1);
-}
-
-void TCP::Socket::clear_timeout() {
-    if (_timeout)
-    {
-        _timeout->Alarm::~Alarm();
-        _timeout = 0;
-    }
-}
-
-void TCP::Socket::operator()() {
-    _timeout->Alarm::~Alarm();
-    _timeout = 0;
-
-    snd_nxt = snd_una; // rollback, so the user can resend
-    error(ERR_TIMEOUT);
-}
-
-void TCP::Socket::close()
+int TCP::Connection::dsend(const void * d, unsigned int size)
 {
-    send_fin();
-    set_timeout();
-    if (state() == ESTABLISHED)
-        state(FIN_WAIT1);
-    else if (state() == CLOSE_WAIT) {
-        state(LAST_ACK);    
-    }
-    else if (state() == SYN_SENT) {
-        state(CLOSED);
-        clear_timeout();
-        closed();    
-    }
-}
+    const unsigned char * data = reinterpret_cast<const unsigned char *>(d);
 
+    db<TCP>(TRC) << "TCP::dsend(f=" << from() << ",t=" << peer() << ":" << to() << ",d=" << data << ",s=" << size << ")" << endl;
 
-TCP::ClientSocket::ClientSocket(const Address& remote,const Address& local,
-                                bool start, TCP * tcp) 
-	: Socket(remote,local,tcp)
-{
-    if (start)
-        Socket::connect();
-}
+    _flags = ACK;
+    if(!_retransmiting)
+        _sequence = htonl(_next);
 
-void TCP::Socket::connect() {
-    if (state() != CLOSED && state() != SYN_SENT) {
-        db<TCP>(ERR) << "TCP::Socket::connect() could not be called\n";
-        return;
-    }
-    
-    state(SYN_SENT);
-    snd_ini = Pseudo_Random::random() & 0x00FFFFFF;
-    snd_una = snd_ini;
-    snd_nxt = snd_ini + 1;
+    db<TCP>(TRC) << "TCP::Connection::dsend: SND.NXT=" << _next << ",SND.SEQ=" << sequence() << ",payload=" << size << endl;
 
-    Header hdr(snd_ini, 0);
-    hdr._syn = true;
-    _send(&hdr,0);
-    set_timeout();
-}
+    Buffer * pool = IP::alloc(peer(), IP::TCP, sizeof(Header), size);
+    if(!pool)
+        return 0;
 
-TCP::ServerSocket::ServerSocket(const Address& local,bool start,TCP * tcp) 
-    : Socket(Address(0,0),local,tcp)
-{
-    if (start)
-        Socket::listen();
-}
+    unsigned int headers = sizeof(Header);
+    for(Buffer::Element * el = pool->link(); el; el = el->next()) {
+        Buffer * buf = el->object();
+        Packet * packet = buf->frame()->data<Packet>();
 
-TCP::ServerSocket::ServerSocket(const TCP::ServerSocket &socket)
-    : Socket(socket)
-{
-}
+        db<TCP>(INF) << "TCP::send:buf=" << buf << " => " << *buf<< endl;
 
-void TCP::Socket::listen()
-{
-    if (state() != CLOSED && state() != LISTEN) {
-        db<TCP>(ERR) << "TCP::Socket::listen() called with state: " << state() << endl;
-        return;
-    }
-    
-    _remote = Address(0,0);
-    state(LISTEN);
-}
+        if(el == pool->link()) {
+            Segment * segment = packet->data<Segment>();
+            memcpy(segment, header(), sizeof(Header));
+            segment->sum(packet->from(), packet->to(), data, buf->size() - sizeof(Header) - sizeof(IP::Header));
+            memcpy(segment->data<void>(), data, buf->size() - sizeof(Header) - sizeof(IP::Header));
+            data += buf->size() - sizeof(Header) - sizeof(IP::Header);
 
-void TCP::Socket::__LISTEN(const Header& r ,const char* data,u16 len)
-{
-    db<TCP>(TRC) << __PRETTY_FUNCTION__ << endl;
-
-    if (r._syn && !r._rst && !r._fin) {
-        Socket * n;
-          
-        if ((n = incoming(_remote)) != 0) {
-            n->_remote = _remote;
-            n->rcv_nxt = r.seq_num()+1;
-            n->rcv_ini = r.seq_num();
-            n->snd_wnd = r.wnd();
-
-            n->state(SYN_RCVD);
-
-            n->snd_ini = Pseudo_Random::random() & 0x0000FFFF;
-
-            Header s(n->snd_ini,n->rcv_nxt);
-            s._syn = true;
-            s._ack = true;
-            n->_send(&s,0);
-        
-            n->snd_nxt = n->snd_ini+1;
-            n->snd_una = n->snd_ini;
-
-            n->set_timeout();
+            db<TCP>(INF) << "TCP::send:msg=" << segment << " => " << *segment << endl;
+        } else {
+            memcpy(packet->data<void>(), data, buf->size() - sizeof(IP::Header));
+            data += buf->size() - sizeof(IP::Header);
         }
-        // else = connection rejected
-    } 
-    if (state() == LISTEN) {
-        // a new socket was created to handle the incomming connection
-        // and we stay in the listening state
-        _remote = Address((u32)0,(u16)0);
+
+        headers += sizeof(IP::Header);
+    }
+
+    if(!_retransmiting)
+        _next += size;
+    else
+        _sequence = htonl(header()->sequence() + size);
+
+    return IP::send(pool) - headers; // implicitly releases the pool
+}
+
+int TCP::Connection::receive(Buffer * pool, void * d, unsigned int s)
+{
+    unsigned char * data = reinterpret_cast<unsigned char *>(d);
+
+    db<TCP>(TRC) << "TCP::receive(buf=" << pool << ",d=" << d << ",s=" << s << ")" << endl;
+
+    Buffer::Element * head = pool->link();
+    Packet * packet = head->object()->frame()->data<Packet>();
+    Segment * segment = packet->data<Segment>();
+    unsigned int size = 0;
+
+    for(Buffer::Element * el = head; el && (size <= s); el = el->next()) {
+        Buffer * buf = el->object();
+
+        db<TCP>(INF) << "TCP::receive:buf=" << buf << " => " << *buf << endl;
+
+        packet = buf->frame()->data<Packet>();
+
+        unsigned int len = buf->size() - sizeof(IP::Header);
+        if(el == head) {
+            len -= sizeof(Header);
+            memcpy(data, segment->data<void>(), len);
+
+            db<TCP>(INF) << "TCP::receive:msg=" << segment << " => " << *segment << endl;
+        } else
+            memcpy(data, packet->data<void>(), len);
+
+        db<TCP>(INF) << "TCP::receive:len=" << len << endl;
+
+        data += len;
+        size += len;
+    }
+
+    pool->nic()->free(pool);
+
+    return size;
+}
+
+void TCP::Connection::update(TCP::Observed * obs, unsigned long long socket, NIC::Buffer * pool)
+{
+    db<TCP>(TRC) << "TCP::Connection::update(obs=" << obs << ",sock=" << hex << socket << ",buf=" << pool << ")" << endl;
+
+    Packet * packet = pool->frame()->data<Packet>();
+
+    _current = packet->data<Segment>(); // FIXME should free the previous buffer
+    _length = pool->size() - sizeof(IP::Header) - sizeof(TCP::Header);
+    _peer_window = _current->header()->window();
+
+    db<TCP>(INF) << "TCP::Connection::update:" <<
+        "SEQ.SEQ=" << _current->header()->sequence() <<
+        ",RCV.NXT=" << acknowledgment() <<
+        ",SEG.ACK=" << _current->header()->acknowledgment() <<
+        ",SND.NXT=" << _next << endl;
+
+    if(_state == LISTENING) {
+        _peer = packet->from();
+        _to = htons(_current->header()->to());
+        TCP::_observed.detach(this, from());
+        TCP::_observed.attach(this, id());
+    }
+
+    db<TCP>(INF) << "TCP::Connection::update:conn=" << this << " => " << *this << endl;
+
+    if(!((_state == LISTENING) || (_state == SYN_SENT)) && _current->header()->sequence() > acknowledgment()) {
+        // SEG.SEQ musn't be > than RCV.NXT, this forces segments to be accepted in order, except when connecting or listening, then one may receive stuff out of the blue
+        // If SEG.SEQ < RCV.NXT, i.e. delayed or repeated segment, the treatment happens later
+        pool->nic()->free(pool);
+        return;
+    }
+
+    if(_current->header()->acknowledgment() > _next) {
+        // SEG.ACK must be <= to SND.NXT, for one cannot ack what one is yet to receive
+        fsend(RST);
+        state(CLOSED);
+        pool->nic()->free(pool);
+        return;
+    }
+
+    bool relevant = false; // The segment is relevant to the sliding window
+    if(_streaming) {
+        if(_current->header()->acknowledgment() <= sequence()) {
+            // Regular ack, i.e. SEG.ACK is <= than the last sequence I sent
+            if(_current->header()->acknowledgment() > _unacknowledged)
+                relevant = true; // A segment must ack something in order to be relevant
+
+            _unacknowledged = _current->header()->acknowledgment();
+        } else if(_current->header()->acknowledgment() > sequence()) {
+            // Forward ack, i.e. SEG.ACK > SEG.SEQ, but not > than the SND.NXT. This scenario is only possible in this code and in the FSM during retransmission
+            _sequence = htonl(_current->header()->acknowledgment());
+            _unacknowledged = _current->header()->acknowledgment();
+            relevant = true;
+        }
+    }
+
+    State state_at_arrival = _state;
+
+    (this->*_handler)();
+
+    if(!_valid) {
+        pool->nic()->free(pool);
+        return;
+    }
+
+    if((state_at_arrival == ESTABLISHED)
+        || (state_at_arrival == SYN_RECEIVED)
+        || (state_at_arrival == FIN_WAIT1)
+        || (state_at_arrival == FIN_WAIT2))
+        if(_length)
+            if(!notify(socket, pool))
+                pool->nic()->free(pool);
+
+    if(_streaming && relevant)
+        _stream.signal();
+}
+
+void TCP::Connection::listen()
+{
+    db<TCP>(TRC) << "TCP::Connection::listen(at=" << hex << from() << ")" << endl;
+
+    state(LISTENING);
+    _transition.wait();
+
+    fsend(SYN | ACK);
+    _unacknowledged = _initial;
+    state(SYN_RECEIVED);
+
+    _transition.wait();
+}
+
+void TCP::Connection::connect()
+{
+    db<TCP>(TRC) << "TCP::Connection::connect(from=" << hex << from() << ",to=" << peer() << ":" << to() << ")" << endl;
+
+    state(SYN_SENT);
+    fsend(SYN);
+    _unacknowledged = sequence();
+    set_timeout();
+    _transition.wait();
+}
+
+void TCP::Connection::close()
+{
+    db<TCP>(TRC) << "TCP::Connection::close()" << endl;
+
+    if(_state == CLOSED)
+        return;
+
+    if(_state == LISTENING || _state == SYN_SENT)
+        state(CLOSED);
+    else {
+        if(_state == ESTABLISHED || _state == SYN_RECEIVED)
+            state(FIN_WAIT1);
+        else if(_state == CLOSE_WAIT)
+            state(LAST_ACK);
+        fsend(ACK | FIN);
+        set_timeout(TIMEOUT / 2);
+        _transition.wait();
     }
 }
 
-
-void TCP::Socket::__SYN_SENT(const Header& r,const char* data,u16 len)
+void TCP::Connection::listening()
 {
-    db<TCP>(TRC) << __PRETTY_FUNCTION__ << endl;
+    db<TCP>(TRC) << "TCP::Connection::listening()" << endl;
 
-    if (r._rst || r._fin) {
-            state(CLOSED);
-            clear_timeout();
-            error(ERR_REFUSED);
-            closed();
+    if((_current->header()->flags() & RST) || (_current->header()->flags() & FIN)) {
+        _valid = false;
+        return;
     }
-    else if (r._ack) {
-        if ((r.ack_num() <= snd_ini) || (r.ack_num() > snd_nxt)) {
-            state(CLOSED);
-            clear_timeout();
-            error(ERR_RESET);
-            closed();
-        } else if ((r.ack_num() >= snd_una) && (r.ack_num() <= snd_nxt)) {
-            if (r._syn) {
-                rcv_nxt = r.seq_num() + 1;
-                rcv_ini = r.seq_num();
-                snd_una = r.ack_num();
-                snd_wnd = r.wnd();
-                if (snd_una <= snd_ini) {
-                    state(SYN_RCVD);
-                } else {
+
+    if(_current->header()->flags() & ACK) {
+        _valid = false;
+        fsend(RST);
+        return;
+    }
+
+    if(_current->header()->flags() & SYN) {
+        _to = htons(_current->header()->from());
+        _acknowledgment = htonl(_current->header()->sequence() + 1);
+        _transition.signal();
+    }
+}
+
+void TCP::Connection::syn_sent()
+{
+    db<TCP>(TRC) << "TCP::Connection::syn_sent()" << endl;
+
+    if(_current->header()->flags() & ACK) {
+        if((_current->header()->acknowledgment() <= _initial) || (_current->header()->acknowledgment() > _next)) {
+            db<TCP>(WRN) << "TCP::Connection::syn_sent: bad acknowledgment number!" << endl;
+
+            _valid = false;
+            fsend(RST);
+
+            return;
+        }
+
+        if((_current->header()->acknowledgment() >= _unacknowledged)
+            && (_current->header()->acknowledgment() <= _next)) {
+            if(_current->header()->flags() & RST) {
+                _valid = false;
+                state(CLOSED);
+
+                return;
+            }
+
+            if(_current->header()->flags() & SYN) {
+                _acknowledgment = htonl(_current->header()->sequence() + 1);
+                _unacknowledged = _current->header()->acknowledgment();
+                _peer_window = _current->header()->window();
+
+                if(_unacknowledged > _initial) {
+                    db<TCP>(INF) << "TCP::Connection::syn_sent: connection established!" << endl;
+
+                    fsend(ACK);
                     state(ESTABLISHED);
-                    clear_timeout();
-                    send_ack();
-                    connected();
+                    _tries = 0;
+                    _transition.signal();
+
+                    return;
                 }
-            } else {
-                // TODO: discover what to do here
+
+                fsend(SYN | ACK);
+                state(SYN_RECEIVED);
+
+                return;
+            }
+
+            return;
+        }
+
+        db<TCP>(WRN) << "TCP::Connection::syn_sent: bad acknowledgment number!" << endl;
+
+        _valid = false;
+        fsend(RST);
+
+        return;
+    }
+
+    if(!(_current->header()->flags() & RST) && (_current->header()->flags() & SYN)) { // Simultaneous SYN
+        _acknowledgment = htonl(_current->header()->sequence() + 1);
+
+        fsend(SYN | ACK);
+        state(SYN_RECEIVED);
+
+        return;
+    }
+
+    db<TCP>(WRN) << "TCP::Connection::syn_sent: bad FSM transaction! Closing connection!" << endl;
+
+    close();
+}
+
+void TCP::Connection::syn_received()
+{
+    db<TCP>(TRC) << "TCP::Connection::syn_received()" << endl;
+
+    if(!check_sequence()) {
+        _valid = false;
+
+        if(!(_current->header()->flags() & RST))
+            fsend(ACK);
+
+        return;
+    }
+
+    if(_current->header()->flags() & RST) {
+        _valid = false;
+        state(CLOSED);
+
+        return;
+    }
+
+    if(_current->header()->flags() & SYN) {
+        _valid = false;
+        fsend(RST);
+        state(CLOSED);
+
+        return;
+    }
+
+    if(_current->header()->flags() & ACK) {
+        if((_unacknowledged <= _current->header()->acknowledgment())
+            && (_current->header()->acknowledgment() <= _next)) {
+            db<TCP>(INF) << "TCP::Connection::syn_received: connection established!" << endl;
+
+            state(ESTABLISHED);
+            _tries = 0;
+
+            if(_length) {
+                _acknowledgment = htonl(acknowledgment() + _length);
+                fsend(ACK);
+            }
+
+            _transition.signal();
+        } else if(_current->header()->flags() & FIN) {
+            process_fin();
+            state(CLOSE_WAIT);
+
+            db<TCP>(INF) << "TCP::Connection::syn_received-->close_wait" << endl;
+        } else {
+            _valid = false;
+            fsend(RST);
+            state(CLOSED);
+        }
+    }
+}
+
+void TCP::Connection::established()
+{
+    db<TCP>(TRC) << "TCP::Connection::established()" << endl;
+
+    if(!check_sequence()) {
+        _valid = false;
+
+        if(!(_current->header()->flags() & RST))
+            fsend(ACK);
+
+        return;
+    }
+
+    if(_current->header()->flags() & RST) {
+        db<TCP>(WRN) << "TCP::Connection::established: reset received! Closing connection!" << endl;
+
+        _valid = false;
+        state(CLOSED);
+
+        return;
+    }
+
+    if(_current->header()->flags() & SYN) {
+        db<TCP>(WRN) << "TCP::Connection::established: SYN received! Closing connection!" << endl;
+
+        _valid = false;
+        fsend(RST);
+        state(CLOSED);
+
+        return;
+    }
+
+    if(_current->header()->flags() & ACK) {
+        if(_unacknowledged <= _current->header()->acknowledgment()
+            && _current->header()->acknowledgment() <= _next) { // implicit reject out-of-order segments
+            db<TCP>(TRC) << "TCP::Connection::established: ACK received"
+                << endl;
+
+            if(_length) {
+                _acknowledgment = htonl(acknowledgment() + _length);
+                fsend(ACK);
+            }
+
+            if(_current->header()->flags() & FIN) {
+                process_fin();
+                state(CLOSE_WAIT);
+
+                db<TCP>(TRC) << "TCP::Connection::established-->close_wait" << endl;
             }
         }
-    } else if (!r._rst && r._syn) {
-        rcv_nxt = r.seq_num() + 1;
-        snd_ini = r.seq_num();
-        snd_wnd = r.wnd();
-        state(SYN_RCVD);
     }
 }
 
-void TCP::Socket::__SYN_RCVD(const Header& r ,const char* data,u16 len)
+void TCP::Connection::fin_wait1()
 {
-    db<TCP>(TRC) << __PRETTY_FUNCTION__ << endl;
+    db<TCP>(TRC) << "TCP::Connection::fin_wait1()" << endl;
 
-    if (!check_seq(r,len)) 
-        return;
+    if(!check_sequence()) {
+        _valid = false;
 
-    if (r._rst || r._fin) {
-        error(ERR_RESET);
-        state(CLOSED);
-        clear_timeout();
-        closed();
-    }
-    else if (r._ack) {
-        snd_wnd = r.wnd();
-        snd_una = r.ack_num();
-        state(ESTABLISHED);
-        clear_timeout();
-        connected();
-    }
-}
+        if(!(_current->header()->flags() & RST))
+            fsend(ACK);
 
-void TCP::Socket::__RCVING(const Header &r,const char* data,u16 len)
-{
-    db<TCP>(TRC) << __PRETTY_FUNCTION__ << endl;
-    if (len) {
-        rcv_nxt += len;
-        send_ack();
-        received(data,len);
-        if (r._psh)
-            push();
-    } else {
-        send_ack();
-    }
-}
-
-void TCP::Socket::__SNDING(const Header &r,const char* data, u16 len)
-{
-    db<TCP>(TRC) << __PRETTY_FUNCTION__ << endl;
-
-    if (r._ack) {
-        int bytes = r.ack_num() - snd_una;
-        if (bytes < 0) // sliding window overflow
-            bytes = r.ack_num() + (0xFFFF - snd_una);
-        sent(bytes);
-        snd_una = r.ack_num();
-        if (snd_una == snd_nxt)
-            clear_timeout();
-    }
-}
-
-void TCP::Socket::__ESTABLISHED(const Header& r ,const char* data,u16 len)
-{
-    db<TCP>(TRC) << __PRETTY_FUNCTION__ << endl;
-
-    if (!check_seq(r,len))
-    {
-        if ((len) && (r.seq_num() < rcv_nxt))
-            send_ack();
         return;
     }
 
-    if (r._rst) {
-        error(ERR_RESET);
+    if(_current->header()->flags() & RST) {
+        _valid = false;
         state(CLOSED);
-        clear_timeout();
-        closed();
+
+        return;
     }
-    else if (r.seq_num() == rcv_nxt) { // implicit reject out-of-order segments
-        snd_wnd = r.wnd();
 
-        if (snd_una < r.ack_num())
-            __SNDING(r,data,len);
+    if(_current->header()->flags() & SYN) {
+        _valid = false;
+        fsend(RST);
+        state(CLOSED);
 
-        if (len)
-            __RCVING(r,data,len);
+        return;
+    }
 
-        if (r._fin) {
-            send_ack();
-            state(CLOSE_WAIT);
-            closing();
+    if(_current->header()->flags() & ACK) {
+        db<TCP>(TRC) << "TCP::Connection::fin_wait1: ACK received" << endl;
+
+        if(_length) {
+            _acknowledgment = htonl(acknowledgment() + _length);
+            fsend(ACK);
+        }
+
+        if(_current->header()->acknowledgment() >= _next) { // our FIN has been acknowledged
+            db<TCP>(TRC) << "TCP::Connection::fin_wait1: our FIN has been acknowledged" << endl;
+
+            if(_current->header()->flags() & FIN) {
+                process_fin();
+                state(TIME_WAIT);
+                set_timeout();
+
+                db<TCP>(TRC) << "TCP::Connection::fin_wait1-->time_wait" << endl;
+            } else {
+                state(FIN_WAIT2);
+
+                db<TCP>(TRC) << "TCP::Connection::fin_wait1-->fin_wait2" << endl;
+            }
+        } else {
+            if(_current->header()->flags() & FIN) {
+                process_fin();
+                state(CLOSING);
+
+                db<TCP>(TRC) << "TCP::Connection::fin_wait1-->closing" << endl;
+            }
         }
     }
-    else {
-        db<TCP>(TRC) << "TCP::out of order segment received\n";
-    }
 }
 
-
-void TCP::Socket::__FIN_WAIT1(const Header& r ,const char* data,u16 len)
+void TCP::Connection::fin_wait2()
 {
-    db<TCP>(TRC) << __PRETTY_FUNCTION__ << endl;
+    db<TCP>(TRC) << "TCP::Connection::fin_wait2()" << endl;
 
-    if (!check_seq(r,len))
+    if(!check_sequence()) {
+        _valid = false;
+
+        if(!(_current->header()->flags() & RST))
+            fsend(ACK);
+
         return;
-   
-    if (!r._fin && len) {
-        __RCVING(r,data,len);
-        if (r._ack)
-            state(FIN_WAIT2);
-        return;
-    }
-    if (r._ack && !r._fin) { // TODO: check snd_una
-        rcv_nxt = r.seq_num() + len;
-        state(FIN_WAIT2);
-        send_ack();
-    }
-    if (r._ack && r._fin) {
-        state(CLOSED); // no TIME_WAIT
-        send_ack();
-        clear_timeout();
-        closed();
-    }
-    if (!r._ack && r._fin) {
-        state(CLOSING);
-        send_ack();
-    }
-}
-
-void TCP::Socket::__FIN_WAIT2(const Header& r ,const char* data,u16 len)
-{
-    db<TCP>(TRC) << __PRETTY_FUNCTION__ << endl;
-    if (!check_seq(r,len))
-        return;
-    if (len) {
-        __RCVING(r,data,len);  
     }
 
-    if (r._fin) {
-        state(CLOSED); // no TIME_WAIT
-        send_ack();
-        clear_timeout();
-        closed();
-    }
-}
-
-void TCP::Socket::__CLOSE_WAIT(const Header& r ,const char* data,u16 len)
-{
-    db<TCP>(TRC) << __PRETTY_FUNCTION__ << endl;
-    if (!check_seq(r,len))
-        return;
-
-    if (r._rst || len) {
-        if (len)
-            send_reset();
-        error(ERR_RESET);
+    if(_current->header()->flags() & RST) {
+        _valid = false;
         state(CLOSED);
-        clear_timeout();
-        closed();
-    } 
-}
 
-void TCP::Socket::__CLOSING(const Header& r ,const char* data,u16 len)
-{
-    db<TCP>(TRC) << __PRETTY_FUNCTION__ << endl;
-    if (!check_seq(r,len))
         return;
-    
-    if (r._ack) {
-        state(CLOSED); // no TIME_WAIT
-        clear_timeout();
-        closed();
     }
-}
 
-void TCP::Socket::__LAST_ACK(const Header& r ,const char* data,u16 len)
-{
-    db<TCP>(TRC) << __PRETTY_FUNCTION__ << endl;
-    if (!check_seq(r,len))
-        return;
-    if (r._ack && !r._fin) {
+    if(_current->header()->flags() & SYN) {
+        _valid = false;
+        fsend(RST);
         state(CLOSED);
-        clear_timeout();
-        closed();
-    }else if (r._fin) {
-        send_ack();
-        clear_timeout();
-        closing();
-    }
-}
 
-void TCP::Socket::__TIME_WAIT(const Header& r ,const char* data,u16 len)
-{
-    db<TCP>(TRC) << __PRETTY_FUNCTION__ << endl;
-    if (!check_seq(r,len))
         return;
-    
-    if (r._fin && r._ack) {
-        state(CLOSED);
-        clear_timeout();
-        closed();
+    }
+
+    if(_current->header()->flags() & ACK) {
+        if(_length) {
+            _acknowledgment = htonl(acknowledgment() + _length);
+            fsend(ACK);
+        }
+
+        if(_current->header()->flags() & FIN) {
+            process_fin();
+            state(TIME_WAIT);
+            set_timeout();
+
+            db<TCP>(TRC) << "TCP::Connection::fin_wait2-->time_wait" << endl;
+        }
     }
 }
 
-void TCP::Socket::__CLOSED(const Header&,const char*,u16)
+void TCP::Connection::close_wait()
+{
+    db<TCP>(TRC) << "TCP::Connection::close_wait()" << endl;
+
+    if(!check_sequence()) {
+        _valid = false;
+
+        if(!_current->header()->flags() & RST)
+            fsend(ACK);
+
+        return;
+    }
+
+    if(_current->header()->flags() & RST) {
+        _valid = false;
+        state(CLOSED);
+        closed();
+
+        return;
+    }
+
+    if(_current->header()->flags() & SYN) {
+        _valid = false;
+        fsend(RST);
+        state(CLOSED);
+
+        return;
+    }
+
+    if((_current->header()->flags() & ACK)
+        && (_unacknowledged < _current->header()->acknowledgment())
+        && (_current->header()->acknowledgment() <= _next)) {
+        _unacknowledged = _current->header()->acknowledgment();
+
+        if(_current->header()->flags() & FIN) {
+            process_fin();
+        }
+    }
+}
+
+void TCP::Connection::closing()
+{
+    db<TCP>(TRC) << "TCP::Connection::closing()" << endl;
+
+    if(!check_sequence()) {
+        _valid = false;
+
+        if(!(_current->header()->flags() & RST))
+            fsend(ACK);
+
+        return;
+    }
+
+    if(_current->header()->flags() & RST) {
+        _valid = false;
+        state(CLOSED);
+
+        return;
+    }
+
+    if(_current->header()->flags() & SYN) {
+        _valid = false;
+        fsend(RST);
+        state(CLOSED);
+
+        return;
+    }
+
+    if((_current->header()->flags() & ACK)
+        && (_unacknowledged < _current->header()->acknowledgment())
+        && (_current->header()->acknowledgment() <= _next)
+        && (_next <= _current->header()->acknowledgment())) { // check if our FIN has been acknowledged
+        db<TCP>(TRC) << "TCP::Connection::closing: our FIN has been acknowledged" << endl;
+        db<TCP>(TRC) << "TCP::Connection:closing-->time_wait" << endl;
+
+        state(TIME_WAIT);
+        set_timeout();
+    }
+}
+
+void TCP::Connection::last_ack()
+{
+    db<TCP>(TRC) << "TCP::Connection::last_ack()" << endl;
+
+    if(!check_sequence()) {
+        _valid = false;
+
+        if(!(_current->header()->flags() & RST))
+            fsend(ACK);
+
+        return;
+    }
+
+    if(_current->header()->flags() & RST) {
+        state(CLOSED);
+
+        return;
+    }
+
+    if(_current->header()->flags() & SYN) {
+        fsend(RST);
+        state(CLOSED);
+
+        return;
+    }
+
+    if((_current->header()->flags() & ACK)
+        && (_unacknowledged < _current->header()->acknowledgment())
+        && (_current->header()->acknowledgment() <= _next)
+        && (_next <= _current->header()->acknowledgment())) { // check if our FIN has been acknowledged
+        db<TCP>(TRC) << "TCP::Connection::last_ack: our FIN has been acknowledged" << endl;
+
+        state(CLOSED);
+        _tries = 0;
+        _transition.signal();
+    }
+}
+
+void TCP::Connection::time_wait()
+{
+    db<TCP>(TRC) << "TCP::Connection::time_wait()" << endl;
+
+    if(!check_sequence()) {
+        _valid = false;
+
+        if(!(_current->header()->flags() & RST))
+            fsend(ACK);
+
+        return;
+    }
+
+    if(_current->header()->flags() & RST) {
+        state(CLOSED);
+
+        return;
+    }
+
+    if(_current->header()->flags() & SYN) {
+        fsend(RST);
+        state(CLOSED);
+
+        return;
+    }
+
+    if((_current->header()->flags() & ACK)
+        && (_unacknowledged < _current->header()->acknowledgment())
+        && (_current->header()->acknowledgment() <= _next)
+        && (_current->header()->flags() & FIN)) {
+        process_fin();
+        set_timeout();
+    }
+}
+
+void TCP::Connection::closed()
 {
     // does nothing
 }
 
-void TCP::Socket::send_ack()
+bool TCP::Connection::check_sequence()
 {
-    Header s(snd_nxt,rcv_nxt);
-    s._ack = true;
-    _send(&s,0);
-}
+//    if (WINDOW == 0) {
+//        if (_length) {
+//            db<TCP>(TRC) << "TCP::Connection::check_seq() == false: RCV.WND == 0 AND SEG.LEN > 0" << endl;
+//            return _valid = false;
+//        }
+//
+//        if (_current->header()->sequence() == acknowledgment())
+//            return _valid = true;
+//
+//        db<TCP>(TRC) << "TCP::Connection::check_seq() == false: RCV.WND == 0 AND SEG.SEQ != RCV.NXT" << endl;
+//
+//        return _valid = false;
+//    }
+//
+//    if (_length) {
+//        if (acknowledgment() <= _current->header()->sequence() && _current->header()->sequence() < (acknowledgment() + WINDOW))
+//            return _valid = true;
+//
+//        db<TCP>(TRC) << "TCP::Connection::check_seq() == false: SEG.LEN > 0 AND !(RCV.NXT <= SEG.SEQ < (RCV.NXT + RCV.WND))" << endl;
+//
+//        return _valid = false;
+//    }
+//
+//    if ((acknowledgment() <= _current->header()->sequence() && _current->header()->sequence() < (acknowledgment() + WINDOW))
+//        || (acknowledgment() <= (_current->header()->sequence() + _length - 1) && (_current->header()->sequence() + _length - 1) < (acknowledgment() + WINDOW)))
+//        return _valid = true;
+//
+//    db<TCP>(TRC) << "TCP::Connection::check_seq() == false" << endl;
+//
+//    return _valid = false;
 
-void TCP::Socket::send_fin()
-{
-    Header s(snd_nxt,rcv_nxt);
-    s._fin = true;
-    s._ack = true;
-    _send(&s,0);
-}
+    if(WINDOW == 0) {
+        if(_length) {
+            db<TCP>(TRC) << "TCP::Connection::check_seq() == false: RCV.WND == 0 AND SEG.LEN > 0" << endl;
+            return (_valid = false);
+        }
 
-void TCP::Socket::send_reset()
-{
-    Header s(snd_nxt,rcv_nxt);
-    s._fin = true;
-    s._ack = true;
-    s._psh = true;
-    s._rst = true;
-    _send(&s,0);
-}
+        if(_current->header()->sequence() == acknowledgment())
+            return (_valid = true);
 
-bool TCP::Socket::check_seq(const Header &h,u16 len)
-{
-    if ((len <= rcv_wnd) &&
-        (h.seq_num() == rcv_nxt))
-    {
-        return true;
+        db<TCP>(TRC) << "TCP::Connection::check_seq() == false: RCV.WND == 0 AND SEG.SEQ != RCV.NXT" << endl;
+
+        return (_valid = false);
     }
 
-    db<TCP>(TRC) << "TCP: check_seq() == false\n";
-    return false;
-}
+    if(_length) {
+        if((acknowledgment() <= _current->header()->sequence()) && (_current->header()->sequence() < (acknowledgment() + WINDOW)))
+            return (_valid = true);
 
-void TCP::Socket::abort()
-{
-    send_reset();
-    clear_timeout();
-    state(CLOSED);
-}
+        db<TCP>(TRC) << "TCP::Connection::check_seq() == false: SEG.LEN > 0 AND !(RCV.NXT <= SEG.SEQ < (RCV.NXT + RCV.WND))" << endl;
 
-// Channel stuff
-
-TCP::Channel::Channel() 
-    : TCP::Socket(TCP::Address(0,0),TCP::Address(0,0),0)
-{
-    clear();
-    ICMP::instance()->attach(this, ICMP::UNREACHABLE);
-}
-
-TCP::Channel::~Channel() {
-    if (state() != CLOSED) {
-        db<TCP>(ERR) << "Destroying non-closed channel!\n";
-        // This condition must REALLY not happen.
-    }
-    ICMP::instance()->detach(this, ICMP::UNREACHABLE);
-}
-
-bool TCP::Channel::connect(const TCP::Address& to)
-{
-    if (state() != CLOSED) {
-        db<TCP>(ERR) << "TCP::Channel::connect() called for open connection!\n";
-        return false;
+        return (_valid = false);
     }
 
-    int retry = 5;
-    _remote = to;
-    clear();
-    _sending = true;
+    if(((acknowledgment() <= _current->header()->sequence()) && (_current->header()->sequence() < (acknowledgment() + WINDOW)))
+        || (acknowledgment() <= (_current->header()->sequence() + _length - 1) && (_current->header()->sequence() + _length - 1) < (acknowledgment() + WINDOW)))
+        return (_valid = true);
 
-    do {
-        Socket::connect();
-        _tx_block.wait();
-    } while (retry-- > 0 && state() == SYN_SENT);
-    _sending = false;
+    db<TCP>(TRC) << "TCP::Connection::check_seq() == false" << endl;
 
-    if (state() != ESTABLISHED)
-    {
-        clear_timeout();
-        state(CLOSED);
-    }
-
-    return state() == ESTABLISHED;
+    return (_valid = false);
 }
 
-int TCP::Channel::receive(char * dst,unsigned int size)
+void TCP::Connection::process_fin()
 {
-    if (_error)
-        return -_error;
-    
-    if (state() != ESTABLISHED)
-        return -ERR_NOT_CONNECTED;
-    
-    if (_receiving) {
-        db<TCP>(ERR) << "TCP::Channel::receive already called!\n";
-        return -ERR_ILEGAL;
-    }
-    
-    _rx_buffer_ptr  = dst;
-    _rx_buffer_size = size;
-    _rx_buffer_used = 0;
-    _receiving = true;
-    rcv_wnd = size;
-    send_ack(); // send a window update
+    db<TCP>(TRC) << "TCP::Connection::process_fin(): FIN received" << endl;
 
-    _rx_block.wait();
+    _acknowledgment = htonl(_current->header()->sequence() + 1);
 
-    int rcvd = _rx_buffer_used;
-
-    _rx_buffer_ptr  = 0;
-    _rx_buffer_size = 0;
-    _rx_buffer_used = 0;
-    _receiving = false;
-
-    if (_error)
-        return -_error;
-
-    return rcvd;
+    fsend(ACK);
 }
 
-int TCP::Channel::send(const char * src,unsigned int size)
+void TCP::Connection::timeout(Connection* c)
 {
-    if (_error)
-        return -_error;
-    
-    if (state() != ESTABLISHED)
-        return -ERR_NOT_CONNECTED;
-    
-    // congestion control not yet done
-    
-    _tx_bytes_sent = 0;
-    _sending = true;
+    db<TCP>(TRC) << "TCP::Connection::timeout(connection=" << c << ",state=" << c->_state << ")" << endl;
 
-    int offset;
+    delete c->_alarm;
+    c->_alarm = 0;
 
-    do {
-        offset = _tx_bytes_sent;
-        Socket::send(&src[offset], size - offset);
-
-        _tx_block.wait();
-
-        if (state() != ESTABLISHED || _error)
-            break;
-    } while (_tx_bytes_sent < size);
-
-    _sending = false;
-    return _tx_bytes_sent;
-}
-
-void TCP::Channel::bind(unsigned short port)
-{
-    if (state() != CLOSED) {
-        db<TCP>(ERR) << "Cannot use TCP::Channel::bind() on open connection\n";
+    if(c->_state == TIME_WAIT) {
+        // TIME-WAIT timeout
+        c->state(CLOSED);
+        c->_tries = 0;
+        c->_transition.signal();
         return;
     }
-    
-    tcp()->detach(this, _local.port());
-    
-    _local = TCP::Address(tcp()->ip()->address(), port);
-    
-    tcp()->attach(this, port);
-}
 
-bool TCP::Channel::close()
-{
-    if (state() == CLOSED)
-        return true;
-
-    if (state() == SYN_SENT) {
-        _tx_block.signal();
-        abort();
-        return true;
-    }
-
-    if (_receiving) {
-        _error = ERR_CLOSING;
-        _rx_block.signal();
-    }
-
-    int retry = 5;
-    _sending = true;
-    
-    do {
-        Socket::close();
-        _tx_block.wait();
-    } while (retry-- > 0 && state() != CLOSED);
-
-    _sending = false;
-    
-    return state() == CLOSED;
-}
-
-bool TCP::Channel::listen()
-{
-    if (state() != CLOSED) {
-        db<TCP>(ERR) << "TCP::Channel::listen() called on non-closed channel\n";
-        return false;
-    }
-    
-    clear();
-    _sending = true;
-
-    Socket::listen();   
-    _tx_block.wait();
-
-    _sending = false;
-
-    if (state() != ESTABLISHED)
-    {
-        clear_timeout();
-        state(CLOSED);
-    }
-
-    return state() == ESTABLISHED;
-}
-
-void TCP::Channel::clear()
-{
-    _sending   = false;
-    _receiving = false;;
-    _rx_buffer_ptr  = 0;
-    _rx_buffer_size = 0;
-    _rx_buffer_used = 0;
-    _tx_bytes_sent = 0;
-    _error = 0;
-    rcv_wnd = 0;
-}
-
-// Channel's implementation of Socket callbacks
-
-void TCP::Channel::received(const char* data,u16 size)
-{
-    int remaining = _rx_buffer_size - _rx_buffer_used;
-    
-    if (!_rx_buffer_ptr || (remaining == 0)) {
-        db<TCP>(WRN) << "Channel::received droping data, no buffer space\n";
+    if(c->_tries == 3) {
+        c->state(CLOSED);
+        c->_transition.signal();
         return;
     }
-    if (remaining < static_cast<int>(size)) {
-        db<TCP>(WRN) << "Channel::received data truncated\n";
-        size = static_cast<u16>(remaining);
+
+    if(c->_state == FIN_WAIT1 || c->_state == LAST_ACK || c->_state == CLOSING) {
+        // close() call timeout
+        c->_tries++;
+        c->_next--;
+        c->fsend(FIN | ACK);
+        c->set_timeout(1000 * 1000 * 2.5);
+        return;
     }
-    
-    memcpy(&_rx_buffer_ptr[_rx_buffer_used], data, size);
-    
-    _rx_buffer_used += size;
-    rcv_wnd = _rx_buffer_size - _rx_buffer_used;
-    
-    if (_rx_buffer_size == _rx_buffer_used)
-        if (_receiving)
-            _rx_block.signal();
-}
 
-void TCP::Channel::push()
-{
-    if (_receiving)
-        _rx_block.signal();
-}
-
-void TCP::Channel::closing()
-{
-    if (_receiving)
-        _rx_block.signal();
-}
-
-void TCP::Channel::closed()
-{
-    if (_receiving)
-        _rx_block.signal();
-    
-    if (_sending)
-        _tx_block.signal();
-}
-
-void TCP::Channel::connected()
-{
-    _tx_block.signal();
-}
-
-void TCP::Channel::sent(u16 size)
-{
-    if (_sending) {
-        _tx_bytes_sent += size;
-        
-        _tx_block.signal();
+    if(c->_state == SYN_SENT) {
+        // open() call timeout
+        c->_tries++;
+        c->_next--;
+        c->fsend(SYN);
+        c->set_timeout();
+        return;
     }
 }
 
-void TCP::Channel::error(short errorcode)
+void TCP::Connection::set_timeout(const Alarm::Microsecond & time)
 {
-    if (errorcode != ERR_TIMEOUT) {
-        _error = errorcode;
+    db<TCP>(TRC) << "TCP::Connection::set_timeout" << endl;
 
-        if (_receiving)
-            _rx_block.signal();
+    if(_alarm) {
+        delete _alarm;
+        _alarm = 0;
     }
 
-    if (_sending)
-        _tx_block.signal();
+    _alarm = new (SYSTEM) Alarm(time, &_timeout_handler);
 }
 
-void TCP::Channel::update(Data_Observed<IP::Address> *ob, long c,
-                IP::Address src, IP::Address dst,
-                void *data, unsigned int size)
-{
-        // TODO
-}
 __END_SYS
-
-#endif

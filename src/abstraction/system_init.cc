@@ -9,9 +9,10 @@ __BEGIN_SYS
 void System::init()
 {
     if(Traits<Alarm>::enabled)
-	Alarm::init();
+        Alarm::init();
+
     if(Traits<Task>::enabled)
-	Task::init();
+        Task::init();
 }
 
 __END_SYS

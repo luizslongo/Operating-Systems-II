@@ -1,63 +1,80 @@
 // EPOS System Initializer
 
+#include <utility/random.h>
 #include <machine.h>
 #include <system.h>
-
-extern "C" { void __epos_library_app_entry(void); }
+#include <address_space.h>
+#include <segment.h>
 
 __BEGIN_SYS
 
 class Init_System
 {
+private:
+    static const unsigned int HEAP_SIZE = Traits<System>::HEAP_SIZE;
+
 public:
     Init_System() {
-	db<Init>(TRC) << "\nInit_System(CPU=" << Machine::cpu_id() << ")\n";
+        db<Init>(TRC) << "Init_System()" << endl;
 
-	Machine::smp_barrier();
+        Machine::smp_barrier();
 
-	// Only the boot CPU runs INIT_SYSTEM fully
-	if(Machine::cpu_id() != 0) {
-	    // Wait until the boot CPU has initialized the machine
-	    Machine::smp_barrier();
-	    // For IA-32, timer is CPU-local. What about other SMPs?
-	    Timer::init();
-	    Machine::smp_barrier();
-	    return;
-	}
-	
-	// Initialize the processor
-	db<Init>(INF) << "Initializing the CPU: \n";
-	CPU::init();
-	db<Init>(INF) << "done!\n\n";
+        // Only the boot CPU runs INIT_SYSTEM fully
+        if(Machine::cpu_id() != 0) {
+            // Wait until the boot CPU has initialized the machine
+            Machine::smp_barrier();
+            // For IA-32, timer is CPU-local. What about other SMPs?
+            Timer::init();
+            Machine::smp_barrier();
+            return;
+        }
 
-	// If EPOS is a library then adjust the application entry point (that
-	// was set by SETUP) based on the ELF SYSTEM+APPLICATION image
-	System_Info<Machine> * si = System::info();
-	if(!si->lm.has_sys)
-	    si->lmm.app_entry =
-		reinterpret_cast<unsigned int>(&__epos_library_app_entry);
+        // Initialize the processor
+        db<Init>(INF) << "Initializing the CPU: " << endl;
+        CPU::init();
+        db<Init>(INF) << "done!" << endl;
 
-	// Initialize System's heap
-	db<Init>(INF) << "Initializing system's heap \n";
-	System::heap()->
-	    free(MMU::alloc(MMU::pages(Traits<Machine>::SYSTEM_HEAP_SIZE)),
-		 Traits<Machine>::SYSTEM_HEAP_SIZE);
-	db<Init>(INF) << "done!\n\n";
+        // Initialize System's heap
+        db<Init>(INF) << "Initializing system's heap: " << endl;
+        if(Traits<System>::multiheap) {
+            System::_heap_segment = new (&System::_preheap[0]) Segment(HEAP_SIZE);
+            System::_heap = new (&System::_preheap[sizeof(Segment)]) Heap(Address_Space(MMU::current()).attach(*System::_heap_segment, Memory_Map<Machine>::SYS_HEAP), System::_heap_segment->size());
+        } else
+            System::_heap = new (&System::_preheap[0]) Heap(MMU::alloc(MMU::pages(HEAP_SIZE)), HEAP_SIZE);
+        db<Init>(INF) << "done!" << endl;
 
-	// Initialize the machine
-	db<Init>(INF) << "Initializing the machine: \n";
-	Machine::init();
-	db<Init>(INF) << "done!\n\n";
+        // Initialize the machine
+        db<Init>(INF) << "Initializing the machine: " << endl;
+        Machine::init();
+        db<Init>(INF) << "done!" << endl;
 
-	Machine::smp_barrier(); // signalizes "machine ready" to other CPUs
-	Machine::smp_barrier(); // wait for them to fihish Machine::init()
+        Machine::smp_barrier(); // signalizes "machine ready" to other CPUs
+        Machine::smp_barrier(); // wait for them to finish Machine::init()
 
-	// Initialize system abstractions 
-	db<Init>(INF) << "Initializing system abstractions: \n";
-	System::init();
-	db<Init>(INF) << "done!\n\n";
+        // Initialize system abstractions
+        db<Init>(INF) << "Initializing system abstractions: " << endl;
+        System::init();
+        db<Init>(INF) << "done!" << endl;
 
-	// Initialization continues at init_first
+        // Randomize the Random Numbers Generator's seed
+        if(Traits<Random>::enabled) {
+            db<Init>(INF) << "Randomizing the Random Numbers Generator's seed: " << endl;
+            if(Traits<TSC>::enabled)
+                Random::seed(TSC::time_stamp());
+            if(Traits<NIC>::enabled) {
+                NIC nic;
+                Random::seed(Random::random() ^ nic.address());
+            }
+//            if(Traits<ADC>::enabled) {
+//                ADC adc;
+//                Random::seed(Random::random() ^ adc.read);
+//            }
+            if(!Traits<TSC>::enabled && !Traits<NIC>::enabled)
+                db<Init>(WRN) << "Due to lack of entropy, Random is a pseudo random numbers generator!" << endl;
+            db<Init>(INF) << "done!" << endl;
+        }
+
+        // Initialization continues at init_first
     }
 };
 

@@ -1,17 +1,15 @@
 // EPOS Alarm Abstraction Initialization
 
-#include <system/kmalloc.h>
+#include <system.h>
 #include <alarm.h>
 
 __BEGIN_SYS
 
-int Alarm::init()
+void Alarm::init()
 {
-    db<Init, Alarm>(TRC) << "Alarm::init()\n";
-    
-    _timer = new (kmalloc(sizeof(Alarm_Timer))) Alarm_Timer(&handler);
+    db<Init, Alarm>(TRC) << "Alarm::init()" << endl;
 
-    return 0;
+    _timer = new (SYSTEM) Alarm_Timer(handler);
 }
 
 __END_SYS
