@@ -45,7 +45,7 @@ template<> struct Traits<PC>: public Traits<PC_Common>
     static const unsigned int SYS_DATA  = 0xff740000;
 
     // Default Sizes and Quantities
-    static const unsigned int STACK_SIZE = 256 * 1024;
+    static const unsigned int STACK_SIZE = 16 * 1024;
     static const unsigned int HEAP_SIZE = 16 * 1024 * 1024;
     static const unsigned int MAX_THREADS = 16;
 };
