@@ -28,7 +28,7 @@ int main()
 
     const Task * task0 = Task::self();
     Address_Space * as0 = task0->address_space();
-    cout << "My address space's page directory is located at " << as0 << endl;
+    cout << "My address space's page directory is located at " << as0->pd() << endl;
 
     const Segment * cs0 = task0->code_segment();
     CPU::Log_Addr code0 = task0->code();
@@ -61,7 +61,9 @@ int main()
     as0->detach(ds1);
     cout << " done!" << endl;
 
+    cout << "Creating the clone task:";
     Task * task1 = new Task(cs1, ds1);
+    cout << " done!" << endl;
     a = new Thread(*task1, &func_a);
     b = new Thread(&func_b);
 

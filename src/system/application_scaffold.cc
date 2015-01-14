@@ -1,12 +1,13 @@
 // EPOS Application Scaffold and Application Abstraction Implementation
 
-#include <utility/ostream.h>
 #include <application.h>
+#include <framework/run.h>
 
 // Application class attributes
 __BEGIN_SYS
 char Application::_preheap[];
 Heap * Application::_heap;
+Framework::Cache Framework::_cache;
 __END_SYS
 
 // Global objects

@@ -130,6 +130,21 @@ public:
 
 // LIST of Templates
 template<template<typename T> class ... Tn> class TLIST;
+template<template<typename T> class T1, template<typename T> class T2, template<typename T> class ... Tn>
+class TLIST<T1, T2, Tn ...>
+{
+public:
+    enum { Length = TLIST<Tn ...>::Length + 1 };
+
+    template<typename T>
+    struct Recur: public T1<T>, public TLIST<T2, Tn ...>::template Recur<T>
+    {
+        void enter() { T1<T>::enter(); T2<T>::enter(); }
+        void leave() { T1<T>::leave(); T2<T>::leave(); }
+        static void static_enter() { T1<T>::static_enter(); T2<T>::static_enter(); }
+        static void static_leave() { T1<T>::static_leave(); T2<T>::static_leave(); }
+    };
+};
 template<template<typename T> class T1, template<typename T> class ... Tn>
 class TLIST<T1, Tn ...>
 {
@@ -137,7 +152,13 @@ public:
     enum { Length = TLIST<Tn ...>::Length + 1 };
 
     template<typename T>
-    struct Recur: public T1<T>, public TLIST<Tn ...>::template Recur<T> {};
+    struct Recur: public T1<T>, public TLIST<Tn ...>::template Recur<T>
+    {
+        void enter() { T1<T>::enter(); }
+        void leave() { T1<T>::leave(); }
+        static void static_enter() { T1<T>::static_enter(); }
+        static void static_leave() { T1<T>::static_leave(); }
+    };
 };
 
 template<>
@@ -147,8 +168,44 @@ public:
     enum { Length = 0 };
 
     template<typename T>
-    struct Recur {};
+    struct Recur
+    {
+        void enter() {}
+        void leave() {}
+        static void static_enter() {}
+        static void static_leave() {}
+    };
 };
+
+
+// Serializer
+inline void SERIALIZE(char * buf, int index) {}
+
+template<typename T>
+void SERIALIZE(char * buf, int index, const T && a) {
+//    *static_cast<T *>(reinterpret_cast<void *>(&buf[index])) = a;
+    __builtin_memcpy(&buf[index], &a, sizeof(T));
+}
+
+template<typename T, typename ... Tn>
+void SERIALIZE(char * buf, int index, const T && a, const Tn & ... an) {
+    __builtin_memcpy(&buf[index], &a, sizeof(T));
+    SERIALIZE(buf, index + sizeof(T), an ...);
+}
+
+// Deserializer
+inline void DESERIALIZE(char * buf, int index) {}
+
+template<typename T>
+void DESERIALIZE(char * buf, int index, T && a) {
+    __builtin_memcpy(&a, &buf[index], sizeof(T));
+}
+
+template<typename T, typename ... Tn>
+void DESERIALIZE(char * buf, int index, T && a, Tn && ... an) {
+    __builtin_memcpy(&a, &buf[index], sizeof(T));
+    DESERIALIZE(buf, index + sizeof(T), an ...);
+}
 
 __END_SYS
 

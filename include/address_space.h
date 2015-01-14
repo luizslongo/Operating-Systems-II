@@ -17,12 +17,13 @@ private:
     typedef CPU::Log_Addr Log_Addr;
 
     using MMU::Directory::activate;
-    using MMU::Directory::pd;
 
 public:
     Address_Space();
     Address_Space(MMU::Page_Directory * pd);
     ~Address_Space();
+
+    using MMU::Directory::pd;
 
     Log_Addr attach(const Segment & seg);
     Log_Addr attach(const Segment & seg, Log_Addr addr);

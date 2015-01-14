@@ -5,7 +5,6 @@
 #include <machine.h>
 #include <display.h>
 #include <system.h>
-#include <thread.h>
 
 __BEGIN_SYS
 
@@ -40,24 +39,3 @@ Segment * System::_heap_segment;
 Heap * System::_heap;
 
 __END_SYS
-
-__USING_SYS;
-
-extern "C" {
-    void _panic() {
-        Machine::panic();
-    }
-
-    void _exit(int s) {
-        Thread::exit(s);
-    }
-
-     void _print(const char * s) {
-        Display::puts(s);
-    }
-
-    // LIBC Heritage
-    void __cxa_pure_virtual() {
-        db<void>(ERR) << "Pure Virtual method called!" << endl;
-    }
-}

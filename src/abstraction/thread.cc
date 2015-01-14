@@ -20,7 +20,8 @@ Spin Thread::_lock;
 // Methods
 void Thread::common_constructor(Log_Addr entry, unsigned int stack_size) 
 {
-    db<Thread>(TRC) << "Thread(entry=" << entry
+    db<Thread>(TRC) << "Thread(task=" << _task
+                    << ",entry=" << entry
                     << ",state=" << _state
                     << ",priority=" << _link.rank()
                     << ",stack={b=" << reinterpret_cast<void *>(_stack)
@@ -333,6 +334,37 @@ void Thread::time_slicer()
 void Thread::implicit_exit() 
 {
     exit(CPU::fr()); 
+}
+
+
+void Thread::dispatch(Thread * prev, Thread * next, bool charge)
+{
+    if(charge) {
+        if(Criterion::timed)
+            _timer->reset();
+    }
+
+    if(prev != next) {
+        if(prev->_state == RUNNING)
+            prev->_state = READY;
+        next->_state = RUNNING;
+
+        db<Thread>(TRC) << "Thread::dispatch(prev=" << prev << ",next=" << next << ")" << endl;
+        db<Thread>(INF) << "prev={" << prev << ",ctx=" << *prev->_context << "}" << endl;
+        db<Thread>(INF) << "next={" << next << ",ctx=" << *next->_context << "}" << endl;
+
+        if(smp)
+            _lock.release();
+
+        if(multitask && (next->_task != prev->_task))
+            next->_task->activate();
+
+        CPU::switch_context(&prev->_context, next->_context);
+    } else
+        if(smp)
+            _lock.release();
+
+    CPU::int_enable();
 }
 
 

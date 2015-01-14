@@ -34,7 +34,7 @@ CONFIGURATOR=eposcfg
 COMP_FLGS=""
 COMP_HDRS="$INC"
 if [ "$MODE" = "kernel" ] ; then
-COMP_FLGS="$COMP_FLGS -include $INC/system/framework.h"
+COMP_FLGS="$COMP_FLGS -include $INC/framework/run.h"
 fi
 
 C_COMPILER="$TOOLS_PREFIX""gcc"

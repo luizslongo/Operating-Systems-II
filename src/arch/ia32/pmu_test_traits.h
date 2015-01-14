@@ -168,10 +168,6 @@ template<> struct Traits<Network>: public Traits<void>
     typedef LIST<IP> NETWORKS;
 };
 
-template<> struct Traits<ARP<NIC, IP> >: public Traits<Network>
-{
-};
-
 template<> struct Traits<IP>: public Traits<Network>
 {
     enum {STATIC, MAC, INFO, RARP, DHCP};

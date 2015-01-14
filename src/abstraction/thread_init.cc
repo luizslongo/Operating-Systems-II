@@ -44,8 +44,8 @@ void Thread::init()
         if(multitask) {
             // Create the application's main thread
             // This must precede idle, thus avoiding implicit rescheduling
-            first = new (SYSTEM) Thread(*Task::_master, entry, RUNNING, MAIN);
-            new (SYSTEM) Thread(*Task::_master, &idle, READY, IDLE);
+            first = new (SYSTEM) Thread(*Task::_master, entry, RUNNING, MAIN, Traits<System>::STACK_SIZE, reinterpret_cast<char *>(System::info()->lm.app_heap));
+            new (SYSTEM) Thread(*Task::_master, &idle, READY, IDLE, Traits<System>::STACK_SIZE, 0);
         } else {
             first = new (SYSTEM) Thread(entry, RUNNING, MAIN);
             new (SYSTEM) Thread(&idle, READY, IDLE);

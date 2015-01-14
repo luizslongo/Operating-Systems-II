@@ -248,6 +248,8 @@ public:
         void save() volatile;
         void load() const volatile;
 
+        void usp(Log_Addr usp) { _esp3 = usp; }
+
         friend Debug & operator<<(Debug & db, const Context & c) {
             db << hex
                << "{eflags=" << c._eflags
@@ -258,8 +260,9 @@ public:
                << ",esi=" << c._esi
                << ",edi=" << c._edi
                << ",ebp=" << reinterpret_cast<void *>(c._ebp)
-               << ",esp=" << reinterpret_cast<void *>(c._esp)
+               << ",esp=" << &c
                << ",eip=" << reinterpret_cast<void *>(c._eip)
+               << ",esp3="  << c._esp3
                << ",cs="  << cs()
                << ",ds="  << ds()
                << ",es="  << es()
@@ -272,6 +275,7 @@ public:
         }
 
     private:
+        Reg32 _esp3;
         Reg32 _edi;
         Reg32 _esi;
         Reg32 _ebp;

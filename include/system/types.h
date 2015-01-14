@@ -136,7 +136,8 @@ template<typename Component> class Handle;
 template<typename Component> class Adapter;
 
 // Aspects
-template<typename Component> class Identified;
+class Aspect;
+template<typename Component> class Authenticated;
 template<typename Component> class Shared;
 template<typename Component> class Remote;
 
@@ -230,6 +231,8 @@ template<> struct Type<ICMP> { static const Type_Id ID = ICMP_ID; };
 template<> struct Type<UDP> { static const Type_Id ID = UDP_ID; };
 template<> struct Type<TCP> { static const Type_Id ID = TCP_ID; };
 template<> struct Type<DHCP> { static const Type_Id ID = DHCP_ID; };
+
+template<> struct Type<Utility> { static const Type_Id ID = UTILITY_ID; };
 
 __END_SYS
 

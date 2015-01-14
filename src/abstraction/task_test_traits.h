@@ -12,7 +12,7 @@ struct Traits
     static const bool enabled = true;
     static const bool debugged = true;
     static const bool hysterically_debugged = false;
-    typedef TLIST<Shared, Identified> ASPECTS;
+    typedef TLIST<Shared, Authenticated> ASPECTS;
 };
 
 template<> struct Traits<Build>
@@ -39,8 +39,8 @@ template<> struct Traits<Debug>
 {
     static const bool error   = true;
     static const bool warning = true;
-    static const bool info    = false;
-    static const bool trace   = false;
+    static const bool info    = true;
+    static const bool trace   = true;
 };
 
 template<> struct Traits<Lists>: public Traits<void>
@@ -72,6 +72,14 @@ template<> struct Traits<Init>: public Traits<void>
 {
 };
 
+template<> struct Traits<Framework>: public Traits<void>
+{
+};
+
+template<> struct Traits<Aspect>: public Traits<void>
+{
+    static const bool debugged = hysterically_debugged;
+};
 
 // Mediators
 template<> struct Traits<Serial_Display>: public Traits<void>
