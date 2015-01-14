@@ -5,7 +5,7 @@
 
 #include <cpu.h>
 #include <ic.h>
-#include <mach/pc/memory_map.h>
+#include <machine/pc/memory_map.h>
 
 __BEGIN_SYS
 

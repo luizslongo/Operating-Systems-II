@@ -1,6 +1,6 @@
 // EPOS PC NIC Mediator Initialization
 
-#include <mach/pc/nic.h>
+#include <machine/pc/nic.h>
 
 __BEGIN_SYS
 

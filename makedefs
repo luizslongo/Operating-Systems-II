@@ -15,11 +15,11 @@ LIB		:= $(TOP)/lib
 IMG		:= $(TOP)/img
 ETC		:= $(TOP)/etc
 DOC		:= $(TOP)/doc
-LARCHNAME	:= arch
-LMACHNAME	:= mach
+LARCHNAME	:= architecture
+LMACHNAME	:= machine
 LSYSNAME	:= system
 LINITNAME	:= init
-LUTILNAME	:= util
+LUTILNAME	:= utility
 
 # Makefile hacks
 APPLICATIONS	:= $(subst .cc,,$(shell find $(APP) -name \*.cc -printf "%f\n"))
@@ -66,7 +66,7 @@ armv7_COMP_PREFIX	:= /usr/local/arm/gcc-4.4.4/bin/arm-
 COMP_PREFIX		= $($(ARCH)_COMP_PREFIX)
 
 # Boot Memory Map
-MACH_TRAITS	= $(INCLUDE)/mach/$(MACH)/$(MMOD)_traits.h 
+MACH_TRAITS	= $(INCLUDE)/machine/$(MACH)/$(MMOD)_traits.h 
 MEM_BASE	= $(call GETTK,MEM_BASE,$(MACH_TRAITS))
 MEM_TOP		= $(call GETTK,MEM_TOP,$(MACH_TRAITS))
 MEM_SIZE	= $(shell echo "(`printf "%d" $(MEM_TOP)` + 1 - `printf "%d" $(MEM_BASE)`) / 1024"|bc)
@@ -122,7 +122,7 @@ endif
 # Architecture specifics
 ARCH_LITTLE	:= little
 ARCH_BIG	:= big
-ARCH_TRAITS	= $(INCLUDE)/arch/$(ARCH)/traits.h 
+ARCH_TRAITS	= $(INCLUDE)/architecture/$(ARCH)/traits.h 
 ARCH_ENDIANESS	= $(ARCH_$(call GETTK,ENDIANESS,$(ARCH_TRAITS)))
 ARCH_WORD_SIZE	= $(call GETTK,WORD_SIZE,$(ARCH_TRAITS))
 ARCH_CLOCK	= $(call GETTK,CLOCK,$(ARCH_TRAITS))

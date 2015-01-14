@@ -44,11 +44,11 @@ namespace EPOS {
 }
 #endif
 
-#define __HEADER_ARCH(X)        <arch/ARCH/X.h>
-#define __HEADER_MACH(X)        <mach/MACH/X.h>
-#define __MACH_TRAITS_T(X)      <mach/MACH/X##_traits.h>
+#define __HEADER_ARCH(X)        <architecture/ARCH/X.h>
+#define __HEADER_MACH(X)        <machine/MACH/X.h>
+#define __MACH_TRAITS_T(X)      <machine/MACH/X##_traits.h>
 #define __MACH_TRAITS(X)        __MACH_TRAITS_T(X)
-#define __MACH_CONFIG_T(X)      <mach/MACH/X##_config.h>
+#define __MACH_CONFIG_T(X)      <machine/MACH/X##_config.h>
 #define __MACH_CONFIG(X)        __MACH_CONFIG_T(X)
 #define __APPL_TRAITS_T(X)      <../app/X##_traits.h>
 #define __APPL_TRAITS(X)        __APPL_TRAITS_T(X)

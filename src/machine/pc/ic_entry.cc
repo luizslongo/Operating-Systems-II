@@ -1,6 +1,6 @@
 // EPOS PC Interrupt Dispatcher
 
-#include <mach/pc/ic.h>
+#include <machine/pc/ic.h>
 
 __BEGIN_SYS
 

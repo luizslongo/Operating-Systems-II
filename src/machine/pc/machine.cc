@@ -1,6 +1,6 @@
 // EPOS PC Mediator Implementation
 
-#include <mach/pc/machine.h>
+#include <machine/pc/machine.h>
 
 __BEGIN_SYS
 

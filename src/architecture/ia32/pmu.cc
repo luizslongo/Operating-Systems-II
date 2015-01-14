@@ -1,6 +1,6 @@
 // EPOS IA32 PMU Mediator Implementation
 
-#include <arch/ia32/pmu.h>
+#include <architecture/ia32/pmu.h>
 
 __BEGIN_SYS
 

@@ -1,8 +1,8 @@
 // EPOS PC Intel PRO/100 (i82559) Ethernet NIC Mediator Initialization
 
 #include <system.h>
-#include <mach/pc/machine.h>
-#include <mach/pc/e100.h>
+#include <machine/pc/machine.h>
+#include <machine/pc/e100.h>
 
 __BEGIN_SYS
 

@@ -1,6 +1,6 @@
 // EPOS IA32 CPU System Call Function Implementation
 
-#include <arch/ia32/cpu.h>
+#include <architecture/ia32/cpu.h>
 #include <ic.h>
 
 __BEGIN_SYS

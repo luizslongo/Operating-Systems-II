@@ -2,7 +2,7 @@
 
 #include <machine.h>
 #include <ic.h>
-#include <mach/pc/timer.h>
+#include <machine/pc/timer.h>
 
 __BEGIN_SYS
 
