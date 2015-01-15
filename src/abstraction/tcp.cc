@@ -129,7 +129,7 @@ int TCP::Connection::send(const void * d, unsigned int size)
 
             int payload = (allowed > left) ? left : allowed;
 
-            if(!dsend(d, payload)) // FIXME we should wait until there are available buffers
+            if(!dsend(data, payload)) // FIXME we should wait until there are available buffers
                 return -1;
 
             data += payload;
@@ -170,7 +170,7 @@ int TCP::Connection::send(const void * d, unsigned int size)
 
         return -1;
     } else if(_state != ESTABLISHED && _state != CLOSE_WAIT) {
-        db<TCP>(TRC) << "TCP::send: The connection is not open. It is not possible to stream." << endl;
+        db<TCP>(WRN) << "TCP::send: The connection is not open. It is not possible to stream." << endl;
 
         return -1;
     }

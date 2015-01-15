@@ -57,28 +57,30 @@ public:
     }
 
     int receive_all(void * data, unsigned int size) {
-        for(unsigned int received = 0; received <= size; received = 0) {
+        int r = 0;
+        unsigned int headers = sizeof(IP::Header) + sizeof(TCP::Header);
+        for(unsigned int received = 0, coppied = 0; received < size; received += coppied) {
             _ready.p();
-            for(List::Element* el = _received.head(); el; el = el->next())
-                received += el->object()->size();
+            Element * e = _received.remove();
+            Buffer * head = e->object();
+            delete e;
+            r += Channel::receive(head, data + received, coppied = ((received + (head->size() - headers)) > size ? (size - received) : (head->size() - headers)));
         }
 
-        Element * el = _received.remove();
-        Buffer * buf = el->object();
-        delete el;
-        return Channel::receive(buf, data, size);
+        return r;
     }
     int receive_all(Address * from, void * data, unsigned int size) {
-        for(unsigned int received = 0; received <= size; received = 0) {
+        int r = 0;
+        unsigned int headers = sizeof(IP::Header) + sizeof(TCP::Header);
+        for(unsigned int received = 0, coppied = 0; received < size; received += coppied) {
             _ready.p();
-            for(List::Element* el = _received.head(); el; el = el->next())
-                received += el->object()->size();
+            Element * e = _received.remove();
+            Buffer * head = e->object();
+            delete e;
+            r += Channel::receive(head, data + received, coppied = ((received + (head->size() - headers)) > size ? (size - received) : (head->size() - headers)));
         }
 
-        Element * el = _received.remove();
-        Buffer * buf = el->object();
-        delete el;
-        return Channel::receive(buf, from, data, size);
+        return r;
     }
 
 private:
@@ -145,6 +147,21 @@ public:
         return size;
     }
 
+    int receive_all(void * d, unsigned int size) {
+        char * data = reinterpret_cast<char *>(d);
+        int r = 0;
+        unsigned int headers = sizeof(IP::Header) + sizeof(TCP::Header);
+        for(unsigned int received = 0, coppied = 0; received < size; received += coppied) {
+            _ready.p();
+            Element * e = _received.remove();
+            Buffer * head = e->object();
+            delete e;
+            r += _connection->receive(head, data + received, coppied = ((received + (head->size() - headers)) > size ? (size - received) : (head->size() - headers)));
+        }
+
+        return r;
+    }
+
 private:
     void update(typename Channel::Observed * obs, Observing_Condition c, Buffer * buf) {
         _received.insert(new (SYSTEM) Element(buf));
@@ -180,7 +197,7 @@ public:
     int receive(void * data, unsigned int size) { return Base::receive(data, size); }
     int receive_all(void * data, unsigned int size) { return Base::receive_all(data, size); }
 
-    int read(void * data, unsigned int size) { return receive(data, size); }
+    int read(void * data, unsigned int size) { return receive_all(data, size); }
     int write(const void * data, unsigned int size) { return send(data, size); }
 
     const Address & peer() const { return _peer;}
@@ -209,7 +226,7 @@ public:
     int receive(void * data, unsigned int size) { return Base::receive(data, size); }
     int receive_all(void * data, unsigned int size) { return Base::receive_all(data, size); }
 
-    int read(void * data, unsigned int size) { return receive(data, size); }
+    int read(void * data, unsigned int size) { return receive_all(data, size); }
     int write(const void * data, unsigned int size) { return send(data, size); }
 
     const Address & peer() const { return _peer;}
