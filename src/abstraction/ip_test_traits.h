@@ -94,7 +94,7 @@ __BEGIN_SYS
 // Abstractions
 template<> struct Traits<Application>: public Traits<void>
 {
-    static const unsigned int STACK_SIZE = Traits<Machine>::STACK_SIZE;
+    static const unsigned int STACK_SIZE = 4 * Traits<Machine>::STACK_SIZE;
     static const unsigned int HEAP_SIZE = Traits<Machine>::HEAP_SIZE;
     static const unsigned int MAX_THREADS = Traits<Machine>::MAX_THREADS;
 };
@@ -112,7 +112,7 @@ template<> struct Traits<System>: public Traits<void>
 
     static const bool reboot = true;
 
-    static const unsigned int STACK_SIZE = Traits<Machine>::STACK_SIZE;
+    static const unsigned int STACK_SIZE = 4 * Traits<Machine>::STACK_SIZE;
     static const unsigned int HEAP_SIZE = (Traits<Application>::MAX_THREADS + 1) * Traits<Application>::STACK_SIZE;
 };
 
