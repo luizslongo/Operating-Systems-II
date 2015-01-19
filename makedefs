@@ -210,7 +210,7 @@ lib%.o: lib%.cc
 		$(CXX) $(CXXFLAGS) $<
 
 %_test_traits.h: %_test.cc
-		$(INSTALL) $(INCLUDE)/system/traits.h $@
+		$(INSTALL) -m 755 $(INCLUDE)/system/traits.h $@
 
 %_test.o: %_test.cc
 		$(ACXX) $(ACXXFLAGS) $<

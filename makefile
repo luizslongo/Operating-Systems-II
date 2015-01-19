@@ -70,13 +70,13 @@ veryclean: clean
 		(cd tools && $(MAKECLEAN))
 		find $(LIB) -maxdepth 1 -type f -exec $(CLEAN) {} \;
 		find $(BIN) -maxdepth 1 -type f -exec $(CLEAN) {} \;
-		find $(APP) -maxdepth 1 -type f -perm /111 -exec $(CLEAN) {} \;
+		find $(APP) -maxdepth 1 -type f -perm -755 -exec $(CLEAN) {} \;
 		find $(IMG) -name "*.img" -exec $(CLEAN) {} \;
 		find $(IMG) -name "*.out" -exec $(CLEAN) {} \;
 		find $(IMG) -name "*.pcap" -exec $(CLEAN) {} \;
 		find $(IMG) -name "*.net" -exec $(CLEAN) {} \;
-		find $(IMG) -maxdepth 1 -type f -perm /111 -exec $(CLEAN) {} \;
-		find $(TOP) -name "*_test_traits.h" -type f -perm /111 -exec $(CLEAN) {} \;
+		find $(IMG) -maxdepth 1 -type f -perm 755 -exec $(CLEAN) {} \;
+		find $(TOP) -name "*_test_traits.h" -type f -perm 755 -exec $(CLEAN) {} \;
 
 dist: veryclean
 		find $(TOP) -name ".*project" -exec $(CLEAN) {} \;
