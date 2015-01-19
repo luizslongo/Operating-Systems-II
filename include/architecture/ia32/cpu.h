@@ -240,15 +240,12 @@ public:
     };
 
     // CPU Context
-    class Context
-    {
+    class Context {
     public:
-        Context(Log_Addr entry): _eflags(FLAG_DEFAULTS), _eip(entry) {}
+        Context(Log_Addr usp, Log_Addr entry): _esp3(usp), _eflags(FLAG_DEFAULTS), _eip(entry) {}
 
         void save() volatile;
         void load() const volatile;
-
-        void usp(Log_Addr usp) { _esp3 = usp; }
 
         friend Debug & operator<<(Debug & db, const Context & c) {
             db << hex
@@ -275,7 +272,7 @@ public:
         }
 
     private:
-        Reg32 _esp3;
+        Reg32 _esp3; // only used in multitasking environments
         Reg32 _edi;
         Reg32 _esi;
         Reg32 _ebp;
@@ -366,14 +363,14 @@ public:
 
     // IA32 first decrements the stack pointer and then writes into the stack, that's why we decrement it by an int
     template<typename ... Tn>
-    static Context * init_stack(Log_Addr stack, unsigned int size, void (* exit)(), int (* entry)(Tn ...), Tn ... an) {
+    static Context * init_stack(Log_Addr usp, Log_Addr stack, unsigned int size, void (* exit)(), int (* entry)(Tn ...), Tn ... an) {
         Log_Addr sp = stack + size - sizeof(int);
         sp -= SIZEOF<Tn ... >::Result;
         init_stack_helper(sp, an ...);
         sp -= sizeof(int *);
         *static_cast<int *>(sp) = Log_Addr(exit);
         sp -= sizeof(Context);
-        return new (sp) Context(entry);
+        return new (sp) Context(usp, entry);
     }
 
 public:

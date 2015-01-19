@@ -27,9 +27,10 @@ public:
     // Dereferencing handles for Task(cs, ds)
     Stub(const Stub<Segment, true> & cs, const Stub<Segment, true> & ds): Proxy<Component>(cs.id().unit(), ds.id().unit()) {}
 
-    // Dereferencing proxy for Thread(task, an ..., ustack) and allocating a user-level stack for the thread
+    // Dereferencing proxy for Thread(task, an ..., usp) and allocating a user-level stack for the thread
     template<typename ... Tn>
-    Stub(const Stub<Task, true> & t, const Tn & ... an): Proxy<Component>(t.id().unit(), an ..., new char[Traits<Application>::STACK_SIZE]) {}
+    Stub(const Stub<Task, true> & t, const Tn & ... an)
+    : Proxy<Component>(t.id().unit(), an ..., new char[Traits<Application>::STACK_SIZE] + Traits<Application>::STACK_SIZE) {}
 
     template<typename ... Tn>
     Stub(const Tn & ... an): Proxy<Component>(an ...) {}
@@ -37,10 +38,11 @@ public:
     ~Stub() {}
 };
 
-// Dereferencing proxy for Thread(an ..., ustack) and allocating a user-level stack for the thread
+// Dereferencing proxy for Thread(an ..., usp) and allocating a user-level stack for the thread
 template<>
 template<typename ... Tn>
-Stub<Thread, true>::Stub(const Tn & ... an): Proxy<Thread>(an ..., new char[Traits<Application>::STACK_SIZE]) {}
+Stub<Thread, true>::Stub(const Tn & ... an)
+: Proxy<Thread>(an ..., new char[Traits<Application>::STACK_SIZE] + Traits<Application>::STACK_SIZE) {}
 
 __END_SYS
 

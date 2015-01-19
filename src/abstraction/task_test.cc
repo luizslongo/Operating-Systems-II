@@ -103,7 +103,6 @@ int main()
 
 int func_a(void)
 {
-    Thread * s = Thread::self();
     for(int i = iterations; i > 0; i--) {
         for(int i = 0; i < 79; i++)
             cout << "a";

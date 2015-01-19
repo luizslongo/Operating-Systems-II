@@ -18,7 +18,7 @@ Scheduler<Thread> Thread::_scheduler;
 Spin Thread::_lock;
 
 // Methods
-void Thread::common_constructor(Log_Addr entry, unsigned int stack_size) 
+void Thread::constructor(Log_Addr entry, unsigned int stack_size)
 {
     db<Thread>(TRC) << "Thread(task=" << _task
                     << ",entry=" << entry

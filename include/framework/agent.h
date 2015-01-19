@@ -30,17 +30,17 @@ public:
         switch(method()) {
         case CREATE2: {
             int (*entry)();
-            char * ustack;
-            in(entry, ustack);
-            id(Id(THREAD_ID, reinterpret_cast<Id::Unit_Id>(new Adapter<Thread>(entry, Thread::READY, 0, Thread::STACK_SIZE, ustack))));
+            char * usp;
+            in(entry, usp);
+            id(Id(THREAD_ID, reinterpret_cast<Id::Unit_Id>(new Adapter<Thread>(Thread::Configuration(Thread::READY, Thread::NORMAL, Thread::STACK_SIZE, usp), entry))));
         }
         break;
         case CREATE3: {
             Adapter<Task> * task;
             int (*entry)();
-            char * ustack;
-            in(task, entry, ustack);
-            id(Id(THREAD_ID, reinterpret_cast<Id::Unit_Id>(new Adapter<Thread>(*task, entry, Thread::READY, 0, Thread::STACK_SIZE, ustack))));
+            char * usp;
+            in(task, entry, usp);
+            id(Id(THREAD_ID, reinterpret_cast<Id::Unit_Id>(new Adapter<Thread>(Thread::Configuration(Thread::READY, Thread::NORMAL, Thread::STACK_SIZE, usp), *task, entry))));
         }
         break;
         case DESTROY:
