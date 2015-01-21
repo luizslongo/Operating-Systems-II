@@ -15,11 +15,11 @@ LIB		:= $(TOP)/lib
 IMG		:= $(TOP)/img
 ETC		:= $(TOP)/etc
 DOC		:= $(TOP)/doc
-LARCHNAME	:= architecture
-LMACHNAME	:= machine
-LSYSNAME	:= system
+LARCHNAME	:= arch
+LMACHNAME	:= mach
+LSYSNAME	:= sys
 LINITNAME	:= init
-LUTILNAME	:= utility
+LUTILNAME	:= util
 
 # Makefile hacks
 APPLICATIONS	:= $(subst .cc,,$(shell find $(APP) -name \*.cc -printf "%f\n"))

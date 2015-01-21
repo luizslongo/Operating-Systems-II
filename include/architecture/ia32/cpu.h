@@ -12,6 +12,13 @@ class IA32: public CPU_Common
     friend class Init_System;
 
 public:
+    // CPU Native Data Types
+    using CPU_Common::Reg8;
+    using CPU_Common::Reg16;
+    using CPU_Common::Reg32;
+    using CPU_Common::Log_Addr;
+    using CPU_Common::Phy_Addr;
+
     // CPU Flags
     typedef Reg32 Flags;
     enum {
@@ -242,7 +249,7 @@ public:
     // CPU Context
     class Context {
     public:
-        Context(Log_Addr usp, Log_Addr entry): _esp3(usp), _eflags(FLAG_DEFAULTS), _eip(entry) {}
+        Context(const Log_Addr & usp, const Log_Addr & entry): _esp3(usp), _eflags(FLAG_DEFAULTS), _eip(entry) {}
 
         void save() volatile;
         void load() const volatile;
@@ -354,16 +361,14 @@ public:
         return compare;
    }
 
-    static Reg32 htonl(Reg32 v)	{
- 	ASM("bswap %0" : "=r" (v) : "0" (v), "r" (v)); return v;
-    }
+    static Reg32 htonl(Reg32 v)	{ ASM("bswap %0" : "=r" (v) : "0" (v), "r" (v)); return v; }
     static Reg16 htons(Reg16 v)	{ return swap16(v); }
     static Reg32 ntohl(Reg32 v)	{ return htonl(v); }
     static Reg16 ntohs(Reg16 v)	{ return htons(v); }
 
     // IA32 first decrements the stack pointer and then writes into the stack, that's why we decrement it by an int
     template<typename ... Tn>
-    static Context * init_stack(Log_Addr usp, Log_Addr stack, unsigned int size, void (* exit)(), int (* entry)(Tn ...), Tn ... an) {
+    static Context * init_stack(const Log_Addr & usp, const Log_Addr & stack, unsigned int size, void (* exit)(), int (* entry)(Tn ...), Tn ... an) {
         Log_Addr sp = stack + size - sizeof(int);
         sp -= SIZEOF<Tn ... >::Result;
         init_stack_helper(sp, an ...);

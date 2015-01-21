@@ -164,7 +164,7 @@ __END_SYS
 __BEGIN_SYS
 
 template<typename ... Tn>
-Thread::Thread(int (* entry)(Tn ...), Tn ... an)
+inline Thread::Thread(int (* entry)(Tn ...), Tn ... an)
 : _task(Task::self()), _state(READY), _waiting(0), _joining(0), _link(this, NORMAL)
 {
     lock();
@@ -174,7 +174,7 @@ Thread::Thread(int (* entry)(Tn ...), Tn ... an)
 }
 
 template<typename ... Tn>
-Thread::Thread(const Task & task, int (* entry)(Tn ...), Tn ... an)
+inline Thread::Thread(const Task & task, int (* entry)(Tn ...), Tn ... an)
 : _task(&task), _state(READY), _waiting(0), _joining(0), _link(this, NORMAL)
 {
     lock();
@@ -184,7 +184,7 @@ Thread::Thread(const Task & task, int (* entry)(Tn ...), Tn ... an)
 }
 
 template<typename ... Cn, typename ... Tn>
-Thread::Thread(const Configuration & conf, int (* entry)(Tn ...), Tn ... an)
+inline Thread::Thread(const Configuration & conf, int (* entry)(Tn ...), Tn ... an)
 : _task(Task::self()), _state(conf.state), _waiting(0), _joining(0), _link(this, conf.criterion)
 {
     lock();
@@ -194,7 +194,7 @@ Thread::Thread(const Configuration & conf, int (* entry)(Tn ...), Tn ... an)
 }
 
 template<typename ... Cn, typename ... Tn>
-Thread::Thread(const Configuration & conf, const Task & task, int (* entry)(Tn ...), Tn ... an)
+inline Thread::Thread(const Configuration & conf, const Task & task, int (* entry)(Tn ...), Tn ... an)
 : _task(&task), _state(conf.state), _waiting(0), _joining(0), _link(this, conf.criterion)
 {
     lock();

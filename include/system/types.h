@@ -61,6 +61,10 @@ class IA32_TSC;
 class IA32_MMU;
 class IA32_PMU;
 
+class ARMv7;
+class ARMv7_TSC;
+class ARMv7_MMU;
+
 // Machine Hardware Mediators
 class PC;
 class PC_PCI;
@@ -72,9 +76,21 @@ class PC_Scratchpad;
 class PC_UART;
 class PC_Display;
 class PC_Ethernet;
+
+class Cortex_M;
+class Cortex_M_IC;
+class Cortex_M_Timer;
+class Cortex_M_RTC;
+class Cortex_M_EEPROM;
+class Cortex_M_Scratchpad;
+class Cortex_M_UART;
+class Cortex_M_Display;
+class Cortex_M_NIC;
+
 class PCNet32;
 class C905;
 class E100;
+class Radio;
 
 class Serial_Display;
 
@@ -198,6 +214,11 @@ template<> struct Type<IA32> { static const Type_Id ID = CPU_ID; };
 template<> struct Type<IA32_TSC> { static const Type_Id ID = TSC_ID; };
 template<> struct Type<IA32_MMU> { static const Type_Id ID = MMU_ID; };
 
+template<> struct Type<ARMv7> { static const Type_Id ID = CPU_ID; };
+template<> struct Type<ARMv7_TSC> { static const Type_Id ID = TSC_ID; };
+template<> struct Type<ARMv7_MMU> { static const Type_Id ID = MMU_ID; };
+
+
 template<> struct Type<PC> { static const Type_Id ID = MACHINE_ID; };
 template<> struct Type<PC_IC> { static const Type_Id ID = IC_ID; };
 template<> struct Type<PC_Timer> { static const Type_Id ID = TIMER_ID; };
@@ -207,6 +228,15 @@ template<> struct Type<PC_PCI> { static const Type_Id ID = PCI_ID; };
 template<> struct Type<PC_Display> { static const Type_Id ID = DISPLAY_ID; };
 template<> struct Type<PC_Scratchpad> { static const Type_Id ID = SCRATCHPAD_ID; };
 template<> struct Type<PC_Ethernet> { static const Type_Id ID = NIC_ID; };
+
+template<> struct Type<Cortex_M> { static const Type_Id ID = MACHINE_ID; };
+template<> struct Type<Cortex_M_IC> { static const Type_Id ID = IC_ID; };
+template<> struct Type<Cortex_M_Timer> { static const Type_Id ID = TIMER_ID; };
+template<> struct Type<Cortex_M_UART> { static const Type_Id ID = UART_ID; };
+template<> struct Type<Cortex_M_RTC> { static const Type_Id ID = RTC_ID; };
+template<> struct Type<Cortex_M_Display> { static const Type_Id ID = DISPLAY_ID; };
+template<> struct Type<Cortex_M_Scratchpad> { static const Type_Id ID = SCRATCHPAD_ID; };
+
 
 template<> struct Type<Thread> { static const Type_Id ID = THREAD_ID; };
 template<> struct Type<Periodic_Thread> { static const Type_Id ID = THREAD_ID; };
