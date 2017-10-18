@@ -18,14 +18,19 @@ protected:
     typedef CPU::Reg32 Reg32;
     typedef CPU::Reg64 Reg64;
     typedef CPU::Log_Addr Log_Addr;
-
-    static const unsigned int CHANNELS = 3;
-
 public:
+    static const unsigned int CHANNELS = 3;
+    static const unsigned int FIXED = 0;
+
+public: 
+    static void init();
+    static void perf_int_init(){};
+
     // Architectural PM Version 1 Section 30.2.1.1
     // MAR address range between 0x40000000 to 0x400000FF
     enum {
         MSR_BASE = 0x40000000,
+        PERFEVTSEL_BASE = 0x0186
     };
 
     // Performance Monitoring Counters - used as input to the rdpmc instruction
@@ -45,6 +50,7 @@ public:
         PMC_BASE_ADDR = 0x00c1,
         MPERF         = 0x00e7,
         APERF         = 0x00e8,
+        EVTSEL_BASE_ADDR = 0x0186,
         EVTSEL0       = 0x0186,
         EVTSEL1       = 0x0187,
         EVTSEL2       = 0x0188,
@@ -63,10 +69,13 @@ public:
     };
 
     // Flags
-    enum {
+    enum Flags{
+        //CR4 Performance Counter Enable
+        NONE    = 0,
+        PCE     = 1 << 8,
         USR     = 1 << 16,
         OS      = 1 << 17,
-        EDGE    = 1 << 18,
+        EDGE    = 1 << 18,        
         PC      = 1 << 19,
         INT     = 1 << 20,
         LOGICAL = 1 << 21,
@@ -84,7 +93,7 @@ public:
         LLC_MISSES                      = 0x2e | (0x41 << 8),
         BRANCH_INSTRUCTIONS_RETIRED     = 0xc4 | (0x00 << 8),
         BRANCH_MISSES_RETIRED           = 0xC5 | (0x00 << 8)
-    };
+    }; 
 
 public:
     Intel_PMU_V1() {}
@@ -102,7 +111,7 @@ public:
 
     static void write(const Channel & channel, const Count & count) {
         db<PMU>(TRC) << "PMU::write(ch=" << channel << ",ct=" << count << ")" << endl;
-        wrmsr(EVTSEL0 + channel, count);
+        wrmsr(PMC_BASE_ADDR + channel, count);
     }
 
     static void start(const Channel & channel) {
@@ -120,6 +129,10 @@ public:
         wrmsr(EVTSEL0 + channel, 0);
     }
 
+    //static Reg32 num_counters() { return _num_counters; }
+
+
+
 protected:
     static Reg64 rdmsr(Reg32 msr) { return CPU::rdmsr(msr); }
     static void wrmsr(Reg32 msr, Reg64 val) { CPU::wrmsr(msr, val); }
@@ -131,15 +144,88 @@ protected:
 
 protected:
     static const Reg32 _events[EVENTS];
+
+    // typedef union {
+    // struct {
+    //     Reg32 version_id:8;
+    //     Reg32 num_counters:8;
+    //     Reg32 bit_width:8;
+    //     Reg32 mask_length:8;
+    // } split;
+    // Reg32 full;
+    // } cpuid10_eax;
+
+    // typedef union {
+    // struct {
+    //     Reg32 num_counters_fixed:5;
+    //     Reg32 bit_width_fixed:8;
+    //     Reg32 reserved:19;
+    // } split;
+    // Reg32 full;
+    // } cpuid10_edx;
+    
+    // typedef union {
+    //     struct {
+    //     Reg64 lbr_format    : 6;
+    //     Reg64 pebs_trap     : 1;
+    //     Reg64 pebs_arch_reg : 1;
+    //     Reg64 pebs_format   : 4;
+    //     Reg64 smm_freeze    : 1;
+    //     };
+    //     Reg64 capabilities;
+    // } perf_capabilities;
+
+    // typedef struct {
+    //     Reg8                    x86;            /* CPU family */
+    //     Reg8                    x86_vendor;     /* CPU vendor */
+    //     Reg8                    x86_model;
+    //     Reg8                    x86_mask;
+    // /* Maximum supported CPUID level, -1=no CPUID: */
+    //     int                     cpuid_level;
+    //     Reg32                   x86_capability[10];
+    //     char                    x86_vendor_id[16];
+    //     char                    x86_model_id[64];
+    //     /* in KB - valid for CPUS which support this call: */
+    //     int                     x86_cache_size;
+    //     int                     x86_cache_alignment;    /* In bytes */
+    //     int                     x86_power;
+    //     Reg32                   loops_per_jiffy;
+    // /* cpuid returned max cores value: */
+    //     Reg16                     x86_max_cores;
+    //     Reg16                     apicid;
+    //     Reg16                     initial_apicid;
+    //     Reg16                     x86_clflush_size;
+    // } cpuinfo_x86;
+    
+
+    // static int _version;
+    // static int _max_events;
+    // static int _cntval_bits;
+    // static Reg64 _cntval_mask;
+    // //static int apic;
+    // static Reg64 _max_period;
+    
+    //  * Intel Arch Perfmon v2+
+     
+    // static Reg64 _intel_ctrl;
+    // static perf_capabilities _intel_cap;
+    // static cpuinfo_x86 _cpuinfo;
+
+    // static Reg32 _num_counters;
+    // static Reg32 _num_counters_fixed;
+     
+
 };
 
 
 class Intel_PMU_V2: public Intel_PMU_V1
 {
 public:
-    static const unsigned int CHANNELS = 5;
+    static const unsigned int CHANNELS = 2;
     static const unsigned int FIXED = 3;
-
+protected:
+    static Handler *_pmc_handler[CHANNELS]; 
+public:
     // Meaningful bits in FIXED_CTR_CTRL MSR
     enum {
         CRT0_ENABLE_SYS    = 0,
@@ -168,76 +254,52 @@ public:
         PMC1_OVERFLOW      = 1,
         CRT0_OVERFLOW      = 32,
         CRT1_OVERFLOW      = 33,
-        CRT2_OVERFLOW      = 34
+        CRT2_OVERFLOW      = 34,
+        FIXED_CTR0_OVF     = (1LLU << 0x20),        //verificar
+        FIXED_CTR1_OVF     = (1LLU << 0x21),        //verificar
+        FIXED_CTR2_OVF     = (1LLU << 0x22),        //verificar
+        COND_CHGD          = (1LLU << 0x3F)         //verificar
+    };
+
+    enum {
+    //FIXED_CTR_CTRL0
+    FIXED_CTR0_OS           = 0x01,
+    FIXED_CTR0_USER         = 0x02,
+    FIXED_CTR0_ALL          = 0x03,
+    FIXED_CTR0_PMI          = (0x01 << 3),
+    //FIXED_CTR_CTRL1
+    FIXED_CTR1_OS           = (0x01 << 4),
+    FIXED_CTR1_USER         = (0x02 << 4),
+    FIXED_CTR1_ALL          = (0x03 << 4),
+    FIXED_CTR1_PMI          = (0x01 << 7),
+    //FIXED_CTR_CTRL2
+    FIXED_CTR2_OS           = (0x01 << 8),
+    FIXED_CTR2_USER         = (0x02 << 8),
+    FIXED_CTR2_ALL          = (0x03 << 8),
+    FIXED_CTR2_PMI          = (0x01 << 11),
+
+    FIXED_CTR0_ENABLE = (0x1LLU << 32),
+    FIXED_CTR1_ENABLE = (0x1LLU << 33),
+    FIXED_CTR2_ENABLE = (0x1LLU << 34),
     };
 
 public:
     Intel_PMU_V2() {}
 
-    static bool config(const Channel & channel, const Event & event, const Flags & flags = NONE) {
-        assert((channel < CHANNELS) && (event < EVENTS));
-        db<PMU>(TRC) << "PMU::config(c=" << channel << ",e=" << event << ",f=" << flags << ")" << endl;
-
-        if(((channel == 0) && (event != INSTRUCTION)) || ((channel == 1) && (event != DVS_CLOCK)) || ((channel == 2) && (event != CLOCK))) {
-            db<PMU>(WRN) << "PMU::config: channel " << channel << " is fixed in this architecture and cannot be reconfigured!" << endl;
-            return false;
-        }
-
-        if(channel >= FIXED)
-            wrmsr(EVTSEL0 + channel - FIXED, _events[event] | USR | OS | ENABLE | flags); // implicitly start counting due to flag ENABLE
-
-        start(channel);
-
-        return true;
+    static Reg64 global_overflow_status(void) { 
+        db<Intel_PMU_V1>(TRC) << "Intel_PMU_V1::overflow()\n"; 
+        return rdmsr(GLOBAL_STATUS); 
     }
 
-    static Count read(const Channel & channel) {
-        assert(channel < CHANNELS);
-        db<PMU>(TRC) << "PMU::read(c=" << channel << ")" << endl;
-        return channel < FIXED ? rdpmc(channel | (1 << 30)) : rdpmc(channel - FIXED);
+    static bool cond_changed(void) {
+        db<Intel_PMU_V1>(TRC) << "Intel_PMU_V1::cond_changed()\n";
+        return ((rdmsr(GLOBAL_STATUS) & COND_CHGD) != 0);
     }
 
-    static void write(const Channel & channel, const Count & count) {
-        db<PMU>(TRC) << "PMU::write(ch=" << channel << ",ct=" << count << ")" << endl;
-        wrmsr(EVTSEL0 + channel, count);
+    static void clear_cond_changed(void) {
+        wrmsr(GLOBAL_OVF, COND_CHGD);
     }
 
-    static bool overflow(const Channel & channel) {
-        assert(channel < CHANNELS);
-        db<PMU>(TRC) << "PMU::overflow(c=" << channel << ")" << endl;
-        return (channel < FIXED) ? (rdmsr(GLOBAL_STATUS) & (1ULL << (CRT0_OVERFLOW + channel))) : (rdmsr(GLOBAL_STATUS) & (PMC0_OVERFLOW << (channel - FIXED)));
-    }
-
-    static void start(const Channel & channel) {
-        assert(channel < CHANNELS);
-        db<PMU>(TRC) << "PMU::start(c=" << channel << ")" << endl;
-        if(channel < FIXED) {
-            wrmsr(FIXED_CTR_CTL, (rdmsr(FIXED_CTR_CTL) | (3ULL << (CRT0_ENABLE_SYS + channel * 4))));
-            wrmsr(GLOBAL_CTRL,   (rdmsr(GLOBAL_CTRL)   | (1ULL << (CRT0_ENABLE + channel))));
-        } else {
-            wrmsr(GLOBAL_OVF,  rdmsr(GLOBAL_OVF)  | (1ULL << (PMC0_OVERFLOW + channel - FIXED))); // clear OVF flag
-            wrmsr(GLOBAL_CTRL, rdmsr(GLOBAL_CTRL) | (1ULL << (PMC0_ENABLE + channel - FIXED)));
-        }
-    }
-
-    static void stop(const Channel & channel) {
-        assert(channel < CHANNELS);
-        db<PMU>(TRC) << "PMU::stop(c=" << channel << ")" << endl;
-        if(channel < FIXED) {
-            wrmsr(GLOBAL_OVF,   (rdmsr(GLOBAL_OVF)   | (1ULL << (CRT0_OVERFLOW + channel))));
-            wrmsr(FIXED_CTR_CTL, (rdmsr(FIXED_CTR_CTL) & ~(3ULL << (CRT0_ENABLE_SYS + channel * 4))));
-       } else
-            wrmsr(GLOBAL_CTRL, rdmsr(GLOBAL_CTRL) & ~(1ULL << (PMC0_ENABLE + channel - FIXED)));
-    }
-
-    static void reset(const Channel & channel) {
-        assert(channel < CHANNELS);
-        db<PMU>(TRC) << "PMU::reset(c=" << channel << ")" << endl;
-        if(channel < FIXED)
-            wrmsr(FIXED_CTR0 + channel, 0);
-        else
-            wrmsr(EVTSEL0 + channel - FIXED, 0);
-    }
 };
 
 // TODO: Refactoring stoped at V2. Someone with a real machine must continue the procedure following the model
@@ -248,21 +310,6 @@ public:
     enum {
         // PERFEVTSEL MSR any thread bit figure 18-16
         ANY_THREAD = (0x01 << 21),
-
-        //GLOBAL STATUS and GLOBAL OVF STATUS
-        PMC0_OVERFLOW   = 0x01,
-        PMC1_OVERFLOW   = (1 << 0x01),
-        PMC2_OVF        = (1 << 0x02),
-        PMC3_OVF        = (1 << 0x03),
-        PMC4_OVF        = (1 << 0x04),
-        PMC5_OVF        = (1 << 0x05),
-        PMC6_OVF        = (1 << 0x06),
-        PMC7_OVF        = (1 << 0x07),
-        FIXED_CTR0_OVF  = (1LLU << 0x20),
-        FIXED_CTR1_OVF  = (1LLU << 0x21),
-        FIXED_CTR2_OVF  = (1LLU << 0x22),
-        OVF_BUFFER      = (1LLU << 0x3e),
-        COND_CHGD       = (1LLU << 0x3F)
     };
 
     // FIXED_CTR_CTL MSR any thread bit
@@ -728,10 +775,10 @@ public:
 
 class Intel_Sandy_Bridge_PMU: public Intel_PMU_V3
 {
-private:
-    static const unsigned int CHANNELS = 3;
+public:
+    static const unsigned int CHANNELS = 4;
     static const unsigned int EVENTS = 3;
-
+private:
     //Layout of IA32_PEBS_ENABLE MSR figure 18-28
     enum {
         PS_EN = (0x01LLU << 63),
@@ -797,6 +844,8 @@ private:
         PMC0_UNCORE = 0xb7 | (0x1 << 8), //requires OFFCORE_RSP_0
         PMC3_UNCORE = 0xbb | (0x1 << 8), //requires OFFCORE_RSP_1
     };
+
+public:
 
     // List of all supported events - Section 19.3 - Table 19-3
     enum {
@@ -1034,6 +1083,8 @@ private:
         MEM_UOP_RETIRED_SPLIT = 0xd0 | (0x40 << 8),
         MEM_UOP_RETIRED_ALL = 0xd0 | (0x80 << 8),
 
+        MEM_UOPS_RETIRED_ALL_LOADS = 0xD0 | (0x81 << 8), // Supports PEBS. PMC0-3 only regardless HTT.
+
         MEM_LOAD_UOPS_RETIRED_L1_HIT = 0xd1 | (0x01 << 8),
         MEM_LOAD_UOPS_RETIRED_L2_HIT = 0xd1 | (0x02 << 8),
         MEM_LOAD_UOPS_RETIRED_L3_HIT = 0xd1 | (0x04 << 8),
@@ -1072,83 +1123,202 @@ private:
 public:
     Intel_Sandy_Bridge_PMU() {}
 
-
-private:
-//    static void config_uncore(int pmc, Reg64 uncore_flags) {
-//        if(pmc == 0 ) {
-//            //wrmsr(OFFCORE_RSP_0, uncore_flags);
-//            wrmsr(OFFCORE_RSP_0, 0x3F803C0120LLU);
-//            config(EVTSEL0, PMC0_UNCORE | OS | USR | ENABLE);
-//        } else if(pmc == 3) {
-//            wrmsr(OFFCORE_RSP_1, uncore_flags);
-//            config(EVTSEL3, PMC3_UNCORE | OS | USR | ENABLE);
-//        }
-//    }
-
-//    void instructions_retired(void) {
-//        Intel_PMU_Version3::enable_fixed_ctr0();
-//    }
-//
-//    Reg64 get_instructions_retired(void) {
-//        return Intel_PMU_Version3::rdmsr(FIXED_CTR0);
-//    }
-//
-//    void cpu_clk_unhalted_core(void) {
-//        Intel_PMU_Version3::enable_fixed_ctr1();
-//    }
-//
-//    Reg64 get_cpu_clk_unhalted_core(void) {
-//        return Intel_PMU_Version3::rdmsr(FIXED_CTR1);
-//    }
-//
-//    void cpu_clk_unhalted_ref(void) {
-//        Intel_PMU_Version3::enable_fixed_ctr2();
-//    }
-//
-//    Reg64 get_cpu_clk_unhalted_ref(void) {
-//        return Intel_PMU_Version3::rdmsr(FIXED_CTR2);
-//    }
-
-public:
-//    void reset_fixed_ctr0(void) {
-//        Intel_PMU_Version3::disable_fixed_ctr0();
-//        PMU::reset(PMU::FIXED_CTR0);
-//        Intel_PMU_Version3::enable_fixed_ctr0();
-//    }
-//
-//    void reset_fixed_ctr1(void) {
-//        Intel_PMU_Version3::disable_fixed_ctr1();
-//        PMU::reset(PMU::FIXED_CTR1);
-//        Intel_PMU_Version3::enable_fixed_ctr1();
-//    }
-//
-//    static void enable(int pmc) { wrmsr(PEBS_ENABLE, rdmsr(PEBS_ENABLE) | PEBS_EN_PMC0 << pmc); }
-//
-//    static Reg64 pmc(int pmc) {
-//        Reg64 count = rdpmc(PMC0 + pmc);
-//        disable(EVTSEL0 + pmc);
-//        reset(PMC0 + PMC_BASE_ADDR + pmc);
-//        enable(EVTSEL0 + pmc);
-//        return count;
-//    }
 };
 
 template<int VERSION>
-class PMU_Select_Engine: public Intel_PMU_V1 {};
+class PMU_Select_Version: public Intel_PMU_V2 {};
 template<>
-class PMU_Select_Engine<Traits<PMU>::V2>: public Intel_PMU_V2 {};
+class PMU_Select_Version<Traits<PMU>::V3>: public Intel_PMU_V3 {};
 template<>
-class PMU_Select_Engine<Traits<PMU>::V3>: public Intel_PMU_V3 {};
+class PMU_Select_Version<Traits<PMU>::SANDY_BRIDGE>: public Intel_Sandy_Bridge_PMU {};
 
-class PMU: public PMU_Select_Engine<Traits<PMU>::VERSION>
+
+template<int VERSION>
+class PMU_handler: public PMU_Select_Version<Traits<PMU>::VERSION>
 {
+private:
     friend class CPU;
 
+    enum{
+        PMC_MASK = (0xffffffff>>(32-CHANNELS))
+    };
 public:
-    PMU() {}
+    PMU_handler() {}
 
-private:
-    static void init();
+public:
+    static void perf_int_init()
+    {
+        CPU::int_disable();
+        APIC::config_perf();
+        if (APIC::id()==0) {
+            for (int i=0;i<8; i++)
+                _pmc_handler[i] = 0;
+        }
+        IC::int_vector(IC::INT_PERF_INIT, PMU_int_handler);
+        IC::enable(IC::INT_PERF_INIT);
+        CPU::int_enable();
+    }
+
+    static void PMU_int_handler(const unsigned int& irq)
+    {
+
+        //db< Init, Intel_PMU_V1 >(WRN) << "Intel_PMU_V1::PMU_int_handler()\n";
+
+        Reg64 perf_ovf_msr;// pebs_enable_msr, pmcs_enable_msr;
+
+        // Get overflow status register value
+        perf_ovf_msr = global_overflow_status();
+        // kout << read(FIXED) << "    canal:FIXED   cpu:" << "  overflow:" << overflow() << "   thread:" << endl;
+
+        // PMC Handlers
+        if (overflow())
+        {
+           // kout << "OVERFLOW" << endl;
+
+            for (Channel i=0; i<CHANNELS;i++)
+            {
+                if (perf_ovf_msr&(1ULL << i))
+                {
+                    stop(i+FIXED);
+                    clear_overflow(i+FIXED);
+                    start(i+FIXED);
+                }
+            }
+
+            db<Init, Intel_PMU_V1>(INF) << "Intel_PMU_V1::PMC_overflow(" << APIC::id() << ");" << endl;
+        }
+
+        // Overflow Changed flag
+        clear_cond_changed();
+
+        // Clearing the mask bit in the performance counter LVT entry.
+        APIC::enable_perf(); 
+        // kout << read(FIXED) << "    canal:FIXED   cpu:"  << "  overflow:" << overflow() << "   thread:" << endl;
+
+        for (Reg32 i = 0; i < CHANNELS; i++)
+        { 
+            // For each PMC: verify if it's handler is set and an overflow occurred
+            if ((_pmc_handler[i] != 0) && ((perf_ovf_msr&(1ULL << i)) != 0))
+            {
+                // Then, call this handler
+                _pmc_handler[i]();
+            }
+        }
+        // kout << read(FIXED) << "    canal:FIXED   cpu:" << "  overflow:" << overflow() << "   thread:" << endl;
+
+    }
+
+    static bool overflow(const Channel & channel) {
+        assert(channel < CHANNELS);
+        db<PMU>(TRC) << "PMU::overflow(c=" << channel << ")" << endl;
+        return (channel < FIXED) ? (rdmsr(GLOBAL_STATUS) & (1ULL << (CRT0_OVERFLOW + channel))) : (rdmsr(GLOBAL_STATUS) & (1ULL << (channel - FIXED)));
+    }
+    
+    static bool overflow(void) { 
+        db<Intel_PMU_V1>(TRC) << "Intel_PMU_V1::overflow()\n"; 
+        return ((rdmsr(GLOBAL_STATUS) & PMC_MASK) != 0); 
+    }    
+    
+    static void clear_overflow(const Channel & channel) { 
+        assert(channel < CHANNELS);
+        wrmsr(GLOBAL_OVF, (PMC_MASK & 1ULL << (channel - FIXED))); //clear OVF flag 
+    }
+
+    static Count read(const Channel & channel) {
+        assert(channel < CHANNELS);
+        db<PMU>(TRC) << "PMU::read(c=" << channel << ")" << endl;
+        return channel < FIXED ? rdpmc(channel | (1 << 30)) : rdpmc(channel - FIXED);
+    }
+
+    static void write(const Channel & channel, const Count & count) {
+        db<PMU>(TRC) << "PMU::write(ch=" << channel << ",ct=" << count << ")" << endl;
+        if(channel >= FIXED) wrmsr(PMC_BASE_ADDR + channel - FIXED, count);
+    }
+
+    static void start(const Channel & channel) {
+        assert(channel < CHANNELS);
+        db<PMU>(TRC) << "PMU::start(c=" << channel << ")" << endl;
+        if(channel < FIXED) {
+            wrmsr(FIXED_CTR_CTL, (rdmsr(FIXED_CTR_CTL) | (3ULL << (CRT0_ENABLE_SYS + channel * 4))));
+            wrmsr(GLOBAL_CTRL,   (rdmsr(GLOBAL_CTRL)   | (1ULL << (CRT0_ENABLE + channel))));
+        } else {
+            wrmsr(GLOBAL_OVF,  rdmsr(GLOBAL_OVF)  | (1ULL << (PMC0_OVERFLOW + channel - FIXED))); // clear OVF flag
+            wrmsr(GLOBAL_CTRL, rdmsr(GLOBAL_CTRL) | (1ULL << (PMC0_ENABLE + channel - FIXED)));
+        }
+    }
+
+    static void stop(const Channel & channel) {
+        assert(channel < CHANNELS);
+        db<PMU>(TRC) << "PMU::stop(c=" << channel << ")" << endl;
+        if(channel < FIXED) {
+            wrmsr(GLOBAL_OVF,   (rdmsr(GLOBAL_OVF)   | (1ULL << (CRT0_OVERFLOW + channel))));
+            wrmsr(FIXED_CTR_CTL, (rdmsr(FIXED_CTR_CTL) & ~(3ULL << (CRT0_ENABLE_SYS + channel * 4))));
+       } else
+            wrmsr(GLOBAL_CTRL, rdmsr(GLOBAL_CTRL) & ~(1ULL << (PMC0_ENABLE + channel - FIXED)));
+    }
+
+    static void reset(const Channel & channel) {
+        assert(channel < CHANNELS);
+        db<PMU>(TRC) << "PMU::reset(c=" << channel << ")" << endl;
+        if(channel < FIXED)
+            wrmsr(FIXED_CTR0 + channel, 0);
+        else
+            wrmsr(EVTSEL0 + channel - FIXED, 0);
+    }
+
+    static void handler(Handler * handler, const Channel & channel) { 
+        if((channel-FIXED) < CHANNELS)
+            _pmc_handler[channel-FIXED] = handler; 
+        else
+            db<Init, Intel_PMU_V1>(WRN) << "Intel_PMU_V1::handler = Bad PMC value, handler not addressed!" << endl;
+    }
+
+    static bool config(const Channel & channel, const Event & event, const Flags & flags = NONE) {
+        assert((channel < CHANNELS) && (event < EVENTS));
+        db<PMU>(TRC) << "PMU::config(c=" << channel << ",e=" << event << ",f=" << flags << ")" << endl;
+
+        if(((channel == 0) && (event != INSTRUCTION)) || ((channel == 1) && (event != DVS_CLOCK)) || ((channel == 2) && (event != CLOCK))) {
+            db<PMU>(WRN) << "PMU::config: channel " << channel << " is fixed in this architecture and cannot be reconfigured!" << endl;
+            return false;
+        }
+
+        if(channel >= FIXED){
+            wrmsr(EVTSEL0 + channel - FIXED, _events[event] | USR | OS | ENABLE | flags); // implicitly start counting due to flag ENABLE
+        }
+
+        start(channel);
+
+        return true;
+    }
+
+    static bool config(const Channel & channel, const Reg32 & event, const Flags & flags = NONE) {
+        assert((channel < CHANNELS) && (event < EVENTS));
+        db<PMU>(TRC) << "PMU::config(c=" << channel << ",e=" << event << ",f=" << flags << ")" << endl;
+
+        if(((channel == 0) && (event != _events[INSTRUCTION])) || ((channel == 1) && (event != _events[DVS_CLOCK])) || ((channel == 2) && (event != _events[CLOCK]))) {
+            db<PMU>(WRN) << "PMU::config: channel " << channel << " is fixed in this architecture and cannot be reconfigured!" << endl;
+            return false;
+        }
+
+        if(channel >= FIXED){
+            wrmsr(EVTSEL0 + channel - FIXED, event | USR | OS | ENABLE | flags); // implicitly start counting due to flag ENABLE
+        }
+
+        start(channel);
+
+        return true;
+    }
+
+
+};
+template<>
+class PMU_handler<Traits<PMU>::V1>: public Intel_PMU_V1 {};
+
+class PMU : public PMU_handler<Traits<PMU>::VERSION>
+{
+public:
+    PMU();
+    
 };
 
 __END_SYS

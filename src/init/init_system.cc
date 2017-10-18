@@ -5,6 +5,7 @@
 #include <system.h>
 #include <address_space.h>
 #include <segment.h>
+#include <pmu.h>
 
 __BEGIN_SYS
 
@@ -25,6 +26,11 @@ public:
             Machine::smp_barrier();
             // For IA-32, timer is CPU-local. What about other SMPs?
             Timer::init();
+
+            if(Traits<PMU>::enabled)
+            PMU::init();		//CPU0 calls PMU::init() inside CPU::init()
+
+            
             return;
         }
 

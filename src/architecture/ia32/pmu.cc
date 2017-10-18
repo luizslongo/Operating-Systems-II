@@ -19,4 +19,9 @@ const CPU::Reg32 Intel_PMU_V1::_events[EVENTS] = {
                          /* L3_MISS            */ LLC_MISSES,
 };
 
+
+Intel_PMU_V2::Handler* Intel_PMU_V2::_pmc_handler[CHANNELS];
+
+
+
 __END_SYS

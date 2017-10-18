@@ -4,7 +4,7 @@
 
 __BEGIN_SYS
 
-void PMU::init()
+void Intel_PMU_V1::init()
 {
     db<Init, PMU>(TRC) << "PMU::init()" << endl;
 
@@ -18,6 +18,8 @@ void PMU::init()
     // Enable rdpmc for any protection level
     CPU::cr4((CPU::cr4() | CPU::CR4_PSE));
 
+    if (APIC::id() == 0)
+    {
     Reg32 eax, ebx, ecx = 0, edx;
 
     // Get CPUID max level (EAX) and vendor id (EBX+EDX+ECX)
@@ -54,6 +56,16 @@ void PMU::init()
 	counters_fixed = edx & 0xf;
 
     db<Init, PMU>(INF) << "PMU::init:CPUID(10)={ver=" << version << ",counters=" << counters << ",width=" << cntval_bits << ",fixed counters=" << counters_fixed << "}" << endl;
+
+
+    }
+    // Initialize PMU interrupts
+    PMU::perf_int_init();
+
+    APIC::enable_perf_int();
+
 }
+
+
 
 __END_SYS
