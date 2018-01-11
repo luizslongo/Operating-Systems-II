@@ -18,7 +18,7 @@ struct Traits
 template<> struct Traits<Build>
 {
     enum {LIBRARY, BUILTIN, KERNEL};
-    static const unsigned int MODE = BUILTIN;
+    static const unsigned int MODE = LIBRARY;
 
     enum {IA32, AVR8, ARMv7};
     static const unsigned int ARCHITECTURE = IA32;
@@ -26,10 +26,10 @@ template<> struct Traits<Build>
     enum {PC, ATmega, Cortex};
     static const unsigned int MACHINE = PC;
 
-    enum {Legacy_PC, eMote1, eMote2, eMote3, Arduino, LM3S811, Zynq};
+    enum {Legacy_PC, eMote3, LM3S811, Zynq};
     static const unsigned int MODEL = Legacy_PC;
 
-    static const unsigned int CPUS = 1;
+    static const unsigned int CPUS = 8;
     static const unsigned int NODES = 1; // > 1 => NETWORKING
 };
 
@@ -106,7 +106,7 @@ template<> struct Traits<System>: public Traits<void>
     static const bool multithread = (Traits<Application>::MAX_THREADS > 1);
     static const bool multitask = (mode != Traits<Build>::LIBRARY);
     static const bool multicore = (Traits<Build>::CPUS > 1) && multithread;
-    static const bool multiheap = true;
+    static const bool multiheap = (mode != Traits<Build>::LIBRARY) || Traits<Scratchpad>::enabled;
 
     enum {FOREVER = 0, SECOND = 1, MINUTE = 60, HOUR = 3600, DAY = 86400, WEEK = 604800, MONTH = 2592000, YEAR = 31536000};
     static const unsigned long LIFE_SPAN = 1 * HOUR; // in seconds
@@ -126,7 +126,7 @@ template<> struct Traits<Thread>: public Traits<void>
 {
     static const bool smp = Traits<System>::multicore;
 
-    typedef Scheduling_Criteria::RR Criterion;
+    typedef Scheduling_Criteria::CPU_Affinity Criterion;
     static const unsigned int QUANTUM = 10000; // us
 
     static const bool trace_idle = hysterically_debugged;

@@ -23,7 +23,7 @@ template<> struct Traits<Build>
     enum {IA32, AVR8, ARMv7};
     static const unsigned int ARCHITECTURE = IA32;
 
-    enum {PC, ATmega, Cortex};
+    enum {PC};
     static const unsigned int MACHINE = PC;
 
     enum {Legacy_PC, eMote1, eMote2, eMote3, Arduino, LM3S811, Zynq};
@@ -356,10 +356,16 @@ template<> struct Traits<Network>: public Traits<void>
     typedef LIST<IP> NETWORKS;
 };
 
+template<> struct Traits<ELP>: public Traits<Network>
+{
+    static const bool enabled = NETWORKS::Count<ELP>::Result;
+
+    static const bool acknowledged = true;
+};
+
 template<> struct Traits<TSTP>: public Traits<Network>
 {
     static const bool enabled = NETWORKS::Count<TSTP>::Result;
-    static const unsigned int KEY_SIZE = 16;
 };
 
 template<> template <typename S> struct Traits<Smart_Data<S>>: public Traits<Network>
