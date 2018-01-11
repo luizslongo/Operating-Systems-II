@@ -37,6 +37,8 @@ public:
     static void smp_barrier() {};
     static void smp_init(unsigned int) {};
 
+    static const unsigned char * id() { return Machine_Model::id(); }
+
 private:
     static void pre_init(System_Info * si) {
         Machine_Model::pre_init();
@@ -61,6 +63,9 @@ __END_SYS
 #ifdef __UART_H
 #include __UART_H
 #endif
+#ifdef __SPI_H
+#include __SPI_H
+#endif
 #ifdef __USB_H
 #include __USB_H
 #endif
@@ -75,6 +80,9 @@ __END_SYS
 #endif
 #ifdef __ADC_H
 #include __ADC_H
+#endif
+#ifdef __AES_H
+#include __AES_H
 #endif
 
 #endif

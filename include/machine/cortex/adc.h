@@ -5,6 +5,7 @@
 #define __cortex_adc_h_
 
 #include <adc.h>
+#include <machine.h>
 
 __BEGIN_SYS
 
@@ -43,27 +44,27 @@ public:
         BITS_12 = 3  // 12 bits resolution, 512 decimation rate
     };
 
-    ADC(const Channel & channel = SINGLE_ENDED_ADC0, const Reference & reference = SYSTEM_REF, const Resolution & resolution = BITS_12)
+    ADC(const Channel & channel = SINGLE_ENDED_ADC5, const Reference & reference = SYSTEM_REF, const Resolution & resolution = BITS_12)
     : _channel(channel), _reference(reference), _resolution(resolution) {
         Machine_Model::adc_config(_channel);
     }
 
-    short read() {
+    unsigned short read() {
         reg(ADCCON3) = (_reference * ADCCON3_EREF) | (_resolution * ADCCON3_EDIV) | (_channel * ADCCON3_ECH);
         while(!(reg(ADCCON1) & ADCCON1_EOC));
-        short ret = (reg(ADCH) << 8) + reg(ADCL);
+        unsigned short ret = (reg(ADCH) << 8) + reg(ADCL);
         switch(_resolution) {
-            case BITS_7:  ret >>= 9; break;
-            case BITS_9:  ret >>= 7; break;
-            case BITS_10: ret >>= 6; break;
-            case BITS_12: ret >>= 4; break;
+            case BITS_7:  ret &= 0xfe00; break;
+            case BITS_9:  ret &= 0xff80; break;
+            case BITS_10: ret &= 0xffc0; break;
+            case BITS_12: ret &= 0xfff0; break;
         }
         return ret;
     }
 
     // returns the voltage corresponding to the reading, with three decimal places (e.g. 2534 means 2.534V)
-    int convert(short raw_reading, int reference = 3300/*3.3V*/) {
-        int limit;
+    unsigned int convert(unsigned short raw_reading, unsigned int reference = 3300/*3.3V*/) {
+        unsigned int limit;
         switch(_resolution) {
             case BITS_7:  limit =   63; break;
             case BITS_9:  limit =  255; break;
@@ -74,7 +75,7 @@ public:
     }
 
 private:
-    volatile Reg32 & reg(unsigned int o) { return reinterpret_cast<volatile Reg32*>(ADC_BASE)[o / sizeof(Reg32)]; }
+    volatile CPU::Reg32 & reg(unsigned int o) { return reinterpret_cast<volatile CPU::Reg32*>(ADC_BASE)[o / sizeof(CPU::Reg32)]; }
 
     Channel _channel;
     Reference _reference;

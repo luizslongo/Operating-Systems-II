@@ -12,7 +12,7 @@ __BEGIN_SYS
 class eMote3
 {
     friend class TSC;
-    
+
 protected:
     typedef CPU::Reg32 Reg32;
     typedef CPU::Log_Addr Log_Addr;
@@ -34,7 +34,31 @@ public:
         I2C_MASTER_BASE = 0x40020000,
         I2C_SLAVE_BASE  = 0x40028000,
         SCR_BASE        = 0x400d2000,
+        FLASH_CTRL_BASE = 0x400d3000,
         IOC_BASE        = 0x400d4000,
+    };
+
+    // Hooks to functions implemented in ROM (documented in the ROM User Guide, swru3333)
+    enum {
+        ROM_API_BASE    = 0x00000048,
+    };
+
+    enum {
+        ROM_API_CRC32      = ROM_API_BASE + 0,
+        ROM_API_FLASH_SIZE = ROM_API_BASE + 4,
+        ROM_API_CHIP_ID    = ROM_API_BASE + 8,
+        ROM_API_PAGE_ERASE = ROM_API_BASE + 12,
+        ROM_API_PROG_FLASH = ROM_API_BASE + 16,
+        ROM_API_REBOOT     = ROM_API_BASE + 20,
+        ROM_API_MEMSET     = ROM_API_BASE + 24,
+        ROM_API_MEMCPY     = ROM_API_BASE + 28,
+        ROM_API_MEMCMP     = ROM_API_BASE + 32,
+        ROM_API_MEMMOV     = ROM_API_BASE + 36,
+    };
+
+    // Unique IEEE Address at the flash Info Page
+    enum {
+        IEEE_ADDR       = 0x00280028,
     };
 
     // I2C Master offsets
@@ -92,7 +116,7 @@ public:
     };
 
     // Useful bits in the I2CM_STAT register
-    enum {                         // Description (type)
+    enum {                        // Description (type)
         I2C_STAT_BUSBSY = 1 << 6, // Bus Busy (RO)
         I2C_STAT_IDLE   = 1 << 5, // I2C Idle (RO)
         I2C_STAT_ARBLST = 1 << 4, // Arbitration Lost (RO)
@@ -774,18 +798,22 @@ public:
         EVENT_GPIO_A = 1 << 0,
     };
 
-    // Change in power mode will only be effective when ASM("wfi") is called
-    static void power_mode(POWER_MODE p)
-    {
-        if(p <= PMSLEEP) {
+    // Change in power mode will only be effective when ASM("wfi") is executed
+    static void power(const Power_Mode & mode) {
+        switch(mode) {
+        case FULL: // Active Mode
+        case LIGHT: // Sleep Mode
             scs(SCR) &= ~SLEEPDEEP;
-        }
-        else {
+            break;
+        case SLEEP: // Deep Sleep Power Mode 0
             scs(SCR) |= SLEEPDEEP;
-            scr(PMCTL) = p - POWER_MODE_0;
-        }
-        //if(p != POWER_MODE::ACTIVE)
-        //    ASM("wfi");
+            scr(PMCTL) = 0;
+            break;
+        case OFF: // Deep Sleep Power Mode 3
+            scs(SCR) |= SLEEPDEEP;
+            scr(PMCTL) = 3;
+            break;
+       }
     }
 
     static void wake_up_on(WAKE_UP_EVENT e) {
@@ -1003,10 +1031,10 @@ protected:
     eMote3() {}
 
     static void reboot() {
-        Reg32 val = scs(AIRCR) & (~((-1u / VECTKEY) * VECTKEY));
-        val |= SYSRESREQ;
-        val |= 0x05fa * VECTKEY;
-        scs(AIRCR) = val;
+        // call ROM function to reboot
+        typedef void (* volatile Reboot) (void);
+        Reboot rom_function_reset = *reinterpret_cast<Reboot*>(ROM_API_REBOOT);
+        rom_function_reset();
     }
 
     static void delay(const RTC::Microsecond & time) {
@@ -1014,6 +1042,8 @@ protected:
         TSC::Time_Stamp end = TSC::time_stamp() + time * (TSC::frequency() / 1000000);
         while(end > TSC::time_stamp());
     }
+
+    static const unsigned char * id() { return reinterpret_cast<const unsigned char *>(IEEE_ADDR); }
 
 // GPTM
     static void power_user_timer(unsigned int unit, const Power_Mode & mode) {
@@ -1024,10 +1054,12 @@ protected:
         case SLEEP:
             scr(RCGCGPT) |= 1 << unit;
             scr(SCGCGPT) |= 1 << unit;
+            scr(DCGCGPT) |= 1 << unit;
             break;
         case OFF:
             scr(RCGCGPT) &= ~(1 << unit);
             scr(SCGCGPT) &= ~(1 << unit);
+            scr(DCGCGPT) &= ~(1 << unit);
             break;
        }
     }
@@ -1055,11 +1087,21 @@ protected:
             //5. Set GPIO pins A1 and A0 to peripheral mode
             gpioa(AFSEL) |= (PIN0) + (PIN1);
         } else {
-           ioc(PC4_SEL) = UART1_TXD;
-           ioc(PC4_OVER) = OE;
-           ioc(PC3_OVER) = 0;
-           ioc(UARTRXD_UART1) = (2 << 3) + 3;
-           gpioc(AFSEL) |= (PIN3) + (PIN4);
+            bool m95_enabled = Traits<M95>::enabled && (Traits<NIC>::NICS::Find<M95>::Result <= Traits<Network>::NETWORKS::Length - 1);
+            if((!m95_enabled) || (Traits<M95>::UART_UNIT != 1)) {
+                ioc(PC4_SEL) = UART1_TXD;
+                ioc(PC4_OVER) = OE;
+                ioc(PC3_OVER) = 0;
+                ioc(UARTRXD_UART1) = (2 << 3) + 3;
+                gpioc(AFSEL) |= (PIN3) + (PIN4);
+            } else {
+                // The M95 GPRS board uses UART1 in non-standard pins
+                ioc(PD1_SEL) = UART1_TXD;
+                ioc(PD1_OVER) = OE;
+                ioc(PD0_OVER) = 0;
+                ioc(UARTRXD_UART1) = (3 << 3) + 0;
+                gpiod(AFSEL) |= (PIN0) + (PIN1);
+            }
         }
 
         return unit;
@@ -1073,10 +1115,12 @@ protected:
         case SLEEP:
             scr(RCGCUART) |= 1 << unit;                 // Enable clock for UART "unit" while in Running mode
             scr(SCGCUART) |= 1 << unit;                 // Enable clock for UART "unit" while in Sleep mode
+            scr(DCGCUART) |= 1 << unit;                 // Enable clock for UART "unit" while in Deep Sleep mode
             break;
         case OFF:
             scr(RCGCUART) &= ~(1 << unit);              // Deactivate UART "unit" clock
-            scr(SCGCUART) &= ~(1 << unit);              // Deactivate port "unit" clock
+            scr(SCGCUART) &= ~(1 << unit);              // Deactivate UART "unit" clock
+            scr(DCGCUART) &= ~(1 << unit);              // Deactivate UART "unit" clock
             break;
         }
     }
@@ -1122,14 +1166,14 @@ protected:
         case OFF:
             scr(RCGCRFC) &= ~RCGCRFC_RFC0;
             scr(SCGCRFC) &= ~RCGCRFC_RFC0;
+            scr(DCGCRFC) &= ~RCGCRFC_RFC0;
             break;
         }
     }
 
 
 // PWM
-    static void enable_pwm(unsigned int timer, char gpio_port, unsigned int gpio_pin)
-    {
+    static void enable_pwm(unsigned int timer, char gpio_port, unsigned int gpio_pin) {
         unsigned int port = gpio_port - 'A';
         unsigned int sel = PA0_SEL + 0x20 * port + 0x4 * gpio_pin;
 
@@ -1151,6 +1195,17 @@ protected:
         }
     }
 
+    static void disable_pwm(unsigned int timer, unsigned int gpio_port, unsigned int gpio_pin) {
+        unsigned int pin_bit = 1 << gpio_pin;
+        switch(gpio_port)
+        {
+            case 'A': gpioa(AFSEL) &= ~pin_bit; break;
+            case 'B': gpiob(AFSEL) &= ~pin_bit; break;
+            case 'C': gpioc(AFSEL) &= ~pin_bit; break;
+            case 'D': gpiod(AFSEL) &= ~pin_bit; break;
+        }
+    }
+
     static void config_SSI(volatile Log_Addr * base, Reg32 clock, SSI_Frame_Format protocol, SSI_Mode mode, Reg32 bit_rate, Reg32 data_width) {
         Reg32 pre_div, max_bit_rate, value;
 
@@ -1159,6 +1214,7 @@ protected:
             //Enable the SSI module using the SYS_CTRL_RCGCSSI register.
             scr(RCGCSSI) |= 0x1; // Enable clock for SSI0 while in Running mode
             scr(SCGCSSI) |= 0x1; // Enable clock for SSI0 while in Sleep mode
+            scr(DCGCSSI) |= 0x1; // Enable clock for SSI0 while in Deep Sleep mode
 
             //Set the GPIO pin configuration through the Pxx_SEL registers for the desired output
             if(mode == MASTER)
@@ -1173,6 +1229,7 @@ protected:
 
             scr(RCGCSSI) |= 0x02; // Enable clock for SSI1 while in Running mode
             scr(SCGCSSI) |= 0x02; // Enable clock for SSI1 while in Sleep mode
+            scr(DCGCSSI) |= 0x02; // Enable clock for SSI1 while in Deep Sleep mode
 
             if(mode == MASTER)
                 ioc(PA2_SEL) = SSI1_CLK_OUT;
@@ -1220,8 +1277,7 @@ protected:
         gpioa(AFSEL) |= (PIN2) + (PIN3) + (PIN4) + (PIN5);
     }
 
-    static void i2c_config(char gpio_port_sda, unsigned int gpio_pin_sda, char gpio_port_scl, unsigned int gpio_pin_scl)
-    {
+    static void i2c_config(char gpio_port_sda, unsigned int gpio_pin_sda, char gpio_port_scl, unsigned int gpio_pin_scl) {
         assert((gpio_port_sda >= 'A') && (gpio_port_sda <= 'D'));
         assert(gpio_pin_sda <= 7);
         assert((gpio_port_scl >= 'A') && (gpio_port_scl <= 'D'));
@@ -1229,6 +1285,8 @@ protected:
 
         // Enable the I2C clock using the SYS_CTRL_RCGCI2C register
         scr(RCGCI2C) |= 0x1; // When the CPU is in active (run) mode
+        scr(SCGCI2C) |= 0x1; // When the CPU is in Sleep mode
+        scr(DCGCI2C) |= 0x1; // When the CPU is in Deep Sleep mode
 
         // Calculate the offset for the GPIO's IOC_Pxx_SEL
         auto n_sda = gpio_port_sda - 'A';
@@ -1257,8 +1315,7 @@ protected:
         ioc(I2CMSSCL) = (n_scl << 3) + gpio_pin_scl;
     }
 
-    static void adc_config(unsigned char channel)
-    {
+    static void adc_config(unsigned char channel) {
         gpioa(DIR) &= ~(1 << channel);
         gpio_floating(0, channel);
     }

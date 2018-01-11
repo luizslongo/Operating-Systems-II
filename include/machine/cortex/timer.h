@@ -130,11 +130,12 @@ protected:
         reg(GPTMCFG) = 0; // 32-bit timer
         reg(GPTMTAMR) = periodic ? 2 : 1; // 2 -> Periodic, 1 -> One-shot
         reg(GPTMTAILR) = count;
+        reg(GPTMTAPR) = (count >> 31) >> 1; // Avoid compiler warning "shift >= width of type"
         if(interrupt)
             reg(GPTMIMR) |= TATO_INT;
         else
             reg(GPTMIMR) &= ~TATO_INT;
-        
+
         enable();
     }
 
@@ -150,13 +151,22 @@ public:
 
     void pwm(const Percent & duty_cycle) {
         disable();
-        Count count = reg(GPTMTAILR);
-        reg(GPTMCFG) = 4; // 4 -> 16-bit, only possible value for PWM
+
+        Count count;
+        if(reg(GPTMCFG) == 4) {
+            count = reg(GPTMTAILR) + (reg(GPTMTAPR) << 16);
+        } else {
+            count = reg(GPTMTAILR);
+            reg(GPTMCFG) = 4; // 4 -> 16-bit, only possible value for PWM
+            reg(GPTMTAPR) = count >> 16;
+        }
+
         reg(GPTMTAMR) = TCMR | TAMS | 2; // 2 -> Periodic, 1 -> One-shot
-        reg(GPTMTAPR) = count >> 16;
-        reg(GPTMTAMATCHR) = percent2count(duty_cycle, count);
-        reg(GPTMTAPMR) = reg(GPTMTAMATCHR) >> 16;
         reg(GPTMCTL) &= ~TBPWML; // never inverted
+
+        count = percent2count(duty_cycle, (count & 0x00ffffff));
+        reg(GPTMTAPMR) = count >> 16;
+        reg(GPTMTAMATCHR) = count;
         enable();
     }
 
@@ -334,7 +344,7 @@ public:
 
 private:
     static Count us2count(const Microsecond & us) { return static_cast<unsigned long long>(us) * CLOCK / 1000000; }
-    static Microsecond count2us(const Count & count) { return count * 1000000 / CLOCK; }
+    static Microsecond count2us(const Count & count) { return static_cast<unsigned long long>(count) * 1000000 / CLOCK; }
 
 private:
     unsigned int _channel;

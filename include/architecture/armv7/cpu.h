@@ -10,6 +10,14 @@ __BEGIN_SYS
 class ARMv7_M: public CPU_Common
 {
 public:
+    // CPU Native Data Types
+    using CPU_Common::Reg8;
+    using CPU_Common::Reg16;
+    using CPU_Common::Reg32;
+    using CPU_Common::Reg64;
+    using CPU_Common::Log_Addr;
+    using CPU_Common::Phy_Addr;
+
     static const bool thumb = true;
 
     // CPU Flags
@@ -347,12 +355,7 @@ public:
                 "   bne     1b              \n"
                 "2:                         \n" : "=&r"(old) : "r"(&value), "r"(compare), "r"(replacement) : "r3", "cc");
         return old;
-   }
-
-    static Reg32 htonl(Reg32 v) { return swap32(v); }
-    static Reg16 htons(Reg16 v) { return swap16(v); }
-    static Reg32 ntohl(Reg32 v) { return swap32(v); }
-    static Reg16 ntohs(Reg16 v) { return swap16(v); }
+    }
 
     template<typename ... Tn>
     static Context * init_stack(const Log_Addr & usp, Log_Addr sp, void (* exit)(), int (* entry)(Tn ...), Tn ... an) {
@@ -370,6 +373,25 @@ public:
         return sp;
     }
 
+    using CPU_Common::htole64;
+    using CPU_Common::htole32;
+    using CPU_Common::htole16;
+    using CPU_Common::letoh64;
+    using CPU_Common::letoh32;
+    using CPU_Common::letoh16;
+
+    using CPU_Common::htobe64;
+    using CPU_Common::htobe32;
+    using CPU_Common::htobe16;
+    using CPU_Common::betoh64;
+    using CPU_Common::betoh32;
+    using CPU_Common::betoh16;
+
+    using CPU_Common::htonl;
+    using CPU_Common::htons;
+    using CPU_Common::ntohl;
+    using CPU_Common::ntohs;
+
 private:
     template<typename Head, typename ... Tail>
     static void init_stack_helper(Log_Addr sp, Head head, Tail ... tail) {
@@ -384,6 +406,20 @@ private:
     static unsigned int _cpu_clock;
     static unsigned int _bus_clock;
 };
+
+inline CPU::Reg64 htole64(CPU::Reg64 v) { return CPU::htole64(v); }
+inline CPU::Reg32 htole32(CPU::Reg32 v) { return CPU::htole32(v); }
+inline CPU::Reg16 htole16(CPU::Reg16 v) { return CPU::htole16(v); }
+inline CPU::Reg64 letoh64(CPU::Reg64 v) { return CPU::letoh64(v); }
+inline CPU::Reg32 letoh32(CPU::Reg32 v) { return CPU::letoh32(v); }
+inline CPU::Reg16 letoh16(CPU::Reg16 v) { return CPU::letoh16(v); }
+
+inline CPU::Reg64 htobe64(CPU::Reg64 v) { return CPU::htobe64(v); }
+inline CPU::Reg32 htobe32(CPU::Reg32 v) { return CPU::htobe32(v); }
+inline CPU::Reg16 htobe16(CPU::Reg16 v) { return CPU::htobe16(v); }
+inline CPU::Reg64 betoh64(CPU::Reg64 v) { return CPU::betoh64(v); }
+inline CPU::Reg32 betoh32(CPU::Reg32 v) { return CPU::betoh32(v); }
+inline CPU::Reg16 betoh16(CPU::Reg16 v) { return CPU::betoh16(v); }
 
 inline CPU::Reg32 htonl(CPU::Reg32 v) { return CPU::htonl(v); }
 inline CPU::Reg16 htons(CPU::Reg16 v) { return CPU::htons(v); }

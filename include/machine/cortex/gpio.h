@@ -12,6 +12,7 @@ __BEGIN_SYS
 
 class GPIO: public GPIO_Common, private Machine_Model
 {
+    friend class PWM;
 private:
     static const bool supports_power_up = Machine_Model::supports_gpio_power_up;
 
@@ -38,6 +39,13 @@ public:
     bool get() const {
         assert(_direction == IN || _direction == INOUT);
         return *_data;
+    }
+
+    void handler(const IC::Interrupt_Handler & handler, const Edge & int_edge = RISING) {
+        int_disable();
+        _handler = handler;
+        _devices[_port][_pin] = this;
+        int_enable(int_edge);
     }
 
     void set(bool value = true) {

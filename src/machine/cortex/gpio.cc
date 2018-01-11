@@ -13,9 +13,9 @@ unsigned char GPIO::_mis[GPIO_PORTS];
 unsigned int GPIO::_irq_detect_ack[GPIO_PORTS];
 
 // Class methods
-void GPIO::handle_int(const IC::Interrupt_Id & i)
+void GPIO::handle_int(const IC::Interrupt_Id & id)
 {
-    unsigned int port = i - IC::INT_GPIOA;
+    unsigned int port = id - IC::INT_GPIOA;
 
     unsigned int mis = _mis[port];
     _mis[port] = 0;
@@ -28,14 +28,14 @@ void GPIO::handle_int(const IC::Interrupt_Id & i)
         if(regular_interrupt || power_up_interrupt) {
             GPIO * dev = _devices[port][i];
             if(dev && dev->_handler)
-                dev->_handler(i);
+                dev->_handler(id);
         }
     }
 }
 
-void GPIO::eoi(const IC::Interrupt_Id & i)
+void GPIO::eoi(const IC::Interrupt_Id & id)
 {
-    unsigned int port = i - IC::INT_GPIOA;
+    unsigned int port = id - IC::INT_GPIOA;
     _mis[port] |= gpio(port, MIS);
     _irq_detect_ack[port] |= gpio(port, IRQ_DETECT_ACK);
 
@@ -58,7 +58,6 @@ void GPIO::int_enable(const Edge & edge, bool power_up, const Edge & power_up_ed
     IC::Interrupt_Id int_id = IC::INT_GPIOA + _port;
     IC::disable(int_id);
     int_disable();
-    clear_interrupt();
     IC::int_vector(int_id, GPIO::handle_int);
 
     gpio(_port, IS) &= ~_pin_bit; // Set interrupt to edge-triggered

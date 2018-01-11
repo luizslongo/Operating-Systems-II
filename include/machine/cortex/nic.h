@@ -67,10 +67,11 @@ __END_SYS
 
 #include <ieee802_15_4.h>
 #include "cc2538.h"
+#include "m95.h"
 
 __BEGIN_SYS
 
-class NIC: public IEEE802_15_4::NIC_Base<IEEE802_15_4, Traits<NIC>::NICS::Polymorphic>
+class NIC: public IEEE802_15_4
 {
     friend class Machine;
 
@@ -85,8 +86,6 @@ public:
     typedef Data_Observed<Buffer, Protocol> Observed;
 
 public:
-    typedef Device::Timer Timer;
-
     template<unsigned int UNIT = 0>
     NIC(unsigned int u = UNIT) {
         _dev = reinterpret_cast<Device *>(NICS::Get<UNIT>::Result::get(u));
@@ -106,9 +105,6 @@ public:
 
     const Address & address() { return _dev->address(); }
     void address(const Address & address) { _dev->address(address); }
-
-    unsigned int channel() { return _dev->channel(); }
-    void channel(unsigned int channel) { _dev->channel(channel); }
 
     const Statistics & statistics() { return _dev->statistics(); }
 

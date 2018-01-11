@@ -41,6 +41,8 @@ public:
     using TSC_Common::Hertz;
     using TSC_Common::Time_Stamp;
 
+    static const unsigned int FREQUENCY = CLOCK;
+
 public:
     TSC() {}
 

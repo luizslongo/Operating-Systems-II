@@ -85,6 +85,9 @@ public:
     bool rxd_ok() { return reg(CHANNEL_STS_REG0) & STS_RTRIG; }
     bool txd_ok() { return !(reg(CHANNEL_STS_REG0) & STS_TFUL); }
 
+    bool rxd_full();
+    bool txd_empty();
+
 private:
     volatile Reg32 & reg(unsigned int o) { return reinterpret_cast<volatile Reg32*>(_base)[o / sizeof(Reg32)]; }
 
@@ -241,6 +244,9 @@ public:
     bool rxd_ok() { return !(reg(FR) & RXFE); }
     bool txd_ok() { return !(reg(FR) & TXFF); }
 
+    bool rxd_full() { return (reg(FR) & RXFF); }
+    bool txd_empty() { return (reg(FR) & TXFE) && !(reg(FR) & BUSY); }
+
     bool busy() { return (reg(FR) & BUSY); }
 
 private:
@@ -276,6 +282,8 @@ public:
 
     char get() { while(!rxd_ok()); return rxd(); }
     void put(char c) { while(!txd_ok()); txd(c); }
+
+    void flush() { while(!txd_empty()); }
 
     bool ready_to_get() { return rxd_ok(); }
     bool ready_to_put() { return txd_ok(); }

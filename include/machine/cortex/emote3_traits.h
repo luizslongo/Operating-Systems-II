@@ -18,8 +18,10 @@ template<> struct Traits<Machine>: public Traits<Machine_Common>
     static const unsigned int CPUS = Traits<Build>::CPUS;
 
     // Physical Memory
-    static const unsigned int MEM_BASE  = 0x20000004;
-    static const unsigned int MEM_TOP   = 0x20007ff7; // 32 KB (MAX for 32-bit is 0x70000000 / 1792 MB)
+    static const unsigned int MEM_BASE   = 0x20000004;
+    static const unsigned int MEM_TOP    = 0x20007ff7; // 32 KB (MAX for 32-bit is 0x70000000 / 1792 MB)
+    static const unsigned int FLASH_BASE = 0x00200000;
+    static const unsigned int FLASH_TOP  = 0x0027ffff; // 512 KB
 
     // Logical Memory Map
     static const unsigned int APP_LOW   = 0x20000004;
@@ -69,6 +71,11 @@ template<> struct Traits<UART>: public Traits<Machine_Common>
     static const unsigned int DEF_STOP_BITS = 1;
 };
 
+template<> struct Traits<SPI>: public Traits<Machine_Common>
+{
+    static const unsigned int UNITS = 1;
+};
+
 template<> struct Traits<USB>: public Traits<Machine_Common>
 {
     // Some observed objects are created before initializing the Display, which may use the USB.
@@ -80,6 +87,17 @@ template<> struct Traits<USB>: public Traits<Machine_Common>
     static const bool enabled = Traits<Serial_Display>::enabled && (Traits<Serial_Display>::ENGINE == Traits<Serial_Display>::USB);
 };
 
+template<> struct Traits<Watchdog>: public Traits<Machine_Common>
+{
+    enum {
+        MS_1_9,    // 1.9ms
+        MS_15_625, // 15.625ms
+        S_0_25,    // 0.25s
+        S_1,       // 1s
+    };
+    static const int PERIOD = S_1;
+};
+
 template<> struct Traits<Scratchpad>: public Traits<Machine_Common>
 {
     static const bool enabled = false;
@@ -88,16 +106,39 @@ template<> struct Traits<Scratchpad>: public Traits<Machine_Common>
 template<> struct Traits<NIC>: public Traits<Machine_Common>
 {
     static const bool enabled = (Traits<Build>::NODES > 1);
-    static const bool promiscuous = false;
 
+    // NICS that don't have a network in Traits<Network>::NETWORKS will not be enabled
     typedef LIST<CC2538> NICS;
     static const unsigned int UNITS = NICS::Length;
+    static const bool promiscuous = false;
 };
 
 template<> struct Traits<CC2538>: public Traits<NIC>
 {
     static const unsigned int UNITS = NICS::Count<CC2538>::Result;
-    static const unsigned int RECEIVE_BUFFERS = 8; // per unit
+    static const unsigned int RECEIVE_BUFFERS = 20; // per unit
+    static const bool gpio_debug = false;
+    static const bool reset_backdoor = false;
+    static const unsigned int DEFAULT_CHANNEL = 26;
+};
+
+template<> struct Traits<M95>: public Traits<NIC>
+{
+    static const unsigned int UNITS = NICS::Count<M95>::Result;
+
+    enum {CLARO, TIM, OI};
+    static const unsigned int PROVIDER = CLARO;
+
+    static const unsigned int UART_UNIT = 1;
+    static const unsigned int UART_BAUD_RATE = 9600;
+    static const unsigned int UART_DATA_BITS = 8;
+    static const unsigned int UART_PARITY = 0;
+    static const unsigned int UART_STOP_BITS = 1;
+
+    static const char PWRKEY_PORT = 'C';
+    static const unsigned int PWRKEY_PIN = 4;
+    static const char STATUS_PORT = 'C';
+    static const unsigned int STATUS_PIN = 1;
 };
 
 __END_SYS

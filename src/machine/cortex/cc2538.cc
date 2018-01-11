@@ -14,9 +14,12 @@ __BEGIN_SYS
 // Class attributes
 volatile CC2538RF::Reg32 CC2538RF::Timer::_overflow_count;
 volatile CC2538RF::Reg32 CC2538RF::Timer::_ints;
-CC2538RF::Timer::Time_Stamp CC2538RF::Timer::_int_request_time;
-CC2538RF::Timer::Time_Stamp CC2538RF::Timer::_offset;
-IC::Interrupt_Handler CC2538RF::Timer::_handler;
+volatile CC2538RF::Timer::Time_Stamp CC2538RF::Timer::_int_request_time;
+volatile CC2538RF::Timer::Offset CC2538RF::Timer::_offset;
+volatile CC2538RF::Timer::Offset CC2538RF::Timer::_periodic_update;
+volatile CC2538RF::Timer::Offset CC2538RF::Timer::_periodic_update_update;
+volatile CC2538RF::Timer::Offset CC2538RF::Timer::_periodic_update_update_update;
+volatile IC::Interrupt_Handler CC2538RF::Timer::_handler;
 bool CC2538RF::Timer::_overflow_match;
 bool CC2538RF::Timer::_msb_match;
 
@@ -31,16 +34,16 @@ CC2538::~CC2538()
     db<CC2538>(TRC) << "~CC2538(unit=" << _unit << ")" << endl;
 }
 
-int CC2538::send(const Address & dst, const Type & type, const void * data, unsigned int size)
+int CC2538::send(const Address & dst, const IEEE802_15_4::Type & type, const void * data, unsigned int size)
 {
     db<CC2538>(TRC) << "CC2538::send(s=" << address() << ",d=" << dst << ",p=" << hex << type << dec << ",d=" << data << ",s=" << size << ")" << endl;
 
-    Buffer * b = alloc(reinterpret_cast<NIC*>(this), dst, type, 0, 0, size);
+    Buffer * b = alloc(0, dst, type, 0, 0, size);
     memcpy(b->frame()->data<void>(), data, size);
     return send(b);
 }
 
-int CC2538::receive(Address * src, Type * type, void * data, unsigned int size)
+int CC2538::receive(Address * src, IEEE802_15_4::Type * type, void * data, unsigned int size)
 {
     db<CC2538>(TRC) << "CC2538::receive(s=" << *src << ",p=" << hex << *type << dec << ",d=" << data << ",s=" << size << ") => " << endl;
 
@@ -65,7 +68,7 @@ int CC2538::receive(Address * src, Type * type, void * data, unsigned int size)
     return ret;
 }
 
-CC2538::Buffer * CC2538::alloc(NIC * nic, const Address & dst, const Type & type, unsigned int once, unsigned int always, unsigned int payload)
+CC2538::Buffer * CC2538::alloc(NIC * nic, const Address & dst, const IEEE802_15_4::Type & type, unsigned int once, unsigned int always, unsigned int payload)
 {
     db<CC2538>(TRC) << "CC2538::alloc(s=" << address() << ",d=" << dst << ",p=" << hex << type << dec << ",on=" << once << ",al=" << always << ",ld=" << payload << ")" << endl;
 
@@ -113,22 +116,31 @@ void CC2538::reset()
 
 void CC2538::handle_int()
 {
-    char rssi = xreg(RSSI); // TODO: get the RSSI appended by hardware at the end of the frame when filtering is enabled
-
-    db<CC2538>(TRC) << "CC2538::handle_int()" << endl;
+    Timer::Time_Stamp sfd = Timer::sfd();
 
     Reg32 irqrf0 = sfr(RFIRQF0);
     Reg32 irqrf1 = sfr(RFIRQF1);
     Reg32 errf = sfr(RFERRF);
     sfr(RFIRQF0) = irqrf0 & INT_RXPKTDONE; //INT_RXPKTDONE is polled by rx_done()
     sfr(RFIRQF1) = irqrf1 & INT_TXDONE; //INT_TXDONE is polled by tx_done()
-    sfr(RFERRF) = 0;
-    db<CC2538>(INF) << "CC2538::handle_int:RFIRQF0=" << hex << irqrf0 << endl;
-    db<CC2538>(INF) << "CC2538::handle_int:RFIRQF1=" << hex << irqrf1 << endl;
-    db<CC2538>(INF) << "CC2538::handle_int:RFERRF=" << hex << errf << endl;
+    sfr(RFERRF) = errf & (INT_TXUNDERF | INT_TXOVERF);
+    if(Traits<CC2538>::hysterically_debugged) {
+        db<CC2538>(TRC) << "CC2538::handle_int()" << endl;
 
-    if(irqrf0 & INT_FIFOP) { // Frame received
-        db<CC2538>(TRC) << "CC2538::handle_int:receive()" << endl;
+        db<CC2538>(TRC) << "CC2538::handle_int:RFIRQF0=" << hex << irqrf0 << endl;
+        db<CC2538>(TRC) << "CC2538::handle_int:RFIRQF1=" << hex << irqrf1 << endl;
+        db<CC2538>(TRC) << "CC2538::handle_int:RFERRF=" << hex << errf << endl;
+    }
+
+    if(errf & (INT_RXUNDERF | INT_RXOVERF)) { // RX Error
+        CC2538RF::drop();
+        IC::enable(IC::INT_NIC0_TIMER);
+        db<CC2538>(INF) << "CC2538::handle_int:RFERRF=" << hex << errf << endl;
+    } else if(irqrf0 & INT_FIFOP) { // Frame received
+        if(TSTP_MAC<CC2538RF>::state_machine_debugged)
+            kout << 'h';
+        if(Traits<CC2538>::hysterically_debugged)
+            db<CC2538>(TRC) << "CC2538::handle_int:receive()" << endl;
         if(CC2538RF::filter()) {
             Buffer * buf = 0;
             unsigned int idx = _rx_cur_produce;
@@ -141,10 +153,16 @@ void CC2538::handle_int()
             _rx_cur_produce = (idx + 1) % RX_BUFS;
 
             if(buf) {
-                buf->rssi = rssi;
                 buf->size(CC2538RF::copy_from_nic(buf->frame()));
+                // When AUTO_CRC is on, the radio automatically puts the RSSI on the second-to-last byte
+                assert(xreg(FRMCTRL0) & AUTO_CRC);
+                assert(buf->size() >= 2);
+                buf->rssi = reinterpret_cast<char *>(buf->frame())[buf->size() - 2];
+                buf->sfd_time_stamp = sfd;
+
                 if(MAC::pre_notify(buf)) {
                     db<CC2538>(TRC) << "CC2538::handle_int:receive(b=" << buf << ") => " << *buf << endl;
+                    IC::enable(IC::INT_NIC0_TIMER); // Make sure radio and MAC timer don't preempt one another
                     bool notified = notify(reinterpret_cast<IEEE802_15_4::Header *>(buf->frame())->type(), buf);
                     if(!MAC::post_notify(buf) && !notified)
                         buf->unlock(); // No one was waiting for this frame, so make it available for receive()
@@ -152,10 +170,19 @@ void CC2538::handle_int()
                     db<CC2538>(TRC) << "CC2538::handle_int: frame dropped by MAC"  << endl;
                     buf->size(0);
                     buf->unlock();
+                    IC::enable(IC::INT_NIC0_TIMER); // Make sure radio and MAC timer don't preempt one another
                 }
-            } else
+            } else {
                 CC2538RF::drop();
+                IC::enable(IC::INT_NIC0_TIMER); // Make sure radio and MAC timer don't preempt one another
+            }
+        } else {
+            IC::enable(IC::INT_NIC0_TIMER); // Make sure radio and MAC timer don't preempt one another
         }
+        if(TSTP_MAC<CC2538RF>::state_machine_debugged)
+            kout << 'H';
+    } else {
+        IC::enable(IC::INT_NIC0_TIMER);
     }
 }
 
@@ -174,8 +201,12 @@ void CC2538::int_handler(const IC::Interrupt_Id & interrupt)
 
 // TSTP binding
 template<typename Radio>
-void TSTP_MAC<Radio>::free(Buffer * b) { b->nic()->free(reinterpret_cast<NIC::Buffer*>(b)); }
+void TSTP_MAC<Radio>::free(Buffer * b) { CC2538::get(_unit)->free(b); }
 template void TSTP_MAC<CC2538RF>::free(Buffer * b);
+
+template<typename Radio>
+void TSTP_MAC_NOMF<Radio>::free(Buffer * b) { CC2538::get(_unit)->free(b); }
+template void TSTP_MAC_NOMF<CC2538RF>::free(Buffer * b);
 
 __END_SYS
 
