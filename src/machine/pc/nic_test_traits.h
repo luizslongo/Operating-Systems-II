@@ -6,7 +6,7 @@
 __BEGIN_SYS
 
 // Global Configuration
-template <typename T>
+template<typename T>
 struct Traits
 {
     static const bool enabled = true;
@@ -14,18 +14,18 @@ struct Traits
     static const bool hysterically_debugged = false;
 };
 
-template <> struct Traits<Build>
+template<> struct Traits<Build>
 {
-    enum {LIBRARY, BUILTIN};
+    enum {LIBRARY, BUILTIN, KERNEL};
     static const unsigned int MODE = LIBRARY;
 
-    enum {IA32};
+    enum {IA32, AVR8, ARMv7};
     static const unsigned int ARCHITECTURE = IA32;
 
-    enum {PC};
+    enum {PC, ATmega, Cortex};
     static const unsigned int MACHINE = PC;
 
-    enum {Legacy_PC};
+    enum {Legacy_PC, eMote1, eMote2, eMote3, Arduino, LM3S811, Zynq};
     static const unsigned int MODEL = Legacy_PC;
 
     static const unsigned int CPUS = 1;
@@ -34,7 +34,7 @@ template <> struct Traits<Build>
 
 
 // Utilities
-template <> struct Traits<Debug>
+template<> struct Traits<Debug>
 {
     static const bool error   = true;
     static const bool warning = true;
@@ -42,38 +42,38 @@ template <> struct Traits<Debug>
     static const bool trace   = false;
 };
 
-template <> struct Traits<Lists>: public Traits<void>
+template<> struct Traits<Lists>: public Traits<void>
 {
     static const bool debugged = hysterically_debugged;
 };
 
-template <> struct Traits<Spin>: public Traits<void>
+template<> struct Traits<Spin>: public Traits<void>
 {
     static const bool debugged = hysterically_debugged;
 };
 
-template <> struct Traits<Heap>: public Traits<void>
+template<> struct Traits<Heaps>: public Traits<void>
 {
     static const bool debugged = hysterically_debugged;
 };
 
 
 // System Parts (mostly to fine control debugging)
-template <> struct Traits<Boot>: public Traits<void>
+template<> struct Traits<Boot>: public Traits<void>
 {
 };
 
-template <> struct Traits<Setup>: public Traits<void>
+template<> struct Traits<Setup>: public Traits<void>
 {
 };
 
-template <> struct Traits<Init>: public Traits<void>
+template<> struct Traits<Init>: public Traits<void>
 {
 };
 
 
-// Common Mediators
-template <> struct Traits<Serial_Display>: public Traits<void>
+// Mediators
+template<> struct Traits<Serial_Display>: public Traits<void>
 {
     static const bool enabled = true;
     enum {UART, USB};
@@ -83,6 +83,12 @@ template <> struct Traits<Serial_Display>: public Traits<void>
     static const int TAB_SIZE = 8;
 };
 
+template<> template <unsigned int S> struct Traits<Software_AES<S>>: public Traits<void>
+{
+    static const bool enabled = true;
+    static const unsigned int KEY_SIZE = 16;
+};
+
 __END_SYS
 
 #include __ARCH_TRAITS_H
@@ -90,13 +96,13 @@ __END_SYS
 
 __BEGIN_SYS
 
-template <> struct Traits<Application>: public Traits<void>
+template<> struct Traits<Application>: public Traits<void>
 {
     static const unsigned int STACK_SIZE = 256 * 1024;
     static const unsigned int HEAP_SIZE = 16 * 1024 * 1024;
 };
 
-template <> struct Traits<System>: public Traits<void>
+template<> struct Traits<System>: public Traits<void>
 {
     static const unsigned int mode = Traits<Build>::MODE;
     static const bool multithread = (Traits<Application>::MAX_THREADS > 1);
@@ -106,6 +112,7 @@ template <> struct Traits<System>: public Traits<void>
 
     enum {FOREVER = 0, SECOND = 1, MINUTE = 60, HOUR = 3600, DAY = 86400, WEEK = 604800, MONTH = 2592000, YEAR = 31536000};
     static const unsigned long LIFE_SPAN = 1 * HOUR; // in seconds
+    static const unsigned int DUTY_CYCLE = 10000; // in ppm
 
     static const bool reboot = true;
 
@@ -115,12 +122,12 @@ template <> struct Traits<System>: public Traits<void>
 
 
 // Components
-template <> struct Traits<Task>: public Traits<void>
+template<> struct Traits<Task>: public Traits<void>
 {
     static const bool enabled = Traits<System>::multitask;
 };
 
-template <> struct Traits<Thread>: public Traits<void>
+template<> struct Traits<Thread>: public Traits<void>
 {
     static const bool smp = Traits<System>::multicore;
 
@@ -130,32 +137,32 @@ template <> struct Traits<Thread>: public Traits<void>
     static const bool trace_idle = hysterically_debugged;
 };
 
-template <> struct Traits<Scheduler<Thread> >: public Traits<void>
+template<> struct Traits<Scheduler<Thread> >: public Traits<void>
 {
     static const bool debugged = Traits<Thread>::trace_idle || hysterically_debugged;
 };
 
-template <> struct Traits<Periodic_Thread>: public Traits<void>
+template<> struct Traits<Periodic_Thread>: public Traits<void>
 {
     static const bool simulate_capacity = false;
 };
 
-template <> struct Traits<Address_Space>: public Traits<void>
+template<> struct Traits<Address_Space>: public Traits<void>
 {
     static const bool enabled = Traits<System>::multiheap;
 };
 
-template <> struct Traits<Segment>: public Traits<void>
+template<> struct Traits<Segment>: public Traits<void>
 {
     static const bool enabled = Traits<System>::multiheap;
 };
 
-template <> struct Traits<Alarm>: public Traits<void>
+template<> struct Traits<Alarm>: public Traits<void>
 {
     static const bool visible = hysterically_debugged;
 };
 
-template <> struct Traits<Synchronizer>: public Traits<void>
+template<> struct Traits<Synchronizer>: public Traits<void>
 {
     static const bool enabled = Traits<System>::multithread;
 };
@@ -168,7 +175,7 @@ template<> struct Traits<Network>: public Traits<void>
     static const unsigned int RETRIES = 3;
     static const unsigned int TIMEOUT = 10; // s
 
-    // This list is positional, with one network for each NIC in traits<NIC>::NICS
+    // This list is positional, with one network for each NIC in Traits<NIC>::NICS
     typedef LIST<IP> NETWORKS;
 };
 
