@@ -4,13 +4,11 @@
 #include <utility/string.h>
 #include <utility/bignum.h>
 #include <utility/random.h>
-#include <utility/aes.h>
-#include <utility/diffie_hellman.h>
 
 using namespace EPOS;
 
-const int ITERATIONS = 125000;
-const int SIZE = 16;
+const unsigned int ITERATIONS = 125000;
+const unsigned int SIZE = 16;
 
 OStream cout;
 
