@@ -95,6 +95,9 @@ APP_CODE_ADDR	= $(call GETTK,APP_CODE,$(MACH_TRAITS))
 APP_DATA_ADDR	= $(call GETTK,APP_DATA,$(MACH_TRAITS))
 BOOT_LENGTH_MIN	= $(call GETTK,BOOT_LENGTH_MIN,$(MACH_TRAITS))
 BOOT_LENGTH_MAX = $(call GETTK,BOOT_LENGTH_MAX,$(MACH_TRAITS))
+NODE_ID         = $(call GETTK,NODE_ID,$(MACH_TRAITS))
+N_NODES         = $(call GETTK,N_NODES,$(MACH_TRAITS))
+UUID            = $(shell cat /proc/sys/kernel/random/uuid | sed 's/-//g')
 
 #Machine specifics
 pc_CC_FLAGS             := -Wa,--32
