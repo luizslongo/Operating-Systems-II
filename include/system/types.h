@@ -50,6 +50,7 @@ enum Power_Mode
 // Utilities
 __BEGIN_UTIL
 typedef unsigned char Percent;
+typedef unsigned char UUID[8];
 class Dummy {};
 class Bitmaps;
 class CRC;
@@ -92,6 +93,8 @@ class IC;
 class Timer;
 class RTC;
 class UART;
+class SPI;
+class RS485;
 class USB;
 class EEPROM;
 class Display;
@@ -99,6 +102,10 @@ class Serial_Display;
 class Keyboard;
 class Serial_Keyboard;
 class Scratchpad;
+class Cipher;
+class Watchdog;
+template<unsigned int KEY_SIZE>
+class AES;
 class GPIO;
 class I2C;
 class ADC;
@@ -110,6 +117,7 @@ class PCNet32;
 class C905;
 class E100;
 class CC2538;
+class M95;
 class AT86RF;
 class GEM;
 
@@ -155,8 +163,6 @@ class Delay;
 
 class Network;
 
-class ELP;
-
 class TSTPOE;
 class TSTP;
 
@@ -167,6 +173,7 @@ class ICMP;
 class UDP;
 class TCP;
 class DHCP;
+class HTTP;
 
 class IPC;
 
@@ -198,13 +205,30 @@ template<typename Component> class Remote;
 typedef unsigned int Type_Id;
 enum
 {
-    CPU_ID = 100,
+    FIRST_COMPONENT_ID = 0,
+    THREAD_ID = FIRST_COMPONENT_ID,
+    TASK_ID,
+    ACTIVE_ID,
+    ADDRESS_SPACE_ID,
+    SEGMENT_ID,
+    MUTEX_ID,
+    SEMAPHORE_ID,
+    CONDITION_ID,
+    CLOCK_ID,
+    ALARM_ID,
+    CHRONOMETER_ID,
+    IPC_COMMUNICATOR_ID,
+    UTILITY_ID,
+    LAST_COMPONENT_ID,
+
+    FIRST_MEDIATOR_ID = 100,
+    CPU_ID = FIRST_MEDIATOR_ID,
     TSC_ID,
     MMU_ID,
     FPU_ID,
     PMU_ID,
 
-    MACHINE_ID = 200,
+    MACHINE_ID,
     PCI_ID,
     IC_ID,
     TIMER_ID,
@@ -215,27 +239,9 @@ enum
     DISPLAY_ID,
     KEYBOARD_ID,
     NIC_ID,
+    LAST_MEDIATOR_ID,
 
-    THREAD_ID = 0,
-    TASK_ID,
-    ACTIVE_ID,
-
-    ADDRESS_SPACE_ID,
-    SEGMENT_ID,
-
-    MUTEX_ID,
-    SEMAPHORE_ID,
-    CONDITION_ID,
-
-    CLOCK_ID,
-    ALARM_ID,
-    CHRONOMETER_ID,
-
-    IPC_COMMUNICATOR_ID,
-
-    UTILITY_ID,
-
-    LAST_TYPE_ID,
+    LAST_TYPE_ID = LAST_MEDIATOR_ID,
 
     UNKNOWN_TYPE_ID = 0xffff
 };
