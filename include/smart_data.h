@@ -108,7 +108,13 @@ public:
         return _value;
     }
 
-    const Coordinates & location() const { return TSTP::absolute(_coordinates); }
+    const Coordinates location() const { return _coordinates; }
+    const Time time() const { return TSTP::absolute(_time); }
+    const Error & error() const { return _error; }
+    const Unit & unit() const { return _unit; }
+
+    const Power_Mode & power() const { return Transducer::power(); }
+    void power(const Power_Mode & mode) const { Transducer::power(mode); }
 
     friend Debug & operator<<(Debug & db, const Smart_Data & d) {
         db << "{";
@@ -135,17 +141,21 @@ private:
         case TSTP::INTEREST: {
             TSTP::Interest * interest = reinterpret_cast<TSTP::Interest *>(packet);
             db<Smart_Data>(INF) << "Smart_Data::update[I]:msg=" << interest << " => " << *interest << endl;
+            _responsive->t0(interest->region().t0);
+            _responsive->t1(interest->region().t1);
             if(interest->period()) {
                 if(!_thread)
                     _thread = new Periodic_Thread(interest->period(), &updater, _device, interest->expiry(), this);
                 else {
                     if(!interest->period() != _thread->period())
-                        _thread->period(interest->period()) ;
+                        _thread->period(interest->period());
                 }
             } else {
                 Transducer::sense(_device, this);
+                _time = TSTP::now();
                 _responsive->value(_value);
-                _responsive->respond(interest->expiry());
+                _responsive->time(_time);
+                _responsive->respond(_time + interest->expiry());
             }
         } break;
         case TSTP::RESPONSE: {
@@ -154,7 +164,7 @@ private:
             _value = response->value<Value>();
             _error = response->error();
             _coordinates = response->origin();
-            _time = buffer->origin_time;
+//            _time = buffer->origin_time;
             db<Smart_Data>(INF) << "Smart_Data:update[R]:this=" << this << " => " << *this << endl;
         }
         case TSTP::COMMAND: {

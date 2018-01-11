@@ -9,6 +9,7 @@
 #include <utility/list.h>
 #include <utility/observer.h>
 #include <utility/buffer.h>
+#include <utility/random.h>
 
 __BEGIN_SYS
 
@@ -26,10 +27,12 @@ public:
 
     // IEEE 802.15.4 Physical Layer
     static const unsigned int MTU = 127;
-    static const unsigned int CCA_TX_GAP = 320;
+    static const unsigned int CCA_TX_GAP = 160;
     static const unsigned int TURNAROUND_TIME = 192;
-    static const unsigned int BYTE_RATE = 31250; // Bytes per second
-    static const unsigned int PHY_HEADER_SIZE = 6;
+    static const unsigned int BYTE_RATE = 31250; // bytes per second
+    static const unsigned int SHR_SIZE = 5; // bytes
+    static const unsigned int PHR_SIZE = 1; // bytes
+    static const unsigned int PHY_HEADER_SIZE = SHR_SIZE + PHR_SIZE; // bytes
 
     typedef unsigned char Data[MTU];
 
@@ -143,10 +146,10 @@ public:
         Header() {}
 
         Header(const Type & type)
-        : _frame_control(type), _sequence_number(0), _dst_pan_id(PAN_ID_BROADCAST) {};
+        : _frame_control(type), _sequence_number(Random::random()), _dst_pan_id(PAN_ID_BROADCAST) {};
 
         Header(const Type & type, const Address & src, const Address & dst)
-        : _frame_control(type), _sequence_number(0), _dst_pan_id(PAN_ID_BROADCAST), _dst(dst), _src(src) { ack_request(dst != broadcast()); }
+        : _frame_control(type), _sequence_number(Random::random()), _dst_pan_id(PAN_ID_BROADCAST), _dst(dst), _src(src) { ack_request(dst != broadcast()); }
 
         const Address & src() const { return _src; }
         const Address & dst() const { return _dst; }
@@ -206,7 +209,7 @@ public:
     typedef Frame PDU;
 
     // Buffers used to hold frames across a zero-copy network stack
-    typedef _UTIL::Buffer<NIC, IF<Traits<_SYS::TSTP>::enabled, Phy_Frame, Frame>::Result, void, IF<Traits<_SYS::TSTP>::enabled, TSTP_Metadata, IEEE802_15_4_Metadata>::Result> Buffer;
+    typedef _UTIL::Buffer<NIC, IF<Traits<_SYS::TSTP>::enabled, Phy_Frame, Frame>::Result, void, NIC_Common::Metadata> Buffer;
 
     // Observers of a protocol get a also a pointer to the received buffer
     typedef Data_Observer<Buffer, Type> Observer;
@@ -223,6 +226,7 @@ public:
                << ",rxorun=" <<  s.rx_overruns
                << ",txp=" <<  s.tx_packets
                << ",txb=" <<  s.tx_bytes
+               << ",txr=" <<  s.tx_relayed
                << ",txorun=" <<  s.tx_overruns
                << ",frm=" <<  s.frame_errors
                << ",car=" <<  s.carrier_errors
@@ -231,6 +235,7 @@ public:
             return db;
         }
 
+        unsigned int tx_relayed;
         unsigned int rx_overruns;
         unsigned int tx_overruns;
         unsigned int frame_errors;
