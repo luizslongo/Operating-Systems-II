@@ -5,6 +5,7 @@
 
 #include <utility/string.h>
 #include <cpu.h>
+#include <rtc.h>
 
 __BEGIN_SYS
 
@@ -152,33 +153,57 @@ public:
     };
 
     // Buffer Metadata added to frames by higher-level protocols
-    struct IEEE802_15_4_Metadata
+    struct Metadata
     {
-        int rssi; // Received Signal Strength Indicator
+    	// TODO: remove unnecessary long longs
+    	int rssi;                             // Received Signal Strength Indicator
+    	unsigned long long sfd_time_stamp;    // Start-of-frame reception time stamp
+    	unsigned int id;                      // Message identifier
+    	unsigned long long offset;            // MAC contention offset
+    	bool destined_to_me;                  // Whether this node is the final destination for this message
+    	bool downlink;                        // Message direction (downlink == from sink to sensor)
+    	unsigned long long deadline;          // Time until when this message must arrive at the final destination
+    	unsigned int my_distance;             // This node's distance to the message's final destination
+    	unsigned int sender_distance;         // Last hop's distance to the message's final destination
+    	bool is_new;                          // Whether this message was just created by this node
+    	bool is_microframe;                   // Whether this message is a Microframe
+    	bool relevant;                        // Whether any component is interested in this message
+    	bool trusted;                         // If true, this message was successfully verified by the Security Manager
+    	bool freed;                           // If true, the MAC will not free this buffer
+    	unsigned int random_backoff_exponent; // Exponential backoff used by the MAC to avoid permanent interference
+    	unsigned int microframe_count;        // Number of Microframes left until data
+    	int hint;                             // Inserted in the Hint Microframe field
     };
 
-    struct TSTP_Metadata: public IEEE802_15_4_Metadata
+    // NIC Timer Interface (to be implemented by NIC aiming at supporting time-synchronous protocols)
+    class Timer
     {
-        unsigned long long sfd_time_stamp;  // Start-of-frame reception time stamp
-        unsigned int id;                    // Message identifier
-        unsigned long long offset;          // MAC contention offset
-        bool destined_to_me;                // Whether this node is the final destination for this message
-        bool downlink;                      // Message direction
-        unsigned long long expiry;          // Time until when this message must arrive at the final destination
-        unsigned long long origin_time;     // Time when this message was created at the source node
-        unsigned long long my_distance;     // This node's distance to the message's final destination
-        unsigned long long sender_distance; // Last hop's distance to the message's final destination
-        bool is_new;                        // Whether this message was just created by this node
-        bool is_microframe;                 // Whether this message is a Microframe
-        bool relevant;                      // Whether any component is interested in this message
-        bool trusted;                       // If true, this message was successfully verified by the Security Manager
-    };
+    private:
+        typedef RTC::Microsecond Microsecond;
 
+    public:
+        typedef unsigned long long Time_Stamp;
+        typedef long long Offset;
+
+    public:
+         Timer() {}
+
+         static Time_Stamp frequency() { return 0; }
+         static Time_Stamp read() { return 0; }
+         static Time_Stamp sfd() { return 0; }
+         static void adjust(const Offset & o) { }
+         static Time_Stamp us2count(const Microsecond & us) { return 0; }
+         static Microsecond count2us(const Time_Stamp & ts) { return 0; }
+    };
 
     // Polymorphic NIC Base
     template<typename Family, bool polymorphic = true>
     class NIC_Base: public Family, public Family::Observed
     {
+    private:
+    	typedef typename Family::Observed Observed;
+    	typedef typename Family::Observer Observer;
+
     public:
         NIC_Base(unsigned int unit = 0) {}
         virtual ~NIC_Base() {}
@@ -196,6 +221,10 @@ public:
         virtual const typename Family::Statistics & statistics() = 0;
 
         virtual void reset() = 0;
+
+        void attach(Observer * obs, const Protocol & prot) { Observed::attach(obs, prot); }
+        void detach(Observer * obs, const Protocol & prot) { Observed::detach(obs, prot); }
+        void notify(const Protocol & prot, typename Family::Buffer * buf) { Observed::notify(prot, buf); }
     };
 
     // Monomorphic NIC Base

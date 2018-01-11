@@ -1,4 +1,4 @@
-// EPOS Advanced Encryption Standard (AES) Utility Declarations
+// EPOS Elliptic Curve Diffie-Hellman (ECDH) Component Declarations
 
 #ifndef __diffie_hellman_h
 #define __diffie_hellman_h
@@ -6,194 +6,235 @@
 #include <system/config.h>
 #include <utility/bignum.h>
 
-__BEGIN_SYS
+__BEGIN_UTIL
 
-template <unsigned int SECRET_SIZE>
+template<typename Cipher>
 class Diffie_Hellman
 {
-private:
-    static const unsigned int PUBLIC_KEY_SIZE = 2 * SECRET_SIZE;
+public:
+	static const unsigned int SECRET_SIZE = Cipher::KEY_SIZE;
+	static const unsigned int PUBLIC_KEY_SIZE = 2 * SECRET_SIZE;
 
+private:
     typedef _UTIL::Bignum<SECRET_SIZE> Bignum;
 
-    class ECC_Point
-    {
+	class Elliptic_Curve_Point
+	{
     public:
-        ECC_Point() __attribute__((noinline)) {}
+        typedef typename Diffie_Hellman::Bignum Coordinate;
 
-        void operator*=(const Bignum & b) __attribute__((noinline)) {
-            // Finding last '1' bit of k
-            unsigned int t = Bignum::BITS_PER_DIGIT;
-            int b_len = sizeof(Bignum::Word) + 1;
-            typename Bignum::Digit now; //= x._data[Bignum::word - 1];   
-            do {
-                now = b.data[(--b_len) - 1];
-            } while(now == 0);
-            assert(b_len > 0);
+		Elliptic_Curve_Point() __attribute__((noinline)) { }
 
-            bool bin[t]; // Binary representation of now
+		void operator*=(const Coordinate & b);
 
-            ECC_Point pp(*this);
+		friend Debug &operator<<(Debug &out, const Elliptic_Curve_Point &a) {
+			out << "{x=" << a.x << ",y=" << a.y << ",z=" << a.z << "}";
+			return out;
+		}
+		friend OStream &operator<<(OStream &out, const Elliptic_Curve_Point &a) {
+			out << "{x=" << a.x << ",y=" << a.y << ",z=" << a.z << "}";
+			return out;
+		}
 
-            for(int j = Bignum::BITS_PER_DIGIT - 1; j >= 0; j--) {
-                if(now % 2)
-                    t = j + 1;
-                bin[j] = now % 2;
-                now /= 2;
-            }
+	private:
+		void jacobian_double();
+		void add_jacobian_affine(const Elliptic_Curve_Point &b);
 
-            for(int i = b_len - 1; i >= 0; i--) {
-                for(; t < Bignum::BITS_PER_DIGIT; t++) {
-                    jacobian_double();
-                    if(bin[t])
-                        add_jacobian_affine(pp);
-                }
-                if(i>0) {
-                    now = b.data[i-1];
-                    for(int j = Bignum::BITS_PER_DIGIT - 1; j >= 0; j--) {
-                        bin[j] = now % 2;
-                        now /= 2;
-                    }
-                    t=0;
-                }
-            }
-
-            Bignum Z; 
-            z.invert();
-            Z = z; 
-            Z *= z;
-
-            x *= Z;
-            Z *= z;
-
-            y *= Z;
-            z = 1;
-        }
-
-        friend Debug &operator<<(Debug & db, const ECC_Point & a) {
-            db << "{x=" << a.x << ",y=" << a.y << ",z=" << a.z << "}";
-            return db;
-        }
-
-    private:
-        void jacobian_double() __attribute__((noinline)) {
-            Bignum B, C(x), aux(z);
-
-            aux *= z; C -= aux;
-            aux += x; C *= aux;
-            C *= 3;
-
-            z *= y; z *= 2;
-
-            y *= y; B = y;
-
-            y *= x; y *= 4;
-
-            B *= B; B *= 8;
-
-            x = C; x *= x;
-            aux = y; aux *= 2;
-            x -= aux;
-
-            y -= x; y *= C;
-            y -= B; 
-        }
-
-        void add_jacobian_affine(const ECC_Point & b) __attribute__((noinline)) {
-            Bignum A(z), B, C, X, Y, aux, aux2;  
-
-            A *= z;
-
-            B = A;
-
-            A *= b.x;
-
-            B *= z; B *= b.y;
-
-            C = A; C -= x;
-
-            B -= y;
-
-            X = B; X *= B;
-            aux = C; aux *= C;
-
-            Y = aux;
-
-            aux2 = aux; aux *= C;
-            aux2 *= 2; aux2 *= x;
-            aux += aux2; X -= aux;
-
-            aux = Y; Y *= x;
-            Y -= X; Y *= B;
-            aux *= y; aux *= C;
-            Y -= aux;
-
-            z *= C;
-
-            x = X; y = Y;  
-        }
-
-    private:
-        Diffie_Hellman::Bignum x, y, z;
-    };
+    public:
+        Coordinate x, y, z;
+	};
 
 public:
-    typedef ECC_Point Public_Key;
+    typedef Elliptic_Curve_Point Public_Key;
     typedef Bignum Shared_Key;
-    typedef unsigned char Base_Point_Data[sizeof(typename Bignum::Word) * sizeof(typename Bignum::Digit)];
+    typedef Bignum Private_Key;
 
-public:
-    Diffie_Hellman(const Base_Point_Data & x = _def_x, const Base_Point_Data & y = _def_y) __attribute__((noinline)) {
-        _base_point.x = Bignum(x);
-        _base_point.y = Bignum(y);
+	Diffie_Hellman() {
+        new (&_base_point.x) Bignum(_default_base_point_x, SECRET_SIZE);
+        new (&_base_point.y) Bignum(_default_base_point_y, SECRET_SIZE);
         _base_point.z = 1;
         generate_keypair();
     }
 
-    const ECC_Point & public_key() { return _public; }
-
-    void generate_keypair() {
-        db<Diffie_Hellman>(TRC) << "Diffie_Hellman::generate_keypair()" << endl;
-        _private.random();
-        db<Diffie_Hellman>(INF) << "Diffie_Hellman: private=" << _private << endl;
-        _public = _base_point;
-        db<Diffie_Hellman>(INF) << "Diffie_Hellman: base point=" << _base_point << endl;
-        _public *= _private;
-        db<Diffie_Hellman>(INF) << "Diffie_Hellman: public=" << _public << endl;
+    Diffie_Hellman(const Elliptic_Curve_Point & base_point): _base_point(base_point) {
+        generate_keypair();
     }
 
-    Shared_Key shared_key(const ECC_Point & public_key) __attribute__((noinline)) {
-        db<Diffie_Hellman>(TRC) << "Diffie_Hellman::shared_key(pub=" << public_key << ")" << endl;
-        db<Diffie_Hellman>(INF) << "Diffie_Hellman: private=" << _private << endl;
+	Elliptic_Curve_Point public_key() { return _public; }
+
+	Shared_Key shared_key(Elliptic_Curve_Point public_key) {
+        db<Diffie_Hellman>(TRC) << "Diffie_Hellman::shared_key(pub=" << public_key << ",priv=" << _private << ")" << endl;
 
         public_key *= _private;
         public_key.x ^= public_key.y;
 
-        db<Diffie_Hellman>(INF) << "Diffie_Hellman: public=" << _public << endl;
+        db<Diffie_Hellman>(INF) << "Diffie_Hellman: shared key = " << public_key.x << endl;
         return public_key.x;
     }
 
 private:
-    Bignum _private;
-    ECC_Point _base_point;
-    ECC_Point _public;
+	void generate_keypair() {
+		db<Diffie_Hellman>(TRC) << "Diffie_Hellman::generate_keypair()" << endl;
 
-    static const unsigned char _def_x[SECRET_SIZE];
-    static const unsigned char _def_y[SECRET_SIZE];
+		_private.randomize();
+
+		db<Diffie_Hellman>(INF) << "Diffie_Hellman Private: " << _private << endl;
+		db<Diffie_Hellman>(INF) << "Diffie_Hellman Base Point: " << _base_point << endl;
+
+		_public = _base_point;
+		_public *= _private;
+
+		db<Diffie_Hellman>(INF) << "Diffie_Hellman Public: " << _public << endl;
+	}
+
+private:
+	Private_Key _private;
+	Elliptic_Curve_Point _base_point;
+	Elliptic_Curve_Point _public;
+	static const unsigned char _default_base_point_x[SECRET_SIZE];
+	static const unsigned char _default_base_point_y[SECRET_SIZE];
 };
 
-template<>
-const unsigned char Diffie_Hellman<16>::_def_x[16] = { 0x86, 0x5b, 0x2c, 0xa5,
-                                                       0x7c, 0x60, 0x28, 0x0c,
-                                                       0x2d, 0x9b, 0x89, 0x8b,
-                                                       0x52, 0xf7, 0x1f, 0x16 };
+//TODO: base point is dependent of SECRET_SIZE
+template<typename Cipher>
+const unsigned char Diffie_Hellman<Cipher>::_default_base_point_x[SECRET_SIZE] =
+{
+    '\x86', '\x5B', '\x2C', '\xA5',
+    '\x7C', '\x60', '\x28', '\x0C',
+    '\x2D', '\x9B', '\x89', '\x8B',
+    '\x52', '\xF7', '\x1F', '\x16'
+};
 
-template<>
-const unsigned char Diffie_Hellman<16>::_def_y[16] = { 0x83, 0x7a, 0xed, 0xdd,
-                                                       0x92, 0xa2, 0x2d, 0xc0,
-                                                       0x13, 0xeb, 0xaf, 0x5b,
-                                                       0x39, 0xc8, 0x5a, 0xcf };
+template<typename Cipher>
+const unsigned char Diffie_Hellman<Cipher>::_default_base_point_y[SECRET_SIZE] =
+{
+    '\x83', '\x7A', '\xED', '\xDD',
+    '\x92', '\xA2', '\x2D', '\xC0',
+    '\x13', '\xEB', '\xAF', '\x5B',
+    '\x39', '\xC8', '\x5A', '\xCF'
+};
 
-__END_SYS
+template<typename Cipher>
+void Diffie_Hellman<Cipher>::Elliptic_Curve_Point::operator*=(const Coordinate & b)
+{
+    // Finding last '1' bit of b
+    static const unsigned int bits_in_digit = sizeof(typename Coordinate::Digit) * 8;
+
+    typename Coordinate::Digit now;
+    unsigned int b_len = sizeof(Coordinate) / sizeof(typename Coordinate::Digit);
+    for(; (b_len > 1) && (b[b_len - 1] == 0); b_len--);
+    if((b_len == 0) || (b[b_len - 1] == 0)) {
+        x = 0;
+        y = 0;
+        z = 0;
+        return;
+    }
+
+    now = b[b_len - 1];
+
+    bool bin[bits_in_digit]; // Binary representation of 'now'
+    unsigned int current_bit = bits_in_digit;
+
+    Elliptic_Curve_Point pp(*this);
+
+    for(int i = bits_in_digit - 1; i >= 0; i--) {
+        if(now % 2)
+            current_bit = i + 1;
+        bin[i] = now % 2;
+        now /= 2;
+    }
+
+    for(int i = b_len - 1; i >= 0; i--) {
+        for(; current_bit < bits_in_digit; current_bit++) {
+            jacobian_double();
+            if(bin[current_bit])
+                add_jacobian_affine(pp);
+        }
+        if(i > 0) {
+            now = b[i-1];
+            for(int j = bits_in_digit-1; j >= 0; j--) {
+                bin[j] = now % 2;
+                now /= 2;
+            }
+            current_bit = 0;
+        }
+    }
+
+    Coordinate Z;
+    z.invert();
+    Z = z;
+    Z *= z;
+
+    x *= Z;
+    Z *= z;
+
+    y *= Z;
+    z = 1;
+}
+
+template<typename Cipher>
+void Diffie_Hellman<Cipher>::Elliptic_Curve_Point::jacobian_double()
+{
+    Coordinate B, C(x), aux(z);
+
+    aux *= z; C -= aux;
+    aux += x; C *= aux;
+    C *= 3;
+
+    z *= y; z *= 2;
+
+    y *= y; B = y;
+
+    y *= x; y *= 4;
+
+    B *= B; B *= 8;
+
+    x = C; x *= x;
+    aux = y; aux *= 2;
+    x -= aux;
+
+    y -= x; y *= C;
+    y -= B;
+}
+
+template<typename Cipher>
+void Diffie_Hellman<Cipher>::Elliptic_Curve_Point::add_jacobian_affine(const Elliptic_Curve_Point &b)
+{
+    Coordinate A(z), B, C, X, Y, aux, aux2;
+
+    A *= z;
+
+    B = A;
+
+    A *= b.x;
+
+    B *= z; B *= b.y;
+
+    C = A; C -= x;
+
+    B -= y;
+
+    X = B; X *= B;
+    aux = C; aux *= C;
+
+    Y = aux;
+
+    aux2 = aux; aux *= C;
+    aux2 *= 2; aux2 *= x;
+    aux += aux2; X -= aux;
+
+    aux = Y; Y *= x;
+    Y -= X; Y *= B;
+    aux *= y; aux *= C;
+    Y -= aux;
+
+    z *= C;
+
+    x = X; y = Y;
+}
+
+
+
+__END_UTIL
 
 #endif
