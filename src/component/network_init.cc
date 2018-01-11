@@ -4,7 +4,6 @@
 #ifndef __no_networking__
 
 #include <network.h>
-#include <elp.h>
 #include <icmp.h>
 #include <udp.h>
 #include <tcp.h>
@@ -42,6 +41,7 @@ void Network::init()
             new (SYSTEM) TCP;
     }
 
+	// FIXME: why isn't TSTP's initialized here?
     // If TSTP was initialized, initialize also the rest of the stack
     if(Traits<Network>::NETWORKS::Count<TSTP>::Result) {
 //        if(Traits<TSTP>::enabled)
