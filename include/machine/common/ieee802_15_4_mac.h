@@ -10,17 +10,17 @@
 __BEGIN_SYS
 
 template<typename Radio>
-class IEEE802_15_4_MAC: public IEEE802_15_4, public IEEE802_15_4::Observed, public Radio
+class IEEE802_15_4_MAC: public IEEE802_15_4, public Radio
 {
 private:
     static const unsigned int CSMA_CA_MIN_BACKOFF_EXPONENT = 3;
     static const unsigned int CSMA_CA_MAX_BACKOFF_EXPONENT = 5;
-    static const unsigned int CSMA_CA_UNIT_BACKOFF_PERIOD = 320; // us
-    static const unsigned int CSMA_CA_RETRIES = Traits<_API::ELP>::RETRIES > 4 ? 4 : Traits<_API::ELP>::RETRIES;
+    static const unsigned int CSMA_CA_UNIT_BACKOFF_PERIOD = IEEE802_15_4::CCA_TX_GAP; // us
+    static const unsigned int CSMA_CA_RETRIES = Traits<Network>::RETRIES > 4 ? 4 : Traits<Network>::RETRIES;
 
     static const unsigned int ACK_TIMEOUT = 352 * 2;
 
-    static const bool acknowledged = Traits<_API::ELP>::acknowledged;
+    static const bool acknowledged = true;
 
 public:
     using IEEE802_15_4::Address;
@@ -29,7 +29,7 @@ public:
 
     static const unsigned int MTU = IEEE802_15_4::MTU - sizeof(Header);
 
-    typedef _UTIL::Buffer<NIC, Frame, void, IEEE802_15_4_Metadata> Buffer;
+    typedef _UTIL::Buffer<NIC, Frame, void, Metadata> Buffer;
 
 protected:
     IEEE802_15_4_MAC() {}
@@ -76,7 +76,7 @@ public:
         if(do_ack) {
             if(sent) {
                 Radio::power(Power_Mode::FULL);
-                ack_ok = Radio::wait_for_ack(ACK_TIMEOUT);
+                ack_ok = Radio::wait_for_ack(ACK_TIMEOUT, buf->frame()->sequence_number());
             }
 
             for(unsigned int i = 0; !ack_ok && (i < CSMA_CA_RETRIES); i++) {
@@ -85,7 +85,7 @@ public:
                 ack_ok = sent = backoff_and_send();
                 if(sent) {
                     Radio::power(Power_Mode::FULL);
-                    ack_ok = Radio::wait_for_ack(ACK_TIMEOUT);
+                    ack_ok = Radio::wait_for_ack(ACK_TIMEOUT, buf->frame()->sequence_number());
                 }
             }
 
@@ -116,7 +116,8 @@ private:
             if(time < CSMA_CA_UNIT_BACKOFF_PERIOD)
                 time = CSMA_CA_UNIT_BACKOFF_PERIOD;
 
-            if(Radio::cca(time) && Radio::transmit())
+            Radio::backoff(time);
+            if(Radio::cca(CSMA_CA_UNIT_BACKOFF_PERIOD) && Radio::transmit())
                 break; // Success
 
             if(exp < CSMA_CA_MAX_BACKOFF_EXPONENT) {

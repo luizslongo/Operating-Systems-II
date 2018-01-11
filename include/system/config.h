@@ -103,6 +103,7 @@ namespace EPOS {
 #define __SCRATCHPAD_H  __HEADER_MACH(scratchpad)
 #define __NIC_H         __HEADER_MACH(nic)
 #define __FPGA_H        __HEADER_MACH(fpga)
+#define __AES_H         __HEADER_MACH(aes)
 #endif
 
 #ifdef __mmod_lm3s811__
@@ -113,6 +114,7 @@ namespace EPOS {
 #define __USB_H                 __HEADER_MACH(usb)
 #define __NIC_H                 __HEADER_MACH(nic)
 #define __GPIO_H                __HEADER_MACH(gpio)
+#define __AES_H                 __HEADER_MACH(aes)
 #endif
 
 #ifdef __mmod_emote3__
@@ -121,12 +123,16 @@ namespace EPOS {
 #define __RTC_H                 __HEADER_MACH(rtc)
 #define __EEPROM_H              __HEADER_MACH(eeprom)
 #define __UART_H                __HEADER_MACH(uart)
-#define __NIC_H                 __HEADER_MACH(nic)
+#define __SPI_H                 __HEADER_MACH(spi)
+#define __RS485_H               __HEADER_MACH(rs485)
 #define __USB_H                 __HEADER_MACH(usb)
 #define __I2C_H                 __HEADER_MACH(i2c)
 #define __GPIO_H                __HEADER_MACH(gpio)
 #define __ADC_H                 __HEADER_MACH(adc)
-#define __SPI_H                 __HEADER_MACH(spi)
+#define __PWM_H                 __HEADER_MACH(pwm)
+#define __WATCHDOG_H            __HEADER_MACH(watchdog)
+#define __NIC_H                 __HEADER_MACH(nic)
+#define __AES_H                 __HEADER_MACH(aes)
 #endif
 
 #ifdef __mmod_zynq__
@@ -136,6 +142,7 @@ namespace EPOS {
 #define __RTC_H                 __HEADER_MACH(rtc)
 #define __UART_H                __HEADER_MACH(uart)
 #define __NIC_H                 __HEADER_MACH(nic)
+#define __AES_H                 __HEADER_MACH(aes)
 #endif
 
 //============================================================================
