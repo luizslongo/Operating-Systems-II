@@ -16,6 +16,8 @@
 #include <string.h>
 
 using namespace EPOS;
+using namespace EPOS::S;
+using namespace EPOS::S::U;
 
 // Constants
 const unsigned int ARRAY_MAX = 128;
@@ -65,7 +67,6 @@ char components[STR_SIZE_MAX][ARRAY_MAX] = {
     "Alarm",
     "Delay",
     "Network",
-    "ELP",
     "TSTP",
     "ARP",
     "IP",
@@ -285,8 +286,6 @@ void populate_strings()
                 enabled_components[i] = Traits<Delay>::enabled;
             else if(!strcmp(components[i], "Network"))
                 enabled_components[i] = Traits<Network>::enabled;
-            else if(!strcmp(components[i], "ELP"))
-                enabled_components[i] = Traits<ELP>::enabled;
             else if(!strcmp(components[i], "TSTP"))
                 enabled_components[i] = Traits<TSTP>::enabled;
             else if(!strcmp(components[i], "ARP"))
