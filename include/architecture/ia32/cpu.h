@@ -16,6 +16,7 @@ public:
     using CPU_Common::Reg8;
     using CPU_Common::Reg16;
     using CPU_Common::Reg32;
+    using CPU_Common::Reg64;
     using CPU_Common::Log_Addr;
     using CPU_Common::Phy_Addr;
 
@@ -365,6 +366,20 @@ public:
         return compare;
    }
 
+    static Reg64 htole64(Reg64 v) { return v; }
+    static Reg32 htole32(Reg32 v) { return v; }
+    static Reg16 htole16(Reg16 v) { return v; }
+    static Reg64 letoh64(Reg64 v) { return v; }
+    static Reg32 letoh32(Reg32 v) { return v; }
+    static Reg16 letoh16(Reg16 v) { return v; }
+
+    static Reg64 htobe64(Reg64 v) { ASM("bswap %0" : "=r"(v) : "0"(v), "r"(v)); return v; }
+    static Reg32 htobe32(Reg32 v) { ASM("bswap %0" : "=r"(v) : "0"(v), "r"(v)); return v; }
+    static Reg16 htobe16(Reg16 v) { return swap16(v); }
+    static Reg64 betoh64(Reg64 v) { return htobe64(v); }
+    static Reg32 betoh32(Reg32 v) { return htobe32(v); }
+    static Reg16 betoh16(Reg16 v) { return htobe16(v); }
+
     static Reg32 htonl(Reg32 v) { ASM("bswap %0" : "=r"(v) : "0"(v), "r"(v)); return v; }
     static Reg16 htons(Reg16 v) { return swap16(v); }
     static Reg32 ntohl(Reg32 v) { return htonl(v); }
@@ -606,6 +621,20 @@ private:
     static unsigned int _cpu_clock;
     static unsigned int _bus_clock;
 };
+
+inline CPU::Reg64 htole64(CPU::Reg64 v) { return CPU::htole64(v); }
+inline CPU::Reg32 htole32(CPU::Reg32 v) { return CPU::htole32(v); }
+inline CPU::Reg16 htole16(CPU::Reg16 v) { return CPU::htole16(v); }
+inline CPU::Reg64 letoh64(CPU::Reg64 v) { return CPU::letoh64(v); }
+inline CPU::Reg32 letoh32(CPU::Reg32 v) { return CPU::letoh32(v); }
+inline CPU::Reg16 letoh16(CPU::Reg16 v) { return CPU::letoh16(v); }
+
+inline CPU::Reg64 htobe64(CPU::Reg64 v) { return CPU::htobe64(v); }
+inline CPU::Reg32 htobe32(CPU::Reg32 v) { return CPU::htobe32(v); }
+inline CPU::Reg16 htobe16(CPU::Reg16 v) { return CPU::htobe16(v); }
+inline CPU::Reg64 betoh64(CPU::Reg64 v) { return CPU::betoh64(v); }
+inline CPU::Reg32 betoh32(CPU::Reg32 v) { return CPU::betoh32(v); }
+inline CPU::Reg16 betoh16(CPU::Reg16 v) { return CPU::betoh16(v); }
 
 inline CPU::Reg32 htonl(CPU::Reg32 v) { return CPU::htonl(v); }
 inline CPU::Reg16 htons(CPU::Reg16 v) { return CPU::htons(v); }

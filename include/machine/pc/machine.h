@@ -3,7 +3,6 @@
 #ifndef __pc_h
 #define __pc_h
 
-#include <utility/list.h>
 #include <cpu.h>
 #include <mmu.h>
 #include <tsc.h>
@@ -13,6 +12,7 @@
 #include "memory_map.h"
 #include "ic.h"
 #include <display.h>
+#include <system.h>
 
 __BEGIN_SYS
 
@@ -66,6 +66,8 @@ public:
         	while(ready[j]);          // wait for CPU[0] signal
         }
     }
+
+    static const UUID & id() { return System::info()->bm.uuid; }
 
 private:
     static void pre_init(System_Info * si) {

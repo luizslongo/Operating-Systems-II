@@ -16,11 +16,11 @@ protected:
     CPU_Common() {}
 
 public:
-    typedef unsigned char Reg8;
+    typedef unsigned long  Reg;
+    typedef unsigned char  Reg8;
     typedef unsigned short Reg16;
-    typedef unsigned long Reg32;
+    typedef unsigned long  Reg32;
     typedef unsigned long long Reg64;
-    typedef unsigned long Reg;
 
     class Log_Addr
     {
@@ -103,23 +103,41 @@ public:
         return old;
     }
 
+    static Reg64 htole64(Reg64 v) { return (BIG_ENDIAN) ? swap64(v) : v; }
+    static Reg32 htole32(Reg32 v) { return (BIG_ENDIAN) ? swap32(v) : v; }
+    static Reg16 htole16(Reg16 v) { return (BIG_ENDIAN) ? swap16(v) : v; }
+    static Reg64 letoh64(Reg64 v) { return htole64(v); }
+    static Reg32 letoh32(Reg32 v) { return htole32(v); }
+    static Reg16 letoh16(Reg16 v) { return htole16(v); }
+
+    static Reg64 htobe64(Reg64 v) { return (!BIG_ENDIAN) ? swap64(v) : v; }
+    static Reg32 htobe32(Reg32 v) { return (!BIG_ENDIAN) ? swap32(v) : v; }
+    static Reg16 htobe16(Reg16 v) { return (!BIG_ENDIAN) ? swap16(v) : v; }
+    static Reg64 betoh64(Reg64 v) { return htobe64(v); }
+    static Reg32 betoh32(Reg32 v) { return htobe32(v); }
+    static Reg16 betoh16(Reg16 v) { return htobe16(v); }
+
     static Reg32 htonl(Reg32 v) { return (BIG_ENDIAN) ? v : swap32(v); }
     static Reg16 htons(Reg16 v) { return (BIG_ENDIAN) ? v : swap16(v); }
     static Reg32 ntohl(Reg32 v) { return htonl(v); }
     static Reg16 ntohs(Reg16 v) { return htons(v); }
 
 protected:
-    static Reg32 swap32(Reg32 v) { return (v & 0xff000000) >> 24 | (v & 0x00ff0000) >> 8 | (v & 0x0000ff00) << 8 | (v & 0x000000ff) << 24; }
-    static Reg16 swap16(Reg16 v) { return (v & 0xff00) >> 8 | (v & 0x00ff) << 8; }
+    static Reg64 swap64(Reg64 v) { return ((v & 0xff00000000000000ULL) >> 56) |
+    		                              ((v & 0x00ff000000000000ULL) >> 40) |
+										  ((v & 0x0000ff0000000000ULL) >> 24) |
+										  ((v & 0x000000ff00000000uLL) >> 8)  |
+    									  ((v & 0x00000000ff000000ULL) << 8)  |
+										  ((v & 0x0000000000ff0000ULL) << 24) |
+										  ((v & 0x000000000000ff00ULL) << 40) |
+										  ((v & 0x00000000000000ffULL) << 56); }
+    static Reg32 swap32(Reg32 v) { return ((v & 0xff000000) >> 24) |
+    									  ((v & 0x00ff0000) >> 8) |
+										  ((v & 0x0000ff00) << 8) |
+										  ((v & 0x000000ff) << 24); }
+    static Reg16 swap16(Reg16 v) { return ((v & 0xff00) >> 8) |
+    									  ((v & 0x00ff) << 8); }
 };
-
-__END_SYS
-
-#ifdef __CPU_H
-#include __CPU_H
-#endif
-
-__BEGIN_SYS
 
 template<typename T>
 inline T align32(const T & addr) { return (addr + 3) & ~3U; }
@@ -129,5 +147,9 @@ template<typename T>
 inline T align128(const T & addr) { return (addr + 15) & ~15U; }
 
 __END_SYS
+
+#ifdef __CPU_H
+#include __CPU_H
+#endif
 
 #endif
