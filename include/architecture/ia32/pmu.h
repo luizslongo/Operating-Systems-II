@@ -18,19 +18,16 @@ protected:
     typedef CPU::Reg32 Reg32;
     typedef CPU::Reg64 Reg64;
     typedef CPU::Log_Addr Log_Addr;
-public:
+    typedef IC::Interrupt_Id Interrupt_Id;
+
     static const unsigned int CHANNELS = 3;
     static const unsigned int FIXED = 0;
 
-public: 
-    static void init();
-    static void perf_int_init(){};
-
+public:
     // Architectural PM Version 1 Section 30.2.1.1
     // MAR address range between 0x40000000 to 0x400000FF
     enum {
-        MSR_BASE = 0x40000000,
-        PERFEVTSEL_BASE = 0x0186
+        MSR_BASE = 0x40000000
     };
 
     // Performance Monitoring Counters - used as input to the rdpmc instruction
@@ -50,7 +47,6 @@ public:
         PMC_BASE_ADDR = 0x00c1,
         MPERF         = 0x00e7,
         APERF         = 0x00e8,
-        EVTSEL_BASE_ADDR = 0x0186,
         EVTSEL0       = 0x0186,
         EVTSEL1       = 0x0187,
         EVTSEL2       = 0x0188,
@@ -69,13 +65,11 @@ public:
     };
 
     // Flags
-    enum Flags{
-        //CR4 Performance Counter Enable
-        NONE    = 0,
+    enum {
         PCE     = 1 << 8,
         USR     = 1 << 16,
         OS      = 1 << 17,
-        EDGE    = 1 << 18,        
+        EDGE    = 1 << 18,
         PC      = 1 << 19,
         INT     = 1 << 20,
         LOGICAL = 1 << 21,
@@ -93,7 +87,7 @@ public:
         LLC_MISSES                      = 0x2e | (0x41 << 8),
         BRANCH_INSTRUCTIONS_RETIRED     = 0xc4 | (0x00 << 8),
         BRANCH_MISSES_RETIRED           = 0xC5 | (0x00 << 8)
-    }; 
+    };
 
 public:
     Intel_PMU_V1() {}
@@ -129,10 +123,6 @@ public:
         wrmsr(EVTSEL0 + channel, 0);
     }
 
-    //static Reg32 num_counters() { return _num_counters; }
-
-
-
 protected:
     static Reg64 rdmsr(Reg32 msr) { return CPU::rdmsr(msr); }
     static void wrmsr(Reg32 msr, Reg64 val) { CPU::wrmsr(msr, val); }
@@ -144,87 +134,15 @@ protected:
 
 protected:
     static const Reg32 _events[EVENTS];
-
-    // typedef union {
-    // struct {
-    //     Reg32 version_id:8;
-    //     Reg32 num_counters:8;
-    //     Reg32 bit_width:8;
-    //     Reg32 mask_length:8;
-    // } split;
-    // Reg32 full;
-    // } cpuid10_eax;
-
-    // typedef union {
-    // struct {
-    //     Reg32 num_counters_fixed:5;
-    //     Reg32 bit_width_fixed:8;
-    //     Reg32 reserved:19;
-    // } split;
-    // Reg32 full;
-    // } cpuid10_edx;
-    
-    // typedef union {
-    //     struct {
-    //     Reg64 lbr_format    : 6;
-    //     Reg64 pebs_trap     : 1;
-    //     Reg64 pebs_arch_reg : 1;
-    //     Reg64 pebs_format   : 4;
-    //     Reg64 smm_freeze    : 1;
-    //     };
-    //     Reg64 capabilities;
-    // } perf_capabilities;
-
-    // typedef struct {
-    //     Reg8                    x86;            /* CPU family */
-    //     Reg8                    x86_vendor;     /* CPU vendor */
-    //     Reg8                    x86_model;
-    //     Reg8                    x86_mask;
-    // /* Maximum supported CPUID level, -1=no CPUID: */
-    //     int                     cpuid_level;
-    //     Reg32                   x86_capability[10];
-    //     char                    x86_vendor_id[16];
-    //     char                    x86_model_id[64];
-    //     /* in KB - valid for CPUS which support this call: */
-    //     int                     x86_cache_size;
-    //     int                     x86_cache_alignment;    /* In bytes */
-    //     int                     x86_power;
-    //     Reg32                   loops_per_jiffy;
-    // /* cpuid returned max cores value: */
-    //     Reg16                     x86_max_cores;
-    //     Reg16                     apicid;
-    //     Reg16                     initial_apicid;
-    //     Reg16                     x86_clflush_size;
-    // } cpuinfo_x86;
-    
-
-    // static int _version;
-    // static int _max_events;
-    // static int _cntval_bits;
-    // static Reg64 _cntval_mask;
-    // //static int apic;
-    // static Reg64 _max_period;
-    
-    //  * Intel Arch Perfmon v2+
-     
-    // static Reg64 _intel_ctrl;
-    // static perf_capabilities _intel_cap;
-    // static cpuinfo_x86 _cpuinfo;
-
-    // static Reg32 _num_counters;
-    // static Reg32 _num_counters_fixed;
-     
-
 };
 
 
 class Intel_PMU_V2: public Intel_PMU_V1
 {
-public:
-    static const unsigned int CHANNELS = 2;
-    static const unsigned int FIXED = 3;
 protected:
-    static Handler *_pmc_handler[CHANNELS]; 
+    static const unsigned int CHANNELS = 5;
+    static const unsigned int FIXED = 3;
+
 public:
     // Meaningful bits in FIXED_CTR_CTRL MSR
     enum {
@@ -255,44 +173,45 @@ public:
         CRT0_OVERFLOW      = 32,
         CRT1_OVERFLOW      = 33,
         CRT2_OVERFLOW      = 34,
-        FIXED_CTR0_OVF     = (1LLU << 0x20),        //verificar
-        FIXED_CTR1_OVF     = (1LLU << 0x21),        //verificar
-        FIXED_CTR2_OVF     = (1LLU << 0x22),        //verificar
-        COND_CHGD          = (1LLU << 0x3F)         //verificar
+        FIXED_CTR0_OVF     = (1LLU << 0x20),        //TODO: confirm
+        FIXED_CTR1_OVF     = (1LLU << 0x21),        //TODO: confirm
+        FIXED_CTR2_OVF     = (1LLU << 0x22),        //TODO: confirm
+        COND_CHGD          = (1LLU << 0x3F)         //TODO: confirm
     };
 
+    // Meaningful bits in FIXED_CRTs
     enum {
-    //FIXED_CTR_CTRL0
-    FIXED_CTR0_OS           = 0x01,
-    FIXED_CTR0_USER         = 0x02,
-    FIXED_CTR0_ALL          = 0x03,
-    FIXED_CTR0_PMI          = (0x01 << 3),
-    //FIXED_CTR_CTRL1
-    FIXED_CTR1_OS           = (0x01 << 4),
-    FIXED_CTR1_USER         = (0x02 << 4),
-    FIXED_CTR1_ALL          = (0x03 << 4),
-    FIXED_CTR1_PMI          = (0x01 << 7),
-    //FIXED_CTR_CTRL2
-    FIXED_CTR2_OS           = (0x01 << 8),
-    FIXED_CTR2_USER         = (0x02 << 8),
-    FIXED_CTR2_ALL          = (0x03 << 8),
-    FIXED_CTR2_PMI          = (0x01 << 11),
+    	// FIXED_CTR_CTRL0
+    	FIXED_CTR0_OS           = 0x01,
+		FIXED_CTR0_USER         = 0x02,
+		FIXED_CTR0_ALL          = 0x03,
+		FIXED_CTR0_PMI          = (0x01 << 3),
+		// FIXED_CTR_CTRL1
+		FIXED_CTR1_OS           = (0x01 << 4),
+		FIXED_CTR1_USER         = (0x02 << 4),
+		FIXED_CTR1_ALL          = (0x03 << 4),
+		FIXED_CTR1_PMI          = (0x01 << 7),
+		// FIXED_CTR_CTRL2
+		FIXED_CTR2_OS           = (0x01 << 8),
+		FIXED_CTR2_USER         = (0x02 << 8),
+		FIXED_CTR2_ALL          = (0x03 << 8),
+		FIXED_CTR2_PMI          = (0x01 << 11),
 
-    FIXED_CTR0_ENABLE = (0x1LLU << 32),
-    FIXED_CTR1_ENABLE = (0x1LLU << 33),
-    FIXED_CTR2_ENABLE = (0x1LLU << 34),
+		FIXED_CTR0_ENABLE 		= (0x1LLU << 32),
+		FIXED_CTR1_ENABLE 		= (0x1LLU << 33),
+		FIXED_CTR2_ENABLE 		= (0x1LLU << 34),
     };
 
 public:
     Intel_PMU_V2() {}
 
     static Reg64 global_overflow_status(void) { 
-        db<Intel_PMU_V1>(TRC) << "Intel_PMU_V1::overflow()\n"; 
+        db<Intel_PMU_V1>(TRC) << "Intel_PMU_V1::overflow()" << endl; 
         return rdmsr(GLOBAL_STATUS); 
     }
 
     static bool cond_changed(void) {
-        db<Intel_PMU_V1>(TRC) << "Intel_PMU_V1::cond_changed()\n";
+        db<Intel_PMU_V1>(TRC) << "Intel_PMU_V1::cond_changed()" << endl;
         return ((rdmsr(GLOBAL_STATUS) & COND_CHGD) != 0);
     }
 
@@ -300,6 +219,9 @@ public:
         wrmsr(GLOBAL_OVF, COND_CHGD);
     }
 
+protected:
+    // Guto: FIXEDs never trigger ints?
+    static Handler * _handlers[CHANNELS - FIXED];
 };
 
 // TODO: Refactoring stoped at V2. Someone with a real machine must continue the procedure following the model
@@ -323,481 +245,32 @@ public:
     Intel_PMU_V3() {}
 };
 
-
-class Intel_Core_Duo_PMU: public Intel_PMU_V2
-{
-public:
-    Intel_Core_Duo_PMU() {}
-
-    // UMASK specific to Intel core solo and Intel core duo
-    enum {
-        //Core Specificity Encoding within a Non-Architectural Umask bits 15-14
-        ALL_CORES       = (0x03 << 14),
-        THIS_CORE       = (0x01 << 14),
-
-        //Bit 13
-        THIS_AGENT      = (0x0 << 13),
-        ALL_AGENTS      = (0x1 << 13),
-
-        //HW Prefetch Qualification Encoding within a Non-Architectural Umask bits 13-12
-        ALL_INCLUSIVE   = (0x03 << 12),
-        HW_PREFETCH     = (0x01 << 12),
-        EXC_HW_PREFETCH = (0x00 << 12),
-
-        //MESI Qualification Encoding within a Non-Architectural Umask bits 11-8
-        M_STATE         = (0x1 << 11), //bit 11
-        E_STATE         = (0x1 << 10), //bit 10
-        S_STATE         = (0x1 << 9),  //bit 9
-        I_STATE         = (0x1 << 8),  //bit 8
-    };
-
-    // Supported events
-    enum {
-        LD_BLOCKS                = 0x03,
-        SD_DRAINS                = 0x04,
-        MISALIGN_MEM_REF         = 0x05,
-        SEG_REG_LOAS             = 0x06,
-        SSE_PREFNTA_RET          = 0x07,
-        SSE_PREFNTA_RET_UMASK    = (0x00 << 8),
-        SSE_PREFT1_RET           = 0x07,
-        SSE_PREFT1_RET_UMASK     = (0x01 << 8),
-        SSE_PREFT2_RET           = 0x07,
-        SSE_PREFT2_RET_UMASK     = (0x02 << 8),
-        SSE_NTSTORES_RET         = 0x07,
-        SSE_NTSTORES_RET_UMASK   = (0x03 << 8),
-        FP_COMPS_OP_EXE          = 0x10,
-        FP_ASSIST                = 0x11, //PMC1 only
-        MUL                      = 0x12, //PMC1 only
-        DIV                      = 0x13, //PMC1 only
-        CYCLES_DIV_BUSY          = 0x14, //PMC0 only
-        L2_ADS                   = 0x21, //Requires core specificity
-        DBUS_BUSY                = 0x22, //Requires core specificity
-        DBUS_BUSY_RD             = 0x23, //Requires core specificity
-        L2_LINES_IN              = 0x24, //Requires core specificity and HW prefetch qualification
-        L2_M_LINES_IN            = 0x25, //Requires core specificity
-        L2_LINES_OUT             = 0x26, //Requires core specificity and HW prefetch qualification
-        L2_M_LINES_OUT           = 0x27, //Requires core specificity and HW prefetch qualification
-        L2_IFETCH                = 0x28, //Requires core specificity
-        L2_LD                    = 0x29, //Requires core specificity
-        L2_ST                    = 0x2a, //Requires core specificity
-        L2_RQSTS                 = 0x2e, //Requires core specificity, HW prefetch qualification, and MESI qualification
-        L2_REJECT_CYCLES         = 0x30, //Requires core specificity, HW prefetch qualification, and MESI qualification
-        L2_NO_REQUEST_CYCLES     = 0x32, //Requires core specificity, HW prefetch qualification, and MESI qualification
-        EST_TRANS_ALL            = 0x3a,
-        EST_TRANS_ALL_UMASK      = (0x10 << 8), // Intel enhanced SpeedStep frequency transitions,
-        THERMAL_TRIP             = 0xc0, //miss UMASK not completed
-        NONHLT_REF_CYCLES        = 0x3c,
-        NONHLT_REF_CYCLES_UMASK  = (0x01 << 8),
-        SERIAL_EXECUTION_CYCLES  = 0x3c,
-        DCACHE_CACHE_LD          = 0x40, //Requires MESI qualification
-        DCACHE_CACHE_ST          = 0x41, //Requires MESI qualification
-        DCACHE_CACHE_LOCK        = 0x42, //Requires MESI qualification
-        DATA_MEM_REF             = 0x43,
-        DATA_MEM_REF_UMASK       = (0x01 << 8),
-        DATA_MEM_CACHE_REF       = 0x44,
-        DATA_MEM_CACHE_REF_UMASK = (0x02 << 8),
-        DCACHE_REPL              = 0x45,
-        DCACHE_REPL_UMASK        = (0xf << 8),
-        DCACHE_M_REPL            = 0x46,
-        DCACHE_M_REPL_UMASK      = (0x00 << 8),
-        DCACHE_M_EVICT           = 0x47,
-        DCACHE_PEND_MISS         = 0x48, // use CMASK = 1 to count duration
-        DTLB_MISS                = 0x49,
-        SSE_PREFNTA_MISS         = 0x4b,
-        SSE_PREFNTA_MISS_UMASK   = (0x00 << 8),
-        SSE_PREFT1_MISS          = 0x4b,
-        SSE_PREFT1_MISS_UMASK    = (0x01 << 8),
-        SSE_PREFT2_MISS          = 0x4b,
-        SSE_PREFT2_MISS_UMASK    = (0x02 << 8),
-        SSE_NTSTORES_MISS        = 0x4b,
-        SSE_NTSTORES_MISS_UMASK  = (0x03 << 8),
-        L1_PREF_REQ              = 0x4f,
-        BUS_REQ_OUTSTANDING      = 0x60, //Requires core specificity and agent specificity
-        BUS_BNR_CLOCKS           = 0x61,
-        BUS_DRDY_CLOCKS          = 0x62, //Requires core specificity and agent specificity
-        BUS_LOCKS_CLOCKS         = 0x63, //Requires core specificity and agent specificity
-        BUS_DATA_RCV             = 0x64,
-        BUS_DATA_RCV_UMASK       = (0x40 << 8),
-        BUS_TRANS_BRD            = 0x65, //Requires core specificity
-        BUS_TRANS_RFO            = 0x66, //Requires core specificity and agent specificity
-        BUS_TRANS_IFETCH         = 0x68, //Requires core specificity and agent specificity
-        BUS_TRANS_INVAL          = 0x69, //Requires core specificity and agent specificity
-        BUS_TRANS_PWR            = 0x6a, //Requires core specificity and agent specificity
-        BUS_TRANS_P              = 0x6b, //Requires core specificity and agent specificity
-        BUS_TRANS_IO             = 0x6c, //Requires core specificity and agent specificity
-        BUS_TRANS_DEF            = 0x6d, //Requires core specificity
-        BUS_TRANS_WB             = 0x67, //Requires agent specificity
-        BUS_TRANS_BURST          = 0x6e, //Requires agent specificity
-        BUS_TRANS_MEM            = 0x6f, //Requires agent specificity
-        BUS_TRANS_ANY            = 0x70, //Requires agent specificity
-        BUS_TRANS_ANY_MASK       =  (0xc0 << 8),
-        BUS_SNOOPS               = 0x77, //Requires MESI qualification and Agent specificity
-        DCU_SNOOP_TO_SHARE       = 0x78, //Requires core specificity
-        DCU_SNOOP_TO_SHARE_UMASK = (0x01 << 8),
-        BUS_NOT_IN_USE           = 0x7d, //Requires core specificity
-        BUS_SNOOP_STALL          = 0x7e,
-        ICACHE_READS             = 0x80,
-        ICACHE_MISSES            = 0x81,
-        ITLB_MISSES              = 0x85,
-        IFU_MEM_STALL            = 0x86,
-        ILD_STALL                = 0x87,
-        BR_INST_EXEC             = 0x88,
-        BR_MISSP_EXEC            = 0x89,
-        BR_BAC_MISSP_EXEC        = 0x8a,
-        BR_CND_EXEC              = 0x8b,
-        BR_CND_MISSP_EXEC        = 0x8c,
-        BR_IND_EXEC              = 0x8d,
-        BR_IND_MISSP_EXEC        = 0x8e,
-        BR_RET_EXEC              = 0x8f,
-        BR_RET_MISSP_EXEC        = 0x90,
-        BR_RET_BAC_MISSP_EXEC    = 0x91,
-        BR_CALL_EXEC             = 0x92,
-        BR_CALL_MISSP_EXEC       = 0x93,
-        BR_IND_CALL_EXEC         = 0x94,
-        RESOURCE_STALL           = 0xa2,
-        MMX_INSTR_EXEC           = 0xb0,
-        SIMD_INT_SAT_EXEC        = 0xb1,
-        SIMD_INT_PMUL_EXEC       = 0xb3,
-        SIMD_INT_PMUL_EXEC_UMASK = (0x01 << 8),
-        SIMD_INT_PSTF_EXEC       = 0xb3,
-        SIMD_INT_PSTF_EXEC_UMASK = (0x02 << 8),
-        SIMD_INT_PCK_EXEC        = 0xb3,
-        SIMD_INT_PCK_EXEC_UMASK  = (0x04 << 8),
-        SIMD_INT_UPCK_EXEC       = 0xb3,
-        SIMD_INT_UPCK_EXEC_UMASK = (0x08 << 8),
-        SIMD_INT_PLOG_EXEC       = 0xb3,
-        SIMD_INT_PLOG_EXEC_UMASK = (0x10 << 8),
-        SIMD_INT_PARI_EXEC       = 0xb3,
-        SIMD_INT_PARI_EXEC_UMASK = (0x20 << 8),
-        INSTR_RET                = 0xc0,
-        FP_COMP_INSTR_RET        = 0xc1, // PMC0 only
-        UOPS_REF                 = 0xc2,
-        SMC_DETECTED             = 0xc3,
-        BR_INSTR_RET             = 0xc4,
-        BR_MISPRED_RET           = 0xc5,
-        CYCLES_INT_MASKED        = 0xc6,
-        CYCLES_INT_PEDNING_MASKED= 0xc7,
-        HW_INT_RX                = 0xc8,
-        BR_TAKEN_RET             = 0xc9,
-        BR_MISPRED_TAKEN_RET     = 0xca,
-        MMX_FP_TRANS             = 0xcc,
-        MMX_FP_TRANS_UMASK       = (0x00 << 8),
-        FP_MMX_TRANS             = 0xcc,
-        FP_MMX_TRANS_UMASK       = (0x01 << 8),
-        MMX_ASSIST               = 0xcd,
-        MMX_INSTR_RET            = 0xce,
-        INSTR_DECODED            = 0xd0,
-        ESP_UOPS                 = 0xd7,
-        SIMD_FP_SP_RET           = 0xd8,
-        SIMD_FP_SP_RET_UMASK     = (0x00 << 8),
-        SIMD_FP_SP_S_RET         = 0xd8,
-        SIMD_FP_SP_S_RET_UMASK   = (0x01 << 8),
-        SIMD_FP_DP_P_RET         = 0xd8,
-        SIMD_FP_DP_P_RET_UMASK   = (0x02 << 8),
-        SIMD_FP_DP_S_RET         = 0xd8,
-        SIMD_FP_DP_S_RET_UMASK   = (0x03 << 8),
-        SIMD_INT_128_RET         = 0xd8,
-        SIMD_INT_128_RET_UMASK   = (0x04 << 8),
-        SIMD_FP_SP_P_COMP_RET    = 0xd9,
-        SIMD_FP_SP_P_COMP_RET_UMASK = (0x00 << 8),
-        SIMD_FP_SP_S_COMP_RET    = 0xd9,
-        SIMD_FP_SP_S_COMP_RET_UMAS = (0x01 << 8),
-        SIMD_FP_DP_P_COMP_RET    = 0xd9,
-        SIMD_FP_DP_P_COMP_RET_UMASK = (0x02 << 8),
-        SIMD_FP_DP_S_COMP_RET    = 0xd9,
-        SIMD_FP_DP_S_COMP_RET_UMASK = (0x03 << 8),
-        FUSED_UOPS_REG           = 0xda,
-        FUSED_UOPS_REG_UMASK     = (0x00 << 8),
-        FUSED_LD_UOPS_RET        = 0xda,
-        FUSED_LD_UOPS_RET_UMASK  = (0x01 << 8),
-        FUSED_ST_UOPS_REF        = 0xda,
-        FUSED_ST_UOPS_REF_UMASK  = (0x02 << 8),
-        UNFUSION                 = 0xdb,
-        BR_INSTR_DECODED         = 0xe0,
-        BTB_MISSES               = 0xe2,
-        BR_BOGUS                 = 0xe4,
-        BACLEARS                 = 0xe6,
-        PREF_RQSTS_UP            = 0xf0,
-        PREF_RQSTS_DN            = 0xf8,
-    };
-
-};
-
-
-class Intel_Core_Micro_PMU: public Intel_PMU_V2
-{
-public:
-    Intel_Core_Micro_PMU() {}
-
-    // UMASK specific to Intel core microarchitecture
-    enum {
-        //Core Specificity Encoding within a Non-Architectural Umask bits 15-14
-        ALL_CORES   = (0x03 << 14),
-        //0x2 and 0x0 reserved
-        THIS_CORE   = (0x01 << 14),
-
-        //Agent Specificity Encoding within a Non-Architectural Umask Bit 13
-        THIS_AGENT  = (0x0 << 13),
-        ALL_AGENTS  = (0x1 << 13),
-
-        //HW Prefetch Qualification Encoding within a Non-Architectural Umask bits 13-12
-        ALL_INCLUSIVE   = (0x03 << 12),
-        //0x02 reserved
-        HW_PREFETCH     = (0x01 << 12),
-        EXC_HW_PREFETCH = (0x00 << 12),
-
-        //Bus Snoop Qualification Definitions within a Non-Architectural Umask bits 11-8
-        HITM            = (0x1 << 11), //bit 11
-        //bit 10 reserved
-        HIT             = (0x1 << 9),  //bit 9
-        CLEAN           = (0x1 << 8),  //bit 8
-
-        //MESI Qualification Encoding within a Non-Architectural Umask bits 11-8
-        M_STATE     = (0x1 << 11), //bit 11
-        E_STATE     = (0x1 << 10), //bit 10
-        S_STATE     = (0x1 << 9),  //bit 9
-        I_STATE     = (0x1 << 8),  //bit 8
-
-        //Snoop Type Qualification Definitions within a Non-Architectural Umask bits 9-8
-        CMP2I_SNOOPS = (0x1 << 9),
-        CMP2S_SNOOPS = (0x1 << 8),
-    };
-
-    // Supported events - Table A-9
-    enum {
-        LD_BLOCK_STA                = 0x03 | (0x02 << 8),
-        LD_BLOCK_STD                = 0x03 | (0x04 << 8),
-        LD_BLOCK_OVERLAP_STORE      = 0x03 | (0x08 << 8),
-        LD_BLOCK_UNTIL_RETIRE       = 0x03 | (0x10 << 8),
-        LD_BLOCK_L1D                = 0x03 | (0x20 << 8),
-        SD_DRAIN_CYCLES             = 0x04 | (0x01 << 8),
-        STORE_BLOCK_ORDER           = 0x04 | (0x02 << 8),
-        STORE_BLOCK_SNOOP           = 0x04 | (0x08 << 8),
-        SEG_REG_LOADS               = 0x06,
-        SSE_PRE_EXEC_NTA            = 0x07,
-        SSE_PRE_EXEC_L1             = 0x07 | (0x01 << 8),
-        SSE_PRE_EXEC_L2             = 0x07 | (0x02 << 8),
-        SSE_PRE_EXEC_STORES         = 0x07 | (0x03 << 8),
-        DTLB_MISSES_ANY             = 0x08 | (0x01 << 8),
-        DTLB_MISSES_LD              = 0x08 | (0x02 << 8),
-        DTLB_MISSES_LO_MISS_LD      = 0x08 | (0x04 << 8),
-        DTLB_MISSES_MISS_ST         = 0x08 | (0x08 << 8),
-        MEMORY_DIS_RESET            = 0x09 | (0x01 << 8),
-        MEMORY_DIS_SUCCESS          = 0x09 | (0x02 << 8),
-        PAGE_WALKS_COUNT            = 0x0c | (0x01 << 8),
-        PAGE_WALKS_CYCLES           = 0x0c | (0x02 << 8),
-        FP_COMP_OPS_EXE             = 0x10, //PMC0 only
-        FP_ASSIST                   = 0x11, //PMC1 only
-        MUL                         = 0x12, //PMC1 only
-        DIV                         = 0x13, //PMC1 only
-        CYCLES_DIV_BUSY             = 0x14, //PMC0 only
-        IDLE_DURING_DIV             = 0x18, //PMC0 only
-        DELAYED_BYPASS_FP           = 0x19, //PMC1 only
-        DELAYED_BYPASS_SIMD         = 0x19 | (0x01 << 8), //PMC1 only
-        DELAYED_BYPASS_LOAD         = 0x19 | (0x02 << 8), //PMC1 only
-        L2_ADS                      = 0x21, //Requires core specificity
-        DBUS_BUSY_RD                = 0x23, //Requires core specificity
-        L2_LINES_IN                 = 0x24, //Requires core specificity and HW prefetch qualification
-        L2_M_LINES_IN               = 0x25, //Requires core specificity
-        L2_LINES_OUT                = 0x26, //Requires core specificity and HW prefetch qualification
-        L2_M_LINES_OUT              = 0x27, //Requires core specificity and HW prefetch qualification
-        L2_IFETCH                   = 0x28, //Requires core specificity and MESI qualification
-        L2_LD                       = 0x29, //Requires core specificity, HW prefetch and MESI qualification
-        L2_ST                       = 0x2a, //Requires core specificity and MESI qualification
-        L2_LOCK                     = 0x2b, //Requires core specificity and MESI qualification
-        L2_RQSTS                    = 0x2e, //Requires core specificity, HW prefetch qualification, and MESI qualification
-        L2_RQSTS_SELF_DEMAND_I_STATE = 0x2e | (0x41 << 8),
-        L2_RQSTS_SELF_DEMAND_MESI   = 0x2e | (0x4f << 8),
-        L2_REJECT_BUSQ              = 0x30, //Requires core specificity, HW prefetch qualification, and MESI qualification
-        L2_NO_REQ                   = 0x32, //Requires core specificity
-        EIST_TRANS                  = 0x3a,
-        THERMAL_TRIP                = 0x3b | (0xc0 << 8),
-        CPU_CLK_UNHALTED_CORE_P     = 0x3c,
-        CPU_CLK_UNHALTED_BUS        = 0x3c | (0x01 << 8),
-        CPU_CLK_UNHALTED_NO_OTHER   = 0x3c | (0x02 << 8),
-        L1D_CACHE_LD                = 0x40, //Requires MESI qualification
-        L1D_CACHE_ST                = 0x41, //Requires MESI qualification
-        L1D_CACHE_LOCK              = 0x42, //Requires MESI qualification
-        L1D_CACHE_LOCK_DURATION     = 0x42 | (0x10 << 8),
-        L1D_ALL_REF                 = 0x43 | (0x01 << 8),
-        L1D_ALL_CACHE_REF           = 0x43 | (0x02 << 8),
-        L1D_REPL                    = 0x45 | (0x0f << 8),
-        L1D_M_REPL                  = 0x46,
-        L1D_M_EVICT                 = 0x47,
-        L1D_PEND_MISS               = 0x48,
-        L1D_SPLIT_LOADS             = 0x49 | (0x01 << 8),
-        L1D_SPLIT_STORES            = 0x49 | (0x02 << 8),
-        SSE_PRE_MISS_NTA            = 0x4b,
-        SSE_PRE_MISS_L1             = 0x4b | (0x01 << 8),
-        SSE_PRE_MISS_L2             = 0x4b | (0x02 << 8),
-        LOAD_HIT_PRE                = 0x4c,
-        L1D_PREFETCH_REQUESTS       = 0x4e | (0x10 << 8),
-        BUS_REQUEST_OUTSTANDING     = 0x60, //Requires core specificity and agent specificity
-        BUS_BNR_DRV                 = 0x61, //Requires agent specificity
-        BUS_DRDY_CLOCKS             = 0x62, //Requires agent specificity
-        BUS_LOCK_CLOCKS             = 0x63, //Requires core specificity and agent specificity
-        BUS_DATA_RCV                = 0x64, //Requires core specificity
-        BUS_TRANS_BRD               = 0x65, //Requires core and agent specificity
-        BUS_TRANS_RFO               = 0x66, //Requires core specificity and agent specificity
-        BUS_TRANS_WB                = 0x67, //Requires core specificity and agent specificity
-        BUS_TRANS_IFETCH            = 0x68, //Requires core specificity and agent specificity
-        BUS_TRANS_INVAL             = 0x69, //Requires core specificity and agent specificity
-        BUS_TRANS_PWR               = 0x6a, //Requires core specificity and agent specificity
-        BUS_TRANS_P                 = 0x6b, //Requires core specificity and agent specificity
-        BUS_TRANS_IO                = 0x6c, //Requires core specificity and agent specificity
-        BUS_TRANS_DEF               = 0x6d, //Requires core and agent specificity
-        BUS_TRANS_BURST             = 0x6e, //Requires core and agent specificity
-        BUS_TRANS_MEM               = 0x6f, //Requires core and agent specificity
-        BUS_TRANS_ANY               = 0x70, //Requires core and agent specificity
-        EXT_SNOOPS                  = 0x77, //Requires agent specificity and snoop response
-        CMP_SNOOP                   = 0x78, //Requires core specificity and snoop type
-        BUS_HIT_DRV                 = 0x7a, //Requires agent specificity
-        BUS_HITM_DRV                = 0x7b, //Requires agent specificity
-        BUSQ_EMPTY                  = 0x7d, //Requires agent specificity
-        SNOOP_STALL_DRV             = 0x7e, //Requires core and agent specificity
-        BUS_IO_WAIT                 = 0x7f, //Requires core specificity
-        L1I_READS                   = 0x80,
-        L1I_MISSES                  = 0x81,
-        ITLB_SMALL_MISS             = 0x82 | (0x02 << 8),
-        ITLB_LARGE_MISS             = 0x82 | (0x10 << 8),
-        ITLB_FLUSH                  = 0x82 | (0x40 << 8),
-        ITLB_MISSES                 = 0x82 | (0x12 << 8),
-        INST_QUEUE_FULL             = 0x83 | (0x02 << 8),
-        CYCLES_L1I_MEM_STALLED      = 0x86,
-        ILD_STALL                   = 0x87,
-        BR_INST_EXEC                = 0x88,
-        BR_MISSP_EXEC               = 0x89,
-        BR_BAC_MISSP_EXEC           = 0x8a,
-        BR_CND_EXEC                 = 0x8b,
-        BR_CND_MISSP_EXEC           = 0x8c,
-        BR_IND_EXEC                 = 0x8d,
-        BR_IND_MISSP_EXEC           = 0x8e,
-        BR_RET_EXEC                 = 0x8f,
-        BR_RET_MISSP_EXEC           = 0x90,
-        BR_RET_BAC_MISSP_EXEC       = 0x91,
-        BR_CALL_EXEC                = 0x92,
-        BR_CALL_MISSP_EXEC          = 0x93,
-        BR_IND_CALL_EXEC            = 0x94,
-        BR_TKN_BUBBLE_1             = 0x97,
-        BR_TKN_BUBBLE_2             = 0x98,
-        RS_UOPS_DISPATCHED          = 0xa0,
-        RS_UOPS_DISPATCHED_PORT0    = 0xa1 | (0x01 << 8),
-        RS_UOPS_DISPATCHED_PORT1    = 0xa1 | (0x02 << 8),
-        RS_UOPS_DISPATCHED_PORT2    = 0xa1 | (0x04 << 8),
-        RS_UOPS_DISPATCHED_PORT3    = 0xa1 | (0x08 << 8),
-        RS_UOPS_DISPATCHED_PORT4    = 0xa1 | (0x10 << 8),
-        RS_UOPS_DISPATCHED_PORT5    = 0xa1 | (0x20 << 8),
-        MACRO_INSTS_DECODED         = 0xaa | (0x01 << 8),
-        MACRO_INSTS_CISC_DECODED    = 0xaa | (0x08 << 8),
-        ESP_SYNCH                   = 0xab | (0x01 << 8),
-        ESP_ADDITIONS               = 0xab | (0x02 << 8),
-        SIMD_UOPS_EXEC              = 0xb0,
-        SIMD_SAT_UOP_EXEC           = 0xb1,
-        SIMD_UOP_TYPE_EXEC_MUL      = 0xb3 | (0x01 << 8),
-        SIMD_UOP_TYPE_EXEC_SHIFT    = 0xb3 | (0x02 << 8),
-        SIMD_UOP_TYPE_EXEC_PACK     = 0xb3 | (0x04 << 8),
-        SIMD_UOP_TYPE_EXEC_UNPACK   = 0xb3 | (0x08 << 8),
-        SIMD_UOP_TYPE_EXEC_LOGICAL  = 0xb3 | (0x10 << 8),
-        SIMD_UOP_TYPE_EXEC_ARITHMETIC  = 0xb3 | (0x20 << 8),
-        INST_RETIRED_ANY_P          = 0xc0,
-        INST_RETIRED_LOADS          = 0xc0 | (0x01 << 8),
-        INST_RETIRED_STORES         = 0xc0 | (0x02 << 8),
-        INST_RETIRED_OTHER          = 0xc0 | (0x04 << 8),
-        X87_OPS_RETIRED_FXCH        = 0xc1 | (0x01 << 8),
-        X87_OPS_RETIRED_ANY         = 0xc1 | (0xfe << 8),
-        UOPS_RETIRED_LD_IND_BR      = 0xc2 | (0x01 << 8),
-        UOPS_RETIRED_STD_STA        = 0xc2 | (0x02 << 8),
-        UOPS_RETIRED_MACRO_FUSION   = 0xc2 | (0x04 << 8),
-        UOPS_RETIRED_FUSED          = 0xc2 | (0x07 << 8),
-        UOPS_RETIRED_NON_FUSED      = 0xc2 | (0x08 << 8),
-        UOPS_RETIRED_ANY            = 0xc2 | (0x0f << 8),
-        MACHINE_NUKES_SMC           = 0xc3 | (0x01 << 8),
-        MACHINE_NUKES_MEM_ORDER     = 0xc3 | (0x04 << 8),
-        BR_INST_RETIRED_ANY         = 0xc4,
-        BR_INST_RETIRED_PRED_NOT_TAKEN = 0xc4 | (0x01 << 8),
-        BR_INST_RETIRED_MISPRED_NOT_TAKEN = 0xc4 | (0x02 << 8),
-        BR_INST_RETIRED_PRED_TAKEN  = 0xc4 | (0x04 << 8),
-        BR_INST_RETIRED_MISPRED_TAKEN = 0xc4 | (0x08 << 8),
-        BR_INST_RETIRED_TAKEN       = 0xc4 | (0x0c << 8),
-        BR_INST_RETIRED_MISPRED     = 0xc5,
-        CYCLES_INT_MASKED           = 0xc6 | (0x01 << 8),
-        CYCLES_INT_PEDNING_AND_MASKED = 0xc6 | (0x02 << 8),
-        SIMD_INST_RETIRED_PACKED_SINGLE = 0xc7 | (0x01 << 8),
-        SIMD_INST_RETIRED_SCALAR_SINGLE = 0xc7 | (0x02 << 8),
-        SIMD_INST_RETIRED_PACKED_DOUBLE = 0xc7 | (0x04 << 8),
-        SIMD_INST_RETIRED_SCALAR_DOUBLE = 0xc7 | (0x08 << 8),
-        SIMD_INST_RETIRED_VECTOR        = 0xc7 | (0x10 << 8),
-        SIMD_INST_RETIRED_ANY           = 0xc7 | (0x1f << 8),
-        HW_INT_RCV                  = 0xc8,
-        ITLB_MISS_RETIRED           = 0xc9,
-        SIMD_COMP_INST_RETIRED_PACKED_SINGLE = 0xca | (0x01 << 8),
-        SIMD_COMP_INST_RETIRED_SCALAR_SINGLE = 0xca | (0x02 << 8),
-        SIMD_COMP_INST_RETIRED_PACKED_DOUBLE = 0xca | (0x04 << 8),
-        SIMD_COMP_INST_RETIRED_SCALAR_DOUBLE = 0xca | (0x08 << 8),
-        MEM_LOAD_RETIRED_L1D_MISS       = 0xcb | (0x01 << 8),
-        MEM_LOAD_RETIRED_L1D_LINE_MISS  = 0xcb | (0x02 << 8),
-        MEM_LOAD_RETIRED_L2_MISS        = 0xcb | (0x04 << 8),
-        MEM_LOAD_RETIRED_L2_LINE_MISS   = 0xcb | (0x08 << 8),
-        MEM_LOAD_RETIRED_DTLB_MISS      = 0xcb | (0x10 << 8),
-        FP_MMX_TRANS_TO_MMX         = 0xcc | (0x01 << 8),
-        FP_MMX_TRANS_TO_FP          = 0xcc | (0x02 << 8),
-        SIMD_ASSIST                 = 0xcd,
-        SIMD_INSTR_RETIRED          = 0xce,
-        SIMD_SAT_INSTR_RETIRED      = 0xcf,
-        RAT_STALLS_ROB_READ_PORT    = 0xd2 | (0x01 << 8),
-        RAT_STALLS_PARTIAL_CYCLES   = 0xd2 | (0x02 << 8),
-        RAT_STALLS_FLAGS            = 0xd2 | (0x04 << 8),
-        RAT_STALLS_FPSW             = 0xd2 | (0x08 << 8),
-        RAT_STALLS_ANY              = 0xd2 | (0x0f << 8),
-        SEG_RENAME_STALLS_ES        = 0xd4 | (0x01 << 8),
-        SEG_RENAME_STALLS_DS        = 0xd4 | (0x02 << 8),
-        SEG_RENAME_STALLS_FS        = 0xd4 | (0x04 << 8),
-        SEG_RENAME_STALLS_GS        = 0xd4 | (0x08 << 8),
-        SEG_RENAME_STALLS_ANY       = 0xd4 | (0x0f << 8),
-        SEG_REG_RENAMES_ES          = 0xd5 | (0x01 << 8),
-        SEG_REG_RENAMES_DS          = 0xd5 | (0x02 << 8),
-        SEG_REG_RENAMES_FS          = 0xd5 | (0x04 << 8),
-        SEG_REG_RENAMES_GS          = 0xd5 | (0x08 << 8),
-        SEG_REG_RENAMES_ANY         = 0xd5 | (0x0f << 8),
-        RESOURCE_STALLS_ROB_FULL    = 0xdc | (0x01 << 8),
-        RESOURCE_STALLS_RS_FULL     = 0xdc | (0x02 << 8),
-        RESOURCE_STALLS_LD_ST       = 0xdc | (0x04 << 8),
-        RESOURCE_STALLS_FPCW        = 0xdc | (0x08 << 8),
-        RESOURCE_STALLS_BR_MISS_CLEAR  = 0xdc | (0x10 << 8),
-        RESOURCE_STALLS_ANY         = 0xdc | (0x1f << 8),
-        BR_INST_DECODED             = 0xe0,
-        BR_BOGUS                    = 0xe4,
-        BACLEARS                    = 0xe6,
-        PREF_RQSTS_UP               = 0xf0,
-        PREF_RQSTS_DN               = 0xf8,
-    };
-};
-
 class Intel_Sandy_Bridge_PMU: public Intel_PMU_V3
 {
-public:
+protected:
     static const unsigned int CHANNELS = 4;
     static const unsigned int EVENTS = 3;
-private:
-    //Layout of IA32_PEBS_ENABLE MSR figure 18-28
+
+public:
+    // Layout of IA32_PEBS_ENABLE MSR figure 18-28
     enum {
-        PS_EN = (0x01LLU << 63),
-        LL_EN_PMC3 = (0x01LLU << 35),
-        LL_EN_PMC2 = (0x01LLU << 34),
-        LL_EN_PMC1 = (0x01LLU << 33),
-        LL_EN_PMC0 = (0x01LLU << 32),
-        PEBS_EN_PMC3 = (0x01LLU << 3),
-        PEBS_EN_PMC2 = (0x01LLU << 2),
-        PEBS_EN_PMC1 = (0x01LLU << 1),
-        PEBS_EN_PMC0 = 0x01LLU,
-        RESET_PEBS = 0x00LLU
+        PS_EN 			= (0x01LLU << 63),
+        LL_EN_PMC3 		= (0x01LLU << 35),
+        LL_EN_PMC2 		= (0x01LLU << 34),
+        LL_EN_PMC1 		= (0x01LLU << 33),
+        LL_EN_PMC0 		= (0x01LLU << 32),
+        PEBS_EN_PMC3 	= (0x01LLU << 3),
+        PEBS_EN_PMC2 	= (0x01LLU << 2),
+        PEBS_EN_PMC1 	= (0x01LLU << 1),
+        PEBS_EN_PMC0 	= 0x01LLU,
+        RESET_PEBS 		= 0x00LLU
     };
 
     // the two uncore MSR addresses
     enum {
-        OFFCORE_RSP_0 = 0x1a6,
-        OFFCORE_RSP_1 = 0x1a7,
-        RESET_VALUE = 0x00000000
+        OFFCORE_RSP_0 	= 0x1a6,
+        OFFCORE_RSP_1 	= 0x1a7,
+        RESET_VALUE 	= 0x00000000
     };
 
     // Request type fields bits for OFFCORE_RSP_x
@@ -815,8 +288,8 @@ private:
         PF_LLC_IFETCH  = 0x0000000200LLU, // bit 9
         BUS_LOCKS      = 0x0000000400LLU, // bit 10
         STRM_ST        = 0x0000000800LLU, // bit 11
-        //bits 12-14 are reserved
-        OTHER          = 0x0000008000LLU // bit 15
+        // bits 12-14 are reserved
+        OTHER          = 0x0000008000LLU  // bit 15
     };
 
     // Response supplier and snoop info field bits for OFFCORE_RSP_x
@@ -845,7 +318,9 @@ private:
         PMC3_UNCORE = 0xbb | (0x1 << 8), //requires OFFCORE_RSP_1
     };
 
-public:
+    enum{
+        PMC_MASK = (0xffffffff >> (32 - CHANNELS - FIXED))
+    };
 
     // List of all supported events - Section 19.3 - Table 19-3
     enum {
@@ -1123,105 +598,22 @@ public:
 public:
     Intel_Sandy_Bridge_PMU() {}
 
-};
+    static bool config(const Channel & channel, const Event & event, const Flags & flags = NONE) {
+        assert((channel < CHANNELS) && (event < EVENTS));
+        db<PMU>(TRC) << "PMU::config(c=" << channel << ",e=" << event << ",f=" << flags << ")" << endl;
 
-template<int VERSION>
-class PMU_Select_Version: public Intel_PMU_V2 {};
-template<>
-class PMU_Select_Version<Traits<PMU>::V3>: public Intel_PMU_V3 {};
-template<>
-class PMU_Select_Version<Traits<PMU>::SANDY_BRIDGE>: public Intel_Sandy_Bridge_PMU {};
-
-
-template<int VERSION>
-class PMU_handler: public PMU_Select_Version<Traits<PMU>::VERSION>
-{
-private:
-    friend class CPU;
-
-    enum{
-        PMC_MASK = (0xffffffff>>(32-CHANNELS))
-    };
-public:
-    PMU_handler() {}
-
-public:
-    static void perf_int_init()
-    {
-        CPU::int_disable();
-        APIC::config_perf();
-        if (APIC::id()==0) {
-            for (int i=0;i<8; i++)
-                _pmc_handler[i] = 0;
-        }
-        IC::int_vector(IC::INT_PERF_INIT, PMU_int_handler);
-        IC::enable(IC::INT_PERF_INIT);
-        CPU::int_enable();
-    }
-
-    static void PMU_int_handler(const unsigned int& irq)
-    {
-
-        //db< Init, Intel_PMU_V1 >(WRN) << "Intel_PMU_V1::PMU_int_handler()\n";
-
-        Reg64 perf_ovf_msr;// pebs_enable_msr, pmcs_enable_msr;
-
-        // Get overflow status register value
-        perf_ovf_msr = global_overflow_status();
-        // kout << read(FIXED) << "    canal:FIXED   cpu:" << "  overflow:" << overflow() << "   thread:" << endl;
-
-        // PMC Handlers
-        if (overflow())
-        {
-           // kout << "OVERFLOW" << endl;
-
-            for (Channel i=0; i<CHANNELS;i++)
-            {
-                if (perf_ovf_msr&(1ULL << i))
-                {
-                    stop(i+FIXED);
-                    clear_overflow(i+FIXED);
-                    start(i+FIXED);
-                }
-            }
-
-            db<Init, Intel_PMU_V1>(INF) << "Intel_PMU_V1::PMC_overflow(" << APIC::id() << ");" << endl;
+        if(((channel == 0) && (event != INSTRUCTION)) || ((channel == 1) && (event != DVS_CLOCK)) || ((channel == 2) && (event != CLOCK))) {
+            db<PMU>(WRN) << "PMU::config: channel " << channel << " is fixed in this architecture and cannot be reconfigured!" << endl;
+            return false;
         }
 
-        // Overflow Changed flag
-        clear_cond_changed();
-
-        // Clearing the mask bit in the performance counter LVT entry.
-        APIC::enable_perf(); 
-        // kout << read(FIXED) << "    canal:FIXED   cpu:"  << "  overflow:" << overflow() << "   thread:" << endl;
-
-        for (Reg32 i = 0; i < CHANNELS; i++)
-        { 
-            // For each PMC: verify if it's handler is set and an overflow occurred
-            if ((_pmc_handler[i] != 0) && ((perf_ovf_msr&(1ULL << i)) != 0))
-            {
-                // Then, call this handler
-                _pmc_handler[i]();
-            }
+        if(channel >= FIXED){
+            wrmsr(EVTSEL0 + channel - FIXED, _events[event] | USR | OS | ENABLE | flags); // implicitly start counting due to flag ENABLE
         }
-        // kout << read(FIXED) << "    canal:FIXED   cpu:" << "  overflow:" << overflow() << "   thread:" << endl;
 
-    }
+        start(channel);
 
-    static bool overflow(const Channel & channel) {
-        assert(channel < CHANNELS);
-        db<PMU>(TRC) << "PMU::overflow(c=" << channel << ")" << endl;
-        return (channel < FIXED) ? (rdmsr(GLOBAL_STATUS) & (1ULL << (CRT0_OVERFLOW + channel))) : (rdmsr(GLOBAL_STATUS) & (1ULL << (channel - FIXED)));
-    }
-    
-    static bool overflow(void) { 
-        db<Intel_PMU_V1>(TRC) << "Intel_PMU_V1::overflow()\n"; 
-        return ((rdmsr(GLOBAL_STATUS) & PMC_MASK) != 0); 
-    }    
-    
-    static void clear_overflow(const Channel & channel) { 
-        assert(channel < CHANNELS);
-        wrmsr(GLOBAL_OVF, (PMC_MASK & 1ULL << (channel - FIXED))); //clear OVF flag 
+        return true;
     }
 
     static Count read(const Channel & channel) {
@@ -1266,59 +658,51 @@ public:
             wrmsr(EVTSEL0 + channel - FIXED, 0);
     }
 
+    static bool overflow(const Channel & channel) {
+        assert(channel < CHANNELS);
+        db<PMU>(TRC) << "PMU::overflow(c=" << channel << ")" << endl;
+        return (channel < FIXED) ? (rdmsr(GLOBAL_STATUS) & (1ULL << (CRT0_OVERFLOW + channel))) : (rdmsr(GLOBAL_STATUS) & (1ULL << (channel - FIXED)));
+    }
+
+    static bool overflow(void) {
+        db<Intel_PMU_V1>(TRC) << "Intel_PMU_V1::overflow()\n";
+        return ((rdmsr(GLOBAL_STATUS) & PMC_MASK) != 0);
+    }
+
+    static void clear_overflow(const Channel & channel) {
+        assert(channel < CHANNELS);
+        wrmsr(GLOBAL_OVF, (PMC_MASK & 1ULL << (channel - FIXED))); //clear OVF flag
+    }
+
     static void handler(Handler * handler, const Channel & channel) { 
-        if((channel-FIXED) < CHANNELS)
-            _pmc_handler[channel-FIXED] = handler; 
+        if((channel - FIXED) < CHANNELS)
+            _handlers[channel - FIXED] = handler;
         else
             db<Init, Intel_PMU_V1>(WRN) << "Intel_PMU_V1::handler = Bad PMC value, handler not addressed!" << endl;
     }
-
-    static bool config(const Channel & channel, const Event & event, const Flags & flags = NONE) {
-        assert((channel < CHANNELS) && (event < EVENTS));
-        db<PMU>(TRC) << "PMU::config(c=" << channel << ",e=" << event << ",f=" << flags << ")" << endl;
-
-        if(((channel == 0) && (event != INSTRUCTION)) || ((channel == 1) && (event != DVS_CLOCK)) || ((channel == 2) && (event != CLOCK))) {
-            db<PMU>(WRN) << "PMU::config: channel " << channel << " is fixed in this architecture and cannot be reconfigured!" << endl;
-            return false;
-        }
-
-        if(channel >= FIXED){
-            wrmsr(EVTSEL0 + channel - FIXED, _events[event] | USR | OS | ENABLE | flags); // implicitly start counting due to flag ENABLE
-        }
-
-        start(channel);
-
-        return true;
-    }
-
-    static bool config(const Channel & channel, const Reg32 & event, const Flags & flags = NONE) {
-        assert((channel < CHANNELS) && (event < EVENTS));
-        db<PMU>(TRC) << "PMU::config(c=" << channel << ",e=" << event << ",f=" << flags << ")" << endl;
-
-        if(((channel == 0) && (event != _events[INSTRUCTION])) || ((channel == 1) && (event != _events[DVS_CLOCK])) || ((channel == 2) && (event != _events[CLOCK]))) {
-            db<PMU>(WRN) << "PMU::config: channel " << channel << " is fixed in this architecture and cannot be reconfigured!" << endl;
-            return false;
-        }
-
-        if(channel >= FIXED){
-            wrmsr(EVTSEL0 + channel - FIXED, event | USR | OS | ENABLE | flags); // implicitly start counting due to flag ENABLE
-        }
-
-        start(channel);
-
-        return true;
-    }
-
-
 };
-template<>
-class PMU_handler<Traits<PMU>::V1>: public Intel_PMU_V1 {};
 
-class PMU : public PMU_handler<Traits<PMU>::VERSION>
+template<int VERSION>
+class PMU_Select_Version: public Intel_PMU_V1 {};
+template<>
+class PMU_Select_Version<Traits<PMU>::V2>: public Intel_PMU_V2 {};
+template<>
+class PMU_Select_Version<Traits<PMU>::V3>: public Intel_PMU_V3 {};
+template<>
+class PMU_Select_Version<Traits<PMU>::SANDY_BRIDGE>: public Intel_Sandy_Bridge_PMU {};
+
+
+class PMU: public PMU_Select_Version<Traits<PMU>::VERSION>
 {
+    friend class CPU;
+
 public:
-    PMU();
-    
+    PMU() {}
+
+private:
+    static void int_handler(const Interrupt_Id & i);
+
+    static void init();
 };
 
 __END_SYS

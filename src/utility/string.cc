@@ -447,7 +447,8 @@ extern "C"
 
     int utoa(unsigned long v,char * dst)
     {
-        int i=0,j;
+        int i = 0;
+        unsigned long j;
         // special case for v=0
         if (v == 0)
             dst[i++] = '0';

@@ -12,7 +12,6 @@ class PMU_Common
 public:
     typedef unsigned int Channel;
     typedef long long int Count;
-    typedef void (Handler)();
 
     enum Event {
         CLOCK,

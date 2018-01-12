@@ -58,8 +58,7 @@ public:
         IRQ_MATH        = 13,
         IRQ_DISK1       = 14,
         IRQ_DISK2       = 15,
-        IRQ_PERF_INIT   = 16, 
-        IRQ_LAST        = IRQ_PERF_INIT
+        IRQ_LAST        = IRQ_DISK2
     };
 
     // Interrupts
@@ -69,8 +68,8 @@ public:
         INT_TIMER       = HARD_INT + IRQ_TIMER,
         INT_KEYBOARD    = HARD_INT + IRQ_KEYBOARD,
         INT_LAST_HARD   = HARD_INT + IRQ_LAST,
-        INT_PERF_INIT   = HARD_INT + IRQ_PERF_INIT,
-        INT_RESCHEDULER = SOFT_INT,
+        INT_PMU         = SOFT_INT,
+        INT_RESCHEDULER,
         INT_SYSCALL
     };
 
@@ -166,9 +165,9 @@ public:
         INT_FIRST_HARD  = i8259A::INT_FIRST_HARD,
         INT_TIMER       = i8259A::INT_TIMER,
         INT_KEYBOARD    = i8259A::INT_KEYBOARD,
+        INT_PMU			= i8259A::INT_PMU,
         INT_RESCHEDULER = i8259A::INT_RESCHEDULER, // in multicores, reschedule goes via IPI, which must be acknowledged just like hardware
         INT_SYSCALL     = i8259A::INT_SYSCALL,
-        INT_PERF_INIT   = i8259A::INT_PERF_INIT,
         INT_LAST_HARD   = INT_RESCHEDULER
     };
 
@@ -400,25 +399,16 @@ public:
         enable();
     }
 
-    static void config_perf(void) {
-        Reg32 v = INT_PERF_INIT;
+    static void config_pmu(void) {
+        Reg32 v = INT_PMU;
         write(LVT_PERF, v);
     }
 
-    static void enable_perf() {
-            write(LVT_PERF, read(LVT_PERF) & ~LVT_MASKED);
+    static void enable_pmu() {
+    	write(LVT_PERF, read(LVT_PERF) & ~LVT_MASKED);
     }
-    static void disable_perf() {
-            write(LVT_PERF, read(LVT_PERF) | LVT_MASKED);
-    }
-
-    static void enable_perf_int() { 
-        if((read(LVT_PERF) & INT_PERF_INIT) != 0)
-            CPU::int_enable();
-    }
-    static void disable_perf_int() {
-        if((read(LVT_PERF) & INT_PERF_INIT) != 0)
-            CPU::int_disable();
+    static void disable_pmu() {
+    	write(LVT_PERF, read(LVT_PERF) | LVT_MASKED);
     }
 
 private:
@@ -495,7 +485,7 @@ public:
     using Engine::INT_SYSCALL;
     using Engine::INT_TIMER;
     using Engine::INT_KEYBOARD;
-    using Engine::INT_PERF_INIT;
+    using Engine::INT_PMU;
     using Engine::ipi_send;
 
 public:
@@ -509,6 +499,7 @@ public:
     static void int_vector(const Interrupt_Id & i, const Interrupt_Handler & h) {
         db<IC>(TRC) << "IC::int_vector(int=" << i << ",h=" << reinterpret_cast<void *>(h) <<")" << endl;
         assert(i < INTS);
+        // WARNING: in static member function 'static void EPOS::S::FPGA::init()': error: array subscript is above array bounds
         _int_vector[i] = h;
     }
 
