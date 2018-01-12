@@ -103,18 +103,18 @@ UUID            = $(shell cat /proc/sys/kernel/random/uuid | sed 's/-//g')
 pc_CC_FLAGS             := -Wa,--32
 pc_AS_FLAGS             := --32
 pc_LD_FLAGS             :=
-pc_EMULATOR             = qemu-system-i386 -smp $(CPUS) -m $(MEM_SIZE)k -nographic -no-reboot -fda
+pc_EMULATOR             = qemu-system-i386 -smp $(CPUS) -m $(MEM_SIZE)k -nographic -no-reboot -drive format=raw,index=0,if=floppy,file=
 pc_DEBUGGER             := gdb
 pc_FLASHER              :=
 
 ifeq ($(MMOD),zynq)
 cortex_CC_FLAGS         := -mcpu=cortex-a9 -mfpu=fpa
 cortex_AS_FLAGS         := -mcpu=cortex-a9 -mfpu=fpa
-cortex_EMULATOR         = qemu-system-arm -machine xilinx-zynq-a9 -m $(MEM_SIZE)k -serial null -serial mon:stdio -nographic -no-reboot -kernel
+cortex_EMULATOR         = qemu-system-arm -machine xilinx-zynq-a9 -m $(MEM_SIZE)k -serial null -serial mon:stdio -nographic -no-reboot -kernel 
 else
 cortex_CC_FLAGS         := -mcpu=cortex-m3 -mthumb -mno-thumb-interwork -mfpu=fpa
 cortex_AS_FLAGS         := -mcpu=cortex-m3 -mthumb -mfpu=fpa
-cortex_EMULATOR         = qemu-system-arm -machine lm3s811evb -m $(MEM_SIZE)k -serial stdio -no-reboot -kernel
+cortex_EMULATOR         = qemu-system-arm -machine lm3s811evb -m $(MEM_SIZE)k -serial stdio -no-reboot -kernel 
 endif
 cortex_LD_FLAGS         :=
 cortex_DEBUGGER         := arm-none-eabi-gdb
