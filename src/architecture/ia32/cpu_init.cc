@@ -6,6 +6,7 @@
 #include <pmu.h>
 #include <system.h>
 #include <system/info.h>
+#include <machine.h>
 
 __BEGIN_SYS
 
@@ -17,7 +18,7 @@ void CPU::init()
     _bus_clock = System::info()->tm.bus_clock;
 
     // Initialize the MMU
-    if(Traits<MMU>::enabled)
+    if(Traits<MMU>::enabled && Machine::cpu_id() == 0)
         MMU::init();
     else
         db<Init, MMU>(WRN) << "MMU is disabled!" << endl;

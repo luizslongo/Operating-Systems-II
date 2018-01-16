@@ -5,6 +5,7 @@
 #include <system.h>
 #include <address_space.h>
 #include <segment.h>
+#include <thread.h>
 
 __BEGIN_SYS
 
@@ -24,7 +25,9 @@ public:
             // Wait until the boot CPU has initialized the machine
             Machine::smp_barrier();
             // For IA-32, timer is CPU-local. What about other SMPs?
+            CPU::init();
             Timer::init();
+            Thread::init();
             return;
         }
 

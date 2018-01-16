@@ -18,6 +18,7 @@ __BEGIN_SYS
 class Thread
 {
     friend class Init_First;
+    friend class Init_System;
     friend class System;
     friend class Scheduler<Thread>;
     friend class Synchronizer_Common;
