@@ -164,13 +164,13 @@ private:
             _value = response->value<Value>();
             _error = response->error();
             _coordinates = response->origin();
-//            _time = buffer->origin_time;
+            _time = response->time();
             db<Smart_Data>(INF) << "Smart_Data:update[R]:this=" << this << " => " << *this << endl;
         }
         case TSTP::COMMAND: {
             if(_mode & COMMANDED) {
                 TSTP::Command * command = reinterpret_cast<TSTP::Command *>(packet);
-                Transducer::actuate(_device, this, command->command<void>());
+                Transducer::actuate(_device, this, *(command->command<Value>()));
             }
         } break;
         case TSTP::CONTROL: {
@@ -196,11 +196,12 @@ private:
 
     static int updater(unsigned int dev, Time_Offset expiry, Smart_Data * data) {
         while(1) {
+            Time t = TSTP::now();
             Transducer::sense(dev, data);
-            data->_time = TSTP::now();
+            data->_time = t;
             data->_responsive->value(data->_value);
             data->_responsive->time(data->_time);
-            data->_responsive->respond(expiry);
+            data->_responsive->respond(data->_time + expiry);
             Periodic_Thread::wait_next();
         }
         return 0;
