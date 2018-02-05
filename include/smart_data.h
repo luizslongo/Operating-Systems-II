@@ -78,11 +78,11 @@ public:
     typedef typename TSTP::Unit::Get<NUM>::Type Value;
 
     enum Mode {
-        PRIVATE = 0,
-        ADVERTISED = 1,
-        COMMANDED = 3,
-        CUMULATIVE = 4,
-        DISPLAYED = 8,
+        PRIVATE    = (0),
+        ADVERTISED = (1 << 0),
+        COMMANDED  = (1 << 1) | ADVERTISED,
+        CUMULATIVE = (1 << 2),
+        DISPLAYED  = (1 << 3),
     };
 
     static const unsigned int REMOTE = -1;
@@ -99,7 +99,7 @@ public:
 public:
     // Local data source, possibly advertised to or commanded by the network
     Smart_Data(unsigned int dev, const Microsecond & expiry, const Mode & mode = PRIVATE)
-    : _unit(UNIT), _value(0), _error(ERROR), _coordinates(TSTP::here()), _time(TSTP::now()), _expiry(expiry), _device(dev), _mode(mode), _thread(0), _interested(0), _responsive((mode & ADVERTISED) | (mode & COMMANDED) ? new Responsive(this, UNIT, ERROR, expiry, mode & DISPLAYED) : 0) {
+    : _unit(UNIT), _value(0), _error(ERROR), _coordinates(TSTP::here()), _time(TSTP::now()), _expiry(expiry), _device(dev), _mode(mode), _thread(0), _interested(0), _responsive(((mode & ADVERTISED) == ADVERTISED) ? new Responsive(this, UNIT, ERROR, expiry, ((mode & DISPLAYED) == DISPLAYED)) : 0) {
         db<Smart_Data>(TRC) << "Smart_Data(dev=" << dev << ",exp=" << expiry << ",mode=" << mode << ")" << endl;
         if(Transducer::POLLING)
             Transducer::sense(_device, this);
@@ -183,7 +183,7 @@ public:
             }
         }
         Value ret = _value;
-        if(_mode & CUMULATIVE)
+        if(((_mode & CUMULATIVE) == CUMULATIVE))
             _value = 0;
         return ret;
     }
@@ -236,7 +236,7 @@ private:
         db<Smart_Data>(TRC) << "Smart_Data::update(obs=" << obs << ",cond=" << reinterpret_cast<void *>(subject) << ",data=" << packet << ")" << endl;
         switch(packet->type()) {
         case TSTP::INTEREST: {
-            if(_mode & ADVERTISED) {
+            if(((_mode & ADVERTISED) == ADVERTISED)) {
                 TSTP::Interest * interest = reinterpret_cast<TSTP::Interest *>(packet);
                 db<Smart_Data>(INF) << "Smart_Data::update[I]:msg=" << interest << " => " << *interest << endl;
                 _responsive->t0(interest->region().t0);
@@ -266,7 +266,7 @@ private:
             TSTP::Response * response = reinterpret_cast<TSTP::Response *>(packet);
             db<Smart_Data>(INF) << "Smart_Data:update[R]:msg=" << response << " => " << *response << endl;
             if(response->time() > _time) {
-                if(_mode & CUMULATIVE)
+                if(((_mode & CUMULATIVE) == CUMULATIVE))
                     _value += response->value<Value>();
                 else
                     _value = response->value<Value>();
@@ -274,10 +274,11 @@ private:
                 _coordinates = response->origin();
                 _time = response->time();
                 db<Smart_Data>(INF) << "Smart_Data:update[R]:this=" << this << " => " << *this << endl;
+                notify();
             }
         } break;
         case TSTP::COMMAND: {
-            if(_mode & COMMANDED) {
+            if(((_mode & COMMANDED) == COMMANDED)) {
                 // TODO: Check if this command was already treated
                 TSTP::Command * command = reinterpret_cast<TSTP::Command *>(packet);
                 if(_device != REMOTE)
@@ -291,6 +292,8 @@ private:
 //                _thread = 0;
 //            }
         } break;
+        default:
+            break;
         }
     }
 
