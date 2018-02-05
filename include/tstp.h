@@ -703,7 +703,7 @@ public:
     } __attribute__((packed));
 
     // Security types
-    typedef Array<unsigned char, 16> Node_ID;
+    typedef _UTIL::Array<unsigned char, 16> Node_ID;
     typedef _UTIL::Array<unsigned char, 16> Auth;
     typedef _UTIL::Array<unsigned char, 16> OTP;
     typedef Diffie_Hellman<AES<KEY_SIZE>>::Public_Key Public_Key;
