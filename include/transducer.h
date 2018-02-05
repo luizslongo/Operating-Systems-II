@@ -4,6 +4,7 @@
 #define __tranducer_h
 
 #include <smart_data.h>
+#include <utility/predictor.h>
 
 #include <keyboard.h>
 
@@ -21,6 +22,9 @@ public:
 
     static const bool INTERRUPT = true;
     static const bool POLLING = false;
+
+    typedef Predictor_Dummy Predictor;
+    typedef Predictor_Dummy::Configuration Predictor_Configuration;
 
     typedef Keyboard::Observer Observer;
     typedef Keyboard::Observed Observed;

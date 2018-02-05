@@ -5,6 +5,7 @@
 
 #include <tstp.h>
 #include <periodic_thread.h>
+#include <utility/predictor.h>
 #include <utility/observer.h>
 
 __BEGIN_SYS
@@ -65,11 +66,16 @@ template<typename Transducer>
 class Smart_Data: public Smart_Data_Common, private TSTP::Observer, private Transducer::Observer
 {
     friend class Smart_Data_Type_Wrapper<Transducer>::Type; // friend S is OK in C++11, but this GCC does not implements it yet. Remove after GCC upgrade.
+    friend class Smart_Data_Type_Wrapper<typename Transducer::Predictor>::Type;
 
 private:
     typedef TSTP::Buffer Buffer;
     typedef typename TSTP::Responsive Responsive;
     typedef typename TSTP::Interested Interested;
+
+    typedef typename TSTP::Predictive Predictive;
+    typedef typename Transducer::Predictor Predictor;
+    typedef typename Transducer::Predictor_Configuration Predictor_Configuration;
 
 public:
     static const unsigned int UNIT = Transducer::UNIT;
@@ -83,6 +89,8 @@ public:
         COMMANDED  = (1 << 1) | ADVERTISED,
         CUMULATIVE = (1 << 2),
         DISPLAYED  = (1 << 3),
+        PREDICTIVE = (1 << 4),
+        SUPPRESSIBLE = PREDICTIVE | ADVERTISED,
     };
 
     static const unsigned int REMOTE = -1;
@@ -99,7 +107,7 @@ public:
 public:
     // Local data source, possibly advertised to or commanded by the network
     Smart_Data(unsigned int dev, const Microsecond & expiry, const Mode & mode = PRIVATE)
-    : _unit(UNIT), _value(0), _error(ERROR), _coordinates(TSTP::here()), _time(TSTP::now()), _expiry(expiry), _device(dev), _mode(mode), _thread(0), _interested(0), _responsive(((mode & ADVERTISED) == ADVERTISED) ? new Responsive(this, UNIT, ERROR, expiry, ((mode & DISPLAYED) == DISPLAYED)) : 0) {
+    : _unit(UNIT), _value(0), _error(ERROR), _coordinates(TSTP::here()), _time(TSTP::now()), _expiry(expiry), _device(dev), _mode(mode), _thread(0), _interested(0), _responsive(((mode & ADVERTISED) == ADVERTISED) ? new Responsive(this, UNIT, ERROR, expiry, ((mode & DISPLAYED) == DISPLAYED)) : 0), _predictor(0), _model(0) {
         db<Smart_Data>(TRC) << "Smart_Data(dev=" << dev << ",exp=" << expiry << ",mode=" << mode << ")" << endl;
         if(Transducer::POLLING)
             Transducer::sense(_device, this);
@@ -111,7 +119,8 @@ public:
     }
     // Remote, event-driven (period = 0) or time-triggered data source
     Smart_Data(const Region & region, const Microsecond & expiry, const Microsecond & period = 0, const Mode & mode = PRIVATE)
-    : _unit(UNIT), _value(0), _error(ERROR), _coordinates(0), _time(0), _expiry(expiry), _device(REMOTE), _mode(static_cast<Mode>(mode & (~COMMANDED))), _thread(0), _interested(new Interested(this, region, UNIT, TSTP::SINGLE, 0, expiry, period)), _responsive(0) {
+    : _unit(UNIT), _value(0), _error(ERROR), _coordinates(0), _time(0), _expiry(expiry), _device(REMOTE), _mode(static_cast<Mode>(mode & (~COMMANDED))), _thread(0), _responsive(0), _predictor(0), _model(0) {
+        _interested = new Interested(this, region, UNIT, TSTP::SINGLE, 0, expiry, period, (((mode & PREDICTIVE) == PREDICTIVE) ? (Predictor_Common::Type)Predictor::TYPE : Predictor_Common::NONE), Predictor_Configuration());
         TSTP::attach(this, _interested);
     }
 
@@ -177,10 +186,11 @@ public:
             if((_device != REMOTE) && (Transducer::POLLING)) { // Local data source
                 Transducer::sense(_device, this); // read sensor
                 _time = TSTP::now();
-            } else {
-                // Other data sources must have called update() timely
-                db<Smart_Data>(WRN) << "Smart_Data::get(this=" << this << ",exp=" <<_time +  _expiry << ",val=" << _value << ") => expired!" << endl;
-            }
+            } else if(_device == REMOTE && ((_mode & PREDICTIVE) == PREDICTIVE) && _model) {
+                _time = TSTP::now();
+                _value = (*_model)(_time);
+            } else // Other data sources must have called update() timely
+                db<Smart_Data>(WRN) << "Smart_Data::get(this=" << this << ",exp=" << _expiry << ",val=" << _value << ") => expired!" << endl;
         }
         Value ret = _value;
         if(((_mode & CUMULATIVE) == CUMULATIVE))
@@ -217,15 +227,18 @@ public:
         db << "{";
         if(d._device != REMOTE) {
             switch(d._mode) {
-            case PRIVATE:    db << "PRI."; break;
-            case ADVERTISED: db << "ADV."; break;
-            case COMMANDED:  db << "CMD."; break;
+            case SUPPRESSIBLE: db << "SUP."; break;
+            case PREDICTIVE:   db << "PRD."; break;
+            case COMMANDED:    db << "CMD."; break;
+            case ADVERTISED:   db << "ADV."; break;
+            case PRIVATE:      db << "PRI."; break;
             }
             db << "[" << d._device << "]:";
         }
         if(d._thread) db << "ReTT";
         if(d._responsive) db << "ReED";
         if(d._interested) db << "In" << ((d._interested->period()) ? "TT" : "ED");
+        if(d._predictive) db << "Prd";
         db << ":u=" << d._unit << ",v=" << d._value << ",e=" << int(d._error) << ",c=" << d._coordinates << ",t=" << d._time << ",x=" << d._expiry << "}";
         return db;
     }
@@ -246,19 +259,51 @@ private:
                         delete _thread; // FIXME: There is a bug when this Interest mode is received.
                         _thread = 0;
                     }
+                    if(_predictor){
+                        delete _predictor;
+                        _predictor = 0;
+                    }
+
                 } else if(interest->period()) {
-                    if(!_thread)
+                    if(((_mode & PREDICTIVE) == PREDICTIVE) && interest->is_predictive() && interest->predictor() == Predictor::TYPE){
+                        if(interest->has_config()){
+                            if(!_predictor){
+                                _predictor = new Predictor(*interest->predictor_config<Predictor_Configuration>());
+                                _predictive = new Predictive(typename Predictor::Model(), _unit, _error, _expiry);
+                            } else {
+                                _predictor->configure(*interest->predictor_config<Predictor_Configuration>());
+                            }
+                        } else if (interest->has_model()) {
+                            _predictor->model(*interest->predictor_config<typename Predictor::Model>());
+                        }
+
+                        if(_predictive){
+                            _predictive->t0(interest->region().t0);
+                            _predictive->t1(interest->region().t1);
+                        }
+                    }
+
+                    if(!_thread){
                         _thread = new Periodic_Thread(interest->period(), &updater, _device, interest->expiry(), this);
-                    else {
+                    } else {
                         if(!interest->period() != _thread->period())
                             _thread->period(interest->period());
                     }
                 } else {
                     Transducer::sense(_device, this);
                     _time = TSTP::now();
-                    _responsive->value(_value);
-                    _responsive->time(_time);
-                    _responsive->respond(_time + interest->expiry());
+
+                    if(_predictor){
+                        if(!_predictor->trickle(this)){
+                            _predictive->model(_predictor->model());
+                            _predictive->time(_time);
+                            _predictive->respond(_time + interest->expiry());
+                        }
+                    } else {
+                        _responsive->value(_value);
+                        _responsive->time(_time);
+                        _responsive->respond(_time + interest->expiry());
+                    }
                 }
             }
         } break;
@@ -287,10 +332,24 @@ private:
             }
         } break;
         case TSTP::CONTROL: {
-//            if(subtype == DELETE) { // Interest being revoked
-//                delete _thread;
-//                _thread = 0;
-//            }
+            switch(buffer->frame()->data<TSTP::Control>()->subtype()) {
+            case TSTP::MODEL: {
+                TSTP::Model * model = reinterpret_cast<TSTP::Model *>(packet);
+
+                if(model->time() > _time && model->model<Model_Common>()->type() == Predictor::Model::TYPE) {
+                    if(!_model)
+                        _model = new typename Predictor::Model();
+                    *_model = *model->model<typename Predictor::Model>();
+                    _time = TSTP::now();
+                    _value = (*_model)(_time);
+                    _error = model->error();
+                    _coordinates = model->origin();
+                    notify();
+                }
+            } break;
+            default:
+                break;
+            }
         } break;
         default:
             break;
@@ -319,10 +378,20 @@ private:
             if(t < data->_responsive->t1()) {
                 Transducer::sense(dev, data);
                 data->_time = t;
-                data->_responsive->value(data->_value);
-                data->_responsive->time(data->_time);
-                data->_responsive->respond(data->_time + expiry);
-                data->notify();
+
+                if(((data->_mode & PREDICTIVE) == PREDICTIVE) && data->_predictor){
+                    if(!data->_predictor->trickle(data)){
+                        data->_predictive->model(data->_predictor->model());
+                        data->_predictive->time(data->_time);
+                        data->_predictive->respond(data->_time + expiry);
+                        db<Smart_Data>(TRC) << "Smart_Data::updater. sending a model    v=" << data->_value << endl;
+                    } else{ /*trickle*/ }
+                } else {
+                    data->_responsive->value(data->_value);
+                    data->_responsive->time(data->_time);
+                    data->_responsive->respond(data->_time + expiry);
+                    data->notify();
+                }
             }
         } while(Periodic_Thread::wait_next());
 
@@ -342,8 +411,11 @@ private:
     Periodic_Thread * _thread;
     Interested * _interested;
     Responsive * _responsive;
-};
 
+    Predictive * _predictive;
+    Predictor * _predictor;
+    typename Predictor::Model * _model;
+};
 
 // Smart Data Transform and Aggregation functions
 
