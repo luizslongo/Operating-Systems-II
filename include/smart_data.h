@@ -5,8 +5,53 @@
 
 #include <tstp.h>
 #include <periodic_thread.h>
+#include <utility/observer.h>
 
 __BEGIN_SYS
+
+class Smart_Data_Common : public _UTIL::Observed
+{
+public:
+    typedef _UTIL::Observed Observed;
+    typedef _UTIL::Observer Observer;
+
+    struct DB_Series {
+        unsigned char version;
+        unsigned long unit;
+        long x;
+        long y;
+        long z;
+        unsigned long r;
+        unsigned long long t0;
+        unsigned long long t1;
+
+        friend OStream & operator<<(OStream & os, const DB_Series & d) {
+            os << "{ve=" << d.version << ",u=" << d.unit << ",dst=(" << d.x << "," << d.y << "," << d.z << ")+" << d.r << ",t=[" << d.t0 << "," << d.t1 << "]}";
+            return os;
+        }
+    }__attribute__((packed));
+
+    struct DB_Record {
+        double value;
+        unsigned char error;
+        unsigned char confidence;
+        long x;
+        long y;
+        long z;
+        unsigned long long t;
+        unsigned char mac[16];
+        DB_Series series;
+
+        friend OStream & operator<<(OStream & os, const DB_Record & d) {
+                            // FIXME: can't print doubles on eMote3
+            os << "{va=" << (float)d.value << ",e=" << d.error << ",src=(" << d.x << "," << d.y << "," << d.z << "),t=" << d.t << ",m=[" << hex << d.mac[0];
+            for(unsigned int i = 1; i < 16; i++)
+                os << "," << hex << d.mac[i];
+            os << dec << "],s=" << d.series << "}";
+            return os;
+        }
+    }__attribute__((packed));
+};
 
 template <typename T>
 struct Smart_Data_Type_Wrapper
@@ -17,7 +62,7 @@ struct Smart_Data_Type_Wrapper
 // Smart Data encapsulates Transducers (i.e. sensors and actuators), local or remote, and bridges them with TSTP
 // Transducers must be Observed objects, must implement either sense() or actuate(), and must define UNIT, NUM, and ERROR.
 template<typename Transducer>
-class Smart_Data: private TSTP::Observer, private Transducer::Observer
+class Smart_Data: public Smart_Data_Common, private TSTP::Observer, private Transducer::Observer
 {
     friend class Smart_Data_Type_Wrapper<Transducer>::Type; // friend S is OK in C++11, but this GCC does not implements it yet. Remove after GCC upgrade.
 
@@ -37,7 +82,7 @@ public:
         ADVERTISED = 1,
         COMMANDED = 3,
         CUMULATIVE = 4,
-        DISPLAYED = 8, //TODO: Merge this module when new TSTP version was been incorporated into the trunk
+        DISPLAYED = 8,
     };
 
     static const unsigned int REMOTE = -1;
@@ -51,29 +96,10 @@ public:
     typedef TSTP::Time Time;
     typedef TSTP::Time_Offset Time_Offset;
 
-    struct DB_Record {
-        double value;
-        unsigned char error;
-        long x;
-        long y;
-        long z;
-        unsigned long long t;
-    };
-
-    struct DB_Series {
-        unsigned long unit;
-        long x;
-        long y;
-        long z;
-        unsigned long r;
-        unsigned long long t0;
-        unsigned long long t1;
-    };
-
 public:
     // Local data source, possibly advertised to or commanded by the network
     Smart_Data(unsigned int dev, const Microsecond & expiry, const Mode & mode = PRIVATE)
-    : _unit(UNIT), _value(0), _error(ERROR), _coordinates(TSTP::here()), _time(TSTP::now()), _expiry(expiry), _device(dev), _mode(mode), _thread(0), _interested(0), _responsive((mode & ADVERTISED) | (mode & COMMANDED) ? new Responsive(this, UNIT, ERROR, expiry) : 0) {
+    : _unit(UNIT), _value(0), _error(ERROR), _coordinates(TSTP::here()), _time(TSTP::now()), _expiry(expiry), _device(dev), _mode(mode), _thread(0), _interested(0), _responsive((mode & ADVERTISED) | (mode & COMMANDED) ? new Responsive(this, UNIT, ERROR, expiry, mode & DISPLAYED) : 0) {
         db<Smart_Data>(TRC) << "Smart_Data(dev=" << dev << ",exp=" << expiry << ",mode=" << mode << ")" << endl;
         if(Transducer::POLLING)
             Transducer::sense(_device, this);
@@ -100,6 +126,50 @@ public:
             TSTP::detach(this, _responsive);
             delete _responsive;
         }
+    }
+
+    DB_Record db_record() {
+        DB_Record ret;
+
+        ret.series.version = 0;
+        ret.series.unit = _unit;
+        if(_interested) {
+            TSTP::Global_Coordinates c = TSTP::absolute(_interested->region().center);
+            ret.series.x = c.x;
+            ret.series.y = c.y;
+            ret.series.z = c.z;
+            ret.series.r = _interested->region().radius;
+            ret.series.t0 = TSTP::absolute(_interested->region().t0);
+            ret.series.t1 = TSTP::absolute(_interested->region().t1);
+        } else {
+            TSTP::Global_Coordinates c = location();
+            ret.series.x = c.x;
+            ret.series.y = c.y;
+            ret.series.z = c.z;
+            ret.series.r = 0;
+            ret.series.t0 = 0;
+            ret.series.t1 = -1;
+        }
+
+        ret.value = this->operator Value();
+        if(Traits<Build>::MODEL == Traits<Build>::eMote3) {
+            // FIXME: Something weird is going on with doubles on emote3
+            char aux1[8];
+            char * aux2 = reinterpret_cast<char *>(&ret.value);
+            memcpy(aux1, aux2, 8);
+            memcpy(aux2, aux1 + 4, 4);
+            memcpy(aux2 + 4, aux1, 4);
+        }
+        ret.error = error();
+        ret.confidence = 0; // TODO
+        TSTP::Global_Coordinates c = location();
+        ret.x = c.x;
+        ret.y = c.y;
+        ret.z = c.z;
+        ret.t = time();
+        for(unsigned int i = 0; i < 16; i++)
+            ret.mac[i] = 0;
+        return ret;
     }
 
     operator Value() {
@@ -230,6 +300,7 @@ private:
         Transducer::sense(_device, this);
         db<Smart_Data>(TRC) << "Smart_Data::update(this=" << this << ",exp=" << _expiry << ") => " << _value << endl;
         db<Smart_Data>(TRC) << "Smart_Data::update:responsive=" << _responsive << " => " << *reinterpret_cast<TSTP::Response *>(_responsive) << endl;
+        notify();
         if(_responsive && !_thread) {
             _responsive->value(_value);
             _responsive->time(_time);
@@ -243,13 +314,13 @@ private:
             Time t = TSTP::now();
             // TODO: The thread should be deleted or suspended when time is up
             if(t < data->_responsive->t1()) {
-		Transducer::sense(dev, data);
-		data->_time = t;
-		data->_responsive->value(data->_value);
-		data->_responsive->time(data->_time);
-		data->_responsive->respond(data->_time + expiry);
-    	    }
-
+                Transducer::sense(dev, data);
+                data->_time = t;
+                data->_responsive->value(data->_value);
+                data->_responsive->time(data->_time);
+                data->_responsive->respond(data->_time + expiry);
+                data->notify();
+            }
         } while(Periodic_Thread::wait_next());
 
         return 0;
@@ -268,6 +339,130 @@ private:
     Periodic_Thread * _thread;
     Interested * _interested;
     Responsive * _responsive;
+};
+
+
+// Smart Data Transform and Aggregation functions
+
+class No_Transform
+{
+public:
+    No_Transform() {}
+
+    template<typename T, typename U>
+    void apply(T * result, U * source) {
+        typename U::Value v = *source;
+        *result = v;
+    }
+};
+
+template<typename T>
+class Percent_Transform
+{
+public:
+    Percent_Transform(typename T::Value min, typename T::Value max) : _min(min), _step((max - min) / 100) {}
+
+    template<typename U>
+    void apply(U * result, T * source) {
+        typename T::Value v = *source;
+        if(v < _min)
+            *result = 0;
+        else {
+            v = (v - _min) / _step;
+            if(v > 100)
+                v = 100;
+
+            *result = v;
+        }
+    }
+
+private:
+    typename T::Value _min;
+    typename T::Value _step;
+};
+
+template<typename T>
+class Inverse_Percent_Transform: private Percent_Transform<T>
+{
+public:
+    Inverse_Percent_Transform(typename T::Value min, typename T::Value max) : Percent_Transform<T>(min, max) {}
+
+    template<typename U>
+    void apply(U * result, T * source) {
+        typename U::Value r;
+        Percent_Transform<T>::apply(&r, source);
+        *result = 100 - r;
+    }
+};
+
+class Sum_Transform
+{
+public:
+    Sum_Transform() {}
+
+    template<typename T, typename ...U>
+    void apply(T * result, U * ... sources) {
+        *result = sum<T::Value, U...>((*sources)...);
+    }
+
+private:
+    template<typename T, typename U, typename ...V>
+    T sum(const U & s0, const V & ... s) { return s0 + sum<T, V...>(s...); }
+
+    template<typename T, typename U>
+    T sum(const U & s) { return s; }
+};
+
+class Average_Transform: private Sum_Transform
+{
+public:
+    Average_Transform() {}
+
+    template<typename T, typename ...U>
+    void apply(T * result, U * ... sources) {
+        typename T::Value r;
+        Sum_Transform::apply(&r, sources...);
+        *result = r / sizeof...(U);
+    }
+};
+
+
+// Smart Data Actuator
+
+template<typename Destination, typename Transform, typename ...Sources>
+class Actuator: public Smart_Data_Common::Observer
+{
+public:
+    Actuator(Destination * d, Transform * a, Sources * ... s)
+        : _destination(d), _transform(a), _sources{s...}
+    {
+        attach(s...);
+    }
+    ~Actuator() {
+        unsigned int index = 0;
+        detach((reinterpret_cast<Sources*>(_sources[index++]))...);
+    }
+
+    void update(Smart_Data_Common::Observed * obs) {
+        unsigned int index = 0;
+        _transform->apply(_destination, (reinterpret_cast<Sources*>(_sources[index++]))...);
+    }
+
+private:
+    template<typename T, typename ...U>
+    void attach(T * t, U * ... u) { t->attach(this); attach(u...); }
+    template<typename T>
+    void attach(T * t) { t->attach(this); }
+
+    template<typename T, typename ...U>
+    void detach(T * t, U * ... u) { t->detach(this); detach(u...); }
+    template<typename T>
+    void detach(T * t) { t->detach(this); }
+
+private:
+    Destination * _destination;
+    Transform * _transform;
+    void * _sources[sizeof...(Sources)];
 };
 
 __END_SYS
