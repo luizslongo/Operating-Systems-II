@@ -6,7 +6,6 @@
 #define __tstp_common_h
 
 #include <utility/geometry.h>
-#include <utility/predictor.h>
 #include <rtc.h>
 
 __BEGIN_SYS
@@ -56,7 +55,6 @@ public:
         REPORT = 4,
         KEEP_ALIVE = 5,
         EPOCH = 6,
-        MODEL = 7,
     };
 
     // Scale for local network's geographic coordinates
@@ -480,10 +478,6 @@ public:
     // Precision or Error in SI values, expressed as 10^Error
     typedef char Precision;
     typedef char Error;
-
-    // Predictor types
-    typedef unsigned int Predictor;
-    typedef unsigned int Model;
 };
 
 __END_SYS
@@ -567,9 +561,6 @@ public:
                         case EPOCH:
                             db << reinterpret_cast<const Epoch &>(p);
                             break;
-                        case MODEL:
-                            db << reinterpret_cast<const Model &>(p);
-                            break;
                         default:
                             break;
                     }
@@ -614,16 +605,9 @@ public:
     // Interest Message
     class Interest: public Header
     {
-    protected:
-        typedef unsigned char Data[MTU - sizeof(Region) - sizeof(Unit) - sizeof(unsigned char) - sizeof(Time_Offset) - sizeof(Microsecond) - sizeof(unsigned char) - sizeof(CRC)];
     public:
-        template<typename C=unsigned char>
-        Interest(const Region & region, const Unit & unit, const Mode & mode, const Error & precision, const Microsecond & expiry, const Microsecond & period = 0, const Predictor & predictor = Predictor_Common::NONE, const C & configuration = 0x00)
-        : Header(INTEREST, 0, 0, now(), here(), here()), _region(region), _unit(unit), _mode(mode), _precision(0), _expiry(expiry), _period(period), _predictive(predictor << 1) {
-            memset(_predictor_config, 0, sizeof(Data));
-            C * config = predictor_config<C>();
-            *config = configuration;
-        }
+        Interest(const Region & region, const Unit & unit, const Mode & mode, const Error & precision, const Microsecond & expiry, const Microsecond & period = 0)
+        : Header(INTEREST, 0, 0, now(), here(), here()), _region(region), _unit(unit), _mode(mode), _precision(0), _expiry(expiry), _period(period) {}
 
         const Unit & unit() const { return _unit; }
         const Region & region() const { return _region; }
@@ -632,16 +616,8 @@ public:
         Mode mode() const { return static_cast<Mode>(_mode); }
         Error precision() const { return static_cast<Error>(_precision); }
 
-        bool is_predictive() const { return static_cast<bool>(_predictive >> 1); }
-        bool has_model() const { return is_predictive() && static_cast<bool>(_predictive & 0x01); }
-        bool has_config() const { return !has_model(); }
-        Predictor predictor() const { return static_cast<Predictor>(_predictive >> 1); }
-
         bool time_triggered() { return _period; }
         bool event_driven() { return !time_triggered(); }
-
-        template<typename T>
-        T * predictor_config() { return reinterpret_cast<T *>(&_predictor_config); }
 
         friend Debug & operator<<(Debug & db, const Interest & m) {
             db << reinterpret_cast<const Header &>(m) << ",u=" << m._unit << ",m=" << ((m._mode == ALL) ? 'A' : 'S') << ",e=" << int(m._precision) << ",x=" << m._expiry << ",re=" << m._region << ",p=" << m._period;
@@ -655,14 +631,6 @@ public:
         unsigned char _precision : 6;
         Time_Offset _expiry;
         Microsecond _period; // TODO: should be Time_Offset
-
-        // Format _predictive
-        //     +------------+-----------+
-        //     | predictor  | has_model |
-        //     +------------+-----------+
-        // Bits      7            1
-        unsigned char _predictive;
-        Data _predictor_config; // can be a model or a configuration
         CRC _crc;
     } __attribute__((packed));
 
@@ -902,59 +870,15 @@ public:
         CRC _crc;
     } __attribute__((packed));
 
-    // Model Control Message
-    class Model: public Control
-    {
-    protected:
-        typedef unsigned char Data[MTU - sizeof(Unit) - sizeof(Error) - sizeof(Time_Offset) - sizeof(CRC)];
-    public:
-        template<typename M>
-        Model(const M & m, const Unit & unit, const Error & error = 0, const Time & expiry = 0)
-        : Control(MODEL, 0, 0, now(), here(), here()), _unit(unit), _error(error), _expiry(expiry), _crc(0) {
-            memset(_model, 0, sizeof(Data));
-            M * mtmp = model<M>();
-            *mtmp = m;
-        }
-
-        const Unit & unit() const { return _unit; }
-        Error error() const { return _error; }
-
-        Time expiry() const { return _time + _expiry; }
-        void expiry(const Time & e) { _expiry = e - _time; }
-
-        template<typename T>
-        T * model() { return reinterpret_cast<T *>(&_model); }
-
-        template<typename T>
-        void model(const T & m) { *reinterpret_cast<T *>(&_model) = m; }
-
-        friend OStream & operator<<(OStream & db, const Model & m) {
-            db << reinterpret_cast<const Control &>(m) << ",u=" << m._unit << ",e=" << m._error;
-            return db;
-        }
-
-    private:
-        Unit _unit;
-        Error _error;
-        Time_Offset _expiry;
-        Data _model;
-        CRC _crc;
-    } __attribute__((packed));
-
     // TSTP Smart Data bindings
     // Interested (binder between Interest messages and Smart Data)
     class Interested: public Interest
     {
     public:
-        template<typename T, typename C=unsigned char>
-        Interested(T * data, const Region & region, const Unit & unit, const Mode & mode, const Precision & precision, const Microsecond & expiry, const Microsecond & period = 0, const Predictor & predictor = Predictor_Common::NONE, const C & configuration = 0x00)
-        : Interest(region, unit, mode, precision, expiry, period, predictor, configuration), _link(this, T::UNIT) {
+        template<typename T>
+        Interested(T * data, const Region & region, const Unit & unit, const Mode & mode, const Precision & precision, const Microsecond & expiry, const Microsecond & period = 0)
+        : Interest(region, unit, mode, precision, expiry, period), _link(this, T::UNIT) {
             db<TSTP>(TRC) << "TSTP::Interested(d=" << data << ",r=" << region << ",p=" << period << ") => " << reinterpret_cast<const Interest &>(*this) << endl;
-            if(predictor != Predictor_Common::NONE)
-                _size = sizeof(Interest) - sizeof(Interest::Data) + sizeof(C);
-            else
-                _size = sizeof(Interest) - sizeof(Interest::Data);
-
             _interested.insert(&_link);
             advertise();
         }
@@ -981,15 +905,13 @@ public:
     private:
         void send() {
             db<TSTP>(TRC) << "TSTP::Interested::send() => " << reinterpret_cast<const Interest &>(*this) << endl;
-            Buffer * buf = alloc(_size);
-            Interest * interest = buf->frame()->data<Interest>();
-            memcpy(interest, this, _size);
+            Buffer * buf = alloc(sizeof(Interest));
+            memcpy(buf->frame()->data<Interest>(), this, sizeof(Interest));
             marshal(buf);
             _nic->send(buf);
         }
 
     private:
-        unsigned int _size;
         Interests::Element _link;
     };
 
@@ -1049,40 +971,6 @@ public:
         Time _t1;
         Responsives::Element _link;
     };
-
-    // Predictive (binder between Model messages and Smart Data)
-    class Predictive: public Model
-    {
-    public:
-        template<typename M>
-        Predictive(const M & model, const Unit & unit, const Error & error = 0, const Time & expiry = 0)
-        : Model(model, unit, error, expiry), _size(sizeof(Model) - sizeof(Model::Data) + sizeof(M)) { }
-
-        void t0(const Time & t) { _t0 = t; }
-        void t1(const Time & t) { _t1 = t; }
-        Time t0() const { return _t0; }
-        Time t1() const { return _t1; }
-
-        void respond(const Time & expiry) { send(expiry); }
-
-    private:
-        void send(const Time & expiry) {
-            if((_time >= _t0) && (_time <= _t1)) {
-                assert(expiry > TSTP::now());
-                Buffer * buf = alloc(_size);
-                Model * model = buf->frame()->data<Model>();
-                memcpy(model, this, _size);
-                model->expiry(expiry);
-                marshal(buf);
-                _nic->send(buf);
-            }
-        }
-    private:
-        unsigned int _size;
-        Time _t0;
-        Time _t1;
-    };
-
 
 
     class Router;
@@ -1658,9 +1546,6 @@ private:
                     }
                     case EPOCH: {
                         return buf->frame()->data<Epoch>()->destination();
-                    }
-                    case MODEL: {
-                        return Region(sink(), 0, buf->frame()->data<Model>()->time(), buf->frame()->data<Model>()->expiry());
                     }
                 }
             default:

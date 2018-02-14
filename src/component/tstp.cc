@@ -607,24 +607,6 @@ void TSTP::update(NIC::Observed * obs, NIC::Protocol prot, Buffer * buf)
                     db<TSTP>(INF) << "TSTP::update: Epoch: adjusted epoch Space-Time to: " << _global_coordinates << ", " << _epoch << endl;
                 }
             } break;
-            case MODEL: {
-                Model * model = reinterpret_cast<Model *>(packet);
-                db<TSTP>(INF) << "TSTP::update:model=" << model << " => " << *model << endl;
-                db<TSTP>(INF) << "model->time() = " << model->time();
-                db<TSTP>(INF) << "now() = " << now();
-                if(model->time() < now()) {
-                    // Check region inclusion and notify interested observers
-                    Interests::List * list = _interested[model->unit()];
-                    if(list && !list->empty()) {
-                        for(Interests::Element * el = list->head(); el; el = el->next()) {
-                            Interested * interested = el->object();
-                            if(interested->region().contains(model->origin(), model->time()))
-                                notify(interested, buf);
-                        }
-                    } else if(here() != sink())
-                        notify(0, buf);
-                }
-            } break;
             default:
                 db<TSTP>(WRN) << "TSTP::update: Unrecognized Control subtype: " << buf->frame()->data<Control>()->subtype() << endl;
                 break;
