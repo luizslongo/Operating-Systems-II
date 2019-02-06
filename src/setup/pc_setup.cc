@@ -508,6 +508,8 @@ void PC_Setup::get_node_id()
 //========================================================================
 void PC_Setup::say_hi()
 {
+    kout << endl;
+
     if(!si->lm.has_app) {
         db<Setup>(ERR) << "No APPLICATION in boot image, you don't need EPOS!" << endl;
         panic();
