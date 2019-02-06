@@ -11,7 +11,7 @@ struct Traits
 {
     static const bool enabled = true;
     static const bool debugged = true;
-    static const bool hysterically_debugged = false;
+    static const bool hysterically_debugged = true;
     typedef TLIST<> ASPECTS;
 };
 
@@ -39,8 +39,8 @@ template<> struct Traits<Debug>
 {
     static const bool error   = true;
     static const bool warning = true;
-    static const bool info    = false;
-    static const bool trace   = false;
+    static const bool info    = true;
+    static const bool trace   = true;
 };
 
 template<> struct Traits<Lists>: public Traits<void>
@@ -179,7 +179,7 @@ template<> struct Traits<TSTP>: public Traits<Network>
     static const unsigned int KEY_SIZE = 16;
 };
 
-template<> template <typename S> struct Traits<Smart_Data<S>>: public Traits<Network>
+template <typename S> struct Traits<Smart_Data<S>>: public Traits<Network>
 {
     static const bool enabled = NETWORKS::Count<TSTP>::Result;
 };
