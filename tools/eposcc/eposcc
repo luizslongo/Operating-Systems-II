@@ -63,7 +63,8 @@ LINKER="$TOOLS_PREFIX""ld"
 LINKER_LIBRARY=$LINKER
 LINK_FLGS_LIBRARY="-L$LIB -L`$C_COMPILER $C_COMP_FLGS -print-file-name=` -static --section-start $MACH_CODE_NAME=$APP_CODE --section-start $MACH_DATA_NAME=$APP_DATA"
 LINK_OBJI_LIBRARY="$LIB/$ARCH""_crt0.o $LIB/$ARCH""_crtbegin.o $LIB/$MACH""_init_first.o $LIB/$MACH""_init_application.o $LIB/$MACH""_application.o"
-LINK_OBJN_LIBRARY="$LIB/$MACH""_init_system.o $LIB/$MACH""_system.o $LIB/$ARCH""_crtend.o"
+LINK_OBJN_LIBRARY="$LIB/$MACH""_init_system.o $LIB/$MACH""_system.o"
+LINK_OBJL_LIBRARY="$LIB/$ARCH""_crtend.o"
 LINK_LIBS_LIBRARY="util_$ARCH init_$ARCH sys_$ARCH mach_$ARCH arch_$ARCH util_$ARCH gcc"
 if [ "$SETUP" = "" ] ; then
 LINK_OBJI_LIBRARY="$LIB/$MACH""_setup.o $LINK_OBJI_LIBRARY"
@@ -72,7 +73,8 @@ fi
 LINKER_BUILTIN=$LINKER
 LINK_FLGS_BUILTIN="-L$LIB -L`$C_COMPILER $C_COMP_FLGS -print-file-name=` -static --section-start $MACH_CODE_NAME=$APP_CODE --section-start $MACH_DATA_NAME=$APP_DATA"
 LINK_OBJI_BUILTIN="$LIB/$ARCH""_crt0.o $LIB/$ARCH""_crtbegin.o $LIB/$MACH""_init_application.o  $LIB/$MACH""_application.o"
-LINK_OBJN_BUILTIN="$LIB/$ARCH""_crtend.o -R$SRC/system/$MACH""_system"
+LINK_OBJN_BUILTIN=" -R$SRC/system/$MACH""_system"
+LINK_OBJL_BUILTIN="$LIB/$ARCH""_crtend.o"
 LINK_LIBS_BUILTIN="util_$ARCH gcc"
 if [ "$SETUP" = "" ] ; then
 LINK_OBJN_BUILTIN="$LIB/$MACH""_setup.o $LINK_OBJN_BUILTIN"
@@ -81,7 +83,8 @@ fi
 LINKER_KERNEL=$LINKER
 LINK_FLGS_KERNEL="-L$LIB -L`$C_COMPILER $C_COMP_FLGS -print-file-name=` -static --section-start $MACH_CODE_NAME=$APP_CODE --section-start $MACH_DATA_NAME=$APP_DATA"
 LINK_OBJI_KERNEL="$LIB/$ARCH""_crt0.o $LIB/$ARCH""_crtbegin.o $LIB/$MACH""_init_application.o  $LIB/$MACH""_application.o"
-LINK_OBJN_KERNEL="$LIB/$ARCH""_crtend.o"
+LINK_OBJN_KERNEL=""
+LINK_OBJL_KERNEL="$LIB/$ARCH""_crtend.o"
 LINK_LIBS_KERNEL="util_$ARCH arch_$ARCH gcc"
 
 #=========================================================================
@@ -307,18 +310,21 @@ if [ $os_is_kernel = 1 ] ; then
 	LINK_FLGS=$LINK_FLGS_KERNEL
 	LINK_OBJI=$LINK_OBJI_KERNEL
 	LINK_OBJN=$LINK_OBJN_KERNEL
+	LINK_OBJL=$LINK_OBJL_KERNEL
 	LINK_LIBS=$LINK_LIBS_KERNEL
     elif [ $os_is_library = 1 ] ; then
 	LINKER=$LINKER_LIBRARY
 	LINK_FLGS=$LINK_FLGS_LIBRARY
 	LINK_OBJI=$LINK_OBJI_LIBRARY
 	LINK_OBJN=$LINK_OBJN_LIBRARY
+	LINK_OBJL=$LINK_OBJL_LIBRARY
 	LINK_LIBS=$LINK_LIBS_LIBRARY
     elif [ $os_is_builtin = 1 ] ; then
 	LINKER=$LINKER_BUILTIN
 	LINK_FLGS=$LINK_FLGS_BUILTIN
 	LINK_OBJI=$LINK_OBJI_BUILTIN
 	LINK_OBJN=$LINK_OBJN_BUILTIN
+	LINK_OBJL=$LINK_OBJL_BUILTIN
 	LINK_LIBS=$LINK_LIBS_BUILTIN
 fi
 
@@ -328,6 +334,7 @@ link_objs="$LINK_OBJI $link_objs $LINK_OBJN"
 for lib in $LINK_LIBS ; do
   link_libs="$link_libs -l$lib"
 done
+link_libs="$link_libs $LINK_OBJL"
 
 if [ $need_compile = 1 -a ! -f "$key_file" ] ; then
     need_analyze=1
