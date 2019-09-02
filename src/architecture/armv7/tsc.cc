@@ -1,6 +1,6 @@
 // EPOS ARMv7 Time-Stamp Counter Mediator Implementation
 
-#include <tsc.h>
+#include <architecture/tsc.h>
 
 __BEGIN_SYS
 

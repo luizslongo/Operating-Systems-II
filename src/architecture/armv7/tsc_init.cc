@@ -1,7 +1,7 @@
 // EPOS ARMv7 Time-Stamp Counter Mediator Initialization
 
-#include <tsc.h>
-#include <machine.h>
+#include <machine/main.h>
+#include <machine/timer.h>
 
 __BEGIN_SYS
 
@@ -9,19 +9,21 @@ void TSC::init()
 {
     db<Init, TSC>(TRC) << "TSC::init()" << endl;
 
-#ifdef __mmod_zynq__
+#if defined(__mach_cortex_a__)
 
-    // Disable counting before programming
-    reg(GTCLR) = 0;
+    if(Machine::cpu_id() == 0) {
+        // Disable counting before programming
+        reg(GTCLR) = 0;
 
-    // Set timer to 0
-    reg(GTCTRL) = 0;
-    reg(GTCTRH) = 0;
+        // Set timer to 0
+        reg(GTCTRL) = 0;
+        reg(GTCTRH) = 0;
 
-    // Re-enable counting
-    reg(GTCLR) = 1;
-
-#elif defined(__mmod_emote3__) || defined(__mmod_lm3s811__)
+        // Re-enable counting
+        reg(GTCLR) = 1;
+    }
+    
+#elif defined(__mach_cortex_m__)
 
     reg(Machine_Model::GPTMCTL) &= ~Machine_Model::TAEN; // Disable timer
     Machine_Model::power_user_timer(Machine_Model::TIMERS - 1, FULL);

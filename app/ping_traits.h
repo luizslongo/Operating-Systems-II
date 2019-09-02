@@ -1,1 +1,1 @@
-../src/component/ip_test_traits.h
+../tests/ip_test_traits.h

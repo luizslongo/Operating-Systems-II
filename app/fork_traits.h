@@ -1,1 +1,1 @@
-../src/component/task_test_traits.h
+../tests/task_test_traits.h

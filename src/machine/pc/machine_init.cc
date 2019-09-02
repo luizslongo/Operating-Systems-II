@@ -11,23 +11,31 @@ void Machine::init()
     if(Traits<IC>::enabled)
         IC::init();
 
-    if(Traits<PCI>::enabled)
-        PCI::init();
-
     if(Traits<Timer>::enabled)
         Timer::init();
 
-    if(Traits<Keyboard>::enabled)
-        Keyboard::init();
+    if(Traits<PCI>::enabled)
+        PCI::init();
 
+#ifdef __SCRATCHPAD_H
     if(Traits<Scratchpad>::enabled)
         Scratchpad::init();
+#endif
 
-    if(Traits<NIC>::enabled)
-        NIC::init();
+#ifdef __KEYBOARD_H
+    if(Traits<Keyboard>::enabled)
+        Keyboard::init();
+#endif
 
+#ifdef __FPGA_H
     if(Traits<FPGA>::enabled)
         FPGA::init();
+#endif
+
+#ifdef __NIC_H
+    if(Traits<Ethernet>::enabled)
+        Initializer<Ethernet>::init();
+#endif
 }
 
 __END_SYS

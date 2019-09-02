@@ -1,6 +1,7 @@
 // EPOS PC FPGA Mediator Initialization
 
-#include <machine/pc/machine.h>
+#include <machine/main.h>
+#include <machine/pci.h>
 #include <machine/pc/fpga.h>
 
 __BEGIN_SYS

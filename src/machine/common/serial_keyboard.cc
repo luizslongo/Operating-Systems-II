@@ -1,6 +1,6 @@
 // EPOS Serial Keyboard Mediator Implementation
 
-#include <keyboard.h>
+#include <machine/keyboard.h>
 
 __BEGIN_SYS
 

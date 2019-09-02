@@ -1,6 +1,6 @@
 // EPOS IA32 MMU Mediator Initialization
 
-#include <mmu.h>
+#include <architecture/mmu.h>
 #include <system.h>
 
 __BEGIN_SYS

@@ -1,7 +1,7 @@
 // EPOS IA32 CPU Mediator Implementation
 
 #include <architecture/ia32/cpu.h>
-#include <thread.h>
+#include <machine.h>
 
 extern "C" { void _exec(void *); }
 

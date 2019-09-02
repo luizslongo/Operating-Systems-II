@@ -455,7 +455,7 @@ msg_disk_error:
 		.byte 0x00
 
 msg_hello:
-		.ascii  "This is EPOS;"
+		.ascii  "This is EPOS!"
 		.word 0x0D0A
 		.byte 0x00
 

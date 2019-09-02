@@ -1,1 +1,1 @@
-../src/component/synchronizer_test.cc
+../tests/synchronizer_test.cc

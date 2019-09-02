@@ -1,6 +1,6 @@
 // EPOS Serial Display Mediator Implementation
 
-#include <display.h>
+#include <machine/display.h>
 
 __BEGIN_SYS
 

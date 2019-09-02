@@ -1,7 +1,7 @@
 // EPOS PC Timer Mediator Initialization
 
-#include <timer.h>
-#include <ic.h>
+#include <machine/timer.h>
+#include <machine/ic.h>
 
 __BEGIN_SYS
 
@@ -11,9 +11,10 @@ void Timer::init()
 
     CPU::int_disable();
 
-    Engine::config(0, Engine::clock() / FREQUENCY);
+    if(!Traits<System>::multicore || (Machine::cpu_id() == 0))
+        IC::int_vector(IC::INT_TIMER, int_handler);
 
-    IC::int_vector(IC::INT_TIMER, int_handler);
+    Engine::config(0, Engine::clock() / FREQUENCY);
     IC::enable(IC::INT_TIMER);
 
     CPU::int_enable();

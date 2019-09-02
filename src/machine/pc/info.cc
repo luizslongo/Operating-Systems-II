@@ -15,6 +15,8 @@ Debug & operator<<(Debug & db, const System_Info & si)
        << ",io_base=" << reinterpret_cast<void *>(si.bm.io_base)
        << ",io_top=" << reinterpret_cast<void *>(si.bm.io_top)
        << ",node_id=" << si.bm.node_id
+       << ",space=(" << si.bm.space_x << "," << si.bm.space_y << "," << si.bm.space_z << ")"
+       << ",uuid=" << si.bm.uuid
        << ",img_size=" << si.bm.img_size
        << ",setup_offset=" << hex << si.bm.setup_offset
        << ",init_offset=" << si.bm.init_offset

@@ -28,21 +28,23 @@ static const char CFG_FILE[] = "etc/eposmkbi.conf";
 // Target Machine Description
 struct Configuration
 {
-    char          mode[16];
-    char          arch[16];
-    char          mach[16];
-    char          mmod[16];
+    char           mode[16];
+    char           arch[16];
+    char           mach[16];
+    char           mmod[16];
     unsigned short n_cpus;
-    unsigned int  clock;
-    unsigned char word_size;
-    bool          endianess; // true => little, false => big
-    unsigned int  mem_base;
-    unsigned int  mem_top;
-    unsigned int  boot_length_min;
-    unsigned int  boot_length_max;
-    short         node_id;   // node id in SAN (-1 => get from net)
-    short         n_nodes;   // nodes in SAN (-1 => dynamic)
-    unsigned char uuid[8];   // EPOS image Universally Unique Identifier
+    unsigned int   clock;
+    unsigned char  word_size;
+    bool           endianess;  // true => little, false => big
+    unsigned int   mem_base;
+    unsigned int   mem_top;
+    unsigned int   boot_length_min;
+    unsigned int   boot_length_max;
+    short          node_id;   // nodes in SAN (-1 => dynamic)
+    int            space_x;   // Spatial coordinates of a node (-1 => mobile)
+    int            space_y;
+    int            space_z;
+    unsigned char  uuid[8];   // EPOS image Universally Unique Identifier
 };
 
 // System_Info
@@ -75,9 +77,42 @@ int main(int argc, char **argv)
     // Say hello
     printf("\nEPOS bootable image tool\n\n");
 
+    // Parse options and arguments
+    bool error = false;
+    if(argc < 3)
+        error = true;
+
+    // Space
+    CONFIG.space_x = -1; // dynamic
+    CONFIG.space_y = -1; // dynamic
+    CONFIG.space_z = -1; // dynamic
+    int opt;
+    while((opt = getopt(argc, argv, "x:y:z:")) != -1) {
+        switch (opt) {
+        case 'x':
+            CONFIG.space_x = atoi(optarg);
+            break;
+        case 'y':
+            CONFIG.space_y = atoi(optarg);
+            break;
+        case 'z':
+            CONFIG.space_z = atoi(optarg);
+            break;
+        default: /* '?' */
+            error = true;
+        }
+    }
+    if(optind >= argc)
+        error = true;
+
+    if(error) {
+        fprintf(stderr, "Usage: %s [-x X] [-y Y] [-z Z] <EPOS root> <boot image> <app1> <app2> ...\n", argv[0]);
+        return 1;
+    }
+
     // Read configuration
     char file[256];
-    sprintf(file, "%s/%s", argv[1], CFG_FILE);
+    sprintf(file, "%s/%s", argv[optind], CFG_FILE);
     FILE * cfg_file = fopen(file, "rb");
     if(!cfg_file) {
         fprintf(stderr, "Error: can't read configuration file \"%s\"!\n", file);
@@ -89,19 +124,9 @@ int main(int argc, char **argv)
     }
 
     // Open destination file (rewrite)
-    int fd_img = open(argv[2], O_WRONLY | O_CREAT | O_TRUNC, 00644);
+    int fd_img = open(argv[optind + 1], O_WRONLY | O_CREAT | O_TRUNC, 00644);
     if(fd_img < 0) {
-        fprintf(stderr, "Error: can't create boot image \"%s\"!\n", argv[2]);
-        return 1;
-    }
-
-    // Check ARGS
-    if(argc < 3) {
-        fprintf(stderr, "Usage: %s <options> <EPOS root> <boot image> <app1> <app2> ...\n", argv[0]);
-        return 1;
-    }
-    if(!strcmp(CONFIG.mode, "library") && (argc > 4)) {
-        fprintf(stderr, "Error: library mode supports a single application!\n");
+        fprintf(stderr, "Error: can't create boot image \"%s\"!\n", argv[optind + 1]);
         return 1;
     }
 
@@ -112,21 +137,19 @@ int main(int argc, char **argv)
     printf("  Processor: %s (%d bits, %s-endian)\n", CONFIG.arch, CONFIG.word_size, CONFIG.endianess ? "little" : "big");
     printf("  Memory: %d KBytes\n", (CONFIG.mem_top - CONFIG.mem_base) / 1024);
     printf("  Boot Length: %d - %d (min - max) KBytes\n", CONFIG.boot_length_min, CONFIG.boot_length_max);
-    if(CONFIG.node_id == -1)
-        printf("  Node id: will get from the network\n");
-    else
-        printf("  Node id: %d\n", CONFIG.node_id);
-    printf("  EPOS Image UUID: ");
+    if(CONFIG.space_x != -1)
+        printf("  Node location: (%d, %d, %d)\n", CONFIG.space_x, CONFIG.space_y, CONFIG.space_z);
+    printf("  UUID: ");
     for(unsigned int i = 0; i < 8; i++)
         printf("%.2x", CONFIG.uuid[i]);
 
     // Create the boot image
     unsigned int image_size = 0;
-    printf("\n  Creating EPOS bootable image in \"%s\":\n", argv[2]);
+    printf("\n  Creating EPOS bootable image in \"%s\":\n", argv[optind + 1]);
 
     // Add BOOT
     if(CONFIG.boot_length_max > 0) {
-        sprintf(file, "%s/img/%s_boot", argv[1], CONFIG.mach);
+        sprintf(file, "%s/img/%s_boot", argv[optind], CONFIG.mach);
         printf("    Adding boot strap \"%s\":", file);
         image_size += put_file(fd_img, file);
         if(image_size > CONFIG.boot_length_max) {
@@ -134,12 +157,11 @@ int main(int argc, char **argv)
             fprintf(stderr, "Boot strap \"%s\" is too large! (%d bytes)\n", file, image_size);
             return 1;
         } else {
-            while((image_size % CONFIG.boot_length_min != 0))
-                image_size += pad(fd_img, 1);
+            if(image_size < CONFIG.boot_length_min)
+                image_size += pad(fd_img, CONFIG.boot_length_min - image_size);
         }
     }
     unsigned int boot_size = image_size;
-
 
     // Reserve space for System_Info if necessary
     System_Info si;
@@ -161,12 +183,14 @@ int main(int argc, char **argv)
     si.bm.io_base  = 0; // will be adjusted by SETUP
     si.bm.io_top   = 0; // will be adjusted by SETUP
     si.bm.node_id  = CONFIG.node_id;
-    si.bm.n_nodes  = CONFIG.n_nodes;
+    si.bm.space_x  = CONFIG.space_x;
+    si.bm.space_y  = CONFIG.space_y;
+    si.bm.space_z  = CONFIG.space_z;
     for(unsigned int i = 0; i < 8; i++)
         si.bm.uuid[i]  = CONFIG.uuid[i];
 
     // Add SETUP
-    sprintf(file, "%s/img/%s_setup", argv[1], CONFIG.mach);
+    sprintf(file, "%s/img/%s_setup", argv[optind], CONFIG.mach);
     if(file_exist(file)) {
         si.bm.setup_offset = image_size - boot_size;
         printf("    Adding setup \"%s\":", file);
@@ -181,34 +205,28 @@ int main(int argc, char **argv)
     } else {
         // Add INIT
         si.bm.init_offset = image_size - boot_size;
-        sprintf(file, "%s/img/%s_init", argv[1], CONFIG.mach);
+        sprintf(file, "%s/img/%s_init", argv[optind], CONFIG.mach);
         printf("    Adding init \"%s\":", file);
         image_size += put_file(fd_img, file);
 
         // Add SYSTEM
         si.bm.system_offset = image_size - boot_size;
-        sprintf(file, "%s/img/%s_system", argv[1], CONFIG.mach);
+        sprintf(file, "%s/img/%s_system", argv[optind], CONFIG.mach);
         printf("    Adding system \"%s\":", file);
         image_size += put_file(fd_img, file);
     }
 
-    // Add LOADER (if multiple applications) or the single application otherwise
+    // Add application(s) and data
     si.bm.application_offset = image_size - boot_size;
-//    if((argc == 4) && strcmp(CONFIG.mode, "kernel")) { // Add Single APP
-    if(argc == 4) { // Add Single APP
-        printf("    Adding application \"%s\":", argv[3]);
-        image_size += put_file(fd_img, argv[3]);
+    printf("    Adding application \"%s\":", argv[optind + 2]);
+    image_size += put_file(fd_img, argv[optind + 2]);
+    if((argc - optind) == 3) // single APP
         si.bm.extras_offset = -1;
-    } else { // Add LOADER
-        sprintf(file, "%s/img/%s_loader", argv[1], CONFIG.mach);
-        printf("    Adding loader \"%s\":", file);
-        image_size += put_file(fd_img, file);
-
-        // Add APPs
+    else { // multiple APPs or data
         si.bm.extras_offset = image_size - boot_size;
         struct stat file_stat;
-        for(int i = 3; i < argc; i++) {
-            printf("    Adding application \"%s\":", argv[i]);
+        for(int i = optind + 3; i < argc; i++) {
+            printf("    Adding file \"%s\":", argv[i]);
             stat(argv[i], &file_stat);
             image_size += put_number(fd_img, file_stat.st_size);
             image_size += put_file(fd_img, argv[i]);
@@ -262,12 +280,12 @@ bool parse_config(FILE * cfg_file, Configuration * cfg)
 
     // EPOS Mode
     if(fgets(line, 256, cfg_file) != line) {
-        fprintf(stderr, "Error: failed to read MODE from configuration file!\n");
+        fprintf(stderr, "Error: failed to read SMOD from configuration file!\n");
         return false;
     }
     token = strtok(line, "=");
-    if(strcmp(token, "MODE") || !(token = strtok(NULL, "\n"))) {
-        fprintf(stderr, "Error: no valid MODE in configuration!\n");
+    if(strcmp(token, "SMOD") || !(token = strtok(NULL, "\n"))) {
+        fprintf(stderr, "Error: no valid SMOD in configuration!\n");
         return false;
     }
     strtolower(cfg->mode, token);
@@ -413,17 +431,6 @@ bool parse_config(FILE * cfg_file, Configuration * cfg)
             cfg->node_id = -1; // get from net
     }
 
-    // Number of Nodes in SAN
-    if(fgets(line, 256, cfg_file) != line)
-        cfg->n_nodes = -1; // dynamic
-    else {
-        token = strtok(line, "=");
-        if(!strcmp(token, "N_NODES") && (token = strtok(NULL, "\n")))
-            cfg->n_nodes = atoi(token);
-        else
-            cfg->n_nodes = -1; // dynamic
-    }
-
     // UUID
     if(fgets(line, 256, cfg_file) == line) {
         token = strtok(line, "=");
@@ -451,14 +458,18 @@ template<typename T> bool add_boot_map(int fd, System_Info * si)
     if(!put_number(fd, static_cast<T>(si->bm.mem_top)))
         return false;
 
-    if(!put_number(fd, static_cast<T>(0)))
+    if(!put_number(fd, static_cast<T>(0))) // io_base
         return false;
-    if(!put_number(fd, static_cast<T>(0)))
+    if(!put_number(fd, static_cast<T>(0))) // io_top
         return false;
 
     if(!put_number(fd, si->bm.node_id))
         return false;
-    if(!put_number(fd, si->bm.n_nodes))
+    if(!put_number(fd, si->bm.space_x))
+        return false;
+    if(!put_number(fd, si->bm.space_y))
+        return false;
+    if(!put_number(fd, si->bm.space_z))
         return false;
     for(unsigned int i = 0; i < 8; i++)
         if(!put_number(fd, si->bm.uuid[i]))

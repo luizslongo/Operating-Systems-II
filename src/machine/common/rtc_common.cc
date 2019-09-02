@@ -1,6 +1,6 @@
 // EPOS RTC Mediator Common Package Implementation
 
-#include <rtc.h>
+#include <machine/rtc.h>
 
 __BEGIN_SYS
 

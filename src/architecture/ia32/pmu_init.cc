@@ -1,6 +1,6 @@
 // EPOS IA32 PMU Mediator Initialization
 
-#include <pmu.h>
+#include <architecture/pmu.h>
 
 __BEGIN_SYS
 
@@ -23,8 +23,9 @@ void PMU::init()
 
     	// Get CPUID max level (EAX) and vendor id (EBX+EDX+ECX)
     	char vendor_id[13];
+        vendor_id[8] = '\0'; // ecx in cpuid() is bidirectional!
     	vendor_id[12] = '\0';
-    	CPU::cpuid(0, &eax, (Reg32 *)&vendor_id[0], (Reg32 *)&vendor_id[8], (Reg32 *)&vendor_id[4]);
+    	CPU::cpuid(0, &eax, reinterpret_cast<Reg32 *>(&vendor_id[0]), reinterpret_cast<Reg32 *>(&vendor_id[8]), reinterpret_cast<Reg32 *>(&vendor_id[4]));
     	db<Init, PMU>(INF) << "PMU::init:CPUID(0)={max=" << eax << ",vendor=" << vendor_id << "}" << endl;
 
     	int cpu_family = 4;
@@ -61,7 +62,7 @@ void PMU::init()
 //    CPU::int_disable();
 //    APIC::config_pmu();
 //    if(APIC::id() == 0) {
-//    	for(int i = 0; i < 8; i++)
+//    	for(unsigned int i = 0; i < (CHANNELS - FIXED); i++)
 //    		_handlers[i] = 0;
 //    }
 //    IC::int_vector(IC::INT_PMU, int_handler);

@@ -2,7 +2,7 @@
 
 #include <architecture/armv7/pmu.h>
 
-#ifdef __mmod_zynq__
+#ifdef __mach_cortex_a__
 
 __BEGIN_SYS
 

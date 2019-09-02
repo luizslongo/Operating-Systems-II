@@ -2,8 +2,8 @@
 
 #include <utility/spin.h>
 #include <utility/ostream.h>
-#include <application.h>
-#include <cpu.h>
+#include <architecture/cpu.h>
+#include <system.h>
 #include <framework/main.h>
 
 // Framework class attributes
@@ -21,7 +21,7 @@ __END_SYS
 // Bindings
 extern "C" {
     void _panic() { _API::Thread::exit(-1); }
-    void _exit(int s) { _API::Thread::exit(s); }
+    void _exit(int s) { _API::Thread::exit(s); for(;;); }
 
     // Utility methods that differ from kernel and user space.
     // Heap

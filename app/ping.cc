@@ -1,1 +1,1 @@
-../src/component/ip_test.cc
+../tests/ip_test.cc

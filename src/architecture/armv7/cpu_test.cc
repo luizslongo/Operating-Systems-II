@@ -1,7 +1,6 @@
 // EPOS ARMV7 Test Program
 
-#include <utility/ostream.h>
-#include <cpu.h>
+#include <architecture/cpu.h>
 
 using namespace EPOS;
 

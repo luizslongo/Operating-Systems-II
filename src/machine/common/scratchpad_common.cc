@@ -1,8 +1,8 @@
 // EPOS Scratchpad Memory Implementation
 
 #include <utility/heap.h>
-#include <segment.h>
-#include <scratchpad.h>
+#include <memory.h>
+#include <machine/scratchpad.h>
 
 __BEGIN_SYS
 

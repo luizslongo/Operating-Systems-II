@@ -1,10 +1,8 @@
 // EPOS PC Scratchpad Memory Initialization
 
-#include <system/config.h>
+#include <machine/scratchpad.h>
 #include <system.h>
-#include <address_space.h>
-#include <segment.h>
-#include <scratchpad.h>
+#include <memory.h>
 
 __BEGIN_SYS
 

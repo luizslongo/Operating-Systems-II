@@ -1,1 +1,1 @@
-../src/component/task_test.cc
+../tests/task_test.cc

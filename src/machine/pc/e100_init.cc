@@ -1,17 +1,18 @@
 // EPOS PC Intel PRO/100 (i82559) Ethernet NIC Mediator Initialization
 
-#include <system.h>
-#include <machine/pc/machine.h>
+#include <machine/main.h>
+#include <machine/pci.h>
 #include <machine/pc/e100.h>
-
-#include <segment.h>
-#include <address_space.h>
+#include <system.h>
+#include <memory.h>
 
 __BEGIN_SYS
 
 void E100::init(unsigned int unit)
 {
     db<Init, E100>(TRC) << "E100::init(unit=" << unit << ")" << endl;
+
+    assert(unit < UNITS);
 
     // Scan the PCI bus for device
     PCI::Locator loc = PCI::scan(PCI_VENDOR_ID, PCI_DEVICE_ID, unit);

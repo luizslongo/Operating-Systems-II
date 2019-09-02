@@ -2,10 +2,9 @@
 
 #include <utility/ostream.h>
 #include <utility/heap.h>
-#include <display.h>
 #include <machine.h>
+#include <memory.h>
 #include <system.h>
-#include <segment.h>
 
 __BEGIN_SYS
 
@@ -16,7 +15,7 @@ class First_Object
 {
 public:
     First_Object() {
-	Machine::pre_init(reinterpret_cast<System_Info *>(Memory_Map::SYS_INFO));
+        Machine::pre_init(reinterpret_cast<System_Info *>(Memory_Map::SYS_INFO));
     }
 };
 

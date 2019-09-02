@@ -1,9 +1,9 @@
 // EPOS PC AMD PCNet II (Am79C970A) Ethernet NIC Mediator Implementation
 
-#include <machine/pc/machine.h>
+#include <machine/main.h>
 #include <machine/pc/pcnet32.h>
-#include <utility/malloc.h>
-#include <alarm.h>
+#include <system.h>
+#include <time.h>
 
 __BEGIN_SYS
 
@@ -100,9 +100,9 @@ int PCNet32::receive(Address * src, Protocol * prot, void * data, unsigned int s
 
 
 // Allocated buffers must be sent or release IN ORDER as assumed by the PCNet32
-PCNet32::Buffer * PCNet32::alloc(NIC * nic, const Address & dst, const Protocol & prot, unsigned int once, unsigned int always, unsigned int payload)
+PCNet32::Buffer * PCNet32::alloc(const Address & dst, const Protocol & prot, unsigned int once, unsigned int always, unsigned int payload)
 {
-    db<PCNet32>(TRC) << "PCNet32::alloc(s=" << _address << ",d=" << dst << ",p=" << hex << prot << dec << ",on=" << once << ",al=" << always << ",ld=" << payload << ")" << endl;
+    db<PCNet32>(TRC) << "PCNet32::alloc(s=" << _address << ",d=" << dst << ",p=" << hex << prot << dec << ",on=" << once << ",al=" << always << ",pl=" << payload << ")" << endl;
 
     int max_data = MTU - always;
 
@@ -126,7 +126,7 @@ PCNet32::Buffer * PCNet32::alloc(NIC * nic, const Address & dst, const Protocol 
         Buffer * buf = _tx_buffer[i];
 
         // Initialize the buffer and assemble the Ethernet Frame Header
-        new (buf) Buffer(nic, (size > max_data) ? MTU : size + always, _address, dst, prot);
+        new (buf) Buffer(this, (size > max_data) ? MTU : size + always, _address, dst, prot);
 
         db<PCNet32>(INF) << "PCNet32::alloc:desc[" << i << "]=" << desc << " => " << *desc << endl;
         db<PCNet32>(INF) << "PCNet32::alloc:buf=" << buf << " => " << *buf << endl;
@@ -299,7 +299,7 @@ void PCNet32::handle_int()
 
         if(csr0 & CSR0_IDON) { // Initialization done
             // This should never happen, since IDON is disabled in reset()
-            // and all the initialization is conctrolled via polling, so if
+            // and all the initialization is controlled via polling, so if
             // we are here, it must be due to a hardware induced reset.
             // All we can do is to try to reset the nic!
             db<PCNet32>(WRN) << "PCNet32::handle_int: initialization done!" << endl;
@@ -321,7 +321,7 @@ void PCNet32::handle_int()
                     // For the upper layers, size will represent the size of frame->data<T>()
                     buf->size((desc->misc & 0x00000fff) - sizeof(Header) - sizeof(CRC));
 
-                    db<PCNet32>(TRC) << "PCNet32::int:receive(s=" << frame->src() << ",p=" << hex << frame->header()->prot() << dec
+                    db<PCNet32>(TRC) << "PCNet32::handle_int:receive(s=" << frame->src() << ",p=" << hex << frame->header()->prot() << dec
                                      << ",d=" << frame->data<void>() << ",s=" << buf->size() << ")" << endl;
 
                     db<PCNet32>(INF) << "PCNet32::handle_int:desc[" << i << "]=" << desc << " => " << *desc << endl;
@@ -336,7 +336,7 @@ void PCNet32::handle_int()
  	}
 
         if(csr0 & CSR0_ERR) { // Error
-            db<PCNet32>(WRN) << "PCNet32::int:error =>";
+            db<PCNet32>(WRN) << "PCNet32::handle_int:error =>";
 
             if(csr0 & CSR0_MERR) { // Memory
         	db<PCNet32>(WRN) << " memory";

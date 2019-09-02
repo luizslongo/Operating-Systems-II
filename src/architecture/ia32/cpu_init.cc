@@ -1,12 +1,8 @@
 // EPOS IA32 CPU Mediator Initialization
 
-#include <cpu.h>
-#include <tsc.h>
-#include <mmu.h>
-#include <pmu.h>
+#include <architecture.h>
+#include <machine/main.h>
 #include <system.h>
-#include <system/info.h>
-#include <machine.h>
 
 __BEGIN_SYS
 
@@ -18,10 +14,12 @@ void CPU::init()
     _bus_clock = System::info()->tm.bus_clock;
 
     // Initialize the MMU
-    if(Traits<MMU>::enabled && Machine::cpu_id() == 0)
-        MMU::init();
-    else
-        db<Init, MMU>(WRN) << "MMU is disabled!" << endl;
+    if(Machine::cpu_id() == 0) {
+        if(Traits<MMU>::enabled)
+            MMU::init();
+        else
+            db<Init, MMU>(WRN) << "MMU is disabled!" << endl;
+    }
 
     // Initialize the PMU	
     if(Traits<PMU>::enabled)

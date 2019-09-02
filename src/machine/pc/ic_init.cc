@@ -1,7 +1,7 @@
 // EPOS PC Interrupt Controller Initialization
 
-#include <cpu.h>
-#include <ic.h>
+#include <architecture/cpu.h>
+#include <machine/ic.h>
 
 __BEGIN_SYS
 

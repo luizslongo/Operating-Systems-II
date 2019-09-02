@@ -1,1 +1,1 @@
-../src/component/semaphore_test.cc
+../tests/semaphore_test.cc

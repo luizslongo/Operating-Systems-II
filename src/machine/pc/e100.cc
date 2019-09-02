@@ -1,8 +1,7 @@
 // EPOS PC Intel PRO/100 (i82559) Ethernet NIC Mediator Implementation
 
-#include <machine/pc/machine.h>
+#include <machine/main.h>
 #include <machine/pc/e100.h>
-#include <task.h>
 
 __BEGIN_SYS
 
@@ -336,7 +335,7 @@ int E100::receive(Address * src, Protocol * prot, void * data, unsigned int size
 /*! NOTE: this method is not thread-safe as _tx_cur is shared by all threads
  * that use this object and the access to _tx_cur is not atomic. */
 // TODO: solve this!
-E100::Buffer * E100::alloc(NIC * nic, const Address & dst, const Protocol & prot, unsigned int once, unsigned int always, unsigned int payload)
+E100::Buffer * E100::alloc(const Address & dst, const Protocol & prot, unsigned int once, unsigned int always, unsigned int payload)
 {
     db<E100>(TRC) << "E100::alloc(s=" << _address << ",d=" << dst << ",p=" << hex << prot << dec << ",on=" << once << ",al=" << always << ",ld=" << payload << ")" << endl;
 
@@ -360,7 +359,7 @@ E100::Buffer * E100::alloc(NIC * nic, const Address & dst, const Protocol & prot
         Buffer * buf = _tx_buffer[_tx_cur];
 
         // Initialize the buffer and assemble the Ethernet Frame Header
-        new (buf) Buffer(nic, (size > max_data) ? MTU : size + always, _address, dst, prot);
+        new (buf) Buffer(this, (size > max_data) ? MTU : size + always, _address, dst, prot);
 
         db<E100>(INF) << "E100::alloc:desc[" << _tx_cur << "]=" << desc << " => " << *desc << endl;
 

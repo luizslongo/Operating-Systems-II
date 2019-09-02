@@ -14,76 +14,50 @@
 // Using only bare C to avoid conflicts with EPOS
 #include <stdio.h>
 #include <string.h>
+#include <stdlib.h>
 
 using namespace EPOS;
 using namespace EPOS::S;
 using namespace EPOS::S::U;
 
 // Constants
-const unsigned int ARRAY_MAX = 128;
-const unsigned int STR_SIZE_MAX = 128;
+const unsigned int TOKENS = 24;
+const unsigned int COMPONENTS = 61;
+const unsigned int STRING_SIZE = 128;
 
-// Configurations that return an int
-char int_cfg_names[STR_SIZE_MAX][ARRAY_MAX] = {
-    "-CPUS",
-    "-NODES",
-};
-// Their values
-int int_cfg_values[ARRAY_MAX] = {
-    Traits<Build>::CPUS,
-    Traits<Build>::NODES
+// Configuration tokens (integer tokens first, marked by INT_TOKENS)
+char tokens[TOKENS][STRING_SIZE] = {
+    "CPUS",
+    "NODES",
+    "MODE",
+    "ARCH",
+    "MACH",
+    "MMOD",
+    "CLOCK",
+    "WORD_SIZE",
+    "ENDIANESS",
+    "MEM_BASE",
+    "MEM_TOP",
+    "MEM_SIZE",
+    "MEM_SIZE_KB",
+    "BOOT_STACK",
+    "BOOT",
+    "SETUP",
+    "INIT",
+    "APP_CODE",
+    "APP_DATA",
+    "SYS_CODE",
+    "SYS_DATA",
+    "BOOT_LENGTH_MIN",
+    "BOOT_LENGTH_MAX",
+    "EXPECTED_SIMULATION_TIME"
 };
 
-// Configurations that return (a) string(s)
-char str_cfg_names[STR_SIZE_MAX][ARRAY_MAX] = {
-    "-ARCHITECTURE",
-    "-MACHINE",
-    "-MODEL",
-    "-COMPONENTS",
-    "-MEDIATORS",
-};
-// Values for single-string configurations
-// populated at populate_strings()
-char str_cfg_values[STR_SIZE_MAX][ARRAY_MAX]; 
+// Values for single-string tokens (populated at populate_strings())
+char token_values[TOKENS][STRING_SIZE];
 
 // List of EPOS components. Changes here must be replicated at populate_strings()
-char components[STR_SIZE_MAX][ARRAY_MAX] = {
-    "System",
-    "Application",
-    "Thread",
-    "Active",
-    "Periodic_Thread",
-    "RT_Thread",
-    "Task",
-    "Scheduler",
-    "Address_Space",
-    "Segment",
-    "Synchronizer",
-    "Mutex",
-    "Semaphore",
-    "Condition",
-    "Clock",
-    "Chronometer",
-    "Alarm",
-    "Delay",
-    "Network",
-    "TSTP",
-    "ARP",
-    "IP",
-    "ICMP",
-    "UDP",
-    "TCP",
-    "DHCP",
-    "IPC",
-    "Link",
-    "Port",
-    "Smart_Data",
-};
-// populated at populate_strings()
-bool enabled_components[ARRAY_MAX];
-
-// List of EPOS mediators. Changes here must be replicated at populate_strings()
-char mediators[STR_SIZE_MAX][ARRAY_MAX] = {
+char components[COMPONENTS][STRING_SIZE] = {
     "CPU",
     "TSC",
     "MMU",
@@ -115,271 +89,345 @@ char mediators[STR_SIZE_MAX][ARRAY_MAX] = {
     "CC2538",
     "AT86RF",
     "GEM",
+    "System",
+    "Application",
+    "Thread",
+    "Active",
+    "Periodic_Thread",
+    "RT_Thread",
+    "Task",
+    "Scheduler",
+    "Address_Space",
+    "Segment",
+    "Synchronizer",
+    "Mutex",
+    "Semaphore",
+    "Condition",
+    "Clock",
+    "Chronometer",
+    "Alarm",
+    "Delay",
+    "Network",
+    "TSTP",
+    "ARP",
+    "IP",
+    "ICMP",
+    "UDP",
+    "TCP",
+    "DHCP",
+    "IPC",
+    "Link",
+    "Port",
+    "SmartData",
 };
-// populated at populate_strings()
-bool enabled_mediators[ARRAY_MAX];
+
+// List of enabled components (populated at populate_strings())
+bool enabled_components[COMPONENTS];
 
 
 // Prototypes
-
-// Finds the index of given configuration name in names_array
-// returns -1 if not found
-int find_cfg(char names_array[STR_SIZE_MAX][ARRAY_MAX], const char * cfg_name);
-
-// Populates the values for the string configurations
 void populate_strings();
-
+int set_token_value(const char * token, const char * value);
+const char * get_token_value(const char * token);
+int enable_component(const char * component);
 
 
 // Main
 int main(int argc, char **argv)
 {
-    if(argc != 2) {
-        fprintf(stderr, "Usage: %s <configuration>\n", argv[0]);
-        fprintf(stderr, "Possible values for <configuration> are:\n");
-        for(unsigned int i = 0; i < ARRAY_MAX && strlen(int_cfg_names[i]); i++)
-            puts(int_cfg_names[i]);
-        for(unsigned int i = 0; i < ARRAY_MAX && strlen(str_cfg_names[i]); i++)
-            puts(str_cfg_names[i]);
-
-        return 1;
-    }
-
-    if(strlen(argv[1]) > STR_SIZE_MAX) {
-        fprintf(stderr, "ERROR! Configuration name too long\n");
-        return 1;
-    }
-
     populate_strings();
 
-    if(!strcmp(argv[1], "-COMPONENTS")) {
-        for(unsigned int i = 0; i < ARRAY_MAX; i++)
-            if(enabled_components[i])
-                puts(components[i]);
+    if(argc > 2) {
+        fprintf(stderr, "Usage: %s [-e|-h|<TOKEN>]\n", argv[0]);
+        return -1;
+    }
+
+    if(argc == 1) {
+        for(unsigned int i = 0; (i < TOKENS) && strlen(tokens[i]); i++)
+            printf("%s = %s\n", tokens[i], token_values[i]);
         return 0;
     }
 
-    if(!strcmp(argv[1], "-MEDIATORS")) {
-        for(unsigned int i = 0; i < ARRAY_MAX; i++)
-            if(enabled_mediators[i])
-                puts(mediators[i]);
+    if(!strcmp(argv[1], "-h")) {
+        fprintf(stderr, "Usage: %s [-e|-h|<TOKEN>]\n", argv[0]);
+        fprintf(stderr, "Possible values for <TOKEN> are:\n");
+        for(unsigned int i = 0; (i < TOKENS) && strlen(tokens[i]); i++)
+            fprintf(stderr, "%s\n", tokens[i]);
         return 0;
     }
 
-    int idx;
-    if((idx = find_cfg(int_cfg_names, argv[1])) >= 0)
-        printf("%d\n", int_cfg_values[idx]);
-    else if((idx = find_cfg(str_cfg_names, argv[1])) >= 0)
-        printf("%s\n", str_cfg_values[idx]);
-    else {
-        fprintf(stderr, "ERROR! Configuration \"%s\" not supported!\n", argv[1]);
-        return 1;
+    if(!strcmp(argv[1], "-e")) {
+        for(unsigned int i = 0; i < COMPONENTS; i++)
+            printf("%s = %i\n", components[i], enabled_components[i]);
+        return 0;
     }
+
+    if(argv[1][0] == '-') {
+        fprintf(stderr, "Usage: %s [-e|-h|<TOKEN>]\n", argv[0]);
+        return -1;
+    }
+
+    printf("%s", get_token_value(argv[1]));
 
     return 0;
-}
-
-// Finds the index of given configuration name in names_array
-// returns -1 if not found
-int find_cfg(char names_array[STR_SIZE_MAX][ARRAY_MAX], const char * cfg_name)
-{
-    for(unsigned int i = 0; i < ARRAY_MAX; i++)
-        if(!strcmp(names_array[i], cfg_name))
-            return i;
-    return -1;
 }
 
 // Populates the values for the string configurations
 void populate_strings()
 {
-    int idx;
-   
-    idx = find_cfg(str_cfg_names, "-ARCHITECTURE");
-    if(idx >= 0) {
-        switch(Traits<Build>::ARCHITECTURE) {
-            case Traits<Build>::IA32:
-                strcpy(str_cfg_values[idx], "IA32");
-                break;
-            case Traits<Build>::ARMv7:
-                strcpy(str_cfg_values[idx], "ARMv7");
-                break;
-            default:
-                strcpy(str_cfg_values[idx], "ERROR! Value not supported!");
-                break;
-        }
+
+    // Integer value tokens
+    char string[STRING_SIZE];
+
+    snprintf(string, STRING_SIZE, "%i", Traits<Build>::CPUS);
+    set_token_value("CPUS", string);
+
+    snprintf(string, STRING_SIZE, "%i", Traits<Build>::NODES);
+    set_token_value("NODES", string);
+
+    snprintf(string, STRING_SIZE, "%i", Traits<CPU>::CLOCK);
+    set_token_value("CLOCK", string);
+
+    snprintf(string, STRING_SIZE, "%i", Traits<CPU>::WORD_SIZE);
+    set_token_value("WORD_SIZE", string);
+
+    snprintf(string, STRING_SIZE, "0x%08x", Traits<Machine>::MEM_BASE);
+    set_token_value("MEM_BASE", string);
+
+    snprintf(string, STRING_SIZE, "0x%08x", Traits<Machine>::MEM_TOP);
+    set_token_value("MEM_TOP", string);
+
+    snprintf(string, STRING_SIZE, "0x%08x", Traits<Machine>::MEM_TOP - Traits<Machine>::MEM_BASE);
+    set_token_value("MEM_SIZE", string);
+
+    snprintf(string, STRING_SIZE, "0x%08x", (Traits<Machine>::MEM_TOP + 1 - Traits<Machine>::MEM_BASE) / 1024);
+    set_token_value("MEM_SIZE_KB", string);
+
+    if(Traits<Machine>::BOOT_STACK != Traits<Machine>::NOT_USED)
+        snprintf(string, STRING_SIZE, "0x%08x", Traits<Machine>::BOOT_STACK);
+    else
+        string[0] = '\0';
+    set_token_value("BOOT_STACK", string);
+
+    if(Traits<Machine>::BOOT != Traits<Machine>::NOT_USED)
+        snprintf(string, STRING_SIZE, "0x%08x", Traits<Machine>::BOOT);
+    else
+        string[0] = '\0';
+    set_token_value("BOOT", string);
+
+    if(Traits<Machine>::SETUP != Traits<Machine>::NOT_USED)
+        snprintf(string, STRING_SIZE, "0x%08x", Traits<Machine>::SETUP);
+    else
+        string[0] = '\0';
+    set_token_value("SETUP", string);
+
+    if(Traits<Machine>::INIT != Traits<Machine>::NOT_USED)
+        snprintf(string, STRING_SIZE, "0x%08x", Traits<Machine>::INIT);
+    else
+        string[0] = '\0';
+    set_token_value("INIT", string);
+
+    if(Traits<Machine>::APP_CODE != Traits<Machine>::NOT_USED)
+        snprintf(string, STRING_SIZE, "0x%08x", Traits<Machine>::APP_CODE);
+    else
+        string[0] = '\0';
+    set_token_value("APP_CODE", string);
+
+    if(Traits<Machine>::APP_DATA != Traits<Machine>::NOT_USED)
+        snprintf(string, STRING_SIZE, "0x%08x", Traits<Machine>::APP_DATA);
+    else
+        string[0] = '\0';
+    set_token_value("APP_DATA", string);
+
+    if(Traits<Machine>::SYS_CODE != Traits<Machine>::NOT_USED)
+        snprintf(string, STRING_SIZE, "0x%08x", Traits<Machine>::SYS_CODE);
+    else
+        string[0] = '\0';
+    set_token_value("SYS_CODE", string);
+
+    if(Traits<Machine>::SYS_DATA != Traits<Machine>::NOT_USED)
+        snprintf(string, STRING_SIZE, "0x%08x", Traits<Machine>::SYS_DATA);
+    else
+        string[0] = '\0';
+    set_token_value("SYS_DATA", string);
+
+    if(Traits<Machine>::BOOT_LENGTH_MIN != Traits<Machine>::NOT_USED)
+        snprintf(string, STRING_SIZE, "%i", Traits<Machine>::BOOT_LENGTH_MIN);
+    else
+        string[0] = '\0';
+    set_token_value("BOOT_LENGTH_MIN", string);
+
+    if(Traits<Machine>::BOOT_LENGTH_MAX != Traits<Machine>::NOT_USED)
+        snprintf(string, STRING_SIZE, "%i", Traits<Machine>::BOOT_LENGTH_MAX);
+    else
+        string[0] = '\0';
+    set_token_value("BOOT_LENGTH_MAX", string);
+
+    snprintf(string, STRING_SIZE, "%i", Traits<Build>::EXPECTED_SIMULATION_TIME);
+    set_token_value("EXPECTED_SIMULATION_TIME", string);
+
+    // String value tokens
+    switch(Traits<Build>::MODE) {
+    case Traits<Build>::LIBRARY:        set_token_value("MODE", "library");             break;
+    case Traits<Build>::BUILTIN:        set_token_value("MODE", "builtin");             break;
+    case Traits<Build>::KERNEL:         set_token_value("MODE", "kernel");              break;
+    default:                            set_token_value("MODE", "unsuported");          break;
     }
 
-    idx = find_cfg(str_cfg_names, "-MACHINE");
-    if(idx >= 0) {
-        switch(Traits<Build>::MACHINE) {
-            case Traits<Build>::PC:
-                strcpy(str_cfg_values[idx], "PC");
-                break;
-            case Traits<Build>::Cortex:
-                strcpy(str_cfg_values[idx], "Cortex");
-                break;
-            default:
-                strcpy(str_cfg_values[idx], "ERROR! Value not supported!");
-                break;
-        }
+    switch(Traits<Build>::ARCHITECTURE) {
+    case Traits<Build>::AVR8:           set_token_value("ARCH", "avr8");        break;
+    case Traits<Build>::H8:             set_token_value("ARCH", "h8");          break;
+    case Traits<Build>::IA32:           set_token_value("ARCH", "ia32");        break;
+    case Traits<Build>::X86_64:         set_token_value("ARCH", "x86_64");      break;
+    case Traits<Build>::ARMv4:          set_token_value("ARCH", "armv4");       break;
+    case Traits<Build>::ARMv7:          set_token_value("ARCH", "armv7");       break;
+    case Traits<Build>::ARMv8:          set_token_value("ARCH", "armv8");       break;
+    case Traits<Build>::SPARCv8:        set_token_value("ARCH", "sparc8");      break;
+    case Traits<Build>::PPC32:          set_token_value("ARCH", "ppc32");       break;
+    default:                            set_token_value("ARCH", "unsuported");  break;
     }
 
-    idx = find_cfg(str_cfg_names, "-MODEL");
-    if(idx >= 0) {
-        switch(Traits<Build>::MODEL) {
-            case Traits<Build>::Legacy_PC:
-                strcpy(str_cfg_values[idx], "Legacy_PC");
-                break;
-            case Traits<Build>::eMote3:
-                strcpy(str_cfg_values[idx], "eMote3");
-                break;
-            case Traits<Build>::LM3S811:
-                strcpy(str_cfg_values[idx], "LM3S811");
-                break;
-            case Traits<Build>::Zynq:
-                strcpy(str_cfg_values[idx], "Zynq");
-                break;
-            default:
-                strcpy(str_cfg_values[idx], "ERROR! Value not supported!");
-                break;
-        }
+    switch(Traits<Build>::MACHINE) {
+    case Traits<Build>::PC:             set_token_value("MACH", "pc");               break;
+    case Traits<Build>::eMote1:         set_token_value("MACH", "emote1");           break;
+    case Traits<Build>::eMote2:         set_token_value("MACH", "emote2");           break;
+    case Traits<Build>::STK500:         set_token_value("MACH", "stk500");           break;
+    case Traits<Build>::RCX:            set_token_value("MACH", "rcx");              break;
+    case Traits<Build>::Leon:           set_token_value("MACH", "leon");             break;
+    case Traits<Build>::Virtex:         set_token_value("MACH", "virtex");           break;
+    case Traits<Build>::Cortex_M:       set_token_value("MACH", "cortex_m");         break;
+    case Traits<Build>::Cortex_R:       set_token_value("MACH", "cortex_r");         break;
+    case Traits<Build>::Cortex_A:       set_token_value("MACH", "cortex_a");         break;
+    default:                            set_token_value("MACH", "unsuported");       break;
     }
 
-    idx = find_cfg(str_cfg_names, "-COMPONENTS");
-    if(idx >= 0) {
-        for(unsigned int i = 0; i < ARRAY_MAX; i++) {
-            if(!strcmp(components[i], "System"))
-                enabled_components[i] = Traits<System>::enabled;
-            else if(!strcmp(components[i], "Application"))
-                enabled_components[i] = Traits<Application>::enabled;
-            else if(!strcmp(components[i], "Thread"))
-                enabled_components[i] = Traits<Thread>::enabled;
-            else if(!strcmp(components[i], "Active"))
-                enabled_components[i] = Traits<Active>::enabled;
-            else if(!strcmp(components[i], "Periodic_Thread"))
-                enabled_components[i] = Traits<Periodic_Thread>::enabled;
-            else if(!strcmp(components[i], "RT_Thread"))
-                enabled_components[i] = Traits<RT_Thread>::enabled;
-            else if(!strcmp(components[i], "Task"))
-                enabled_components[i] = Traits<Task>::enabled;
-            else if(!strcmp(components[i], "Scheduler"))
-                enabled_components[i] = Traits<Scheduler<void>>::enabled;
-            else if(!strcmp(components[i], "Address_Space"))
-                enabled_components[i] = Traits<Address_Space>::enabled;
-            else if(!strcmp(components[i], "Segment"))
-                enabled_components[i] = Traits<Segment>::enabled;
-            else if(!strcmp(components[i], "Synchronizer"))
-                enabled_components[i] = Traits<Synchronizer>::enabled;
-            else if(!strcmp(components[i], "Mutex"))
-                enabled_components[i] = Traits<Mutex>::enabled;
-            else if(!strcmp(components[i], "Semaphore"))
-                enabled_components[i] = Traits<Semaphore>::enabled;
-            else if(!strcmp(components[i], "Condition"))
-                enabled_components[i] = Traits<Condition>::enabled;
-            else if(!strcmp(components[i], "Clock"))
-                enabled_components[i] = Traits<Clock>::enabled;
-            else if(!strcmp(components[i], "Chronometer"))
-                enabled_components[i] = Traits<Chronometer>::enabled;
-            else if(!strcmp(components[i], "Alarm"))
-                enabled_components[i] = Traits<Alarm>::enabled;
-            else if(!strcmp(components[i], "Delay"))
-                enabled_components[i] = Traits<Delay>::enabled;
-            else if(!strcmp(components[i], "Network"))
-                enabled_components[i] = Traits<Network>::enabled;
-            else if(!strcmp(components[i], "TSTP"))
-                enabled_components[i] = Traits<TSTP>::enabled;
-            else if(!strcmp(components[i], "ARP"))
-                enabled_components[i] = Traits<ARP<void,void,0>>::enabled;
-            else if(!strcmp(components[i], "IP"))
-                enabled_components[i] = Traits<IP>::enabled;
-            else if(!strcmp(components[i], "ICMP"))
-                enabled_components[i] = Traits<ICMP>::enabled;
-            else if(!strcmp(components[i], "UDP"))
-                enabled_components[i] = Traits<UDP>::enabled;
-            else if(!strcmp(components[i], "TCP"))
-                enabled_components[i] = Traits<TCP>::enabled;
-            else if(!strcmp(components[i], "DHCP"))
-                enabled_components[i] = Traits<DHCP>::enabled;
-            else if(!strcmp(components[i], "IPC"))
-                enabled_components[i] = Traits<IPC>::enabled;
-            else if(!strcmp(components[i], "Link"))
-                enabled_components[i] = Traits<Link<void,false>>::enabled;
-            else if(!strcmp(components[i], "Port"))
-                enabled_components[i] = Traits<Port<void,false>>::enabled;
-            else if(!strcmp(components[i], "Smart_Data"))
-                enabled_components[i] = Traits<Smart_Data<void>>::enabled;
-            else
-                enabled_components[i] = false;
-        }
+    switch(Traits<Build>::MODEL) {
+    case Traits<Build>::Unique:         set_token_value("MMOD", "unique");             break;
+    case Traits<Build>::Legacy_PC:      set_token_value("MMOD", "legacy_pc");          break;
+    case Traits<Build>::eMote3:         set_token_value("MMOD", "emote3");             break;
+    case Traits<Build>::LM3S811:        set_token_value("MMOD", "lm3S811");            break;
+    case Traits<Build>::Zynq:           set_token_value("MMOD", "zynq");               break;
+    case Traits<Build>::Realview_PBX:   set_token_value("MMOD", "realview_pbx");       break;
+    default:                            set_token_value("MMOD", "unsuported");         break;
     }
 
-    idx = find_cfg(str_cfg_names, "-MEDIATORS");
-    if(idx >= 0) {
-        for(unsigned int i = 0; i < ARRAY_MAX; i++) {
-            if(!strcmp(mediators[i], "CPU"))
-                enabled_mediators[i] = Traits<CPU>::enabled;
-            else if(!strcmp(mediators[i], "TSC"))
-                enabled_mediators[i] = Traits<TSC>::enabled;
-            else if(!strcmp(mediators[i], "MMU"))
-                enabled_mediators[i] = Traits<MMU>::enabled;
-            else if(!strcmp(mediators[i], "FPU"))
-                enabled_mediators[i] = Traits<FPU>::enabled;
-            else if(!strcmp(mediators[i], "PMU"))
-                enabled_mediators[i] = Traits<PMU>::enabled;
-            else if(!strcmp(mediators[i], "Machine"))
-                enabled_mediators[i] = Traits<Machine>::enabled;
-            else if(!strcmp(mediators[i], "PCI"))
-                enabled_mediators[i] = Traits<PCI>::enabled;
-            else if(!strcmp(mediators[i], "IC"))
-                enabled_mediators[i] = Traits<IC>::enabled;
-            else if(!strcmp(mediators[i], "Timer"))
-                enabled_mediators[i] = Traits<Timer>::enabled;
-            else if(!strcmp(mediators[i], "RTC"))
-                enabled_mediators[i] = Traits<RTC>::enabled;
-            else if(!strcmp(mediators[i], "UART"))
-                enabled_mediators[i] = Traits<UART>::enabled;
-            else if(!strcmp(mediators[i], "USB"))
-                enabled_mediators[i] = Traits<USB>::enabled;
-            else if(!strcmp(mediators[i], "EEPROM"))
-                enabled_mediators[i] = Traits<EEPROM>::enabled;
-            else if(!strcmp(mediators[i], "Display"))
-                enabled_mediators[i] = Traits<Display>::enabled;
-            else if(!strcmp(mediators[i], "Serial_Display"))
-                enabled_mediators[i] = Traits<Serial_Display>::enabled;
-            else if(!strcmp(mediators[i], "Keyboard"))
-                enabled_mediators[i] = Traits<Keyboard>::enabled;
-            else if(!strcmp(mediators[i], "Serial_Keyboard"))
-                enabled_mediators[i] = Traits<Serial_Keyboard>::enabled;
-            else if(!strcmp(mediators[i], "Scratchpad"))
-                enabled_mediators[i] = Traits<Scratchpad>::enabled;
-            else if(!strcmp(mediators[i], "GPIO"))
-                enabled_mediators[i] = Traits<GPIO>::enabled;
-            else if(!strcmp(mediators[i], "I2C"))
-                enabled_mediators[i] = Traits<I2C>::enabled;
-            else if(!strcmp(mediators[i], "ADC"))
-                enabled_mediators[i] = Traits<ADC>::enabled;
-            else if(!strcmp(mediators[i], "FPGA"))
-                enabled_mediators[i] = Traits<FPGA>::enabled;
-            else if(!strcmp(mediators[i], "NIC"))
-                enabled_mediators[i] = Traits<NIC>::enabled;
-            else if(!strcmp(mediators[i], "Ethernet"))
-                enabled_mediators[i] = Traits<Ethernet>::enabled;
-            else if(!strcmp(mediators[i], "IEEE802_15_4"))
-                enabled_mediators[i] = Traits<IEEE802_15_4>::enabled;
-            else if(!strcmp(mediators[i], "PCNet32"))
-                enabled_mediators[i] = Traits<PCNet32>::enabled;
-            else if(!strcmp(mediators[i], "C905"))
-                enabled_mediators[i] = Traits<C905>::enabled;
-            else if(!strcmp(mediators[i], "E100"))
-                enabled_mediators[i] = Traits<E100>::enabled;
-            else if(!strcmp(mediators[i], "CC2538"))
-                enabled_mediators[i] = Traits<CC2538>::enabled;
-            else if(!strcmp(mediators[i], "AT86RF"))
-                enabled_mediators[i] = Traits<AT86RF>::enabled;
-            else if(!strcmp(mediators[i], "GEM"))
-                enabled_mediators[i] = Traits<GEM>::enabled;
-            else
-                enabled_mediators[i] = false;
-        }
+    switch(Traits<CPU>::ENDIANESS) {
+    case Traits<CPU>::BIG:              set_token_value("ENDIANESS", "big");            break;
+    case Traits<CPU>::LITTLE:           set_token_value("ENDIANESS", "little");         break;
+    default:                            set_token_value("ENDIANESS", "undefined");      break;
     }
+
+
+    // Enabled mediators
+    if(Traits<CPU>::enabled)            enable_component("CPU");
+    if(Traits<TSC>::enabled)            enable_component("TSC");
+    if(Traits<MMU>::enabled)            enable_component("MMU");
+    if(Traits<FPU>::enabled)            enable_component("FPU");
+    if(Traits<PMU>::enabled)            enable_component("PMU");
+    if(Traits<Machine>::enabled)        enable_component("Machine");
+    if(Traits<PCI>::enabled)            enable_component("PCI");
+    if(Traits<IC>::enabled)             enable_component("IC");
+    if(Traits<Timer>::enabled)          enable_component("Timer");
+    if(Traits<RTC>::enabled)            enable_component("RTC");
+    if(Traits<UART>::enabled)           enable_component("UART");
+    if(Traits<USB>::enabled)            enable_component("USB");
+    if(Traits<EEPROM>::enabled)         enable_component("EEPROM");
+    if(Traits<Display>::enabled)        enable_component("Display");
+    if(Traits<Serial_Display>::enabled) enable_component("Serial_Display");
+    if(Traits<Keyboard>::enabled)       enable_component("Keyboard");
+    if(Traits<Serial_Keyboard>::enabled)enable_component("Serial_Keyboard");
+    if(Traits<Scratchpad>::enabled)     enable_component("Scratchpad");
+    if(Traits<GPIO>::enabled)           enable_component("GPIO");
+    if(Traits<I2C>::enabled)            enable_component("I2C");
+    if(Traits<ADC>::enabled)            enable_component("ADC");
+    if(Traits<FPGA>::enabled)           enable_component("FPGA");
+    if(Traits<Ethernet>::enabled)       enable_component("Ethernet");
+    if(Traits<IEEE802_15_4>::enabled)   enable_component("IEEE802_15_4");
+    if(Traits<PCNet32>::enabled)        enable_component("PCNet32");
+    if(Traits<C905>::enabled)           enable_component("C905");
+    if(Traits<E100>::enabled)           enable_component("E100");
+    if(Traits<CC2538>::enabled)         enable_component("CC2538");
+    if(Traits<AT86RF>::enabled)         enable_component("AT86RF");
+    if(Traits<GEM>::enabled)            enable_component("GEM");
+
+    // Enabled components
+    if(Traits<System>::enabled)         enable_component("System");
+    if(Traits<Application>::enabled)    enable_component("Application");
+    if(Traits<Thread>::enabled)         enable_component("Thread");
+    if(Traits<Active>::enabled)         enable_component("Active");
+    if(Traits<Periodic_Thread>::enabled)enable_component("Periodic_Thread");
+    if(Traits<RT_Thread>::enabled)      enable_component("RT_Thread");
+    if(Traits<Task>::enabled)           enable_component("Task");
+    if(Traits<Scheduler<Thread>>::enabled)      enable_component("Scheduler");
+    if(Traits<Address_Space>::enabled)  enable_component("Address_Space");
+    if(Traits<Segment>::enabled)        enable_component("Segment");
+    if(Traits<Synchronizer>::enabled)   enable_component("Synchronizer");
+    if(Traits<Mutex>::enabled)          enable_component("Mutex");
+    if(Traits<Semaphore>::enabled)      enable_component("Semaphore");
+    if(Traits<Condition>::enabled)      enable_component("Condition");
+    if(Traits<Clock>::enabled)          enable_component("Clock");
+    if(Traits<Chronometer>::enabled)    enable_component("Chronometer");
+    if(Traits<Alarm>::enabled)          enable_component("Alarm");
+    if(Traits<Delay>::enabled)          enable_component("Delay");
+    if(Traits<Network>::enabled)        enable_component("Network");
+    if(Traits<TSTP>::enabled)           enable_component("TSTP");
+    if(Traits<IP>::enabled)             enable_component("IP");
+    if(Traits<ICMP>::enabled)           enable_component("ICMP");
+    if(Traits<UDP>::enabled)            enable_component("UDP");
+    if(Traits<TCP>::enabled)            enable_component("TCP");
+    if(Traits<DHCP>::enabled)           enable_component("DHCP");
+    if(Traits<IPC>::enabled)            enable_component("IPC");
+    if(Traits<SmartData>::enabled)      enable_component("SmartData");
 }
+
+// Sets the value of a token if it exists
+// returns the order in tokens if successful or -1 if token is not found
+int set_token_value(const char * token, const char * value)
+{
+    unsigned int i;
+
+    for(i = 0; i < TOKENS; i++)
+        if(!strncmp(tokens[i], token, STRING_SIZE))
+            break;
+
+    if(i < TOKENS)
+        strncpy(token_values[i], value, STRING_SIZE);
+    else
+        i = -1;
+
+    return i;
+}
+
+// Gets the value of a token if it exists
+// returns a pointer to the value if successful or 0 if not found
+const char * get_token_value(const char * token)
+{
+    unsigned int i;
+
+    for(i = 0; i < TOKENS; i++)
+        if(!strncmp(tokens[i], token, STRING_SIZE))
+            break;
+
+    if(i < TOKENS)
+        return token_values[i];
+    else
+        return 0;
+}
+
+// Sets a component as enabled
+int enable_component(const char * component)
+{
+    unsigned int i;
+
+    for(i = 0; i < COMPONENTS; i++)
+        if(!strncmp(components[i], component, STRING_SIZE))
+            break;
+
+    if(i < COMPONENTS)
+        enabled_components[i] = true;
+    else
+        i = -1;
+
+    return i;
+}
+

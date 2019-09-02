@@ -1,6 +1,6 @@
 // EPOS ARMv7 PMU Mediator Initialization
 
-#include <pmu.h>
+#include <architecture/pmu.h>
 
 #ifdef __mmod_zynq__
 

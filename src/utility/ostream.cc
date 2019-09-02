@@ -1,7 +1,6 @@
 // EPOS OStream Implementation
 
 #include <utility/ostream.h>
-#include <machine.h>
 
 __BEGIN_UTIL
 

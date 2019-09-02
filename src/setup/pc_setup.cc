@@ -18,7 +18,7 @@ extern "C" {
 
     // Libc legacy
     void _panic() { Machine::panic(); }
-    void _exit(int s) { db<Setup>(ERR) << "_exit(" << s << ") called!" << endl; }
+    void _exit(int s) { db<Setup>(ERR) << "_exit(" << s << ") called!" << endl; for(;;); }
     void __cxa_pure_virtual() { db<void>(ERR) << "Pure Virtual method called!" << endl; }
 
     // Utility-related methods that differ from kernel and user space.
@@ -251,11 +251,11 @@ PC_Setup::PC_Setup(char * boot_image)
 void PC_Setup::build_lm()
 {
     // Get boot image structure
-    si->lm.has_stp = (si->bm.setup_offset != -1);
-    si->lm.has_ini = (si->bm.init_offset != -1);
-    si->lm.has_sys = (si->bm.system_offset != -1);
-    si->lm.has_app = (si->bm.application_offset != -1);
-    si->lm.has_ext = (si->bm.extras_offset != -1);
+    si->lm.has_stp = (si->bm.setup_offset != -1u);
+    si->lm.has_ini = (si->bm.init_offset != -1u);
+    si->lm.has_sys = (si->bm.system_offset != -1u);
+    si->lm.has_app = (si->bm.application_offset != -1u);
+    si->lm.has_ext = (si->bm.extras_offset != -1u);
 
     // Check SETUP integrity and get the size of its segments
     si->lm.stp_entry = 0;
@@ -401,7 +401,9 @@ void PC_Setup::build_lm()
         }
         if(si->lm.has_ext) { // Check for EXTRA data in the boot image
             si->lm.app_extra = si->lm.app_data + si->lm.app_data_size;
-            si->lm.app_extra_size = MMU::align_page(si->bm.img_size - si->bm.extras_offset);
+            si->lm.app_extra_size = si->bm.img_size - si->bm.extras_offset;
+            if(Traits<System>::multiheap)
+                si->lm.app_extra_size = MMU::align_page(si->lm.app_extra_size);
             si->lm.app_data_size += si->lm.app_extra_size;
         }
     }
@@ -532,11 +534,15 @@ void PC_Setup::say_hi()
          << " Kbytes [" << (void *)si->pmm.io_base
          << ":" << (void *)si->pmm.io_top << "]" << endl;
     kout << "  Node Id:      ";
-
     if(si->bm.node_id != -1)
-        kout << si->bm.node_id << " (" << si->bm.n_nodes << ")" << endl;
+        kout << si->bm.node_id << " (" << Traits<Build>::NODES << ")" << endl;
     else
         kout << "will get from the network!" << endl;
+    kout << "  Space:        ";
+    if(si->bm.space_x != -1)
+        kout << "(" << si->bm.space_x << "," << si->bm.space_y << "," << si->bm.space_z << ")" << endl;
+    else
+        kout << "  will get from the network!" << endl;
     if(si->lm.has_stp)
         kout << "  Setup:        " << si->lm.stp_code_size + si->lm.stp_data_size << " bytes" << endl;
     if(si->lm.has_ini)

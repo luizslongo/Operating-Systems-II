@@ -2,10 +2,9 @@
 
 #include <utility/random.h>
 #include <machine.h>
+#include <memory.h>
 #include <system.h>
-#include <address_space.h>
-#include <segment.h>
-#include <thread.h>
+#include <process.h>
 
 __BEGIN_SYS
 
@@ -39,7 +38,8 @@ public:
         // Initialize System's heap
         db<Init>(INF) << "Initializing system's heap: " << endl;
         if(Traits<System>::multiheap) {
-            System::_heap_segment = new (&System::_preheap[0]) Segment(HEAP_SIZE, WHITE, Segment::Flags::SYS);
+            Segment * tmp = reinterpret_cast<Segment *>(&System::_preheap[0]);
+            System::_heap_segment = new (tmp) Segment(HEAP_SIZE, WHITE, Segment::Flags::SYS);
             System::_heap = new (&System::_preheap[sizeof(Segment)]) Heap(Address_Space(MMU::current()).attach(System::_heap_segment, Memory_Map::SYS_HEAP), System::_heap_segment->size());
         } else
             System::_heap = new (&System::_preheap[0]) Heap(MMU::alloc(MMU::pages(HEAP_SIZE)), HEAP_SIZE);
@@ -62,10 +62,14 @@ public:
             db<Init>(INF) << "Randomizing the Random Numbers Generator's seed: " << endl;
             if(Traits<TSC>::enabled)
                 Random::seed(TSC::time_stamp());
-#ifdef __NIC_H
-            if(Traits<NIC>::enabled) {
-                NIC nic;
-                Random::seed(Random::random() ^ nic.address());
+#if defined(__mach_pc__) && defined(__NIC_H)
+            if(Traits<PCNet32>::enabled) {
+                NIC<Ethernet> * nic = PCNet32::get(0);
+                Random::seed(Random::random() ^ nic->statistics().rx_packets);
+            }
+            if(Traits<E100>::enabled) {
+                NIC<Ethernet> * nic = E100::get(0);
+                Random::seed(Random::random() ^ nic->statistics().rx_packets);
             }
 #endif
 #ifdef __ADC_H
@@ -74,7 +78,7 @@ public:
                 Random::seed(Random::random() ^ adc.read());
             }
 #endif
-            if(!Traits<TSC>::enabled && !Traits<NIC>::enabled)
+            if(!Traits<TSC>::enabled && !Traits<Ethernet>::enabled)
                 db<Init>(WRN) << "Due to lack of entropy, Random is a pseudo random numbers generator!" << endl;
             db<Init>(INF) << "done!" << endl;
         }

@@ -1,9 +1,9 @@
 // EPOS Application Initializer
 
+#include <architecture.h>
 #include <utility/heap.h>
-#include <mmu.h>
 #include <machine.h>
-#include <application.h>
+#include <system.h>
 
 extern "C" { char _end; } // defined by GCC
 
