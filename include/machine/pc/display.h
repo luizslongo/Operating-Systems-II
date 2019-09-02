@@ -3,7 +3,7 @@
 #ifndef __pc_display_h
 #define __pc_display_h
 
-#include <display.h>
+#include <machine/display.h>
 #include <machine/pc/memory_map.h>
 
 __BEGIN_SYS

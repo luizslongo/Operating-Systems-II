@@ -3,9 +3,10 @@
 #ifndef __pc_fpga_h
 #define __pc_fpga_h
 
-#include <cpu.h>
-#include <ic.h>
-#include <fpga.h>
+#include <architecture/cpu.h>
+#include <architecture/mmu.h>
+#include <machine/ic.h>
+#include <machine/fpga.h>
 
 __BEGIN_SYS
 

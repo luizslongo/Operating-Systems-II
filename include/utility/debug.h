@@ -1,9 +1,9 @@
 // EPOS Debug Utility Declarations
 
+#include <utility/ostream.h>
+
 #ifndef __debug_h
 #define __debug_h
-
-#include <utility/ostream.h>
 
 __BEGIN_UTIL
 

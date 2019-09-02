@@ -3,15 +3,13 @@
 #ifndef __pc_h
 #define __pc_h
 
-#include <cpu.h>
-#include <mmu.h>
-#include <tsc.h>
-#include <machine.h>
-#include <rtc.h>
+#include <architecture.h>
+#include <machine/main.h>
+#include <machine/rtc.h>
+#include <machine/display.h>
 #include "info.h"
 #include "memory_map.h"
 #include "ic.h"
-#include <display.h>
 #include <system.h>
 
 __BEGIN_SYS
@@ -31,6 +29,7 @@ public:
     Machine() {}
 
     static void delay(const RTC::Microsecond & time) {
+        assert(Traits<TSC>::enabled);
         TSC::Time_Stamp end = TSC::time_stamp() + time * (TSC::frequency() / 1000000);
         while(end > TSC::time_stamp());
     }
@@ -43,38 +42,23 @@ public:
     static unsigned int cpu_id() { return smp ? APIC::id() : 0; }
 
     static void smp_init(unsigned int n_cpus) {
-        if(smp) {
-            _n_cpus = n_cpus;
+        _n_cpus = n_cpus;
+        if(smp)
             APIC::remap();
-        }
     };
 
-    static void smp_barrier(unsigned long n_cpus = _n_cpus) {
-        static volatile unsigned long ready[2];
-        static volatile unsigned long i;
+    static void smp_barrier(unsigned long n_cpus = _n_cpus);
 
-        if(smp) {
-            int j = i;
-
-            CPU::finc(ready[j]);
-
-            if(cpu_id() == 0) {
-        	while(ready[j] < n_cpus); // wait for all CPUs to be ready
-        	i = !i;                   // toggle ready
-        	ready[j] = 0;             // signalizes waiting CPUs
-            } else
-        	while(ready[j]);          // wait for CPU[0] signal
-        }
-    }
-
-    static const UUID & id() { return System::info()->bm.uuid; }
+    static const UUID & uuid() { return System::info()->bm.uuid; }
 
 private:
     static void pre_init(System_Info * si) {
-        Display::init();
+        if(Machine::cpu_id() == 0) {
+            Display::init();
 
-        if(Traits<System>::multicore)
-            smp_init(si->bm.n_cpus);
+            if(Traits<System>::multicore)
+                smp_init(si->bm.n_cpus);
+        }
     }
 
     static void init();
@@ -84,33 +68,5 @@ private:
 };
 
 __END_SYS
-
-#include "pci.h"
-#include "timer.h"
-
-#ifdef __RTC_H
-#include __RTC_H
-#endif
-#ifdef __EEPROM_H
-#include __EEPROM_H
-#endif
-#ifdef __UART_H
-#include __UART_H
-#endif
-#ifdef __DISPLAY_H
-#include __DISPLAY_H
-#endif
-#ifdef __KEYBOARD_H
-#include __KEYBOARD_H
-#endif
-#ifdef __SCRATCHPAD_H
-#include __SCRATCHPAD_H
-#endif
-#ifdef __NIC_H
-#include __NIC_H
-#endif
-#ifdef __FPGA_H
-#include __FPGA_H
-#endif
 
 #endif

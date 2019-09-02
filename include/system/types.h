@@ -18,6 +18,18 @@ enum Color {
     WHITE = COLOR_0
 };
 
+// Power Management Modes
+enum Power_Mode
+{
+    ENROLL,
+    DISMISS,
+    SAME,
+    FULL,
+    LIGHT,
+    SLEEP,
+    OFF
+};
+
 __END_API
 
 extern "C"
@@ -38,36 +50,55 @@ void * operator new[](size_t, const EPOS::Scratchpad_Allocator &);
 void * operator new(size_t, const EPOS::Color &);
 void * operator new[](size_t, const EPOS::Color &);
 
-// Power Management Modes
-enum Power_Mode
-{
-    FULL,
-    LIGHT,
-    SLEEP,
-    OFF
-};
-
 // Utilities
+// Generic names such as "lists" and "hashes" are used to specify Traits<> and control debugging for all related utilities
 __BEGIN_UTIL
+
+template<int BITS> class Padding {} __attribute__((packed));
+template<> class Padding<8>  { char _padding;          } __attribute__((packed));
+template<> class Padding<16> { short int _padding;     } __attribute__((packed));
+template<> class Padding<32> { long int _padding;      } __attribute__((packed));
+template<> class Padding<64> { long long int _padding; } __attribute__((packed));
+
 typedef unsigned char Percent;
 typedef unsigned char UUID[8];
-class Dummy {};
+
 class Bitmaps;
 class CRC;
+class Debug;
+class Dummy {};
 class ELF;
 class Handler;
 class Hashes;
 class Heaps;
-class Debug;
 class Lists;
-class Observers;
 class Observeds;
+class Observers;
 class OStream;
+class Predictors;
 class Queues;
 class Random;
 class Spin;
 class SREC;
 class Vectors;
+template<unsigned int KEY_SIZE> class _AES;
+template<typename> class Scheduler;
+namespace Scheduling_Criteria
+{
+    class Priority;
+    class FCFS;
+    class RR;
+    class RM;
+    class DM;
+    class EDF;
+    class GRR;
+    class CPU_Affinity;
+    class GEDF;
+    class PEDF;
+    class CEDF;
+    class PRM;
+};
+
 __END_UTIL
 
 __BEGIN_SYS
@@ -102,17 +133,16 @@ class Serial_Display;
 class Keyboard;
 class Serial_Keyboard;
 class Scratchpad;
-class Cipher;
 class Watchdog;
-template<unsigned int KEY_SIZE>
-class AES;
+template<unsigned int KEY_SIZE> class _AES;
 class GPIO;
 class I2C;
 class ADC;
 class FPGA;
-class NIC;
 class Ethernet;
 class IEEE802_15_4;
+class Modem;
+template<typename Family> class NIC;
 class PCNet32;
 class C905;
 class E100;
@@ -120,6 +150,13 @@ class CC2538;
 class M95;
 class AT86RF;
 class GEM;
+class CC1101;
+
+// Transducer Mediators (i.e. sensors and actuators)
+class Transducers;
+class Dummy_Transducer;
+class Pluviometer;
+class Keller_46X;
 
 // Components
 class System;
@@ -131,23 +168,6 @@ class Periodic_Thread;
 class RT_Thread;
 class Task;
 
-template<typename> class Scheduler;
-namespace Scheduling_Criteria
-{
-    class Priority;
-    class FCFS;
-    class RR;
-    class RM;
-    class DM;
-    class EDF;
-    class GRR;
-    class CPU_Affinity;
-    class GEDF;
-    class PEDF;
-    class CEDF;
-    class PRM;
-};
-
 class Address_Space;
 class Segment;
 
@@ -156,34 +176,32 @@ class Mutex;
 class Semaphore;
 class Condition;
 
+class Time;
 class Clock;
 class Chronometer;
 class Alarm;
 class Delay;
 
-class Network;
+template<typename T> class Clerk;
+class Monitor;
 
+class Network;
 class TSTPOE;
 class TSTP;
-
-template<typename NIC, typename Network, unsigned int HTYPE>
-class ARP;
+template<typename NIC, typename Network, unsigned int HTYPE> class ARP;
 class IP;
 class ICMP;
 class UDP;
 class TCP;
 class DHCP;
 class HTTP;
-
 class IPC;
+template<typename Channel, bool connectionless = Channel::connectionless> class Link;
+template<typename Channel, bool connectionless = Channel::connectionless> class Port;
 
-template<typename Channel, bool connectionless = Channel::connectionless>
-class Link;
-template<typename Channel, bool connectionless = Channel::connectionless>
-class Port;
-
-template<typename S>
-class Smart_Data;
+class SmartData;
+template<typename Transducer, typename Network = TSTP> class Responsive_SmartData;
+template<typename Transducer, typename Network = TSTP> class Interested_SmartData;
 
 // Framework
 class Framework;

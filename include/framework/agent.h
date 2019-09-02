@@ -3,17 +3,11 @@
 #ifndef __agent_h
 #define __agent_h
 
-#include <thread.h>
-#include <task.h>
-#include <active.h>
-#include <address_space.h>
-#include <segment.h>
-#include <mutex.h>
-#include <semaphore.h>
-#include <condition.h>
-#include <clock.h>
-#include <alarm.h>
-#include <chronometer.h>
+#include <process.h>
+
+#include <memory.h>
+#include <time.h>
+#include <synchronizer.h>
 #include <communicator.h>
 
 #include "message.h"
@@ -90,7 +84,7 @@ void Agent::handle_thread()
     case THREAD_PRIORITY1: {
         int p;
         in(p);
-        thread->priority(p);
+        thread->priority(Thread::Criterion(p));
     } break;
     case THREAD_JOIN:
         res = thread->join();

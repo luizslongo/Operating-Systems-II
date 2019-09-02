@@ -36,7 +36,7 @@
 #ifndef __queue_h
 #define __queue_h
 
-#include <cpu.h>
+#include <architecture.h>
 #include "list.h"
 #include "spin.h"
 

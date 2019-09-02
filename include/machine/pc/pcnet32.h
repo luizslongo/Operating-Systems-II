@@ -3,7 +3,9 @@
 #ifndef __pcnet32_h
 #define __pcnet32_h
 
-#include <ethernet.h>
+#include <architecture.h>
+#include <utility/convert.h>
+#include <network/ethernet.h>
 
 __BEGIN_SYS
 
@@ -209,7 +211,7 @@ public:
         MIIADDR  =  33, // MII Address
         MIIMDR   =  34, // MII Management Data
         PCIVID   =  35, // PCI Vendor ID
-        PMC_A    =  36, // PCI Power Management Copabilities Alias
+        PMC_A    =  36, // PCI Power Management Capabilities Alias
         DATA0    =  37, // PCI Data Register 0 Alias
         DATA1    =  38, // PCI Data Register 1 Alias
         DATA2    =  39, // PCI Data Register 2 Alias
@@ -296,9 +298,9 @@ public:
 
         friend Debug & operator<<(Debug & db, const Rx_Desc & d) {
             db << "{" << hex << d.phy_addr << dec
-               << "," << 65536 - d.size
-               << "," << hex << d.status
-               << "," << d.misc << dec << "}";
+                << "," << 65536 - d.size
+                << "," << hex << d.status
+                << "," << d.misc << dec << "}";
             return db;
         }
     };
@@ -307,9 +309,9 @@ public:
     struct Tx_Desc: public Desc {
         friend Debug & operator<<(Debug & db, const Tx_Desc & d) {
             db << "{" << hex << d.phy_addr << dec
-               << "," << 65536 - d.size
-               << "," << hex << d.status
-               << "," << d.misc << dec << "}";
+                << "," << 65536 - d.size
+                << "," << hex << d.status
+                << "," << d.misc << dec << "}";
             return db;
         }
     };
@@ -323,7 +325,7 @@ public:
         CPU::in16(_io_port + WIO_RESET);
 
         // Wait for STOP
- 	for(int i = 0; (i < 100) && !(csr(CSC) & 0x0004); i++);
+        for(int i = 0; (i < 100) && !(csr(CSC) & 0x0004); i++);
     }
 
     Reg16 rap() volatile {
@@ -381,15 +383,15 @@ public:
         return log2_n;
     }
 
-protected:
+    protected:
     IO_Port _io_port;
 };
 
 
 // PCNet32 PC Ethernet NIC
-class PCNet32: public Ethernet::NIC_Base<Ethernet, Traits<NIC>::NICS::Polymorphic>, private Am79C970A
+class PCNet32: public NIC<Ethernet>, private Am79C970A
 {
-    template<int unit> friend void call_init();
+    friend class Machine_Common;
 
 private:
     // PCI ID
@@ -397,11 +399,13 @@ private:
     static const unsigned int PCI_DEVICE_ID = 0x2000;
     static const unsigned int PCI_REG_IO = 0;
 
+    // Mode
+    static const bool promiscuous = Traits<PCNet32>::promiscuous;
+
     // Transmit and Receive Ring sizes
     static const unsigned int UNITS = Traits<PCNet32>::UNITS;
     static const unsigned int TX_BUFS = Traits<PCNet32>::SEND_BUFFERS;
-    static const unsigned int RX_BUFS =	Traits<PCNet32>::RECEIVE_BUFFERS;
-    static const bool promiscuous = Traits<PCNet32>::promiscuous;
+    static const unsigned int RX_BUFS =Traits<PCNet32>::RECEIVE_BUFFERS;
 
     // Size of the DMA Buffer that will host the ring buffers and the init block
     static const unsigned int DMA_BUFFER_SIZE = ((sizeof(Init_Block) + 15) & ~15U) +
@@ -423,7 +427,7 @@ public:
     int send(const Address & dst, const Protocol & prot, const void * data, unsigned int size);
     int receive(Address * src, Protocol * prot, void * data, unsigned int size);
 
-    Buffer * alloc(NIC * nic, const Address & dst, const Protocol & prot, unsigned int once, unsigned int always, unsigned int payload);
+    Buffer * alloc(const Address & dst, const Protocol & prot, unsigned int once, unsigned int always, unsigned int payload);
     void free(Buffer * buf);
     int send(Buffer * buf);
 
@@ -449,7 +453,7 @@ private:
     static PCNet32 * get_by_interrupt(unsigned int interrupt) {
         for(unsigned int i = 0; i < UNITS; i++)
             if(_devices[i].interrupt == interrupt)
-        	return _devices[i].device;
+                return _devices[i].device;
         db<PCNet32>(WRN) << "PCNet32::get_by_interrupt(" << interrupt << ") => no device bound!" << endl;
         return 0;
     };
@@ -481,6 +485,14 @@ private:
 
     static Device _devices[UNITS];
 };
+
+inline PCNet32::Timer::Time_Stamp PCNet32::Timer::Timer::read() { return TSC::time_stamp(); }
+inline void PCNet32::Timer::adjust(const PCNet32::Timer::Offset & o) { TSC::time_stamp(o); }
+inline PCNet32::Timer::Hertz PCNet32::Timer::frequency() { return TSC::frequency(); }
+inline PCNet32::Timer::PPB PCNet32::Timer::accuracy() { return TSC::accuracy(); }
+inline PCNet32::Timer::Time_Stamp PCNet32::Timer::us2count(const PCNet32::Timer::Microsecond & us) { return Convert::us2count<Time_Stamp, Microsecond>(TSC::frequency(), us); }
+inline PCNet32::Timer::Microsecond PCNet32::Timer::count2us(const PCNet32::Timer::Time_Stamp & ts) { return Convert::count2us<Time_Stamp, Microsecond>(TSC::frequency(), ts); }
+//    static Time_Stamp sfd() { return 0; }
 
 __END_SYS
 

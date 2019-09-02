@@ -7,8 +7,8 @@
 #include <utility/string.h>
 #include <utility/list.h>
 #include <utility/debug.h>
-#include <cpu.h>
-#include <mmu.h>
+#include <architecture/cpu.h>
+#include <architecture/mmu.h>
 
 __BEGIN_SYS
 
@@ -45,7 +45,7 @@ public:
             SYS  = (PRE | RW  | ACC),
             PCI  = (SYS | PCD | IO),
             APIC = (SYS | PCD),
-            VGA = (SYS | PCD),
+            VGA  = (SYS | PCD),
             DMA  = (SYS | PCD | CT),
         };
 

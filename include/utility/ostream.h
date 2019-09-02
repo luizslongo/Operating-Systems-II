@@ -169,6 +169,10 @@ public:
         return *this;
     }
 
+    OStream & operator<<(double d) {
+        return operator<<(static_cast<float>(d));
+    }
+
 private:
     void print(const char * s) { _print(s); }
 

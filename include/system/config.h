@@ -7,7 +7,7 @@
 // ARCHITECTURE, MACHINE, AND APPLICATION SELECTION
 // This section is generated automatically from makedefs by $EPOS/etc/makefile
 //============================================================================
-#define MODE xxx
+#define SMOD xxx
 #define ARCH xxx
 #define MACH xxx
 #define MMOD xxx
@@ -16,10 +16,6 @@
 #define __arch_xxx__
 #define __mach_xxx__
 #define __mmod_xxx__
-
-#if defined (__arch_avr__)
-#define __no_networking__
-#endif
 
 //============================================================================
 // NAMESPACES AND DEFINITIONS
@@ -42,6 +38,7 @@ namespace EPOS {
 
 #define __BEGIN_SYS             namespace EPOS { namespace S {
 #define __END_SYS               }}
+#define __IN_SYS(X)             namespace EPOS { namespace S { X }}
 #define __USING_SYS             using namespace EPOS::S;
 #define _SYS                    ::EPOS::S
 
@@ -54,6 +51,7 @@ namespace EPOS {
 
 #define __HEADER_ARCH(X)        <architecture/ARCH/X.h>
 #define __HEADER_MACH(X)        <machine/MACH/X.h>
+#define __HEADER_TRAN(X)        <transducer/X.h>
 #define __MACH_TRAITS_T(X)      <machine/MACH/X##_traits.h>
 #define __MACH_TRAITS(X)        __MACH_TRAITS_T(X)
 #define __MACH_CONFIG_T(X)      <machine/MACH/X##_config.h>
@@ -81,46 +79,48 @@ namespace EPOS {
 #include <system/meta.h>
 #include __APPL_TRAITS_H
 
-#define __CPU_H         __HEADER_ARCH(cpu)
-#define __MMU_H         __HEADER_ARCH(mmu)
+#define __CPU_H                 __HEADER_ARCH(cpu)
+#define __MMU_H                 __HEADER_ARCH(mmu)
 
-#define __MACH_H        __HEADER_MACH(machine)
-#define __MODEL_H       __HEADER_MACH(MMOD)
-#define __IC_H          __HEADER_MACH(ic)
-#define __TIMER_H       __HEADER_MACH(timer)
+#define __MACH_H                __HEADER_MACH(machine)
+#define __MODEL_H               __HEADER_MACH(MMOD)
+#define __IC_H                  __HEADER_MACH(ic)
+#define __TIMER_H               __HEADER_MACH(timer)
 
 #ifdef __mmod_legacy_pc__
-#define __TSC_H         __HEADER_ARCH(tsc)
-#define __FPU_H         __HEADER_ARCH(fpu)
-#define __PMU_H         __HEADER_ARCH(pmu)
+#define __TSC_H                 __HEADER_ARCH(tsc)
+#define __PMU_H                 __HEADER_ARCH(pmu)
 
-#define __PCI_H         __HEADER_MACH(pci)
-#define __RTC_H         __HEADER_MACH(rtc)
-#define __EEPROM_H      __HEADER_MACH(eeprom)
-#define __UART_H        __HEADER_MACH(uart)
-#define __DISPLAY_H     __HEADER_MACH(display)
-#define __KEYBOARD_H    __HEADER_MACH(keyboard)
-#define __SCRATCHPAD_H  __HEADER_MACH(scratchpad)
-#define __NIC_H         __HEADER_MACH(nic)
-#define __FPGA_H        __HEADER_MACH(fpga)
-#define __AES_H         __HEADER_MACH(aes)
+#define __PCI_H                 __HEADER_MACH(pci)
+#define __RTC_H                 __HEADER_MACH(rtc)
+#define __EEPROM_H              __HEADER_MACH(eeprom)
+#define __UART_H                __HEADER_MACH(uart)
+#define __DISPLAY_H             __HEADER_MACH(display)
+#define __KEYBOARD_H            __HEADER_MACH(keyboard)
+#define __SCRATCHPAD_H          __HEADER_MACH(scratchpad)
+#define __NIC_H                 __HEADER_MACH(nic)
+#define __FPGA_H                __HEADER_MACH(fpga)
+#define __AES_H                 __HEADER_MACH(aes)
+#define __ipv4__
+#define __tstp__
+
+#define __KEYPAD_H              __HEADER_TRAN(keypad)
+
 #endif
 
 #ifdef __mmod_lm3s811__
 #define __TSC_H                 __HEADER_ARCH(tsc)
 
-#define __RTC_H                 __HEADER_MACH(rtc)
 #define __UART_H                __HEADER_MACH(uart)
 #define __USB_H                 __HEADER_MACH(usb)
-#define __NIC_H                 __HEADER_MACH(nic)
 #define __GPIO_H                __HEADER_MACH(gpio)
-#define __AES_H                 __HEADER_MACH(aes)
+
+#define __PLUVIOMETER_H         __HEADER_TRAN(pluviometer)
 #endif
 
 #ifdef __mmod_emote3__
 #define __TSC_H                 __HEADER_ARCH(tsc)
 
-#define __RTC_H                 __HEADER_MACH(rtc)
 #define __EEPROM_H              __HEADER_MACH(eeprom)
 #define __UART_H                __HEADER_MACH(uart)
 #define __SPI_H                 __HEADER_MACH(spi)
@@ -133,16 +133,31 @@ namespace EPOS {
 #define __WATCHDOG_H            __HEADER_MACH(watchdog)
 #define __NIC_H                 __HEADER_MACH(nic)
 #define __AES_H                 __HEADER_MACH(aes)
+#define __tstp__
+
+#define __CO2_SENSOR_H          __HEADER_TRAN(co2_sensor)
+#define __PLUVIOMETER_H         __HEADER_TRAN(pluviometer)
+#define __PRESSURE_SENSOR_H     __HEADER_TRAN(pressure_sensor)
 #endif
 
 #ifdef __mmod_zynq__
 #define __TSC_H                 __HEADER_ARCH(tsc)
 #define __PMU_H                 __HEADER_ARCH(pmu)
 
-#define __RTC_H                 __HEADER_MACH(rtc)
 #define __UART_H                __HEADER_MACH(uart)
 #define __NIC_H                 __HEADER_MACH(nic)
 #define __AES_H                 __HEADER_MACH(aes)
+#define __ipv4__
+#endif
+
+#ifdef __mmod_realview_pbx__
+#define __TSC_H                 __HEADER_ARCH(tsc)
+#define __PMU_H                 __HEADER_ARCH(pmu)
+
+#define __UART_H                __HEADER_MACH(uart)
+#define __NIC_H                 __HEADER_MACH(nic)
+#define __AES_H                 __HEADER_MACH(aes)
+#define __ipv4__
 #endif
 
 //============================================================================

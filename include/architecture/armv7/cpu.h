@@ -3,7 +3,7 @@
 #ifndef __armv7_h
 #define __armv7_h
 
-#include <cpu.h>
+#include <architecture/cpu.h>
 
 __BEGIN_SYS
 
@@ -57,7 +57,7 @@ public:
         return value;
     }
     static void flags(const Flags & flags) {
-        ASM("msr xpsr, %0" : : "r"(flags) : "cc");
+        ASM("msr xpsr_nzcvq, %0" : : "r"(flags) : "cc");
     }
 
     static void int_enable() { ASM("cpsie i"); }
@@ -70,7 +70,7 @@ public:
     }
 
     static void mrs12() { ASM("mrs r12, xpsr" : : : "r12"); }
-    static void msr12() { ASM("msr xpsr, r12" : : : "cc"); }
+    static void msr12() { ASM("msr xpsr_nzcvq, r12" : : : "cc"); }
 };
 
 class ARMv7_A: public CPU_Common
@@ -126,29 +126,29 @@ protected:
 public:
     static Flags flags() {
         register Reg32 value;
-        ASM("mrs %0, cpsr" : "=r"(value) :);
+        ASM("mrs %0, cpsr_all" : "=r"(value) :);
         return value;
     }
     static void flags(const Flags & flags) {
-        ASM("msr cpsr, %0" : : "r"(flags) : "cc");
+        ASM("msr cpsr_all, %0" : : "r"(flags) : "cc");
     }
 
-    static void int_enable() { flags(flags() & ~0xC0); }
-    static void int_disable() { flags(flags() | 0xC0); }
-    static bool int_disabled() { return flags() & 0xC0; }
+    static void int_enable() { flags(flags() & ~0xc0); }
+    static void int_disable() { flags(flags() | 0xc0); }
+    static bool int_disabled() { return flags() & 0xc0; }
 
-    static void mrs12() { ASM("mrs r12, cpsr" : : : "r12"); }
-    static void msr12() { ASM("msr cpsr, r12" : : : "cc"); }
+    static void mrs12() { ASM("mrs r12, cpsr_all" : : : "r12"); }
+    static void msr12() { ASM("msr cpsr_all, r12" : : : "cc"); }
 
     static unsigned int int_id() { return 0; }
 };
 
-class CPU: private IF<Traits<Build>::MODEL == Traits<Build>::Zynq, ARMv7_A, ARMv7_M>::Result
+class CPU: private IF<Traits<Build>::MACHINE == Traits<Build>::Cortex_A, ARMv7_A, ARMv7_M>::Result
 {
     friend class Init_System;
 
 private:
-    typedef IF<Traits<Build>::MODEL == Traits<Build>::Zynq, ARMv7_A, ARMv7_M>::Result Base;
+    typedef IF<Traits<Build>::MACHINE == Traits<Build>::Cortex_A, ARMv7_A, ARMv7_M>::Result Base;
 
 public:
     // CPU Native Data Types
@@ -235,7 +235,7 @@ public:
 
     static void halt() { ASM("wfi"); }
 
-    static void switch_context(Context * volatile * o, Context * volatile n) __attribute__ ((naked));
+    static void switch_context(Context ** o, Context * n) __attribute__ ((naked));
 
     static int syscall(void * message);
     static void syscalled();

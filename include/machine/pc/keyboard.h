@@ -4,9 +4,9 @@
 #define __pc_keyboard_h
 
 #include <utility/observer.h>
-#include <cpu.h>
-#include <ic.h>
-#include <keyboard.h>
+#include <architecture/cpu.h>
+#include <machine/ic.h>
+#include <machine/keyboard.h>
 
 __BEGIN_SYS
 
@@ -188,7 +188,12 @@ private:
     static Observed _observed;
 };
 
+// i8042 is used even if the machine is configured without a keyboard (e.g. leds, reboot)
+#ifdef __KEYBOARD_H
+
 class Keyboard: public IF<Traits<Serial_Keyboard>::enabled, Serial_Keyboard, PS2_Keyboard>::Result {};
+
+#endif
 
 __END_SYS
 

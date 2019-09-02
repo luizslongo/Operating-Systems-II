@@ -12,44 +12,44 @@ template<typename Cipher>
 class Diffie_Hellman
 {
 public:
-	static const unsigned int SECRET_SIZE = Cipher::KEY_SIZE;
-	static const unsigned int PUBLIC_KEY_SIZE = 2 * SECRET_SIZE;
+    static const unsigned int SECRET_SIZE = Cipher::KEY_SIZE;
+    static const unsigned int PUBLIC_KEY_SIZE = 2 * SECRET_SIZE;
 
 private:
     typedef _UTIL::Bignum<SECRET_SIZE> Bignum;
 
-	class Elliptic_Curve_Point
-	{
+    class Elliptic_Curve_Point
+    {
     public:
         typedef typename Diffie_Hellman::Bignum Coordinate;
 
-		Elliptic_Curve_Point() __attribute__((noinline)) { }
+        Elliptic_Curve_Point() __attribute__((noinline)) { }
 
-		void operator*=(const Coordinate & b);
+        void operator*=(const Coordinate & b);
 
-		friend Debug &operator<<(Debug &out, const Elliptic_Curve_Point &a) {
-			out << "{x=" << a.x << ",y=" << a.y << ",z=" << a.z << "}";
-			return out;
-		}
-		friend OStream &operator<<(OStream &out, const Elliptic_Curve_Point &a) {
-			out << "{x=" << a.x << ",y=" << a.y << ",z=" << a.z << "}";
-			return out;
-		}
+        friend Debug &operator<<(Debug &out, const Elliptic_Curve_Point &a) {
+            out << "{x=" << a.x << ",y=" << a.y << ",z=" << a.z << "}";
+            return out;
+        }
+        friend OStream &operator<<(OStream &out, const Elliptic_Curve_Point &a) {
+            out << "{x=" << a.x << ",y=" << a.y << ",z=" << a.z << "}";
+            return out;
+        }
 
-	private:
-		void jacobian_double();
-		void add_jacobian_affine(const Elliptic_Curve_Point &b);
+    private:
+        void jacobian_double();
+        void add_jacobian_affine(const Elliptic_Curve_Point &b);
 
     public:
         Coordinate x, y, z;
-	};
+    };
 
 public:
     typedef Elliptic_Curve_Point Public_Key;
     typedef Bignum Shared_Key;
     typedef Bignum Private_Key;
 
-	Diffie_Hellman() {
+    Diffie_Hellman() {
         new (&_base_point.x) Bignum(_default_base_point_x, SECRET_SIZE);
         new (&_base_point.y) Bignum(_default_base_point_y, SECRET_SIZE);
         _base_point.z = 1;
@@ -60,9 +60,9 @@ public:
         generate_keypair();
     }
 
-	Elliptic_Curve_Point public_key() { return _public; }
+    Elliptic_Curve_Point public_key() { return _public; }
 
-	Shared_Key shared_key(Elliptic_Curve_Point public_key) {
+    Shared_Key shared_key(Elliptic_Curve_Point public_key) {
         db<Diffie_Hellman>(TRC) << "Diffie_Hellman::shared_key(pub=" << public_key << ",priv=" << _private << ")" << endl;
 
         public_key *= _private;
@@ -73,45 +73,45 @@ public:
     }
 
 private:
-	void generate_keypair() {
-		db<Diffie_Hellman>(TRC) << "Diffie_Hellman::generate_keypair()" << endl;
+    void generate_keypair() {
+        db<Diffie_Hellman>(TRC) << "Diffie_Hellman::generate_keypair()" << endl;
 
-		_private.randomize();
+        _private.randomize();
 
-		db<Diffie_Hellman>(INF) << "Diffie_Hellman Private: " << _private << endl;
-		db<Diffie_Hellman>(INF) << "Diffie_Hellman Base Point: " << _base_point << endl;
+        db<Diffie_Hellman>(INF) << "Diffie_Hellman Private: " << _private << endl;
+        db<Diffie_Hellman>(INF) << "Diffie_Hellman Base Point: " << _base_point << endl;
 
-		_public = _base_point;
-		_public *= _private;
+        _public = _base_point;
+        _public *= _private;
 
-		db<Diffie_Hellman>(INF) << "Diffie_Hellman Public: " << _public << endl;
-	}
+        db<Diffie_Hellman>(INF) << "Diffie_Hellman Public: " << _public << endl;
+    }
 
 private:
-	Private_Key _private;
-	Elliptic_Curve_Point _base_point;
-	Elliptic_Curve_Point _public;
-	static const unsigned char _default_base_point_x[SECRET_SIZE];
-	static const unsigned char _default_base_point_y[SECRET_SIZE];
+    Private_Key _private;
+    Elliptic_Curve_Point _base_point;
+    Elliptic_Curve_Point _public;
+    static const char _default_base_point_x[SECRET_SIZE];
+    static const char _default_base_point_y[SECRET_SIZE];
 };
 
 //TODO: base point is dependent of SECRET_SIZE
 template<typename Cipher>
-const unsigned char Diffie_Hellman<Cipher>::_default_base_point_x[SECRET_SIZE] =
+const char Diffie_Hellman<Cipher>::_default_base_point_x[SECRET_SIZE] =
 {
-    '\x86', '\x5B', '\x2C', '\xA5',
-    '\x7C', '\x60', '\x28', '\x0C',
-    '\x2D', '\x9B', '\x89', '\x8B',
-    '\x52', '\xF7', '\x1F', '\x16'
+ '\x86', '\x5B', '\x2C', '\xA5',
+ '\x7C', '\x60', '\x28', '\x0C',
+ '\x2D', '\x9B', '\x89', '\x8B',
+ '\x52', '\xF7', '\x1F', '\x16'
 };
 
 template<typename Cipher>
-const unsigned char Diffie_Hellman<Cipher>::_default_base_point_y[SECRET_SIZE] =
+const char Diffie_Hellman<Cipher>::_default_base_point_y[SECRET_SIZE] =
 {
-    '\x83', '\x7A', '\xED', '\xDD',
-    '\x92', '\xA2', '\x2D', '\xC0',
-    '\x13', '\xEB', '\xAF', '\x5B',
-    '\x39', '\xC8', '\x5A', '\xCF'
+ '\x83', '\x7A', '\xED', '\xDD',
+ '\x92', '\xA2', '\x2D', '\xC0',
+ '\x13', '\xEB', '\xAF', '\x5B',
+ '\x39', '\xC8', '\x5A', '\xCF'
 };
 
 template<typename Cipher>

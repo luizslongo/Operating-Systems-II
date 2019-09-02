@@ -3,7 +3,7 @@
 #ifndef __pc_pci_h
 #define __pc_pci_h
 
-#include <pci.h>
+#include <machine/pci.h>
 #include "memory_map.h"
 
 __BEGIN_SYS

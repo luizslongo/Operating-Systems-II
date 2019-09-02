@@ -113,7 +113,7 @@ public:
         DESERIALIZE(_parms, index, an ...);
     }
     template<typename ... Tn>
-    void out(const Tn & ... an) {
+    void out(Tn && ... an) {
         // Force a compilation error in case out is called with too many arguments
         typename IF<(SIZEOF<Tn ...>::Result <= MAX_PARAMETERS_SIZE), int, void>::Result index = 0;
         SERIALIZE(_parms, index, an ...);

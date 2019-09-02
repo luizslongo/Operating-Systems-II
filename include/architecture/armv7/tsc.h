@@ -3,8 +3,8 @@
 #ifndef __armv7_tsc_h
 #define __armv7_tsc_h
 
-#include <cpu.h>
-#include <tsc.h>
+#include <architecture/cpu.h>
+#include <architecture/tsc.h>
 
 __BEGIN_SYS
 
@@ -15,12 +15,14 @@ class TSC: private TSC_Common
 
 private:
     static const unsigned int CLOCK = Traits<CPU>::CLOCK / (Traits<Build>::MODEL == Traits<Build>::Zynq ? 2 : 1);
+    static const unsigned int ACCURACY = 40000; // ppb
 
     enum {
         TSC_BASE =
-            Traits<Build>::MODEL == Traits<Build>::eMote3  ? 0x40033000 /*TIMER3_BASE*/ :
-            Traits<Build>::MODEL == Traits<Build>::LM3S811 ? 0x40031000 /*TIMER1_BASE*/ :
-            Traits<Build>::MODEL == Traits<Build>::Zynq ? 0xF8F00200 /*GLOBAL_TIMER_BASE*/ : 
+            Traits<Build>::MODEL == Traits<Build>::eMote3  ?      0x40033000 : // TIMER3_BASE
+            Traits<Build>::MODEL == Traits<Build>::LM3S811 ?      0x40031000 : // TIMER1_BASE
+            Traits<Build>::MODEL == Traits<Build>::Zynq ?         0xf8f00200 : // GLOBAL_TIMER_BASE
+            Traits<Build>::MODEL == Traits<Build>::Realview_PBX ? 0x1f000200 : // GLOBAL_TIMER_BASE
             0
     };
 
@@ -39,6 +41,8 @@ private:
 
 public:
     using TSC_Common::Hertz;
+    using TSC_Common::PPM;
+    using TSC_Common::PPB;
     using TSC_Common::Time_Stamp;
 
     static const unsigned int FREQUENCY = CLOCK;
@@ -47,10 +51,11 @@ public:
     TSC() {}
 
     static Hertz frequency() { return CLOCK; }
+    static PPB accuracy() { return ACCURACY; }
 
     static Time_Stamp time_stamp() {
 
-#ifdef __mmod_zynq__
+#ifdef __mach_cortex_a__
 
         if(sizeof(Time_Stamp) == sizeof(CPU::Reg32))
             return reg(GTCTRL);
@@ -65,12 +70,11 @@ public:
 
         return (high << 32) | low;
 
-#elif defined(__mmod_emote3__) || defined(__mmod_lm3s811__)
+#endif
+#ifdef __mach_cortex_m__
 
         return (_overflow << 32) + reg(GPTMTAR); // Not supported by LM3S811 on QEMU (version 2.7.50)
 
-#else
-#error "Method not implemented yet!"
 #endif
 
     }

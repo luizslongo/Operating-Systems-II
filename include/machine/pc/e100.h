@@ -3,8 +3,8 @@
 #ifndef __e100_h
 #define __e100_h
 
-#include <ic.h>
-#include <ethernet.h>
+#include <machine/ic.h>
+#include <network/ethernet.h>
 
 __BEGIN_SYS
 
@@ -521,22 +521,19 @@ protected:
 
 };
 
-// typedef i82559c _Base_Dev; // Designed to work with physical E100 (i82559c version)
-typedef i82559ER _Base_Dev; // Designed to work with QEMU
-
-class E100: public Ethernet::NIC_Base<Ethernet, Traits<NIC>::NICS::Polymorphic>, private _Base_Dev
+class E100: public NIC<Ethernet>, private IF<Traits<E100>::qemu, i82559ER, i82559c>::Result
 {
-    template<int unit> friend void call_init();
+    friend class Machine_Common;
 
 private:
-    typedef _Base_Dev Base_Dev;
+    // The E100 engine
+    typedef IF<Traits<E100>::qemu, i82559ER, i82559c>::Result Engine;
 
-private:
     // PCI ID
-    static const unsigned int PCI_VENDOR_ID = Base_Dev::PCI_VENDOR_ID;
-    static const unsigned int PCI_DEVICE_ID = Base_Dev::PCI_DEVICE_ID;
-    static const unsigned int PCI_REG_IO = Base_Dev::PCI_REG_IO;
-    static const unsigned int PCI_REG_MEM = Base_Dev::PCI_REG_MEM;
+    static const unsigned int PCI_VENDOR_ID = Engine::PCI_VENDOR_ID;
+    static const unsigned int PCI_DEVICE_ID = Engine::PCI_DEVICE_ID;
+    static const unsigned int PCI_REG_IO = Engine::PCI_REG_IO;
+    static const unsigned int PCI_REG_MEM = Engine::PCI_REG_MEM;
 
     // Transmit and Receive Ring Buffer sizes
     static const unsigned int UNITS = Traits<E100>::UNITS;
@@ -566,7 +563,7 @@ public:
     int send(const Address & dst, const Protocol & prot, const void * data, unsigned int size);
     int receive(Address * src, Protocol * prot, void * data, unsigned int size);
 
-    Buffer * alloc(NIC * nic, const Address & dst, const Protocol & prot, unsigned int once, unsigned int always, unsigned int payload);
+    Buffer * alloc(const Address & dst, const Protocol & prot, unsigned int once, unsigned int always, unsigned int payload);
     void free(Buffer * buf);
     int send(Buffer * buf);
 

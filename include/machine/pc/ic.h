@@ -3,8 +3,8 @@
 #ifndef __pc_ic_h
 #define __pc_ic_h
 
-#include <cpu.h>
-#include <ic.h>
+#include <architecture/cpu.h>
+#include <machine/ic.h>
 #include <machine/pc/memory_map.h>
 
 __BEGIN_SYS
@@ -62,15 +62,13 @@ public:
     };
 
     // Interrupts
-    static const unsigned int INTS = 50;
     enum {
         INT_FIRST_HARD  = HARD_INT,
         INT_TIMER       = HARD_INT + IRQ_TIMER,
         INT_KEYBOARD    = HARD_INT + IRQ_KEYBOARD,
-        INT_LAST_HARD   = HARD_INT + IRQ_LAST,
-        INT_PMU         = SOFT_INT,
-        INT_RESCHEDULER,
-        INT_SYSCALL
+        INT_IPI         = HARD_INT + IRQ_LAST + 1, // in multicores, IPIs must be acknowledged just like other hardware interrupts
+        INT_LAST_HARD   = INT_IPI,
+        INT_FIRST_SOFT
     };
 
 public:
@@ -157,18 +155,17 @@ private:
     typedef CPU::Log_Addr Log_Addr;
 
     static const unsigned int HARD_INT = i8259A::HARD_INT;
+    static const unsigned int SOFT_INT = i8259A::HARD_INT;
 
 public:
     // Interrupts
-    static const unsigned int INTS = i8259A::INTS;
     enum {
         INT_FIRST_HARD  = i8259A::INT_FIRST_HARD,
         INT_TIMER       = i8259A::INT_TIMER,
         INT_KEYBOARD    = i8259A::INT_KEYBOARD,
-        INT_PMU			= i8259A::INT_PMU,
-        INT_RESCHEDULER = i8259A::INT_RESCHEDULER, // in multicores, reschedule goes via IPI, which must be acknowledged just like hardware
-        INT_SYSCALL     = i8259A::INT_SYSCALL,
-        INT_LAST_HARD   = INT_RESCHEDULER
+        INT_IPI         = i8259A::INT_IPI,
+        INT_LAST_HARD   = i8259A::INT_LAST_HARD,
+        INT_FIRST_SOFT  = i8259A::INT_FIRST_SOFT
     };
 
     // Default mapping addresses
@@ -399,8 +396,8 @@ public:
         enable();
     }
 
-    static void config_pmu(void) {
-        Reg32 v = INT_PMU;
+    static void config_pmu(const Reg32 & i) {
+        Reg32 v = i;
         write(LVT_PERF, v);
     }
 
@@ -471,6 +468,7 @@ private:
 class IC: private IC_Common, private IF<Traits<System>::multicore, APIC, i8259A>::Result
 {
     friend class Machine;
+    friend class Thread;
 
 private:
     typedef IF<Traits<System>::multicore, APIC, i8259A>::Result Engine;
@@ -481,12 +479,19 @@ private:
 public:
     using IC_Common::Interrupt_Id;
     using IC_Common::Interrupt_Handler;
-    using Engine::INT_RESCHEDULER;
-    using Engine::INT_SYSCALL;
-    using Engine::INT_TIMER;
-    using Engine::INT_KEYBOARD;
-    using Engine::INT_PMU;
-    using Engine::ipi_send;
+
+    enum {
+        INT_FIRST_HARD  = Engine::INT_FIRST_HARD,
+        INT_TIMER       = Engine::INT_TIMER,
+        INT_KEYBOARD    = Engine::INT_KEYBOARD,
+        INT_LAST_HARD   = Engine::INT_LAST_HARD,
+        INT_RESCHEDULER = Engine::INT_IPI,
+        INT_SYSCALL     = Engine::INT_FIRST_SOFT,
+        INT_PMU,
+        LAST_INT
+    };
+
+    static const unsigned int INTS = LAST_INT;
 
 public:
     IC() {}
@@ -505,7 +510,6 @@ public:
 
     static void enable() {
         db<IC>(TRC) << "IC::enable()" << endl;
-        assert(i < INTS);
         Engine::enable();
     }
 
@@ -517,7 +521,6 @@ public:
 
     static void disable() {
         db<IC>(TRC) << "IC::disable()" << endl;
-        assert(i < INTS);
         Engine::disable();
     }
 
@@ -527,22 +530,11 @@ public:
         Engine::disable(i);
     }
 
+    using Engine::ipi_send;
     using Engine::irq2int;
 
 private:
-    static void dispatch(unsigned int i) {
-        bool not_spurious = true;
-        if((i >= INT_FIRST_HARD) && (i <= INT_LAST_HARD))
-            not_spurious = eoi(i);
-        if(not_spurious) {
-            if((i != INT_TIMER) || Traits<IC>::hysterically_debugged)
-                db<IC>(TRC) << "IC::dispatch(i=" << i << ")" << endl;
-            _int_vector[i](i);
-        } else {
-            if(i != INT_LAST_HARD)
-                db<IC>(TRC) << "IC::spurious interrupt (" << i << ")" << endl;
-        }
-    }
+    static void dispatch(unsigned int i);
 
     // Logical handlers
     static void int_not(const Interrupt_Id & i);

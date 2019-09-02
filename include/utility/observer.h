@@ -26,10 +26,10 @@ private:
 
 public:
     Observed() {
-        db<Observers>(TRC) << "Observed() => " << this << endl;
+        db<Observeds>(TRC) << "Observed() => " << this << endl;
     }
     ~Observed() {
-        db<Observers>(TRC) << "~Observed(this=" << this << ")" << endl;
+        db<Observeds>(TRC) << "~Observed(this=" << this << ")" << endl;
     }
 
     virtual void attach(Observer * o);
@@ -92,42 +92,42 @@ inline bool Observed::notify()
 
 
 // Conditional Observer x Conditionally Observed
-template<typename T = int>
+template<typename C = int>
 class Conditional_Observer;
 
-template<typename T = int>
+template<typename C = int>
 class Conditionally_Observed
 {
-    friend class Conditional_Observer<T>;
+    friend class Conditional_Observer<C>;
 
 private:
-    typedef typename Simple_Ordered_List<Conditional_Observer<T>, T>::Element Element;
+    typedef typename Simple_Ordered_List<Conditional_Observer<C>, C>::Element Element;
 
 public:
-    typedef T Observing_Condition;
+    typedef C Observing_Condition;
 
 public:
     Conditionally_Observed() {
         db<Observers>(TRC) << "Conditionally_Observed() => " << this << endl;
     }
-    ~Conditionally_Observed() {
+    virtual ~Conditionally_Observed() {
         db<Observers>(TRC) << "~Conditionally_Observed(this=" << this << ")" << endl;
     }
 
-    virtual void attach(Conditional_Observer<T> * o, T c) {
+    virtual void attach(Conditional_Observer<C> * o, const C & c) {
         db<Observers>(TRC) << "Conditionally_Observed::attach(o=" << o << ",c=" << c << ")" << endl;
 
         o->_link = Element(o, c);
         _observers.insert(&o->_link);
     }
 
-    virtual void detach(Conditional_Observer<T> * o, T c) {
+    virtual void detach(Conditional_Observer<C> * o, const C & c) {
         db<Observers>(TRC) << "Conditionally_Observed::detach(obs=" << o << ",c=" << c << ")" << endl;
 
         _observers.remove(&o->_link);
     }
 
-    virtual bool notify(T c) {
+    virtual bool notify(const C & c) {
         bool notified = false;
 
         db<Observers>(TRC) << "Conditionally_Observed::notify(cond=" << hex << c << ")" << endl;
@@ -144,16 +144,16 @@ public:
     }
 
 private:
-    Simple_Ordered_List<Conditional_Observer<T>, T> _observers;
+    Simple_Ordered_List<Conditional_Observer<C>, C> _observers;
 };
 
-template<typename T>
+template<typename C>
 class Conditional_Observer
 {
-    friend class Conditionally_Observed<T>;
+    friend class Conditionally_Observed<C>;
 
 public:
-    typedef T Observing_Condition;
+    typedef C Observing_Condition;
 
 protected:
     Conditional_Observer(): _link(this) {
@@ -161,64 +161,64 @@ protected:
     }
 
 public:
-    ~Conditional_Observer() {
+    virtual ~Conditional_Observer() {
         db<Observers>(TRC) << "~Conditionally_Observer(this=" << this << ")" << endl;
     }
 
-    virtual void update(Conditionally_Observed<T> * o, T c) = 0;
+    virtual void update(Conditionally_Observed<C> * o, const C & c) = 0;
 
 private:
-    typename Conditionally_Observed<T>::Element _link;
+    typename Conditionally_Observed<C>::Element _link;
 };
 
 
 // (Conditional) Observer x (Conditionally) Observed with Data
-template<typename T1, typename T2 = void>
+template<typename D, typename C = void>
 class Data_Observer;
 
-template<typename T1, typename T2 = void>
+template<typename D, typename C = void>
 class Data_Observed
 {
-    friend class Data_Observer<T1, T2>;
+    friend class Data_Observer<D, C>;
 
 private:
-    typedef Data_Observer<T1, T2> Observer;
-    typedef typename Simple_Ordered_List<Data_Observer<T1, T2>, T2>::Element Element;
+    typedef Data_Observer<D, C> _Observer;
+    typedef typename Simple_Ordered_List<Data_Observer<D, C>, C>::Element Element;
 
 public:
-    typedef T1 Observed_Data;
-    typedef T2 Observing_Condition;
+    typedef D Observed_Data;
+    typedef C Observing_Condition;
 
 public:
     Data_Observed() {
-        db<Observers>(TRC) << "Data_Observed<T>() => " << this << endl;
+        db<Observeds>(TRC) << "Data_Observed() => " << this << endl;
     }
 
-    ~Data_Observed() {
-        db<Observers>(TRC) << "~Data_Observed<T>(this=" << this << ")" << endl;
+    virtual ~Data_Observed() {
+        db<Observeds>(TRC) << "~Data_Observed(this=" << this << ")" << endl;
     }
 
-    virtual void attach(Data_Observer<T1, T2> * o, T2 c) {
-        db<Observers>(TRC) << "Data_Observed<T>::attach(obs=" << o << ",cond=" << c << ")" << endl;
+    virtual void attach(Data_Observer<D, C> * o, const C & c) {
+        db<Observeds>(TRC) << "Data_Observed::attach(obs=" << o << ",cond=" << c << ")" << endl;
 
         o->_link = Element(o, c);
         _observers.insert(&o->_link);
     }
 
-    virtual void detach(Data_Observer<T1, T2> * o, T2 c) {
-        db<Observers>(TRC) << "Data_Observed<T>::detach(obs=" << o << ",cond=" << c << ")" << endl;
+    virtual void detach(Data_Observer<D, C> * o, const C & c) {
+        db<Observeds>(TRC) << "Data_Observed::detach(obs=" << o << ",cond=" << c << ")" << endl;
 
         _observers.remove(&o->_link);
     }
 
-    virtual bool notify(T2 c, T1 * d) {
+    virtual bool notify(const C & c, D * d) {
         bool notified = false;
 
-        db<Observers>(TRC) << "Data_Observed<T>::notify(this=" << this << ",cond=" << c << ")" << endl;
+        db<Observeds>(TRC) << "Data_Observed::notify(this=" << this << ",cond=" << c << ")" << endl;
 
         for(Element * e = _observers.head(); e; e = e->next()) {
             if(e->rank() == c) {
-                db<Observers>(INF) << "Data_Observed<T>::notify(this=" << this << ",obs=" << e->object() << ")" << endl;
+                db<Observeds>(INF) << "Data_Observed::notify(this=" << this << ",obs=" << e->object() << ")" << endl;
                 e->object()->update(this, c, d);
                 notified = true;
             }
@@ -227,8 +227,8 @@ public:
         return notified;
     }
 
-    virtual Observer * observer(T2 c, unsigned int index = 0) {
-        Observer * o = 0;
+    virtual _Observer * observer(const C & c, unsigned int index = 0) {
+        _Observer * o = 0;
         for(Element * e = _observers.head(); e; e = e->next()) {
             if(e->rank() == c) {
                 if(!index)
@@ -241,71 +241,71 @@ public:
     }
 
 private:
-    Simple_Ordered_List<Data_Observer<T1, T2>, T2> _observers;
+    Simple_Ordered_List<Data_Observer<D, C>, C> _observers;
 };
 
-template<typename T1, typename T2>
+template<typename D, typename C>
 class Data_Observer
 {
-    friend class Data_Observed<T1, T2>;
+    friend class Data_Observed<D, C>;
 
 public:
-    typedef T1 Observed_Data;
-    typedef T2 Observing_Condition;
+    typedef D Observed_Data;
+    typedef C Observing_Condition;
 
 protected:
     Data_Observer(): _link(this) {
-        db<Observers>(TRC) << "Data_Observer<T>() => " << this << endl;
+        db<Observers>(TRC) << "Data_Observer() => " << this << endl;
     }
 
 public:
-    ~Data_Observer() {
-        db<Observers>(TRC) << "~Data_Observer<T>(this=" << this << ")" << endl;
+    virtual ~Data_Observer() {
+        db<Observers>(TRC) << "~Data_Observer(this=" << this << ")" << endl;
     }
 
-    virtual void update(Data_Observed<T1, T2> * o, T2 c, T1 * d) = 0;
+    virtual void update(Data_Observed<D, C> * o, const C & c, D * d) = 0;
 
 private:
-    typename Data_Observed<T1, T2>::Element _link;
+    typename Data_Observed<D, C>::Element _link;
 };
 
 
 // (Unconditional) Observer x (Unconditionally) Observed with Data
-template<typename T1>
-class Data_Observed<T1, void>
+template<typename D>
+class Data_Observed<D, void>
 {
-    friend class Data_Observer<T1, void>;
+    friend class Data_Observer<D, void>;
 
 private:
-    typedef Data_Observer<T1, void> Observer;
-    typedef typename Simple_List<Data_Observer<T1, void>>::Element Element;
+    typedef Data_Observer<D, void> _Observer;
+    typedef typename Simple_List<Data_Observer<D, void>>::Element Element;
 
 public:
-    typedef T1 Observed_Data;
+    typedef D Observed_Data;
 
 public:
     Data_Observed() {
         db<Observers>(TRC) << "Data_Observed() => " << this << endl;
     }
 
-    ~Data_Observed() {
+    virtual ~Data_Observed() {
         db<Observers>(TRC) << "~Data_Observed(this=" << this << ")" << endl;
     }
 
-    virtual void attach(Data_Observer<T1, void> * o) {
+    virtual void attach(Data_Observer<D, void> * o) {
         db<Observers>(TRC) << "Data_Observed::attach(obs=" << o << ")" << endl;
 
         o->_link = Element(o);
         _observers.insert(&o->_link);
     }
 
-    virtual void detach(Data_Observer<T1, void> * o) {
+    virtual void detach(Data_Observer<D, void> * o) {
         db<Observers>(TRC) << "Data_Observed::detach(obs=" << o << ")" << endl;
 
         _observers.remove(&o->_link);
     }
 
-    virtual bool notify(T1 * d) {
+    virtual bool notify(D * d) {
         bool notified = false;
 
         db<Observers>(TRC) << "Data_Observed::notify(this=" << this << ")" << endl;
@@ -319,8 +319,8 @@ public:
         return notified;
     }
 
-    virtual Observer * observer(unsigned int index = 0) {
-        Observer * o = 0;
+    virtual _Observer * observer(unsigned int index = 0) {
+        _Observer * o = 0;
         for(Element * e = _observers.head(); e; e = e->next()) {
             if(!index)
                 o =  e->object();
@@ -331,16 +331,16 @@ public:
     }
 
 private:
-    Simple_List<Data_Observer<T1, void>> _observers;
+    Simple_List<Data_Observer<D, void>> _observers;
 };
 
-template<typename T1>
-class Data_Observer<T1, void>
+template<typename D>
+class Data_Observer<D, void>
 {
-    friend class Data_Observed<T1, void>;
+    friend class Data_Observed<D, void>;
 
 public:
-    typedef T1 Observed_Data;
+    typedef D Observed_Data;
 
 protected:
     Data_Observer(): _link(this) {
@@ -348,14 +348,14 @@ protected:
     }
 
 public:
-    ~Data_Observer() {
+    virtual ~Data_Observer() {
         db<Observers>(TRC) << "~Data_Observer(this=" << this << ")" << endl;
     }
 
-    virtual void update(Data_Observed<T1, void> * o, T1 * d) = 0;
+    virtual void update(Data_Observed<D, void> * o, D * d) = 0;
 
 private:
-    typename Data_Observed<T1, void>::Element _link;
+    typename Data_Observed<D, void>::Element _link;
 };
 
 __END_UTIL

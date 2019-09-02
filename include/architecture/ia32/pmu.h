@@ -3,9 +3,9 @@
 #ifndef __ia32_pmu_h
 #define __ia32_pmu_h
 
-#include <cpu.h>
-#include <pmu.h>
-#include <ic.h>
+#include <architecture/cpu.h>
+#include <architecture/pmu.h>
+#include <machine/ic.h>
 #include <utility/handler.h>
 
 __BEGIN_SYS
@@ -695,6 +695,10 @@ class PMU_Select_Version<Traits<PMU>::SANDY_BRIDGE>: public Intel_Sandy_Bridge_P
 class PMU: public PMU_Select_Version<Traits<PMU>::VERSION>
 {
     friend class CPU;
+    typedef PMU_Select_Version<Traits<PMU>::VERSION> Engine;
+
+public:
+    using Engine::CHANNELS;
 
 public:
     PMU() {}

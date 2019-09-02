@@ -30,8 +30,12 @@ template<> struct Traits<TSC>: public Traits<void>
     // * LM3S811 does not support up-count mode on general purpose timers,
     //   and QEMU (v2.7.50) does not support reading the value of general purpose timers,
     //   thus TSC::time_stamp() does not work, but Machine::delay does.
+#ifdef __mmod_lm3s811__
+    static const bool enabled = false;
+#else
     static const bool enabled = true;
-//TODO: http://stackoverflow.com/questions/16236460/arm-cortex-a9-event-counters-return-0
+#endif
+    //TODO: http://stackoverflow.com/questions/16236460/arm-cortex-a9-event-counters-return-0
 };
 
 template<> struct Traits<PMU>: public Traits<void>

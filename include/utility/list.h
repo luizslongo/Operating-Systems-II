@@ -464,6 +464,10 @@ class Simple_Ordered_List: public Simple_List<T, El>
 private:
     typedef Simple_List<T, El> Base;
 
+    using Base::insert_first;
+    using Base::insert_head;
+    using Base::insert_tail;
+
 public:
     typedef T Object_Type;
     typedef R Rank_Type;
@@ -572,6 +576,11 @@ public:
     using Base::tail;
     using Base::begin;
     using Base::end;
+    using Base::insert_first;
+    using Base::insert_head;
+    using Base::insert_tail;
+    using Base::search;
+    using Base::remove;
 
     unsigned int grouped_size() const { return _grouped_size; }
 

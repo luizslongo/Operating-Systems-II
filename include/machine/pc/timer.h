@@ -3,11 +3,10 @@
 #ifndef __pc_timer_h
 #define __pc_timer_h
 
-#include <cpu.h>
-#include <ic.h>
-#include <rtc.h>
-#include <timer.h>
-#include <machine.h>
+#include <machine/main.h>
+#include <machine/ic.h>
+#include <machine/rtc.h>
+#include <machine/timer.h>
 
 __BEGIN_SYS
 
@@ -288,9 +287,7 @@ public:
     Tick read() { return _current[Machine::cpu_id()]; }
 
     int reset() {
-        db<Timer>(TRC) << "Timer::reset() => {f=" << frequency()
-        	       << ",h=" << reinterpret_cast<void*>(_handler)
-        	       << ",count=" << _current[Machine::cpu_id()] << "}" << endl;
+        db<Timer>(TRC) << "Timer::reset() => {f=" << frequency() << ",h=" << reinterpret_cast<void*>(_handler) << ",count=" << _current[Machine::cpu_id()] << "}" << endl;
 
         int percentage = _current[Machine::cpu_id()] * 100 / _initial;
         _current[Machine::cpu_id()] = _initial;

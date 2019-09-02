@@ -67,6 +67,13 @@ template<typename T>
 struct EQUAL<T, T>
 { enum { Result = true }; };
 
+template<typename T1, typename T2>
+struct MAX
+{ typedef typename IF<sizeof(T1) >= sizeof(T2), T1, T2>::Result Result; };
+
+template<typename T1, typename T2>
+struct MIN
+{ typedef typename IF<sizeof(T1) < sizeof(T2), T1, T2>::Result Result; };
 
 // SIZEOF Type Package
 template<typename ... Tn>
@@ -193,13 +200,12 @@ public:
 inline void SERIALIZE(char * buf, int index) {}
 
 template<typename T>
-void SERIALIZE(char * buf, int index, const T && a) {
-//    *static_cast<T *>(reinterpret_cast<void *>(&buf[index])) = a;
+void SERIALIZE(char * buf, int index, T && a) {
     __builtin_memcpy(&buf[index], &a, sizeof(T));
 }
 
 template<typename T, typename ... Tn>
-void SERIALIZE(char * buf, int index, const T && a, const Tn & ... an) {
+void SERIALIZE(char * buf, int index, const T && a, Tn & ... an) {
     __builtin_memcpy(&buf[index], &a, sizeof(T));
     SERIALIZE(buf, index + sizeof(T), an ...);
 }

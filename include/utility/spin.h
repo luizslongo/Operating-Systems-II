@@ -3,7 +3,7 @@
 #ifndef __spin_h
 #define __spin_h
 
-#include <cpu.h>
+#include <architecture.h>
 
 __BEGIN_UTIL
 
@@ -28,17 +28,22 @@ public:
         int me = This_Thread::id();
 
         while(CPU::cas(_owner, 0, me) != me);
-        _level++;
 
-        db<Spin>(TRC) << "Spin::acquire[SPIN=" << this << ",ID=" << me << "]() => {owner=" << _owner << ",level=" << _level << "}" << endl;
+        db<Spin>(TRC) << "Spin::acquire[this=" << this << ",id=" << hex << me << "]() => {owner=" << _owner << dec << ",level=" << _level << "}" << endl;
+
+        _level++;
     }
 
     void release() {
-    	if(--_level <= 0)
-            _owner = 0;
+        db<Spin>(TRC) << "Spin::release[this=" << this << "]() => {owner=" << hex << _owner << dec << ",level=" << _level << "}" << endl;
 
-        db<Spin>(TRC) << "Spin::release[SPIN=" << this << "]() => {owner=" << _owner << ",level=" << _level << "}" << endl;
+        if(--_level <= 0) {
+    	    _level = 0;
+            _owner = 0;
+    	}
     }
+
+    volatile bool taken() const { return (_owner != 0); }
 
 private:
     volatile int _level;

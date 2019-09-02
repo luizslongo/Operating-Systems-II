@@ -112,7 +112,7 @@ public:
         Larger_T xx = p.x > x ? p.x - x : x - p.x;
         Larger_T yy = p.y > y ? p.y - y : y - p.y;
         Larger_T zz = p.z > z ? p.z - z : z - p.z;
-        return sqrt(xx*xx + yy*yy + zz*zz);
+        return sqrt(xx * xx + yy * yy + zz * zz);
     }
 
     // Translation
@@ -180,15 +180,15 @@ public:
     T x, y, z;
 }__attribute__((packed));
 
-template<typename T>
+template<typename T1, typename T2 = void>
 struct Sphere
 {
 private:
-    typedef typename IF<EQUAL<char, T>::Result, int, T>::Result Print_Type;
+    typedef typename IF<EQUAL<T1, char>::Result, int, T1>::Result Print_Type;
 
 public:
-    typedef Point<T, 3> Center;
-    typedef typename Center::Distance Radius;
+    typedef Point<T1, 3> Center;
+    typedef typename IF<EQUAL<T2, void>::Result, typename Point<T1, 3>::Distance, T2>::Result Radius;
 
     Sphere() {}
     Sphere(const Center & c, const Radius & r = 0): center(c), radius(r) { }

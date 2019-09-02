@@ -25,17 +25,14 @@ private:
 
 __END_SYS
 
-#include <cpu.h>
-#include <mmu.h>
+#include <architecture/cpu.h>
+#include <architecture/mmu.h>
 #include <system.h>
-#include <thread.h>
-#include <task.h>
-#include <alarm.h>
-#include <address_space.h>
-#include <segment.h>
-#include <mutex.h>
-#include <semaphore.h>
-#include <condition.h>
+#include <process.h>
+
+#include <time.h>
+#include <memory.h>
+#include <synchronizer.h>
 #include <communicator.h>
 
 #include "handle.h"

@@ -8,6 +8,7 @@
 
 #include <aspect/shared.h>
 #include <aspect/authenticated.h>
+#include <aspect/energy_aware.h>
 
 __BEGIN_SYS
 
@@ -19,6 +20,9 @@ protected:
 
 public:
     ~Scenario() {}
+
+    static const Power_Mode & power();
+    static Power_Mode power(const Power_Mode & mode);
 
     void * operator new(size_t bytes) { return ::operator new(bytes, SYSTEM); }
     void operator delete(void * ptr) { ::operator delete(ptr); }

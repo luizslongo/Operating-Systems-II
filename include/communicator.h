@@ -3,19 +3,20 @@
 #ifndef __communicator_h
 #define __communicator_h
 
-#include <channel.h>
+#include <network.h>
+#include <synchronizer.h>
 
 __BEGIN_SYS
 
 // Commonalities for connectionless channels
 template<typename Channel, bool connectionless>
-class Communicator_Common: protected Channel::Observer, private Semaphore_Observer<typename Channel::Observer::Observed_Data, typename Channel::Observer::Observing_Condition>
+class Communicator_Common: protected Channel::Observer, private Concurrent_Observer<typename Channel::Observer::Observed_Data, typename Channel::Observer::Observing_Condition>
 {
 private:
     static const unsigned int HEADERS_SIZE = Channel::HEADERS_SIZE;
 
     typedef typename Channel::Observer::Observing_Condition Observing_Condition;
-    typedef Semaphore_Observer<typename Channel::Observer::Observed_Data, typename Channel::Observer::Observing_Condition> Observer;
+    typedef Concurrent_Observer<typename Channel::Observer::Observed_Data, typename Channel::Observer::Observing_Condition> Observer;
 
 public:
     // List to hold received Buffers
@@ -85,7 +86,7 @@ public:
     }
 
 private:
-    void update(typename Channel::Observed * obs, Observing_Condition c, Buffer * buf) { Observer::update(c, buf); }
+    void update(typename Channel::Observed * obs, const Observing_Condition & c, Buffer * buf) { Observer::update(c, buf); }
     Buffer * updated() { return Observer::updated(); }
 
 private:
@@ -94,13 +95,13 @@ private:
 
 // Commonalities for connection-oriented channels
 template<typename Channel>
-class Communicator_Common<Channel, false>: protected Channel::Observer, private Semaphore_Observer<typename Channel::Observer::Observed_Data, typename Channel::Observer::Observing_Condition>
+class Communicator_Common<Channel, false>: protected Channel::Observer, private Concurrent_Observer<typename Channel::Observer::Observed_Data, typename Channel::Observer::Observing_Condition>
 {
 private:
     static const unsigned int HEADERS_SIZE = Channel::HEADERS_SIZE;
 
     typedef typename Channel::Observer::Observing_Condition Observing_Condition;
-    typedef Semaphore_Observer<typename Channel::Observer::Observed_Data, typename Channel::Observer::Observing_Condition> Observer;
+    typedef Concurrent_Observer<typename Channel::Observer::Observed_Data, typename Channel::Observer::Observing_Condition> Observer;
 
 public:
     // List to hold received Buffers
@@ -154,7 +155,7 @@ public:
     }
 
 private:
-    void update(typename Channel::Observed * obs, Observing_Condition c, Buffer * buf) { Observer::update(c, buf); }
+    void update(typename Channel::Observed * obs, const Observing_Condition & c, Buffer * buf) { Observer::update(c, buf); }
     Buffer * updated() { return Observer::updated(); }
 
 protected:

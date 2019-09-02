@@ -16,7 +16,8 @@ private:
 
 public:
     // The information we have at boot time (built by MKBI)
-    // Modifications to this map requires adjustments at MKBI
+    // Modifications to this map requires adjustments at MKBI and SETUP
+    // The size of the struct must be multiple of sizeof(int)
     struct Boot_Map
     {
         volatile unsigned int n_cpus;     // Number of CPUs in SMPs
@@ -24,15 +25,17 @@ public:
         PAddr mem_top;                    // Memory top address
         PAddr io_base;                    // I/O Memory base address
         PAddr io_top;                     // I/O Memory top address
-        short node_id;                    // Local node id in SAN (-1 => RARP)
-        short n_nodes;                    // Number of nodes in SAN (-1 => dynamic)
+        int node_id;                      // Local node id in SAN (-1 => RARP)
+        int space_x;                      // Spatial coordinates of a node (-1 => mobile)
+        int space_y;                      //
+        int space_z;                      //
         unsigned char uuid[8];            // EPOS image Universally Unique Identifier
         Size img_size;                    // Boot image size (in bytes)
-        int setup_offset;                 // Image offsets (-1 => not present)
-        int init_offset;
-        int system_offset;
-        int application_offset;
-        int extras_offset;
+        Size setup_offset;                // Image offsets (-1 => not present)
+        Size init_offset;
+        Size system_offset;
+        Size application_offset;
+        Size extras_offset;
         volatile int cpu_status[Traits<Machine>::CPUS]; // CPUs initialization status
     };
 

@@ -154,6 +154,60 @@ T variance(const T array[], int size, const T & mean)
     return var / (size - 1);
 }
 
+// Babylonian power of ten helper
+template<typename T>
+T power_of_ten(int num) {
+    T rst = 1.0;
+    if(num >= 0)
+        for(int i = 0; i < num ; i++)
+            rst *= 10.0;
+    else
+        for(int i = 0; i < (0 - num); i++)
+            rst *= 0.1;
+    return rst;
+}
+
+// Babylonian Square Root
+template<typename T>
+T babylonian_sqrt(const T & a) {
+    T z = a;
+    T rst = 0.0;
+    int max = 8;     // to define maximum digit
+    int i;
+    T j = 1.0;
+
+    for(i = max ; i > 0 ; i--) {
+        // value must be bigger then 0
+        if(z - ((2 * rst) + (j * power_of_ten<T>(i))) * (j * power_of_ten<T>(i)) >= 0) {
+            while(z - ((2 * rst) + (j * power_of_ten<T>(i))) * (j * power_of_ten<T>(i)) >= 0) {
+                j++;
+                if(j >= 10)
+                    break;
+            }
+            j--; //correct the extra value by minus one to j
+            z -= ((2 * rst) + (j * power_of_ten<T>(i))) * (j * power_of_ten<T>(i)); //find value of z
+
+            rst += j * power_of_ten<T>(i);     // find sum of a
+
+            j = 1.0;
+        }
+    }
+
+    for(i = 0 ; i >= 0 - max ; i--){
+        if(z - ((2 * rst) + (j * power_of_ten<T>(i))) * (j * power_of_ten<T>(i)) >= 0) {
+            while(z - ((2 * rst) + (j * power_of_ten<T>(i))) * (j * power_of_ten<T>(i)) >= 0)
+                j++;
+            j--;
+            z -= ((2 * rst) + (j * power_of_ten<T>(i))) * (j * power_of_ten<T>(i)); //find value of z
+
+            rst += j * power_of_ten<T>(i);     // find sum of a
+            j = 1.0;
+        }
+    }
+    // find the number on each digit
+    return rst;
+}
+
 __END_UTIL
 
 #endif

@@ -3,8 +3,8 @@
 #ifndef __pc_rtc_h
 #define __pc_rtc_h
 
-#include <cpu.h>
-#include <rtc.h>
+#include <architecture/cpu.h>
+#include <machine/rtc.h>
 
 __BEGIN_SYS
 

@@ -3,7 +3,7 @@
 #ifndef __pc_eeprom_h
 #define __pc_eeprom_h
 
-#include <eeprom.h>
+#include <machine/eeprom.h>
 #include "rtc.h"
 
 __BEGIN_SYS

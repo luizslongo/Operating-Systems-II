@@ -1,6 +1,6 @@
 // EPOS PC Scratchpad Memory Mediator Declarations
 
-#include <scratchpad.h>
+#include <machine/scratchpad.h>
 
 #ifndef __pc_scratchpad_h
 #define __pc_scratchpad_h

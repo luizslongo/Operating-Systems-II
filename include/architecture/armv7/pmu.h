@@ -3,8 +3,8 @@
 #ifndef __armv7_pmu_h
 #define __armv7_pmu_h
 
-#include <cpu.h>
-#include <pmu.h>
+#include <architecture/cpu.h>
+#include <architecture/pmu.h>
 
 __BEGIN_SYS
 
@@ -170,12 +170,19 @@ private:
 };
 
 
-class PMU: private IF<Traits<Build>::MODEL == Traits<Build>::Zynq, ARMv7_A_PMU, ARMv7_A_PMU>::Result
+class PMU: private IF<Traits<Build>::MACHINE == Traits<Build>::Cortex_A, ARMv7_A_PMU, ARMv7_A_PMU>::Result
 {
     friend class CPU;
 
 private:
-    typedef IF<Traits<Build>::MODEL == Traits<Build>::Zynq, ARMv7_A_PMU, ARMv7_A_PMU>::Result Engine;
+    typedef IF<Traits<Build>::MACHINE == Traits<Build>::Cortex_A, ARMv7_A_PMU, ARMv7_A_PMU>::Result Engine;
+
+public:
+    using Engine::CHANNELS;
+
+    using Engine::Event;
+    using Engine::Count;
+    using Engine::Channel;
 
 public:
     PMU() {}

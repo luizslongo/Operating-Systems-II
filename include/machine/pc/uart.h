@@ -3,8 +3,8 @@
 #ifndef __pc_uart_h
 #define __pc_uart_h
 
-#include <uart.h>
-#include <cpu.h>
+#include <machine/uart.h>
+#include <architecture/cpu.h>
 
 __BEGIN_SYS
 

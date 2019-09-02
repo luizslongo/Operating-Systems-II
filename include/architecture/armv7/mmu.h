@@ -7,8 +7,8 @@
 #include <utility/string.h>
 #include <utility/list.h>
 #include <utility/debug.h>
-#include <cpu.h>
-#include <mmu.h>
+#include <architecture/cpu.h>
+#include <architecture/mmu.h>
 
 __BEGIN_SYS
 
@@ -111,7 +111,7 @@ public:
 
     static Phy_Addr calloc(unsigned int bytes = 1) {
         Phy_Addr phy = alloc(bytes);
-        memset(phy, bytes, 0);
+        memset(phy, 0, bytes);
         return phy;
     }
 

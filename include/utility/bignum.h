@@ -28,11 +28,11 @@ public:
 private:
     union _Word {
         unsigned char bytes[sizeof(Word)];
-        Digit data[];
+        Digit data[sizeof(Word) / sizeof(Digit)];
     };
     union _Barrett {
         unsigned char bytes[sizeof(Word) + sizeof(Digit)];
-        Digit data[];
+        Digit data[sizeof(Word) / sizeof(Digit)];
     };
 
 public:
