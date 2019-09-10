@@ -23,7 +23,9 @@ protected:
 
 __END_SYS
 
-#ifdef __SCRATCHPAD_H
+#endif
+
+#if defined(__SCRATCHPAD_H) && !defined(__common_only__)
 #include __SCRATCHPAD_H
 
 inline void * operator new(size_t bytes, const EPOS::Scratchpad_Allocator & allocator) {
@@ -33,7 +35,5 @@ inline void * operator new(size_t bytes, const EPOS::Scratchpad_Allocator & allo
 inline void * operator new[](size_t bytes, const EPOS::Scratchpad_Allocator & allocator) {
     return _SYS::Scratchpad::_heap->alloc(bytes);
 }
-
-#endif
 
 #endif

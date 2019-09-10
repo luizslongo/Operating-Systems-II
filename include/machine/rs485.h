@@ -5,8 +5,18 @@
 
 #include <system/config.h>
 
-#ifdef __RS485_H
-#include __RS485_H
+__BEGIN_SYS
+
+class RS485_Common
+{
+protected:
+    RS485_Common() {}
+};
+
+__END_SYS
+
 #endif
 
+#if defined(__RS485_H) && !defined(__common_only__)
+#include __RS485_H
 #endif

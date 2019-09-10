@@ -17,22 +17,22 @@ void Machine::init()
     if(Traits<PCI>::enabled)
         PCI::init();
 
-#ifdef __SCRATCHPAD_H
+#if defined(__SCRATCHPAD_H) && !defined(__common_only__)
     if(Traits<Scratchpad>::enabled)
         Scratchpad::init();
 #endif
 
-#ifdef __KEYBOARD_H
+#if defined(__KEYBOARD_H) && !defined(__common_only__)
     if(Traits<Keyboard>::enabled)
         Keyboard::init();
 #endif
 
-#ifdef __FPGA_H
+#if defined(__FPGA_H) && !defined(__common_only__)
     if(Traits<FPGA>::enabled)
         FPGA::init();
 #endif
 
-#ifdef __NIC_H
+#if defined(__NIC_H) && !defined(__common_only__)
     if(Traits<Ethernet>::enabled)
         Initializer<Ethernet>::init();
 #endif

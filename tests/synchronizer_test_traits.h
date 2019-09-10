@@ -16,10 +16,10 @@ struct Traits
     enum {AVR8, H8, ARMv4, ARMv7, ARMv8, IA32, X86_64, SPARCv8, PPC32};
 
     // Machines
-    enum {eMote1, eMote2, STK500, RCX, Cortex_A, Cortex_M, Cortex_R, PC, Leon, Virtex};
+    enum {eMote1, eMote2, STK500, RCX, Cortex, PC, Leon, Virtex};
 
     // Machine models
-    enum {Unique, Legacy_PC, eMote3, LM3S811, Realview_PBX, Zynq};
+    enum {Unique, Legacy_PC, eMote3, LM3S811, Zynq, Realview_PBX, Raspberry_Pi3};
 
     // Serial display engines
     enum {UART, USB};
@@ -47,8 +47,8 @@ template<> struct Traits<Build>: public Traits<void>
 {
     static const unsigned int MODE = LIBRARY;
     static const unsigned int ARCHITECTURE = ARMv7;
-    static const unsigned int MACHINE = Cortex_M;
-    static const unsigned int MODEL = LM3S811;
+    static const unsigned int MACHINE = Cortex;
+    static const unsigned int MODEL = Realview_PBX;
     static const unsigned int CPUS = 1;
     static const unsigned int NODES = 1;     // (> 1 => NETWORKING)
     static const unsigned int EXPECTED_SIMULATION_TIME = 60;    // s (0 => not simulated)
@@ -60,8 +60,8 @@ template<> struct Traits<Debug>: public Traits<void>
 {
     static const bool error   = true;
     static const bool warning = true;
-    static const bool info    = false;
-    static const bool trace   = false;
+    static const bool info    = true;
+    static const bool trace   = true;
 };
 
 template<> struct Traits<Lists>: public Traits<void>
@@ -85,6 +85,7 @@ template<> struct Traits<Observers>: public Traits<void>
     // Enabling debug may cause trouble in some Machines
     static const bool debugged = false;
 };
+
 
 // System Parts (mostly to fine control debugging)
 template<> struct Traits<Boot>: public Traits<void>
@@ -110,29 +111,15 @@ template<> struct Traits<Aspect>: public Traits<void>
 
 
 // Mediators
-template<> struct Traits<Serial_Display>: public Traits<void>
-{
-    static const bool enabled = (Traits<Build>::EXPECTED_SIMULATION_TIME != 0);
-    static const int ENGINE = UART;
-    static const int COLUMNS = 80;
-    static const int LINES = 24;
-    static const int TAB_SIZE = 8;
-};
-
-template<> struct Traits<Serial_Keyboard>: public Traits<void>
-{
-    static const bool enabled = (Traits<Build>::EXPECTED_SIMULATION_TIME != 0);
-};
-
 __END_SYS
 
-#include __ARCH_TRAITS_H
-#include __MACH_TRAITS_H
+#include __ARCHITECTURE_TRAITS_H
+#include Machine_Engine_Engine_TRAITS_H
 
 __BEGIN_SYS
 
 
-// Components
+// API Components
 template<> struct Traits<Application>: public Traits<void>
 {
     static const unsigned int STACK_SIZE = Traits<Machine>::STACK_SIZE;
@@ -169,7 +156,7 @@ template<> struct Traits<Thread>: public Traits<void>
     static const bool simulate_capacity = false;
     static const bool trace_idle = hysterically_debugged;
 
-    typedef Scheduling_Criteria::Priority Criterion;
+    typedef Scheduling_Criteria::CPU_Affinity Criterion;
     static const unsigned int QUANTUM = 10000; // us
 };
 

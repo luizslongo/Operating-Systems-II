@@ -151,7 +151,7 @@ inline T align128(const T & addr) { return (addr + 15) & ~15U; }
 
 __END_SYS
 
-#ifdef __CPU_H
+#if defined(__CPU_H) && !defined(__common_only__)
 #include __CPU_H
 #endif
 

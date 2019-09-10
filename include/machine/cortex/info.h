@@ -1,4 +1,4 @@
-// EPOS ARM Cortex Run-Time System Information
+// EPOS ARM Cortex Common Run-Time System Information
 
 #ifndef __cortex_info_h
 #define __cortex_info_h
@@ -7,7 +7,7 @@
 
 __BEGIN_SYS
 
-struct System_Info
+struct Cortex_System_Info
 {
 private:
     typedef unsigned int LAddr;
@@ -19,20 +19,22 @@ public:
     // Modifications to this map requires adjustments at MKBI
     struct Boot_Map
     {
-        volatile unsigned int n_cpus;   // Number of CPUs in SMPs
-        PAddr mem_base;                 // Memory base address
-        PAddr mem_top;                  // Memory top address
-        PAddr io_base;                  // I/O Memory base address
-        PAddr io_top;                   // I/O Memory top address
-        short node_id;                  // Local node id in SAN (-1 => RARP)
-        short n_nodes;                  // Number of nodes in SAN (-1 => dynamic)
-        unsigned char uuid[8];          // EPOS image Universally Unique Identifier
-        Size img_size;                  // Boot image size (in bytes)
-        int setup_offset;               // Image offsets (-1 => not present)
-        int init_offset;
-        int system_offset;
-        int application_offset;
-        int extras_offset;
+        volatile unsigned int n_cpus;     // Number of CPUs in SMPs
+        PAddr mem_base;                   // Memory base address
+        PAddr mem_top;                    // Memory top address
+        PAddr io_base;                    // I/O Memory base address
+        PAddr io_top;                     // I/O Memory top address
+        int node_id;                      // Local node id in SAN (-1 => RARP)
+        int space_x;                      // Spatial coordinates of a node (-1 => mobile)
+        int space_y;                      //
+        int space_z;                      //
+        unsigned char uuid[8];            // EPOS image Universally Unique Identifier
+        Size img_size;                    // Boot image size (in bytes)
+        Size setup_offset;                // Image offsets (-1 => not present)
+        Size init_offset;
+        Size system_offset;
+        Size application_offset;
+        Size extras_offset;
     };
 
     // Load Map (not used in this machine, but kept for architectural transparency)
@@ -50,9 +52,6 @@ public:
         PAddr app_extra;
         Size  app_extra_size;
     };
-
-public:
-    friend Debug & operator<<(Debug & db, const System_Info & si) { return db; }
 
 public:
     Boot_Map bm;

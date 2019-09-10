@@ -2,7 +2,7 @@
 
 #include <system/config.h>
 
-#ifdef __DISPLAY_H
+#if defined(__DISPLAY_H) && !defined(__common_only__)
 
 #include <machine/display.h>
 

@@ -149,7 +149,7 @@ int main(int argc, char **argv)
 
     // Add BOOT
     if(CONFIG.boot_length_max > 0) {
-        sprintf(file, "%s/img/%s_boot", argv[optind], CONFIG.mach);
+        sprintf(file, "%s/img/%s_boot", argv[optind], CONFIG.mmod);
         printf("    Adding boot strap \"%s\":", file);
         image_size += put_file(fd_img, file);
         if(image_size > CONFIG.boot_length_max) {
@@ -190,7 +190,7 @@ int main(int argc, char **argv)
         si.bm.uuid[i]  = CONFIG.uuid[i];
 
     // Add SETUP
-    sprintf(file, "%s/img/%s_setup", argv[optind], CONFIG.mach);
+    sprintf(file, "%s/img/%s_setup", argv[optind], CONFIG.mmod);
     if(file_exist(file)) {
         si.bm.setup_offset = image_size - boot_size;
         printf("    Adding setup \"%s\":", file);
@@ -256,7 +256,7 @@ int main(int argc, char **argv)
     }
 
     // Adding MACH specificities
-    printf("\n  Adding specific boot features of \"%s\":", CONFIG.mach);
+    printf("\n  Adding specific boot features of \"%s\":", CONFIG.mmod);
     if(!(add_machine_secrets(fd_img, image_size, CONFIG.mach, CONFIG.mmod))) {
         fprintf(stderr, "Error: specific features error!\n");
         return 1;

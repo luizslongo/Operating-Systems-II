@@ -81,7 +81,7 @@ public:
 
 __END_SYS
 
-#ifdef __MMU_H
+#if defined(__MMU_H) && !defined(__common_only__)
 #include __MMU_H
 #endif
 

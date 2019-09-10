@@ -1,7 +1,7 @@
-// EPOS Cortex Mediator Implementation
+// EPOS Cortex-A Mediator Implementation
 
 #include <machine/cortex/machine.h>
-#include <display.h>
+#include <machine/display.h>
 
 __BEGIN_SYS
 
@@ -14,12 +14,6 @@ void Machine::panic()
         reboot();
     else
         CPU::halt();
-}
-
-void Machine::reboot()
-{
-    db<Machine>(WRN) << "Machine::reboot()" << endl;
-    Machine_Model::reboot();
 }
 
 __END_SYS

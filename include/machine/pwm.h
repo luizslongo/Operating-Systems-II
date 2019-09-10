@@ -15,8 +15,8 @@ protected:
 
 __END_SYS
 
-#ifdef __PWM_H
-#include __PWM_H
 #endif
 
+#if defined(__PWM_H) && !defined(__common_only__)
+#include __PWM_H
 #endif

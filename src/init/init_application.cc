@@ -22,7 +22,7 @@ public:
         // Only the boot CPU runs INIT_APPLICATION on non-kernel configurations
         if(!Traits<System>::multitask) {
             Machine::smp_barrier();
-            if(Machine::cpu_id() != 0)
+            if(CPU::id() != 0)
                 return;
         }
 

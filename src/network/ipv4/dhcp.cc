@@ -1,9 +1,10 @@
 // EPOS DHCP (RFCs 2131 and 2132) Protocol Implementation
 
 #include <system/config.h>
-#ifndef __no_networking__
 
-#include <dhcp.h>
+#ifdef __ipv4__
+
+#include <network/ipv4/dhcp.h>
 
 __BEGIN_SYS
 

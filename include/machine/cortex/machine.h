@@ -1,88 +1,50 @@
 // EPOS ARM Cortex Mediator Declarations
 
-#ifndef __cortex_h
-#define __cortex_h
+#ifndef __cortex_machine_h
+#define __cortex_machine_h
 
-#include <utility/list.h>
-#include <cpu.h>
-#include <mmu.h>
-#include <tsc.h>
-#include <machine.h>
-#include <rtc.h>
-#include __MODEL_H
-#include "info.h"
-#include "memory_map.h"
-#include "ic.h"
-#include <display.h>
+#include <architecture/cpu.h>
+#include __HEADER_MMOD(machine)
 
 __BEGIN_SYS
 
-class Machine: private Machine_Common, private Machine_Model
+class Machine: private Machine_Engine
 {
     friend class Init_System;
     friend class First_Object;
 
+private:
+    static const bool smp = Traits<System>::multicore;
+
+    typedef Machine_Engine Engine;
+
 public:
     Machine() {}
 
-    static void delay(const RTC::Microsecond & time) { Machine_Model::delay(time); }
+    using Engine::delay;
+    using Engine::smp_barrier;
+
+    static const UUID & uuid() { return System::info()->bm.uuid; }
 
     static void panic();
-    static void reboot();
-    static void poweroff() { reboot(); }
 
-    static unsigned int n_cpus() { return 1; }
-    static unsigned int cpu_id() { return 0; }
-
-    static void smp_barrier() {};
-    static void smp_init(unsigned int) {};
-
-    static const unsigned char * id() { return Machine_Model::id(); }
-
-private:
-    static void pre_init(System_Info * si) {
-        Machine_Model::pre_init();
-
-        Display::init();
-
-        if(Traits<System>::multicore)
-            smp_init(si->bm.n_cpus);
+    static void reboot()
+    {
+        db<Machine>(WRN) << "Machine::reboot()" << endl;
+        Engine::reboot();
+    }
+    static void poweroff()
+    {
+        db<Machine>(WRN) << "Machine::poweroff()" << endl;
+        Engine::poweroff();
     }
 
+private:
+    using Engine::smp_init;
+    static void pre_init(System_Info * si);
     static void init();
 };
 
 __END_SYS
-
-#ifdef __TIMER_H
-#include __TIMER_H
-#endif
-#ifdef __RTC_H
-#include __RTC_H
-#endif
-#ifdef __UART_H
-#include __UART_H
-#endif
-#ifdef __SPI_H
-#include __SPI_H
-#endif
-#ifdef __USB_H
-#include __USB_H
-#endif
-#ifdef __DISPLAY_H
-#include __DISPLAY_H
-#endif
-#ifdef __GPIO_H
-#include __GPIO_H
-#endif
-#ifdef __NIC_H
-#include __NIC_H
-#endif
-#ifdef __ADC_H
-#include __ADC_H
-#endif
-#ifdef __AES_H
-#include __AES_H
-#endif
 
 #endif

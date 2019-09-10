@@ -15,8 +15,8 @@ protected:
 
 __END_SYS
 
-#ifdef __RFID_READER_H
-#include __RFID_READER_H
 #endif
 
+#if defined(__RFID_READER_H) && !defined(__common_only__)
+#include __RFID_READER_H
 #endif

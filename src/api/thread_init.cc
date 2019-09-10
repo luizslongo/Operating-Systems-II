@@ -20,7 +20,7 @@ void Thread::init()
 
     static volatile bool task_ready = false;
 
-    if(Machine::cpu_id() == 0) {
+    if(CPU::id() == 0) {
         System_Info * si = System::info();
         if(Traits<System>::multitask) {
             new (SYSTEM) Task(new (SYSTEM) Address_Space(MMU::current()),
@@ -58,18 +58,18 @@ void Thread::init()
     // Letting reschedule() happen during thread creation is also harmless, since MAIN is
     // created first and dispatch won't replace it nor by itself neither by IDLE (which
     // has a lower priority)
-    if(Criterion::timed && (Machine::cpu_id() == 0))
+    if(Criterion::timed && (CPU::id() == 0))
         _timer = new (SYSTEM) Scheduler_Timer(QUANTUM, time_slicer);
 
     // Install an interrupt handler to receive forced reschedules
     if(smp) {
-        if(Machine::cpu_id() == 0)
+        if(CPU::id() == 0)
             IC::int_vector(IC::INT_RESCHEDULER, rescheduler);
         IC::enable(IC::INT_RESCHEDULER);
     }
 
     // Enable secondary cores monitoring (primary core is enabled at pre_main())
-    if(monitored && Machine::cpu_id() != 0)
+    if(monitored && CPU::id() != 0)
         Monitor::init();
 
     // Transition from CPU-based locking to thread-based locking

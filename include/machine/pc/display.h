@@ -4,7 +4,7 @@
 #define __pc_display_h
 
 #include <machine/display.h>
-#include <machine/pc/memory_map.h>
+#include __HEADER_MMOD(memory_map)
 
 __BEGIN_SYS
 

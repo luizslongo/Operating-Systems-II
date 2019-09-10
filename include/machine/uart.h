@@ -23,8 +23,8 @@ public:
 
 __END_SYS
 
-#ifdef __UART_H
-#include __UART_H
 #endif
 
+#if defined(__UART_H) && !defined(__common_only__)
+#include __UART_H
 #endif

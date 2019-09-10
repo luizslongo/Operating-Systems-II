@@ -189,7 +189,7 @@ private:
 };
 
 // i8042 is used even if the machine is configured without a keyboard (e.g. leds, reboot)
-#ifdef __KEYBOARD_H
+#if defined(__KEYBOARD_H) && !defined(__common_only__)
 
 class Keyboard: public IF<Traits<Serial_Keyboard>::enabled, Serial_Keyboard, PS2_Keyboard>::Result {};
 

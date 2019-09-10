@@ -250,8 +250,8 @@ public:
 
 __END_SYS
 
-#if defined (__NIC_H) && !defined(__no_mediator__)
-#include __NIC_H
 #endif
 
+#if defined (__NIC_H) && !defined(__no_mediator__)
+#include __NIC_H
 #endif

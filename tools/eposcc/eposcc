@@ -71,9 +71,9 @@ fi
 LINK_OBJI_LIBRARY="$LIB/$ARCH""_crt0.o $LIB/$ARCH""_crtbegin.o $LIB/$MACH""_init_first.o"
 LINK_OBJN_LIBRARY="$LIB/$MACH""_application.o $LIB/$MACH""_init_application.o $LIB/$MACH""_init_system.o"
 LINK_OBJL_LIBRARY="$LIB/$MACH""_system.o $LIB/$ARCH""_crtend.o"
-LINK_LIBS_LIBRARY="util_$ARCH init_$ARCH sys_$ARCH mach_$ARCH arch_$ARCH util_$ARCH gcc"
+LINK_LIBS_LIBRARY="util_$ARCH sys_$ARCH init_$ARCH mach_$ARCH arch_$ARCH util_$ARCH gcc"
 if [ "$SETUP" = "" ] ; then
-    LINK_OBJI_LIBRARY="$LIB/$MACH""_setup.o $LINK_OBJI_LIBRARY"
+    LINK_OBJI_LIBRARY="$LIB/$MMOD""_setup.o $LINK_OBJI_LIBRARY"
 fi
 
 LINKER_BUILTIN=$LINKER
@@ -83,7 +83,7 @@ LINK_OBJN_BUILTIN="$LIB/$MACH""_application.o $LIB/$MACH""_init_application.o -R
 LINK_OBJL_BUILTIN="$LIB/$ARCH""_crtend.o"
 LINK_LIBS_BUILTIN="util_$ARCH gcc"
 if [ "$SETUP" = "" ] ; then
-LINK_OBJN_BUILTIN="$LIB/$MACH""_setup.o $LINK_OBJN_BUILTIN"
+LINK_OBJN_BUILTIN="$LIB/$MMOD""_setup.o $LINK_OBJN_BUILTIN"
 fi
 
 LINKER_KERNEL=$LINKER
@@ -340,7 +340,7 @@ link_objs="$LINK_OBJI $link_objs $LINK_OBJN"
 for lib in $LINK_LIBS ; do
   link_libs="$link_libs -l$lib"
 done
-link_libs="$link_libs $LINK_OBJL"
+link_libs="$LINK_OBJL $link_libs"
 
 if [ $need_compile = 1 -a ! -f "$key_file" ] ; then
     need_analyze=1

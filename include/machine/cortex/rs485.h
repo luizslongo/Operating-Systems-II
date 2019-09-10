@@ -1,45 +1,19 @@
-// EPOS Cortex RS-485 Mediator Declarations
+// EPOS ARM Cortex RS-485 Mediator Declarations
 
-#ifndef __cortex_rs485_h__
-#define __cortex_rs485_h__
+#ifndef __cortex_rs485_h
+#define __cortex_rs485_h
 
-#include "uart.h"
-#include "gpio.h"
+#include <architecture/cpu.h>
+#include <machine/uart.h>
+#include <machine/rs485.h>
+#include __HEADER_MMOD(rs485)
 
 __BEGIN_SYS
 
-#ifdef __mmod_zynq__
-
-class RS485_Engine: protected Machine_Model;
-
-#else
-
-//
-class RS485_Transceiver: protected Machine_Model
+class RS485: private UART, private RS485_Engine
 {
 private:
-    static const char RE_PORT = 'C';
-    static const unsigned int RE_PIN  = 5;
-    static const char DE_PORT = 'C';
-    static const unsigned int DE_PIN  = 6;
-
-public:
-    RS485_Transceiver(): _re(GPIO(RE_PORT, RE_PIN, GPIO::OUT)), _de(GPIO(DE_PORT, DE_PIN, GPIO::OUT)) {}
-
-    void out() { _re.set(true); _de.set(true); }
-    void in() { _re.set(false); _de.set(false); }
-
-private:
-    GPIO _re;
-    GPIO _de;
-};
-
-#endif
-
-class RS485: private UART, private RS485_Transceiver
-{
-private:
-    typedef RS485_Transceiver Transceiver;
+    typedef RS485_Engine Transceiver;
     typedef UART Engine;
 
     static const unsigned int UNIT = Traits<UART>::DEF_UNIT;
@@ -53,35 +27,35 @@ public:
     : Engine(unit, baud_rate, data_bits, parity, stop_bits) {}
 
     void config(unsigned int baud_rate, unsigned int data_bits, unsigned int parity, unsigned int stop_bits) {
-    	Engine::config(baud_rate, data_bits, parity, stop_bits);
+        Engine::config(baud_rate, data_bits, parity, stop_bits);
     }
     void config(unsigned int * baud_rate, unsigned int * data_bits, unsigned int * parity, unsigned int * stop_bits) {
-    	Engine::config(*baud_rate, *data_bits, *parity, *stop_bits);
+        Engine::config(*baud_rate, *data_bits, *parity, *stop_bits);
     }
 
     int read(void * data, unsigned int size) {
-    	char * d = reinterpret_cast<char *>(data);
-    	unsigned int s = 0;
+        char * d = reinterpret_cast<char *>(data);
+        unsigned int s = 0;
 
-    	for(; s < size; s++) {
-    		if(ready_to_get())
-    			d[s] = get();
-    		else
-    			break;
-    	}
-    	return s;
+        for(; s < size; s++) {
+            if(ready_to_get())
+                d[s] = get();
+            else
+                break;
+        }
+        return s;
     }
     int write(const void * data, unsigned int size) {
-    	const char * d = reinterpret_cast<const char *>(data);
-    	unsigned int s = 0;
+        const char * d = reinterpret_cast<const char *>(data);
+        unsigned int s = 0;
 
-    	Transceiver::out();
-    	for(; s < size; s++)
-    		put(d[s]);
-    	Engine::flush();
-    	Transceiver::in();
+        Transceiver::out();
+        for(; s < size; s++)
+            put(d[s]);
+        Engine::flush();
+        Transceiver::in();
 
-    	return s;
+        return s;
     }
 
     using Engine::flush;

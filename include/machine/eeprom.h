@@ -18,8 +18,8 @@ public:
 
 __END_SYS
 
-#ifdef __EEPROM_H
-#include __EEPROM_H
 #endif
 
+#if defined(__EEPROM_H) && !defined(__common_only__)
+#include __EEPROM_H
 #endif
