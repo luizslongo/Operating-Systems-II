@@ -7,7 +7,7 @@
 __BEGIN_SYS
 
 // Class attributes
-volatile unsigned int Machine::_n_cpus;
+volatile unsigned int Machine::_cores;
 
 
 // Class methods

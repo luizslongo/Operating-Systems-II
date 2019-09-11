@@ -1,8 +1,6 @@
 // EPOS Realview PBX (ARM Cortex-A9) Initialization
 
-#include <machine.h>
-
-#ifdef __realview_pbx__
+#include <machine/machine.h>
 
 __BEGIN_SYS
 
@@ -325,4 +323,3 @@ void Machine_Engine::smp_init(unsigned int n_cpus) {
 }
 
 __END_SYS
-#endif

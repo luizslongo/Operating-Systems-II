@@ -144,7 +144,7 @@ cortex_IMG_SUFFIX	:= .bin
 endif
 
 ifeq ($(MMOD),lm3s811)
-cortex_EMULATOR		= qemu-system-arm -machine lm3s811evb -m $(MEM_SIZE)k -serial mon:stdio -serial chardev:pipe -nographic -no-reboot -chardev pipe,id=pipe,path=/tmp/epos -kernel 
+cortex_EMULATOR		= qemu-system-arm -machine lm3s811evb -m $(MEM_SIZE)k -serial mon:stdio -serial null -nographic -no-reboot -kernel 
 cortex_CC_FLAGS		:= -mcpu=cortex-m3 -mthumb -mabi=atpcs -Wno-builtin-declaration-mismatch -Wno-array-bounds
 cortex_AS_FLAGS		:= -mcpu=cortex-m3 -mthumb -meabi=gnu
 cortex_LD_FLAGS		:=

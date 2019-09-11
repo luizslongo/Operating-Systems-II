@@ -1,4 +1,4 @@
-// EPOS Cortex-A Mediator Initialization
+// EPOS Cortex Initialization
 
 #include <machine.h>
 

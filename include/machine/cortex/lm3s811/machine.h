@@ -40,8 +40,8 @@ public:
     static void smp_init(unsigned int n_cpus) { assert(n_cpus == 1); }
 
 protected:
-    static void pre_init() { scr()->clock_init(); }
-    static void init() { scb()->enter_thread_state(); }
+    static void pre_init();
+    static void init();
 
 private:
     static SysTick * systick() { return reinterpret_cast<SysTick *>(SCS_BASE); }

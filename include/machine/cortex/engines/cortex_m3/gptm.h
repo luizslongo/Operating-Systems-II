@@ -8,6 +8,7 @@
 #include <machine/rtc.h>
 #include <machine/timer.h>
 #undef __common_only__
+#include <utility/convert.h>
 
 __BEGIN_SYS
 
@@ -114,9 +115,8 @@ public:
     void disable() { gptm(GPTMCTL) &= ~TAEN; }
 
     void delay(const Count & offset) {
-        // TODO: check if this considers overflow!
         gptm(GPTMTAILR) = offset;
-        gptm(GPTMTAPR) = offset >> 32;
+        gptm(GPTMTAPR) = 0;
         gptm(GPTMCTL) |= TAEN;
         while(!(gptm(GPTMRIS) & TATO_INT));
         gptm(GPTMCTL) &= ~TAEN;

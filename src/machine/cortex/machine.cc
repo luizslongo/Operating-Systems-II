@@ -1,4 +1,4 @@
-// EPOS Cortex-A Mediator Implementation
+// EPOS ARM Cortex Mediator Implementation
 
 #include <machine/cortex/machine.h>
 #include <machine/display.h>
