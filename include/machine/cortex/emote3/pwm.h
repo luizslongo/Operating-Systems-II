@@ -23,6 +23,7 @@ public:
     void duty_cycle(const Percent & d) { _timer->pwm(d); }
     void enable() { _timer->enable(); }
     void disable() { _timer->disable(); }
+
     void power(const Power_Mode & mode) { _timer->power(mode); }
 
 private:

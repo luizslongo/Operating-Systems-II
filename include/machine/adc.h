@@ -13,6 +13,8 @@ protected:
     ADC_Common() {}
 
 public:
+    template <typename T>
+    unsigned short read();
 };
 
 __END_SYS

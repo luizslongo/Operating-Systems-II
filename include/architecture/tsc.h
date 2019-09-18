@@ -21,8 +21,8 @@ public:
 
 __END_SYS
 
-#if defined(__TSC_H) && !defined(__common_only__)
-#include __TSC_H
 #endif
 
+#if defined(__TSC_H) && !defined(__common_only__)
+#include __TSC_H
 #endif

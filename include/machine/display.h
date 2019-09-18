@@ -19,6 +19,16 @@ class Display_Common
 {
 protected:
     Display_Common() {}
+
+public:
+    static void putc(char c);
+    static void puts(const char * s);
+
+    static void clear();
+
+    static void geometry(int * lines, int * columns);
+    static void position(int * line, int * column);
+    static void position(int line, int column);
 };
 
 class Serial_Display: public Display_Common
@@ -143,12 +153,14 @@ private:
     static int _column;
 };
 
+__END_SYS
+
 // If the machine does not feature a Keyboard, then use the serial console
 #ifndef __DISPLAY_H
+__BEGIN_SYS
 class Display: public IF<Traits<Serial_Display>::enabled, Serial_Display, Dummy>::Result {};
-#endif
-
 __END_SYS
+#endif
 
 #endif
 

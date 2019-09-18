@@ -3,6 +3,8 @@
 #ifndef __ip_h
 #define __ip_h
 
+#include <system/config.h>
+
 #ifdef __ipv4__
 
 #include <utility/bitmap.h>

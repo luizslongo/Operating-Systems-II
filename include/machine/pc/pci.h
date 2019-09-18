@@ -4,7 +4,7 @@
 #define __pc_pci_h
 
 #include <machine/pci.h>
-#include __HEADER_MMOD(memory_map)
+#include <system/memory_map.h>
 
 __BEGIN_SYS
 

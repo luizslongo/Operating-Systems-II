@@ -11,6 +11,11 @@ class PWM_Common
 {
 protected:
     PWM_Common() {}
+
+public:
+    void duty_cycle(const Percent & d);
+    void enable();
+    void disable();
 };
 
 __END_SYS

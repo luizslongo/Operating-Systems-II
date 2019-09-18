@@ -25,8 +25,8 @@ public:
     static void disable();
     static void disable(const Interrupt_Id & id);
 
-    static Interrupt_Id irq2int(const Interrupt_Id & id);
-    static Interrupt_Id int2irq(const Interrupt_Id & irq);
+    static Interrupt_Id irq2int(const Interrupt_Id & id);       // Offset IRQs as seen by the bus to INTs seen by the CPU (if needed)
+    static Interrupt_Id int2irq(const Interrupt_Id & irq);      // Offset INTs as seen by the CPU to IRQs seen by the bus (if needed)
 
     static void ipi(unsigned int cpu, const Interrupt_Id & id); // Inter-processor Interrupt
 };

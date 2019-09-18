@@ -98,8 +98,8 @@ protected:
 
 __END_SYS
 
-#if defined(__PMU_H) && !defined(__common_only__)
-#include __PMU_H
 #endif
 
+#if defined(__PMU_H) && !defined(__common_only__)
+#include __PMU_H
 #endif

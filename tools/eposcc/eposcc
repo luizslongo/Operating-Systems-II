@@ -71,7 +71,7 @@ fi
 LINK_OBJI_LIBRARY="$LIB/$ARCH""_crt0.o $LIB/$ARCH""_crtbegin.o $LIB/$MACH""_init_first.o"
 LINK_OBJN_LIBRARY="$LIB/$MACH""_application.o $LIB/$MACH""_init_application.o $LIB/$MACH""_init_system.o"
 LINK_OBJL_LIBRARY="$LIB/$MACH""_system.o $LIB/$ARCH""_crtend.o"
-LINK_LIBS_LIBRARY="util_$ARCH sys_$ARCH init_$ARCH mach_$ARCH arch_$ARCH util_$ARCH gcc"
+LINK_LIBS_LIBRARY="util_$ARCH sys_$ARCH init_$ARCH sys_$ARCH mach_$ARCH arch_$ARCH util_$ARCH gcc"
 if [ "$SETUP" = "" ] ; then
     LINK_OBJI_LIBRARY="$LIB/$MMOD""_setup.o $LINK_OBJI_LIBRARY"
 fi

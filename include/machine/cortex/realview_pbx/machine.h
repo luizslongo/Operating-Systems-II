@@ -46,11 +46,12 @@ public:
     static void init();
 
 private:
-    static volatile unsigned int _cores;
-
     static GIC_CPU * gic_cpu() { return reinterpret_cast<GIC_CPU *>(GIC_CPU_BASE); }
     static GIC_Distributor * gic_distributor() { return reinterpret_cast<GIC_Distributor *>(GIC_DIST_BASE); }
     static SCU * scu() { return reinterpret_cast<SCU *>(SCU_BASE); }
+
+private:
+    static volatile unsigned int _cores;
 };
 
 __END_SYS

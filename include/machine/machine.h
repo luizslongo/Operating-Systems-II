@@ -3,7 +3,9 @@
 #ifndef __machine_machine_h
 #define __machine_machine_h
 
-#include <architecture/cpu.h>
+#define __common_only__
+#include <machine/rtc.h>
+#undef __common_only__
 
 __BEGIN_SYS
 
@@ -33,23 +35,13 @@ protected:
     Machine_Common() {}
 
 public:
-    static void smp_barrier(unsigned long cores) {
-        static volatile unsigned long ready[2];
-        static volatile unsigned long i;
+    static void delay(const RTC_Common::Microsecond & time);
 
-        if(cores > 1) {
-            int j = i;
+    static void panic();
+    static void reboot();
+    static void poweroff();
 
-            CPU::finc(ready[j]);
-
-            if(CPU::id() == 0) {
-                while(ready[j] < cores);  // wait for all CPUs to be ready
-                i = !i;                   // toggle ready
-                ready[j] = 0;             // signalizes waiting CPUs
-            } else
-                while(ready[j]);          // wait for CPU[0] signal
-        }
-    }
+    static const UUID & uuid();
 };
 
 __END_SYS

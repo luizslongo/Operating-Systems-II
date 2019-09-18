@@ -114,7 +114,7 @@ template<> struct Traits<Aspect>: public Traits<void>
 __END_SYS
 
 #include __ARCHITECTURE_TRAITS_H
-#include Machine_Engine_Engine_TRAITS_H
+#include __MACHINE_TRAITS_H
 
 __BEGIN_SYS
 

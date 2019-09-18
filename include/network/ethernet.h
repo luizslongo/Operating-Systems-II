@@ -3,7 +3,7 @@
 #ifndef __ethernet_h
 #define __ethernet_h
 
-#include <architecture.h>
+#include <architecture/cpu.h>
 #define __common_only__
 #include <machine/nic.h>
 #undef __common_only__

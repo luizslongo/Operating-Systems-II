@@ -3,7 +3,7 @@
 #ifndef __fpga_h
 #define __fpga_h
 
-#include <architecture/cpu.h>
+#include <system/config.h>
 
 __BEGIN_SYS
 
@@ -11,6 +11,10 @@ class FPGA_Common
 {
 protected:
     FPGA_Common() {}
+
+public:
+    static void reset();
+    static void int_handler(const IC::Interrupt_Id & interrupt);
 };
 
 __END_SYS

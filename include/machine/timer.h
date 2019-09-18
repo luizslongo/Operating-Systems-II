@@ -3,9 +3,11 @@
 #ifndef __timer_h
 #define __timer_h
 
+#define __common_only__
 #include <architecture/tsc.h>
 #include <machine/rtc.h>
 #include <machine/ic.h>
+#undef __common_only__
 
 __BEGIN_SYS
 

@@ -2,7 +2,7 @@
 
 #include <system/config.h>
 
-#if defined(__KEYBOARD_H) && !defined(__common_only__)
+#ifdef __KEYBOARD_H
 
 #include <machine/pc/keyboard.h>
 

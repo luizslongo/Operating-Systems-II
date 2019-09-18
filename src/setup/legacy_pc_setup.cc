@@ -171,7 +171,7 @@ PC_Setup::PC_Setup(char * boot_image)
 
     db<Setup>(INF) << "System_Info=" << *si << endl;
 
-    Machine::smp_barrier(si->bm.n_cpus);
+    CPU::smp_barrier(si->bm.n_cpus);
     if(cpu_id == 0) { // Boot strap CPU (BSP)
 
         // Disable hardware interrupt triggering at PIC
@@ -232,7 +232,7 @@ PC_Setup::PC_Setup(char * boot_image)
         setup_tss();
     }
 
-    Machine::smp_barrier(si->bm.n_cpus);
+    CPU::smp_barrier(si->bm.n_cpus);
 
     db<Setup>(INF) << "IP=" << CPU::ip() << endl;
     db<Setup>(INF) << "SP=" << reinterpret_cast<void *>(CPU::sp()) << endl;
@@ -913,7 +913,7 @@ void PC_Setup::call_next()
 
     db<Setup>(INF) << "SETUP ends here!" << endl;
 
-    Machine::smp_barrier(si->bm.n_cpus);
+    CPU::smp_barrier(si->bm.n_cpus);
 
     // Set SP and call next stage
     CPU::sp(sp);

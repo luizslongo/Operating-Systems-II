@@ -6,7 +6,7 @@
 
 __BEGIN_SYS
 
-Segment * Scratchpad_Common::_segment;
-Heap * Scratchpad_Common::_heap;
+Segment * Scratchpad_Base::_segment;
+Heap * Scratchpad_Base::_heap;
 
 __END_SYS

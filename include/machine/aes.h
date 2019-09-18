@@ -9,8 +9,20 @@ __BEGIN_SYS
 
 class AES_Common
 {
+public:
+    enum Mode {
+        ECB,
+        CBC,
+    };
+
 protected:
     AES_Common() {}
+
+public:
+    const Mode & mode();
+
+    void encrypt(const unsigned char * data, const unsigned char * key, unsigned char * result);
+    void decrypt(const unsigned char * data, const unsigned char * key, unsigned char * result);
 };
 
 __END_SYS

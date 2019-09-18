@@ -1,17 +1,16 @@
 // EPOS IA32 CPU Mediator Implementation
 
 #include <architecture/ia32/cpu.h>
-#include <machine.h>
-
-extern "C" { void _exec(void *); }
+#include <architecture/ia32/mmu.h>
+#include <machine/ic.h>
+#include <system/memory_map.h>
 
 __BEGIN_SYS
 
-// Class attributes
+volatile unsigned int CPU::_cores;
 unsigned int CPU::_cpu_clock;
 unsigned int CPU::_bus_clock;
 
-// Class methods
 void CPU::Context::save() volatile
 {
     // Save the running thread context into its own stack (mostly for debugging)
@@ -90,22 +89,9 @@ void CPU::switch_context(Context * volatile * o, Context * volatile n)
         "        iret                                                    \n");
 }
 
-void CPU::syscalled()
-{
-    // We get here when an APP triggers INT_SYSCALL with the message address in CX
-    // The CPU saves the user-level stack pointer in the stack and restores the system-level stack pointer also from the TSS
-    // Stack contents at this point are always: ss, esp, eflags, cs, eip
-    // CX holds the pointer to the message
-
-    if(Traits<Build>::MODE == Traits<Build>::KERNEL) {
-        // Do the system call by calling _exec with the message pointed by ecx
-        ASM("        push    %ecx                # msg                       \n"
-            "        call    _exec                                           \n"
-            "        pop     %ecx                # clean up                  \n");
-
-        // Return to user-level
-        ASM("        iret                                                    \n");
-    }
+unsigned int CPU::id() {
+    // Core id in IA32 is handled by the APIC
+    return smp ? APIC::id() : 0;
 }
 
 __END_SYS

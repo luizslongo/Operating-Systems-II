@@ -8,10 +8,14 @@
 
 __BEGIN_SYS
 
-class Scratchpad_Common
+// TODO: This design is a bit weird, since this is not a Common package (it's a base indeed). It could be refactored to have an "Engine" or to just leave ::init() to be implemented by each Machine
+class Scratchpad_Base
 {
     friend void * ::operator new(size_t, const EPOS::Scratchpad_Allocator &);
     friend void * ::operator new[](size_t, const EPOS::Scratchpad_Allocator &);
+
+protected:
+    Scratchpad_Base() {}
 
 public:
     static void * alloc(unsigned int bytes) { return _heap->alloc(bytes); }
@@ -37,3 +41,4 @@ inline void * operator new[](size_t bytes, const EPOS::Scratchpad_Allocator & al
 }
 
 #endif
+

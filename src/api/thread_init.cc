@@ -16,7 +16,7 @@ void Thread::init()
 
     db<Init, Thread>(TRC) << "Thread::init()" << endl;
 
-    Machine::smp_barrier();
+    CPU::smp_barrier();
 
     static volatile bool task_ready = false;
 
@@ -50,7 +50,7 @@ void Thread::init()
         new (SYSTEM) Thread(Thread::Configuration(Thread::RUNNING, Thread::IDLE), &Thread::idle);
     }
 
-    Machine::smp_barrier();
+    CPU::smp_barrier();
 
     // The installation of the scheduler timer handler does not need to be done after the
     // creation of threads, since the constructor won't call reschedule() which won't call
@@ -73,7 +73,7 @@ void Thread::init()
         Monitor::init();
 
     // Transition from CPU-based locking to thread-based locking
-    Machine::smp_barrier();
+    CPU::smp_barrier();
     This_Thread::not_booting();
 }
 

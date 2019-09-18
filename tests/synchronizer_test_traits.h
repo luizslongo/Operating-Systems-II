@@ -46,9 +46,9 @@ struct Traits
 template<> struct Traits<Build>: public Traits<void>
 {
     static const unsigned int MODE = LIBRARY;
-    static const unsigned int ARCHITECTURE = ARMv7;
-    static const unsigned int MACHINE = Cortex;
-    static const unsigned int MODEL = LM3S811;
+    static const unsigned int ARCHITECTURE = IA32;
+    static const unsigned int MACHINE = PC;
+    static const unsigned int MODEL = Legacy_PC;
     static const unsigned int CPUS = 1;
     static const unsigned int NODES = 1;     // (> 1 => NETWORKING)
     static const unsigned int EXPECTED_SIMULATION_TIME = 60;    // s (0 => not simulated)
@@ -60,8 +60,8 @@ template<> struct Traits<Debug>: public Traits<void>
 {
     static const bool error   = true;
     static const bool warning = true;
-    static const bool info    = true;
-    static const bool trace   = true;
+    static const bool info    = false;
+    static const bool trace   = false;
 };
 
 template<> struct Traits<Lists>: public Traits<void>
@@ -114,7 +114,7 @@ template<> struct Traits<Aspect>: public Traits<void>
 __END_SYS
 
 #include __ARCHITECTURE_TRAITS_H
-#include Machine_Engine_Engine_TRAITS_H
+#include __MACHINE_TRAITS_H
 
 __BEGIN_SYS
 
@@ -156,7 +156,7 @@ template<> struct Traits<Thread>: public Traits<void>
     static const bool simulate_capacity = false;
     static const bool trace_idle = hysterically_debugged;
 
-    typedef Scheduling_Criteria::CPU_Affinity Criterion;
+    typedef Scheduling_Criteria::Priority Criterion;
     static const unsigned int QUANTUM = 10000; // us
 };
 

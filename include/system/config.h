@@ -57,7 +57,7 @@ namespace EPOS {
 #define __APPL_TRAITS(X)        __APPL_TRAITS_T(X)
 
 #define __ARCHITECTURE_TRAITS_H __HEADER_ARCH(traits)
-#define Machine_Engine_Engine_TRAITS_H      __HEADER_MMOD(traits)
+#define __MACHINE_TRAITS_H      __HEADER_MMOD(traits)
 #define __APPLICATION_TRAITS_H  __APPL_TRAITS(APPL)
 
 #define ASM                     __asm__ __volatile__

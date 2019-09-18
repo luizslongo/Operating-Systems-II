@@ -39,12 +39,14 @@ private:
     static Observed _observed;
 };
 
+__END_SYS
+
 // If the machine does not feature a Keyboard, then use the serial console
 #ifndef __KEYBOARD_H
+__BEGIN_SYS
 class Keyboard: public IF<Traits<Serial_Keyboard>::enabled, Serial_Keyboard, Dummy>::Result {};
-#endif
-
 __END_SYS
+#endif
 
 #endif
 
