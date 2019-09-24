@@ -22,7 +22,7 @@ public:
     Machine() {}
 
     using Engine::delay;
-    using Engine::smp_barrier;
+    // using Engine::smp_barrier;
 
     static const UUID & uuid() { return System::info()->bm.uuid; }
 

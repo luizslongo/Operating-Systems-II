@@ -1,5 +1,6 @@
 // EPOS ARMv7 Time-Stamp Counter Mediator Initialization
 
+#include <machine/machine.h>
 #include <machine/timer.h>
 
 __BEGIN_SYS

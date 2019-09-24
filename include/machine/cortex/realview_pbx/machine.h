@@ -37,7 +37,7 @@ public:
 
     static const UUID & uuid() { return System::info()->bm.uuid; }
 
-    static void smp_barrier() { Machine_Common::smp_barrier(_cores); }
+    // static void smp_barrier(); // { CPU::smp_barrier(_cores); }
 
     static void smp_init(unsigned int n_cpus);
 
