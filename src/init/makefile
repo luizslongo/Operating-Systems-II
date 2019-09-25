@@ -31,9 +31,9 @@ init_builtin_$(MMOD): $(SRC)/system/system_$(MMOD) $(OBJS) $(LIBINIT)
 		$(LD) $(LDFLAGS) -L$(CCLIB) --omagic \
 		--section-start $(MACH_CODE_NAME)=$(INIT_ADDR) \
 		--entry=_init -o init_$(MMOD) \
-		$(LIB)/$(ARCH)_crtbegin.o \
+		$(LIB)/crtbegin_$(MMOD).o \
 		init_first.o init_system.o \
-		$(LIB)/$(ARCH)_crtend.o \
+		$(LIB)/crtend_$(MMOD).o \
 		-l$(LINIT) \
 		-R $(SRC)/system/system_$(MMOD) \
 		-l$(LUTIL) -lgcc
@@ -43,9 +43,9 @@ init_kernel_$(MMOD): $(SRC)/system/system_$(MMOD) $(OBJS) $(LIBINIT)
 		$(LD) $(LDFLAGS) -L$(CCLIB) --omagic \
 		--section-start .init=$(INIT_ADDR) \
 		--entry=_init -o init_$(MMOD) \
-		$(LIB)/$(ARCH)_crtbegin.o \
+		$(LIB)/crtbegin_$(MMOD).o \
 		init_first.o init_system.o \
-		$(LIB)/$(ARCH)_crtend.o \
+		$(LIB)/crtend_$(MMOD).o \
 		-l$(LINIT) \
 		-R $(SRC)/system/system_$(MMOD) \
 		-l$(LUTIL) -lgcc
