@@ -54,6 +54,6 @@ system_kernel_$(MMOD): $(OBJS)
 		$(LD) $(LDFLAGS) -i application_scaffold.o application_binding.o -o application_$(MMOD).o
 
 clean:
-		$(CLEAN) *.o system_$(MMOD)
+		$(CLEAN) *.o $(shell find -maxdepth 1 -executable -not -type d)
 
 FORCE:

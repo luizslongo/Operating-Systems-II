@@ -16,4 +16,4 @@ install.o:	setup_$(MMOD).o
 		$(INSTALL) $< $(LIB)
 
 clean:
-		$(CLEAN) *.o *.s setup_$(MMOD)
+		$(CLEAN) *.o $(shell find -maxdepth 1 -executable -not -type d)

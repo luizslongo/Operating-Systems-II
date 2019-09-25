@@ -53,6 +53,6 @@ init_kernel_$(MMOD): $(SRC)/system/system_$(MMOD) $(OBJS) $(LIBINIT)
 
 
 clean:
-		$(CLEAN) *.o init_$(MMOD)
+		$(CLEAN) *.o $(shell find -maxdepth 1 -executable -not -type d)
 
 FORCE:

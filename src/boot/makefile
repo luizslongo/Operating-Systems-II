@@ -20,5 +20,5 @@ install_legacy_pc: boot_legacy_pc
 		$(CLEAN) boot_$(MMOD).tmp
 
 clean:
-		$(CLEAN) *.s *.o boot_$(MMOD) *.tmp
+		$(CLEAN) *.s *.o *.tmp $(shell find -maxdepth 1 -executable -not -type d)
 
