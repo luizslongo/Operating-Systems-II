@@ -37,13 +37,12 @@ public:
 
     static const UUID & uuid() { return System::info()->bm.uuid; }
 
-    // static void smp_barrier(); // { CPU::smp_barrier(_cores); }
-
-    static void smp_init(unsigned int n_cpus);
-
 public:
+    static void smp_init(unsigned int n_cpus) {
+        gic_distributor()->smp_init(n_cpus);
+    }
     static void pre_init();
-    static void init();
+    static void init() {}
 
 private:
     static GIC_CPU * gic_cpu() { return reinterpret_cast<GIC_CPU *>(GIC_CPU_BASE); }

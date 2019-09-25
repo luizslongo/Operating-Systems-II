@@ -106,6 +106,7 @@ public:
         return old;
     }
 
+    template <int (* finc)(volatile int &)>
     static void smp_barrier(unsigned int cores, unsigned int id) {
         static volatile int ready[2];
         static volatile int i;

@@ -188,6 +188,22 @@ public:
         gic_dist(ICDSGIR) = aux;
     }
 
+    void smp_init(unsigned int cores) {
+        Reg32 interrupt_id = 0x0; // reset id
+
+        Reg32 target_list = 0x0;
+        if(cores <= CPU::cores())
+            for(unsigned int i = 0; i < cores; i++)
+                target_list |= 1 << (i);
+        else
+            for(unsigned int i = 0; i < CPU::cores(); i++)
+                target_list |= 1 << (i);
+
+        Reg32 filter_list = 0x01; // except the current
+
+        send_sgi(interrupt_id, target_list, filter_list);
+    }
+
     void init() {
         // Enable distributor
         gic_dist(ICDDCR) = DIST_EN_S;

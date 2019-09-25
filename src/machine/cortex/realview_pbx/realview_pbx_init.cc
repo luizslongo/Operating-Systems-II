@@ -300,26 +300,4 @@ void Machine_Engine::pre_init()
     }
 }
 
-void Machine_Engine::init()
-{
-}
-
-void Machine_Engine::smp_init(unsigned int n_cpus) {
-    CPU::Reg32 interrupt_id = 0x0; // reset id
-    
-    CPU::Reg32 target_list = 0x0;
-    if(n_cpus <= CPU::cores()) {
-        for(unsigned int i = 0; i < n_cpus; i++) {
-            target_list |= 1 << (i);
-        }
-    } else {
-        for(unsigned int i = 0; i < CPU::cores(); i++) {
-            target_list |= 1 << (i);
-        }
-    }
-    CPU::Reg32 filter_list = 0x01; // except the current
-    
-    gic_distributor()->send_sgi(interrupt_id, target_list, filter_list);
-}
-
 __END_SYS

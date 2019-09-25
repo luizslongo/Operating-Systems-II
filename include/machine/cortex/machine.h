@@ -22,7 +22,6 @@ public:
     Machine() {}
 
     using Engine::delay;
-    // using Engine::smp_barrier;
 
     static const UUID & uuid() { return System::info()->bm.uuid; }
 
@@ -40,7 +39,6 @@ public:
     }
 
 private:
-    using Engine::smp_init;
     static void pre_init(System_Info * si);
     static void init();
 };

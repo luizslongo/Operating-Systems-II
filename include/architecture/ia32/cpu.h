@@ -394,7 +394,7 @@ public:
         return compare;
     }
 
-    static void smp_barrier(unsigned long cores = _cores);
+    static void smp_barrier(unsigned long cores = cores()) { CPU_Common::smp_barrier<&finc>(cores, id()); }
 
     static Reg64 htole64(Reg64 v) { return v; }
     static Reg32 htole32(Reg32 v) { return v; }

@@ -9,8 +9,10 @@ __BEGIN_SYS
 
 class ARMv7: protected CPU_Common
 {
-public:
+private:
     static const bool smp = Traits<System>::multicore;
+
+public:
     // CPU Native Data Types
     using CPU_Common::Reg8;
     using CPU_Common::Reg16;
@@ -200,7 +202,7 @@ public:
     static void int_enable() { ASM("cpsie i"); }
     static void int_disable() { ASM("cpsid i"); }
 
-    static void smp_barrier(unsigned long cores = cores()) {ARMv7::smp_barrier(cores, id());}
+    static void smp_barrier(unsigned long cores = cores()) { assert(cores == 1); }
 
     static bool int_enabled() { return !int_disabled(); }
     static bool int_disabled() {
@@ -286,7 +288,7 @@ public:
         return (n & 0x3) + 1;
     }
 
-    static void smp_barrier(unsigned long cores = cores()) {ARMv7::smp_barrier(cores, id());}
+    static void smp_barrier(unsigned long cores = cores()) { CPU_Common::smp_barrier<&finc>(cores, id()); }
 
     static void int_enable() { flags(flags() & ~0xc0); }
     static void int_disable() { flags(flags() | 0xc0); }
