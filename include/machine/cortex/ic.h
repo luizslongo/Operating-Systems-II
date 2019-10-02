@@ -11,7 +11,6 @@ __BEGIN_SYS
 
 class IC: private IC_Engine
 {
-    friend class Machine_Engine;
     friend class Machine;
 
 private:
@@ -23,11 +22,13 @@ private:
 public:
     using Engine::Interrupt_Id;
     using Engine::Interrupt_Handler;
+
     using Engine::INT_TIMER;
     using Engine::INT_USER_TIMER0;
     using Engine::INT_USER_TIMER1;
     using Engine::INT_USER_TIMER2;
     using Engine::INT_USER_TIMER3;
+    using Engine::INT_MACTIMER;
     using Engine::INT_GPIOA;
     using Engine::INT_GPIOB;
     using Engine::INT_GPIOC;

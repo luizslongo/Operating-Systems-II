@@ -1,111 +1,86 @@
-// EPOS EPOSMote III (ARM Cortex-M3) MCU GPIO Mediator Declarations
+/// EPOS EPOSMote III (ARM Cortex-M3) GPIO Mediator Declarations
 
-#ifndef __model_gpio_h
-#define __model_gpio_h
+#ifndef __emote3_gpio_h
+#define __emote3_gpio_h
 
-#include <machine/gpio.h>
-#include "sysctrl.h"
+#include <machine/cortex/engines/cortex_m3/scb.h>
 #include <machine/cortex/engines/pl061.h>
-#include "../engines/cortex_m3/scb.h"
+#include "sysctrl.h"
 #include "memory_map.h"
 
 __BEGIN_SYS
 
-class GPIO_Engine: private GPIO_Common, public PL061
+class GPIO_Engine: public GPIO_Common
 {
-private:
-    static const bool supports_power_up = true;
+protected:
+    static const unsigned int PORTS = Traits<GPIO>::UNITS;
 
 public:
-    GPIO_Engine(char port, unsigned int pin, const Direction & dir, const Pull & pull = UP, const Edge & int_edge = NONE)
-    : PL061(pin, dir, pull), _port(port), _pin(pin), _pin_bit(1 << pin), _data(&gpio(_port, _pin_bit << 2)) {
-        assert(port < GPIO_PORTS);
-        clear_interrupts();
-        if(int_edge != NONE) {
-            _devices[_port][_pin] = this;
-            int_enable(int_edge);
-        }
-    }
-    ~GPIO_Engine() {
-        int_disable();
-        _devices[_port][_pin] = 0;
+    GPIO_Engine(const Port & port, const Pin & pin, const Direction & dir, const Pull & p, const Edge & int_edge)
+    : _pin_mask(1 << pin) {
+        assert(port < PORTS);
+        power(FULL);
+        _gpio = new(reinterpret_cast<void *>(Memory_Map::GPIOA_BASE + port * 0x1000)) PL061;
+        _gpio->select_pin_function(_pin_mask, PL061::FUN_GPIO);
+        pull(p);
+        direction(dir);
+        if(int_edge != NONE)
+            _gpio->clear_interrupts(_pin_mask);
     }
 
     bool get() const {
         assert(_direction == IN || _direction == INOUT);
-        return *_data;
+        return _gpio->get(_pin_mask);
     }
 
     void set(bool value = true) {
         assert(_direction == INOUT || _direction == OUT);
-        if(_direction == INOUT) {
-            gpio(_port, DIR) |= _pin_bit;
-            *_data = 0xff * value;
-            gpio(_port, DIR) &= ~_pin_bit;
-        } else
-            *_data = 0xff * value;
+        if(_direction == INOUT)
+            _gpio->direction(_pin_mask, OUT); // temporarily, so don't set _direction
+        _gpio->set(_pin_mask, value);
+        if(_direction == INOUT)
+            _gpio->direction(_pin_mask, IN);
     }
 
-    void clear() { set(false); }
+    void clear() { _gpio->clear(_pin_mask); }
 
     void direction(const Direction & dir) {
         _direction = dir;
-        switch(dir) {
-            case OUT:
-                gpio(_port, DIR) |= _pin_bit;
-                break;
-            case IN:
-            case INOUT:
-                gpio(_port, DIR) &= ~_pin_bit;
-                break;
-        }
+        _gpio->direction(_pin_mask, dir);
     }
 
-    void pull(const Pull & p) {
-        switch(p) {
-            case UP:
-                gpio_pull_up(_port, _pin);
-                break;
-            case DOWN:
-                gpio_pull_down(_port, _pin);
-                break;
-            case FLOATING:
-                gpio_floating(_port, _pin);
-                break;
-        }
-    }
+    void pull(const Pull & p) { _gpio->pull(_pin_mask, p); }
 
-    void int_enable() { gpio(_port, IM) |= _pin_bit; }
+    void int_enable() { _gpio->int_enable(_pin_mask); }
     void int_enable(const Level & level, bool power_up = false, const Level & power_up_level = HIGH);
     void int_enable(const Edge & edge, bool power_up = false, const Edge & power_up_edge = RISING);
-    void int_disable() { gpio(_port, IM) &= ~_pin_bit; }
+    void int_disable() { _gpio->int_disable(_pin_mask); }
+    void clear_interrupts() { _gpio->clear_interrupts(0xff); }
 
-    static void eoi(const IC::Interrupt_Id & i);
-
-
-
-    static void wake_up_on(const WAKE_UP_EVENT & e) {
-        scs(IWE) = e;
+    void power(const Power_Mode & mode) {
+        switch(mode) {
+        case ENROLL:
+            break;
+        case DISMISS:
+            break;
+        case SAME:
+            break;
+        case FULL:
+        case LIGHT:
+            break;
+        case SLEEP:
+        case OFF:
+            break;
+        }
     }
 
-private:
-    void clear_interrupt() {
-        gpio(_port, ICR) = _pin_bit;
-        gpio(_port, IRQ_DETECT_ACK) &= ~(_pin_bit << (8 * _port));
-    }
-
-    static void int_handler(const IC::Interrupt_Id & i);
+    static void init();
 
 private:
     Port _port;
-    Pin _pin;
-    unsigned int _pin_bit;
+    Pin _pin_mask;
     Direction _direction;
-    volatile Reg32 * _data;
-
-    static GPIO * _devices[GPIO_PORTS][8];
-    static unsigned char _mis[GPIO_PORTS];
-    static unsigned int _irq_detect_ack[GPIO_PORTS];
+    PL061 * _gpio;
 };
 
 __END_SYS

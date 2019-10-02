@@ -1,9 +1,10 @@
 // EPOS TI CC2538 IEEE 802.15.4 NIC Mediator Implementation
 
-#include <machine/cortex_m/cc2538.h>
-#include <system.h>
+#include <system/config.h>
 
-#if defined(__cc2538_H) && !defined(__common_only__)
+#ifdef __NIC_H
+
+#include <machine/cortex_m/cc2538.h>
 
 __BEGIN_SYS
 
@@ -133,7 +134,7 @@ void CC2538::handle_int()
         IC::enable(IC::INT_NIC0_TIMER);
         db<CC2538>(INF) << "CC2538::handle_int:RFERRF=" << hex << errf << endl;
     } else if(irqrf0 & INT_FIFOP) { // Frame received
-        if(stateMachine_Engine_debugged)
+        if(state_machine_debugged)
             kout << 'h';
         if(Traits<CC2538>::hysterically_debugged)
             db<CC2538>(TRC) << "CC2538::handle_int:receive()" << endl;
@@ -175,7 +176,7 @@ void CC2538::handle_int()
         } else {
             IC::enable(IC::INT_NIC0_TIMER); // Make sure radio and MAC timer don't preempt one another
         }
-        if(stateMachine_Engine_debugged)
+        if(state_machine_debugged)
             kout << 'H';
     } else {
         IC::enable(IC::INT_NIC0_TIMER);

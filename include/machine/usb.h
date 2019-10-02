@@ -8,9 +8,30 @@
 
 __BEGIN_SYS
 
-// Definitions from USB2.0 Standard.
-// using camelCase to keep the same names as the standard.
-class USB_2_0
+class USB_Common
+{
+public:
+
+protected:
+    USB_Common() {}
+
+public:
+    char get();
+    void put(char c);
+
+    int read(char * data, unsigned int max_size);
+    int write(const char * data, unsigned int size);
+
+    void flush();
+    bool ready_to_get();
+    bool ready_to_put();
+
+    void int_enable(bool receive = true, bool transmit = true, bool error = true);
+    void int_disable(bool receive = true, bool transmit = true, bool error = true);
+};
+
+
+class USB_2_0: public USB_Common
 {
 public:
     enum STATE
@@ -472,6 +493,23 @@ public:
         };
     };
 
+    struct Full_Config
+    {
+        Descriptor::Configuration _configuration_descriptor;
+
+        Descriptor::Interface _interface0_descriptor;
+        CDC::Functional_Descriptor::Header _cdc_header_descriptor;
+        CDC::Functional_Descriptor::Abstract_Control_Management _cdc_acm_descriptor;
+        CDC::Functional_Descriptor::Union_Interface _cdc_ui_descriptor;
+        CDC::Functional_Descriptor::Call_Management _cdc_cm_descriptor;
+        Descriptor::Endpoint _endpoint0_descriptor;
+
+        Descriptor::Interface _interface1_descriptor;
+        Descriptor::Endpoint _endpoint1_descriptor;
+        Descriptor::Endpoint _endpoint2_descriptor;
+
+        const char& operator[](unsigned int idx) const { return (reinterpret_cast<const char*>(this))[idx]; };
+    } __attribute__((packed));
 };
 
 __END_SYS

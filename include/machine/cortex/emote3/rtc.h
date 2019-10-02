@@ -1,7 +1,7 @@
 // EPOS ARM Cortex-M3 RTC Mediator Declarations
 
-#ifndef __cortex_m_rtc_h
-#define __cortex_m_rtc_h
+#ifndef __emote3_rtc_h
+#define __emote3_rtc_h
 
 #include <machine/rtc.h>
 

@@ -150,7 +150,7 @@ int main(int argc, char **argv)
     // Add BOOT
     if(CONFIG.boot_length_max > 0) {
         sprintf(file, "%s/img/boot_%s", argv[optind], CONFIG.mmod);
-        printf("    Adding boot strap \"%s\":", file);
+        printf("    Adding bootstrap \"%s\":", file);
         image_size += put_file(fd_img, file);
         if(image_size > CONFIG.boot_length_max) {
             printf(" failed!\n");

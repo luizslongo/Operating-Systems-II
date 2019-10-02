@@ -1,4 +1,4 @@
-// EPOS PrimeCell PL011 UART Mediator Declarations
+// EPOS ARM PrimeCell PL011 UART Mediator Declarations
 
 #ifndef __pl011_h
 #define __pl011_h
@@ -126,11 +126,23 @@ public:
     Reg8 rxd() { return uart(DR); }
     void txd(Reg8 c) { uart(DR) = c; }
 
-    void int_enable(bool receive = true, bool send = true, bool line = true, bool modem = true) {
-        uart(UIM) &= ~((receive ? UIMRX : 0) | (send ? UIMTX : 0));
+
+    bool rxd_ok() { return !(uart(FR) & RXFE); }
+    bool txd_ok() { return !(uart(FR) & TXFF); }
+
+    bool rxd_full() { return (uart(FR) & RXFF); }
+    bool txd_empty() { return (uart(FR) & TXFE) && !(uart(FR) & BUSY); }
+
+    bool busy() { return (uart(FR) & BUSY); }
+
+    void enable() { uart(UCR) |= UEN | TXE | RXE; }
+    void disable() { uart(UCR) &= ~UEN; }
+
+    void int_enable(bool receive = true, bool transmit = true, bool line = true, bool modem = true) {
+        uart(UIM) &= ~((receive ? UIMRX : 0) | (transmit ? UIMTX : 0));
     }
-    void int_disable(bool receive = true, bool send = true, bool line = true, bool modem = true) {
-        uart(UCR) |= (receive ? UIMRX : 0) | (send ? UIMTX : 0);
+    void int_disable(bool receive = true, bool transmit = true, bool line = true, bool modem = true) {
+        uart(UCR) |= (receive ? UIMRX : 0) | (transmit ? UIMTX : 0);
     }
 
     void reset() {
@@ -145,14 +157,6 @@ public:
         else
             uart(UCR) &= ~LBE;
     }
-
-    bool rxd_ok() { return !(uart(FR) & RXFE); }
-    bool txd_ok() { return !(uart(FR) & TXFF); }
-
-    bool rxd_full() { return (uart(FR) & RXFF); }
-    bool txd_empty() { return (uart(FR) & TXFE) && !(uart(FR) & BUSY); }
-
-    bool busy() { return (uart(FR) & BUSY); }
 
 private:
     volatile Reg32 & uart(unsigned int o) { return reinterpret_cast<volatile Reg32 *>(this)[o / sizeof(Reg32)]; }

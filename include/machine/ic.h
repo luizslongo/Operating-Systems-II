@@ -13,6 +13,44 @@ public:
     typedef unsigned int Interrupt_Id;
     typedef void (* Interrupt_Handler)(const Interrupt_Id &);
 
+    enum {
+        INT_HARD_FAULT,
+        INT_SYS_TIMER,
+        INT_USER_TIMER0,
+        INT_USER_TIMER1,
+        INT_USER_TIMER2,
+        INT_USER_TIMER3,
+        INT_USER_TIMER4,
+        INT_USER_TIMER5,
+        INT_USER_TIMER6,
+        INT_USER_TIMER7,
+        INT_GPIOA,
+        INT_GPIOB,
+        INT_GPIOC,
+        INT_GPIOD,
+        INT_GPIOE,
+        INT_GPIOF,
+        INT_NIC0,
+        INT_NIC0_RX,
+        INT_NIC0_TX,
+        INT_NIC0_ERR,
+        INT_NIC0_TIMER,
+        INT_NIC1,
+        INT_NIC1_RX,
+        INT_NIC1_TX,
+        INT_NIC1_ERR,
+        INT_NIC1_TIMER,
+        INT_UART0,
+        INT_UART1,
+        INT_UART2,
+        INT_UART3,
+        INT_USB,
+        INT_SPI,
+        INT_ADC,
+        INT_RESCHEDULER,
+        LAST_INT
+    };
+
 protected:
     IC_Common() {}
 

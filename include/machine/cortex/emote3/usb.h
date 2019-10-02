@@ -1,22 +1,37 @@
-// EPOS EPOSMote III (ARM Cortex-M3) MCU USB Mediator Declarations
+// EPOS EPOSMote III (ARM Cortex-M3) USB Mediator Declarations
 
-#include <machine/usb.h>
 #include <architecture/cpu.h>
+#define __common_only__
 #include <machine/usb.h>
+#undef __common_only__
+#include <machine/ic.h>
+#include <machine/cortex/engines/pl061.h>
 
-#ifndef __model_usb_h
-#define __model_usb_h
+#ifndef __emote3_usb_h
+#define __emote3_usb_h
 
 __BEGIN_SYS
 
 class USB_Engine: public USB_2_0
 {
-protected:
-    enum Base {
-        USB_BASE = 0x40089000,
-    };
+    // This is a hardware object.
+    // Use with something like "new (Memory_Map::USB0_BASE) USB_Engine"
 
-    enum USB {
+private:
+    typedef CPU::Reg8 Reg8;
+    typedef CPU::Reg32 Reg32;
+
+public:
+    // Maximum packet sizes for each end-point
+    static const unsigned int _max_packet_ep0 = 32;
+    static const unsigned int _max_packet_ep1 = 32;
+    static const unsigned int _max_packet_ep2 = 64;
+    static const unsigned int _max_packet_ep3 = 128;
+    static const unsigned int _max_packet_ep4 = 256;
+    static const unsigned int _max_packet_ep5 = 512;
+
+    // Registers offsets from BASE (i.e. this)
+    enum {
     //  Name        Offset   Type  Width   Reset Value    Physical Address
         ADDR      = 0x00, //   RW   32     0x0000 0000    0x4008 9000
         POW       = 0x04, //   RW   32     0x0000 0000    0x4008 9004
@@ -46,7 +61,8 @@ protected:
         F5        = 0xA8, //   RW   32     0x0000 0000    0x4008 90A8
     };
 
-    enum USB_CTRL {
+    // Useful bits in CTRL
+    enum {
       //Name        Offset     Description                                                        Type Reset Value
         PLLLOCKED = 1 << 7, // PLL lock status. The PLL is locked when USB_CTRL.PLLLOCKED is 1.     RO 0
         PLLEN     = 1 << 1, // 48 MHz USB PLL enable When this bit is set, the 48 MHz PLL is        RW 0
@@ -58,7 +74,8 @@ protected:
         USBEN     = 1 << 0, // USB enable. The USB controller is reset when this bit is cleared     RW 0
     };
 
-    enum USB_POW {
+    // Useful bits in POW
+    enum {
       //Name        Offset      Description                                                        Type Reset Value
         ISOWAITSOF = 1 << 7, // For isochronous mode IN endpoints:                                   RW 0
                              // When set, the USB controller will wait for an SOF token from the
@@ -79,7 +96,7 @@ protected:
     };
 
     // Common to CIE, CIF registers
-    enum INT_CI {
+    enum {
       //Name          Offset     Description
         INT_SOF     = 1 << 3, // Start-of-Frame interrupt flag/enable
         INT_RESET   = 1 << 2, // Reset interrupt flag/enable
@@ -87,7 +104,8 @@ protected:
         INT_SUSPEND = 1 << 0, // Suspend interrupt flag/enable
     };
 
-    enum CS0 {
+    // Useful bits in CS0
+    enum {
       //Name              Offset     Description                                                     Type Reset
        CS0_CLROUTPKTRDY = 1 << 6, // Software sets this bit to clear the USB_CS0.OUTPKTRDY bit. It is  RW 0
                                   // cleared automatically.
@@ -118,7 +136,8 @@ protected:
                                   // setting USB_CS0.CLROUTPKTRDY
     };
 
-    enum CSOL {
+    // Useful bits in CSOL
+    enum {
       //Name              Offset     Description                                                     Type Reset
         CSOL_CLRDATATOG  = 1 << 7, // Software sets this bit to reset the endpoint data toggle to 0. RW 0
         CSOL_SENTSTALL   = 1 << 6, // This bit is set when a STALL handshake is transmitted. An interrupt is generated when this bit is set. Software should clear this bit. RW 0
@@ -130,7 +149,8 @@ protected:
         CSOL_OUTPKTRDY   = 1 << 0, // This bit is set when a data packet has been received. Software should clear this bit when the packet has been unloaded from the OUT endpoint FIFO. An interrupt is generated when the bit is set. RW 0
     };
 
-    enum CSIH {
+    // Useful bits in CSIH
+    enum {
       //Name           Offset     Description                                                          Type Reset
         AUTISET      = 1 << 7, // If set by software, the CSIL.INPKTRDY bit is automatically set when    RW 0
                                // a data packet of maximum size (specified by USBMAXI) is loaded into
@@ -144,7 +164,8 @@ protected:
         INDBLBUF     = 1 << 0, // IN endpoint FIFO double-buffering enable.                              RW 0
     };
 
-    enum CSIL {
+    // Useful bits in CSIL
+    enum {
       //Name              Offset     Description                                                         Type Reset
         CSIL_CLRDATATOG  = 1 << 6, // Software sets this bit to reset the IN endpoint data toggle to 0.    RW 0
         CSIL_SENTSTALL   = 1 << 5, // For bulk/interrupt mode IN endpoints: This bit is set when a STALL   RW 0
@@ -169,6 +190,118 @@ protected:
                                    // rated (if enabled) when the bit is cleared.  When using double-buff-
                                    // ering, the bit is cleared immediately if the other FIFO is empty.
     };
+
+public:
+    char get();
+    void put(char c);
+
+    int read(char * data, unsigned int max_size);
+    int write(const char * data, unsigned int size);
+
+    void flush() { usb(CS0_CSIL) |= CSIL_INPKTRDY; }
+
+    bool ready_to_get() {
+        if(!configured())
+            return false;
+        else {
+            lock();
+            input();
+            bool ret = usb(CSOL) & CSOL_OUTPKTRDY;
+            unlock();
+            return ret;
+        }
+    }
+
+    bool ready_to_put() { return _ready_to_put; }
+
+    void int_enable(bool receive = true, bool transmit = true, bool error = true) { IC::disable(IC::INT_USB0); }
+    void int_disable(bool receive = true, bool transmit = true, bool error = true);
+
+    void reset();
+
+    void eoi() {
+        // USB interrupt flags are cleared when read
+        _cif |= usb(CIF);
+        _iif |= usb(IIF);
+        _oif |= usb(OIF);
+    }
+
+    void power(const Power_Mode & mode) {
+        PL061 * pl061 = new(reinterpret_cast<void *>(Memory_Map::GPIOC_BASE)) PL061;
+
+        switch(mode) {
+        case ENROLL:
+            break;
+        case DISMISS:
+            break;
+        case SAME:
+            break;
+        case FULL: {
+            // Set D+ USB pull-up resistor, which is controlled by GPIO pin C2 in eMote3
+            pl061->select_pin_function(PL061::PIN2, PL061::FUN_ALTERNATE);
+            pl061->direction(1 << 2, PL061::OUT);
+            pl061->set(1 << 2);
+        } break;
+        case LIGHT:
+        case SLEEP:
+            break;
+        case OFF:
+            disable();
+            pl061->clear(1 << 2);
+            break;
+        }
+    }
+
+    void handle_int(const unsigned int & interrupt);
+
+    void init();
+
+private:
+    bool configured() { return state() >= USB_2_0::STATE::CONFIGURED; }
+    USB_2_0::STATE state() { return _state; }
+
+    void endpoint(int index) { usb(INDEX) = index; }
+    int endpoint() { return usb(INDEX); }
+    void control() { endpoint(0); }
+    void output() { endpoint(3); }
+    void input() { endpoint(4); }
+
+    void lock() {
+        _locked = CPU::int_disabled();
+        // Concerning the correctness of _locked if a rescheduling happens between these two lines:
+        // 1) If _locked was true, no rescheduling happens. OK.
+        // 2) If _locked was false and interrupts are still enabled when execution returns, we're OK.
+        // 3) It seems like an error if _locked was false and execution comes back with interrupts disabled.
+        // So _locked should be correct.
+        CPU::int_disable();
+    }
+
+    void unlock() {
+        if(!_locked)
+            CPU::int_enable();
+    }
+
+    void enable() { usb(CTRL) |= USBEN; }
+    void disable() { usb(CTRL) &= ~USBEN; }
+
+    bool handle_ep0(const USB_2_0::Request::Device_Request & data);
+
+private:
+    static volatile bool _ready_to_put; //FIXME: wrong semantics
+    static volatile bool _ready_to_put_next;
+    static volatile bool _locked;
+    static volatile USB_2_0::STATE _state;
+    static const Full_Config _config;
+
+    static const char * _send_buffer;
+    static unsigned int _send_buffer_size;
+
+    static Reg32 _cif;
+    static Reg32 _iif;
+    static Reg32 _oif;
+    static const Descriptor::Device _device_descriptor;
+
+    volatile Reg32 & usb(unsigned int o) { return reinterpret_cast<volatile Reg32 *>(this)[o / sizeof(Reg32)]; }
 };
 
 __END_SYS

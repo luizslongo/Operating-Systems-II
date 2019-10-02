@@ -1,7 +1,7 @@
 // EPOS EPOSMote III (ARM Cortex-M3) MCU RS-485 Mediator Declarations
 
-#ifndef __model_rs485_h
-#define __model_rs485_h
+#ifndef __emote3_rs485_h
+#define __emote3_rs485_h
 
 #include <machine/gpio.h>
 

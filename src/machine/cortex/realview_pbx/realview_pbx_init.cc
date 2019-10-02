@@ -237,7 +237,7 @@ inline static void clear_bss() {
     }
 }
 
-void Machine_Engine::pre_init()
+void Realview_PBX::pre_init()
 {
     // Relocated the vector table
     ASM("MCR p15, 0, %0, c12, c0, 0" : : "p"(Traits<Machine>::VECTOR_TABLE) :);

@@ -15,7 +15,7 @@ class Keller_46X: public Transducer<SmartData::Unit::I32 | SmartData::Unit::Leng
 private:
     static const GPIO::Port GPIO_PORT = GPIO::B;
     static const GPIO::Pin GPIO_PIN = 0;
-    static const ADC::Channel ADC_CHANNEL = ADC::SINGLE_ENDED_ADC2;
+    static const unsigned int ADC_CHANNEL = 2;
 
 public:
     static const unsigned int DEVS = 1;

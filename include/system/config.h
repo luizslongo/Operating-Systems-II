@@ -121,16 +121,16 @@ namespace EPOS {
 
 #define __EEPROM_H              __HEADER_MACH(eeprom)
 #define __UART_H                __HEADER_MACH(uart)
-//#define __SPI_H                 __HEADER_MACH(spi)
+#define __SPI_H                 __HEADER_MACH(spi)
 #define __RS485_H               __HEADER_MACH(rs485)
 #define __USB_H                 __HEADER_MACH(usb)
-//#define __I2C_H                 __HEADER_MACH(i2c)
+#define __I2C_H                 __HEADER_MACH(i2c)
 #define __GPIO_H                __HEADER_MACH(gpio)
-//#define __ADC_H                 __HEADER_MACH(adc)
-//#define __PWM_H                 __HEADER_MACH(pwm)
-//#define __WATCHDOG_H            __HEADER_MACH(watchdog)
-//#define __NIC_H                 __HEADER_MACH(nic)
-//#define __AES_H                 __HEADER_MACH(aes)
+#define __ADC_H                 __HEADER_MACH(adc)
+#define __PWM_H                 __HEADER_MACH(pwm)
+#define __WATCHDOG_H            __HEADER_MACH(watchdog)
+#define __NIC_H                 __HEADER_MACH(nic)
+#define __AES_H                 __HEADER_MACH(aes)
 #define __tstp__
 
 #define __CO2_SENSOR_H          __HEADER_TRAN(co2_sensor)

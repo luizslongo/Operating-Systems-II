@@ -1,7 +1,7 @@
-// EPOS LM3S811 MCU (ARM Cortex-M3) Memory Map
+// EPOS LM3S811 (ARM Cortex-M3) Memory Map
 
-#ifndef __model_memory_map_h
-#define __model_memory_map_h
+#ifndef __lm3s811_memory_map_h
+#define __lm3s811_memory_map_h
 
 #include <system/memory_map.h>
 #include <machine/cortex/memory_map.h>
@@ -32,7 +32,7 @@ struct Memory_Map: public Cortex_Memory_Map
         ADC0_BASE                   = 0x40038000, // ADC
         FLASH0_BASE                 = 0x400fd000, // Flash Controller
         SCR_BASE                    = 0x400fe000, // System Control
-        SCS_BASE                    = 0xe000e000, // System Control Space
+        SCB_BASE                    = 0xe000e000, // System Control Block
     };
 
     // Logical Address Space

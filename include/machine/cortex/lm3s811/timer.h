@@ -1,7 +1,7 @@
-// EPOS LM3S811 (ARM Cortex-M3) MCU Timer Mediator Declarations
+// EPOS LM3S811 (ARM Cortex-M3) Timer Mediator Declarations
 
-#ifndef __model_timer_h
-#define __model_timer_h
+#ifndef __lm3s811_timer_h
+#define __lm3s811_timer_h
 
 #define __common_only__
 #include <architecture/tsc.h>
@@ -77,31 +77,13 @@ public:
 
     Hertz clock() const { return _gptm->clock(); }
 
-    void power(const Power_Mode & mode) {
-        switch(mode) {
-        case ENROLL:
-            break;
-        case DISMISS:
-            break;
-        case SAME:
-            break;
-        case FULL:
-        case LIGHT:
-        case SLEEP:
-            // TODO: clock_gptm(mode)
-//            scr(RCGC1) |= 1 << (unit + 16);             // Activate GPTM "unit" clock
-            break;
-        case OFF:
-//            scr(RCGC1) &= ~(1 << (unit + 16));          // Deactivate GPTM "unit" clock
-            break;
-        }
-    }
+    void power(const Power_Mode & mode) {}
 
 protected:
     static void eoi(const Interrupt_Id & id) { int2gptm(id)->eoi(id); };
 
 private:
-    // TODO: incorporate in eoi and muve to .cc
+    // TODO: incorporate in eoi and move to .cc
     static GPTM * int2gptm(const Interrupt_Id & id) {
         int i;
         switch(id) {

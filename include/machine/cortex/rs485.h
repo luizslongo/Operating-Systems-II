@@ -29,12 +29,9 @@ public:
     void config(unsigned int baud_rate, unsigned int data_bits, unsigned int parity, unsigned int stop_bits) {
         Engine::config(baud_rate, data_bits, parity, stop_bits);
     }
-    void config(unsigned int * baud_rate, unsigned int * data_bits, unsigned int * parity, unsigned int * stop_bits) {
-        Engine::config(*baud_rate, *data_bits, *parity, *stop_bits);
-    }
 
-    int read(void * data, unsigned int size) {
-        char * d = reinterpret_cast<char *>(data);
+    int read(char * data, unsigned int size) {
+        char * d = data;
         unsigned int s = 0;
 
         for(; s < size; s++) {
@@ -45,8 +42,8 @@ public:
         }
         return s;
     }
-    int write(const void * data, unsigned int size) {
-        const char * d = reinterpret_cast<const char *>(data);
+    int write(const char * data, unsigned int size) {
+        const char * d = data;
         unsigned int s = 0;
 
         Transceiver::out();
@@ -64,9 +61,6 @@ public:
 
     using Engine::int_enable;
     using Engine::int_disable;
-
-    using Engine::reset;
-    using Engine::loopback;
 
     using Engine::power;
 };

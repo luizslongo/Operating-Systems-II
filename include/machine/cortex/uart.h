@@ -24,25 +24,18 @@ public:
     UART(unsigned int unit = UNIT, unsigned int baud_rate = BAUD_RATE, unsigned int data_bits = DATA_BITS, unsigned int parity = PARITY, unsigned int stop_bits = STOP_BITS)
     : Engine(unit, baud_rate, data_bits, parity, stop_bits) {}
 
-    void config(unsigned int baud_rate, unsigned int data_bits, unsigned int parity, unsigned int stop_bits) {
-        Engine::config(baud_rate, data_bits, parity, stop_bits);
-    }
-    void config(unsigned int * baud_rate, unsigned int * data_bits, unsigned int * parity, unsigned int * stop_bits) {
-        Engine::config(*baud_rate, *data_bits, *parity, *stop_bits);
-    }
+    using Engine::config;
 
     char get() { while(!rxd_ok()); return rxd(); }
     void put(char c) { while(!txd_ok()); txd(c); }
 
     void flush() { while(!txd_empty()); }
-
     bool ready_to_get() { return rxd_ok(); }
     bool ready_to_put() { return txd_ok(); }
 
     using Engine::int_enable;
     using Engine::int_disable;
-    using Engine::reset;
-    using Engine::loopback;
+
     using Engine::power;
 
 private:

@@ -21,16 +21,17 @@ void IC::init()
     _int_vector[IC::INT_HARD_FAULT] = hard_fault;
 
     // TSC is initialized before IC, so we register its interrupt now
-//    if(Traits<TSC>::enabled) {
-//        static const Interrupt_Id int_id =
-//              Machine_Model::TIMERS == 1 ? INT_USER_TIMER0
-//            : Machine_Model::TIMERS == 2 ? INT_USER_TIMER1
-//            : Machine_Model::TIMERS == 3 ? INT_USER_TIMER2
-//            : INT_USER_TIMER3;
-//
-//        int_vector(int_id, TSC::int_handler);
-//        enable(int_id);
-//    }
+    if(Traits<TSC>::enabled) {
+        static const Interrupt_Id int_id =
+            static const Interrupt_Id int_id =
+                Traits<Timer>::UNITS == 1 ? INT_USER_TIMER0
+              : Traits<Timer>::UNITS == 2 ? INT_USER_TIMER1
+              : Traits<Timer>::UNITS == 3 ? INT_USER_TIMER2
+                                          : INT_USER_TIMER3;
+
+        int_vector(int_id, TSC::int_handler);
+        enable(int_id);
+    }
 }
 
 __END_SYS

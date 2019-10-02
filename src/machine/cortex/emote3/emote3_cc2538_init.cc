@@ -1,10 +1,11 @@
 // EPOS TI CC2538 IEEE 802.15.4 NIC Mediator Initialization
 
-#include <machine/gpio.h>
-#include <machine/cortex_m/cc2538.h>
 #include <system.h>
 
-#if defined(__cc2538_H) && !defined(__common_only__)
+#ifdef __NIC_H
+
+#include <machine/gpio.h>
+#include <machine/cortex/emote3/cc2538.h>
 
 __BEGIN_SYS
 

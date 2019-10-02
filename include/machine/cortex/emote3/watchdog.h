@@ -1,31 +1,34 @@
-// EPOS Cortex-M Watchdog Mediator Declarations
+// EPOS EPOSMoteIII (ARM Cortex-M3) Watchdog Mediator Declarations
 
-#ifndef __cortex_m_watchdog_h
-#define __cortex_m_watchdog_h
+#ifndef __emote3_watchdog_h
+#define __emote3_watchdog_h
 
 #include <architecture/cpu.h>
+#define __common_only__
+#include <machine/machine.h>
 #include <machine/watchdog.h>
-#include __MODEL_H
+#undef __common_only__
 
 __BEGIN_SYS
 
-class eMote3_Watchdog: protected Machine_Model
+class Watchdog_Engine: public Watchdog_Common
 {
-    typedef CPU::Reg32 Reg32;
+    // This is a hardware object.
+    // Use with something like "new (Memory_Map::WATCHDOG_BASE) CC2538_Watchdog"
 
 private:
-    enum Base {
-        WATCHDOG_BASE = 0x400D5000,
-    };
+    typedef CPU::Reg32 Reg32;
 
+public:
+    // Registers offsets from BASE (i.e. this)
     enum {
      // Name    Offset   Type  Width   Reset Value    Physical Address
-        WDCTL = 0x00, //   RW   32     0x0000 0000    0x400D 5000
+        WDCTL = 0x00, //   RW   32     0x0000 0000    0x400d5000
     };
 
-    // WDCTL register offsets
+    // WDCTL useful bits
     enum {
-      //Name  Offset     Description                                                           Type Reset Value
+     // Name  Offset     Description                                                           Type Reset Value
         CLR = 1 << 4, // Clear timer                                                             RW 0
                       // When 0xA followed by 0x5 is written to these bits, the timer is
                       // loaded with 0x0000. Note that 0x5 must be written within one
@@ -51,34 +54,35 @@ private:
                       // Writing these bits when EN = 1 has no effect.
     };
 
-    enum PERIOD {
+    enum {
         MS_1_9    = 3, // 1.9ms
         MS_15_625 = 2, // 15.625ms
         S_0_25    = 1, // 0.25s
         S_1       = 0, // 1s
     };
 
-    static volatile Reg32 & reg (unsigned int offset) { return *(reinterpret_cast<volatile Reg32*>(WATCHDOG_BASE + offset)); }
-
 public:
-    static void enable() {
-        switch(Traits<Watchdog>::PERIOD) {
-            case Traits<Watchdog>::MS_1_9:    reg(WDCTL) = PERIOD::MS_1_9;    break;
-            case Traits<Watchdog>::MS_15_625: reg(WDCTL) = PERIOD::MS_15_625; break;
-            case Traits<Watchdog>::S_0_25:    reg(WDCTL) = PERIOD::S_0_25;    break;
-            default:
-            case Traits<Watchdog>::S_1:       reg(WDCTL) = PERIOD::S_1;       break;
-        }
-        reg(WDCTL) |= EN;
+    void kick() {
+        wd(WDCTL) = 0xa * CLR;
+        wd(WDCTL) = 0x5 * CLR;
     }
 
-    static void kick() {
-        reg(WDCTL) = 0xA * CLR;
-        reg(WDCTL) = 0x5 * CLR;
+    void enable() {
+        if(Traits<Watchdog>::PERIOD <= 10) wd(WDCTL) = MS_1_9;
+        else if(Traits<Watchdog>::PERIOD <= 50) wd(WDCTL) = MS_15_625;
+        else if(Traits<Watchdog>::PERIOD <= 500) wd(WDCTL) = S_0_25;
+        else wd(WDCTL) = S_1;
+
+        wd(WDCTL) |= EN;
     }
+
+    void disable() { wd(WDCTL) &= ~EN; }
+
+    static void init() {}
+
+private:
+    volatile Reg32 & wd(unsigned int o) { return reinterpret_cast<volatile Reg32 *>(this)[o / sizeof(Reg32)]; }
 };
-
-class Watchdog: private Watchdog_Common, public eMote3_Watchdog {};
 
 __END_SYS
 

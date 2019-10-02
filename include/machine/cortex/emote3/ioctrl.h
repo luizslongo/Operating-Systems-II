@@ -140,32 +140,91 @@ public:
     };
 
 public:
-    IOCtrl() {}
+    void enable_external_clock() {
+        ioc(PD6_OVER) = ANA;
+        ioc(PD7_OVER) = ANA;
+    }
 
-    void enable_uart0() {
-        // assume UART0 has been powered on before getting here (see UART::power())
-        ioc(PA1_SEL) = UART0_TXD;           // configure pin A1 to UART0_TXD
-        ioc(PA1_OVER) = OE;                 // enable IO pads to drive outputs
-        ioc(PA0_OVER) = 0;
-        ioc(UARTRXD_UART0) = (0 << 3) + 0;  // connect input signals to the UART module (port << 3) + pin
-        // calling function must invoke PL061::select_alternate_function(PIN0 | PIN1) afterwards
+    void enable_uart(unsigned int unit) {
+        // assume UART has been powered on before getting here (see UART::power())
+        if(unit == 0) {
+            ioc(PA1_SEL) = UART0_TXD;           // configure pin A1 to UART0_TXD
+            ioc(PA1_OVER) = OE;                 // enable IO pads to drive outputs
+            ioc(PA0_OVER) = 0;
+            ioc(UARTRXD_UART0) = (0 << 3) + 0;  // connect input signals to the UART module (port << 3) + pin
+
+            // calling function must invoke PL061::select_pin_function(PIN0 | PIN1, FUN_ALTERNATE) on GPIOA afterwards to connect the pins
+        } else {
+            ioc(PC4_SEL) = UART1_TXD;
+            ioc(PC4_OVER) = OE;
+            ioc(PC3_OVER) = 0;
+            ioc(UARTRXD_UART1) = (2 << 3) + 3;
+
+            // calling function must invoke PL061::select_pin_function(PIN3 | PIN4, FUN_ALTERNATE) on GPIOC afterwards to connect the pins
+        }
     }
-    void enable_uart1() {
-        // assume UART1 has been powered on before getting here (see UART::power())
-        ioc(PC4_SEL) = UART1_TXD;
-        ioc(PC4_OVER) = OE;
-        ioc(PC3_OVER) = 0;
-        ioc(UARTRXD_UART1) = (2 << 3) + 3;
-        // calling function must invoke PL061::select_alternate_function(PIN3 | PIN4) afterwards
-    }
+
     void enable_modem_on_uart1() {
         // The M95 GPRS board uses UART1 in non-standard pins
         ioc(PD1_SEL) = UART1_TXD;
         ioc(PD1_OVER) = OE;
         ioc(PD0_OVER) = 0;
         ioc(UARTRXD_UART1) = (3 << 3) + 0;
-        // calling function must invoke PL061::select_alternate_function(PIN0 | PIN1) afterwards
+
+        // calling function must invoke PL061::select_pin_function(PIN0 | PIN1, FUN_ALTERNATE) on GPIOD afterwards to connect the pins
+        // PL061 * pl061 = new(reinterpret_cast<void *>(Memory_Map::GPIOD_BASE)) PL061;
+        // pl061->select_pin_function(PL061::PIN0 | PL061::PIN1, PL061::FUN_ALTERNATE);
     }
+
+    void enable_spi(unsigned int unit, bool master) {
+        // assume SPI has been powered on before getting here (see SPI::power())
+
+        if(unit == 0) {
+            if(master)
+                ioc(PA2_SEL) = SSI0_CLK_OUT;
+            else
+                ioc(CLK_SSI_SSI0) = 0x02; // PA2
+
+            ioc(PA3_SEL) = SSI0_FSS_OUT;
+            ioc(PA5_SEL) = SSI0_TXD;
+            ioc(SSIRXD_SSI0) = 0x04; // PA4
+        } else {
+            if(master)
+                ioc(PA2_SEL) = SSI1_CLK_OUT;
+            else
+                ioc(CLK_SSI_SSI1) = 0x02; // PA2
+
+            ioc(PA3_SEL) = SSI1_FSS_OUT;
+            ioc(PA5_SEL) = SSI1_TXD;
+            ioc(SSIRXD_SSI1) = 0x04; // PA4
+        }
+
+        // enable IO pads to drive outputs making the corresponding IPxx_OVER bits in IOC_Pxx_OVER register 0x8 (OE - Output Enable)
+        if(master)
+            ioc(PA2_OVER) = OE;
+        ioc(PA3_OVER) = OE;
+        ioc(PA5_OVER) = OE;
+
+        // calling function must invoke PL061::select_pin_function(PIN2 | PIN3 | PIN4 | PIN5, FUN_ALTERNATE) afterwards to connect the pins
+    }
+
+    void enable_i2c(unsigned int port_sda, unsigned int pin_sda, unsigned int port_scl, unsigned int pin_scl) {
+        auto sda = PA0_SEL + 0x20 * port_sda + 0x4 * pin_sda;
+        auto scl = PA0_SEL + 0x20 * port_scl + 0x4 * pin_scl;
+
+        ioc(sda + 0x80) = DIS;
+        ioc(scl + 0x80) = DIS;
+
+        ioc(sda) = I2C_SDA;
+        ioc(scl) = I2C_SCL;
+
+        ioc(I2CMSSDA) = (port_sda << 3) + pin_sda;
+        ioc(I2CMSSCL) = (port_scl << 3) + pin_scl;
+    }
+
+    void gpio_pull_up(unsigned int port, unsigned int pin) { ioc(PA0_OVER + 0x20 * port + 0x4 * pin) = PUE; }
+    void gpio_pull_down(unsigned int port, unsigned int pin) { ioc(PA0_OVER + 0x20 * port + 0x4 * pin) = PDE; }
+    void gpio_floating(unsigned int port, unsigned int pin) { ioc(PA0_OVER + 0x20 * port + 0x4 * pin) = ANA; }
 
 private:
     volatile Reg32 & ioc(unsigned int o) { return reinterpret_cast<volatile Reg32 *>(this)[o / sizeof(Reg32)]; }

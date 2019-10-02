@@ -23,9 +23,9 @@ struct Memory_Map: public Cortex_Memory_Map
         UART3_BASE                  = 0x1000c000, // PrimeCell PL011 UART
         TIMER0_BASE                 = 0x10011000, // ARM Dual-Timer Module SP804
         TIMER1_BASE                 = 0x10012000, // ARM Dual-Timer Module SP804
-        GPIO0_BASE                  = 0x10013000, // PrimeCell PL061 GPIO
-        GPIO1_BASE                  = 0x10014000, // PrimeCell PL061 GPIO
-        GPIO2_BASE                  = 0x10015000, // PrimeCell PL061 GPIO
+        GPIOA_BASE                  = 0x10013000, // PrimeCell PL061 GPIO
+        GPIOB_BASE                  = 0x10014000, // PrimeCell PL061 GPIO
+        GPIOC_BASE                  = 0x10015000, // PrimeCell PL061 GPIO
         RTC_BASE                    = 0x10017000, // PrimeCell PL031 RTC
         LCD_BASE                    = 0x10020000, // PrimeCell PL110 Color LCD Controller
         DMA_BASE                    = 0x10030000, // PrimeCell PL080 DMA Controller

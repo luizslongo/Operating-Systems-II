@@ -1,4 +1,4 @@
-// EPOS LM3S811 (ARM Cortex-M3) SETUP
+// EPOS EPOSMote III (ARM Cortex-M3) SETUP
 
 #include <system/config.h>
 

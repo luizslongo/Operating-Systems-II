@@ -1,13 +1,14 @@
 // EPOS IP Protocol Implementation
 
+#include <system.h>
+
+#ifdef __ipv4__
+
 #include <utility/string.h>
 #include <network/ipv4/arp.h>
 #include <network/ipv4/ip.h>
 #include <network/ipv4/udp.h>
 #include <network/ipv4/dhcp.h>
-#include <system.h>
-
-#ifdef __ipv4__
 
 __BEGIN_SYS
 

@@ -538,11 +538,11 @@ void PC_Setup::say_hi()
         kout << si->bm.node_id << " (" << Traits<Build>::NODES << ")" << endl;
     else
         kout << "will get from the network!" << endl;
-    kout << "  Position:       ";
+    kout << "  Position:     ";
     if(si->bm.space_x != -1)
         kout << "(" << si->bm.space_x << "," << si->bm.space_y << "," << si->bm.space_z << ")" << endl;
     else
-        kout << "  will get from the network!" << endl;
+        kout << "will get from the network!" << endl;
     if(si->lm.has_stp)
         kout << "  Setup:        " << si->lm.stp_code_size + si->lm.stp_data_size << " bytes" << endl;
     if(si->lm.has_ini)

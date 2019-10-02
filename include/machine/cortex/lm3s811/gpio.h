@@ -1,7 +1,7 @@
-// EPOS EPOSMote III (ARM Cortex-M3) MCU GPIO Mediator Declarations
+// EPOS LM3S811 (ARM Cortex-M3) GPIO Mediator Declarations
 
-#ifndef __model_gpio_h
-#define __model_gpio_h
+#ifndef __lm3s811_gpio_h
+#define __lm3s811_gpio_h
 
 #include "sysctrl.h"
 #include <machine/cortex/engines/cortex_m3/scb.h>
@@ -57,32 +57,14 @@ public:
         _gpio->direction(_pin_mask, dir);
     }
 
-    void pull(const Pull & p) { _gpio->pull(p, _pin_mask); }
+    void pull(const Pull & p) { _gpio->pull(_pin_mask, p); }
 
     void int_enable() { _gpio->int_enable(_pin_mask); }
     void int_enable(const Level & level, bool power_up = false, const Level & power_up_level = HIGH);
     void int_enable(const Edge & edge, bool power_up = false, const Edge & power_up_edge = RISING);
     void int_disable() { _gpio->int_disable(_pin_mask); }
 
-    void power(const Power_Mode & mode) {
-        switch(mode) {
-        case ENROLL:
-            break;
-        case DISMISS:
-            break;
-        case SAME:
-            break;
-        case FULL:
-        case LIGHT:
-        case SLEEP:
-            // TODO: clock_gpio(mode)
-//            scr(RCGC2) |= 1 << unit;                   // Activate port "unit" clock
-            break;
-        case OFF:
-//            scr(RCGC2) &= ~(1 << unit);                // Deactivate port "unit" clock
-            break;
-        }
-    }
+    void power(const Power_Mode & mode) {}
 
 //    static void wake_up_on(const WAKE_UP_EVENT & e) {
 //        scs(IWE) = e;

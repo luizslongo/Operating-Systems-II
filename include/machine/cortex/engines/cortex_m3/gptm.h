@@ -27,7 +27,7 @@ public:
 
     const static Hertz CLOCK = Traits<CPU>::CLOCK;
 
-    // Registers' offsets from BASE
+    // Registers' offsets from BASE (i.e. this)
     enum {                              // Description                                          Type    Value after reset
         GPTMCFG            = 0x00,      //                                                      rw      0x00000000
         GPTMTAMR           = 0x04,      //                                                      rw      0x00000000
@@ -56,7 +56,7 @@ public:
         GPTMPP             = 0xfc0,     //                                                      ro      0x00000000
     };
 
-    enum GPTMCTL {                      // Description
+    enum {                              // Description
         TAEN            = 1 << 0,       // Timer A enable
         TASTALL         = 1 << 1,       // Timer A stall enable (0 -> continues counting while the processor is halted by the debugger, 1 -> freezes)
         TAEVENT         = 1 << 2,       // Timer A event mode (0 -> positive edge, 1 -> negative edge, 2 -> reserved, 3 -> both edges)
@@ -69,7 +69,7 @@ public:
         TBPWML          = 1 << 14,      // Timer B PWM output level (0 -> direct, 1 -> inverted)
     };
 
-    enum GPTMTMR {                      // Description
+    enum {                              // Description
         TMR             = 1 << 0,       // Timer A mode (0 -> reserved, 1 -> one-shot, 2 -> periodic, 3 -> capture)
         TCMR            = 1 << 2,       // Timer A capture mode (0 -> edge-count, 1 -> edge-time)
         TAMS            = 1 << 3,       // Timer A alternate mode (0 -> capture, 1 -> PWM) mode is enabled.
@@ -83,16 +83,16 @@ public:
         TPLO            = 1 << 11,      // Legacy PWM operation (0 -> legacy operation, 1 -> CCP is set to 1 on time-out)
     };
 
-    enum GPTMIR {           // Description                    Type Reset value
-        TATO_INT = 1 << 0,  // Timer A time-out interrupt       RW 0
-        CAM_INT  = 1 << 1,  // Timer A capture match interrupt  RW 0
-        CAE_INT  = 1 << 2,  // Timer A capture event Interrupt  RW 0
-        TAM_INT  = 1 << 4,  // Timer A match interrupt          RW 0
-        TBTO_INT = 1 << 8,  // Timer B time-out interrupt       RW 0
-        CBM_INT  = 1 << 9,  // Timer B capture match interrupt  RW 0
-        CBE_INT  = 1 << 10, // Timer B capture event Interrupt  RW 0
-        TBM_INT  = 1 << 11, // Timer B match interrupt          RW 0
-        WUE_INT  = 1 << 16, // write update error interrupt     RW 0
+    enum {                      // Description                    Type Reset value
+        TATO_INT = 1 << 0,      // Timer A time-out interrupt       RW 0
+        CAM_INT  = 1 << 1,      // Timer A capture match interrupt  RW 0
+        CAE_INT  = 1 << 2,      // Timer A capture event Interrupt  RW 0
+        TAM_INT  = 1 << 4,      // Timer A match interrupt          RW 0
+        TBTO_INT = 1 << 8,      // Timer B time-out interrupt       RW 0
+        CBM_INT  = 1 << 9,      // Timer B capture match interrupt  RW 0
+        CBE_INT  = 1 << 10,     // Timer B capture event Interrupt  RW 0
+        TBM_INT  = 1 << 11,     // Timer B match interrupt          RW 0
+        WUE_INT  = 1 << 16,     // write update error interrupt     RW 0
     };
 
 public:

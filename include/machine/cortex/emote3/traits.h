@@ -56,6 +56,9 @@ template<> struct Traits<Machine>: public Traits<Machine_Common>
 template<> struct Traits<IC>: public Traits<Machine_Common>
 {
     static const bool debugged = hysterically_debugged;
+
+    static const unsigned int IRQS = 48;
+    static const unsigned int INTS = 65;
 };
 
 template<> struct Traits<Timer>: public Traits<Machine_Common>
@@ -83,6 +86,12 @@ template<> struct Traits<UART>: public Traits<Machine_Common>
     static const unsigned int DEF_STOP_BITS = 1;
 };
 
+template<> struct Traits<GPIO>: public Traits<Machine_Common>
+{
+    static const unsigned int UNITS = 4;
+    static const bool supports_power_up = true;
+};
+
 template<> struct Traits<SPI>: public Traits<Machine_Common>
 {
     static const unsigned int UNITS = 1;
@@ -101,23 +110,17 @@ template<> struct Traits<USB>: public Traits<Machine_Common>
 
 template<> struct Traits<Watchdog>: public Traits<Machine_Common>
 {
-    enum {
-        MS_1_9,    // 1.9ms
-        MS_15_625, // 15.625ms
-        S_0_25,    // 0.25s
-        S_1,       // 1s
-    };
-    static const int PERIOD = S_1;
+    static const unsigned int PERIOD = 1000; // ms
 };
 
 template<> struct Traits<Serial_Display>: public Traits<void>
 {
     static const bool enabled = true;
-    static const int ENGINE = USB;
-    static const int UNIT = 0;
-    static const int COLUMNS = 80;
-    static const int LINES = 24;
-    static const int TAB_SIZE = 8;
+    static const unsigned int ENGINE = USB;
+    static const unsigned int UNIT = 0;
+    static const unsigned int COLUMNS = 80;
+    static const unsigned int LINES = 24;
+    static const unsigned int TAB_SIZE = 8;
 };
 
 template<> struct Traits<Serial_Keyboard>: public Traits<void>
@@ -126,11 +129,6 @@ template<> struct Traits<Serial_Keyboard>: public Traits<void>
 };
 
 template<> struct Traits<Scratchpad>: public Traits<Machine_Common>
-{
-    static const bool enabled = false;
-};
-
-template<> struct Traits<Ethernet>: public Traits<Machine_Common>
 {
     static const bool enabled = false;
 };

@@ -1,7 +1,7 @@
-// EPOS LM3S811 (ARM Cortex-M3) MCU UART Mediator Declarations
+// EPOS LM3S811 (ARM Cortex-M3) UART Mediator Declarations
 
-#ifndef __model_uart_h
-#define __model_uart_h
+#ifndef __lm3s811_uart_h
+#define __lm3s811_uart_h
 
 #define __common_only__
 #include <machine/uart.h>
@@ -22,15 +22,8 @@ public:
         assert(unit < UNITS);
         _unit = unit;
         power(FULL);  // physically enable the UART in SysCtrl before configuring it
-// TODO: move this to eMote. LM does not have IOC!
-//        if(unit == 0) {   // pins A[1:0] are multiplexed between GPIOA and UART0; select UART
-//            IOCtrl * ioc = new(reinterpret_cast<void *>(Memory_Map::IOC_BASE)) IOCtrl;
-//            ioc->enable_uart0();
-//            PL061 * pl061 = new(reinterpret_cast<void *>(Memory_Map::GPIOA_BASE)) PL061;
-//            pl061->select_alternate_function(3);
-//        }
         _pl011 = new(reinterpret_cast<void *>(Memory_Map::UART0_BASE + 0x1000 * unit)) PL011;
-        _pl011->config(baud_rate, data_bits, parity, stop_bits);
+        config(baud_rate, data_bits, parity, stop_bits);
     }
 
     void config(unsigned int baud_rate, unsigned int data_bits, unsigned int parity, unsigned int stop_bits) {

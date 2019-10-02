@@ -3,8 +3,7 @@
 #ifndef __time_h
 #define __time_h
 
-#include <architecture.h>
-#include <machine.h>
+#include <machine/timer.h>
 #include <utility/queue.h>
 #include <utility/handler.h>
 

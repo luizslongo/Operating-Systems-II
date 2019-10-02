@@ -1,39 +1,208 @@
 // EPOS ARM Cortex-M I2C Mediator Declarations
 
-#include <system/config.h>
-#if defined(__I2C_H) && !defined(__common_only__)
+// TODO: it looks like this mediator only implements Master operation
 
-#ifndef __cortex_m_i2c_h
-#define __cortex_m_i2c_h
+#ifndef __emote3_i2c_h
+#define __emote3_i2c_h
 
-#include __MODEL_H
-
+#include <architecture/cpu.h>
+#include <machine/cortex/engines/pl061.h>
+#define __common_only__
 #include <machine/i2c.h>
+#undef __common_only__
+#include "sysctrl.h"
+#include "ioctrl.h"
+#include "memory_map.h"
 
 __BEGIN_SYS
 
-// TODO: It looks like this class only implements Master operation
-class I2C : private Machine_Model, private I2C_Common
+class I2C_Engine: public I2C_Common
 {
+    // This is a hardware object.
+    // Use with something like "new (Memory_Map::ADC0_BASE) eMote3_ADC"
+
+private:
+    typedef CPU::Reg32 Reg32;
+    typedef GPIO_Common::Port Port;
+    typedef GPIO_Common::Pin Pin;
+
 public:
-    I2C(Role r, char port_sda, unsigned int pin_sda, char port_scl, unsigned int pin_scl)
-    : _base(r == I2C_Common::MASTER ? reinterpret_cast<Log_Addr*>(I2C_MASTER_BASE) : reinterpret_cast<Log_Addr*>(I2C_SLAVE_BASE)) {
-        Machine_Model::i2c_config(port_sda, pin_sda, port_scl, pin_scl);
-        if(r == I2C_Common::MASTER) {
-            reg(I2C_CR) = I2C_CR_MFE;
-            reg(I2C_TPR) = 0x3; // 400kHz, assuming a system clock of 32MHz
-        } else {
-            reg(I2C_CR) = I2C_CR_SFE;
-        }
+    // Registers offsets from BASE (i.e. this)
+    enum {
+        I2CM_SA         = 0x00,
+        I2CM_CTRL       = 0x04,
+        I2CM_STAT       = I2CM_CTRL,
+        I2CM_DR         = 0x08,
+        I2CM_TPR        = 0x0c,
+        I2CM_IMR        = 0x10,
+        I2CM_RIS        = 0x14,
+        I2CM_MIS        = 0x18,
+        I2CM_ICR        = 0x1c,
+        I2CM_CR         = 0x20,
+    };
+
+    // I2C slave offsets
+    enum {                           // Description
+        I2CS_OAR        = 0x00,      // Own Address
+        I2CS_CTRL       = 0x04,      // Control and Status
+        I2CS_STAT       = I2CS_CTRL, // Control and Status
+        I2CS_DR         = 0x08,      // Data
+        I2CS_IMR        = 0x0c,      // Interrupt Mask
+        I2CS_RIS        = 0x10,      // Raw Interrupt Status
+        I2CS_MIS        = 0x14,      // Masked Interrupt Status
+        I2CS_ICR        = 0x18,      // Interrupt Clear
+    };
+
+    // Unified I2C Master-Slave offsets
+    enum {
+        I2C_SA         = 0x00,
+        I2C_OAR        = I2C_SA,
+        I2C_CTRL       = 0x04,
+        I2C_STAT       = I2C_CTRL,
+        I2C_DR         = 0x08,
+        I2C_TPR        = 0x0c,
+        I2C_IMR        = 0x10,
+        I2C_RIS        = 0x14,
+        I2C_MIS        = 0x18,
+        I2C_ICR        = 0x1c,
+        I2C_CR         = 0x20,
+    };
+
+    // Useful bits in the I2CM_SA register
+    enum {
+        I2C_SA_RS              = 0x01,
+    };
+
+    // Useful bits in the I2CM_CTRL register
+    enum {
+        I2C_CTRL_ACK   = 1 << 3,
+        I2C_CTRL_STOP  = 1 << 2,
+        I2C_CTRL_START = 1 << 1,
+        I2C_CTRL_RUN   = 1 << 0,
+    };
+
+    // Useful bits in the I2CM_STAT register
+    enum {                        // Description (type)
+        I2C_STAT_BUSBSY = 1 << 6, // Bus Busy (RO)
+        I2C_STAT_IDLE   = 1 << 5, // I2C Idle (RO)
+        I2C_STAT_ARBLST = 1 << 4, // Arbitration Lost (RO)
+        I2C_STAT_DATACK = 1 << 3, // Acknowledge Data (RO)
+        I2C_STAT_ADRACK = 1 << 2, // Acknowledge Address (RO)
+        I2C_STAT_ERROR  = 1 << 1, // Error (RO)
+        I2C_STAT_BUSY   = 1 << 0, // I2C Busy (RO)
+    };
+
+    // Useful bits in the I2CM_IMR register
+    enum {                  // Description (type)
+        I2C_IMR_IM = 0x01, // Interrupt Mask (RW)
+    };
+
+    // Useful bits in the I2CM_RIS register
+    enum {                   // Description (type)
+        I2C_RIS_BIT = 0x01, // Raw Interrupt Status (RO)
+    };
+
+    // Useful bits in the I2CM_MIS register
+    enum {                   // Description (type)
+        I2C_MIS_MIS = 0x01, // Masked Interrupt Status (RO)
+    };
+
+    // Useful bits in the I2CM_ICR register
+    enum {                  // Description (type)
+        I2C_ICR_IC = 0x01, // Interrupt Clear (WO)
+    };
+
+    // Useful bits in the I2CM_CR register
+    enum {                     // Description (type)
+        I2C_CR_SFE  = 1 << 5, // I2C Slave Function Enable (RW)
+        I2C_CR_MFE  = 1 << 4, // I2C Master Function Enable (RW)
+        I2C_CR_LPBK = 1 << 0, // I2C Loopback (RW)
+    };
+
+    // Useful bits in the I2CS_STAT register
+    enum {                      // Description (type)
+        I2C_STAT_FBR  = 1 << 2, // First Byte Received (RO)
+        I2C_STAT_TREQ = 1 << 1, // Transmit Request (RO)
+        I2C_STAT_RREQ = 1 << 0, // Receive Request (RO)
+    };
+
+    // Useful bits in the I2CS_CTRL register
+    enum {                   // Description (type)
+        I2C_CTRL_DA = 0x01, // Device Active (WO)
+    };
+
+    // Useful bits in the I2CS_IMR register
+    enum {                         // Description (type)
+        I2C_IMR_STOPIM  = 1 << 2, // Stop Condition Interrupt Mask (RO)
+        I2C_IMR_STARTIM = 1 << 1, // Start Condition Interrupt Mask (RO)
+        I2C_IMR_DATAIM  = 1 << 0, // Data Interrupt Mask (RW)
+    };
+
+    // Useful bits in the I2CS_RIS register
+    enum {                          // Description (type)
+        I2C_RIS_STOPRIS  = 1 << 2, // Stop Condition Raw Interrupt Status (RO)
+        I2C_RIS_STARTRIS = 1 << 1, // Start Condition Raw Interrupt Status (RO)
+        I2C_RIS_DATARIS  = 1 << 0, // Data Interrupt Status (RO)
+    };
+
+    // Useful bits in the I2CS_MIS register
+    enum {                          // Description (type)
+        I2C_MIS_STOPMIS  = 1 << 2, // Stop Condition Masked Interrupt Status (RO)
+        I2C_MIS_STARTMIS = 1 << 1, // Start Condition Masked Interrupt Status (RO)
+        I2C_MIS_DATAMIS  = 1 << 0, // Data Masked Interrupt Status (RO)
+    };
+
+    // Useful bits in the I2CS_ICR register
+    enum {                          // Description (type)
+        I2C_ICR_STOPIC   = 1 << 2, // Stop Condition Interrupt Clear (WO)
+        I2C_ICR_STARTIC  = 1 << 1, // Start Condition Interrupt Clear (WO)
+        I2C_ICR_DATAIC   = 1 << 0, // Data Interrupt Clear (WO)
+    };
+
+public:
+    void config(const Role & role) {
+        if(role == MASTER) {
+            i2c(I2C_CR) = I2C_CR_MFE;
+            i2c(I2C_TPR) = 0x3; // 400kHz, assuming a system clock of 32MHz
+        } else
+            i2c(I2C_CR) = I2C_CR_SFE;
     }
 
-    bool ready_to_put() { return !(reg(I2C_STAT) & I2C_STAT_BUSY); }
-    bool ready_to_get() { return ready_to_put(); }
+    bool get(char slave_address, char * data, bool stop = true) {
+        // Specify the slave address and that the next operation is a read (last bit = 1)
+        i2c(I2C_SA) = (slave_address << 1) | 0x01;
+        return get_byte(data, I2C_CTRL_RUN | I2C_CTRL_START | (stop ? I2C_CTRL_STOP : 0));
 
-    bool put(unsigned char slave_address, const char * data, unsigned int size, bool stop) {
+    }
+
+    bool put(unsigned char slave_address, char data, bool stop = true) {
+        // Specify the slave address and that the next operation is a write (last bit = 0)
+        i2c(I2C_SA) = (slave_address << 1);
+        return send_byte(data, I2C_CTRL_RUN | I2C_CTRL_START | (stop ? I2C_CTRL_STOP : 0));
+    }
+
+    bool read(char slave_address, char * data, unsigned int size, bool stop) {
+        unsigned int i;
+        bool ret = true;
+        // Specify the slave address and that the next operation is a read (last bit = 1)
+        i2c(I2C_SA) = (slave_address << 1) | 0x01;
+        for(i = 0; i < size; i++, data++) {
+            if(i == 0)
+                ret = get_byte(data, I2C_CTRL_START | I2C_CTRL_RUN | I2C_CTRL_ACK);
+            else if(i + 1 == size)
+                ret = get_byte(data, I2C_CTRL_RUN | (stop ? I2C_CTRL_STOP : 0));
+            else
+                ret = get_byte(data, I2C_CTRL_RUN | I2C_CTRL_ACK);
+            if(!ret)
+                return ret;
+        }
+        return ret;
+    }
+
+    bool write(unsigned char slave_address, const char * data, unsigned int size, bool stop) {
         bool ret = true;
         // Specify the slave address and that the next operation is a write (last bit = 0)
-        reg(I2C_SA) = (slave_address << 1) & 0xFE;
+        i2c(I2C_SA) = (slave_address << 1) & 0xFE;
         for(unsigned int i = 0; i < size; i++) {
             if(i == 0) //first byte to be sent
                 ret = send_byte(data[i], I2C_CTRL_RUN | I2C_CTRL_START);
@@ -48,59 +217,78 @@ public:
         return ret;
     }
 
-    bool put(unsigned char slave_address, char data, bool stop = true) {
-        // Specify the slave address and that the next operation is a write (last bit = 0)
-        reg(I2C_SA) = (slave_address << 1);
-        return send_byte(data, I2C_CTRL_RUN | I2C_CTRL_START | (stop ? I2C_CTRL_STOP : 0));
-    }
-
-    bool get(char slave_address, char * data, bool stop = true) {
-        // Specify the slave address and that the next operation is a read (last bit = 1)
-        reg(I2C_SA) = (slave_address << 1) | 0x01;
-        return get_byte(data, I2C_CTRL_RUN | I2C_CTRL_START | (stop ? I2C_CTRL_STOP : 0));
-
-    }
-
-    bool get(char slave_address, char * data, unsigned int size, bool stop) {
-        unsigned int i;
-        bool ret = true;
-        // Specify the slave address and that the next operation is a read (last bit = 1)
-        reg(I2C_SA) = (slave_address << 1) | 0x01;
-        for(i = 0; i < size; i++, data++) {
-            if(i == 0)
-                ret = get_byte(data, I2C_CTRL_START | I2C_CTRL_RUN | I2C_CTRL_ACK);
-            else if(i + 1 == size)
-                ret = get_byte(data, I2C_CTRL_RUN | (stop ? I2C_CTRL_STOP : 0));
-            else
-                ret = get_byte(data, I2C_CTRL_RUN | I2C_CTRL_ACK);
-            if(!ret)
-                return ret;
-        }
-        return ret;
-    }
+    bool ready_to_get() { return ready_to_put(); }
+    bool ready_to_put() { return !(i2c(I2C_STAT) & I2C_STAT_BUSY); }
 
 private:
     bool send_byte(char data, int mode) {
-        reg(I2C_DR) = data;
-        reg(I2C_CTRL) = mode;
+        i2c(I2C_DR) = data;
+        i2c(I2C_CTRL) = mode;
         while(!ready_to_put());
-        return !(reg(I2C_STAT) & I2C_STAT_ERROR);
+        return !(i2c(I2C_STAT) & I2C_STAT_ERROR);
     }
 
     bool get_byte(char * data, int mode) {
-        reg(I2C_CTRL) = mode;
+        i2c(I2C_CTRL) = mode;
         while(!ready_to_get());
-        if(reg(I2C_STAT) & I2C_STAT_ERROR) {
+        if(i2c(I2C_STAT) & I2C_STAT_ERROR) {
             return false;
         } else {
-            *data = reg(I2C_DR);
+            *data = i2c(I2C_DR);
             return true;
         }
     }
 
+    volatile Reg32 & i2c(unsigned int o) { return reinterpret_cast<volatile Reg32 *>(this)[o / sizeof(Reg32)]; }
+};
+
+class I2C: private I2C_Engine
+{
+    friend Machine;
+
 private:
-    volatile Log_Addr * _base;
-    volatile Reg32 & reg(unsigned int o) { return reinterpret_cast<volatile Reg32 *>(_base)[o / sizeof(Reg32)]; }
+    typedef I2C_Engine Engine;
+
+public:
+    I2C(const Role & role, const Port & port_sda, const Pin & pin_sda, const Port &  port_scl, const Pin & pin_scl)
+    : _i2c((role == MASTER) ? reinterpret_cast<Engine *>(Memory_Map::I2C_MASTER_BASE) : reinterpret_cast<I2C_Engine *>(Memory_Map::I2C_SLAVE_BASE)) {
+        assert((port_sda >= 'A') && (port_sda <= 'D'));
+        assert(pin_sda <= 7);
+        assert((port_scl >= 'A') && (port_scl <= 'D'));
+        assert(pin_scl <= 7);
+
+        PL061 * sda = new(reinterpret_cast<void *>(Memory_Map::GPIOA_BASE + port_sda * 0x1000)) PL061;
+        PL061 * scl = new(reinterpret_cast<void *>(Memory_Map::GPIOA_BASE + port_scl * 0x1000)) PL061;
+
+        scr()->clock_i2c();
+
+        sda->select_pin_function(1 << pin_sda, PL061::FUN_ALTERNATE);
+        sda->direction(1 << pin_sda, PL061::INOUT);
+        scl->select_pin_function(1 << pin_scl, PL061::FUN_ALTERNATE);
+        scl->direction(1 << pin_scl, PL061::INOUT);
+
+        ioc()->enable_i2c(port_dsa, pin_sda, port_scl, pin_scl);
+
+        _i2c->config(role);
+    }
+
+    using Engine::get;
+    using Engine::put;
+
+    using Engine::read;
+    using Engine::write;
+
+    using Engine::ready_to_get;
+    using Engine::ready_to_put;
+
+private:
+    static SysCtrl * scr() { return reinterpret_cast<SysCtrl *>(Memory_Map::SCR_BASE); }
+    static IOCtrl * ioc() { return reinterpret_cast<IOCtrl *>(Memory_Map::IOC_BASE); }
+
+    static void init() {}
+
+private:
+    I2C_Engine * _i2c;
 };
 
 // Si7020 Temperature and Humidity sensor

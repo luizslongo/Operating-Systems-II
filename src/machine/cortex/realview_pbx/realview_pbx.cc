@@ -5,9 +5,9 @@
 
 __BEGIN_SYS
 
-volatile unsigned int Machine_Engine::_cores;
+volatile unsigned int Realview_PBX::_cores;
 
-void Machine_Engine::reboot()
+void Realview_PBX::reboot()
 {
     db<Machine>(WRN) << "Machine::reboot()" << endl;
 //TODO: reboot!

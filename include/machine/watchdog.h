@@ -14,9 +14,9 @@ protected:
     Watchdog_Common() {}
 
 public:
-    static void enable();
-    static void disable();
-    static void kick();
+    void kick();
+    void enable();
+    void disable();
 };
 
 __END_SYS

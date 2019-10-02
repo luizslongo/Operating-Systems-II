@@ -34,14 +34,6 @@ int main()
 {
     cout << "Producer x Consumer" << endl;
 
-//    UART gps(1);
-//    gps.put('a');
-//    gps.put('b');
-//    gps.put('c');
-//    for(char c = gps.get(); c != '*'; c = gps.get())
-//        cout << c;
-//    cout << endl;
-
     Thread * cons = new Thread(&consumer);
 
     // producer

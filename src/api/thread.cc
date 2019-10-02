@@ -114,23 +114,35 @@ void Thread::priority(const Criterion & c)
 
     db<Thread>(TRC) << "Thread::priority(this=" << this << ",prio=" << c << ")" << endl;
 
-    unsigned int old_cpu = _link.rank().queue();
-
-    _link.rank(c);
+//    unsigned int old_cpu = _link.rank().queue();
 
     if(_state != RUNNING) { // reorder the scheduling queue
         _scheduler.remove(this);
+        _link.rank(c);
         _scheduler.insert(this);
-    }
+    } else
+        _link.rank(c);
+
+    unsigned int new_cpu = _link.rank().queue();
 
     if(preemptive) {
-        reschedule(old_cpu);
-        if(smp) {
-            lock();
-            reschedule(_link.rank().queue());
-        }
-    } else
-        unlock();
+//        if(old_cpu != CPU::id()) {
+//            reschedule(old_cpu);
+            if(smp) {
+                lock();
+                reschedule(new_cpu);
+            }
+//        } else if(new_cpu != CPU::id()) {
+//            reschedule(new_cpu);
+//            if(smp) {
+//                lock();
+//                reschedule(old_cpu);
+//            }
+//        } else
+//            reschedule();
+    }
+
+    unlock();
 }
 
 

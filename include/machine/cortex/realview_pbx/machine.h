@@ -14,7 +14,7 @@
 
 __BEGIN_SYS
 
-class Machine_Engine: public Machine_Common
+class Realview_PBX: public Machine_Common
 {
 private:
     static const unsigned int GIC_CPU_BASE = Memory_Map::GIC_CPU_BASE;
@@ -28,7 +28,7 @@ private:
 public:
 
 public:
-    Machine_Engine() {}
+    Realview_PBX() {}
 
     static void delay(const Microsecond & time);
 
@@ -52,6 +52,8 @@ private:
 private:
     static volatile unsigned int _cores;
 };
+
+typedef Realview_PBX Machine_Model;
 
 __END_SYS
 

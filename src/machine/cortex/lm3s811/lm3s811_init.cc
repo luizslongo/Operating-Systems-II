@@ -5,14 +5,14 @@
 
 __BEGIN_SYS
 
-void Machine_Engine::pre_init()
+void LM3S811::pre_init()
 {
     db<Init, Machine>(TRC) << "LM3S811::pre_init()" << endl;
 
     scr()->clock_init();
 }
 
-void Machine_Engine::init()
+void LM3S811::init()
 {
     db<Init, Machine>(TRC) << "LM3S811::init()" << endl;
     scb()->enter_thread_state();

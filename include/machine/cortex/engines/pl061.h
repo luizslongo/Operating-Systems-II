@@ -1,4 +1,4 @@
-// EPOS PrimeCell PL061 GPIO Mediator Declarations
+// EPOS ARM PrimeCell PL061 GPIO Mediator Declarations
 
 #ifndef __pl061_h
 #define __pl061_h
@@ -13,12 +13,15 @@ __BEGIN_SYS
 
 class PL061: public GPIO_Common
 {
+    // This is a hardware object.
+    // Use with something like "new (Memory_Map::TIMERx_BASE) GPTM".
+
 private:
     typedef CPU::Reg32 Reg32;
     typedef IC_Common::Interrupt_Id Interrupt_Id;
 
 public:
-    // Registers offsets
+    // Registers offsets from BASE (i.e. this)
     enum {                              // Description                          Type    Value after reset
         DATA            = 0x000,        // Data                                 rw      0x00000000
         DIR             = 0x400,        // Direction                            rw      0x00000000
@@ -119,8 +122,35 @@ public:
 
     void int_enable(const Pin & mask) { gpio(IM) |= mask; }
     void int_disable(const Pin & mask) { gpio(IM) &= ~mask; }
-    void int_enable(const Level & level, bool power_up = false, const Level & power_up_level = HIGH);
-    void int_enable(const Edge & edge, bool power_up = false, const Edge & power_up_edge = RISING);
+    void int_enable(const Port & port, const Pin & mask, const Level & level, bool power_up = false, const Level & power_up_level = HIGH);
+    void int_enable(const Port & port, const Pin & mask, const Edge & edge, bool power_up = false, const Edge & power_up_edge = RISING) {
+        gpio(IS) &= ~mask; // Set interrupt to edge-triggered
+
+        switch(edge) {
+        case RISING:
+            gpio(IBE) &= ~mask; // Interrupt on single edge, defined by IEV
+            gpio(IEV) |= mask;
+            break;
+        case FALLING:
+            gpio(IBE) &= ~mask; // Interrupt on single edge, defined by IEV
+            gpio(IEV) &= ~mask;
+            break;
+        case BOTH:
+            gpio(IBE) |= mask;
+            break;
+        case NONE:
+            break;
+        }
+
+        if(Traits<GPIO>::supports_power_up && power_up) {
+            assert(power_up_edge != BOTH);
+            if(power_up_edge == FALLING)
+                gpio(P_EDGE_CTRL) |= (mask << (8 * port)); // this is a bit weird: each port has an P_EDGE_CTRL, but the bits for each port are different
+            else if (power_up_edge == RISING)
+                gpio(P_EDGE_CTRL) &= ~(mask << (8 * port));
+            gpio(PI_IEN) |= (mask << (8 * port));
+        }
+    }
 
     void select_pin_function(const Pin & mask, const Function & fun) {
         if(fun == FUN_ALTERNATE) {
@@ -130,7 +160,7 @@ public:
             gpio(AFSEL) &= ~mask;
     }
 
-    void pull(const Pull & p, const Pin & mask) {
+    void pull(const Pin & mask, const Pull & p) {
         switch(p) {
             case UP:
                 gpio(PUR) &= mask;
@@ -146,12 +176,19 @@ public:
 
     void clear_interrupts(const Pin & mask) {
         gpio(ICR) = mask;
+
+        // There is something weird going on here.
+        // The manual says: "There is a self-clearing function to this register that generates a
+        // reset pulse to clear any interrupt which has its corresponding bit set to 1."
+        // But this is not happening!
+        // Also, clearing only the bit that is set or replacing the statement below with
+        // regs[irq_number](IRQ_DETECT_ACK) = 0;
+        // does not work!
         gpio(IRQ_DETECT_ACK) &= ~mask;
     }
 
-    static void eoi(const Interrupt_Id & i);
-
-    static void int_handler(const Interrupt_Id & i);
+    unsigned int pending_regular_interrupts() { return gpio(MIS); }
+    unsigned int pending_powerup_interrupts() { return gpio(IRQ_DETECT_ACK); }
 
 private:
     volatile Reg32 & gpio(unsigned int o) { return reinterpret_cast<volatile Reg32 *>(this)[o / sizeof(Reg32)]; }

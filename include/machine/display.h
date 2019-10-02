@@ -141,7 +141,7 @@ private:
     static void init() {
         // Display must be on very early in the boot process, so it is
         // subject to memory remappings. Renewing it cares for it.
-        new (&_engine) Engine;
+        new (&_engine) Engine(UNIT);
 
         _line = 0;
         _column = 0;

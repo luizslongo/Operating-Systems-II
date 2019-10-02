@@ -1,7 +1,7 @@
-// EPOS LM3S811 MCU (ARM Cortex-M3) Run-Time System Information
+// EPOS LM3S811 (ARM Cortex-M3) Run-Time System Information
 
-#ifndef __model_info_h
-#define __model_info_h
+#ifndef __lm3s811_info_h
+#define __lm3s811_info_h
 
 #include <system/info.h>
 #include <machine/cortex/info.h>

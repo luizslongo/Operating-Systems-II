@@ -1,4 +1,4 @@
-// EPOS LM3S811 (ARM Cortex-M3) MCU Mediator Declarations
+// EPOS LM3S811 (ARM Cortex-M3) Mediator Declarations
 
 #ifndef __lm3s811_h
 #define __lm3s811_h
@@ -15,18 +15,15 @@
 
 __BEGIN_SYS
 
-class Machine_Engine: public Machine_Common
+class LM3S811: public Machine_Common
 {
 private:
-    static const unsigned int SCS_BASE = Memory_Map::SCS_BASE;
-    static const unsigned int SCR_BASE = Memory_Map::SCR_BASE;
-
     typedef CPU::Reg32 Reg32;
     typedef CPU::Log_Addr Log_Addr;
     typedef RTC_Common::Microsecond Microsecond;
 
 public:
-    Machine_Engine() {}
+    LM3S811() {}
 
     static void delay(const Microsecond & time) { systick()->delay(time); }
 
@@ -48,6 +45,8 @@ private:
     static SCB * scb() { return reinterpret_cast<SCB *>(SCS_BASE); }
     static SysCtrl * scr() { return reinterpret_cast<SysCtrl *>(SCR_BASE); }
 };
+
+typedef LM3S811 Machine_Model;
 
 __END_SYS
 

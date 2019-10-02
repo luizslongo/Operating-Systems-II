@@ -1,7 +1,7 @@
-// EPOS LM3S811 (ARM Cortex-M3) MCU Metainfo and Configuration
+// EPOS LM3S811 (ARM Cortex-M3) Metainfo and Configuration
 
-#ifndef __model_traits_h
-#define __model_traits_h
+#ifndef __machine_engine_traits_h
+#define __machine_engine_traits_h
 
 #include <system/config.h>
 

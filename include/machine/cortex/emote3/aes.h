@@ -1,7 +1,7 @@
-// EPOS ARM Cortex-M AES Mediator Declarations
+// EPOS EPOSMoteIII (ARM Cortex-M3) AES Mediator Declarations
 
-#ifndef __cortex_m_aes_h
-#define __cortex_m_aes_h
+#ifndef __emote3_aes_h
+#define __emote3_aes_h
 
 #include <machine/aes.h>
 

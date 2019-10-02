@@ -1,172 +1,95 @@
-// EPOS Cortex-M3 SPI Mediator Declarations
+// EPOS EPOSMoteIII (ARM Cortex-M3) SPI Mediator Declarations
 
-#include <system/config.h>
+#ifndef __emote3_spi_h
+#define __emote3_spi_h
 
-#if !defined(__cortex_m_spi_h) && defined(__SPI_H)
-#define __cortex_m_spi_h
-
-#include <machine/machine.h>
+#include <architecture/cpu.h>
+#define __common_only__
 #include <machine/spi.h>
+#undef __common_only__
+#include <machine/cortex/engines/pl022.h>
+#include <machine/cortex/engines/pl061.h>
+#include "sysctrl.h"
+#include "ioctrl.h"
+#include "memory_map.h"
 
 __BEGIN_SYS
 
-class SSI_Engine: public Machine_Model
+class SPI_Engine: public SPI_Common
 {
-    friend class eMote3;
 private:
     static const unsigned int UNITS = Traits<SPI>::UNITS;
 
-public:
-    enum Interrupt_Flag {
-        TXIM    = Machine_Model::TXIM,
-        RXIM    = Machine_Model::RXIM,
-        RTIM    = Machine_Model::RTIM,
-        RORIM   = Machine_Model::RORIM,
-    };
-
-    enum Clock_Source {
-        IO      = 0x00,
-        SYS     = 0x01,
-    };
-
-    using Machine_Model::SSI_Frame_Format;
-    using Machine_Model::SSI_Mode;
-
-    volatile Reg32 & ssi(unsigned int o) { return reinterpret_cast<volatile Reg32 *>(_base)[o / sizeof(Reg32)]; }
+    typedef CPU::Reg32 Reg32;
 
 public:
-    SSI_Engine(Reg32 unit = 0): _base(reinterpret_cast<Log_Addr *>(unit ? SSI1_BASE : SSI0_BASE)) {}
-
-    SSI_Engine(Reg32 unit, Reg32 clock, SSI_Frame_Format protocol, SSI_Mode mode, Reg32 bit_rate, Reg32 data_width): _base(reinterpret_cast<Log_Addr *>(unit ? SSI1_BASE : SSI0_BASE)) {
+    SPI_Engine(unsigned int unit, unsigned int clock, const Protocol & protocol, const Mode & mode, unsigned int bit_rate, unsigned int data_bits): _unit(unit) {
         assert(unit < UNITS);
-        config(clock, protocol, mode, bit_rate, data_width);
+        _pl022 = new(reinterpret_cast<void *>(Memory_Map::SSI0_BASE + 0x1000 * unit)) PL022;
+        config(clock, protocol, mode, bit_rate, data_bits);
     }
 
-    //This method configures the synchronous serial interface.  It sets
-    // the SSI protocol, mode of operation, bit rate, and data width.
-    // data_width must be a value between 4 and 16, inclusive
-    void config(Reg32 clock, SSI_Frame_Format protocol, SSI_Mode mode, Reg32 bit_rate, Reg32 data_width) {
-        disable();
-        Machine_Model::config_SSI(_base, clock, protocol, mode, bit_rate, data_width);
-        enable();
+    void config(unsigned int clock, const Protocol & protocol, const Mode & mode, unsigned int bit_rate, unsigned int data_bits) {
+        _pl022->disable();
+
+        scr()->clock_spi(_unit);
+        ioc()->enable_spi(_unit, (mode == MASTER));
+
+        _pl022->config(clock, protocol, mode, bit_rate, data_bits);
+
+        // Set GPIO pins A2, A3, A4 and A5 to peripheral mode
+        PL061 * pl061 = new(reinterpret_cast<void *>(Memory_Map::GPIOA_BASE)) PL061;
+        pl061->select_pin_function(PL061::PIN2 | PL061::PIN3 | PL061::PIN4 | PL061::PIN5, PL061::FUN_ALTERNATE);
+
+        _pl022->enable();
     }
 
-    //enable SSI interface
-    void enable() {
-        // Read-modify-write the enable bit
-        ssi(SSI_CR1) |= SSE;
+    int get() { return _pl022->get(); }
+    bool try_get(int * data) { return _pl022->try_get(reinterpret_cast<Reg32 *>(data)); }
+    void put(int data) { _pl022->put(data); }
+    bool try_put(int data) { return _pl022->try_put(data); }
+
+    void flush() { while(_pl022->busy()); }
+    bool ready_to_get() { return _pl022->ready_to_get(); }
+    bool ready_to_put() { return _pl022->ready_to_put(); }
+
+    void int_enable(bool receive = true, bool transmit = true, bool time_out = true, bool overrun = true) {
+        _pl022->int_enable((receive ? PL022::RXIM : 0) | (transmit ? PL022::TXIM : 0) | (time_out ? PL022::RTIM : 0) | (overrun ? PL022::RORIM : 0));
+    }
+    void int_disable(bool receive = true, bool transmit = true, bool time_out = true, bool overrun = true) {
+        int_enable(!receive, !transmit, !time_out, !overrun);
     }
 
-    //disable SSI interface
-    void disable() {
-        // Read-modify-write the enable bit
-        ssi(SSI_CR1) &= ~(SSE);
-    }
-
-    void int_enable(Interrupt_Flag flag) {
-        ssi(SSI_IM) |= flag;
-    }
-
-    void int_disable(Interrupt_Flag flag) {
-        ssi(SSI_IM) &= ~(flag);
-    }
-
-    void put_data(Reg32 data) {
-        // Wait until there is space.
-        while(!(ssi(SSI_SR) & TNF)) ;
-
-        // Write the data to the SSI.
-        ssi(SSI_DR) = data;
-    }
-
-    //returns 1 if the data has been written or 0 if an error occurred
-    Reg32 put_data_non_blocking(Reg32 data) {
-        // Check for space to write.
-        if(ssi(SSI_SR) & TNF) {
-            ssi(SSI_DR) = data;
-            return 1;
+    void power(const Power_Mode & mode) {
+        switch(mode) {
+        case ENROLL:
+            break;
+        case DISMISS:
+            break;
+        case SAME:
+            break;
+        case FULL:
+        case LIGHT:
+            scr()->clock_spi(_unit);
+            _pl022->enable();
+            break;
+        case SLEEP:
+        case OFF:
+            _pl022->disable();
+            scr()->unclock_spi(_unit);
+            break;
         }
-        return 0;
     }
 
-    Reg32 get_data() {
-        // Wait until there is data to be read.
-        while(!(ssi(SSI_SR) & RNE)) ;
-
-        return ssi(SSI_DR);
-    }
-
-    //returns the data read or 0 if an error occurred
-    Reg32 get_data_non_blocking() {
-        if(ssi(SSI_SR) & RNE) {
-            return ssi(SSI_DR);
-        }
-
-        return 0;
-    }
-
-    bool is_busy() {
-        // Determine if the SSI is busy.
-        return((ssi(SSI_SR) & BSY) ? true : false);
-    }
-
-    void clock_source(Clock_Source source) {
-        ssi(SSI_CC) = source;
-    }
-
-    Reg32 clock_source() {
-        return ssi(SSI_CC);
-    }
+    static void init() {}
 
 private:
-    volatile Log_Addr * _base;
-};
+    static SysCtrl * scr() { return reinterpret_cast<SysCtrl *>(Memory_Map::SCR_BASE); }
+    static IOCtrl * ioc() { return reinterpret_cast<IOCtrl *>(Memory_Map::IOC_BASE); }
 
-
-typedef SSI_Engine SPI_Engine;
-
-
-class SPI: public SPI_Common, public SPI_Engine
-{
 private:
-    typedef SPI_Engine Engine;
-
-public:
-
-    static const unsigned int CLOCK = Traits<CPU>::CLOCK;
-
-    using SPI_Engine::SSI_Frame_Format;
-    using Machine_Model::SSI_Mode;
-
-    typedef SPI_Engine::SSI_Frame_Format SPI_Frame_Format;
-    typedef Machine_Model::SSI_Mode SPI_Mode;
-
-    SPI() : Engine(0) {
-    }
-
-    SPI(Reg32 unit, Reg32 clock, SPI_Frame_Format protocol, SPI_Mode mode, Reg32 bit_rate, Reg32 data_width) :
-        Engine(unit, clock, protocol, mode, bit_rate, data_width)
-    {
-    }
-
-    //This method configures the synchronous serial interface.  It sets
-    // the SSI protocol, mode of operation, bit rate, and data width.
-    // data_width must be a value between 4 and 16, inclusive
-    void config(Reg32 clock, SPI_Frame_Format protocol, SPI_Mode mode, Reg32 bit_rate, Reg32 data_width) {
-        Engine::config(clock, protocol, mode, bit_rate, data_width);
-    }
-
-    void disable() { Engine::disable(); }
-    void enable() { Engine::enable(); }
-    void int_enable(Interrupt_Flag flag) { Engine::int_enable(flag); }
-    void int_disable(Interrupt_Flag flag) { Engine::int_disable(flag); }
-    void put_data(Reg32 data) { Engine::put_data(data); }
-    Reg32 put_data_non_blocking(Reg32 data) { return Engine::put_data_non_blocking(data); }
-    Reg32 get_data() { return Engine::get_data(); }
-    Reg32 get_data_non_blocking() { return Engine::get_data_non_blocking(); }
-    bool is_busy() { return Engine::is_busy(); }
-    void clock_source(Clock_Source source) { Engine::clock_source(source); }
-    Reg32 clock_source() { return Engine::clock_source(); }
+    unsigned int _unit;
+    PL022 * _pl022;
 };
 
 __END_SYS

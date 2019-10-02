@@ -23,16 +23,17 @@ struct Memory_Map: public Cortex_Memory_Map
         TIMER1_BASE     = 0x40031000, // GPTM
         TIMER2_BASE     = 0x40032000, // GPTM
         TIMER3_BASE     = 0x40033000, // GPTM
+        USB0_BASE       = 0x40089000,
         SCR_BASE        = 0x400d2000,
-        FLASH_CTRL_BASE = 0x400d3000,
+        FLASH_BASE      = 0x400d3000,
         IOC_BASE        = 0x400d4000,
+        WATCHDOG_BASE   = 0x400d5000,
+        ADC_BASE        = 0x400d7000,
         GPIOA_BASE      = 0x400d9000, // PL061 GPIO Port A
         GPIOB_BASE      = 0x400da000, // PL061 GPIO Port B
         GPIOC_BASE      = 0x400db000, // PL061 GPIO Port C
         GPIOD_BASE      = 0x400dc000, // PL061 GPIO Port D
-        SCS_BASE        = 0xe000e000, // System Control Space
-
-
+        SCB_BASE        = 0xe000e000, // System Control Block
     };
 
     // Logical Address Space

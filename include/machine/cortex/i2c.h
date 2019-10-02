@@ -3,8 +3,8 @@
 #include <system/config.h>
 #ifdef __I2C_H
 
-#ifndef __cortex_i2c_h__
-#define __cortex_i2c_h__
+#ifndef __cortex_i2c_h
+#define __cortex_i2c_h
 
 #include __MODEL_H
 

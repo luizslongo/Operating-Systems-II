@@ -4,11 +4,12 @@
 #define __cortex_machine_h
 
 #include <architecture/cpu.h>
+#include <system.h>
 #include __HEADER_MMOD(machine)
 
 __BEGIN_SYS
 
-class Machine: private Machine_Engine
+class Machine: private Machine_Model
 {
     friend class Init_System;
     friend class First_Object;
@@ -16,7 +17,7 @@ class Machine: private Machine_Engine
 private:
     static const bool smp = Traits<System>::multicore;
 
-    typedef Machine_Engine Engine;
+    typedef Machine_Model Engine;
 
 public:
     Machine() {}

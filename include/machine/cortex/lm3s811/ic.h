@@ -1,7 +1,7 @@
-// EPOS LM3S811 (ARM Cortex-M3) MCU IC Mediator Declarations
+// EPOS LM3S811 (ARM Cortex-M3) IC Mediator Declarations
 
-#ifndef __model_ic_h
-#define __model_ic_h
+#ifndef __lm3s811_ic_h
+#define __lm3s811_ic_h
 
 #define __common_only__
 #include <machine/ic.h>

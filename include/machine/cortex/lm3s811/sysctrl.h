@@ -1,4 +1,4 @@
-// EPOS EPOSMote III (ARM Cortex-M3) MCU System Control Module Mediator Declarations
+// EPOS LM3S811 (ARM Cortex-M3) System Control Module Mediator Declarations
 
 #ifndef __lm3s811_sysctrl_h
 #define __lm3s811_sysctrl_h

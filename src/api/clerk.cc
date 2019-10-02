@@ -5,7 +5,7 @@
 __BEGIN_SYS
 
 // Clerk
-#if defined(__PMU_H) && !defined(__common_only__)
+#ifdef __PMU_H
 
 bool Clerk<PMU>::_in_use[Traits<Build>::CPUS][CHANNELS];
 
@@ -42,7 +42,7 @@ void Monitor::init()
         new Clerk<System>(DEADLINE_MISS, Traits<Monitor>::MONITOR_DEADLINE_MISS, true);
     }
 
-#if defined(__PAMU_H) && !defined(__common_only__)
+#ifdef __PAMU_H
 
     unsigned int used_channels = 0;
 

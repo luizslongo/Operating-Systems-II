@@ -1,18 +1,14 @@
-// EPOS Cortex-M USB Mediator Initialization
+// EPOS EPOSMote III (ARM Cortex-M3) USB Mediator Declarations
 
 #include <machine/ic.h>
 #include <machine/usb.h>
+#include <machine/cortex/emote3/sysctrl.h>
 
 __USING_SYS
 
-#if defined(__USB_H) && !defined(__common_only__)
+#ifdef __USB_H
 
-volatile USB_2_0::STATE USB::_state;
-volatile bool USB::_ready_to_put = false;
-bool USB::_ready_to_put_next = false;
-bool USB::_was_locked = false;
-
-const USB_2_0::Descriptor::Device USB::_device_descriptor =
+const USB_2_0::Descriptor::Device USB_Engine::_device_descriptor =
 {
     sizeof(Descriptor::Device), // Descriptor length
     DESC_DEVICE,               // Descriptor type
@@ -30,7 +26,7 @@ const USB_2_0::Descriptor::Device USB::_device_descriptor =
     0x01,                      // Number of possible configurations
 };
 
-const USB::Full_Config USB::_config =
+const USB_Engine::Full_Config USB_Engine::_config =
 {
     //_configuration_descriptor =
     {
@@ -127,7 +123,7 @@ const USB::Full_Config USB::_config =
 };
 
 // Configurations that need to be done at every USB reset
-void USB::reset()
+void USB_Engine::reset()
 {
     _ready_to_put = false;
     _ready_to_put_next = false;
@@ -138,51 +134,50 @@ void USB::reset()
     // Set up endpoints
     output();
     // The two lines below make the USB automatically signal that a packet is ready every 32 characters.
-    reg(MAXI) = 32 / 8; // Endpoint 3, IN.
-    reg(MAXO) = 0;
-    reg(CS0_CSIL) |= CSIL_CLRDATATOG; // From cc2538 User Guide: When a Bulk IN endpoint is first configured, USB_CSIL.CLRDATATOG should be set.
+    usb(MAXI) = 32 / 8; // Endpoint 3, IN.
+    usb(MAXO) = 0;
+    usb(CS0_CSIL) |= CSIL_CLRDATATOG; // From cc2538 User Guide: When a Bulk IN endpoint is first configured, USB_CSIL.CLRDATATOG should be set.
     // if there are any data packets in the FIFO, they should be flushed. It may be necessary to set this bit twice in succession if double buffering is enabled.
-    reg(CS0_CSIL) |= CSIL_FLUSHPACKET;
-    reg(CS0_CSIL) |= CSIL_FLUSHPACKET;
+    usb(CS0_CSIL) |= CSIL_FLUSHPACKET;
+    usb(CS0_CSIL) |= CSIL_FLUSHPACKET;
 
     input();
-    reg(MAXI) = 0;
-    reg(MAXO) = _max_packet_ep4 / 8; // Endpoint 4, OUT
-    reg(CSOL) |= CSOL_CLRDATATOG; // From cc2538 User Guide: When a Bulk OUT endpoint is first configured, USB_CSOL.CLRDATATOG should be set.
+    usb(MAXI) = 0;
+    usb(MAXO) = _max_packet_ep4 / 8; // Endpoint 4, OUT
+    usb(CSOL) |= CSOL_CLRDATATOG; // From cc2538 User Guide: When a Bulk OUT endpoint is first configured, USB_CSOL.CLRDATATOG should be set.
     // if there are any data packets in the FIFO, they should be flushed
-    reg(CSOL) |= CSOL_FLUSHPACKET;
+    usb(CSOL) |= CSOL_FLUSHPACKET;
 
     // Only enable IN interrupts for endpoints 0 and 2
-    reg(IIE) = (1 << 0);// | (1 << 2);
+    usb(IIE) = (1 << 0);// | (1 << 2);
     // Only enable OUT interrupts for endpoint 0
-    reg(OIE) = (1 << 0);
+    usb(OIE) = (1 << 0);
     // Only enable RESET common interrupt (disable start-of-frame, resume and suspend)
-    reg(CIE) = INT_RESET;
+    usb(CIE) = INT_RESET;
 }
 
-void USB::init()
+void USB_Engine::init()
 {
-    Machine_Model::power_usb(0, FULL);
+    SysCtrl * scr = reinterpret_cast<SysCtrl *>(Memory_Map::SCR_BASE);
+    scr->clock_usb();
+    power(FULL);
 
     // Reset USB
-    //reg(CTRL) = 0;
+    //usb(CTRL) = 0;
 
     // Enable USB controller
-    reg(CTRL) |= USBEN;
+    usb(CTRL) |= USBEN;
 
     // Enable PLL and wait for it to initialize
-    reg(CTRL) |= PLLEN;
-    while(!(reg(CTRL) & PLLLOCKED));
+    usb(CTRL) |= PLLEN;
+    while(!(usb(CTRL) & PLLLOCKED));
 
     // Do not suspend the device when USB is idle
-    reg(POW) &= ~SUSPENDEN;
+    usb(POW) &= ~SUSPENDEN;
 
     reset();
 
     _state = USB_2_0::STATE::POWERED;
-
-    IC::int_vector(IC::INT_USB0, &int_handler);
-    IC::enable(IC::INT_USB0);
 }
 
 #endif

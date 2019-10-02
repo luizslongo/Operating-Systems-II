@@ -9,12 +9,22 @@ __BEGIN_SYS
 
 class ADC_Common
 {
+public:
+    static const unsigned int DEFAULT = -1UL;
+
+    enum Reference {
+        INTERNAL,
+        EXTERNAL,
+        SYSTEM,
+        EXTERNAL_DIFF
+    };
+
 protected:
     ADC_Common() {}
 
 public:
-    template <typename T>
-    unsigned short read();
+    unsigned int read();
+    unsigned int convert(unsigned short reading, unsigned int reference);
 };
 
 __END_SYS

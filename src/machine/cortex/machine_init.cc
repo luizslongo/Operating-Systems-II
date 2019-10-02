@@ -42,16 +42,16 @@ void Machine::init()
         USB::init();
 #endif
 
-#ifdef __ETHERNET_H
+#ifdef __NIC_H
     if(Traits<Ethernet>::enabled)
         Initializer<Ethernet>::init();
-#endif
 
     if(Traits<IEEE802_15_4>::enabled)
         Initializer<IEEE802_15_4>::init();
 
     if(Traits<Modem>::enabled)
         Initializer<Modem>::init();
+#endif
 }
 
 __END_SYS
