@@ -28,7 +28,6 @@ public:
     using Engine::INT_USER_TIMER1;
     using Engine::INT_USER_TIMER2;
     using Engine::INT_USER_TIMER3;
-    using Engine::INT_MACTIMER;
     using Engine::INT_GPIOA;
     using Engine::INT_GPIOB;
     using Engine::INT_GPIOC;

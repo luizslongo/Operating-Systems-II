@@ -4,7 +4,7 @@
 #define __zynq_memory_map_h
 
 #include <system/memory_map.h>
-#include <machine/cortex/common/memory_map.h>
+#include <machine/cortex/memory_map.h>
 
 __BEGIN_SYS
 

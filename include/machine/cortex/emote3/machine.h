@@ -18,7 +18,7 @@ __BEGIN_SYS
 
 class eMote3: public Machine_Common
 {
-    friend class TSC;
+    friend Machine;
 
 private:
     typedef CPU::Reg32 Reg32;
@@ -49,7 +49,7 @@ private:
         IEEE_ADDR       = 0x00280028,
     };
 
-protected:
+public:
     eMote3() {}
 
     static void delay(const RTC::Microsecond & time) {
@@ -64,10 +64,13 @@ protected:
         Reboot rom_function_reset = *reinterpret_cast<Reboot*>(ROM_API_REBOOT);
         rom_function_reset();
     }
+    static void poweroff() { reboot(); }
 
     static const UUID & uuid() { return *reinterpret_cast<const UUID *>(IEEE_ADDR); }
+    
+    static void smp_barrier() {}
 
-    static void smp_init(unsigned int n_cpus);
+    static void smp_init(unsigned int n_cpus) { assert(n_cpus == 1); }
 
     static void power(const Power_Mode & mode) {
         // Change in power mode will only be effective when ASM("wfi") is executed
@@ -93,11 +96,11 @@ protected:
        }
     }
 
-protected:
+private:
     static void pre_init();
     static void init();
 
-public:
+private:
     static SCB * scb() { return reinterpret_cast<SCB *>(Memory_Map::SCB_BASE); }
     static SysCtrl * scr() { return reinterpret_cast<SysCtrl *>(Memory_Map::SCR_BASE); }
     static IOCtrl * ioc() { return reinterpret_cast<IOCtrl *>(Memory_Map::IOC_BASE); }

@@ -1,4 +1,4 @@
-// EPOS EPOSMote III (ARM Cortex-M3) MCU Timer Mediator Declarations
+// EPOS EPOSMote III (ARM Cortex-M3) Timer Mediator Declarations
 
 #ifndef __emote3_timer_h
 #define __emote3_timer_h
@@ -9,6 +9,7 @@
 #undef __common_only__
 #include <machine/cortex/engines/cortex_m3/systick.h>
 #include <machine/cortex/engines/cortex_m3/gptm.h>
+#include "sysctrl.h"
 #include "memory_map.h"
 #include <utility/convert.h>
 
@@ -57,10 +58,9 @@ public:
     typedef GPTM::Count Count;
 
 public:
-    User_Timer_Engine(unsigned int unit, const Microsecond & time, bool interrupt, bool periodic) {
+    User_Timer_Engine(unsigned int unit, const Microsecond & time, bool interrupt, bool periodic): _unit(unit), _gptm(new (gptm(unit)) GPTM) {
         assert(unit < UNITS);
         power(FULL);
-        _gptm = new (gptm(unit)) GPTM;
         _gptm->config(time, interrupt, periodic);
     }
     ~User_Timer_Engine() {
@@ -84,22 +84,17 @@ public:
             break;
         case FULL:
         case LIGHT:
-        case SLEEP:
-            // TODO: clock_gptm(mode)
-//            scr(RCGC1) |= 1 << (unit + 16);             // Activate GPTM "unit" clock
+            scr()->clock_timer(_unit);
             break;
+        case SLEEP:
         case OFF:
-//            scr(RCGC1) &= ~(1 << (unit + 16));          // Deactivate GPTM "unit" clock
+            scr()->unclock_timer(_unit);
             break;
         }
     }
 
 protected:
-    static void eoi(const Interrupt_Id & id) { int2gptm(id)->eoi(id); };
-
-private:
-    // TODO: incorporate in eoi and muve to .cc
-    static GPTM * int2gptm(const Interrupt_Id & id) {
+    static void eoi(const Interrupt_Id & id) {
         int i;
         switch(id) {
         case IC::INT_USER_TIMER0: i = 0; break;
@@ -107,13 +102,16 @@ private:
         case IC::INT_USER_TIMER2: i = 2; break;
         default: i = 3;
         }
-        return gptm(i);
-    }
+        gptm(i)->eoi(id);
+    };
 
 private:
-    GPTM * _gptm;
-
     static GPTM * gptm(unsigned int unit) { return reinterpret_cast<GPTM *>(Memory_Map::TIMER0_BASE + 0x1000 * unit); }
+    static SysCtrl * scr() { return reinterpret_cast<SysCtrl *>(Memory_Map::SCR_BASE); }
+
+private:
+    unsigned int _unit;
+    GPTM * _gptm;
 };
 
 __END_SYS

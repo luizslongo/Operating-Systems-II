@@ -17,8 +17,6 @@ __BEGIN_SYS
 class System_Timer_Engine: public Timer_Common
 {
 private:
-    static const unsigned int SCS_BASE = Memory_Map::SCS_BASE;
-
     typedef TSC_Common::Hertz Hertz;
     typedef IC_Common::Interrupt_Id Interrupt_Id;
 
@@ -44,7 +42,7 @@ protected:
     }
 
 private:
-    static SysTick * systick() { return reinterpret_cast<SysTick *>(SCS_BASE); }
+    static SysTick * systick() { return reinterpret_cast<SysTick *>(Memory_Map::SCB_BASE); }
 };
 
 
@@ -52,7 +50,6 @@ class User_Timer_Engine: public Timer_Common
 {
 private:
     static const unsigned int UNITS = Traits<Timer>::UNITS;
-    static const unsigned int TIMER_BASE = Memory_Map::TIMER0_BASE;
 
     typedef IC_Common::Interrupt_Id Interrupt_Id;
 
@@ -79,7 +76,7 @@ public:
 
     void power(const Power_Mode & mode) {}
 
-protected:
+ protected:
     static void eoi(const Interrupt_Id & id) { int2gptm(id)->eoi(id); };
 
 private:
@@ -95,10 +92,10 @@ private:
         return gptm(i);
     }
 
+    static GPTM * gptm(unsigned int unit) { return reinterpret_cast<GPTM *>(Memory_Map::TIMER0_BASE + 0x1000 * unit); }
+
 private:
     GPTM * _gptm;
-
-    static GPTM * gptm(unsigned int unit) { return reinterpret_cast<GPTM *>(TIMER_BASE + 0x1000 * unit); }
 };
 
 __END_SYS

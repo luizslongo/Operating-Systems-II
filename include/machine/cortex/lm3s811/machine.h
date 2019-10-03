@@ -17,6 +17,8 @@ __BEGIN_SYS
 
 class LM3S811: public Machine_Common
 {
+    friend Machine;
+
 private:
     typedef CPU::Reg32 Reg32;
     typedef CPU::Log_Addr Log_Addr;
@@ -25,7 +27,11 @@ private:
 public:
     LM3S811() {}
 
-    static void delay(const Microsecond & time) { systick()->delay(time); }
+    static void delay(const RTC::Microsecond & time) {
+        assert(Traits<TSC>::enabled);
+        TSC::Time_Stamp end = TSC::time_stamp() + time * (TSC::frequency() / 1000000);
+        while(end > TSC::time_stamp());
+    }
 
     static void reboot() { scb()->reboot(); }
     static void poweroff() { reboot(); }
@@ -36,14 +42,15 @@ public:
 
     static void smp_init(unsigned int n_cpus) { assert(n_cpus == 1); }
 
-protected:
+    static void power(const Power_Mode & mode) {}
+    
+private:
     static void pre_init();
     static void init();
 
 private:
-    static SysTick * systick() { return reinterpret_cast<SysTick *>(SCS_BASE); }
-    static SCB * scb() { return reinterpret_cast<SCB *>(SCS_BASE); }
-    static SysCtrl * scr() { return reinterpret_cast<SysCtrl *>(SCR_BASE); }
+    static SCB * scb() { return reinterpret_cast<SCB *>(Memory_Map::SCB_BASE); }
+    static SysCtrl * scr() { return reinterpret_cast<SysCtrl *>(Memory_Map::SCR_BASE); }
 };
 
 typedef LM3S811 Machine_Model;

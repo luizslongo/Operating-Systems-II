@@ -15,7 +15,7 @@ __BEGIN_SYS
 class SysTick: public Timer_Common
 {
     // This is a hardware object.
-    // Use with something like "new (Memory_Map::SCS_BASE) SysTick".
+    // Use with something like "new (Memory_Map::SCB_BASE) SysTick".
 
 private:
     typedef CPU::Reg32 Reg32;

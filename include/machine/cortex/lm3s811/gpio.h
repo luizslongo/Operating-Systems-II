@@ -3,9 +3,9 @@
 #ifndef __lm3s811_gpio_h
 #define __lm3s811_gpio_h
 
-#include "sysctrl.h"
 #include <machine/cortex/engines/cortex_m3/scb.h>
 #include <machine/cortex/engines/pl061.h>
+#include "sysctrl.h"
 #include "memory_map.h"
 
 __BEGIN_SYS
@@ -14,26 +14,18 @@ class GPIO_Engine: public GPIO_Common
 {
 protected:
     static const unsigned int PORTS = Traits<GPIO>::UNITS;
-    static const bool supports_power_up = true;
 
 public:
-    GPIO_Engine(unsigned int port, const Pin & pin, const Direction & dir, const Pull & p, const Edge & int_edge)
-    : _port(port), _pin(pin), _pin_mask(1 << pin) {
+    GPIO_Engine(const Port & port, const Pin & pin, const Direction & dir, const Pull & p, const Edge & int_edge)
+    : _pin_mask(1 << pin) {
         assert(port < PORTS);
         power(FULL);
-        _gpio = _gpios[port];
+        _gpio = new(reinterpret_cast<void *>(Memory_Map::GPIOA_BASE + port * 0x1000)) PL061;
         _gpio->select_pin_function(_pin_mask, PL061::FUN_GPIO);
         pull(p);
         direction(dir);
-        if(int_edge != NONE) {
+        if(int_edge != NONE)
             _gpio->clear_interrupts(_pin_mask);
-            _handlers[_port][_pin] = this;
-            int_enable(int_edge);
-        }
-    }
-    ~GPIO_Engine() {
-        int_disable();
-        _handlers[_port][_pin] = 0;
     }
 
     bool get() const {
@@ -63,31 +55,32 @@ public:
     void int_enable(const Level & level, bool power_up = false, const Level & power_up_level = HIGH);
     void int_enable(const Edge & edge, bool power_up = false, const Edge & power_up_edge = RISING);
     void int_disable() { _gpio->int_disable(_pin_mask); }
+    void clear_interrupts() { _gpio->clear_interrupts(0xff); }
 
-    void power(const Power_Mode & mode) {}
-
-//    static void wake_up_on(const WAKE_UP_EVENT & e) {
-//        scs(IWE) = e;
-//    }
-
-protected:
-    static void int_handler(const IC::Interrupt_Id & i);
-    static void eoi(const IC::Interrupt_Id & i);
+    void power(const Power_Mode & mode) {
+        switch(mode) {
+        case ENROLL:
+            break;
+        case DISMISS:
+            break;
+        case SAME:
+            break;
+        case FULL:
+        case LIGHT:
+            break;
+        case SLEEP:
+        case OFF:
+            break;
+        }
+    }
 
     static void init();
 
 private:
     Port _port;
-    Pin _pin;
     Pin _pin_mask;
     Direction _direction;
     PL061 * _gpio;
-
-    static GPIO_Engine * _handlers[PORTS][8];
-    static unsigned char _mis[PORTS];
-    static unsigned int _irq_detect_ack[PORTS];
-
-    PL061 * _gpios[PORTS];
 };
 
 __END_SYS

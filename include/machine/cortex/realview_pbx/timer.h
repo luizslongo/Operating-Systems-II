@@ -1,7 +1,7 @@
 // EPOS Realview PBX (ARM Cortex-A9) Timer Mediator Declarations
 
-#ifndef __model_timer_h
-#define __model_timer_h
+#ifndef __realview_pbx_timer_h
+#define __realview_pbx_timer_h
 
 #define __common_only__
 #include <architecture/tsc.h>
@@ -16,11 +16,9 @@ __BEGIN_SYS
 
 class System_Timer_Engine: public Timer_Common
 {
-    friend Timer;
+    friend Timer; // for init()
 
 private:
-    static const unsigned int TIMER_BASE = Memory_Map::PRIVATE_TIMER_BASE;
-
     typedef TSC_Common::Hertz Hertz;
     typedef IC_Common::Interrupt_Id Interrupt_Id;
 
@@ -37,24 +35,25 @@ public:
 
     Hertz clock() { return pt()->clock(); }
 
-private:
+protected:
     static void eoi(const Interrupt_Id & id) { pt()->eoi(id); };
 
+private:
     static void init(const Hertz & frequency) {
         pt()->config(pt()->clock() / frequency, true, true);
         pt()->enable();
     }
 
 private:
-    static A9_Private_Timer * pt() { return reinterpret_cast<A9_Private_Timer *>(TIMER_BASE); }
+    static A9_Private_Timer * pt() { return reinterpret_cast<A9_Private_Timer *>(Memory_Map::PRIVATE_TIMER_BASE); }
 };
+
 
 // TODO: User_Timer should be mapped to ARM Dual Timers
 class User_Timer_Engine: public Timer_Common
 {
 private:
     static const unsigned int UNITS = Traits<Timer>::UNITS;
-    static const unsigned int TIMER_BASE = Memory_Map::GLOBAL_TIMER_BASE;
 
     typedef IC_Common::Interrupt_Id Interrupt_Id;
 
@@ -72,12 +71,12 @@ public:
         power(OFF);
     }
 
-    Count count() { return gt()->count(); }
+    Count count() const { return gt()->count(); }
 
-    void enable() { gt()->enable(); }
-    void disable() { gt()->disable(); }
+    void enable() const  { gt()->enable(); }
+    void disable() const { gt()->disable(); }
 
-    Hertz clock() { return gt()->clock(); }
+    Hertz clock() const { return gt()->clock(); }
 
     void power(const Power_Mode & mode) {
         switch(mode) {
@@ -101,7 +100,7 @@ protected:
     static void eoi(const Interrupt_Id & id) { gt()->eoi(id); };
 
 private:
-    static A9_Global_Timer * gt() { return reinterpret_cast<A9_Global_Timer *>(TIMER_BASE); }
+    static A9_Global_Timer * gt() { return reinterpret_cast<A9_Global_Timer *>(Memory_Map::GLOBAL_TIMER_BASE); }
 };
 
 __END_SYS

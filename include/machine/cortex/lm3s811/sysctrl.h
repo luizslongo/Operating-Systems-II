@@ -194,6 +194,9 @@ public:
         scr(RCC) = rcc;
     }
 
+    void clock_timer(unsigned int unit) {}
+    void unclock_timer(unsigned int unit) {}
+
 private:
     volatile Reg32 & scr(unsigned int o) { return reinterpret_cast<volatile Reg32 *>(this)[o / sizeof(Reg32)]; }
 };

@@ -1,6 +1,7 @@
 // EPOS Cortex-M Interrupt Controller Initialization
 
 #include <architecture/cpu.h>
+#include <architecture/tsc.h>
 #include <machine/ic.h>
 
 __BEGIN_SYS
@@ -23,7 +24,6 @@ void IC::init()
     // TSC is initialized before IC, so we register its interrupt now
     if(Traits<TSC>::enabled) {
         static const Interrupt_Id int_id =
-            static const Interrupt_Id int_id =
                 Traits<Timer>::UNITS == 1 ? INT_USER_TIMER0
               : Traits<Timer>::UNITS == 2 ? INT_USER_TIMER1
               : Traits<Timer>::UNITS == 3 ? INT_USER_TIMER2

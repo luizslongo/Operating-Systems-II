@@ -10,7 +10,7 @@ __BEGIN_SYS
 class SCB
 {
     // This is a hardware object.
-    // Use with something like "new (Memory_Map::SCS_BASE) SCB".
+    // Use with something like "new (Memory_Map::SCB_BASE) SCB".
 
 private:
     typedef CPU::Reg32 Reg32;

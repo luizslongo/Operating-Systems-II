@@ -14,7 +14,6 @@ public:
     typedef void (* Interrupt_Handler)(const Interrupt_Id &);
 
     enum {
-        INT_HARD_FAULT,
         INT_SYS_TIMER,
         INT_USER_TIMER0,
         INT_USER_TIMER1,

@@ -3,18 +3,25 @@
 #ifndef __zynq_h
 #define __zynq_h
 
-#include <architecture/cpu.h>
-#include <architecture/tsc.h>
+#define __common_only__
+#include <machine/machine.h>
 #include <machine/rtc.h>
+#undef __common_only__
+#include <machine/cortex/engines/cortex_a9/gic.h>
+#include <machine/cortex/engines/cortex_a9/scu.h>
+#include "memory_map.h"
 #include <system.h>
 
 __BEGIN_SYS
 
 class Zynq
 {
-protected:
+    friend Machine; // for pre_init() and init()
+
+private:
     typedef CPU::Reg32 Reg32;
     typedef CPU::Log_Addr Log_Addr;
+    typedef RTC_Common::Microsecond Microsecond;
 
 public:
     static const unsigned int IRQS = 96;

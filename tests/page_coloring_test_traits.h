@@ -138,7 +138,7 @@ template<> struct Traits<FPU>: public Traits<void>
 template<> struct Traits<PMU>: public Traits<void>
 {
     static const bool enabled = true;
-    enum { V1, V2, V3, DUO, MICRO, ATOM, NEHALEN, NETBURST, SANDY_BRIDGE };
+    enum { V1, V2, V3, DUO, MICRO, ATOM, SANDY_BRIDGE };
     static const unsigned int VERSION = V2;
 };
 
@@ -238,6 +238,21 @@ template<> struct Traits<UART>: public Traits<Machine_Common>
     static const unsigned int COM2 = 0x2f8; // to 0x2ff, IRQ3
     static const unsigned int COM3 = 0x3e8; // to 0x3ef, no IRQ
     static const unsigned int COM4 = 0x2e8; // to 0x2ef, no IRQ
+};
+
+template<> struct Traits<Serial_Display>: public Traits<void>
+{
+    static const bool enabled = (Traits<Build>::EXPECTED_SIMULATION_TIME != 0);
+    static const int ENGINE = UART;
+    static const int UNIT = 0; // COM1
+    static const int COLUMNS = 80;
+    static const int LINES = 24;
+    static const int TAB_SIZE = 8;
+};
+
+template<> struct Traits<Serial_Keyboard>: public Traits<void>
+{
+    static const bool enabled = (Traits<Build>::EXPECTED_SIMULATION_TIME != 0);
 };
 
 template<> struct Traits<Display>: public Traits<Machine_Common>

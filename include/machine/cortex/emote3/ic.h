@@ -1,4 +1,4 @@
-// EPOS EPOSMote III (ARM Cortex-M3) MCU IC Mediator Declarations
+// EPOS EPOSMote III (ARM Cortex-M3) IC Mediator Declarations
 
 #ifndef __emote3_ic_h
 #define __emote3_ic_h
@@ -26,7 +26,6 @@ public:
         INT_USER_TIMER1 = HARD_INT + NVIC::IRQ_GPT1A,
         INT_USER_TIMER2 = HARD_INT + NVIC::IRQ_GPT2A,
         INT_USER_TIMER3 = HARD_INT + NVIC::IRQ_GPT3A,
-        INT_MACTIMER    = HARD_INT + NVIC::IRQ_MACTIMER,
         INT_GPIOA       = HARD_INT + NVIC::IRQ_GPIOA,
         INT_GPIOB       = HARD_INT + NVIC::IRQ_GPIOB,
         INT_GPIOC       = HARD_INT + NVIC::IRQ_GPIOC,

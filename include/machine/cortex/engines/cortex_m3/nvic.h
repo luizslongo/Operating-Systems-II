@@ -13,7 +13,7 @@ __BEGIN_SYS
 class NVIC: public IC_Common
 {
     // This is a hardware object.
-    // Use with something like "new (Memory_Map::SCS_BASE) NVIC".
+    // Use with something like "new (Memory_Map::SCB_BASE) NVIC".
 
 private:
     typedef CPU::Reg32 Reg32;

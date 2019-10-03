@@ -1,4 +1,4 @@
-/// EPOS EPOSMote III (ARM Cortex-M3) GPIO Mediator Declarations
+// EPOS EPOSMote III (ARM Cortex-M3) GPIO Mediator Declarations
 
 #ifndef __emote3_gpio_h
 #define __emote3_gpio_h
