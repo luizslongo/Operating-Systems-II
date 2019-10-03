@@ -12,7 +12,8 @@ struct Memory_Map: public Cortex_Memory_Map
 {
     // Physical Memory
     enum {
-        UART0_BASE                  = 0x3F200000 // PrimeCell PL011 UART
+        UART0_BASE                  = 0x3f200000, // PrimeCell PL011 UART
+        TIMER0_BASE                 = 0x3f003000
     };
     // Logical Address Space
 };

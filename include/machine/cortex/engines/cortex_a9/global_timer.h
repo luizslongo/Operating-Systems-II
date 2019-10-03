@@ -37,7 +37,6 @@ public:
 
 public:
     void config(const Count & count, bool interrupt, bool periodic);
-
     Count count() {
         CPU::Reg32 high, low;
 
