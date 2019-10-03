@@ -20,7 +20,6 @@ class BCM_Timer : public Timer_Common
 private:
     typedef CPU::Reg32 Reg32;
     typedef TSC_Common::Hertz Hertz;
-    typedef IC_Common::Interrupt_Id Interrupt_Id;
 
 public:
     typedef CPU::Reg64 Count;
@@ -42,10 +41,10 @@ public:
 public:
     void config(unsigned int unit = 1, const Count & count) {
         if (unit == 1) {
-            bcmt(STCS) &= 1 << 1;
+            bcmt(STCS) |= 1 << 1;
             bcmt(STC1) = count + bcmt(STCLO);
         } else if (unit == 3) {
-            bcmt(STCS) &= 1 << 3;
+            bcmt(STCS) |= 1 << 3;
             bcmt(STC3) = count + bcmt(STCLO);
         }
     }
@@ -65,16 +64,6 @@ public:
     }
 
     Hertz clock() { return CLOCK; }
-
-    void eoi(const IC::Interrupt_Id & int_id) {
-        if (int_id == 1){
-            bcmt(STC1) = RELOAD_VALUE + bcmt(STCLO);
-            bcmt(STCS) &= 1 << 1;
-        } else if (int_id == 3) {
-            bcmt(STC3) = RELOAD_VALUE + bcmt(STCLO);
-            bcmt(STCS) &= 1 << 3;
-        }
-    }
 
 protected:
     volatile Reg32 & bcmt(unsigned int o) { return reinterpret_cast<volatile Reg32 *>(this)[o / sizeof(Reg32)]; }
