@@ -47,7 +47,7 @@ public:
     };
 
 public:
-    void config(const Count & count, bool interrupt, bool periodic) {
+    void config(const Count & count) {
         // TODO: interrupt and periodic are not being handled!
         pt(PTCLR) = 0;
         pt(PTISR) = INT_CLR;

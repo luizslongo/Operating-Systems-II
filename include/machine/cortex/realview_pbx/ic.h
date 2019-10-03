@@ -1,7 +1,7 @@
 // EPOS Realview PBX (ARM Cortex-A9) IC Mediator Declarations
 
-#ifndef __model_ic_h
-#define __model_ic_h
+#ifndef __realview_pbx_ic_h
+#define __realview_pbxic_h
 
 #define __common_only__
 #include <machine/ic.h>
@@ -16,8 +16,6 @@ class IC_Engine: public IC_Common
 public:
     // Interrupts
     static const unsigned int INTS = Traits<IC>::INTS;
-    static const unsigned int EXC_INT = 0; // Not mapped by IC. Exceptions are hard configured by SETUP.
-    static const unsigned int SOFT_INT = 0;
     enum {
         INT_TIMER       = GIC::IRQ_PRIVATE_TIMER,
         INT_USER_TIMER0 = GIC::IRQ_GLOBAL_TIMER,
@@ -38,6 +36,10 @@ public:
         INT_RESCHEDULER = GIC::IRQ_SOFTWARE0,
         LAST_INT        = INT_RESCHEDULER
     };
+
+    // Exceptions
+    // Exceptions are hard configured by SETUP, since they run in different mode with a different context layout.
+    static const unsigned int EXC_INT = 0;
 
 public:
     static void enable() { gic_distributor()->enable(); }

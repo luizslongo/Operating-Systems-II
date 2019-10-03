@@ -12,14 +12,15 @@ __BEGIN_SYS
 
 class GIC: public IC_Common
 {
-public:
-    static const unsigned int INT_ID_MASK = 0x3ff;
-
+protected:
     typedef CPU::Reg32 Reg32;
 
+    static const unsigned int INT_ID_MASK = 0x3ff;
+
+public:
     // IRQs
     static const unsigned int IRQS = Traits<IC>::IRQS;
-    static const unsigned int HARD_INT = 16;
+    static const unsigned int HARD_INT = 0;
     typedef Interrupt_Id IRQ;
     enum {
         IRQ_SOFTWARE0           = 0,
@@ -149,6 +150,9 @@ public:
 
 class GIC_Distributor: public GIC
 {
+    // This is a hardware object.
+    // Use with something like "new (Memory_Map::GIC_DIST_BASE) GIC_Distributor".
+
 public:
     void enable() {
         gic_dist(ICDISER0) = ~0;

@@ -59,21 +59,24 @@ template <> struct Traits<Machine>: public Traits<Machine_Common>
 
 template <> struct Traits<IC>: public Traits<Machine_Common>
 {
+    static const unsigned int IRQS = 128;
 };
 
-template <> struct Traits<Timer>: public Traits<Machine_Common>
+template<> struct Traits<Timer>: public Traits<Machine_Common>
 {
     static const bool debugged = hysterically_debugged;
 
-    // Meaningful values for the timer frequency range from 100 to 10000 Hz. The
-    // choice must respect the scheduler time-slice, i. e., it must be higher
-    // than the scheduler invocation frequency.
+    static const unsigned int UNITS = 1;
+
+    // Meaningful values for the timer frequency range from 100 to
+    // 10000 Hz. The choice must respect the scheduler time-slice, i. e.,
+    // it must be higher than the scheduler invocation frequency.
     static const int FREQUENCY = 1000; // Hz
 };
 
-template <> struct Traits<UART>: public Traits<Machine_Common>
+template<> struct Traits<UART>: public Traits<Machine_Common>
 {
-    static const unsigned int UNITS = 2;
+    static const unsigned int UNITS = 1; // only mini UART, since PL011 is Bluetooth
 
     // CLOCK_DIVISOR is hard coded in ps7_init.tcl
     static const unsigned int CLOCK_DIVISOR = 20;
@@ -84,6 +87,12 @@ template <> struct Traits<UART>: public Traits<Machine_Common>
     static const unsigned int DEF_DATA_BITS = 8;
     static const unsigned int DEF_PARITY = 0; // none
     static const unsigned int DEF_STOP_BITS = 1;
+};
+
+template<> struct Traits<GPIO>: public Traits<Machine_Common>
+{
+    static const unsigned int UNITS = 5;
+    static const bool supports_power_up = false;
 };
 
 template<> struct Traits<Serial_Display>: public Traits<void>

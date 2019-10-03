@@ -4,7 +4,7 @@
 #define __raspberry_pi3_info_h
 
 #include <system/info.h>
-#include <machine/cortex/common/info.h>
+#include <machine/cortex/info.h>
 
 __BEGIN_SYS
 

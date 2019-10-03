@@ -26,8 +26,6 @@ public:
     typedef A9_Private_Timer::Count Count;
 
 public:
-    System_Timer_Engine() { new(pt()) A9_Private_Timer; }
-
     Count read() { return pt()->read(); }
 
     void enable() { pt()->enable(); }
@@ -40,7 +38,7 @@ protected:
 
 private:
     static void init(const Hertz & frequency) {
-        pt()->config(pt()->clock() / frequency, true, true);
+        pt()->config(pt()->clock() / frequency);
         pt()->enable();
     }
 

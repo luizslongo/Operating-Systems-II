@@ -1,7 +1,7 @@
-// EPOS ARM PrimeCell PL011 UART Mediator Declarations
+// EPOS ARM Cortex-A53 BCM UART (similar to 16550) Mediator Declarations
 
-#ifndef __pl011_h
-#define __pl011_h
+#ifndef __bcm_uart_h
+#define __bcm_uart_h
 
 #include <architecture/cpu.h>
 #define __common_only__
@@ -10,10 +10,10 @@
 
 __BEGIN_SYS
 
-class BSC_UART: public UART_Common
+class BCM_UART: public UART_Common
 {
-    // This is a hardware object.
-    // Use with something like "new (Memory_Map::UARTx_BASE) PL011".
+    // This is a hardware object
+    // Use with something like "new (Memory_Map::UARTx_BASE) PL011"
 
 private:
     typedef CPU::Reg8 Reg8;
@@ -64,33 +64,32 @@ public:
     void config(unsigned int baud_rate, unsigned int data_bits, unsigned int parity, unsigned int stop_bits) {
         unsigned int ra;
 
-        /* initialize UART */
+        // Initialize UART
         uart(AUX_ENABLES) = UEN;
         uart(AUX_MU_IER_REG) = 0;
         uart(AUX_MU_CNTL_REG) = 0;
-        uart(AUX_MU_LCR_REG) = 3;           // 8 bits
+        uart(AUX_MU_LCR_REG) = 3;       // 8 bits
         uart(AUX_MU_MCR_REG) = 0;
 
 
         uart(AUX_MU_IER_REG) = 0x5;
 
-        uart(AUX_MU_IIR_REG) = 0xC6;        //disable interrupts
-        uart(AUX_MU_BAUD_REG) = 270;        //sets baudrate to 115200
+        uart(AUX_MU_IIR_REG) = 0xC6;    // disable interrupts
+        uart(AUX_MU_BAUD_REG) = 270;    // sets baudrate to 115200
         
-        /* map UART1 to GPIO pins */
+        // Map UART to GPIO pins
         ra = uart(GPFSEL1);
-        ra &= ~(7<<12);                     //gpio14
-        ra |= 2<<12;                        //alt5
-        ra &=~ (7<<15);                       //gpio15
-        ra |= 2<<15;                          //alt5
-        
+        ra &= ~(7 << 12);       // GPIO 14
+        ra |= 2 << 12;          // alternate function 5
+        ra &= ~(7 << 15);       // GPIO 15
+        ra |= 2 << 15;          // alternate function 5
         uart(GPFSEL1) = ra;
         uart(GPPUD) = 0;
-        for(ra=0;ra<150;ra++) asm volatile ("nop"); //150 cycles to synchronize
-        uart(GPPUDCLK0) = (1<<14)|(1<<15);
-        for(ra=0;ra<150;ra++) asm volatile ("nop"); //150 cycles to synchronize
-        uart(GPPUDCLK0) = 0;                // flush GPIO setup
-        uart(AUX_MU_CNTL_REG) = TXE | RXE;          // enable Tx, Rx
+        for(ra = 0; ra < 150; ra++) asm volatile ("nop"); // 150 cycles to synchronize
+        uart(GPPUDCLK0) = (1 << 14) | (1 << 15);
+        for(ra = 0; ra < 150; ra++) asm volatile ("nop"); // 150 cycles to synchronize
+        uart(GPPUDCLK0) = 0;                    // flush GPIO setup
+        uart(AUX_MU_CNTL_REG) = TXE | RXE;      // enable Tx, Rx
     }
 
     void config(unsigned int * baud_rate, unsigned int * data_bits, unsigned int * parity, unsigned int * stop_bits) {
@@ -104,14 +103,8 @@ public:
     Reg8 rxd() { return uart(DR); }
     void txd(Reg8 c) { uart(DR) = c; }
 
-
     bool rxd_ok() { return !(uart(AUX_MU_LSR_REG) & RXFE); }
     bool txd_ok() { return !(uart(AUX_MU_LSR_REG) & TXFF); }
-
-    // bool rxd_full() { return (uart(FR) & RXFF); }
-    // bool txd_empty() { return (uart(FR) & TXFE) && !(uart(FR) & BUSY); }
-
-    // bool busy() { return (uart(FR) & BUSY); }
 
     void enable() { uart(AUX_ENABLES) = UEN;}
     void disable() { uart(AUX_ENABLES) &= ~UEN; }

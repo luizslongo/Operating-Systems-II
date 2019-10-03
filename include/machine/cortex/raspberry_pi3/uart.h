@@ -1,4 +1,4 @@
-// EPOS Realview PBX (ARM Cortex-A9) UART Mediator Declarations
+// EPOS Paspberry Pi3 (ARM Cortex-A53) UART Mediator Declarations
 
 #ifndef __raspberry_pi3_uart_h
 #define __raspberry_pi3_uart_h
@@ -6,7 +6,7 @@
 #define __common_only__
 #include <machine/uart.h>
 #undef __common_only__
-#include <machine/cortex/engines/cortex_a53/bsc_uart.h>
+#include <machine/cortex/engines/cortex_a53/bcm_uart.h>
 #include "memory_map.h"
 
 __BEGIN_SYS
@@ -17,7 +17,8 @@ private:
     static const unsigned int UNITS = Traits<UART>::UNITS;
 
 public:
-    UART_Engine(unsigned int unit, unsigned int baud_rate, unsigned int data_bits, unsigned int parity, unsigned int stop_bits): _unit(unit), _uart(new(reinterpret_cast<void *>(Memory_Map::UART0_BASE + 0x1000 * unit)) BSC_UART) {
+    UART_Engine(unsigned int unit, unsigned int baud_rate, unsigned int data_bits, unsigned int parity, unsigned int stop_bits)
+    : _unit(unit), _uart(new(reinterpret_cast<void *>(Memory_Map::AUX_BASE)) BCM_UART) {
         assert(unit < UNITS);
         power(FULL);  // physically enable the UART in SysCtrl before configuring it
         config(baud_rate, data_bits, parity, stop_bits);
@@ -73,7 +74,8 @@ public:
     static void init() {}
 
 private:
-    BSC_UART * _uart;
+    unsigned int _unit;
+    BCM_UART * _uart;
 };
 
 __END_SYS

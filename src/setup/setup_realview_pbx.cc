@@ -1,4 +1,4 @@
-// EPOS Cortex-A SETUP
+// EPOS Realview-PBX (ARM Cortex-A9) SETUP
 
 // If emulating on QEMU, uboot has a vector table in ROM at 0x00000000.
 // It relocates EPOS image (.bin), which has this vector table at the
