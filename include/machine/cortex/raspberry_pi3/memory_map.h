@@ -11,7 +11,9 @@ __BEGIN_SYS
 struct Memory_Map: public Cortex_Memory_Map
 {
     // Physical Memory
-
+    enum {
+        UART0_BASE                  = 0x3F200000 // PrimeCell PL011 UART
+    };
     // Logical Address Space
 };
 
