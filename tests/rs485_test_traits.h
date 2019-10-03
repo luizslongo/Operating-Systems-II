@@ -110,28 +110,13 @@ template<> struct Traits<Aspect>: public Traits<void>
 };
 
 
-// Mediators
-template<> struct Traits<Serial_Display>: public Traits<void>
-{
-    static const bool enabled = (Traits<Build>::EXPECTED_SIMULATION_TIME != 0);
-    static const int ENGINE = USB;
-    static const int COLUMNS = 80;
-    static const int LINES = 24;
-    static const int TAB_SIZE = 8;
-};
-
-template<> struct Traits<Serial_Keyboard>: public Traits<void>
-{
-    static const bool enabled = (Traits<Build>::EXPECTED_SIMULATION_TIME != 0);
-};
-
 __END_SYS
 
+// Mediators
 #include __ARCHITECTURE_TRAITS_H
 #include __MACHINE_TRAITS_H
 
 __BEGIN_SYS
-
 
 // API Components
 template<> struct Traits<Application>: public Traits<void>

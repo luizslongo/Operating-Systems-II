@@ -13,7 +13,7 @@ __BEGIN_SYS
 class PL022: public SPI_Common
 {
     // This is a hardware object.
-    // Use with something like "new (Memory_Map::TIMERx_BASE) GPTM".
+    // Use with something like "new (Memory_Map::SPIx_BASE) PL022".
 
 private:
     typedef CPU::Reg32 Reg32;

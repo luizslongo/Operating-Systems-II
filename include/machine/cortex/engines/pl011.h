@@ -12,15 +12,17 @@ __BEGIN_SYS
 
 class PL011: public UART_Common
 {
+    // This is a hardware object.
+    // Use with something like "new (Memory_Map::UARTx_BASE) PL011".
+
 private:
-    typedef CPU::Log_Addr Log_Addr;
     typedef CPU::Reg8 Reg8;
     typedef CPU::Reg32 Reg32;
 
     static const unsigned int CLOCK = Traits<UART>::CLOCK / 16;
 
 public:
-    // Register offsets
+    // Registers offsets from BASE (i.e. this)
     enum {                              // Description                  Type    Value after reset
         DR              = 0x000,        // Data                         r/w     0x00000000
         RSR             = 0x004,        // Receive Status               r/w     0x00000000

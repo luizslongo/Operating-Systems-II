@@ -7,7 +7,6 @@
 #include <machine/uart.h>
 #undef __common_only__
 #include <machine/cortex/engines/pl011.h>
-#include <machine/cortex/engines/pl061.h>
 #include "memory_map.h"
 
 __BEGIN_SYS
@@ -18,10 +17,8 @@ private:
     static const unsigned int UNITS = Traits<UART>::UNITS;
 
 public:
-    UART_Engine(unsigned int unit, unsigned int baud_rate, unsigned int data_bits, unsigned int parity, unsigned int stop_bits) {
+    UART_Engine(unsigned int unit, unsigned int baud_rate, unsigned int data_bits, unsigned int parity, unsigned int stop_bits): _unit(unit), _pl011(new(reinterpret_cast<void *>(Memory_Map::UART0_BASE + 0x1000 * unit)) PL011) {
         assert(unit < UNITS);
-        _unit = unit;
-        _pl011 = new(reinterpret_cast<void *>(Memory_Map::UART0_BASE + 0x1000 * unit)) PL011;
         config(baud_rate, data_bits, parity, stop_bits);
     }
 
