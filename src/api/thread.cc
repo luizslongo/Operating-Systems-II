@@ -110,6 +110,18 @@ Thread::~Thread()
 
 void Thread::priority(const Criterion & c)
 {
+
+    /*
+    * Problem description
+    * when changing the priority of a RUNNING Thread, the _scheduler.remove makes the thread be removed from the queue,
+    * but when calling reschedule(), the thread set as the running thread is the running(), which is the scheduler.chosen()
+    * this makes the dispatch to switch context with the wrong thread
+    * the scenarios to pay attention are:
+    * 1: Core 1 calls priority for a running thread "t0" on Core 2:
+    *   1.1: t0's new priority does not change the running Core
+    *   1.2: t0's new priority changes the running Core
+    * 2: Core 1 calls priority for its own running thread
+    */
     lock();
 
     db<Thread>(TRC) << "Thread::priority(this=" << this << ",prio=" << c << ")" << endl;
