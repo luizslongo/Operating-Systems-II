@@ -51,7 +51,7 @@ public:
     }
 
     Count count() {
-        return static_cast<Count>(bcm(STCLO));
+        return static_cast<Count>(timer(STCLO));
 
         // TODO: We could not identified why, but reading High counter does not work, it returns an execution error!
         //Reg32 high;
