@@ -42,24 +42,25 @@ public:
     void config(unsigned int unit, const Count & count) {
         assert(unit < 2);
         if(unit == 0) {
-            timer(STCS) &= 1 << 1;
+            timer(STCS) |= 1 << 1;
             timer(STC1) = count + timer(STCLO);
         } else {
-            timer(STCS) &= 1 << 3;
+            timer(STCS) |= 1 << 3;
             timer(STC3) = count + timer(STCLO);
         }
     }
 
     Count count() {
-        Reg32 high;
-        Reg32 low;
+        return static_cast<Count>(bcm(STCLO));
 
-        do {
-            high = timer(STCHI);
-            low = timer(STCLO);
-        } while(bcm(STCHI) != high);
-
-        return static_cast<Count>(high) << 32 | low;
+        // TODO: We could not identified why, but reading High counter does not work, it returns an execution error!
+        //Reg32 high;
+        //Reg32 low;
+        //do {
+        //    high = timer(STCHI);
+        //    low = timer(STCLO);
+        //} while(bcm(STCHI) != high);
+        //return static_cast<Count>(high) << 32 | low;
     }
 
     Hertz clock() { return CLOCK; }
