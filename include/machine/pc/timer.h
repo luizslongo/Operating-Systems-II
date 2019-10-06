@@ -295,8 +295,8 @@ public:
         return percentage;
     }
 
-    static void enable() { IC::enable(IC::INT_TIMER); }
-    static void disable() { IC::disable(IC::INT_TIMER); }
+    static void enable() { IC::enable(IC::INT_SYS_TIMER); }
+    static void disable() { IC::disable(IC::INT_SYS_TIMER); }
 
  private:
     static Hertz count2freq(const Count & c) { return c ? Engine::clock() / c : 0; }

@@ -38,7 +38,8 @@ protected:
     static void eoi(const Interrupt_Id & id) { timer()->config(UNIT, _count); }
 
 private:
-    static void init(const Hertz & frequency) : _count(timer()->clock() / frequency) {
+    static void init(const Hertz & frequency) {
+        _count = timer()->clock() / frequency;
         timer()->config(UNIT, _count);
         timer()->enable();
     }
@@ -47,7 +48,7 @@ private:
     static BCM_Timer * timer() { return reinterpret_cast<BCM_Timer *>(Memory_Map::TIMER0_BASE); }
 
 private:
-    Count _count;
+    static Count _count;
 };
 
 
@@ -66,11 +67,12 @@ public:
     typedef BCM_Timer::Count Count;
 
 public:
-    User_Timer_Engine(unsigned int unit, const Microsecond & time, bool interrupt, bool periodic): _count(Convert::us2count(time, clock())) {
+    User_Timer_Engine(unsigned int unit, const Microsecond & time, bool interrupt, bool periodic) {
         assert(unit < UNITS);
-        power(FULL); // TODO: This operation has no effect
+        _count = Convert::us2count(time, clock());
+        power(FULL);
         // TODO: If we maintain the next line, a user timer creation will always interrupt
-        //       Other than that, it will start the couting immediately, so no there is no need to have an init on User_Timer_Engine...
+        //       Other than that, it will start the counting immediately, so no there is no need to have an init on User_Timer_Engine...
         timer()->config(UNIT, _count);
     }
     ~User_Timer_Engine() {
@@ -108,16 +110,10 @@ protected:
     static void eoi(const Interrupt_Id & id) { timer()->config(UNIT, _count); }
 
 private:
-    static void init(const Hertz & frequency) {
-        timer()->config(UNIT, timer()->clock() / frequency);
-        timer()->enable();
-    }
-
-private:
     static BCM_Timer * timer() { return reinterpret_cast<BCM_Timer *>(Memory_Map::TIMER0_BASE); }
 
 private:
-    Count _count;
+    static Count _count;
 };
 
 __END_SYS

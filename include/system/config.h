@@ -167,9 +167,6 @@ namespace EPOS {
 #define __PMU_H                 __HEADER_ARCH(pmu)
 
 #define __UART_H                __HEADER_MACH(uart)
-#define __NIC_H                 __HEADER_MACH(nic)
-#define __AES_H                 __HEADER_MACH(aes)
-#define __ipv4__
 #endif
 
 //============================================================================

@@ -12,7 +12,7 @@ void IC::dispatch(unsigned int i)
         not_spurious = eoi(i);
     if(not_spurious) {
 
-        if((i != INT_TIMER) || Traits<IC>::hysterically_debugged)
+        if((i != INT_SYS_TIMER) || Traits<IC>::hysterically_debugged)
             db<IC>(TRC) << "IC::dispatch(i=" << i << ")" << endl;
 
 // The code bellow aims at fixing an old problem with the network stack (and other interrupt driven subsystems).
@@ -23,13 +23,13 @@ void IC::dispatch(unsigned int i)
 
         Thread::Criterion c = Thread::self()->priority();
 
-        if(i != INT_TIMER && i != INT_IPI)
+        if(i != INT_SYS_TIMER && i != INT_IPI)
            Thread::self()->link()->rank(Thread::Criterion::ISR + int(i));
 
         db<Thread>(TRC) << "Thread::priority(this=" << Thread::self() << ",prio=" << Thread::self()->link()->rank() << ")" << endl;
         _int_vector[i](i);
 
-        if(i != INT_TIMER && i != INT_IPI)
+        if(i != INT_SYS_TIMER && i != INT_IPI)
             Thread::self()->priority(c);
 
     } else {

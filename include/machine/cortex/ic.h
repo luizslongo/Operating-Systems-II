@@ -23,7 +23,7 @@ public:
     using Engine::Interrupt_Id;
     using Engine::Interrupt_Handler;
 
-    using Engine::INT_TIMER;
+    using Engine::INT_SYS_TIMER;
     using Engine::INT_USER_TIMER0;
     using Engine::INT_USER_TIMER1;
     using Engine::INT_USER_TIMER2;

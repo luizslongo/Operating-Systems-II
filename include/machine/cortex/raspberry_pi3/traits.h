@@ -59,7 +59,10 @@ template <> struct Traits<Machine>: public Traits<Machine_Common>
 
 template <> struct Traits<IC>: public Traits<Machine_Common>
 {
-    static const unsigned int IRQS = 128;
+    static const bool debugged = hysterically_debugged;
+
+    static const unsigned int IRQS = 96;
+    static const unsigned int INTS = 128;
 };
 
 template<> struct Traits<Timer>: public Traits<Machine_Common>
@@ -91,7 +94,7 @@ template<> struct Traits<UART>: public Traits<Machine_Common>
 
 template<> struct Traits<GPIO>: public Traits<Machine_Common>
 {
-    static const unsigned int UNITS = 5;
+    static const unsigned int UNITS = 0;
     static const bool supports_power_up = false;
 };
 

@@ -20,7 +20,7 @@ public:
     static const unsigned int SOFT_INT = HARD_INT + NVIC::IRQS;
     enum {
         INT_HARD_FAULT  = ARMv7_M::EXC_HARD,
-        INT_TIMER       = ARMv7_M::EXC_SYSTICK,
+        INT_SYS_TIMER   = ARMv7_M::EXC_SYSTICK,
         INT_USER_TIMER0 = HARD_INT + NVIC::IRQ_GPT0A,
         INT_USER_TIMER1 = HARD_INT + NVIC::IRQ_GPT1A,
         INT_USER_TIMER2 = HARD_INT + NVIC::IRQ_GPT2A,

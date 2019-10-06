@@ -482,7 +482,7 @@ public:
 
     enum {
         INT_FIRST_HARD  = Engine::INT_FIRST_HARD,
-        INT_TIMER       = Engine::INT_TIMER,
+        INT_SYS_TIMER   = Engine::INT_TIMER,
         INT_KEYBOARD    = Engine::INT_KEYBOARD,
         INT_LAST_HARD   = Engine::INT_LAST_HARD,
         INT_RESCHEDULER = Engine::INT_IPI,

@@ -52,15 +52,6 @@ public:
 
     Count count() {
         return static_cast<Count>(timer(STCLO));
-
-        // TODO: We could not identified why, but reading High counter does not work, it returns an execution error!
-        //Reg32 high;
-        //Reg32 low;
-        //do {
-        //    high = timer(STCHI);
-        //    low = timer(STCLO);
-        //} while(bcm(STCHI) != high);
-        //return static_cast<Count>(high) << 32 | low;
     }
 
     Hertz clock() { return CLOCK; }

@@ -15,6 +15,8 @@ struct Memory_Map: public Cortex_Memory_Map
         UART0_BASE              = 0x3f200000, // PrimeCell PL011 UART
         TIMER0_BASE             = 0x3f003000,
         AUX_BASE                = 0x3f215000, // mini UART + 2 x SPI master
+        IC_BASE                 = 0x3f215000,
+        MBOX_BASE               = 0x3f215000,
     };
 
     // Logical Address Space

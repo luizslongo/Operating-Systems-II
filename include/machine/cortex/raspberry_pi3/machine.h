@@ -17,11 +17,6 @@ protected:
     typedef CPU::Log_Addr Log_Addr;
 
 public:
-    static const unsigned int IRQS = 96;
-    static const unsigned int TIMERS = 3;       // ARM Timer + 2 x System Timer
-    static const unsigned int UARTS = 2;        // PL011 AND AUX
-    static const unsigned int GPIO_PORTS = 0;   // FIXME: Not implemented yet
-    static const bool supports_gpio_power_up = false;
 
     // Base addresses for memory-mapped I/O devices
     enum {

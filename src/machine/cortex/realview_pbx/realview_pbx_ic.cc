@@ -59,7 +59,7 @@ void IC::dispatch(unsigned int i)
 {
     Interrupt_Id id = int_id();
 
-    if((id != INT_TIMER) || Traits<IC>::hysterically_debugged)
+    if((id != INT_SYS_TIMER) || Traits<IC>::hysterically_debugged)
         db<IC>(TRC) << "IC::dispatch(i=" << id << ")" << endl;
 
     assert(id < INTS);
@@ -73,7 +73,7 @@ void IC::dispatch(unsigned int i)
 
 void IC::eoi(unsigned int id)
 {
-    if((id != INT_TIMER) || Traits<IC>::hysterically_debugged)
+    if((id != INT_SYS_TIMER) || Traits<IC>::hysterically_debugged)
         db<IC>(TRC) << "IC::eoi(i=" << id << ")" << endl;
 
     assert(id < INTS);

@@ -17,7 +17,7 @@ public:
     // Interrupts
     static const unsigned int INTS = Traits<IC>::INTS;
     enum {
-        INT_TIMER       = GIC::IRQ_PRIVATE_TIMER,
+        INT_SYS_TIMER   = GIC::IRQ_PRIVATE_TIMER,
         INT_USER_TIMER0 = GIC::IRQ_GLOBAL_TIMER,
         INT_USER_TIMER1 = 0,
         INT_USER_TIMER2 = 0,
