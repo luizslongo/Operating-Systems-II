@@ -5,8 +5,8 @@
 
 #define __common_only__
 #include <architecture/tsc.h>
-#include <machine/ic.h>
 #undef __common_only__
+#include <machine/ic.h>
 #include <machine/cortex/engines/cortex_a53/bcm_timer.h>
 #include "memory_map.h"
 #include <utility/convert.h>
@@ -70,13 +70,17 @@ public:
     User_Timer_Engine(unsigned int unit, const Microsecond & time, bool interrupt, bool periodic) {
         assert(unit < UNITS);
         _count = Convert::us2count(time, clock());
+        _periodic = periodic;
         power(FULL);
-        // TODO: If we maintain the next line, a user timer creation will always interrupt
-        //       Other than that, it will start the counting immediately, so no there is no need to have an init on User_Timer_Engine...
         timer()->config(UNIT, _count);
+        if(interrupt)
+        	IC::enable(INT_USER_TIMER0);
+        else
+        	IC::disable(INT_USER_TIMER0);
     }
+
     ~User_Timer_Engine() {
-        power(OFF); // TODO: This operation has no effect
+        power(OFF);
     }
 
     Count read() { return timer()->read(); }
@@ -86,7 +90,6 @@ public:
 
     Hertz clock() { return timer()->clock(); }
 
-    // TODO: The BCM_Timer does not have a Power_Mode, it is necessary to have this function?
     void power(const Power_Mode & mode) {
         switch(mode) {
         case ENROLL:
@@ -106,13 +109,13 @@ public:
     }
 
 protected:
-    // TODO: This kind of handling will make every User time to be periodic!!
-    static void eoi(const Interrupt_Id & id) { timer()->config(UNIT, _count); }
+    static void eoi(const Interrupt_Id & id) { if(_periodic) timer()->config(UNIT, _count); }
 
 private:
     static BCM_Timer * timer() { return reinterpret_cast<BCM_Timer *>(Memory_Map::TIMER0_BASE); }
 
 private:
+    static bool _periodic;
     static Count _count;
 };
 

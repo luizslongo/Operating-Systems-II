@@ -92,14 +92,6 @@ public:
         DISABLE_BASIC_IRQS          = 0x024  // r/w     0x000
     };
 
-    enum {
-        ATISR                       = 0x0C,     // Interrupt Status ARM Timer
-        STCLO                       = 0x04,     // Low COUNTER
-        STC1                        = 0x10,     // Compare 1 - Value used to generate interrupt 1
-        STC3                        = 0X18,     // Compare 3 - Value used to generate interrupt 3
-        STCS                        = 0x0       // Control/Status System Timer
-    };
-
 public:
     void enable() {
         irq(ENABLE_IRQS_1) = ~1;

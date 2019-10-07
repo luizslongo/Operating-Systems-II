@@ -20,31 +20,14 @@ public:
 
     // Base addresses for memory-mapped I/O devices
     enum {
-        I2C_BASE                    = 0x10002000, // Versatile I2C
-        AAC_BASE                    = 0x10004000, // PrimeCell PL041 Advanced Audio CODEC
-        MMCI_BASE                   = 0x10005000, // PrimeCell PL181 MultiMedia Card Interface
-        KBD0_BASE                   = 0x10006000, // PrimeCell PL050 PS2 Keyboard/Mouse Interface
-        KBD1_BASE                   = 0x10007000, // PrimeCell PL050 PS2 Keyboard/Mouse Interface
-        UART0_BASE                  = 0x10009000, // PrimeCell PL011 UART
         UART1_BASE                  = 0x3f215000, // PrimeCell PL011 UART
-        UART2_BASE                  = 0x1000b000, // PrimeCell PL011 UART
-        UART3_BASE                  = 0x1000c000, // PrimeCell PL011 UART
         GPIOA_BASE                  = 0x3f200000, // PrimeCell PL061 GPIO
-        GPIOB_BASE                  = 0x10014000, // PrimeCell PL061 GPIO
-        GPIOC_BASE                  = 0x10015000, // PrimeCell PL061 GPIO
-        RTC_BASE                    = 0x10017000, // PrimeCell PL031 RTC
-        LCD_BASE                    = 0x10020000, // PrimeCell PL110 Color LCD Controller
         DMA_BASE                    = 0x3fe05000, // PrimeCell PL080 DMA Controller
         MBOX_COM                    = 0x3ef00000, // basic memory for device-os communication
         MBOX_COM_CPU_OFFSET         = 0x00040000, // memory offset per cpu
         MBOX_SIZE                   = 0x00000100, // mbox size (rounded up)
 
         PPS_BASE                    = 0x3f000000, // A9 Private Peripheral Space
-        SCU_BASE                    = 0x1f000000, // MP Snoop Control Unit
-        GIC_CPU_BASE                = 0x1f000100,
-        GLOBAL_TIMER_BASE           = 0x1f000200,
-        PRIVATE_TIMER_BASE          = 0x1f000600,
-        GIC_DIST_BASE               = 0x1f001000,
         IC_BASE                     = 0x3f00b200, // BCM2870 IC
         ARM_TIMER_BASE              = 0x3f00b400, // ARM Timer (frequency relative to processor frequency)
         SYSTEM_TIMER_BASE           = 0x3f003000, // System Timer (free running)
