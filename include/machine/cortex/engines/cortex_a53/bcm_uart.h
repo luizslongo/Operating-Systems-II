@@ -13,7 +13,7 @@ __BEGIN_SYS
 class BCM_UART: public UART_Common
 {
     // This is a hardware object
-    // Use with something like "new (Memory_Map::UARTx_BASE) PL011"
+    // Use with something like "new (Memory_Map::UARTx_BASE) BCM_UART"
 
 private:
     typedef CPU::Reg8 Reg8;
