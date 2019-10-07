@@ -19,7 +19,7 @@ private:
     typedef CPU::Reg8 Reg8;
     typedef CPU::Reg32 Reg32;
 
-    static const unsigned int CLOCK = Traits<UART>::CLOCK / 16;
+    static const unsigned int CLOCK = Traits<UART>::CLOCK;
 
 public:
     // Registers offsets from BASE (i.e. this)
@@ -100,7 +100,7 @@ public:
         uart(AUX_MU_IER_REG) = 0x5;
 
         uart(AUX_MU_IIR_REG) = 0xC6;    // disable interrupts
-        uart(AUX_MU_BAUD_REG) = 270;    // sets baudrate to 115200
+        uart(AUX_MU_BAUD_REG) = ((CLOCK/baud_rate)/8)-1;    // CLOCK is 250,000,000 / 115,200 / 8 = 271.27; int(271.27 - 1) = 270 
         
         // Map UART to GPIO pins
         ra = uart(GPFSEL1);
@@ -119,11 +119,10 @@ public:
     }
 
     void config(unsigned int * baud_rate, unsigned int * data_bits, unsigned int * parity, unsigned int * stop_bits) {
-        // Reg32 lcrh = uart(LCRH);
-        // *data_bits = 5 + (lcrh & WLEN8);
-        // *parity = (lcrh & PEN) ? (1 + (lcrh & EPS)) : 0;
-        // *baud_rate = (CLOCK * 300) / (uart(FBRD) * 1000 + uart(IBRD) * 300);
-        // *stop_bits = (uart(LCRH) & STP2) ? 2 : 1;
+        *data_bits = ((uart(AUX_MU_LCR_REG) & 0x1) ? 8 : 7);
+        *parity = 0; //by Manual definition
+        *baud_rate = CLOCK/(uart(AUX_MU_BAUD_REG)+1)/8;
+        *stop_bits = 1; //by Manual definition
     }
 
     Reg8 rxd() { return uart(AUX_MU_IO_REG); }
@@ -141,10 +140,10 @@ public:
     void disable() { uart(AUX_ENABLES) &= ~UEN; }
 
     void int_enable(bool receive = true, bool transmit = true, bool line = true, bool modem = true) {
-        // uart(UIM) &= ~((receive ? UIMRX : 0) | (transmit ? UIMTX : 0));
+        uart(AUX_MU_IER_REG) &= ((receive ? RX_INT_ENABLE : 0) | (transmit ? TX_INT_ENABLE : 0));
     }
     void int_disable(bool receive = true, bool transmit = true, bool line = true, bool modem = true) {
-        // uart(UCR) |= (receive ? UIMRX : 0) | (transmit ? UIMTX : 0);
+        uart(AUX_MU_IER_REG) &= ~((receive ? RX_INT_ENABLE : 0) | (transmit ? TX_INT_ENABLE : 0));
     }
 
     void reset() {
@@ -153,12 +152,8 @@ public:
         config(b, db, p, sb);
     }
 
-    void loopback(bool flag) {
-        // if(flag)
-        //     uart(UCR) |= int(LBE);
-        // else
-        //     uart(UCR) &= ~LBE;
-    }
+    //loopback is not available for miniUART
+    // void loopback(bool flag) {}
 
 private:
     volatile Reg32 & uart(unsigned int o) { return reinterpret_cast<volatile Reg32 *>(this)[o / sizeof(Reg32)]; }

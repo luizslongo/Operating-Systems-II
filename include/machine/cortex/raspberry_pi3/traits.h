@@ -82,7 +82,7 @@ template<> struct Traits<UART>: public Traits<Machine_Common>
     static const unsigned int UNITS = 1; // only mini UART, since PL011 is Bluetooth
 
     // CLOCK_DIVISOR is hard coded in ps7_init.tcl
-    static const unsigned int CLOCK_DIVISOR = 20;
+    static const unsigned int CLOCK_DIVISOR = 4;
     static const unsigned int CLOCK = Traits<Machine>::IO_PLL_CLOCK/CLOCK_DIVISOR;
 
     static const unsigned int DEF_UNIT = 1;
