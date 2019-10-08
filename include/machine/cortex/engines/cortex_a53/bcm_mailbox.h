@@ -205,14 +205,10 @@ public:
     Interrupt_Id int_id() {
         unsigned int cpu = CPU::id();
         Reg32 src = mailbox(CORE0_IRQ_SRC + 4 * cpu);
-        if(src & 0x10) // mailbox 0
-            return CORE0_MAILBOX0_IRQ + 4 * cpu;
-        else if(src & 0x20) // mailbox 1
-            return CORE0_MAILBOX1_IRQ + 4 * cpu;
-        else if(src & 0x40) // mailbox 2
-            return CORE0_MAILBOX2_IRQ + 4 * cpu;
-        else if(src & 0x80) // mailbox 3
-            return CORE0_MAILBOX3_IRQ + 4 * cpu;
+        // Does not matter the CPU from where the IPI came from
+        // 0x10 = CPU 0 | 0x20 = CPU 1 | 0x40 = CPU 2 | 0x40 = CPU 3
+        if (src & 0x10 || src & 0x20 || src & 0x40 || src & 0x80)
+            return CORE0_MAILBOX0_IRQ;
         else
             return LAST_INT;
     }
@@ -222,11 +218,16 @@ public:
     }
 
     void eoi(const Interrupt_Id & int_id) {
-        unsigned int cpu = CPU::id();
-        mailbox(MBOX_WC + 16 * cpu + (int_id % 4) * 4) = 1 << 31; // ACK
+        unsigned int cpu_base = CPU::id() * 16;
+        //Clear all the interrups, as all IPIs use the same ID now
+        mailbox(MBOX_WC + cpu_base + 0)  = 1 << 31; // ACK From CPU0
+        mailbox(MBOX_WC + cpu_base + 4)  = 1 << 31; // ACK From CPU1
+        mailbox(MBOX_WC + cpu_base + 8)  = 1 << 31; // ACK From CPU2
+        mailbox(MBOX_WC + cpu_base + 12) = 1 << 31; // ACK From CPU3
     }
 
     void init(void) {
+        // Enable All IPIs
         mailbox(CORE0_MBOX_INT_CTRL) = 0xf;
         mailbox(CORE1_MBOX_INT_CTRL) = 0xf;
         mailbox(CORE2_MBOX_INT_CTRL) = 0xf;

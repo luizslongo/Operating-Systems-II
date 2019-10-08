@@ -30,7 +30,7 @@ public:
         INT_UART1               = UART_INT0,
         INT_USB0                = USB_CONTROLLER,
         INT_SPI                 = SPI_INT,
-        INT_RESCHEDULER,
+        INT_RESCHEDULER         = CORE0_MAILBOX0_IRQ,
         LAST_INT
     };
 
