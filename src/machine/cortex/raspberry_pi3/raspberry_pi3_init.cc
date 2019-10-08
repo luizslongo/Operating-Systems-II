@@ -36,7 +36,7 @@
 // }
 
 // static void enable_scu() {
-//     Machine::scu(0) |= 0x1;
+//     Machine::scu(Machine::SCU_CTRL) |= 0x1;
 // }
 
 // static void secure_scu_invalidate() {
@@ -52,11 +52,11 @@
 //     _cpu = _cpu << 2; // Convert into bit offset (four bits per core)
 //     Reg32 _ways = 0x0F; // all four ways
 //     _ways = _ways << _cpu; // Shift ways into the correct CPU field
-//     Machine::scu(SCU_IARSS) = _ways;
+//     Machine::scu(Machine::SCU_IARSS) = _ways;
 // }
 
 // static void scu_enable_cache_coherence() {
-//     Machine::scu(SCU_CONFIG) |= 0xF0;
+//     Machine::scu(Machine::SCU_CONFIG) |= 0xF0;
 // }
 
 // static void enable_maintenance_broadcast() {
