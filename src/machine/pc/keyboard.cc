@@ -4,7 +4,7 @@
 
 #ifdef __KEYBOARD_H
 
-#include <machine/pc/keyboard.h>
+#include <machine/keyboard.h>
 
 __BEGIN_SYS
 

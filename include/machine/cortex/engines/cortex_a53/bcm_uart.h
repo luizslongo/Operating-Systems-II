@@ -62,14 +62,14 @@ public:
         RXF_LSR_DR      = 1 <<  0,      // Receive FIFO Data Ready                  r/w     0
         TXF_LSR_EMPTY   = 1 <<  5,      // Transmit FIFO Empty                      r/w     1
         TXF_LSR_IDLE    = 1 <<  6,      // Transmit FIFO Full                       r/w     0
-        RXFF_LSR_OVERRUN= 1 <<  1       // Receiver FIFO Overrun                    ro      0
+        RXFF_LSR_OVERRUN= 1 <<  1,      // Receiver FIFO Overrun                    ro      0
         RX_STAT_IDLE    = 1 <<  2,      // Receiver is Idle stat on AUX_MU_STAT     ro      1
         TX_STAT_IDLE    = 1 <<  3,      // Transmitter is Idle stat on AUX_MU_STAT  ro      1
         RX_STAT_OVERRUN = 1 <<  4,      // Receiver Overrun stat on AUX_MU_STAT     ro      1
         TX_STAT_FULL    = 1 <<  5,      // Transmitter FIFO is Full                 ro      0
         TX_STAT_EMPTY   = 1 <<  8,      // Transmitter FIFO is Empty                ro      0
-        RX_STAT_LEVEL_FULL = 1 <<  16,      // Receiver FIFO is Empty                   ro      0
-        TX_STAT_LEVEL_FULL = 1 <<  24       // Transmitter FIFO is Empty                ro      0
+        RX_STAT_LEVEL_FULL = 1 <<  16,  // Receiver FIFO is Empty                   ro      0
+        TX_STAT_LEVEL_FULL = 1 <<  24   // Transmitter FIFO is Empty                ro      0
     };
 
     // Useful Bits in the Control Register
@@ -151,9 +151,6 @@ public:
         config(&b, &db, &p, &sb);
         config(b, db, p, sb);
     }
-
-    //loopback is not available for miniUART
-    // void loopback(bool flag) {}
 
 private:
     volatile Reg32 & uart(unsigned int o) { return reinterpret_cast<volatile Reg32 *>(this)[o / sizeof(Reg32)]; }

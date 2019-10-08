@@ -1,8 +1,8 @@
 // EPOS PC FPGA Mediator Implementation
 
 #include <machine/machine.h>
-#include <machine/pc/ic.h>
-#include <machine/pc/fpga.h>
+#include <machine/ic.h>
+#include <machine/fpga.h>
 
 __BEGIN_SYS
 

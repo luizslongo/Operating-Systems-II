@@ -50,8 +50,8 @@ namespace EPOS {
 #endif
 
 #define __HEADER_ARCH(X)        <architecture/ARCH/X.h>
-#define __HEADER_MACH(X)        <machine/MACH/X.h>
-#define __HEADER_MMOD(X)        <machine/MACH/MMOD/X.h>
+#define __HEADER_MACH(X)        <machine/MACH/MACH/**/_##X.h>
+#define __HEADER_MMOD(X)        <machine/MACH/MMOD/MMOD/**/_##X.h>
 #define __HEADER_TRAN(X)        <transducer/X.h>
 #define __APPL_TRAITS_T(X)      <../app/X##_traits.h>
 #define __APPL_TRAITS(X)        __APPL_TRAITS_T(X)
@@ -65,8 +65,8 @@ namespace EPOS {
 //============================================================================
 // ASSERT (for pre and post conditions)
 //============================================================================
-//#define assert(expr)    ((expr) ? static_cast<void>(0) : Assert::fail (#expr, __FILE__, __LINE__, __PRETTY_FUNCTION__))
-#define assert(expr)    (static_cast<void>(0))
+#define assert(expr)    ((expr) ? static_cast<void>(0) : Assert::fail (#expr, __FILE__, __LINE__, __PRETTY_FUNCTION__))
+//#define assert(expr)    (static_cast<void>(0))
 
 //============================================================================
 // CONFIGURATION
@@ -97,7 +97,6 @@ namespace EPOS {
 #define __FPGA_H                __HEADER_MACH(fpga)
 #define __AES_H                 __HEADER_MACH(aes)
 #define __ipv4__
-#define __tstp__
 
 #define __KEYPAD_H              __HEADER_TRAN(keypad)
 

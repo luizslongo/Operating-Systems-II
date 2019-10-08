@@ -2,7 +2,7 @@
 
 #include <machine/ic.h>
 #include <machine/usb.h>
-#include <machine/cortex/emote3/sysctrl.h>
+#include <machine/emote3/sysctrl.h>
 
 __USING_SYS
 

@@ -2,7 +2,7 @@
 
 #include <machine/machine.h>
 #include <machine/pci.h>
-#include <machine/pc/fpga.h>
+#include <machine/fpga.h>
 
 __BEGIN_SYS
 

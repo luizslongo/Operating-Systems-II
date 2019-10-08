@@ -2,7 +2,7 @@
 
 #include <machine/machine.h>
 #include <machine/pci.h>
-#include <machine/pc/pcnet32.h>
+#include <machine/pc/pc_pcnet32.h>
 #include <system.h>
 
 __BEGIN_SYS

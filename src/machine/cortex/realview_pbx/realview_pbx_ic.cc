@@ -1,7 +1,7 @@
 // EPOS ARM Cortex IC Mediator Implementation
 
-#include <machine/cortex/machine.h>
-#include <machine/cortex/ic.h>
+#include <machine/machine.h>
+#include <machine/ic.h>
 
 extern "C" { void _int_entry() __attribute__ ((alias("_ZN4EPOS1S2IC5entryEv"))); }
 extern "C" { void _dispatch(unsigned int) __attribute__ ((alias("_ZN4EPOS1S2IC8dispatchEj"))); }

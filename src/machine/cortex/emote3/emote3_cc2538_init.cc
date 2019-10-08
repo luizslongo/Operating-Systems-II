@@ -5,7 +5,7 @@
 #ifdef __NIC_H
 
 #include <machine/gpio.h>
-#include <machine/cortex/emote3/cc2538.h>
+#include <machine/emote3/cc2538.h>
 
 __BEGIN_SYS
 

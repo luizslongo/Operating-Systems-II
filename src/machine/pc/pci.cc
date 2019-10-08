@@ -1,6 +1,6 @@
 // EPOS PC PCI Mediator
 
-#include <machine/pc/pci.h>
+#include <machine/pci.h>
 
 __BEGIN_SYS
 

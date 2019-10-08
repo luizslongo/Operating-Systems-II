@@ -1,6 +1,6 @@
 // EPOS PC RTC Mediator Implementation
 
-#include <machine/pc/rtc.h>
+#include <machine/rtc.h>
 
 __BEGIN_SYS
 

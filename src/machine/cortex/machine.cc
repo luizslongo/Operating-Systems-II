@@ -1,6 +1,6 @@
 // EPOS ARM Cortex Mediator Implementation
 
-#include <machine/cortex/machine.h>
+#include <machine/machine.h>
 #include <machine/display.h>
 
 __BEGIN_SYS

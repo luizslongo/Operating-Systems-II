@@ -1,8 +1,8 @@
 // EPOS PC Mediator Implementation
 
 #include <machine/machine.h>
-#include <machine/pc/timer.h>
-#include <machine/pc/keyboard.h>
+#include <machine/timer.h>
+#include <machine/keyboard.h>
 
 __BEGIN_SYS
 

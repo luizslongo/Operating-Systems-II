@@ -1,6 +1,6 @@
 // EPOS PC Interrupt Dispatcher
 
-#include <machine/pc/ic.h>
+#include <machine/ic.h>
 
 extern "C" { void _exit(int s); }
 extern "C" { void __exit(); }

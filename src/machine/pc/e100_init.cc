@@ -2,7 +2,7 @@
 
 #include <machine/machine.h>
 #include <machine/pci.h>
-#include <machine/pc/e100.h>
+#include <machine/pc/pc_e100.h>
 #include <system.h>
 #include <memory.h>
 
