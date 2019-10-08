@@ -4,6 +4,7 @@
 #define __raspberry_pi3_ioctrl_timer_h
 
 #include <architecture/cpu.h>
+#include "machine.h"
 #include "memory_map.h"
 
 __BEGIN_SYS
@@ -117,7 +118,7 @@ public:
 
     static void writeMailbox0(Reg32 data, Reg32 channel) {
         wait_mailbox_write();
-        ioc(MBOX0_WRITE) = (data &~0xF) | (Reg32) (channel & 0xf);
+        ioc(MBOX0_WRITE) = (data &~0xf) | (Reg32) (channel & 0xf);
     }
 
     static Reg32 readMailbox0(Reg32 channel) {
@@ -146,8 +147,8 @@ public:
         msg->msg_size = sizeof(struct set_mailbox_msg);
         msg->request_code = 0x0;
         msg->tag.tag_id = tag;
-        msg->tag.buffer_size = 0xC;
-        msg->tag.data_size = 0xC;
+        msg->tag.buffer_size = 0xc;
+        msg->tag.data_size = 0xc;
         msg->tag.val = id;
         msg->tag.val2 = value;
         msg->tag.val3 = 0x1;
@@ -166,7 +167,7 @@ public:
     }
 
     static Reg32 temperature() {
-        volatile struct mailbox_msg * local= (volatile struct mailbox_msg *)(Memory_Map::MBOX_COM_BASE+MBOX_COM_CPU_OFFSET*cpu_id());
+        volatile struct mailbox_msg * local= (volatile struct mailbox_msg *)(Memory_Map::MBOX_COM_BASE+MBOX_COM_CPU_OFFSET*Machine::cpu_id());
         prepare_call(local, (Reg32)TEMPERATURE_ID, (Reg32)TEMPERATURE_TAG);
         writeMailbox0((unsigned long)local, 8);
         readMailbox0(8);
@@ -174,7 +175,7 @@ public:
     }
 
     static Reg32 arm_clock() {
-        volatile struct mailbox_msg * local= (volatile struct mailbox_msg *)(Memory_Map::MBOX_COM_BASE+MBOX_COM_CPU_OFFSET*cpu_id());
+        volatile struct mailbox_msg * local= (volatile struct mailbox_msg *)(Memory_Map::MBOX_COM_BASE+MBOX_COM_CPU_OFFSET*Machine::cpu_id());
         prepare_call(local, (Reg32)ARM_CLOCK_ID, (Reg32)CLOCK_TAG);
         writeMailbox0((unsigned long)local, 8);
         readMailbox0(8);
@@ -182,7 +183,7 @@ public:
     }
 
     static Reg32 arm_voltage() {
-        volatile struct mailbox_msg * local= (volatile struct mailbox_msg *)(Memory_Map::MBOX_COM_BASE+MBOX_COM_CPU_OFFSET*cpu_id());
+        volatile struct mailbox_msg * local= (volatile struct mailbox_msg *)(Memory_Map::MBOX_COM_BASE+MBOX_COM_CPU_OFFSET*Machine::cpu_id());
         prepare_call(local, (Reg32)VOLTAGE_ID, (Reg32)VOLTAGE_TAG);
         writeMailbox0((unsigned long)local, 8);
         readMailbox0(8);
@@ -190,7 +191,7 @@ public:
     }
 
     static Reg32 arm_min_clock() {
-        volatile struct mailbox_msg * local= (volatile struct mailbox_msg *)(Memory_Map::MBOX_COM_BASE+MBOX_COM_CPU_OFFSET*cpu_id());
+        volatile struct mailbox_msg * local= (volatile struct mailbox_msg *)(Memory_Map::MBOX_COM_BASE+MBOX_COM_CPU_OFFSET*Machine::cpu_id());
         prepare_call(local, (Reg32)ARM_CLOCK_ID, (Reg32)CLOCK_MIN_TAG);
         writeMailbox0((unsigned long)local, 8);
         readMailbox0(8);
@@ -198,7 +199,7 @@ public:
     }
 
     static Reg32 arm_max_clock() {
-        volatile struct mailbox_msg * local= (volatile struct mailbox_msg *)(Memory_Map::MBOX_COM_BASE+MBOX_COM_CPU_OFFSET*cpu_id());
+        volatile struct mailbox_msg * local= (volatile struct mailbox_msg *)(Memory_Map::MBOX_COM_BASE+MBOX_COM_CPU_OFFSET*Machine::cpu_id());
         prepare_call(local, (Reg32)ARM_CLOCK_ID, (Reg32)CLOCK_MAX_TAG);
         writeMailbox0((unsigned long)local, 8);
         readMailbox0(8);
@@ -206,7 +207,7 @@ public:
     }
 
     static Reg32 arm_clock(unsigned int hertz) {
-        volatile struct set_mailbox_msg * local= (volatile struct set_mailbox_msg *)(Memory_Map::MBOX_COM_BASE+MBOX_COM_CPU_OFFSET*cpu_id());
+        volatile struct set_mailbox_msg * local= (volatile struct set_mailbox_msg *)(Memory_Map::MBOX_COM_BASE+MBOX_COM_CPU_OFFSET*Machine::cpu_id());
         prepare_req(local, (Reg32)ARM_CLOCK_ID, (Reg32)DVFS_TAG, hertz);
         writeMailbox0((unsigned long)local, 8);
         readMailbox0(8);
