@@ -62,14 +62,6 @@ public:
         MBOX_WC_BASE                = 0x0c0  // Each CPU has 4 Mailboxes WRITE-CLEAR registers of 4 Bytes
     };
 
-    // SCU Registers (as offsets to SCU_BASE)
-    enum {                                      // Description              Type    Value after reset
-        SCU_CTRL                    = 0x00,     // Control                  r/w     0x00000128
-        SCU_CONFIG                  = 0x04,     // Configuration            r/w     0x00000000
-        SCU_PSTAT                   = 0x08,     // Power Status             r/w     0x00000000
-        SCU_IARSS                   = 0x0c      // Invalidate All Reg Secure State
-    };
-
     // Useful bits in the CONTROL_REG0 register
     enum {                                      // Description              Type    Value after reset
         RXRES                       = 1 << 0,   // Reset Rx data path       r/w     0
@@ -239,27 +231,6 @@ public:
     // Useful bits in PTISR
     enum {                                      // Description                  Type    Value after reset
         INT_CLR                     = 0    // Interrupt clear bit          r/w     0
-    };
-
-    // TTB definitions
-    enum {
-        TTBCR_DOMAIN                = 0x55555555, // All access to client
-        TTB_DESCRIPTOR              = 0x10c0A
-        // According to ARMv7 Arch. Ref. Manual: (description beggining at pages 1326 to 1329)
-        // REG[19] NS, 0b0 for secure address space -> no effect on  Physical Address Space. -> Page 1330
-        // REG[18] = 0b0 (mapped on 1 MB), it is not a supersection -> page 1329
-        // REG[17] = 0b0 the TTB is global -> page 1378
-        // REG[16] = 0b1 means shareable memory -> page 1368
-        // REG[15] = 0b0 means read/write memory (if 1, read-only) -> ->  page 1358
-        // REG[14:12] = TEX - 0b000 means possibly shareable page -> 1367
-        // REG[11:10] = 0b11 means read/write with full access ->  page 1358
-        // REG[9] = 0b0, Implementation Defined. -> page 1329
-        // Reg[8:5] = 0b0000, Domain - not supported (DEPRECATED) its written on MCR p15, 0, <rt>, c3, c0, 0 -
-        // REG[4] = XN = 0b0, means code can be executed. 0b1 stands for not exacutable area (generates Page Fault) -> page 1359
-        // REG[3] = C (cacheable) = 1 with the config of TEX it means no Write-Allocate -> page 1367
-        // REG[2] = B (Bufferable) = 0 with the config of TEX and C, it means Write-Through -> page 1367
-        // Reg[1] = 0b1 means it points a section (more or equal than a MEGABYTE) -> Page 1329
-        // REG[0] = PXN = 0b0 means every core can run, else processor running at PL1 generates Permission Fault-> page 1359
     };
 
 protected:
