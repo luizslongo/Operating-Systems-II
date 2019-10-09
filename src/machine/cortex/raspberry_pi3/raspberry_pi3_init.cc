@@ -7,15 +7,6 @@
 
 __BEGIN_SYS
 
-
-// SCU Registers (as offsets to SCU_BASE)
-enum {                                      // Description              Type    Value after reset
-    SCU_CTRL                    = 0x00,     // Control                  r/w     0x00000128
-    SCU_CONFIG                  = 0x04,     // Configuration            r/w     0x00000000
-    SCU_PSTAT                   = 0x08,     // Power Status             r/w     0x00000000
-    SCU_IARSS                   = 0x0c      // Invalidate All Reg Secure State
-};
-
 // TTB definitions
 enum {
     TTBCR_DOMAIN                    = 0xffffffff, // All access to client
@@ -64,30 +55,6 @@ static void clear_branch_prediction_array() {
 
 static void set_domain_access() {
     ASM("mcr p15, 0, %0, c3, c0, 0" : : "p"(TTBCR_DOMAIN) :);
-}
-
-static void enable_scu() {
-    Machine::scu(SCU_CTRL) |= 0x1;
-}
-
-static void secure_scu_invalidate() {
-    // void secure_SCU_invalidate(unsigned int cpu, unsigned int ways)
-    // cpu: 0x0=CPU 0 0x1=CPU 1 etc...
-    // This function invalidates the SCU copy of the tag rams
-    // for the specified core.  Typically only done at start-up.
-    // Possible flow:
-    //- Invalidate L1 caches
-    //- Invalidate SCU copy of TAG RAMs
-    //- Join SMP
-    Reg32 _cpu = CPU::id();
-    _cpu = _cpu << 2; // Convert into bit offset (four bits per core)
-    Reg32 _ways = 0x0f; // all four ways
-    _ways = _ways << _cpu; // Shift ways into the correct CPU field
-    Machine::scu(SCU_IARSS) = _ways;
-}
-
-static void scu_enable_cache_coherence() {
-    Machine::scu(SCU_CONFIG) |= 0xf0;
 }
 
 static void enable_maintenance_broadcast() {
