@@ -7,6 +7,13 @@
 
 __BEGIN_SYS
 
+// usefull bits for secondary cores boot
+enum {
+    FLAG_SET_REG                    = 0x40000000, //base for BCM CTRL, where you write the addresses of the boot
+    CORE1_BASE_OFFSET               = 0x9c,
+    CORE_OFFSET_VARIATION           = 0x10
+};
+
 // TTB definitions
 enum {
     TTBCR_DOMAIN                    = 0xffffffff, // All access to client
@@ -126,7 +133,7 @@ static void clear_bss() {
 // order before the DSB instruction.
 void dsb()
 {
-   ASM("dsb");
+    ASM("dsb");
 }
 
 
@@ -136,7 +143,7 @@ void dsb()
 // after the ISB instruction.
 void isb()
 {
-   ASM("isb");
+    ASM("isb");
 }
 
 void invalidate_caches()
@@ -181,55 +188,61 @@ set_loop:                                                                       
 
 void Raspberry_Pi3::pre_init()
 {
-   // Relocated the vector table
-   // ASM("mcr p15, 0, %0, c12, c0, 0" : : "p"(Traits<Machine>::VECTOR_TABLE) :);
-   ASM ("mov r0, #0 \t\n msr spsr, r0 \t\n cpsie aif");
-   // MMU init
-   invalidate_caches();
-   clear_branch_prediction_array();
-   invalidate_tlb();
-   enable_dside_prefetch();
-   set_domain_access();
-   dsb();
-   isb();
+    // Relocated the vector table
+    // ASM("mcr p15, 0, %0, c12, c0, 0" : : "p"(Traits<Machine>::VECTOR_TABLE) :);
+    ASM ("mov r0, #0 \t\n msr spsr, r0 \t\n cpsie aif");
+    // MMU init
+    invalidate_caches();
+    clear_branch_prediction_array();
+    invalidate_tlb();
+    enable_dside_prefetch();
+    set_domain_access();
+    dsb();
+    isb();
 
-   // Initialize PageTable.
+    // Initialize PageTable.
 
-   // Create a basic L1 page table in RAM, with 1MB sections containing a flat
-   // (VA=PA) mapping, all pages Full Access, Strongly Ordered.
+    // Create a basic L1 page table in RAM, with 1MB sections containing a flat
+    // (VA=PA) mapping, all pages Full Access, Strongly Ordered.
 
-   // It would be faster to create this in a read-only section in an assembly file.
+    // It would be faster to create this in a read-only section in an assembly file.
 
-   if(CPU::id() == 0)
-       page_tables_setup();
+    if(CPU::id() == 0)
+        page_tables_setup();
 
-   // Activate the MMU
-   enable_mmu();
-   dsb();
-   isb();
+    // Activate the MMU
+    enable_mmu();
+    dsb();
+    isb();
 
-   // MMU now enabled - Virtual address system now active
+    // MMU now enabled - Virtual address system now active
 
-   // Branch Prediction init
-   branch_prediction_enable();
+    // Branch Prediction init
+    branch_prediction_enable();
 
-   // SMP initialization
-   if(CPU::id() == 0) {
-       //primary core
+    // SMP initialization
+    if(CPU::id() == 0) {
+        //primary core
 
-       // this is only a flat segment register that allows mapping the start point for the secondary cores
-       static const unsigned int FLAG_SET_REG = 0x40000000;
-       // set flag register to the address secondary CPUS are meant to start executing
-       ASM("str %0, [%1, #0x9c]" : : "p"(Traits<Machine>::VECTOR_TABLE), "p"(FLAG_SET_REG) :);
-       ASM("str %0, [%1, #0xac]" : : "p"(Traits<Machine>::VECTOR_TABLE), "p"(FLAG_SET_REG) :);
-       ASM("str %0, [%1, #0xbc]" : : "p"(Traits<Machine>::VECTOR_TABLE), "p"(FLAG_SET_REG) :);
+        // this loop replaces the code commented below (that runned on previous versions), 
+        // it is not moved to smp init as on Realview_PBX because there is no IPI to wakeup the secondary cores
+        // instead, the Raspberry Pi secondary cores are waken by a Send Event (runned after the dsb instruction)
+        for (int cpu = 0; cpu < (Traits<Build>::CPUS-1); cpu++) {
+            ASM("str %0, [%1, #%2]" : : "p"(Traits<Machine>::VECTOR_TABLE), "p"(FLAG_SET_REG), "p"(CORE1_BASE_OFFSET+(cpu*CORE_OFFSET_VARIATION)) :);
+        }
+        // this is only a flat segment register that allows mapping the start point for the secondary cores
+        // static const unsigned int FLAG_SET_REG = 0x40000000;
+        // set flag register to the address secondary CPUS are meant to start executing
+        // ASM("str %0, [%1, #0x9c]" : : "p"(Traits<Machine>::VECTOR_TABLE), "p"(FLAG_SET_REG) :);
+        // ASM("str %0, [%1, #0xac]" : : "p"(Traits<Machine>::VECTOR_TABLE), "p"(FLAG_SET_REG) :);
+        // ASM("str %0, [%1, #0xbc]" : : "p"(Traits<Machine>::VECTOR_TABLE), "p"(FLAG_SET_REG) :);
 
-       dsb();
-       // secondary cores reset
-       ASM ("SEV");
+        dsb();
+        // secondary cores reset
+        ASM ("SEV");
 
-       clear_bss();
-   }
+        clear_bss();
+    }
 }
 
 //void Raspberry_Pi3::init()
