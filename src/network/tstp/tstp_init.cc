@@ -70,7 +70,7 @@ TSTP::Security::Security()
 
     db<TSTP>(INF) << "Node ID: " << _id << endl;
 
-    assert(AES::KEY_SIZE == sizeof(Node_Id));
+    assert(_AES::KEY_SIZE == sizeof(Node_Id));
     _aes.encrypt(_id, _id, _auth);
 
     attach(this);

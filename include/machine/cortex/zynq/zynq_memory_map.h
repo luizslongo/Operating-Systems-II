@@ -17,7 +17,7 @@ struct Memory_Map: public Cortex_Memory_Map
         SPI1_BASE               = 0xe0007000,
         ETH0_BASE               = 0xe000b000,
         ETH1_BASE               = 0xe000c000,
-        SPI1_BASE               = 0xe000d000,
+        SPI2_BASE               = 0xe000d000,
         SD0_BASE                = 0xe0100000,
         SD1_BASE                = 0xe0101000,
         FLASH_BASE              = 0xe2000000,

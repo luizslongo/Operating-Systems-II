@@ -254,13 +254,13 @@ public:
         scr(DCGCGPT) &= ~(1 << unit);
     }
 
-    void clock_nic() {
+    void clock_ieee802_15_4() {
         scr(RCGCRFC) |= 1 << 0;
         scr(SCGCRFC) |= 1 << 0;
         scr(DCGCRFC) |= 1 << 0;
     }
 
-    void unclock_nic(unsigned int unit) {
+    void unclock_ieee802_15_4() {
         scr(RCGCRFC) &= ~(1 << 0);
         scr(SCGCRFC) &= ~(1 << 0);
         scr(DCGCRFC) &= ~(1 << 0);

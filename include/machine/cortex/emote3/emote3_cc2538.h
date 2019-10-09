@@ -10,6 +10,7 @@
 #define __tstp_h
 #include <network/tstp/mac.h>
 #undef __tstp_h
+#include "emote3_sysctrl.h"
 
 __BEGIN_SYS
 
@@ -466,7 +467,7 @@ public:
         }
 
         static Time_Stamp us2count(const Microsecond & us) { return Convert::us2count<Time_Stamp, Microsecond>(CLOCK, us); }
-        static Microsecond count2us(const Time_Stamp & ts) { return Convert::count2us<Time_Stamp, Microsecond>(CLOCK, ts); }
+        static Microsecond count2us(const Time_Stamp & ts) { return Convert::count2us<Hertz, Time_Stamp, Microsecond>(CLOCK, ts); }
 
     private:
         static void int_enable(const Reg32 & interrupt) { mactimer(MTIRQM) |= interrupt; }
@@ -764,13 +765,13 @@ public:
          case SAME:
         	 break;
          case FULL: // Able to receive and transmit
-             power_ieee802_15_4(FULL);
+             scr()->clock_ieee802_15_4();
              xreg(FRMCTRL0) = (xreg(FRMCTRL0) & ~(3 * RX_MODE)) | (RX_MODE_NORMAL * RX_MODE);
              xreg(RFIRQM0) &= ~INT_FIFOP;
              xreg(RFIRQM0) |= INT_FIFOP;
              break;
          case LIGHT: // Able to sense channel and transmit
-             power_ieee802_15_4(LIGHT);
+             scr()->clock_ieee802_15_4();
              xreg(FRMCTRL0) = (xreg(FRMCTRL0) & ~(3 * RX_MODE)) | (RX_MODE_NO_SYMBOL_SEARCH * RX_MODE);
              break;
          case SLEEP: // Receiver off
@@ -778,19 +779,21 @@ public:
              sfr(RFST) = ISRFOFF;
              xreg(RFIRQM0) &= ~INT_FIFOP;
              xreg(RFIRQF0) &= ~INT_FIFOP;
-             power_ieee802_15_4(SLEEP);
+             scr()->unclock_ieee802_15_4();
              break;
          case OFF: // Radio unit shut down
              sfr(RFST) = ISSTOP;
              sfr(RFST) = ISRFOFF;
              xreg(RFIRQM0) &= ~INT_FIFOP;
              xreg(RFIRQF0) &= ~INT_FIFOP;
-             power_ieee802_15_4(OFF);
+             scr()->unclock_ieee802_15_4();
              break;
          }
      }
 
-protected:
+private:
+    static SysCtrl * scr() { return reinterpret_cast<SysCtrl *>(Memory_Map::SCR_BASE); }
+
     static volatile Reg32 & ana     (unsigned int offset) { return *(reinterpret_cast<volatile Reg32 *>(ANA_BASE + offset)); }
     static volatile Reg32 & xreg    (unsigned int offset) { return *(reinterpret_cast<volatile Reg32 *>(XREG_BASE + offset)); }
     static volatile Reg32 & ffsm    (unsigned int offset) { return *(reinterpret_cast<volatile Reg32 *>(FFSM_BASE + offset)); }

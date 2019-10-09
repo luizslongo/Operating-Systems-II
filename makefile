@@ -70,6 +70,9 @@ buildtest: $(subst .cc,_traits.h,$(TESTS_SOURCES))
 		$(INSTALL) $(subst .cc,_traits.h,$(TESTS_SOURCES)) $(APP)
 		$(foreach tst,$(UNCOMPILED_TESTS),$(MAKETEST) APPLICATION=$(tst) prebuild_$(tst) clean1 all1 posbuild_$(tst);)
 
+runtest: $(subst .cc,_traits.h,$(TESTS_SOURCES))
+		$(foreach tst,$(UNFINISHED_TESTS),$(MAKETEST) APPLICATION=$(tst) etc prerun_$(tst) run1 posbuild_$(tst);)
+
 .PHONY: prebuild_$(APPLICATION) posbuild_$(APPLICATION) prerun_$(APPLICATION)
 prebuild_$(APPLICATION):
 		@echo "Building $(APPLICATION) ..."

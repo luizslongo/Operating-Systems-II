@@ -63,15 +63,15 @@ template <> struct Traits<IC>: public Traits<Machine_Common>
 {
     static const bool debugged = hysterically_debugged;
 
-    static const unsigned int IRQS = ;
-    static const unsigned int INTS = ;
+    static const unsigned int IRQS = 96;
+    static const unsigned int INTS = 94;
 };
 
 template <> struct Traits<Timer>: public Traits<Machine_Common>
 {
     static const bool debugged = hysterically_debugged;
 
-    static const unsigned int UNITS =;
+    static const unsigned int UNITS = 4;
 
     // Meaningful values for the timer frequency range from 100 to 10000 Hz. The
     // choice must respect the scheduler time-slice, i. e., it must be higher
