@@ -74,9 +74,9 @@ public:
         power(FULL);
         timer()->config(UNIT, _count);
         if(interrupt)
-        	IC::enable(INT_USER_TIMER0);
+            IC::enable(IC::INT_USER_TIMER0);
         else
-        	IC::disable(INT_USER_TIMER0);
+            IC::disable(IC::INT_USER_TIMER0);
     }
 
     ~User_Timer_Engine() {

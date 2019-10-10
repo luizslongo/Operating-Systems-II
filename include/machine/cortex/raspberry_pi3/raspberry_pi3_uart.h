@@ -51,7 +51,7 @@ public:
     }
 
     void reset() { _uart->reset(); }
-    void loopback(bool flag) { _uart->loopback(flag); }
+    void loopback(bool flag) {} // there is no loopback support on miniUART
 
     void power(const Power_Mode & mode) {
         switch(mode) {

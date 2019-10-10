@@ -40,7 +40,7 @@ public:
     }
 
     static void enable(int i) {
-        assert(i <= INTS);
+        assert((unsigned int)i <= INTS);
         switch(i / 32){
         case 0 /* */:
         case 1 /* */:
@@ -54,7 +54,7 @@ public:
     }
 
     static void disable(int i) {
-        assert(i <= INTS);
+        assert((unsigned int)i <= INTS);
         switch(i / 32){
         case 0 /* */:
         case 1 /* */:

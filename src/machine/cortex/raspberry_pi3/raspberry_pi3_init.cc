@@ -239,7 +239,8 @@ void Raspberry_Pi3::pre_init()
 
         dsb();
         // secondary cores reset
-        ASM ("SEV");
+        if (Traits<Build>::CPUS > 1)
+            ASM ("SEV");
 
         clear_bss();
     }
