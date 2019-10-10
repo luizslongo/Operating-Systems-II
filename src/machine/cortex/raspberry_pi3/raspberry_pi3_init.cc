@@ -3,7 +3,6 @@
 #include <system/config.h>
 #include <machine.h>
 #include <architecture/cpu.h>
-#include __MODEL_H
 
 __BEGIN_SYS
 
@@ -63,7 +62,7 @@ static void clear_branch_prediction_array() {
 static void set_domain_access() {
     ASM("mcr p15, 0, %0, c3, c0, 0" : : "p"(TTBCR_DOMAIN) :);
 }
-
+/*
 static void enable_maintenance_broadcast() {
     // Enable the broadcasting of cache & TLB maintenance operations
     // When enabled AND in SMP, broadcast all "inner sharable"
@@ -81,18 +80,18 @@ static void join_smp() {
         mcr     p15, 0, r0, c1, c0, 1   // Write ACTLR                          \t\n\
         ");
 }
-
+*/
 static void page_tables_setup() {
-    Reg32 aux = 0x0;
+    CPU::Reg32 aux = 0x0;
     for (int curr_page = 1006; curr_page >= 0; curr_page--) {
         aux = TTB_MEMORY_DESCRIPTOR | (curr_page << 20);
-        reinterpret_cast<volatile Reg32 *>(Traits<Machine>::PAGE_TABLES)[curr_page] = aux;
+        reinterpret_cast<volatile CPU::Reg32 *>(Traits<Machine>::PAGE_TABLES)[curr_page] = aux;
     }
     aux = TTB_DEVICE_DESCRIPTOR | (1007 << 20);
-    reinterpret_cast<volatile Reg32 *>(Traits<Machine>::PAGE_TABLES)[1007] = aux;
+    reinterpret_cast<volatile CPU::Reg32 *>(Traits<Machine>::PAGE_TABLES)[1007] = aux;
     for (int curr_page = 4095; curr_page > 1007; curr_page--) {
         aux = TTB_PERIPHERAL_DESCRIPTOR | (curr_page << 20);
-        reinterpret_cast<volatile Reg32 *>(Traits<Machine>::PAGE_TABLES)[curr_page] = aux;
+        reinterpret_cast<volatile CPU::Reg32 *>(Traits<Machine>::PAGE_TABLES)[curr_page] = aux;
     }
 }
 
@@ -120,12 +119,12 @@ static void enable_mmu() {
 }
 
 static void clear_bss() {
-    Reg32 bss_start, bss_end;
+    CPU::Reg32 bss_start, bss_end;
     ASM("ldr %0, =__bss_start__" : "=r"(bss_start) :);
     ASM("ldr %0, =__bss_end__" : "=r"(bss_end) :);
-    Reg32 limit = (bss_end - bss_start)/4;
-    for(Reg32 i = 0; i < limit; i++) {
-        reinterpret_cast<volatile Reg32 *>(bss_start)[i] = 0x0;
+    CPU::Reg32 limit = (bss_end - bss_start)/4;
+    for(CPU::Reg32 i = 0; i < limit; i++) {
+        reinterpret_cast<volatile CPU::Reg32 *>(bss_start)[i] = 0x0;
     }
 }
 
@@ -227,7 +226,7 @@ void Raspberry_Pi3::pre_init()
         // this loop replaces the code commented below (that runned on previous versions), 
         // it is not moved to smp init as on Realview_PBX because there is no IPI to wakeup the secondary cores
         // instead, the Raspberry Pi secondary cores are waken by a Send Event (runned after the dsb instruction)
-        for (int cpu = 0; cpu < (Traits<Build>::CPUS-1); cpu++) {
+        for (unsigned int cpu = 0; cpu < (Traits<Build>::CPUS-1); cpu++) {
             ASM("str %0, [%1, #%2]" : : "p"(Traits<Machine>::VECTOR_TABLE), "p"(FLAG_SET_REG), "p"(CORE1_BASE_OFFSET+(cpu*CORE_OFFSET_VARIATION)) :);
         }
         // this is only a flat segment register that allows mapping the start point for the secondary cores
@@ -250,4 +249,4 @@ void Raspberry_Pi3::pre_init()
 //{
 //}
 //
-//__END_SYS
+__END_SYS
