@@ -8,6 +8,11 @@ __BEGIN_SYS
 // Class attributes
 Timer * Timer::_channels[CHANNELS];
 
+//attribute only used for raspberry pi3
+#ifdef __mmod_raspberry_pi3__
+System_Timer_Engine::Count System_Timer_Engine::_count;
+#endif
+
 // Class methods
 void Timer::int_handler(const Interrupt_Id & i)
 {

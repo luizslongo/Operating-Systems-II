@@ -39,7 +39,7 @@ const CPU::Reg32 ARMv7_A_PMU::_events[EVENTS] = {
     BUS_CYCLE,                                  // BUS_CYCLE,
     CHAIN,                                      // CHAIN
 
-    // Cortex-A specific events
+    // Cortex-A9 specific events
     JAZELLE_BACKWARDS_BRANCHES_EXECUTED,        // JAZELLE_BACKWARDS_BRANCHES_EXECUTED
     COHERENT_LINEFILL_MISS,                     // COHERENT_LINEFILL_MISS,
     COHERENT_LINEFILL_HIT,                      // COHERENT_LINEFILL_HIT,

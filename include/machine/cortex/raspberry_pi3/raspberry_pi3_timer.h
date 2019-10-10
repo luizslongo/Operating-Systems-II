@@ -5,8 +5,8 @@
 
 #define __common_only__
 #include <architecture/tsc.h>
-#undef __common_only__
 #include <machine/ic.h>
+#undef __common_only__
 #include <machine/cortex/engines/cortex_a53/bcm_timer.h>
 #include <system/memory_map.h>
 #include <utility/convert.h>

@@ -206,7 +206,7 @@ public:
         unsigned int cpu = CPU::id();
         Reg32 src = mailbox(CORE0_IRQ_SRC + 4 * cpu);
         // Does not matter the CPU from where the IPI came from
-        // 0x10 = CPU 0 | 0x20 = CPU 1 | 0x40 = CPU 2 | 0x40 = CPU 3
+        // 0x10 = CPU 0 | 0x20 = CPU 1 | 0x40 = CPU 2 | 0x80 = CPU 3
         if (src & 0x10 || src & 0x20 || src & 0x40 || src & 0x80)
             return CORE0_MAILBOX0_IRQ;
         else

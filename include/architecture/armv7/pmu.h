@@ -65,7 +65,7 @@ public:
         BUS_CYCLE                             = 0x1c,
         CHAIN                                 = 0x1d,
 
-        // Cortex-A specific events
+        // Cortex-A9 specific events
         JAVA_BYTECODE_EXECUTE                 = 0x40,
         SOFTWARE_JAVA_BYTECODE_EXECUTED       = 0x41,
         JAZELLE_BACKWARDS_BRANCHES_EXECUTED   = 0x42,

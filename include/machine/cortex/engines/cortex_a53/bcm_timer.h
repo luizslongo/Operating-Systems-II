@@ -54,6 +54,15 @@ public:
         return static_cast<Count>(timer(STCLO));
     }
 
+    //check for an implementation for this method
+    void enable() {}
+
+    //check for an implementation for this method
+    void disable() {}
+
+    //check for an implementation for this method
+    void set(const Count & count) {}
+
     Hertz clock() { return CLOCK; }
 
 private:

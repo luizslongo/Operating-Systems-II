@@ -39,8 +39,8 @@ public:
         mbox()->enable();
     }
 
-    static void enable(int i) {
-        assert((unsigned int)i <= INTS);
+    static void enable(unsigned int i) {
+        assert(i <= INTS);
         switch(i / 32){
         case 0 /* */:
         case 1 /* */:
@@ -53,8 +53,8 @@ public:
         mbox()->disable();
     }
 
-    static void disable(int i) {
-        assert((unsigned int)i <= INTS);
+    static void disable(unsigned int i) {
+        assert(i <= INTS);
         switch(i / 32){
         case 0 /* */:
         case 1 /* */:
