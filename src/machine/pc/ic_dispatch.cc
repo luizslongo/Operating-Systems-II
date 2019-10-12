@@ -24,7 +24,7 @@ void IC::dispatch(unsigned int i)
         Thread::Criterion c = Thread::self()->priority();
 
         if(i != INT_SYS_TIMER && i != INT_IPI)
-           Thread::self()->link()->rank(Thread::Criterion::ISR + int(i));
+            Thread::self()->link()->rank(Thread::Criterion::ISR + int(i));
 
         db<Thread>(TRC) << "Thread::priority(this=" << Thread::self() << ",prio=" << Thread::self()->link()->rank() << ")" << endl;
         _int_vector[i](i);

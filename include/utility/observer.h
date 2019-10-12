@@ -36,6 +36,8 @@ public:
     virtual void detach(Observer * o);
     virtual bool notify();
 
+    virtual unsigned int observers() const { return _observers.size(); }
+
 private:
     Simple_List<Observer> _observers;
 };
@@ -110,6 +112,7 @@ public:
     Conditionally_Observed() {
         db<Observers>(TRC) << "Conditionally_Observed() => " << this << endl;
     }
+
     virtual ~Conditionally_Observed() {
         db<Observers>(TRC) << "~Conditionally_Observed(this=" << this << ")" << endl;
     }
@@ -142,6 +145,8 @@ public:
 
         return notified;
     }
+
+    virtual unsigned int observers() const { return _observers.size(); }
 
 private:
     Simple_Ordered_List<Conditional_Observer<C>, C> _observers;
@@ -240,6 +245,8 @@ public:
         return o;
     }
 
+    virtual unsigned int observers() const { return _observers.size(); }
+
 private:
     Simple_Ordered_List<Data_Observer<D, C>, C> _observers;
 };
@@ -329,6 +336,8 @@ public:
         }
         return o;
     }
+
+    virtual unsigned int observers() const { return _observers.size(); }
 
 private:
     Simple_List<Data_Observer<D, void>> _observers;

@@ -224,8 +224,8 @@ void PCNet32::reset()
     // Enable full-duplex
     bcr(9, BCR9_FDEN);
 
-    // Disable INIT interrupt and transmit stop on underflow and two part deferral
-    csr(3, CSR3_TINTM | CSR3_IDONM | CSR3_DXMT2PD | CSR3_LAPPEN | CSR3_DXSUFLO);
+    // Disable INIT, TX, RX, transmit stop on underflow and two part deferral interrupts
+    csr(3, CSR3_IDONM | CSR3_TINTM | CSR3_RINTM | CSR3_DXMT2PD | CSR3_LAPPEN | CSR3_DXSUFLO);
 
     // Enable frame auto padding/stripping and auto CRC handling
     csr(4, CSR4_DMAPLUS | CSR4_DPOLL | CSR4_APAD_XMT | CSR4_ASTRP_RCV | CSR4_TXSTRTM);
