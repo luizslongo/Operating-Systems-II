@@ -3,10 +3,11 @@
 #ifndef __tstp_timekeeper_h
 #define __tstp_timekeeper_h
 
-#include <machine/nic.h>
-#include <smartdata.h>
+#include <system/config.h>
 
 #ifdef __tstp__
+
+#include <machine/nic.h>
 
 __BEGIN_SYS
 
@@ -24,6 +25,40 @@ private:
 
     typedef _NIC::Timer::Time_Stamp Time_Stamp;
     typedef _NIC::Timer::Offset Offset;
+
+public:
+    // Epoch Control Message
+    class Epoch: public Control
+    {
+    public:
+        Epoch(const Region & dst, const Time & ep = TSTP::_epoch, const Global_Space & coordinates = Locator::absolute(Global_Space(0, 0, 0)))
+        : Control(dst, 0, 0, 0, EPOCH), _epoch(ep), _coordinates(coordinates) { }
+
+        Region destination() const { return Region(_origin, _radius, _t1); }
+        const Time epoch() const { return _epoch; }
+        const Global_Space & coordinates() const { return _coordinates; }
+
+        friend Debug & operator<<(Debug & db, const Epoch & e) {
+            db << reinterpret_cast<const Control &>(e) << ",d=" << e.destination() << ",e=" << e._epoch << ",c=" << e._coordinates;
+            return db;
+        }
+
+    private:
+        Time _epoch;
+        Global_Space _coordinates;
+    } __attribute__((packed));
+
+    // Keep Alive Control Message
+    class Keep_Alive: public Control
+    {
+    public:
+        Keep_Alive(): Control(Spacetime(here(), now()), 0, 0, 0, KEEP_ALIVE) {}
+
+        friend Debug & operator<<(Debug & db, const Keep_Alive & k) {
+            db << reinterpret_cast<const Control &>(k);
+            return db;
+        }
+    } __attribute__((packed));
 
 public:
     Timekeeper();

@@ -10,6 +10,7 @@
 #include <utility/observer.h>
 #include <utility/hash.h>
 #include <utility/predictor.h>
+#include <utility/math.h>
 #include <time.h>
 #include <real-time.h>
 
@@ -1074,10 +1075,10 @@ private:
             _interesteds.insert(binding->link());
             if(interest->period()) {
                 if(!_thread)
-                    _thread = new (SYSTEM) Periodic_Thread(interest->period(), &updater, _device, interest->expiry(), this);
+                    _thread = new (SYSTEM) Periodic_Thread(RTC::Microsecond(interest->period()), &updater, _device, interest->expiry(), this);
                 else
                     if(interest->period() != _thread->period())
-                        _thread->period(interest->period()); // FIXME: MDC(_thread->period(), interest->period())
+                        _thread->period(gcd(_thread->period(), RTC::Microsecond(interest->period())));
             }
             bound = true;
         }

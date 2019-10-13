@@ -3,12 +3,13 @@
 #ifndef __tstp_security_h
 #define __tstp_security_h
 
+#include <system/config.h>
+
+#ifdef __tstp__
+
 #include <utility/poly1305.h>
 #include <utility/diffie_hellman.h>
 #include <machine/aes.h>
-#include <smartdata.h>
-
-#ifdef __tstp__
 
 __BEGIN_SYS
 

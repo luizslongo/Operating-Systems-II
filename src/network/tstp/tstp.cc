@@ -1,19 +1,21 @@
 // EPOS Trustful Space-Time Protocol Implementation
 
+#include <system/config.h>
+
+#ifdef __tstp__
+
 #include <utility/math.h>
 #include <utility/string.h>
 #include <machine/nic.h>
 #include <network/tstp/tstp.h>
 
-#ifdef __tstp__
-
 __BEGIN_SYS
 
-// Class attributes
-TSTP::Router * TSTP::_router;
-TSTP::Locator * TSTP::_locator;
-TSTP::Timekeeper * TSTP::_timekeeper;
 TSTP::Security * TSTP::_security;
+TSTP::Timekeeper * TSTP::_timekeeper;
+TSTP::Locator * TSTP::_locator;
+TSTP::Router * TSTP::_router;
+TSTP::Manager * TSTP::_manager;
 
 TSTP::Time TSTP::_epoch;
 
@@ -22,7 +24,6 @@ Data_Observed<TSTP::Buffer> TSTP::_parts;
 Data_Observed<TSTP::Buffer, TSTP::Unit> TSTP::_clients;
 
 
-// Methods
 TSTP::~TSTP()
 {
     db<TSTP>(TRC) << "TSTP::~TSTP()" << endl;
@@ -34,10 +35,13 @@ void TSTP::update(NIC_Family::Observed * obs, const Protocol & prot, Buffer * bu
     db<TSTP>(TRC) << "TSTP::update(nic=" << obs << ",prot=" << hex << prot << ",buf=" << buf << ")" << endl;
 
     Packet * packet = buf->frame()->data<Packet>();
-    db<TSTP>(TRC) << "TSTP::update:packet=" << *packet << endl;
+    db<TSTP>(INF) << "TSTP::update:packet=" << *packet << endl;
 
     _parts.notify(buf);
-    _clients.notify(packet->header()->unit(), buf);
+    if(buf->destined_to_me)
+        _clients.notify(packet->header()->unit(), buf);
+}
+
 //    if(buf->is_microframe || !buf->trusted)
 //        return;
 //
@@ -172,13 +176,12 @@ void TSTP::update(NIC_Family::Observed * obs, const Protocol & prot, Buffer * bu
 //        db<TSTP>(WRN) << "TSTP::update: Unrecognized packet type: " << packet->type() << endl;
 //        break;
 //    }
-}
 
-// Class methods
 void TSTP::marshal(Buffer * buf) {
+    Manager::marshal(buf);
+    Router::marshal(buf);
     Locator::marshal(buf);
     Timekeeper::marshal(buf);
-    Router::marshal(buf);
     Security::marshal(buf);
 
     Packet * packet = buf->frame()->data<Packet>();

@@ -3,9 +3,11 @@
 #ifndef __tstp_router_h
 #define __tstp_router_h
 
-#include <smartdata.h>
+#include <system/config.h>
 
 #ifdef __tstp__
+
+#include <smartdata.h>
 
 __BEGIN_SYS
 

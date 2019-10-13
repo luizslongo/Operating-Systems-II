@@ -3,10 +3,11 @@
 #ifndef __tstp_locator_h
 #define __tstp_locator_h
 
-#include <network/hecops.h>
-#include <smartdata.h>
+#include <system/config.h>
 
 #ifdef __tstp__
+
+#include <network/hecops.h>
 
 __BEGIN_SYS
 

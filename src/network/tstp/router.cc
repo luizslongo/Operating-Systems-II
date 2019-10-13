@@ -1,17 +1,16 @@
 // EPOS Trustful Space-Time Protocol Router Implementation
 
+#include <system/config.h>
+
+#ifdef __tstp__
+
 #include <utility/math.h>
 #include <utility/string.h>
 #include <machine/nic.h>
 #include <network/tstp/tstp.h>
 
-#ifdef __tstp__
-
 __BEGIN_SYS
 
-// Class attributes
-
-// Methods
 TSTP::Router::~Router()
 {
     db<TSTP>(TRC) << "TSTP::~Router()" << endl;
@@ -125,13 +124,15 @@ TSTP::Region TSTP::Router::destination(Buffer * buf)
                             return Region(fake, 0, 0, -1); // Should never be destined_to_me
                     }
                 }
+                break;
                 case EPOCH: {
-                    return buf->frame()->data<Epoch>()->destination();
+                    return buf->frame()->data<Timekeeper::Epoch>()->destination();
                 }
-//                case MODEL: {
-//                    return Region(sink(), 0, buf->frame()->data<Model>()->origin(), buf->frame()->data<Model>()->expiry());
-//                }
+                case MODEL: {
+                    return buf->frame()->data<Updater::Model>()->destination();
+                }
             }
+            break;
         default:
             db<TSTP>(WRN) << "TSTP::Locator::destination(): invalid frame type " << buf->frame()->data<Header>()->type() << endl;
             return Region(here(), 0, now() - 2, now() - 1);

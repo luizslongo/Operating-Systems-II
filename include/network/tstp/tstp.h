@@ -1,10 +1,11 @@
 // EPOS Trustful SpaceTime Protocol Declarations
 
-#include <system/config.h>
-#ifdef __tstp__
-
 #ifndef __tstp_common_h
 #define __tstp_common_h
+
+#include <system/config.h>
+
+#ifdef __tstp__
 
 #include <utility/hash.h>
 #include <utility/string.h>
@@ -31,6 +32,7 @@ public:
     class Router;
     class Locator;
     class Timekeeper;
+    class Manager;
     class Security;
 
     // Imports
@@ -90,98 +92,11 @@ public:
         friend Debug & operator<<(Debug & db, const Packet & p);
     } __attribute__((packed));
 
-
     // This field is packed first and matches the Frame Type field in the Frame Control in IEEE 802.15.4 MAC.
     // A version number above 4 renders TSTP into the reserved frame type zone and should avoid interference.
     enum Version {
         V0 = 4
     };
-
-    // Keep Alive Control Message
-    class Keep_Alive: public Control
-    {
-    public:
-        Keep_Alive(): Control(Spacetime(here(), now()), 0, 0, 0, KEEP_ALIVE) {}
-
-        friend Debug & operator<<(Debug & db, const Keep_Alive & k) {
-            db << reinterpret_cast<const Control &>(k);
-            return db;
-        }
-    } __attribute__((packed));
-
-    // Epoch Control Message
-    class Epoch;
-
-//    // Model Control Message
-//    class Model: public Control
-//    {
-//    protected:
-//        typedef unsigned char Data[MTU - sizeof(Unit) - sizeof(int) - sizeof(Time) - sizeof(CRC)];
-//    public:
-//        template<typename M>
-//        Model(const M & m, const Unit & unit, const Error & error = 0, const Time & expiry = 0)
-//        : Control(MODEL, 0, 0, now(), here(), here()), _unit(unit), _error(error), _expiry(expiry), _crc(0) {
-//            memset(_model, 0, sizeof(Data));
-//            model(m);
-//        }
-//
-//        const Unit & unit() const { return _unit; }
-//        Error error() const { return _error; }
-//
-//        Time expiry() const { return _origin.time() + _expiry; }
-//        void expiry(const Time & e) { _expiry = e - _origin.time(); }
-//
-//        template<typename T>
-//        T * model() { return reinterpret_cast<T *>(&_model); }
-//        template<typename T>
-//        void model(const T & m) { *reinterpret_cast<T *>(&_model) = m; }
-//
-//        friend Debug & operator<<(Debug & db, const Model & m) {
-//            db << reinterpret_cast<const Control &>(m) << ",u=" << m._unit << ",e=" << m._error << ",x=" << m._expiry << ",m=" << hex << *const_cast<Model &>(m).model<unsigned>() << dec;
-//            return db;
-//        }
-//
-//    private:
-//        Unit _unit;
-//        int _error;
-//        Time _expiry;
-//        Data _model;
-//        CRC _crc;
-//    } __attribute__((packed));
-//
-//    // TSTP Smart Data bindings
-//    // Predictive (binder between Model messages and Smart Data)
-//    class Predictive: public Model
-//    {
-//    public:
-//        template<typename M>
-//        Predictive(const M & model, const Unit & unit, const Error & error = 0, const Time & expiry = 0)
-//        : Model(model, unit, error, expiry), _size(sizeof(Model) - sizeof(Model::Data) + sizeof(M)) { }
-//
-//        void t0(const Time & t) { _t0 = t; }
-//        void t1(const Time & t) { _t1 = t; }
-//        Time t0() const { return _t0; }
-//        Time t1() const { return _t1; }
-//
-//        void respond(const Time & expiry) { send(expiry); }
-//
-//    private:
-//        void send(const Time & expiry) {
-//            if((_origin.time() >= _t0) && (_origin.time() <= _t1)) {
-//                assert(expiry > now());
-//                Buffer * buf = alloc(_size);
-//                Model * model = buf->frame()->data<Model>();
-//                memcpy(model, this, _size);
-//                model->expiry(expiry);
-//                marshal(buf);
-//                _nic->send(buf);
-//            }
-//        }
-//    private:
-//        unsigned int _size;
-//        Time _t0;
-//        Time _t1;
-//    };
 
 protected:
     template<unsigned int UNIT = 0>
@@ -193,7 +108,7 @@ public:
     static Buffer * alloc(unsigned int size);
     static int send(Buffer * buf);
 
-    // Local network Space-Time
+    // Local Space-Time (network scope, sink at center)
     static Space here();
     static Time now();
 
@@ -228,10 +143,11 @@ private:
     static void init(unsigned int unit);
 
 private:
-    static Router * _router;
-    static Locator * _locator;
-    static Timekeeper * _timekeeper;
     static Security * _security;
+    static Timekeeper * _timekeeper;
+    static Locator * _locator;
+    static Router * _router;
+    static Manager * _manager;
 
     static Time _epoch;
 
@@ -248,33 +164,13 @@ __END_SYS
 #define __tstp_h
 
 #include "mac.h"
-#include "router.h"
+#include "security.h"
 #include "locator.h"
 #include "timekeeper.h"
-#include "security.h"
+#include "router.h"
+#include "manager.h"
 
 __BEGIN_SYS
-
-// Epoch Control Message
-class TSTP::Epoch: public TSTP::Control
-{
-public:
-    Epoch(const Region & dst, const Time & ep = TSTP::_epoch, const Global_Space & coordinates = Locator::absolute(Global_Space(0, 0, 0)))
-    : Control(dst, 0, 0, 0, EPOCH), _epoch(ep), _coordinates(coordinates) { }
-
-    Region destination() const { return Region(_origin, _radius, _t1); }
-    const Time epoch() const { return _epoch; }
-    const Global_Space & coordinates() const { return _coordinates; }
-
-    friend Debug & operator<<(Debug & db, const Epoch & e) {
-        db << reinterpret_cast<const Control &>(e) << ",d=" << e.destination() << ",e=" << e._epoch << ",c=" << e._coordinates;
-        return db;
-    }
-
-private:
-    Time _epoch;
-    Global_Space _coordinates;
-} __attribute__((packed));
 
 inline TSTP::Buffer * TSTP::alloc(unsigned int size)
 {
@@ -288,8 +184,9 @@ inline int TSTP::send(TSTP::Buffer * buf)
     return _nic->send(buf);
 }
 
-
-inline TSTP::Space TSTP::here() { return Locator::here(); }
+inline TSTP::Space TSTP::here() {
+    return Locator::here();
+}
 
 inline TSTP::Space TSTP::local(TSTP::Global_Space gs) {
     gs -= Locator::absolute(Space(0, 0, 0));
@@ -300,8 +197,9 @@ inline TSTP::Global_Space TSTP::absolute(const TSTP::Space & s) {
     return Locator::absolute(Global_Space(s.x, s.y, s.z));
 }
 
-
-inline TSTP::Time TSTP::now() { return Timekeeper::now(); }
+inline TSTP::Time TSTP::now() {
+    return Timekeeper::now();
+}
 
 inline Debug & operator<<(Debug & db, const TSTP::Packet & p)
 {
@@ -315,7 +213,7 @@ inline Debug & operator<<(Debug & db, const TSTP::Packet & p)
     case TSTP::COMMAND:
         db << reinterpret_cast<const TSTP::Command &>(p);
         break;
-    case TSTP::CONTROL: {
+    case TSTP::CONTROL:
         switch(const_cast<TSTP::Packet *>(&p)->header()->subtype()) {
         case TSTP::DH_RESPONSE:
             db << reinterpret_cast<const TSTP::Security::DH_Response &>(p);
@@ -333,10 +231,10 @@ inline Debug & operator<<(Debug & db, const TSTP::Packet & p)
             db << reinterpret_cast<const TSTP::Security::Report &>(p);
             break;
         case TSTP::KEEP_ALIVE:
-            db << reinterpret_cast<const TSTP::Keep_Alive &>(p);
+            db << reinterpret_cast<const TSTP::Timekeeper::Keep_Alive &>(p);
             break;
         case TSTP::EPOCH:
-            db << reinterpret_cast<const TSTP::Epoch &>(p);
+            db << reinterpret_cast<const TSTP::Timekeeper::Epoch &>(p);
             break;
 //        case TSTP::MODEL:
 //            db << reinterpret_cast<const TSTP::Model &>(p);
@@ -344,7 +242,7 @@ inline Debug & operator<<(Debug & db, const TSTP::Packet & p)
         default:
             break;
         }
-    }
+        break;
     default:
         break;
     }

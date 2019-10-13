@@ -3,14 +3,16 @@
 #ifndef __tstp_mac_h
 #define __tstp_mac_h
 
+#include <system/config.h>
+
+#if defined(__tstp__) && defined (__mach_cortex_m__)
+
 #include <utility/random.h>
 #include <utility/math.h>
 #include <machine/ic.h>
 #include <machine/rtc.h>
 #include <machine/watchdog.h>
 #include <network/tstp/tstp.h>
-
-#if defined(__tstp__) && defined (__mach_cortex_m__)
 
 __BEGIN_SYS
 
