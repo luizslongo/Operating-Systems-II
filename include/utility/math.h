@@ -208,6 +208,15 @@ T babylonian_sqrt(const T & a) {
     return rst;
 }
 
+// Greatest Common Divisor (Euclid's algorithm)
+template <typename T>
+T gcd(const T & a, const T & b) {
+    if(b == 0)
+        return a;
+    else
+        return gcd(b, a % b);
+}
+
 __END_UTIL
 
 #endif
