@@ -129,7 +129,7 @@ TSTP::Region TSTP::Router::destination(Buffer * buf)
                     return buf->frame()->data<Timekeeper::Epoch>()->destination();
                 }
                 case MODEL: {
-                    return buf->frame()->data<Updater::Model>()->destination();
+                    return buf->frame()->data<Manager::Model>()->destination();
                 }
             }
             break;

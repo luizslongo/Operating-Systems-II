@@ -53,7 +53,7 @@ namespace EPOS {
 #define __HEADER_MACH(X)        <machine/MACH/MACH/**/_##X.h>
 #define __HEADER_MMOD(X)        <machine/MACH/MMOD/MMOD/**/_##X.h>
 #define __HEADER_TRAN(X)        <transducer/X.h>
-#define __APPL_TRAITS_T(X)      <../app/X##_traits.h>
+#define __APPL_TRAITS_T(X)      <../app/X/X##_traits.h>
 #define __APPL_TRAITS(X)        __APPL_TRAITS_T(X)
 
 #define __ARCHITECTURE_TRAITS_H __HEADER_ARCH(traits)

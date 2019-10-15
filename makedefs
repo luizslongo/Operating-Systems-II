@@ -24,7 +24,7 @@ LINITNAME	:= init
 LUTILNAME	:= util
 
 # Makefile hacks
-APPLICATIONS	:= $(subst .cc,,$(shell find $(APP) -name \*.cc -printf "%f\n"))
+APPLICATIONS	:= $(shell find $(APP) -maxdepth 1 -not -name makefile -and -not -name app -printf "%f\n")
 
 ifeq ($(words $(APPLICATIONS)),1)
 ifndef APPLICATION
@@ -256,6 +256,7 @@ EMULATOR	= $(MACH_EMULATOR)
 FLASHER 	= $(MACH_FLASHER)
 
 INSTALL		:= install
+LINK            := ln -sf
 
 LD		= $(COMP_PREFIX)ld
 LDFLAGS		= $(MACH_LD_FLAGS) -nostdlib -L$(LIB) -Bstatic

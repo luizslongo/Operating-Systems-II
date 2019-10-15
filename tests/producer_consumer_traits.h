@@ -1,1 +1,0 @@
-synchronizer_test_traits.h

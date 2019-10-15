@@ -2,9 +2,9 @@
 
 include	../makedefs
 
-all: $(APP)/$(APPLICATION)_traits.h config eposcfg eposcc.conf eposmkbi.conf 
+all: $(APP)/$(APPLICATION)/$(APPLICATION)_traits.h config eposcfg eposcc.conf eposmkbi.conf 
 
-$(APP)/$(APPLICATION)_traits.h:
+$(APP)/$(APPLICATION)/$(APPLICATION)_traits.h:
 		$(INSTALL) $(INCLUDE)/system/traits.h $@
 
 eposcfg: FORCE
@@ -52,7 +52,7 @@ eposmkbi.conf:	FORCE
 		@echo "NODE_ID=$(NODE_ID)" >> $@
 		@echo "UUID=$(UUID)" >> $@
 
-clean: $(APP)/$(APPLICATION)_traits.h
+clean: $(APP)/$(APPLICATION)/$(APPLICATION)_traits.h
 		sed -e 's/^#define SMOD.*$$/#define SMOD xxx/' -i $(INCLUDE)/system/config.h
 		sed -e 's/^#define ARCH.*$$/#define ARCH xxx/' -i $(INCLUDE)/system/config.h
 		sed -e 's/^#define MACH.*$$/#define MACH xxx/' -i $(INCLUDE)/system/config.h

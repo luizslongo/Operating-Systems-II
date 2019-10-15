@@ -53,24 +53,22 @@ endif
 flash1: all1
 		(cd img && $(MAKE) flash)
 
-TESTS_APPS := $(subst .cc,,$(shell find $(TST) -name \*_test.cc -printf "%f\n"))
-TESTS_COMPILED := $(subst .img,,$(shell find $(IMG) -name \*_test.img -printf "%f\n"))
-TESTS_COMPILED := $(TESTS_COMPILED) $(subst .bin,,$(shell find $(IMG) -name \*_test.bin -printf "%f\n"))
-TESTS_FINISHED := $(subst .out,,$(shell find $(IMG) -name \*_test.out -printf "%f\n"))
-TESTS_SOURCES := $(shell find $(TST) -name \*_test.cc -printf "%p\n")
-UNFINISHED_TESTS := $(filter-out $(TESTS_FINISHED),$(TESTS_APPS))
-UNCOMPILED_TESTS := $(filter-out $(TESTS_COMPILED),$(TESTS_APPS))
-test: $(subst .cc,_traits.h,$(TESTS_SOURCES))
-		$(INSTALL) $(TESTS_SOURCES) $(APP)
-		$(INSTALL) $(subst .cc,_traits.h,$(TESTS_SOURCES)) $(APP)
+TESTS		:= $(shell find $(TST) -maxdepth 1 -type d -and -not -name tests -printf "%f\n")
+TESTS_COMPILED 	:= $(subst .img,,$(shell find $(IMG) -name \*_test.img -printf "%f\n"))
+TESTS_COMPILED 	:= $(TESTS_COMPILED) $(subst .bin,,$(shell find $(IMG) -name \*_test.bin -printf "%f\n"))
+TESTS_FINISHED 	:= $(subst .out,,$(shell find $(IMG) -name \*_test.out -printf "%f\n"))
+UNFINISHED_TESTS:= $(filter-out $(TESTS_FINISHED),$(TESTS))
+UNCOMPILED_TESTS:= $(filter-out $(TESTS_COMPILED),$(TESTS))
+test: FORCE
+		$(foreach tst,$(TESTS),$(LINK) $(TST)/$(tst) $(APP);)
 		$(foreach tst,$(UNFINISHED_TESTS),$(MAKETEST) APPLICATION=$(tst) prebuild_$(tst) clean1 all1 posbuild_$(tst) prerun_$(tst) run1 posbuild_$(tst);)
 		
-buildtest: $(subst .cc,_traits.h,$(TESTS_SOURCES))
-		$(INSTALL) $(TESTS_SOURCES) $(APP)
-		$(INSTALL) $(subst .cc,_traits.h,$(TESTS_SOURCES)) $(APP)
+buildtest: FORCE
+		$(foreach tst,$(TESTS),$(LINK) $(TST)/$(tst) $(APP);)
 		$(foreach tst,$(UNCOMPILED_TESTS),$(MAKETEST) APPLICATION=$(tst) prebuild_$(tst) clean1 all1 posbuild_$(tst);)
 
-runtest: $(subst .cc,_traits.h,$(TESTS_SOURCES))
+runtest: FORCE
+		$(foreach tst,$(TESTS),$(LINK) $(TST)/$(tst) $(APP);)
 		$(foreach tst,$(UNFINISHED_TESTS),$(MAKETEST) APPLICATION=$(tst) etc prerun_$(tst) run1 posbuild_$(tst);)
 
 .PHONY: prebuild_$(APPLICATION) posbuild_$(APPLICATION) prerun_$(APPLICATION)
@@ -108,8 +106,7 @@ veryclean: clean
 		find $(IMG) -name "*.pcap" -exec $(CLEAN) {} \;
 		find $(IMG) -name "*.net" -exec $(CLEAN) {} \;
 		find $(IMG) -maxdepth 1 -type f -perm 755 -exec $(CLEAN) {} \;
-		find $(TST) -maxdepth 1 -type f -perm 755 -exec $(CLEAN) {} \;
-		find $(APP) -maxdepth 1 -type f -perm -755 -exec $(CLEAN) {} \;
+		find $(APP) -maxdepth 1 -type l -exec $(CLEAN) {} \;
 
 dist: veryclean
 		find $(TOP) -name ".*project" -exec $(CLEAN) {} \;
