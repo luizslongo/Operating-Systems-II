@@ -483,14 +483,19 @@ public:
         // Interest
         ANNOUNCEMENT    = 1,
 
-        // Control
+        // Control - Security
         DH_REQUEST      = 1,
         DH_RESPONSE,
         AUTH_REQUEST,
         AUTH_GRANTED,
+        ESA_RESPONSE,
+
+        // Control - Timekeeper
         REPORT,
         KEEP_ALIVE,
         EPOCH,
+
+        // Control - Predictor
         MODEL
     };
 

@@ -44,8 +44,8 @@ endif
 endif
 
 # System configuration
-ifneq ("$(wildcard $(APP)/$(APPLICATION)_traits.h)","")
-TRAITS		= $(APP)/$(APPLICATION)_traits.h
+ifneq ("$(wildcard $(APP)/$(APPLICATION)/$(APPLICATION)_traits.h)","")
+TRAITS		= $(APP)/$(APPLICATION)/$(APPLICATION)_traits.h
 else
 TRAITS		= $(INCLUDE)/system/traits.h
 endif
