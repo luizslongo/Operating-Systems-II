@@ -160,6 +160,10 @@ __END_SYS
 
 #endif
 
+#endif
+
+#ifdef __tstp__
+
 #ifndef __tstp_h
 #define __tstp_h
 
