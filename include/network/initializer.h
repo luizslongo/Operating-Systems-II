@@ -5,7 +5,6 @@
 
 #include <system/config.h>
 
-
 extern "C" { void __pre_main(); }
 
 __BEGIN_SYS

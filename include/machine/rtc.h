@@ -24,9 +24,48 @@ protected:
 
 public:
     // The time (as defined by God Chronos)
-    typedef Time_Base Microsecond;
-    typedef Time_Base Milisecond;
-    typedef Time_Base Second;
+    class Second;
+    class Milisecond;
+    class Microsecond;
+
+    class Second
+    {
+    public:
+        Second() {}
+        Second(const Time_Base & time) { _time = time; }
+
+        operator Time_Base() const { return _time; }
+
+    private:
+        Time_Base _time;
+    };
+
+    class Milisecond
+    {
+    public:
+        Milisecond() {}
+        Milisecond(const Time_Base & time) { _time = time; }
+        Milisecond(const Second & time) { _time = reinterpret_cast<const Time_Base &>(time) * 1000; }
+
+        operator Time_Base() const { return _time; }
+
+    private:
+        Time_Base _time;
+    };
+
+    class Microsecond
+    {
+    public:
+        Microsecond() = default;
+        Microsecond(const Time_Base & time) { _time = time; }
+        Microsecond(const Second & time) { _time = reinterpret_cast<const Time_Base &>(time) * 1000000; }
+        Microsecond(const Milisecond & time) { _time = reinterpret_cast<const Time_Base &>(time) * 1000; }
+
+        operator Time_Base() const { return _time; }
+
+    private:
+        Time_Base _time;
+    };
 
     // Infinite times (for alarms and periodic threads)
     enum : unsigned int { INFINITE = -1UL };
@@ -65,6 +104,10 @@ public:
         unsigned int _s;
     };
 };
+
+typedef RTC_Common::Second Second;
+typedef RTC_Common::Milisecond Milisecond;
+typedef RTC_Common::Microsecond Microsecond;
 
 // If the machine does not feature a RTC, define seconds_since_epoch to be 0
 #ifndef __RTC_H

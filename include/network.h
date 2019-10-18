@@ -6,6 +6,10 @@
 #include <machine/nic.h>
 #include <network/initializer.h>
 
+#ifdef __NIC_H
+#include <network/elp.h>
+#endif
+
 #ifdef __ipv4__
 #include <network/ipv4/ip.h>
 #include <network/ipv4/tcp.h>

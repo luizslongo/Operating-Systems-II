@@ -219,6 +219,13 @@ template<> struct Traits<Network>: public Traits<void>
     typedef LIST<TSTP> NETWORKS;
 };
 
+template<> struct Traits<ELP>: public Traits<Network>
+{
+    typedef Ethernet NIC_Family;
+
+    static const bool enabled = NETWORKS::Count<ELP>::Result;
+};
+
 template<> struct Traits<TSTP>: public Traits<Network>
 {
     typedef IEEE802_15_4 NIC_Family;

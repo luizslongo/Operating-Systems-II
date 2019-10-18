@@ -35,7 +35,7 @@ struct Traits
 
     // Default traits
     static const bool enabled = true;
-    static const bool debugged = true;
+    static const bool debugged = false;
     static const bool monitored = false;
     static const bool hysterically_debugged = false;
 
@@ -50,8 +50,8 @@ template<> struct Traits<Build>: public Traits<void>
     static const unsigned int MACHINE = PC;
     static const unsigned int MODEL = Legacy_PC;
     static const unsigned int CPUS = 1;
-    static const unsigned int NODES = 2; // (> 1 => NETWORKING)
-    static const unsigned int EXPECTED_SIMULATION_TIME = 60; // s (0 => not simulated)
+    static const unsigned int NODES = 2;     // (> 1 => NETWORKING)
+    static const unsigned int EXPECTED_SIMULATION_TIME = 60;    // s (0 => not simulated)
 };
 
 
@@ -60,8 +60,8 @@ template<> struct Traits<Debug>: public Traits<void>
 {
     static const bool error   = true;
     static const bool warning = true;
-    static const bool info    = false;
-    static const bool trace   = false;
+    static const bool info    = true;
+    static const bool trace   = true;
 };
 
 template<> struct Traits<Lists>: public Traits<void>
@@ -77,6 +77,11 @@ template<> struct Traits<Spin>: public Traits<void>
 template<> struct Traits<Heaps>: public Traits<void>
 {
     static const bool debugged = hysterically_debugged;
+};
+
+template<> struct Traits<Hashes>: public Traits<void>
+{
+    static const bool debugged = true;
 };
 
 template<> struct Traits<Observers>: public Traits<void>
@@ -122,9 +127,9 @@ __BEGIN_SYS
 // API Components
 template<> struct Traits<Application>: public Traits<void>
 {
-    static const unsigned int STACK_SIZE = Traits<Machine>::STACK_SIZE;
+    static const unsigned int STACK_SIZE = 4 * Traits<Machine>::STACK_SIZE;
     static const unsigned int HEAP_SIZE = Traits<Machine>::HEAP_SIZE;
-    static const unsigned int MAX_THREADS = Traits<Machine>::MAX_THREADS;
+    static const unsigned int MAX_THREADS = 4 * Traits<Machine>::MAX_THREADS;
 };
 
 template<> struct Traits<System>: public Traits<void>
@@ -133,10 +138,10 @@ template<> struct Traits<System>: public Traits<void>
     static const bool multithread = (Traits<Build>::CPUS > 1) || (Traits<Application>::MAX_THREADS > 1);
     static const bool multitask = (mode != Traits<Build>::LIBRARY);
     static const bool multicore = (Traits<Build>::CPUS > 1) && multithread;
-    static const bool multiheap = (mode != Traits<Build>::LIBRARY) || Traits<Scratchpad>::enabled;
+    static const bool multiheap = multitask || Traits<Scratchpad>::enabled;
 
     static const unsigned long LIFE_SPAN = 1 * YEAR; // s
-    static const unsigned int DUTY_CYCLE = 10000; // ppm
+    static const unsigned int DUTY_CYCLE = 1000000; // ppm
 
     static const bool reboot = true;
 
@@ -156,7 +161,7 @@ template<> struct Traits<Thread>: public Traits<void>
     static const bool simulate_capacity = false;
     static const bool trace_idle = hysterically_debugged;
 
-    typedef Scheduling_Criteria::EDF Criterion;
+    typedef Scheduling_Criteria::RR Criterion;
     static const unsigned int QUANTUM = 10000; // us
 };
 
@@ -180,18 +185,12 @@ template<> struct Traits<SmartData>: public Traits<void>
     static const unsigned char PREDICTOR = NONE;
 };
 
-//template<typename Transducer, typename Network>
-//struct Traits<SmartData<Transducer, Network>>: public Traits<Network>
-//{
-//    static const unsigned char PREDICTOR = Traits<Network>::NONE;
-//};
-
 template<> struct Traits<Monitor>: public Traits<void>
 {
     static const bool enabled = monitored;
 
     // Monitoring frequencies (in Hz, aka samples per second)
-    static const unsigned int MONITOR_ELAPSED_TIME      = 100;
+    static const unsigned int MONITOR_ELAPSED_TIME      = 0;
     static const unsigned int MONITOR_DEADLINE_MISS     = 0;
 
     static const unsigned int MONITOR_CLOCK             = 0;
@@ -222,11 +221,12 @@ template<> struct Traits<Network>: public Traits<void>
     static const unsigned int RETRIES = 3;
     static const unsigned int TIMEOUT = 10; // s
 
-    typedef LIST<TSTP> NETWORKS;
+    typedef LIST<ELP> NETWORKS;
 };
 
 template<> struct Traits<ELP>: public Traits<Network>
 {
+    static const bool debugged = true;
     typedef Ethernet NIC_Family;
 
     static const bool enabled = NETWORKS::Count<ELP>::Result;
@@ -259,7 +259,15 @@ template<> struct Traits<IP>: public Traits<Network>
     static const unsigned int TTL  = 0x40; // Time-to-live
 };
 
-template<> struct Traits<IP>::Config<0>: public Traits<IP>::Default_Config
+template<> struct Traits<IP>::Config<0> //: public Traits<IP>::Default_Config
+{
+    static const unsigned int  TYPE      = MAC;
+    static const unsigned long ADDRESS   = 0x0a000100;  // 10.0.1.x x=MAC[5]
+    static const unsigned long NETMASK   = 0xffffff00;  // 255.255.255.0
+    static const unsigned long GATEWAY   = 0;           // 10.0.1.1
+};
+
+template<> struct Traits<IP>::Config<1>: public Traits<IP>::Default_Config
 {
 };
 

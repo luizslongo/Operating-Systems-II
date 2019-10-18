@@ -63,6 +63,7 @@ template<> class Padding<64> { long long int _padding; } __attribute__((packed))
 typedef unsigned char Percent;
 typedef unsigned char UUID[8];
 
+template<unsigned int KEY_SIZE> class _AES;
 class Bitmaps;
 class CRC;
 class Debug;
@@ -81,7 +82,7 @@ class Random;
 class Spin;
 class SREC;
 class Vectors;
-template<unsigned int KEY_SIZE> class _AES;
+
 template<typename> class Scheduler;
 namespace Scheduling_Criteria
 {
@@ -186,6 +187,7 @@ template<typename T> class Clerk;
 class Monitor;
 
 class Network;
+class ELP;
 class TSTPOE;
 class TSTP;
 template<typename NIC, typename Network, unsigned int HTYPE> class ARP;

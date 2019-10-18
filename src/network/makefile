@@ -11,7 +11,7 @@ all:		$(SUBDIRS) $(LIBSYS) $(LIBINIT)
 $(SUBDIRS):	FORCE
 		(cd $@ && $(MAKE))
 
-#$(LIBSYS):	$(LIBSYS)($(OBJS))
+$(LIBSYS):	$(LIBSYS)($(OBJS))
 
 $(LIBINIT):	$(LIBINIT)($(INITS))
 

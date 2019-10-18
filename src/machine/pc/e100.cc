@@ -134,7 +134,7 @@ E100::E100(unsigned int unit, const Log_Addr & io_mem, const IO_Irq & irq, DMA_B
 
     // Rx Buffer
     for(i = 0; i < RX_BUFS; i++) {
-        _rx_buffer[i] = new (log) Buffer(&_rx_ring[i]);
+        _rx_buffer[i] = new (log) Buffer(this, &_rx_ring[i]);
 
         log += align128(sizeof(Buffer));
         phy += align128(sizeof(Buffer));
@@ -142,7 +142,7 @@ E100::E100(unsigned int unit, const Log_Addr & io_mem, const IO_Irq & irq, DMA_B
 
     // Tx Buffer
     for(i = 0; i < TX_BUFS; i++) {
-        _tx_buffer[i] = new (log) Buffer(&_tx_ring[i]);
+        _tx_buffer[i] = new (log) Buffer(this, &_tx_ring[i]);
 
         log += align128(sizeof(Buffer));
         phy += align128(sizeof(Buffer));
@@ -359,7 +359,7 @@ E100::Buffer * E100::alloc(const Address & dst, const Protocol & prot, unsigned 
         Buffer * buf = _tx_buffer[_tx_cur];
 
         // Initialize the buffer and assemble the Ethernet Frame Header
-        new (buf) Buffer(this, (size > max_data) ? MTU : size + always, _address, dst, prot);
+        buf->fill((size > max_data) ? MTU : size + always, _address, dst, prot);
 
         db<E100>(INF) << "E100::alloc:desc[" << _tx_cur << "]=" << desc << " => " << *desc << endl;
 

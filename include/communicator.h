@@ -89,7 +89,7 @@ private:
     void update(typename Channel::Observed * obs, const Observing_Condition & c, Buffer * buf) { Observer::update(c, buf); }
     Buffer * updated() { return Observer::updated(); }
 
-private:
+protected:
     Local_Address _local;
 };
 
@@ -181,11 +181,10 @@ public:
     Link(const Local_Address & local, const Address & peer = Address::NULL): Base(local), _peer(peer) {}
     ~Link() {}
 
-    int send(const void * data, unsigned int size) { return Base::send(_peer, data, size); }
+    int send(const void * data, unsigned int size) { return Base::send(Base::_local, _peer, data, size); }
     int receive(void * data, unsigned int size) { return Base::receive(data, size); }
-    int receive_all(void * data, unsigned int size) { return Base::receive_all(data, size); }
 
-    int read(void * data, unsigned int size) { return receive_all(data, size); }
+    int read(void * data, unsigned int size) { return receive(data, size); }
     int write(const void * data, unsigned int size) { return send(data, size); }
 
     const Address & peer() const { return _peer;}

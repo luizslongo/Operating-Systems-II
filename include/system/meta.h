@@ -243,7 +243,7 @@ template<> struct UNSIGNED<unsigned long long> { typedef unsigned long long Resu
 // Returns a type one rank LARGER than primitive type T
 template<typename T>
 struct LARGER {
-    typedef void Result; // Type T not supported;
+    typedef T Result; // if there is no larger type, return T
 };
 template<> struct LARGER<bool> { typedef short Result; };
 template<> struct LARGER<char> { typedef short Result; };

@@ -162,10 +162,10 @@ __END_SYS
 
 #endif
 
-#ifdef __tstp__
-
 #ifndef __tstp_h
 #define __tstp_h
+
+#ifdef __tstp__
 
 #include "mac.h"
 #include "security.h"

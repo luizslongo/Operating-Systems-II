@@ -8,7 +8,7 @@ RTC_Common::Date::Date(const Second & seconds, unsigned long epoch_days)
 {
     static int days_per_month[12] = {31,28,31,30,31,30,31,31,30,31,30,31};
 
-    Second tmp = seconds;
+    int tmp = seconds;
 
     _s = tmp % 60;
     tmp /= 60;

@@ -126,7 +126,7 @@ PCNet32::Buffer * PCNet32::alloc(const Address & dst, const Protocol & prot, uns
         Buffer * buf = _tx_buffer[i];
 
         // Initialize the buffer and assemble the Ethernet Frame Header
-        new (buf) Buffer(this, (size > max_data) ? MTU : size + always, _address, dst, prot);
+        buf->fill((size > max_data) ? MTU : size + always, _address, dst, prot);
 
         db<PCNet32>(INF) << "PCNet32::alloc:desc[" << i << "]=" << desc << " => " << *desc << endl;
         db<PCNet32>(INF) << "PCNet32::alloc:buf=" << buf << " => " << *buf << endl;
