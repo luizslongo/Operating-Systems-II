@@ -8,6 +8,7 @@
 #include <machine/ic.h>
 #undef __common_only__
 #include <machine/cortex/engines/cortex_a53/bcm_timer.h>
+#include <machine/cortex/engines/cortex_a53/bcm_arm_timer.h>
 #include <system/memory_map.h>
 #include <utility/convert.h>
 
@@ -51,6 +52,43 @@ private:
     static Count _count;
 };
 
+// class System_Timer_Engine: public Timer_Common
+// {
+//     friend Timer; // for init()
+//
+// private:
+//     static const unsigned int UNIT = 0;
+//
+//     typedef TSC_Common::Hertz Hertz;
+//     typedef IC_Common::Interrupt_Id Interrupt_Id;
+//
+// public:
+//     typedef ARM_Timer::Count Count;
+//
+// public:
+//     Count read() { return timer()->read(); }
+//
+//     void enable() { timer()->enable(); }
+//     void disable() { timer()->disable(); }
+//
+//     Hertz clock() { return timer()->clock(); }
+//
+// protected:
+//     static void eoi(const Interrupt_Id & id) { timer()->eoi(); }
+//
+// private:
+//     static void init(const Hertz & frequency) {
+//         _count = timer()->clock() / frequency;
+//         timer()->config(UNIT, _count);
+//         timer()->enable();
+//     }
+//
+// private:
+//     static ARM_Timer * timer() { return reinterpret_cast<ARM_Timer *>(Memory_Map::TIMER1_BASE); }
+//
+// private:
+//     static Count _count;
+// };
 
 class User_Timer_Engine: public Timer_Common
 {

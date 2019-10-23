@@ -78,18 +78,18 @@ secondary_core:                                                                 
                                                                                 \t\n\
         ldr     r0, =0x400000CC             //ARM local mailbox3 clr0           \t\n\
         mov     r1, #0x10                                                       \t\n\
-        mul     r1, r2, r1                                                      \t\n\
+        mul     r1, r2, r1                  //r2 is CPU id                      \t\n\
         mov     r3, #0                                                          \t\n\
         str     r3, [r0, r1]                                                    \t\n\
         ldr     r0, =0x40000050             //arm local mailbox int control0    \t\n\
         mov     r1, #4                                                          \t\n\
-        mul     r1, r2, r1                                                      \t\n\
+        mul     r1, r2, r1                  //r2 is CPU id                      \t\n\
         mov     r3, #0xF                                                        \t\n\
         str     r3, [r0, r1]                                                    \t\n\
 all:                                                                            \t\n\
         mrc     p15, 0, r2, c0, c0, 5   // Multiprocessor Affinity Register     \t\n\
         ands    r2, r2, #0x03                                                   \t\n\
-        mov     r2, r2, LSL #14                                                 \t\n\
+        mov     r2, r2, LSL #18         // this sets 256KB boot_stack per core  \t\n\
         ldr     r1, =__boot_stack__                                             \t\n\
         sub     r1, r1, r2                                                      \t\n\
         mov     sp, r1                                                          \t\n\

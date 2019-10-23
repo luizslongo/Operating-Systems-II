@@ -18,7 +18,7 @@ private:
 
 public:
     UART_Engine(unsigned int unit, unsigned int baud_rate, unsigned int data_bits, unsigned int parity, unsigned int stop_bits)
-    : _unit(unit), _uart(new(reinterpret_cast<void *>(Memory_Map::AUX_BASE)) BCM_UART) {
+    : _unit(unit), _uart(new(reinterpret_cast<void *>(Memory_Map::GPIO_BASE)) BCM_UART) {
         assert(unit < UNITS);
         power(FULL);  // physically enable the UART in SysCtrl before configuring it
         config(baud_rate, data_bits, parity, stop_bits);

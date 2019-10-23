@@ -31,7 +31,7 @@ public:
         INT_USB0                = USB_CONTROLLER,
         INT_SPI                 = SPI_INT,
         INT_RESCHEDULER         = CORE0_MAILBOX0_IRQ,
-        LAST_INT
+        LAST_INT                = IC_Common::LAST_INT
     };
 
 public:
@@ -50,7 +50,7 @@ public:
     }
 
     static void disable() {
-        mbox()->disable();
+        //mbox()->disable();
     }
 
     static void disable(unsigned int i) {
@@ -75,11 +75,13 @@ public:
 
     static void ipi(unsigned int cpu, const Interrupt_Id & id) { mbox()->ipi(cpu, id); }
 
+    static void mailbox_eoi(const Interrupt_Id & id) {mbox()->eoi(id); }
+
     static void init() { mbox()->init(); }; // irq doesn't need initialization
 
 private:
     static BCM_IRQ * irq() { return reinterpret_cast<BCM_IRQ *>(Memory_Map::IC_BASE); }
-    static BCM_Mailbox * mbox() { return reinterpret_cast<BCM_Mailbox *>(Memory_Map::MBOX_BASE); }
+    static BCM_Mailbox * mbox() { return reinterpret_cast<BCM_Mailbox *>(Memory_Map::CTRL_BASE); }
 };
 
 __END_SYS

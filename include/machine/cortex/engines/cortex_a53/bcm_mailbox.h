@@ -119,10 +119,12 @@ public:
         if(pending) {
             if(pending & 2)     return SYSTEM_TIMER_MATCH1; // handler needs to reset counter compare register
             if(pending & 4)     return SYSTEM_TIMER_MATCH3; // handler needs to reset counter compare register
+            return SYSTEM_TIMER_MATCH1;
         }
 
         pending = irq(IRQ_PENDING_2);
         if(pending) {
+            return pending;
         }
 
         return LAST_INT; // Unsupported interrupt
@@ -224,6 +226,7 @@ public:
         mailbox(MBOX_WC + cpu_base + 4)  = 1 << 31; // ACK From CPU1
         mailbox(MBOX_WC + cpu_base + 8)  = 1 << 31; // ACK From CPU2
         mailbox(MBOX_WC + cpu_base + 12) = 1 << 31; // ACK From CPU3
+        ASM("dsb \t\n isb");
     }
 
     void init(void) {

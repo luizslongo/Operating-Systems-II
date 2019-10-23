@@ -75,7 +75,7 @@ IC::Interrupt_Handler IC::_eoi_vector[INTS] = {
     0,
     0,
     0,
-    0,
+    Timer::eoi, // ARM TIMER INT
     0,
     0,
     0,
@@ -108,21 +108,21 @@ IC::Interrupt_Handler IC::_eoi_vector[INTS] = {
     0,
     0,
     mailbox_eoi, // MB0_CPU0
-    mailbox_eoi, // MB1_CPU0
-    mailbox_eoi, // MB2_CPU0
-    mailbox_eoi, // MB3_CPU0
-    mailbox_eoi, // MB0_CPU1
-    mailbox_eoi, // MB1_CPU1
-    mailbox_eoi, // MB2_CPU1
-    mailbox_eoi, // MB3_CPU1
-    mailbox_eoi, // MB0_CPU2
-    mailbox_eoi, // MB1_CPU2
-    mailbox_eoi, // MB2_CPU2
-    mailbox_eoi, // MB3_CPU2
-    mailbox_eoi, // MB0_CPU3
-    mailbox_eoi, // MB1_CPU3
-    mailbox_eoi, // MB2_CPU3
-    mailbox_eoi, // MB3_CPU3
+    0,//mailbox_eoi, // MB1_CPU0
+    0,//mailbox_eoi, // MB2_CPU0
+    0,//mailbox_eoi, // MB3_CPU0
+    0,//mailbox_eoi, // MB0_CPU1
+    0,//mailbox_eoi, // MB1_CPU1
+    0,//mailbox_eoi, // MB2_CPU1
+    0,//mailbox_eoi, // MB3_CPU1
+    0,//mailbox_eoi, // MB0_CPU2
+    0,//mailbox_eoi, // MB1_CPU2
+    0,//mailbox_eoi, // MB2_CPU2
+    0,//mailbox_eoi, // MB3_CPU2
+    0,//mailbox_eoi, // MB0_CPU3
+    0,//mailbox_eoi, // MB1_CPU3
+    0,//mailbox_eoi, // MB2_CPU3
+    0,//mailbox_eoi, // MB3_CPU3
     0
 };
 

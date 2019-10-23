@@ -10,6 +10,8 @@ __BEGIN_SYS
 enum {
     FLAG_SET_REG                    = 0x40000000, //base for BCM CTRL, where you write the addresses of the boot
     CORE1_BASE_OFFSET               = 0x9c,
+    CORE2_BASE_OFFSET               = 0xac,
+    CORE3_BASE_OFFSET               = 0xbc,
     CORE_OFFSET_VARIATION           = 0x10
 };
 
@@ -223,11 +225,17 @@ void Raspberry_Pi3::pre_init()
     if(CPU::id() == 0) {
         //primary core
 
-        // this loop replaces the code commented below (that runned on previous versions), 
+        // this replaces the code commented below (that runned on previous versions),
         // it is not moved to smp init as on Realview_PBX because there is no IPI to wakeup the secondary cores
         // instead, the Raspberry Pi secondary cores are waken by a Send Event (runned after the dsb instruction)
-        for (unsigned int cpu = 0; cpu < (Traits<Build>::CPUS-1); cpu++) {
-            ASM("str %0, [%1, #%2]" : : "p"(Traits<Machine>::VECTOR_TABLE), "p"(FLAG_SET_REG), "p"(CORE1_BASE_OFFSET+(cpu*CORE_OFFSET_VARIATION)) :);
+        if (Traits<Build>::CPUS >= 2) {
+            ASM("str %0, [%1, #0x9c]" : : "p"(Traits<Machine>::VECTOR_TABLE), "p"(FLAG_SET_REG) :);
+            if (Traits<Build>::CPUS >= 3) {
+                ASM("str %0, [%1, #0xac]" : : "p"(Traits<Machine>::VECTOR_TABLE), "p"(FLAG_SET_REG) :);
+                if (Traits<Build>::CPUS == 4) {
+                    ASM("str %0, [%1, #0xbc]" : : "p"(Traits<Machine>::VECTOR_TABLE), "p"(FLAG_SET_REG) :);
+                }
+            }
         }
         // this is only a flat segment register that allows mapping the start point for the secondary cores
         // static const unsigned int FLAG_SET_REG = 0x40000000;

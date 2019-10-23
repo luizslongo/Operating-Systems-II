@@ -24,7 +24,7 @@ private:
 public:
     typedef CPU::Reg64 Count;
 
-    static const unsigned int CLOCK = 1000000000;
+    static const unsigned int CLOCK = 1000000;
 
     // Registers offsets from BASE (i.e. this)
     enum {                                      // Description
