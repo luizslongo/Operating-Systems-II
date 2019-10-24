@@ -2,7 +2,7 @@
 
 #include <architecture/armv7/pmu.h>
 
-#ifdef __mach_cortex_a__
+#ifdef __cortex_a__
 
 __BEGIN_SYS
 

@@ -4,7 +4,9 @@
 #define __armv7_pmu_h
 
 #include <architecture/cpu.h>
+#define __common_only__
 #include <architecture/pmu.h>
+#undef __common_only__
 
 __BEGIN_SYS
 

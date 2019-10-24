@@ -42,135 +42,103 @@ void Monitor::init()
         new Clerk<System>(DEADLINE_MISS, Traits<Monitor>::MONITOR_DEADLINE_MISS, true);
     }
 
-#ifdef __PAMU_H
+#ifdef __PMU_H
 
     unsigned int used_channels = 0;
 
     if(Traits<Monitor>::MONITOR_CLOCK && (used_channels < Clerk<PMU>::CHANNELS)) {
         db<Monitor>(TRC) << "Monitor::init: monitoring CLOCK at " << Traits<Monitor>::MONITOR_CLOCK << " Hz" << endl;
-        Clerk<PMU> * clerk = new Clerk<PMU>(CLOCK);
-        Clerk_Monitor<Clerk<PMU>, Traits<Monitor>::MONITOR_CLOCK> * monitor = new Clerk_Monitor<Clerk<PMU>, Traits<Monitor>::MONITOR_CLOCK>(clerk);
-        _monitors[CPU::id()].insert(&monitor->_link);
+        new Clerk<PMU>(CLOCK, Traits<Monitor>::MONITOR_CLOCK, true);
         used_channels++;
     }
 
     if(Traits<Monitor>::MONITOR_DVS_CLOCK && (used_channels < Clerk<PMU>::CHANNELS)) {
         db<Monitor>(TRC) << "Monitor::init: monitoring DVS CLOCK at " << Traits<Monitor>::MONITOR_DVS_CLOCK << " Hz" << endl;
-        Clerk<PMU> * clerk = new Clerk<PMU>(DVS_CLOCK);
-        Clerk_Monitor<Clerk<PMU>, Traits<Monitor>::MONITOR_DVS_CLOCK> * monitor = new Clerk_Monitor<Clerk<PMU>, Traits<Monitor>::MONITOR_DVS_CLOCK>(clerk);
-        _monitors[CPU::id()].insert(&monitor->_link);
+        new Clerk<PMU>(DVS_CLOCK, Traits<Monitor>::MONITOR_DVS_CLOCK, true);
         used_channels++;
     }
 
     if(Traits<Monitor>::MONITOR_INSTRUCTION && (used_channels < Clerk<PMU>::CHANNELS)) {
         db<Monitor>(TRC) << "Monitor::init: monitoring INSTRUCTION at " << Traits<Monitor>::MONITOR_INSTRUCTION << " Hz" << endl;
-        Clerk<PMU> * clerk = new Clerk<PMU>(INSTRUCTION);
-        Clerk_Monitor<Clerk<PMU>, Traits<Monitor>::MONITOR_INSTRUCTION> * monitor = new Clerk_Monitor<Clerk<PMU>, Traits<Monitor>::MONITOR_INSTRUCTION>(clerk);
-        _monitors[CPU::id()].insert(&monitor->_link);
+        new Clerk<PMU>(INSTRUCTION, Traits<Monitor>::MONITOR_INSTRUCTION, true);
         used_channels++;
     }
 
     if(Traits<Monitor>::MONITOR_BRANCH && (used_channels < Clerk<PMU>::CHANNELS)) {
         db<Monitor>(TRC) << "Monitor::init: monitoring BRANCH at " << Traits<Monitor>::MONITOR_BRANCH << " Hz" << endl;
-        Clerk<PMU> * clerk = new Clerk<PMU>(BRANCH);
-        Clerk_Monitor<Clerk<PMU>, Traits<Monitor>::MONITOR_BRANCH> * monitor = new Clerk_Monitor<Clerk<PMU>, Traits<Monitor>::MONITOR_BRANCH>(clerk);
-        _monitors[CPU::id()].insert(&monitor->_link);
+        new Clerk<PMU>(BRANCH, Traits<Monitor>::MONITOR_BRANCH, true);
         used_channels++;
     }
 
     if(Traits<Monitor>::MONITOR_BRANCH_MISS && (used_channels < Clerk<PMU>::CHANNELS)) {
-        db<Monitor>(TRC) << "Monitor::init: monitoring BRANCH MISS at " << Traits<Monitor>::MONITOR_BRANCH_MISS << " Hz" << endl;
-        Clerk<PMU> * clerk = new Clerk<PMU>(BRANCH_MISS);
-        Clerk_Monitor<Clerk<PMU>, Traits<Monitor>::MONITOR_BRANCH_MISS> * monitor = new Clerk_Monitor<Clerk<PMU>, Traits<Monitor>::MONITOR_BRANCH_MISS>(clerk);
-        _monitors[CPU::id()].insert(&monitor->_link);
+        db<Monitor>(TRC) << "Monitor::init: monitoring BRANCH_MISS at " << Traits<Monitor>::MONITOR_BRANCH_MISS << " Hz" << endl;
+        new Clerk<PMU>(BRANCH_MISS, Traits<Monitor>::MONITOR_BRANCH_MISS, true);
         used_channels++;
     }
 
     if(Traits<Monitor>::MONITOR_L1_HIT && (used_channels < Clerk<PMU>::CHANNELS)) {
-        db<Monitor>(TRC) << "Monitor::init: monitoring L1 HIT at " << Traits<Monitor>::MONITOR_L1_HIT << " Hz" << endl;
-        Clerk<PMU> * clerk = new Clerk<PMU>(L1_HIT);
-        Clerk_Monitor<Clerk<PMU>, Traits<Monitor>::MONITOR_L1_HIT> * monitor = new Clerk_Monitor<Clerk<PMU>, Traits<Monitor>::MONITOR_L1_HIT>(clerk);
-        _monitors[CPU::id()].insert(&monitor->_link);
+        db<Monitor>(TRC) << "Monitor::init: monitoring L1_HIT at " << Traits<Monitor>::MONITOR_L1_HIT << " Hz" << endl;
+        new Clerk<PMU>(L1_HIT, Traits<Monitor>::MONITOR_L1_HIT, true);
         used_channels++;
     }
 
     if(Traits<Monitor>::MONITOR_L2_HIT && (used_channels < Clerk<PMU>::CHANNELS)) {
-        db<Monitor>(TRC) << "Monitor::init: monitoring L2 HIT at " << Traits<Monitor>::MONITOR_L2_HIT << " Hz" << endl;
-        Clerk<PMU> * clerk = new Clerk<PMU>(L2_HIT);
-        Clerk_Monitor<Clerk<PMU>, Traits<Monitor>::MONITOR_L2_HIT> * monitor = new Clerk_Monitor<Clerk<PMU>, Traits<Monitor>::MONITOR_L2_HIT>(clerk);
-        _monitors[CPU::id()].insert(&monitor->_link);
+        db<Monitor>(TRC) << "Monitor::init: monitoring L2_HIT at " << Traits<Monitor>::MONITOR_L2_HIT << " Hz" << endl;
+        new Clerk<PMU>(L2_HIT, Traits<Monitor>::MONITOR_L2_HIT, true);
         used_channels++;
     }
 
     if(Traits<Monitor>::MONITOR_L3_HIT && (used_channels < Clerk<PMU>::CHANNELS)) {
-        db<Monitor>(TRC) << "Monitor::init: monitoring L3 HIT at " << Traits<Monitor>::MONITOR_L3_HIT << " Hz" << endl;
-        Clerk<PMU> * clerk = new Clerk<PMU>(L3_HIT);
-        Clerk_Monitor<Clerk<PMU>, Traits<Monitor>::MONITOR_L3_HIT> * monitor = new Clerk_Monitor<Clerk<PMU>, Traits<Monitor>::MONITOR_L3_HIT>(clerk);
-        _monitors[CPU::id()].insert(&monitor->_link);
+        db<Monitor>(TRC) << "Monitor::init: monitoring L3_HIT at " << Traits<Monitor>::MONITOR_L3_HIT << " Hz" << endl;
+        new Clerk<PMU>(L3_HIT, Traits<Monitor>::MONITOR_L3_HIT, true);
         used_channels++;
     }
 
     if(Traits<Monitor>::MONITOR_LLC_HIT && (used_channels < Clerk<PMU>::CHANNELS)) {
-        db<Monitor>(TRC) << "Monitor::init: monitoring LLC HIT at " << Traits<Monitor>::MONITOR_LLC_HIT << " Hz" << endl;
-        Clerk<PMU> * clerk = new Clerk<PMU>(LLC_HIT);
-        Clerk_Monitor<Clerk<PMU>, Traits<Monitor>::MONITOR_LLC_HIT> * monitor = new Clerk_Monitor<Clerk<PMU>, Traits<Monitor>::MONITOR_LLC_HIT>(clerk);
-        _monitors[CPU::id()].insert(&monitor->_link);
+        db<Monitor>(TRC) << "Monitor::init: monitoring LLC_HIT at " << Traits<Monitor>::MONITOR_LLC_HIT << " Hz" << endl;
+        new Clerk<PMU>(LLC_HIT, Traits<Monitor>::MONITOR_LLC_HIT, true);
         used_channels++;
     }
 
     if(Traits<Monitor>::MONITOR_CACHE_HIT && (used_channels < Clerk<PMU>::CHANNELS)) {
-        db<Monitor>(TRC) << "Monitor::init: monitoring CACHE HIT at " << Traits<Monitor>::MONITOR_CACHE_HIT << " Hz" << endl;
-        Clerk<PMU> * clerk = new Clerk<PMU>(CACHE_HIT);
-        Clerk_Monitor<Clerk<PMU>, Traits<Monitor>::MONITOR_CACHE_HIT> * monitor = new Clerk_Monitor<Clerk<PMU>, Traits<Monitor>::MONITOR_CACHE_HIT>(clerk);
-        _monitors[CPU::id()].insert(&monitor->_link);
+        db<Monitor>(TRC) << "Monitor::init: monitoring CACHE_HIT at " << Traits<Monitor>::MONITOR_CACHE_HIT << " Hz" << endl;
+        new Clerk<PMU>(CACHE_HIT, Traits<Monitor>::MONITOR_CACHE_HIT, true);
         used_channels++;
     }
 
     if(Traits<Monitor>::MONITOR_L1_MISS && (used_channels < Clerk<PMU>::CHANNELS)) {
-        db<Monitor>(TRC) << "Monitor::init: monitoring L1 MISS at " << Traits<Monitor>::MONITOR_L1_MISS << " Hz" << endl;
-        Clerk<PMU> * clerk = new Clerk<PMU>(L1_MISS);
-        Clerk_Monitor<Clerk<PMU>, Traits<Monitor>::MONITOR_L1_MISS> * monitor = new Clerk_Monitor<Clerk<PMU>, Traits<Monitor>::MONITOR_L1_MISS>(clerk);
-        _monitors[CPU::id()].insert(&monitor->_link);
+        db<Monitor>(TRC) << "Monitor::init: monitoring L1_MISS at " << Traits<Monitor>::MONITOR_L1_MISS << " Hz" << endl;
+        new Clerk<PMU>(L1_MISS, Traits<Monitor>::MONITOR_L1_MISS, true);
         used_channels++;
     }
 
     if(Traits<Monitor>::MONITOR_L2_MISS && (used_channels < Clerk<PMU>::CHANNELS)) {
-        db<Monitor>(TRC) << "Monitor::init: monitoring L2 MISS at " << Traits<Monitor>::MONITOR_L2_MISS << " Hz" << endl;
-        Clerk<PMU> * clerk = new Clerk<PMU>(L2_MISS);
-        Clerk_Monitor<Clerk<PMU>, Traits<Monitor>::MONITOR_L2_MISS> * monitor = new Clerk_Monitor<Clerk<PMU>, Traits<Monitor>::MONITOR_L2_MISS>(clerk);
-        _monitors[CPU::id()].insert(&monitor->_link);
+        db<Monitor>(TRC) << "Monitor::init: monitoring L2_MISS at " << Traits<Monitor>::MONITOR_L2_MISS << " Hz" << endl;
+        new Clerk<PMU>(L2_MISS, Traits<Monitor>::MONITOR_L2_MISS, true);
         used_channels++;
     }
 
     if(Traits<Monitor>::MONITOR_L3_MISS && (used_channels < Clerk<PMU>::CHANNELS)) {
-        db<Monitor>(TRC) << "Monitor::init: monitoring L3 MISS at " << Traits<Monitor>::MONITOR_L3_MISS << " Hz" << endl;
-        Clerk<PMU> * clerk = new Clerk<PMU>(L3_MISS);
-        Clerk_Monitor<Clerk<PMU>, Traits<Monitor>::MONITOR_L3_MISS> * monitor = new Clerk_Monitor<Clerk<PMU>, Traits<Monitor>::MONITOR_L3_MISS>(clerk);
-        _monitors[CPU::id()].insert(&monitor->_link);
+        db<Monitor>(TRC) << "Monitor::init: monitoring L3_MISS at " << Traits<Monitor>::MONITOR_L3_MISS << " Hz" << endl;
+        new Clerk<PMU>(L3_MISS, Traits<Monitor>::MONITOR_L3_MISS, true);
         used_channels++;
     }
 
     if(Traits<Monitor>::MONITOR_LLC_MISS && (used_channels < Clerk<PMU>::CHANNELS)) {
-        db<Monitor>(TRC) << "Monitor::init: monitoring LLC MISS at " << Traits<Monitor>::MONITOR_LLC_MISS << " Hz" << endl;
-        Clerk<PMU> * clerk = new Clerk<PMU>(LLC_MISS);
-        Clerk_Monitor<Clerk<PMU>, Traits<Monitor>::MONITOR_LLC_MISS> * monitor = new Clerk_Monitor<Clerk<PMU>, Traits<Monitor>::MONITOR_LLC_MISS>(clerk);
-        _monitors[CPU::id()].insert(&monitor->_link);
+        db<Monitor>(TRC) << "Monitor::init: monitoring LLC_MISS at " << Traits<Monitor>::MONITOR_LLC_MISS << " Hz" << endl;
+        new Clerk<PMU>(LLC_MISS, Traits<Monitor>::MONITOR_LLC_MISS, true);
         used_channels++;
     }
 
     if(Traits<Monitor>::MONITOR_CACHE_MISS && (used_channels < Clerk<PMU>::CHANNELS)) {
-        db<Monitor>(TRC) << "Monitor::init: monitoring CACHE MISS at " << Traits<Monitor>::MONITOR_CACHE_MISS << " Hz" << endl;
-        Clerk<PMU> * clerk = new Clerk<PMU>(CACHE_MISS);
-        Clerk_Monitor<Clerk<PMU>, Traits<Monitor>::MONITOR_CACHE_MISS> * monitor = new Clerk_Monitor<Clerk<PMU>, Traits<Monitor>::MONITOR_CACHE_MISS>(clerk);
-        _monitors[CPU::id()].insert(&monitor->_link);
+        db<Monitor>(TRC) << "Monitor::init: monitoring CACHE_MISS at " << Traits<Monitor>::MONITOR_CACHE_MISS << " Hz" << endl;
+        new Clerk<PMU>(CACHE_MISS, Traits<Monitor>::MONITOR_CACHE_MISS, true);
         used_channels++;
     }
 
     if(Traits<Monitor>::MONITOR_LLC_HITM && (used_channels < Clerk<PMU>::CHANNELS)) {
-        db<Monitor>(TRC) << "Monitor::init: monitoring LLC HITM at " << Traits<Monitor>::MONITOR_LLC_HITM << " Hz" << endl;
-        Clerk<PMU> * clerk = new Clerk<PMU>(LLC_HITM);
-        Clerk_Monitor<Clerk<PMU>, Traits<Monitor>::MONITOR_LLC_HITM> * monitor = new Clerk_Monitor<Clerk<PMU>, Traits<Monitor>::MONITOR_LLC_HITM>(clerk);
-        _monitors[CPU::id()].insert(&monitor->_link);
+        db<Monitor>(TRC) << "Monitor::init: monitoring LLC_HITM at " << Traits<Monitor>::MONITOR_LLC_HITM << " Hz" << endl;
+        new Clerk<PMU>(LLC_HITM, Traits<Monitor>::MONITOR_LLC_HITM, true);
         used_channels++;
     }
 
