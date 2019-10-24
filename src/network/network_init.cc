@@ -1,5 +1,7 @@
 // EPOS Network Component Initialization
 
+#ifdef __NIC_H
+
 #include <network.h>
 
 __BEGIN_SYS
@@ -27,3 +29,5 @@ void Network_Common::init()
 }
 
 __END_SYS
+
+#endif
