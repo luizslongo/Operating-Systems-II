@@ -3,8 +3,6 @@
 #ifndef __timer_h
 #define __timer_h
 
-#include <architecture/tsc.h>
-#include <machine/rtc.h>
 #include <machine/ic.h>
 
 __BEGIN_SYS
@@ -12,9 +10,7 @@ __BEGIN_SYS
 class Timer_Common
 {
 public:
-    typedef TSC_Common::Hertz Hertz;
     typedef int Tick;
-    typedef RTC_Common::Microsecond Microsecond;
     typedef IC_Common::Interrupt_Handler Handler;
 
 protected:
@@ -37,6 +33,6 @@ __END_SYS
 
 #endif
 
-#if defined(__TIMER_H) && !defined(__common_only__)
+#if defined(__TIMER_H) && !defined(__timer_common_only__)
 #include __TIMER_H
 #endif

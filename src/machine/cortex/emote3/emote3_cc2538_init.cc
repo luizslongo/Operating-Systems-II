@@ -5,7 +5,7 @@
 #ifdef __NIC_H
 
 #include <machine/gpio.h>
-#include <machine/emote3/cc2538.h>
+#include <machine/cortex/emote3/emote3_cc2538.h>
 
 __BEGIN_SYS
 
@@ -87,13 +87,13 @@ void CC2538::init(unsigned int unit)
 {
     db<Init, CC2538>(TRC) << "CC2538::init(unit=" << unit << ")" << endl;
 
-    // Enable clock to RF module
-    power_ieee802_15_4(FULL);
-
-    Timer::init();
-
     // Initialize the device
     CC2538 * dev = new (SYSTEM) CC2538(unit);
+
+    // Enable clock to RF module
+    dev->power(FULL);
+
+    Timer::init();
 
     // Register the device
     _devices[unit].device = dev;

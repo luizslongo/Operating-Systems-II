@@ -1,7 +1,6 @@
 // EPOS ARMv7 CPU Mediator Initialization
 
 #include <architecture.h>
-#include <machine.h>
 
 extern "C" { void __epos_library_app_entry(void); }
 

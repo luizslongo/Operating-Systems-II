@@ -5,14 +5,11 @@
 
 #include <machine/aes.h>
 
-
-//TODO: this is just a place holder. Replace with x86 AES!
-#include <utility/aes.h>
-
 __BEGIN_SYS
 
+//TODO: this is just a place holder. Replace with x86 AES!
 template<unsigned int KEY_SIZE>
-class _AES: public _UTIL::_AES<KEY_SIZE> {};
+class AES;
 
 __END_SYS
 

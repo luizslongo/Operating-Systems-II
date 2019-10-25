@@ -3,9 +3,8 @@
 #ifndef __emote3_uart_h
 #define __emote3_uart_h
 
-#define __common_only__
 #include <machine/uart.h>
-#undef __common_only__
+#include <machine/gpio.h>
 #include <machine/cortex/engines/pl011.h>
 #include <machine/cortex/engines/pl061.h>
 #include "emote3_sysctrl.h"

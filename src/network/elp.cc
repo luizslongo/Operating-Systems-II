@@ -1,5 +1,7 @@
 // EPOS Light Protocol Implementation
 
+#include <system/config.h>
+
 #ifdef __NIC_H
 
 #include <network/elp.h>

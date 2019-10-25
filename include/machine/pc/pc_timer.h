@@ -15,7 +15,6 @@ class i8253
 {
 private:
     typedef CPU::Reg8 Reg8;
-    typedef TSC::Hertz Hertz;
 
 public:
     // The timer's counter
@@ -209,9 +208,6 @@ public:
 // APIC Timer (Local to each CPU on MP configurations)
 class APIC_Timer
 {
-private:
-    typedef TSC::Hertz Hertz;
-
 public:
     // The timer's counter
     typedef CPU::Reg32 Count;
@@ -255,9 +251,7 @@ public:
         USER
     };
 
-    using Timer_Common::Hertz;
     using Timer_Common::Tick;
-    using Timer_Common::Microsecond;
     using Timer_Common::Handler;
 
 protected:

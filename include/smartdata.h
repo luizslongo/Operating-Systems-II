@@ -3,16 +3,14 @@
 // Smart Data encapsulates Transducers (i.e. sensors and actuators), local or remote, and bridges them with Network
 // Transducers must be Observed objects, must implement either sense() or actuate(), and must define UNIT, NUM, and ERROR.
 
-#ifndef __smartdata_h
-#define __smartdata_h
+#ifndef __smartdata_common_h
+#define __smartdata_common_h
 
 #include <utility/geometry.h>
 #include <utility/observer.h>
 #include <utility/hash.h>
 #include <utility/predictor.h>
 #include <utility/math.h>
-#include <time.h>
-#include <real-time.h>
 
 __BEGIN_SYS
 
@@ -791,6 +789,17 @@ template<> inline SmartData::_Space<SmartData::CM_16>::operator    SmartData::_S
 template<> inline SmartData::_Space<SmartData::CMx25_16>::operator SmartData::_Space<CM_32>() const { return _Space<CM_32>(Point<Number, 3>::x * 25, Point<Number, 3>::y * 25, Point<Number, 3>::z * 25); }
 template<> inline SmartData::_Space<SmartData::CM_32>::operator    SmartData::_Space<CM_32>() const { return _Space<CM_32>(Point<Number, 3>::x,      Point<Number, 3>::y,      Point<Number, 3>::z); }
 
+__END_SYS
+
+#endif
+
+#if !defined(__smartdata_h) && !defined(__smartdata_common_only__)
+#define __smartdata_h
+
+#include <time.h>
+#include <real-time.h>
+
+__BEGIN_SYS
 
 // Local data source, possibly advertised to or commanded through the network
 template<typename Transducer, typename Network>
@@ -1080,10 +1089,10 @@ private:
             _interesteds.insert(binding->link());
             if(interest->period()) {
                 if(!_thread)
-                    _thread = new (SYSTEM) Periodic_Thread(RTC::Microsecond(interest->period()), &updater, _device, interest->expiry(), this);
+                    _thread = new (SYSTEM) Periodic_Thread(Microsecond(interest->period()), &updater, _device, interest->expiry(), this);
                 else
                     if(interest->period() != _thread->period())
-                        _thread->period(gcd(_thread->period(), RTC::Microsecond(interest->period())));
+                        _thread->period(gcd(_thread->period(), Microsecond(interest->period())));
             }
             bound = true;
         }

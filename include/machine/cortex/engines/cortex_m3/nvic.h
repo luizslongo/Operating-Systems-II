@@ -4,9 +4,9 @@
 #define __cortex_m3_nvic_h
 
 #include <architecture/cpu.h>
-#define __common_only__
+#define __ic_common_only__
 #include <machine/ic.h>
-#undef __common_only__
+#undef __ic_common_only__
 
 __BEGIN_SYS
 

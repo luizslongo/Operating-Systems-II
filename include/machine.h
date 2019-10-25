@@ -3,9 +3,13 @@
 #ifndef __machine_h
 #define __machine_h
 
+// All machines must provide the following components
 #include <machine/machine.h>
 #include <machine/ic.h>
 #include <machine/timer.h>
+
+// This components have software equivalents in case the machine does not provide them
+#include <machine/aes.h>
 #include <machine/rtc.h>
 #include <machine/display.h>
 
@@ -42,9 +46,6 @@
 #ifdef __NIC_H
 #include <machine/nic.h>
 #include __NIC_H
-#endif
-#ifdef __AES_H
-#include <machine/aes.h>
 #endif
 
 #endif

@@ -42,6 +42,6 @@ __END_SYS
 
 #endif
 
-#if defined(__I2C_H) && !defined(__common_only__)
+#if defined(__I2C_H) && !defined(__i2c_common_only__)
 #include __I2C_H
 #endif

@@ -4,18 +4,19 @@
 #define __emote3_cc2538rf_h
 
 #include <utility/convert.h>
+#define __ic_common_only__
 #include <machine/ic.h>
+#undef __ic_common_only__
 #include <network/ieee802_15_4.h>
 #include <network/ieee802_15_4_mac.h>
-#define __tstp_h
 #include <network/tstp/mac.h>
-#undef __tstp_h
 #include "emote3_sysctrl.h"
+#include "emote3_memory_map.h"
 
 __BEGIN_SYS
 
 // TI CC2538 IEEE 802.15.4 RF Transceiver
-class CC2538RF: protected Machine_Model
+class CC2538RF
 {
 protected:
     struct Reset_Backdoor_Message {
@@ -35,7 +36,6 @@ protected:
     typedef CPU::Reg32 Reg32;
     typedef CPU::IO_Irq IO_Irq;
     typedef MMU::DMA_Buffer DMA_Buffer;
-    typedef RTC::Microsecond Microsecond;
 
     static const bool promiscuous = Traits<CC2538>::promiscuous;
 
@@ -791,7 +791,7 @@ public:
          }
      }
 
-private:
+protected:
     static SysCtrl * scr() { return reinterpret_cast<SysCtrl *>(Memory_Map::SCR_BASE); }
 
     static volatile Reg32 & ana     (unsigned int offset) { return *(reinterpret_cast<volatile Reg32 *>(ANA_BASE + offset)); }
@@ -801,6 +801,7 @@ private:
     static volatile Reg32 & cctest  (unsigned int offset) { return *(reinterpret_cast<volatile Reg32 *>(CCTEST_BASE + offset)); }
     static volatile Reg32 & mactimer(unsigned int offset) { return *(reinterpret_cast<volatile Reg32 *>(MACTIMER_BASE + offset)); }
 
+private:
     // FIXME: Static because of TSTP_MAC
     static bool _cca_done;
 };
@@ -868,6 +869,25 @@ public:
 
     static void eoi(const IC::Interrupt_Id & interrupt) {
         IC::disable(IC::INT_NIC0_TIMER); // Make sure radio and MAC timer don't preempt one another
+    }
+
+    void power(const Power_Mode & mode) {
+        switch(mode) {
+        case ENROLL:
+            break;
+        case DISMISS:
+            break;
+        case SAME:
+            break;
+        case FULL:
+        case LIGHT:
+            scr()->clock_ieee802_15_4();
+            break;
+        case SLEEP:
+        case OFF:
+            scr()->unclock_ieee802_15_4();
+            break;
+        }
     }
 
 private:

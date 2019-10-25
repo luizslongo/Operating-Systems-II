@@ -71,9 +71,10 @@ namespace EPOS {
 //============================================================================
 // CONFIGURATION
 //============================================================================
-#include <system/types.h>
 #include <system/meta.h>
+#include <system/traits.h>
 #include __APPLICATION_TRAITS_H
+#include <system/types.h>
 
 #define __CPU_H                 __HEADER_ARCH(cpu)
 #define __MMU_H                 __HEADER_ARCH(mmu)
@@ -95,7 +96,6 @@ namespace EPOS {
 #define __SCRATCHPAD_H          __HEADER_MACH(scratchpad)
 #define __NIC_H                 __HEADER_MACH(nic)
 #define __FPGA_H                __HEADER_MACH(fpga)
-#define __AES_H                 __HEADER_MACH(aes)
 #define __ipv4__
 #define __tstp__
 
@@ -130,7 +130,6 @@ namespace EPOS {
 #define __PWM_H                 __HEADER_MACH(pwm)
 #define __WATCHDOG_H            __HEADER_MACH(watchdog)
 #define __NIC_H                 __HEADER_MACH(nic)
-#define __AES_H                 __HEADER_MACH(aes)
 #define __tstp__
 
 #define __CO2_SENSOR_H          __HEADER_TRAN(co2_sensor)

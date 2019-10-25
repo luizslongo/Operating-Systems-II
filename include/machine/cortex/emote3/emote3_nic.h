@@ -3,10 +3,6 @@
 #ifndef __emote3_nic_h
 #define __emote3_nic_h
 
-#define __common_only__
-#include <machine/nic.h>
-#undef __common_only__
-
 #include "emote3_cc2538.h"
 #include <machine/cortex/engines/m95.h>
 

@@ -1,18 +1,18 @@
 // EPOS Trustful SpaceTime Protocol MAC Declarations
 
-#ifndef __tstp_mac_h
-#define __tstp_mac_h
-
 #include <system/config.h>
 
-#if defined(__tstp__) && defined (__mach_cortex_m__)
+#if defined(__tstp__) && defined (__cortex_m__) && !defined(__tstp_mac_h)
+#define __tstp_mac_h
 
+#include <machine/ic.h>
+#include <machine/timer.h>
+#include <machine/watchdog.h>
+#define __tstp_common_only__
+#include <network/tstp/tstp.h>
+#undef __tstp_common_only__
 #include <utility/random.h>
 #include <utility/math.h>
-#include <machine/ic.h>
-#include <machine/rtc.h>
-#include <machine/watchdog.h>
-#include <network/tstp/tstp.h>
 
 __BEGIN_SYS
 
@@ -26,7 +26,6 @@ private:
     typedef CPU::Reg16 MF_Count;
     typedef NIC_Common::CRC16 CRC;
     typedef IEEE802_15_4 Phy_Layer;
-    typedef RTC::Microsecond Microsecond;
 
     enum State {
         UPDATE_TX_SCHEDULE = 0,
@@ -179,7 +178,7 @@ protected:
             Radio::power(Power_Mode::FULL);
             Radio::listen();
         } else {
-            Watchdog::enable();
+//            Watchdog::enable();
             update_tx_schedule(0);
         }
     }
@@ -312,7 +311,7 @@ protected:
         if(buf->is_microframe && !sniffer) { // State: RX MF (part 3/3)
             Time_Stamp data_time = buf->sfd_time_stamp + Timer::us2count(TIME_BETWEEN_MICROFRAMES) + buf->microframe_count * Timer::us2count(TIME_BETWEEN_MICROFRAMES + MICROFRAME_TIME);
 
-            Watchdog::kick();
+// FIXME:            Watchdog::kick();
             if(state_machine_debugged)
                 kout << SLEEP_DATA;
 
@@ -431,7 +430,7 @@ private:
         Timer::int_disable();
         if(state_machine_debugged)
             kout << UPDATE_TX_SCHEDULE;
-        Watchdog::kick();
+//        Watchdog::kick();
         if(Traits<TSTP>::hysterically_debugged)
             db<TSTP>(TRC) << "TSTP_MAC::update_tx_schedule(id=" << id << ")" << endl;
 
@@ -498,7 +497,7 @@ private:
         if(_tx_pending) { // Transition: [TX pending]
             // State: Contend CCA (Contend part)
 
-            Watchdog::kick();
+//            Watchdog::kick();
             if(state_machine_debugged)
                 kout << CONTEND;
 
@@ -546,7 +545,7 @@ private:
             // State: Sleep S
             if(state_machine_debugged)
                 kout << SLEEP_S ;
-            Watchdog::kick();
+//            Watchdog::kick();
             Timer::interrupt(now_ts + Timer::us2count(SLEEP_PERIOD - Radio::SLEEP_TO_RX_DELAY), rx_mf);
         }
         CPU::int_enable();
@@ -556,7 +555,7 @@ private:
     static void cca(const IC::Interrupt_Id & id) {
         if(state_machine_debugged)
             kout << CCA ;
-        Watchdog::kick();
+//        Watchdog::kick();
         if(Traits<TSTP>::hysterically_debugged)
             db<TSTP>(TRC) << "TSTP_MAC::cca(id=" << id << ")" << endl;
 
@@ -575,7 +574,7 @@ private:
                 _mf.dec_count();
                 if(state_machine_debugged)
                     kout << TX_MF ;
-                Watchdog::kick();
+//                Watchdog::kick();
                 while(!Radio::tx_done());
                 Radio::copy_to_nic(&_mf, sizeof(Microframe));
                 //tx_mf(0);
@@ -592,7 +591,7 @@ private:
     static void rx_mf(const IC::Interrupt_Id & id) {
         if(state_machine_debugged)
             kout << RX_MF ;
-        Watchdog::kick();
+//        Watchdog::kick();
         if(Traits<TSTP>::hysterically_debugged)
             db<TSTP>(TRC) << "TSTP_MAC::rx_mf(id=" << id << ")" << endl;
 
@@ -613,7 +612,7 @@ private:
     static void rx_data(const IC::Interrupt_Id & id) {
         if(state_machine_debugged)
             kout << RX_DATA ;
-        Watchdog::kick();
+// FIXME:        Watchdog::kick();
         if(Traits<TSTP>::hysterically_debugged)
             db<TSTP>(TRC) << "TSTP_MAC::rx_data(id=" << id << ")" << endl;
 
@@ -639,7 +638,7 @@ private:
 
         _mf_time += Timer::us2count(TIME_BETWEEN_MICROFRAMES + MICROFRAME_TIME);
 
-        Watchdog::kick();
+//        Watchdog::kick();
 
         if(_mf.dec_count() > 0) {
             while(!Radio::tx_done());
@@ -668,7 +667,7 @@ private:
         CPU::int_disable();
         if(_tx_pending) { // _tx_pending might have been deleted at drop()
             Radio::transmit_no_cca();
-            Watchdog::kick();
+//            Watchdog::kick();
 
             bool is_keep_alive = (_tx_pending->frame()->data<Header>()->type() == CONTROL)
                     && (_tx_pending->frame()->data<Control>()->subtype() == KEEP_ALIVE);
@@ -766,7 +765,6 @@ protected:
     typedef CPU::Reg16 MF_Count;
     typedef NIC_Common::CRC16 CRC;
     typedef IEEE802_15_4 Phy_Layer;
-    typedef RTC::Microsecond Microsecond;
 
 public:
     enum State {
@@ -1106,7 +1104,5 @@ template<typename Radio>
 bool TSTP::MAC<Radio, false>::_notifying;
 
 __END_SYS
-
-#endif
 
 #endif

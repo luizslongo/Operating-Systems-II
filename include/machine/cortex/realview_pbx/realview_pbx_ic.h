@@ -3,9 +3,7 @@
 #ifndef __realview_pbx_ic_h
 #define __realview_pbxic_h
 
-#define __common_only__
 #include <machine/ic.h>
-#undef __common_only__
 #include <machine/cortex/engines/cortex_a9/gic.h>
 #include <system/memory_map.h>
 

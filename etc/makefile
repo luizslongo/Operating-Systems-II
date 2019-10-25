@@ -5,7 +5,7 @@ include	../makedefs
 all: $(APP)/$(APPLICATION)/$(APPLICATION)_traits.h config eposcfg eposcc.conf eposmkbi.conf 
 
 $(APP)/$(APPLICATION)/$(APPLICATION)_traits.h:
-		$(INSTALL) $(INCLUDE)/system/traits.h $@
+		$(error Missing traits file $@ !)
 
 eposcfg: FORCE
 		(cd $(TLS)/eposcfg && $(MAKE) clean all)

@@ -50,6 +50,6 @@ __END_SYS
 
 #endif
 
-#if defined(__KEYBOARD_H) && !defined(__common_only__)
+#if defined(__KEYBOARD_H) && !defined(__keyboard_common_only__)
 #include __KEYBOARD_H
 #endif

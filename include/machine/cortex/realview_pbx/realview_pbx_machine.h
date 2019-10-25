@@ -3,10 +3,7 @@
 #ifndef __realview_pbx_machine_h
 #define __realview_pbx_machine_h
 
-#define __common_only__
 #include <machine/machine.h>
-#include <machine/rtc.h>
-#undef __common_only__
 #include <machine/cortex/engines/cortex_a9/gic.h>
 #include <machine/cortex/engines/cortex_a9/scu.h>
 #include <system/memory_map.h>
@@ -21,7 +18,6 @@ class Realview_PBX: public Machine_Common
 private:
     typedef CPU::Reg32 Reg32;
     typedef CPU::Log_Addr Log_Addr;
-    typedef RTC_Common::Microsecond Microsecond;
 
 public:
     Realview_PBX() {}

@@ -39,7 +39,7 @@
  * project.
  * ###*E*### */
 
-#include "disparity.h"
+#include "../disparity/disparity.h"
 
 #include <architecture/tsc.h>
 #include <real-time.h>
@@ -152,7 +152,7 @@ I2D *imleft, *imright, *retDisparity;
 int main(void)
 {
     Thread *t = new Periodic_Thread(RTConf(PERIOD, MAX_EXECS, Thread::READY ,
-            Thread::Criterion((RTC::Microsecond) PERIOD, DEADLINE,
+            Thread::Criterion((Microsecond) PERIOD, DEADLINE,
             WCET, 0)), &FuncTask1);
 
     cout << "Disparity Periodic: All TASKs created with result (>0 is OK): " << t << endl;

@@ -5,11 +5,11 @@
 
 #include <system/config.h>
 
-#if defined(__UART_H) && !defined(__common_only__)
+#if defined(__UART_H) && !defined(__uart_common_only__)
 #include __UART_H
 #endif
 
-#if defined(__USB_H) && !defined(__common_only__)
+#if defined(__USB_H) && !defined(__usb_common_only__)
 #include __USB_H
 #endif
 
@@ -164,6 +164,6 @@ __END_SYS
 
 #endif
 
-#if defined(__DISPLAY_H) && !defined(__common_only__)
+#if defined(__DISPLAY_H) && !defined(__display_common_only__)
 #include __DISPLAY_H
 #endif

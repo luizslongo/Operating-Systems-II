@@ -3,11 +3,7 @@
 #ifndef __raspberry_pi3_machine_h
 #define __raspberry_pi3_machine_h
 
-#define __common_only__
 #include <machine/machine.h>
-#include <machine/rtc.h>
-#undef __common_only__
-// #include <architecture/cpu.h>
 #include <system/memory_map.h>
 #include <system.h>
 
@@ -20,7 +16,6 @@ class Raspberry_Pi3: public Machine_Common
 protected:
     typedef CPU::Reg32 Reg32;
     typedef CPU::Log_Addr Log_Addr;
-    typedef RTC_Common::Microsecond Microsecond;
 
 
 public:

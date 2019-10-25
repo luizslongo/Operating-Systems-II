@@ -1,7 +1,7 @@
 #include <utility/pcap.h>
+#include <network/tstp/tstp.h>
 #include <time.h>
 #include <synchronizer.h>
-#include <network/tstp/tstp.h>
 
 using namespace EPOS;
 

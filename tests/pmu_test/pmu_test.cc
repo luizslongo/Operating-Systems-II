@@ -67,7 +67,7 @@ struct Task_Set {
 OStream cout;
 Chronometer chrono;
 Periodic_Thread * thread[TASKS];
-RTC::Microsecond wcet[TASKS];
+Microsecond wcet[TASKS];
 Clock clock;
 Semaphore sem;
 

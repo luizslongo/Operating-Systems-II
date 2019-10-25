@@ -95,9 +95,9 @@ inline void exec(char c, unsigned int time) // in miliseconds
 {
     // Delay was not used here to prevent scheduling interference due to blocking
     // Alarm and Chronometer often use different timers, so a small variation is expected.
-    Chronometer::Microsecond elapsed = chrono.read() / 1000;
-    Chronometer::Microsecond end = elapsed + time;
-    Chronometer::Microsecond last = -1;
+    Microsecond elapsed = chrono.read() / 1000;
+    Microsecond end = elapsed + time;
+    Microsecond last = -1;
 
     do {
         if(last != elapsed) {

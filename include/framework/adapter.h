@@ -76,7 +76,7 @@ public:
     void broadcast() { enter(); Component::broadcast(); leave(); }
 
     // Timing
-    static void delay(const RTC::Microsecond & time) { static_enter(); Component::delay(time); static_leave(); }
+    static void delay(const Microsecond & time) { static_enter(); Component::delay(time); static_leave(); }
     void reset() { enter(); Component::reset(); leave(); }
     void start() { enter(); Component::start(); leave(); }
     void lap() { enter(); Component::lap(); leave(); }
@@ -84,9 +84,9 @@ public:
     int frequency() { enter(); int res = Component::frequency(); leave(); return res; }
     int ticks() { enter(); int res = Component::ticks(); leave(); return res; }
     int read() { enter(); int res = Component::read(); leave(); return res; }
-    const RTC::Microsecond period() { enter(); RTC::Microsecond res = Component::period(); leave(); return res; }
-    void period(const RTC::Microsecond p) { enter(); Component::period(p); leave(); }
-    static TSC::Hertz alarm_frequency() { static_enter(); TSC::Hertz res = Component::frequency(); static_leave(); return res; }
+    const Microsecond period() { enter(); Microsecond res = Component::period(); leave(); return res; }
+    void period(const Microsecond p) { enter(); Component::period(p); leave(); }
+    static Hertz alarm_frequency() { static_enter(); Hertz res = Component::frequency(); static_leave(); return res; }
 
     // Communication
     template<typename ... Tn>

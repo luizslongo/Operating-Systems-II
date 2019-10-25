@@ -4,9 +4,9 @@
 #define __cortex_m3_pl022_h
 
 #include <architecture/cpu.h>
-#define __common_only__
+#define __spi_common_only__
 #include <machine/spi.h>
-#undef __common_only__
+#undef __spi_common_only__
 
 __BEGIN_SYS
 

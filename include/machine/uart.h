@@ -42,6 +42,6 @@ __END_SYS
 
 #endif
 
-#if defined(__UART_H) && !defined(__common_only__)
+#if defined(__UART_H) && !defined(__uart_common_only__)
 #include __UART_H
 #endif

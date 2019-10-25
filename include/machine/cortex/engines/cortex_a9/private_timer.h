@@ -4,10 +4,9 @@
 #define __cortex_a9_private_timer_h
 
 #include <architecture/cpu.h>
-#define __common_only__
-#include <machine/rtc.h>
+#define __timer_common_only__
 #include <machine/timer.h>
-#undef __common_only__
+#undef __timer_common_only__
 
 __BEGIN_SYS
 
@@ -18,7 +17,6 @@ class A9_Private_Timer: public Timer_Common
 
 private:
     typedef CPU::Reg32 Reg32;
-    typedef TSC_Common::Hertz Hertz;
     typedef IC_Common::Interrupt_Id Interrupt_Id;
 
 public:

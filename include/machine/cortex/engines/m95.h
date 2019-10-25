@@ -1,8 +1,8 @@
 // EPOS Quectel M95 GPRS NIC Mediator, commanded by Quectel AT commands
 
 #include <system/config.h>
-#if !defined(__m95_h) && defined(__NIC_H) && defined(__mmod_emote3__)
 
+#if !defined(__m95_h) && defined(__NIC_H)
 #define __m95_h
 
 #include <machine/machine.h>
@@ -37,7 +37,7 @@ public:
     void on();
     void off();
 
-    RTC::Microsecond now();
+    Microsecond now();
 
     int send(const Address & dst, const Protocol & prot, const void * data, unsigned int size) {
         const char * cmd = reinterpret_cast<const char *>(data);
@@ -81,7 +81,7 @@ public:
 private:
     int send_command(const char *command, unsigned int size);
     int send_data(const char * data, unsigned int size);
-    bool wait_response(const char * expected, const RTC::Microsecond & timeout, char * response = 0, unsigned int response_length = 0);
+    bool wait_response(const char * expected, const Microsecond & timeout, char * response = 0, unsigned int response_length = 0);
 
     Address _addr;
     Statistics _statistics;

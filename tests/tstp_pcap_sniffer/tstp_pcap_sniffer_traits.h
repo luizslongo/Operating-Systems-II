@@ -5,44 +5,7 @@
 
 __BEGIN_SYS
 
-// Global Configuration
-template<typename T>
-struct Traits
-{
-    // EPOS software architecture (aka mode)
-    enum {LIBRARY, BUILTIN, KERNEL};
-
-    // CPU hardware architectures
-    enum {AVR8, H8, ARMv4, ARMv7, ARMv8, IA32, X86_64, SPARCv8, PPC32};
-
-    // Machines
-    enum {eMote1, eMote2, STK500, RCX, Cortex, PC, Leon, Virtex};
-
-    // Machine models
-    enum {Unique, Legacy_PC, eMote3, LM3S811, Zynq, Realview_PBX, Raspberry_Pi3};
-
-    // Serial display engines
-    enum {UART, USB};
-
-    // Life span multipliers
-    enum {FOREVER = 0, SECOND = 1, MINUTE = 60, HOUR = 3600, DAY = 86400, WEEK = 604800, MONTH = 2592000, YEAR = 31536000};
-
-    // IP configuration strategies
-    enum {STATIC, MAC, INFO, RARP, DHCP};
-
-    // SmartData predictors
-    enum :unsigned char {NONE, LVP, DBP};
-
-    // Default traits
-    static const bool enabled = true;
-    static const bool debugged = true;
-    static const bool emulated = false;
-    static const bool hysterically_debugged = false;
-
-    typedef LIST<> DEVICES;
-    typedef TLIST<> ASPECTS;
-};
-
+// Build
 template<> struct Traits<Build>: public Traits<void>
 {
     static const unsigned int MODE = LIBRARY;
@@ -110,28 +73,13 @@ template<> struct Traits<Aspect>: public Traits<void>
 };
 
 
-// Mediators
-template<> struct Traits<Serial_Display>: public Traits<void>
-{
-    static const bool enabled = (Traits<Build>::EXPECTED_SIMULATION_TIME != 0);
-    static const int ENGINE = USB;
-    static const int COLUMNS = 80;
-    static const int LINES = 24;
-    static const int TAB_SIZE = 8;
-};
-
-template<> struct Traits<Serial_Keyboard>: public Traits<void>
-{
-    static const bool enabled = (Traits<Build>::EXPECTED_SIMULATION_TIME != 0);
-};
-
 __END_SYS
 
+// Mediators
 #include __ARCHITECTURE_TRAITS_H
 #include __MACHINE_TRAITS_H
 
 __BEGIN_SYS
-
 
 // API Components
 template<> struct Traits<Application>: public Traits<void>
@@ -235,7 +183,7 @@ template<> struct Traits<Network>: public Traits<void>
 
 template<> struct Traits<ELP>: public Traits<Network>
 {
-    typedef Ethernet NIC_Family;
+    typedef IEEE802_15_4 NIC_Family;
 
     static const bool enabled = NETWORKS::Count<ELP>::Result;
 };

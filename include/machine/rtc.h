@@ -10,66 +10,10 @@ __BEGIN_SYS
 
 class RTC_Common
 {
-private:
-    static const unsigned long MAX_LONG = (unsigned long)(-1);
-    static const unsigned long long MAX_LONG_LONG = (unsigned long long)(-1);
-    // Adjusts the precision of the basic time type according to the system's life span,
-    // forcing a compilation error through void when a counter overflow becomes possible.
-    typedef IF<(Traits<System>::LIFE_SPAN * 1000000 <= MAX_LONG), unsigned long,
-               IF<(Traits<System>::LIFE_SPAN * 1000000ULL <= MAX_LONG_LONG), unsigned long long,
-                  void>::Result>::Result Time_Base;
-
 protected:
     RTC_Common() {}
 
 public:
-    // The time (as defined by God Chronos)
-    class Second;
-    class Milisecond;
-    class Microsecond;
-
-    class Second
-    {
-    public:
-        Second() {}
-        Second(const Time_Base & time) { _time = time; }
-
-        operator Time_Base() const { return _time; }
-
-    private:
-        Time_Base _time;
-    };
-
-    class Milisecond
-    {
-    public:
-        Milisecond() {}
-        Milisecond(const Time_Base & time) { _time = time; }
-        Milisecond(const Second & time) { _time = reinterpret_cast<const Time_Base &>(time) * 1000; }
-
-        operator Time_Base() const { return _time; }
-
-    private:
-        Time_Base _time;
-    };
-
-    class Microsecond
-    {
-    public:
-        Microsecond() = default;
-        Microsecond(const Time_Base & time) { _time = time; }
-        Microsecond(const Second & time) { _time = reinterpret_cast<const Time_Base &>(time) * 1000000; }
-        Microsecond(const Milisecond & time) { _time = reinterpret_cast<const Time_Base &>(time) * 1000; }
-
-        operator Time_Base() const { return _time; }
-
-    private:
-        Time_Base _time;
-    };
-
-    // Infinite times (for alarms and periodic threads)
-    enum : unsigned int { INFINITE = -1UL };
-
     // Calendar date and time
     class Date {
     public:
@@ -105,12 +49,8 @@ public:
     };
 };
 
-typedef RTC_Common::Second Second;
-typedef RTC_Common::Milisecond Milisecond;
-typedef RTC_Common::Microsecond Microsecond;
-
 // If the machine does not feature a RTC, define seconds_since_epoch to be 0
-#ifndef __RTC_H
+#if !defined(__RTC_H) && !defined(__rtc_common_only__)
 class RTC: public RTC_Common
 {
 public:
@@ -127,6 +67,6 @@ __END_SYS
 
 #endif
 
-#if defined(__RTC_H) && !defined(__common_only__)
+#if defined(__RTC_H) && !defined(__rtc_common_only__)
 #include __RTC_H
 #endif

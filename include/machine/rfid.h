@@ -17,6 +17,6 @@ __END_SYS
 
 #endif
 
-#if defined(__RFID_READER_H) && !defined(__common_only__)
+#if defined(__RFID_READER_H) && !defined(__rfid_reader_common_only__)
 #include __RFID_READER_H
 #endif

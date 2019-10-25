@@ -1,11 +1,11 @@
 // EPOS Trustful SpaceTime Protocol Locator Declarations
 
-#ifndef __tstp_locator_h
-#define __tstp_locator_h
-
 #include <system/config.h>
 
 #ifdef __tstp__
+
+#ifndef __tstp_locator_h
+#define __tstp_locator_h
 
 #include <network/hecops.h>
 

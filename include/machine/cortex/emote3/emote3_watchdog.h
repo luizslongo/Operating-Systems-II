@@ -4,10 +4,7 @@
 #define __emote3_watchdog_h
 
 #include <architecture/cpu.h>
-#define __common_only__
-#include <machine/machine.h>
 #include <machine/watchdog.h>
-#undef __common_only__
 
 __BEGIN_SYS
 

@@ -115,9 +115,9 @@ template<> struct Traits<Aspect>: public Traits<void>
 };
 
 
-// Mediators
 __END_SYS
 
+// Mediators
 #include __ARCHITECTURE_TRAITS_H
 #include __MACHINE_TRAITS_H
 

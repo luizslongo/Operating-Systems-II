@@ -3,10 +3,10 @@
 #ifndef __realview_pbx_timer_h
 #define __realview_pbx_timer_h
 
-#define __common_only__
-#include <architecture/tsc.h>
+#define __ic_common_only__
 #include <machine/ic.h>
-#undef __common_only__
+#undef __ic_common_only__
+#include <machine/timer.h>
 #include <machine/cortex/engines/cortex_a9/global_timer.h>
 #include <machine/cortex/engines/cortex_a9/private_timer.h>
 #include <system/memory_map.h>
@@ -19,7 +19,6 @@ class System_Timer_Engine: public Timer_Common
     friend Timer; // for init()
 
 private:
-    typedef TSC_Common::Hertz Hertz;
     typedef IC_Common::Interrupt_Id Interrupt_Id;
 
 public:

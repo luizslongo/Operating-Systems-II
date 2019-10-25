@@ -22,6 +22,6 @@ __END_SYS
 
 #endif
 
-#if defined(__PWM_H) && !defined(__common_only__)
+#if defined(__PWM_H) && !defined(__pwm_common_only__)
 #include __PWM_H
 #endif

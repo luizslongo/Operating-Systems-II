@@ -4,7 +4,7 @@
 
 #ifdef __NIC_H
 
-#include <machine/cortex_m/cc2538.h>
+#include <machine/cortex/emote3/emote3_cc2538.h>
 
 __BEGIN_SYS
 
@@ -70,7 +70,8 @@ CC2538::Buffer * CC2538::alloc(const Address & dst, const IEEE802_15_4::Type & t
     db<CC2538>(TRC) << "CC2538::alloc(s=" << address() << ",d=" << dst << ",p=" << hex << type << dec << ",on=" << once << ",al=" << always << ",ld=" << payload << ")" << endl;
 
     // Initialize the buffer
-    Buffer * buf = new (SYSTEM) Buffer(this, once + always + payload + sizeof(IEEE802_15_4::Header));
+    Buffer * buf = new (SYSTEM) Buffer(this, 0);
+    buf->size(once + always + payload + sizeof(IEEE802_15_4::Header));
     MAC::marshal(buf, address(), dst, type);
 
     return buf;

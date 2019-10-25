@@ -253,6 +253,6 @@ __END_SYS
 
 #endif
 
-#if defined(__PCI_H) && !defined(__common_only__)
+#if defined(__PCI_H) && !defined(__pci_common_only__)
 #include __PCI_H
 #endif

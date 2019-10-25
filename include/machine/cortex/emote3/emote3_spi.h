@@ -4,9 +4,7 @@
 #define __emote3_spi_h
 
 #include <architecture/cpu.h>
-#define __common_only__
 #include <machine/spi.h>
-#undef __common_only__
 #include <machine/cortex/engines/pl022.h>
 #include <machine/cortex/engines/pl061.h>
 #include "emote3_sysctrl.h"

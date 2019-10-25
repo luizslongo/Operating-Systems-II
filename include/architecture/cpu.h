@@ -173,6 +173,6 @@ __END_SYS
 
 #endif
 
-#if defined(__CPU_H) && !defined(__common_only__)
+#if defined(__CPU_H) && !defined(__cpu_common_only__)
 #include __CPU_H
 #endif

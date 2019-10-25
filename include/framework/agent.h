@@ -299,13 +299,13 @@ void Agent::handle_alarm()
 
     switch(method()) {
     case CREATE2: {
-        Alarm::Microsecond time;
+        Microsecond time;
         Handler * handler;
         in(time, handler);
         id(Id(ALARM_ID, reinterpret_cast<Id::Unit_Id>(new Adapter<Alarm>(time, handler))));
     } break;
     case CREATE3: {
-        Alarm::Microsecond time;
+        Microsecond time;
         Handler * handler;
         int times;
         in(time, handler, times);
@@ -318,7 +318,7 @@ void Agent::handle_alarm()
         res = alarm->period();
     break;
     case ALARM_SET_PERIOD: {
-        Alarm::Microsecond p;
+        Microsecond p;
         in(p);
         alarm->period(p);
     } break;
@@ -326,7 +326,7 @@ void Agent::handle_alarm()
         res = Adapter<Alarm>::alarm_frequency();
     break;
     case ALARM_DELAY: {
-        Alarm::Microsecond time;
+        Microsecond time;
         in(time);
         Adapter<Alarm>::delay(time);
     } break;

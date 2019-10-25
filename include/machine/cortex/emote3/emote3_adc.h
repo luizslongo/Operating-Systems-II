@@ -4,10 +4,9 @@
 #define __emote3_adc_h_
 
 #include <architecture/cpu.h>
-#define __common_only__
-#include <machine/machine.h>
+#define __adc_common_only__
 #include <machine/adc.h>
-#undef __common_only__
+#undef __adc_common_only__
 #include <machine/gpio.h>
 #include <system/memory_map.h>
 

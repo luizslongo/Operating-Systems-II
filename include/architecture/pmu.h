@@ -100,6 +100,6 @@ __END_SYS
 
 #endif
 
-#if defined(__PMU_H) && !defined(__common_only__)
+#if defined(__PMU_H) && !defined(__pmu_common_only__)
 #include __PMU_H
 #endif

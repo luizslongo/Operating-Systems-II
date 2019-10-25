@@ -3,9 +3,7 @@
 #ifndef __machine_machine_h
 #define __machine_machine_h
 
-#define __common_only__
-#include <machine/rtc.h>
-#undef __common_only__
+#include <system/config.h>
 
 __BEGIN_SYS
 
@@ -35,7 +33,7 @@ protected:
     Machine_Common() {}
 
 public:
-    static void delay(const RTC_Common::Microsecond & time);
+    static void delay(const Microsecond & time);
 
     static void panic();
     static void reboot();
@@ -48,6 +46,6 @@ __END_SYS
 
 #endif
 
-#if defined(__MACH_H) && !defined(__common_only__)
+#if defined(__MACH_H) && !defined(__mach_common_only__)
 #include __MACH_H
 #endif

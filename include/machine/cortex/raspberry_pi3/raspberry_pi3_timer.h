@@ -3,10 +3,10 @@
 #ifndef __raspberry_pi3_timer_h
 #define __raspberry_pi3_timer_h
 
-#define __common_only__
-#include <architecture/tsc.h>
+#define __ic_common_only__
 #include <machine/ic.h>
-#undef __common_only__
+#undef __ic_common_only__
+#include <machine/timer.h>
 #include <machine/cortex/engines/cortex_a53/bcm_timer.h>
 #include <machine/cortex/engines/cortex_a53/bcm_arm_timer.h>
 #include <system/memory_map.h>
@@ -21,7 +21,6 @@ class System_Timer_Engine: public Timer_Common
 private:
     static const unsigned int UNIT = 0;
 
-    typedef TSC_Common::Hertz Hertz;
     typedef IC_Common::Interrupt_Id Interrupt_Id;
 
 public:
@@ -98,7 +97,6 @@ private:
     static const unsigned int UNITS = Traits<Timer>::UNITS;
     static const unsigned int UNIT = 1;
 
-    typedef TSC_Common::Hertz Hertz;
     typedef IC_Common::Interrupt_Id Interrupt_Id;
 
 public:

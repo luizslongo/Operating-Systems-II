@@ -1,11 +1,11 @@
 // EPOS Quectel M95 GPRS NIC Mediator Implementation
 
 #include <system/config.h>
-#if defined(__NIC_H) && defined(__mmod_emote3__)
 
-#include <machine/cortex_m/machine.h>
-#include <machine/cortex_m/m95.h>
-#include <machine/cortex_m/uart.h>
+#if defined(__NIC_H)
+
+#include <machine/cortex/engines/m95.h>
+#include <machine/uart.h>
 
 __BEGIN_SYS
 
@@ -66,7 +66,7 @@ int M95::send_data(const char * data, unsigned int size)
 }
 
 // Assumes "expected" is null-terminated.
-bool M95::wait_response(const char * expected, const RTC::Microsecond & timeout, char * response, unsigned int response_size) {
+bool M95::wait_response(const char * expected, const Microsecond & timeout, char * response, unsigned int response_size) {
     db<M95>(TRC) << "M95::wait_response(ex=" << expected << ",tmt=" << timeout << ")" << endl;
 
     TSC::Time_Stamp end = TSC::time_stamp() + timeout * TSC::frequency() / 1000000;
@@ -130,7 +130,7 @@ bool M95::wait_response(const char * expected, const RTC::Microsecond & timeout,
     return ret;
 }
 
-RTC::Microsecond M95::now()
+Microsecond M95::now()
 {
     char buf[32];
 
@@ -141,13 +141,13 @@ RTC::Microsecond M95::now()
 
     wait_response("OK\r\n", 300000);
 
-    // adapted from an Aplication Note by Microchip for a PIC 18 MCU
+    // adapted from an Application Note by Microchip for a PIC 18 MCU
     // http://ww1.microchip.com/downloads/en/AppNotes/01412A.pdf
 
     //Code from http://www.oryx-embedded.com/doc/date__time_8c_source.html
 
     unsigned int year, month, day, hour, minute, second;
-    RTC::Microsecond time_stamp;
+    Microsecond time_stamp;
 
     year = 2000 + (buf[1] - '0') * 10 + (buf[2] - '0');
 
@@ -165,13 +165,13 @@ RTC::Microsecond M95::now()
     // Convert years to days
     time_stamp = (365 * year) + (year / 4) - (year / 100) + (year / 400);
     // Convert months to days
-    time_stamp += (30 * month) + (3 * (month + 1) / 5) + day;
+    time_stamp = time_stamp + (30 * month) + (3 * (month + 1) / 5) + day;
     // Unix time starts on January 1st, 1970
-    time_stamp -= 719561;
+    time_stamp = time_stamp - 719561;
     // Convert days to seconds
-    time_stamp *= 86400;
+    time_stamp = time_stamp * 86400;
     // Add hours, minutes and seconds
-    time_stamp += (3600 * hour) + (60 * minute) + second;
+    time_stamp = time_stamp + (3600 * hour) + (60 * minute) + second;
 
     // Return Unix time in microseconds
     return time_stamp * 1000000;

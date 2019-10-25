@@ -240,7 +240,9 @@ public:
         scr(DCGCI2C) &= ~0x1; // When the CPU is in Deep Sleep mode
     }
 
-    void clock_usb();
+    void clock_usb() {
+        // TODO: is there a clock gating for USB?
+    }
 
     void clock_timer(unsigned int unit) {
         scr(RCGCGPT) |= 1 << unit;

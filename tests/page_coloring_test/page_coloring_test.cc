@@ -10,8 +10,6 @@
 
 using namespace EPOS;
 
-typedef RTC::Microsecond Microsecond;
-
 const unsigned int ITERATIONS = 200; // number of times each thread will be executed ~40seg
 const unsigned int TEST_REPETITIONS = 1;
 const unsigned int THREADS = 17; // number of periodic threads
@@ -27,13 +25,15 @@ void collect_wcet(int test);
 void print_stats(void);
 int job(unsigned int, int); // function passed to each periodic thread
 
+typedef unsigned int us;
+
 // 17 threads, total utilization of 5.972483, 8 processors
 static struct Task_Set {
     int (*f)(unsigned int, int);
-    int p;
-    int d;
-    int c;
-    int affinity;
+    us p;
+    us d;
+    us c;
+    us affinity;
 } set[THREADS] = {
                   // period, deadline, execution time, cpu (partitioned)
                   {&job,  50000,  50000,  32329, 0},
@@ -57,12 +57,12 @@ static struct Task_Set {
 unsigned int lowest_priority_task = 16;
 
 typedef struct {
-    /*Microsecond mean[TEST_REPETITIONS];
-    Microsecond var[TEST_REPETITIONS];
-    Microsecond wcet[TEST_REPETITIONS];*/
-    Microsecond * mean;
-    Microsecond * var;
-    Microsecond * wcet;
+    /*us mean[TEST_REPETITIONS];
+    us var[TEST_REPETITIONS];
+    us wcet[TEST_REPETITIONS];*/
+    us * mean;
+    us * var;
+    us * wcet;
 } wcet_stats;
 
 Display d;
@@ -70,9 +70,9 @@ OStream cout;
 Clock clock;
 
 volatile wcet_stats * stats;
-Microsecond exec_time;
+us exec_time;
 static const bool same_color = false;
-volatile Microsecond * wcet[THREADS];
+volatile us * wcet[THREADS];
 Periodic_Thread * threads[THREADS]; // periodic threads that will be created
 
 int main()
@@ -84,10 +84,10 @@ int main()
     stats = new wcet_stats[THREADS];
 
     for(int i = 0; i < THREADS; i++) {
-        wcet[i] = new unsigned long(sizeof(Microsecond) * ITERATIONS);
-        stats[i].mean = new Microsecond[TEST_REPETITIONS];
-        stats[i].var = new Microsecond[TEST_REPETITIONS];
-        stats[i].wcet = new Microsecond[TEST_REPETITIONS];
+        wcet[i] = new us[ITERATIONS];
+        stats[i].mean = new us[TEST_REPETITIONS];
+        stats[i].var = new us[TEST_REPETITIONS];
+        stats[i].wcet = new us[TEST_REPETITIONS];
     }
 
     for(int i = 0; i < TEST_REPETITIONS; i++) {
@@ -115,10 +115,10 @@ int run(int test)
     for(int i = 0; i < THREADS; i++) {
         cout << "T[" << i << "] p=" << set[i].p << " d=" << set[i].d << " c=" << set[i].c << " a=" << set[i].affinity << endl;
         if(i == lowest_priority_task)
-            threads[i] = new Periodic_Thread(RTConf(set[i].p, ITERATIONS, Thread::READY, Thread::Criterion(Microsecond(set[i].p), Microsecond(set[i].d), Microsecond(set[i].c), set[i].affinity), Color(i + 1)),
+            threads[i] = new Periodic_Thread(RTConf(set[i].p, ITERATIONS, Thread::READY, Thread::Criterion(us(set[i].p), us(set[i].d), us(set[i].c), set[i].affinity), Color(i + 1)),
                                              set[i].f, (unsigned int)((set[i].c / 1730) * 10), i);
         else
-            threads[i] = new Periodic_Thread(RTConf(set[i].p, ITERATIONS, Thread::READY, Thread::Criterion(Microsecond(set[i].p), Microsecond(set[i].d), Microsecond(set[i].c), set[i].affinity), Color(i + 1)),
+            threads[i] = new Periodic_Thread(RTConf(set[i].p, ITERATIONS, Thread::READY, Thread::Criterion(us(set[i].p), us(set[i].d), us(set[i].c), set[i].affinity), Color(i + 1)),
                                              set[i].f, (i == 12) ? (unsigned int)(set[i].c / 540) : (unsigned int)((set[i].c / 540) * 3), i);
     }
 
@@ -140,10 +140,10 @@ int run(int test)
 void collect_wcet(int test)
 {
     for(int i = 0; i < THREADS; i++) {
-        Microsecond wc, m, var;
+        us wc, m, var;
         wc = largest(wcet[i], ITERATIONS);
         m = mean(wcet[i], ITERATIONS);
-        var = variance(const_cast<Microsecond *&>(wcet[i]), ITERATIONS, m);
+        var = variance(const_cast<us *&>(wcet[i]), ITERATIONS, m);
         stats[i].mean[test] = m;
         stats[i].wcet[test] = wc;
         stats[i].var[test] = var;
@@ -155,7 +155,7 @@ void collect_wcet(int test)
 void print_stats(void)
 {
     for(int i = 0; i < THREADS; i++) {
-        Microsecond wc, m, var, wc_m, wc_var;
+        us wc, m, var, wc_m, wc_var;
         if(TEST_REPETITIONS > 1) {
             wc = largest(stats[i].wcet, TEST_REPETITIONS);
             wc_m = mean(stats[i].wcet, TEST_REPETITIONS);

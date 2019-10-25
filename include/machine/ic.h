@@ -70,6 +70,6 @@ __END_SYS
 
 #endif
 
-#if defined(__IC_H) && !defined(__common_only__)
+#if defined(__IC_H) && !defined(__ic_common_only__)
 #include __IC_H
 #endif

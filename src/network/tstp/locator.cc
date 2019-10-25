@@ -1,9 +1,10 @@
 // EPOS Trustful Space-Time Protocol Locator Implementation
 
-#include <machine/nic.h>
-#include <network/tstp/tstp.h>
+#include <system/config.h>
 
 #ifdef __tstp__
+
+#include <network/tstp/tstp.h>
 
 __BEGIN_SYS
 

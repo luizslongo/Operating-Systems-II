@@ -72,7 +72,7 @@ __END_SYS
 
 #endif
 
-#if defined(__GPIO_H) && !defined(__common_only__)
+#if defined(__GPIO_H) && !defined(__gpio_common_only__)
 #include __GPIO_H
 #endif
 

@@ -1,5 +1,9 @@
 // EPOS Light Protocol Declarations
 
+#include <system/config.h>
+
+#ifdef __NIC_H
+
 #ifndef __elp_h
 #define __elp_h
 
@@ -306,5 +310,7 @@ private:
 //};
 
 __END_SYS
+
+#endif
 
 #endif

@@ -7,9 +7,7 @@
 
 #include <architecture/cpu.h>
 #include <machine/cortex/engines/pl061.h>
-#define __common_only__
 #include <machine/i2c.h>
-#undef __common_only__
 #include "emote3_sysctrl.h"
 #include "emote3_ioctrl.h"
 #include <system/memory_map.h>

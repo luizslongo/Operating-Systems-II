@@ -219,7 +219,7 @@ public:
         void process_fin();
 
         static void timeout(Connection * c);
-        void set_timeout(const Alarm::Microsecond & time = TIMEOUT);
+        void set_timeout(const Microsecond & time = TIMEOUT);
 
     private:
         IP::Address _peer;

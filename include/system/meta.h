@@ -1,4 +1,4 @@
-// EPOS Metaprograms
+// EPOS Basic Metaprograms
 
 #ifndef __meta_h
 #define __meta_h

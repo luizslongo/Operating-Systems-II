@@ -4,9 +4,9 @@
 #define __ethernet_h
 
 #include <architecture/cpu.h>
-#define __common_only__
+#define __nic_common_only__
 #include <machine/nic.h>
-#undef __common_only__
+#undef __nic_common_only__
 #include <utility/list.h>
 #include <utility/observer.h>
 #include <utility/buffer.h>

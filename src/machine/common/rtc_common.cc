@@ -27,7 +27,7 @@ RTC_Common::Date::Date(const Second & seconds, unsigned long epoch_days)
     _D = tmp;
 }
 
-RTC_Common::Second RTC_Common::Date::to_offset(unsigned long epoch_days) const
+Second RTC_Common::Date::to_offset(unsigned long epoch_days) const
 {
     Date tmp(*this);
 

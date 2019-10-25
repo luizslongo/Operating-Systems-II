@@ -52,10 +52,6 @@ protected:
     typedef IF<Criterion::dynamic, Dynamic_Handler, Static_Handler>::Result Handler;
 
 public:
-    typedef RTC::Microsecond Microsecond;
-
-    enum { INFINITE = RTC::INFINITE };
-
     struct Configuration: public Thread::Configuration {
         Configuration(const Microsecond & p, unsigned int n = INFINITE, const State & s = READY, const Criterion & c = NORMAL, const Color & a = WHITE, Task * t = 0, unsigned int ss = STACK_SIZE)
         : Thread::Configuration(s, c, a, t, ss), period(p), times(n) {}

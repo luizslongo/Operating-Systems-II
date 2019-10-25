@@ -3,7 +3,7 @@
 #ifndef __scheduler_h
 #define __scheduler_h
 
-#include <architecture.h>
+#include <architecture/cpu.h>
 #include <utility/list.h>
 #include <machine/timer.h>
 
@@ -19,9 +19,6 @@ namespace Scheduling_Criteria
     {
         friend class _SYS::RT_Thread;
 
-    protected:
-        typedef RTC::Microsecond Microsecond;
-
     public:
         // Common priorities
         enum : int {
@@ -34,12 +31,11 @@ namespace Scheduling_Criteria
         };
 
         // Constructor helpers
-        enum {
+        enum : int {
             SAME        = 0,
             NOW         = 0,
             UNKNOWN     = 0,
-            ANY         = -1,
-            INFINITE    = RTC::INFINITE
+            ANY         = -1
         };
 
         // Policy types

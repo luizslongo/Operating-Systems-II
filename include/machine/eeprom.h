@@ -26,6 +26,6 @@ __END_SYS
 
 #endif
 
-#if defined(__EEPROM_H) && !defined(__common_only__)
+#if defined(__EEPROM_H) && !defined(__eeprom_common_only__)
 #include __EEPROM_H
 #endif

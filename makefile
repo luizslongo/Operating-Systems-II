@@ -54,9 +54,9 @@ flash1: all1
 		(cd img && $(MAKE) flash)
 
 TESTS		:= $(shell find $(TST) -maxdepth 1 -type d -and -not -name tests -printf "%f\n")
-TESTS_COMPILED 	:= $(subst .img,,$(shell find $(IMG) -name \*_test.img -printf "%f\n"))
-TESTS_COMPILED 	:= $(TESTS_COMPILED) $(subst .bin,,$(shell find $(IMG) -name \*_test.bin -printf "%f\n"))
-TESTS_FINISHED 	:= $(subst .out,,$(shell find $(IMG) -name \*_test.out -printf "%f\n"))
+TESTS_COMPILED 	:= $(subst .img,,$(shell find $(IMG) -name \*.img -printf "%f\n"))
+TESTS_COMPILED 	:= $(TESTS_COMPILED) $(subst .bin,,$(shell find $(IMG) -name \*.bin -printf "%f\n"))
+TESTS_FINISHED 	:= $(subst .out,,$(shell find $(IMG) -name \*.out -printf "%f\n"))
 UNFINISHED_TESTS:= $(filter-out $(TESTS_FINISHED),$(TESTS))
 UNCOMPILED_TESTS:= $(filter-out $(TESTS_COMPILED),$(TESTS))
 test: FORCE

@@ -3,9 +3,8 @@
 #ifndef __nic_h
 #define __nic_h
 
+#include <architecture/cpu.h>
 #include <utility/string.h>
-#include <architecture/tsc.h>
-#include <machine/rtc.h>
 
 __BEGIN_SYS
 
@@ -145,11 +144,6 @@ public:
     // NIC Timer Interface (to be implemented by NIC aiming at supporting time-synchronous protocols)
     class Timer
     {
-    protected:
-        typedef TSC::Hertz Hertz;
-        typedef TSC::PPB PPB;
-        typedef RTC::Microsecond Microsecond;
-
     public:
         typedef unsigned long long Time_Stamp;
         typedef long long Offset;
@@ -252,6 +246,6 @@ __END_SYS
 
 #endif
 
-#if defined (__NIC_H) && !defined(__common_only__)
+#if defined (__NIC_H) && !defined(__nic_common_only__)
 #include __NIC_H
 #endif

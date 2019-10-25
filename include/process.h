@@ -4,7 +4,6 @@
 #define __process_h
 
 #include <architecture.h>
-#include <machine.h>
 #include <utility/queue.h>
 #include <utility/handler.h>
 #include <utility/scheduler.h>

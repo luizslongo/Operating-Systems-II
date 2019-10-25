@@ -1,18 +1,21 @@
 // EPOS Trustful SpaceTime Protocol Declarations
 
-#ifndef __tstp_common_h
-#define __tstp_common_h
-
 #include <system/config.h>
 
 #ifdef __tstp__
 
+#ifndef __tstp_common_h
+#define __tstp_common_h
+
+#include <network/ethernet.h>
+#include <network/ieee802_15_4.h>
+#define __nic_common_only__
+#include <machine/nic.h>
+#undef __nic_common_only__
+#include <smartdata.h>
 #include <utility/hash.h>
 #include <utility/string.h>
 #include <utility/array.h>
-#include <machine/nic.h>
-#include <time.h>
-#include <smartdata.h>
 
 __BEGIN_SYS
 
@@ -36,7 +39,7 @@ public:
     class Security;
 
     // Imports
-    using NIC_Family::Buffer;
+    using typename NIC_Family::Buffer;
     using NIC_Family::CRC;
     using SmartData::Header;
     typedef Data_Observer<Buffer, Unit> Observer;
@@ -160,12 +163,8 @@ __END_SYS
 
 #endif
 
-#endif
-
-#ifndef __tstp_h
+#if !defined(__tstp_h) && !defined(__tstp_common_only__)
 #define __tstp_h
-
-#ifdef __tstp__
 
 #include "mac.h"
 #include "security.h"

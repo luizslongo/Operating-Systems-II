@@ -23,6 +23,6 @@ __END_SYS
 
 #endif
 
-#if defined(__WATCHDOG_H) && !defined(__common_only__)
+#if defined(__WATCHDOG_H) && !defined(__watchdog_common_only__)
 #include __WATCHDOG_H
 #endif

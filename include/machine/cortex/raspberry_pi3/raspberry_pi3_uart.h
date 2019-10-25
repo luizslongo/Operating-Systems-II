@@ -3,9 +3,7 @@
 #ifndef __raspberry_pi3_uart_h
 #define __raspberry_pi3_uart_h
 
-#define __common_only__
 #include <machine/uart.h>
-#undef __common_only__
 #include <machine/cortex/engines/cortex_a53/bcm_uart.h>
 #include <system/memory_map.h>
 
@@ -18,7 +16,7 @@ private:
 
 public:
     UART_Engine(unsigned int unit, unsigned int baud_rate, unsigned int data_bits, unsigned int parity, unsigned int stop_bits)
-    : _unit(unit), _uart(new(reinterpret_cast<void *>(Memory_Map::GPIO_BASE)) BCM_UART) {
+    : _unit(unit), _uart(new(reinterpret_cast<void *>(Memory_Map::/* FIXME: cannot instantiate an UART ona GPIO */ xxxx GPIO_BASE)) BCM_UART) {
         assert(unit < UNITS);
         power(FULL);  // physically enable the UART in SysCtrl before configuring it
         config(baud_rate, data_bits, parity, stop_bits);

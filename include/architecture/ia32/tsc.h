@@ -4,18 +4,13 @@
 #define __ia32_tsc_h
 
 #include <architecture/cpu.h>
-#define __common_only__
 #include <architecture/tsc.h>
-#undef __common_only__
 
 __BEGIN_SYS
 
 class TSC: private TSC_Common
 {
 public:
-    using TSC_Common::Hertz;
-    using TSC_Common::PPM;
-    using TSC_Common::PPB;
     using TSC_Common::Time_Stamp;
 
 public:

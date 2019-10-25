@@ -3,9 +3,7 @@
 #ifndef __ia32_h
 #define __ia32_h
 
-#define __common_only__
 #include <architecture/cpu.h>
-#undef __common_only__
 
 __BEGIN_SYS
 

@@ -1,13 +1,13 @@
-// EPOS Internal Type Management System
+// EPOS Common Types and Type Management System
 
 typedef __SIZE_TYPE__ size_t;
 
 #ifndef __types_h
 #define __types_h
 
-// Memory allocators
 __BEGIN_API
 
+// Memory allocators
 enum System_Allocator { SYSTEM };
 enum Scratchpad_Allocator { SCRATCHPAD };
 enum Color {
@@ -51,7 +51,6 @@ void * operator new(size_t, const EPOS::Color &);
 void * operator new[](size_t, const EPOS::Color &);
 
 // Utilities
-// Generic names such as "lists" and "hashes" are used to specify Traits<> and control debugging for all related utilities
 __BEGIN_UTIL
 
 template<int BITS> class Padding {} __attribute__((packed));
@@ -63,162 +62,77 @@ template<> class Padding<64> { long long int _padding; } __attribute__((packed))
 typedef unsigned char Percent;
 typedef unsigned char UUID[8];
 
-template<unsigned int KEY_SIZE> class _AES;
-class Bitmaps;
-class CRC;
-class Debug;
 class Dummy {};
-class ELF;
-class Handler;
-class Hashes;
-class Heaps;
-class Lists;
-class Observeds;
-class Observers;
-class OStream;
-class Predictors;
-class Queues;
-class Random;
-class Spin;
-class SREC;
-class Vectors;
-
-template<typename> class Scheduler;
-namespace Scheduling_Criteria
-{
-    class Priority;
-    class FCFS;
-    class RR;
-    class RM;
-    class DM;
-    class EDF;
-    class GRR;
-    class CPU_Affinity;
-    class GEDF;
-    class PEDF;
-    class CEDF;
-    class PRM;
-};
 
 __END_UTIL
 
 __BEGIN_SYS
 
-// System parts
-class Build;
-class Boot;
-class Setup;
-class Init;
-class Utility;
+static const int MAX_INT = -1U/2;
+static const long int MAX_LONG_INT = -1UL/2;
+static const long long int MAX_LONG_LONG_INT = -1ULL/2;
+static const unsigned MAX_UNSIGNED = -1U;
+static const unsigned long MAX_UNSIGNED_LONG = -1UL;
+static const unsigned long long MAX_UNSIGNED_LONG_LONG = -1ULL;
 
-// Architecture Hardware Mediators
-class CPU;
-class TSC;
-class MMU;
-class FPU;
-class PMU;
+// Adjusts the precision of the basic time type according to the system's life span,
+// forcing a compilation error through void when a counter overflow becomes possible.
+typedef IF<(Traits<System>::LIFE_SPAN * 1000000 <= MAX_UNSIGNED_LONG), unsigned long,
+           IF<(Traits<System>::LIFE_SPAN * 1000000ULL <= MAX_UNSIGNED_LONG_LONG), unsigned long long,
+              void>::Result>::Result Time_Base;
 
-// Machine Hardware Mediators
-class Machine;
-class PCI;
-class IC;
-class Timer;
-class RTC;
-class UART;
-class SPI;
-class RS485;
-class USB;
-class EEPROM;
-class Display;
-class Serial_Display;
-class Keyboard;
-class Serial_Keyboard;
-class Scratchpad;
-class Watchdog;
-template<unsigned int KEY_SIZE> class _AES;
-class GPIO;
-class I2C;
-class ADC;
-class FPGA;
-class Ethernet;
-class IEEE802_15_4;
-class Modem;
-template<typename Family> class NIC;
-class PCNet32;
-class C905;
-class E100;
-class CC2538;
-class M95;
-class AT86RF;
-class GEM;
-class CC1101;
 
-// Transducer Mediators (i.e. sensors and actuators)
-class Transducers;
-class Dummy_Transducer;
-class Pluviometer;
-class Keller_46X;
+// The time (as defined by God Chronos)
+class Second;
+class Milisecond;
+class Microsecond;
 
-// API Components
-class System;
-class Application;
+class Second
+{
+public:
+    Second() {}
+    Second(const Time_Base & time) { _time = time; }
 
-class Thread;
-class Active;
-class Periodic_Thread;
-class RT_Thread;
-class Task;
+    operator Time_Base() const { return _time; }
 
-class Address_Space;
-class Segment;
+private:
+    Time_Base _time;
+};
 
-class Synchronizer;
-class Mutex;
-class Semaphore;
-class Condition;
+class Milisecond
+{
+public:
+    Milisecond() {}
+    Milisecond(const Time_Base & time) { _time = time; }
+    Milisecond(const Second & time) { _time = reinterpret_cast<const Time_Base &>(time) * 1000; }
 
-class Time;
-class Clock;
-class Chronometer;
-class Alarm;
-class Delay;
+    operator Time_Base() const { return _time; }
 
-template<typename T> class Clerk;
-class Monitor;
+private:
+    Time_Base _time;
+};
 
-class Network;
-class ELP;
-class TSTPOE;
-class TSTP;
-template<typename NIC, typename Network, unsigned int HTYPE> class ARP;
-class IP;
-class ICMP;
-class UDP;
-class TCP;
-class DHCP;
-class HTTP;
-class IPC;
-template<typename Channel, bool connectionless = Channel::connectionless> class Link;
-template<typename Channel, bool connectionless = Channel::connectionless> class Port;
+class Microsecond
+{
+public:
+    Microsecond() {};
+    Microsecond(const Time_Base & time) { _time = time; }
+    Microsecond(const Second & time) { _time = reinterpret_cast<const Time_Base &>(time) * 1000000; }
+    Microsecond(const Milisecond & time) { _time = reinterpret_cast<const Time_Base &>(time) * 1000; }
 
-class SmartData;
-template<typename Transducer, typename Network = TSTP> class Responsive_SmartData;
-template<typename Transducer, typename Network = TSTP> class Interested_SmartData;
+    operator Time_Base() const { return _time; }
 
-// Framework
-class Framework;
-template<typename Component> class Handle;
-template<typename Component, bool remote> class Stub;
-template<typename Component> class Proxy;
-template<typename Component> class Adapter;
-template<typename Component> class Scenario;
-class Agent;
+private:
+    Time_Base _time;
+};
 
-// Aspects
-class Aspect;
-template<typename Component> class Authenticated;
-template<typename Component> class Shared;
-template<typename Component> class Remote;
+typedef unsigned long Hertz;
+typedef unsigned long PPM; // parts per million
+typedef unsigned long long PPB; // parts per billion
+
+// Infinite times (for alarms and periodic threads)
+enum : unsigned int { INFINITE = -1UL };
+
 
 // System Components IDs
 // The order in this enumeration defines many things in the system (e.g. init)

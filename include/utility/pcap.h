@@ -149,7 +149,7 @@ public:
     class Packet_Header
     {
     public:
-        Packet_Header(RTC::Microsecond timestamp, unsigned int len) :
+        Packet_Header(Microsecond timestamp, unsigned int len) :
             _ts_sec(timestamp / 1000000), _ts_usec(timestamp % 1000000),
             _incl_len(len), _orig_len(len) {}
 

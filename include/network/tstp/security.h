@@ -7,9 +7,14 @@
 
 #ifdef __tstp__
 
+#include <machine/aes.h>
+#define __nic_common_only__
+#include <machine/nic.h>
+#undef __nic_common_only__
+#include <process.h>
+#include <time.h>
 #include <utility/poly1305.h>
 #include <utility/diffie_hellman.h>
-#include <machine/aes.h>
 
 __BEGIN_SYS
 
@@ -239,246 +244,17 @@ private:
 
     static void marshal(Buffer * buf);
 
-    static void pack(unsigned char * msg, const Peer * peer) {
-        Time t = TSTP::now() / POLY_TIME_WINDOW;
-
-        const unsigned char * ms = reinterpret_cast<const unsigned char *>(&peer->master_secret());
-        const unsigned char * id = reinterpret_cast<const unsigned char *>(&peer->id());
-
-        unsigned char nonce[16];
-        memset(nonce, 0, 16);
-        memcpy(nonce, &t, sizeof(Time) < 16u ? sizeof(Time) : 16u);
-
-        _Poly1305 poly(id, ms);
-
-        poly.stamp(&msg[sizeof(Master_Secret)], nonce, reinterpret_cast<const unsigned char *>(msg), sizeof(Master_Secret));
-
-        if(use_encryption) {
-            // mi = ms ^ _id
-            static const unsigned int MI_SIZE = sizeof(Node_Id) > sizeof(Master_Secret) ? sizeof(Node_Id) : sizeof(Master_Secret);
-            unsigned char mi[MI_SIZE];
-            unsigned int i;
-            for(i = 0; (i < sizeof(Node_Id)) && (i < sizeof(Master_Secret)); i++)
-                mi[i] = id[i] ^ ms[i];
-            for(; i < sizeof(Node_Id); i++)
-                mi[i] = id[i];
-            for(; i < sizeof(Master_Secret); i++)
-                mi[i] = ms[i];
-
-            OTP key;
-            poly.stamp(key, nonce, mi, MI_SIZE);
-            _aes.encrypt(msg, key, msg);
-        }
-    }
-
-    static bool unpack(const Peer * peer, unsigned char * msg, const unsigned char * mac, Time reception_time) {
-        unsigned char original_msg[sizeof(Master_Secret)];
-        memcpy(original_msg, msg, sizeof(Master_Secret));
-
-        const unsigned char * ms = reinterpret_cast<const unsigned char *>(&peer->master_secret());
-        const unsigned char * id = reinterpret_cast<const unsigned char *>(&peer->id());
-
-        // mi = ms ^ _id
-        static const unsigned int MI_SIZE = sizeof(Node_Id) > sizeof(Master_Secret) ? sizeof(Node_Id) : sizeof(Master_Secret);
-        unsigned char mi[MI_SIZE];
-        unsigned int i;
-        for(i = 0; (i < sizeof(Node_Id)) && (i < sizeof(Master_Secret)); i++)
-            mi[i] = id[i] ^ ms[i];
-        for(; i < sizeof(Node_Id); i++)
-            mi[i] = id[i];
-        for(; i < sizeof(Master_Secret); i++)
-            mi[i] = ms[i];
-
-        reception_time /= POLY_TIME_WINDOW;
-
-        OTP key;
-        unsigned char nonce[16];
-        _Poly1305 poly(id, ms);
-
-        memset(nonce, 0, 16);
-        memcpy(nonce, &reception_time, sizeof(Time) < 16u ? sizeof(Time) : 16u);
-        poly.stamp(key, nonce, mi, MI_SIZE);
-        if(use_encryption)
-            _aes.decrypt(original_msg, key, msg);
-        if(poly.verify(mac, nonce, msg, sizeof(Master_Secret)))
-            return true;
-
-        reception_time--;
-        memset(nonce, 0, 16);
-        memcpy(nonce, &reception_time, sizeof(Time) < 16u ? sizeof(Time) : 16u);
-        poly.stamp(key, nonce, mi, MI_SIZE);
-        if(use_encryption)
-            _aes.decrypt(original_msg, key, msg);
-        if(poly.verify(mac, nonce, msg, sizeof(Master_Secret)))
-            return true;
-
-        reception_time += 2;
-        memset(nonce, 0, 16);
-        memcpy(nonce, &reception_time, sizeof(Time) < 16u ? sizeof(Time) : 16u);
-        poly.stamp(key, nonce, mi, MI_SIZE);
-        if(use_encryption)
-            _aes.decrypt(original_msg, key, msg);
-        if(poly.verify(mac, nonce, msg, sizeof(Master_Secret)))
-            return true;
-
-        memcpy(msg, original_msg, sizeof(Master_Secret));
-        return false;
-    }
+    static void pack(unsigned char * msg, const Peer * peer);
+    static bool unpack(const Peer * peer, unsigned char * msg, const unsigned char * mac, Time reception_time);
 
     // TODO: remove?
     static void encrypt(const unsigned char * msg, const Peer * peer, unsigned char * out) {
         OTP key = otp(peer->master_secret(), peer->id());
         _aes.encrypt(msg, key, out);
     }
-
-    static OTP otp(const Master_Secret & master_secret, const Node_Id & id) {
-        const unsigned char * ms = reinterpret_cast<const unsigned char *>(&master_secret);
-
-        // mi = ms ^ _id
-        static const unsigned int MI_SIZE = sizeof(Node_Id) > sizeof(Master_Secret) ? sizeof(Node_Id) : sizeof(Master_Secret);
-        unsigned char mi[MI_SIZE];
-        unsigned int i;
-        for(i = 0; (i < sizeof(Node_Id)) && (i < sizeof(Master_Secret)); i++)
-            mi[i] = id[i] ^ ms[i];
-        for(; i < sizeof(Node_Id); i++)
-            mi[i] = id[i];
-        for(; i < sizeof(Master_Secret); i++)
-            mi[i] = ms[i];
-
-        Time t = TSTP::now() / POLY_TIME_WINDOW;
-
-        unsigned char nonce[16];
-        memset(nonce, 0, 16);
-        memcpy(nonce, &t, sizeof(Time) < 16u ? sizeof(Time) : 16u);
-
-        OTP out;
-        _Poly1305(id, ms).stamp(out, nonce, mi, MI_SIZE);
-        return out;
-    }
-
-    static bool verify_auth_request(const Master_Secret & master_secret, const Node_Id & id, const OTP & otp) {
-        const unsigned char * ms = reinterpret_cast<const unsigned char *>(&master_secret);
-
-        // mi = ms ^ _id
-        static const unsigned int MI_SIZE = sizeof(Node_Id) > sizeof(Master_Secret) ? sizeof(Node_Id) : sizeof(Master_Secret);
-        unsigned char mi[MI_SIZE];
-        unsigned int i;
-        for(i = 0; (i < sizeof(Node_Id)) && (i < sizeof(Master_Secret)); i++)
-            mi[i] = id[i] ^ ms[i];
-        for(; i < sizeof(Node_Id); i++)
-            mi[i] = id[i];
-        for(; i < sizeof(Master_Secret); i++)
-            mi[i] = ms[i];
-
-        unsigned char nonce[16];
-        Time t = TSTP::now() / POLY_TIME_WINDOW;
-
-        _Poly1305 poly(id, ms);
-
-        memset(nonce, 0, 16);
-        memcpy(nonce, &t, sizeof(Time) < 16u ? sizeof(Time) : 16u);
-        if(poly.verify(otp, nonce, mi, MI_SIZE))
-            return true;
-
-        t--;
-        memset(nonce, 0, 16);
-        memcpy(nonce, &t, sizeof(Time) < 16u ? sizeof(Time) : 16u);
-        if(poly.verify(otp, nonce, mi, MI_SIZE))
-            return true;
-
-        t += 2;
-        memset(nonce, 0, 16);
-        memcpy(nonce, &t, sizeof(Time) < 16u ? sizeof(Time) : 16u);
-        if(poly.verify(otp, nonce, mi, MI_SIZE))
-            return true;
-
-        return false;
-    }
-
-    static int key_manager() {
-
-        Peers::Element * last_dh_request = 0;
-
-        while(true) {
-            Alarm::delay(KEY_MANAGER_PERIOD);
-
-            db<TSTP>(TRC) << "TSTP::Security::key_manager()" << endl;
-            CPU::int_disable();
-            //while(CPU::tsl(_peers_lock));
-
-            // Cleanup expired pending keys
-            Pending_Keys::Element * next_key;
-            for(Pending_Keys::Element * el = _pending_keys.head(); el; el = next_key) {
-                next_key = el->next();
-                Pending_Key * p = el->object();
-                if(p->expired()) {
-                    _pending_keys.remove(el);
-                    delete p;
-                    db<TSTP>(INF) << "TSTP::Security::key_manager(): removed pending key" << endl;
-                }
-            }
-
-            // Cleanup expired peers
-            Peers::Element * next;
-            for(Peers::Element * el = _trusted_peers.head(); el; el = next) {
-                next = el->next();
-                Peer * p = el->object();
-                if(!p->valid_deploy(p->valid().center, TSTP::now())) {
-                    _trusted_peers.remove(el);
-                    delete p;
-                    db<TSTP>(INF) << "TSTP::Security::key_manager(): permanently removed trusted peer" << endl;
-                }
-            }
-            for(Peers::Element * el = _pending_peers.head(); el; el = next) {
-                next = el->next();
-                Peer * p = el->object();
-                if(!p->valid_deploy(p->valid().center, TSTP::now())) {
-                    _pending_peers.remove(el);
-                    delete p;
-                    db<TSTP>(INF) << "TSTP::Security::key_manager(): permanently removed pending peer" << endl;
-                }
-            }
-
-            // Cleanup expired established keys
-            for(Peers::Element * el = _trusted_peers.head(); el; el = next) {
-                next = el->next();
-                Peer * p = el->object();
-                if(TSTP::now() - p->authentication_time() > KEY_EXPIRY) {
-                    _trusted_peers.remove(el);
-                    _pending_peers.insert(el);
-                    db<TSTP>(INF) << "TSTP::Security::key_manager(): trusted peer's key expired" << endl;
-                }
-            }
-
-            // Send DH Request to at most one peer
-            Peers::Element * el;
-            if(last_dh_request && last_dh_request->next())
-                el = last_dh_request->next();
-            else
-                el = _pending_peers.head();
-
-            last_dh_request = 0;
-
-            for(; el; el = el->next()) {
-                Peer * p = el->object();
-                if(p->valid_deploy(p->valid().center, TSTP::now())) {
-                    last_dh_request = el;
-                    Buffer * buf = alloc(sizeof(DH_Request));
-//                    new (buf->frame()->data<DH_Request>()) DH_Request(Region::Space(p->valid().center, p->valid().radius), _dh.public_key());
-                    marshal(buf);
-                    _dh_requests_open++;
-                    TSTP::_nic->send(buf);
-                    db<TSTP>(INF) << "TSTP::Security::key_manager(): Sent DH_Request: "  << *buf->frame()->data<DH_Request>() << endl;
-                    break;
-                }
-            }
-
-            //_peers_lock = false;
-            CPU::int_enable();
-        }
-
-        return 0;
-    }
+    static OTP otp(const Master_Secret & master_secret, const Node_Id & id);
+    static bool verify_auth_request(const Master_Secret & master_secret, const Node_Id & id, const OTP & otp);
+    static int key_manager();
 
 private:
     static Node_Id _id;

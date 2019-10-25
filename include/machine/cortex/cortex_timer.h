@@ -26,7 +26,6 @@ protected:
     typedef IC_Common::Interrupt_Id Interrupt_Id;
 
 public:
-    using Timer_Common::Hertz;
     using Timer_Common::Tick;
     using Timer_Common::Handler;
 
@@ -97,9 +96,6 @@ private:
 // Timer used by Thread::Scheduler
 class Scheduler_Timer: public Timer
 {
-private:
-    typedef RTC::Microsecond Microsecond;
-
 public:
     Scheduler_Timer(const Microsecond & quantum, const Handler & handler): Timer(SCHEDULER, 1000000 / quantum, handler) {}
 };
@@ -128,7 +124,6 @@ private:
     static const unsigned int UNITS = Traits<Timer>::UNITS - Traits<TSC>::enabled; // TSC uses the last timer. To use the it, you must disable the TSC.
 
 public:
-    using Timer_Common::Microsecond;
     using Timer_Common::Handler;
 
 public:

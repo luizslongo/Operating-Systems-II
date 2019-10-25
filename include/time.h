@@ -3,6 +3,7 @@
 #ifndef __time_h
 #define __time_h
 
+#include <machine/rtc.h>
 #include <machine/timer.h>
 #include <utility/queue.h>
 #include <utility/handler.h>
@@ -12,9 +13,7 @@ __BEGIN_SYS
 class Clock
 {
 public:
-    typedef RTC::Microsecond Microsecond;
-    typedef RTC::Second Second;
-    typedef RTC::Date Date;
+    typedef RTC_Common::Date Date;
 
 public:
     Clock() {}
@@ -39,15 +38,8 @@ class Alarm
     friend class Scheduling_Criteria::EDF;      // for ticks() and elapsed()
 
 private:
-    typedef Timer::Tick Tick;
+    typedef Timer_Common::Tick Tick;
     typedef Relative_Queue<Alarm, Tick> Queue;
-
-public:
-    typedef TSC::Hertz Hertz;
-    typedef RTC::Microsecond Microsecond;
-
-    // Infinite times (for alarms)
-    enum { INFINITE = RTC::INFINITE };
 
 public:
     Alarm(const Microsecond & time, Handler * handler, unsigned int times = 1);
@@ -90,9 +82,6 @@ private:
 
 class Delay
 {
-private:
-    typedef RTC::Microsecond Microsecond;
-
 public:
     Delay(const Microsecond & time): _time(time)  { Alarm::delay(_time); }
 
@@ -105,10 +94,6 @@ class TSC_Chronometer
 {
 private:
     typedef TSC::Time_Stamp Time_Stamp;
-
-public:
-    typedef TSC::Hertz Hertz;
-    typedef RTC::Microsecond Microsecond;
 
 public:
     TSC_Chronometer() : _start(0), _stop(0) {}
@@ -142,10 +127,6 @@ class Alarm_Chronometer
 {
 private:
     typedef Alarm::Tick Time_Stamp;
-
-public:
-    typedef TSC::Hertz Hertz;
-    typedef RTC::Microsecond Microsecond;
 
 public:
     Alarm_Chronometer() : _start(0), _stop(0) {}

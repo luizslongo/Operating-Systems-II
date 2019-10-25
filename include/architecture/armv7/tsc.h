@@ -52,9 +52,6 @@ private:
     };
 
 public:
-    using TSC_Common::Hertz;
-    using TSC_Common::PPM;
-    using TSC_Common::PPB;
     using TSC_Common::Time_Stamp;
 
     static const unsigned int FREQUENCY = CLOCK;

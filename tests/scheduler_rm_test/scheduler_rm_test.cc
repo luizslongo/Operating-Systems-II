@@ -27,7 +27,7 @@ Periodic_Thread * thread_c;
 inline void exec(char c, unsigned int time = 0) // in miliseconds
 {
     // Delay was not used here to prevent scheduling interference due to blocking
-    Chronometer::Microsecond elapsed = chrono.read() / 1000;
+    Microsecond elapsed = chrono.read() / 1000;
 
     cout << "\n" << elapsed << "\t" << c
          << "\t[p(A)=" << thread_a->priority()
@@ -35,7 +35,7 @@ inline void exec(char c, unsigned int time = 0) // in miliseconds
          << ", p(C)=" << thread_c->priority() << "]";
 
     if(time) {
-        for(Chronometer::Microsecond end = elapsed + time, last = end; end > elapsed; elapsed = chrono.read() / 1000)
+        for(Microsecond end = elapsed + time, last = end; end > elapsed; elapsed = chrono.read() / 1000)
             if(last != elapsed) {
                 cout << "\n" << elapsed << "\t" << c
                     << "\t[p(A)=" << thread_a->priority()

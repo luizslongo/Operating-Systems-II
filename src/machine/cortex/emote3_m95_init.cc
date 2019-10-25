@@ -1,12 +1,10 @@
 // EPOS Quectel M95 GPRS NIC Mediator Initialization
 
 #include <system/config.h>
-#if defined(__NIC_H) && defined(__mmod_emote3__)
+#if defined(__NIC_H)
 
-#include <machine/cortex_m/machine.h>
-#include <machine/cortex_m/m95.h>
-#include <machine/cortex_m/gpio.h>
-#include <system.h>
+#include <machine/cortex/engines/m95.h>
+#include <machine/uart.h>
 
 __BEGIN_SYS
 

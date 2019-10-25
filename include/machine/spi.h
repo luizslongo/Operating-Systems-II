@@ -51,6 +51,6 @@ __END_SYS
 
 #endif
 
-#if defined(__SPI_H) && !defined(__common_only__)
+#if defined(__SPI_H) && !defined(__spi_common_only__)
 #include __SPI_H
 #endif

@@ -3,10 +3,7 @@
 #ifndef __zynq_machine_h
 #define __zynq_machine_h
 
-#define __common_only__
 #include <machine/machine.h>
-#include <machine/rtc.h>
-#undef __common_only__
 #include <machine/cortex/engines/cortex_a9/gic.h>
 #include <machine/cortex/engines/cortex_a9/scu.h>
 #include <system/memory_map.h>
@@ -21,7 +18,6 @@ class Zynq
 private:
     typedef CPU::Reg32 Reg32;
     typedef CPU::Log_Addr Log_Addr;
-    typedef RTC_Common::Microsecond Microsecond;
 
 public:
     static const unsigned int IRQS = 96;
@@ -184,7 +180,7 @@ protected:
         slcr(PSS_RST_CTRL) = 1;
     }
 
-    static void delay(const RTC::Microsecond & time) {
+    static void delay(const Microsecond & time) {
         assert(Traits<TSC>::enabled);
         TSC::Time_Stamp end = TSC::time_stamp() + time * (TSC::frequency() / 1000000);
         while(end > TSC::time_stamp());

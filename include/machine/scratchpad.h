@@ -29,7 +29,7 @@ __END_SYS
 
 #endif
 
-#if defined(__SCRATCHPAD_H) && !defined(__common_only__)
+#if defined(__SCRATCHPAD_H) && !defined(__scratchpad_common_only__)
 #include __SCRATCHPAD_H
 
 inline void * operator new(size_t bytes, const EPOS::Scratchpad_Allocator & allocator) {

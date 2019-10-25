@@ -3,10 +3,7 @@
 #ifndef __emote3_machine_h
 #define __emote3_machine_h
 
-#define __common_only__
 #include <machine/machine.h>
-#include <machine/rtc.h>
-#undef __common_only__
 #include <machine/cortex/engines/cortex_m3/scb.h>
 #include <machine/cortex/engines/cortex_m3/systick.h>
 #include "emote3_sysctrl.h"
@@ -23,8 +20,6 @@ class eMote3: public Machine_Common
 private:
     typedef CPU::Reg32 Reg32;
     typedef CPU::Log_Addr Log_Addr;
-    typedef RTC_Common::Microsecond Microsecond;
-
 
     // Hooks to functions implemented in ROM (documented in the ROM User Guide, swru3333)
     enum {
@@ -52,7 +47,7 @@ private:
 public:
     eMote3() {}
 
-    static void delay(const RTC::Microsecond & time) {
+    static void delay(const Microsecond & time) {
         assert(Traits<TSC>::enabled);
         TSC::Time_Stamp end = TSC::time_stamp() + time * (TSC::frequency() / 1000000);
         while(end > TSC::time_stamp());

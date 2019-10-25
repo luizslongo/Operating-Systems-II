@@ -3,10 +3,9 @@
 #ifndef __emote3_timer_h
 #define __emote3_timer_h
 
-#define __common_only__
-#include <architecture/tsc.h>
+#define __ic_common_only__
 #include <machine/ic.h>
-#undef __common_only__
+#undef __ic_common_only__
 #include <machine/cortex/engines/cortex_m3/systick.h>
 #include <machine/cortex/engines/cortex_m3/gptm.h>
 #include "emote3_sysctrl.h"
@@ -18,7 +17,6 @@ __BEGIN_SYS
 class System_Timer_Engine: public Timer_Common
 {
 private:
-    typedef TSC_Common::Hertz Hertz;
     typedef IC_Common::Interrupt_Id Interrupt_Id;
 
 public:

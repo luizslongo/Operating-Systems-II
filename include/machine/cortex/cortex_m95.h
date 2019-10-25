@@ -35,7 +35,7 @@ public:
     void on();
     void off();
 
-    RTC::Microsecond now();
+    Microsecond now();
 
     int send(const Address & dst, const Protocol & prot, const void * data, unsigned int size) {
         const char * cmd = reinterpret_cast<const char *>(data);
@@ -79,7 +79,7 @@ public:
 private:
     int send_command(const char *command, unsigned int size);
     int send_data(const char * data, unsigned int size);
-    bool wait_response(const char * expected, const RTC::Microsecond & timeout, char * response = 0, unsigned int response_length = 0);
+    bool wait_response(const char * expected, const Microsecond & timeout, char * response = 0, unsigned int response_length = 0);
 
     Address _addr;
     Statistics _statistics;

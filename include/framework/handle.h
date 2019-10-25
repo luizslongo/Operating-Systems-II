@@ -122,9 +122,9 @@ public:
     int ticks() { return _stub->ticks(); }
     int read() { return _stub->read(); }
 
-    const RTC::Microsecond period() const { return _stub->period(); }
-    void period(const RTC::Microsecond p) { _stub->period(p); }
-    static TSC::Hertz alarm_frequency() { return _Stub::alarm_frequency(); }
+    const Microsecond period() const { return _stub->period(); }
+    void period(const Microsecond p) { _stub->period(p); }
+    static Hertz alarm_frequency() { return _Stub::alarm_frequency(); }
 
     // Communication
     template<typename ... Tn>

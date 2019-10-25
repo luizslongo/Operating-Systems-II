@@ -21,7 +21,6 @@ class Monitor
 
 protected:
     typedef TSC::Time_Stamp Time_Stamp;
-    typedef TSC::Hertz Hertz;
     typedef Simple_List<Monitor> List;
 
     // Anomaly detection parameters
@@ -217,7 +216,6 @@ class Clerk: private T
 {
 public:
     typedef typename T::Value Data;
-    typedef Monitor::Hertz Hertz;
 
 public:
     Clerk(const Transducer_Clerk_Events & event, unsigned int dev, const Hertz frequency = 0, bool monitored = false): _dev(dev), _monitor(monitored ? new (SYSTEM) Clerk_Monitor<Clerk>(this, frequency) : 0) {}
@@ -250,7 +248,6 @@ class Clerk<System>
 {
 public:
     typedef int Data;
-    typedef TSC::Hertz Hertz;
 
 public:
     Clerk(const System_Clerk_Event & event, const Hertz frequency = 0, bool monitored = false): _event(event), _monitor(monitored ? new (SYSTEM) Clerk_Monitor<Clerk>(this, frequency) : 0) {}
@@ -277,7 +274,7 @@ private:
 };
 
 
-#if defined(__PMU_H) && !defined(__common_only__)
+#ifdef __PMU_H
 
 // PMU Clerk
 enum PMU_Clerk_Event {
@@ -359,7 +356,6 @@ class Clerk<PMU>: private PMU
 public:
     using PMU::CHANNELS;
     typedef PMU::Count Data;
-    typedef TSC::Hertz Hertz;
 
 public:
     Clerk(const PMU_Clerk_Event & event, const Hertz frequency = 0, bool monitored = false) {

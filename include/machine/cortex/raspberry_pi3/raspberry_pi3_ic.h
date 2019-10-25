@@ -3,9 +3,6 @@
 #ifndef __raspberry_pi3_ic_h
 #define __raspberry_pi3_ic_h
 
-#define __common_only__
-#include <machine/ic.h>
-#undef __common_only__
 #include <machine/cortex/engines/cortex_a53/bcm_mailbox.h>
 #include <system/memory_map.h>
 

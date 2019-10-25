@@ -68,7 +68,7 @@ TSTP::Timekeeper::Timekeeper()
 
     if(here() != sink()) {
         keep_alive();
-        _life_keeper = new (SYSTEM) Alarm(sync_period(), &_life_keeper_handler, Alarm::INFINITE);
+        _life_keeper = new (SYSTEM) Alarm(sync_period(), &_life_keeper_handler, INFINITE);
 
         // Wait for time synchronization
         while(sync_required())

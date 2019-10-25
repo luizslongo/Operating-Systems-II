@@ -30,6 +30,6 @@ __END_SYS
 
 #endif
 
-#if defined(__RS485_H) && !defined(__common_only__)
+#if defined(__RS485_H) && !defined(__rs485_common_only__)
 #include __RS485_H
 #endif

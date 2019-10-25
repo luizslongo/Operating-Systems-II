@@ -4,9 +4,9 @@
 #define __pl011_h
 
 #include <architecture/cpu.h>
-#define __common_only__
+#define __uart_common_only__
 #include <machine/uart.h>
-#undef __common_only__
+#undef __uart_common_only__
 
 __BEGIN_SYS
 

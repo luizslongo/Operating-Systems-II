@@ -965,7 +965,7 @@ void TCP::Connection::timeout(Connection* c)
     }
 }
 
-void TCP::Connection::set_timeout(const Alarm::Microsecond & time)
+void TCP::Connection::set_timeout(const Microsecond & time)
 {
     db<TCP>(TRC) << "TCP::Connection::set_timeout" << endl;
 

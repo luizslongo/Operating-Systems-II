@@ -3,14 +3,14 @@
 #ifndef __ieee802_15_4_h
 #define __ieee802_15_4_h
 
-#include <architecture.h>
+#include <architecture/cpu.h>
+#define __nic_common_only__
+#include <machine/nic.h>
+#undef __nic_common_only__
 #include <utility/list.h>
 #include <utility/observer.h>
 #include <utility/buffer.h>
 #include <utility/random.h>
-#define __common_only__
-#include <machine/nic.h>
-#undef __common_only__
 
 __BEGIN_SYS
 

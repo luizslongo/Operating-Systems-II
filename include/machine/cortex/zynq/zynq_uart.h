@@ -4,9 +4,7 @@
 #define __zynq_uart_h
 
 #include <architecture/cpu.h>
-#define __common_only__
 #include <machine/uart.h>
-#undef __common_only__
 #include <system/memory_map.h>
 
 __BEGIN_SYS

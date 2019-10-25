@@ -83,6 +83,6 @@ __END_SYS
 
 #endif
 
-#if defined(__MMU_H) && !defined(__common_only__)
+#if defined(__MMU_H) && !defined(__mmu_common_only__)
 #include __MMU_H
 #endif

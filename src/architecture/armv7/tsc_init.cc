@@ -1,11 +1,10 @@
 // EPOS ARMv7 Time-Stamp Counter Mediator Initialization
 
 
-#include <system/config.h>
+#include <architecture/tsc.h>
+#include <machine/timer.h>
 
 #if defined(__cortex_a__)
-
-#include <machine/timer.h>
 
 __BEGIN_SYS
 
@@ -31,7 +30,6 @@ __END_SYS
 
 #elif defined(__cortex_m__)
 
-#include <machine/timer.h>
 #include __HEADER_MMOD(sysctrl)
 #include __HEADER_MMOD(memory_map)
 

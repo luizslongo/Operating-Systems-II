@@ -4,9 +4,7 @@
 #define __ia32_mmu_h
 
 #include <architecture/cpu.h>
-#define __common_only__
 #include <architecture/mmu.h>
-#undef __common_only__
 #include <system/memory_map.h>
 #include <utility/string.h>
 #include <utility/list.h>

@@ -4,9 +4,7 @@
 #define __emote3_usb_h
 
 #include <architecture/cpu.h>
-#define __common_only__
 #include <machine/usb.h>
-#undef __common_only__
 #include <machine/ic.h>
 #include <machine/cortex/engines/pl061.h>
 

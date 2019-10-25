@@ -3,9 +3,7 @@
 #ifndef __emote3_ic_h
 #define __emote3_ic_h
 
-#define __common_only__
 #include <machine/ic.h>
-#undef __common_only__
 #include <machine/cortex/engines/cortex_m3/nvic.h>
 #include <system/memory_map.h>
 

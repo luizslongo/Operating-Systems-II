@@ -516,6 +516,6 @@ __END_SYS
 
 #endif
 
-#if defined(__USB_H) && !defined(__common_only__)
+#if defined(__USB_H) && !defined(__usb_common_only__)
 #include __USB_H
 #endif

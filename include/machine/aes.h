@@ -27,28 +27,21 @@ public:
 
 __END_SYS
 
-#ifndef __AES_H
+#endif
+
+#if !defined(__AES_H) && !defined(__aes_common_only__)
 // If the machine does not feature an AES accelerator, then use a software lib
 #include <utility/aes.h>
-
 __BEGIN_SYS
-
 template<unsigned int KEY_SIZE>
-using AES = _UTIL::_AES<KEY_SIZE>;
-
+using AES = SWAES<KEY_SIZE>;
 __END_SYS
 #endif
 
-#endif
-
-#if defined(__AES_H) && !defined(__common_only__)
+#if defined(__AES_H) && !defined(__aes_common_only__)
 #include __AES_H
-
 __BEGIN_SYS
-
 template<unsigned int KEY_SIZE>
-using AES = _SYS::_AES<KEY_SIZE>;
-
+using AES = HWAES<KEY_SIZE>;
 __END_SYS
-
 #endif

@@ -3,9 +3,9 @@
 #ifndef __pc_scratchpad_h
 #define __pc_scratchpad_h
 
-#define __common_only__
+#define __scratchpad_common_only__
 #include <machine/scratchpad.h>
-#undef __common_only__
+#undef __scratchpad_common_only__
 
 __BEGIN_SYS
 

@@ -3,9 +3,7 @@
 #ifndef __realview_pbx_uart_h
 #define __realview_pbx_uart_h
 
-#define __common_only__
 #include <machine/uart.h>
-#undef __common_only__
 #include <machine/cortex/engines/pl011.h>
 #include <system/memory_map.h>
 

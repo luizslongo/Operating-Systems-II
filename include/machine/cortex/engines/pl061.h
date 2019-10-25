@@ -4,10 +4,12 @@
 #define __pl061_h
 
 #include <architecture/cpu.h>
-#define __common_only__
+#define __ic_common_only__
 #include <machine/ic.h>
+#undef __ic_common_only__
+#define __gpio_common_only__
 #include <machine/gpio.h>
-#undef __common_only__
+#undef __gpio_common_only__
 
 __BEGIN_SYS
 
