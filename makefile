@@ -71,6 +71,11 @@ runtest: FORCE
 		$(foreach tst,$(TESTS),$(LINK) $(TST)/$(tst) $(APP);)
 		$(foreach tst,$(UNFINISHED_TESTS),$(MAKETEST) APPLICATION=$(tst) etc prerun_$(tst) run1 posbuild_$(tst);)
 
+cleantest: FORCE
+		$(foreach tst,$(TESTS),$(LINK) $(TST)/$(tst) $(APP);)
+		$(foreach tst,$(TESTS),cd $(TST)/${tst} && $(MAKE) APPLICATION=$(tst) clean;)
+		find $(APP) -maxdepth 1 -type l -exec $(CLEAN) {} \;
+
 .PHONY: prebuild_$(APPLICATION) posbuild_$(APPLICATION) prerun_$(APPLICATION)
 prebuild_$(APPLICATION):
 		@echo "Building $(APPLICATION) ..."
@@ -95,7 +100,7 @@ clean1: FORCE
 		(cd img && $(MAKECLEAN))
 		find $(LIB) -maxdepth 1 -type f -exec $(CLEAN) {} \;
 
-veryclean: clean
+veryclean: clean cleantest
 		(cd tools && $(MAKECLEAN))
 		find $(LIB) -maxdepth 1 -type f -exec $(CLEAN) {} \;
 		find $(BIN) -maxdepth 1 -type f -exec $(CLEAN) {} \;
@@ -106,7 +111,6 @@ veryclean: clean
 		find $(IMG) -name "*.pcap" -exec $(CLEAN) {} \;
 		find $(IMG) -name "*.net" -exec $(CLEAN) {} \;
 		find $(IMG) -maxdepth 1 -type f -perm 755 -exec $(CLEAN) {} \;
-		find $(APP) -maxdepth 1 -type l -exec $(CLEAN) {} \;
 
 dist: veryclean
 		find $(TOP) -name ".*project" -exec $(CLEAN) {} \;
