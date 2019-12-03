@@ -10,43 +10,6 @@ __BEGIN_UTIL
 static const float E = 2.71828183;
 
 template <typename T>
-T deg2rad(T deg){
-    double PI = 3.14159265358979323846264338327950288;
-    return deg * PI / 180.0;
-}
-
-template <typename T>
-T sin(T x){
-    T cur = x;
-    float acc = 1;
-    T fact= 1;
-    T pow = x;
-    for (int i = 1; abs<float>(acc) > .000001 && i < 100; i++){
-        fact *= ((2*i)*(2*i+1));
-        pow *= -1 * x*x;
-        acc = pow / fact;
-        cur += acc;
-    }
-    return cur;
-}
-
-// src: https://stackoverflow.com/a/2284969
-template <typename T>
-T cos(T x) {
-    T t, s;
-    int p;
-    p = 0;
-    s = 1;
-    t = 1;
-    while(abs<float>(((float)t)/s) > .000001) {
-        p++;
-        t = (-t * x * x) / ((2 * p - 1) * (2 * p));
-        s += t;
-    }
-    return s;
-}
-
-template <typename T>
 inline T logf(T num, float base = E, float epsilon = 1e-12)
 {
     if(num == 0) return 1;
@@ -149,6 +112,43 @@ template <typename T>
 T abs(const T & x)
 {
     return (x > 0) ? x : -x;
+}
+
+template <typename T>
+T deg2rad(T deg){
+    double PI = 3.14159265358979323846264338327950288;
+    return deg * PI / 180.0;
+}
+
+template <typename T>
+T sin(T x){
+    T cur = x;
+    float acc = 1;
+    T fact= 1;
+    T pow = x;
+    for (int i = 1; abs<float>(acc) > .000001 && i < 100; i++){
+        fact *= ((2*i)*(2*i+1));
+        pow *= -1 * x*x;
+        acc = pow / fact;
+        cur += acc;
+    }
+    return cur;
+}
+
+// src: https://stackoverflow.com/a/2284969
+template <typename T>
+T cos(T x) {
+    T t, s;
+    int p;
+    p = 0;
+    s = 1;
+    t = 1;
+    while(abs<float>(((float)t)/s) > .000001) {
+        p++;
+        t = (-t * x * x) / ((2 * p - 1) * (2 * p));
+        s += t;
+    }
+    return s;
 }
 
 template <typename T>
