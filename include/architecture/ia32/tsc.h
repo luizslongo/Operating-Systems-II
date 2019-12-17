@@ -3,26 +3,30 @@
 #ifndef __ia32_tsc_h
 #define __ia32_tsc_h
 
-#include <cpu.h>
-#include <tsc.h>
+#include <architecture/cpu.h>
+#include <architecture/tsc.h>
 
 __BEGIN_SYS
 
-class IA32_TSC: private TSC_Common
+class TSC: private TSC_Common
 {
 public:
-    using TSC_Common::Hertz;
     using TSC_Common::Time_Stamp;
 
 public:
-    IA32_TSC() {}
+    TSC() {}
 
     static Hertz frequency() { return CPU::clock(); }
+    static PPB accuracy() { return 50; }
 
     static Time_Stamp time_stamp() {
         Time_Stamp ts;
         ASM("rdtsc" : "=A" (ts) : ); // must be volatile!
         return ts;
+    }
+
+    static void time_stamp(const Time_Stamp & ts) {
+        CPU::wrmsr(CPU::MSR_TSC, ts);
     }
 };
 

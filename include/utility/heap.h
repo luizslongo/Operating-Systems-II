@@ -20,11 +20,11 @@ public:
     using Grouping_List<char>::size;
 
     Simple_Heap() {
-        db<Init, Simple_Heap>(TRC) << "Heap() => " << this << endl;
+        db<Init, Heaps>(TRC) << "Heap() => " << this << endl;
     }
 
     Simple_Heap(void * addr, unsigned int bytes) {
-        db<Init, Simple_Heap>(TRC) << "Heap(addr=" << addr << ",bytes=" << bytes << ") => " << this << endl;
+        db<Init, Heaps>(TRC) << "Heap(addr=" << addr << ",bytes=" << bytes << ") => " << this << endl;
 
         free(addr, bytes);
     }
@@ -101,6 +101,11 @@ public:
 
 
 // Wrapper for atomic heap
+extern "C" {
+    void _heap_lock();
+    void _heap_unlock();
+}
+
 template<typename T>
 class Heap_Wrapper<T, true>: public T
 {
@@ -123,37 +128,27 @@ public:
     }
 
     void * alloc(unsigned int bytes) {
-	enter();
-	void * tmp = T::alloc(bytes);
-	leave();
-	return tmp;
+        enter();
+        void * tmp = T::alloc(bytes);
+        leave();
+        return tmp;
     }
 
     void free(void * ptr) {
-	enter();
-	T::free(ptr);
-	leave();
+        enter();
+        T::free(ptr);
+        leave();
     }
 
     void free(void * ptr, unsigned int bytes) {
-	enter();
-	T::free(ptr, bytes);
-	leave();
+        enter();
+        T::free(ptr, bytes);
+        leave();
     }
 
 private:
-    void enter() {
-        _lock.acquire();
-        CPU::int_disable();
-    }
-
-    void leave() {
-        _lock.release();
-        CPU::int_enable();
-    }
-
-private:
-    Spin _lock;
+    void enter() { _heap_lock(); }
+    void leave() { _heap_unlock(); }
 };
 
 

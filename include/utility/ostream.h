@@ -5,7 +5,11 @@
 #ifndef __ostream_h
 #define __ostream_h
 
-extern "C" { void _print(const char * s); }
+extern "C" {
+    void _print_preamble();
+    void _print(const char * s);
+    void _print_trailler(bool error);
+}
 
 __BEGIN_UTIL
 
@@ -21,17 +25,17 @@ public:
     struct Err {};
 
 public:
-    OStream(): _base(10), _lock(-1), _error(false) {}
+    OStream(): _base(10), _error(false) {}
 
     OStream & operator<<(const Begl & begl) {
         if(Traits<System>::multicore)
-            preamble();
+            _print_preamble();
         return *this;
     }
-    
+
     OStream & operator<<(const Endl & endl) {
         if(Traits<System>::multicore)
-            trailler();
+            _print_trailler(_error);
         print("\n");
         _base = 10;
         return *this;
@@ -67,7 +71,7 @@ public:
         print(buf);
         return *this;
     }
-    OStream & operator<<(unsigned char c) { 
+    OStream & operator<<(unsigned char c) {
         return operator<<(static_cast<unsigned int>(c));
     }
 
@@ -90,7 +94,7 @@ public:
         print(buf);
         return *this;
     }
-    OStream & operator<<(unsigned short s) { 
+    OStream & operator<<(unsigned short s) {
         return operator<<(static_cast<unsigned int>(s));
     }
     OStream & operator<<(unsigned long l) {
@@ -118,9 +122,9 @@ public:
         return *this;
     }
 
-    OStream & operator<<(const char * s) { 
+    OStream & operator<<(const char * s) {
         print(s);
-        return *this; 
+        return *this;
     }
 
     OStream & operator<<(float f) {
@@ -165,10 +169,11 @@ public:
         return *this;
     }
 
-private:
-    void preamble();
-    void trailler();
+    OStream & operator<<(double d) {
+        return operator<<(static_cast<float>(d));
+    }
 
+private:
     void print(const char * s) { _print(s); }
 
     int itoa(int v, char * s);
@@ -179,11 +184,10 @@ private:
 
 private:
     int _base;
-    volatile int _lock;
     volatile bool _error;
 
     static const char _digits[];
-}; 
+};
 
 extern OStream::Begl begl;
 extern OStream::Endl endl;

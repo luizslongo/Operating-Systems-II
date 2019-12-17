@@ -1,66 +1,14 @@
 // EPOS PC IC Mediator Implementation
 
-#include <machine/pc/ic.h>
-#include <machine.h>
-
-extern "C" { void _exit(int s); }
+#include <machine/ic.h>
+#include <machine/timer.h>
 
 __BEGIN_SYS
 
 // Class attributes
 APIC::Log_Addr APIC::_base;
-PC_IC::Interrupt_Handler PC_IC::_int_vector[PC_IC::INTS];
+IC::Interrupt_Handler IC::_int_vector[IC::INTS];
 
-
-// Class methods
-void PC_IC::int_not(const Interrupt_Id & i)
-{
-    db<IC>(WRN) << "IC::int_not(i=" << i << ")" << endl;
-}
-
-void PC_IC::exc_not(const Interrupt_Id & i, Reg32 error, Reg32 eip, Reg32 cs, Reg32 eflags)
-{
-    db<IC>(WRN) << "IC::exc_not(i=" << i << ") => [err=" << hex << error
-                << ",ctx={cs=" << cs << ",ip=" << eip << ",fl=" << eflags << "}]" << endl;
-
-    db<IC>(WRN) << "The running thread will now be terminated!" << endl;
-    _exit(-1);
-}
-
-void PC_IC::exc_pf(const Interrupt_Id & i, Reg32 error, Reg32 eip, Reg32 cs, Reg32 eflags)
-{  
-    db<IC>(WRN) << "IC::exc_pf(i=" << i << ") => [address=" << hex << CPU::cr2() << ",err={";
-    if(error & (1 << 0))
-        db<IC>(WRN) << "P";
-    if(error & (1 << 1))
-        db<IC>(WRN) << "W";
-    if(error & (1 << 2))
-        db<IC>(WRN) << "S";
-    if(error & (1 << 3))
-        db<IC>(WRN) << "R";
-    db<IC>(WRN) << "},ctx={cs=" << hex << cs << ",ip=" << eip << ",fl=" << eflags << "}]" << endl;
-
-    db<IC>(WRN) << "The running thread will now be terminated!" << endl;
-    _exit(-1);
-}
-
-void PC_IC::exc_gpf(const Interrupt_Id & i, Reg32 error, Reg32 eip, Reg32 cs, Reg32 eflags)
-{  
-    db<IC>(WRN) << "IC::exc_gpf(i=" << i << ")[err=" << hex << error << ",ctx={cs=" << (void *)cs
-                << ",ip=" << (void *)eip << ",fl=" << (void *)eflags << "}]" << endl;
-
-    db<IC>(WRN) << "The running thread will now be terminated!" << endl;
-    _exit(-1);
-}
-
-void PC_IC::exc_fpu(const Interrupt_Id & i, Reg32 error, Reg32 eip, Reg32 cs, Reg32 eflags)
-{
-    db<IC>(WRN) << "IC::exc_fpu(i=" << i << ") => [err=" << hex << error
-                << ",ctx={cs=" << cs << ",ip=" << eip << ",fl=" << eflags << "}]" << endl;
-
-    db<IC>(WRN) << "The running thread will now be terminated!" << endl;
-    _exit(-1);
-}
 
 // APIC class methods
 void APIC::ipi_init(volatile int * status)
@@ -72,7 +20,7 @@ void APIC::ipi_init(volatile int * status)
     status[0] = 0;
 
     // Send INIT IPI to all APs excluding self
-    for(unsigned int n = 1; n < Traits<PC>::CPUS; n++) {
+    for(unsigned int n = 1; n < Traits<Machine>::CPUS; n++) {
         status[n] = 0;
         write(ICR32_63, n << 24);
         write(ICR0_31, ICR_LEVEL | ICR_ASSERT | ICR_INIT);
@@ -101,7 +49,7 @@ void APIC::ipi_start(Log_Addr entry, volatile int * status)
     unsigned int vector = (entry >> 12) & 0xff;
 
     // Send STARTUP IPI to all APs
-    for(unsigned int n = 1; n < Traits<PC>::CPUS; n++) {
+    for(unsigned int n = 1; n < Traits<Machine>::CPUS; n++) {
         write(ICR32_63, n << 24);
         write(ICR0_31, ICR_LEVEL | ICR_ASSERT | ICR_STARTUP | vector);
         while((read(ICR0_31) & ICR_PENDING));
@@ -110,7 +58,7 @@ void APIC::ipi_start(Log_Addr entry, volatile int * status)
     // Give them time to wake up (> 100ms)
     i8255::ms_delay(500);
 
-    for(unsigned int n = 1; n < Traits<PC>::CPUS; n++) {
+    for(unsigned int n = 1; n < Traits<Machine>::CPUS; n++) {
         if(status[n] == 1) { // CPU is up
             CPU::finc(status[n]);
             i8255::ms_delay(30);
@@ -125,7 +73,7 @@ void APIC::ipi_start(Log_Addr entry, volatile int * status)
     }
 }
 
-void APIC::ipi_send(unsigned int cpu, unsigned int interrupt)
+void APIC::ipi(unsigned int cpu, unsigned int interrupt)
 {
     write(ICR32_63, (cpu << 24));
     write(ICR0_31, ICR_LEVEL | ICR_ASSERT | ICR_FIXED | interrupt);

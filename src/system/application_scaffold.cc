@@ -1,17 +1,32 @@
-// EPOS Application Scaffold and Application Abstraction Implementation
+// EPOS Application Scaffold and Application Component Implementation
 
-#include <application.h>
-#include <framework/main.h>
+#include <system.h>
+#include <network.h>
+#include <clerk.h>
+
+__BEGIN_SYS
 
 // Application class attributes
-__BEGIN_SYS
 char Application::_preheap[];
 Heap * Application::_heap;
-Framework::Cache Framework::_cache;
+
 __END_SYS
 
-// Global objects
 __BEGIN_API
+
+// Global objects
+__USING_UTIL
 OStream cout;
 OStream cerr;
+
 __END_API
+
+extern "C" {
+    void __pre_main() {
+        if(_SYS::Traits<_SYS::Monitor>::enabled)
+            _SYS::Monitor::init();
+
+        if(_SYS::Traits<_SYS::Network>::enabled)
+            _SYS::Network_Common::init();
+    }
+}

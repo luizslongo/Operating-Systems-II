@@ -1,10 +1,16 @@
 // EPOS PC Display Mediator Implementation
 
-#include <display.h>
+#include <system/config.h>
+
+#ifdef __DISPLAY_H
+
+#include <machine/display.h>
 
 __BEGIN_SYS
 
 // Class attributes
-PC_Display::Frame_Buffer PC_Display::_frame_buffer;
+VGA::Frame_Buffer VGA::_frame_buffer;
 
 __END_SYS
+
+#endif

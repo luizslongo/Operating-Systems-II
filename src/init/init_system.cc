@@ -2,9 +2,9 @@
 
 #include <utility/random.h>
 #include <machine.h>
+#include <memory.h>
 #include <system.h>
-#include <address_space.h>
-#include <segment.h>
+#include <process.h>
 
 __BEGIN_SYS
 
@@ -17,15 +17,16 @@ public:
     Init_System() {
         db<Init>(TRC) << "Init_System()" << endl;
 
-        Machine::smp_barrier();
+        CPU::smp_barrier();
 
         // Only the boot CPU runs INIT_SYSTEM fully
-        if(Machine::cpu_id() != 0) {
+        if(CPU::id() != 0) {
             // Wait until the boot CPU has initialized the machine
-            Machine::smp_barrier();
+            CPU::smp_barrier();
             // For IA-32, timer is CPU-local. What about other SMPs?
+            CPU::init();
             Timer::init();
-            Machine::smp_barrier();
+            Thread::init();
             return;
         }
 
@@ -37,8 +38,9 @@ public:
         // Initialize System's heap
         db<Init>(INF) << "Initializing system's heap: " << endl;
         if(Traits<System>::multiheap) {
-            System::_heap_segment = new (&System::_preheap[0]) Segment(HEAP_SIZE);
-            System::_heap = new (&System::_preheap[sizeof(Segment)]) Heap(Address_Space(MMU::current()).attach(*System::_heap_segment, Memory_Map<Machine>::SYS_HEAP), System::_heap_segment->size());
+            Segment * tmp = reinterpret_cast<Segment *>(&System::_preheap[0]);
+            System::_heap_segment = new (tmp) Segment(HEAP_SIZE, WHITE, Segment::Flags::SYS);
+            System::_heap = new (&System::_preheap[sizeof(Segment)]) Heap(Address_Space(MMU::current()).attach(System::_heap_segment, Memory_Map::SYS_HEAP), System::_heap_segment->size());
         } else
             System::_heap = new (&System::_preheap[0]) Heap(MMU::alloc(MMU::pages(HEAP_SIZE)), HEAP_SIZE);
         db<Init>(INF) << "done!" << endl;
@@ -48,8 +50,7 @@ public:
         Machine::init();
         db<Init>(INF) << "done!" << endl;
 
-        Machine::smp_barrier(); // signalizes "machine ready" to other CPUs
-        Machine::smp_barrier(); // wait for them to finish Machine::init()
+        CPU::smp_barrier(); // signalizes "machine ready" to other CPUs
 
         // Initialize system abstractions
         db<Init>(INF) << "Initializing system abstractions: " << endl;
@@ -61,15 +62,23 @@ public:
             db<Init>(INF) << "Randomizing the Random Numbers Generator's seed: " << endl;
             if(Traits<TSC>::enabled)
                 Random::seed(TSC::time_stamp());
-            if(Traits<NIC>::enabled) {
-                NIC nic;
-                Random::seed(Random::random() ^ nic.address());
+#if defined(__mach_pc__) && defined(__NIC_H)
+            if(Traits<PCNet32>::enabled) {
+                NIC<Ethernet> * nic = PCNet32::get(0);
+                Random::seed(Random::random() ^ nic->statistics().rx_packets);
             }
-//            if(Traits<ADC>::enabled) {
-//                ADC adc;
-//                Random::seed(Random::random() ^ adc.read);
-//            }
-            if(!Traits<TSC>::enabled && !Traits<NIC>::enabled)
+            if(Traits<E100>::enabled) {
+                NIC<Ethernet> * nic = E100::get(0);
+                Random::seed(Random::random() ^ nic->statistics().rx_packets);
+            }
+#endif
+#ifdef __ADC_H
+            if(Traits<ADC>::enabled) {
+                ADC adc;
+                Random::seed(Random::random() ^ adc.read());
+            }
+#endif
+            if(!Traits<TSC>::enabled && !Traits<Ethernet>::enabled)
                 db<Init>(WRN) << "Due to lack of entropy, Random is a pseudo random numbers generator!" << endl;
             db<Init>(INF) << "done!" << endl;
         }

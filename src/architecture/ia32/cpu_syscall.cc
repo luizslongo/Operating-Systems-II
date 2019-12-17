@@ -1,15 +1,13 @@
 // EPOS IA32 CPU System Call Function Implementation
 
 #include <architecture/ia32/cpu.h>
-#include <ic.h>
+#include <machine/ic.h>
 
 __BEGIN_SYS
 
-int IA32::syscall(void * msg)
+void CPU::syscall(void * msg)
 {
-    Reg32 ret;
-    ASM("int %1" : "=a"(ret) : "i"(IC::INT_SYSCALL), "a"(msg));
-    return ret;
+    ASM("int %0" : : "i"(IC::INT_SYSCALL), "c"(msg));
 }
 
 __END_SYS

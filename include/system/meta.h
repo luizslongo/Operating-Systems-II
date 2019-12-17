@@ -1,4 +1,4 @@
-// EPOS Metaprograms
+// EPOS Basic Metaprograms
 
 #ifndef __meta_h
 #define __meta_h
@@ -7,7 +7,7 @@ __BEGIN_SYS
 
 // Conditional Type
 template<bool condition, typename Then, typename Else>
-struct IF 
+struct IF
 { typedef Then Result; };
 
 template<typename Then, typename Else>
@@ -32,8 +32,8 @@ struct Nil_Case {};
 
 template<int tag_, typename Type_, typename Next_ = Nil_Case>
 struct CASE
-{ 
-    enum { tag = tag_ }; 
+{
+    enum { tag = tag_ };
     typedef Type_ Type;
     typedef Next_ Next;
 };
@@ -42,13 +42,12 @@ template<int tag, typename Case>
 class SWITCH
 {
     typedef typename Case::Next Next_Case;
-    enum { 
-        case_tag = Case::tag, 
+    enum {
+        case_tag = Case::tag,
         found = ( case_tag == tag || case_tag == DEFAULT  )
     };
 public:
-    typedef typename IF<found, typename Case::Type,
-        typename SWITCH<tag, Next_Case>::Result>::Result Result;
+    typedef typename IF<found, typename Case::Type, typename SWITCH<tag, Next_Case>::Result>::Result Result;
 };
 
 template<int tag>
@@ -61,13 +60,20 @@ public:
 
 // EQUALty of Types
 template<typename T1, typename T2>
-struct EQUAL 
+struct EQUAL
 { enum { Result = false }; };
 
 template<typename T>
 struct EQUAL<T, T>
 { enum { Result = true }; };
 
+template<typename T1, typename T2>
+struct MAX
+{ typedef typename IF<sizeof(T1) >= sizeof(T2), T1, T2>::Result Result; };
+
+template<typename T1, typename T2>
+struct MIN
+{ typedef typename IF<sizeof(T1) < sizeof(T2), T1, T2>::Result Result; };
 
 // SIZEOF Type Package
 template<typename ... Tn>
@@ -97,6 +103,14 @@ public:
     struct Get<Index, Current, true>
     { typedef Head Result; };
 
+    template<typename Type, int Start = 0, int Current = 0, bool Stop = ((Current >= Start) && EQUAL<Head, Type>::Result)>
+    struct Find
+    { enum { Result = Tail::template Find<Type, Start, Current + 1>::Result }; };
+
+    template<typename Type, int Start, int Current>
+    struct Find<Type, Start, Current, true>
+    { enum { Result = Current }; };
+
     template<typename Type>
     struct Count
     { enum { Result = EQUAL<Head, Type>::Result + Tail::template Count<Type>::Result }; };
@@ -109,13 +123,17 @@ public:
 
 template<>
 class LIST<>
-{ 
+{
 public:
-    enum { Length = 0 }; 
+    enum { Length = 0 };
 
     template<int Index, int Current = 0>
     struct Get
     { typedef void Result; };
+
+    template<typename Type, int Start = 0, int Current = 0>
+    struct Find
+    { enum { Result = -1 }; };
 
     template<typename Type>
     struct Count
@@ -182,13 +200,12 @@ public:
 inline void SERIALIZE(char * buf, int index) {}
 
 template<typename T>
-void SERIALIZE(char * buf, int index, const T && a) {
-//    *static_cast<T *>(reinterpret_cast<void *>(&buf[index])) = a;
+void SERIALIZE(char * buf, int index, T && a) {
     __builtin_memcpy(&buf[index], &a, sizeof(T));
 }
 
 template<typename T, typename ... Tn>
-void SERIALIZE(char * buf, int index, const T && a, const Tn & ... an) {
+void SERIALIZE(char * buf, int index, const T && a, Tn & ... an) {
     __builtin_memcpy(&buf[index], &a, sizeof(T));
     SERIALIZE(buf, index + sizeof(T), an ...);
 }
@@ -206,6 +223,37 @@ void DESERIALIZE(char * buf, int index, T && a, Tn && ... an) {
     __builtin_memcpy(&a, &buf[index], sizeof(T));
     DESERIALIZE(buf, index + sizeof(T), an ...);
 }
+
+// Returns the UNSIGNED counterpart of primitive type T
+template<typename T>
+struct UNSIGNED {
+    typedef void Result; // Type T not supported
+};
+template<> struct UNSIGNED<char> { typedef unsigned char Result; };
+template<> struct UNSIGNED<short> { typedef unsigned short Result; };
+template<> struct UNSIGNED<int> { typedef unsigned int Result; };
+template<> struct UNSIGNED<long> { typedef unsigned long Result; };
+template<> struct UNSIGNED<long long> { typedef unsigned long long Result; };
+template<> struct UNSIGNED<unsigned char> { typedef unsigned char Result; };
+template<> struct UNSIGNED<unsigned short> { typedef unsigned short Result; };
+template<> struct UNSIGNED<unsigned int> { typedef unsigned int Result; };
+template<> struct UNSIGNED<unsigned long> { typedef unsigned long Result; };
+template<> struct UNSIGNED<unsigned long long> { typedef unsigned long long Result; };
+
+// Returns a type one rank LARGER than primitive type T
+template<typename T>
+struct LARGER {
+    typedef T Result; // if there is no larger type, return T
+};
+template<> struct LARGER<bool> { typedef short Result; };
+template<> struct LARGER<char> { typedef short Result; };
+template<> struct LARGER<short> { typedef int Result; };
+template<> struct LARGER<int> { typedef long long Result; };
+template<> struct LARGER<long> { typedef long long Result; };
+template<> struct LARGER<unsigned char> { typedef unsigned short Result; };
+template<> struct LARGER<unsigned short> { typedef unsigned int Result; };
+template<> struct LARGER<unsigned int> { typedef unsigned long long Result; };
+template<> struct LARGER<unsigned long> { typedef unsigned long long Result; };
 
 __END_SYS
 

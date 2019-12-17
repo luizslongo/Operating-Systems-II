@@ -1,11 +1,9 @@
 // EPOS Application Initializer
 
+#include <architecture.h>
 #include <utility/heap.h>
-#include <mmu.h>
 #include <machine.h>
-#include <application.h>
-#include <address_space.h>
-#include <segment.h>
+#include <system.h>
 
 extern "C" { char _end; } // defined by GCC
 
@@ -23,16 +21,17 @@ public:
 
         // Only the boot CPU runs INIT_APPLICATION on non-kernel configurations
         if(!Traits<System>::multitask) {
-            Machine::smp_barrier();
-            if(Machine::cpu_id() != 0)
+            CPU::smp_barrier();
+            if(CPU::id() != 0)
                 return;
         }
 
         // Initialize Application's heap
         db<Init>(INF) << "Initializing application's heap: " << endl;
-        if(Traits<System>::multiheap) { // Heap in data segment arranged by SETUP
-            char * stack = MMU::align_page(&_end);
-            char * heap = stack + MMU::align_page(Traits<Application>::STACK_SIZE);
+        if(Traits<System>::multiheap) { // heap in data segment arranged by SETUP
+            char * heap = MMU::align_page(&_end);
+            if(Traits<Build>::MODE != Traits<Build>::KERNEL) // if not a kernel, then use the stack allocated by SETUP, otherwise make that part of the heap
+                heap += MMU::align_page(Traits<Application>::STACK_SIZE);
             Application::_heap = new (&Application::_preheap[0]) Heap(heap, HEAP_SIZE);
         } else
             for(unsigned int frames = MMU::allocable(); frames; frames = MMU::allocable())

@@ -1,9 +1,9 @@
 // EPOS PC AMD PCNet II (Am79C970A) Ethernet NIC Mediator Implementation
 
-#include <machine/pc/machine.h>
-#include <machine/pc/pcnet32.h>
-#include <utility/malloc.h>
-#include <alarm.h>
+#include <machine/machine.h>
+#include <machine/pc/pc_pcnet32.h>
+#include <system.h>
+#include <time.h>
 
 __BEGIN_SYS
 
@@ -21,16 +21,17 @@ PCNet32::~PCNet32()
 int PCNet32::send(const Address & dst, const Protocol & prot, const void * data, unsigned int size)
 {
     // Wait for a buffer to become free and seize it
+    unsigned int i = _tx_cur;
     for(bool locked = false; !locked; ) {
-        for(; _tx_ring[_tx_cur].status & Tx_Desc::OWN; ++_tx_cur %= TX_BUFS);
-        locked = _tx_buffer[_tx_cur]->lock();
+        for(; _tx_ring[i].status & Tx_Desc::OWN; ++i %= TX_BUFS);
+        locked = _tx_buffer[i]->lock();
     }
+    _tx_cur = (i + 1) % TX_BUFS; // _tx_cur and _rx_cur are simple accelerators to avoid scanning the ring buffer from the beginning.
+                                 // Losing a write in a race condition is assumed to be harmless. The FINC + CAS alternative seems too expensive.
+    Tx_Desc * desc = &_tx_ring[i];
+    Buffer * buf = _tx_buffer[i];
 
-    Tx_Desc * desc = &_tx_ring[_tx_cur];
-    Buffer * buf = _tx_buffer[_tx_cur];
-
-    db<PCNet32>(TRC) << "PCNet32::send(s=" << _address << ",d=" << dst << ",p=" << hex << prot << dec
-                     << ",d=" << data << ",s=" << size << ")" << endl;
+    db<PCNet32>(TRC) << "PCNet32::send(s=" << _address << ",d=" << dst << ",p=" << hex << prot << dec << ",d=" << data << ",s=" << size << ")" << endl;
 
     // Assemble the Ethernet frame
     new (buf->frame()) Frame(_address, dst, prot, data, size);
@@ -49,11 +50,9 @@ int PCNet32::send(const Address & dst, const Protocol & prot, const void * data,
     // Wait for packet to be sent
     // while(desc->status & Tx_Desc::OWN);
 
-    db<PCNet32>(INF) << "PCNet32::send:desc[" << _tx_cur << "]=" << desc << " => " << *desc << endl;
+    db<PCNet32>(INF) << "PCNet32::send:desc[" << i << "]=" << desc << " => " << *desc << endl;
 
     buf->unlock();
-
-    ++_tx_cur %= TX_BUFS;
 
     return size;
 }
@@ -61,16 +60,17 @@ int PCNet32::send(const Address & dst, const Protocol & prot, const void * data,
 
 int PCNet32::receive(Address * src, Protocol * prot, void * data, unsigned int size)
 {
-    db<PCNet32>(TRC) << "PCNet32::receive(s=" << *src << ",p=" << hex << *prot << dec
-                     << ",d=" << data << ",s=" << size << ") => " << endl;
+    db<PCNet32>(TRC) << "PCNet32::receive(s=" << *src << ",p=" << hex << *prot << dec << ",d=" << data << ",s=" << size << ") => " << endl;
 
     // Wait for a received frame and seize it
+    unsigned int i = _rx_cur;
     for(bool locked = false; !locked; ) {
-        for(; _rx_ring[_rx_cur].status & Rx_Desc::OWN; ++_rx_cur %= RX_BUFS);
-        locked = _rx_buffer[_rx_cur]->lock();
+        for(; _rx_ring[i].status & Rx_Desc::OWN; ++i %= RX_BUFS);
+        locked = _rx_buffer[i]->lock();
     }
-    Buffer * buf = _rx_buffer[_rx_cur];
-    Rx_Desc * desc = &_rx_ring[_rx_cur];
+    _rx_cur = (i + 1) % RX_BUFS;
+    Buffer * buf = _rx_buffer[i];
+    Rx_Desc * desc = &_rx_ring[i];
 
     // Disassemble the Ethernet frame
     Frame * frame = buf->frame();
@@ -89,22 +89,20 @@ int PCNet32::receive(Address * src, Protocol * prot, void * data, unsigned int s
     _statistics.rx_packets++;
     _statistics.rx_bytes += buf->size();
 
-    db<PCNet32>(INF) << "PCNet32::receive:desc[" << _rx_cur << "]=" << desc << " => " << *desc << endl;
+    db<PCNet32>(INF) << "PCNet32::receive:desc[" << i << "]=" << desc << " => " << *desc << endl;
 
     int tmp = buf->size();
 
     buf->unlock();
-
-    ++_rx_cur %= RX_BUFS;
 
     return tmp;
 }
 
 
 // Allocated buffers must be sent or release IN ORDER as assumed by the PCNet32
-PCNet32::Buffer * PCNet32::alloc(NIC * nic, const Address & dst, const Protocol & prot, unsigned int once, unsigned int always, unsigned int payload)
+PCNet32::Buffer * PCNet32::alloc(const Address & dst, const Protocol & prot, unsigned int once, unsigned int always, unsigned int payload)
 {
-    db<PCNet32>(TRC) << "PCNet32::alloc(s=" << _address << ",d=" << dst << ",p=" << hex << prot << dec << ",on=" << once << ",al=" << always << ",ld=" << payload << ")" << endl;
+    db<PCNet32>(TRC) << "PCNet32::alloc(s=" << _address << ",d=" << dst << ",p=" << hex << prot << dec << ",on=" << once << ",al=" << always << ",pl=" << payload << ")" << endl;
 
     int max_data = MTU - always;
 
@@ -118,19 +116,20 @@ PCNet32::Buffer * PCNet32::alloc(NIC * nic, const Address & dst, const Protocol 
     // Calculate how many frames are needed to hold the transport PDU and allocate enough buffers
     for(int size = once + payload; size > 0; size -= max_data) {
         // Wait for the next buffer to become free and seize it
+        unsigned int i = _tx_cur;
         for(bool locked = false; !locked; ) {
-            for(; _tx_ring[_tx_cur].status & Tx_Desc::OWN; ++_tx_cur %= TX_BUFS);
-            locked = _tx_buffer[_tx_cur]->lock();
+            for(; _tx_ring[i].status & Tx_Desc::OWN; ++i %= TX_BUFS);
+            locked = _tx_buffer[i]->lock();
         }
-        Tx_Desc * desc = &_tx_ring[_tx_cur];
-        Buffer * buf = _tx_buffer[_tx_cur];
+        _tx_cur = (i + 1) % TX_BUFS;
+        Tx_Desc * desc = &_tx_ring[i];
+        Buffer * buf = _tx_buffer[i];
 
         // Initialize the buffer and assemble the Ethernet Frame Header
-        new (buf) Buffer(nic, _address, dst, prot, (size > max_data) ? MTU : size + always);
+        buf->fill((size > max_data) ? MTU : size + always, _address, dst, prot);
 
-        db<PCNet32>(INF) << "PCNet32::alloc:desc[" << _tx_cur << "]=" << desc << " => " << *desc << endl;
-
-        ++_tx_cur %= TX_BUFS;
+        db<PCNet32>(INF) << "PCNet32::alloc:desc[" << i << "]=" << desc << " => " << *desc << endl;
+        db<PCNet32>(INF) << "PCNet32::alloc:buf=" << buf << " => " << *buf << endl;
 
         pool.insert(buf->link());
     }
@@ -145,9 +144,11 @@ int PCNet32::send(Buffer * buf)
 
     for(Buffer::Element * el = buf->link(); el; el = el->next()) {
         buf = el->object();
-        Tx_Desc * desc = buf->back<Tx_Desc>();
+        Tx_Desc * desc = reinterpret_cast<Tx_Desc *>(buf->back());
 
         db<PCNet32>(TRC) << "PCNet32::send(buf=" << buf << ")" << endl;
+
+        db<PCNet32>(INF) << "PCNet32::send:buf=" << buf << " => " << *buf << endl;
 
         desc->size = -(buf->size() + sizeof(Header)); // 2's comp.
 
@@ -177,9 +178,11 @@ void PCNet32::free(Buffer * buf)
 {
     db<PCNet32>(TRC) << "PCNet32::free(buf=" << buf << ")" << endl;
 
+    db<PCNet32>(INF) << "PCNet32::free:buf=" << buf << " => " << *buf << endl;
+
     for(Buffer::Element * el = buf->link(); el; el = el->next()) {
         buf = el->object();
-        Rx_Desc * desc = buf->back<Rx_Desc>();
+        Rx_Desc * desc = reinterpret_cast<Rx_Desc *>(buf->back());
 
         _statistics.rx_packets++;
         _statistics.rx_bytes += buf->size();
@@ -221,8 +224,8 @@ void PCNet32::reset()
     // Enable full-duplex
     bcr(9, BCR9_FDEN);
 
-    // Disable INIT interrupt and transmit stop on underflow and two part deferral
-    csr(3, CSR3_TINTM | CSR3_IDONM | CSR3_DXMT2PD | CSR3_LAPPEN | CSR3_DXSUFLO);
+    // Disable INIT, TX, RX, transmit stop on underflow and two part deferral interrupts
+    csr(3, CSR3_IDONM | CSR3_TINTM | CSR3_RINTM | CSR3_DXMT2PD | CSR3_LAPPEN | CSR3_DXSUFLO);
 
     // Enable frame auto padding/stripping and auto CRC handling
     csr(4, CSR4_DMAPLUS | CSR4_DPOLL | CSR4_APAD_XMT | CSR4_ASTRP_RCV | CSR4_TXSTRTM);
@@ -234,7 +237,8 @@ void PCNet32::reset()
     bcr(18, bcr(18) | BCR18_BREADE | BCR18_BWRITE);
 
     // Promiscuous mode
-//    csr(15, csr(15) | CSR15_PROM);
+//    if(promiscuous)
+//        csr(15, csr(15) | CSR15_PROM);
 
     // Set transmit start point to full frame
     csr(80, csr(80) | 0x0c00); // XMTSP = 11
@@ -295,7 +299,7 @@ void PCNet32::handle_int()
 
         if(csr0 & CSR0_IDON) { // Initialization done
             // This should never happen, since IDON is disabled in reset()
-            // and all the initialization is conctrolled via polling, so if
+            // and all the initialization is controlled via polling, so if
             // we are here, it must be due to a hardware induced reset.
             // All we can do is to try to reset the nic!
             db<PCNet32>(WRN) << "PCNet32::handle_int: initialization done!" << endl;
@@ -307,20 +311,20 @@ void PCNet32::handle_int()
             // Note that ISRs in EPOS are reentrant, that's why locking was carefully made atomic
             // Therefore, several instances of this code can compete to handle received buffers
 
-            for(int count = RX_BUFS; count && !(_rx_ring[_rx_cur].status & Rx_Desc::OWN); count--, ++_rx_cur %= RX_BUFS) {
+            for(unsigned int count = RX_BUFS, i = _rx_cur; count && !(_rx_ring[i].status & Rx_Desc::OWN); count--, ++i %= RX_BUFS, _rx_cur = i) {
                 // NIC received a frame in _rx_buffer[_rx_cur], let's check if it has already been handled
-                if(_rx_buffer[_rx_cur]->lock()) { // if it wasn't, let's handle it
-                    Buffer * buf = _rx_buffer[_rx_cur];
-                    Rx_Desc * desc = &_rx_ring[_rx_cur];
+                if(_rx_buffer[i]->lock()) { // if it wasn't, let's handle it
+                    Buffer * buf = _rx_buffer[i];
+                    Rx_Desc * desc = &_rx_ring[i];
                     Frame * frame = buf->frame();
 
                     // For the upper layers, size will represent the size of frame->data<T>()
                     buf->size((desc->misc & 0x00000fff) - sizeof(Header) - sizeof(CRC));
 
-                    db<PCNet32>(TRC) << "PCNet32::int:receive(s=" << frame->src() << ",p=" << hex << frame->header()->prot() << dec
+                    db<PCNet32>(TRC) << "PCNet32::handle_int:receive(s=" << frame->src() << ",p=" << hex << frame->header()->prot() << dec
                                      << ",d=" << frame->data<void>() << ",s=" << buf->size() << ")" << endl;
 
-                    db<PCNet32>(INF) << "PCNet32::handle_int:desc[" << _rx_cur << "]=" << desc << " => " << *desc << endl;
+                    db<PCNet32>(INF) << "PCNet32::handle_int:desc[" << i << "]=" << desc << " => " << *desc << endl;
 
                     IC::disable(IC::irq2int(_irq));
                     if(!notify(frame->header()->prot(), buf)) // No one was waiting for this frame, so let it free for receive()
@@ -332,7 +336,7 @@ void PCNet32::handle_int()
  	}
 
         if(csr0 & CSR0_ERR) { // Error
-            db<PCNet32>(WRN) << "PCNet32::int:error =>";
+            db<PCNet32>(WRN) << "PCNet32::handle_int:error =>";
 
             if(csr0 & CSR0_MERR) { // Memory
         	db<PCNet32>(WRN) << " memory";

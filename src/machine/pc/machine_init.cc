@@ -4,24 +4,38 @@
 
 __BEGIN_SYS
 
-void PC::init()
+void Machine::init()
 {
-    db<Init, PC>(TRC) << "PC::init()" << endl;
+    db<Init, Machine>(TRC) << "Machine::init()" << endl;
 
-    if(Traits<PC_IC>::enabled)
-        PC_IC::init();
+    if(Traits<IC>::enabled)
+        IC::init();
 
-    if(Traits<PC_PCI>::enabled)
-        PC_PCI::init();
+    if(Traits<Timer>::enabled)
+        Timer::init();
 
-    if(Traits<PC_Timer>::enabled)
-        PC_Timer::init();
+    if(Traits<PCI>::enabled)
+        PCI::init();
 
-    if(Traits<PC_Scratchpad>::enabled)
-        PC_Scratchpad::init();
+#ifdef __SCRATCHPAD_H
+    if(Traits<Scratchpad>::enabled)
+        Scratchpad::init();
+#endif
 
-    if(Traits<PC_Ethernet>::enabled)
-        PC_Ethernet::init();
+#ifdef __KEYBOARD_H
+    if(Traits<Keyboard>::enabled)
+        Keyboard::init();
+#endif
+
+#ifdef __FPGA_H
+    if(Traits<FPGA>::enabled)
+        FPGA::init();
+#endif
+
+#ifdef __NIC_H
+    if(Traits<Ethernet>::enabled)
+        Initializer<Ethernet>::init();
+#endif
 }
 
 __END_SYS

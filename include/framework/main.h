@@ -25,12 +25,15 @@ private:
 
 __END_SYS
 
-#include <cpu.h>
-#include <mmu.h>
-#include <task.h>
-#include <thread.h>
+#include <architecture/cpu.h>
+#include <architecture/mmu.h>
 #include <system.h>
-#include <alarm.h>
+#include <process.h>
+
+#include <time.h>
+#include <memory.h>
+#include <synchronizer.h>
+#include <communicator.h>
 
 #include "handle.h"
 
@@ -67,33 +70,33 @@ BIND(Alarm);
 BIND(Delay);
 
 BIND(Network);
-BIND(IP);
-BIND(ICMP);
-BIND(UDP);
-BIND(TCP);
-BIND(DHCP);
+EXPORT(IPC);
+EXPORT(IP);
+EXPORT(ICMP);
+EXPORT(UDP);
+EXPORT(TCP);
+EXPORT(DHCP);
 
-//TBIND(Link);
-//TBIND(Port);
-
-template<typename Channel, typename Network = typename Channel::Network, bool connectionless = Channel::connectionless>
-class Link: public _SYS::Link<Channel, Network, connectionless>
+template<typename Channel, bool connectionless = Channel::connectionless>
+class Link: public _SYS::Handle<_SYS::Link<Channel, connectionless>>
 {
 private:
-    typedef typename _SYS::Link<Channel, Network, connectionless> Base;
+    typedef typename _SYS::Handle<_SYS::Link<Channel, connectionless>> Base;
 
 public:
-    Link(const typename Base::Local_Address & local, const typename Base::Address & peer = Base::Address::NULL): Base(local, peer) {}
+    template<typename ... Tn>
+    Link(const Tn & ... an): Base(an ...) {};
 };
 
-template<typename Channel, typename Network = typename Channel::Network, bool connectionless = Channel::connectionless>
-class Port: public _SYS::Port<Channel, Network, connectionless>
+template<typename Channel, bool connectionless = Channel::connectionless>
+class Port: public _SYS::Handle<_SYS::Port<Channel, connectionless>>
 {
 private:
-    typedef typename _SYS::Port<Channel, Network, connectionless> Base;
+    typedef typename _SYS::Handle<_SYS::Port<Channel, connectionless>> Base;
 
 public:
-    Port(const typename Base::Local_Address & local): Base(local) {}
+    template<typename ... Tn>
+    Port(const Tn & ... an): Base(an ...) {};
 };
 
 __END_API

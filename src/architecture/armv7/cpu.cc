@@ -6,51 +6,61 @@
 __BEGIN_SYS
 
 // Class attributes
-unsigned int ARMv7::_cpu_clock;
-unsigned int ARMv7::_bus_clock;
+unsigned int CPU::_cpu_clock;
+unsigned int CPU::_bus_clock;
 
 // Class methods
-void ARMv7::Context::save() volatile
+void CPU::Context::save() volatile
 {
-    ASM("       mov     r2, pc                  \n"
-        "       push    {r2}                    \n"
-        "       push    {r0-r12, lr}            \n"
-        "       mrs     r2, xpsr                \n"
-        "       push    {r2}                    \n"
-        "       str     sp, [%0]                \n"
-        : : "r"(this));
+    ASM("       str     r12, [sp,#-68]          \n"
+        "       mov     r12, pc                 \n");
+    if(thumb)
+        ASM("       orr r12, #1                     \n");
+
+    ASM("       push    {r12}                   \n"
+        "       ldr     r12, [sp,#-64]          \n"
+        "       push    {r0-r12, lr}            \n");
+    mrs12();
+    ASM("       push    {r12}                   \n"
+        "       sub     sp, #4                  \n"
+        "       pop     {r12}                   \n"
+        "       str     sp, [%0]                \n" : : "r"(this));
 }
 
-void ARMv7::Context::load() const volatile
+void CPU::Context::load() const volatile
 {
-    System::_heap->free(reinterpret_cast<void *>(Memory_Map<Machine>::SYS_STACK), Traits<System>::STACK_SIZE);
+    System::_heap->free(reinterpret_cast<void *>(Memory_Map::SYS_STACK), Traits<System>::STACK_SIZE);
     ASM("       mov     sp, %0                  \n"
-        "       isb                             \n"     // serialize the pipeline so that SP gets updated before the pop
-        "       pop     {r2}                    \n"
-        "       msr     xpsr, r2                \n"
-        "       pop     {r0-r12, lr}            \n"
-        "       pop     {pc}                    \n"
-        : : "r"(this));
+        "       isb                             \n" // serialize the pipeline so that SP gets updated before the pop
+        "       pop     {r12}                   \n" : : "r"(this));
+    msr12();
+    ASM("       pop     {r0-r12, lr}            \n"
+        "       pop     {pc}                    \n");
 }
 
-void ARMv7::switch_context(Context * volatile * o, Context * volatile n)
+// This function assumes A[T]PCS (i.e. "o" is in r0/a0 and "n" is in r1/a1)
+void CPU::switch_context(Context ** o, Context * n)
 {
-    ASM("       adr     r2, .ret                \n"
-        "       push    {r2}                    \n"
-        "       push    {r0-r12, lr}            \n"
-        "       mrs     r2, xpsr                \n"
-        "       push    {r2}                    \n"
-        "       str     sp, [%0]                \n"
-
-        "       mov     sp, %1                  \n"
-        "       isb                             \n"     // serialize the pipeline so that SP gets updated before the pop
-        "       pop     {r2}                    \n"
-        "       msr     xpsr, r2                \n"
-        "       pop     {r0-r12, lr}            \n"
-        "       pop     {r2}                    \n"
-        "       mov     pc, r2                  \n"     // popping directly into PC causes an Usage Fault???
-        ".ret:  bx      lr                      \n"
-        : : "r"(o), "r"(n));
+    ASM("       sub     sp, #4                  \n"     // reserve room for PC
+        "       push    {r12}                   \n"     // save tmp register
+        "       adr     r12, .ret               \n");   // calculate return address
+if(thumb)
+    ASM("       orr r12, #1                     \n");   // adjust thumb
+    ASM("       str     r12, [sp,#4]            \n"     // save calculate PC
+        "       pop     {r12}                   \n"     // restore tmp register
+        "       push    {r0-r12, lr}            \n");   // save all registers
+    mrs12();                                            // move flags to tmp register
+    ASM("       push    {r12}                   \n"     // save flags
+        "       str     sp, [r0]                \n"     // update Context * volatile * o
+        "       mov     sp, r1                  \n"     // get Context * volatile n into SP
+        "       isb                             \n"     // serialize the pipeline so SP gets updated before the pop
+        "       pop     {r12}                   \n");   // pop flags into tmp register
+    msr12();                                            // restore flags
+    ASM("       pop     {r0-r12, lr}            \n");   // restore all registers
+    if((Traits<Build>::MODEL == Traits<Build>::eMote3) || (Traits<Build>::MODEL == Traits<Build>::LM3S811))
+        int_enable();
+    ASM("       pop     {pc}                    \n"     // restore PC
+        ".ret:  bx      lr                      \n");   // return
 }
 
 __END_SYS

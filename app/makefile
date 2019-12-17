@@ -2,16 +2,15 @@
 
 include ../makedefs
 
-all: install
+SUBDIRS := $(shell find * -maxdepth 0 -type d)
 
-$(APPLICATION):	$(APPLICATION).o $(LIB)/*
-		$(ALD) $(ALDFLAGS) -o $@ $(APPLICATION).o
+all:		$(APPLICATION)
 
-$(APPLICATION).o: $(APPLICATION).cc $(SRC)
-		$(ACC) $(ACCFLAGS) -o $@ $<
+$(APPLICATION):	FORCE
+		(cd $@ && $(MAKE))
 
-install: $(APPLICATION)
-		$(INSTALL) $(APPLICATION) $(IMG)
-		
 clean:
-		$(CLEAN) *.o $(APPLICATION)
+		make MAKE:="$(MAKECLEAN)" $(APPLICATION)
+
+FORCE:
+		

@@ -57,25 +57,24 @@ private:
     Handle(_Stub * s) { _stub = s; }
 
 public:
-    // Dereferencing handles for Task(cs, ds)
-    Handle(const Handle<Segment> & cs, const Handle<Segment> & ds) { _stub = new _Stub(*cs._stub, *ds._stub); }
-
-    // Dereferencing handle for Thread(task, an ...)
-    template<typename ... Tn>
-    Handle(const Handle<Task> & t, const Tn & ... an) { _stub = new _Stub(*t._stub, an ...); }
-
     template<typename ... Tn>
     Handle(const Tn & ... an) { _stub = new _Stub(an ...); }
+
+    // Dereferencing handles for Task(cs, ds, ...)
+    template<typename ... Tn>
+    Handle(Handle<Segment> * cs, Handle<Segment> * ds, const Tn & ... an) { _stub = new _Stub(*cs->_stub, *ds->_stub, an ...); }
 
     ~Handle() { if(_stub) delete _stub; }
 
     static Handle<Component> * self() { return new (_Stub::self()) Handled<Component>; }
 
     // Process management
-    void suspend() { _stub->suspend(); }
-    void resume() { _stub->resume(); }
+    int priority() { return _stub->priority(); }
+    void priority(int p) { _stub->priority(p); }
     int join() { return _stub->join(); }
     int pass() { return _stub->pass(); }
+    void suspend() { _stub->suspend(); }
+    void resume() { _stub->resume(); }
     static void yield() { _Stub::yield(); }
     static void exit(int r = 0) { _Stub::exit(r); }
     static volatile bool wait_next() { return _Stub::wait_next(); }
@@ -85,12 +84,15 @@ public:
     Handle<Segment> * data_segment() const { return new (_stub->data_segment()) Handled<Segment>; }
     CPU::Log_Addr code() const { return _stub->code(); }
     CPU::Log_Addr data() const { return _stub->data(); }
+    Handle<Thread> * main() const { return new (_stub->main()) Handled<Thread>; }
 
     // Memory Management
     CPU::Phy_Addr pd() { return _stub->pd(); }
-    CPU::Log_Addr attach(const Handle<Segment> & seg) { return _stub->attach(*seg._stub); }
-    CPU::Log_Addr attach(const Handle<Segment> & seg, CPU::Log_Addr addr) { return _stub->attach(*seg._stub, addr); }
-    void detach(const Handle<Segment> & seg) { _stub->detach(*seg._stub); }
+    CPU::Log_Addr attach(Handle<Segment> * seg) { return _stub->attach(*seg->_stub); }
+    CPU::Log_Addr attach(Handle<Segment> * seg, CPU::Log_Addr addr) { return _stub->attach(*seg->_stub, addr); }
+    void detach(Handle<Segment> * seg) { _stub->detach(*seg->_stub); }
+    void detach(Handle<Segment> * seg, CPU::Log_Addr addr) { _stub->detach(*seg->_stub, addr); }
+    CPU::Phy_Addr physical(const CPU::Log_Addr addr) { return _stub->physical(addr); }
 
     unsigned int size() const { return _stub->size(); }
     CPU::Phy_Addr phy_address() const { return _stub->phy_address(); }
@@ -109,7 +111,7 @@ public:
 
     // Timing
     template<typename T>
-    static void delay(T a) { _Stub::delay(a); }
+    static void delay(T t) { _Stub::delay(t); }
 
     void reset() { _stub->reset(); }
     void start() { _stub->start(); }
@@ -120,11 +122,17 @@ public:
     int ticks() { return _stub->ticks(); }
     int read() { return _stub->read(); }
 
+    const Microsecond period() const { return _stub->period(); }
+    void period(const Microsecond p) { _stub->period(p); }
+    static Hertz alarm_frequency() { return _Stub::alarm_frequency(); }
+
     // Communication
     template<typename ... Tn>
     int send(Tn ... an) { return _stub->send(an ...);}
     template<typename ... Tn>
     int receive(Tn ... an) { return _stub->receive(an ...);}
+    template<typename ... Tn>
+    int reply(Tn ... an) { return _stub->reply(an ...);}
 
     template<typename ... Tn>
     int read(Tn ... an) { return _stub->read(an ...);}

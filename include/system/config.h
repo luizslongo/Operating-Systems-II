@@ -5,13 +5,17 @@
 
 //============================================================================
 // ARCHITECTURE, MACHINE, AND APPLICATION SELECTION
-// This section is generated automatically from makedefs
+// This section is generated automatically from makedefs by $EPOS/etc/makefile
 //============================================================================
-#define MODExxx
+#define SMOD xxx
 #define ARCH xxx
 #define MACH xxx
 #define MMOD xxx
 #define APPL xxx
+#define __mode_xxx__
+#define __arch_xxx__
+#define __mach_xxx__
+#define __mmod_xxx__
 
 //============================================================================
 // NAMESPACES AND DEFINITIONS
@@ -34,10 +38,11 @@ namespace EPOS {
 
 #define __BEGIN_SYS             namespace EPOS { namespace S {
 #define __END_SYS               }}
+#define __IN_SYS(X)             namespace EPOS { namespace S { X }}
 #define __USING_SYS             using namespace EPOS::S;
 #define _SYS                    ::EPOS::S
 
-#ifndef MODEkernel
+#ifndef __mode_kernel__
 namespace EPOS {
     using namespace S;
     using namespace S::U;
@@ -45,34 +50,123 @@ namespace EPOS {
 #endif
 
 #define __HEADER_ARCH(X)        <architecture/ARCH/X.h>
-#define __HEADER_MACH(X)        <machine/MACH/X.h>
-#define __MACH_TRAITS_T(X)      <machine/MACH/X##_traits.h>
-#define __MACH_TRAITS(X)        __MACH_TRAITS_T(X)
-#define __MACH_CONFIG_T(X)      <machine/MACH/X##_config.h>
-#define __MACH_CONFIG(X)        __MACH_CONFIG_T(X)
-#define __APPL_TRAITS_T(X)      <../app/X##_traits.h>
+#define __HEADER_MACH(X)        <machine/MACH/MACH/**/_##X.h>
+#define __HEADER_MMOD(X)        <machine/MACH/MMOD/MMOD/**/_##X.h>
+#define __HEADER_TRAN(X)        <transducer/X.h>
+#define __APPL_TRAITS_T(X)      <../app/X/X##_traits.h>
 #define __APPL_TRAITS(X)        __APPL_TRAITS_T(X)
 
-#define __ARCH_TRAITS_H         __HEADER_ARCH(traits)
-#define __MACH_TRAITS_H         __MACH_TRAITS(MMOD)
-#define __MACH_CONFIG_H         __MACH_CONFIG(MMOD)
-#define __APPL_TRAITS_H         __APPL_TRAITS(APPL)
+#define __ARCHITECTURE_TRAITS_H __HEADER_ARCH(traits)
+#define __MACHINE_TRAITS_H      __HEADER_MMOD(traits)
+#define __APPLICATION_TRAITS_H  __APPL_TRAITS(APPL)
 
 #define ASM                     __asm__ __volatile__
 
 //============================================================================
 // ASSERT (for pre and post conditions)
 //============================================================================
-//#define assert(expr)    ((expr) ? static_cast<void>(0) : Assert::fail (#expr, __FILE__, __LINE__, __PRETTY_FUNCTION__))
-#define assert(expr)    (static_cast<void>(0))
+#define assert(expr)    ((expr) ? static_cast<void>(0) : Assert::fail (#expr, __FILE__, __LINE__, __PRETTY_FUNCTION__))
+//#define assert(expr)    (static_cast<void>(0))
 
 //============================================================================
 // CONFIGURATION
 //============================================================================
-#include <system/types.h>
 #include <system/meta.h>
-#include __APPL_TRAITS_H
-#include <system/info.h>
+#include <system/traits.h>
+#include __APPLICATION_TRAITS_H
+#include <system/types.h>
+
+#define __CPU_H                 __HEADER_ARCH(cpu)
+#define __MMU_H                 __HEADER_ARCH(mmu)
+
+#define __MACH_H                __HEADER_MACH(machine)
+#define __IC_H                  __HEADER_MACH(ic)
+#define __TIMER_H               __HEADER_MACH(timer)
+
+#ifdef __mmod_legacy_pc__
+#define __TSC_H                 __HEADER_ARCH(tsc)
+#define __PMU_H                 __HEADER_ARCH(pmu)
+
+#define __PCI_H                 __HEADER_MACH(pci)
+#define __RTC_H                 __HEADER_MACH(rtc)
+#define __EEPROM_H              __HEADER_MACH(eeprom)
+#define __UART_H                __HEADER_MACH(uart)
+#define __DISPLAY_H             __HEADER_MACH(display)
+#define __KEYBOARD_H            __HEADER_MACH(keyboard)
+#define __SCRATCHPAD_H          __HEADER_MACH(scratchpad)
+#define __NIC_H                 __HEADER_MACH(nic)
+#define __FPGA_H                __HEADER_MACH(fpga)
+#define __ipv4__
+#define __tstp__
+
+#define __KEYPAD_H              __HEADER_TRAN(keypad)
+
+#endif
+
+#ifdef __mmod_lm3s811__
+#define __cortex_m__
+#define __cortex_m3__
+#define __TSC_H                 __HEADER_ARCH(tsc)
+
+#define __UART_H                __HEADER_MACH(uart)
+#define __GPIO_H                __HEADER_MACH(gpio)
+
+#define __PLUVIOMETER_H         __HEADER_TRAN(pluviometer)
+#endif
+
+#ifdef __mmod_emote3__
+#define __cortex_m__
+#define __cortex_m3__
+#define __TSC_H                 __HEADER_ARCH(tsc)
+
+#define __EEPROM_H              __HEADER_MACH(eeprom)
+#define __UART_H                __HEADER_MACH(uart)
+#define __SPI_H                 __HEADER_MACH(spi)
+#define __RS485_H               __HEADER_MACH(rs485)
+#define __USB_H                 __HEADER_MACH(usb)
+#define __I2C_H                 __HEADER_MACH(i2c)
+#define __GPIO_H                __HEADER_MACH(gpio)
+#define __ADC_H                 __HEADER_MACH(adc)
+#define __PWM_H                 __HEADER_MACH(pwm)
+#define __WATCHDOG_H            __HEADER_MACH(watchdog)
+#define __NIC_H                 __HEADER_MACH(nic)
+#define __tstp__
+
+#define __CO2_SENSOR_H          __HEADER_TRAN(co2_sensor)
+#define __PLUVIOMETER_H         __HEADER_TRAN(pluviometer)
+#define __PRESSURE_SENSOR_H     __HEADER_TRAN(pressure_sensor)
+#endif
+
+#ifdef __mmod_zynq__
+#define __cortex_a__
+#define __cortex_a9__
+#define __TSC_H                 __HEADER_ARCH(tsc)
+#define __PMU_H                 __HEADER_ARCH(pmu)
+
+#define __UART_H                __HEADER_MACH(uart)
+#define __NIC_H                 __HEADER_MACH(nic)
+#define __AES_H                 __HEADER_MACH(aes)
+#define __ipv4__
+#endif
+
+#ifdef __mmod_realview_pbx__
+#define __cortex_a__
+#define __cortex_a9__
+#define __realview_pbx__
+#define __TSC_H                 __HEADER_ARCH(tsc)
+#define __PMU_H                 __HEADER_ARCH(pmu)
+
+#define __UART_H                __HEADER_MACH(uart)
+#endif
+
+#ifdef __mmod_raspberry_pi3__
+#define __cortex_a__
+#define __cortex_a53__
+#define __TSC_H                 __HEADER_ARCH(tsc)
+#define __PMU_H                 __HEADER_ARCH(pmu)
+
+#define __UART_H                __HEADER_MACH(uart)
+#endif
 
 //============================================================================
 // THINGS EVERBODY NEEDS

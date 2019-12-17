@@ -11,11 +11,13 @@ INITS := $(subst .cc,.o,$(shell find *.cc | grep _init))
 all:		crts $(LIBARCH) $(LIBINIT)
 
 crts:		$(CRTS)
-		$(INSTALL) $^ $(LIB)
+		$(INSTALL) $(ARCH)_crt0.o $(LIB)/crt0_$(MMOD).o
+		$(INSTALL) $(ARCH)_crtbegin.o $(LIB)/crtbegin_$(MMOD).o
+		$(INSTALL) $(ARCH)_crtend.o $(LIB)/crtend_$(MMOD).o
 
 .INTERMEDIATE:	$(CRTSI)
 
-$(LIBARCH):	$(LIBARCH)($(OBJS))	
+$(LIBARCH):	$(LIBARCH)($(OBJS))
 
 $(LIBINIT):	$(LIBINIT)($(INITS))
 

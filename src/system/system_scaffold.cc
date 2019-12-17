@@ -1,27 +1,21 @@
-// EPOS System Scaffold and System Abstraction Implementation
+// EPOS System Scaffold and System Component Implementation
 
 #include <utility/ostream.h>
 #include <utility/heap.h>
 #include <machine.h>
-#include <display.h>
+#include <memory.h>
 #include <system.h>
 
 __BEGIN_SYS
 
-// This class purpose is simply to define a well-known entry point for 
+// This class purpose is simply to define a well-known entry point for
 // the system. It must be declared as the first global object in
 // system_scaffold.cc
 class First_Object
 {
 public:
     First_Object() {
-	Display::init();
-
-	if(Traits<System>::multicore) {
-	    System_Info<Machine> * si = reinterpret_cast<System_Info<Machine> *>(Memory_Map<Machine>::SYS_INFO);
-
-	    Machine::smp_init(si->bm.n_cpus);
-	}
+        Machine::pre_init(reinterpret_cast<System_Info *>(Memory_Map::SYS_INFO));
     }
 };
 
@@ -33,7 +27,7 @@ OStream kout;
 OStream kerr;
 
 // System class attributes
-System_Info<Machine> * System::_si = reinterpret_cast<System_Info<Machine> *>(Memory_Map<Machine>::SYS_INFO);
+System_Info * System::_si = reinterpret_cast<System_Info *>(Memory_Map::SYS_INFO);
 char System::_preheap[];
 Segment * System::_heap_segment;
 Heap * System::_heap;

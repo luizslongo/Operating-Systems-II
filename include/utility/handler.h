@@ -38,6 +38,7 @@ class Functor_Handler: public Handler
 public:
     typedef void (Functor)(T *);
 
+public:
     Functor_Handler(Functor * h, T * p): _handler(h), _ptr(p) {}
     ~Functor_Handler() {}
 

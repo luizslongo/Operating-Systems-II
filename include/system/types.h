@@ -1,14 +1,35 @@
-// EPOS Internal Type Management System
+// EPOS Common Types and Type Management System
 
 typedef __SIZE_TYPE__ size_t;
 
 #ifndef __types_h
 #define __types_h
 
-// Memory allocators
 __BEGIN_API
+
+// Memory allocators
 enum System_Allocator { SYSTEM };
 enum Scratchpad_Allocator { SCRATCHPAD };
+enum Color {
+    COLOR_0,  COLOR_1,  COLOR_2,  COLOR_3,  COLOR_4,  COLOR_5,  COLOR_6,  COLOR_7,
+    COLOR_8,  COLOR_9,  COLOR_10, COLOR_11, COLOR_12, COLOR_13, COLOR_14, COLOR_15,
+    COLOR_16, COLOR_17, COLOR_18, COLOR_19, COLOR_20, COLOR_21, COLOR_22, COLOR_23,
+    COLOR_24, COLOR_25, COLOR_26, COLOR_27, COLOR_28, COLOR_29, COLOR_30, COLOR_31,
+    WHITE = COLOR_0
+};
+
+// Power Management Modes
+enum Power_Mode
+{
+    ENROLL,
+    DISMISS,
+    SAME,
+    FULL,
+    LIGHT,
+    SLEEP,
+    OFF
+};
+
 __END_API
 
 extern "C"
@@ -26,147 +47,122 @@ void * operator new[](size_t, const EPOS::System_Allocator &);
 void * operator new(size_t, const EPOS::Scratchpad_Allocator &);
 void * operator new[](size_t, const EPOS::Scratchpad_Allocator &);
 
+void * operator new(size_t, const EPOS::Color &);
+void * operator new[](size_t, const EPOS::Color &);
+
 // Utilities
 __BEGIN_UTIL
-class Bitmaps;
-class CRC;
-class ELF;
-class Handler;
-class Hashes;
-class Heaps;
-class Debug;
-class Lists;
-class Observers;
-class Observeds;
-class OStream;
-class Queues;
-class Random;
-class Spin;
-class SREC;
-class Vectors;
+
+template<int BITS> class Padding {} __attribute__((packed));
+template<> class Padding<8>  { char _padding;          } __attribute__((packed));
+template<> class Padding<16> { short int _padding;     } __attribute__((packed));
+template<> class Padding<32> { long int _padding;      } __attribute__((packed));
+template<> class Padding<64> { long long int _padding; } __attribute__((packed));
+
+typedef unsigned char Percent;
+typedef unsigned char UUID[8];
+
+class Dummy {};
+
 __END_UTIL
 
 __BEGIN_SYS
 
-// System parts
-class Build;
-class Boot;
-class Setup;
-class Init;
-class Utility;
+static const int MAX_INT = -1U/2;
+static const long int MAX_LONG_INT = -1UL/2;
+static const long long int MAX_LONG_LONG_INT = -1ULL/2;
+static const unsigned MAX_UNSIGNED = -1U;
+static const unsigned long MAX_UNSIGNED_LONG = -1UL;
+static const unsigned long long MAX_UNSIGNED_LONG_LONG = -1ULL;
 
-// Architecture Hardware Mediators
-class IA32;
-class IA32_TSC;
-class IA32_MMU;
-class IA32_PMU;
+// Adjusts the precision of the basic time type according to the system's life span,
+// forcing a compilation error through void when a counter overflow becomes possible.
+typedef IF<(Traits<System>::LIFE_SPAN * 1000000 <= MAX_UNSIGNED_LONG), unsigned long,
+           IF<(Traits<System>::LIFE_SPAN * 1000000ULL <= MAX_UNSIGNED_LONG_LONG), unsigned long long,
+              void>::Result>::Result Time_Base;
 
-class ARMv7;
-class ARMv7_TSC;
-class ARMv7_MMU;
 
-// Machine Hardware Mediators
-class PC;
-class PC_PCI;
-class PC_IC;
-class PC_Timer;
-class PC_RTC;
-class PC_EEPROM;
-class PC_Scratchpad;
-class PC_UART;
-class PC_Display;
-class PC_Ethernet;
+// The time (as defined by God Chronos)
+class Second;
+class Milisecond;
+class Microsecond;
 
-class Cortex_M;
-class Cortex_M_IC;
-class Cortex_M_Timer;
-class Cortex_M_RTC;
-class Cortex_M_EEPROM;
-class Cortex_M_Scratchpad;
-class Cortex_M_UART;
-class Cortex_M_Display;
-class Cortex_M_NIC;
-
-class PCNet32;
-class C905;
-class E100;
-class Radio;
-
-class Serial_Display;
-
-// Abstractions
-class System;
-class Application;
-
-class Thread;
-class Active;
-class Periodic_Thread;
-class RT_Thread;
-class Task;
-
-template<typename> class Scheduler;
-namespace Scheduling_Criteria
+class Second
 {
-    class Priority;
-    class FCFS;
-    class RR;
-    class RM;
-    class DM;
-    class EDF;
-    class CPU_Affinity;
-    class GEDF;
-    class PEDF;
-    class CEDF;
+public:
+    Second() {}
+    Second(const Time_Base & time) { _time = time; }
+
+    operator Time_Base() const { return _time; }
+
+private:
+    Time_Base _time;
 };
 
-class Address_Space;
-class Segment;
+class Milisecond
+{
+public:
+    Milisecond() {}
+    Milisecond(const Time_Base & time) { _time = time; }
+    Milisecond(const Second & time) { _time = reinterpret_cast<const Time_Base &>(time) * 1000; }
 
-class Synchronizer;
-class Mutex;
-class Semaphore;
-class Condition;
+    operator Time_Base() const { return _time; }
 
-class Clock;
-class Chronometer;
-class Alarm;
-class Delay;
+private:
+    Time_Base _time;
+};
 
-template<typename NIC, typename Network, unsigned int HTYPE>
-class ARP;
-class Network;
-class IP;
-class ICMP;
-class UDP;
-class TCP;
-class DHCP;
+class Microsecond
+{
+public:
+    Microsecond() {};
+    Microsecond(const Time_Base & time) { _time = time; }
+    Microsecond(const Second & time) { _time = reinterpret_cast<const Time_Base &>(time) * 1000000; }
+    Microsecond(const Milisecond & time) { _time = reinterpret_cast<const Time_Base &>(time) * 1000; }
 
-template<typename Channel, typename Network, bool connectionless>
-class Link;
-template<typename Channel, typename Network, bool connectionless>
-class Port;
+    operator Time_Base() const { return _time; }
 
-// Framework
-class Framework;
-template<typename Component> class Handle;
-template<typename Component> class Adapter;
+private:
+    Time_Base _time;
+};
 
-// Aspects
-class Aspect;
-template<typename Component> class Authenticated;
-template<typename Component> class Shared;
-template<typename Component> class Remote;
+typedef unsigned long Hertz;
+typedef unsigned long PPM; // parts per million
+typedef unsigned long long PPB; // parts per billion
+
+// Infinite times (for alarms and periodic threads)
+enum : unsigned int { INFINITE = -1UL };
+
 
 // System Components IDs
 // The order in this enumeration defines many things in the system (e.g. init)
 typedef unsigned int Type_Id;
-enum 
+enum
 {
-    CPU_ID = 0,
+    FIRST_COMPONENT_ID = 0,
+    THREAD_ID = FIRST_COMPONENT_ID,
+    TASK_ID,
+    ACTIVE_ID,
+    ADDRESS_SPACE_ID,
+    SEGMENT_ID,
+    MUTEX_ID,
+    SEMAPHORE_ID,
+    CONDITION_ID,
+    CLOCK_ID,
+    ALARM_ID,
+    CHRONOMETER_ID,
+    IPC_COMMUNICATOR_ID,
+    UTILITY_ID,
+    LAST_COMPONENT_ID,
+
+    FIRST_MEDIATOR_ID = 100,
+    CPU_ID = FIRST_MEDIATOR_ID,
     TSC_ID,
     MMU_ID,
+    FPU_ID,
+    PMU_ID,
 
-    MACHINE_ID = 10,
+    MACHINE_ID,
     PCI_ID,
     IC_ID,
     TIMER_ID,
@@ -175,68 +171,35 @@ enum
     SCRATCHPAD_ID,
     UART_ID,
     DISPLAY_ID,
+    KEYBOARD_ID,
     NIC_ID,
+    LAST_MEDIATOR_ID,
 
-    THREAD_ID = 20,
-    TASK_ID,
-    ACTIVE_ID,
+    LAST_TYPE_ID = LAST_MEDIATOR_ID,
 
-    ADDRESS_SPACE_ID,
-    SEGMENT_ID,
-
-    MUTEX_ID,
-    SEMAPHORE_ID,
-    CONDITION_ID,
-
-    CLOCK_ID,
-    ALARM_ID,
-    CHRONOMETER_ID,
-
-    IP_ID,
-    ICMP_ID,
-    UDP_ID,
-    TCP_ID,
-    DHCP_ID,
-
-    LINK_ID,
-    PORT_ID,
-
-    UTILITY_ID = 50,
-
-    UNKNOWN_TYPE_ID,
-    LAST_TYPE_ID = UNKNOWN_TYPE_ID - 1
+    UNKNOWN_TYPE_ID = 0xffff
 };
 
 // Type IDs for system components
 template<typename T> struct Type { static const Type_Id ID = UNKNOWN_TYPE_ID; };
 
-template<> struct Type<IA32> { static const Type_Id ID = CPU_ID; };
-template<> struct Type<IA32_TSC> { static const Type_Id ID = TSC_ID; };
-template<> struct Type<IA32_MMU> { static const Type_Id ID = MMU_ID; };
+template<> struct Type<CPU> { static const Type_Id ID = CPU_ID; };
+template<> struct Type<TSC> { static const Type_Id ID = TSC_ID; };
+template<> struct Type<MMU> { static const Type_Id ID = MMU_ID; };
+template<> struct Type<FPU> { static const Type_Id ID = FPU_ID; };
+template<> struct Type<PMU> { static const Type_Id ID = PMU_ID; };
 
-template<> struct Type<ARMv7> { static const Type_Id ID = CPU_ID; };
-template<> struct Type<ARMv7_TSC> { static const Type_Id ID = TSC_ID; };
-template<> struct Type<ARMv7_MMU> { static const Type_Id ID = MMU_ID; };
-
-
-template<> struct Type<PC> { static const Type_Id ID = MACHINE_ID; };
-template<> struct Type<PC_IC> { static const Type_Id ID = IC_ID; };
-template<> struct Type<PC_Timer> { static const Type_Id ID = TIMER_ID; };
-template<> struct Type<PC_UART> { static const Type_Id ID = UART_ID; };
-template<> struct Type<PC_RTC> { static const Type_Id ID = RTC_ID; };
-template<> struct Type<PC_PCI> { static const Type_Id ID = PCI_ID; };
-template<> struct Type<PC_Display> { static const Type_Id ID = DISPLAY_ID; };
-template<> struct Type<PC_Scratchpad> { static const Type_Id ID = SCRATCHPAD_ID; };
-template<> struct Type<PC_Ethernet> { static const Type_Id ID = NIC_ID; };
-
-template<> struct Type<Cortex_M> { static const Type_Id ID = MACHINE_ID; };
-template<> struct Type<Cortex_M_IC> { static const Type_Id ID = IC_ID; };
-template<> struct Type<Cortex_M_Timer> { static const Type_Id ID = TIMER_ID; };
-template<> struct Type<Cortex_M_UART> { static const Type_Id ID = UART_ID; };
-template<> struct Type<Cortex_M_RTC> { static const Type_Id ID = RTC_ID; };
-template<> struct Type<Cortex_M_Display> { static const Type_Id ID = DISPLAY_ID; };
-template<> struct Type<Cortex_M_Scratchpad> { static const Type_Id ID = SCRATCHPAD_ID; };
-
+template<> struct Type<Machine> { static const Type_Id ID = MACHINE_ID; };
+template<> struct Type<IC> { static const Type_Id ID = IC_ID; };
+template<> struct Type<Timer> { static const Type_Id ID = TIMER_ID; };
+template<> struct Type<UART> { static const Type_Id ID = UART_ID; };
+template<> struct Type<RTC> { static const Type_Id ID = RTC_ID; };
+template<> struct Type<PCI> { static const Type_Id ID = PCI_ID; };
+template<> struct Type<Display> { static const Type_Id ID = DISPLAY_ID; };
+template<> struct Type<Keyboard> { static const Type_Id ID = KEYBOARD_ID; };
+template<> struct Type<Scratchpad> { static const Type_Id ID = SCRATCHPAD_ID; };
+template<> struct Type<Ethernet> { static const Type_Id ID = NIC_ID; };
+template<> struct Type<IEEE802_15_4> { static const Type_Id ID = NIC_ID; };
 
 template<> struct Type<Thread> { static const Type_Id ID = THREAD_ID; };
 template<> struct Type<Periodic_Thread> { static const Type_Id ID = THREAD_ID; };
@@ -256,13 +219,9 @@ template<> struct Type<Chronometer> { static const Type_Id ID = CHRONOMETER_ID; 
 template<> struct Type<Alarm> { static const Type_Id ID = ALARM_ID; };
 template<> struct Type<Delay> { static const Type_Id ID = ALARM_ID; };
 
-template<> struct Type<IP> { static const Type_Id ID = IP_ID; };
-template<> struct Type<ICMP> { static const Type_Id ID = ICMP_ID; };
-template<> struct Type<UDP> { static const Type_Id ID = UDP_ID; };
-template<> struct Type<TCP> { static const Type_Id ID = TCP_ID; };
-template<> struct Type<DHCP> { static const Type_Id ID = DHCP_ID; };
-
 template<> struct Type<Utility> { static const Type_Id ID = UTILITY_ID; };
+
+// Type IDs for system components whose parameters are themselves components are defined where they are declared.
 
 __END_SYS
 

@@ -1,8 +1,9 @@
 // EPOS PC AMD PCNet II (Am79C970A) Ethernet NIC Mediator Initialization
 
+#include <machine/machine.h>
+#include <machine/pci.h>
+#include <machine/pc/pc_pcnet32.h>
 #include <system.h>
-#include <machine/pc/machine.h>
-#include <machine/pc/pcnet32.h>
 
 __BEGIN_SYS
 
@@ -41,7 +42,7 @@ PCNet32::PCNet32(unsigned int unit, IO_Port io_port, IO_Irq irq, DMA_Buffer * dm
 
     // Rx_Buffer Ring
     for(unsigned int i = 0; i < RX_BUFS; i++) {
-        _rx_buffer[i] = new (log) Buffer(&_rx_ring[i]);
+        _rx_buffer[i] = new (log) Buffer(this, &_rx_ring[i]);
         _rx_ring[i].phy_addr = phy;
         _rx_ring[i].size = Reg16(-sizeof(Frame)); // 2's comp.
         _rx_ring[i].misc = 0;
@@ -53,7 +54,7 @@ PCNet32::PCNet32(unsigned int unit, IO_Port io_port, IO_Irq irq, DMA_Buffer * dm
 
     // Tx_Buffer Ring
     for(unsigned int i = 0; i < TX_BUFS; i++) {
-        _tx_buffer[i] = new (log) Buffer(&_tx_ring[i]);
+        _tx_buffer[i] = new (log) Buffer(this, &_tx_ring[i]);
         _tx_ring[i].phy_addr = phy;
         _tx_ring[i].size = 0;
         _tx_ring[i].misc = 0;
@@ -73,26 +74,26 @@ void PCNet32::init(unsigned int unit)
     db<Init, PCNet32>(TRC) << "PCNet32::init(unit=" << unit << ")" << endl;
 
     // Scan the PCI bus for device
-    PC_PCI::Locator loc = PC_PCI::scan(PCI_VENDOR_ID, PCI_DEVICE_ID, unit);
+    PCI::Locator loc = PCI::scan(PCI_VENDOR_ID, PCI_DEVICE_ID, unit);
     if(!loc) {
         db<Init, PCNet32>(WRN) << "PCNet32::init: PCI scan failed!" << endl;
         return;
     }
 
     // Try to enable IO regions and bus master
-    PC_PCI::command(loc, PC_PCI::command(loc) | PC_PCI::COMMAND_IO | PC_PCI::COMMAND_MASTER);
+    PCI::command(loc, PCI::command(loc) | PCI::COMMAND_IO | PCI::COMMAND_MASTER);
 
     // Get the config space header and check if we got IO and MASTER
-    PC_PCI::Header hdr;
+    PCI::Header hdr;
     PCI::header(loc, &hdr);
     if(!hdr) {
         db<Init, PCNet32>(WRN) << "PCNet32::init: PCI header failed!" << endl;
         return;
     }
     db<Init, PCNet32>(INF) << "PCNet32::init: PCI header=" << hdr << endl;
-    if(!(hdr.command & PC_PCI::COMMAND_IO))
+    if(!(hdr.command & PCI::COMMAND_IO))
         db<Init, PCNet32>(WRN) << "PCNet32::init: I/O unaccessible!" << endl;
-    if(!(hdr.command & PC_PCI::COMMAND_MASTER))
+    if(!(hdr.command & PCI::COMMAND_MASTER))
         db<Init, PCNet32>(WRN) << "PCNet32::init: not master capable!" << endl;
 
     // Get I/O base port
@@ -112,7 +113,7 @@ void PCNet32::init(unsigned int unit)
     // Register the device
     _devices[unit].device = dev;
     _devices[unit].interrupt = IC::irq2int(irq);
-    
+
     // Install interrupt handler
     IC::int_vector(_devices[unit].interrupt, &int_handler);
 

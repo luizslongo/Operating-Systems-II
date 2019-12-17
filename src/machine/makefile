@@ -2,7 +2,11 @@
 
 include	../../makedefs
 
-SUBDIRS := common $(MACH)
+ifeq ($(MAKE),$(MAKECLEAN))
+SUBDIRS := $(shell find * -maxdepth 0 -type d)
+else
+SUBDIRS := common "$(MACH)"
+endif
 
 all:		$(SUBDIRS)
 
