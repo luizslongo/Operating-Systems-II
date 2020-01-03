@@ -211,7 +211,7 @@ ARCH_CLOCK		= $(call GETTK,CLOCK,$(ARCH_TRAITS))
 TCC		:= gcc -ansi -c -Werror
 TCCFLAGS	:= -m32 -Wall -O -I$(INCLUDE)
 
-TCXX		:= g++ -c -ansi -fno-exceptions -std=c++0x
+TCXX		:= g++ -c -ansi -fno-exceptions -fno-asynchronous-unwind-tables -std=c++0x
 TCXXFLAGS	:= -m32 -Wall -O -I$(INCLUDE)
 
 TCPP		:= gcc -E
