@@ -98,12 +98,11 @@ clean1: FORCE
 		(cd app && $(MAKECLEAN))
 		(cd src && $(MAKECLEAN))
 		(cd img && $(MAKECLEAN))
-		find $(LIB) -maxdepth 1 -type f -exec $(CLEAN) {} \;
+		find $(LIB) -maxdepth 1 -type f -not -name .gitignore -exec $(CLEAN) {} \;
 
 veryclean: clean cleantest
 		(cd tools && $(MAKECLEAN))
-		find $(LIB) -maxdepth 1 -type f -exec $(CLEAN) {} \;
-		find $(BIN) -maxdepth 1 -type f -exec $(CLEAN) {} \;
+		find $(BIN) -maxdepth 1 -type f -not -name .gitignore -exec $(CLEAN) {} \;
 		find $(IMG) -name "*.img" -exec $(CLEAN) {} \;
 		find $(IMG) -name "*.bin" -exec $(CLEAN) {} \;
 		find $(IMG) -name "*.hex" -exec $(CLEAN) {} \;
