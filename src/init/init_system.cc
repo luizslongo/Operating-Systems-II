@@ -62,13 +62,10 @@ public:
             db<Init>(INF) << "Randomizing the Random Numbers Generator's seed: " << endl;
             if(Traits<TSC>::enabled)
                 Random::seed(TSC::time_stamp());
-#if defined(__mach_pc__) && defined(__NIC_H)
-            if(Traits<PCNet32>::enabled) {
-                NIC<Ethernet> * nic = PCNet32::get(0);
-                Random::seed(Random::random() ^ nic->statistics().rx_packets);
-            }
-            if(Traits<E100>::enabled) {
-                NIC<Ethernet> * nic = E100::get(0);
+#ifdef __ipv4__
+            // An ordinary IP network should produce decent entropy
+            if(Traits<Ethernet>::enabled) {
+                NIC<Ethernet> * nic = Traits<Ethernet>::DEVICES::Get<0>::Result::get(0);
                 Random::seed(Random::random() ^ nic->statistics().rx_packets);
             }
 #endif
