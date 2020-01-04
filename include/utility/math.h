@@ -7,10 +7,11 @@
 
 __BEGIN_UTIL
 
-static const float E = 2.71828183;
+constexpr double pi() { return 3.14159265358979323846264338327950288; }
+constexpr float e() { return 2.7182818284590452354; }
 
 template <typename T>
-inline T logf(T num, float base = E, float epsilon = 1e-12)
+inline T logf(T num, float base = e(), float epsilon = 1e-12)
 {
     if(num == 0) return 1;
 
@@ -64,16 +65,19 @@ inline T sqrt(T x)
 }
 
 template <typename T>
-inline T pow(const T & x, unsigned int e)
+inline T pow(const T & x, unsigned int y)
 {
-    if(e == 0) 
+    if(y == 0)
         return 1;
-    else if(e == 1)
+    else if(y == 1)
         return x;
-    else if(e & 1)
-        return pow(x * x, e / 2);
-    else
-        return x * pow(x * x, (e - 1) / 2);
+    else {
+        T tmp = pow(x, y / 2);
+        if((y % 2) == 0)
+            return tmp * tmp;
+        else
+            return x * tmp * tmp;
+    }
 }
 
 inline float fast_log2(float val)
@@ -114,10 +118,8 @@ T abs(const T & x)
     return (x > 0) ? x : -x;
 }
 
-template <typename T>
-T deg2rad(T deg){
-    double PI = 3.14159265358979323846264338327950288;
-    return deg * PI / 180.0;
+float deg2rad(unsigned int deg){
+    return static_cast<float>(deg) * pi() / 180.0;
 }
 
 template <typename T>
@@ -126,9 +128,9 @@ T sin(T x){
     float acc = 1;
     T fact= 1;
     T pow = x;
-    for (int i = 1; abs<float>(acc) > .000001 && i < 100; i++){
-        fact *= ((2*i)*(2*i+1));
-        pow *= -1 * x*x;
+    for (int i = 1; abs<T>(acc) > .000001 && i < 100; i++){
+        fact *= ((2 * i) * (2 * i + 1));
+        pow *= -1 * x * x;
         acc = pow / fact;
         cur += acc;
     }
@@ -143,7 +145,7 @@ T cos(T x) {
     p = 0;
     s = 1;
     t = 1;
-    while(abs<float>(((float)t)/s) > .000001) {
+    while(abs<T>(static_cast<T>(t)/s) > .000001) {
         p++;
         t = (-t * x * x) / ((2 * p - 1) * (2 * p));
         s += t;
