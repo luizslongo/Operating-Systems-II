@@ -10,7 +10,7 @@ __BEGIN_SYS
 UDP::Observed UDP::_observed;
 
 // Methods
-int UDP::send(const Port & from, const Address & to, const void * d, unsigned int s)
+int UDP::send(const Address & from, const Address & to, const void * d, unsigned int s)
 {
     const unsigned char * data = reinterpret_cast<const unsigned char *>(d);
     unsigned int size = (s > sizeof(Data)) ? sizeof(Data) : s;
@@ -31,7 +31,7 @@ int UDP::send(const Port & from, const Address & to, const void * d, unsigned in
 
         if(el == pool->link()) {
             message = packet->data<Message>();
-            new(packet->data<void>()) Header(from, to.port(), size);
+            new(packet->data<void>()) Header(from.port(), to.port(), size);
             message->sum_header(packet->from(), packet->to());
             memcpy(message->data<void>(), data, buf->size() - sizeof(Header) - sizeof(IP::Header));
             message->sum_data(data, buf->size() - sizeof(Header) - sizeof(IP::Header));

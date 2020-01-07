@@ -9,7 +9,7 @@
 __BEGIN_SYS
 
 DHCP::Client::Client(const MAC_Address & mac, IP * ip):
-Link<UDP>(68, Link<UDP>::Address(~0UL, 67)), _xid(Random::random())
+Link<UDP>(UDP::Address(~0UL, 68), UDP::Address(~0UL, 67)), _xid(Random::random())
 {
     IP::Address address = IP::Address::NULL;
     IP::Address netmask = IP::Address::NULL;

@@ -16,21 +16,18 @@ public:
     static const bool connectionless = true;
     static const unsigned int HEADERS_SIZE = 0;
 
-    // IPC addresses are ordinary Object Ids, but Type_Id will be used by Communicator as local address
-    class Address: public Id
-    {
-    public:
-        typedef Type Local;
-
-        enum Null { NULL = Id::NULL };
-
-    public:
-        Address() {}
-        Address(const Null &): Id(Id::NULL) {}
-        Address(const Id & id): Id(id) {}
-
-        Local local() const { return type(); }
-    };
+    // IPC addresses are ordinary Object Ids, but Communicator requires NULL
+    typedef Id::Type_Id Address;
+//    class Address: public Id
+//    {
+//    public:
+//        enum Null { NULL = Id::NULL };
+//
+//    public:
+//        Address() {}
+//        Address(const Null &): Id(Id::NULL) {}
+//        Address(const Id & id): Id(id) {}
+//    };
 
     typedef Message Buffer;
 
