@@ -118,12 +118,12 @@ T abs(const T & x)
     return (x > 0) ? x : -x;
 }
 
-float deg2rad(unsigned int deg){
+inline float deg2rad(unsigned int deg) {
     return static_cast<float>(deg) * pi() / 180.0;
 }
 
 template <typename T>
-T sin(T x){
+T sin(T x) {
     T cur = x;
     float acc = 1;
     T fact= 1;
