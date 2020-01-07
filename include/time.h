@@ -65,7 +65,7 @@ private:
     static void lock();
     static void unlock();
 
-    static void handler(const IC::Interrupt_Id & i);
+    static void handler(IC::Interrupt_Id i);
 
 private:
     Microsecond _time;

@@ -221,12 +221,12 @@ void IC::eoi(unsigned int id)
         _eoi_vector[id](id);
 }
 
-void IC::int_not(const Interrupt_Id & i)
+void IC::int_not(Interrupt_Id i)
 {
     db<IC>(WRN) << "IC::int_not(i=" << i << ")" << endl;
 }
 
-void IC::hard_fault(const Interrupt_Id & i)
+void IC::hard_fault(Interrupt_Id i)
 {
     db<IC>(ERR) << "IC::hard_fault(i=" << i << ")" << endl;
     Machine::panic();

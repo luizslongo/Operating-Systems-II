@@ -2,6 +2,8 @@
 
 #include <network.h>
 
+#ifdef __NIC_H
+
 __BEGIN_SYS
 
 void Network_Common::init()
@@ -27,3 +29,5 @@ void Network_Common::init()
 }
 
 __END_SYS
+
+#endif

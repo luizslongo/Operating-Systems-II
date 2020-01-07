@@ -369,7 +369,7 @@ void Thread::reschedule(unsigned int cpu)
 }
 
 
-void Thread::rescheduler(const IC::Interrupt_Id & i)
+void Thread::rescheduler(IC::Interrupt_Id i)
 {
     lock();
 
@@ -377,7 +377,7 @@ void Thread::rescheduler(const IC::Interrupt_Id & i)
 }
 
 
-void Thread::time_slicer(const IC::Interrupt_Id & i)
+void Thread::time_slicer(IC::Interrupt_Id i)
 {
     lock();
 

@@ -35,7 +35,7 @@ public:
     Hertz clock() { return timer()->clock(); }
 
 protected:
-    static void eoi(const Interrupt_Id & id) { timer()->config(UNIT, _count); }
+    static void eoi(Interrupt_Id id) { timer()->config(UNIT, _count); }
 
 private:
     static void init(const Hertz & frequency) {
@@ -73,7 +73,7 @@ private:
 //     Hertz clock() { return timer()->clock(); }
 //
 // protected:
-//     static void eoi(const Interrupt_Id & id) { timer()->eoi(); }
+//     static void eoi(Interrupt_Id id) { timer()->eoi(); }
 //
 // private:
 //     static void init(const Hertz & frequency) {
@@ -145,7 +145,7 @@ public:
     }
 
 protected:
-    static void eoi(const Interrupt_Id & id) { if(_periodic) timer()->config(UNIT, _count); }
+    static void eoi(Interrupt_Id id) { if(_periodic) timer()->config(UNIT, _count); }
 
 private:
     static BCM_Timer * timer() { return reinterpret_cast<BCM_Timer *>(Memory_Map::TIMER0_BASE); }

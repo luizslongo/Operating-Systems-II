@@ -29,8 +29,8 @@ endif
 ifneq ($(wildcard $(IMG)/$(MACH)_system),)
 DEBUGGER	:= $(DEBUGGER) -ex "add-symbol-file $(call DBSEC,$(SRC)/system/$(MACH)_system,.text)"
 endif
-PEER_DEBUGGER	:= $(DEBUGGER) -ex "add-symbol-file $(call DBSEC,$(APP)/$(APPLICATION),.text)"
-PEER_DEBUGGER	:= $(subst 1235,1236,$(PEER_DEBUGGER))
+DEBUGGER	:= $(DEBUGGER) -ex "add-symbol-file $(call DBSEC,$(APP)/$(APPLICATION)/$(APPLICATION),.text)"
+PEER_DEBUGGER	:= $(subst 1235,1236,$(DEBUGGER))
 endif
 
 PEER_EMULATOR	:= $(subst 1235,1236,$(EMULATOR))
@@ -87,12 +87,12 @@ else
 		$(TERM) "$(EMULATOR)$(IMAGE) $(NETWORK) | $(TEE) $(OUTPUT) \
 		&& $(TCPDUMP) $(APPLICATION).pcap > $(APPLICATION).net \
 		&& read -p 'Press [Enter] key to close ...'" &
-		$(DEBUGGER) $(APP)/$(APPLICATION) &
+		$(DEBUGGER) &
 		sleep 2
 		$(TERM) "$(PEER_EMULATOR)$(PEER_IMAGE) $(PEER_NETWORK) | $(TEE) $(PEER_OUTPUT) \
 		&& $(TCPDUMP) $(PEER).pcap > $(PEER).net \
 		&& read -p 'Press [Enter] key to close ...'" &
-		$(PEER_DEBUGGER) $(APP)/$(PEER) &
+		$(PEER_DEBUGGER) &
 endif
 
 runall:		FORCE

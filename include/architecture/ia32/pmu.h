@@ -704,7 +704,7 @@ public:
     PMU() {}
 
 private:
-    static void int_handler(const Interrupt_Id & i);
+    static void int_handler(Interrupt_Id i);
 
     static void init();
 };

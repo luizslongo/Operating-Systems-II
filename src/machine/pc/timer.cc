@@ -9,7 +9,7 @@ __BEGIN_SYS
 Timer * Timer::_channels[CHANNELS];
 
 // Class methods
-void Timer::int_handler(const Interrupt_Id & i)
+void Timer::int_handler(Interrupt_Id i)
 {
     if((!Traits<System>::multicore || (Traits<System>::multicore && (CPU::id() == 0))) && _channels[ALARM]) {
         _channels[ALARM]->_current[0] = _channels[ALARM]->_initial;
