@@ -14,7 +14,7 @@ protected:
 
 public:
     static void reset();
-    static void int_handler(const IC::Interrupt_Id & interrupt);
+    static void int_handler(IC::Interrupt_Id interrupt);
 };
 
 __END_SYS

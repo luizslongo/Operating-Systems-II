@@ -33,7 +33,7 @@ public:
     Hertz clock() const { return systick()->clock(); }
 
 protected:
-    static void eoi(const Interrupt_Id & id) { systick()->eoi(id); };
+    static void eoi(Interrupt_Id id) { systick()->eoi(id); };
 
     static void init(const Hertz & frequency) {
         systick()->config(systick()->clock() / frequency, true, true);
@@ -92,7 +92,7 @@ public:
     }
 
 protected:
-    static void eoi(const Interrupt_Id & id) {
+    static void eoi(Interrupt_Id id) {
         int i;
         switch(id) {
         case IC::INT_USER_TIMER0: i = 0; break;

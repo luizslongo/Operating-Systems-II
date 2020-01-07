@@ -492,7 +492,7 @@ public:
             return ts;
         }
 
-        static void int_handler(const IC::Interrupt_Id & interrupt) {
+        static void int_handler(IC::Interrupt_Id interrupt) {
             CPU::int_disable();
             Reg32 ints = _ints;
             _ints &= ~ints;
@@ -519,7 +519,7 @@ public:
             }
         }
 
-        static void eoi(const IC::Interrupt_Id & interrupt) {
+        static void eoi(IC::Interrupt_Id interrupt) {
             _ints |= mactimer(MTIRQF);
             mactimer(MTIRQF) = 0;
             IC::disable(IC::INT_NIC0_RX); // Make sure radio and MAC timer don't preempt one another
@@ -867,7 +867,7 @@ public:
 
     static CC2538 * get(unsigned int unit = 0) { return get_by_unit(unit); }
 
-    static void eoi(const IC::Interrupt_Id & interrupt) {
+    static void eoi(IC::Interrupt_Id interrupt) {
         IC::disable(IC::INT_NIC0_TIMER); // Make sure radio and MAC timer don't preempt one another
     }
 
@@ -893,7 +893,7 @@ public:
 private:
     void handle_int();
 
-    static void int_handler(const IC::Interrupt_Id & interrupt);
+    static void int_handler(IC::Interrupt_Id interrupt);
 
     static CC2538 * get_by_unit(unsigned int unit) {
         assert(unit < UNITS);

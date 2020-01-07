@@ -67,12 +67,12 @@ public:
         return id;
     }
 
-    static Interrupt_Id irq2int(const Interrupt_Id & id) { return id; }
-    static Interrupt_Id int2irq(const Interrupt_Id & irq) { return irq; }
+    static Interrupt_Id irq2int(Interrupt_Id id) { return id; }
+    static Interrupt_Id int2irq(Interrupt_Id irq) { return irq; }
 
-    static void ipi(unsigned int cpu, const Interrupt_Id & id) { mbox()->ipi(cpu, id); }
+    static void ipi(unsigned int cpu, Interrupt_Id id) { mbox()->ipi(cpu, id); }
 
-    static void mailbox_eoi(const Interrupt_Id & id) {mbox()->eoi(id); }
+    static void mailbox_eoi(Interrupt_Id id) {mbox()->eoi(id); }
 
     static void init() { mbox()->init(); }; // irq doesn't need initialization
 

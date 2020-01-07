@@ -175,7 +175,7 @@ private:
 
     static bool notify() { return _observed.notify(); }
 
-    static void int_handler(const IC::Interrupt_Id & i);
+    static void int_handler(IC::Interrupt_Id i);
 
     static void reboot();
 

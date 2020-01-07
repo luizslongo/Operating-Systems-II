@@ -62,7 +62,7 @@ public:
 
     Hertz clock() { return CLOCK; }
 
-    void eoi(const IC::Interrupt_Id & int_id) {}
+    void eoi(IC::Interrupt_Id int_id) {}
 
 protected:
     volatile Reg32 & gt(unsigned int o) { return reinterpret_cast<volatile Reg32 *>(this)[o / sizeof(Reg32)]; }

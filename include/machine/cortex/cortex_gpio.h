@@ -56,8 +56,8 @@ public:
 private:
     using Engine::init;
 
-    static void int_handler(const IC::Interrupt_Id & i);
-    static void eoi(const IC::Interrupt_Id & i);
+    static void int_handler(IC::Interrupt_Id i);
+    static void eoi(IC::Interrupt_Id i);
 
 private:
     Port _port;

@@ -23,7 +23,7 @@ const CPU::Reg32 Intel_PMU_V1::_events[EVENTS] = {
 Handler * Intel_PMU_V2::_handlers[];
 
 // Class methods
-void PMU::int_handler(const Interrupt_Id & i)
+void PMU::int_handler(Interrupt_Id i)
 {
 //
 //        //db< Init, Intel_PMU_V1 >(WRN) << "Intel_PMU_V1::PMU_int_handler()\n";
