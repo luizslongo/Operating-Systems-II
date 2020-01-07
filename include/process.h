@@ -133,8 +133,8 @@ protected:
 
     static void reschedule();
     static void reschedule(unsigned int cpu);
-    static void rescheduler(const IC::Interrupt_Id & interrupt);
-    static void time_slicer(const IC::Interrupt_Id & interrupt);
+    static void rescheduler(IC::Interrupt_Id interrupt);
+    static void time_slicer(IC::Interrupt_Id interrupt);
 
     static void dispatch(Thread * prev, Thread * next, bool charge = true);
 

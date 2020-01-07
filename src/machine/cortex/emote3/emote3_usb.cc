@@ -174,7 +174,7 @@ bool USB_Engine::handle_ep0(const USB_2_0::Request::Device_Request & data)
     return false;
 }
 
-void USB_Engine::handle_int(const IC::Interrupt_Id & interrupt)
+void USB_Engine::handle_int(IC::Interrupt_Id interrupt)
 {
     Reg32 index = endpoint(); // Save old index
 

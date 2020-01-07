@@ -87,7 +87,7 @@ public:
         if(IRQS > 64) nvic(IRQ_ENABLE2) = ~0;
     }
 
-    void enable(const Interrupt_Id & id) {
+    void enable(Interrupt_Id id) {
         if(id >= HARD_INT) {
             IRQ i = int2irq(id);
             assert(i < IRQS);
@@ -103,7 +103,7 @@ public:
         if(IRQS > 64) nvic(IRQ_DISABLE2) = ~0;
     }
 
-    void disable(const Interrupt_Id & id) {
+    void disable(Interrupt_Id id) {
         if(id >= HARD_INT) {
             IRQ i = int2irq(id);
             assert(i < IRQS);

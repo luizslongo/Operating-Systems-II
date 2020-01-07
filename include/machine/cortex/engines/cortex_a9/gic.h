@@ -160,7 +160,7 @@ public:
         gic_dist(ICDISER2) = ~0;
     }
 
-    void enable(const Interrupt_Id & id) {
+    void enable(Interrupt_Id id) {
         gic_dist(ICDISER0 + (id / 32) * 4) = 1 << (id % 32);
     }
 
@@ -170,20 +170,20 @@ public:
         gic_dist(ICDICER1) = ~0;
     }
 
-    void disable(const Interrupt_Id & id) {
+    void disable(Interrupt_Id id) {
         gic_dist(ICDICER0 + (id / 32) * 4) = 1 << (id % 32);
     }
 
     int irq2int(int i) { return i; }
     int int2irq(int i) { return i; }
 
-    void send_sgi(unsigned int cpu, const Interrupt_Id & id) {
+    void send_sgi(unsigned int cpu, Interrupt_Id id) {
         Reg32 target_list = 1 << cpu;
         Reg32 filter_list = 0;
         gic_dist(ICDSGIR) = ((filter_list << 24) | (target_list << 16) | (id & 0x0f));
     }
 
-    void send_sgi(const Interrupt_Id & id, Reg32 target_list, Reg32 filter_list) {
+    void send_sgi(Interrupt_Id id, Reg32 target_list, Reg32 filter_list) {
         Reg32 aux = id & 0x0f;
         target_list = target_list & 0x0f;
         filter_list = filter_list & 0x0f;

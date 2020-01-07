@@ -16,7 +16,7 @@ System_Timer_Engine::Count System_Timer_Engine::_count;
 // Class methods
 #ifdef __mmod_raspberry_pi3__
 
-void Timer::int_handler(const Interrupt_Id & i)
+void Timer::int_handler(Interrupt_Id i)
 {
     if(_channels[SCHEDULER] && (--_channels[SCHEDULER]->_current[CPU::id()] <= 0)) {
         _channels[SCHEDULER]->_current[CPU::id()] = _channels[SCHEDULER]->_initial;
@@ -36,7 +36,7 @@ void Timer::int_handler(const Interrupt_Id & i)
 
 #else
 
-void Timer::int_handler(const Interrupt_Id & i)
+void Timer::int_handler(Interrupt_Id i)
 {
     if(_channels[SCHEDULER] && (--_channels[SCHEDULER]->_current[CPU::id()] <= 0)) {
         _channels[SCHEDULER]->_current[CPU::id()] = _channels[SCHEDULER]->_initial;

@@ -67,7 +67,7 @@ public:
 
     Hertz clock() { return CLOCK; }
 
-    void eoi(const IC::Interrupt_Id & int_id) { pt(PTISR) = INT_CLR; }
+    void eoi(IC::Interrupt_Id int_id) { pt(PTISR) = INT_CLR; }
 
     void power(const Power_Mode & mode);
 

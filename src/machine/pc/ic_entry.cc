@@ -791,7 +791,7 @@ void IC::entry()
 };
 
 // Default logical handler
-void IC::int_not(const Interrupt_Id & i)
+void IC::int_not(Interrupt_Id i)
 {
     db<IC,Machine>(WRN) << "IC::int_not(i=" << i << ")" << endl;
 }

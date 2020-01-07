@@ -40,16 +40,16 @@ public:
 
 public:
     static void enable() { nvic()->enable(); }
-    static void enable(const Interrupt_Id & id)  { nvic()->enable(id); }
+    static void enable(Interrupt_Id id)  { nvic()->enable(id); }
     static void disable() { nvic()->disable(); }
-    static void disable(const Interrupt_Id & id) { nvic()->disable(); }
+    static void disable(Interrupt_Id id) { nvic()->disable(); }
 
     // Only works in handler mode (inside IC::entry())
     static Interrupt_Id int_id() { return CPU::flags() & 0x3f; }
-    static Interrupt_Id irq2int(const Interrupt_Id & id) { return nvic()->irq2int(id); }
-    static Interrupt_Id int2irq(const Interrupt_Id & irq) { return nvic()->int2irq(irq); }
+    static Interrupt_Id irq2int(Interrupt_Id id) { return nvic()->irq2int(id); }
+    static Interrupt_Id int2irq(Interrupt_Id irq) { return nvic()->int2irq(irq); }
 
-    static void ipi(unsigned int cpu, const Interrupt_Id & id) {} // NVIC is always single-core
+    static void ipi(unsigned int cpu, Interrupt_Id id) {} // NVIC is always single-core
 
     static void init() { nvic()->init(); };
 
