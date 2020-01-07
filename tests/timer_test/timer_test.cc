@@ -6,7 +6,7 @@ using namespace EPOS;
 
 OStream cout;
 
-void handler(const IC::Interrupt_Id & i)
+void handler(IC::Interrupt_Id i)
 {
     static int elapsed;
 

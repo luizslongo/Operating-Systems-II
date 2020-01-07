@@ -395,9 +395,9 @@ void Agent::handle_ipc()
 
     switch(method()) {
     case CREATE1: {
-        Port<IPC>::Local_Address local;
-        in(local);
-        id(Id(IPC_COMMUNICATOR_ID, reinterpret_cast<Id::Unit_Id>(new Adapter<Port<IPC>>(local))));
+        Port<IPC>::Address addr;
+        in(addr);
+        id(Id(IPC_COMMUNICATOR_ID, reinterpret_cast<Id::Unit_Id>(new Adapter<Port<IPC>>(addr))));
     } break;
     case DESTROY: {
         delete comm;

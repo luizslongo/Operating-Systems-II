@@ -14,7 +14,7 @@ int main()
     cout << "RTC test" << endl;
 
     RTC rtc;
-    RTC::Second t0 = rtc.seconds_since_epoch();
+    Second t0 = rtc.seconds_since_epoch();
 
     cout << "It's now " << t0 << " seconds since epoch." << endl;
 

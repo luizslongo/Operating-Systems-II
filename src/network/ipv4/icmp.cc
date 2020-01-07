@@ -51,7 +51,7 @@ int ICMP::receive(Buffer * buf, Address * from, void * data, unsigned int s)
     return size;
 }
 
-void ICMP::update(IP::Observed * obs, const IP::Protocol & prot, Ethernet::Buffer * buf)
+void ICMP::update(IP::Observed * obs, const IP::Protocol & prot, Buffer * buf)
 {
     db<ICMP>(TRC) << "ICMP::update(obs=" << obs << ",prot=" << prot << ",buf=" << buf << ")" << endl;
 

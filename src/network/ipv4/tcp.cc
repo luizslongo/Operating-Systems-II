@@ -109,11 +109,11 @@ void TCP::Connection::fsend(const Flags & flags)
     IP::send(buf); // implicitly releases the buffer
 }
 
-int TCP::Connection::send(const void * d, unsigned int size)
+int TCP::Connection::write(const void * d, unsigned int size)
 {
     const unsigned char * data = reinterpret_cast<const unsigned char *>(d);
 
-    db<TCP>(TRC) << "TCP::Connection::send(f=" << from() << ",t=" << peer() << ":" << to() << ",d=" << data << ",s=" << size << ")" << endl;
+    db<TCP>(TRC) << "TCP::Connection::write(f=" << from() << ",t=" << peer() << ":" << to() << ",d=" << data << ",s=" << size << ")" << endl;
 
     unsigned int allowed = WINDOW;
     unsigned int left = size; // bytes that have not been sent at all
@@ -127,7 +127,7 @@ int TCP::Connection::send(const void * d, unsigned int size)
         allowed = (allowed > MSS) ? MSS: allowed;
 
         if(allowed && left) {
-            db<TCP>(TRC) << "TCP::Connection::send: send" << endl;
+            db<TCP>(TRC) << "TCP::Connection::write: send" << endl;
 
             int payload = (allowed > left) ? left : allowed;
 
@@ -139,7 +139,7 @@ int TCP::Connection::send(const void * d, unsigned int size)
             if(sequence() == _next)
                 _retransmiting = false;
         } else { // Either window's full or we've sent all there was to
-            db<TCP>(TRC) << "TCP::Connection::send: wait" << endl;
+            db<TCP>(TRC) << "TCP::Connection::write: wait" << endl;
 
             unsigned int old_ack = _current->header()->acknowledgment();
 
@@ -150,7 +150,7 @@ int TCP::Connection::send(const void * d, unsigned int size)
 
             if(_current->header()->acknowledgment() == old_ack) {
                 // Retransmission
-                db<TCP>(TRC) << "TCP::Connection::send: retransmission" << endl;
+                db<TCP>(TRC) << "TCP::Connection::write: retransmission" << endl;
 
                 _retransmiting = true;
                 _sequence = htonl(_current->header()->acknowledgment());
@@ -168,11 +168,11 @@ int TCP::Connection::send(const void * d, unsigned int size)
     _retransmiting = false;
 
     if(tries == RETRIES) {
-        db<TCP>(TRC) << "TCP::send: Enough tries already!" << endl;
+        db<TCP>(TRC) << "TCP::write: enough tries already!" << endl;
 
         return -1;
     } else if(_state != ESTABLISHED && _state != CLOSE_WAIT) {
-        db<TCP>(WRN) << "TCP::send: The connection is not open. It is not possible to stream." << endl;
+        db<TCP>(WRN) << "TCP::write: the connection is not open!" << endl;
 
         return -1;
     }
@@ -193,9 +193,14 @@ int TCP::Connection::dsend(const void * d, unsigned int size)
 
     db<TCP>(TRC) << "TCP::Connection::dsend: SND.NXT=" << _next << ",SND.SEQ=" << sequence() << ",payload=" << size << endl;
 
-    Buffer * pool = IP::alloc(peer(), IP::TCP, sizeof(Header), size);
-    if(!pool)
-        return 0;
+    Buffer * pool;
+//    do {
+        pool = IP::alloc(peer(), IP::TCP, sizeof(Header), size);
+        if(!pool) {
+            db<TCP>(WRN) << "TCP::send: failed to alloc a NIC buffer to send a TCP data segment!" << endl;
+            return 0;
+        }
+//    } while(!pool);
 
     unsigned int headers = sizeof(Header);
     for(Buffer::Element * el = pool->link(); el; el = el->next()) {
@@ -228,11 +233,11 @@ int TCP::Connection::dsend(const void * d, unsigned int size)
     return IP::send(pool) - headers; // implicitly releases the pool
 }
 
-int TCP::Connection::receive(Buffer * pool, void * d, unsigned int s)
+int TCP::Connection::read(Buffer * pool, void * d, unsigned int s)
 {
     unsigned char * data = reinterpret_cast<unsigned char *>(d);
 
-    db<TCP>(TRC) << "TCP::receive(buf=" << pool << ",d=" << d << ",s=" << s << ")" << endl;
+    db<TCP>(TRC) << "TCP::read(buf=" << pool << ",d=" << d << ",s=" << s << ")" << endl;
 
     Buffer::Element * head = pool->link();
     Packet * packet = head->object()->frame()->data<Packet>();
@@ -242,7 +247,7 @@ int TCP::Connection::receive(Buffer * pool, void * d, unsigned int s)
     for(Buffer::Element * el = head; el && (size <= s); el = el->next()) {
         Buffer * buf = el->object();
 
-        db<TCP>(INF) << "TCP::receive:buf=" << buf << " => " << *buf << endl;
+        db<TCP>(INF) << "TCP::read:buf=" << buf << " => " << *buf << endl;
 
         packet = buf->frame()->data<Packet>();
 
@@ -251,11 +256,11 @@ int TCP::Connection::receive(Buffer * pool, void * d, unsigned int s)
             len -= sizeof(Header);
             memcpy(data, segment->data<void>(), len);
 
-            db<TCP>(INF) << "TCP::receive:msg=" << segment << " => " << *segment << endl;
+            db<TCP>(INF) << "TCP::read:msg=" << segment << " => " << *segment << endl;
         } else
             memcpy(data, packet->data<void>(), len);
 
-        db<TCP>(INF) << "TCP::receive:len=" << len << endl;
+        db<TCP>(INF) << "TCP::read:len=" << len << endl;
 
         data += len;
         size += len;
@@ -266,9 +271,9 @@ int TCP::Connection::receive(Buffer * pool, void * d, unsigned int s)
     return size;
 }
 
-void TCP::Connection::update(TCP::Observed * obs, const unsigned long long & socket, Buffer * pool)
+void TCP::Connection::update(TCP::Observed * obs, const TCP::Connection_Id & cid, Buffer * pool)
 {
-    db<TCP>(TRC) << "TCP::Connection::update(obs=" << obs << ",sock=" << hex << socket << ",buf=" << pool << ")" << endl;
+    db<TCP>(TRC) << "TCP::Connection::update(obs=" << obs << ",sock=" << hex << cid << ",buf=" << pool << ")" << endl;
 
     Packet * packet = pool->frame()->data<Packet>();
 
@@ -336,7 +341,7 @@ void TCP::Connection::update(TCP::Observed * obs, const unsigned long long & soc
         || (state_at_arrival == FIN_WAIT1)
         || (state_at_arrival == FIN_WAIT2))
         if(_length)
-            if(!notify(socket, pool))
+            if(!notify(cid, pool))
                 pool->nic()->free(pool);
 
     if(_streaming && relevant)
