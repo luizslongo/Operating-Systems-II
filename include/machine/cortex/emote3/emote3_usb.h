@@ -236,7 +236,7 @@ public:
             break;
         case FULL: {
             // Set D+ USB pull-up resistor, which is controlled by GPIO pin C2 in eMote3
-            pl061->select_pin_function(PL061::PIN2, PL061::FUN_ALTERNATE);
+            pl061->select_pin_function(PL061::PIN2, PL061::FUN_GPIO);
             pl061->direction(1 << 2, PL061::OUT);
             pl061->set(1 << 2);
         } break;
@@ -299,7 +299,7 @@ private:
     static Reg32 _oif;
     static const Descriptor::Device _device_descriptor;
 
-    volatile Reg32 & usb(unsigned int o) { return reinterpret_cast<volatile Reg32 *>(this)[o / sizeof(Reg32)]; }
+    volatile Reg32 & usb(unsigned int o) { return reinterpret_cast<volatile Reg32 *>(Memory_Map::USB0_BASE)[o / sizeof(Reg32)]; }
 };
 
 __END_SYS
