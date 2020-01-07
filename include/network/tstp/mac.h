@@ -424,7 +424,7 @@ private:
 
     // State Machine
 
-    static void update_tx_schedule(const IC::Interrupt_Id & id) {
+    static void update_tx_schedule(IC::Interrupt_Id id) {
         // State: Update TX Schedule
         CPU::int_disable();
         Timer::int_disable();
@@ -552,7 +552,7 @@ private:
     }
 
     // State: Contend CCA (CCA part)
-    static void cca(const IC::Interrupt_Id & id) {
+    static void cca(IC::Interrupt_Id id) {
         if(state_machine_debugged)
             kout << CCA ;
 //        Watchdog::kick();
@@ -588,7 +588,7 @@ private:
     }
 
     // State: RX MF (part 1/3)
-    static void rx_mf(const IC::Interrupt_Id & id) {
+    static void rx_mf(IC::Interrupt_Id id) {
         if(state_machine_debugged)
             kout << RX_MF ;
 //        Watchdog::kick();
@@ -609,7 +609,7 @@ private:
     }
 
     // State: RX Data (part 1/3)
-    static void rx_data(const IC::Interrupt_Id & id) {
+    static void rx_data(IC::Interrupt_Id id) {
         if(state_machine_debugged)
             kout << RX_DATA ;
 // FIXME:        Watchdog::kick();
@@ -629,7 +629,7 @@ private:
     }
 
     // State: TX MFs
-    static void tx_mf(const IC::Interrupt_Id & id) {
+    static void tx_mf(IC::Interrupt_Id id) {
         if(Traits<TSTP>::hysterically_debugged)
             db<TSTP>(TRC) << "TSTP_MAC::tx_mf()" << endl;
 
@@ -657,7 +657,7 @@ private:
         }
     }
 
-    static void tx_data(const IC::Interrupt_Id & id) {
+    static void tx_data(IC::Interrupt_Id id) {
         if(state_machine_debugged)
             kout << TX_DATA;
         if(Traits<TSTP>::hysterically_debugged)
@@ -945,7 +945,7 @@ protected:
 private:
     // State Machine
 
-    static void update_tx_schedule(const IC::Interrupt_Id & id) {
+    static void update_tx_schedule(IC::Interrupt_Id id) {
         if(state_machine_debugged)
             kout << UPDATE_TX_SCHEDULE;
         if(Traits<TSTP>::hysterically_debugged)
@@ -1043,7 +1043,7 @@ private:
         // Radio is assumed to always return to RX after TX
     }
 
-    static void cca_tx(const IC::Interrupt_Id & id) {
+    static void cca_tx(IC::Interrupt_Id id) {
         if(state_machine_debugged)
             kout << CCA_TX;
 

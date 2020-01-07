@@ -34,9 +34,10 @@ public:
 
     typedef UDP::Address Address;
 
-    typedef Data_Observer<Buffer, unsigned long long> Observer; // Condition = Connection::id()
-    typedef Data_Observed<Buffer, unsigned long long> Observed;
+    typedef unsigned long long Connection_Id; //  peer_ip[0] << 56 | peer_ip[1] << 48 | peer_ip[2] << 40 | peer_ip[3] << 32 | peer_port << 16 | local_port;
 
+    typedef Data_Observer<Buffer, Connection_Id> Observer;
+    typedef Data_Observed<Buffer, Connection_Id> Observed;
 
     class Header
     {
@@ -142,8 +143,8 @@ public:
         typedef void (Connection:: * State_Handler)();
 
     public:
-        Connection(const Port & from, const Address & to)
-        : Header(from, to.port(), Random::random() & 0x00ffffff, WINDOW), _peer(to.ip()), _peer_window(0), _next(ntohl(_sequence)),
+        Connection(const Address & from, const Address & to)
+        : Header(from.port(), to.port(), Random::random() & 0x00ffffff, WINDOW), _peer(to.ip()), _peer_window(0), _next(ntohl(_sequence)),
           _unacknowledged(_next), _initial(_next), _state(CLOSED), _handler(&Connection::closed), _current(0), _length(0), _valid(false),
           _streaming(false), _retransmiting(false), _timeout_handler(&timeout,this), _alarm(0), _tries(0), _observer(0) {}
         ~Connection() { if(_alarm) delete _alarm; close(); }
@@ -151,29 +152,29 @@ public:
         const volatile State & state() const { return _state; }
         const Header * header() const { return this; }
 
-        int send(const void * data, unsigned int size);
-        int receive(Buffer * buf, void * data, unsigned int size);
+        int write(const void * data, unsigned int size);
+        int read(Buffer * buf, void * data, unsigned int size);
 
         const IP::Address & peer() const { return _peer; }
 
-        unsigned long long id() const {
-            unsigned long long tmp = _peer[0] << 24 | _peer[1] << 16 | _peer[2] << 8 | _peer[3];
+        Connection_Id id() const {
+            Connection_Id tmp = _peer[0] << 24 | _peer[1] << 16 | _peer[2] << 8 | _peer[3];
             tmp = (tmp << 32) | ((to() << 16) | from());
             return tmp;
         }
 
         void attach(TCP::Observer * obs) { _observer = obs; }
         void detach(TCP::Observer * obs) { _observer = 0; }
-        bool notify(unsigned long long socket, Buffer * buf) {
+        bool notify(const Connection_Id & cid, Buffer * buf) {
             if(_observer) {
-                _observer->update(this, socket, buf);
+                _observer->update(this, cid, buf);
                 return true;
             } else
                 return false;
         }
 
-        static unsigned long long id(const Port & local, const Port & remote, const IP::Address & peer) {
-            unsigned long long tmp = peer[0] << 24 | peer[1] << 16 | peer[2] << 8 | peer[3];
+        static Connection_Id id(const Port & local, const Port & remote, const IP::Address & peer) {
+            Connection_Id tmp = peer[0] << 24 | peer[1] << 16 | peer[2] << 8 | peer[3];
             tmp = (tmp << 32) | ((remote << 16) | local);
             return tmp;
         }
@@ -192,7 +193,7 @@ public:
             _handler = _handlers[s];
         }
 
-        void update(TCP::Observed * osb, const unsigned long long & socket, Buffer * buf);
+        void update(TCP::Observed * osb, const Connection_Id & cid, Buffer * buf);
 
         // State Transition Initiators
         void listen();
@@ -261,11 +262,11 @@ public:
         IP::detach(this, IP::TCP);
     }
 
-    static Connection * attach(Observer * obs, const Port & from, const Address & to) {
-        db<TCP>(TRC) << "TCP::attach(obs=" << obs << ",from=" << hex << from << ",to=" << to << ")" << endl;
+    static Connection * attach(Observer * obs, const Address & from, const Address & to) {
+        db<TCP>(TRC) << "TCP::attach(obs=" << obs << ",from=" << from << ",to=" << to << ")" << endl;
 
         Connection * conn = new Connection(from, to);
-        unsigned long long id = conn->id();
+        Connection_Id id = conn->id();
         conn->attach(obs);
         _observed.attach(conn, id);
 
@@ -284,7 +285,7 @@ public:
     }
 
     static void detach(Observer * obs, Connection * conn) {
-        unsigned long long id = conn->id();
+        Connection_Id id = conn->id();
         conn->detach(obs);
         delete conn;
         _observed.detach(conn, id);
