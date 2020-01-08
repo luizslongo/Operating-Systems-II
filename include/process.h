@@ -111,6 +111,17 @@ protected:
 
     void suspend(bool locked);
 
+    Criterion begin_isr(IC::Interrupt_Id i) {
+        assert(_state == RUNNING);
+        Criterion c = criterion();
+        _link.rank(Criterion::ISR + int(i));
+        return c;
+    }
+    void end_isr(IC::Interrupt_Id i, const Criterion & c) {
+        assert(_state == RUNNING);
+        _link.rank(c);
+    }
+
     static Thread * volatile running() { return _scheduler.chosen(); }
 
     static void lock() {

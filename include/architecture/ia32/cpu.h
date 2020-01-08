@@ -655,7 +655,7 @@ private:
     }
     static void init_stack_helper(Log_Addr sp) {}
 
-    static void smp_init(unsigned int cores);
+    static void smp_barrier_init(unsigned int cores);
     static void init();
 
 private:

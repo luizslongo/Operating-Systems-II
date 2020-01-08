@@ -36,7 +36,7 @@ public:
 
     static void smp_barrier() {}
 
-    static void smp_init(unsigned int n_cpus) { assert(n_cpus == 1); }
+    static void smp_barrier_init(unsigned int n_cpus) { assert(n_cpus == 1); }
 
     static void power(const Power_Mode & mode) {}
     
