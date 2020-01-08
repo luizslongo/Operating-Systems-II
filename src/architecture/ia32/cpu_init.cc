@@ -42,7 +42,7 @@ void CPU::init()
 //    }
 }
 
-void CPU::smp_init(unsigned int cores) {
+void CPU::smp_barrier_init(unsigned int cores) {
     // Core activation in IA32 is handled by the APIC
     _cores = cores;
     if(smp)

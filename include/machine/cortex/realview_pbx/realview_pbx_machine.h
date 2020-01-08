@@ -30,7 +30,9 @@ public:
     static const UUID & uuid() { return System::info()->bm.uuid; }
 
 public:
-    static void smp_init(unsigned int n_cpus) {
+    static void smp_barrier_init(unsigned int n_cpus) {
+        // TODO: I guess this should be in SETUP, so all machines get to INIT with all designated cores enabled
+        // so this method only deals with the barrier initialization (if needed)
         gic_distributor()->smp_init(n_cpus);
     }
 
