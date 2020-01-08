@@ -21,7 +21,7 @@ void Machine::pre_init(System_Info * si)
             // Wake up remaining CPUs
             // si->bm.n_cpus = Traits<Build>::CPUS;
             if(Traits<System>::multicore)
-                smp_init(Traits<Build>::CPUS);
+                smp_barrier_init(Traits<Build>::CPUS);
         }
     } //else
     //        if(Traits<IC>::enabled)

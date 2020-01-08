@@ -33,7 +33,7 @@ public:
     Hertz clock() { return pt()->clock(); }
 
 protected:
-    static void eoi(const Interrupt_Id & id) { pt()->eoi(id); };
+    static void eoi(Interrupt_Id id) { pt()->eoi(id); };
 
 private:
     static void init(const Hertz & frequency) {
@@ -93,7 +93,7 @@ public:
     }
 
 protected:
-    static void eoi(const Interrupt_Id & id) { gt()->eoi(id); };
+    static void eoi(Interrupt_Id id) { gt()->eoi(id); };
 
 private:
     static A9_Global_Timer * gt() { return reinterpret_cast<A9_Global_Timer *>(Memory_Map::GLOBAL_TIMER_BASE); }

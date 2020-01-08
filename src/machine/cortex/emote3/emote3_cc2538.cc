@@ -184,7 +184,7 @@ void CC2538::handle_int()
     }
 }
 
-void CC2538::int_handler(const IC::Interrupt_Id & interrupt)
+void CC2538::int_handler(IC::Interrupt_Id interrupt)
 {
     CC2538 * dev = get_by_interrupt(interrupt);
 

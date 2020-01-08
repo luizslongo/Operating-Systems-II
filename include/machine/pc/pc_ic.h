@@ -496,12 +496,12 @@ public:
 public:
     IC() {}
 
-    static Interrupt_Handler int_vector(const Interrupt_Id & i) {
+    static Interrupt_Handler int_vector(Interrupt_Id i) {
         assert(i < INTS);
         return _int_vector[i];
     }
 
-    static void int_vector(const Interrupt_Id & i, const Interrupt_Handler & h) {
+    static void int_vector(Interrupt_Id i, const Interrupt_Handler & h) {
         db<IC>(TRC) << "IC::int_vector(int=" << i << ",h=" << reinterpret_cast<void *>(h) <<")" << endl;
         assert(i < INTS);
         // WARNING: in static member function 'static void EPOS::S::FPGA::init()': error: array subscript is above array bounds
@@ -513,7 +513,7 @@ public:
         Engine::enable();
     }
 
-    static void enable(const Interrupt_Id & i) {
+    static void enable(Interrupt_Id i) {
         db<IC>(TRC) << "IC::enable(int=" << i << ")" << endl;
         assert(i < INTS);
         Engine::enable(i);
@@ -524,7 +524,7 @@ public:
         Engine::disable();
     }
 
-    static void disable(const Interrupt_Id & i) {
+    static void disable(Interrupt_Id i) {
         db<IC>(TRC) << "IC::disable(int=" << i << ")" << endl;
         assert(i < INTS);
         Engine::disable(i);
@@ -537,7 +537,7 @@ private:
     static void dispatch(unsigned int i);
 
     // Logical handlers
-    static void int_not(const Interrupt_Id & i);
+    static void int_not(Interrupt_Id i);
 
     // Physical handlers
     static void entry();

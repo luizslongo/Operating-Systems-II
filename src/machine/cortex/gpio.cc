@@ -9,12 +9,12 @@ __BEGIN_SYS
 
 GPIO * GPIO::_gpios[PORTS][8];
 
-void GPIO::int_handler(const IC::Interrupt_Id & id)
+void GPIO::int_handler(IC::Interrupt_Id id)
 {
     // GPIO interrupt handling is done at eoi, because some devices generate interrupts faster than the processor can handle
 }
 
-void GPIO::eoi(const IC::Interrupt_Id & id)
+void GPIO::eoi(IC::Interrupt_Id id)
 {
     unsigned int port = id - IC::INT_GPIOA;
     PL061 * pl061 = new(reinterpret_cast<void *>(Memory_Map::GPIOA_BASE + port * 0x1000)) PL061;

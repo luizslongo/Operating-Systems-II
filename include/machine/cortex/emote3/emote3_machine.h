@@ -65,7 +65,7 @@ public:
     
     static void smp_barrier() {}
 
-    static void smp_init(unsigned int n_cpus) { assert(n_cpus == 1); }
+    static void smp_barrier_init(unsigned int n_cpus) { assert(n_cpus == 1); }
 
     static void power(const Power_Mode & mode) {
         // Change in power mode will only be effective when ASM("wfi") is executed

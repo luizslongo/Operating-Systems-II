@@ -579,7 +579,7 @@ public:
 private:
     void handle_int();
 
-    static void int_handler(const IC::Interrupt_Id & interrupt);
+    static void int_handler(IC::Interrupt_Id interrupt);
 
     bool verifyPendingInterrupts(void);
 

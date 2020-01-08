@@ -39,7 +39,7 @@ int i8255x::exec_command(Reg8 cmd, Reg32 dma_addr)
 E100::Device E100::_devices[UNITS];
 
 // Class Methods
-void E100::int_handler(const IC::Interrupt_Id & interrupt)
+void E100::int_handler(IC::Interrupt_Id interrupt)
 {
     db<E100>(TRC) << "E100::int_handler" << endl;
 

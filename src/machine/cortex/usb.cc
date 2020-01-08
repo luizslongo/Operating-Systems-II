@@ -7,11 +7,11 @@
 
 __BEGIN_SYS
 
-void USB::int_handler(const IC::Interrupt_Id & i) {
+void USB::int_handler(IC::Interrupt_Id i) {
     Engine usb; usb.handle_int(i);
 }
 
-void USB::eoi(const IC::Interrupt_Id & int_id) {
+void USB::eoi(IC::Interrupt_Id int_id) {
     Engine usb; usb.eoi();
 }
 

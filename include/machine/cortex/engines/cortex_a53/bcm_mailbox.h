@@ -215,11 +215,11 @@ public:
             return LAST_INT;
     }
 
-    void ipi(unsigned int cpu, const Interrupt_Id & id) {
+    void ipi(unsigned int cpu, Interrupt_Id id) {
         mailbox(MBOX_WS + 16 * cpu) = 1 << 31;
     }
 
-    void eoi(const Interrupt_Id & int_id) {
+    void eoi(Interrupt_Id int_id) {
         unsigned int cpu_base = CPU::id() * 16;
         //Clear all the interrups, as all IPIs use the same ID now
         mailbox(MBOX_WC + cpu_base + 0)  = 1 << 31; // ACK From CPU0

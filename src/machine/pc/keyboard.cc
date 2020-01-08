@@ -84,7 +84,7 @@ char PS2_Keyboard::get()
     return c;
 }
 
-void PS2_Keyboard::int_handler(const IC::Interrupt_Id & i)
+void PS2_Keyboard::int_handler(IC::Interrupt_Id i)
 {
     db<Keyboard>(TRC) << "Keyboard::int_handler(int=" << i << ")" << endl;
 

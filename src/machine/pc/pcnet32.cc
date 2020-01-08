@@ -363,7 +363,7 @@ void PCNet32::handle_int()
 }
 
 
-void PCNet32::int_handler(const IC::Interrupt_Id & interrupt)
+void PCNet32::int_handler(IC::Interrupt_Id interrupt)
 {
     PCNet32 * dev = get_by_interrupt(interrupt);
 
