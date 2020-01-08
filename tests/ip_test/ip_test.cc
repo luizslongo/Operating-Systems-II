@@ -255,10 +255,10 @@ int main()
     cout << "  IP::Header => " << sizeof(IP::Header) << endl;
     cout << "  UDP::Header => " << sizeof(UDP::Header) << endl;
 
-//    icmp_test();
-//    Alarm::delay(2000000);
-//    udp_test();
-//    Alarm::delay(2000000);
+    icmp_test();
+    Alarm::delay(2000000);
+    udp_test();
+    Alarm::delay(2000000);
     tcp_test();
 
     cout << "The end!" << endl;
