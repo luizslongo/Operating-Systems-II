@@ -1,6 +1,7 @@
 // EPOS Cortex-M Interrupt Controller Initialization
 
 #include <architecture/cpu.h>
+#include <architecture/tsc.h>
 #include <machine/ic.h>
 #include <machine/timer.h>
 #include <machine/usb.h>

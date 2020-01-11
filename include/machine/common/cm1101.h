@@ -44,15 +44,14 @@ public:
     static const unsigned int MAX_RESPONSE_LENGTH = 8;
 
 public:
-    CM1101(UART * u): _uart(u), _version(0), _status(OK), _co2(0), _temperature(0), _humidity(0) { get_firmware_version(); }
-    ~CM1101() {}
+    CM1101(UART * uart): _uart(uart), _version(0), _status(OK), _co2(0), _temperature(0), _humidity(0) { get_firmware_version(); }
 
     int get() { return (_status == OK) ? _co2 : 0; }
     int sample() { update_data(); return get(); }
 
-    int co2() { update_data(); return get(); }
-    int temperature() { update_data(); return (_status == OK) ? _temperature : 0; }
-    int humidity() { update_data(); return (_status == OK) ? _humidity : 0;}
+    int co2() { update_data(); return get(); } // in PPM
+    int temperature() { update_data(); return (_status == OK) ? _temperature : 0; } // in °C
+    int humidity() { update_data(); return (_status == OK) ? _humidity : 0;} // in %
 
     void enable() {} // not supported by CM1101
     void disable() {} // not supported by CM1101

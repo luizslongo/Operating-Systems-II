@@ -84,12 +84,32 @@ template<> struct Traits<UART>: public Traits<Machine_Common>
     static const unsigned int DEF_DATA_BITS = 8;
     static const unsigned int DEF_PARITY = 0; // none
     static const unsigned int DEF_STOP_BITS = 1;
+
+    static const unsigned int CM1101_UNIT = 0;
 };
 
 template<> struct Traits<GPIO>: public Traits<Machine_Common>
 {
     static const unsigned int UNITS = 4;
     static const bool supports_power_up = true;
+};
+
+template<> struct Traits<I2C>: public Traits<Machine_Common>
+{
+    static const unsigned int UNITS = 1;
+
+    static const unsigned int LSM330_UNIT = 0;
+    static const unsigned int SI7020_UNIT = 0;
+
+    template<unsigned int UNIT>
+    struct Config {};
+};
+template<> struct Traits<I2C>::Config<0>
+{
+    static const unsigned char SDA_PORT = 'B';
+    static const unsigned char SDA_PIN = 1;
+    static const unsigned char SCL_PORT = 'B';
+    static const unsigned char SCL_PIN = 0;
 };
 
 template<> struct Traits<SPI>: public Traits<Machine_Common>

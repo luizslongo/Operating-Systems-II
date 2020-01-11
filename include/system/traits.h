@@ -96,8 +96,16 @@ class CC1101;
 // Transducer Mediators (i.e. sensors and actuators)
 class Transducers;
 class Dummy_Transducer;
+class Accelerometer;
+class Gyroscope;
+class Thermometer;
+class Alternate_Thermometer;
+class Hygrometer;
+class Alternate_Hygrometer;
+class CO2_Sensor;
 class Pluviometer;
-class Keller_46X;
+class Pressure_Sensor;
+class Keypad;
 
 // API Components
 class System;
