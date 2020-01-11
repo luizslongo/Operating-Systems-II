@@ -6,6 +6,10 @@
 #include <architecture/cpu.h>
 #include <architecture/tsc.h>
 
+#define __ic_common_only__
+#include <machine/ic.h>
+#undef __ic_common_only__
+
 __BEGIN_SYS
 
 class TSC: private TSC_Common
@@ -100,7 +104,7 @@ private:
 
 #if defined(__mmod_emote3__) || defined(__mmod_lm3s811__)
 
-    static void int_handler(const unsigned int & int_id) { _overflow++; }
+    static void int_handler(IC_Common::Interrupt_Id int_id) { _overflow++; }
 
     static volatile Time_Stamp _overflow;
 

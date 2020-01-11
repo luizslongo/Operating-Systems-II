@@ -26,7 +26,9 @@ extern "C" {
         if(_SYS::Traits<_SYS::Monitor>::enabled)
             _SYS::Monitor::init();
 
+#ifdef __NIC_H
         if(_SYS::Traits<_SYS::Network>::enabled)
             _SYS::Network_Common::init();
+#endif
     }
 }
