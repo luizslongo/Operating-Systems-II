@@ -3,7 +3,6 @@
 #ifndef __tranducer_h
 #define __tranducer_h
 
-#include <machine.h>
 #include <smartdata.h>
 
 __BEGIN_SYS
@@ -59,6 +58,30 @@ typedef Responsive_SmartData<Dummy_Transducer> Antigravity;
 typedef Interested_SmartData<Dummy_Transducer::Unit::Wrap<Dummy_Transducer::UNIT>> Antigravity_Proxy;
 
 __END_SYS
+
+#ifdef __ACCELEROMETER_H
+#include __ACCELEROMETER_H
+__IN_SYS(typedef Responsive_SmartData<Accelerometer> Acceleration;)
+__IN_SYS(typedef Interested_SmartData<Accelerometer::Unit::Wrap<Accelerometer::UNIT>> Acceleration_Proxy;)
+#endif
+
+#ifdef __GYROSCOPE_H
+#include __GYROSCOPE_H
+__IN_SYS(typedef Responsive_SmartData<Gyroscope> Angular_Velocity;)
+__IN_SYS(typedef Interested_SmartData<Gyroscope::Unit::Wrap<Gyroscope::UNIT>> Angular_Velocity_Proxy;)
+#endif
+
+#ifdef __THERMOMETER_H
+#include __THERMOMETER_H
+__IN_SYS(typedef Responsive_SmartData<Thermometer> Temperature;)
+__IN_SYS(typedef Interested_SmartData<Thermometer::Unit::Wrap<Thermometer::UNIT>> Temperature_Proxy;)
+#endif
+
+#ifdef __HYGROMETER_H
+#include __HYGROMETER_H
+__IN_SYS(typedef Responsive_SmartData<Hygrometer> Relative_Humidity;)
+__IN_SYS(typedef Interested_SmartData<Hygrometer::Unit::Wrap<Hygrometer::UNIT>> Relative_Humidity_Proxy;)
+#endif
 
 #ifdef __CO2_SENSOR_H
 #include __CO2_SENSOR_H

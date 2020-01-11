@@ -132,9 +132,13 @@ namespace EPOS {
 #define __NIC_H                 __HEADER_MACH(nic)
 #define __tstp__
 
+#define __ACCELEROMETER_H       __HEADER_TRAN(accelerometer)
+#define __GYROSCOPE_H           __HEADER_TRAN(gyroscope)
 #define __CO2_SENSOR_H          __HEADER_TRAN(co2_sensor)
 #define __PLUVIOMETER_H         __HEADER_TRAN(pluviometer)
 #define __PRESSURE_SENSOR_H     __HEADER_TRAN(pressure_sensor)
+#define __THERMOMETER_H         __HEADER_TRAN(thermometer)
+#define __HYGROMETER_H          __HEADER_TRAN(hygrometer)
 #endif
 
 #ifdef __mmod_zynq__
