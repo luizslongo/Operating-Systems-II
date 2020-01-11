@@ -250,7 +250,7 @@ public:
         }
     }
 
-    void handle_int(const unsigned int & interrupt);
+    void handle_int(IC::Interrupt_Id interrupt);
 
     void init();
 

@@ -3,10 +3,13 @@
 #ifndef __emote3_cc2538rf_h
 #define __emote3_cc2538rf_h
 
+#include <system/config.h>
+
+#ifdef __tstp__
+
 #include <utility/convert.h>
-#define __ic_common_only__
 #include <machine/ic.h>
-#undef __ic_common_only__
+#include <machine/machine.h>
 #include <network/ieee802_15_4.h>
 #include <network/ieee802_15_4_mac.h>
 #include <network/tstp/mac.h>
@@ -924,5 +927,7 @@ private:
 };
 
 __END_SYS
+
+#endif
 
 #endif
