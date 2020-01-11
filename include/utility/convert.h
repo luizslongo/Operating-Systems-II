@@ -3,12 +3,20 @@
 #ifndef __convert_h
 #define __convert_h
 
-#include <system/config.h>
+#include <utility/math.h>
 
 __BEGIN_UTIL
 
 namespace Convert
 {
+    template<typename T>
+    inline T deg2rad(T deg) { return deg * pi() / 180.0; }
+
+    template<typename T>
+    inline T g2ms2(T g) { return g * 9.80665; }
+
+    template<typename T>
+    inline T c2k(T c) { return c - 273.15; }
 
     template<typename Count, typename Time, typename Temporary = typename LARGER<Time>::Result>
     inline Count s2count(const Count & frequency, const Time & time) { return static_cast<Temporary>(time) * frequency / 1; }
