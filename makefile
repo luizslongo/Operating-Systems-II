@@ -100,7 +100,10 @@ clean1: FORCE
 		(cd img && $(MAKECLEAN))
 		find $(LIB) -maxdepth 1 -type f -not -name .gitignore -exec $(CLEAN) {} \;
 
-veryclean: clean cleantest
+cleanapps: FORCE
+		$(foreach app,$(APPLICATIONS),cd $(APP)/${app} && $(MAKE) APPLICATION=$(app) clean;)
+
+veryclean: clean cleantest cleanapps
 		(cd tools && $(MAKECLEAN))
 		find $(BIN) -maxdepth 1 -type f -not -name .gitignore -exec $(CLEAN) {} \;
 		find $(IMG) -name "*.img" -exec $(CLEAN) {} \;

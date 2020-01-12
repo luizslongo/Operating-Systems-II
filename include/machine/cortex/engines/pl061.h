@@ -105,10 +105,10 @@ public:
 public:
     unsigned char get() { return gpio(DATA); }
     bool get(const Pin & mask) { return gpio(DATA + (mask << 2)); }
-    void set(unsigned char value) { gpio(DATA) = value; }
-    void set(const Pin & mask, unsigned char value) { gpio(DATA + (mask << 2)) = value * 0xff; }
-    void clear() { set(0); }
-    void clear(const Pin & mask) { set(mask, 0x0); }
+    void set() { gpio(DATA) = 0xff; }
+    void set(const Pin & mask, bool value = true) { gpio(DATA + (mask << 2)) = value * 0xff; }
+    void clear() { gpio(DATA) = 0; }
+    void clear(const Pin & mask) { set(mask, false); }
 
     void direction(const Pin & mask, const Direction & dir) {
         switch(dir) {

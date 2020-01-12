@@ -237,15 +237,15 @@ public:
         case FULL: {
             // Set D+ USB pull-up resistor, which is controlled by GPIO pin C2 in eMote3
             pl061->select_pin_function(PL061::PIN2, PL061::FUN_GPIO);
-            pl061->direction(1 << 2, PL061::OUT);
-            pl061->set(1 << 2, true);
+            pl061->direction(PL061::PIN2, PL061::OUT);
+            pl061->set(PL061::PIN2, true);
         } break;
         case LIGHT:
         case SLEEP:
             break;
         case OFF:
             disable();
-            pl061->clear(1 << 2);
+            pl061->clear(PL061::PIN2);
             break;
         }
     }

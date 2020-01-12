@@ -13,10 +13,9 @@ template<> struct Traits<Build>: public Traits<void>
     static const unsigned int MACHINE = Cortex;
     static const unsigned int MODEL = eMote3;
     static const unsigned int CPUS = 1;
-    static const unsigned int NODES = 2;     // (> 1 => NETWORKING)
+    static const unsigned int NODES = 1;     // (> 1 => NETWORKING)
     static const unsigned int EXPECTED_SIMULATION_TIME = 0;    // s (0 => not simulated)
 };
-
 
 // Utilities
 template<> struct Traits<Debug>: public Traits<void>
