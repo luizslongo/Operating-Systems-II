@@ -65,7 +65,7 @@ inline T sqrt(T x)
 }
 
 template <typename T>
-inline T pow(const T & x, unsigned int y)
+inline T pow(T x, unsigned int y)
 {
     if(y == 0)
         return 1;
@@ -244,8 +244,8 @@ T babylonian_sqrt(const T & a) {
 }
 
 // Greatest Common Divisor (Euclid's algorithm)
-template <typename T>
-T gcd(const T & a, const T & b) {
+template <typename T1, typename T2>
+T1 gcd(T1 a, T2 b) {
     if(b == 0)
         return a;
     else
