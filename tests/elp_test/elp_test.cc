@@ -26,7 +26,7 @@ int elp_link_test()
         peer_mac[5]--;
         ELP::Address peer(peer_mac, 0);
 
-        Link<ELP> com(0, peer);
+        Link<ELP> com(ELP::Address(mac, 0), peer);
 
         NIC<Ethernet>::Address self = nic->address();
         cout << "  MAC: " << self << endl;
@@ -36,7 +36,7 @@ int elp_link_test()
         for(int i = 0; i < ITERATIONS; i++) {
             memset(data, '0' + i, ELP::MTU - 1);
             data[ELP::MTU - 1] = '\0';
-            int sent = com.write(data, sizeof(data));
+            int sent = com.send(data, sizeof(data));
             if(sent == sizeof(data))
                 cout << "  Data to " << peer << ": " << data << endl;
             else
@@ -49,13 +49,13 @@ int elp_link_test()
         peer_mac[5]++;
         ELP::Address peer(peer_mac, 0);
 
-        Link<ELP> com(0, peer);
+        Link<ELP> com(ELP::Address(mac, 0), peer);
 
         char data[ELP::MTU];
 
         for(int i = 0; i < ITERATIONS; i++) {
             ELP::Address peer;
-            int received = com.read(data, sizeof(data));
+            int received = com.receive(data, sizeof(data));
             if(received == sizeof(data))
                 cout << "  Data from " << peer << ": " << data << endl;
             else
@@ -88,7 +88,7 @@ int elp_port_test()
         peer_mac[5]--;
         ELP::Address peer(peer_mac, 0);
 
-        Port<ELP> com(0);
+        Port<ELP> com(ELP::Address(mac, 0));
 
         NIC<Ethernet>::Address self = nic->address();
         cout << "  MAC: " << self << endl;
@@ -107,7 +107,7 @@ int elp_port_test()
     } else { // receiver
         cout << "Receiver:" << endl;
 
-        Port<ELP> com(0);
+        Port<ELP> com(ELP::Address(mac, 0));
 
         char data[ELP::MTU];
 
