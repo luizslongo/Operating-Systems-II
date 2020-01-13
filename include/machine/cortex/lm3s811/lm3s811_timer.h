@@ -6,8 +6,8 @@
 #define __ic_common_only__
 #include <machine/ic.h>
 #undef __ic_common_only__
-#include <machine/cortex/engines/cortex_m3/systick.h>
-#include <machine/cortex/engines/cortex_m3/gptm.h>
+#include <machine/cortex/engine/cortex_m3/systick.h>
+#include <machine/cortex/engine/cortex_m3/gptm.h>
 #include <system/memory_map.h>
 #include <utility/convert.h>
 

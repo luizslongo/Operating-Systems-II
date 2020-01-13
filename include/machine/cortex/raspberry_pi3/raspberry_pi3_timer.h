@@ -7,8 +7,8 @@
 #include <machine/ic.h>
 #undef __ic_common_only__
 #include <machine/timer.h>
-#include <machine/cortex/engines/cortex_a53/bcm_timer.h>
-#include <machine/cortex/engines/cortex_a53/bcm_arm_timer.h>
+#include <machine/cortex/engine/cortex_a53/bcm_timer.h>
+#include <machine/cortex/engine/cortex_a53/bcm_arm_timer.h>
 #include <system/memory_map.h>
 #include <utility/convert.h>
 

@@ -6,7 +6,7 @@
 #define __emote3_i2c_h
 
 #include <architecture/cpu.h>
-#include <machine/cortex/engines/pl061.h>
+#include <machine/cortex/engine/pl061.h>
 #define __i2c_common_only__
 #include <machine/i2c.h>
 #undef __i2c_common_only__

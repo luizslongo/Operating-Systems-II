@@ -3,7 +3,7 @@
 #ifndef __raspberry_pi3_ic_h
 #define __raspberry_pi3_ic_h
 
-#include <machine/cortex/engines/cortex_a53/bcm_mailbox.h>
+#include <machine/cortex/engine/cortex_a53/bcm_mailbox.h>
 #include <system/memory_map.h>
 
 __BEGIN_SYS

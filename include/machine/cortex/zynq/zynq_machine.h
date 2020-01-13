@@ -4,8 +4,8 @@
 #define __zynq_machine_h
 
 #include <machine/machine.h>
-#include <machine/cortex/engines/cortex_a9/gic.h>
-#include <machine/cortex/engines/cortex_a9/scu.h>
+#include <machine/cortex/engine/cortex_a9/gic.h>
+#include <machine/cortex/engine/cortex_a9/scu.h>
 #include <system/memory_map.h>
 #include <system.h>
 

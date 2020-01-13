@@ -6,7 +6,7 @@
 #include <architecture/cpu.h>
 #include <machine/usb.h>
 #include <machine/ic.h>
-#include <machine/cortex/engines/pl061.h>
+#include <machine/cortex/engine/pl061.h>
 
 __BEGIN_SYS
 

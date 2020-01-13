@@ -8,7 +8,7 @@
 #ifdef __mmod_emote3__
 
 #include <machine/uart.h>
-#include <machine/common/cm1101.h>
+#include <machine/engine/cm1101.h>
 
 __BEGIN_SYS
 

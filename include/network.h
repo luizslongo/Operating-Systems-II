@@ -6,7 +6,7 @@
 #include <machine/nic.h>
 #include <network/initializer.h>
 
-#ifdef __NIC_H
+#ifdef __ethernet__
 #include <network/elp.h>
 #endif
 

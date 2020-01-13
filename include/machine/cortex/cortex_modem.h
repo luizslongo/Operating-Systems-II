@@ -1,18 +1,17 @@
 // EPOS Quectel M95 GPRS NIC Mediator, commanded by Quectel AT commands
 
 #include <system/config.h>
-#if !defined(__m95_h) && defined(__NIC_H) && defined(__mmod_emote3__)
-
+#if !defined(__m95_h) && defined(__modem__)
 #define __m95_h
 
 #include <machine.h>
 #include <machine/uart.h>
 #include <machine/gpio.h>
-#include <ieee802_15_4.h>
+#include <network/ethernet.h>
 
 __BEGIN_SYS
 
-class M95: public IEEE802_15_4::NIC_Base<IEEE802_15_4, Traits<NIC>::NICS::Polymorphic>
+class M95: public NIC<Ethernet>
 {
     template <typename Type, int unit> friend void call_init();
 
@@ -92,6 +91,8 @@ private:
     TSC::Time_Stamp _last_send;
     TSC::Time_Stamp _init_timeout;
 };
+
+class Modem: public M95 {};
 
 __END_SYS
 

@@ -4,7 +4,7 @@
 #define __lm3s811_ic_h
 
 #include <machine/ic.h>
-#include <machine/cortex/engines/cortex_m3/nvic.h>
+#include <machine/cortex/engine/cortex_m3/nvic.h>
 #include <system/memory_map.h>
 
 __BEGIN_SYS

@@ -2,7 +2,7 @@
 
 #include <system/config.h>
 
-#if !defined(__m95_h) && defined(__NIC_H)
+#if !defined(__m95_h) && defined(__MODEM_H)
 #define __m95_h
 
 #include <machine/machine.h>

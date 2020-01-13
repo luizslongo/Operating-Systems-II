@@ -2,7 +2,7 @@
 
 #include <system/config.h>
 
-#ifdef __NIC_H
+#ifdef __ethernet__
 
 #ifndef __elp_h
 #define __elp_h

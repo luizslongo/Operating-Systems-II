@@ -4,6 +4,6 @@
 #define __emote3_nic_h
 
 #include "emote3_cc2538.h"
-#include <machine/cortex/engines/m95.h>
+#include <machine/cortex/engine/m95.h>
 
 #endif

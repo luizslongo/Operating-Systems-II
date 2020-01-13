@@ -8,8 +8,8 @@
 #ifdef __mmod_emote3__
 
 #include <utility/convert.h>
-#include <machine/common/si7020.h>
-#include <machine/common/cm1101.h>
+#include <machine/engine/si7020.h>
+#include <machine/engine/cm1101.h>
 #include <machine/i2c.h>
 
 __BEGIN_SYS

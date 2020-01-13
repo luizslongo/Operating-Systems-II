@@ -2,9 +2,9 @@
 
 #include <system/config.h>
 
-#ifdef __NIC_H
+#ifdef __ieee802_15_4__
 
-#include <machine/cortex/emote3/emote3_cc2538.h>
+#include <machine/cortex/emote3/emote3_ieee802_15_4.h>
 
 __BEGIN_SYS
 

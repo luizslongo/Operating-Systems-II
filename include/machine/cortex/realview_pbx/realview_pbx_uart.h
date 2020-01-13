@@ -4,7 +4,7 @@
 #define __realview_pbx_uart_h
 
 #include <machine/uart.h>
-#include <machine/cortex/engines/pl011.h>
+#include <machine/cortex/engine/pl011.h>
 #include <system/memory_map.h>
 
 __BEGIN_SYS

@@ -4,7 +4,7 @@
 #define __zynq_ic_h
 
 #include <machine/ic.h>
-#include <machine/cortex/engines/cortex_a9/gic.h>
+#include <machine/cortex/engine/cortex_a9/gic.h>
 #include <system/memory_map.h>
 
 __BEGIN_SYS

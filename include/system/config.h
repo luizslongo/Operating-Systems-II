@@ -95,6 +95,7 @@ namespace EPOS {
 #define __KEYBOARD_H            __HEADER_MACH(keyboard)
 #define __SCRATCHPAD_H          __HEADER_MACH(scratchpad)
 #define __NIC_H                 __HEADER_MACH(nic)
+#define __ethernet__
 #define __FPGA_H                __HEADER_MACH(fpga)
 #define __ipv4__
 #define __tstp__
@@ -129,6 +130,8 @@ namespace EPOS {
 #define __PWM_H                 __HEADER_MACH(pwm)
 #define __WATCHDOG_H            __HEADER_MACH(watchdog)
 #define __NIC_H                 __HEADER_MACH(nic)
+#define __modem__
+#define __ieee802_15_4__
 #define __tstp__
 
 #define __ACCELEROMETER_H       __HEADER_TRAN(accelerometer)
@@ -148,6 +151,7 @@ namespace EPOS {
 
 #define __UART_H                __HEADER_MACH(uart)
 #define __NIC_H                 __HEADER_MACH(nic)
+#define __ethernet__
 #define __AES_H                 __HEADER_MACH(aes)
 #define __ipv4__
 #endif

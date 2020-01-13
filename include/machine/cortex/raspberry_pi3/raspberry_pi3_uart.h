@@ -4,7 +4,7 @@
 #define __raspberry_pi3_uart_h
 
 #include <machine/uart.h>
-#include <machine/cortex/engines/cortex_a53/bcm_uart.h>
+#include <machine/cortex/engine/cortex_a53/bcm_uart.h>
 #include <system/memory_map.h>
 
 __BEGIN_SYS

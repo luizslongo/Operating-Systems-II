@@ -110,7 +110,7 @@ public:
 private:
     bool backoff_and_send() {
         unsigned int exp = CSMA_CA_MIN_BACKOFF_EXPONENT;
-        unsigned int backoff = pow(2, exp);
+        unsigned int backoff = Math::pow(2, exp);
 
         unsigned int retry = 0;
         for(; (retry < CSMA_CA_RETRIES) ; retry++) {

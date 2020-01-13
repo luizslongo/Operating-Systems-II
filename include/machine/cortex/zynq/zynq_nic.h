@@ -4,11 +4,10 @@
 #define __zynq_nic_h
 
 #include <machine/nic.h>
-#include <machine/cortex/engines/cortex_a9/gem.h>
+#include <machine/cortex/engine/cortex_a9/gem.h>
 
 __BEGIN_SYS
 
-// PCNet32 PC Ethernet NIC
 class Ethernet_Engine: private GEM
 {
 protected:

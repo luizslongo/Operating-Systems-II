@@ -32,7 +32,7 @@ void IC::init()
     _eoi_vector[INT_USER_TIMER1] = User_Timer::eoi;
     _eoi_vector[INT_USER_TIMER2] = User_Timer::eoi;
     _eoi_vector[INT_USER_TIMER3] = User_Timer::eoi;
-#ifdef __NIC_H
+#ifdef __IEEE802_15_4_H
     _eoi_vector[INT_NIC0_RX] = CC2538::eoi;
     _eoi_vector[INT_NIC0_TIMER] = CC2538RF::Timer::eoi;
 #endif

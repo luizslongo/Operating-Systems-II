@@ -32,7 +32,7 @@ void Machine::init()
         FPGA::init();
 #endif
 
-#ifdef __NIC_H
+#if defined (__NIC_H) && defined (__ethernet__)
     if(Traits<Ethernet>::enabled)
         Initializer<Ethernet>::init();
 #endif

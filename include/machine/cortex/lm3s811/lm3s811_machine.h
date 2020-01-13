@@ -4,8 +4,8 @@
 #define __lm3s811_machine_h
 
 #include <machine/machine.h>
-#include <machine/cortex/engines/cortex_m3/scb.h>
-#include <machine/cortex/engines/cortex_m3/systick.h>
+#include <machine/cortex/engine/cortex_m3/scb.h>
+#include <machine/cortex/engine/cortex_m3/systick.h>
 #include "lm3s811_sysctrl.h"
 #include <system/memory_map.h>
 #include <system.h>

@@ -8,7 +8,7 @@
 #ifdef __mmod_emote3__
 
 #include <utility/convert.h>
-#include <machine/common/lsm330.h>
+#include <machine/engine/lsm330.h>
 #include <machine/i2c.h>
 
 __BEGIN_SYS
