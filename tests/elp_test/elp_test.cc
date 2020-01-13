@@ -82,6 +82,7 @@ int elp_port_test()
     cout << "  MAC address: " << mac << endl;
 
     if(mac[5] % 2) { // sender
+        Delay(Second(1)); // Receuver takes more time to reach receiving state in the second execution.
         cout << "Sender:" << endl;
 
         NIC<Ethernet>::Address peer_mac = mac;
