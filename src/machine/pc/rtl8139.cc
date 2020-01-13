@@ -267,7 +267,7 @@ void RTL8139::handle_int()
 
             Frame * frame = reinterpret_cast<Frame *>(rx);
             db<RTL8139>(TRC) << "frame src " << frame->src() << endl;
-            Buffer * buf = new Buffer(this, rx);
+            Buffer * buf = new (SYSTEM) Buffer(this, rx);
             memcpy(buf->frame(), frame, sizeof(Frame));
             db<RTL8139>(TRC) << "buff src " << buf->frame()->src() << endl;
 
