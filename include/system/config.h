@@ -111,7 +111,6 @@ namespace EPOS {
 #define __UART_H                __HEADER_MACH(uart)
 #define __GPIO_H                __HEADER_MACH(gpio)
 
-#define __PLUVIOMETER_H         __HEADER_TRAN(pluviometer)
 #endif
 
 #ifdef __mmod_emote3__

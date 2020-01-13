@@ -347,7 +347,7 @@ void populate_strings()
     if(Traits<E100>::enabled)           enable_component("E100");
     if(Traits<CC2538>::enabled)         enable_component("CC2538");
     if(Traits<AT86RF>::enabled)         enable_component("AT86RF");
-    if(Traits<GEM>::enabled)            enable_component("GEM");
+    if(Traits<Ethernet_NIC>::enabled)   enable_component("Ethernet_NIC");
 
     // Enabled components
     if(Traits<System>::enabled)         enable_component("System");

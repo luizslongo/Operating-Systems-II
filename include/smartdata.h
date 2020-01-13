@@ -1094,7 +1094,7 @@ private:
                     _thread = new (SYSTEM) Periodic_Thread(Microsecond(interest->period()), &updater, _device, interest->expiry(), this);
                 else
                     if(interest->period() != _thread->period())
-                        _thread->period(gcd(_thread->period(), Microsecond(interest->period())));
+                        _thread->period(gcd(_thread->period(),  interest->period()));
             }
             bound = true;
         }

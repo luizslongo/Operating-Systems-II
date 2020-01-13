@@ -90,7 +90,7 @@ class E100;
 class CC2538;
 class M95;
 class AT86RF;
-class GEM;
+class Ethernet_NIC;
 class CC1101;
 
 // Transducer Mediators (i.e. sensors and actuators)

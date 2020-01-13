@@ -2,7 +2,7 @@
 
 #include <system/config.h>
 
-#if defined(__NIC_H)
+#if defined(__NIC_H) && defined(__mmod_emote3__)
 
 #include <machine/cortex/engines/m95.h>
 #include <machine/uart.h>

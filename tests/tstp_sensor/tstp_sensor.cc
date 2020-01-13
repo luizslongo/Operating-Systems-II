@@ -1,5 +1,6 @@
 #include <machine.h>
 #include <process.h>
+#include <network.h>
 #include <smartdata.h>
 
 using namespace EPOS;
