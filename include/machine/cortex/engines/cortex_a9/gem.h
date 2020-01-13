@@ -3,39 +3,22 @@
 #ifndef __gem_h
 #define __gem_h
 
-#include <ethernet.h>
+#include <architecture/cpu.h>
 
 __BEGIN_SYS
 
-class GEM: public Ethernet::NIC_Base<Ethernet, Traits<NIC>::NICS::Polymorphic> //, private Engine
+class GEM
 {
-    template <typename Type, int unit> friend void call_init();
-
-protected:
-    GEM(){}
-
-public:
-    ~GEM() {}
-
-    int send(const Address & dst, const Protocol & prot, const void * data, unsigned int size) { return 0; }
-    int receive(Address * src, Protocol * prot, void * data, unsigned int size) { return 0; }
-
-
-    Buffer * alloc(NIC * nic, const Address & dst, const Protocol & prot, unsigned int once, unsigned int always, unsigned int payload);
-    void free(Buffer * buf) {}
-    int send(Buffer * buf) { return 0; }
-
-    const Address & address() { Address * a = new (SYSTEM) Address; return *a; }
-    void address(const Address & address) {}
-
-    const Statistics & statistics() { Statistics * s = new (SYSTEM) Statistics; return *s; }
-
-    void reset() {}
-
-    static GEM * get(unsigned int unit = 0) { GEM * g = new (SYSTEM) GEM; return g; }
+    // This is a hardware object.
+    // Use with something like "new (Memory_Map::UARTx_BASE) PL011".
 
 private:
-    static void init(unsigned int unit);
+    typedef CPU::Reg32 Reg32;
+
+public:
+
+private:
+    volatile Reg32 & gem(unsigned int o) { return reinterpret_cast<volatile Reg32 *>(this)[o / sizeof(Reg32)]; }
 };
 
 __END_SYS

@@ -9,7 +9,7 @@ __BEGIN_SYS
 
 // TODO: this is just a place holder. Replace with Cortex-A AES!
 template<unsigned int KEY_SIZE>
-class AES;
+class HWAES;
 
 __END_SYS
 

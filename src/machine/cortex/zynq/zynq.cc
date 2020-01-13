@@ -10,7 +10,11 @@ volatile unsigned int Zynq::_cores;
 void Zynq::reboot()
 {
     db<Machine>(WRN) << "Machine::reboot()" << endl;
-//TODO: reboot!
+
+    // This will mess with qemu but works on real hardware, possibly a bug
+    // in qemu. Note that the asserting reset will clear the RAM where the
+    // application is stored.
+    slcr(PSS_RST_CTRL) = 1;
 }
 
 __END_SYS

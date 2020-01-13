@@ -4,6 +4,32 @@
 #define __zynq_nic_h
 
 #include <machine/nic.h>
-#include "gem.h"
+#include <machine/cortex/engines/cortex_a9/gem.h>
+
+__BEGIN_SYS
+
+// PCNet32 PC Ethernet NIC
+class Ethernet_Engine: private GEM
+{
+protected:
+    Ethernet_Engine(unsigned int unit);
+
+public:
+    ~Ethernet_Engine();
+
+    void reset();
+
+private:
+    void handle_int();
+
+    static void int_handler(IC_Common::Interrupt_Id interrupt);
+
+    static void init(unsigned int unit);
+
+private:
+
+};
+
+__END_SYS
 
 #endif

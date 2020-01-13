@@ -1,7 +1,7 @@
-// EPOS Realview PBX (ARM Cortex-A9) IC Mediator Declarations
+// EPOS Zynq-7000 (Cortex-A9) IC Mediator Declarations
 
-#ifndef __realview_pbx_ic_h
-#define __realview_pbx_ic_h
+#ifndef __zynq_ic_h
+#define __zynq_ic_h
 
 #include <machine/ic.h>
 #include <machine/cortex/engines/cortex_a9/gic.h>

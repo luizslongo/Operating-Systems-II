@@ -29,9 +29,9 @@ struct Memory_Map: public Cortex_Memory_Map
         PPS_BASE                = 0xf8f00000, // A9 Private Peripheral Space
         SCU_BASE                = 0xf8f00000, // A9 MP Snoop Control Unit
         GIC_CPU_BASE            = 0xf8f00100,
-        TIMER2_BASE             = 0xf8f00200, // Global Timer
-        TIMER3_BASE             = 0xf8f00600, // Private Timer
-        TIMER4_BASE             = 0xf8f00620, // Private Timer
+        GLOBAL_TIMER_BASE       = 0xf8f00200,
+        PRIVATE_TIMER_BASE      = 0xf8f00600,
+        PRIVATE_TIMER_BASE1     = 0xf8f00620,
         GIC_DIST_BASE           = 0xf8f01000
     };
 
