@@ -179,7 +179,7 @@ template<> struct Traits<Network>: public Traits<void>
     static const unsigned int RETRIES = 3;
     static const unsigned int TIMEOUT = 10; // s
 
-    typedef LIST<IP> NETWORKS;
+    typedef LIST<> NETWORKS;
 };
 
 template<> struct Traits<ELP>: public Traits<Network>

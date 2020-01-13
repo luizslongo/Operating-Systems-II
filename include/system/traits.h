@@ -85,6 +85,7 @@ class IEEE802_15_4;
 class Modem;
 template<typename Family> class NIC;
 class PCNet32;
+class RTL8139;
 class C905;
 class E100;
 class CC2538;

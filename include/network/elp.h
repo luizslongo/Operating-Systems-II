@@ -126,10 +126,10 @@ public:
         _nic->detach(this, PROTOCOL);
     }
 
-    static int send(const Port & from, const Address & to, const void * data, unsigned int size) {
+    static int send(const Address & from, const Address & to, const void * data, unsigned int size) {
         db<ELP>(TRC) << "ELP::send(f=" << from << ",t=" << to << ",d=" << data << ",s=" << size << ")" << endl;
 
-        Binding * binding = Binding::get_by_key(from);
+        Binding * binding = Binding::get_by_key(0);
         if(!binding)
             return 0;
 
@@ -175,9 +175,9 @@ public:
 
     NIC<NIC_Family> * nic() { return _nic; }
 
-    static void attach(Observer * obs, const Port & port) { Binding::rebind(Address::NULL, port); _observed.attach(obs, port); }
-    static void detach(Observer * obs, const Port & port) { _observed.detach(obs, port); Binding::unbind(port); }
-    static bool notify(const Port & port, Buffer * buf) { return _observed.notify(port, buf); }
+    static void attach(Observer * obs, const Address & address) { Binding::rebind(Address::NULL, 0); _observed.attach(obs, 0); }
+    static void detach(Observer * obs, const Address & address) { _observed.detach(obs, 0); Binding::unbind(0); }
+    static bool notify(const Port & port, Buffer * buf) { return _observed.notify(0, buf); }
 
 private:
     void update(NIC_Family::Observed * obs, const Protocol & prot, Buffer * buf) {
