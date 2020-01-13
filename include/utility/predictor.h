@@ -268,8 +268,8 @@ public:
         db<Predictors>(TRC) << "LVP::trickle(t=" << time << ",v=" << value << ",t=" << time << ")" << endl;
 
         float predicted = predict(time);
-        float max_acceptable_error = max(abs(((float)value * (float)_config.relative_error)/100.0f), (float)_config.absolute_error);
-        float error = abs((float)value - predicted);
+        float max_acceptable_error = Math::max(Math::abs(((float)value * (float)_config.relative_error)/100.0f), (float)_config.absolute_error);
+        float error = Math::abs((float)value - predicted);
 
         db<Predictors>(TRC) << "LVP::trickle:real=" << value << ",pred=" << predicted << ",err=" << error << ",max=" << max_acceptable_error << ",t_err:" << _config.time_error << ",miss:" << _miss_predicted << ")" << endl;
 
@@ -376,8 +376,8 @@ public:
         } else {
             float predicted = predict(time);
             OStream cout;
-            float max_acceptable_error = max(abs(((float)value * (float)_config.relative_error)/100.0f), (float)_config.absolute_error);
-            float error = abs((float)value - predicted);
+            float max_acceptable_error = Math::max(Math::abs(((float)value * (float)_config.relative_error)/100.0f), (float)_config.absolute_error);
+            float error = Math::abs((float)value - predicted);
 
             db<Predictors>(TRC) << "LVP::trickle:real=" << value << ",pred=" << predicted << ",err=" << error << ",max=" << max_acceptable_error << ",t_err:" << _config.time_error << ",miss:" << _miss_predicted << ")" << endl;
 

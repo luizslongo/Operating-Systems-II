@@ -17,7 +17,7 @@ class TSTP::Timekeeper: private SmartData, private Data_Observer<Buffer>
 
 private:
     static const unsigned int MAX_DRIFT = 500000; // us
-#ifdef __ieee802_15_4_h
+#ifdef __ieee802_15_4__
     static const unsigned int NIC_TIMER_INTERRUPT_DELAY = IEEE802_15_4::SHR_SIZE * 1000000 / IEEE802_15_4::BYTE_RATE; // us FIXME: this has to come from NIC
 #else
     static const unsigned int NIC_TIMER_INTERRUPT_DELAY = 0; // us

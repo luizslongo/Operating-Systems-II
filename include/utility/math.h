@@ -7,6 +7,9 @@
 
 __BEGIN_UTIL
 
+namespace Math
+{
+
 constexpr double pi() { return 3.14159265358979323846264338327950288; }
 constexpr float e() { return 2.7182818284590452354; }
 
@@ -155,7 +158,7 @@ T largest(const T array[], int size)
     T result = array[0];
     for(int i = 1; i < size; i++)
         if(array[i] > result)
-          result = array[i];
+            result = array[i];
     return result;
 }
 
@@ -165,7 +168,7 @@ T smallest(const T array[], int size)
     T result = array[0];
     for(int i = 1; i < size; i++)
         if(array[i] < result)
-          result = array[i];
+            result = array[i];
     return result;
 }
 
@@ -250,6 +253,8 @@ T1 gcd(T1 a, T2 b) {
         return a;
     else
         return gcd(b, a % b);
+}
+
 }
 
 __END_UTIL

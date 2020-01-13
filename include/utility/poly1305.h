@@ -24,7 +24,7 @@ public:
         // cr = (c_1 * r^q + c_2 * r^(q-1) + ... + c_q * r^1) % (2^130 - 5)
         Bignum cr(0);
         for(; message_len > 0; message_len -= 16, message += 16) {
-            int len = min(16, message_len);
+            int len = Math::min(16, message_len);
             Bignum c(message, len);
             reinterpret_cast<unsigned char *>(c._data)[len] = 1;
 
