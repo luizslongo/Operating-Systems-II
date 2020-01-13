@@ -116,14 +116,10 @@ template<> struct Traits<Scratchpad>: public Traits<Machine_Common>
 template<> struct Traits<Ethernet>: public Traits<Machine_Common>
 {
     // NICS that don't have a network in Traits<Network>::NETWORKS will not be enabled
-    typedef LIST<GEM> DEVICES;
+    typedef LIST<Ethernet_NIC> DEVICES;
     static const unsigned int UNITS = DEVICES::Length;
 
     static const bool enabled = (Traits<Build>::NODES > 1) && (UNITS > 0);
-};
-
-template<> struct Traits<GEM>: public Traits<Machine_Common>
-{
     static const bool promiscuous = false;
 };
 

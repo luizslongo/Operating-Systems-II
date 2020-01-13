@@ -88,7 +88,7 @@ char components[COMPONENTS][STRING_SIZE] = {
     "E100",
     "CC2538",
     "AT86RF",
-    "GEM",
+    "Ethernet_NIC",
     "System",
     "Application",
     "Thread",
