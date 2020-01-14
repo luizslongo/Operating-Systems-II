@@ -148,16 +148,6 @@ template<> struct Traits<Ethernet>: public Traits<Machine_Common>
     static const bool enabled = (Traits<Build>::NODES > 1) && (UNITS > 0);
 };
 
-template<> struct Traits<RTL8139>: public Traits<Machine_Common>
-{
-    static const unsigned int UNITS = Traits<Ethernet>::DEVICES::Count<RTL8139>::Result;
-    static const unsigned int SEND_BUFFERS = 4; // per unit
-    static const unsigned int RECEIVE_BUFFERS = 8192; // no descriptor, just a memory block of 8192 bits
-
-    static const bool enabled = (Traits<Build>::NODES > 1) && (UNITS > 0);
-    static const bool promiscuous = false;
-};
-
 template<> struct Traits<PCNet32>: public Traits<Machine_Common>
 {
     static const unsigned int UNITS = Traits<Ethernet>::DEVICES::Count<PCNet32>::Result;
@@ -189,6 +179,16 @@ template<> struct Traits<C905>: public Traits<Machine_Common>
 
     static const bool enabled = (Traits<Build>::NODES > 1) && (UNITS > 0);
 
+    static const bool promiscuous = false;
+};
+
+template<> struct Traits<RTL8139>: public Traits<Machine_Common>
+{
+    static const unsigned int UNITS = Traits<Ethernet>::DEVICES::Count<RTL8139>::Result;
+    static const unsigned int SEND_BUFFERS = 4; // per unit
+    static const unsigned int RECEIVE_BUFFERS = 8192; // no descriptor, just a memory block of 8192 bits
+
+    static const bool enabled = (Traits<Build>::NODES > 1) && (UNITS > 0);
     static const bool promiscuous = false;
 };
 
