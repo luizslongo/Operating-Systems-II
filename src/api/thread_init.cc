@@ -61,10 +61,11 @@ void Thread::init()
     if(Criterion::timed && (CPU::id() == 0))
         _timer = new (SYSTEM) Scheduler_Timer(QUANTUM, time_slicer);
 
-    // Install an interrupt handler to receive forced reschedules
+    // Install an interrupt handler to receive forced reschedules, but disable interrupts for the rest of INIT (will be renabled at Init_First)
     if(smp) {
         if(CPU::id() == 0)
             IC::int_vector(IC::INT_RESCHEDULER, rescheduler);
+        CPU::int_disable();
         IC::enable(IC::INT_RESCHEDULER);
     }
 
