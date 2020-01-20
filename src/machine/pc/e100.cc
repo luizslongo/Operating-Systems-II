@@ -47,10 +47,6 @@ void E100::int_handler(IC::Interrupt_Id interrupt)
 
     db<E100>(TRC) << "E100::int_handler(int=" << interrupt << ",dev=" << dev << ")" << endl;
 
-    if (HYSTERICALLY_DEBUGGED && dev) {
-        dev->print_status();
-    }
-
     if(!dev)
         db<E100>(WRN) << "E100::int_handler: handler not found" << endl;
     else
