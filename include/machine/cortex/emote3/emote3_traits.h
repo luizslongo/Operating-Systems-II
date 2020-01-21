@@ -156,24 +156,24 @@ template<> struct Traits<Scratchpad>: public Traits<Machine_Common>
 template<> struct Traits<IEEE802_15_4>: public Traits<Machine_Common>
 {
     // NICS that don't have a network in Traits<Network>::NETWORKS will not be enabled
-    typedef LIST<CC2538> DEVICES;
+    typedef LIST<IEEE802_15_4_NIC> DEVICES;
     static const unsigned int UNITS = DEVICES::Length;
 
     static const bool enabled = (Traits<Build>::NODES > 1) && (UNITS > 0);
 };
 
-template<> struct Traits<CC2538>: public Traits<Machine_Common>
+template<> struct Traits<IEEE802_15_4_NIC>: public Traits<Machine_Common>
 {
-    static const unsigned int UNITS = Traits<IEEE802_15_4>::DEVICES::Count<CC2538>::Result;
+    static const unsigned int UNITS = Traits<IEEE802_15_4>::DEVICES::Count<IEEE802_15_4_NIC>::Result;
     static const unsigned int RECEIVE_BUFFERS = 20; // per unit
     static const bool gpio_debug = false;
     static const bool reset_backdoor = false;
     static const unsigned int DEFAULT_CHANNEL = 26;
 
-    static const bool enabled = (Traits<Build>::NODES > 1) && (UNITS > 0);
-
-    static const bool tstp_mac = true;
+    static const bool tstp_mac = false;
     static const bool promiscuous = false;
+
+    static const bool enabled = (Traits<Build>::NODES > 1) && (UNITS > 0);
 };
 
 template<> struct Traits<Modem>: public Traits<Machine_Common>
