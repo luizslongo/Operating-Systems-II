@@ -203,8 +203,7 @@ struct Traits
     static const bool monitored = false;
     static const bool hysterically_debugged = false;
 
-    typedef LIST<> DEVICES;
-    typedef TLIST<> ASPECTS;
+    typedef ALIST<> ASPECTS;
 };
 
 __END_SYS
