@@ -99,9 +99,10 @@ int PCNet32::receive(Address * src, Protocol * prot, void * data, unsigned int s
 }
 
 
-// Allocated buffers must be sent or release IN ORDER as assumed by the PCNet32
 PCNet32::Buffer * PCNet32::alloc(const Address & dst, const Protocol & prot, unsigned int once, unsigned int always, unsigned int payload)
 {
+    // Allocated buffers must be sent or release IN ORDER as assumed by the PCNet32
+
     db<PCNet32>(TRC) << "PCNet32::alloc(s=" << _address << ",d=" << dst << ",p=" << hex << prot << dec << ",on=" << once << ",al=" << always << ",pl=" << payload << ")" << endl;
 
     int max_data = MTU - always;

@@ -2,21 +2,24 @@
 
 #include <system/config.h>
 
-#ifdef __ethernet__
+#ifdef __NIC_H
 
 #ifndef __elp_h
 #define __elp_h
 
 #include <machine/nic.h>
 #include <utility/binding.h>
+#include <system.h>
 
 __BEGIN_SYS
 
 class ELP: private NIC<Traits<ELP>::NIC_Family>::Observer
 {
-    friend class Network_Common;
+    friend class Network;
 
 private:
+    static const unsigned int UNITS = Traits<ELP>::UNITS;
+
 public:
     typedef Traits<ELP>::NIC_Family NIC_Family;
     static const bool connectionless = true;
@@ -111,9 +114,8 @@ public:
     typedef _UTIL::Binding<ELP, Port, NIC<NIC_Family>, NIC_Family::Address> Binding;
 
 protected:
-    template<unsigned int UNIT = 0>
-    ELP(unsigned int unit = UNIT): _nic(Traits<NIC_Family>::DEVICES::Get<UNIT>::Result::get(unit)) {
-        db<ELP>(TRC) << "ELP::ELP()" << endl;
+    ELP(NIC<NIC_Family> * nic): _nic(nic) {
+        db<ELP>(TRC) << "ELP::ELP(nic=" << _nic << ")" << endl;
         _nic->attach(this, PROTOCOL);
     }
 
@@ -174,7 +176,6 @@ public:
 
     static void attach(Observer * obs, const Address & address) { Binding::rebind(Address::NULL, 0); _observed.attach(obs, 0); }
     static void detach(Observer * obs, const Address & address) { _observed.detach(obs, 0); Binding::unbind(0); }
-    static bool notify(const Port & port, Buffer * buf) { return _observed.notify(0, buf); }
 
 private:
     void update(NIC_Family::Observed * obs, const Protocol & prot, Buffer * buf) {
@@ -182,21 +183,27 @@ private:
             _nic->free(buf);
     }
 
-    static void init(unsigned int unit)
-    {
-        db<Init, ELP>(TRC) << "ELP::init(u=" << unit << ")" << endl;
+    static bool notify(const Port & port, Buffer * buf) { return _observed.notify(0, buf); }
 
-        ELP * elp = new (SYSTEM) ELP(unit);
-        NIC<NIC_Family> * nic = elp->nic();
-
+    template<unsigned int UNIT>
+    inline static void init_helper() {
+        NIC<NIC_Family> * nic = Traits<NIC_Family>::DEVICES::Get<Traits<ELP>::NICS[UNIT]>::Result::get(Traits<ELP>::NICS[UNIT]);
+        ELP * elp = new (SYSTEM) ELP(nic);
         new (SYSTEM) Binding(elp, Port(Address::NULL), nic, nic->address());
-    }
+
+        init_helper<UNIT + 1>();
+    };
+
+    static void init();
 
 private:
     NIC<NIC_Family> * _nic;
 
     static Observed _observed; // Channel protocols are singletons
 };
+
+template<>
+inline void ELP::init_helper<ELP::UNITS>() {};
 
 __END_SYS
 

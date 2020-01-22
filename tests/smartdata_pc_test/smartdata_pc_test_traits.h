@@ -81,7 +81,6 @@ __END_SYS
 
 __BEGIN_SYS
 
-
 // API Components
 template<> struct Traits<Application>: public Traits<void>
 {
@@ -96,7 +95,7 @@ template<> struct Traits<System>: public Traits<void>
     static const bool multithread = (Traits<Build>::CPUS > 1) || (Traits<Application>::MAX_THREADS > 1);
     static const bool multitask = (mode != Traits<Build>::LIBRARY);
     static const bool multicore = (Traits<Build>::CPUS > 1) && multithread;
-    static const bool multiheap = (mode != Traits<Build>::LIBRARY) || Traits<Scratchpad>::enabled;
+    static const bool multiheap = multitask || Traits<Scratchpad>::enabled;
 
     static const unsigned long LIFE_SPAN = 1 * YEAR; // s
     static const unsigned int DUTY_CYCLE = 10000; // ppm
@@ -180,34 +179,40 @@ template<> struct Traits<Monitor>: public Traits<void>
 
 template<> struct Traits<Network>: public Traits<void>
 {
-    static const bool enabled = (Traits<Build>::NODES > 1);
+    typedef LIST<TSTP, ELP> NETWORKS;
 
     static const unsigned int RETRIES = 3;
     static const unsigned int TIMEOUT = 10; // s
 
-    typedef LIST<TSTP> NETWORKS;
+    static const bool enabled = (Traits<Build>::NODES > 1) && (NETWORKS::Length > 0);
 };
 
 template<> struct Traits<ELP>: public Traits<Network>
 {
     typedef Ethernet NIC_Family;
+    static constexpr unsigned int NICS[] = {1}; // relative to NIC_Family (i.e. Traits<Ethernet>::DEVICES[NICS[i]]
+    static const unsigned int UNITS = COUNTOF(NICS);
 
-    static const bool enabled = NETWORKS::Count<ELP>::Result;
+    static const bool enabled = (Traits<Network>::enabled && (UNITS > 0));
 };
 
 template<> struct Traits<TSTP>: public Traits<Network>
 {
     typedef Ethernet NIC_Family;
-
-    static const bool enabled = NETWORKS::Count<TSTP>::Result;
+    static constexpr unsigned int NICS[] = {0}; // relative to NIC_Family (i.e. Traits<Ethernet>::DEVICES[NICS[i]]
+    static const unsigned int UNITS = COUNTOF(NICS);
 
     static const unsigned int KEY_SIZE = 16;
-    static const unsigned int RADIO_RANGE = 8000; // Approximated radio range in centimeters
+    static const unsigned int RADIO_RANGE = 8000; // approximated radio range in centimeters
+
+    static const bool enabled = (Traits<Network>::enabled && (UNITS > 0));
 };
 
 template<> struct Traits<IP>: public Traits<Network>
 {
-    static const bool enabled = NETWORKS::Count<IP>::Result;
+    typedef Ethernet NIC_Family;
+    static constexpr unsigned int NICS[] = {1};  // relative to NIC_Family (i.e. Traits<Ethernet>::DEVICES[NICS[i]]
+    static const unsigned int UNITS = COUNTOF(NICS);
 
     struct Default_Config {
         static const unsigned int  TYPE    = DHCP;
@@ -220,10 +225,16 @@ template<> struct Traits<IP>: public Traits<Network>
     struct Config: public Default_Config {};
 
     static const unsigned int TTL  = 0x40; // Time-to-live
+
+    static const bool enabled = (Traits<Network>::enabled && (UNITS > 0));
 };
 
-template<> struct Traits<IP>::Config<0>: public Traits<IP>::Default_Config
+template<> struct Traits<IP>::Config<0>
 {
+    static const unsigned int  TYPE      = MAC;
+    static const unsigned long ADDRESS   = 0x0a000100;  // 10.0.1.x x=MAC[5]
+    static const unsigned long NETMASK   = 0xffffff00;  // 255.255.255.0
+    static const unsigned long GATEWAY   = 0;           // 10.0.1.1
 };
 
 template<> struct Traits<UDP>: public Traits<Network>

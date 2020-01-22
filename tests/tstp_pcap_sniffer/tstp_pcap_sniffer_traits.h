@@ -226,7 +226,6 @@ template<> struct Traits<IP>::Config<0> //: public Traits<IP>::Default_Config
 template<> struct Traits<IP>::Config<1>: public Traits<IP>::Default_Config
 {
 };
-
 template<> struct Traits<UDP>: public Traits<Network>
 {
     static const bool checksum = true;

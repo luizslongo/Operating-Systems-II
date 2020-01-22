@@ -11,7 +11,7 @@ __BEGIN_SYS
 
 class ICMP: private IP::Observer
 {
-    friend class Network_Common;
+    friend class IP;
 
 public:
     static const bool connectionless = true;

@@ -88,11 +88,9 @@ class PCNet32;
 class RTL8139;
 class C905;
 class E100;
-class CC2538;
 class M95;
-class AT86RF;
+class IEEE802_15_4_NIC;
 class Ethernet_NIC;
-class CC1101;
 
 // Transducer Mediators (i.e. sensors and actuators)
 class Transducers;
@@ -203,8 +201,7 @@ struct Traits
     static const bool monitored = false;
     static const bool hysterically_debugged = false;
 
-    typedef LIST<> DEVICES;
-    typedef TLIST<> ASPECTS;
+    typedef ALIST<> ASPECTS;
 };
 
 __END_SYS

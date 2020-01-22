@@ -345,7 +345,8 @@ void Thread::wakeup_all(Queue * q)
 
 void Thread::reschedule()
 {
-    db<Thread>(TRC) << "Thread::reschedule()" << endl;
+    if(!Criterion::timed || Traits<Thread>::hysterically_debugged)
+        db<Thread>(TRC) << "Thread::reschedule()" << endl;
 
     // lock() must be called before entering this method
     assert(locked());
