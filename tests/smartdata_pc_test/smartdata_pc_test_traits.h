@@ -179,17 +179,19 @@ template<> struct Traits<Monitor>: public Traits<void>
 
 template<> struct Traits<Network>: public Traits<void>
 {
-    static const bool enabled = (Traits<Build>::NODES > 1);
+    typedef LIST<> NETWORKS;
 
     static const unsigned int RETRIES = 3;
     static const unsigned int TIMEOUT = 10; // s
+
+    static const bool enabled = (Traits<Build>::NODES > 1) && (NETWORKS::Length > 0);
 };
 
 template<> struct Traits<ELP>: public Traits<Network>
 {
     typedef Ethernet NIC_Family;
-    static const unsigned int UNITS = 0; // must be always equal to COUNTOF(NICS)
-    static constexpr unsigned int NICS[] = {}; // relative to NIC_Family (i.e. Traits<Ethernet>::DEVICES[NICS[]]
+    static constexpr unsigned int NICS[] = {0}; // relative to NIC_Family (i.e. Traits<Ethernet>::DEVICES[NICS[i]]
+    static const unsigned int UNITS = COUNTOF(NICS);
 
     static const bool enabled = (Traits<Network>::enabled && (UNITS > 0));
 };
@@ -209,8 +211,8 @@ template<> struct Traits<TSTP>: public Traits<Network>
 template<> struct Traits<IP>: public Traits<Network>
 {
     typedef Ethernet NIC_Family;
-    static const unsigned int UNITS = 1;  // must be always equal to COUNTOF(NICS)
-    static constexpr unsigned int NICS[] = {0};  // relative to NIC_Family (i.e. Traits<Ethernet>::DEVICES[NICS[]]
+    static constexpr unsigned int NICS[] = {0};  // relative to NIC_Family (i.e. Traits<Ethernet>::DEVICES[NICS[i]]
+    static const unsigned int UNITS = COUNTOF(NICS);
 
     struct Default_Config {
         static const unsigned int  TYPE    = DHCP;
