@@ -591,6 +591,12 @@ public:
         ffsm(SHORT_ADDR0) = address[0];
         ffsm(SHORT_ADDR1) = address[1];
     }
+    IEEE802_15_4::Address address() {
+        IEEE802_15_4::Address address;
+        address[0] = ffsm(SHORT_ADDR0);
+        address[1] = ffsm(SHORT_ADDR1);
+        return address;
+    }
 
     // FIXME: methods changed to static because of TSTP_MAC
     static void backoff(const Microsecond & time) {
