@@ -62,24 +62,18 @@ public:
     const Address & address() { return _address; }
     void address(const Address & address) { _address = address; IEEE802_15_4_Engine::address(address); }
 
-    unsigned int channel() { return _channel; }
-    void channel(unsigned int channel) {
-        if((channel > 10) && (channel < 27)) {
-            _channel = channel;
-            IEEE802_15_4_Engine::channel(_channel);
-        }
-    }
+    void reset();
+    bool reconfigure(const Configuration & c);
+    void configuration(Configuration * c);
 
     const Statistics & statistics() { return _statistics; }
 
-    void reset();
-
-    virtual void attach(Observer * o, const Protocol & p) {
+    void attach(Observer * o, const Protocol & p) {
         NIC<IEEE802_15_4>::attach(o, p);
         ; // enable receive interrupt
     }
 
-    virtual void detach(Observer * o, const Protocol & p) {
+    void detach(Observer * o, const Protocol & p) {
         NIC<IEEE802_15_4>::detach(o, p);
         if(!observers())
             ; // disable receive interrupt

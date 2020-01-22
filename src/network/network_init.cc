@@ -6,7 +6,7 @@
 
 __BEGIN_SYS
 
-void Network_Common::init()
+void Network::init()
 {
     db<Init, Network>(TRC) << "Network::init()" << endl;
 

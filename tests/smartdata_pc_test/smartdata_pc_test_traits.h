@@ -179,7 +179,7 @@ template<> struct Traits<Monitor>: public Traits<void>
 
 template<> struct Traits<Network>: public Traits<void>
 {
-    typedef LIST<> NETWORKS;
+    typedef LIST<TSTP, ELP> NETWORKS;
 
     static const unsigned int RETRIES = 3;
     static const unsigned int TIMEOUT = 10; // s
@@ -190,7 +190,7 @@ template<> struct Traits<Network>: public Traits<void>
 template<> struct Traits<ELP>: public Traits<Network>
 {
     typedef Ethernet NIC_Family;
-    static constexpr unsigned int NICS[] = {0}; // relative to NIC_Family (i.e. Traits<Ethernet>::DEVICES[NICS[i]]
+    static constexpr unsigned int NICS[] = {1}; // relative to NIC_Family (i.e. Traits<Ethernet>::DEVICES[NICS[i]]
     static const unsigned int UNITS = COUNTOF(NICS);
 
     static const bool enabled = (Traits<Network>::enabled && (UNITS > 0));
@@ -199,8 +199,8 @@ template<> struct Traits<ELP>: public Traits<Network>
 template<> struct Traits<TSTP>: public Traits<Network>
 {
     typedef Ethernet NIC_Family;
-    static const unsigned int UNITS = 1;  // must be always equal to COUNTOF(NICS)
-    static constexpr unsigned int NICS[] = {1}; // relative to NIC_Family (i.e. Traits<Ethernet>::DEVICES[NICS[]]
+    static constexpr unsigned int NICS[] = {0}; // relative to NIC_Family (i.e. Traits<Ethernet>::DEVICES[NICS[i]]
+    static const unsigned int UNITS = COUNTOF(NICS);
 
     static const unsigned int KEY_SIZE = 16;
     static const unsigned int RADIO_RANGE = 8000; // approximated radio range in centimeters
@@ -211,7 +211,7 @@ template<> struct Traits<TSTP>: public Traits<Network>
 template<> struct Traits<IP>: public Traits<Network>
 {
     typedef Ethernet NIC_Family;
-    static constexpr unsigned int NICS[] = {0};  // relative to NIC_Family (i.e. Traits<Ethernet>::DEVICES[NICS[i]]
+    static constexpr unsigned int NICS[] = {1};  // relative to NIC_Family (i.e. Traits<Ethernet>::DEVICES[NICS[i]]
     static const unsigned int UNITS = COUNTOF(NICS);
 
     struct Default_Config {
@@ -237,7 +237,6 @@ template<> struct Traits<IP>::Config<0>
     static const unsigned long GATEWAY   = 0;           // 10.0.1.1
 };
 
-};
 template<> struct Traits<UDP>: public Traits<Network>
 {
     static const bool checksum = true;

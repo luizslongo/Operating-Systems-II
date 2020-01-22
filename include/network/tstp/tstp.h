@@ -21,7 +21,7 @@ __BEGIN_SYS
 
 class TSTP: private Traits<TSTP>::NIC_Family, private SmartData, private NIC<Traits<TSTP>::NIC_Family>::Observer
 {
-    friend class Network_Common;
+    friend class Network;
     friend class Epoch;
 
 private:

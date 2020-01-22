@@ -112,6 +112,33 @@ void IEEE802_15_4_NIC::reset()
     new (&_statistics) Statistics;
 }
 
+bool IEEE802_15_4_NIC::reconfigure(const Configuration & c)
+{
+    db<IEEE802_15_4_NIC>(TRC) << "IEEE802_15_4_NIC::reconfigure(c=" << c << ")" << endl;
+
+    IEEE802_15_4_Engine::address(c.address);
+    if(IEEE802_15_4_Engine::address() == c.address)
+        _address = c.address;
+    else
+        return false;
+
+    if((c.channel > 10) && (c.channel < 27)) {
+        IEEE802_15_4_Engine::channel(_channel);
+        _channel = c.channel;
+    } else
+        return false;
+
+    // TODO: implement power and period reconfigurations
+    return true;
+}
+
+void IEEE802_15_4_NIC::configuration(Configuration * c)
+{
+    db<IEEE802_15_4_NIC>(TRC) << "IEEE802_15_4_NIC::configuration(c=" << c << ")" << endl;
+
+    c->channel = _channel;
+}
+
 void IEEE802_15_4_NIC::handle_int()
 {
     Timer::Time_Stamp sfd = Timer::sfd();

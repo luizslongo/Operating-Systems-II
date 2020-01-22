@@ -28,7 +28,7 @@ extern "C" {
 
 #ifdef __NIC_H
         if(_SYS::Traits<_SYS::Network>::enabled)
-            _SYS::Network_Common::init();
+            _SYS::Network::init();
 #endif
     }
 }

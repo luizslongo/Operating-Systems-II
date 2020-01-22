@@ -16,7 +16,7 @@ __BEGIN_SYS
 class IP: private NIC<Ethernet>::Observer
 {
     friend class System;
-    friend class Network_Common;
+    friend class Network;
 
 private:
     static const unsigned int UNITS = Traits<IP>::UNITS;

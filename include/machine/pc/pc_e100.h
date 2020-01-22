@@ -574,6 +574,9 @@ public:
 
     void reset();
 
+    void attach(Observer * o, const Protocol & p);
+    void detach(Observer * o, const Protocol & p);
+
     static E100 * get(unsigned int unit = 0) { return get_by_unit(unit); }
 
 private:
@@ -722,10 +725,6 @@ private:
     DMA_Buffer * _dma_buffer;
 
     static Device _devices[UNITS];
-
-private:
-    static const bool HYSTERICALLY_DEBUGGED = true;
-
 };
 
 __END_SYS

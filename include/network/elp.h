@@ -15,7 +15,7 @@ __BEGIN_SYS
 
 class ELP: private NIC<Traits<ELP>::NIC_Family>::Observer
 {
-    friend class Network_Common;
+    friend class Network;
 
 private:
     static const unsigned int UNITS = Traits<ELP>::UNITS;
