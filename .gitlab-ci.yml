@@ -1,0 +1,7 @@
+build:
+  script:
+  - make buildtest
+
+run:
+  script:
+  - make runtest
