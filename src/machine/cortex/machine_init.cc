@@ -19,13 +19,11 @@ void Machine::pre_init(System_Info * si)
             IC::init();
 
             // Wake up remaining CPUs
-            // si->bm.n_cpus = Traits<Build>::CPUS;
+            si->bm.n_cpus = Traits<Build>::CPUS;
             if(Traits<System>::multicore)
                 smp_barrier_init(Traits<Build>::CPUS);
         }
-    } //else
-    //        if(Traits<IC>::enabled)
-//            IC::int_id(); //clear the wake up interrupt
+    }
 }
 
 void Machine::init()
@@ -42,12 +40,15 @@ void Machine::init()
         USB::init();
 #endif
 
-#ifdef __ETHERNET_H
+#ifdef __NIC_H
+#ifdef __ethernet__
     if(Traits<Ethernet>::enabled)
         Initializer<Ethernet>::init();
-
+#endif
+#ifdef __ieee802_15_4__
     if(Traits<IEEE802_15_4>::enabled)
         Initializer<IEEE802_15_4>::init();
+#endif
 #endif
 
 #ifdef __MODEM_H

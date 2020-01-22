@@ -211,7 +211,7 @@ ARCH_CLOCK		= $(call GETTK,CLOCK,$(ARCH_TRAITS))
 TCC		:= gcc -ansi -c -Werror
 TCCFLAGS	:= -m32 -Wall -O -I$(INCLUDE)
 
-TCXX		:= g++ -c -ansi -fno-exceptions -fno-asynchronous-unwind-tables -std=c++0x
+TCXX		:= g++ -c -ansi -fno-exceptions -std=c++14
 TCXXFLAGS	:= -m32 -Wall -O -I$(INCLUDE)
 
 TCPP		:= gcc -E
@@ -241,7 +241,7 @@ CCLIB		= `$(CC) $(MACH_CC_FLAGS) -print-file-name=`
 CPP		= $(COMP_PREFIX)gcc -E
 CPPFLAGS	= $(MACH_CC_FLAGS) -I$(INCLUDE)
 
-CXX		= $(COMP_PREFIX)g++ -c --no-exceptions --no-rtti --no-use-cxa-atexit
+CXX		= $(COMP_PREFIX)g++ -c --no-exceptions --no-rtti --no-use-cxa-atexit --no-asynchronous-unwind-tables -std=c++14 
 CXXFLAGS	= $(MACH_CC_FLAGS) -O -nostdinc -Wall -Werror -fdata-sections -ffunction-sections -I$(INCLUDE)
 
 CLEAN		:= rm -f
