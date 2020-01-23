@@ -4,4 +4,4 @@ build:
 
 run:
   script:
-  - make rudtest TESTS="semaphore_test ip_test task_test"
+  - make runtest TESTS="semaphore_test ip_test task_test"
