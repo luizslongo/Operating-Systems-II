@@ -1,7 +1,7 @@
 build:
   script:
-  - make buildtest
+  - make buildtest TESTS="semaphore_test ip_test task_test"
 
 run:
   script:
-  - make runtest
+  - make rudtest TESTS="semaphore_test ip_test task_test"
