@@ -6,7 +6,7 @@
 
 __BEGIN_SYS
 
-template<> struct Traits<CPU>: public Traits<void>
+template<> struct Traits<CPU>: public Traits<Build>
 {
     enum {LITTLE, BIG};
     static const unsigned int ENDIANESS         = LITTLE;
@@ -15,13 +15,13 @@ template<> struct Traits<CPU>: public Traits<void>
     static const bool unaligned_memory_access   = false;
 };
 
-template<> struct Traits<MMU>: public Traits<void>
+template<> struct Traits<MMU>: public Traits<Build>
 {
     static const bool colorful = false;
     static const unsigned int COLORS = 1;
 };
 
-template<> struct Traits<TSC>: public Traits<void>
+template<> struct Traits<TSC>: public Traits<Build>
 {
     // In order to use Machine::delay, TSC must be enabled
     // On eMote3, TSC uses User_Timer on channel 3. To use channel 3, you must disable the TSC
@@ -30,15 +30,12 @@ template<> struct Traits<TSC>: public Traits<void>
     // * LM3S811 does not support up-count mode on general purpose timers,
     //   and QEMU (v2.7.50) does not support reading the value of general purpose timers,
     //   thus TSC::time_stamp() does not work, but Machine::delay does.
-#ifdef __mmod_lm3s811__
-    static const bool enabled = false;
-#else
-    static const bool enabled = true;
-#endif
-    //TODO: http://stackoverflow.com/questions/16236460/arm-cortex-a9-event-counters-return-0
+    static const bool enabled = (Traits<Build>::MODEL != Traits<Build>::LM3S811);
+
+    // TODO: http://stackoverflow.com/questions/16236460/arm-cortex-a9-event-counters-return-0
 };
 
-template<> struct Traits<PMU>: public Traits<void>
+template<> struct Traits<PMU>: public Traits<Build>
 {
     static const bool enabled = (Traits<Build>::MODEL == Traits<Build>::Raspberry_Pi3);
 };

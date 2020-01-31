@@ -76,9 +76,16 @@ struct MIN
 { typedef typename IF<sizeof(T1) < sizeof(T2), T1, T2>::Result Result; };
 
 
-// SIZEOF Constant Arrays
+// Constant Arrays
 template<unsigned int N, typename T>
-constexpr unsigned int COUNTOF(T(&)[N]) { return N; }
+constexpr unsigned int COUNTOF(const T (&)[N]) { return N; }
+
+template<unsigned int N, typename T>
+constexpr bool INARRAY(const T (& array)[N], const T & value) {
+    for(const T & v : array)
+        if(value == v) return true;
+    return false;
+}
 
 
 // SIZEOF Type Package

@@ -18,7 +18,7 @@ class ELP: private NIC<Traits<ELP>::NIC_Family>::Observer
     friend class Network;
 
 private:
-    static const unsigned int UNITS = Traits<ELP>::UNITS;
+    static const unsigned int UNITS = COUNTOF(Traits<ELP>::NICS);
 
 public:
     typedef Traits<ELP>::NIC_Family NIC_Family;

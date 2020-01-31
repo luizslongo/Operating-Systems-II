@@ -13,10 +13,11 @@ class ARMv8_A_PMU: public PMU_Common
 private:
     typedef CPU::Reg32 Reg32;
 
-    static const unsigned int EVENTS = 96;
+    static const unsigned int EVENTS = 54;
 
 public:
     static const unsigned int CHANNELS = 6;
+    static const unsigned int FIXED = 0;
 
     // Useful bits in the PMCR register
     enum {                      // Description                          Type    Value after reset
@@ -47,7 +48,9 @@ public:
         L1D_TLB_REFILL                        = 0x05,
         INSTRUCTIONS_ARCHITECTURALLY_EXECUTED = 0x08,
         EXCEPTION_TAKEN                       = 0x09,
-        BRANCHES_ARCHITECTURALLY_EXECUTED     = 0x0C,
+        BRANCHES_ARCHITECTURALLY_EXECUTED     = 0x0c,
+        IMMEDIATE_BRANCH                      = 0X0d,
+        UNALIGNED_LOAD_STORE                  = 0X0f,
         MISPREDICTED_BRANCH                   = 0x10,
         CYCLE                                 = 0x11,
         PREDICTABLE_BRANCH_EXECUTED           = 0x12,
@@ -58,49 +61,41 @@ public:
         L2D_REFILL                            = 0x17,
         L2D_WRITEBACK                         = 0x18,
         BUS_ACCESS                            = 0x19,
-        LOCAL_MEMORY_ERROR                    = 0x1A,
-        INSTRUCTION_SPECULATIVELY_EXECUTED    = 0x1B,
-        BUS_CYCLE                             = 0x1D,
-        // Cortex-A specific events
-        JAVA_BYTECODE_EXECUTE                 = 0x40,
-        SOFTWARE_JAVA_BYTECODE_EXECUTED       = 0x41,
-        JAZELLE_BACKWARDS_BRANCHES_EXECUTED   = 0x42,
-        COHERENT_LINEFILL_MISS                = 0x50,
-        COHERENT_LINEFILL_HIT                 = 0x51,
-        ICACHE_DEPENDENT_STALL_CYCLES         = 0x60,
-        DCACHE_DEPENDENT_STALL_CYCLES         = 0x61,
-        MAIN_TLB_MISS_STALL_CYCLES            = 0x62,
-        STREX_PASSED                          = 0x63,
-        STREX_FAILED                          = 0x64,
-        DATA_EVICTION                         = 0x65,
-        ISSUE_DOESNT_DISPATCH                 = 0x66,
-        ISSUE_EMPTY                           = 0x67,
-        ISSUE_CORE_RENAMING                   = 0x68,
-        PREDICTABLE_FUNCTION_RETURNS          = 0x6E,
-        MAIN_EXECUTION_UNIT_RETURNS           = 0x70,
-        SECOND_EXECUTION_UNIT_RETURNS         = 0x71,
-        LOAD_STORE_INSTRUCTIONS               = 0x72,
-        FLOATING_POINT_INSTRUCTIONS           = 0x73,
-        NEON_INSTRUCTIONS                     = 0x74,
-        PROCESSOR_STALL_PLD                   = 0x80,
-        PROCESSOR_STALL_WRITE_MEMORY          = 0x81,
-        PROCESSOR_STALL_ITLB_MISS             = 0x82,
-        PROCESSOR_STALL_DTLB_MISS             = 0x83,
-        PROCESSOR_STALL_IUTLB_MISS            = 0x84,
-        PROCESSOR_STALL_DUTLB_MISS            = 0x85,
-        PROCESSOR_STALL_DMB                   = 0x86,
-        INTEGER_CLOCK_ENABLED                 = 0x8A,
-        DATA_ENGINE_CLOCK_ENABLED             = 0x8B,
-        ISB_INSTRUCTIONS                      = 0x90,
-        DSB_INSTRUCTIONS                      = 0x91,
-        DMB_INSTRUCTIONS                      = 0x92,
-        EXTERNAL_INTERRUPTS                   = 0x93,
-        PLE_CACHE_LINE_REQUEST_COMPLETED      = 0xA0,
-        PLE_CACHE_LINE_REQUEST_SKIPPED        = 0xA1,
-        PLE_FIFO_FLUSH                        = 0xA2,
-        PLE_REQUEST_COMPLETED                 = 0xA3,
-        PLE_FIFO_OVERFLOW                     = 0xA4,
-        PLE_REQUEST_PROGRAMMED                = 0xA5,
+        LOCAL_MEMORY_ERROR                    = 0x1a,
+        INSTRUCTION_SPECULATIVELY_EXECUTED    = 0x1b,
+        BUS_CYCLE                             = 0x1d,
+        CHAIN                                 = 0x1e,
+        // Cortex A-53 specific events
+        BUS_ACCESS_LD                         = 0x60,
+        BUS_ACCESS_ST                         = 0x61,
+        BR_INDIRECT_SPEC                      = 0x7a,
+        EXC_IRQ                               = 0x86,
+        EXC_FIQ                               = 0x87,
+        EXTERNAL_MEM_REQUEST                  = 0xc0,
+        EXTERNAL_MEM_REQUEST_NON_CACHEABLE    = 0xc1,
+        PREFETCH_LINEFILL                     = 0xc2,
+        ICACHE_THROTTLE                       = 0xc3,
+        ENTER_READ_ALLOC_MODE                 = 0xc4,
+        READ_ALLOC_MODE                       = 0xc5,
+        PRE_DECODE_ERROR                      = 0xc6,
+        DATA_WRITE_STALL_ST_BUFFER_FULL       = 0xc7,
+        SCU_SNOOPED_DATA_FROM_OTHER_CPU       = 0xc8,
+        CONDITIONAL_BRANCH_EXECUTED           = 0xc9,
+        IND_BR_MISP                           = 0xca,
+        IND_BR_MISP_ADDRESS_MISCOMPARE        = 0xcb,
+        CONDITIONAL_BRANCH_MISP               = 0xcc,
+        L1_ICACHE_MEM_ERROR                   = 0xd0,
+        L1_DCACHE_MEM_ERROR                   = 0xd1,
+        TLB_MEM_ERROR                         = 0xd2,
+        EMPTY_DPU_IQ_NOT_GUILTY               = 0xe0,
+        EMPTY_DPU_IQ_ICACHE_MISS              = 0xe1,
+        EMPTY_DPU_IQ_IMICRO_TLB_MISS          = 0xe2,
+        EMPTY_DPU_IQ_PRE_DECODE_ERROR         = 0xe3,
+        INTERLOCK_CYCLE_NOT_GUILTY            = 0xe4,
+        INTERLOCK_CYCLE_LD_ST_WAIT_AGU_ADDRESS= 0xe5,
+        INTERLOCK_CYCLE_ADV_SIMD_FP_INST      = 0xe6,
+        INTERLOCK_CYCLE_WR_STAGE_STALL_BC_MISS= 0xe7,
+        INTERLOCK_CYCLE_WR_STAGE_STALL_BC_STR = 0xe8
     };
 
 public:
@@ -166,7 +161,63 @@ private:
     static Reg32 pmxevcntr() { Reg32 reg; ASM("mrc p15, 0, %0, c9, c13, 2\n\t" : "=r"(reg) : ); return reg; }
 
 private:
-    static const Reg32 _events[EVENTS];
+    static const Reg32 _events[EVENTS] = {
+                INSTRUCTIONS_ARCHITECTURALLY_EXECUTED,  // 0
+        IMMEDIATE_BRANCH,                       // 1
+        CYCLE,                                  // 2
+        BRANCHES_ARCHITECTURALLY_EXECUTED,      // 3
+        MISPREDICTED_BRANCH,                    // 4
+        L1D_ACCESS,                             // 5
+        L2D_ACCESS,                             // 6
+        L1D_REFILL,                             // 7
+        DATA_MEMORY_ACCESS,                     // 8 (LLC MISS)
+        L1I_REFILL,                             // 9
+        L1I_TLB_REFILL,                         // 10
+        PREDICTABLE_BRANCH_EXECUTED,            // 11
+        L1D_WRITEBACK,                          // 12
+        L2D_WRITEBACK,                          // 13
+        L2D_REFILL,                             // 14
+        UNALIGNED_LOAD_STORE,                   // 15
+        L1I_ACCESS,                             // 16
+        L1D_TLB_REFILL,                         // 17
+        EXCEPTION_TAKEN,                        // 18
+        BUS_ACCESS,                             // 19
+        LOCAL_MEMORY_ERROR,                     // 20
+        INSTRUCTION_SPECULATIVELY_EXECUTED,     // 21
+        BUS_CYCLE,                              // 22
+        CHAIN,                                  // 23
+        // ARM Cortex-A53 specific events (24-62 are Cortex-A9 events)
+        BUS_ACCESS_LD,                          // 63
+        BUS_ACCESS_ST,                          // 64
+        BR_INDIRECT_SPEC,                       // 65
+        EXC_IRQ,                                // 66
+        EXC_FIQ,                                // 67
+        EXTERNAL_MEM_REQUEST,                   // 68
+        EXTERNAL_MEM_REQUEST_NON_CACHEABLE,     // 69
+        PREFETCH_LINEFILL,                      // 70
+        ICACHE_THROTTLE,                        // 71
+        ENTER_READ_ALLOC_MODE,                  // 72
+        READ_ALLOC_MODE,                        // 73
+        PRE_DECODE_ERROR,                       // 74
+        DATA_WRITE_STALL_ST_BUFFER_FULL,        // 75
+        SCU_SNOOPED_DATA_FROM_OTHER_CPU,        // 76
+        CONDITIONAL_BRANCH_EXECUTED,            // 77
+        IND_BR_MISP,                            // 78
+        IND_BR_MISP_ADDRESS_MISCOMPARE,         // 79
+        CONDITIONAL_BRANCH_MISP,                // 80
+        L1_ICACHE_MEM_ERROR,                    // 81
+        L1_DCACHE_MEM_ERROR,                    // 82
+        TLB_MEM_ERROR,                          // 83
+        EMPTY_DPU_IQ_NOT_GUILTY,                // 84
+        EMPTY_DPU_IQ_ICACHE_MISS,               // 85
+        EMPTY_DPU_IQ_IMICRO_TLB_MISS,           // 86
+        EMPTY_DPU_IQ_PRE_DECODE_ERROR,          // 87
+        INTERLOCK_CYCLE_NOT_GUILTY,             // 88
+        INTERLOCK_CYCLE_LD_ST_WAIT_AGU_ADDRESS, // 89
+        INTERLOCK_CYCLE_ADV_SIMD_FP_INST,       // 90
+        INTERLOCK_CYCLE_WR_STAGE_STALL_BC_MISS, // 91
+        INTERLOCK_CYCLE_WR_STAGE_STALL_BC_STR   // 92
+    }
 };
 
 
@@ -179,6 +230,8 @@ private:
 
 public:
     using Engine::CHANNELS;
+    using Engine::FIXED;
+    using Engine::EVENTS;
 
     using Engine::Event;
     using Engine::Count;

@@ -8,10 +8,7 @@
 __BEGIN_SYS
 
 class Machine_Common;
-template<> struct Traits<Machine_Common>: public Traits<void>
-{
-    static const bool debugged = Traits<void>::debugged;
-};
+template<> struct Traits<Machine_Common>: public Traits<Build> {};
 
 template<> struct Traits<Machine>: public Traits<Machine_Common>
 {
@@ -133,7 +130,7 @@ template<> struct Traits<Watchdog>: public Traits<Machine_Common>
     static const unsigned int PERIOD = 1000; // ms
 };
 
-template<> struct Traits<Serial_Display>: public Traits<void>
+template<> struct Traits<Serial_Display>: public Traits<Machine_Common>
 {
     static const bool enabled = true;
     static const unsigned int ENGINE = USB;
@@ -143,7 +140,7 @@ template<> struct Traits<Serial_Display>: public Traits<void>
     static const unsigned int TAB_SIZE = 8;
 };
 
-template<> struct Traits<Serial_Keyboard>: public Traits<void>
+template<> struct Traits<Serial_Keyboard>: public Traits<Machine_Common>
 {
     static const bool enabled = true;
 };

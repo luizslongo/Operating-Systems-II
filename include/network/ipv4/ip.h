@@ -19,7 +19,7 @@ class IP: private NIC<Ethernet>::Observer
     friend class Network;
 
 private:
-    static const unsigned int UNITS = Traits<IP>::UNITS;
+    static const unsigned int UNITS = COUNTOF(Traits<IP>::NICS);
 
 public:
     static const unsigned int TIMEOUT = Traits<IP>::TIMEOUT * 1000000;
