@@ -6,7 +6,7 @@
 
 __BEGIN_SYS
 
-template<> struct Traits<CPU>: public Traits<void>
+template<> struct Traits<CPU>: public Traits<Build>
 {
     enum {LITTLE, BIG};
     static const unsigned int ENDIANESS         = LITTLE;
@@ -15,18 +15,18 @@ template<> struct Traits<CPU>: public Traits<void>
     static const bool unaligned_memory_access   = false;
 };
 
-template<> struct Traits<MMU>: public Traits<void>
+template<> struct Traits<MMU>: public Traits<Build>
 {
     static const bool colorful = false;
     static const unsigned int COLORS = 1;
 };
 
-template<> struct Traits<TSC>: public Traits<void>
+template<> struct Traits<TSC>: public Traits<Build>
 {
     static const bool enabled = true;
 };
 
-template<> struct Traits<PMU>: public Traits<void>
+template<> struct Traits<PMU>: public Traits<Build>
 {
     static const bool enabled = true;
 };

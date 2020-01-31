@@ -18,7 +18,6 @@ class ARM_Timer : public Timer_Common
 
 private:
     typedef CPU::Reg32 Reg32;
-    typedef TSC_Common::Hertz Hertz;
     typedef IC_Common::Interrupt_Id Interrupt_Id;
 
 public:
