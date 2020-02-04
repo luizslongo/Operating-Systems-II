@@ -21,6 +21,11 @@ private:
     typedef UART_Engine Engine;
 
 public:
+    using UART_Common::NONE;
+    using UART_Common::EVEN;
+    using UART_Common::ODD;
+
+public:
     UART(unsigned int unit = UNIT, unsigned int baud_rate = BAUD_RATE, unsigned int data_bits = DATA_BITS, unsigned int parity = PARITY, unsigned int stop_bits = STOP_BITS)
     : Engine(unit, baud_rate, data_bits, parity, stop_bits) {}
 
