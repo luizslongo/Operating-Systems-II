@@ -57,7 +57,7 @@ endif
 ifeq ($(words $(call GETTK,ENDIANESS,$(TRAITS))),1)
 ARCH_TRAITS	= $(TRAITS)
 else
-ARCH_TRAITS	= $(INCLUDE)/architecture/$(ARCH)/traits.h
+ARCH_TRAITS	= $(INCLUDE)/architecture/$(ARCH)/$(ARCH)_traits.h
 endif
 SMOD		= $(call TOLOWER,$(call GETTK,MODE,$(TRAITS)))
 ARCH		= $(call TOLOWER,$(call GETTK,ARCHITECTURE,$(TRAITS)))
