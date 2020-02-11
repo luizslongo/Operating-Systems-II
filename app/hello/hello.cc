@@ -8,5 +8,10 @@ int main()
 {
     cout << "Hello world!" << endl;
 
+    unsigned long long a = 1234;
+
+ASM("baba:");
+    cout << "a=" << a << endl;
+
     return 0;
 }

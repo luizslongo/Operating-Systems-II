@@ -112,7 +112,12 @@ template<> struct Traits<PMU>: public Traits<Build>
 {
     static const bool enabled = true;
     enum { V1, V2, V3, DUO, MICRO, ATOM, SANDY_BRIDGE };
-    static const unsigned int VERSION = V2;
+    static const unsigned int VERSION = SANDY_BRIDGE;
+
+    enum {  EVENTS_V1 = 7,
+            EVENTS_SANDY_BRIDGE = 213
+    };
+    static const unsigned int EVENTS = EVENTS_SANDY_BRIDGE;
 };
 
 class Machine_Common;

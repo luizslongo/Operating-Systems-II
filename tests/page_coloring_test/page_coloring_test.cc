@@ -20,7 +20,7 @@ const unsigned int WRITE_RATIO = 4;
 const unsigned int POLLUTE_BUFFER_SIZE = 16 * 1024;
 
 int pollute_cache(unsigned int repetitions, int id);
-int run(int test);
+void run(int test);
 void collect_wcet(int test);
 void print_stats(void);
 int job(unsigned int, int); // function passed to each periodic thread
@@ -104,7 +104,7 @@ int main()
         delete wcet[i];
 }
 
-int run(int test)
+void run(int test)
 {
     TSC_Chronometer chrono;
 
