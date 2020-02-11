@@ -97,7 +97,7 @@ public:
     void config(const Count & count, bool interrupt, bool periodic) {
         disable();
         gptm(GPTMCFG)   = 0;                     // 32-bit timer
-        gptm(GPTMTAMR)  = periodic ? 2 : 1;      // 2 -> Periodic, 1 -> One-shot
+        gptm(GPTMTAMR)  = TCDIR | ((periodic) ? 2 : 1);      // 2 -> Periodic, 1 -> One-shot
         gptm(GPTMTAILR) = count;
         gptm(GPTMTAPR)  = (count >> 31) >> 1;    // Avoid compiler warning "shift >= width of type"
         if(interrupt)
