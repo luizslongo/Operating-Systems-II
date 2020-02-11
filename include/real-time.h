@@ -64,8 +64,6 @@ public:
     struct Configuration: public Thread::Configuration {
         Configuration(const Microsecond & p, const Microsecond & d = SAME, const Microsecond & cap = UNKNOWN, const Microsecond & act = NOW, const unsigned int n = INFINITE, int cpu_id = ANY, const State & s = READY, const Criterion & c = NORMAL, const Color & a = WHITE, Task * t = 0, unsigned int ss = STACK_SIZE)
         : Thread::Configuration(s, c, a, t, ss), period(p), deadline(d == SAME ? p : d), capacity(cap), activation(act), times(n), cpu(cpu_id) {}
-            // Why does Periodic_Thread recriates a configuration when creating the thread?
-            // Can't it simply (Thread::Configuration *) &conf?
 
         Microsecond period;
         Microsecond deadline;
