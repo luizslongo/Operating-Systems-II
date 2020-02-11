@@ -1,6 +1,6 @@
 // EPOS-- ARMv7 MMU Mediator Implementation
 
-#include <architecture/armv7/mmu.h>
+#include <architecture/armv7/armv7_mmu.h>
 
 __BEGIN_SYS
 

@@ -1,6 +1,6 @@
 // EPOS-- ARMv8 MMU Mediator Implementation
 
-#include <architecture/armv8/mmu.h>
+#include <architecture/armv8/armv8_mmu.h>
 
 __BEGIN_SYS
 

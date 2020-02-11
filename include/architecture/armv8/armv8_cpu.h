@@ -4,7 +4,7 @@
 #define __armv8_h
 
 #include <architecture/cpu.h>
-#include <architecture/armv7/cpu.h>
+#include <architecture/armv7/armv7_cpu.h>
 
 __BEGIN_SYS
 

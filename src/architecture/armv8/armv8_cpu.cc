@@ -1,6 +1,6 @@
 // EPOS ARMv8 CPU Mediator Implementation
 
-#include <architecture/armv8/cpu.h>
+#include <architecture/armv8/armv8_cpu.h>
 #include <system.h>
 
 __BEGIN_SYS

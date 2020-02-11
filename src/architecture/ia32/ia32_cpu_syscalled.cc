@@ -1,6 +1,6 @@
 // EPOS IA32 CPU System Call Entry Implementation
 
-#include <architecture/ia32/cpu.h>
+#include <architecture/ia32/ia32_cpu.h>
 
 extern "C" { void _exec(void *); }
 

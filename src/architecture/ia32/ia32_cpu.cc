@@ -1,7 +1,7 @@
 // EPOS IA32 CPU Mediator Implementation
 
-#include <architecture/ia32/cpu.h>
-#include <architecture/ia32/mmu.h>
+#include <architecture/ia32/ia32_cpu.h>
+#include <architecture/ia32/ia32_mmu.h>
 #include <machine/ic.h>
 #include <system/memory_map.h>
 
