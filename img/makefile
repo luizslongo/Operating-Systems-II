@@ -82,7 +82,7 @@ endif
 debug:		$(IMAGE)
 ifeq ($(NODES),1)
 		$(EMULATOR)$(IMAGE) | $(TEE) $(OUTPUT) &
-		$(DEBUGGER) $(APP)/$(APPLICATION)
+		$(DEBUGGER)
 else
 		$(TERM) "$(EMULATOR)$(IMAGE) $(NETWORK) | $(TEE) $(OUTPUT) \
 		&& $(TCPDUMP) $(APPLICATION).pcap > $(APPLICATION).net \
