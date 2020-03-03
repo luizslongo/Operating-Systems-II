@@ -1,4 +1,4 @@
-// EPOS Cortex USB Mediator Initialization
+// EPOS Cortex USB Mediator Implementation
 
 #include <machine/ic.h>
 #include <machine/usb.h>
