@@ -97,7 +97,7 @@ COMP_PREFIX		= $($(ARCH)_COMP_PREFIX)
 pc_CC_FLAGS		:= -m32 -Wa,--32
 pc_AS_FLAGS		:= --32
 pc_LD_FLAGS		:= -m elf_i386
-pc_EMULATOR		= qemu-system-i386  -D /tmp/qemu-debug-log -d int,page,mmu,pcall,unimp,cpu_reset,guest_errors -smp $(CPUS) -m $(MEM_SIZE)k -nographic -no-reboot -drive format=raw,index=0,if=floppy,read-only,file=
+pc_EMULATOR		= qemu-system-i386 -smp $(CPUS) -m $(MEM_SIZE)k -nographic -no-reboot -drive format=raw,index=0,if=floppy,read-only,file=
 pc_DEBUGGER		:= gdb
 pc_FLASHER		:=
 pc_MAGIC		:= --nmagic
@@ -181,7 +181,7 @@ atmega_DATA_NAME	:= .data
 atmega_IMG_SUFFIX	:= .hex
 
 MACH_CC_FLAGS           := $($(MACH)_CC_FLAGS) -O -nostdinc -Wno-builtin-declaration-mismatch -Wno-array-bounds
-MACH_CXX_FLAGS          := $($(MACH)_CC_FLAGS) -O -std=c++14 -nostdinc --no-exceptions --no-rtti --no-use-cxa-atexit --no-asynchronous-unwind-tables -fdata-sections -ffunction-sections -Wall -Werror -Wno-builtin-declaration-mismatch -Wno-array-bounds -Wno-attribute-alias -Wno-placement-new -Wno-class-memaccess 
+MACH_CXX_FLAGS          := $($(MACH)_CC_FLAGS) -O -std=c++14 -nostdinc --no-exceptions --no-rtti --no-use-cxa-atexit --no-asynchronous-unwind-tables -fno-stack-protector -fdata-sections -ffunction-sections -Wall -Werror -Wno-builtin-declaration-mismatch -Wno-array-bounds -Wno-attribute-alias -Wno-placement-new -Wno-class-memaccess 
 MACH_AS_FLAGS           := $($(MACH)_AS_FLAGS)
 MACH_LD_FLAGS           := $($(MACH)_LD_FLAGS)
 MACH_CODE_NAME          := $($(MACH)_CODE_NAME)
