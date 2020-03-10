@@ -1,6 +1,6 @@
 # EPOS
 
-The [Embedded Parallel Operating System (EPOS)](https://epos.lisha.ufsc.br) project aims at automating the development of embedded systems so that developers can concentrate on what really matters: their applications. EPOS relies on the Application-Driven Embedded System Design (ADESD) method to guide the development of both software and hardware components that can be automatically adapted to fulfill the requirements of particular applications. EPOS features a set of tools to support developers in selecting, configuring, and plugging components into its application-specific framework. The combination of methodology, components, frameworks, and tools enable the automatic generation of an application-specific embedded system instances.
+The [Embedded Parallel Operating System (EPOS)](https://epos.lisha.ufsc.br) project aims at automating the development of embedded systems so that developers can concentrate on what really matters: their applications. EPOS relies on the Application-Driven Embedded System Design (ADESD) method to guide the development of both software and hardware components that can be automatically adapted to fulfill the requirements of particular applications. EPOS features a set of tools to support developers in selecting, configuring, and plugging components into its application-specific framework. The combination of methodology, components, frameworks, and tools enable the automatic generation of an application-specific embedded system instances. 
 
 ## Getting Started
 
@@ -28,11 +28,11 @@ Check the **Setting up EPOS** section of the [manual](https://epos.lisha.ufsc.br
 
 ### Installing
 
-Simply extract the tarball or clone the repository in a convenient location for you. EPOS is fully self-contained.
+Simply extract the tarball or clone the repository in a convenient location for you. EPOS is fully self-contained. 
 
 ### Building
 
-Go into the directory where you extracted EPOS and issue a ```make all``` to have instances of EPOS built for each of the applications in the ```app``` directory.
+Go into the directory where you extracted EPOS and issue a ```make all``` to have instances of EPOS built for each of the applications in the ```app``` directory. 
 
 You can also built for specific applications using ```make APPLICATION=<app>```, where \<app\> is a subdir of ```app```.
 
@@ -46,7 +46,7 @@ Please read [CONTRIBUTING.md](CONTRIBUTING.md) for details on our code of conduc
 
 ## Versioning
 
-We use [SemVer](http://semver.org/) for versioning. For the versions available, see the [tags on this repository](https://gitlab.lisha.ufsc.br/osdi/teaching2/tags).
+We use [SemVer](http://semver.org/) for versioning. For the versions available, see the [tags on this repository](https://gitlab.lisha.ufsc.br/osdi/teaching2/tags). 
 
 ## Authors
 
