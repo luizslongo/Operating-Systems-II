@@ -7,6 +7,8 @@
 #include <utility/list.h>
 #include <machine/timer.h>
 
+#include <utility/fann.h>
+
 __BEGIN_UTIL
 
 // All scheduling criteria, or disciplines, must define operator int() with
@@ -62,6 +64,10 @@ namespace Scheduling_Criteria
 
         void update() {}
         unsigned int queue() const { return 0; }
+
+        static void charge();
+        static bool colect(FANN_EPOS::fann_type *input, unsigned int cpu);
+        static bool award(int p, unsigned int cpu);
 
     protected:
         volatile int _priority;

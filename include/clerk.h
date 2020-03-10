@@ -10,6 +10,7 @@
 #include <time.h>
 #include <transducer.h>
 #include <process.h>
+#include <utility/fann.h>
 
 extern "C" { void __pre_main(); }
 
@@ -19,6 +20,7 @@ class Monitor
 {
     friend void ::__pre_main(); // for init()
     friend class Thread;        // for init()
+    friend class FANN_EPOS;
 
 protected:
     typedef TSC::Time_Stamp Time_Stamp;
@@ -34,12 +36,30 @@ public:
     Monitor(): _captures(0), _t0(TSC::time_stamp()) {}
     virtual ~Monitor() {}
 
+    virtual FANN_EPOS::fann_type last_capture() = 0;
+    virtual Time_Stamp last_time_stamp() = 0;
+    virtual unsigned int get_capture(unsigned int i) = 0;
+    virtual Time_Stamp get_capture_ts(unsigned int i) = 0;
+    virtual unsigned int captures() = 0;
+    //virtual void capture(Thread  * running_thread) = 0; TODO
+
     virtual void capture() = 0;
     virtual unsigned long long read() = 0;
     virtual void reset() = 0;
     virtual void print(OStream & os) const = 0;
 
     static void run();
+
+    static unsigned int get_ann_out (unsigned int i) {
+        if (i < ann_captures[CPU::id()] && i >= 0) {
+            return ann_out[CPU::id()][i];
+        }
+        return 1;
+    }
+
+    static unsigned int get_ann_captures() {
+        return ann_captures[CPU::id()];
+    }
 
     static void process_batch() {
         disable_captures();
@@ -107,7 +127,14 @@ protected:
 
 private:
     static volatile bool _enable;
+
+public:
     static Simple_List<Monitor> _monitors[Traits<Build>::CPUS];
+    static struct FANN_EPOS::fann *ann;
+    static unsigned int * ann_out[Traits<Build>::CPUS];
+    static unsigned long long * ann_ts[Traits<Build>::CPUS];
+    static unsigned int ann_captures[Traits<Build>::CPUS];
+    static unsigned long long ann_last_capture[Traits<Build>::CPUS];
 };
 
 
@@ -146,6 +173,30 @@ public:
     Snapshot & operator[](unsigned int i) const { return (i < _captures) ? _buffer[i] : _buffer[_captures]; }
 
     unsigned int captures() { return _captures; }
+
+    FANN_EPOS::fann_type last_capture() {
+        if(_captures >= 2)
+            return (FANN_EPOS::fann_type)(_buffer[_captures-1].data - _buffer[_captures-2].data);
+        return (FANN_EPOS::fann_type)0;
+    }
+
+    Time_Stamp last_time_stamp() {
+        if (_captures > 0)
+            return _buffer[_captures-1].ts;
+        return 0;
+    }
+
+    unsigned int get_capture(unsigned int i ) { // fix
+        if (i < _captures && i >= 0)
+            return (unsigned int)_buffer[i].data;
+        return 0;
+    }
+
+    Time_Stamp get_capture_ts(unsigned int i ) {
+        if (i < _captures && i >= 0)
+            return _buffer[i].ts;
+        return 0;
+    }
 
     void capture() {
         Time_Stamp ts = time_since_t0();

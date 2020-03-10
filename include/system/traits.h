@@ -133,6 +133,7 @@ class Delay;
 
 template<typename T> class Clerk;
 class Monitor;
+class FANN_EPOS;
 
 class Network;
 class ELP;
