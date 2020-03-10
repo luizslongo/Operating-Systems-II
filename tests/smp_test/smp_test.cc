@@ -58,7 +58,7 @@ int main()
     if (!SILENT) {
         cout << "All Threads have been created! \n Now they will sleep for 0.5s each and print a message for " << ITERATIONS << " Times \n Releasing print lock!" << endl;
     }
-    Monitor::enable_captures();
+    Monitor::enable_captures(TSC::time_stamp());
     print.v();
 
     for (unsigned int i = 0; i < THREADS; ++i) {

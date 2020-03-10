@@ -153,6 +153,9 @@ namespace Scheduling_Criteria
         : Priority(i), _deadline(d), _period(p), _capacity(c) {}
 
     public:
+        const Microsecond period() { return _period;}
+
+    public:
         Microsecond _deadline;
         Microsecond _period;
         Microsecond _capacity;

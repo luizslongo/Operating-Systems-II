@@ -35,6 +35,7 @@ public:
     virtual ~Monitor() {}
 
     virtual void capture() = 0;
+    virtual unsigned long long read() = 0;
     virtual void reset() = 0;
     virtual void print(OStream & os) const = 0;
 
@@ -60,8 +61,7 @@ public:
     }
 
     // Only start capturing when enters in main (enabled by CPU 0 at the end of init, which is only called at pre_init)
-    static void enable_captures() { 
-        Time_Stamp t0 = TSC::time_stamp();
+    static void enable_captures(Time_Stamp t0) { 
         // Adjust each Clerk Monitor instantiated.
         for(unsigned int n = 0; n < CPU::cores(); n++) {
             for(List::Iterator it = _monitors[n].begin(); it != _monitors[n].end(); it++) {
@@ -129,7 +129,7 @@ public:
     };
 
 public:
-    Clerk_Monitor(Clerk * clerk, const Hertz & frequency, bool data_to_us = false): _clerk(clerk), _frequency(frequency), _period(us2count((frequency > 0) ? 1000000 / frequency : -1UL)), _last_capture(0), _average(0), _data_to_us(data_to_us), _link(this) {
+    Clerk_Monitor(Clerk * clerk, const Hertz frequency, bool data_to_us = false): _clerk(clerk), _frequency(frequency), _period(us2count((frequency > 0) ? 1000000 / frequency : -1UL)), _last_capture(0), _average(0), _data_to_us(data_to_us), _link(this) {
         db<Clerk>(TRC) << "Clerk_Monitor(clerk=" << clerk << ") => " << this << ")" << endl;
         _snapshots = Traits<Build>::EXPECTED_SIMULATION_TIME * frequency;
         // if((_snapshots * sizeof(Snapshot)) > Traits<Monitor>::MAX_BUFFER_SIZE)
@@ -158,6 +158,10 @@ public:
             _captures++;
             _last_capture = ts;
         }
+    }
+
+    unsigned long long read() {
+        return (unsigned long long) _clerk->read();
     }
 
     void reset() {
@@ -269,7 +273,7 @@ public:
     typedef typename T::Value Data;
 
 public:
-    Clerk(const Event & event, unsigned int dev, const Hertz frequency = 0, bool monitored = false): _dev(dev), _monitor(monitored ? new (SYSTEM) Clerk_Monitor<Clerk>(this, frequency) : 0) {}
+    Clerk(const Event event, unsigned int dev, const Hertz frequency = 0, bool monitored = false): _dev(dev), _monitor(monitored ? new (SYSTEM) Clerk_Monitor<Clerk>(this, frequency) : 0) {}
     ~Clerk() {}
 
     Data read() { return T::sense(_dev); }
@@ -293,7 +297,7 @@ public:
     typedef unsigned long long Data;
 
 public:
-    Clerk(const Event & event, const Hertz frequency = 0, bool monitored = false): _event(event), 
+    Clerk(const Event event, const Hertz frequency = 0, bool monitored = false): _event(event), 
         _monitor(monitored ? new (SYSTEM) Clerk_Monitor<Clerk>(this, frequency, event == Event::THREAD_EXECUTION_TIME || event == Event::CPU_EXECUTION_TIME) : 0) {}
     ~Clerk() {}
 
@@ -394,16 +398,11 @@ private:
 
 template<unsigned int CHANNEL>
 inline void Monitor::init_pmu_monitoring() {
-    unsigned int  used_channels = 0;
     if(Traits<Monitor>::PMU_EVENTS_FREQUENCIES[CHANNEL]) {
         if(CPU::id() == 0)
             db<Monitor>(TRC) << "Monitor::init: monitoring PMU event " << Traits<Monitor>::PMU_EVENTS[CHANNEL] << " at " << Traits<Monitor>::PMU_EVENTS_FREQUENCIES[CHANNEL] << " Hz" << endl;
         new (SYSTEM) Clerk<PMU>(Traits<Monitor>::PMU_EVENTS[CHANNEL], Traits<Monitor>::PMU_EVENTS_FREQUENCIES[CHANNEL], true);
-        used_channels++;
     }
-
-    if(used_channels > Clerk<PMU>::CHANNELS + Clerk<PMU>::FIXED)
-        db<Monitor>(WRN) << "Monitor::init: some events not monitored because all PMU channels are busy!" << endl;
 
     init_pmu_monitoring<CHANNEL + 1>();
 };
@@ -415,7 +414,7 @@ inline void Monitor::init_pmu_monitoring<COUNTOF(Traits<Monitor>::PMU_EVENTS)>()
 
 template<unsigned int CHANNEL>
 inline void Monitor::init_system_monitoring() {
-    if((Traits<Monitor>::SYSTEM_EVENTS_FREQUENCIES[CHANNEL] > 0)) {
+    if(Traits<Monitor>::SYSTEM_EVENTS_FREQUENCIES[CHANNEL]) {
             db<Monitor>(TRC) << "Monitor::init: monitoring system event " << Traits<Monitor>::SYSTEM_EVENTS[CHANNEL] << " at " << Traits<Monitor>::SYSTEM_EVENTS_FREQUENCIES[CHANNEL] << " Hz" << endl;
         new (SYSTEM) Clerk<System>(Traits<Monitor>::SYSTEM_EVENTS[CHANNEL], Traits<Monitor>::SYSTEM_EVENTS_FREQUENCIES[CHANNEL], true);
     }

@@ -82,26 +82,32 @@ public:
 
     // Thread Statistics (mostly for Monitor)
     struct _Statistics {
-        _Statistics(): execution_time(0), last_execution(0), jobs(0), average_execution_time(0), hyperperiod_count_thread(0), hyperperiod_jobs(0), hyperperiod_average_execution_time(0), alarm_times(0), times_p_count(0), missed_deadlines(0) {}
+        _Statistics(): execution_time(0), last_execution(0), jobs(0), average_execution_time(0), hyperperiod_count_thread(0), alarm_times(0), times_p_count(0), missed_deadlines(0) {}
 
-        // Thread Execution Time
-        unsigned int execution_time;
-        unsigned int last_execution;
+        // Thread Execution Time (limited to 32bits counting, a hyperperiod greater than 32bits is not supported)
+        TSC::Time_Stamp execution_time;
+        TSC::Time_Stamp last_execution;
         unsigned int jobs;
-        unsigned int average_execution_time;
+        TSC::Time_Stamp average_execution_time;
         unsigned int hyperperiod_count_thread;
-        unsigned int hyperperiod_jobs;
-        unsigned int hyperperiod_average_execution_time;
+        // unsigned int hyperperiod_jobs;
 
         // Dealine Miss count
         Alarm * alarm_times;
         unsigned int times_p_count;
         unsigned int missed_deadlines;
 
+        // Per Thread PMU
+        unsigned long long thread_pmu_accumulated[COUNTOF(Traits<Monitor>::PMU_EVENTS)];
+        unsigned long long thread_pmu_last[COUNTOF(Traits<Monitor>::PMU_EVENTS)];
+
         // On Migration
-        static unsigned int hyperperiod[Traits<Build>::CPUS];              // recalculate, on _old_hyperperiod + hyperperiod update
+        static TSC::Time_Stamp hyperperiod[Traits<Build>::CPUS];              // recalculate, on _old_hyperperiod + hyperperiod update
         static TSC::Time_Stamp last_hyperperiod[Traits<Build>::CPUS];      // wait for old hyperperiod and update
         static unsigned int hyperperiod_count[Traits<Build>::CPUS];        // reset on next hyperperiod
+        static unsigned long long cpu_pmu_accumulated[Traits<Build>::CPUS][COUNTOF(Traits<Monitor>::PMU_EVENTS)];
+        static unsigned long long cpu_pmu_last[Traits<Build>::CPUS][COUNTOF(Traits<Monitor>::PMU_EVENTS)];
+        static bool cooldown[Traits<Build>::CPUS];
 
         // CPU Execution Time
         static TSC::Time_Stamp hyperperiod_idle_time[Traits<Build>::CPUS]; //
@@ -110,24 +116,30 @@ public:
     };
 
     union _Dummy_Statistics {
-        // Thread Execution Time
-        unsigned int execution_time;
-        unsigned int last_execution;
+        // Thread Execution Time (limited to 32bits counting, a hyperperiod greater than 32bits is not supported)
+        TSC::Time_Stamp execution_time;
+        TSC::Time_Stamp last_execution;
         unsigned int jobs;
-        unsigned int average_execution_time;
+        TSC::Time_Stamp average_execution_time;
         unsigned int hyperperiod_count_thread;
         unsigned int hyperperiod_jobs;
-        unsigned int hyperperiod_average_execution_time;
 
         // Dealine Miss count
         Alarm * alarm_times;
         unsigned int times_p_count;
         unsigned int missed_deadlines;
 
+        // Per Thread PMU
+        unsigned long long thread_pmu_accumulated[COUNTOF(Traits<Monitor>::PMU_EVENTS)];
+        unsigned long long thread_pmu_last[COUNTOF(Traits<Monitor>::PMU_EVENTS)];
+
         // On Migration
-        static unsigned int hyperperiod[Traits<Build>::CPUS];              // recalculate, on _old_hyperperiod + hyperperiod update
+        static TSC::Time_Stamp hyperperiod[Traits<Build>::CPUS];              // recalculate, on _old_hyperperiod + hyperperiod update
         static TSC::Time_Stamp last_hyperperiod[Traits<Build>::CPUS];      // wait for old hyperperiod and update
         static unsigned int hyperperiod_count[Traits<Build>::CPUS];        // reset on next hyperperiod
+        static unsigned long long cpu_pmu_accumulated[Traits<Build>::CPUS][COUNTOF(Traits<Monitor>::PMU_EVENTS)];
+        static unsigned long long cpu_pmu_last[Traits<Build>::CPUS][COUNTOF(Traits<Monitor>::PMU_EVENTS)];
+        static bool cooldown[Traits<Build>::CPUS];
 
         // CPU Execution Time
         static TSC::Time_Stamp hyperperiod_idle_time[Traits<Build>::CPUS]; //
@@ -172,12 +184,13 @@ protected:
     Criterion begin_isr(IC::Interrupt_Id i) {
         assert(_state == RUNNING);
         Criterion c = criterion();
-        _link.rank(Criterion::ISR + int(i));
+        _link = Queue::Element(this, Criterion(Criterion::ISR + int(i))); //;Criterion::ISR + int(i));
         return c;
     }
     void end_isr(IC::Interrupt_Id i, const Criterion & c) {
         assert(_state == RUNNING);
-        _link.rank(c);
+        _link = Queue::Element(this, c);
+        //_link.rank(c);
     }
 
     static Thread * volatile running() { return _scheduler.chosen(); }
