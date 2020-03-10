@@ -505,26 +505,26 @@ void padarray4(I2D* inMat, I2D* borderMat, int dir, I2D* paddedArray)
     return;
 }
 
-inline int disparity()
-{
-    int rows = 32;
-    int cols = 32;
-    I2D *imleft, *imright, *retDisparity;
+// inline int disparity()
+// {
+//     int rows = 32;
+//     int cols = 32;
+//     I2D *imleft, *imright, *retDisparity;
 
-    int WIN_SZ=8, SHIFT=64;
+//     int WIN_SZ=8, SHIFT=64;
 
-    imleft  = (I2D *) img1;
-    imright = (I2D *) img2;
+//     imleft  = (I2D *) img1;
+//     imright = (I2D *) img2;
 
-    rows = imleft->height;
-    cols = imleft->width;
+//     rows = imleft->height;
+//     cols = imleft->width;
 
-    (void)SHIFT;
-    (void)WIN_SZ;
+//     (void)SHIFT;
+//     (void)WIN_SZ;
 
-    retDisparity = getDisparity(imleft, imright, WIN_SZ, SHIFT);
+//     retDisparity = getDisparity(imleft, imright, WIN_SZ, SHIFT);
 
-    return retDisparity->height;
-}
+//     return retDisparity->height;
+// }
 
 #endif

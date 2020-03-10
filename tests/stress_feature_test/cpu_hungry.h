@@ -1,6 +1,10 @@
 #ifndef __CPU_HUNGRY__
 #define __CPU_HUNGRY__
 
+#include <process.h>
+
+using namespace EPOS;
+
 //method that configures iterative fibonacci execution
 int iterative_fib () {
     //float ret = 1.33;

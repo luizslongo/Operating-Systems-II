@@ -225,6 +225,9 @@ protected:
 private:
     static void init();
 
+public:
+    Statistics _statistics;
+
 protected:
     Task * _task;
     Segment * _user_stack;
@@ -235,8 +238,6 @@ protected:
     Queue * _waiting;
     Thread * volatile _joining;
     Queue::Element _link;
-
-    Statistics _statistics;
 
     static volatile unsigned int _thread_count;
     static Scheduler_Timer * _timer;

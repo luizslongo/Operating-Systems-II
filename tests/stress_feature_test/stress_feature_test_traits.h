@@ -5,16 +5,17 @@
 
 __BEGIN_SYS
 
+// Build
 template<> struct Traits<Build>: public Traits_Tokens
 {
     // Basic configuration
     static const unsigned int MODE = LIBRARY;
-    static const unsigned int ARCHITECTURE = IA32;
-    static const unsigned int MACHINE = PC;
-    static const unsigned int MODEL = Legacy_PC;
-    static const unsigned int CPUS = 8;
+    static const unsigned int ARCHITECTURE = ARMv8;
+    static const unsigned int MACHINE = Cortex;
+    static const unsigned int MODEL = Raspberry_Pi3;
+    static const unsigned int CPUS = 4;
     static const unsigned int NODES = 1; // (> 1 => NETWORKING)
-    static const unsigned int EXPECTED_SIMULATION_TIME = 60; // s (0 => not simulated)
+    static const unsigned int EXPECTED_SIMULATION_TIME = 30; // s (0 => not simulated)
 
     // Default flags
     static const bool enabled = true;
@@ -81,9 +82,9 @@ template<> struct Traits<Aspect>: public Traits<Build>
 };
 
 
-// Mediators
 __END_SYS
 
+// Mediators
 #include __ARCHITECTURE_TRAITS_H
 #include __MACHINE_TRAITS_H
 
@@ -112,7 +113,7 @@ template<> struct Traits<System>: public Traits<Build>
     static const bool reboot = true;
 
     static const unsigned int STACK_SIZE = Traits<Machine>::STACK_SIZE;
-    static const unsigned int HEAP_SIZE = 32 * (Traits<Application>::MAX_THREADS + 1) * Traits<Application>::STACK_SIZE;
+    static const unsigned int HEAP_SIZE = 64 * (Traits<Application>::MAX_THREADS + 1) * Traits<Application>::STACK_SIZE;
 };
 
 template<> struct Traits<Task>: public Traits<Build>
@@ -221,14 +222,14 @@ template<> struct Traits<Monitor>: public Traits<Build>
 {
     static const bool enabled = monitored;
 
-    static constexpr System_Event SYSTEM_EVENTS[]                 = {ELAPSED_TIME, DEADLINE_MISSES, CPU_EXECUTION_TIME, THREAD_EXECUTION_TIME, RUNNING_THREAD};
-    static constexpr unsigned int SYSTEM_EVENTS_FREQUENCIES[]     = {           1,               1,                  1,                     1,              1}; // in Hz
+    static constexpr System_Event SYSTEM_EVENTS[]                 = {CPU_EXECUTION_TIME, RUNNING_THREAD, THREAD_EXECUTION_TIME, DEADLINE_MISSES};
+    static constexpr unsigned int SYSTEM_EVENTS_FREQUENCIES[]     = {1                 , 1             , 1};//{106, 106};// // in Hz
 
-    static constexpr PMU_Event PMU_EVENTS[]                       = {COMMITED_INSTRUCTIONS, BRANCHES, CACHE_MISSES};
-    static constexpr unsigned int PMU_EVENTS_FREQUENCIES[]        = {                    1,        1,            1}; // in Hz
+    static constexpr PMU_Event PMU_EVENTS[]                       = {COMMITED_INSTRUCTIONS, BRANCHES, CACHE_MISSES, BUS_ACCESS_LD_CA53_v8};
+    static constexpr unsigned int PMU_EVENTS_FREQUENCIES[]        = {2                    , 2       , 2           , 2};//,106,106,106}; // in Hz
 
-    static constexpr unsigned int TRANSDUCER_EVENTS[]             = {CPU_VOLTAGE, CPU_TEMPERATURE};
-    static constexpr unsigned int TRANSDUCER_EVENTS_FREQUENCIES[] = {          1,           1}; // in Hz
+    static constexpr unsigned int TRANSDUCER_EVENTS[]             = {};
+    static constexpr unsigned int TRANSDUCER_EVENTS_FREQUENCIES[] = {}; // in Hz
 };
 
 __END_SYS
