@@ -85,11 +85,11 @@ protected:
     inline Time_Stamp time_since_t0() { return TSC::time_stamp() - _t0; }
 
     static inline Time_Stamp us2count(Microsecond t) {
-        return Convert::us2count<Time_Stamp, Microsecond>(TSC::frequency(), t);
+        return Convert::us2count<Time_Stamp, Time_Base>(TSC::frequency(), t);
     }
 
     static inline Microsecond count2us(Time_Stamp t) {
-        return Convert::count2us<Hertz, Time_Stamp, Microsecond>(TSC::frequency(), t);
+        return Convert::count2us<Hertz, Time_Stamp, Time_Base>(TSC::frequency(), t);
     }
 
 private:
@@ -415,7 +415,7 @@ inline void Monitor::init_pmu_monitoring<COUNTOF(Traits<Monitor>::PMU_EVENTS)>()
 
 template<unsigned int CHANNEL>
 inline void Monitor::init_system_monitoring() {
-    if((Traits<Monitor>::SYSTEM_EVENTS_FREQUENCIES[CHANNEL] > 0) && (CPU::id() == 0)) {
+    if((Traits<Monitor>::SYSTEM_EVENTS_FREQUENCIES[CHANNEL] > 0)) {
             db<Monitor>(TRC) << "Monitor::init: monitoring system event " << Traits<Monitor>::SYSTEM_EVENTS[CHANNEL] << " at " << Traits<Monitor>::SYSTEM_EVENTS_FREQUENCIES[CHANNEL] << " Hz" << endl;
         new (SYSTEM) Clerk<System>(Traits<Monitor>::SYSTEM_EVENTS[CHANNEL], Traits<Monitor>::SYSTEM_EVENTS_FREQUENCIES[CHANNEL], true);
     }

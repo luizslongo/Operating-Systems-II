@@ -29,15 +29,15 @@ void Monitor::init()
 {
     db<Monitor>(TRC) << "Monitor::init()" << endl;
 
-    if(Traits<System>::monitored)
-        init_system_monitoring<0>();
-
 #ifdef __PMU_H
 
     if(Traits<PMU>::enabled && Traits<PMU>::monitored)
         init_pmu_monitoring<0>();
 
 #endif
+
+    if(Traits<System>::monitored)
+        init_system_monitoring<0>();
 
 }
 

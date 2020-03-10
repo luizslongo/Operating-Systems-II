@@ -1,6 +1,7 @@
 #include <utility/ostream.h>
 #include <synchronizer.h>
 #include <process.h>
+#include <clerk.h>
 #include <time.h>
 #include <architecture/cpu.h>
 
@@ -10,7 +11,6 @@ OStream cout;
 
 const bool SILENT = false;
 const unsigned int THREADS = 4;
-const unsigned int SLEEP_TIME = 500000; // 0.5 sec
 const unsigned int ITERATIONS = 10; // 5 sec
 
 Semaphore print;
@@ -46,7 +46,6 @@ int main()
     cout << "Simple SMP Tester!" << endl;
     if (!SILENT) {
         cout << THREADS << " Threads will be created following CPU Affinity Scheduling!" << endl;
-        cout << "Will create them now!" << endl;
     }
     
     print = Semaphore(1);
@@ -59,6 +58,7 @@ int main()
     if (!SILENT) {
         cout << "All Threads have been created! \n Now they will sleep for 0.5s each and print a message for " << ITERATIONS << " Times \n Releasing print lock!" << endl;
     }
+    Monitor::enable_captures();
     print.v();
 
     for (unsigned int i = 0; i < THREADS; ++i) {
@@ -74,10 +74,8 @@ int main()
         delete thread[i];
     }
 
-    if (!SILENT) {
-        cout << "Sleeping for 2 second, then the system will be rebooted!" << endl;
-    }
     cout << "Goodbey world!" << endl;
+    Monitor::disable_captures();
 
     return 0;
 }
