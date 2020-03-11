@@ -53,6 +53,9 @@ namespace Scheduling_Criteria
         static const bool preemptive = true;
         static const unsigned int QUEUES = 1;
 
+        // FANN lib usage
+        static const bool learning = false;
+
     public:
         template <typename ... Tn>
         Priority(int p = NORMAL, Tn & ... an): _priority(p) {}

@@ -22,7 +22,7 @@ namespace Scheduling_Criteria {
     }
 
     bool Priority::colect(FANN_EPOS::fann_type *input, unsigned int cpu) {
-        if (Traits<FANN_EPOS>::enable) {
+        if (learning) {
             int i = 0;
             bool reset = false;
             for(Simple_List<Monitor>::Iterator it = monitor->begin(); it != monitor->end() && i < 5; it++) {
@@ -40,7 +40,7 @@ namespace Scheduling_Criteria {
     }
 
     void Priority::charge() {
-        if (Traits<FANN_EPOS>::enable && CPU::id() == 0) {
+        if (learning && CPU::id() == 0) {
             // Simple_List<Monitor> * monitor;
             for(unsigned int cpu = 0; cpu < CPU::cores(); cpu++) {
                 monitor = &(Monitor::_monitors[cpu]);
@@ -65,7 +65,7 @@ namespace Scheduling_Criteria {
     }
 
     bool Priority::award(int p, unsigned int cpu) {
-        if (Traits<FANN_EPOS>::enable) {
+        if (learning) {
             if(Monitor::ann_captures[cpu] >= 2) {
                 return !(p != IDLE && p != MAIN && 
                     Monitor::ann_out[cpu][Monitor::ann_captures[cpu]-2] == Monitor::ann_out[cpu][Monitor::ann_captures[cpu]-1] &&
