@@ -3,8 +3,8 @@
 #ifndef __lm3s811_gpio_h
 #define __lm3s811_gpio_h
 
-#include <machine/cortex/engines/cortex_m3/scb.h>
-#include <machine/cortex/engines/pl061.h>
+#include <machine/cortex/engine/cortex_m3/scb.h>
+#include <machine/cortex/engine/pl061.h>
 #include "lm3s811_sysctrl.h"
 #include <system/memory_map.h>
 

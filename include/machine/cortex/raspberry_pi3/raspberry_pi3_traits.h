@@ -8,9 +8,9 @@
 __BEGIN_SYS
 
 class Machine_Common;
-template <> struct Traits<Machine_Common>: public Traits<void>
+template <> struct Traits<Machine_Common>: public Traits<Build>
 {
-    static const bool debugged = Traits<void>::debugged;
+    static const bool debugged = Traits<Build>::debugged;
 };
 
 template <> struct Traits<Machine>: public Traits<Machine_Common>
@@ -85,7 +85,7 @@ template<> struct Traits<UART>: public Traits<Machine_Common>
     static const unsigned int CLOCK_DIVISOR = 4;
     static const unsigned int CLOCK = Traits<Machine>::IO_PLL_CLOCK/CLOCK_DIVISOR;
 
-    static const unsigned int DEF_UNIT = 1;
+    static const unsigned int DEF_UNIT = 0;
     static const unsigned int DEF_BAUD_RATE = 115200;
     static const unsigned int DEF_DATA_BITS = 8;
     static const unsigned int DEF_PARITY = 0; // none
@@ -98,17 +98,17 @@ template<> struct Traits<GPIO>: public Traits<Machine_Common>
     static const bool supports_power_up = false;
 };
 
-template<> struct Traits<Serial_Display>: public Traits<void>
+template<> struct Traits<Serial_Display>: public Traits<Machine_Common>
 {
     static const bool enabled = (Traits<Build>::EXPECTED_SIMULATION_TIME != 0);
     static const int ENGINE = UART;
-    static const int UNIT = 1;
+    static const int UNIT = 0;
     static const int COLUMNS = 80;
     static const int LINES = 24;
     static const int TAB_SIZE = 8;
 };
 
-template<> struct Traits<Serial_Keyboard>: public Traits<void>
+template<> struct Traits<Serial_Keyboard>: public Traits<Machine_Common>
 {
     static const bool enabled = (Traits<Build>::EXPECTED_SIMULATION_TIME != 0);
 };
@@ -121,14 +121,10 @@ template<> struct Traits<Scratchpad>: public Traits<Machine_Common>
 template<> struct Traits<Ethernet>: public Traits<Machine_Common>
 {
     // NICS that don't have a network in Traits<Network>::NETWORKS will not be enabled
-    typedef LIST<GEM> DEVICES;
+    typedef LIST<Ethernet_NIC> DEVICES;
     static const unsigned int UNITS = DEVICES::Length;
 
     static const bool enabled = (Traits<Build>::NODES > 1) && (UNITS > 0);
-};
-
-template<> struct Traits<GEM>: public Traits<Machine_Common>
-{
     static const bool promiscuous = false;
 };
 

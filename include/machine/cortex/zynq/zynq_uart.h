@@ -109,16 +109,16 @@ public:
 
     bool busy();
 
-    void enable() { uart(AUX_ENABLES) = UEN;}
-    void disable() { uart(AUX_ENABLES) &= ~UEN; }
+    void enable() {}
+    void disable() {}
 
     void int_enable(bool receive = true, bool transmit = true, bool line = true, bool modem = true) {
         uart(INTRPT_EN_REG0) |= (receive ? INTRPT_RTRIG : 0) | (transmit ? INTRPT_TTRIG : 0);
         uart(INTRPT_DIS_REG0) &= ~(receive ? INTRPT_RTRIG : 0) & ~(transmit ? INTRPT_TTRIG : 0);
     }
     void int_disable(bool receive = true, bool transmit = true, bool line = true, bool modem = true) {
-        uart(INTRPT_EN_REG0) &= ~(receive ? INTRPT_RTRIG : 0) & ~(send ? INTRPT_TTRIG : 0);
-        uart(INTRPT_DIS_REG0) |= (receive ? INTRPT_RTRIG : 0) | (send ? INTRPT_TTRIG : 0);
+        uart(INTRPT_EN_REG0) &= ~(receive ? INTRPT_RTRIG : 0) & ~(transmit ? INTRPT_TTRIG : 0);
+        uart(INTRPT_DIS_REG0) |= (receive ? INTRPT_RTRIG : 0) | (transmit ? INTRPT_TTRIG : 0);
     }
 
     void reset() {
@@ -148,7 +148,7 @@ private:
     static const unsigned int UNITS = Traits<UART>::UNITS;
 
 public:
-    UART_Engine(unsigned int unit, unsigned int baud_rate, unsigned int data_bits, unsigned int parity, unsigned int stop_bits): _unit(unit), _uart(new(reinterpret_cast<void *>(Memory_Map::UART0_BASE + 0x1000 * unit)) PL011) {
+    UART_Engine(unsigned int unit, unsigned int baud_rate, unsigned int data_bits, unsigned int parity, unsigned int stop_bits): _unit(unit), _uart(new(reinterpret_cast<void *>(Memory_Map::UART0_BASE + 0x1000 * unit)) Zynq_UART_Engine) {
         assert(unit < UNITS);
         config(baud_rate, data_bits, parity, stop_bits);
     }

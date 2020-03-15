@@ -4,12 +4,13 @@
 #define __emote3_machine_h
 
 #include <machine/machine.h>
-#include <machine/cortex/engines/cortex_m3/scb.h>
-#include <machine/cortex/engines/cortex_m3/systick.h>
+#include <machine/cortex/engine/cortex_m3/scb.h>
+#include <machine/cortex/engine/cortex_m3/systick.h>
 #include "emote3_sysctrl.h"
 #include "emote3_ioctrl.h"
 #include <system/memory_map.h>
 #include <system.h>
+#include <utility/convert.h>
 
 __BEGIN_SYS
 
@@ -49,7 +50,7 @@ public:
 
     static void delay(const Microsecond & time) {
         assert(Traits<TSC>::enabled);
-        TSC::Time_Stamp end = TSC::time_stamp() + time * (TSC::frequency() / 1000000);
+        TSC::Time_Stamp end = TSC::time_stamp() + Convert::us2count<TSC::Time_Stamp, Microsecond>(TSC::frequency(), time);
         while(end > TSC::time_stamp());
     }
 
@@ -65,7 +66,7 @@ public:
     
     static void smp_barrier() {}
 
-    static void smp_init(unsigned int n_cpus) { assert(n_cpus == 1); }
+    static void smp_barrier_init(unsigned int n_cpus) { assert(n_cpus == 1); }
 
     static void power(const Power_Mode & mode) {
         // Change in power mode will only be effective when ASM("wfi") is executed

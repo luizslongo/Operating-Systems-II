@@ -3,7 +3,11 @@
 #ifndef __cortex_machine_h
 #define __cortex_machine_h
 
-#include <architecture/cpu.h>
+#include <architecture.h>
+#include <machine/machine.h>
+#include <machine/ic.h>
+#include <system/info.h>
+#include <system/memory_map.h>
 #include <system.h>
 #include __HEADER_MMOD(machine)
 
@@ -24,8 +28,6 @@ public:
 
     using Engine::delay;
 
-    static const UUID & uuid() { return System::info()->bm.uuid; }
-
     static void panic();
 
     static void reboot()
@@ -38,6 +40,8 @@ public:
         db<Machine>(WRN) << "Machine::poweroff()" << endl;
         Engine::poweroff();
     }
+
+    static const UUID & uuid() { return System::info()->bm.uuid; }
 
 private:
     static void pre_init(System_Info * si);

@@ -11,7 +11,7 @@ __BEGIN_SYS
 
 class ICMP: private IP::Observer
 {
-    friend class Network_Common;
+    friend class IP;
 
 public:
     static const bool connectionless = true;
@@ -78,16 +78,11 @@ public:
     class Address: public IP::Address
     {
     public:
-        typedef Type Local;
-
-    public:
         Address() {}
         Address(const IP::Address & ip): IP::Address(ip) {}
-
-        Local local() const { return 0; }
     };
 
-    typedef Data_Observer<Buffer, Type> Observer;
+    typedef Data_Observer<Buffer, Type> Observer; // ICMP does not use the Condition, but to support Communicator/Link, 0 is used
     typedef Data_Observed<Buffer, Type> Observed;
 
     class Header
@@ -174,12 +169,13 @@ public:
         IP::detach(this, IP::ICMP);
     }
 
-    static int send(const Address::Local & from, const Address & to, const void * data, unsigned int size);
+    static int send(const Address & from, const Address & to, const void * data, unsigned int size);
     static int receive(Buffer * buf, Address * from, void * data, unsigned int size);
 
-    static void attach(Observer * obs, const Type & type) { _observed.attach(obs, type); }
-    static void detach(Observer * obs, const Type & type) { _observed.detach(obs, type); }
-    static bool notify(const Type & type, Buffer * buf) { return _observed.notify(type, buf); }
+    // ICMP does not use the Condition in Observer, but to support Communicator/Link, 0 is used
+    static void attach(Observer * obs, const Address & addr) { _observed.attach(obs, 0); }
+    static void detach(Observer * obs, const Address & addr) { _observed.detach(obs, 0); }
+    static bool notify(const Type & type, Buffer * buf) { return _observed.notify(0, buf); }
 
 private:
     void update(IP::Observed * ip, const IP::Protocol & prot, Buffer * buf);

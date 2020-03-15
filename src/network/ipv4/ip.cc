@@ -63,6 +63,8 @@ IP::Buffer * IP::alloc(const Address & to, const Protocol & prot, unsigned int o
     }
 
     Buffer * pool = nic->alloc(mac, NIC<Ethernet>::PROTO_IP, once, sizeof(IP::Header), payload);
+    if(!pool)
+        return 0;
 
     Header header(ip->address(), to, prot, 0); // length will be defined latter for each fragment
 

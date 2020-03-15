@@ -6,8 +6,8 @@
 #define __ic_common_only__
 #include <machine/ic.h>
 #undef __ic_common_only__
-#include <machine/cortex/engines/cortex_m3/systick.h>
-#include <machine/cortex/engines/cortex_m3/gptm.h>
+#include <machine/cortex/engine/cortex_m3/systick.h>
+#include <machine/cortex/engine/cortex_m3/gptm.h>
 #include <system/memory_map.h>
 #include <utility/convert.h>
 
@@ -32,7 +32,7 @@ public:
     Hertz clock() const { return systick()->clock(); }
 
 protected:
-    static void eoi(const Interrupt_Id & id) { systick()->eoi(id); };
+    static void eoi(Interrupt_Id id) { systick()->eoi(id); };
 
     static void init(const Hertz & frequency) {
         systick()->config(systick()->clock() / frequency, true, true);
@@ -75,11 +75,11 @@ public:
     void power(const Power_Mode & mode) {}
 
  protected:
-    static void eoi(const Interrupt_Id & id) { int2gptm(id)->eoi(id); };
+    static void eoi(Interrupt_Id id) { int2gptm(id)->eoi(id); };
 
 private:
     // TODO: incorporate in eoi and move to .cc
-    static GPTM * int2gptm(const Interrupt_Id & id) {
+    static GPTM * int2gptm(Interrupt_Id id) {
         int i;
         switch(id) {
         case IC::INT_USER_TIMER0: i = 0; break;

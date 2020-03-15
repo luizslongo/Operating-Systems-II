@@ -27,8 +27,9 @@ public:
 
         // This barrier is particularly important, since afterwards the temporary stacks
         // and data structures established by SETUP and announced as "free memory" will indeed be
-        // available to user threads. 
+        // available to user threads.
         CPU::smp_barrier();
+        CPU::int_enable();  // Was disabled at Thread::init to prevent INT_RESCHEDULE before context->load()
         first->_context->load();
     }
 };

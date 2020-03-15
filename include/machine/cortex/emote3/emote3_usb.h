@@ -6,7 +6,7 @@
 #include <architecture/cpu.h>
 #include <machine/usb.h>
 #include <machine/ic.h>
-#include <machine/cortex/engines/pl061.h>
+#include <machine/cortex/engine/pl061.h>
 
 __BEGIN_SYS
 
@@ -236,21 +236,21 @@ public:
             break;
         case FULL: {
             // Set D+ USB pull-up resistor, which is controlled by GPIO pin C2 in eMote3
-            pl061->select_pin_function(PL061::PIN2, PL061::FUN_ALTERNATE);
-            pl061->direction(1 << 2, PL061::OUT);
-            pl061->set(1 << 2);
+            pl061->select_pin_function(PL061::PIN2, PL061::FUN_GPIO);
+            pl061->direction(PL061::PIN2, PL061::OUT);
+            pl061->set(PL061::PIN2, true);
         } break;
         case LIGHT:
         case SLEEP:
             break;
         case OFF:
             disable();
-            pl061->clear(1 << 2);
+            pl061->clear(PL061::PIN2);
             break;
         }
     }
 
-    void handle_int(const unsigned int & interrupt);
+    void handle_int(IC::Interrupt_Id interrupt);
 
     void init();
 
@@ -299,7 +299,7 @@ private:
     static Reg32 _oif;
     static const Descriptor::Device _device_descriptor;
 
-    volatile Reg32 & usb(unsigned int o) { return reinterpret_cast<volatile Reg32 *>(this)[o / sizeof(Reg32)]; }
+    volatile Reg32 & usb(unsigned int o) { return reinterpret_cast<volatile Reg32 *>(Memory_Map::USB0_BASE)[o / sizeof(Reg32)]; }
 };
 
 __END_SYS

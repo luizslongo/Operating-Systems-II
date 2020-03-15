@@ -4,8 +4,8 @@
 #define __lm3s811_machine_h
 
 #include <machine/machine.h>
-#include <machine/cortex/engines/cortex_m3/scb.h>
-#include <machine/cortex/engines/cortex_m3/systick.h>
+#include <machine/cortex/engine/cortex_m3/scb.h>
+#include <machine/cortex/engine/cortex_m3/systick.h>
 #include "lm3s811_sysctrl.h"
 #include <system/memory_map.h>
 #include <system.h>
@@ -36,7 +36,7 @@ public:
 
     static void smp_barrier() {}
 
-    static void smp_init(unsigned int n_cpus) { assert(n_cpus == 1); }
+    static void smp_barrier_init(unsigned int n_cpus) { assert(n_cpus == 1); }
 
     static void power(const Power_Mode & mode) {}
     

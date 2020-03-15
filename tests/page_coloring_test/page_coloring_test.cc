@@ -20,7 +20,7 @@ const unsigned int WRITE_RATIO = 4;
 const unsigned int POLLUTE_BUFFER_SIZE = 16 * 1024;
 
 int pollute_cache(unsigned int repetitions, int id);
-int run(int test);
+void run(int test);
 void collect_wcet(int test);
 void print_stats(void);
 int job(unsigned int, int); // function passed to each periodic thread
@@ -104,7 +104,7 @@ int main()
         delete wcet[i];
 }
 
-int run(int test)
+void run(int test)
 {
     TSC_Chronometer chrono;
 
@@ -115,10 +115,11 @@ int run(int test)
     for(int i = 0; i < THREADS; i++) {
         cout << "T[" << i << "] p=" << set[i].p << " d=" << set[i].d << " c=" << set[i].c << " a=" << set[i].affinity << endl;
         if(i == lowest_priority_task)
-            threads[i] = new Periodic_Thread(RTConf(set[i].p, ITERATIONS, Thread::READY, Thread::Criterion(us(set[i].p), us(set[i].d), us(set[i].c), set[i].affinity), Color(i + 1)),
+            // p,d,c,act,t,cpu
+            threads[i] = new Periodic_Thread(RTConf(us(set[i].p), us(set[i].d), us(set[i].c), 0, ITERATIONS, set[i].affinity, Thread::READY, Thread::Criterion(us(set[i].p), us(set[i].d), us(set[i].c), set[i].affinity), Color(i + 1)),
                                              set[i].f, (unsigned int)((set[i].c / 1730) * 10), i);
         else
-            threads[i] = new Periodic_Thread(RTConf(set[i].p, ITERATIONS, Thread::READY, Thread::Criterion(us(set[i].p), us(set[i].d), us(set[i].c), set[i].affinity), Color(i + 1)),
+            threads[i] = new Periodic_Thread(RTConf(us(set[i].p), us(set[i].d), us(set[i].c), 0, ITERATIONS, set[i].affinity, Thread::READY, Thread::Criterion(us(set[i].p), us(set[i].d), us(set[i].c), set[i].affinity), Color(i + 1)),
                                              set[i].f, (i == 12) ? (unsigned int)(set[i].c / 540) : (unsigned int)((set[i].c / 540) * 3), i);
     }
 
@@ -141,9 +142,9 @@ void collect_wcet(int test)
 {
     for(int i = 0; i < THREADS; i++) {
         us wc, m, var;
-        wc = largest(wcet[i], ITERATIONS);
-        m = mean(wcet[i], ITERATIONS);
-        var = variance(const_cast<us *&>(wcet[i]), ITERATIONS, m);
+        wc = Math::largest(wcet[i], ITERATIONS);
+        m = Math::mean(wcet[i], ITERATIONS);
+        var = Math::variance(const_cast<us *&>(wcet[i]), ITERATIONS, m);
         stats[i].mean[test] = m;
         stats[i].wcet[test] = wc;
         stats[i].var[test] = var;
@@ -157,11 +158,11 @@ void print_stats(void)
     for(int i = 0; i < THREADS; i++) {
         us wc, m, var, wc_m, wc_var;
         if(TEST_REPETITIONS > 1) {
-            wc = largest(stats[i].wcet, TEST_REPETITIONS);
-            wc_m = mean(stats[i].wcet, TEST_REPETITIONS);
-            wc_var = variance(stats[i].wcet, TEST_REPETITIONS, wc_m);
-            m = mean(stats[i].mean, TEST_REPETITIONS);
-            var = mean(stats[i].var, TEST_REPETITIONS);
+            wc = Math::largest(stats[i].wcet, TEST_REPETITIONS);
+            wc_m = Math::mean(stats[i].wcet, TEST_REPETITIONS);
+            wc_var = Math::variance(stats[i].wcet, TEST_REPETITIONS, wc_m);
+            m = Math::mean(stats[i].mean, TEST_REPETITIONS);
+            var = Math::mean(stats[i].var, TEST_REPETITIONS);
         } else {
             wc = stats[i].wcet[0];
             wc_m = stats[i].wcet[0];

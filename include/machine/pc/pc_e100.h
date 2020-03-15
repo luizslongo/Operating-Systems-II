@@ -574,12 +574,23 @@ public:
 
     void reset();
 
+    void attach(Observer * o, const Protocol & p) {
+        NIC<Ethernet>::attach(o, p);
+        ; // enable receive interrupt
+    }
+
+    void detach(Observer * o, const Protocol & p) {
+        NIC<Ethernet>::detach(o, p);
+        if(!observers())
+            ; // disable receive interrupt
+    }
+
     static E100 * get(unsigned int unit = 0) { return get_by_unit(unit); }
 
 private:
     void handle_int();
 
-    static void int_handler(const IC::Interrupt_Id & interrupt);
+    static void int_handler(IC::Interrupt_Id interrupt);
 
     bool verifyPendingInterrupts(void);
 
@@ -722,10 +733,6 @@ private:
     DMA_Buffer * _dma_buffer;
 
     static Device _devices[UNITS];
-
-private:
-    static const bool HYSTERICALLY_DEBUGGED = true;
-
 };
 
 __END_SYS

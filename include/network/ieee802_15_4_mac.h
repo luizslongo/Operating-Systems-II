@@ -7,6 +7,8 @@
 #include <utility/math.h>
 #include <network/ieee802_15_4.h>
 
+#ifdef __ieee802_15_4__
+
 __BEGIN_SYS
 
 template<typename Radio>
@@ -110,7 +112,7 @@ public:
 private:
     bool backoff_and_send() {
         unsigned int exp = CSMA_CA_MIN_BACKOFF_EXPONENT;
-        unsigned int backoff = pow(2, exp);
+        unsigned int backoff = Math::pow(2, exp);
 
         unsigned int retry = 0;
         for(; (retry < CSMA_CA_RETRIES) ; retry++) {
@@ -132,5 +134,7 @@ private:
 };
 
 __END_SYS
+
+#endif
 
 #endif

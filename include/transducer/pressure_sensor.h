@@ -3,14 +3,17 @@
 #ifndef __pressure_sensor_h
 #define __pressure_sensor_h
 
+#include <transducer.h>
+
+#ifdef __mmod_emote3__
+
 #include <machine/gpio.h>
 #include <machine/adc.h>
-#include <transducer.h>
 
 __BEGIN_SYS
 
 // Keller Capacitive Transmitters Series 46 X / 46 X Ei (http://www.keller-druck.com/home_e/paprod_e/46x_e.asp)
-class Keller_46X: public Transducer<SmartData::Unit::I32 | SmartData::Unit::Length>
+class Pressure_Sensor: public Transducer<SmartData::Unit::I32 | SmartData::Unit::Length>
 {
 private:
     static const GPIO::Port GPIO_PORT = GPIO::B;
@@ -24,7 +27,7 @@ public:
     static const bool active = false;
 
 public:
-    Keller_46X(unsigned int dev = 0): _relay(GPIO_PORT, GPIO_PIN, GPIO::OUT), _adc(ADC_CHANNEL) {
+    Pressure_Sensor(unsigned int dev = 0): _relay(GPIO_PORT, GPIO_PIN, GPIO::OUT), _adc(ADC_CHANNEL) {
         assert(dev < DEVS);
         _relay.clear();
     }
@@ -45,9 +48,8 @@ private:
     ADC _adc;
 };
 
-typedef Keller_46X Pressure_Sensor;
-
-
 __END_SYS
+
+#endif
 
 #endif

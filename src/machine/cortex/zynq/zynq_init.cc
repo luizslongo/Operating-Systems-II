@@ -2,7 +2,7 @@
 
 #include <machine.h>
 
-#ifdef __zynq__
+#ifdef __mmod_zynq__
 
 __BEGIN_SYS
 

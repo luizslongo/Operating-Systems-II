@@ -98,12 +98,14 @@ clean1: FORCE
 		(cd app && $(MAKECLEAN))
 		(cd src && $(MAKECLEAN))
 		(cd img && $(MAKECLEAN))
-		find $(LIB) -maxdepth 1 -type f -exec $(CLEAN) {} \;
+		find $(LIB) -maxdepth 1 -type f -not -name .gitignore -exec $(CLEAN) {} \;
 
-veryclean: clean cleantest
+cleanapps: FORCE
+		$(foreach app,$(APPLICATIONS),cd $(APP)/${app} && $(MAKE) APPLICATION=$(app) clean;)
+
+veryclean: clean cleanapps cleantest
 		(cd tools && $(MAKECLEAN))
-		find $(LIB) -maxdepth 1 -type f -exec $(CLEAN) {} \;
-		find $(BIN) -maxdepth 1 -type f -exec $(CLEAN) {} \;
+		find $(BIN) -maxdepth 1 -type f -not -name .gitignore -exec $(CLEAN) {} \;
 		find $(IMG) -name "*.img" -exec $(CLEAN) {} \;
 		find $(IMG) -name "*.bin" -exec $(CLEAN) {} \;
 		find $(IMG) -name "*.hex" -exec $(CLEAN) {} \;
@@ -113,17 +115,14 @@ veryclean: clean cleantest
 		find $(IMG) -maxdepth 1 -type f -perm 755 -exec $(CLEAN) {} \;
 
 dist: veryclean
-		find $(TOP) -name ".*project" -exec $(CLEAN) {} \;
-		find $(TOP) -name CVS -type d -print | xargs $(CLEANDIR)
-		find $(TOP) -name .svn -type d -print | xargs $(CLEANDIR)
-		find $(TOP) -name "*.h" -print | xargs sed -i "1r $(TOP)/LICENSE"
-		find $(TOP) -name "*.cc" -print | xargs sed -i "1r $(TOP)/LICENSE"
-		sed -e 's/^\/\//#/' LICENSE > LICENSE.mk
-		find $(TOP) -name "makedefs" -print | xargs sed -i "1r $(TOP)/LICENSE.mk"
-		find $(TOP) -name "makefile" -print | xargs sed -i "1r $(TOP)/LICENSE.mk"
-		$(CLEAN) LICENSE.mk
-		sed -e 's/^\/\//#/' LICENSE > LICENSE.as
-		find $(TOP) -name "*.S" -print | xargs sed -i "1r $(TOP)/LICENSE.as"
-		$(CLEAN) LICENSE.as
+		find $(TOP) -name "*.h" -print | xargs sed -i "1r $(ETC)/license.txt"
+		find $(TOP) -name "*.cc" -print | xargs sed -i "1r $(ETC)/license.txt"
+		sed -e 's/^\/\//#/' $(ETC)/license.txt > $(ETC)/license.mk
+		find $(TOP) -name "makedefs" -print | xargs sed -i "1r $(ETC)/license.txt.mk"
+		find $(TOP) -name "makefile" -print | xargs sed -i "1r $(ETC)/license.txt.mk"
+		$(CLEAN) $(ETC)/license.mk
+		sed -e 's/^\/\//#/' $(ETC)/license.txt > $(ETC)/license.as
+		find $(TOP) -name "*.S" -print | xargs sed -i "1r $(ETC)/license.txt.as"
+		$(CLEAN) $(ETC)/license.as
 
 FORCE:

@@ -91,7 +91,7 @@ void Alarm::delay(const Microsecond & time)
 }
 
 
-void Alarm::handler(const IC::Interrupt_Id & i)
+void Alarm::handler(IC::Interrupt_Id i)
 {
     lock();
 

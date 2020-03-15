@@ -18,6 +18,9 @@ void Thread::init()
 
     CPU::smp_barrier();
 
+    if(monitored)
+        Monitor::init();
+
     static volatile bool task_ready = false;
 
     if(CPU::id() == 0) {
@@ -61,16 +64,13 @@ void Thread::init()
     if(Criterion::timed && (CPU::id() == 0))
         _timer = new (SYSTEM) Scheduler_Timer(QUANTUM, time_slicer);
 
-    // Install an interrupt handler to receive forced reschedules
+    // Install an interrupt handler to receive forced reschedules, but disable interrupts for the rest of INIT (will be renabled at Init_First)
     if(smp) {
         if(CPU::id() == 0)
             IC::int_vector(IC::INT_RESCHEDULER, rescheduler);
+        CPU::int_disable();
         IC::enable(IC::INT_RESCHEDULER);
     }
-
-    // Enable secondary cores monitoring (primary core is enabled at pre_main())
-    if(monitored && CPU::id() != 0)
-        Monitor::init();
 
     // Transition from CPU-based locking to thread-based locking
     CPU::smp_barrier();

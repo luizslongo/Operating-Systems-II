@@ -120,31 +120,33 @@ public:
 
         // Typical SI Quantities
         enum Quantity {
-            //                                mod,     sr,    rad,      m,     kg,      s,      A,      K,    mol,     cd
-            Acceleration            = SI_Unit<DIR,     +0,     +0,     +1,     +0,     -2,     +0,     +0,     +0,     +0>::UNIT,
-            Amount_of_Substance     = SI_Unit<DIR,     +0,     +0,     +0,     +0,     +0,     +0,     +0,     +1,     +0>::UNIT,
-            Angular_Speed           = SI_Unit<DIR,     +0,     +1,     +0,     +0,     -1,     +0,     +0,     +0,     +0>::UNIT,
-            Area                    = SI_Unit<DIR,     +0,     +0,     +2,     +0,     +0,     +0,     +0,     +0,     +0>::UNIT,
-            Current                 = SI_Unit<DIR,     +0,     +0,     +0,     +0,     +0,     +1,     +0,     +0,     +0>::UNIT,
+            //                                mod,     sr,    rad,      m,     kg,      s,      A,      K,    mol,     cd            unit
+            Acceleration            = SI_Unit<DIR,     +0,     +0,     +1,     +0,     -2,     +0,     +0,     +0,     +0>::UNIT, // m/s2
+            Amount_of_Substance     = SI_Unit<DIR,     +0,     +0,     +0,     +0,     +0,     +0,     +0,     +1,     +0>::UNIT, // mol
+            Angular_Velocity        = SI_Unit<DIR,     +0,     +1,     +0,     +0,     -1,     +0,     +0,     +0,     +0>::UNIT, // rad/s
+            Area                    = SI_Unit<DIR,     +0,     +0,     +2,     +0,     +0,     +0,     +0,     +0,     +0>::UNIT, // m2
+            Current                 = SI_Unit<DIR,     +0,     +0,     +0,     +0,     +0,     +1,     +0,     +0,     +0>::UNIT, // Ampere
             Electric_Current        = Current,
-            Force                   = SI_Unit<DIR,     +0,     +0,     +1,     +1,     -2,     +0,     +0,     +0,     +0>::UNIT,
-            Humidity                = SI_Unit<DIR,     +0,     +0,     -3,     +1,     +0,     +0,     +0,     +0,     +0>::UNIT,
-            Length                  = SI_Unit<DIR,     +0,     +0,     +1,     +0,     +0,     +0,     +0,     +0,     +0>::UNIT,
-            Luminous_Intensity      = SI_Unit<DIR,     +0,     +0,     +0,     +0,     +0,     +0,     +0,     +0,     +1>::UNIT,
-            Mass                    = SI_Unit<DIR,     +0,     +0,     +0,     +1,     +0,     +0,     +0,     +0,     +0>::UNIT,
-            Power                   = SI_Unit<DIR,     +0,     +0,     +2,     +1,     -3,     +0,     +0,     +0,     +0>::UNIT,
-            Speed                   = SI_Unit<DIR,     +0,     +0,     +1,     +0,     -1,     +0,     +0,     +0,     +0>::UNIT,
-            Sound_Intensity         = SI_Unit<DIR,     +0,     +0,     +0,     +1,     -3,     +0,     +0,     +0,     +0>::UNIT,
-            Temperature             = SI_Unit<DIR,     +0,     +0,     +0,     +0,     +0,     +0,     +1,     +0,     +0>::UNIT,
-            Time                    = SI_Unit<DIR,     +0,     +0,     +0,     +0,     +1,     +0,     +0,     +0,     +0>::UNIT,
-            Velocity                = Speed,
-            Volume                  = SI_Unit<DIR,     +0,     +0,     +3,     +0,     +0,     +0,     +0,     +0,     +0>::UNIT,
-            Voltage                 = SI_Unit<DIR,     +0,     +0,     +2,     +1,     -3,     -1,     +0,     +0,     +0>::UNIT,
-            Water_Flow              = SI_Unit<DIR,     +0,     +0,     +3,     +0,     -1,     +0,     +0,     +0,     +0>::UNIT,
+            Force                   = SI_Unit<DIR,     +0,     +0,     +1,     +1,     -2,     +0,     +0,     +0,     +0>::UNIT, // Newton
+            Humidity                = SI_Unit<DIR,     +0,     +0,     -3,     +1,     +0,     +0,     +0,     +0,     +0>::UNIT, // kg/m3
+            Length                  = SI_Unit<DIR,     +0,     +0,     +1,     +0,     +0,     +0,     +0,     +0,     +0>::UNIT, // m
+            Luminous_Intensity      = SI_Unit<DIR,     +0,     +0,     +0,     +0,     +0,     +0,     +0,     +0,     +1>::UNIT, // cd
+            Mass                    = SI_Unit<DIR,     +0,     +0,     +0,     +1,     +0,     +0,     +0,     +0,     +0>::UNIT, // kg
+            Power                   = SI_Unit<DIR,     +0,     +0,     +2,     +1,     -3,     +0,     +0,     +0,     +0>::UNIT, // Watt
+            Pressure                = SI_Unit<DIR,     +0,     +0,     -1,     +1,     -2,     +0,     +0,     +0,     +0>::UNIT, // Pascal
+            Velocity                = SI_Unit<DIR,     +0,     +0,     +1,     +0,     -1,     +0,     +0,     +0,     +0>::UNIT, // m/s
+            Sound_Intensity         = SI_Unit<DIR,     +0,     +0,     +0,     +1,     -3,     +0,     +0,     +0,     +0>::UNIT, // W/m2
+            Temperature             = SI_Unit<DIR,     +0,     +0,     +0,     +0,     +0,     +0,     +1,     +0,     +0>::UNIT, // Kelvin
+            Time                    = SI_Unit<DIR,     +0,     +0,     +0,     +0,     +1,     +0,     +0,     +0,     +0>::UNIT, // s
+            Speed                   = Velocity,
+            Volume                  = SI_Unit<DIR,     +0,     +0,     +3,     +0,     +0,     +0,     +0,     +0,     +0>::UNIT, // m3
+            Voltage                 = SI_Unit<DIR,     +0,     +0,     +2,     +1,     -3,     -1,     +0,     +0,     +0>::UNIT, // Volt
+            Water_Flow              = SI_Unit<DIR,     +0,     +0,     +3,     +0,     -1,     +0,     +0,     +0,     +0>::UNIT, // m3/s
 
             Ratio                   = SI_Unit<LOG_DIV, -4,     -4,     -4,     -4,     -4,     -4,     -4,     -4,     -4>::UNIT, // not an SI unit
-            PPM                     = SI_Unit<LOG_DIV, -4,     -4,     -4,     -4,     -4,     -4,     -4,     -4,     -3>::UNIT, // not an SI unit
-            PPB                     = SI_Unit<LOG_DIV, -4,     -4,     -4,     -4,     -4,     -4,     -4,     -4,     -2>::UNIT, // not an SI unit
+            Percent                 = SI_Unit<LOG_DIV, -4,     -4,     -4,     -4,     -4,     -4,     -4,     -4,     -3>::UNIT, // not an SI unit
+            PPM                     = SI_Unit<LOG_DIV, -4,     -4,     -4,     -4,     -4,     -4,     -4,     -4,     -2>::UNIT, // not an SI unit
+            PPB                     = SI_Unit<LOG_DIV, -4,     -4,     -4,     -4,     -4,     -4,     -4,     -4,     -1>::UNIT, // not an SI unit
             Antigravity             = SI_Unit<LOG_DIV, +3,     +3,     +3,     +3,     +3,     +3,     +3,     +3,     +3>::UNIT, // for Dummy_Transducer :-)
         };
 
@@ -1092,7 +1094,7 @@ private:
                     _thread = new (SYSTEM) Periodic_Thread(Microsecond(interest->period()), &updater, _device, interest->expiry(), this);
                 else
                     if(interest->period() != _thread->period())
-                        _thread->period(gcd(_thread->period(), Microsecond(interest->period())));
+                        _thread->period(Math::gcd(_thread->period(),  interest->period()));
             }
             bound = true;
         }
@@ -1208,16 +1210,16 @@ public:
 
     const Unit unit() const { return UNIT; }
     const Error & error() const { return _response.error(); }
-    const Percent & confidence() const { return _response.confidence; }
+    const Percent & confidence() const { return _response.confidence(); }
 
     Spacetime origin() const { return Spacetime(space(), time()); }
-    Space space() const { return Locator::absolute(_response.origin); }
-    Time time() const { return Timekeeper::absolute(_response.origin); }
+    Space space() const { return Locator::absolute(_response.origin()); }
+    Time time() const { return Timekeeper::absolute(_response.origin()); }
 
     const Mode & mode() const { return _mode; }
     const Precision & precision() const { return _precision; }
 
-    Time_Offset expiry() const { return _response.expiry; }
+    Time_Offset expiry() const { return _response.expiry(); }
     bool expired() const { return Timekeeper::now() > (_response.time() + _expiry); }
 
     operator Value & () {
@@ -1412,5 +1414,7 @@ template<typename Unit, typename Network>
 typename Interested_SmartData<Unit, Network>::Interests Interested_SmartData<Unit, Network>::_interests;
 
 __END_SYS
+
+#include <transducer.h>
 
 #endif

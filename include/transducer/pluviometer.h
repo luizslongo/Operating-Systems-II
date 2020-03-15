@@ -3,8 +3,11 @@
 #ifndef __pluviometer_h
 #define __pluviometer_h
 
-#include <machine/gpio.h>
 #include <transducer.h>
+
+#ifdef __mmod_emote3__
+
+#include <machine/gpio.h>
 
 __BEGIN_SYS
 
@@ -51,5 +54,7 @@ private:
 };
 
 __END_SYS
+
+#endif
 
 #endif

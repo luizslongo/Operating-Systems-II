@@ -1,10 +1,10 @@
 // EPOS Realview PBX (ARM Cortex-A9) IC Mediator Declarations
 
 #ifndef __realview_pbx_ic_h
-#define __realview_pbxic_h
+#define __realview_pbx_ic_h
 
 #include <machine/ic.h>
-#include <machine/cortex/engines/cortex_a9/gic.h>
+#include <machine/cortex/engine/cortex_a9/gic.h>
 #include <system/memory_map.h>
 
 __BEGIN_SYS
@@ -41,15 +41,15 @@ public:
 
 public:
     static void enable() { gic_distributor()->enable(); }
-    static void enable(const Interrupt_Id & id)  { gic_distributor()->enable(id); }
+    static void enable(Interrupt_Id id)  { gic_distributor()->enable(id); }
     static void disable() { gic_distributor()->disable(); }
-    static void disable(const Interrupt_Id & id) { gic_distributor()->disable(); }
+    static void disable(Interrupt_Id id) { gic_distributor()->disable(); }
 
     static Interrupt_Id int_id() { return gic_cpu()->int_id(); }
-    static Interrupt_Id irq2int(const Interrupt_Id & id) { return gic_distributor()->irq2int(id); }
-    static Interrupt_Id int2irq(const Interrupt_Id & irq) { return gic_distributor()->int2irq(irq); }
+    static Interrupt_Id irq2int(Interrupt_Id id) { return gic_distributor()->irq2int(id); }
+    static Interrupt_Id int2irq(Interrupt_Id irq) { return gic_distributor()->int2irq(irq); }
 
-    static void ipi(unsigned int cpu, const Interrupt_Id & id) { gic_distributor()->send_sgi(cpu, id); }
+    static void ipi(unsigned int cpu, Interrupt_Id id) { gic_distributor()->send_sgi(cpu, id); }
 
     static void init() {
         gic_distributor()->init();

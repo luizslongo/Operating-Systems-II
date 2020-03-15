@@ -7,10 +7,14 @@
 
 __BEGIN_UTIL
 
-static const float E = 2.71828183;
+namespace Math
+{
+
+constexpr double pi() { return 3.14159265358979323846264338327950288; }
+constexpr float e() { return 2.7182818284590452354; }
 
 template <typename T>
-inline T logf(T num, float base = E, float epsilon = 1e-12)
+inline T logf(T num, float base = e(), float epsilon = 1e-12)
 {
     if(num == 0) return 1;
 
@@ -64,16 +68,19 @@ inline T sqrt(T x)
 }
 
 template <typename T>
-inline T pow(const T & x, unsigned int e)
+inline T pow(T x, unsigned int y)
 {
-    if(e == 0) 
+    if(y == 0)
         return 1;
-    else if(e == 1)
+    else if(y == 1)
         return x;
-    else if(e & 1)
-        return pow(x * x, e / 2);
-    else
-        return x * pow(x * x, (e - 1) / 2);
+    else {
+        T tmp = pow(x, y / 2);
+        if((y % 2) == 0)
+            return tmp * tmp;
+        else
+            return x * tmp * tmp;
+    }
 }
 
 inline float fast_log2(float val)
@@ -115,20 +122,14 @@ T abs(const T & x)
 }
 
 template <typename T>
-T deg2rad(T deg){
-    double PI = 3.14159265358979323846264338327950288;
-    return deg * PI / 180.0;
-}
-
-template <typename T>
-T sin(T x){
+T sin(T x) {
     T cur = x;
     float acc = 1;
     T fact= 1;
     T pow = x;
-    for (int i = 1; abs<float>(acc) > .000001 && i < 100; i++){
-        fact *= ((2*i)*(2*i+1));
-        pow *= -1 * x*x;
+    for (int i = 1; abs<T>(acc) > .000001 && i < 100; i++){
+        fact *= ((2 * i) * (2 * i + 1));
+        pow *= -1 * x * x;
         acc = pow / fact;
         cur += acc;
     }
@@ -143,7 +144,7 @@ T cos(T x) {
     p = 0;
     s = 1;
     t = 1;
-    while(abs<float>(((float)t)/s) > .000001) {
+    while(abs<T>(static_cast<T>(t)/s) > .000001) {
         p++;
         t = (-t * x * x) / ((2 * p - 1) * (2 * p));
         s += t;
@@ -157,7 +158,7 @@ T largest(const T array[], int size)
     T result = array[0];
     for(int i = 1; i < size; i++)
         if(array[i] > result)
-          result = array[i];
+            result = array[i];
     return result;
 }
 
@@ -167,7 +168,7 @@ T smallest(const T array[], int size)
     T result = array[0];
     for(int i = 1; i < size; i++)
         if(array[i] < result)
-          result = array[i];
+            result = array[i];
     return result;
 }
 
@@ -193,7 +194,8 @@ T variance(const T array[], int size, const T & mean)
 
 // Babylonian power of ten helper
 template<typename T>
-T power_of_ten(int num) {
+T power_of_ten(int num)
+{
     T rst = 1.0;
     if(num >= 0)
         for(int i = 0; i < num ; i++)
@@ -206,7 +208,8 @@ T power_of_ten(int num) {
 
 // Babylonian Square Root
 template<typename T>
-T babylonian_sqrt(const T & a) {
+T babylonian_sqrt(const T & a)
+{
     T z = a;
     T rst = 0.0;
     int max = 8;     // to define maximum digit
@@ -246,12 +249,23 @@ T babylonian_sqrt(const T & a) {
 }
 
 // Greatest Common Divisor (Euclid's algorithm)
-template <typename T>
-T gcd(const T & a, const T & b) {
+template <typename T1, typename T2>
+inline T1 gcd(T1 a, T2 b)
+{
     if(b == 0)
         return a;
     else
         return gcd(b, a % b);
+}
+
+// Least Common Multiple
+template <typename T1, typename T2>
+inline T1 lcm(T1 a, T2 b)
+{
+    T1 temp = gcd(a,b);
+    return temp ? a * (b / temp) : 0;
+}
+
 }
 
 __END_UTIL

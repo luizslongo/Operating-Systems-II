@@ -5,8 +5,8 @@
 
 #include <architecture/cpu.h>
 #include <machine/spi.h>
-#include <machine/cortex/engines/pl022.h>
-#include <machine/cortex/engines/pl061.h>
+#include <machine/cortex/engine/pl022.h>
+#include <machine/cortex/engine/pl061.h>
 #include "emote3_sysctrl.h"
 #include "emote3_ioctrl.h"
 #include <system/memory_map.h>

@@ -151,7 +151,9 @@ I2D *imleft, *imright, *retDisparity;
 
 int main(void)
 {
-    Thread *t = new Periodic_Thread(RTConf(PERIOD, MAX_EXECS, Thread::READY ,
+    // p,d,c,act,t,cpu
+    int CPU = 0;
+    Thread *t = new Periodic_Thread(RTConf(PERIOD, DEADLINE, WCET, 0, MAX_EXECS, CPU, Thread::READY,
             Thread::Criterion((Microsecond) PERIOD, DEADLINE,
             WCET, 0)), &FuncTask1);
 

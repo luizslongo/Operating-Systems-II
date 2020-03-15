@@ -18,6 +18,16 @@ Scheduler_Timer * Thread::_timer;
 Scheduler<Thread> Thread::_scheduler;
 Spin Thread::_lock;
 
+
+// Statistics
+unsigned int Thread::_Statistics::hyperperiod[Traits<Build>::CPUS];
+TSC::Time_Stamp Thread::_Statistics::last_hyperperiod[Traits<Build>::CPUS];
+unsigned int Thread::_Statistics::hyperperiod_count[Traits<Build>::CPUS];
+TSC::Time_Stamp Thread::_Statistics::hyperperiod_idle_time[Traits<Build>::CPUS];
+TSC::Time_Stamp Thread::_Statistics::idle_time[Traits<Build>::CPUS];
+TSC::Time_Stamp Thread::_Statistics::last_idle[Traits<Build>::CPUS];
+
+
 // Methods
 void Thread::constructor_prologue(const Color & color, unsigned int stack_size)
 {
@@ -345,7 +355,8 @@ void Thread::wakeup_all(Queue * q)
 
 void Thread::reschedule()
 {
-    db<Thread>(TRC) << "Thread::reschedule()" << endl;
+    if(!Criterion::timed || Traits<Thread>::hysterically_debugged)
+        db<Thread>(TRC) << "Thread::reschedule()" << endl;
 
     // lock() must be called before entering this method
     assert(locked());
@@ -369,7 +380,7 @@ void Thread::reschedule(unsigned int cpu)
 }
 
 
-void Thread::rescheduler(const IC::Interrupt_Id & i)
+void Thread::rescheduler(IC::Interrupt_Id i)
 {
     lock();
 
@@ -377,7 +388,7 @@ void Thread::rescheduler(const IC::Interrupt_Id & i)
 }
 
 
-void Thread::time_slicer(const IC::Interrupt_Id & i)
+void Thread::time_slicer(IC::Interrupt_Id i)
 {
     lock();
 
@@ -392,8 +403,42 @@ void Thread::dispatch(Thread * prev, Thread * next, bool charge)
             _timer->reset();
     }
 
-    if(monitored)
+    if(monitored) {
+        unsigned int cpu = CPU::id();
+        TSC::Time_Stamp ts = TSC::time_stamp();
+        if(INARRAY(Traits<Monitor>::SYSTEM_EVENTS, Traits<Monitor>::THREAD_EXECUTION_TIME) || INARRAY(Traits<Monitor>::SYSTEM_EVENTS, Traits<Monitor>::CPU_EXECUTION_TIME)) {
+            if((prev->priority() == IDLE) && (prev->_statistics.last_idle[cpu] != 0)) {
+                prev->_statistics.idle_time[cpu] += ts - prev->_statistics.last_idle[cpu];
+            }
+            if(next->priority() == IDLE) {
+                prev->_statistics.last_idle[cpu] = ts;
+            }
+            if(INARRAY(Traits<Monitor>::SYSTEM_EVENTS, Traits<Monitor>::THREAD_EXECUTION_TIME)) {
+                if(prev->priority() != IDLE)
+                    prev->_statistics.execution_time += ts - prev->_statistics.last_execution;
+                if((prev->priority() > Criterion::PERIODIC) && (prev->priority() < Criterion::APERIODIC)) { // a real-time thread
+                    if(prev->_statistics.hyperperiod_count_thread < prev->_statistics.hyperperiod_count[cpu]) { // only happen when usage is 100%
+                        // if this is not being called after a wait_next, deadline miss...
+                        prev->_statistics.hyperperiod_average_execution_time = prev->_statistics.average_execution_time/prev->_statistics.jobs;
+                        prev->_statistics.hyperperiod_jobs = prev->_statistics.jobs;
+                        prev->_statistics.average_execution_time = 0;
+                        prev->_statistics.jobs = 0;
+                    }
+                }
+                if(next->priority() != IDLE)
+                    next->_statistics.last_execution = ts;
+                if((next->priority() > Criterion::PERIODIC) && (next->priority() < Criterion::APERIODIC)) { // a real-time thread
+                    if (next->_statistics.hyperperiod_count_thread < next->_statistics.hyperperiod_count[cpu]) {
+                        next->_statistics.hyperperiod_average_execution_time = next->_statistics.average_execution_time/next->_statistics.jobs;
+                        next->_statistics.hyperperiod_jobs = next->_statistics.jobs;
+                        next->_statistics.average_execution_time = 0;
+                        next->_statistics.jobs = 0;
+                    }
+                }
+            }
+        }
         Monitor::run();
+    }
 
     if(prev != next) {
         if(prev->_state == RUNNING)
@@ -431,9 +476,6 @@ int Thread::idle()
     while(_thread_count > CPU::cores()) { // someone else besides idles
         if(Traits<Thread>::trace_idle)
             db<Thread>(TRC) << "Thread::idle(cpu=" << CPU::id() << ",this=" << running() << ")" << endl;
-
-        if(monitored)
-            Monitor::run();
 
         CPU::int_enable();
         CPU::halt();

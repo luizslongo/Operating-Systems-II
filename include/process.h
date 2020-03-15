@@ -23,6 +23,7 @@ class Thread
     friend class Alarm;                 // for lock()
     friend class System;                // for init()
     friend class IC;                    // for link() for priority ceiling
+    friend class Clerk<System>;         // for _statistics
 
 protected:
     static const bool smp = Traits<Thread>::smp;
@@ -62,6 +63,9 @@ public:
         IDLE    = Criterion::IDLE
     };
 
+    // Thread Queue
+    typedef Ordered_Queue<Thread, Criterion, Scheduler<Thread>::Element> Queue;
+
     // Thread Configuration
     // t = 0 => Task::self()
     // ss = 0 => user-level stack on an auto expand segment
@@ -76,8 +80,61 @@ public:
         unsigned int stack_size;
     };
 
-    // Thread Queue
-    typedef Ordered_Queue<Thread, Criterion, Scheduler<Thread>::Element> Queue;
+    // Thread Statistics (mostly for Monitor)
+    struct _Statistics {
+        _Statistics(): execution_time(0), last_execution(0), jobs(0), average_execution_time(0), hyperperiod_count_thread(0), hyperperiod_jobs(0), hyperperiod_average_execution_time(0), alarm_times(0), times_p_count(0), missed_deadlines(0) {}
+
+        // Thread Execution Time
+        unsigned int execution_time;
+        unsigned int last_execution;
+        unsigned int jobs;
+        unsigned int average_execution_time;
+        unsigned int hyperperiod_count_thread;
+        unsigned int hyperperiod_jobs;
+        unsigned int hyperperiod_average_execution_time;
+
+        // Dealine Miss count
+        Alarm * alarm_times;
+        unsigned int times_p_count;
+        unsigned int missed_deadlines;
+
+        // On Migration
+        static unsigned int hyperperiod[Traits<Build>::CPUS];              // recalculate, on _old_hyperperiod + hyperperiod update
+        static TSC::Time_Stamp last_hyperperiod[Traits<Build>::CPUS];      // wait for old hyperperiod and update
+        static unsigned int hyperperiod_count[Traits<Build>::CPUS];        // reset on next hyperperiod
+
+        // CPU Execution Time
+        static TSC::Time_Stamp hyperperiod_idle_time[Traits<Build>::CPUS]; //
+        static TSC::Time_Stamp idle_time[Traits<Build>::CPUS];
+        static TSC::Time_Stamp last_idle[Traits<Build>::CPUS];
+    };
+
+    union _Dummy_Statistics {
+        // Thread Execution Time
+        unsigned int execution_time;
+        unsigned int last_execution;
+        unsigned int jobs;
+        unsigned int average_execution_time;
+        unsigned int hyperperiod_count_thread;
+        unsigned int hyperperiod_jobs;
+        unsigned int hyperperiod_average_execution_time;
+
+        // Dealine Miss count
+        Alarm * alarm_times;
+        unsigned int times_p_count;
+        unsigned int missed_deadlines;
+
+        // On Migration
+        static unsigned int hyperperiod[Traits<Build>::CPUS];              // recalculate, on _old_hyperperiod + hyperperiod update
+        static TSC::Time_Stamp last_hyperperiod[Traits<Build>::CPUS];      // wait for old hyperperiod and update
+        static unsigned int hyperperiod_count[Traits<Build>::CPUS];        // reset on next hyperperiod
+
+        // CPU Execution Time
+        static TSC::Time_Stamp hyperperiod_idle_time[Traits<Build>::CPUS]; //
+        static TSC::Time_Stamp idle_time[Traits<Build>::CPUS];
+        static TSC::Time_Stamp last_idle[Traits<Build>::CPUS];
+    };
+    typedef IF<monitored, _Statistics, _Dummy_Statistics>::Result Statistics;
 
 public:
     template<typename ... Tn>
@@ -87,6 +144,7 @@ public:
     ~Thread();
 
     const volatile State & state() const { return _state; }
+    const volatile Statistics & statistics() const { return _statistics; }
 
     const volatile Criterion & priority() const { return _link.rank(); }
     void priority(const Criterion & p);
@@ -111,6 +169,17 @@ protected:
 
     void suspend(bool locked);
 
+    Criterion begin_isr(IC::Interrupt_Id i) {
+        assert(_state == RUNNING);
+        Criterion c = criterion();
+        _link.rank(Criterion::ISR + int(i));
+        return c;
+    }
+    void end_isr(IC::Interrupt_Id i, const Criterion & c) {
+        assert(_state == RUNNING);
+        _link.rank(c);
+    }
+
     static Thread * volatile running() { return _scheduler.chosen(); }
 
     static void lock() {
@@ -133,8 +202,8 @@ protected:
 
     static void reschedule();
     static void reschedule(unsigned int cpu);
-    static void rescheduler(const IC::Interrupt_Id & interrupt);
-    static void time_slicer(const IC::Interrupt_Id & interrupt);
+    static void rescheduler(IC::Interrupt_Id interrupt);
+    static void time_slicer(IC::Interrupt_Id interrupt);
 
     static void dispatch(Thread * prev, Thread * next, bool charge = true);
 
@@ -153,6 +222,8 @@ protected:
     Queue * _waiting;
     Thread * volatile _joining;
     Queue::Element _link;
+
+    Statistics _statistics;
 
     static volatile unsigned int _thread_count;
     static Scheduler_Timer * _timer;

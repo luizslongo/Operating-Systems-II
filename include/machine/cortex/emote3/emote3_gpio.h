@@ -3,8 +3,8 @@
 #ifndef __emote3_gpio_h
 #define __emote3_gpio_h
 
-#include <machine/cortex/engines/cortex_m3/scb.h>
-#include <machine/cortex/engines/pl061.h>
+#include <machine/cortex/engine/cortex_m3/scb.h>
+#include <machine/cortex/engine/pl061.h>
 #include "emote3_sysctrl.h"
 #include <system/memory_map.h>
 

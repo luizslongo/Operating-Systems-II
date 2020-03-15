@@ -112,7 +112,7 @@ public:
         Larger_T xx = p.x > x ? p.x - x : x - p.x;
         Larger_T yy = p.y > y ? p.y - y : y - p.y;
         Larger_T zz = p.z > z ? p.z - z : z - p.z;
-        return sqrt(xx * xx + yy * yy + zz * zz);
+        return Math::sqrt(xx * xx + yy * yy + zz * zz);
     }
 
     // Translation

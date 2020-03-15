@@ -10,7 +10,7 @@ __BEGIN_SYS
 ICMP::Observed ICMP::_observed;
 
 // Methods
-int ICMP::send(const Address::Local & from, const Address & to, const void * data, unsigned int s)
+int ICMP::send(const Address & from, const Address & to, const void * data, unsigned int s)
 {
     db<ICMP>(TRC) << "ICMP::send(t=" << to << ",d=" << data << ",s=" << s << ")" << endl;
 
@@ -51,7 +51,7 @@ int ICMP::receive(Buffer * buf, Address * from, void * data, unsigned int s)
     return size;
 }
 
-void ICMP::update(IP::Observed * obs, const IP::Protocol & prot, Ethernet::Buffer * buf)
+void ICMP::update(IP::Observed * obs, const IP::Protocol & prot, Buffer * buf)
 {
     db<ICMP>(TRC) << "ICMP::update(obs=" << obs << ",prot=" << prot << ",buf=" << buf << ")" << endl;
 

@@ -78,8 +78,8 @@ public:
     void handler(const Handler & handler) { _handler = handler; }
 
 private:
-    static void int_handler(const Interrupt_Id & i);
-    static void eoi(const Interrupt_Id & int_id) { Engine::eoi(int_id); }
+    static void int_handler(Interrupt_Id i);
+    static void eoi(Interrupt_Id int_id) { Engine::eoi(int_id); }
 
     static void init();
 
@@ -152,7 +152,7 @@ public:
 
     void power(const Power_Mode & mode);
 
-    static void eoi(const Interrupt_Id & int_id) { Engine::eoi(int_id); }
+    static void eoi(Interrupt_Id int_id) { Engine::eoi(int_id); }
 
 private:
     unsigned int _channel;

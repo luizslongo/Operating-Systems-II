@@ -189,12 +189,12 @@ private:
     static const char _digits[];
 };
 
-extern OStream::Begl begl;
-extern OStream::Endl endl;
-extern OStream::Hex hex;
-extern OStream::Dec dec;
-extern OStream::Oct oct;
-extern OStream::Bin bin;
+constexpr OStream::Begl begl;
+constexpr OStream::Endl endl;
+constexpr OStream::Hex hex;
+constexpr OStream::Dec dec;
+constexpr OStream::Oct oct;
+constexpr OStream::Bin bin;
 
 __END_UTIL
 

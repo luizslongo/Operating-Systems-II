@@ -8,9 +8,9 @@
 __BEGIN_SYS
 
 class Machine_Common;
-template <> struct Traits<Machine_Common>: public Traits<void>
+template <> struct Traits<Machine_Common>: public Traits<Build>
 {
-    static const bool debugged = Traits<void>::debugged;
+    static const bool debugged = Traits<Build>::debugged;
 };
 
 template <> struct Traits<Machine>: public Traits<Machine_Common>
@@ -93,7 +93,7 @@ template <> struct Traits<UART>: public Traits<Machine_Common>
     static const unsigned int DEF_STOP_BITS = 1;
 };
 
-template<> struct Traits<Serial_Display>: public Traits<void>
+template<> struct Traits<Serial_Display>: public Traits<Machine_Common>
 {
     static const bool enabled = (Traits<Build>::EXPECTED_SIMULATION_TIME != 0);
     static const int ENGINE = UART;
@@ -103,7 +103,7 @@ template<> struct Traits<Serial_Display>: public Traits<void>
     static const int TAB_SIZE = 8;
 };
 
-template<> struct Traits<Serial_Keyboard>: public Traits<void>
+template<> struct Traits<Serial_Keyboard>: public Traits<Machine_Common>
 {
     static const bool enabled = (Traits<Build>::EXPECTED_SIMULATION_TIME != 0);
 };
@@ -116,14 +116,10 @@ template<> struct Traits<Scratchpad>: public Traits<Machine_Common>
 template<> struct Traits<Ethernet>: public Traits<Machine_Common>
 {
     // NICS that don't have a network in Traits<Network>::NETWORKS will not be enabled
-    typedef LIST<GEM> DEVICES;
+    typedef LIST<Ethernet_NIC> DEVICES;
     static const unsigned int UNITS = DEVICES::Length;
 
     static const bool enabled = (Traits<Build>::NODES > 1) && (UNITS > 0);
-};
-
-template<> struct Traits<GEM>: public Traits<Machine_Common>
-{
     static const bool promiscuous = false;
 };
 

@@ -4,14 +4,14 @@
 #define __zynq_machine_h
 
 #include <machine/machine.h>
-#include <machine/cortex/engines/cortex_a9/gic.h>
-#include <machine/cortex/engines/cortex_a9/scu.h>
+#include <machine/cortex/engine/cortex_a9/gic.h>
+#include <machine/cortex/engine/cortex_a9/scu.h>
 #include <system/memory_map.h>
 #include <system.h>
 
 __BEGIN_SYS
 
-class Zynq
+class Zynq: public Machine_Common
 {
     friend Machine; // for pre_init() and init()
 
@@ -173,18 +173,14 @@ public:
 protected:
     Zynq() {}
 
-    static void reboot() {
-        // This will mess with qemu but works on real hardware, possibly a bug
-        // in qemu. Note that the asserting reset will clear the RAM where the
-        // application is stored.
-        slcr(PSS_RST_CTRL) = 1;
-    }
-
     static void delay(const Microsecond & time) {
         assert(Traits<TSC>::enabled);
         TSC::Time_Stamp end = TSC::time_stamp() + time * (TSC::frequency() / 1000000);
         while(end > TSC::time_stamp());
     }
+
+    static void reboot();
+    static void poweroff() { reboot(); }
 
     static const UUID & uuid() { return System::info()->bm.uuid; } // TODO: System_Info is not populated in this machine
 
@@ -201,7 +197,7 @@ protected:
         return (n & 0x3) + 1;
     }
 
-    static void smp_init(unsigned int n_cpus) {}
+    static void smp_barrier_init(unsigned int n_cpus) {}
 
     static void enable_uart(unsigned int unit) {}
 
@@ -300,6 +296,9 @@ public:
 
     static void pre_init() {}
     static void init();
+
+private:
+    static volatile unsigned int _cores;
 };
 
 typedef Zynq Machine_Model;

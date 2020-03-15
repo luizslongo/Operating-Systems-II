@@ -6,8 +6,8 @@
 #define __ic_common_only__
 #include <machine/ic.h>
 #undef __ic_common_only__
-#include <machine/cortex/engines/cortex_m3/systick.h>
-#include <machine/cortex/engines/cortex_m3/gptm.h>
+#include <machine/cortex/engine/cortex_m3/systick.h>
+#include <machine/cortex/engine/cortex_m3/gptm.h>
 #include "emote3_sysctrl.h"
 #include <system/memory_map.h>
 #include <utility/convert.h>
@@ -26,6 +26,7 @@ public:
     System_Timer_Engine() { new(systick()) SysTick; }
 
     Count count() const { return systick()->count(); }
+    Count read() const { return systick()->read(); }
 
     void enable() const { systick()->enable(); }
     void disable() const { systick()->disable(); }
@@ -33,7 +34,7 @@ public:
     Hertz clock() const { return systick()->clock(); }
 
 protected:
-    static void eoi(const Interrupt_Id & id) { systick()->eoi(id); };
+    static void eoi(Interrupt_Id id) { systick()->eoi(id); };
 
     static void init(const Hertz & frequency) {
         systick()->config(systick()->clock() / frequency, true, true);
@@ -66,6 +67,7 @@ public:
     }
 
     Count count() const { return _gptm->count(); }
+    Count read() const { return _gptm->read(); }
 
     void enable() const { _gptm->enable(); }
     void disable() const { _gptm->disable(); }
@@ -92,7 +94,7 @@ public:
     }
 
 protected:
-    static void eoi(const Interrupt_Id & id) {
+    static void eoi(Interrupt_Id id) {
         int i;
         switch(id) {
         case IC::INT_USER_TIMER0: i = 0; break;

@@ -26,7 +26,7 @@ int icmp_test()
         IP::Address peer_ip = ip->address();
         peer_ip[3]--;
         ICMP::Packet packet;
-        com = new Port<ICMP>(0);
+        com = new Port<ICMP>(ICMP::Address(ip->address()));
         unsigned int id = Random::random();
 
         for(int i = 0; i < ITERATIONS; i++) {
@@ -45,7 +45,7 @@ int icmp_test()
         IP::Address peer_ip = ip->address();
         peer_ip[3]++;
         ICMP::Packet packet;
-        com = new Port<ICMP>(0);
+        com = new Port<ICMP>(ICMP::Address(ip->address()));
 
         for(int i = 0; i < ITERATIONS; i++) {
             ICMP::Address from;
@@ -95,7 +95,7 @@ int udp_test()
         IP::Address peer_ip = ip->address();
         peer_ip[3]--;
 
-        com = new Link<UDP>(8000, Link<UDP>::Address(peer_ip, UDP::Port(8000)));
+        com = new Link<UDP>(UDP::Address(ip->address(), 8000), UDP::Address(peer_ip, 8000));
 
         for(int i = 0; i < ITERATIONS; i++) {
             data[0] = '\n';
@@ -139,7 +139,7 @@ int udp_test()
         IP::Address peer_ip = ip->address();
         peer_ip[3]++;
 
-        com = new Link<UDP>(8000, Link<UDP>::Address(peer_ip, UDP::Port(8000)));
+        com = new Link<UDP>(UDP::Address(ip->address(), 8000), UDP::Address(peer_ip, 8000));
 
         for(int i = 0; i < ITERATIONS; i++) {
             int received = com->receive(&data, sizeof(data));
@@ -180,7 +180,7 @@ int tcp_test()
         IP::Address peer_ip = ip->address();
         peer_ip[3]--;
 
-        com = new Link<TCP>(8000, Link<TCP>::Address(peer_ip, TCP::Port(8000))); // connect
+        com = new Link<TCP>(TCP::Address(ip->address(), 8000), TCP::Address(peer_ip, 8000)); // connect
 
         for(int i = 0; i < ITERATIONS; i++) {
             data[0] = '\n';
@@ -224,7 +224,7 @@ int tcp_test()
         IP::Address peer_ip = ip->address();
         peer_ip[3]++;
 
-        com = new Link<TCP>(TCP::Port(8000)); // listen
+        com = new Link<TCP>(TCP::Address(ip->address(), 8000)); // listen
 
         for(int i = 0; i < ITERATIONS; i++) {
             int received = com->read(&data, sizeof(data));

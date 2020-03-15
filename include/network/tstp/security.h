@@ -236,7 +236,7 @@ public:
     }
 
     static Time deadline(const Time & origin) {
-        return origin + min(static_cast<Time>(KEY_MANAGER_PERIOD), KEY_EXPIRY) / 2;
+        return origin + Math::min(static_cast<Time>(KEY_MANAGER_PERIOD), KEY_EXPIRY) / 2;
     }
 
 private:

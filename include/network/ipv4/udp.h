@@ -11,7 +11,7 @@ __BEGIN_SYS
 
 class UDP: private IP::Observer
 {
-    friend class Network_Common;
+    friend class IP;
     friend class TCP;
 
 private:
@@ -27,8 +27,6 @@ public:
     class Address
     {
     public:
-        typedef Port Local;
-
         enum Null { NULL = IP::Address::NULL };
 
     public:
@@ -42,7 +40,7 @@ public:
 
         const IP::Address & ip() const { return _ip; }
         const Port & port() const { return _port; }
-        const Local & local() const { return _port; }
+        const Port & local() const { return _port; }
 
         operator bool() const {
             return (_ip || _port);
@@ -134,11 +132,11 @@ public:
         IP::detach(this, IP::UDP);
     }
 
-    static int send(const Port & from, const Address & to, const void * data, unsigned int size);
+    static int send(const Address & from, const Address & to, const void * data, unsigned int size);
     static int receive(Buffer * buf, void * data, unsigned int size);
 
-    static void attach(Observer * obs, const Port & port) { _observed.attach(obs, port); }
-    static void detach(Observer * obs, const Port & port) { _observed.detach(obs, port); }
+    static void attach(Observer * obs, const Address & addr) { _observed.attach(obs, addr.port()); }
+    static void detach(Observer * obs, const Address & addr) { _observed.detach(obs, addr.port()); }
     static bool notify(const Port & port, Buffer * buf) { return _observed.notify(port, buf); }
 
 private:

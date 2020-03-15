@@ -29,13 +29,13 @@ endif
 ifneq ($(wildcard $(IMG)/$(MACH)_system),)
 DEBUGGER	:= $(DEBUGGER) -ex "add-symbol-file $(call DBSEC,$(SRC)/system/$(MACH)_system,.text)"
 endif
-PEER_DEBUGGER	:= $(DEBUGGER) -ex "add-symbol-file $(call DBSEC,$(APP)/$(APPLICATION),.text)"
-PEER_DEBUGGER	:= $(subst 1235,1236,$(PEER_DEBUGGER))
+DEBUGGER	:= $(DEBUGGER) -ex "add-symbol-file $(call DBSEC,$(APP)/$(APPLICATION)/$(APPLICATION),.text)"
+PEER_DEBUGGER	:= $(subst 1235,1236,$(DEBUGGER))
 endif
 
 PEER_EMULATOR	:= $(subst 1235,1236,$(EMULATOR))
 
-NETWORK	        := -netdev socket,id=vlan0,mcast=230.0.0.1:1234 -object filter-dump,id=dump0,netdev=vlan0,file=$(APPLICATION).pcap   -device pcnet,id=eth0,netdev=vlan0,mac=56:34:12:00:54:08 -device pcnet,id=eth1,mac=00:00:00:00:00:01
+NETWORK	        := -netdev socket,id=vlan0,mcast=230.0.0.1:1234 -object filter-dump,id=dump0,netdev=vlan0,file=$(APPLICATION).pcap -device pcnet,id=eth0,netdev=vlan0,mac=56:34:12:00:54:08 -device pcnet,id=eth1,mac=00:00:00:00:00:01
 # add the rest of the line to enable a dhcp server -netdev user,id=1,ipv6=off,restrict=on,net=10.0.1.0/24,host=10.0.1.1,dhcpstart=10.0.1.8
 PEER_NETWORK	:= -netdev socket,id=vlan0,mcast=230.0.0.1:1234 -object filter-dump,id=dump0,netdev=vlan0,file=$(PEER).pcap -device pcnet,id=eth0,netdev=vlan0,mac=56:34:12:00:54:09 -device pcnet,id=eth1,mac=00:00:00:00:00:02
 
@@ -82,17 +82,17 @@ endif
 debug:		$(IMAGE)
 ifeq ($(NODES),1)
 		$(EMULATOR)$(IMAGE) | $(TEE) $(OUTPUT) &
-		$(DEBUGGER) $(APP)/$(APPLICATION)
+		$(DEBUGGER)
 else
 		$(TERM) "$(EMULATOR)$(IMAGE) $(NETWORK) | $(TEE) $(OUTPUT) \
 		&& $(TCPDUMP) $(APPLICATION).pcap > $(APPLICATION).net \
 		&& read -p 'Press [Enter] key to close ...'" &
-		$(DEBUGGER) $(APP)/$(APPLICATION) &
+		$(DEBUGGER) &
 		sleep 2
 		$(TERM) "$(PEER_EMULATOR)$(PEER_IMAGE) $(PEER_NETWORK) | $(TEE) $(PEER_OUTPUT) \
 		&& $(TCPDUMP) $(PEER).pcap > $(PEER).net \
 		&& read -p 'Press [Enter] key to close ...'" &
-		$(PEER_DEBUGGER) $(APP)/$(PEER) &
+		$(PEER_DEBUGGER) &
 endif
 
 runall:		FORCE

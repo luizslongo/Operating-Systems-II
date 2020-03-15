@@ -49,7 +49,7 @@ namespace EPOS {
 }
 #endif
 
-#define __HEADER_ARCH(X)        <architecture/ARCH/X.h>
+#define __HEADER_ARCH(X)        <architecture/ARCH/ARCH/**/_##X.h>
 #define __HEADER_MACH(X)        <machine/MACH/MACH/**/_##X.h>
 #define __HEADER_MMOD(X)        <machine/MACH/MMOD/MMOD/**/_##X.h>
 #define __HEADER_TRAN(X)        <transducer/X.h>
@@ -95,6 +95,7 @@ namespace EPOS {
 #define __KEYBOARD_H            __HEADER_MACH(keyboard)
 #define __SCRATCHPAD_H          __HEADER_MACH(scratchpad)
 #define __NIC_H                 __HEADER_MACH(nic)
+#define __ethernet__
 #define __FPGA_H                __HEADER_MACH(fpga)
 #define __ipv4__
 #define __tstp__
@@ -111,7 +112,6 @@ namespace EPOS {
 #define __UART_H                __HEADER_MACH(uart)
 #define __GPIO_H                __HEADER_MACH(gpio)
 
-#define __PLUVIOMETER_H         __HEADER_TRAN(pluviometer)
 #endif
 
 #ifdef __mmod_emote3__
@@ -130,11 +130,17 @@ namespace EPOS {
 #define __PWM_H                 __HEADER_MACH(pwm)
 #define __WATCHDOG_H            __HEADER_MACH(watchdog)
 #define __NIC_H                 __HEADER_MACH(nic)
+#define __modem__
+#define __ieee802_15_4__
 #define __tstp__
 
+#define __ACCELEROMETER_H       __HEADER_TRAN(accelerometer)
+#define __GYROSCOPE_H           __HEADER_TRAN(gyroscope)
 #define __CO2_SENSOR_H          __HEADER_TRAN(co2_sensor)
 #define __PLUVIOMETER_H         __HEADER_TRAN(pluviometer)
 #define __PRESSURE_SENSOR_H     __HEADER_TRAN(pressure_sensor)
+#define __THERMOMETER_H         __HEADER_TRAN(thermometer)
+#define __HYGROMETER_H          __HEADER_TRAN(hygrometer)
 #endif
 
 #ifdef __mmod_zynq__
@@ -145,6 +151,7 @@ namespace EPOS {
 
 #define __UART_H                __HEADER_MACH(uart)
 #define __NIC_H                 __HEADER_MACH(nic)
+#define __ethernet__
 #define __AES_H                 __HEADER_MACH(aes)
 #define __ipv4__
 #endif
