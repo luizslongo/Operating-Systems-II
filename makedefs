@@ -327,7 +327,7 @@ lib%.o: lib%.cc
 		$(AR) $(ARFLAGS) $@ $^
 
 %.img: %
-		$(MKBI) $@ $<
+		$(MKBI) $@ $< $(DATA)
 
 %.hex: %
 		$(OBJCOPY) -I elf32-$(ARCH_ENDIANESS) -O ihex $< $<.tmp
