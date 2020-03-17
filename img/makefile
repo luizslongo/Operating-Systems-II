@@ -39,6 +39,10 @@ NETWORK	        := -netdev socket,id=vlan0,mcast=230.0.0.1:1234 -object filter-d
 # add the rest of the line to enable a dhcp server -netdev user,id=1,ipv6=off,restrict=on,net=10.0.1.0/24,host=10.0.1.1,dhcpstart=10.0.1.8
 PEER_NETWORK	:= -netdev socket,id=vlan0,mcast=230.0.0.1:1234 -object filter-dump,id=dump0,netdev=vlan0,file=$(PEER).pcap -device pcnet,id=eth0,netdev=vlan0,mac=56:34:12:00:54:09 -device pcnet,id=eth1,mac=00:00:00:00:00:02
 
+VARSI := $(shell $(OBJDUMP) -S $(APP)/$(APPLICATION)/$(APPLICATION) | grep '_sys_info' | sed 's/<_sys_info>\:/ /')
+
+VARELF := $(shell $(OBJDUMP) -p $(APP)/$(APPLICATION)/$(APPLICATION) | sed -n -e 's/^ *LOAD off *\(0x.*\) vaddr.*$$/\1/ p' | head -1)
+
 ifeq ($(NODES),1)
 
 all:		strip $(IMAGE)
@@ -98,14 +102,23 @@ endif
 runall:		FORCE
 		$(foreach app,$(IMAGES),$(MAKE) APPLICATION=$(app) prerun_$(app) run1 posrun_$(app);)
 
+ifeq ($(MACH), cortex)
+strip:		$(SYSTEM) $(APPLICATION)
+			@echo "SYS_INFO_BASE=0x$(VARSI)" > sys_info.conf
+			@echo "ELF_HEADER_OFFSET=$(VARELF)" >> sys_info.conf
+			@for file in $^; do $(STRIP) "$${file}"; done;
+
+else
 strip:		$(SYSTEM) $(APPLICATION)
 		@for file in $^; do $(STRIP) "$${file}"; done;
+endif
 
 clean:		FORCE
 		$(CLEAN) $(SYSTEM) $(APPLICATION) $(IMAGE)
 ifneq ($(NODES),1)
 		$(CLEAN) $(PEER_IMAGE)
 endif
+		$(CLEAN) *.conf
 
 .PHONY: prebuild_$(APPLICATION) posbuild_$(APPLICATION) prerun_$(APPLICATION)
 prerun_$(APPLICATION):

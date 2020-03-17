@@ -30,6 +30,33 @@ protected:
     static const unsigned int TIME_ACCEPTED_DRIFT = 2;            // ts difference between captures +/- 2 * frequency
     static const unsigned int MINIMUN_SNAPSHOTS_TO_VALIDATE = 20; // start verification if #SNAPSHOTS greater than this value
 
+    // Aggregator List
+    enum Aggregator {
+        DRIFT,
+        STUCK_AT,
+        CONST_BIAS,
+        CONST_GAIN,
+        MULT_ANOMALIES,
+        FAULT_INJECTOR,
+        AGGREGATORS
+    };
+    // Aggregators Parameters (anomaly injectors)
+    static const unsigned int DELAY = 0; //the time delay before applying the Aggregators
+    static const unsigned int RANGE = 0; //the time window applying the Aggregators
+    static const unsigned int SPACING = 0; //the time between applying windows
+    static const Aggregator AGGREGATOR = FAULT_INJECTOR;
+    static const float SLOPE; //drift parameter
+    static const float STUCK; //stuck parameter
+    static const float BIAS; //bias parameter
+    static const float GAIN; //gain parameter
+public:
+    static bool enable_injector[Traits<Build>::CPUS];
+    static unsigned int samples[Traits<Build>::CPUS];
+    //The following attribute exists only for tests. The value to be applied must come from a vector written in memory by MKBI
+    static unsigned int **anomalous_behaviour[Traits<Build>::CPUS];
+    // static unsigned int anomalous_behaviour[50][4];
+
+
 public:
     Monitor(): _captures(0), _t0(TSC::time_stamp()) {}
     virtual ~Monitor() {}
@@ -57,6 +84,8 @@ public:
             }
         }
         os << "end_data" << endl;
+        while(1)
+            os << "simulation ended" << endl;
     }
 
     // Only start capturing when enters in main (enabled by CPU 0 at the end of init, which is only called at pre_init)
@@ -137,6 +166,12 @@ public:
         _buffer = new (SYSTEM) Snapshot[_snapshots];
 
         _monitors[CPU::id()].insert(&_link);
+        _index = _monitors[CPU::id()].size() - 1;
+        _core = CPU::id();
+        _aggregator_count = 0;
+        _aggregator_begin = 0;
+        _aggregator_last = 0;
+        _aggregator_applied = 0;
     }
     ~Clerk_Monitor() {
         _monitors[CPU::id()].remove(&_link);
@@ -150,8 +185,12 @@ public:
     void capture() {
         Time_Stamp ts = time_since_t0();
         if(_captures < _snapshots && ((ts - _last_capture) >= _period)) {
-            _buffer[_captures].ts = ts;
-            _buffer[_captures].data = _clerk->read();
+            Snapshot tmp;
+            tmp.ts = ts;
+            tmp.data = _clerk->read();
+            transform(&tmp);
+            _buffer[_captures].ts = tmp.ts;
+            _buffer[_captures].data = tmp.data;
             // a counter reset happens frequently depending on the selected feature and its capacity (32 or 64 bits)
             // is it worth a reset call to avoid such behavior?
             _average = (_average * _captures + _buffer[_captures].data) / (_captures + 1);
@@ -171,6 +210,147 @@ public:
         } else {
             for(unsigned int i = 0; i < _captures; i++)
                 os << count2us(_buffer[i].ts) << "," << _buffer[i].data << endl;
+        }
+    }
+
+    void transform(Snapshot* s) {
+        switch(AGGREGATOR) {
+        case DRIFT:
+            //check
+            if(SLOPE <= 0)
+                return;
+            //init
+            if(_aggregator_begin == 0)
+                _aggregator_begin = s->ts + DELAY;
+            //apply
+            if(s->ts >= _aggregator_begin && (s->ts <= (_aggregator_begin + RANGE) || RANGE == 0)) {
+                s->data = s->data + SLOPE * (++_aggregator_count);
+            } else { //reset
+                if (SPACING > 0 && RANGE != 0) {
+                    _aggregator_begin = s->ts + SPACING;
+                    _aggregator_count = 0;
+                }
+            }
+            return;
+        case STUCK_AT:
+            //no check is needed
+            //init
+            if(_aggregator_begin == 0)
+                _aggregator_begin = s->ts + DELAY;
+            //apply
+            if(s->ts >= _aggregator_begin && (s->ts <= (_aggregator_begin + RANGE) || RANGE == 0)) {
+                if (_aggregator_last == 0) {
+                    _aggregator_last = s->data;
+                }
+                s->data = _aggregator_last;
+            } else { //reset
+                if (SPACING > 0 && RANGE != 0) {
+                    _aggregator_begin = s->ts + SPACING;
+                    _aggregator_last = 0;
+                }
+            }
+            return;
+        case CONST_BIAS:
+            //check
+            if(BIAS <= 0)
+                return;
+            //init
+            if(_aggregator_begin == 0)
+                _aggregator_begin = s->ts + DELAY;
+            //apply
+            if(s->ts >= _aggregator_begin && (s->ts <= (_aggregator_begin + RANGE) || RANGE == 0)) {
+                s->data = s->data + BIAS;
+            } else { //reset
+                if (SPACING > 0 && RANGE != 0) {
+                    _aggregator_begin = s->ts + SPACING;
+                }
+            }
+            return;
+        case CONST_GAIN:
+            //check
+            if(GAIN <= 0)
+                return;
+            //init
+            if(_aggregator_begin == 0)
+                _aggregator_begin = s->ts + DELAY;
+            //apply
+            if(s->ts >= _aggregator_begin && (s->ts <= (_aggregator_begin + RANGE) || RANGE == 0)) {
+                s->data = s->data * GAIN;
+            } else { //reset
+                if (SPACING > 0 && RANGE != 0) {
+                    _aggregator_begin = s->ts + SPACING;
+                    _aggregator_count = 0;
+                }
+            }
+            return;
+        case MULT_ANOMALIES:
+            //no checks needed
+            //init
+            if(_aggregator_begin == 0)
+                _aggregator_begin = s->ts + DELAY;
+            //apply
+            if(s->ts >= _aggregator_begin && (s->ts <= (_aggregator_begin + RANGE) || RANGE == 0)) {
+                if (_aggregator_applied == 0) {
+                    if (SLOPE == 0) {
+                        _aggregator_applied +=1;
+                    } else {
+                        s->data = s->data + SLOPE * (++_aggregator_count);
+                    }
+                }
+                if (_aggregator_applied == 1) {
+                    if (STUCK == 0) {
+                        _aggregator_applied +=1;
+                    } else {
+                        if (_aggregator_last == 0) {
+                            _aggregator_last = s->data;
+                        }
+                        s->data = _aggregator_last;
+                    }
+                }
+                if (_aggregator_applied == 2) {
+                    if (BIAS == 0) {
+                        _aggregator_applied +=1;
+                    } else {
+                        s->data = s->data + BIAS;
+                    }
+                }
+                if (_aggregator_applied == 3) {
+                    if (GAIN == 0) {
+                        _aggregator_applied +=1;
+                    } else {
+                        s->data = s->data * GAIN;
+                    }
+                }
+            } else { //reset
+                if (SPACING > 0 && RANGE != 0) {
+                    _aggregator_begin = s->ts + SPACING;
+                    _aggregator_count = 0;
+                    _aggregator_last = 0;
+                    _aggregator_applied += 1;
+                }
+            }
+            return;
+        case FAULT_INJECTOR:
+            //apply
+            if(enable_injector[_core]) {
+                // kout << "bora la: " << _aggregator_count << " indice: " << _index << endl;
+                if (_captures > 0) {
+                    _aggregator_last = _buffer[_captures - 1].data; // get the last capture value
+                    s->data = _aggregator_last + anomalous_behaviour[_core][_aggregator_count][_index]; // calculates the counter value for the anomalous behaviour
+                    _clerk->write(s->data); // update pmu register value to the anomalous one
+                    _aggregator_count = (_aggregator_count + 1) % samples[_core]; // counts injections
+                    //this counter is meant to be used on the anomalous values vector position control
+                } else {
+                    _aggregator_last = 0; // get the last capture value
+                    s->data = _aggregator_last + anomalous_behaviour[_core][_aggregator_count][_index]; // calculates the counter value for the anomalous behaviour
+                    _clerk->write(s->data); // update pmu register value to the anomalous one
+                    _aggregator_count = (_aggregator_count + 1) % samples[_core]; // counts injections
+                    //this counter is meant to be used on the anomalous values vector position control
+                }
+            }
+            return;
+        default:
+            return;
         }
     }
 
@@ -252,8 +432,14 @@ private:
     Hertz _frequency;
     Time_Stamp _period;
     Time_Stamp _last_capture;
+    Time_Stamp _aggregator_begin;
+    unsigned int _aggregator_count;
+    unsigned int _aggregator_applied;
+    Data _aggregator_last;
     Data _average;
     unsigned int _snapshots;
+    unsigned int _index;
+    unsigned int _core;
     Snapshot * _buffer;
     bool _data_to_us;
     List::Element _link;
@@ -273,7 +459,7 @@ public:
     ~Clerk() {}
 
     Data read() { return T::sense(_dev); }
-
+    void write (Data v) { return; }//not supported by transducers
     void start() {}
     void stop() {}
     void reset() {}
@@ -314,6 +500,26 @@ public:
             return t->_statistics.idle_time[CPU::id()];
         default:
             return 0;
+        }
+    }
+
+    void write(Data v) {
+        Thread* t = Thread::self();
+        switch(_event) {
+        case Event::ELAPSED_TIME:
+            break;
+        case Event::DEADLINE_MISSES:
+            t->_statistics.missed_deadlines = v;
+            break;
+        case Event::RUNNING_THREAD:
+            break;
+        case Event::THREAD_EXECUTION_TIME:
+            break;
+        case Event::CPU_EXECUTION_TIME:
+            //Thread::_idle_time[CPU::id()] = 0;
+            break;
+        default:
+            break;
         }
     }
 
@@ -382,6 +588,7 @@ public:
     }
 
     Data read() { return (_channel < CHANNELS) ? PMU::read(_channel) : 0; }
+    void write(Data v) { if(_channel < CHANNELS) PMU::write(_channel, v); }
     void start() { if(_channel < CHANNELS) PMU::start(_channel); }
     void stop() { if(_channel < CHANNELS) PMU::stop(_channel); }
     void reset() { if(_channel < CHANNELS) PMU::reset(_channel); }

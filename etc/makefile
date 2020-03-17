@@ -47,6 +47,7 @@ eposmkbi.conf:	FORCE
 		@echo "ENDIANESS=$(shell $(BIN)/eposcfg ENDIANESS)" >> $@
 		@echo "MEM_BASE=$(shell $(BIN)/eposcfg MEM_BASE)" >> $@
 		@echo "MEM_TOP=$(shell $(BIN)/eposcfg MEM_TOP)" >> $@
+		@echo "APP_CODE=$(shell $(BIN)/eposcfg APP_CODE)" >> $@
 		@echo "BOOT_LENGTH_MIN=$(shell $(BIN)/eposcfg BOOT_LENGTH_MIN)" >> $@
 		@echo "BOOT_LENGTH_MAX=$(shell $(BIN)/eposcfg BOOT_LENGTH_MAX)" >> $@
 		@echo "NODE_ID=$(NODE_ID)" >> $@

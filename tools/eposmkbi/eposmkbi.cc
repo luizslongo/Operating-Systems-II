@@ -22,6 +22,7 @@
 // CONSTANTS
 static const unsigned int MAX_SI_LEN = 512;
 static const char CFG_FILE[] = "etc/eposmkbi.conf";
+static const char SYS_INFO_FILE[] = "img/sys_info.conf";
 
 // TYPES
 
@@ -40,6 +41,7 @@ struct Configuration
     unsigned int   mem_top;
     unsigned int   boot_length_min;
     unsigned int   boot_length_max;
+    unsigned int   app_code;
     short          node_id;   // nodes in SAN (-1 => dynamic)
     int            space_x;   // Spatial coordinates of a node (-1 => mobile)
     int            space_y;
@@ -52,6 +54,7 @@ typedef _SYS::System_Info System_Info;
 
 // PROTOTYPES
 bool parse_config(FILE * cfg_file, Configuration * cfg);
+bool parse_sys_info(FILE * cfg_file, Configuration * cfg);
 void strtolower (char *dst,const char* src);
 bool add_machine_secrets(int fd_img, unsigned int i_size, char * mach, char * mmod);
 
@@ -59,6 +62,7 @@ bool file_exist(char *file);
 
 int put_buf(int fd_out, void *buf, int size);
 int put_file(int fd_out, char *file);
+int put_file_with_si(int fd_out, char *file, System_Info *si);
 int pad(int fd_out, int size);
 bool lil_endian();
 
@@ -68,6 +72,8 @@ template<typename T> bool add_boot_map(int fd_out, System_Info * si);
 
 // GLOBALS
 Configuration CONFIG;
+unsigned int sys_info_base;
+unsigned int elf_header_offset;
 
 //=============================================================================
 // MAIN
@@ -123,6 +129,19 @@ int main(int argc, char **argv)
         return 1;
     }
 
+    if (!strcmp(CONFIG.mach,"cortex")) {
+        char file[256];
+        sprintf(file, "%s/%s", argv[optind], SYS_INFO_FILE);
+        FILE * sys_info_file = fopen(file, "rb");
+        if(!sys_info_file) {
+            fprintf(stderr, "Error: can't read configuration file \"%s\"!\n", file);
+            return 1;
+        }
+        if(!parse_sys_info(sys_info_file, &CONFIG)) {
+            fprintf(stderr, "Error: invalid configuration file \"%s\"!\n", file);
+            return 1;
+        }
+    }
     // Open destination file (rewrite)
     int fd_img = open(argv[optind + 1], O_WRONLY | O_CREAT | O_TRUNC, 00644);
     if(fd_img < 0) {
@@ -166,16 +185,25 @@ int main(int argc, char **argv)
     // Reserve space for System_Info if necessary
     System_Info si;
     bool need_si = true;
-    if(image_size == 0) {
-        need_si = false;
-    } else
-        if(sizeof(System_Info) > MAX_SI_LEN) {
-            printf(" failed!\n");
-            fprintf(stderr, "System_Info structure is too large (%d)!\n", sizeof(System_Info));
-            return 1;
-        } else
+    /*
+    * First I thought Si was not necessary if the three conditions below were met
+    *   c1 - No boot;
+    *   c2 - no x,y, and z;
+    *   c3 - no extra apps or data
+    * if(image_size == 0 && CONFIG.space_x == -1 && (argc - optind) == 3) {
+    *     need_si = false;
+    * } else {
+    * By now, SI is always active
+    */
+    if(sizeof(System_Info) > MAX_SI_LEN) {
+        printf(" failed!\n");
+        fprintf(stderr, "System_Info structure is too large (%d)!\n", sizeof(System_Info));
+        return 1;
+    } else {
+        if(strcmp(CONFIG.mach,"cortex")) {
             image_size += pad(fd_img, MAX_SI_LEN);
-
+        }
+    }
     // Initialize the Boot_Map in System_Info
     si.bm.n_cpus   = CONFIG.n_cpus; // can be adjusted by SETUP in some machines
     si.bm.mem_base = CONFIG.mem_base;
@@ -219,7 +247,11 @@ int main(int argc, char **argv)
     // Add application(s) and data
     si.bm.application_offset = image_size - boot_size;
     printf("    Adding application \"%s\":", argv[optind + 2]);
-    image_size += put_file(fd_img, argv[optind + 2]);
+    if (!strcmp(CONFIG.mach,"cortex")) {
+        image_size += put_file_with_si(fd_img, argv[optind + 2], &si);
+    } else {
+        image_size += put_file(fd_img, argv[optind + 2]);
+    }
     if((argc - optind) == 3) // single APP
         si.bm.extras_offset = -1;
     else { // multiple APPs or data
@@ -240,19 +272,25 @@ int main(int argc, char **argv)
 
     // Add System_Info
     if(need_si) {
-        printf("    Adding system info:");
-        if(lseek(fd_img, boot_size, SEEK_SET) < 0) {
-            fprintf(stderr, "Error: can't seek the boot image!\n");
-            return 1;
+        if (!strcmp(CONFIG.mach,"cortex")) {
+            printf("    Adding Cortex system info:");
+            //The cortex system info is written along with the app code
+            printf(" done. SYS_INFO at %d - %d + %d\n", sys_info_base, CONFIG.app_code, elf_header_offset);
+        } else {
+            printf("    Adding system info:");
+            if(lseek(fd_img, boot_size, SEEK_SET) < 0) {
+                fprintf(stderr, "Error: can't seek the boot image!\n");
+                return 1;
+            }
+            switch(CONFIG.word_size) {
+            case  8: if(!add_boot_map<char>(fd_img, &si)) return 1; break;
+            case 16: if(!add_boot_map<short>(fd_img, &si)) return 1; break;
+            case 32: if(!add_boot_map<long>(fd_img, &si)) return 1; break;
+            case 64: if(!add_boot_map<long long>(fd_img, &si)) return 1; break;
+            default: return 1;
+            }
+            printf(" done.\n");
         }
-        switch(CONFIG.word_size) {
-        case  8: if(!add_boot_map<char>(fd_img, &si)) return 1; break;
-        case 16: if(!add_boot_map<short>(fd_img, &si)) return 1; break;
-        case 32: if(!add_boot_map<long>(fd_img, &si)) return 1; break;
-        case 64: if(!add_boot_map<long long>(fd_img, &si)) return 1; break;
-        default: return 1;
-        }
-        printf(" done.\n");
     }
 
     // Adding MACH specificities
@@ -398,6 +436,18 @@ bool parse_config(FILE * cfg_file, Configuration * cfg)
     }
     cfg->mem_top=strtol(token, 0, 16);
 
+    // APP Code
+    if(fgets(line, 256, cfg_file) != line) {
+        fprintf(stderr, "Error: failed to read APP_CODE from configuration file!\n");
+        return false;
+    }
+    token = strtok(line, "=");
+    if(strcmp(token, "APP_CODE") || !(token = strtok(NULL, "\n"))) {
+        fprintf(stderr, "Error: no valid APP_CODE in configuration!\n");
+        return false;
+    }
+    cfg->app_code=strtol(token, 0, 16);
+
     // Boot Length Min
     if(fgets(line, 256, cfg_file) != line)
         cfg->boot_length_min = 0;
@@ -442,6 +492,42 @@ bool parse_config(FILE * cfg_file, Configuration * cfg)
                 cfg->uuid[i] = buf[j] ^ buf[j+1];
         }
     }
+
+    return true;
+}
+
+
+//=============================================================================
+// PARSE_SYS_INFO
+//=============================================================================
+bool parse_sys_info(FILE * cfg_file, Configuration * cfg)
+{
+    char line[256];
+    char * token;
+
+    // Memory Top
+    if(fgets(line, 256, cfg_file) != line) {
+        fprintf(stderr, "Error: failed to read MEM_TOP from configuration file!\n");
+        return false;
+    }
+    token = strtok(line, "=");
+    if(strcmp(token, "SYS_INFO_BASE") || !(token = strtok(NULL, "\n"))) {
+        fprintf(stderr, "Error: no valid SYS_INFO_BASE in configuration!\n");
+        return false;
+    }
+    sys_info_base=strtol(token, 0, 16);
+
+    // APP Code
+    if(fgets(line, 256, cfg_file) != line) {
+        fprintf(stderr, "Error: failed to read APP_CODE from configuration file!\n");
+        return false;
+    }
+    token = strtok(line, "=");
+    if(strcmp(token, "ELF_HEADER_OFFSET") || !(token = strtok(NULL, "\n"))) {
+        fprintf(stderr, "Error: no valid ELF_HEADER_OFFSET in configuration!\n");
+        return false;
+    }
+    elf_header_offset=strtol(token, 0, 16);
 
     return true;
 }
@@ -602,6 +688,85 @@ int put_file(int fd_out, char * file)
         printf(" failed! (write)\n");
         free(buffer);
         return 0;
+    }
+
+    free(buffer);
+    close(fd_in);
+
+    printf(" done.\n");
+
+    return stat.st_size;
+}
+
+//=============================================================================
+// PUT_FILE
+//=============================================================================
+int put_file_with_si(int fd_out, char * file, System_Info *si)
+{
+    int fd_in;
+    struct stat stat;
+    char * buffer;
+
+    fd_in = open(file, O_RDONLY);
+    if(fd_in < 0) {
+        printf(" failed! (open)\n");
+        return 0;
+    }
+
+    if(fstat(fd_in, &stat) < 0)  {
+        printf(" failed! (stat)\n");
+        return 0;
+    }
+
+    buffer = (char *) malloc(stat.st_size);
+    if(!buffer) {
+        printf(" failed! (malloc)\n");
+        return 0;
+    }
+    memset(buffer, '\1', stat.st_size);
+
+    if(read(fd_in, buffer, stat.st_size) < 0) {
+        printf(" failed! (read)\n");
+        free(buffer);
+        return 0;
+    }
+    unsigned int offset_to_write = sys_info_base - CONFIG.app_code + elf_header_offset;
+    for (unsigned int i = 0; i < stat.st_size; i++) {
+        if(strcmp(CONFIG.mmod,"emote3")) {
+            if (i == offset_to_write) {
+                switch(CONFIG.word_size) {
+                case  8: if(!add_boot_map<char>(fd_out, si)) return 1; break;
+                case 16: if(!add_boot_map<short>(fd_out, si)) return 1; break;
+                case 32: if(!add_boot_map<long>(fd_out, si)) return 1; break;
+                case 64: if(!add_boot_map<long long>(fd_out, si)) return 1; break;
+                default: return 1;
+                }
+            } else {
+                if (!(i >= offset_to_write)) {
+                    if(put_buf(fd_out, &buffer[i], 1) < 0) {
+                        printf(" failed! (write)\n");
+                        free(buffer);
+                        return 0;
+                    }
+                } else if(i >= offset_to_write + sizeof(System_Info::Boot_Map)) {
+                    if(write(fd_out, &buffer[i], stat.st_size - i) < 0) {
+                        printf(" failed! (write)\n");
+                        free(buffer);
+                        return 0;
+                    } else {
+                        break;
+                    }
+                }
+            }
+        } else {
+            if(write(fd_out, &buffer[i], stat.st_size - i) < 0) {
+                printf(" failed! (write)\n");
+                free(buffer);
+                return 0;
+            } else {
+                break;
+            }
+        }
     }
 
     free(buffer);

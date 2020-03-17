@@ -15,10 +15,10 @@ void Machine::pre_init(System_Info * si)
     db<Init, Machine>(TRC) << "Machine::pre_init()" << endl;
 
     if(CPU::id() == 0) {
-         // FIXME: Alloc and populate System_Info
-         // si = ???
-         // si->bm.n_cpus = Traits<Build>::CPUS;
-
+        //for cortex machines, the System Info must be remapped
+        unsigned int address;
+        ASM("LDR %0, =_sys_info" : "=r"(address) : : );
+        si = (reinterpret_cast<System_Info *>(address));
         if(Traits<IC>::enabled) {
             IC::init();
 

@@ -10,10 +10,10 @@ template<> struct Traits<Build>: public Traits_Tokens
 {
     // Basic configuration
     static const unsigned int MODE = LIBRARY;
-    static const unsigned int ARCHITECTURE = IA32;
-    static const unsigned int MACHINE = PC;
-    static const unsigned int MODEL = Legacy_PC;
-    static const unsigned int CPUS = 8;
+    static const unsigned int ARCHITECTURE = ARMv7;
+    static const unsigned int MACHINE = Cortex;
+    static const unsigned int MODEL = Realview_PBX;
+    static const unsigned int CPUS = 1;
     static const unsigned int NODES = 1; // (> 1 => NETWORKING)
     static const unsigned int EXPECTED_SIMULATION_TIME = 60; // s (0 => not simulated)
 
@@ -126,10 +126,11 @@ template<> struct Traits<Thread>: public Traits<Build>
 {
     static const bool enabled = Traits<System>::multithread;
     static const bool smp = Traits<System>::multicore;
-    static const bool trace_idle = hysterically_debugged;
     static const bool simulate_capacity = false;
+    static const bool trace_idle = hysterically_debugged;
 
-    typedef Scheduling_Criteria::GEDF Criterion;
+    typedef Scheduling_Criteria::Priority Criterion;
+    static const bool debugged = true;
     static const unsigned int QUANTUM = 10000; // us
 };
 
