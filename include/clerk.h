@@ -94,6 +94,10 @@ public:
         _enable = true;
     }
 
+    static bool is_enable() {
+        return _enable;
+    }
+
     static void disable_captures() { _enable = false; }
 
     friend OStream & operator<<(OStream & os, const Monitor & m) {
@@ -126,7 +130,7 @@ protected:
     Time_Stamp _t0;
 
 private:
-    static volatile bool _enable;
+    static bool _enable;
 
 public:
     static Simple_List<Monitor> _monitors[Traits<Build>::CPUS];

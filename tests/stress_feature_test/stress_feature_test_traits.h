@@ -15,7 +15,7 @@ template<> struct Traits<Build>: public Traits_Tokens
     static const unsigned int MODEL = Raspberry_Pi3;
     static const unsigned int CPUS = 4;
     static const unsigned int NODES = 1; // (> 1 => NETWORKING)
-    static const unsigned int EXPECTED_SIMULATION_TIME = 30; // s (0 => not simulated)
+    static const unsigned int EXPECTED_SIMULATION_TIME = 60; // s (0 => not simulated)
 
     // Default flags
     static const bool enabled = true;
@@ -222,11 +222,11 @@ template<> struct Traits<Monitor>: public Traits<Build>
 {
     static const bool enabled = monitored;
 
-    static constexpr System_Event SYSTEM_EVENTS[]                 = {CPU_EXECUTION_TIME, RUNNING_THREAD, THREAD_EXECUTION_TIME, DEADLINE_MISSES};
-    static constexpr unsigned int SYSTEM_EVENTS_FREQUENCIES[]     = {1                 , 1             , 1};//{106, 106};// // in Hz
+    static constexpr System_Event SYSTEM_EVENTS[]                 = {CPU_EXECUTION_TIME, RUNNING_THREAD, THREAD_EXECUTION_TIME};
+    static constexpr unsigned int SYSTEM_EVENTS_FREQUENCIES[]     = {34                , 34            , 34                   };//{106, 106};// // in Hz
 
-    static constexpr PMU_Event PMU_EVENTS[]                       = {COMMITED_INSTRUCTIONS, BRANCHES, CACHE_MISSES, BUS_ACCESS_LD_CA53_v8};
-    static constexpr unsigned int PMU_EVENTS_FREQUENCIES[]        = {2                    , 2       , 2           , 2};//,106,106,106}; // in Hz
+    static constexpr PMU_Event PMU_EVENTS[]                       = {static_cast<PMU_Event>(48), static_cast<PMU_Event>(49), static_cast<PMU_Event>(50), static_cast<PMU_Event>(51), static_cast<PMU_Event>(52), static_cast<PMU_Event>(53)};
+    static constexpr unsigned int PMU_EVENTS_FREQUENCIES[]        = {34,34,34,34,34,34};//,106,106,106}; // in Hz
 
     static constexpr unsigned int TRANSDUCER_EVENTS[]             = {};
     static constexpr unsigned int TRANSDUCER_EVENTS_FREQUENCIES[] = {}; // in Hz

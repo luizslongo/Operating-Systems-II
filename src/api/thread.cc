@@ -49,7 +49,8 @@ void Thread::constructor_prologue(const Color & color, unsigned int stack_size)
 
 void Thread::constructor_epilogue(const Log_Addr & entry, unsigned int stack_size)
 {
-    db<Thread>(TRC) << "Thread(task=" << _task
+    if (_link.rank() == IDLE || _link.rank() == MAIN)
+        db<Thread>(WRN) << "Thread(task=" << _task
                     << ",entry=" << entry
                     << ",state=" << _state
                     << ",priority=" << _link.rank()
@@ -410,7 +411,7 @@ void Thread::dispatch(Thread * prev, Thread * next, bool charge)
             _timer->reset();
     }
 
-    if(monitored) {
+    if(monitored && Monitor::is_enable()) {
         unsigned int cpu = CPU::id();
         Simple_List<Monitor> *monitor = &(Monitor::_monitors[cpu]);
         TSC::Time_Stamp ts = TSC::time_stamp();
@@ -518,12 +519,12 @@ void Thread::dispatch(Thread * prev, Thread * next, bool charge)
 
 int Thread::idle()
 {
-    db<Thread>(TRC) << "Thread::idle(cpu=" << CPU::id() << ",this=" << running() << ")" << endl;
+    db<Thread>(WRN) << "Thread::idle(cpu=" << CPU::id() << ",this=" << running() << ")" << endl;
 
     while(_thread_count > CPU::cores()) { // someone else besides idles
         if(Traits<Thread>::trace_idle)
             db<Thread>(TRC) << "Thread::idle(cpu=" << CPU::id() << ",this=" << running() << ")" << endl;
-
+        //db<Thread>(WRN) << "." << endl;
         CPU::int_enable();
         CPU::halt();
 
@@ -539,7 +540,8 @@ int Thread::idle()
         db<Thread>(WRN) << "The last thread has exited!" << endl;
         if(reboot) {
             db<Thread>(WRN) << "Rebooting the machine ..." << endl;
-            Machine::reboot();
+            //Machine::reboot();
+            CPU::halt();
         } else {
             db<Thread>(WRN) << "Halting the machine ..." << endl;
             CPU::halt();

@@ -12,6 +12,7 @@ unsigned int CPU::_bus_clock;
 // Class methods
 void CPU::Context::save() volatile
 {
+    ASM("       clrex");
     ASM("       str     r12, [sp,#-68]          \n"
         "       mov     r12, pc                 \n");
     if(thumb)
@@ -30,6 +31,7 @@ void CPU::Context::save() volatile
 void CPU::Context::load() const volatile
 {
     System::_heap->free(reinterpret_cast<void *>(Memory_Map::SYS_STACK), Traits<System>::STACK_SIZE);
+    ASM("       clrex");
     ASM("       mov     sp, %0                  \n"
         "       isb                             \n" // serialize the pipeline so that SP gets updated before the pop
         "       pop     {r12}                   \n" : : "r"(this));
@@ -41,6 +43,7 @@ void CPU::Context::load() const volatile
 // This function assumes A[T]PCS (i.e. "o" is in r0/a0 and "n" is in r1/a1)
 void CPU::switch_context(Context ** o, Context * n)
 {
+    ASM("       clrex");
     ASM("       sub     sp, #4                  \n"     // reserve room for PC
         "       push    {r12}                   \n"     // save tmp register
         "       adr     r12, .ret               \n");   // calculate return address

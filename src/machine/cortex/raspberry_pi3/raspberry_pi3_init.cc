@@ -19,7 +19,7 @@ enum {
 enum {
     TTBCR_DOMAIN                    = 0xffffffff, // All access to client
     TTB_MEMORY_DESCRIPTOR           = 0x91c0e,
-    TTB_DEVICE_DESCRIPTOR           = 0x90c0a,
+    TTB_DEVICE_DESCRIPTOR           = 0x91c06,
     TTB_PERIPHERAL_DESCRIPTOR       = 0x90c16
     // According to ARMv7 Arch. Ref. Manual: (description beggining at pages 1326 to 1329)
     // REG[19] NS, 0b0 for secure address space -> no effect on  Physical Address Space. -> Page 1330

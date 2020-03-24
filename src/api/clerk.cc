@@ -8,12 +8,13 @@ __BEGIN_SYS
 #ifdef __PMU_H
 
 bool Clerk<PMU>::_in_use[Traits<Build>::CPUS][CHANNELS];
+constexpr CPU::Reg32 ARMv8_A_PMU::_events[PMU::EVENTS];
 
 #endif
 
 // System_Monitor
 Simple_List<Monitor> Monitor::_monitors[Traits<Build>::CPUS];
-volatile bool Monitor::_enable;
+bool Monitor::_enable;
 
 void Monitor::run()
 {

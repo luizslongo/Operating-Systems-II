@@ -83,6 +83,12 @@ public:
     Periodic_Thread(const Configuration & conf, int (* entry)(Tn ...), Tn ... an)
     : Thread(Thread::Configuration(SUSPENDED, (conf.criterion != NORMAL) ? conf.criterion : Criterion(conf.period), conf.color, conf.task, conf.stack_size), entry, an ...),
       _semaphore(0), _handler(&_semaphore, this), _alarm(conf.period, &_handler, conf.times) {
+        if (monitored) {
+            if(INARRAY(Traits<Monitor>::SYSTEM_EVENTS, Traits<Monitor>::DEADLINE_MISSES)) {
+                _statistics.times_p_count = conf.times;
+                _statistics.alarm_times = &_alarm; // will be reconfigured at entry, however the address is still the same
+            }
+        }
         if((conf.state == READY) || (conf.state == RUNNING)) {
             _state = SUSPENDED;
             resume();
@@ -98,14 +104,14 @@ public:
 
         if(monitored) {
             if(INARRAY(Traits<Monitor>::SYSTEM_EVENTS, Traits<Monitor>::THREAD_EXECUTION_TIME)) {
-                if (!t->_statistics.cooldown[t->_link.rank().queue()]) {
+                //if (!t->_statistics.cooldown[t->_link.rank().queue()]) {
                     TSC::Time_Stamp ts = TSC::time_stamp();
                     t->_statistics.execution_time += ts - t->_statistics.last_execution;
                     t->_statistics.last_execution = ts; // for deadline misses to account correctly (as they not necessarily inccur in a dispatch)
                     t->_statistics.average_execution_time += t->_statistics.execution_time;
                     t->_statistics.jobs++;
                     t->_statistics.execution_time = 0;
-                }
+                //}
             }
 
             if(INARRAY(Traits<Monitor>::SYSTEM_EVENTS, Traits<Monitor>::DEADLINE_MISSES))
@@ -147,10 +153,6 @@ public:
                 }
                 _statistics.last_execution = ts; // Why? updated at dispatch
                 _statistics.hyperperiod_count_thread = 0;
-            }
-            if(INARRAY(Traits<Monitor>::SYSTEM_EVENTS, Traits<Monitor>::DEADLINE_MISSES)) {
-                _statistics.times_p_count = times;
-                _statistics.alarm_times = &_alarm; // will be reconfigured at entry, however the address is still the same
             }
         }
 
