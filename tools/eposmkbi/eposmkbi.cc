@@ -248,6 +248,24 @@ int main(int argc, char **argv)
     si.bm.application_offset = image_size - boot_size;
     printf("    Adding application \"%s\":", argv[optind + 2]);
     if (!strcmp(CONFIG.mach,"cortex")) {
+        if((argc - optind) == 3) // single APP
+            si.bm.extras_offset = -1;
+        else {
+            int aux_in;
+            struct stat stat_aux;
+            aux_in = open(argv[optind + 2], O_RDONLY);
+            if(aux_in < 0) {
+                printf(" failed! (open)\n");
+                return 0;
+            }
+
+            if(fstat(aux_in, &stat_aux) < 0)  {
+                printf(" failed! (stat)\n");
+                return 0;
+            }
+            close(aux_in);
+            si.bm.extras_offset = image_size - boot_size + stat_aux.st_size;
+        }
         image_size += put_file_with_si(fd_img, argv[optind + 2], &si);
     } else {
         image_size += put_file(fd_img, argv[optind + 2]);
@@ -260,6 +278,7 @@ int main(int argc, char **argv)
         for(int i = optind + 3; i < argc; i++) {
             printf("    Adding file \"%s\":", argv[i]);
             stat(argv[i], &file_stat);
+            printf("  SIZE = %d", file_stat.st_size);
             image_size += put_number(fd_img, file_stat.st_size);
             image_size += put_file(fd_img, argv[i]);
         }

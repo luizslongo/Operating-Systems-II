@@ -1,7 +1,7 @@
 // EPOS ARMv7 Program Starter
 
         .file "armv7_crt0.S"
-
+        .extern _sys_info
         .global _sys_info
         .type _sys_info, object
 _sys_info:

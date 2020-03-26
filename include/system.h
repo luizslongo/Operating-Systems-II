@@ -28,6 +28,7 @@ class System
 {
     friend class Init_System;
     friend class Init_Application;
+    friend class First_Object; //to reset System_info address on cortex machines 
     friend void CPU::Context::load() const volatile;
     friend void * ::malloc(size_t);
     friend void ::free(void *);

@@ -19,6 +19,7 @@ void Machine::pre_init(System_Info * si)
         unsigned int address;
         ASM("LDR %0, =_sys_info" : "=r"(address) : : );
         si = (reinterpret_cast<System_Info *>(address));
+
         if(Traits<IC>::enabled) {
             IC::init();
 

@@ -11,8 +11,10 @@ __BEGIN_SYS
 #ifdef __PMU_H
 
 bool Clerk<PMU>::_in_use[Traits<Build>::CPUS][CHANNELS];
-#ifdef __mmod_pc__
+#ifdef __mach_pc__
 constexpr PMU::Event Intel_Sandy_Bridge_PMU::_events[Intel_Sandy_Bridge_PMU::EVENTS];
+#else
+constexpr CPU::Reg32 ARMv8_A_PMU::_events[PMU::EVENTS];
 #endif
 bool Monitor::enable_injector[Traits<Build>::CPUS];
 unsigned int **Monitor::anomalous_behaviour[Traits<Build>::CPUS];
@@ -41,7 +43,7 @@ void Monitor::run()
 void Monitor::init()
 {
     db<Monitor>(TRC) << "Monitor::init()" << endl;
-#ifdef __mmod_pc__
+#ifdef __mach_pc__
     if (CPU::id() == 0) {
         for (unsigned int i = 0; i < Traits<Build>::CPUS; i++) {
             samples[i] = 0;
@@ -161,9 +163,59 @@ void Monitor::init()
             }
         }
     }
+#else
+/*
+    if (CPU::id() == 0) {
+        for (unsigned int i = 0; i < Traits<Build>::CPUS; i++) {
+            samples[i] = 0;
+            enable_injector[i] = false;
+        }
+        // unsigned int address;
+        // ASM("LDR %0, =_sys_info" : "=r"(address) : : );
+        // System_Info * si;
+        // si = (reinterpret_cast<System_Info *>(address));
+        System_Info * si = System::info();
+        if (si->bm.extras_offset != static_cast<unsigned int>(-1)) {
+            db<Monitor>(WRN) << "Monitor Extras: " << hex << si->bm.n_cpus << endl;
+            db<Monitor>(WRN) << "Monitor Extras: " << hex << si->bm.extras_offset << endl;
+            db<Monitor>(WRN) << "Monitor Extras: " << hex << si->bm.extras_offset + Traits<Machine>::APP_CODE << endl;
+            // int nbytes = reinterpret_cast<int *>(si->bm.extras_offset + Traits<Machine>::APP_CODE)[0];
+            int nbytes = reinterpret_cast<int *>(si->bm.extras_offset + Traits<Machine>::APP_CODE)[0];
+            char *text = (reinterpret_cast<char *>(si->bm.extras_offset + Traits<Machine>::APP_CODE+sizeof(int)));
+            char *tmp = new char, *old = new char, *aux = new char;
+            strcpy(tmp, "");
+            strcpy(old, "");
+            strcpy(aux, "");
+            int i = 0;
+            bool anomalous_trace = false;
+            db<Monitor>(WRN) << "Content EXTRA: "  << nbytes << endl;
+            for (; i < nbytes && i < 1000; i++) {
+                db<Monitor>(WRN) << "Content EXTRA: " << i << " = " << text[i] << endl;
+                if (text[i] != ',' && text[i] != '\n') {
+                    // db<Monitor>(WRN) << "old: " << old << ", tmp: " << tmp << " ,aux: " << aux << endl;
+                    *aux = text[i];
+                    strcpy(&aux[1], ""); // this is necessary to clean the trash from the previous instruction
+                    strcat(tmp, aux);
+                    // strcpy(old, tmp);
+                } else {
+                    const char *sign("anomalous_trace"); //this is the signature
+                    if (strcmp(tmp, sign) == 0) {
+                        anomalous_trace = true;
+                        strcpy(tmp, "");
+                        // strcpy(old, "");
+                        strcpy(aux, "");
+                        break;
+                    }
+                }
+            }
+            if(anomalous_trace) {
+                db<Monitor>(WRN) << "Monitor Extras! " << endl;
+            }
+        }
+    }
+*/
 #endif
-    if(Traits<System>::monitored)
-        init_system_monitoring<0>();
+
 
 #ifdef __PMU_H
 
@@ -171,6 +223,9 @@ void Monitor::init()
         init_pmu_monitoring<0>();
 
 #endif
+
+    if(Traits<System>::monitored)
+        init_system_monitoring<0>();
 
 }
 

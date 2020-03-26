@@ -27,6 +27,7 @@ template<> struct Traits<Build>: public Traits_Tokens
     typedef ALIST<> ASPECTS;
 };
 
+
 // Utilities
 template<> struct Traits<Debug>: public Traits<Build>
 {
@@ -113,7 +114,7 @@ template<> struct Traits<System>: public Traits<Build>
     static const bool reboot = true;
 
     static const unsigned int STACK_SIZE = Traits<Machine>::STACK_SIZE;
-    static const unsigned int HEAP_SIZE = 64 * (Traits<Application>::MAX_THREADS + 1) * Traits<Application>::STACK_SIZE;
+    static const unsigned int HEAP_SIZE = (Traits<Application>::MAX_THREADS + 1) * Traits<Application>::STACK_SIZE;
 };
 
 template<> struct Traits<Task>: public Traits<Build>
@@ -128,7 +129,7 @@ template<> struct Traits<Thread>: public Traits<Build>
     static const bool simulate_capacity = false;
     static const bool trace_idle = hysterically_debugged;
 
-    typedef Scheduling_Criteria::PEDF Criterion;
+    typedef Scheduling_Criteria::CPU_Affinity Criterion;
     static const unsigned int QUANTUM = 10000; // us
 };
 
@@ -166,7 +167,6 @@ template<> struct Traits<ELP>: public Traits<Network>
 {
     typedef Ethernet NIC_Family;
     static constexpr unsigned int NICS[] = {0}; // relative to NIC_Family (i.e. Traits<Ethernet>::DEVICES[NICS[i]]
-    static const unsigned int UNITS = COUNTOF(NICS);
 
     static const bool enabled = Traits<Network>::enabled && (NETWORKS::Count<ELP>::Result > 0);
 };
@@ -175,7 +175,6 @@ template<> struct Traits<TSTP>: public Traits<Network>
 {
     typedef Ethernet NIC_Family;
     static constexpr unsigned int NICS[] = {0}; // relative to NIC_Family (i.e. Traits<Ethernet>::DEVICES[NICS[i]]
-    static const unsigned int UNITS = COUNTOF(NICS);
 
     static const unsigned int KEY_SIZE = 16;
     static const unsigned int RADIO_RANGE = 8000; // approximated radio range in centimeters
@@ -187,7 +186,6 @@ template<> struct Traits<IP>: public Traits<Network>
 {
     typedef Ethernet NIC_Family;
     static constexpr unsigned int NICS[] = {0};  // relative to NIC_Family (i.e. Traits<Ethernet>::DEVICES[NICS[i]]
-    static const unsigned int UNITS = COUNTOF(NICS);
 
     struct Default_Config {
         static const unsigned int  TYPE    = DHCP;
@@ -222,14 +220,14 @@ template<> struct Traits<Monitor>: public Traits<Build>
 {
     static const bool enabled = monitored;
 
-    static constexpr System_Event SYSTEM_EVENTS[]                 = {CPU_EXECUTION_TIME, RUNNING_THREAD, THREAD_EXECUTION_TIME};
-    static constexpr unsigned int SYSTEM_EVENTS_FREQUENCIES[]     = {34                , 34            , 34                   };//{106, 106};// // in Hz
+    static constexpr System_Event SYSTEM_EVENTS[]                 = {ELAPSED_TIME, DEADLINE_MISSES, CPU_EXECUTION_TIME, THREAD_EXECUTION_TIME, RUNNING_THREAD};
+    static constexpr unsigned int SYSTEM_EVENTS_FREQUENCIES[]     = {           1,               1,                  1,                     1,              1}; // in Hz
 
-    static constexpr PMU_Event PMU_EVENTS[]                       = {static_cast<PMU_Event>(48), static_cast<PMU_Event>(49), static_cast<PMU_Event>(50), static_cast<PMU_Event>(51), static_cast<PMU_Event>(52), static_cast<PMU_Event>(53)};
-    static constexpr unsigned int PMU_EVENTS_FREQUENCIES[]        = {34,34,34,34,34,34};//,106,106,106}; // in Hz
+    static constexpr PMU_Event PMU_EVENTS[]                       = {COMMITED_INSTRUCTIONS, BRANCHES, CACHE_MISSES};
+    static constexpr unsigned int PMU_EVENTS_FREQUENCIES[]        = {                    1,        1,            1}; // in Hz
 
-    static constexpr unsigned int TRANSDUCER_EVENTS[]             = {};
-    static constexpr unsigned int TRANSDUCER_EVENTS_FREQUENCIES[] = {}; // in Hz
+    static constexpr unsigned int TRANSDUCER_EVENTS[]             = {CPU_VOLTAGE, CPU_TEMPERATURE};
+    static constexpr unsigned int TRANSDUCER_EVENTS_FREQUENCIES[] = {          0,           0}; // in Hz
 };
 
 __END_SYS

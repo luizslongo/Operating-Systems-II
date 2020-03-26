@@ -214,9 +214,9 @@ int main() // TODO: Add clock change in middle of execution (reschedule probably
 {
     cout << "Begin Main, img1=" << sizeof(img1)*sizeof(signed char) << ",g_mem_ptr=" << G_MEM_SIZE << endl;
     cout << "clock["<< CPU::id() <<"]" << Machine::clock() << endl;
-    Hertz new_clock = 1200000000;
-    cout << "    clock change to" << new_clock << "Hz" << endl;
-    cout << "    clock now is = " << Machine::clock(new_clock) << endl;
+    // Hertz new_clock = 1200000000;
+    // cout << "    clock change to" << new_clock << "Hz" << endl;
+    // cout << "    clock now is = " << Machine::clock(new_clock) << endl;
 
     Delay(500000);
     cout << "SETUP" << endl;
@@ -247,9 +247,9 @@ int main() // TODO: Add clock change in middle of execution (reschedule probably
 
     init_threads<0>(10000, us(tsc0));
 
+    cout << "All TASKs created" << ",Time=" << us(tsc0) << endl;
     Monitor::enable_captures(tsc0);
     //Monitor::disable_captures();
-    cout << "All TASKs created" << ",Time=" << us(tsc0) << endl;
     Thread * freq = new Thread(Thread::Configuration(Thread::READY, Thread::Criterion(400000, 400000, 10000, 0)), &freq_control);
 
     for (int i = 0; i < THREADS; ++i)

@@ -336,6 +336,7 @@ lib%.o: lib%.cc
 
 %.bin: %.img
 		$(OBJCOPY) -O binary $< $@
+		cp $@ kernel7.img
 
 %.out: %.img
 		$(EMULATOR) $< | $(TEE) $@

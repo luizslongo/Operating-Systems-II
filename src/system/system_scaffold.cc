@@ -15,7 +15,7 @@ class First_Object
 {
 public:
     First_Object() {
-        Machine::pre_init(reinterpret_cast<System_Info *>(Memory_Map::SYS_INFO));
+        Machine::pre_init(System::_si);
     }
 };
 
@@ -26,8 +26,14 @@ First_Object __entry;
 OStream kout;
 OStream kerr;
 
+
 // System class attributes
-System_Info * System::_si = reinterpret_cast<System_Info *>(Memory_Map::SYS_INFO);
+#ifdef __mach_cortex__
+    extern "C" { extern unsigned int _sys_info; }
+    System_Info * System::_si = reinterpret_cast<System_Info *>(&_sys_info);
+#else
+    System_Info * System::_si = reinterpret_cast<System_Info *>(Memory_Map::SYS_INFO);
+#endif
 char System::_preheap[];
 Segment * System::_heap_segment;
 Heap * System::_heap;
