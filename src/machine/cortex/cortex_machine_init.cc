@@ -43,6 +43,8 @@ void Machine::init()
 #ifdef __USB_H
     if(Traits<USB>::enabled)
         USB::init();
+    for(int i = 0; i < 0xffff; i++)
+        db<Monitor>(WRN)<<"print sync"<<endl;
 #endif
 
 #ifdef __NIC_H

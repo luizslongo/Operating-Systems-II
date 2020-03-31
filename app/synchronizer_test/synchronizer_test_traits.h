@@ -15,7 +15,7 @@ template<> struct Traits<Build>: public Traits_Tokens
     static const unsigned int MODEL = Raspberry_Pi3;
     static const unsigned int CPUS = 1;
     static const unsigned int NODES = 1; // (> 1 => NETWORKING)
-    static const unsigned int EXPECTED_SIMULATION_TIME = 60; // s (0 => not simulated)
+    static const unsigned int EXPECTED_SIMULATION_TIME = 300; // s (0 => not simulated)
 
     // Default flags
     static const bool enabled = true;
@@ -114,7 +114,7 @@ template<> struct Traits<System>: public Traits<Build>
     static const bool reboot = true;
 
     static const unsigned int STACK_SIZE = Traits<Machine>::STACK_SIZE;
-    static const unsigned int HEAP_SIZE = (Traits<Application>::MAX_THREADS + 1) * Traits<Application>::STACK_SIZE;
+    static const unsigned int HEAP_SIZE = 64 * (Traits<Application>::MAX_THREADS + 1) * Traits<Application>::STACK_SIZE;
 };
 
 template<> struct Traits<Task>: public Traits<Build>
@@ -166,8 +166,8 @@ template<> struct Traits<Network>: public Traits<Build>
 
 template<> struct Traits<ELP>: public Traits<Network>
 {
-    typedef Ethernet NIC_Family;
-    static constexpr unsigned int NICS[] = {0}; // relative to NIC_Family (i.e. Traits<Ethernet>::DEVICES[NICS[i]]
+    typedef IEEE802_15_4 NIC_Family;
+    static constexpr unsigned int NICS[] = {0}; // relative to NIC_Family (i.e. Traits<IEEE802_15_4>::DEVICES[NICS[i]]
     static const unsigned int UNITS = COUNTOF(NICS);
 
     static const bool enabled = Traits<Network>::enabled && (NETWORKS::Count<ELP>::Result > 0);
@@ -175,8 +175,8 @@ template<> struct Traits<ELP>: public Traits<Network>
 
 template<> struct Traits<TSTP>: public Traits<Network>
 {
-    typedef Ethernet NIC_Family;
-    static constexpr unsigned int NICS[] = {0}; // relative to NIC_Family (i.e. Traits<Ethernet>::DEVICES[NICS[i]]
+    typedef IEEE802_15_4 NIC_Family;
+    static constexpr unsigned int NICS[] = {0}; // relative to NIC_Family (i.e. Traits<IEEE802_15_4>::DEVICES[NICS[i]]
     static const unsigned int UNITS = COUNTOF(NICS);
 
     static const unsigned int KEY_SIZE = 16;
@@ -187,8 +187,8 @@ template<> struct Traits<TSTP>: public Traits<Network>
 
 template<> struct Traits<IP>: public Traits<Network>
 {
-    typedef Ethernet NIC_Family;
-    static constexpr unsigned int NICS[] = {0};  // relative to NIC_Family (i.e. Traits<Ethernet>::DEVICES[NICS[i]]
+    typedef IEEE802_15_4 NIC_Family;
+    static constexpr unsigned int NICS[] = {0};  // relative to NIC_Family (i.e. Traits<IEEE802_15_4>::DEVICES[NICS[i]]
     static const unsigned int UNITS = COUNTOF(NICS);
 
     struct Default_Config {

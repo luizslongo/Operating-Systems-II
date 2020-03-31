@@ -247,7 +247,12 @@ int main(int argc, char **argv)
     // Add application(s) and data
     si.bm.application_offset = image_size - boot_size;
     printf("    Adding application \"%s\":", argv[optind + 2]);
-    if (!strcmp(CONFIG.mach,"cortex")) {
+    printf("\n test 1: %d\n", strlen(argv[optind + 1]));
+    int pos_h = strrchr(argv[optind + 1], 'h') - argv[optind + 1];
+    int pos_e = strrchr(argv[optind + 1], 'e') - argv[optind + 1];
+    int pos_x = strrchr(argv[optind + 1], 'x') - argv[optind + 1];
+    //emote3 is configured on .img, .hex file works like an intel .img here
+    if (!strcmp(CONFIG.mach,"cortex") && !(!(strlen(argv[optind + 1]) - (pos_x + 1)) && (pos_e - pos_h == 1))) {
         if((argc - optind) == 3) // single APP
             si.bm.extras_offset = -1;
         else {
@@ -314,9 +319,12 @@ int main(int argc, char **argv)
 
     // Adding MACH specificities
     printf("\n  Adding specific boot features of \"%s\":", CONFIG.mmod);
-    if(!(add_machine_secrets(fd_img, image_size, CONFIG.mach, CONFIG.mmod))) {
-        fprintf(stderr, "Error: specific features error!\n");
-        return 1;
+    //in case it is emote3, we only add if file is .hex
+    if (strcmp(CONFIG.mach,"cortex") || !(strlen(argv[optind + 1]) - (pos_x + 1)) && (pos_e - pos_h == 1)) {
+        if(!(add_machine_secrets(fd_img, image_size, CONFIG.mach, CONFIG.mmod))) {
+            fprintf(stderr, "Error: specific features error!\n");
+            return 1;
+        }
     }
     printf(" done.\n");
 
@@ -751,7 +759,7 @@ int put_file_with_si(int fd_out, char * file, System_Info *si)
     }
     unsigned int offset_to_write = sys_info_base - CONFIG.app_code + elf_header_offset;
     for (unsigned int i = 0; i < stat.st_size; i++) {
-        if(strcmp(CONFIG.mmod,"emote3")) {
+        // if(strcmp(CONFIG.mmod,"emote3")) {
             if (i == offset_to_write) {
                 switch(CONFIG.word_size) {
                 case  8: if(!add_boot_map<char>(fd_out, si)) return 1; break;
@@ -777,15 +785,15 @@ int put_file_with_si(int fd_out, char * file, System_Info *si)
                     }
                 }
             }
-        } else {
-            if(write(fd_out, &buffer[i], stat.st_size - i) < 0) {
-                printf(" failed! (write)\n");
-                free(buffer);
-                return 0;
-            } else {
-                break;
-            }
-        }
+        // } else {
+            // if(write(fd_out, &buffer[i], stat.st_size - i) < 0) {
+            //     printf(" failed! (write)\n");
+            //     free(buffer);
+            //     return 0;
+            // } else {
+            //     break;
+            // }
+        // }
     }
 
     free(buffer);

@@ -90,6 +90,7 @@ UUID                    = $(shell cat /proc/sys/kernel/random/uuid | sed 's/-//g
 ia32_COMP_PREFIX	:= /usr/bin/x86_64-linux-gnu-
 #ia32_COMP_PREFIX	:= /usr/local/ia32/gcc-7.2.0/bin/ia32-
 armv7_COMP_PREFIX	:= /usr/bin/arm-none-eabi-
+#armv8_COMP_PREFIX	:= /usr/bin/arm-none-eabi-
 armv8_COMP_PREFIX	:= /usr/local/arm/gcc-7.2.0/bin/arm-
 avr8_COMP_PREFIX	:= /usr/local/avr/gcc-4.4.4/bin/avr-
 COMP_PREFIX		= $($(ARCH)_COMP_PREFIX)
@@ -330,13 +331,15 @@ lib%.o: lib%.cc
 		$(MKBI) $@ $< $(DATA)
 
 %.hex: %
-		$(OBJCOPY) -I elf32-$(ARCH_ENDIANESS) -O ihex $< $<.tmp
+		$(OBJCOPY) -I elf32-$(ARCH_ENDIANESS) -O ihex $<.img $<.tmp
 		$(MKBI) $@ $<.tmp
 		$(CLEAN) $<.tmp
 
 %.bin: %.img
 		$(OBJCOPY) -O binary $< $@
-		cp $@ kernel7.img
+		cat $@ $(DATA) > kernel7.img
+		cp $< img_copy.img
+		#cp $@ kernel7.img
 
 %.out: %.img
 		$(EMULATOR) $< | $(TEE) $@
