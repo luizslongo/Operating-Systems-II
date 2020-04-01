@@ -247,12 +247,8 @@ int main(int argc, char **argv)
     // Add application(s) and data
     si.bm.application_offset = image_size - boot_size;
     printf("    Adding application \"%s\":", argv[optind + 2]);
-    printf("\n test 1: %d\n", strlen(argv[optind + 1]));
-    int pos_h = strrchr(argv[optind + 1], 'h') - argv[optind + 1];
-    int pos_e = strrchr(argv[optind + 1], 'e') - argv[optind + 1];
-    int pos_x = strrchr(argv[optind + 1], 'x') - argv[optind + 1];
     //emote3 is configured on .img, .hex file works like an intel .img here
-    if (!strcmp(CONFIG.mach,"cortex") && !(!(strlen(argv[optind + 1]) - (pos_x + 1)) && (pos_e - pos_h == 1))) {
+    if (!strcmp(CONFIG.mach,"cortex") && strcmp(&(argv[optind + 1][strlen(argv[optind + 1])-4]), ".hex")) {
         if((argc - optind) == 3) // single APP
             si.bm.extras_offset = -1;
         else {
@@ -320,7 +316,7 @@ int main(int argc, char **argv)
     // Adding MACH specificities
     printf("\n  Adding specific boot features of \"%s\":", CONFIG.mmod);
     //in case it is emote3, we only add if file is .hex
-    if (strcmp(CONFIG.mach,"cortex") || !(strlen(argv[optind + 1]) - (pos_x + 1)) && (pos_e - pos_h == 1)) {
+    if (strcmp(CONFIG.mach,"cortex") || !strcmp(&(argv[optind + 1][strlen(argv[optind + 1])-4]), ".hex")) {
         if(!(add_machine_secrets(fd_img, image_size, CONFIG.mach, CONFIG.mmod))) {
             fprintf(stderr, "Error: specific features error!\n");
             return 1;
@@ -890,4 +886,3 @@ template<typename T> void invert(T & n)
         *h ^= *l;
     }
 }
-
