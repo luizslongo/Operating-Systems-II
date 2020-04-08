@@ -82,11 +82,12 @@ public:
 
     // Thread Statistics (mostly for Monitor)
     struct _Statistics {
-        _Statistics(): execution_time(0), last_execution(0), jobs(0), average_execution_time(0), hyperperiod_count_thread(0), alarm_times(0), times_p_count(0), missed_deadlines(0) {}
+        _Statistics(): execution_time(0), last_execution(0), wcet(0), jobs(0), average_execution_time(0), hyperperiod_count_thread(0), alarm_times(0), times_p_count(0), missed_deadlines(0) {}
 
         // Thread Execution Time (limited to 32bits counting, a hyperperiod greater than 32bits is not supported)
         TSC::Time_Stamp execution_time;
         TSC::Time_Stamp last_execution;
+        TSC::Time_Stamp wcet;
         unsigned int jobs;
         TSC::Time_Stamp average_execution_time;
         unsigned int hyperperiod_count_thread;
@@ -103,11 +104,19 @@ public:
 
         // On Migration
         static TSC::Time_Stamp hyperperiod[Traits<Build>::CPUS];              // recalculate, on _old_hyperperiod + hyperperiod update
+        static TSC::Time_Stamp wcet_cpu[Traits<Build>::CPUS];
         static TSC::Time_Stamp last_hyperperiod[Traits<Build>::CPUS];      // wait for old hyperperiod and update
         static unsigned int hyperperiod_count[Traits<Build>::CPUS];        // reset on next hyperperiod
         static unsigned long long cpu_pmu_accumulated[Traits<Build>::CPUS][COUNTOF(Traits<Monitor>::PMU_EVENTS)];
         static unsigned long long cpu_pmu_last[Traits<Build>::CPUS][COUNTOF(Traits<Monitor>::PMU_EVENTS)];
         static bool cooldown[Traits<Build>::CPUS];
+
+        // ANN
+        static bool decrease_frequency[Traits<Build>::CPUS];
+        static unsigned int count_ann[Traits<Build>::CPUS];
+        static unsigned int size_ann[Traits<Build>::CPUS];
+        static float *ann_inputs[Traits<Build>::CPUS][20];//[COUNTOF(Traits<Monitor>::PMU_EVENTS)+COUNTOF(Traits<Monitor>::SYSTEM_EVENTS)];
+        static float *ann_outputs[Traits<Build>::CPUS][20];//[3];
 
         // CPU Execution Time
         static TSC::Time_Stamp hyperperiod_idle_time[Traits<Build>::CPUS]; //
@@ -169,6 +178,7 @@ public:
     void resume();
 
     static Thread * volatile self() { return running(); }
+    static void reset_statistics();
     static void yield();
     static void exit(int status = 0);
 

@@ -54,7 +54,7 @@ namespace Scheduling_Criteria
         static const unsigned int QUEUES = 1;
 
         // FANN lib usage
-        static const bool learning = false;
+        static const bool learning = true;
 
     public:
         template <typename ... Tn>
@@ -68,9 +68,9 @@ namespace Scheduling_Criteria
         void update() {}
         unsigned int queue() const { return 0; }
 
-        static void charge();
+        static bool charge();
         static bool colect(FANN_EPOS::fann_type *input, unsigned int cpu);
-        static bool award(int p, unsigned int cpu);
+        static bool award(bool hyperperiod);
 
     protected:
         volatile int _priority;
@@ -251,6 +251,8 @@ namespace Scheduling_Criteria
     {
     public:
         static const unsigned int QUEUES = Traits<Machine>::CPUS;
+        // FANN lib usage
+        static const bool learning = true;
 
     public:
         PEDF(int p = APERIODIC)

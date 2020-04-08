@@ -31,6 +31,8 @@ protected:
     static const unsigned int AVERAGE_ACCEPTED_DRIFT = 2;         // +/- 2 * average
     static const unsigned int TIME_ACCEPTED_DRIFT = 2;            // ts difference between captures +/- 2 * frequency
     static const unsigned int MINIMUN_SNAPSHOTS_TO_VALIDATE = 20; // start verification if #SNAPSHOTS greater than this value
+public:
+    static const unsigned int TOTAL_EVENTS_MONITORED = COUNTOF(Traits<Monitor>::PMU_EVENTS) + COUNTOF(Traits<Monitor>::SYSTEM_EVENTS);
 
 public:
     Monitor(): _captures(0), _t0(TSC::time_stamp()) {}
@@ -45,20 +47,33 @@ public:
 
     virtual void capture() = 0;
     virtual unsigned long long read() = 0;
+    virtual void start() = 0;
+    virtual void stop() = 0;
     virtual void reset() = 0;
+    virtual void reset_accounting_clerk() = 0;
     virtual void print(OStream & os) const = 0;
 
     static void run();
 
     static unsigned int get_ann_out (unsigned int i) {
         if (i < ann_captures[CPU::id()] && i >= 0) {
-            return ann_out[CPU::id()][i];
+            return ann_out[CPU::id()];//[i];
         }
         return 1;
     }
 
     static unsigned int get_ann_captures() {
         return ann_captures[CPU::id()];
+    }
+
+    static void reset_accounting() {
+        process_batch();
+        for(unsigned int n = 0; n < CPU::cores(); n++) {
+            for(List::Iterator it = _monitors[n].begin(); it != _monitors[n].end(); it++) {
+                it->object()->reset_accounting_clerk();
+            }
+        }
+        Thread::reset_statistics();
     }
 
     static void process_batch() {
@@ -134,11 +149,11 @@ private:
 
 public:
     static Simple_List<Monitor> _monitors[Traits<Build>::CPUS];
-    static struct FANN_EPOS::fann *ann;
-    static unsigned int * ann_out[Traits<Build>::CPUS];
-    static unsigned long long * ann_ts[Traits<Build>::CPUS];
+    static struct FANN_EPOS::fann *ann[Traits<Build>::CPUS];
+    static unsigned int ann_out[Traits<Build>::CPUS];
+    //static unsigned long long * ann_ts[Traits<Build>::CPUS];
     static unsigned int ann_captures[Traits<Build>::CPUS];
-    static unsigned long long ann_last_capture[Traits<Build>::CPUS];
+    //static unsigned long long ann_last_capture[Traits<Build>::CPUS];
 };
 
 
@@ -179,8 +194,15 @@ public:
     unsigned int captures() { return _captures; }
 
     FANN_EPOS::fann_type last_capture() {
-        if(_captures >= 2)
-            return (FANN_EPOS::fann_type)(_buffer[_captures-1].data - _buffer[_captures-2].data);
+        // handle reset (unsigned long long) 0xffffffff)
+        if(_captures >= 2) {
+            // buffer store a unsigned long long but stores a int
+            long long aux = ((long long)_buffer[_captures-1].data) - _buffer[_captures-2].data;
+            if (aux < 0) {
+                return (FANN_EPOS::fann_type)((((long long) 0xffffffff) - _buffer[_captures-2].data) + _buffer[_captures-1].data);
+            }
+            return (FANN_EPOS::fann_type)(aux);
+        }
         return (FANN_EPOS::fann_type)0;
     }
 
@@ -208,7 +230,6 @@ public:
             _buffer[_captures].ts = ts;
             _buffer[_captures].data = _clerk->read();
             // a counter reset happens frequently depending on the selected feature and its capacity (32 or 64 bits)
-            // is it worth a reset call to avoid such behavior?
             _average = (_average * _captures + _buffer[_captures].data) / (_captures + 1);
             _captures++;
             _last_capture = ts;
@@ -219,8 +240,20 @@ public:
         return (unsigned long long) _clerk->read();
     }
 
+    void start() {
+        _clerk->start();
+    }
+
+    void stop() {
+        _clerk->stop();
+    }
+
     void reset() {
         _clerk->reset();
+    }
+
+    void reset_accounting_clerk() {
+        _captures = 0;
     }
 
     void print(OStream & os) const {
@@ -353,7 +386,7 @@ public:
 
 public:
     Clerk(const Event event, const Hertz frequency = 0, bool monitored = false): _event(event), 
-        _monitor(monitored ? new (SYSTEM) Clerk_Monitor<Clerk>(this, frequency, event == Event::THREAD_EXECUTION_TIME || event == Event::CPU_EXECUTION_TIME) : 0) {}
+        _monitor(monitored ? new (SYSTEM) Clerk_Monitor<Clerk>(this, frequency, event == Event::THREAD_WCET || event == Event::CPU_WCET || event == Event::THREAD_EXECUTION_TIME || event == Event::CPU_EXECUTION_TIME) : 0) {}
     ~Clerk() {}
 
     Data read() {
@@ -370,7 +403,13 @@ public:
                 return t->_statistics.jobs ? t->_statistics.average_execution_time / t->_statistics.jobs : t->_statistics.execution_time;
             return t->_statistics.execution_time;
         case Event::CPU_EXECUTION_TIME:
-            return t->_statistics.idle_time[CPU::id()];
+            return t->_statistics.hyperperiod_idle_time[CPU::id()];
+        case Event::CPU_FREQUENCY:
+            return Machine::frequency();
+        case Event::CPU_WCET:
+            return t->_statistics.wcet_cpu[CPU::id()]; 
+        case Event::THREAD_WCET:
+            return t->_statistics.wcet;
         default:
             return 0;
         }

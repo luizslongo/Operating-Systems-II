@@ -6,6 +6,7 @@
 __BEGIN_SYS
 
 volatile unsigned int Raspberry_Pi3::_cores;
+Hertz Raspberry_Pi3::_frequency = Traits<CPU>::CLOCK;
 
 void Raspberry_Pi3::reboot()
 {

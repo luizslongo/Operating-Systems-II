@@ -38,6 +38,11 @@ public:
         return static_cast<Hertz>(ioc()->arm_clock());
     }
 
+    static unsigned int frequency() { 
+        // ARM MBOX read consumes a lot of time, its efficient to maintain the frequency in a internal variable
+        return _frequency;
+    }
+
     static Hertz max_clock() {
         return static_cast<Hertz>(ioc()->arm_max_clock());
     }
@@ -47,6 +52,7 @@ public:
     }
 
     static Hertz clock(const Hertz & frequency) {
+        _frequency = frequency;
         return static_cast<Hertz>(ioc()->arm_clock(frequency));
     }
 
@@ -56,6 +62,7 @@ private:
 
 private:
     static volatile unsigned int _cores;
+    static Hertz _frequency;
 
 private:
     static IOCtrl * ioc() { return reinterpret_cast<IOCtrl *>(Memory_Map::MBOX_BASE); }

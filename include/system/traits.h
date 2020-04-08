@@ -212,6 +212,9 @@ struct Traits_Tokens
         CPU_EXECUTION_TIME,
         THREAD_EXECUTION_TIME,
         RUNNING_THREAD,
+        CPU_FREQUENCY,
+        CPU_WCET,
+        THREAD_WCET,
     };
 
     // Monitor events (PMU)

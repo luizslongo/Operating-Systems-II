@@ -14,6 +14,9 @@ constexpr CPU::Reg32 ARMv8_A_PMU::_events[PMU::EVENTS];
 
 // System_Monitor
 Simple_List<Monitor> Monitor::_monitors[Traits<Build>::CPUS];
+FANN_EPOS::fann * Monitor::ann[Traits<Build>::CPUS];
+unsigned int Monitor::ann_out[Traits<Build>::CPUS];
+unsigned int Monitor::ann_captures[Traits<Build>::CPUS];
 bool Monitor::_enable;
 
 void Monitor::run()
@@ -29,7 +32,7 @@ void Monitor::run()
 void Monitor::init()
 {
     db<Monitor>(TRC) << "Monitor::init()" << endl;
-
+    ann[CPU::id()] = FANN_EPOS::fann_create_from_config();
 #ifdef __PMU_H
 
     if(Traits<PMU>::enabled && Traits<PMU>::monitored)

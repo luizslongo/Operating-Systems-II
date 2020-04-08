@@ -105,7 +105,16 @@ public:
         if(monitored) {
             if(INARRAY(Traits<Monitor>::SYSTEM_EVENTS, Traits<Monitor>::THREAD_EXECUTION_TIME)) {
                 //if (!t->_statistics.cooldown[t->_link.rank().queue()]) {
-                    TSC::Time_Stamp ts = TSC::time_stamp();
+                //unsigned int cpu = t->_link.rank().queue();
+                TSC::Time_Stamp ts = TSC::time_stamp();
+                //if (t->_statistics.hyperperiod_count_thread < t->_statistics.hyperperiod_count[cpu]) {
+                //    t->_statistics.hyperperiod_count_thread = t->_statistics.hyperperiod_count[cpu];
+                //    t->_statistics.execution_time += ts - t->_statistics.last_execution;
+                //    t->_statistics.last_execution = ts;
+                //    t->_statistics.average_execution_time = t->_statistics.execution_time;
+                //    t->_statistics.jobs = 1;
+                //    t->_statistics.execution_time = 0;
+                //} else {
                     t->_statistics.execution_time += ts - t->_statistics.last_execution;
                     t->_statistics.last_execution = ts; // for deadline misses to account correctly (as they not necessarily inccur in a dispatch)
                     t->_statistics.average_execution_time += t->_statistics.execution_time;
@@ -141,18 +150,21 @@ public:
     RT_Thread(void (* function)(), const Microsecond & deadline, const Microsecond & period = SAME, const Microsecond & capacity = UNKNOWN, const Microsecond & activation = NOW, int times = INFINITE, int cpu = ANY, const Color & color = WHITE, unsigned int stack_size = STACK_SIZE)
     : Periodic_Thread(Configuration(activation ? activation : period ? period : deadline, deadline, capacity, activation, activation ? 1 : times, cpu, SUSPENDED, Criterion(deadline, period ? period : deadline, capacity, cpu), color, 0, stack_size), &entry, this, function, activation, times) {
         if(monitored) {
-            if(INARRAY(Traits<Monitor>::SYSTEM_EVENTS, Traits<Monitor>::THREAD_EXECUTION_TIME) || INARRAY(Traits<Monitor>::SYSTEM_EVENTS, Traits<Monitor>::CPU_EXECUTION_TIME)) {
+            if(INARRAY(Traits<Monitor>::SYSTEM_EVENTS, Traits<Monitor>::THREAD_EXECUTION_TIME) || INARRAY(Traits<Monitor>::SYSTEM_EVENTS, Traits<Monitor>::CPU_EXECUTION_TIME) 
+                || INARRAY(Traits<Monitor>::SYSTEM_EVENTS, Traits<Monitor>::CPU_WCET) || INARRAY(Traits<Monitor>::SYSTEM_EVENTS, Traits<Monitor>::THREAD_WCET)) {
                 TSC::Time_Stamp ts = TSC::time_stamp();
                 if(_statistics.last_hyperperiod[_link.rank().queue()] == 0) {
                     _statistics.last_hyperperiod[_link.rank().queue()] = ts+Convert::us2count<TSC::Time_Stamp, Time_Base>(TSC::frequency(), activation);
-                    db<Thread>(TRC) << "period=" << period << ",hyperperiod=" << Convert::us2count<TSC::Time_Stamp, Time_Base>(TSC::frequency(), period) << endl;
+                    db<Thread>(WRN) << "period=" << period << ",hyperperiod=" << Convert::us2count<TSC::Time_Stamp, Time_Base>(TSC::frequency(), period) << endl;
                     _statistics.hyperperiod[_link.rank().queue()] = Convert::us2count<TSC::Time_Stamp, Time_Base>(TSC::frequency(), period);
                 } else {
                     _statistics.hyperperiod[_link.rank().queue()] = Math::lcm(_statistics.hyperperiod[_link.rank().queue()], Convert::us2count<TSC::Time_Stamp, Time_Base>(TSC::frequency(), period));
-                    db<Thread>(TRC) << "hyperperiod=" << _statistics.hyperperiod[_link.rank().queue()] << endl;
+                    db<Thread>(WRN) << "hyperperiod=" << _statistics.hyperperiod[_link.rank().queue()] << endl;
                 }
+                _statistics.wcet = Convert::us2count<TSC::Time_Stamp, Time_Base>(TSC::frequency(), (capacity*100)/period);
                 _statistics.last_execution = ts; // Why? updated at dispatch
                 _statistics.hyperperiod_count_thread = 0;
+                _statistics.wcet_cpu[_link.rank().queue()] += _statistics.wcet;
             }
         }
 
@@ -172,6 +184,7 @@ private:
             // Adjust alarm's period
             t->_alarm.~Alarm();
             new (&t->_alarm) Alarm(t->criterion().period(), &t->_handler, times);
+            t->_statistics.times_p_count = times;
             if (Criterion::dynamic)
                 const_cast<Criterion &>(t->_link.rank())._priority = Alarm::elapsed() + Alarm::ticks(t->criterion().period()); // should be deadline
         }
