@@ -153,18 +153,19 @@ public:
             if(INARRAY(Traits<Monitor>::SYSTEM_EVENTS, Traits<Monitor>::THREAD_EXECUTION_TIME) || INARRAY(Traits<Monitor>::SYSTEM_EVENTS, Traits<Monitor>::CPU_EXECUTION_TIME) 
                 || INARRAY(Traits<Monitor>::SYSTEM_EVENTS, Traits<Monitor>::CPU_WCET) || INARRAY(Traits<Monitor>::SYSTEM_EVENTS, Traits<Monitor>::THREAD_WCET)) {
                 TSC::Time_Stamp ts = TSC::time_stamp();
-                if(_statistics.last_hyperperiod[_link.rank().queue()] == 0) {
-                    _statistics.last_hyperperiod[_link.rank().queue()] = ts+Convert::us2count<TSC::Time_Stamp, Time_Base>(TSC::frequency(), activation);
-                    db<Thread>(WRN) << "period=" << period << ",hyperperiod=" << Convert::us2count<TSC::Time_Stamp, Time_Base>(TSC::frequency(), period) << endl;
-                    _statistics.hyperperiod[_link.rank().queue()] = Convert::us2count<TSC::Time_Stamp, Time_Base>(TSC::frequency(), period);
+                if(Thread::_Statistics::last_hyperperiod[_link.rank().queue()] == 0) {
+                    Thread::_Statistics::last_hyperperiod[_link.rank().queue()] = ts+Convert::us2count<TSC::Time_Stamp, Time_Base>(TSC::frequency(), activation);
+                    //db<Thread>(WRN) << "period=" << period << ",hyperperiod=" << Convert::us2count<TSC::Time_Stamp, Time_Base>(TSC::frequency(), period) << endl;
+                    Thread::_Statistics::hyperperiod[_link.rank().queue()] = Convert::us2count<TSC::Time_Stamp, Time_Base>(TSC::frequency(), period);
                 } else {
-                    _statistics.hyperperiod[_link.rank().queue()] = Math::lcm(_statistics.hyperperiod[_link.rank().queue()], Convert::us2count<TSC::Time_Stamp, Time_Base>(TSC::frequency(), period));
-                    db<Thread>(WRN) << "hyperperiod=" << _statistics.hyperperiod[_link.rank().queue()] << endl;
+                    Thread::_Statistics::hyperperiod[_link.rank().queue()] = Math::lcm(Thread::_Statistics::hyperperiod[_link.rank().queue()], Convert::us2count<TSC::Time_Stamp, Time_Base>(TSC::frequency(), period));
                 }
                 _statistics.wcet = Convert::us2count<TSC::Time_Stamp, Time_Base>(TSC::frequency(), (capacity*100)/period);
                 _statistics.last_execution = ts; // Why? updated at dispatch
                 _statistics.hyperperiod_count_thread = 0;
-                _statistics.wcet_cpu[_link.rank().queue()] += _statistics.wcet;
+                Thread::_Statistics::wcet_cpu[_link.rank().queue()] += _statistics.wcet;
+                db<Thread>(WRN) << "hyperperiod=" << Thread::_Statistics::hyperperiod[_link.rank().queue()] << ",period=" << period 
+                << ",WCET_c=" << Thread::_Statistics::wcet_cpu[_link.rank().queue()] << ",WCET=" << _statistics.wcet << endl;
             }
         }
 

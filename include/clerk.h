@@ -403,11 +403,11 @@ public:
                 return t->_statistics.jobs ? t->_statistics.average_execution_time / t->_statistics.jobs : t->_statistics.execution_time;
             return t->_statistics.execution_time;
         case Event::CPU_EXECUTION_TIME:
-            return t->_statistics.hyperperiod_idle_time[CPU::id()];
+            return Thread::_Statistics::hyperperiod_idle_time[CPU::id()];
         case Event::CPU_FREQUENCY:
             return Machine::frequency();
         case Event::CPU_WCET:
-            return t->_statistics.wcet_cpu[CPU::id()]; 
+            return Thread::_Statistics::wcet_cpu[CPU::id()]; 
         case Event::THREAD_WCET:
             return t->_statistics.wcet;
         default:

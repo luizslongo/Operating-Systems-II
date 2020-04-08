@@ -115,8 +115,8 @@ public:
         static bool decrease_frequency[Traits<Build>::CPUS];
         static unsigned int count_ann[Traits<Build>::CPUS];
         static unsigned int size_ann[Traits<Build>::CPUS];
-        static float *ann_inputs[Traits<Build>::CPUS][20];//[COUNTOF(Traits<Monitor>::PMU_EVENTS)+COUNTOF(Traits<Monitor>::SYSTEM_EVENTS)];
-        static float *ann_outputs[Traits<Build>::CPUS][20];//[3];
+        static float ann_inputs[Traits<Build>::CPUS][20][COUNTOF(Traits<Monitor>::PMU_EVENTS)+COUNTOF(Traits<Monitor>::SYSTEM_EVENTS)];
+        static float ann_outputs[Traits<Build>::CPUS][20][3];
 
         // CPU Execution Time
         static TSC::Time_Stamp hyperperiod_idle_time[Traits<Build>::CPUS]; //
