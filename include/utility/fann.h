@@ -1117,8 +1117,8 @@ public: // Create and Run and Online Train
     }
 
     static fann_type* scale_input(fann_type* input, unsigned int input_size) {
-        const fann_type fann_max[] = {367119., 1330863., 5608278., 2000006., 17562780., 5072266., 100., 100., 7.};
-        const fann_type fann_min[] = {0., 0., 2032., 0., 0., 603., 0., 0., 1.};
+        const fann_type fann_max[] = {367119., 1330863., 5608278., 2000006., 17562780., 5072266., 100., 100., 1200000000.};
+        const fann_type fann_min[] = {0., 0., 2032., 0., 0., 603., 0., 0., 600000000.};
 
         for (unsigned int i = 0; i < input_size; i++)
         {

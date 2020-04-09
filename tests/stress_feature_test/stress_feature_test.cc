@@ -15,7 +15,7 @@ OStream cout;
 typedef TSC::Time_Stamp Time_Stamp;
 
 // Configuration
-const unsigned int  TEST_LENGTH            = 140; // in seconds
+const unsigned int  TEST_LENGTH            = 30; // in seconds
 const bool          MEASURE_TIME           = false;
 // To be measured
 const float         MEMORY_IT_LENGHT       = 150;//150;    // 0.4 in microseconds

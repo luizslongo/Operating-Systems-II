@@ -38,7 +38,7 @@ public:
     Monitor(): _captures(0), _t0(TSC::time_stamp()) {}
     virtual ~Monitor() {}
 
-    virtual FANN_EPOS::fann_type last_capture() = 0;
+    virtual FANN_EPOS::fann_type last_capture(unsigned int index) = 0;
     virtual Time_Stamp last_time_stamp() = 0;
     virtual unsigned int get_capture(unsigned int i) = 0;
     virtual Time_Stamp get_capture_ts(unsigned int i) = 0;
@@ -57,7 +57,7 @@ public:
 
     static unsigned int get_ann_out (unsigned int i) {
         if (i < ann_captures[CPU::id()] && i >= 0) {
-            return ann_out[CPU::id()];//[i];
+            return ann_out[CPU::id()][i];
         }
         return 1;
     }
@@ -81,8 +81,14 @@ public:
         OStream os; // we are using OStream instead of db to avoid <CPU_ID> print in each line.
         db<Monitor>(TRC) << "Monitor::process_batch()" << endl;
         os << "FINAL_TS<" << count2us(_monitors[0].begin()->object()->time_since_t0()) << ">" << endl;
-        os << "begin_data" << endl;
+        os << "ANN-OUT" << endl;
         unsigned int i;
+        for(unsigned int n = 1; n < CPU::cores(); n++) {
+            os << "CPU" << n << endl;
+            for(i = 0; i < ann_captures[n]; i++)
+                os << ann_out[n][i] << endl;
+        } 
+        os << "begin_data" << endl;
         for(unsigned int n = 0; n < CPU::cores(); n++) {
             i = 0;
             os << "CPU" << n << endl;
@@ -150,10 +156,9 @@ private:
 public:
     static Simple_List<Monitor> _monitors[Traits<Build>::CPUS];
     static struct FANN_EPOS::fann *ann[Traits<Build>::CPUS];
-    static unsigned int ann_out[Traits<Build>::CPUS];
+    static unsigned int ann_out[Traits<Build>::CPUS][100*30];
     //static unsigned long long * ann_ts[Traits<Build>::CPUS];
     static unsigned int ann_captures[Traits<Build>::CPUS];
-    //static unsigned long long ann_last_capture[Traits<Build>::CPUS];
 };
 
 
@@ -193,8 +198,10 @@ public:
 
     unsigned int captures() { return _captures; }
 
-    FANN_EPOS::fann_type last_capture() {
+    FANN_EPOS::fann_type last_capture(unsigned int index) {
         // handle reset (unsigned long long) 0xffffffff)
+        if (index >= COUNTOF(Traits<Monitor>::PMU_EVENTS))
+            return (FANN_EPOS::fann_type)_buffer[_captures-1].data;
         if(_captures >= 2) {
             // buffer store a unsigned long long but stores a int
             long long aux = ((long long)_buffer[_captures-1].data) - _buffer[_captures-2].data;
@@ -203,7 +210,7 @@ public:
             }
             return (FANN_EPOS::fann_type)(aux);
         }
-        return (FANN_EPOS::fann_type)0;
+        return (FANN_EPOS::fann_type)-1;
     }
 
     Time_Stamp last_time_stamp() {
