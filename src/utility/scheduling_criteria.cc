@@ -92,8 +92,8 @@ namespace Scheduling_Criteria {
                     Thread::_Statistics::ann_outputs[cpu][Thread::_Statistics::count_ann[cpu]][1] = out[1];
                     Thread::_Statistics::ann_outputs[cpu][Thread::_Statistics::count_ann[cpu]][2] = out[2];
                     Monitor::ann_captures[cpu]++;
-                    Thread::_Statistics::count_ann[cpu] = (Thread::_Statistics::count_ann[cpu] + 1 ) % 20;
-                    if (Thread::_Statistics::size_ann[cpu] < 20) {
+                    Thread::_Statistics::count_ann[cpu] = (Thread::_Statistics::count_ann[cpu] + 1 ) % 50;
+                    if (Thread::_Statistics::size_ann[cpu] < 50) {
                         Thread::_Statistics::size_ann[cpu]++;
                     }
                     return true;
@@ -107,21 +107,75 @@ namespace Scheduling_Criteria {
     // each cpu stores a result buffer, only one runs voting and clears everything
     bool Priority::award(bool hyperperiod) {//unsigned int cpu) {
         unsigned int cpu = CPU::id();
+        if (!cpu)
+            return false;
         if (learning && Monitor::ann_captures[cpu] > 1) {
             //Thread * t = Thread::self();
             if (hyperperiod) {
+                unsigned int idle = (Thread::_Statistics::hyperperiod_idle_time[cpu]*100) / Thread::_Statistics::hyperperiod[cpu];
+                if (idle != 0) { 
+                    // for each CPU do learn and delete previous captures
+                    FANN_EPOS::fann_type desired_output[3];
+                    unsigned int hyperperiod_threshold_up = 16; // > 1 frequencies downgrade 
+                    unsigned int ddlm = Thread::_Statistics::missed_deadlines[cpu];
+                    ///* TODO LEARN
+                    if (!ddlm && idle >= hyperperiod_threshold_up) { 
+                        // if i have 16% or more of free time i can decrease and no ddlm
+                        desired_output[0] = 1;
+                        desired_output[1] = -1;
+                        desired_output[2] = -1;
+                    } else if (!ddlm) {
+                        // if no deadline miss accounted i can maintain
+                        desired_output[0] = -1;
+                        desired_output[1] = 1;
+                        desired_output[2] = -1;
+                    } else {
+                        // increase
+                        desired_output[0] = -1;
+                        desired_output[1] = -1;
+                        desired_output[2] = 1;
+                    }
+                    if(cpu == 1)
+                        db<Thread>(WRN) << "Train, idle=" << idle << ",ddlm=" << ddlm << ",out=" << desired_output[0] << "," << desired_output[1] << "," << desired_output[2] << endl;
+                    //*/
+                    
+                    ///*
+                    for(unsigned int j = 0; j < Thread::_Statistics::size_ann[cpu]; j++) {
+                        if (Thread::_Statistics::ann_outputs[cpu][j][0] > Thread::_Statistics::ann_outputs[cpu][j][1]) {
+                            if (Thread::_Statistics::ann_outputs[cpu][j][0] > Thread::_Statistics::ann_outputs[cpu][j][2]) {
+                                if (desired_output[0] == 1)
+                                    continue;
+                            } else {
+                                if (desired_output[2] == 1)
+                                    continue;
+                            }
+                        } else if (Thread::_Statistics::ann_outputs[cpu][j][1] > Thread::_Statistics::ann_outputs[cpu][j][2]) {
+                            if (desired_output[1] == 1)
+                                    continue;
+                        } else {
+                            if (desired_output[2] == 1)
+                                    continue;
+                        }
+                        FANN_EPOS::fann_set_train_in_out(Monitor::ann[cpu], Thread::_Statistics::ann_inputs[cpu][j], Thread::_Statistics::ann_outputs[cpu][j]);
+                        FANN_EPOS::fann_learn_last_run(Monitor::ann[cpu], desired_output);
+                    }
+                    //*/
+                }
+                Thread::_Statistics::count_ann[cpu] = 0;
+                Thread::_Statistics::size_ann[cpu] = 0;
                 // do voting
                 if (cpu != 1) // can be CPU 0, needs to check if others reached a hyperperiod first
                     return false;
 
                 bool vote = true;
-                unsigned int greater_idle = 0;
-                unsigned int smaller_idle = ((unsigned int) 0xffffffff);
+                //unsigned int idle[3];
+                //unsigned int smaller_idle = ((unsigned int) 0xffffffff);
                 for (unsigned int i = 1; i < Traits<Build>::CPUS; i++) {
                     db<Thread>(WRN) << "voting cpu[" << i << "]=" << Thread::_Statistics::decrease_frequency[i] << ",idle=" << Thread::_Statistics::hyperperiod_idle_time[i] << endl;
                     vote &= Thread::_Statistics::decrease_frequency[i]; 
-                    smaller_idle = smaller_idle > Thread::_Statistics::hyperperiod_idle_time[i] ? Thread::_Statistics::hyperperiod_idle_time[i] : smaller_idle;
-                    greater_idle = greater_idle < Thread::_Statistics::hyperperiod_idle_time[i] ? Thread::_Statistics::hyperperiod_idle_time[i] : greater_idle;
+                    //idle[i] = (Thread::_Statistics::hyperperiod_idle_time[i]*100) / Thread::_Statistics::hyperperiod[i];
+                    //smaller_idle = smaller_idle > Thread::_Statistics::hyperperiod_idle_time[i] ? Thread::_Statistics::hyperperiod_idle_time[i] : smaller_idle;
+                    //greater_idle = greater_idle < Thread::_Statistics::hyperperiod_idle_time[i] ? Thread::_Statistics::hyperperiod_idle_time[i] : greater_idle;
                 }
 
                 if (vote) { // all CPUS decided for decrease
@@ -134,38 +188,6 @@ namespace Scheduling_Criteria {
                     if (freq > 110000000)
                         Machine::clock(freq - (100 * 1000 * 1000));
                 } else {
-                    // for each CPU do learn and delete previous captures
-                    // fann_type* desired_output[3];
-                    for (unsigned int i = 1; i < Traits<Build>::CPUS; i++) {
-                        /* // TODO LEARN
-                        // monitor = &(Monitor::_monitors[i]);
-                        // unsigned int ddlm = (monitor->begin() + Monitor::TOTAL_EVENTS_MONITORED-2)->object()->last_capture()
-                        if (!ddlm && Thread::_Statistics::hyperperiod_idle_time[i] >= hyperperiod_threshold_up) { 
-                            // if i have 10% or more of free time i can decrease and no ddlm
-                            desired_output[0] = 1;
-                            desired_output[1] = -1;
-                            desired_output[2] = -1;
-                        } else if (!ddlm) { 
-                            // if no deadline miss accounted i can maintain
-                            desired_output[0] = -1;
-                            desired_output[1] = 1;
-                            desired_output[2] = -1;
-                        } else {
-                            // increase
-                            desired_output[0] = -1;
-                            desired_output[1] = -1;
-                            desired_output[2] = 1;
-                        }
-                        //*/
-                        /*
-                        for(unsigned int j = 0; j < Thread::_Statistics::size_ann[i]; j++) {
-                            FANN_EPOS::fann_set_train_in_out(Monitor::ann[i], Thread::_Statistics::ann_inputs[i][j], Thread::_Statistics::ann_outputs[i][j]);
-                            FANN_EPOS::fann_learn_last_run(Monitor::ann[i], desired_output);
-                        }
-                        //*/
-                        Thread::_Statistics::count_ann[i] = 0;
-                        Thread::_Statistics::size_ann[i] = 0;
-                    }
                     // check for imbalance
                     //if (!imbalanced && (greater_idle - smaller_idle > balance_threshold)) { // create imbalanced and balance_threshold
                     //    imbalanced = balance_load(); // HOW TODO THIS? --> force the correct migrations

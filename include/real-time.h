@@ -124,7 +124,7 @@ public:
             }
 
             if(INARRAY(Traits<Monitor>::SYSTEM_EVENTS, Traits<Monitor>::DEADLINE_MISSES))
-                t->_statistics.missed_deadlines = t->_statistics.times_p_count - (t->_statistics.alarm_times->_times);
+                Thread::_Statistics::missed_deadlines[t->_link.rank().queue()] += t->_statistics.times_p_count - (t->_statistics.alarm_times->_times);
         }
 
         db<Thread>(TRC) << "Thread::wait_next(this=" << t << ",times=" << t->_alarm._times << ")" << endl;
@@ -162,7 +162,7 @@ public:
                 }
                 _statistics.wcet = Convert::us2count<TSC::Time_Stamp, Time_Base>(TSC::frequency(), (capacity*100)/period);
                 _statistics.last_execution = ts; // Why? updated at dispatch
-                _statistics.hyperperiod_count_thread = 0;
+                //_statistics.hyperperiod_count_thread = 0;
                 Thread::_Statistics::wcet_cpu[_link.rank().queue()] += _statistics.wcet;
                 db<Thread>(WRN) << "hyperperiod=" << Thread::_Statistics::hyperperiod[_link.rank().queue()] << ",period=" << period 
                 << ",WCET_c=" << Thread::_Statistics::wcet_cpu[_link.rank().queue()] << ",WCET=" << _statistics.wcet << endl;

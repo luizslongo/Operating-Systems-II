@@ -16,14 +16,14 @@ public: //type defs
 
 public:
     static const unsigned int NUM_LAYERS_CONFIG           = 17;
-    static constexpr float    LEARNING_RATE_CONFIG        = 0.700000;
+    static constexpr float    LEARNING_RATE_CONFIG        = 1.500000;
     static constexpr float    CONNECTION_RATE_CONFIG      = 1.000000;
     static const unsigned int NETWORK_TYPE_CONFIG         = 1;
     static constexpr float    LEARNING_MOMENTUM_CONFIG    = 0.000000;
     static const unsigned int TRAINING_ALGORITHM_CONFIG   = 0; // 0 = INCREMENTAL - for online training support
     static const unsigned int TRAIN_ERROR_FUNCTION_CONFIG = 0;
     static const unsigned int TRAIN_STOP_FUNCTION_CONFIG  = 1;
-    static constexpr double   BIT_FAIL_LIMIT_CONFIG       = 8.99999976158142089844e-01;
+    static constexpr double   BIT_FAIL_LIMIT_CONFIG       = 0.9;
 
 private: // Internal Macros
     #define fann_mult(x,y) (x*y)
@@ -1292,7 +1292,7 @@ public: // Create and Run and Online Train
      *
      * We do not reset MSE as the online learn is here considered a single train set.
      */
-    void fann_learn_last_run(struct fann *ann, fann_type *desired_output)
+    static void fann_learn_last_run(struct fann *ann, fann_type *desired_output)
     {
         fann_compute_MSE(ann, desired_output);
 
@@ -1313,7 +1313,7 @@ private: // Internal Online Train Methods
         After this train_errors in the output layer will be set to:
         neuron_value_derived * (desired_output - neuron_value)
     */
-    void fann_compute_MSE(struct fann *ann, fann_type * desired_output)
+    static void fann_compute_MSE(struct fann *ann, fann_type * desired_output)
     {
         fann_type neuron_value, neuron_diff, *error_it = 0, *error_begin = 0;
         struct fann_neuron *last_layer_begin = (ann->last_layer - 1)->first_neuron;
@@ -1367,7 +1367,7 @@ private: // Internal Online Train Methods
     /* INTERNAL FUNCTION
        Helper function to update the MSE value and return a diff which takes symmetric functions into account
     */
-    fann_type fann_update_MSE(struct fann *ann, struct fann_neuron* neuron, fann_type neuron_diff)
+    static fann_type fann_update_MSE(struct fann *ann, struct fann_neuron* neuron, fann_type neuron_diff)
     {
         float neuron_diff2;
         
@@ -1413,7 +1413,7 @@ private: // Internal Online Train Methods
       Calculates the derived of a value, given an activation function
        and a steepness
     */
-    fann_type fann_activation_derived(unsigned int activation_function,
+    static fann_type fann_activation_derived(unsigned int activation_function,
                                       fann_type steepness, fann_type value, fann_type sum)
     {
         switch (activation_function)
@@ -1463,7 +1463,7 @@ private: // Internal Online Train Methods
        After this the train_errors in the hidden layers will be:
        neuron_value_derived * sum(outgoing_weights * connected_neuron)
     */
-    void fann_backpropagate_MSE(struct fann *ann)
+    static void fann_backpropagate_MSE(struct fann *ann)
     {
         fann_type tmp_error;
         unsigned int i;
@@ -1542,7 +1542,7 @@ private: // Internal Online Train Methods
     /* INTERNAL FUNCTION
        Update weights for incremental training
     */
-    void fann_update_weights(struct fann *ann)
+    static void fann_update_weights(struct fann *ann)
     {
         struct fann_neuron *neuron_it, *last_neuron, *prev_neurons;
         fann_type tmp_error, delta_w, *weights;

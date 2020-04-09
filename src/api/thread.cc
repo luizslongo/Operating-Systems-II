@@ -32,8 +32,9 @@ TSC::Time_Stamp Thread::_Statistics::last_idle[Traits<Build>::CPUS];
 bool Thread::_Statistics::decrease_frequency[Traits<Build>::CPUS] = {true, true, true, true};
 unsigned int Thread::_Statistics::count_ann[Traits<Build>::CPUS];
 unsigned int Thread::_Statistics::size_ann[Traits<Build>::CPUS];
-float Thread::_Statistics::ann_inputs[Traits<Build>::CPUS][20][COUNTOF(Traits<Monitor>::PMU_EVENTS)+COUNTOF(Traits<Monitor>::SYSTEM_EVENTS)];
-float Thread::_Statistics::ann_outputs[Traits<Build>::CPUS][20][3];
+float Thread::_Statistics::ann_inputs[Traits<Build>::CPUS][50][COUNTOF(Traits<Monitor>::PMU_EVENTS)+COUNTOF(Traits<Monitor>::SYSTEM_EVENTS)];
+float Thread::_Statistics::ann_outputs[Traits<Build>::CPUS][50][3];
+unsigned int Thread::_Statistics::missed_deadlines[Traits<Build>::CPUS];
 
 unsigned long long Thread::_Statistics::cpu_pmu_accumulated[Traits<Build>::CPUS][COUNTOF(Traits<Monitor>::PMU_EVENTS)];
 unsigned long long Thread::_Statistics::cpu_pmu_last[Traits<Build>::CPUS][COUNTOF(Traits<Monitor>::PMU_EVENTS)];
@@ -69,7 +70,6 @@ void Thread::constructor_epilogue(const Log_Addr & entry, unsigned int stack_siz
 
     for(unsigned int i = 0; i < COUNTOF(Traits<Monitor>::PMU_EVENTS); i++)
         _statistics.thread_pmu_accumulated[i] = 0;
-    _statistics.missed_deadlines = 0;
     if(multitask)
         _task->insert(this);
 
@@ -453,7 +453,7 @@ void Thread::dispatch(Thread * prev, Thread * next, bool charge)
             }
         }
 
-        if(INARRAY(Traits<Monitor>::SYSTEM_EVENTS, Traits<Monitor>::CPU_EXECUTION_TIME)) {
+        if(INARRAY(Traits<Monitor>::SYSTEM_EVENTS, Traits<Monitor>::CPU_EXECUTION_TIME) || INARRAY(Traits<Monitor>::SYSTEM_EVENTS, Traits<Monitor>::CPU_WCET)) {
             // Account idle time
             if((prev->priority() == IDLE) && (prev->_statistics.last_idle[cpu] != 0)) {
                 Thread::_Statistics::idle_time[cpu] += ts - Thread::_Statistics::last_idle[cpu];
@@ -501,7 +501,6 @@ void Thread::dispatch(Thread * prev, Thread * next, bool charge)
             // hyper-period idle time
             Thread::_Statistics::hyperperiod_idle_time[cpu] = Thread::_Statistics::idle_time[cpu];
             // reset current idle time (for next hyperperiod)
-            Thread::_Statistics::idle_time[cpu] = 0;
 
             for(i = 0; i < COUNTOF(Traits<Monitor>::PMU_EVENTS); i++)
             {
@@ -518,7 +517,9 @@ void Thread::dispatch(Thread * prev, Thread * next, bool charge)
                 Criterion::award(true); // in: hyper-period? | out: true = decrease; false = increase or maintain;
                 Thread::_Statistics::decrease_frequency[cpu] = true; // reset decrease frequency for next hyperperiod
             }
-        } else if(cpu) {
+            Thread::_Statistics::missed_deadlines[cpu] = 0;
+            Thread::_Statistics::idle_time[cpu] = 0;
+        } else if(cpu && (prev->priority() > Criterion::PERIODIC) && (prev->priority() < Criterion::APERIODIC)) {
             // fix timing
             if(Criterion::charge()) // if run ANN
                 Thread::_Statistics::decrease_frequency[cpu] &= Criterion::award(false); // in: hyper-period? | out: true = decrease; false = increase or maintain;
