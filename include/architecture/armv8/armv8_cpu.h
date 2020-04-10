@@ -89,6 +89,38 @@ public:
         Reg32 _r11;
         Reg32 _r12;
         Reg32 _lr;
+        /*Reg32 _s0;
+        Reg32 _s1;
+        Reg32 _s2;
+        Reg32 _s3;
+        Reg32 _s4;
+        Reg32 _s5;
+        Reg32 _s6;
+        Reg32 _s7;
+        Reg32 _s8;
+        Reg32 _s9;
+        Reg32 _s10;
+        Reg32 _s11;
+        Reg32 _s12;
+        Reg32 _s13;
+        Reg32 _s14;
+        Reg32 _s15;
+        Reg32 _s16;
+        Reg32 _s17;
+        Reg32 _s18;
+        Reg32 _s19;
+        Reg32 _s20;
+        Reg32 _s21;
+        Reg32 _s22;
+        Reg32 _s23;
+        Reg32 _s24;
+        Reg32 _s25;
+        Reg32 _s26;
+        Reg32 _s27;
+        Reg32 _s28;
+        Reg32 _s29;
+        Reg32 _s30;
+        Reg32 _s31;*/
         Reg32 _pc;
     };
 

@@ -512,18 +512,29 @@ void Thread::dispatch(Thread * prev, Thread * next, bool charge)
                 }
                 Thread::_Statistics::cpu_pmu_last[cpu][i] = captures[i];
             }
+            
             //Criterion::charge(); // run ANN
             if(cpu) {
+                ASM("       vpush    {s0-s15}               \n"
+                    "       vpush    {s16-s31}              \n");
                 Criterion::award(true); // in: hyper-period? | out: true = decrease; false = increase or maintain;
                 Thread::_Statistics::decrease_frequency[cpu] = true; // reset decrease frequency for next hyperperiod
+                ASM("       vpop    {s0-s15}                \n"
+                    "       vpop    {s16-s31}               \n");
             }
             Thread::_Statistics::missed_deadlines[cpu] = 0;
             Thread::_Statistics::idle_time[cpu] = 0;
+            
         } else if(cpu && (prev->priority() > Criterion::PERIODIC) && (prev->priority() < Criterion::APERIODIC)) {
             // fix timing
+            ASM("       vpush    {s0-s15}               \n"
+                "       vpush    {s16-s31}              \n");
             if(Criterion::charge()) // if run ANN
                 Thread::_Statistics::decrease_frequency[cpu] &= Criterion::award(false); // in: hyper-period? | out: true = decrease; false = increase or maintain;
+            ASM("       vpop    {s0-s15}                \n"
+                "       vpop    {s16-s31}               \n");
         }
+
 
         // PMU start
         for(Simple_List<Monitor>::Iterator it = monitor->begin(); it != monitor->end(); it++){

@@ -20,7 +20,10 @@ void CPU::Context::save() volatile
 
     ASM("       push    {r12}                   \n"
         "       ldr     r12, [sp,#-64]          \n"
-        "       push    {r0-r12, lr}            \n");
+        "       push    {r0-r12, lr}            \n"
+        //"       vpush   {s0-s15}                \n"
+        //"       vpush   {s16-s31}               \n"
+        );
     mrs12();
     ASM("       push    {r12}                   \n"
         "       sub     sp, #4                  \n"
@@ -37,6 +40,8 @@ void CPU::Context::load() const volatile
         "       pop     {r12}                   \n" : : "r"(this));
     msr12();
     ASM("       pop     {r0-r12, lr}            \n"
+        //"       vpop    {s0-s15}                \n"
+        //"       vpop    {s16-s31}               \n"
         "       pop     {pc}                    \n");
 }
 
@@ -51,7 +56,10 @@ if(thumb)
     ASM("       orr r12, #1                     \n");   // adjust thumb
     ASM("       str     r12, [sp,#4]            \n"     // save calculate PC
         "       pop     {r12}                   \n"     // restore tmp register
-        "       push    {r0-r12, lr}            \n");   // save all registers
+        "       push    {r0-r12, lr}            \n"
+        //"       vpush    {s0-s15}               \n"
+        //"       vpush    {s16-s31}              \n"
+        );   // save all registers
     mrs12();                                            // move flags to tmp register
     ASM("       push    {r12}                   \n"     // save flags
         "       str     sp, [r0]                \n"     // update Context * volatile * o
@@ -59,7 +67,10 @@ if(thumb)
         "       isb                             \n"     // serialize the pipeline so SP gets updated before the pop
         "       pop     {r12}                   \n");   // pop flags into tmp register
     msr12();                                            // restore flags
-    ASM("       pop     {r0-r12, lr}            \n");   // restore all registers
+    ASM("       pop     {r0-r12, lr}            \n"
+        //"       vpop    {s0-s15}                \n"
+        //"       vpop    {s16-s31}               \n"
+        );   // restore all registers
     ASM("       pop     {pc}                    \n"     // restore PC
         ".ret:  bx      lr                      \n");   // return
 }

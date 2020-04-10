@@ -63,7 +63,7 @@ namespace Scheduling_Criteria {
                 //Monitor::ann_last_capture[cpu] = next_time;
                 //Monitor::ann_ts[cpu][Monitor::ann_captures[cpu]] = next_time;
                 if(colect(input, cpu)) {
-                    if (cpu == 1)
+                    if (cpu == 2)
                         db<Thread>(TRC) << "<"
                         << input[0] << ","
                         << input[1] << ","
@@ -115,10 +115,10 @@ namespace Scheduling_Criteria {
                 unsigned int idle = (Thread::_Statistics::hyperperiod_idle_time[cpu]*100) / Thread::_Statistics::hyperperiod[cpu];
                 if (idle != 0) { 
                     // for each CPU do learn and delete previous captures
-                    FANN_EPOS::fann_type desired_output[3];
-                    unsigned int hyperperiod_threshold_up = 16; // > 1 frequencies downgrade 
+                    //FANN_EPOS::fann_type desired_output[3];
+                    //unsigned int hyperperiod_threshold_up = 16; // > 1 frequencies downgrade 
                     unsigned int ddlm = Thread::_Statistics::missed_deadlines[cpu];
-                    ///* TODO LEARN
+                    /* TODO LEARN
                     if (!ddlm && idle >= hyperperiod_threshold_up) { 
                         // if i have 16% or more of free time i can decrease and no ddlm
                         desired_output[0] = 1;
@@ -135,11 +135,10 @@ namespace Scheduling_Criteria {
                         desired_output[1] = -1;
                         desired_output[2] = 1;
                     }
-                    if(cpu == 1)
-                        db<Thread>(WRN) << "Train, idle=" << idle << ",ddlm=" << ddlm << ",out=" << desired_output[0] << "," << desired_output[1] << "," << desired_output[2] << endl;
                     //*/
-                    
-                    ///*
+                    if(cpu == 1)
+                        db<Thread>(WRN) << "Train, idle=" << idle << ",ddlm=" << ddlm << endl;// ",out=" << desired_output[0] << "," << desired_output[1] << "," << desired_output[2] << endl;
+                    /*
                     for(unsigned int j = 0; j < Thread::_Statistics::size_ann[cpu]; j++) {
                         if (Thread::_Statistics::ann_outputs[cpu][j][0] > Thread::_Statistics::ann_outputs[cpu][j][1]) {
                             if (Thread::_Statistics::ann_outputs[cpu][j][0] > Thread::_Statistics::ann_outputs[cpu][j][2]) {
@@ -171,7 +170,9 @@ namespace Scheduling_Criteria {
                 //unsigned int idle[3];
                 //unsigned int smaller_idle = ((unsigned int) 0xffffffff);
                 for (unsigned int i = 1; i < Traits<Build>::CPUS; i++) {
-                    db<Thread>(WRN) << "voting cpu[" << i << "]=" << Thread::_Statistics::decrease_frequency[i] << ",idle=" << Thread::_Statistics::hyperperiod_idle_time[i] << endl;
+                    db<Thread>(WRN) << "voting cpu[" << i << "]=" << Thread::_Statistics::decrease_frequency[i] 
+                    << ",idle=" << Thread::_Statistics::hyperperiod_idle_time[i] 
+                    << ",caps=" << Thread::_Statistics::size_ann[i] << endl;
                     vote &= Thread::_Statistics::decrease_frequency[i]; 
                     //idle[i] = (Thread::_Statistics::hyperperiod_idle_time[i]*100) / Thread::_Statistics::hyperperiod[i];
                     //smaller_idle = smaller_idle > Thread::_Statistics::hyperperiod_idle_time[i] ? Thread::_Statistics::hyperperiod_idle_time[i] : smaller_idle;
@@ -184,8 +185,8 @@ namespace Scheduling_Criteria {
                         Thread::_Statistics::size_ann[i] = 0;
                     }
                     Hertz freq = Machine::frequency();
-                    db<Thread>(WRN) << "frequency now - 1:" << freq << endl;
-                    if (freq > 110000000)
+                    db<Thread>(WRN) << "Down:" << freq << endl;
+                    if (freq > 60000000)
                         Machine::clock(freq - (100 * 1000 * 1000));
                 } else {
                     // check for imbalance
@@ -199,7 +200,7 @@ namespace Scheduling_Criteria {
                     case 2:  // increase frequency
                         freq = Machine::frequency();
                         if (freq < 1200000000)
-                            Machine::clock(freq + (100 * 1000 * 1000));
+                            db<Thread>(WRN) << "UP:" << Machine::clock(freq + (100 * 1000 * 1000)) << endl;
                         return false;
                     case 1:  // maintain frequency
                         return false;

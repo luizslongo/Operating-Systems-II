@@ -16,7 +16,7 @@ public: //type defs
 
 public:
     static const unsigned int NUM_LAYERS_CONFIG           = 17;
-    static constexpr float    LEARNING_RATE_CONFIG        = 1.500000;
+    static constexpr float    LEARNING_RATE_CONFIG        = 0.700000;
     static constexpr float    CONNECTION_RATE_CONFIG      = 1.000000;
     static const unsigned int NETWORK_TYPE_CONFIG         = 1;
     static constexpr float    LEARNING_MOMENTUM_CONFIG    = 0.000000;
@@ -1126,8 +1126,7 @@ public: // Create and Run and Online Train
                 input[i] = fann_max[i];
             else if (input[i] < fann_min[i])
                 input[i] = fann_min[i];
-            else
-                input[i] = 2*((input[i] - fann_min[i])/(fann_max[i] - fann_min[i])) - 1;
+            input[i] = 2*((input[i] - fann_min[i])/(fann_max[i] - fann_min[i])) - 1;
         }
 
         return input;
