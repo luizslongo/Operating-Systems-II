@@ -20,7 +20,7 @@ public:
     static constexpr float    CONNECTION_RATE_CONFIG      = 1.000000;
     static const unsigned int NETWORK_TYPE_CONFIG         = 1;
     static constexpr float    LEARNING_MOMENTUM_CONFIG    = 0.000000;
-    static const unsigned int TRAINING_ALGORITHM_CONFIG   = 0; // 0 = INCREMENTAL - for online training support
+    static const unsigned int TRAINING_ALGORITHM_CONFIG   = 2; // 0 = INCREMENTAL | 2 = RPROP - for online training support
     static const unsigned int TRAIN_ERROR_FUNCTION_CONFIG = 0;
     static const unsigned int TRAIN_STOP_FUNCTION_CONFIG  = 1;
     static constexpr double   BIT_FAIL_LIMIT_CONFIG       = 0.9;
@@ -1132,17 +1132,18 @@ public: // Create and Run and Online Train
         return input;
     }
 
+    /* DEPRECATED, DOESN'T WORK!
     static void fann_set_train_in_out(struct fann* ann, fann_type * input, fann_type * output) {
         unsigned int i, num_input, num_output;
         num_input = ann->num_input;
         input = scale_input(input, num_input);
-        /* first set the input */
+        // first set the input
         struct fann_neuron *first_neuron = ann->first_layer->first_neuron;
         for(i = 0; i != num_input; i++) {
             first_neuron[i].value = input[i];
         }
 
-        /* set the output */
+        // set the output
         num_output = ann->num_output;
         struct fann_neuron *neurons = (ann->last_layer - 1)->first_neuron;
         for(i = 0; i != num_output; i++)
@@ -1151,10 +1152,12 @@ public: // Create and Run and Online Train
             neurons[i].value = output[i];
         }
     }
+    */
 
-    static fann_type * fann_run(struct fann* ann, fann_type * input) {
+    static fann_type * fann_run(struct fann* ann, fann_type * input, bool scale) {
         struct fann_neuron *neuron_it, *last_neuron, *neurons, **neuron_pointers;
-        input = scale_input(input, ann->num_input);
+        if(scale)
+            input = scale_input(input, ann->num_input);
         unsigned int i, num_connections, num_input, num_output;
         fann_type neuron_sum, *output;
         fann_type *weights;
@@ -1290,6 +1293,7 @@ public: // Create and Run and Online Train
      * 4. With the new configuration, go back to step 1.
      *
      * We do not reset MSE as the online learn is here considered a single train set.
+     * DEPRECATED, DOESN'T WORK!
      */
     static void fann_learn_last_run(struct fann *ann, fann_type *desired_output)
     {
@@ -1298,7 +1302,51 @@ public: // Create and Run and Online Train
         fann_backpropagate_MSE(ann);
 
         fann_update_weights(ann);
+    }
 
+    static void fann_reset_MSE(struct fann *ann)
+    {
+    /*printf("resetMSE %d %f\n", ann->num_MSE, ann->MSE_value);*/
+        ann->num_MSE = 0;
+        ann->MSE_value = 0;
+        ann->num_bit_fail = 0;
+    }
+
+    static float fann_get_MSE(struct fann *ann)
+    {
+        if(ann->num_MSE)
+        {
+            return ann->MSE_value / (float) ann->num_MSE;
+        }
+        else
+        {
+            return 0;
+        }
+    }
+
+    /*
+     * Internal train function 
+     * WE ASSUME ALREADY SCALED INPUT
+     */
+    static float fann_train_data(struct fann *ann, fann_type **data, int data_size, fann_type *desired_output)
+    {
+        int i;
+        if(ann->prev_train_slopes == 0)
+        {
+            fann_clear_train_arrays(ann);
+        }
+
+        fann_reset_MSE(ann);
+        for(i = 0; i < data_size; i++)
+        {
+            fann_run(ann, data[i], false);
+            fann_compute_MSE(ann, desired_output);
+            fann_backpropagate_MSE(ann);
+            fann_update_slopes_batch(ann, ann->first_layer + 1, ann->last_layer - 1);
+            fann_update_weights_irpropm(ann, 0, ann->total_connections);
+        }
+        
+        return fann_get_MSE(ann);
     }
 
 private: // Internal Online Train Methods
@@ -1611,6 +1659,195 @@ private: // Internal Online Train Methods
                     }
                 }
             }
+        }
+    }
+
+    /* INTERNAL FUNCTION
+    Clears arrays used for training before a new training session.
+    Also creates the arrays that do not exist yet.
+     */
+    static void fann_clear_train_arrays(struct fann *ann)
+    {
+        unsigned int i;
+        fann_type delta_zero;
+
+        /* if no room allocated for the slope variabels, allocate it now
+         * (calloc clears mem) */
+        if(ann->train_slopes == 0)
+        {
+            ann->train_slopes =
+                (fann_type *) malloc(ann->total_connections_allocated*sizeof(fann_type));
+            memset(ann->train_slopes, 0, ann->total_connections_allocated * sizeof(fann_type));
+        }
+        else
+        {
+            memset(ann->train_slopes, 0, (ann->total_connections_allocated) * sizeof(fann_type));
+        }
+
+        /* if no room allocated for the variabels, allocate it now */
+        if(ann->prev_steps == 0)
+        {
+            ann->prev_steps = (fann_type *) malloc(ann->total_connections_allocated * sizeof(fann_type));
+        }
+
+        if(ann->training_algorithm == FANN_TRAIN_RPROP)
+        {
+            delta_zero = ann->rprop_delta_zero;
+            
+            for(i = 0; i < ann->total_connections_allocated; i++)
+                ann->prev_steps[i] = delta_zero;
+        }
+        else
+        {
+            memset(ann->prev_steps, 0, (ann->total_connections_allocated) * sizeof(fann_type));
+        }
+
+        /* if no room allocated for the variabels, allocate it now */
+        if(ann->prev_train_slopes == 0)
+        {
+            ann->prev_train_slopes = (fann_type *) malloc(ann->total_connections_allocated*sizeof(fann_type));
+            memset(ann->prev_train_slopes, 0, ann->total_connections_allocated * sizeof(fann_type));
+        }
+        else
+        {
+            memset(ann->prev_train_slopes, 0, (ann->total_connections_allocated) * sizeof(fann_type));
+        }
+    }
+
+    /* INTERNAL FUNCTION
+       Update slopes for batch training
+       layer_begin = ann->first_layer+1 and layer_end = ann->last_layer-1
+       will update all slopes.
+
+    */
+    static void fann_update_slopes_batch(struct fann *ann, struct fann_layer *layer_begin,
+                                  struct fann_layer *layer_end)
+    {
+        struct fann_neuron *neuron_it, *last_neuron, *prev_neurons, **connections;
+        fann_type tmp_error;
+        unsigned int i, num_connections;
+
+        /* store some variabels local for fast access */
+        struct fann_neuron *first_neuron = ann->first_layer->first_neuron;
+        fann_type *error_begin = ann->train_errors;
+        fann_type *slope_begin, *neuron_slope;
+
+        /* if no room allocated for the slope variabels, allocate it now */
+        if(ann->train_slopes == 0)
+        {
+            ann->train_slopes =
+                (fann_type *) malloc(ann->total_connections_allocated*sizeof(fann_type));
+            memset(ann->train_slopes, 0, ann->total_connections_allocated*sizeof(fann_type));
+        }
+
+        if(layer_begin == 0)
+        {
+            layer_begin = ann->first_layer + 1;
+        }
+
+        if(layer_end == 0)
+        {
+            layer_end = ann->last_layer - 1;
+        }
+
+        slope_begin = ann->train_slopes;
+
+        prev_neurons = first_neuron;
+
+        for(; layer_begin <= layer_end; layer_begin++)
+        {
+            last_neuron = layer_begin->last_neuron;
+            if(ann->connection_rate >= 1)
+            {
+                if(ann->network_type == FANN_NETTYPE_LAYER)
+                {
+                    prev_neurons = (layer_begin - 1)->first_neuron;
+                }
+
+                for(neuron_it = layer_begin->first_neuron; neuron_it != last_neuron; neuron_it++)
+                {
+                    tmp_error = error_begin[neuron_it - first_neuron];
+                    neuron_slope = slope_begin + neuron_it->first_con;
+                    num_connections = neuron_it->last_con - neuron_it->first_con;
+                    for(i = 0; i != num_connections; i++)
+                    {
+                        neuron_slope[i] += tmp_error * prev_neurons[i].value;
+                    }
+                }
+            }
+            else
+            {
+                for(neuron_it = layer_begin->first_neuron; neuron_it != last_neuron; neuron_it++)
+                {
+                    tmp_error = error_begin[neuron_it - first_neuron];
+                    neuron_slope = slope_begin + neuron_it->first_con;
+                    num_connections = neuron_it->last_con - neuron_it->first_con;
+                    connections = ann->connections + neuron_it->first_con;
+                    for(i = 0; i != num_connections; i++)
+                    {
+                        neuron_slope[i] += tmp_error * connections[i]->value;
+                    }
+                }
+            }
+        }
+    }
+
+    /* INTERNAL FUNCTION
+       The iRprop- algorithm
+    */
+    static void fann_update_weights_irpropm(struct fann *ann, unsigned int first_weight, unsigned int past_end)
+    {
+        fann_type *train_slopes = ann->train_slopes;
+        fann_type *weights = ann->weights;
+        fann_type *prev_steps = ann->prev_steps;
+        fann_type *prev_train_slopes = ann->prev_train_slopes;
+
+        fann_type prev_step, slope, prev_slope, next_step, same_sign;
+
+        float increase_factor = ann->rprop_increase_factor; /*1.2; */
+        float decrease_factor = ann->rprop_decrease_factor; /*0.5; */
+        float delta_min = ann->rprop_delta_min; /*0.0; */
+        float delta_max = ann->rprop_delta_max; /*50.0; */
+
+        unsigned int i = first_weight;
+
+        for(; i != past_end; i++)
+        {
+            prev_step = Math::max(prev_steps[i], (fann_type) 0.0001);    /* prev_step may not be zero because then the training will stop */
+            slope = train_slopes[i];
+            prev_slope = prev_train_slopes[i];
+
+            same_sign = prev_slope * slope;
+
+            if(same_sign >= 0.0)
+                next_step = Math::min(prev_step * increase_factor, delta_max);
+            else
+            {
+                next_step = Math::max(prev_step * decrease_factor, delta_min);
+                slope = 0;
+            }
+
+            if(slope < 0)
+            {
+                weights[i] -= next_step;
+                if(weights[i] < -1500)
+                    weights[i] = -1500;
+            }
+            else
+            {
+                weights[i] += next_step;
+                if(weights[i] > 1500)
+                    weights[i] = 1500;
+            }
+
+            /*if(i == 2){
+             * printf("weight=%f, slope=%f, next_step=%f, prev_step=%f\n", weights[i], slope, next_step, prev_step);
+             * } */
+
+            /* update global data arrays */
+            prev_steps[i] = next_step;
+            prev_train_slopes[i] = slope;
+            train_slopes[i] = 0.0;
         }
     }
 

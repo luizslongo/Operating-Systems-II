@@ -69,21 +69,27 @@ int main()
     FANN_EPOS::fann_type * out[25];
     for (int i = 0; i < 25; ++i)
     {
-        out[i] = FANN_EPOS::fann_run(ann, inputs[i]);
+        out[i] = FANN_EPOS::fann_run(ann, inputs[i], true);
         cout << "out["<< i <<"] = " << out[i][0] <<"," << out[i][1]<<"," << out[i][2]<<endl;
     }
     cout << "========== LEARNING ===========" << endl;
+    FANN_EPOS::fann_type desired_output[] = {1,-1,-1};
+    FANN_EPOS::fann_type **inputs_2 = new float*[25];
     for (int i = 0; i < 25; ++i)
     {
-        FANN_EPOS::fann_set_train_in_out(ann, inputs[i], out[i]);
-        FANN_EPOS::fann_learn_last_run(ann, outs[i]);
+        inputs_2[i] = new float[9];
+        inputs_2[i] = inputs[i];
+    }
+        FANN_EPOS::fann_train_data(ann, inputs_2, 10, desired_output, true);
+        //FANN_EPOS::fann_set_train_in_out(ann, inputs[i], out[i]);
+        //FANN_EPOS::fann_learn_last_run(ann, outs[i]);
         //out[i] = FANN_EPOS::fann_run(ann, inputs[i]);
         //cout << "out["<< i <<"] = " << out[i][0] <<"," << out[i][1]<<"," << out[i][2]<<endl;
-    }
+    //}
 
     for (int i = 0; i < 25; ++i)
     {
-        out[i] = FANN_EPOS::fann_run(ann, inputs[i]);
+        out[i] = FANN_EPOS::fann_run(ann, inputs[i], true);
         cout << "out["<< i <<"] = " << out[i][0] <<"," << out[i][1]<<"," << out[i][2]<<endl;
     }
 

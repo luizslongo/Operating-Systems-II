@@ -63,6 +63,7 @@ namespace Scheduling_Criteria {
                 //Monitor::ann_last_capture[cpu] = next_time;
                 //Monitor::ann_ts[cpu][Monitor::ann_captures[cpu]] = next_time;
                 if(colect(input, cpu)) {
+                    FANN_EPOS::fann_type *out = FANN_EPOS::fann_run(Monitor::ann[cpu], input, true);
                     if (cpu == 2)
                         db<Thread>(TRC) << "<"
                         << input[0] << ","
@@ -73,8 +74,8 @@ namespace Scheduling_Criteria {
                         << input[5] << ","
                         << input[6] << ","
                         << input[7] << ","
-                        << input[8] << ">" << endl;
-                    FANN_EPOS::fann_type *out = FANN_EPOS::fann_run(Monitor::ann[cpu], input);
+                        << input[8] << ">" 
+                        << "out: " << out[0] << "," << out[1] << "," << out[2] << endl;
                     if (out[0] > out[1]) {
                         if(out[0] > out[2]) {
                             Monitor::ann_out[cpu][Monitor::ann_captures[cpu]] = 0;
@@ -113,12 +114,12 @@ namespace Scheduling_Criteria {
             //Thread * t = Thread::self();
             if (hyperperiod) {
                 unsigned int idle = (Thread::_Statistics::hyperperiod_idle_time[cpu]*100) / Thread::_Statistics::hyperperiod[cpu];
-                if (idle != 0) { 
+                if (idle != 0) {
                     // for each CPU do learn and delete previous captures
-                    //FANN_EPOS::fann_type desired_output[3];
-                    //unsigned int hyperperiod_threshold_up = 16; // > 1 frequencies downgrade 
+                    FANN_EPOS::fann_type desired_output[3];
+                    unsigned int hyperperiod_threshold_up = 16; // > 1 frequencies downgrade 
                     unsigned int ddlm = Thread::_Statistics::missed_deadlines[cpu];
-                    /* TODO LEARN
+                    ///* TODO LEARN
                     if (!ddlm && idle >= hyperperiod_threshold_up) { 
                         // if i have 16% or more of free time i can decrease and no ddlm
                         desired_output[0] = 1;
@@ -136,10 +137,14 @@ namespace Scheduling_Criteria {
                         desired_output[2] = 1;
                     }
                     //*/
-                    if(cpu == 1)
-                        db<Thread>(WRN) << "Train, idle=" << idle << ",ddlm=" << ddlm << endl;// ",out=" << desired_output[0] << "," << desired_output[1] << "," << desired_output[2] << endl;
-                    /*
+                    if(cpu == 2)
+                        db<Thread>(WRN) << "Train, idle=" << idle << ",ddlm=" << ddlm << ",out=" << desired_output[0] << "," << desired_output[1] << "," << desired_output[2] << endl;
+                    ///*
+                    unsigned int train_count = 0;
+                    const unsigned int train_limit = 5;
+                    FANN_EPOS::fann_type *trains[train_limit];
                     for(unsigned int j = 0; j < Thread::_Statistics::size_ann[cpu]; j++) {
+                        // IF OUTPUT IS CORRECT, IGNORE TRAIN
                         if (Thread::_Statistics::ann_outputs[cpu][j][0] > Thread::_Statistics::ann_outputs[cpu][j][1]) {
                             if (Thread::_Statistics::ann_outputs[cpu][j][0] > Thread::_Statistics::ann_outputs[cpu][j][2]) {
                                 if (desired_output[0] == 1)
@@ -155,8 +160,13 @@ namespace Scheduling_Criteria {
                             if (desired_output[2] == 1)
                                     continue;
                         }
-                        FANN_EPOS::fann_set_train_in_out(Monitor::ann[cpu], Thread::_Statistics::ann_inputs[cpu][j], Thread::_Statistics::ann_outputs[cpu][j]);
-                        FANN_EPOS::fann_learn_last_run(Monitor::ann[cpu], desired_output);
+                        trains[train_count++] = Thread::_Statistics::ann_inputs[cpu][j];
+                        if (train_count >= train_limit)
+                            break;
+                    }
+                    if (train_count > 0) {
+                        float error = FANN_EPOS::fann_train_data(Monitor::ann[cpu], trains, train_count, desired_output);
+                        db<Thread>(WRN) << "Train error=" << error << endl;
                     }
                     //*/
                 }
