@@ -101,14 +101,14 @@ public:
 
     static volatile bool wait_next() {
         Periodic_Thread * t = reinterpret_cast<Periodic_Thread *>(running());
-
         if(monitored) {
+            //unsigned int cpu = CPU::id();
+            TSC::Time_Stamp ts = TSC::time_stamp();
+
             if(INARRAY(Traits<Monitor>::SYSTEM_EVENTS, Traits<Monitor>::THREAD_EXECUTION_TIME)) {
                 //if (!t->_statistics.cooldown[t->_link.rank().queue()]) {
-                //unsigned int cpu = t->_link.rank().queue();
-                TSC::Time_Stamp ts = TSC::time_stamp();
-                //if (t->_statistics.hyperperiod_count_thread < t->_statistics.hyperperiod_count[cpu]) {
-                //    t->_statistics.hyperperiod_count_thread = t->_statistics.hyperperiod_count[cpu];
+                //if (t->_statistics.hyperperiod_count_thread < Thread::_Statistics::hyperperiod_count[cpu]) {
+                //    t->_statistics.hyperperiod_count_thread = Thread::_Statistics::hyperperiod_count[cpu];
                 //    t->_statistics.execution_time += ts - t->_statistics.last_execution;
                 //    t->_statistics.last_execution = ts;
                 //    t->_statistics.average_execution_time = t->_statistics.execution_time;
@@ -124,7 +124,7 @@ public:
             }
 
             if(INARRAY(Traits<Monitor>::SYSTEM_EVENTS, Traits<Monitor>::DEADLINE_MISSES))
-                Thread::_Statistics::missed_deadlines[t->_link.rank().queue()] += t->_statistics.times_p_count - (t->_statistics.alarm_times->_times);
+                t->_statistics.missed_deadlines = t->_statistics.times_p_count - (t->_statistics.alarm_times->_times);
         }
 
         db<Thread>(TRC) << "Thread::wait_next(this=" << t << ",times=" << t->_alarm._times << ")" << endl;
@@ -162,10 +162,17 @@ public:
                 }
                 _statistics.wcet = Convert::us2count<TSC::Time_Stamp, Time_Base>(TSC::frequency(), (capacity*100)/period);
                 _statistics.last_execution = ts; // Why? updated at dispatch
+                _statistics.period = period;
                 //_statistics.hyperperiod_count_thread = 0;
                 Thread::_Statistics::wcet_cpu[_link.rank().queue()] += _statistics.wcet;
                 db<Thread>(WRN) << "hyperperiod=" << Thread::_Statistics::hyperperiod[_link.rank().queue()] << ",period=" << period 
                 << ",WCET_c=" << Thread::_Statistics::wcet_cpu[_link.rank().queue()] << ",WCET=" << _statistics.wcet << endl;
+                //if (times != INFINITE)
+                    //for (unsigned int i = 0; i < COUNTOF(Traits<Monitor>::PMU_EVENTS)+COUNTOF(Traits<Monitor>::SYSTEM_EVENTS); ++i)
+                    //{
+                        //thread_monitoring[COUNTOF(Traits<Monitor>::PMU_EVENTS)+COUNTOF(Traits<Monitor>::SYSTEM_EVENTS)]
+                    //    _statistics.thread_monitoring[i] = new (SYSTEM) unsigned long long[times];
+                    //}
             }
         }
 

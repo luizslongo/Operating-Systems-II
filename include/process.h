@@ -24,6 +24,7 @@ class Thread
     friend class System;                // for init()
     friend class IC;                    // for link() for priority ceiling
     friend class Clerk<System>;         // for _statistics
+    friend class Scheduling_Criteria::PEDF;
 
 protected:
     static const bool smp = Traits<Thread>::smp;
@@ -82,7 +83,7 @@ public:
 
     // Thread Statistics (mostly for Monitor)
     struct _Statistics {
-        _Statistics(): execution_time(0), last_execution(0), wcet(0), jobs(0), average_execution_time(0), hyperperiod_count_thread(0), alarm_times(0), times_p_count(0) {}
+        _Statistics(): execution_time(0), last_execution(0), wcet(0), jobs(0), average_execution_time(0), hyperperiod_count_thread(0), period(0), alarm_times(0), times_p_count(0), missed_deadlines(0) {}
 
         // Thread Execution Time (limited to 32bits counting, a hyperperiod greater than 32bits is not supported)
         TSC::Time_Stamp execution_time;
@@ -91,15 +92,20 @@ public:
         unsigned int jobs;
         TSC::Time_Stamp average_execution_time;
         unsigned int hyperperiod_count_thread;
+        unsigned int period;
         // unsigned int hyperperiod_jobs;
 
         // Dealine Miss count
         Alarm * alarm_times;
         unsigned int times_p_count;
+        unsigned int missed_deadlines;
+        float input[COUNTOF(Traits<Monitor>::PMU_EVENTS)+COUNTOF(Traits<Monitor>::SYSTEM_EVENTS)-1];
+        float output;
 
         // Per Thread PMU
         unsigned long long thread_pmu_accumulated[COUNTOF(Traits<Monitor>::PMU_EVENTS)];
         unsigned long long thread_pmu_last[COUNTOF(Traits<Monitor>::PMU_EVENTS)];
+        //unsigned long long *thread_monitoring[COUNTOF(Traits<Monitor>::PMU_EVENTS)+COUNTOF(Traits<Monitor>::SYSTEM_EVENTS)];
 
         // On Migration
         static TSC::Time_Stamp hyperperiod[Traits<Build>::CPUS];              // recalculate, on _old_hyperperiod + hyperperiod update
@@ -109,14 +115,15 @@ public:
         static unsigned long long cpu_pmu_accumulated[Traits<Build>::CPUS][COUNTOF(Traits<Monitor>::PMU_EVENTS)];
         static unsigned long long cpu_pmu_last[Traits<Build>::CPUS][COUNTOF(Traits<Monitor>::PMU_EVENTS)];
         static bool cooldown[Traits<Build>::CPUS];
-        static unsigned int missed_deadlines[Traits<Build>::CPUS];
 
         // ANN
         static bool decrease_frequency[Traits<Build>::CPUS];
-        static unsigned int count_ann[Traits<Build>::CPUS];
-        static unsigned int size_ann[Traits<Build>::CPUS];
-        static float ann_inputs[Traits<Build>::CPUS][50][COUNTOF(Traits<Monitor>::PMU_EVENTS)+COUNTOF(Traits<Monitor>::SYSTEM_EVENTS)];
-        static float ann_outputs[Traits<Build>::CPUS][50][3];
+        static bool to_learn[Traits<Build>::CPUS];
+        static bool pred_ready[Traits<Build>::CPUS];
+        static Thread* threads_cpu[Traits<Build>::CPUS][5];
+        static unsigned int t_count_cpu[Traits<Build>::CPUS];
+        //static unsigned int count_ann[Traits<Build>::CPUS];
+        //static unsigned int size_ann[Traits<Build>::CPUS];
 
         // CPU Execution Time
         static TSC::Time_Stamp hyperperiod_idle_time[Traits<Build>::CPUS]; //

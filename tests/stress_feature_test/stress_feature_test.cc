@@ -40,7 +40,7 @@ constexpr static struct Task_Set {
     // Band on CPU 1
     {500000,500000,200000,2,0},
     // Disparity on CPU 1
-    {500000,500000,200000,2,2},
+    {500000,500000,100000,2,2},
     // Band on CPU 1
     //{400000,400000,100000,2,0},
 
@@ -291,6 +291,16 @@ int main_t(int thread_init, int thread_end, int exec)
     for (int i = thread_init; i < thread_end; ++i)
     {
         threads[i]->join();
+        /*cout << "T["<< i << "]" << endl;;
+        for (unsigned int j = 0; j < jobs.value[i]; ++j)
+        {
+            cout << threads[i]->_statistics.thread_monitoring[0][j];
+            for (unsigned int k = 1; k < COUNTOF(Traits<Monitor>::PMU_EVENTS)+COUNTOF(Traits<Monitor>::SYSTEM_EVENTS); ++k)
+            {
+                cout << "," << threads[i]->_statistics.thread_monitoring[k][j];
+            }
+            cout << "\n";
+        }*/
         //cout << "AVG-Monitor:" << Convert::count2us<Hertz, TSC::Time_Stamp, Time_Base>(TSC::frequency(), (threads[i]->_statistics.average_execution_time/threads[i]->_statistics.jobs)) << endl;
     }
     freq->join();

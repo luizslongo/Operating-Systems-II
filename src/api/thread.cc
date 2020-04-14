@@ -29,12 +29,12 @@ TSC::Time_Stamp Thread::_Statistics::idle_time[Traits<Build>::CPUS];
 TSC::Time_Stamp Thread::_Statistics::last_idle[Traits<Build>::CPUS];
 
 // ANN
-bool Thread::_Statistics::decrease_frequency[Traits<Build>::CPUS] = {true, true, true, true};
-unsigned int Thread::_Statistics::count_ann[Traits<Build>::CPUS];
-unsigned int Thread::_Statistics::size_ann[Traits<Build>::CPUS];
-float Thread::_Statistics::ann_inputs[Traits<Build>::CPUS][50][COUNTOF(Traits<Monitor>::PMU_EVENTS)+COUNTOF(Traits<Monitor>::SYSTEM_EVENTS)];
-float Thread::_Statistics::ann_outputs[Traits<Build>::CPUS][50][3];
-unsigned int Thread::_Statistics::missed_deadlines[Traits<Build>::CPUS];
+bool Thread::_Statistics::decrease_frequency[Traits<Build>::CPUS] = {false, false, false, false};
+bool Thread::_Statistics::to_learn[Traits<Build>::CPUS] = {false, false, false, false};
+bool Thread::_Statistics::pred_ready[Traits<Build>::CPUS] = {false, false, false, false};
+Thread* Thread::_Statistics::threads_cpu[Traits<Build>::CPUS][5];
+unsigned int Thread::_Statistics::t_count_cpu[Traits<Build>::CPUS];
+//unsigned int Thread::_Statistics::missed_deadlines[Traits<Build>::CPUS];
 
 unsigned long long Thread::_Statistics::cpu_pmu_accumulated[Traits<Build>::CPUS][COUNTOF(Traits<Monitor>::PMU_EVENTS)];
 unsigned long long Thread::_Statistics::cpu_pmu_last[Traits<Build>::CPUS][COUNTOF(Traits<Monitor>::PMU_EVENTS)];
@@ -67,6 +67,8 @@ void Thread::constructor_epilogue(const Log_Addr & entry, unsigned int stack_siz
                     << ",s=" << stack_size
                     << "},context={b=" << _context
                     << "," << *_context << "}) => " << this << "@" << _link.rank().queue() << endl;
+    unsigned int cpu = _link.rank().queue();
+    Thread::_Statistics::threads_cpu[cpu][Thread::_Statistics::t_count_cpu[cpu]++] = this;
 
     for(unsigned int i = 0; i < COUNTOF(Traits<Monitor>::PMU_EVENTS); i++)
         _statistics.thread_pmu_accumulated[i] = 0;
@@ -453,7 +455,7 @@ void Thread::dispatch(Thread * prev, Thread * next, bool charge)
             }
         }
 
-        if(INARRAY(Traits<Monitor>::SYSTEM_EVENTS, Traits<Monitor>::CPU_EXECUTION_TIME) || INARRAY(Traits<Monitor>::SYSTEM_EVENTS, Traits<Monitor>::CPU_WCET)) {
+        if(true || INARRAY(Traits<Monitor>::SYSTEM_EVENTS, Traits<Monitor>::CPU_EXECUTION_TIME) || INARRAY(Traits<Monitor>::SYSTEM_EVENTS, Traits<Monitor>::CPU_WCET)) {
             // Account idle time
             if((prev->priority() == IDLE) && (prev->_statistics.last_idle[cpu] != 0)) {
                 Thread::_Statistics::idle_time[cpu] += ts - Thread::_Statistics::last_idle[cpu];
@@ -464,34 +466,6 @@ void Thread::dispatch(Thread * prev, Thread * next, bool charge)
                 Thread::_Statistics::last_idle[cpu] = ts;
             }
         }
-
-        if(INARRAY(Traits<Monitor>::SYSTEM_EVENTS, Traits<Monitor>::THREAD_EXECUTION_TIME)) { // TODO reset hyperperiod
-            if((prev->priority() > Criterion::PERIODIC) && (prev->priority() < Criterion::APERIODIC)) { // a real-time thread
-                // Account Thread execution time
-                if (prev->_statistics.last_execution != 0) {
-                    //if (prev->_statistics.hyperperiod_count_thread < prev->_statistics.hyperperiod_count[cpu]) {
-                    //    prev->_statistics.hyperperiod_count_thread = prev->_statistics.hyperperiod_count[cpu];
-                    //    prev->_statistics.execution_time = ts - prev->_statistics.last_execution;
-                    //    prev->_statistics.average_execution_time = 0;
-                    //    prev->_statistics.jobs = 1; 
-                    //} else {
-                        prev->_statistics.execution_time += ts - prev->_statistics.last_execution;
-                    //}
-                }
-            }
-            // Account Thread execution time checkpoint
-            if((next->priority() > Criterion::PERIODIC) && (next->priority() < Criterion::APERIODIC)) {
-                //if (next->_statistics.hyperperiod_count_thread < next->_statistics.hyperperiod_count[cpu]) {
-                //    next->_statistics.hyperperiod_count_thread = next->_statistics.hyperperiod_count[cpu];
-                //    next->_statistics.execution_time = 0;
-                //    next->_statistics.average_execution_time = 0;
-                //    next->_statistics.jobs = 0;
-                //}
-                next->_statistics.last_execution = ts;
-                //next->_statistics.hyperperiod_count_thread = next->_statistics.hyperperiod_count[cpu];
-            }
-        }
-        Monitor::run();
 
         // CPU hyperperiod account
         if (ts >= Thread::_Statistics::hyperperiod[cpu] + Thread::_Statistics::last_hyperperiod[cpu] && Thread::_Statistics::hyperperiod[cpu] != 0) {
@@ -513,34 +487,91 @@ void Thread::dispatch(Thread * prev, Thread * next, bool charge)
                 Thread::_Statistics::cpu_pmu_last[cpu][i] = captures[i];
             }
             
-            //Criterion::charge(); // run ANN
-            if(cpu) {
+            //Criterion::charge(); // run ANN TODO
+            if(Criterion::learning && cpu) {
                 ASM("       vpush    {s0-s15}               \n"
                     "       vpush    {s16-s31}              \n");
+                //Criterion::charge();
                 Criterion::award(true); // in: hyper-period? | out: true = decrease; false = increase or maintain;
-                Thread::_Statistics::decrease_frequency[cpu] = true; // reset decrease frequency for next hyperperiod
+                //Thread::_Statistics::decrease_frequency[cpu] = false; // reset decrease frequency for next hyperperiod
                 ASM("       vpop    {s0-s15}                \n"
                     "       vpop    {s16-s31}               \n");
             }
-            Thread::_Statistics::missed_deadlines[cpu] = 0;
+            //Thread::_Statistics::missed_deadlines[cpu] = 0;
             Thread::_Statistics::idle_time[cpu] = 0;
             
-        } else if(cpu && (prev->priority() > Criterion::PERIODIC) && (prev->priority() < Criterion::APERIODIC)) {
+        } else if(Criterion::learning && !cpu) {
+            Criterion::award(false);
             // fix timing
-            ASM("       vpush    {s0-s15}               \n"
-                "       vpush    {s16-s31}              \n");
-            if(Criterion::charge()) // if run ANN
-                Thread::_Statistics::decrease_frequency[cpu] &= Criterion::award(false); // in: hyper-period? | out: true = decrease; false = increase or maintain;
-            ASM("       vpop    {s0-s15}                \n"
-                "       vpop    {s16-s31}               \n");
+            //ASM("       vpush    {s0-s15}               \n"
+            //    "       vpush    {s16-s31}              \n");
+            //if(Criterion::charge()) // if run ANN
+            //    Thread::_Statistics::decrease_frequency[cpu] &= Criterion::award(false); // in: hyper-period? | out: true = decrease; false = increase or maintain;
+            //ASM("       vpop    {s0-s15}                \n"
+            //    "       vpop    {s16-s31}               \n");
         }
 
+        if(INARRAY(Traits<Monitor>::SYSTEM_EVENTS, Traits<Monitor>::THREAD_EXECUTION_TIME)) { // TODO reset hyperperiod
+            if((prev->priority() > Criterion::PERIODIC) && (prev->priority() < Criterion::APERIODIC)) { // a real-time thread
+                // Account Thread execution time
+                if (prev->_statistics.last_execution != 0) {
+                    /*
+                    if (prev->_statistics.hyperperiod_count_thread < Thread::_Statistics::hyperperiod_count[cpu]) {
+                        prev->_statistics.execution_time = ts - prev->_statistics.last_execution;
+                        prev->_statistics.average_execution_time = prev->_statistics.execution_time;
+                        prev->_statistics.jobs = 1;
+                        for (unsigned int i = 0; i < COUNTOF(Traits<Monitor>::PMU_EVENTS); ++i)
+                        {
+                            // assuming one iter per hyperperiod...
+                            prev->_statistics.thread_monitoring[i][prev->_statistics.hyperperiod_count_thread] = prev->_statistics.thread_pmu_accumulated[i];
+                            prev->_statistics.thread_pmu_accumulated[i] = 0;
+                        }
 
+                        prev->_statistics.thread_monitoring[COUNTOF(Traits<Monitor>::PMU_EVENTS)+0][prev->_statistics.hyperperiod_count_thread]
+                                        = prev->_statistics.jobs ? prev->_statistics.average_execution_time/prev->_statistics.jobs : prev->_statistics.execution_time;
+                        prev->_statistics.thread_monitoring[COUNTOF(Traits<Monitor>::PMU_EVENTS)+1][prev->_statistics.hyperperiod_count_thread]
+                                        = Machine::frequency();
+                        prev->_statistics.thread_monitoring[COUNTOF(Traits<Monitor>::PMU_EVENTS)+2][prev->_statistics.hyperperiod_count_thread]
+                                        = prev->_statistics.missed_deadlines;
+
+                        prev->_statistics.hyperperiod_count_thread = Thread::_Statistics::hyperperiod_count[cpu];
+                    } else {*/
+                        prev->_statistics.execution_time += ts - prev->_statistics.last_execution;
+                    //}
+                }
+            }
+            // Account Thread execution time checkpoint
+            if((next->priority() > Criterion::PERIODIC) && (next->priority() < Criterion::APERIODIC)) {
+                if (next->_statistics.hyperperiod_count_thread < Thread::_Statistics::hyperperiod_count[cpu]) {
+                    /*
+                    for (unsigned int i = 0; i < COUNTOF(Traits<Monitor>::PMU_EVENTS); ++i)
+                    {
+                        // assuming one iter per hyperperiod...
+                        next->_statistics.thread_monitoring[i][next->_statistics.hyperperiod_count_thread] = next->_statistics.thread_pmu_accumulated[i];
+                        next->_statistics.thread_pmu_accumulated[i] = 0;
+                    }
+
+                    next->_statistics.thread_monitoring[COUNTOF(Traits<Monitor>::PMU_EVENTS)+0][next->_statistics.hyperperiod_count_thread]
+                                    = next->_statistics.jobs ? next->_statistics.average_execution_time/next->_statistics.jobs : next->_statistics.execution_time;
+                    next->_statistics.thread_monitoring[COUNTOF(Traits<Monitor>::PMU_EVENTS)+1][next->_statistics.hyperperiod_count_thread]
+                                    = Machine::frequency();
+                    next->_statistics.thread_monitoring[COUNTOF(Traits<Monitor>::PMU_EVENTS)+2][next->_statistics.hyperperiod_count_thread]
+                                    = next->_statistics.times_p_count - (next->_statistics.alarm_times->_times);
+
+                    //next->_statistics.execution_time = 0;
+                    //next->_statistics.average_execution_time = 0;
+                    //next->_statistics.jobs = 0;
+                    */
+                    next->_statistics.hyperperiod_count_thread = Thread::_Statistics::hyperperiod_count[cpu];
+                }
+                next->_statistics.last_execution = ts;
+            }
+        }
+        Monitor::run();
         // PMU start
         for(Simple_List<Monitor>::Iterator it = monitor->begin(); it != monitor->end(); it++){
             it->object()->start();
         }
-
     }
 
     if(prev != next) {

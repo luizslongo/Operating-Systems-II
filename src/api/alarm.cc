@@ -97,8 +97,8 @@ void Alarm::handler(IC::Interrupt_Id i)
 
     _elapsed++;
 
-    if (!(_elapsed % 1000))
-        db<Thread>(WRN) << _elapsed << endl;
+    //if (!(_elapsed % 1000))
+    //    db<Thread>(WRN) << _elapsed << endl;
 
     if(Traits<Alarm>::visible) {
         Display display;

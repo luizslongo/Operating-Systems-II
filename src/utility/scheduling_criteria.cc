@@ -3,6 +3,7 @@
 #include <utility/scheduler.h>
 #include <time.h>
 #include <clerk.h>
+#include <process.h>
 
 __BEGIN_UTIL
 
@@ -20,202 +21,202 @@ namespace Scheduling_Criteria {
             _priority = Alarm::elapsed() + _deadline;
     }
 
-    bool Priority::colect(FANN_EPOS::fann_type *input, unsigned int cpu) {
-        if (learning) {
-            unsigned int i = 0;
-            bool reset = false;
-            Simple_List<Monitor> *monitor = &(Monitor::_monitors[cpu]);
-            if (monitor->tail()->object()->captures() < Monitor::ann_captures[cpu]+1) // we need two captures to start
-                return false;
-            FANN_EPOS::fann_type aux_input[Monitor::TOTAL_EVENTS_MONITORED-1];
-            for(Simple_List<Monitor>::Iterator it = monitor->begin(); it != monitor->end() && i < Monitor::TOTAL_EVENTS_MONITORED-1; it++) { // ignore ddlm
-                aux_input[i] = it->object()->last_capture(i);
-                if (aux_input[i] < 0){ // never happens
-                    reset = true;
-                    break;
-                }
-                i++;
-            }
-            if(!reset) {
-                for(i = 0; i < Monitor::TOTAL_EVENTS_MONITORED-1; i++) {
-                    input[i] = aux_input[i];
-                }
-            }
-            return !reset;
-        } else {
-            return false;
-        }
+    bool Priority::collect() {
+        return false;
     }
 
-    // collect input and run ANN
-    // return if done
+    
     bool Priority::charge() {
-        if (learning){ //&& CPU::id() == 0) {
-            // Simple_List<Monitor> * monitor;
-            //for(unsigned int cpu = 0; cpu < CPU::cores(); cpu++) {
-                unsigned int cpu = CPU::id();
-                //Simple_List<Monitor> *monitor = &(Monitor::_monitors[cpu]);
-                //unsigned long long next_time = monitor->tail()->object()->last_time_stamp();
-                //if (monitor->tail()->object()->captures() > Monitor::ann_captures[cpu]+1) // we need two captures to start
-                //    return false;
-                FANN_EPOS::fann_type *input = Thread::_Statistics::ann_inputs[cpu][Thread::_Statistics::count_ann[cpu]];
-                //new FANN_EPOS::fann_type[Monitor::TOTAL_EVENTS_MONITORED-1];
-                //Monitor::ann_last_capture[cpu] = next_time;
-                //Monitor::ann_ts[cpu][Monitor::ann_captures[cpu]] = next_time;
-                if(colect(input, cpu)) {
-                    FANN_EPOS::fann_type *out = FANN_EPOS::fann_run(Monitor::ann[cpu], input, true);
-                    if (cpu == 2)
-                        db<Thread>(TRC) << "<"
-                        << input[0] << ","
-                        << input[1] << ","
-                        << input[2] << ","
-                        << input[3] << ","
-                        << input[4] << ","
-                        << input[5] << ","
-                        << input[6] << ","
-                        << input[7] << ","
-                        << input[8] << ">" 
-                        << "out: " << out[0] << "," << out[1] << "," << out[2] << endl;
-                    if (out[0] > out[1]) {
-                        if(out[0] > out[2]) {
-                            Monitor::ann_out[cpu][Monitor::ann_captures[cpu]] = 0;
-                        } else {
-                            Monitor::ann_out[cpu][Monitor::ann_captures[cpu]] = 2;
-                        }
-                    } else {
-                        if(out[1] > out[2]) {
-                            Monitor::ann_out[cpu][Monitor::ann_captures[cpu]] = 1;
-                        } else {
-                            Monitor::ann_out[cpu][Monitor::ann_captures[cpu]] = 2;
-                        }
-                    }
-                    Thread::_Statistics::ann_outputs[cpu][Thread::_Statistics::count_ann[cpu]][0] = out[0];
-                    Thread::_Statistics::ann_outputs[cpu][Thread::_Statistics::count_ann[cpu]][1] = out[1];
-                    Thread::_Statistics::ann_outputs[cpu][Thread::_Statistics::count_ann[cpu]][2] = out[2];
-                    Monitor::ann_captures[cpu]++;
-                    Thread::_Statistics::count_ann[cpu] = (Thread::_Statistics::count_ann[cpu] + 1 ) % 50;
-                    if (Thread::_Statistics::size_ann[cpu] < 50) {
-                        Thread::_Statistics::size_ann[cpu]++;
-                    }
-                    return true;
-                }
-            //}
-        }
         return false;
     }
 
     // check ANN result and actuate
     // each cpu stores a result buffer, only one runs voting and clears everything
     bool Priority::award(bool hyperperiod) {//unsigned int cpu) {
+        return false;
+    }
+
+    bool PEDF::collect() {
+        if (learning){
+            unsigned int cpu = CPU::id();
+            Thread *t;
+            for (unsigned int i = 0; i < Thread::_Statistics::t_count_cpu[cpu]; i++)
+            {
+                t = Thread::_Statistics::threads_cpu[cpu][i];
+                if ((t->priority() > PEDF::PERIODIC) && (t->priority() < PEDF::APERIODIC)) { // !idle
+                    // Collect all threads data
+                    for (unsigned int j = 0; j < COUNTOF(Traits<Monitor>::PMU_EVENTS); ++j)
+                    {
+                        t->_statistics.input[j] = (t->_statistics.thread_pmu_accumulated[j]*1.0) / (t->_statistics.period/100.);
+                        t->_statistics.thread_pmu_accumulated[j] = 0;
+                    }
+                    t->_statistics.input[COUNTOF(Traits<Monitor>::PMU_EVENTS)+0]
+                            = t->_statistics.jobs ? ((t->_statistics.average_execution_time*1.0)/t->_statistics.jobs)/t->_statistics.period
+                            : t->_statistics.execution_time/t->_statistics.period;
+                    t->_statistics.input[COUNTOF(Traits<Monitor>::PMU_EVENTS)+1]
+                            = Machine::frequency();
+                    t->_statistics.average_execution_time = 0;
+                    t->_statistics.jobs = 0;
+                }
+            }
+            return true;
+        }
+        return false;
+    }
+
+    bool PEDF::charge() {
+        if (learning) {
+            unsigned int cpu = CPU::id();
+            if (!cpu)
+                return true;
+            if (collect()) {
+                Thread *t;
+                for (unsigned int i = 0; i < Thread::_Statistics::t_count_cpu[cpu]; i++)
+                {
+                    t = Thread::_Statistics::threads_cpu[cpu][i];
+                    if ((t->priority() > PEDF::PERIODIC) && (t->priority() < PEDF::APERIODIC)) { // !idle
+                        //if (cpu == 2) {
+                            t->_statistics.output = *FANN_EPOS::fann_run(Monitor::ann[cpu], t->_statistics.input, true);
+                            db<Thread>(TRC) << "<"
+                                << t->_statistics.input[0] << ","
+                                << t->_statistics.input[1] << ","
+                                << t->_statistics.input[2] << ","
+                                << t->_statistics.input[3] << ","
+                                << t->_statistics.input[4] << ","
+                                << t->_statistics.input[5] << ","
+                                << t->_statistics.input[6] << ","
+                                << t->_statistics.input[7] << "," 
+                                << "out: " << t->_statistics.output << ">" << endl;
+                        //}
+                    }
+                }
+                return true;
+            }
+        }
+        return false;
+    }
+
+    bool PEDF::award(bool hyperperiod) {
         unsigned int cpu = CPU::id();
-        if (!cpu)
-            return false;
-        if (learning && Monitor::ann_captures[cpu] > 1) {
-            //Thread * t = Thread::self();
-            if (hyperperiod) {
-                unsigned int idle = (Thread::_Statistics::hyperperiod_idle_time[cpu]*100) / Thread::_Statistics::hyperperiod[cpu];
-                if (idle != 0) {
-                    // for each CPU do learn and delete previous captures
-                    FANN_EPOS::fann_type desired_output[3];
-                    unsigned int hyperperiod_threshold_up = 16; // > 1 frequencies downgrade 
-                    unsigned int ddlm = Thread::_Statistics::missed_deadlines[cpu];
-                    ///* TODO LEARN
-                    if (!ddlm && idle >= hyperperiod_threshold_up) { 
-                        // if i have 16% or more of free time i can decrease and no ddlm
-                        desired_output[0] = 1;
-                        desired_output[1] = -1;
-                        desired_output[2] = -1;
-                    } else if (!ddlm) {
-                        // if no deadline miss accounted i can maintain
-                        desired_output[0] = -1;
-                        desired_output[1] = 1;
-                        desired_output[2] = -1;
-                    } else {
-                        // increase
-                        desired_output[0] = -1;
-                        desired_output[1] = -1;
-                        desired_output[2] = 1;
-                    }
-                    //*/
-                    if(cpu == 2)
-                        db<Thread>(WRN) << "Train, idle=" << idle << ",ddlm=" << ddlm << ",out=" << desired_output[0] << "," << desired_output[1] << "," << desired_output[2] << endl;
-                    ///*
-                    unsigned int train_count = 0;
-                    const unsigned int train_limit = 5;
-                    FANN_EPOS::fann_type *trains[train_limit];
-                    for(unsigned int j = 0; j < Thread::_Statistics::size_ann[cpu]; j++) {
-                        // IF OUTPUT IS CORRECT, IGNORE TRAIN
-                        if (Thread::_Statistics::ann_outputs[cpu][j][0] > Thread::_Statistics::ann_outputs[cpu][j][1]) {
-                            if (Thread::_Statistics::ann_outputs[cpu][j][0] > Thread::_Statistics::ann_outputs[cpu][j][2]) {
-                                if (desired_output[0] == 1)
-                                    continue;
-                            } else {
-                                if (desired_output[2] == 1)
-                                    continue;
-                            }
-                        } else if (Thread::_Statistics::ann_outputs[cpu][j][1] > Thread::_Statistics::ann_outputs[cpu][j][2]) {
-                            if (desired_output[1] == 1)
-                                    continue;
-                        } else {
-                            if (desired_output[2] == 1)
-                                    continue;
+        if (learning) {
+            if (Thread::_Statistics::to_learn[cpu]) {// last hyperperiod was decrease
+                if (Thread::_Statistics::cooldown[cpu]) {
+                    Thread *t;
+                    for (unsigned int i = 0; i < Thread::_Statistics::t_count_cpu[cpu]; i++)
+                    {
+                        t = Thread::_Statistics::threads_cpu[cpu][i];
+                        if ((t->priority() > PEDF::PERIODIC) && (t->priority() < PEDF::APERIODIC)) { // !idle
+                            t->_statistics.average_execution_time = 0;
+                            t->_statistics.jobs = 0;
                         }
-                        trains[train_count++] = Thread::_Statistics::ann_inputs[cpu][j];
-                        if (train_count >= train_limit)
-                            break;
                     }
-                    if (train_count > 0) {
-                        float error = FANN_EPOS::fann_train_data(Monitor::ann[cpu], trains, train_count, desired_output);
-                        db<Thread>(WRN) << "Train error=" << error << endl;
-                    }
-                    //*/
-                }
-                Thread::_Statistics::count_ann[cpu] = 0;
-                Thread::_Statistics::size_ann[cpu] = 0;
-                // do voting
-                if (cpu != 1) // can be CPU 0, needs to check if others reached a hyperperiod first
+                    Thread::_Statistics::cooldown[cpu] = false;
                     return false;
-
-                bool vote = true;
-                //unsigned int idle[3];
-                //unsigned int smaller_idle = ((unsigned int) 0xffffffff);
-                for (unsigned int i = 1; i < Traits<Build>::CPUS; i++) {
-                    db<Thread>(WRN) << "voting cpu[" << i << "]=" << Thread::_Statistics::decrease_frequency[i] 
-                    << ",idle=" << Thread::_Statistics::hyperperiod_idle_time[i] 
-                    << ",caps=" << Thread::_Statistics::size_ann[i] << endl;
-                    vote &= Thread::_Statistics::decrease_frequency[i]; 
-                    //idle[i] = (Thread::_Statistics::hyperperiod_idle_time[i]*100) / Thread::_Statistics::hyperperiod[i];
-                    //smaller_idle = smaller_idle > Thread::_Statistics::hyperperiod_idle_time[i] ? Thread::_Statistics::hyperperiod_idle_time[i] : smaller_idle;
-                    //greater_idle = greater_idle < Thread::_Statistics::hyperperiod_idle_time[i] ? Thread::_Statistics::hyperperiod_idle_time[i] : greater_idle;
                 }
+                // TODO learn
+                float aux = 0;
+                float diff = 0;
+                unsigned int train_count = 0;
+                const unsigned int train_limit = 16;
+                FANN_EPOS::fann_type *trains[train_limit];
+                FANN_EPOS::fann_type desired_output[train_limit];
 
-                if (vote) { // all CPUS decided for decrease
-                    for (unsigned int i = 1; i < Traits<Build>::CPUS; i++) { // Clear learn buffer
-                        Thread::_Statistics::count_ann[i] = 0;
-                        Thread::_Statistics::size_ann[i] = 0;
+                Thread *t;
+                for (unsigned int i = 0; i < Thread::_Statistics::t_count_cpu[cpu]; i++)
+                {
+                    t = Thread::_Statistics::threads_cpu[cpu][i];
+                    if ((t->priority() > PEDF::PERIODIC) && (t->priority() < PEDF::APERIODIC)) { // !idle
+                        aux = t->_statistics.jobs ? ((t->_statistics.average_execution_time*1.0)/t->_statistics.jobs)/t->_statistics.period
+                                : t->_statistics.execution_time/t->_statistics.period;
+                        desired_output[train_count] = aux;
+                        diff = aux - t->_statistics.output;
+                        if (diff < 0)
+                            diff *= -1;
+                        if (diff > .01) {
+                            trains[train_count] = t->_statistics.input;
+                            train_count++;
+                        }
+                        t->_statistics.average_execution_time = 0; //as collect isn't been run, we need to clear them here.
+                        t->_statistics.jobs = 0;
                     }
-                    Hertz freq = Machine::frequency();
-                    db<Thread>(WRN) << "Down:" << freq << endl;
-                    if (freq > 60000000)
-                        Machine::clock(freq - (100 * 1000 * 1000));
-                } else {
-                    // check for imbalance
-                    //if (!imbalanced && (greater_idle - smaller_idle > balance_threshold)) { // create imbalanced and balance_threshold
-                    //    imbalanced = balance_load(); // HOW TODO THIS? --> force the correct migrations
-                    //}
                 }
-            } else { // not hyperperiod
-                Hertz freq;
-                switch(Monitor::ann_out[cpu][Monitor::ann_captures[cpu]-1]) {
-                    case 2:  // increase frequency
-                        freq = Machine::frequency();
-                        if (freq < 1200000000)
-                            db<Thread>(WRN) << "UP:" << Machine::clock(freq + (100 * 1000 * 1000)) << endl;
-                        return false;
-                    case 1:  // maintain frequency
-                        return false;
-                    default: // decrease frequency
-                        return true;
+                if (train_count > 0) {
+                    float error = 0;
+                    unsigned int max_train = 4;
+                    bool end = false;
+                    while(!end && max_train) {
+                        end = true;
+                        for (unsigned int i = 0; i < train_count; ++i)
+                        {
+                            error = FANN_EPOS::fann_train_data_incremental(Monitor::ann[cpu], trains[i], &desired_output[i]);
+                            end &= error <= 0.03;
+                            //if (cpu == 2) {
+                            //    db<Thread>(WRN) << "T "<< i << "=" << error << endl;
+                            //}
+                        }
+                        max_train--;
+                    }
+                }
+                Thread::_Statistics::to_learn[cpu] = false;
+            } else {
+                if(cpu && charge()) {
+                    FANN_EPOS::fann_type usage = 0;
+                    Thread *t;
+                    for (unsigned int i = 0; i < Thread::_Statistics::t_count_cpu[cpu]; i++)
+                    {
+                        t = Thread::_Statistics::threads_cpu[cpu][i];
+                        if ((t->priority() > PEDF::PERIODIC) && (t->priority() < PEDF::APERIODIC)) { // !idle
+                            usage += t->_statistics.output;
+                        }
+                    }
+
+                    // margem para baixar pode ser um algoritmo estatistico para medir a variação do sistema
+                    // variancia para margem, se o comportamento esta regular, redução mais agressiva.
+                    // Beta, taxa de desconfiança da IA
+                    // Soma tudo (overhead do SO ta incorporada nos contadores) < 1 - Beta_variancia (.95, .9, .8)
+                    Thread::_Statistics::decrease_frequency[cpu] = usage < (1 - 0.1);
+
+                    Thread::_Statistics::pred_ready[cpu] = true;
+                    return false;
+                } else if (!cpu && Thread::_Statistics::pred_ready[1] && Thread::_Statistics::pred_ready[2] && Thread::_Statistics::pred_ready[3]) {
+                    // CPU0 orchestrate frequency downgrade 
+                    bool vote = true;
+                    for (unsigned int i = 1; i < Traits<Build>::CPUS; ++i)
+                    {
+                        db<Thread>(WRN) << "voting cpu[" << i << "]=" << Thread::_Statistics::decrease_frequency[i] 
+                            << ",idle=" << Thread::_Statistics::hyperperiod_idle_time[i] << endl;
+                        vote &= Thread::_Statistics::decrease_frequency[i];
+                        Thread::_Statistics::pred_ready[i] = false;
+                    }
+
+                    Thread *t;
+                    for (unsigned int i = 1; i < Traits<Build>::CPUS; ++i) {
+                        db<Thread>(WRN) << "CPU" << i << endl;
+                        for (unsigned int j = 0; j < Thread::_Statistics::t_count_cpu[i]; j++)
+                        {
+                            t = Thread::_Statistics::threads_cpu[i][j];
+                            if ((t->priority() > PEDF::PERIODIC) && (t->priority() < PEDF::APERIODIC)) {
+                                db<Thread>(WRN) << "T" << j << "=" << t->_statistics.output << endl;
+                            }
+                        }
+                    }
+
+                    if (vote) { // all CPUS decided for decrease
+                        Hertz freq = Machine::frequency();
+                        db<Thread>(WRN) << "Down:" << freq << endl;
+                        if (freq > 600000000) {
+                            for (unsigned int i = 1; i < Traits<Build>::CPUS; ++i) {
+                                Thread::_Statistics::to_learn[i] = true;
+                                Thread::_Statistics::cooldown[i] = true;
+                            }
+                            Machine::clock(freq - (100 * 1000 * 1000));
+                        }
+                    } else {
+                        // check for imbalance
+                        //if (!imbalanced && (greater_idle - smaller_idle > balance_threshold)) { // create imbalanced and balance_threshold
+                        //    imbalanced = balance_load(); // HOW TODO THIS? --> force the correct migrations
+                        //}
+                    }
                 }
             }
         }

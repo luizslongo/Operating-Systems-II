@@ -222,11 +222,11 @@ template<> struct Traits<Monitor>: public Traits<Build>
 {
     static const bool enabled = monitored;
 
-    static constexpr System_Event SYSTEM_EVENTS[]                 = {CPU_WCET, THREAD_WCET, CPU_FREQUENCY, DEADLINE_MISSES};
-    static constexpr unsigned int SYSTEM_EVENTS_FREQUENCIES[]     = {105, 105, 105, 105                };//{106, 106};// // in Hz
+    static constexpr System_Event SYSTEM_EVENTS[]                 = {THREAD_EXECUTION_TIME, CPU_FREQUENCY, DEADLINE_MISSES};
+    static constexpr unsigned int SYSTEM_EVENTS_FREQUENCIES[]     = {2, 2, 2                };//{106, 106};// // in Hz
 
     static constexpr PMU_Event PMU_EVENTS[]                       = {BUS_ACCESS_ST_CA53_v8, DATA_WRITE_STALL_ST_BUFFER_FULL_CA53_v8, IMMEDIATE_BRANCHES_CA, L2D_WRITEBACK, CPU_CYCLES, L1_CACHE_HITS};
-    static constexpr unsigned int PMU_EVENTS_FREQUENCIES[]        = {105,105,105,105,105,105};//,106,106,106}; // in Hz
+    static constexpr unsigned int PMU_EVENTS_FREQUENCIES[]        = {2,2,2,2,2,2};//,106,106,106}; // in Hz
 
     static constexpr unsigned int TRANSDUCER_EVENTS[]             = {};
     static constexpr unsigned int TRANSDUCER_EVENTS_FREQUENCIES[] = {}; // in Hz

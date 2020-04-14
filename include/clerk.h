@@ -402,7 +402,7 @@ public:
         case Event::ELAPSED_TIME:
             return Alarm::elapsed();
         case Event::DEADLINE_MISSES:
-            return Thread::_Statistics::missed_deadlines[CPU::id()];
+            return t->_statistics.missed_deadlines;
         case Event::RUNNING_THREAD:
             return reinterpret_cast<volatile unsigned int>(t);
         case Event::THREAD_EXECUTION_TIME:
@@ -425,12 +425,12 @@ public:
     void start() {}
     void stop() {}
     void reset() {
-        //Thread* t = Thread::self();
+        Thread* t = Thread::self();
         switch(_event) {
         case Event::ELAPSED_TIME:
             break;
         case Event::DEADLINE_MISSES:
-            Thread::_Statistics::missed_deadlines[CPU::id()] = 0;
+            t->_statistics.missed_deadlines = 0;
             break;
         case Event::RUNNING_THREAD:
             break;

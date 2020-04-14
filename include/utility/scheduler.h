@@ -54,7 +54,7 @@ namespace Scheduling_Criteria
         static const unsigned int QUEUES = 1;
 
         // FANN lib usage
-        static const bool learning = true;
+        static const bool learning = false;
 
     public:
         template <typename ... Tn>
@@ -69,7 +69,7 @@ namespace Scheduling_Criteria
         unsigned int queue() const { return 0; }
 
         static bool charge();
-        static bool colect(FANN_EPOS::fann_type *input, unsigned int cpu);
+        static bool collect();
         static bool award(bool hyperperiod);
 
     protected:
@@ -264,6 +264,10 @@ namespace Scheduling_Criteria
         using Variable_Queue::queue;
 
         static unsigned int current_queue() { return CPU::id(); }
+
+        static bool charge();
+        static bool collect();
+        static bool award(bool hyperperiod);
     };
 
     // Clustered Earliest Deadline First (multicore)
