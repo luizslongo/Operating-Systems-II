@@ -7,6 +7,7 @@
 
 __BEGIN_SYS
 
+extern "C" { extern unsigned int _sys_info; }
 // Clerk
 #ifdef __PMU_H
 
@@ -15,8 +16,9 @@ bool Clerk<PMU>::_in_use[Traits<Build>::CPUS][CHANNELS];
 constexpr PMU::Event Intel_Sandy_Bridge_PMU::_events[Intel_Sandy_Bridge_PMU::EVENTS];
 #elif defined __arch_armv8__
 constexpr CPU::Reg32 ARMv8_A_PMU::_events[PMU::EVENTS];
+extern "C" {extern unsigned int __bss_end__;}
 #endif
-bool Monitor::enable_injector[Traits<Build>::CPUS];
+volatile bool Monitor::enable_injector[Traits<Build>::CPUS];
 unsigned int **Monitor::anomalous_behaviour[Traits<Build>::CPUS];
 unsigned int Monitor::samples[Traits<Build>::CPUS];
 const float Monitor::SLOPE = 0;
@@ -30,14 +32,17 @@ const float Monitor::GAIN = 0;
 Simple_List<Monitor> Monitor::_monitors[Traits<Build>::CPUS];
 volatile bool Monitor::_enable;
 
-void Monitor::run()
+bool Monitor::run()
 {
+    bool ret = true;
     if(_enable) { 
         db<Monitor>(TRC) << "Monitor::run()" << endl;
         Simple_List<Monitor> * monitor = &_monitors[CPU::id()];
         for(List::Iterator it = monitor->begin(); it != monitor->end(); it++)
-            it->object()->capture();
-    }
+            ret &= it->object()->capture();
+    } else
+        return false;
+    return ret;
 }
 
 void Monitor::init()
@@ -171,11 +176,13 @@ void Monitor::init()
         }
         System_Info * si = System::info();
         if (si->bm.extras_offset != static_cast<unsigned int>(-1)) {
-            db<Monitor>(WRN) << "Monitor Extras: " << hex << si->bm.n_cpus << endl;
-            db<Monitor>(WRN) << "Monitor Extras: " << hex << si->bm.extras_offset << endl;
-            db<Monitor>(WRN) << "Monitor Extras: " << hex << si->bm.extras_offset + Traits<Machine>::APP_CODE << endl;
-            int checking_limit = 1000;
-            char *text = (reinterpret_cast<char *>(si->bm.extras_offset + Traits<Machine>::APP_CODE+sizeof(int)));
+            db<Monitor>(WRN) << "Si Address: " << hex << si << endl;
+            db<Monitor>(WRN) << "Si Address: " << hex << &__bss_end__ << endl;
+            db<Monitor>(WRN) << "Monitor Cores: " << hex << si->bm.n_cpus << endl;
+            // db<Monitor>(WRN) << "Monitor Extras: " << hex << si->bm.extras_offset << endl;
+            db<Monitor>(WRN) << "Monitor Extras: " << hex << &__bss_end__ << endl;
+            int checking_limit = 200000;
+            char *text = (reinterpret_cast<char *>(&__bss_end__));
             char *aux = new char, *tmp = new char; //, *old = new char
             strcpy(tmp, "");
             // strcpy(old, "");
@@ -183,11 +190,14 @@ void Monitor::init()
             const char *sign("fake_trace"); //this is the signature for arm... using anomalous_trace was breaking the system
             int i = 0;
             bool anomalous_trace = false;
-            db<Monitor>(WRN) << "Content EXTRA: " << i << " = " << text[i] << endl;
-            for (; i < checking_limit && text[i] != ',' && text[i] != '\n'; i++); // jumps till first comma
+            // db<Monitor>(WRN) << "Content EXTRA: " << i << " = " << text[i] << endl;
+            for (; i < checking_limit && text[i] != ',' && text[i] != '\n'; i++);//  db<Monitor>(WRN) << "Content EXTRA: " << i << " = " << text[i] << endl; // jumps till first comma
+            db<Monitor>(WRN) << "Find comma? " << i << " : "<< text[i] << endl;
+            int subcounter = 0;
             for (; i < checking_limit && !anomalous_trace; i++) {
-                db<Monitor>(WRN) << "Content EXTRA: " << i << " = " << text[i] << endl;
-                if (text[i] != ',' && text[i] != '\n') {
+                subcounter += 1;
+                // db<Monitor>(WRN) << "Content EXTRA: " << i << " = " << text[i] << endl;
+                if (text[i] != ',' && text[i] != '\n' && subcounter < 13) {
                     // db<Monitor>(WRN) << "old: " << old << ", tmp: " << tmp << " ,aux: " << aux << endl;
                     *aux = text[i];
                     strcpy(&aux[1], ""); // this is necessary to clean the trash from the previous instruction
@@ -205,11 +215,12 @@ void Monitor::init()
                     } else {
                         strcpy(tmp, "");
                     }
+                    subcounter = 0;
                 }
             }
-            db<Monitor>(WRN) << "Content EXTRA: " << i << " = " << text[i] << endl;
+            // db<Monitor>(WRN) << "Content EXTRA: " << i << " = " << text[i] << endl;
             if(anomalous_trace) {
-                db<Monitor>(WRN) << "Monitor Extras! " << i << endl;
+                // db<Monitor>(WRN) << "Monitor extrass Exists! " << i << endl;
                 // gets size
                 for (; i < checking_limit && text[i] != ',' && text[i] != '\n'; i++) {
                     *aux = text[i];
@@ -218,11 +229,11 @@ void Monitor::init()
                 }
                 int nbytes = atoi(tmp);
                 strcpy(tmp, "");
-                db<Monitor>(WRN) << "extras size: " << nbytes << endl;
+                // db<Monitor>(WRN) << "extras size: " << nbytes << endl;
                 // si->bm.extras_offset = &text[i];
                 unsigned int count = 0;
                 unsigned int columns = 0, rows = 0;
-                db<Monitor>(WRN) << "define columns" << endl;
+                // db<Monitor>(WRN) << "define columns" << endl;
                 nbytes += i;
                 for (i = i+1; i < nbytes; i++) {
                     if (text[i] != ',' && text[i] != '\n') {
@@ -238,7 +249,7 @@ void Monitor::init()
                         break;
                     }
                 }
-                db<Monitor>(WRN) << "define rows" << endl;
+                // db<Monitor>(WRN) << "define rows" << endl;
                 for (i = i+1; i < nbytes; i++) {
                     if (text[i] != ',' && text[i] != '\n') {
                         *aux = text[i];
@@ -282,7 +293,7 @@ void Monitor::init()
                             // strcpy(aux, "");
                             count++;
                             if (count >= columns*rows) {
-                                db<Monitor>(WRN) << "CPU: "  << cpu << endl;
+                                // db<Monitor>(WRN) << "CPU: "  << cpu << endl;
                                 count = 0;
                                 cpu = -1;
                             }
@@ -295,15 +306,32 @@ void Monitor::init()
             delete aux;
             // delete si;
             delete sign;
-            db<Monitor>(WRN) << "EXIT Extras! " << endl;
+            // db<Monitor>(WRN) << "EXIT Extras! " << endl;
         }
     }
 #elif defined __mmod_emote3__
-    System_Info * si = System::info();
+    System_Info * si =  reinterpret_cast<System_Info *>(&_sys_info);
     if (si->bm.extras_offset != static_cast<unsigned int>(-1)) {
-        db<Monitor>(WRN) << "Monitor Extras: " << hex << si->bm.n_cpus << endl;
+        db<Monitor>(WRN) << "Monitor Extras, #CPUS = " << hex << si->bm.n_cpus << endl;
+        db<Monitor>(WRN) << "Monitor Extras, #CPUS = " << si->bm.n_cpus << endl;
+        db<Monitor>(WRN) << "Monitor Extras, #should be at = " << hex << reinterpret_cast<unsigned int>(&_sys_info) << endl;
+        db<Monitor>(WRN) << "Monitor Extras, #is at = " << hex << reinterpret_cast<unsigned int>(si) << endl;
     } else
         db<Monitor>(WRN) << "Monitor No Extras. "<< endl;
+    db<Monitor>(WRN) << "Monitor Extras = " << hex << si->bm.extras_offset << endl;
+    db<Monitor>(WRN) << "Monitor Extras = " << hex << si->bm.extras_offset+Traits<Machine>::APP_CODE+sizeof(int) << endl;
+    char *text = (reinterpret_cast<char *>(si->bm.extras_offset + Traits<Machine>::APP_CODE+sizeof(int)));
+    int nbytes = 0;
+    int checking_limit = 2000;
+    for (int k = 0; k < checking_limit && nbytes != 2449; k++) {
+        nbytes = reinterpret_cast<int *>(si->bm.extras_offset+Traits<Machine>::APP_CODE)[k];
+        db<Monitor>(WRN) << "Content size at " << k << ": " << nbytes << endl;
+    }
+    int i = 0;
+    for (; i < checking_limit && text[i] != ',' && text[i] != '\n'; i++); // jumps till first comma
+    checking_limit = i + 11;
+    for (i = i+1; i < checking_limit; i++)
+        db<Monitor>(WRN) << "Content EXTRA: " << i << " = " << text[i] << endl;
 #endif
 
 
@@ -321,7 +349,7 @@ void Monitor::init()
     if(Traits<System>::monitored)
         init_system_monitoring<0>();
 
-    db<Monitor>(WRN) << "Monitor Initialized" << endl;
+    // db<Monitor>(WRN) << "Monitor Initialized" << endl;
     // return;
 
 }

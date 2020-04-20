@@ -27,6 +27,10 @@ TSC::Time_Stamp Thread::_Statistics::hyperperiod_idle_time[Traits<Build>::CPUS];
 TSC::Time_Stamp Thread::_Statistics::idle_time[Traits<Build>::CPUS];
 TSC::Time_Stamp Thread::_Statistics::last_idle[Traits<Build>::CPUS];
 
+//Fault Injector Instrumentation
+unsigned int Thread::monitor_time[Traits<Build>::CPUS][10000];
+unsigned int Thread::monitor_captured[Traits<Build>::CPUS][10000];
+unsigned int Thread::monitor_reads[Traits<Build>::CPUS];
 
 // Methods
 void Thread::constructor_prologue(const Color & color, unsigned int stack_size)
@@ -432,8 +436,10 @@ void Thread::dispatch(Thread * prev, Thread * next, bool charge)
                 next->_statistics.hyperperiod_count_thread = next->_statistics.hyperperiod_count[cpu];
             }
         }
-
-        Monitor::run();
+        TSC::Time_Stamp t0 = TSC::time_stamp();
+        monitor_captured[cpu][monitor_reads[cpu]] = Monitor::run();
+        monitor_time[cpu][monitor_reads[cpu]] = TSC::time_stamp() - t0;
+        monitor_reads[cpu]++;
     }
 
     if(prev != next) {
@@ -484,6 +490,20 @@ int Thread::idle()
     if(CPU::id() == 0) {
         if(monitored)
             Monitor::process_batch();
+        db<Thread>(WRN) << "Time instrumentation: " << endl;
+        int total_interference, cap_interference;
+        for (unsigned int c = 1; c < Traits<Build>::CPUS; c++) {
+            total_interference = 0;
+            cap_interference = 0;
+            db<Thread>(WRN) << "Core " << c << ": " << endl;
+            for (unsigned int t = 0; t < monitor_reads[c]; t++) {
+                db<Thread>(WRN) << "cap " << t << ": " << monitor_time[c][t] << " - " << monitor_captured[c][t]<< endl;
+                total_interference += monitor_time[c][t];
+                cap_interference += (monitor_captured[c][t] ? monitor_time[c][t] : 0);
+            }
+            db<Thread>(WRN) << "total_interference: " << total_interference << endl;
+            db<Thread>(WRN) << "cap_interference: " << cap_interference << endl;
+        }
 
         db<Thread>(WRN) << "The last thread has exited!" << endl;
         if(reboot) {

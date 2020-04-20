@@ -214,6 +214,10 @@ private:
 public:
     Statistics _statistics;
 
+    static unsigned int monitor_time[Traits<Build>::CPUS][10000];
+    static unsigned int monitor_captured[Traits<Build>::CPUS][10000];
+    static unsigned int monitor_reads[Traits<Build>::CPUS];
+
 protected:
     Task * _task;
     Segment * _user_stack;

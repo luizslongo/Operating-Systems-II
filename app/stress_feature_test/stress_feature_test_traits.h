@@ -15,7 +15,7 @@ template<> struct Traits<Build>: public Traits_Tokens
     static const unsigned int MODEL = Raspberry_Pi3;
     static const unsigned int CPUS = 4;
     static const unsigned int NODES = 1; // (> 1 => NETWORKING)
-    static const unsigned int EXPECTED_SIMULATION_TIME = 60; // s (0 => not simulated)
+    static const unsigned int EXPECTED_SIMULATION_TIME = 300; // s (0 => not simulated)
 
     // Default flags
     static const bool enabled = true;
@@ -113,7 +113,7 @@ template<> struct Traits<System>: public Traits<Build>
     static const bool reboot = true;
 
     static const unsigned int STACK_SIZE = Traits<Machine>::STACK_SIZE;
-    static const unsigned int HEAP_SIZE = 64 * (Traits<Application>::MAX_THREADS + 1) * Traits<Application>::STACK_SIZE;
+    static const unsigned int HEAP_SIZE = 128 * (Traits<Application>::MAX_THREADS + 1) * Traits<Application>::STACK_SIZE;
 };
 
 template<> struct Traits<Task>: public Traits<Build>
@@ -129,7 +129,7 @@ template<> struct Traits<Thread>: public Traits<Build>
     static const bool trace_idle = hysterically_debugged;
 
     typedef Scheduling_Criteria::PEDF Criterion;
-    static const unsigned int QUANTUM = 10000; // us
+    static const unsigned int QUANTUM = 5000; // us
 };
 
 template<> struct Traits<Scheduler<Thread>>: public Traits<Build>
@@ -222,11 +222,16 @@ template<> struct Traits<Monitor>: public Traits<Build>
 {
     static const bool enabled = monitored;
 
-    static constexpr System_Event SYSTEM_EVENTS[]                 = {DEADLINE_MISSES, RUNNING_THREAD};
-    static constexpr unsigned int SYSTEM_EVENTS_FREQUENCIES[]     = {52                ,52         };//{106, 106};// // in Hz
+    // static constexpr System_Event SYSTEM_EVENTS[]                 = {DEADLINE_MISSES, RUNNING_THREAD};
+    // static constexpr unsigned int SYSTEM_EVENTS_FREQUENCIES[]     = {52                ,52         };//{106, 106};// // in Hz
 
-    static constexpr PMU_Event PMU_EVENTS[]                       = {static_cast<PMU_Event>(48), static_cast<PMU_Event>(49), static_cast<PMU_Event>(50), static_cast<PMU_Event>(51), static_cast<PMU_Event>(52), static_cast<PMU_Event>(53)};
-    static constexpr unsigned int PMU_EVENTS_FREQUENCIES[]        = {52,52,52,52,52,52};//,106,106,106}; // in Hz
+    static constexpr System_Event SYSTEM_EVENTS[]                 = {DEADLINE_MISSES, RUNNING_THREAD};
+    static constexpr unsigned int SYSTEM_EVENTS_FREQUENCIES[]     = {0                ,0         };//{106, 106};// // in Hz
+
+
+    // static constexpr PMU_Event PMU_EVENTS[]                       = {COMMITED_INSTRUCTIONS, BRANCHES, L1_CACHE_HITS, BRANCH_MISSES};
+    static constexpr PMU_Event PMU_EVENTS[]                       = {COMMITED_INSTRUCTIONS, L1_CACHE_MISSES_CA, BRANCH_MISSES, L2_CACHE_HITS, L1I_CACHE_MISS, BRANCHES};
+    static constexpr unsigned int PMU_EVENTS_FREQUENCIES[]        = {           206,        206,        206,        206,        206,         206}; // in Hz
 
     static constexpr unsigned int TRANSDUCER_EVENTS[]             = {};
     static constexpr unsigned int TRANSDUCER_EVENTS_FREQUENCIES[] = {}; // in Hz

@@ -44,13 +44,13 @@ protected:
     static const unsigned int DELAY = 0; //the time delay before applying the Aggregators
     static const unsigned int RANGE = 0; //the time window applying the Aggregators
     static const unsigned int SPACING = 0; //the time between applying windows
-    static const Aggregator AGGREGATOR = AGGREGATORS;
+    static const Aggregator AGGREGATOR = FAULT_INJECTOR;
     static const float SLOPE; //drift parameter
     static const float STUCK; //stuck parameter
     static const float BIAS; //bias parameter
     static const float GAIN; //gain parameter
 public:
-    static bool enable_injector[Traits<Build>::CPUS];
+    static volatile bool enable_injector[Traits<Build>::CPUS];
     static unsigned int samples[Traits<Build>::CPUS];
     //The following attribute exists only for tests. The value to be applied must come from a vector written in memory by MKBI
     static unsigned int **anomalous_behaviour[Traits<Build>::CPUS];
@@ -61,11 +61,11 @@ public:
     Monitor(): _captures(0), _t0(TSC::time_stamp()) {}
     virtual ~Monitor() {}
 
-    virtual void capture() = 0;
+    virtual bool capture() = 0;
     virtual void reset() = 0;
     virtual void print(OStream & os) const = 0;
 
-    static void run();
+    static bool run();
 
     static void process_batch() {
         disable_captures();
@@ -185,7 +185,7 @@ public:
 
     unsigned int captures() { return _captures; }
 
-    void capture() {
+    bool capture() {
         Time_Stamp ts = time_since_t0();
         if(_captures < _snapshots && ((ts - _last_capture) >= _period)) {
             Snapshot tmp;
@@ -199,7 +199,9 @@ public:
             _average = (_average * _captures + _buffer[_captures].data) / (_captures + 1);
             _captures++;
             _last_capture = ts;
+            return true;
         }
+        return false;
     }
 
     void reset() {

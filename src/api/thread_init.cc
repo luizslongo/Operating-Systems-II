@@ -21,6 +21,7 @@ void Thread::init()
     if(monitored)
         Monitor::init();
 
+    // db<Monitor>(WRN) << "BACK TO THREAD INIT" << endl;
     static volatile bool task_ready = false;
 
     if(CPU::id() == 0) {
@@ -42,10 +43,12 @@ void Thread::init()
             // which will directly call main(). In this case, _init will have already been called,
             // before Init_Application to construct MAIN's global objects.
             new (SYSTEM) Thread(Thread::Configuration(Thread::RUNNING, Thread::MAIN), reinterpret_cast<int (*)()>(__epos_app_entry));
+            // db<Monitor>(WRN) << "MAIN IS UP" << endl;
         }
 
         // Idle thread creation does not cause rescheduling (see Thread::constructor_epilogue)
         new (SYSTEM) Thread(Thread::Configuration(Thread::READY, Thread::IDLE), &Thread::idle);
+        // db<Monitor>(WRN) << "IDLE IS UP" << endl;
     } else {
         if(Traits<System>::multitask)
             while (!task_ready);
@@ -54,6 +57,7 @@ void Thread::init()
     }
 
     CPU::smp_barrier();
+    // db<Monitor>(WRN) << "THREADS ARE UP" << endl;
 
     // The installation of the scheduler timer handler does not need to be done after the
     // creation of threads, since the constructor won't call reschedule() which won't call

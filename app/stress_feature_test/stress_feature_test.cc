@@ -15,7 +15,7 @@ OStream cout;
 typedef TSC::Time_Stamp Time_Stamp;
 
 // Configuration
-const unsigned int  TEST_LENGTH            = 60; // in seconds
+const unsigned int  TEST_LENGTH            = 5; // in seconds
 const bool          MEASURE_TIME           = false;
 // To be measured
 const float         MEMORY_IT_LENGHT       = 150;    // 0.4 in microseconds
@@ -248,6 +248,9 @@ int main() // TODO: Add clock change in middle of execution (reschedule probably
     init_threads<0>(10000, us(tsc0));
 
     cout << "All TASKs created" << ",Time=" << us(tsc0) << endl;
+    Monitor::enable_injector[1] = true;
+    Monitor::enable_injector[2] = true;
+    Monitor::enable_injector[3] = true;
     Monitor::enable_captures(tsc0);
     //Monitor::disable_captures();
     Thread * freq = new Thread(Thread::Configuration(Thread::READY, Thread::Criterion(400000, 400000, 10000, 0)), &freq_control);

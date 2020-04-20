@@ -17,6 +17,7 @@ public:
         }
 
         db<Init>(INF) << "INIT ends here!" << endl;
+        // db<Monitor>(WRN) << "INIT ends here!" << endl;
 
         // Thread::self() and Task::self() can be safely called after the construction of MAIN
         // even if no reschedule() was called (running is set by the Scheduler at each insert())
