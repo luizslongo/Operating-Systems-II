@@ -136,22 +136,22 @@ public:
 
 public:
     Concurrent_Observed() {
-        db<Observeds, Semaphore>(TRC) << "Concurrent_Observed() => " << this << endl;
+        db<Observers, Semaphore>(TRC) << "Concurrent_Observed() => " << this << endl;
     }
 
     ~Concurrent_Observed() {
-        db<Observeds, Semaphore>(TRC) << "~Concurrent_Observed(this=" << this << ")" << endl;
+        db<Observers, Semaphore>(TRC) << "~Concurrent_Observed(this=" << this << ")" << endl;
     }
 
     void attach(Concurrent_Observer<D, C> * o, const C & c) {
-        db<Observeds, Semaphore>(TRC) << "Concurrent_Observed::attach(obs=" << o << ",cond=" << c << ")" << endl;
+        db<Observers, Semaphore>(TRC) << "Concurrent_Observed::attach(obs=" << o << ",cond=" << c << ")" << endl;
 
         o->_link = Element(o, c);
         _observers.insert(&o->_link);
     }
 
     void detach(Concurrent_Observer<D, C> * o, const C & c) {
-        db<Observeds, Semaphore>(TRC) << "Concurrent_Observed::detach(obs=" << o << ",cond=" << c << ")" << endl;
+        db<Observers, Semaphore>(TRC) << "Concurrent_Observed::detach(obs=" << o << ",cond=" << c << ")" << endl;
 
         _observers.remove(&o->_link);
     }
@@ -159,11 +159,11 @@ public:
     bool notify(const C & c, D * d) {
         bool notified = false;
 
-        db<Observeds, Semaphore>(TRC) << "Concurrent_Observed::notify(this=" << this << ",cond=" << c << ")" << endl;
+        db<Observers, Semaphore>(TRC) << "Concurrent_Observed::notify(this=" << this << ",cond=" << c << ")" << endl;
 
         for(Element * e = _observers.head(); e; e = e->next()) {
             if(e->rank() == c) {
-                db<Observeds, Semaphore>(INF) << "Observed::notify(this=" << this << ",obs=" << e->object() << ")" << endl;
+                db<Observers, Semaphore>(INF) << "Observed::notify(this=" << this << ",obs=" << e->object() << ")" << endl;
                 e->object()->update(c, d);
                 notified = true;
             }
