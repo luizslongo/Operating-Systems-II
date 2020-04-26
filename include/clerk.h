@@ -130,7 +130,7 @@ public:
 
 public:
     Clerk_Monitor(Clerk * clerk, const Hertz & frequency, bool data_to_us = false): _clerk(clerk), _frequency(frequency), _period(us2count((frequency > 0) ? 1000000 / frequency : -1UL)), _last_capture(0), _average(0), _data_to_us(data_to_us), _link(this) {
-        db<Clerk>(TRC) << "Clerk_Monitor(clerk=" << clerk << ") => " << this << ")" << endl;
+        db<Monitor>(TRC) << "Clerk_Monitor(clerk=" << clerk << ") => " << this << ")" << endl;
         _snapshots = Traits<Build>::EXPECTED_SIMULATION_TIME * frequency;
         // if((_snapshots * sizeof(Snapshot)) > Traits<Monitor>::MAX_BUFFER_SIZE)
         //     _snapshots = Traits<Monitor>::MAX_BUFFER_SIZE * sizeof(Snapshot);
