@@ -38,12 +38,11 @@ public:
     Monitor(): _captures(0), _t0(TSC::time_stamp()) {}
     virtual ~Monitor() {}
 
-    virtual FANN_EPOS::fann_type last_capture(unsigned int index) = 0;
+    virtual unsigned int last_capture(unsigned int index) = 0;
     virtual Time_Stamp last_time_stamp() = 0;
     virtual unsigned int get_capture(unsigned int i) = 0;
     virtual Time_Stamp get_capture_ts(unsigned int i) = 0;
     virtual unsigned int captures() = 0;
-    //virtual void capture(Thread  * running_thread) = 0; TODO
 
     virtual void capture() = 0;
     virtual unsigned long long read() = 0;
@@ -83,11 +82,36 @@ public:
         os << "FINAL_TS<" << count2us(_monitors[0].begin()->object()->time_since_t0()) << ">" << endl;
         os << "ANN-OUT" << endl;
         unsigned int i;
-        for(unsigned int n = 1; n < CPU::cores(); n++) {
-            os << "CPU" << n << endl;
-            for(i = 0; i < ann_captures[n]; i++)
-                os << ann_out[n][i] << endl;
-        } 
+
+        if (Thread::Criterion::learning) {
+            os << "MIGRATION=" << Thread::_Statistics::migration_hyperperiod[0] << "," << Thread::_Statistics::migration_hyperperiod[1] << ","<< Thread::_Statistics::migration_hyperperiod[2] << endl;
+            os << "ALLOCATION_M=x;x;x" << endl;
+            os << "Votes:" << endl;
+            for (unsigned int j = 0; j < Traits<Build>::EXPECTED_SIMULATION_TIME*2; ++j)
+            {
+                for (i = 1; i < Traits<Build>::CPUS; ++i)
+                {
+                    os << "voting cpu[" << i << ",i" << j << "]=" << Thread::_Statistics::votes[i][j] 
+                         << ",idle=" << Thread::_Statistics::idle_time_vote[i][j] 
+                         << ",Overhead=" << Thread::_Statistics::overhead[i][j]
+                         << ",variance=" << Thread::_Statistics::max_variance[i][j] << endl;
+                }
+            }
+
+            os << "Trains:" << endl;
+            for (unsigned int j = 0; j < 6; ++j)
+            {
+                for (i = 1; i < Traits<Build>::CPUS; ++i)
+                {
+                    os << "train cpu[" << i << ",t" << j << "]=\n";
+                    for (unsigned int k = 0; k < 4*2*2; ++k) // TODO threshold at traits
+                    {
+                        os << Thread::_Statistics::trains_err[i][j][k] << "\n";
+                    } 
+                }
+            }
+        }
+
         os << "begin_data" << endl;
         for(unsigned int n = 0; n < CPU::cores(); n++) {
             i = 0;
@@ -106,9 +130,7 @@ public:
         // Adjust each Clerk Monitor instantiated.
         for(unsigned int n = 0; n < CPU::cores(); n++) {
             for(List::Iterator it = _monitors[n].begin(); it != _monitors[n].end(); it++) {
-                // reset PMU counters (could be done at idle, but seems risky due to reschedules) could only be done inside each CPU
-                // it->object()->reset();
-                // Starts t0 with current ts
+                 // Starts t0 with current ts
                 it->object()->_t0 = t0;
             }
         }
@@ -157,7 +179,6 @@ public:
     static Simple_List<Monitor> _monitors[Traits<Build>::CPUS];
     static struct FANN_EPOS::fann *ann[Traits<Build>::CPUS];
     static unsigned int ann_out[Traits<Build>::CPUS][100*30];
-    //static unsigned long long * ann_ts[Traits<Build>::CPUS];
     static unsigned int ann_captures[Traits<Build>::CPUS];
 };
 
@@ -166,9 +187,6 @@ template<typename Clerk>
 class Clerk_Monitor: public Monitor
 {
     friend class Monitor;
-
-private:
-//    static const unsigned int PERIOD = (FREQUENCY > 0) ? 1000000 / FREQUENCY : -1UL;
 
 public:
     typedef typename Clerk::Data Data;
@@ -183,8 +201,6 @@ public:
     Clerk_Monitor(Clerk * clerk, const Hertz frequency, bool data_to_us = false): _clerk(clerk), _frequency(frequency), _period(us2count((frequency > 0) ? 1000000 / frequency : -1UL)), _last_capture(0), _average(0), _data_to_us(data_to_us), _link(this) {
         db<Clerk>(TRC) << "Clerk_Monitor(clerk=" << clerk << ") => " << this << ")" << endl;
         _snapshots = Traits<Build>::EXPECTED_SIMULATION_TIME * frequency;
-        // if((_snapshots * sizeof(Snapshot)) > Traits<Monitor>::MAX_BUFFER_SIZE)
-        //     _snapshots = Traits<Monitor>::MAX_BUFFER_SIZE * sizeof(Snapshot);
         _buffer = new (SYSTEM) Snapshot[_snapshots];
 
         _monitors[CPU::id()].insert(&_link);
@@ -198,19 +214,19 @@ public:
 
     unsigned int captures() { return _captures; }
 
-    FANN_EPOS::fann_type last_capture(unsigned int index) {
+    unsigned int last_capture(unsigned int index) {
         // handle reset (unsigned long long) 0xffffffff)
         if (index >= COUNTOF(Traits<Monitor>::PMU_EVENTS))
             return (FANN_EPOS::fann_type)_buffer[_captures-1].data;
         if(_captures >= 2) {
             // buffer store a unsigned long long but stores a int
-            long long aux = ((long long)_buffer[_captures-1].data) - _buffer[_captures-2].data;
+            long long aux = ((unsigned long long)_buffer[_captures-1].data) - _buffer[_captures-2].data;
             if (aux < 0) {
-                return (FANN_EPOS::fann_type)((((long long) 0xffffffff) - _buffer[_captures-2].data) + _buffer[_captures-1].data);
+                return ((((unsigned long long) 0xffffffff) - _buffer[_captures-2].data) + _buffer[_captures-1].data);
             }
-            return (FANN_EPOS::fann_type)(aux);
+            return aux;
         }
-        return (FANN_EPOS::fann_type)-1;
+        return -1;
     }
 
     Time_Stamp last_time_stamp() {
@@ -221,7 +237,7 @@ public:
 
     unsigned int get_capture(unsigned int i ) { // fix
         if (i < _captures && i >= 0)
-            return (unsigned int)_buffer[i].data;
+            return _buffer[i].data;
         return 0;
     }
 
@@ -435,9 +451,13 @@ public:
         case Event::RUNNING_THREAD:
             break;
         case Event::THREAD_EXECUTION_TIME:
+            t->_statistics.execution_time = 0;
+            t->_statistics.jobs = 0;
+            t->_statistics.average_execution_time = 0;
             break;
         case Event::CPU_EXECUTION_TIME:
-            //Thread::_idle_time[CPU::id()] = 0;
+            Thread::_Statistics::idle_time[CPU::id()] = 0;
+            Thread::_Statistics::hyperperiod_idle_time[CPU::id()] = 0;
             break;
         default:
             break;

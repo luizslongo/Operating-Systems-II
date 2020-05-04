@@ -16,7 +16,7 @@ public: //type defs
 
 public:
     static const unsigned int NUM_LAYERS_CONFIG           = 4;
-    static constexpr float    LEARNING_RATE_CONFIG        = 0.35000;
+    static constexpr float    LEARNING_RATE_CONFIG        = 0.35;
     static constexpr float    CONNECTION_RATE_CONFIG      = 1.000000;
     static const unsigned int NETWORK_TYPE_CONFIG         = 0;
     static constexpr float    LEARNING_MOMENTUM_CONFIG    = 0.000000;
@@ -838,28 +838,6 @@ public: // Create and Run and Online Train
         return input;
     }
 
-    /* DEPRECATED, DOESN'T WORK!
-    static void fann_set_train_in_out(struct fann* ann, fann_type * input, fann_type * output) {
-        unsigned int i, num_input, num_output;
-        num_input = ann->num_input;
-        input = scale_input(input, num_input);
-        // first set the input
-        struct fann_neuron *first_neuron = ann->first_layer->first_neuron;
-        for(i = 0; i != num_input; i++) {
-            first_neuron[i].value = input[i];
-        }
-
-        // set the output
-        num_output = ann->num_output;
-        struct fann_neuron *neurons = (ann->last_layer - 1)->first_neuron;
-        for(i = 0; i != num_output; i++)
-        {
-            ann->output[i] = output[i];
-            neurons[i].value = output[i];
-        }
-    }
-    */
-
     static fann_type * fann_run(struct fann* ann, fann_type * input, bool scale) {
         struct fann_neuron *neuron_it, *last_neuron, *neurons, **neuron_pointers;
         if(scale)
@@ -1003,7 +981,9 @@ public: // Create and Run and Online Train
     static float fann_train_data_incremental(struct fann *ann, fann_type *data, fann_type *desired_output)
     {
         fann_type *output = fann_run(ann, data, false);
-        if (fann_abs(output[0] - desired_output[0]) <= 0.03)
+
+        // Optimization for error threshold
+        if (fann_abs(output[0] - desired_output[0]) <= Traits<Monitor>::TRAIN_MIN_ERROR)
             return fann_abs(output[0] - desired_output[0]);
 
         fann_compute_MSE(ann, desired_output);
@@ -1016,7 +996,6 @@ public: // Create and Run and Online Train
 
     static void fann_reset_MSE(struct fann *ann)
     {
-    /*printf("resetMSE %d %f\n", ann->num_MSE, ann->MSE_value);*/
         ann->num_MSE = 0;
         ann->MSE_value = 0;
         ann->num_bit_fail = 0;

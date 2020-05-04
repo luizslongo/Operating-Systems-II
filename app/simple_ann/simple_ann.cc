@@ -1,5 +1,8 @@
 #include <utility/ostream.h>
 #include <utility/fann.h>
+#include <time.h>
+#include <process.h>
+#include <machine.h>
 
 using namespace EPOS;
 
@@ -63,49 +66,79 @@ FANN_EPOS::fann_type outs[] = {
     {0.6936}
 };
 
+int time_evaluation() {
+    for (int count_dvfs = 0; count_dvfs < 8; ++count_dvfs)
+    {
+        struct FANN_EPOS::fann *ann = FANN_EPOS::fann_create_from_config();
+        FANN_EPOS::fann_type * out[26];
+        TSC::Time_Stamp t0 = TSC::time_stamp();
+        for (int j = 0; j < 100000; ++j)
+        {
+            for (int i = 0; i < 26; ++i)
+            {
+                out[i] = FANN_EPOS::fann_run(ann, inputs[i], false);
+                //cout << "out["<< i <<"] = " << out[i][0] << ",expected=" << outs[i] << endl;
+            }
+        }
+        TSC::Time_Stamp t1 = TSC::time_stamp();
+        cout << "ANN Run * 100000 * 26: " << t1 - t0 << ", per iteration = " << ((t1 - t0)*1.0)/(100000.*26) << endl;
+        //cout << "========== LEARNING ===========" << endl;
+        //FANN_EPOS::fann_type desired_output[] = {1,-1,-1};
+        //FANN_EPOS::fann_type **inputs_2 = new float*[25];
+        //for (int i = 0; i < 25; ++i)
+        //{
+        //    inputs_2[i] = new float[9];
+        //    inputs_2[i] = inputs[i];
+        //}
+        //    FANN_EPOS::fann_train_data(ann, inputs_2, 10, desired_output, true);
+            //FANN_EPOS::fann_set_train_in_out(ann, inputs[i], out[i]);
+            //FANN_EPOS::fann_learn_last_run(ann, outs[i]);
+            //out[i] = FANN_EPOS::fann_run(ann, inputs[i]);
+            //cout << "out["<< i <<"] = " << out[i][0] <<"," << out[i][1]<<"," << out[i][2]<<endl;
+        //}
+        t0 = TSC::time_stamp();
+        float error = 0;
+        bool end = false;
+        for (int j = 0; j < 100000; ++j)
+        {
+            for (unsigned int i = 0; i < 26; ++i)
+            {
+                //end = false;
+                //while(!end) {
+                    //end = true;
+                    FANN_EPOS::fann_train_data_incremental(ann, inputs[i], &outs[i]);
+                    //cout << "train["<< 25 <<"] error = " << error << endl;
+                    //end &= error <= 0.01;
+                //}
+            }
+        }
+        t1 = TSC::time_stamp();
+        cout << "ANN Train * 100000 * 26: " << t1 - t0 << ", per iteration = " << ((t1 - t0)*1.0)/(100000.*26) << endl;
+        cout << "----------------------------------------" << endl;
+        cout << "clock from[" << CPU::id() <<"]: " << Machine::clock(1200000000 - (count_dvfs % 7)*100000000) << endl;
+        cout << "clock to: " << Machine::clock() << endl;
+    }
+    return 0;
+}
+
 int main()
 {
     cout << "Hello world!" << endl;
 
-    struct FANN_EPOS::fann *ann = FANN_EPOS::fann_create_from_config();
-    FANN_EPOS::fann_type * out[26];
-    for (int i = 0; i < 26; ++i)
-    {
-        out[i] = FANN_EPOS::fann_run(ann, inputs[i], false);
-        cout << "out["<< i <<"] = " << out[i][0] << ",expected=" << outs[i] << endl;
-    }
-    cout << "========== LEARNING ===========" << endl;
-    //FANN_EPOS::fann_type desired_output[] = {1,-1,-1};
-    //FANN_EPOS::fann_type **inputs_2 = new float*[25];
-    //for (int i = 0; i < 25; ++i)
-    //{
-    //    inputs_2[i] = new float[9];
-    //    inputs_2[i] = inputs[i];
-    //}
-    //    FANN_EPOS::fann_train_data(ann, inputs_2, 10, desired_output, true);
-        //FANN_EPOS::fann_set_train_in_out(ann, inputs[i], out[i]);
-        //FANN_EPOS::fann_learn_last_run(ann, outs[i]);
-        //out[i] = FANN_EPOS::fann_run(ann, inputs[i]);
-        //cout << "out["<< i <<"] = " << out[i][0] <<"," << out[i][1]<<"," << out[i][2]<<endl;
-    //}
-    float error = 0;
-    bool end = false;
-    for (unsigned int i = 0; i < 1; ++i)
-    {
-        end = false;
-        while(!end) {
-            end = true;
-            error = FANN_EPOS::fann_train_data_incremental(ann, inputs[25], &outs[25]);
-            cout << "train["<< 25 <<"] error = " << error << endl;
-            end &= error <= 0.01;
-        }
-    }
+    cout << "clock["<< CPU::id() <<"]" << Machine::clock() << endl;
+    Hertz new_clock = 1200000000;
+    cout << "    clock change to" << new_clock << "Hz" << endl;
+    cout << "    clock now is = " << Machine::clock(new_clock) << endl;
 
-    for (int i = 0; i < 26; ++i)
-    {
-        out[i] = FANN_EPOS::fann_run(ann, inputs[i], false);
-        cout << "out["<< i <<"] = " << out[i][0] << ",expected=" << outs[i] << endl;
-    }
+    Thread * t = new Thread(Thread::Configuration(Thread::READY, Thread::Criterion(Thread::NORMAL, 1)), &time_evaluation);
+
+    t->join();
+
+    //for (int i = 0; i < 26; ++i)
+    //{
+    //    out[i] = FANN_EPOS::fann_run(ann, inputs[i], false);
+    //    cout << "out["<< i <<"] = " << out[i][0] << ",expected=" << outs[i] << endl;
+    //}
 
     return 0;
 }

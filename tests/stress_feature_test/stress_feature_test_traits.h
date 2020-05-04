@@ -15,7 +15,7 @@ template<> struct Traits<Build>: public Traits_Tokens
     static const unsigned int MODEL = Raspberry_Pi3;
     static const unsigned int CPUS = 4;
     static const unsigned int NODES = 1; // (> 1 => NETWORKING)
-    static const unsigned int EXPECTED_SIMULATION_TIME = 30; // s (0 => not simulated)
+    static const unsigned int EXPECTED_SIMULATION_TIME = 60; // s (0 => not simulated)
 
     // Default flags
     static const bool enabled = true;
@@ -129,6 +129,7 @@ template<> struct Traits<Thread>: public Traits<Build>
     static const bool trace_idle = hysterically_debugged;
 
     typedef Scheduling_Criteria::PEDF Criterion;
+    typedef IF<EQUAL<Criterion, Scheduling_Criteria::PEDF>::Result, Scheduling_Criteria::PEDF, Scheduling_Criteria::Priority>::Result Monitor_Chosen;
     static const unsigned int QUANTUM = 10000; // us
 };
 
@@ -218,18 +219,9 @@ template<> struct Traits<DHCP>: public Traits<Network>
 {
 };
 
-template<> struct Traits<Monitor>: public Traits<Build>
+template<> struct Traits<Monitor>: public Traits<Build>, Traits<Traits<Thread>::Monitor_Chosen>
 {
     static const bool enabled = monitored;
-
-    static constexpr System_Event SYSTEM_EVENTS[]                 = {THREAD_EXECUTION_TIME, CPU_FREQUENCY, DEADLINE_MISSES};
-    static constexpr unsigned int SYSTEM_EVENTS_FREQUENCIES[]     = {2, 2, 2                };//{106, 106};// // in Hz
-
-    static constexpr PMU_Event PMU_EVENTS[]                       = {BUS_ACCESS_ST_CA53_v8, DATA_WRITE_STALL_ST_BUFFER_FULL_CA53_v8, IMMEDIATE_BRANCHES_CA, L2D_WRITEBACK, CPU_CYCLES, L1_CACHE_HITS};
-    static constexpr unsigned int PMU_EVENTS_FREQUENCIES[]        = {2,2,2,2,2,2};//,106,106,106}; // in Hz
-
-    static constexpr unsigned int TRANSDUCER_EVENTS[]             = {};
-    static constexpr unsigned int TRANSDUCER_EVENTS_FREQUENCIES[] = {}; // in Hz
 };
 
 __END_SYS

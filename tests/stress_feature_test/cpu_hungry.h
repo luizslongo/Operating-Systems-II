@@ -7,22 +7,18 @@ using namespace EPOS;
 
 //method that configures iterative fibonacci execution
 int iterative_fib () {
-    //float ret = 1.33;
-    Random * rand;
+     Random * rand;
     rand->seed(0);
     int fib = 1;
     int temp = 1;
     int prev = 1;
     fib = 1+rand->random()%3;
-    //fib = 1;
-    prev = 1;
     for (int j = 1; j < 350000; j++) {
         temp = prev+fib;
         prev = fib;
         fib = temp;
     }
     return fib;
-    //return int(ret);
 }
 
 //fibonacci recursive method

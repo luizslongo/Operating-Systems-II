@@ -15,7 +15,7 @@ OStream cout;
 typedef TSC::Time_Stamp Time_Stamp;
 
 // Configuration
-const unsigned int  TEST_LENGTH            = 30; // in seconds
+const unsigned int  TEST_LENGTH            = 40; // in seconds
 const bool          MEASURE_TIME           = false;
 // To be measured
 const float         MEMORY_IT_LENGHT       = 150;//150;    // 0.4 in microseconds
@@ -37,24 +37,30 @@ constexpr static struct Task_Set {
     const unsigned int f;
 } set[THREADS] = {
     //PERIOD,DEADLINE,WCET,CPU,TASK
+    // /* TS1
+    {500000, 500000, 100000,2,0},   // 20 - band
+    {500000, 500000, 100000,2,2},   // 20 - disp
+
+    {500000, 500000, 100000,3,2},   // 20 - disp
+    {500000, 500000, 100000,3,1},   // 20 - cpu
+
+    {500000, 500000, 100000,4,1},   // 20 - cpu
+    {500000, 500000, 100000,4,2},   // 20 - disp
+    //*/
+
+    /* TS4
     // Band on CPU 1
-    {500000,500000,200000,2,0},
-    // Disparity on CPU 1
-    {500000,500000,100000,2,2},
-    // Band on CPU 1
-    //{400000,400000,100000,2,0},
+    {250000,250000,50000,2,0},      // 20 - band
 
     // Disparity on CPU 2 (Parallel to band on 1)
-    {500000,500000,200000,3,2},
-    // CPU Hungry on CPU 2 (Parallel to disp on CPU 1)
-    {500000,500000,100000,3,1},
+    {1000000,1000000,200000,3,1},   // 20 - cpu
+    {1000000,1000000,200000,3,2},   // 20 - disp
+    {500000, 500000, 100000,3,1},   // 20 - disp
+    {500000, 500000,  50000,3,0},   // 10 - band
 
-    // CPU Hungry on CPU 3 (Parallel to band on 1 and Disp on 2)
-    {500000,500000,100000,4,1},
-    // Disparity on CPU 3 (Parallel to disp on 1 and Hungry on 2)
-    {500000,500000,100000,4,2},
-    // Disparity on CPU 3 (solo)
-    //{400000,400000,100000,4,2}
+    {500000,500000,100000,4,0},  // 20 - band
+    {1000000,1000000,200000,4,2}, // 20 - disp
+    //*/
 };
 
 
@@ -93,7 +99,6 @@ struct JOBS {
 constexpr JOBS<THREADS> jobs = JOBS<THREADS>();
 
 unsigned int *g_mem_ptr[THREADS];           /* unsigned inter to allocated memory region */
-//extern const unsigned int G_MEM_SIZE;
 const unsigned int CACHE_LINE_SIZE = 64;
 const unsigned int DEFAULT_ALLOC_SIZE_KB = 524288;//16384*2;
 const unsigned int G_MEM_SIZE = DEFAULT_ALLOC_SIZE_KB;
@@ -117,11 +122,9 @@ extern signed char img2[];
 signed char* t_img1[THREADS];
 signed char* t_img2[THREADS];
 
-//unsigned int iter;
 
 unsigned int bench_write(unsigned int id)
 {
-    //cout << "Band" << endl;
     register unsigned int i;
     for ( i = 0; i < G_MEM_SIZE/sizeof(unsigned int); i+=(CACHE_LINE_SIZE/sizeof(unsigned int)) ) {
         g_mem_ptr[id][i] += i;
@@ -205,12 +208,12 @@ int freq_control() {
     int count_dvfs = 1;
     for (int i = 0; i < iters; ++i)
     {
-        //if (!(i % 20) && i > 0) {
-        //    cout << "Iter" << i << " - Clock = " << Machine::clock(1200000000 - (count_dvfs % 7)*100000000) << endl; // " - Keep Alive" << endl;//
-        //    count_dvfs++;
-        //} else {
+        if (!(i % 5) && i > 0) {
+            cout << "Iter" << i << " - Clock = " << Machine::clock(1200000000 - (count_dvfs % 7)*100000000) << endl; // " - Keep Alive" << endl;//
+            count_dvfs++;
+        } else {
             cout << "Iter" << i << " - Keep Alive" << endl;
-        //}
+        }
         Delay(1000000);
     }
     return iters;
@@ -226,7 +229,7 @@ int main_t(int thread_init, int thread_end, int exec)
 
     Delay(500000);
     cout << "SETUP" << endl;
-
+    unsigned int cpu = 1;
     for (unsigned int i = thread_init; i < thread_end; ++i)
     {
         if (set[i].f == 2) {
@@ -248,14 +251,7 @@ int main_t(int thread_init, int thread_end, int exec)
             }
         }
     }
-
-    // Thread * a = Thread::self();
-    // for (int i = 0; i < Traits<Build>::CPUS; ++i)
-    // {
-    //     a->_statistics.hyperperiod_idle_time[i] = 0;
-    //     a->_statistics.idle_time[i] = 0;
-    //     a->_statistics.last_idle[i] = 0;
-    // }
+    cout << "ALLOCATION=0,1;2,3;4,5" << endl;
 
     Time_Stamp tsc0 = get_time()+Convert::us2count<Time_Stamp, Time_Base>(TSC::frequency(),10000);
     //switch(exec) {
@@ -278,30 +274,31 @@ int main_t(int thread_init, int thread_end, int exec)
             threads[5] = new RT_Thread(&run_func<5>, set[5].d, set[5].p, set[5].c, 10000, jobs.value[5], set[5].cpu-1);
             //cout << 6 << ",i=" << jobs.value[6] << ",ij=" << iter_per_job.value[6] << endl;
             //threads[6] = new RT_Thread(&run_func<6>, set[6].d, set[6].p, set[6].c, 10000, jobs.value[6], set[6].cpu-1);
+            //cout << 6 << ",i=" << jobs.value[6] << ",ij=" << iter_per_job.value[6] << endl;
+            //threads[6] = new RT_Thread(&run_func<6>, set[6].d, set[6].p, set[6].c, 10000, jobs.value[6], set[6].cpu-1);
     //        cout << 7 << ",i=" << jobs.value[7] << ",ij=" << iter_per_job.value[7] << endl;
     //        threads[7] = new RT_Thread(&run_func<7>, set[7].d, set[7].p, set[7].c, 10000, jobs.value[7], set[7].cpu-1);
     //        break;
     //}
 
     Monitor::enable_captures(tsc0);
-    //Monitor::disable_captures();
     cout << "All TASKs created" << ",Time=" << us(tsc0) << endl;
     Thread * freq = new Thread(Thread::Configuration(Thread::READY, Thread::Criterion(1000000, 1000000, 10000, 0)), &freq_control);
 
     for (int i = thread_init; i < thread_end; ++i)
     {
         threads[i]->join();
-        /*cout << "T["<< i << "]" << endl;;
-        for (unsigned int j = 0; j < jobs.value[i]; ++j)
+        cout << "T["<< i << "]" << endl;
+        ///*
+        for (unsigned int j = 0; j < TEST_LENGTH*2; ++j)
         {
-            cout << threads[i]->_statistics.thread_monitoring[0][j];
+            cout << "i" << j << "=" << threads[i]->_statistics.thread_monitoring[0][j];
             for (unsigned int k = 1; k < COUNTOF(Traits<Monitor>::PMU_EVENTS)+COUNTOF(Traits<Monitor>::SYSTEM_EVENTS); ++k)
             {
                 cout << "," << threads[i]->_statistics.thread_monitoring[k][j];
             }
             cout << "\n";
-        }*/
-        //cout << "AVG-Monitor:" << Convert::count2us<Hertz, TSC::Time_Stamp, Time_Base>(TSC::frequency(), (threads[i]->_statistics.average_execution_time/threads[i]->_statistics.jobs)) << endl;
+        }
     }
     freq->join();
 
