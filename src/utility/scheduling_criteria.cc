@@ -61,9 +61,9 @@ namespace Scheduling_Criteria {
                     t->_statistics.input[COUNTOF(Traits<Monitor>::PMU_EVENTS)+0]
                             = t->_statistics.jobs ? ((t->_statistics.average_execution_time*1.0)/Thread::_Statistics::hyperperiod[1])
                             : ((t->_statistics.execution_time*1.0)/Thread::_Statistics::hyperperiod[1]);
-                    t->_statistics.thread_monitoring[COUNTOF(Traits<Monitor>::PMU_EVENTS)+0][Thread::_Statistics::hyperperiod_count[cpu]] = t->_statistics.input[COUNTOF(Traits<Monitor>::PMU_EVENTS)+0] * 10000;
-                    //t->_statistics.thread_monitoring[COUNTOF(Traits<Monitor>::PMU_EVENTS)+0][Thread::_Statistics::hyperperiod_count[cpu]] = t->_statistics.jobs ? ((t->_statistics.average_execution_time))*1.0) /Thread::_Statistics::hyperperiod[1])*10000
-                    //        : ((t->_statistics.execution_time))/**1.0)/Thread::_Statistics::hyperperiod[1])*10000*/;
+                    //t->_statistics.thread_monitoring[COUNTOF(Traits<Monitor>::PMU_EVENTS)+0][Thread::_Statistics::hyperperiod_count[cpu]] = t->_statistics.input[COUNTOF(Traits<Monitor>::PMU_EVENTS)+0] * 10000;
+                    t->_statistics.thread_monitoring[COUNTOF(Traits<Monitor>::PMU_EVENTS)+0][Thread::_Statistics::hyperperiod_count[cpu]] = t->_statistics.jobs ? (t->_statistics.average_execution_time) /*)*1.0) /Thread::_Statistics::hyperperiod[1])*10000*/
+                            : ((t->_statistics.execution_time));/**1.0)/Thread::_Statistics::hyperperiod[1])*10000*/;
                     t->_statistics.input[COUNTOF(Traits<Monitor>::PMU_EVENTS)+1] = Machine::frequency();
                     t->_statistics.thread_monitoring[COUNTOF(Traits<Monitor>::PMU_EVENTS)+1][Thread::_Statistics::hyperperiod_count[cpu]] = t->_statistics.input[COUNTOF(Traits<Monitor>::PMU_EVENTS)+1];
                     t->_statistics.average_execution_time = 0;
@@ -168,10 +168,10 @@ namespace Scheduling_Criteria {
                 if (train_count > 0) {
                     FANN_EPOS::fann_reset_MSE(Monitor::ann[cpu]);
                     float error = 0;
-                    unsigned int max_train = Traits<PEDF>::MAX_TRAINS;
+                    int max_train = Traits<PEDF>::MAX_TRAINS;
                     bool end = false;
                     int count = 0;
-                    while(!end && max_train) {
+                    while(!end && max_train > 0) {
                         end = true;
                         for (unsigned int i = 0; i < train_count; ++i)
                         {
@@ -233,12 +233,12 @@ namespace Scheduling_Criteria {
                         }
                     }
                     double threshold = 0; // TODO Traits
-                    if (max_variance_t < Traits<PEDF>::VARIANCE_RANGES[0]) {
-                        threshold = Traits<PEDF>::VARIANCE_THRESHOLDS[0]; // 0.05;
-                    } else if (max_variance_t < Traits<PEDF>::VARIANCE_RANGES[1]) {
-                        threshold = Traits<PEDF>::VARIANCE_THRESHOLDS[1]; // 0.1
+                    if (max_variance_t < 100){//Traits<PEDF>::VARIANCE_RANGES[0]) {
+                        threshold = 0.05;//Traits<PEDF>::VARIANCE_THRESHOLDS[0]; // 0.05;
+                    } else if (max_variance_t < 500){//Traits<PEDF>::VARIANCE_RANGES[1]) {
+                        threshold = 0.1;//Traits<PEDF>::VARIANCE_THRESHOLDS[1]; // 0.1
                     } else {
-                        threshold = Traits<PEDF>::VARIANCE_THRESHOLDS[2]; // 0.2
+                        threshold = 0.2;//Traits<PEDF>::VARIANCE_THRESHOLDS[2]; // 0.2
                     }
                     Thread::_Statistics::max_variance[cpu][Thread::_Statistics::hyperperiod_count[cpu]] = max_variance_t;
 
@@ -273,14 +273,9 @@ namespace Scheduling_Criteria {
                     } else {
                         if (!imbalanced) {
                             imbalanced = true;
-                            /* TS4
-                            Thread::_Statistics::migration_hyperperiod[0] = Thread::_Statistics::hyperperiod_count[1];
-                            Thread::_Statistics::migration_hyperperiod[1] = Thread::_Statistics::hyperperiod_count[2];
-                            Thread::_Statistics::migration_hyperperiod[2] = Thread::_Statistics::hyperperiod_count[3];
-                            //db<Thread>(WRN) << "MIGRATION=" << Thread::_Statistics::hyperperiod_count[1] << "," << Thread::_Statistics::hyperperiod_count[2] << "," << Thread::_Statistics::hyperperiod_count[3] << endl;
-
-                            unsigned int x = 2; //from
-                            unsigned int y = 4; // thread
+                            /* TS2
+                            unsigned int x = 3; // from
+                            unsigned int y = 1; // thread // thread 4 - 1
                             unsigned int z = 1; // to
                             Thread::_Statistics::threads_cpu[x][y]->_statistics.migrate_to = z;
                             Thread::_Statistics::threads_cpu[z][Thread::_Statistics::t_count_cpu[z]] = Thread::_Statistics::threads_cpu[x][y];
@@ -292,8 +287,29 @@ namespace Scheduling_Criteria {
                             Thread::_Statistics::t_count_cpu[x]--;
                             Thread::_Statistics::cooldown[x] = true;
                             Thread::_Statistics::cooldown[z] = true;
+                            //*/
+                            
+                            /* TS4
+                            Thread::_Statistics::migration_hyperperiod[0] = Thread::_Statistics::hyperperiod_count[1];
+                            Thread::_Statistics::migration_hyperperiod[1] = Thread::_Statistics::hyperperiod_count[2];
+                            Thread::_Statistics::migration_hyperperiod[2] = Thread::_Statistics::hyperperiod_count[3];
+                            //db<Thread>(WRN) << "MIGRATION=" << Thread::_Statistics::hyperperiod_count[1] << "," << Thread::_Statistics::hyperperiod_count[2] << "," << Thread::_Statistics::hyperperiod_count[3] << endl;
 
-                            x = 3; //from
+                            unsigned int x = 2; //from
+                            unsigned int y = 4; // thread
+                            unsigned int z = 1; // to
+                            //Thread::_Statistics::threads_cpu[x][y]->_statistics.migrate_to = z;
+                            //Thread::_Statistics::threads_cpu[z][Thread::_Statistics::t_count_cpu[z]] = Thread::_Statistics::threads_cpu[x][y];
+                            //Thread::_Statistics::t_count_cpu[z]++;
+                            //for (unsigned int i = y+1; i < Thread::_Statistics::t_count_cpu[x]; ++i)
+                            //{
+                            //    Thread::_Statistics::threads_cpu[x][i-1] = Thread::_Statistics::threads_cpu[x][i];
+                            //}
+                            //Thread::_Statistics::t_count_cpu[x]--;
+                            //Thread::_Statistics::cooldown[x] = true;
+                            //Thread::_Statistics::cooldown[z] = true;
+
+                            x = 3; // from
                             y = 1; // thread
                             z = 1; // to
                             Thread::_Statistics::threads_cpu[x][y]->_statistics.migrate_to = z;
@@ -320,7 +336,7 @@ namespace Scheduling_Criteria {
                             Thread::_Statistics::t_count_cpu[x]--;
                             Thread::_Statistics::cooldown[x] = true;
                             Thread::_Statistics::cooldown[z] = true;
-                            */
+                            //*/
 
                             /* TS3
                             unsigned int x = 2; //from
@@ -364,7 +380,7 @@ namespace Scheduling_Criteria {
                             Thread::_Statistics::t_count_cpu[x]--;
                             Thread::_Statistics::cooldown[x] = true;
                             Thread::_Statistics::cooldown[z] = true;
-                            */
+                            //*/
                             //Machine::clock(1200000000);//freq - (100 * 1000 * 1000));
                             //Monitor::ann[1] = FANN_EPOS::fann_create_from_config();
                             //Monitor::ann[2] = FANN_EPOS::fann_create_from_config();

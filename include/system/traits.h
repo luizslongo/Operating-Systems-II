@@ -586,7 +586,7 @@ template<> struct Traits<Scheduling_Criteria::PEDF>: public Traits_Tokens
     static const unsigned int MAX_TRAINS = 8;
     static constexpr float TRAIN_MIN_ERROR = 0.02;
     static constexpr int VARIANCE_RANGES[] = {100, 500};
-    static constexpr float VARIANCE_THRESHOLDS[] = {0.05, 0.1, 0.2};
+    static constexpr float VARIANCE_THRESHOLDS[] = {0.2, 0.2, 0.2};
 };
 
 template<> struct Traits<Scheduling_Criteria::Priority>: public Traits_Tokens

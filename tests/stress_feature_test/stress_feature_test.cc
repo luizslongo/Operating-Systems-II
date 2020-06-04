@@ -15,7 +15,7 @@ OStream cout;
 typedef TSC::Time_Stamp Time_Stamp;
 
 // Configuration
-const unsigned int  TEST_LENGTH            = 40; // in seconds
+const unsigned int  TEST_LENGTH            = 20; // in seconds
 const bool          MEASURE_TIME           = false;
 // To be measured
 const float         MEMORY_IT_LENGHT       = 150;//150;    // 0.4 in microseconds
@@ -37,7 +37,7 @@ constexpr static struct Task_Set {
     const unsigned int f;
 } set[THREADS] = {
     //PERIOD,DEADLINE,WCET,CPU,TASK
-    // /* TS1
+    ///* TS1
     {500000, 500000, 100000,2,0},   // 20 - band
     {500000, 500000, 100000,2,2},   // 20 - disp
 
@@ -48,18 +48,41 @@ constexpr static struct Task_Set {
     {500000, 500000, 100000,4,2},   // 20 - disp
     //*/
 
+    /* TS2
+    { 250000,  250000,  50000,2,0},   // 20 - band
+    { 500000,  500000, 100000,2,2},   // 20 - disp
+
+    {1000000, 1000000, 200000,3,2},   // 20 - disp
+    { 250000,  250000,  35000,3,1},   // 20 - cpu
+
+    { 125000,  125000,  20000,4,1},   // 20 - cpu
+    { 250000,  250000, 100000,4,2},   // 20 - disp
+    //*/
+
+    /* TS3
+    { 100000,  100000,  10000,2,0},   // 20 - band
+
+    { 100000,  100000,   5000,3,0},   // 20 - band
+    {1000000, 1000000, 400000,3,2},   // 20 - disp
+
+    { 100000,  100000,  30000,4,1},   // 20 - cpu
+    { 500000,  500000, 100000,4,2},   // 20 - disp
+    { 250000,  250000,  60000,4,1},   // 20 - cpu
+    {1000000, 1000000, 100000,4,0},   // band
+    //*/
+
     /* TS4
     // Band on CPU 1
-    {250000,250000,50000,2,0},      // 20 - band
+    {250000,250000,50000,2,0},      // 20 - band 50000
 
     // Disparity on CPU 2 (Parallel to band on 1)
     {1000000,1000000,200000,3,1},   // 20 - cpu
     {1000000,1000000,200000,3,2},   // 20 - disp
-    {500000, 500000, 100000,3,1},   // 20 - disp
-    {500000, 500000,  50000,3,0},   // 10 - band
+    {500000, 500000, 100000,3,1},   // 20 - cpu
+    //{500000, 500000,  50000,3,0}, // 10 - band
 
-    {500000,500000,100000,4,0},  // 20 - band
-    {1000000,1000000,200000,4,2}, // 20 - disp
+    { 125000,  125000,  25000,4,0}, // 20 - band
+    {1000000, 1000000, 200000,4,2}, // 20 - disp
     //*/
 };
 
@@ -208,12 +231,13 @@ int freq_control() {
     int count_dvfs = 1;
     for (int i = 0; i < iters; ++i)
     {
-        if (!(i % 5) && i > 0) {
-            cout << "Iter" << i << " - Clock = " << Machine::clock(1200000000 - (count_dvfs % 7)*100000000) << endl; // " - Keep Alive" << endl;//
-            count_dvfs++;
-        } else {
-            cout << "Iter" << i << " - Keep Alive" << endl;
-        }
+        // 120 - 110 - 100 - 90 - 80 - 70 - 60
+        //if (!(i % 20) && i > 0) {
+            //cout << "Iter" << i << " - Clock = " << Machine::clock(1200000000 - (count_dvfs % 7)*100000000) << endl; // " - Keep Alive" << endl;//
+        //    count_dvfs++;
+        //} else {
+            //cout << "Iter" << i << " - Keep Alive" << endl;
+        //}
         Delay(1000000);
     }
     return iters;
@@ -223,7 +247,7 @@ int main_t(int thread_init, int thread_end, int exec)
 {
     cout << "Begin Main, img1=" << sizeof(img1)*sizeof(signed char) << ",g_mem_ptr=" << G_MEM_SIZE << endl;
     cout << "clock["<< CPU::id() <<"]" << Machine::clock() << endl;
-    Hertz new_clock = 1200000000;
+    Hertz new_clock = 600000000;
     cout << "    clock change to" << new_clock << "Hz" << endl;
     cout << "    clock now is = " << Machine::clock(new_clock) << endl;
 
@@ -310,6 +334,7 @@ int main_t(int thread_init, int thread_end, int exec)
     cout << "Elapsed = " << us(times) << endl;
     cout << "Threads=" << THREADS << endl;
 
+    /*
     cout << "-----------------------------------------------------" << endl;
     cout << "...............Threads Timing Behavior..............." << endl;
     cout << "-----------------------------------------------------" << endl;
@@ -344,6 +369,7 @@ int main_t(int thread_init, int thread_end, int exec)
         delete threads[i];
     }
     cout << "\n";
+    //*/
 
     return 0;
 }

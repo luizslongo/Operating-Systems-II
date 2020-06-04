@@ -104,7 +104,7 @@ public:
                 for (i = 1; i < Traits<Build>::CPUS; ++i)
                 {
                     os << "train cpu[" << i << ",t" << j << "]=\n";
-                    for (unsigned int k = 0; k < 4*2*2; ++k) // TODO threshold at traits
+                    for (unsigned int k = 0; k < Traits<Monitor>::MAX_TRAINS*2; ++k) // TODO threshold at traits
                     {
                         os << Thread::_Statistics::trains_err[i][j][k] << "\n";
                     } 
