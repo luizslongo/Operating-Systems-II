@@ -83,7 +83,7 @@ public:
 
     // Thread Statistics (mostly for Monitor)
     struct _Statistics {
-        _Statistics(): execution_time(0), last_execution(0), wcet(0), jobs(0), average_execution_time(0), hyperperiod_count_thread(0), period(0), captures(0), migrate_to(0), alarm_times(0), times_p_count(0), missed_deadlines(0) {}
+        _Statistics(): execution_time(0), last_execution(0), wcet(0), jobs(0), average_execution_time(0), hyperperiod_count_thread(0), period(0), captures(0), migrate_to(-1), alarm_times(0), times_p_count(0), missed_deadlines(0) {}
 
         // Thread Execution Time (limited to 32bits counting, a hyperperiod greater than 32bits is not supported)
         TSC::Time_Stamp execution_time;
@@ -94,7 +94,7 @@ public:
         unsigned int hyperperiod_count_thread;
         unsigned int period;
         unsigned int captures; // TO_CHECK
-        unsigned int migrate_to;
+        int migrate_to;
 
         // Dealine Miss count
         Alarm * alarm_times;

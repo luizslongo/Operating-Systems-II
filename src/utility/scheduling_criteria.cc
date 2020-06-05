@@ -40,7 +40,7 @@ namespace Scheduling_Criteria {
         if (learning){
             unsigned int cpu = CPU::id();
             Thread *t;
-            double pre_mean;
+            float pre_mean;
             for (unsigned int i = 0; i < Thread::_Statistics::t_count_cpu[cpu]; i++)
             {
                 t = Thread::_Statistics::threads_cpu[cpu][i];
@@ -140,8 +140,8 @@ namespace Scheduling_Criteria {
                 FANN_EPOS::fann_type desired_output[train_limit];
 
                 Thread *t;
-                double pre_mean;
-                double value;
+                float pre_mean;
+                float value;
                 for (unsigned int i = 0; i < Thread::_Statistics::t_count_cpu[cpu]; i++)
                 {
                     t = Thread::_Statistics::threads_cpu[cpu][i];
@@ -216,7 +216,7 @@ namespace Scheduling_Criteria {
                     Thread *t;
                     bool error = false;
                     int max_variance_t = 0;
-                    double aux = 0;
+                    float aux = 0;
                     for (unsigned int i = 0; i < Thread::_Statistics::t_count_cpu[cpu]; i++)
                     {
                         t = Thread::_Statistics::threads_cpu[cpu][i];
@@ -232,20 +232,16 @@ namespace Scheduling_Criteria {
                             error = true;
                         }
                     }
-                    double threshold = 0; // TODO Traits
-                    if (max_variance_t < 100){//Traits<PEDF>::VARIANCE_RANGES[0]) {
-                        threshold = 0.05;//Traits<PEDF>::VARIANCE_THRESHOLDS[0]; // 0.05;
-                    } else if (max_variance_t < 500){//Traits<PEDF>::VARIANCE_RANGES[1]) {
-                        threshold = 0.1;//Traits<PEDF>::VARIANCE_THRESHOLDS[1]; // 0.1
+                    float threshold = 0;
+                    if (max_variance_t < Traits<Monitor>::VARIANCE_RANGES[0]) {
+                        threshold = Traits<Monitor>::VARIANCE_THRESHOLDS[0]; // 0.05;
+                    } else if (max_variance_t < Traits<Monitor>::VARIANCE_RANGES[1]) {
+                        threshold = Traits<Monitor>::VARIANCE_THRESHOLDS[1]; // 0.1
                     } else {
-                        threshold = 0.2;//Traits<PEDF>::VARIANCE_THRESHOLDS[2]; // 0.2
+                        threshold = Traits<Monitor>::VARIANCE_THRESHOLDS[2]; // 0.2
                     }
                     Thread::_Statistics::max_variance[cpu][Thread::_Statistics::hyperperiod_count[cpu]] = max_variance_t;
 
-                    // margem para baixar pode ser um algoritmo estatistico para medir a variação do sistema
-                    // variancia para margem, se o comportamento esta regular, redução mais agressiva.
-                    // Beta, taxa de desconfiança da IA
-                    // Soma tudo (overhead do SO ta incorporada nos contadores) < 1 - Beta_variancia (.95, .9, .8)
                     Thread::_Statistics::decrease_frequency[cpu] = usage < (1 - threshold);
 
                     Thread::_Statistics::prediction_ready[cpu] = !error;

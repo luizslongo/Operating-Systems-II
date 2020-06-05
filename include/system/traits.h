@@ -571,7 +571,7 @@ struct Traits {
     typedef ALIST<> ASPECTS;
 };
 
-template<> struct Traits<Scheduling_Criteria::PEDF>: public Traits_Tokens
+template<> struct Traits<Scheduling_Criteria::PEDF>: public Traits_Tokens // Energy Optimizer
 {
     static constexpr System_Event SYSTEM_EVENTS[]                 = {THREAD_EXECUTION_TIME, CPU_FREQUENCY, DEADLINE_MISSES};
     static constexpr unsigned int SYSTEM_EVENTS_FREQUENCIES[]     = {2, 2, 2                };//{106, 106};// // in Hz
@@ -586,19 +586,19 @@ template<> struct Traits<Scheduling_Criteria::PEDF>: public Traits_Tokens
     static const unsigned int MAX_TRAINS = 8;
     static constexpr float TRAIN_MIN_ERROR = 0.02;
     static constexpr int VARIANCE_RANGES[] = {100, 500};
-    static constexpr float VARIANCE_THRESHOLDS[] = {0.2, 0.2, 0.2};
+    static constexpr float VARIANCE_THRESHOLDS[] = {0.05, 0.1, 0.2};
 };
 
-template<> struct Traits<Scheduling_Criteria::Priority>: public Traits_Tokens
+template<> struct Traits<Scheduling_Criteria::Priority>: public Traits_Tokens // Normal Application
 {
-    static constexpr System_Event SYSTEM_EVENTS[]                 = {THREAD_EXECUTION_TIME, CPU_FREQUENCY, DEADLINE_MISSES};
-    static constexpr unsigned int SYSTEM_EVENTS_FREQUENCIES[]     = {2, 2, 2                };//{106, 106};// // in Hz
+    static constexpr System_Event SYSTEM_EVENTS[]                 = {ELAPSED_TIME, DEADLINE_MISSES, CPU_EXECUTION_TIME, THREAD_EXECUTION_TIME, RUNNING_THREAD};
+    static constexpr unsigned int SYSTEM_EVENTS_FREQUENCIES[]     = {           1,               1,                  1,                     1,              1}; // in Hz
 
-    static constexpr PMU_Event PMU_EVENTS[]                       = {BUS_ACCESS_ST_CA53_v8, DATA_WRITE_STALL_ST_BUFFER_FULL_CA53_v8, IMMEDIATE_BRANCHES_CA, L2D_WRITEBACK, CPU_CYCLES, L1_CACHE_HITS};
-    static constexpr unsigned int PMU_EVENTS_FREQUENCIES[]        = {2,2,2,2,2,2};//,106,106,106}; // in Hz
+    static constexpr PMU_Event PMU_EVENTS[]                       = {COMMITED_INSTRUCTIONS, BRANCHES, CACHE_MISSES};
+    static constexpr unsigned int PMU_EVENTS_FREQUENCIES[]        = {                    1,        1,            1}; // in Hz
 
-    static constexpr unsigned int TRANSDUCER_EVENTS[]             = {};
-    static constexpr unsigned int TRANSDUCER_EVENTS_FREQUENCIES[] = {}; // in Hz
+    static constexpr unsigned int TRANSDUCER_EVENTS[]             = {CPU_VOLTAGE, CPU_TEMPERATURE};
+    static constexpr unsigned int TRANSDUCER_EVENTS_FREQUENCIES[] = {          0,           0}; // in Hz
 
     // ANN
     static const unsigned int MAX_TRAINS = 0;

@@ -18,16 +18,13 @@ typedef TSC::Time_Stamp Time_Stamp;
 const unsigned int  TEST_LENGTH            = 20; // in seconds
 const bool          MEASURE_TIME           = false;
 // To be measured
-const float         MEMORY_IT_LENGHT       = 150;//150;    // 0.4 in microseconds
-const float         MEMORY_IT_LENGHT_T8    = 3;
-const float         MEMORY_IT_LENGHT_T9    = 4;
-const float         MEMORY2_IT_LENGHT      = 1000;
-const unsigned int  CPU_IT_LENGHT          = 900; //1000  // in microseconds
+const float         MEMORY_IT_LENGHT       = 150;  // in microseconds
+const unsigned int  CPU_IT_LENGHT          = 900;  // in microseconds
 const unsigned int  MIDTERM_IT_LENGHT      = 100000;  // in microseconds
 
-constexpr float TIMES[4] = { MEMORY_IT_LENGHT, CPU_IT_LENGHT, MIDTERM_IT_LENGHT, MEMORY2_IT_LENGHT};
+constexpr float TIMES[4] = { MEMORY_IT_LENGHT, CPU_IT_LENGHT, MIDTERM_IT_LENGHT};
 
-const unsigned int THREADS             = 6;//12;//8;//11;
+const unsigned int THREADS             = 6;//7;
 
 constexpr static struct Task_Set {
     const unsigned int p;
@@ -85,12 +82,6 @@ constexpr static struct Task_Set {
     {1000000, 1000000, 200000,4,2}, // 20 - disp
     //*/
 };
-
-
-/* Think section
- * make thread [0] migrate every 10 executions to the other CPUS, print statistics at each migration
-*/
-unsigned int migrations_iters = 0;
 
 inline constexpr int calc_iter_per_job(int i) {
     return set[i].c/TIMES[set[i].f];
@@ -214,17 +205,17 @@ void run_func() {
 }
 
 Thread * threads[THREADS];
-/*
+///*
 template<int ID>
-inline void init_threads(Microsecond activation, TSC::Time_Stamp tsc0) {
+inline void init_threads(Microsecond activation) {
     cout << ID << ",i=" << jobs.value[ID] << ",ij=" << iter_per_job.value[ID] << endl;
     threads[ID] = new RT_Thread(&run_func<ID>, set[ID].d, set[ID].p, set[ID].c, activation, jobs.value[ID], set[ID].cpu-1);
-    init_threads<ID + 1>(activation, tsc0);
+    init_threads<ID + 1>(activation);
 };
 
 template<>
-inline void init_threads<THREADS>(Microsecond activation, TSC::Time_Stamp tsc0) {}
-*/
+inline void init_threads<THREADS>(Microsecond activation) {}
+//*/
 int freq_control() {
     Hertz clock_base = 1200000000;
     int iters = (TEST_LENGTH*1000000)/1000000; // each 2 hyp
@@ -243,18 +234,18 @@ int freq_control() {
     return iters;
 }
 
-int main_t(int thread_init, int thread_end, int exec)
+int main()//int thread_init, int thread_end, int exec)
 {
     cout << "Begin Main, img1=" << sizeof(img1)*sizeof(signed char) << ",g_mem_ptr=" << G_MEM_SIZE << endl;
     cout << "clock["<< CPU::id() <<"]" << Machine::clock() << endl;
-    Hertz new_clock = 600000000;
+    Hertz new_clock = 1200000000;
     cout << "    clock change to" << new_clock << "Hz" << endl;
     cout << "    clock now is = " << Machine::clock(new_clock) << endl;
 
     Delay(500000);
     cout << "SETUP" << endl;
     unsigned int cpu = 1;
-    for (unsigned int i = thread_init; i < thread_end; ++i)
+    for (unsigned int i = 0; i < THREADS; ++i)//thread_init; i < thread_end; ++i)
     {
         if (set[i].f == 2) {
             t_img1[i] = new signed char[sizeof(img1)];
@@ -275,35 +266,26 @@ int main_t(int thread_init, int thread_end, int exec)
             }
         }
     }
-    cout << "ALLOCATION=0,1;2,3;4,5" << endl;
+    cout << "ALLOCATION=";
+    unsigned int count = 0;
+    for (int i = 1; i < 4; ++i)
+    {
+        count = 0;
+        for (int j = 0; j < THREADS; ++j)
+        {
+            if(set[j].cpu-1 == i) {
+                if (count == 0)
+                    cout << j;
+                else
+                    cout << "," << j;
+            }
+        }
+        cout << ";"
+    }
+    cout << endl;
 
     Time_Stamp tsc0 = get_time()+Convert::us2count<Time_Stamp, Time_Base>(TSC::frequency(),10000);
-    //switch(exec) {
-    //    case 0:
-            cout << 0 << ",i=" << jobs.value[0] << ",ij=" << iter_per_job.value[0] << endl;
-            threads[0] = new RT_Thread(&run_func<0>, set[0].d, set[0].p, set[0].c, 10000, jobs.value[0], set[0].cpu-1);
-            cout << 1 << ",i=" << jobs.value[1] << ",ij=" << iter_per_job.value[1] << endl;
-            threads[1] = new RT_Thread(&run_func<1>, set[1].d, set[1].p, set[1].c, 10000, jobs.value[1], set[1].cpu-1);
-    //        break;
-    //    case 1:
-            cout << 2 << ",i=" << jobs.value[2] << ",ij=" << iter_per_job.value[2] << endl;
-            threads[2] = new RT_Thread(&run_func<2>, set[2].d, set[2].p, set[2].c, 10000, jobs.value[2], set[2].cpu-1);
-            cout << 3 << ",i=" << jobs.value[3] << ",ij=" << iter_per_job.value[3] << endl;
-            threads[3] = new RT_Thread(&run_func<3>, set[3].d, set[3].p, set[3].c, 10000, jobs.value[3], set[3].cpu-1);
-            cout << 4 << ",i=" << jobs.value[4] << ",ij=" << iter_per_job.value[4] << endl;
-            threads[4] = new RT_Thread(&run_func<4>, set[4].d, set[4].p, set[4].c, 10000, jobs.value[4], set[4].cpu-1);
-    //        break;
-    //    default:
-            cout << 5 << ",i=" << jobs.value[5] << ",ij=" << iter_per_job.value[5] << endl;
-            threads[5] = new RT_Thread(&run_func<5>, set[5].d, set[5].p, set[5].c, 10000, jobs.value[5], set[5].cpu-1);
-            //cout << 6 << ",i=" << jobs.value[6] << ",ij=" << iter_per_job.value[6] << endl;
-            //threads[6] = new RT_Thread(&run_func<6>, set[6].d, set[6].p, set[6].c, 10000, jobs.value[6], set[6].cpu-1);
-            //cout << 6 << ",i=" << jobs.value[6] << ",ij=" << iter_per_job.value[6] << endl;
-            //threads[6] = new RT_Thread(&run_func<6>, set[6].d, set[6].p, set[6].c, 10000, jobs.value[6], set[6].cpu-1);
-    //        cout << 7 << ",i=" << jobs.value[7] << ",ij=" << iter_per_job.value[7] << endl;
-    //        threads[7] = new RT_Thread(&run_func<7>, set[7].d, set[7].p, set[7].c, 10000, jobs.value[7], set[7].cpu-1);
-    //        break;
-    //}
+    init_threads<0>(10000);
 
     Monitor::enable_captures(tsc0);
     cout << "All TASKs created" << ",Time=" << us(tsc0) << endl;
@@ -374,8 +356,38 @@ int main_t(int thread_init, int thread_end, int exec)
     return 0;
 }
 
+// Trash can
+/*
+
+//switch(exec) {
+//    case 0:
+        cout << 0 << ",i=" << jobs.value[0] << ",ij=" << iter_per_job.value[0] << endl;
+        threads[0] = new RT_Thread(&run_func<0>, set[0].d, set[0].p, set[0].c, 10000, jobs.value[0], set[0].cpu-1);
+        cout << 1 << ",i=" << jobs.value[1] << ",ij=" << iter_per_job.value[1] << endl;
+        threads[1] = new RT_Thread(&run_func<1>, set[1].d, set[1].p, set[1].c, 10000, jobs.value[1], set[1].cpu-1);
+//        break;
+//    case 1:
+        cout << 2 << ",i=" << jobs.value[2] << ",ij=" << iter_per_job.value[2] << endl;
+        threads[2] = new RT_Thread(&run_func<2>, set[2].d, set[2].p, set[2].c, 10000, jobs.value[2], set[2].cpu-1);
+        cout << 3 << ",i=" << jobs.value[3] << ",ij=" << iter_per_job.value[3] << endl;
+        threads[3] = new RT_Thread(&run_func<3>, set[3].d, set[3].p, set[3].c, 10000, jobs.value[3], set[3].cpu-1);
+        cout << 4 << ",i=" << jobs.value[4] << ",ij=" << iter_per_job.value[4] << endl;
+        threads[4] = new RT_Thread(&run_func<4>, set[4].d, set[4].p, set[4].c, 10000, jobs.value[4], set[4].cpu-1);
+//        break;
+//    default:
+        cout << 5 << ",i=" << jobs.value[5] << ",ij=" << iter_per_job.value[5] << endl;
+        threads[5] = new RT_Thread(&run_func<5>, set[5].d, set[5].p, set[5].c, 10000, jobs.value[5], set[5].cpu-1);
+        //cout << 6 << ",i=" << jobs.value[6] << ",ij=" << iter_per_job.value[6] << endl;
+        //threads[6] = new RT_Thread(&run_func<6>, set[6].d, set[6].p, set[6].c, 10000, jobs.value[6], set[6].cpu-1);
+        //cout << 6 << ",i=" << jobs.value[6] << ",ij=" << iter_per_job.value[6] << endl;
+        //threads[6] = new RT_Thread(&run_func<6>, set[6].d, set[6].p, set[6].c, 10000, jobs.value[6], set[6].cpu-1);
+//        cout << 7 << ",i=" << jobs.value[7] << ",ij=" << iter_per_job.value[7] << endl;
+//        threads[7] = new RT_Thread(&run_func<7>, set[7].d, set[7].p, set[7].c, 10000, jobs.value[7], set[7].cpu-1);
+//        break;
+//}
+
 int main() {
-    cout << "BATCH MAIN, help me JESUS!" << endl;
+    cout << "BATCH MAIN" << endl;
     cout << "Lets call first main! From t=" << 0 << " to t=" << 2 << "!" << endl;
     //main_t(0, 2, 0);
     //Monitor::reset_accounting();
@@ -388,8 +400,6 @@ int main() {
     return 0;
 }
 
-// Trash can
-/*
 void calc_iter_per_job() {
     for (int i = 0; i < THREADS; i++)
     {
