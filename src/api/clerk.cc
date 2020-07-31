@@ -21,10 +21,10 @@ extern "C" {extern unsigned int __bss_end__;}
 volatile bool Monitor::enable_injector[Traits<Build>::CPUS];
 unsigned int **Monitor::anomalous_behaviour[Traits<Build>::CPUS];
 unsigned int Monitor::samples[Traits<Build>::CPUS];
-const float Monitor::SLOPE = 0;
-const float Monitor::STUCK = 0;
-const float Monitor::BIAS = 0;
-const float Monitor::GAIN = 0;
+const float Monitor::SLOPE[6] = {0,0,0,0,0,0};
+const float Monitor::STUCK[6] = {0,0,0,0,0,0};
+const float Monitor::BIAS[6] = {0,0,0,0,0,0};
+const float Monitor::GAIN[6] = {0,0,0,0,0,0};
 
 #endif
 

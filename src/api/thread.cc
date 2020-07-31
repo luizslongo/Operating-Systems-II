@@ -436,6 +436,15 @@ void Thread::dispatch(Thread * prev, Thread * next, bool charge)
                 next->_statistics.hyperperiod_count_thread = next->_statistics.hyperperiod_count[cpu];
             }
         }
+        // if (prev->priority() == IDLE) {
+        //     Monitor::enable_injector[1] = true;
+        //     Monitor::enable_injector[2] = true;
+        //     Monitor::enable_injector[3] = true;
+        // } else {
+        //     Monitor::enable_injector[1] = false;
+        //     Monitor::enable_injector[2] = false;
+        //     Monitor::enable_injector[3] = false;
+        // }
         TSC::Time_Stamp t0 = TSC::time_stamp();
         monitor_captured[cpu][monitor_reads[cpu]] = Monitor::run();
         monitor_time[cpu][monitor_reads[cpu]] = TSC::time_stamp() - t0;

@@ -45,10 +45,10 @@ protected:
     static const unsigned int RANGE = 0; //the time window applying the Aggregators
     static const unsigned int SPACING = 0; //the time between applying windows
     static const Aggregator AGGREGATOR = FAULT_INJECTOR;
-    static const float SLOPE; //drift parameter
-    static const float STUCK; //stuck parameter
-    static const float BIAS; //bias parameter
-    static const float GAIN; //gain parameter
+    static const float SLOPE[6]; //drift parameter
+    static const float STUCK[6]; //stuck parameter
+    static const float BIAS[6]; //bias parameter
+    static const float GAIN[6]; //gain parameter
 public:
     static volatile bool enable_injector[Traits<Build>::CPUS];
     static unsigned int samples[Traits<Build>::CPUS];
@@ -63,9 +63,20 @@ public:
 
     virtual bool capture() = 0;
     virtual void reset() = 0;
+    virtual void reset_accounting_clerk() = 0;
     virtual void print(OStream & os) const = 0;
 
     static bool run();
+
+    static void reset_accounting() {
+        process_batch();
+        for(unsigned int n = 0; n < CPU::cores(); n++) {
+            for(List::Iterator it = _monitors[n].begin(); it != _monitors[n].end(); it++) {
+                it->object()->reset_accounting_clerk();
+            }
+        }
+        // Thread::reset_statistics();
+    }
 
     static void process_batch() {
         disable_captures();
@@ -208,6 +219,10 @@ public:
         _clerk->reset();
     }
 
+    void reset_accounting_clerk() {
+        _captures = 0;
+    }
+
     void print(OStream & os) const {
         if (_data_to_us) {
             for(unsigned int i = 0; i < _captures; i++)
@@ -222,116 +237,155 @@ public:
         switch(AGGREGATOR) {
         case DRIFT:
             //check
-            if(SLOPE <= 0)
+            if(SLOPE[_index] <= 0)
                 return;
-            //init
-            if(_aggregator_begin == 0)
-                _aggregator_begin = s->ts + DELAY;
-            //apply
-            if(s->ts >= _aggregator_begin && (s->ts <= (_aggregator_begin + RANGE) || RANGE == 0)) {
-                s->data = s->data + SLOPE * (++_aggregator_count);
-            } else { //reset
-                if (SPACING > 0 && RANGE != 0) {
-                    _aggregator_begin = s->ts + SPACING;
-                    _aggregator_count = 0;
+            if(enable_injector[_core]) {
+                //init
+                if(_aggregator_begin == 0)
+                    _aggregator_begin = s->ts + DELAY;
+                if (_captures >= 1) {
+                    if(_buffer[_captures - 1].ts >= s->ts)
+                        _aggregator_begin = s->ts + DELAY;
+                }
+                //apply
+                if(s->ts >= _aggregator_begin && (s->ts <= (_aggregator_begin + RANGE) || RANGE == 0)) {
+                    s->data = s->data + SLOPE[_index] * (++_aggregator_count) * _period;
+                    _clerk->write(s->data);
+                } else { //reset
+                    if (SPACING > 0 && RANGE != 0 && s->ts > _aggregator_begin) {
+                        _aggregator_begin = s->ts + SPACING;
+                        _aggregator_count = 0;
+                    }
                 }
             }
             return;
         case STUCK_AT:
             //no check is needed
+            if(enable_injector[_core]) {
             //init
-            if(_aggregator_begin == 0)
-                _aggregator_begin = s->ts + DELAY;
-            //apply
-            if(s->ts >= _aggregator_begin && (s->ts <= (_aggregator_begin + RANGE) || RANGE == 0)) {
-                if (_aggregator_last == 0) {
-                    _aggregator_last = s->data;
+                if(_aggregator_begin == 0)
+                    _aggregator_begin = s->ts + DELAY;
+                if (_captures >= 1) {
+                    if(_buffer[_captures - 1].ts >= s->ts)
+                        _aggregator_begin = s->ts + DELAY;
                 }
-                s->data = _aggregator_last;
-            } else { //reset
-                if (SPACING > 0 && RANGE != 0) {
-                    _aggregator_begin = s->ts + SPACING;
-                    _aggregator_last = 0;
+                //apply
+                if(s->ts >= _aggregator_begin && (s->ts <= (_aggregator_begin + RANGE) || RANGE == 0)) {
+                    if (_aggregator_last == 0) {
+                        _aggregator_last = s->data;
+                    }
+                    s->data = _aggregator_last;
+                    _clerk->write(s->data);
+                } else { //reset
+                    if (SPACING > 0 && RANGE != 0 && s->ts > _aggregator_begin) {
+                        _aggregator_begin = s->ts + SPACING;
+                        _aggregator_last = 0;
+                    }
                 }
             }
             return;
         case CONST_BIAS:
             //check
-            if(BIAS <= 0)
+            if(BIAS[_index] <= 0)
                 return;
-            //init
-            if(_aggregator_begin == 0)
-                _aggregator_begin = s->ts + DELAY;
-            //apply
-            if(s->ts >= _aggregator_begin && (s->ts <= (_aggregator_begin + RANGE) || RANGE == 0)) {
-                s->data = s->data + BIAS;
-            } else { //reset
-                if (SPACING > 0 && RANGE != 0) {
-                    _aggregator_begin = s->ts + SPACING;
+            if(enable_injector[_core]) {
+                //init
+                if(_aggregator_begin == 0)
+                    _aggregator_begin = s->ts + DELAY;
+                if (_captures >= 1) {
+                    if(_buffer[_captures - 1].ts >= s->ts)
+                        _aggregator_begin = s->ts + DELAY;
+                }
+                //apply
+                if(s->ts >= _aggregator_begin && (s->ts <= (_aggregator_begin + RANGE) || RANGE == 0)) {
+                    s->data = s->data + BIAS[_index];
+                    _clerk->write(s->data);
+                } else { //reset
+                    if (SPACING > 0 && RANGE != 0 && s->ts > _aggregator_begin) {
+                        _aggregator_begin = s->ts + SPACING;
+                    }
                 }
             }
             return;
         case CONST_GAIN:
             //check
-            if(GAIN <= 0)
+            if(GAIN[_index] <= 0)
                 return;
-            //init
-            if(_aggregator_begin == 0)
-                _aggregator_begin = s->ts + DELAY;
-            //apply
-            if(s->ts >= _aggregator_begin && (s->ts <= (_aggregator_begin + RANGE) || RANGE == 0)) {
-                s->data = s->data * GAIN;
-            } else { //reset
-                if (SPACING > 0 && RANGE != 0) {
-                    _aggregator_begin = s->ts + SPACING;
-                    _aggregator_count = 0;
+            if(enable_injector[_core]) {
+                //init
+                if(_aggregator_begin == 0)
+                    _aggregator_begin = s->ts + DELAY;
+                if (_captures >= 1) {
+                    if(_buffer[_captures - 1].ts >= s->ts)
+                        _aggregator_begin = s->ts + DELAY;
+                }
+                //apply
+                if(s->ts >= _aggregator_begin && (s->ts <= (_aggregator_begin + RANGE) || RANGE == 0)) {
+                    s->data = s->data * GAIN[_index];
+                    _clerk->write(s->data);
+                } else { //reset
+                    if (SPACING > 0 && RANGE != 0 && s->ts > _aggregator_begin) {
+                        _aggregator_begin = s->ts + SPACING;
+                        _aggregator_count = 0;
+                    }
                 }
             }
             return;
         case MULT_ANOMALIES:
             //no checks needed
-            //init
-            if(_aggregator_begin == 0)
-                _aggregator_begin = s->ts + DELAY;
-            //apply
-            if(s->ts >= _aggregator_begin && (s->ts <= (_aggregator_begin + RANGE) || RANGE == 0)) {
-                if (_aggregator_applied == 0) {
-                    if (SLOPE == 0) {
-                        _aggregator_applied +=1;
-                    } else {
-                        s->data = s->data + SLOPE * (++_aggregator_count);
-                    }
+            if(enable_injector[_core]) {
+                //init
+                if(_aggregator_begin == 0)
+                    _aggregator_begin = s->ts + DELAY;
+                if (_captures >= 1) {
+                    if(_buffer[_captures - 1].ts >= s->ts)
+                        _aggregator_begin = s->ts + DELAY;
                 }
-                if (_aggregator_applied == 1) {
-                    if (STUCK == 0) {
-                        _aggregator_applied +=1;
-                    } else {
-                        if (_aggregator_last == 0) {
-                            _aggregator_last = s->data;
+                //apply
+                if(s->ts >= _aggregator_begin && (s->ts <= (_aggregator_begin + RANGE) || RANGE == 0)) {
+                    if (_aggregator_applied == 0) {
+                        if (SLOPE[_index] == 0) {
+                            _aggregator_applied +=1;
+                        } else {
+                            s->data = s->data + SLOPE[_index] * (++_aggregator_count) * _period;
+                            _clerk->write(s->data);
                         }
                         s->data = _aggregator_last;
                     }
-                }
-                if (_aggregator_applied == 2) {
-                    if (BIAS == 0) {
-                        _aggregator_applied +=1;
-                    } else {
-                        s->data = s->data + BIAS;
+                    if (_aggregator_applied == 1) {
+                        if (STUCK[_index] == 0) {
+                            _aggregator_applied +=1;
+                        } else {
+                            if (_aggregator_last == 0) {
+                                _aggregator_last = s->data;
+                            }
+                            s->data = _aggregator_last;
+                            _clerk->write(s->data);
+                        }
                     }
-                }
-                if (_aggregator_applied == 3) {
-                    if (GAIN == 0) {
-                        _aggregator_applied +=1;
-                    } else {
-                        s->data = s->data * GAIN;
+                    if (_aggregator_applied == 2) {
+                        if (BIAS[_index] == 0) {
+                            _aggregator_applied +=1;
+                        } else {
+                            s->data = s->data + BIAS[_index];
+                            _clerk->write(s->data);
+                        }
                     }
-                }
-            } else { //reset
-                if (SPACING > 0 && RANGE != 0) {
-                    _aggregator_begin = s->ts + SPACING;
-                    _aggregator_count = 0;
-                    _aggregator_last = 0;
-                    _aggregator_applied += 1;
+                    if (_aggregator_applied == 3) {
+                        if (GAIN[_index] == 0) {
+                            _aggregator_applied +=1;
+                        } else {
+                            s->data = s->data * GAIN[_index];
+                            _clerk->write(s->data);
+                        }
+                    }
+                } else { //reset
+                    if (SPACING > 0 && RANGE != 0 && s->ts > _aggregator_begin) {
+                        _aggregator_begin = s->ts + SPACING;
+                        _aggregator_count = 0;
+                        _aggregator_last = 0;
+                        _aggregator_applied += 1;
+                    }
                 }
             }
             return;
