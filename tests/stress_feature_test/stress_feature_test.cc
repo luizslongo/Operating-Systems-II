@@ -278,9 +278,10 @@ int main()//int thread_init, int thread_end, int exec)
                     cout << j;
                 else
                     cout << "," << j;
+                count++;
             }
         }
-        cout << ";"
+        cout << ";";
     }
     cout << endl;
 
@@ -291,9 +292,10 @@ int main()//int thread_init, int thread_end, int exec)
     cout << "All TASKs created" << ",Time=" << us(tsc0) << endl;
     Thread * freq = new Thread(Thread::Configuration(Thread::READY, Thread::Criterion(1000000, 1000000, 10000, 0)), &freq_control);
 
-    for (int i = thread_init; i < thread_end; ++i)
+    for (int i = 0; i < THREADS; ++i)
     {
         threads[i]->join();
+        Monitor::disable_captures();
         cout << "T["<< i << "]" << endl;
         ///*
         for (unsigned int j = 0; j < TEST_LENGTH*2; ++j)
@@ -320,7 +322,7 @@ int main()//int thread_init, int thread_end, int exec)
     cout << "-----------------------------------------------------" << endl;
     cout << "...............Threads Timing Behavior..............." << endl;
     cout << "-----------------------------------------------------" << endl;
-    for (int i = thread_init; i < thread_end; ++i)
+    for (int i = 0; i < THREADS; ++i)
     {
         cout<<"t"<<i<<": "<<reinterpret_cast<unsigned int>(threads[i])<<endl;
         cout << "average execution time [" << i << "]: " << us(diff[i]/(jobs.value[i]*iter_per_job.value[i])) << ", diff: " << us(diff[i]) << endl;
@@ -338,7 +340,7 @@ int main()//int thread_init, int thread_end, int exec)
 
     cout << "Threads_end" << endl;
     cout << "ID:" << reinterpret_cast<volatile unsigned int>(Thread::self());
-    for (int i = thread_init; i < thread_end; ++i)
+    for (int i = 0; i < THREADS; ++i)
     {
         cout << "," << reinterpret_cast<volatile unsigned int>(threads[i]);
         if (set[i].f == 2) {

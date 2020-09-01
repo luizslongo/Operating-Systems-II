@@ -146,16 +146,18 @@ namespace Scheduling_Criteria {
                 {
                     t = Thread::_Statistics::threads_cpu[cpu][i];
                     if ((t->priority() > PEDF::PERIODIC) && (t->priority() < PEDF::APERIODIC)) { // !idle
-                        aux = t->_statistics.jobs ? ((t->_statistics.average_execution_time*1.0)/t->_statistics.jobs)/t->_statistics.period
-                                : t->_statistics.execution_time/t->_statistics.period;
+                        aux = t->_statistics.jobs ? ((t->_statistics.average_execution_time*1.0)/Thread::_Statistics::hyperperiod[1])
+                                : t->_statistics.execution_time/Thread::_Statistics::hyperperiod[1];
+                        //aux = t->_statistics.jobs ? ((t->_statistics.average_execution_time*1.0)/t->_statistics.jobs)/t->_statistics.period
+                        //        : t->_statistics.execution_time/t->_statistics.period;
                         desired_output[train_count] = aux;
                         trains[train_count] = t->_statistics.input;
                         train_count++;
-                        t->_statistics.average_execution_time = 0; //as collect isn't been run, we need to clear them here.
+                        t->_statistics.average_execution_time = 0; //as collect isn't going to execute, we need to clear them here.
                         t->_statistics.jobs = 0;
                         for(unsigned int j = 0; j < COUNTOF(Traits<Monitor>::PMU_EVENTS); j++) {
                             pre_mean = t->_statistics.mean[j];
-                            value = (t->_statistics.thread_pmu_accumulated[j]*1.0)/(t->_statistics.period/100.);
+                            value = (t->_statistics.thread_pmu_accumulated[j]*1.0)/(Thread::_Statistics::hyperperiod[1]/100.);
                             // mean[n] = mean[n-1] + (x - mean[n-1])/n
                             t->_statistics.mean[j] = t->_statistics.mean[j] + (value - pre_mean)/(t->_statistics.captures+1);
                             // s[n] = s[n-1] + (x - mean[n-1])*(x - mean[n])
@@ -384,7 +386,7 @@ namespace Scheduling_Criteria {
                         }
                         // check for imbalance
                         /*
-                        Thread::_Statistics::threads_cpu[x][y]->_statostics.migrate_to = z;
+                        Thread::_Statistics::threads_cpu[x][y]->_statistics.migrate_to = z;
                         
                         for (int i = y+1; i < Thread::_Statistics::t_count_cpu[x]; ++i)
                         {

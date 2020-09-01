@@ -431,10 +431,10 @@ void Thread::dispatch(Thread * prev, Thread * next, bool charge)
         unsigned int cpu = CPU::id();
         if (Criterion::learning && next != prev && next->_statistics.migrate_to >= 0 && (next->priority() > Criterion::PERIODIC) && (next->priority() < Criterion::APERIODIC)) {
             _scheduler.remove(next);
-            Criterion c = next->criterion();
-            c.queue = next->_statistics.migrate_to;
-            next->_link = Queue::Element(next, c);
-            //next->_link = Queue::Element(next, Criterion(next->_link.rank()._deadline*1000, next->_link.rank()._period, next->_link.rank()._capacity, next->_statistics.migrate_to));
+            //Criterion c = next->criterion();
+            //c._queue = next->_statistics.migrate_to;
+            //next->_link = Queue::Element(next, c);
+            next->_link = Queue::Element(next, Criterion(next->_link.rank()._deadline*1000, next->_link.rank()._period, next->_link.rank()._capacity, next->_statistics.migrate_to));
             _scheduler.insert(next);
             next->_statistics.migrate_to = -1;
             next = _scheduler.choose_another();
