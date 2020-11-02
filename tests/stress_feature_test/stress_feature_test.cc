@@ -15,16 +15,20 @@ OStream cout;
 typedef TSC::Time_Stamp Time_Stamp;
 
 // Configuration
-const unsigned int  TEST_LENGTH            = 20; // in seconds
-const bool          MEASURE_TIME           = false;
+const unsigned int  TEST_LENGTH                 = 180; // in seconds
+const bool          MEASURE_TIME                = false;
 // To be measured
-const float         MEMORY_IT_LENGHT       = 150;  // in microseconds
-const unsigned int  CPU_IT_LENGHT          = 900;  // in microseconds
-const unsigned int  MIDTERM_IT_LENGHT      = 100000;  // in microseconds
+const float         MEMORY_IT_LENGHT            = 150;  // in microseconds
+const unsigned int  CPU_IT_LENGHT               = 900;  // in microseconds
+const unsigned int  MIDTERM_IT_LENGHT           = 100000;  // in microseconds
 
-constexpr float TIMES[4] = { MEMORY_IT_LENGHT, CPU_IT_LENGHT, MIDTERM_IT_LENGHT};
 
-const unsigned int THREADS             = 6;//7;
+const unsigned int  DISABLED = -1;
+const unsigned int  ITERATION_CHANGE_BEHAVIOR   = 90;
+
+constexpr float TIMES[6] = { MEMORY_IT_LENGHT, CPU_IT_LENGHT, MIDTERM_IT_LENGHT, MEMORY_IT_LENGHT, MEMORY_IT_LENGHT, MEMORY_IT_LENGHT};
+
+const unsigned int THREADS             = 7;//6;//7;
 
 constexpr static struct Task_Set {
     const unsigned int p;
@@ -34,8 +38,8 @@ constexpr static struct Task_Set {
     const unsigned int f;
 } set[THREADS] = {
     //PERIOD,DEADLINE,WCET,CPU,TASK
-    ///* TS1
-    {500000, 500000, 100000,2,0},   // 20 - band
+    /* TS1
+    {500000, 500000, 100000,2,5},   // 20 - band
     {500000, 500000, 100000,2,2},   // 20 - disp
 
     {500000, 500000, 100000,3,2},   // 20 - disp
@@ -46,7 +50,7 @@ constexpr static struct Task_Set {
     //*/
 
     /* TS2
-    { 250000,  250000,  50000,2,0},   // 20 - band
+    { 250000,  250000,  50000,2,5},   // 20 - band
     { 500000,  500000, 100000,2,2},   // 20 - disp
 
     {1000000, 1000000, 200000,3,2},   // 20 - disp
@@ -56,16 +60,16 @@ constexpr static struct Task_Set {
     { 250000,  250000, 100000,4,2},   // 20 - disp
     //*/
 
-    /* TS3
-    { 100000,  100000,  10000,2,0},   // 20 - band
+    ///* TS3
+    { 100000,  100000,  10000,2,3},   // 20 - band
 
-    { 100000,  100000,   5000,3,0},   // 20 - band
+    { 100000,  100000,   5000,3,3},   // 20 - band
     {1000000, 1000000, 400000,3,2},   // 20 - disp
 
     { 100000,  100000,  30000,4,1},   // 20 - cpu
     { 500000,  500000, 100000,4,2},   // 20 - disp
     { 250000,  250000,  60000,4,1},   // 20 - cpu
-    {1000000, 1000000, 100000,4,0},   // band
+    {1000000, 1000000, 100000,4,3},   // band
     //*/
 
     /* TS4
@@ -113,6 +117,7 @@ struct JOBS {
 constexpr JOBS<THREADS> jobs = JOBS<THREADS>();
 
 unsigned int *g_mem_ptr[THREADS];           /* unsigned inter to allocated memory region */
+//extern const unsigned int G_MEM_SIZE;
 const unsigned int CACHE_LINE_SIZE = 64;
 const unsigned int DEFAULT_ALLOC_SIZE_KB = 524288;//16384*2;
 const unsigned int G_MEM_SIZE = DEFAULT_ALLOC_SIZE_KB;
@@ -129,6 +134,7 @@ unsigned int time_job[THREADS][20];
 
 Time_Stamp diff[THREADS];
 Time_Stamp wcet[THREADS];
+Random * rand;
 
 extern signed char img1[];
 extern signed char img2[];
@@ -139,11 +145,79 @@ signed char* t_img2[THREADS];
 
 unsigned int bench_write(unsigned int id)
 {
+    //cout << "Band" << endl;
+    //Random * rand;
+    //rand->seed(0);
     register unsigned int i;
+    register unsigned int address = 0;
+    unsigned int pos = G_MEM_SIZE/sizeof(unsigned int);
     for ( i = 0; i < G_MEM_SIZE/sizeof(unsigned int); i+=(CACHE_LINE_SIZE/sizeof(unsigned int)) ) {
-        g_mem_ptr[id][i] += i;
+        address = ((rand->random() % pos) * i) % pos;
+        // address = (i + i) % G_MEM_SIZE;
+        g_mem_ptr[id][address] += i;
     }
     return G_MEM_SIZE;
+}
+
+unsigned int configurable_bench_write(unsigned int id, unsigned int mem_size, unsigned int cache_line, unsigned int randomicity)
+{
+    //cout << "Band" << endl;
+    register unsigned int i;
+    register unsigned int address = 0;
+    unsigned int pos = 0;
+    
+    unsigned int r = 0;
+
+    if (randomicity) {
+        r = rand->random() % 2;
+        mem_size = r == 0 ? 524288 : 16384;
+        r = rand->random() % 2;
+        cache_line = r == 0 ? 64 : 32;
+        pos = mem_size/sizeof(unsigned int);
+        for ( i = 0; i < mem_size/sizeof(unsigned int); i+=(cache_line/sizeof(unsigned int)) ) {
+            address = ((rand->random() % pos) * i) % pos;
+            // address = (i + i) % G_MEM_SIZE;
+            g_mem_ptr[id][address] += i;
+        }
+    } else {
+        //pos = mem_size/sizeof(unsigned int);
+        for (i = 0; i < mem_size/sizeof(unsigned int); i+=(cache_line/sizeof(unsigned int)) ) {
+            //address = i;
+            // address = (i + i) % G_MEM_SIZE;
+            g_mem_ptr[id][i] += i;
+        }
+    }
+
+    // switch(randomicity) {
+    //     case 0:
+    //         pos = mem_size/sizeof(unsigned int);
+    //         for (i = 0; i < mem_size/sizeof(unsigned int); i+=(cache_line/sizeof(unsigned int)) ) {
+    //             address = i;
+    //             // address = (i + i) % G_MEM_SIZE;
+    //             g_mem_ptr[id][address] += i;
+    //         }
+    //         break;
+    //     case 1:
+    //         rand->seed(0);
+    //         pos = mem_size/sizeof(unsigned int);
+    //         for ( i = 0; i < mem_size/sizeof(unsigned int); i+=(cache_line/sizeof(unsigned int)) ) {
+    //             address = ((rand->random() % pos) + i) % pos;
+    //             // address = (i + i) % G_MEM_SIZE;
+    //             g_mem_ptr[id][address] += i;
+    //         }
+    //         break;
+    //     default:
+    //         rand->seed(0);
+    //         pos = mem_size/sizeof(unsigned int);
+    //         for ( i = 0; i < mem_size/sizeof(unsigned int); i+=(cache_line/sizeof(unsigned int)) ) {
+    //             address = ((rand->random() % pos) * i) % pos;
+    //             // address = (i + i) % G_MEM_SIZE;
+    //             g_mem_ptr[id][address] += i;
+    //         }
+    //         break;
+
+    // }
+    return mem_size;
 }
 
 int disparity(int id)
@@ -170,6 +244,9 @@ int disparity(int id)
     return height;
 }
 
+unsigned int current_iteration[THREADS];
+bool behavior[THREADS];
+
 template<unsigned int ID>
 void run_func() {
 
@@ -179,24 +256,45 @@ void run_func() {
     unsigned int my_iter_per_job = iter_per_job.value[ID];
     unsigned int iterations;
     unsigned int ret;
-    unsigned int cpu;
+    //bool behavior = 0;
+    if (current_iteration[ID] == ITERATION_CHANGE_BEHAVIOR-1) {
+        //bool behavior = ((int)(current_iteration[ID]/ITERATION_CHANGE_BEHAVIOR)) % 2 == 1;
+        behavior[ID] = !behavior[ID];
+        current_iteration[ID] = 0;
+    }
 
-    cpu = CPU::id();
+    //unsigned int cpu;
+
+    //cpu = CPU::id();
     init = get_time();
 
     for(iterations = 0; iterations < my_iter_per_job; iterations++) {
         switch(set[ID].f) {
             case 0:
-                ret += bench_write(ID);
+                ret += configurable_bench_write(ID, 524288, 64, 0); // heavy
                 break;
             case 1:
                 ret += cpu_hungry();
                 break;
-            default:
+            case 2:
                 ret += disparity(ID);
+                break;
+            case 3:
+                ret += configurable_bench_write(ID, 16384, 64, 0); // light
+                break;
+            case 4:
+                if (behavior[ID]) {
+                    ret += configurable_bench_write(ID, 524288, 64, 0); // heavy
+                } else {
+                    ret += configurable_bench_write(ID, 16384, 64, 0); // light
+                }
+                break;
+            default:
+                ret += configurable_bench_write(ID, 0, 0, 1); // random
                 break;
         }
     }
+    current_iteration[ID]++;
     end = get_time();
     diff[ID] += end - init;
     if ((end - init)/my_iter_per_job > wcet[ID]) {
@@ -209,6 +307,8 @@ Thread * threads[THREADS];
 template<int ID>
 inline void init_threads(Microsecond activation) {
     cout << ID << ",i=" << jobs.value[ID] << ",ij=" << iter_per_job.value[ID] << endl;
+    current_iteration[ID] = 0;
+    behavior[ID] = false;
     threads[ID] = new RT_Thread(&run_func<ID>, set[ID].d, set[ID].p, set[ID].c, activation, jobs.value[ID], set[ID].cpu-1);
     init_threads<ID + 1>(activation);
 };
@@ -218,7 +318,7 @@ inline void init_threads<THREADS>(Microsecond activation) {}
 //*/
 int freq_control() {
     Hertz clock_base = 1200000000;
-    int iters = (TEST_LENGTH*1000000)/1000000; // each 2 hyp
+    int iters = (TEST_LENGTH); // each 2 hyp
     int count_dvfs = 1;
     for (int i = 0; i < iters; ++i)
     {
@@ -227,7 +327,7 @@ int freq_control() {
             //cout << "Iter" << i << " - Clock = " << Machine::clock(1200000000 - (count_dvfs % 7)*100000000) << endl; // " - Keep Alive" << endl;//
         //    count_dvfs++;
         //} else {
-            //cout << "Iter" << i << " - Keep Alive" << endl;
+            cout << "Iter" << i << " - Keep Alive" << endl;
         //}
         Delay(1000000);
     }
@@ -244,6 +344,7 @@ int main()//int thread_init, int thread_end, int exec)
 
     Delay(500000);
     cout << "SETUP" << endl;
+    rand->seed(0);
     unsigned int cpu = 1;
     for (unsigned int i = 0; i < THREADS; ++i)//thread_init; i < thread_end; ++i)
     {
@@ -258,7 +359,7 @@ int main()//int thread_init, int thread_end, int exec)
             {
                 t_img2[i][j] = img2[j];
             }
-        } else if (set[i].f == 0) {
+        } else if (set[i].f != 1 && set[i].f != 2) {
             g_mem_ptr[i] = new unsigned int[G_MEM_SIZE/sizeof(unsigned int)];
             cout << "g" << i << "=" << g_mem_ptr[i] << endl;
             for (unsigned int j = 0; j < G_MEM_SIZE / sizeof(unsigned int); j++) {
@@ -298,7 +399,7 @@ int main()//int thread_init, int thread_end, int exec)
         Monitor::disable_captures();
         cout << "T["<< i << "]" << endl;
         ///*
-        for (unsigned int j = 0; j < TEST_LENGTH*2; ++j)
+        for (unsigned int j = 0; j < TEST_LENGTH; ++j)
         {
             cout << "i" << j << "=" << threads[i]->_statistics.thread_monitoring[0][j];
             for (unsigned int k = 1; k < COUNTOF(Traits<Monitor>::PMU_EVENTS)+COUNTOF(Traits<Monitor>::SYSTEM_EVENTS); ++k)
@@ -318,7 +419,7 @@ int main()//int thread_init, int thread_end, int exec)
     cout << "Elapsed = " << us(times) << endl;
     cout << "Threads=" << THREADS << endl;
 
-    /*
+    ///*
     cout << "-----------------------------------------------------" << endl;
     cout << "...............Threads Timing Behavior..............." << endl;
     cout << "-----------------------------------------------------" << endl;

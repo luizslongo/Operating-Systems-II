@@ -81,6 +81,61 @@ public:
         unsigned int stack_size;
     };
 
+    struct Activity {
+        Activity() {
+            reset();
+        }
+
+        Activity(const Activity &a) {
+            for (unsigned int i = 0; i < COUNTOF(Traits<Monitor>::PMU_EVENTS); ++i)
+                vector[i] = a.vector[i];
+            usage = a.usage;
+        }
+
+        void reset() {
+            for (unsigned int i = 0; i < COUNTOF(Traits<Monitor>::PMU_EVENTS); ++i)
+                vector[i] = 0;
+            usage = 0;
+        }
+
+        void operator+=(const Activity & a) {
+            for (unsigned int i = 0; i < COUNTOF(Traits<Monitor>::PMU_EVENTS); ++i)
+                vector[i] += a.vector[i];
+            usage += a.usage; 
+        }
+
+        void operator-=(const Activity & a) {
+            for (unsigned int i = 0; i < COUNTOF(Traits<Monitor>::PMU_EVENTS); ++i)
+                vector[i] -= a.vector[i];
+            usage -= a.usage;
+        }
+
+        float sum() {
+            float result = 0;
+            for (unsigned int i = 0; i < COUNTOF(Traits<Monitor>::PMU_EVENTS); ++i)
+                result += vector[i];
+            return result;
+        }
+
+        bool fits(float* _vector) {
+            bool result = true;
+            for (unsigned int i = 0; i < COUNTOF(Traits<Monitor>::PMU_EVENTS); ++i)
+                result &= vector[i]+ _vector[i] < (1 * Thread::_Statistics::activity_weights[i]);
+            return result;
+        }
+
+        bool fits(const Activity & a) {
+            bool result = true;
+            for (unsigned int i = 0; i < COUNTOF(Traits<Monitor>::PMU_EVENTS); ++i)
+                result &= vector[i]+ a.vector[i] <= (1 * Thread::_Statistics::activity_weights[i]);
+            return result;// && (a.usage + usage < 1 - Traits<Criterion>::VARIANCE_THRESHOLDS[0]);
+        }
+
+        float vector[COUNTOF(Traits<Monitor>::PMU_EVENTS)];
+        float usage;
+
+    };
+
     // Thread Statistics (mostly for Monitor)
     struct _Statistics {
         _Statistics(): execution_time(0), last_execution(0), wcet(0), jobs(0), average_execution_time(0), hyperperiod_count_thread(0), period(0), captures(0), migrate_to(-1), alarm_times(0), times_p_count(0), missed_deadlines(0) {}
@@ -100,10 +155,14 @@ public:
         Alarm * alarm_times;
         unsigned int times_p_count;
         unsigned int missed_deadlines;
+        bool migration_locked[Traits<Build>::CPUS];
 
         // ANN
+        unsigned int activity_digest_thread;
         float input[COUNTOF(Traits<Monitor>::PMU_EVENTS)+COUNTOF(Traits<Monitor>::SYSTEM_EVENTS)-1];
         float output;
+        Activity activity;
+        Activity last_activity;
 
         // Per Thread PMU
         unsigned long long thread_pmu_accumulated[COUNTOF(Traits<Monitor>::PMU_EVENTS)];
@@ -118,16 +177,19 @@ public:
         static TSC::Time_Stamp wcet_cpu[Traits<Build>::CPUS];
         static TSC::Time_Stamp last_hyperperiod[Traits<Build>::CPUS];      // wait for old hyperperiod and update
         static unsigned int hyperperiod_count[Traits<Build>::CPUS];        // reset on next hyperperiod
-        static unsigned long long cpu_pmu_accumulated[Traits<Build>::CPUS][COUNTOF(Traits<Monitor>::PMU_EVENTS)];
-        static unsigned long long cpu_pmu_last[Traits<Build>::CPUS][COUNTOF(Traits<Monitor>::PMU_EVENTS)];
+        //static unsigned long long cpu_pmu_accumulated[Traits<Build>::CPUS][COUNTOF(Traits<Monitor>::PMU_EVENTS)];
+        //static unsigned long long cpu_pmu_last[Traits<Build>::CPUS][COUNTOF(Traits<Monitor>::PMU_EVENTS)];
         static bool cooldown[Traits<Build>::CPUS];
 
         // ANN
         static bool decrease_frequency[Traits<Build>::CPUS];
         static bool to_learn[Traits<Build>::CPUS];
         static bool prediction_ready[Traits<Build>::CPUS];
-        static Thread* threads_cpu[Traits<Build>::CPUS][5];
+        static Thread* threads_cpu[Traits<Build>::CPUS][10];
         static unsigned int t_count_cpu[Traits<Build>::CPUS];
+        static Activity activity_cpu[Traits<Build>::CPUS];
+        static Activity last_activity_cpu[Traits<Build>::CPUS];
+        static float activity_weights[COUNTOF(Traits<Monitor>::PMU_EVENTS)];
 
         // ANN Logging // TO_CHECK
         static bool votes[Traits<Build>::CPUS][Traits<Build>::EXPECTED_SIMULATION_TIME*2];

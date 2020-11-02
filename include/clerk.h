@@ -54,12 +54,14 @@ public:
 
     static void run();
 
+    /*
     static unsigned int get_ann_out (unsigned int i) {
         if (i < ann_captures[CPU::id()] && i >= 0) {
             return ann_out[CPU::id()][i];
         }
         return 1;
     }
+    */
 
     static unsigned int get_ann_captures() {
         return ann_captures[CPU::id()];
@@ -178,7 +180,7 @@ private:
 public:
     static Simple_List<Monitor> _monitors[Traits<Build>::CPUS];
     static struct FANN_EPOS::fann *ann[Traits<Build>::CPUS];
-    static unsigned int ann_out[Traits<Build>::CPUS][100*30];
+    //static unsigned int ann_out[Traits<Build>::CPUS][100*30];
     static unsigned int ann_captures[Traits<Build>::CPUS];
 };
 

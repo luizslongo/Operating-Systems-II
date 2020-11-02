@@ -15,7 +15,7 @@ template<> struct Traits<Build>: public Traits_Tokens
     static const unsigned int MODEL = Raspberry_Pi3;
     static const unsigned int CPUS = 4;
     static const unsigned int NODES = 1; // (> 1 => NETWORKING)
-    static const unsigned int EXPECTED_SIMULATION_TIME = 20; // s (0 => not simulated)
+    static const unsigned int EXPECTED_SIMULATION_TIME = 180; // s (0 => not simulated)
 
     // Default flags
     static const bool enabled = true;
@@ -112,8 +112,8 @@ template<> struct Traits<System>: public Traits<Build>
 
     static const bool reboot = true;
 
-    static const unsigned int STACK_SIZE = Traits<Machine>::STACK_SIZE;
-    static const unsigned int HEAP_SIZE = 2 * 64 * (Traits<Application>::MAX_THREADS + 1) * Traits<Application>::STACK_SIZE;
+    static const unsigned int STACK_SIZE = 8 * Traits<Machine>::STACK_SIZE;
+    static const unsigned int HEAP_SIZE = 4 * 64 * (Traits<Application>::MAX_THREADS + 1) * Traits<Application>::STACK_SIZE;
 };
 
 template<> struct Traits<Task>: public Traits<Build>

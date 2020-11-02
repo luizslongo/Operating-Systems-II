@@ -58,7 +58,7 @@ int main()
     if (!SILENT) {
         cout << THREADS << " Threads will be created following CPU Affinity Scheduling!" << endl;
     }
-    
+
     print = Semaphore(1);
     print.p();
 

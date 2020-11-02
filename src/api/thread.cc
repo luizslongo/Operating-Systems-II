@@ -32,8 +32,15 @@ TSC::Time_Stamp Thread::_Statistics::last_idle[Traits<Build>::CPUS];
 bool Thread::_Statistics::decrease_frequency[Traits<Build>::CPUS] = {false, false, false, false};
 bool Thread::_Statistics::to_learn[Traits<Build>::CPUS] = {false, false, false, false};
 bool Thread::_Statistics::prediction_ready[Traits<Build>::CPUS] = {false, false, false, false};
-Thread* Thread::_Statistics::threads_cpu[Traits<Build>::CPUS][5];
+bool Thread::_Statistics::cooldown[Traits<Build>::CPUS] = {true, true, true, true};
+float Thread::_Statistics::activity_weights[COUNTOF(Traits<Monitor>::PMU_EVENTS)]
+            = {0.463849127,0.46623829,0.521283507,0.482989371,0.496628821,0.486082405}; //{0.5,0.5,0.5,0.5,0.5,0.5};
+Thread* Thread::_Statistics::threads_cpu[Traits<Build>::CPUS][10];
 unsigned int Thread::_Statistics::t_count_cpu[Traits<Build>::CPUS];
+Thread::Activity Thread::_Statistics::activity_cpu[Traits<Build>::CPUS];//[COUNTOF(Traits<Monitor>::PMU_EVENTS)+2];
+Thread::Activity Thread::_Statistics::last_activity_cpu[Traits<Build>::CPUS];
+
+// Prints
 //unsigned int Thread::_Statistics::missed_deadlines[Traits<Build>::CPUS];
 bool Thread::_Statistics::votes[Traits<Build>::CPUS][Traits<Build>::EXPECTED_SIMULATION_TIME*2];
 unsigned int Thread::_Statistics::idle_time_vote[Traits<Build>::CPUS][Traits<Build>::EXPECTED_SIMULATION_TIME*2];
@@ -42,9 +49,9 @@ TSC::Time_Stamp Thread::_Statistics::overhead[Traits<Build>::CPUS][Traits<Build>
 double Thread::_Statistics::max_variance[Traits<Build>::CPUS][Traits<Build>::EXPECTED_SIMULATION_TIME*2];
 unsigned int Thread::_Statistics::migration_hyperperiod[3];
 
-unsigned long long Thread::_Statistics::cpu_pmu_accumulated[Traits<Build>::CPUS][COUNTOF(Traits<Monitor>::PMU_EVENTS)];
-unsigned long long Thread::_Statistics::cpu_pmu_last[Traits<Build>::CPUS][COUNTOF(Traits<Monitor>::PMU_EVENTS)];
-bool Thread::_Statistics::cooldown[Traits<Build>::CPUS] = {true, true, true, true};
+//unsigned long long Thread::_Statistics::cpu_pmu_accumulated[Traits<Build>::CPUS][COUNTOF(Traits<Monitor>::PMU_EVENTS)];
+//unsigned long long Thread::_Statistics::cpu_pmu_last[Traits<Build>::CPUS][COUNTOF(Traits<Monitor>::PMU_EVENTS)];
+
 
 
 // Methods
@@ -78,6 +85,9 @@ void Thread::constructor_epilogue(const Log_Addr & entry, unsigned int stack_siz
 
     for(unsigned int i = 0; i < COUNTOF(Traits<Monitor>::PMU_EVENTS); i++)
         _statistics.thread_pmu_accumulated[i] = 0;
+    for(unsigned int i = 0; i < Traits<Build>::CPUS; i++)
+        _statistics.migration_locked[i] = false;
+
     if(multitask)
         _task->insert(this);
 
@@ -499,14 +509,14 @@ void Thread::dispatch(Thread * prev, Thread * next, bool charge)
             Thread::_Statistics::last_hyperperiod[cpu] = ts;
             // hyper-period idle time
             Thread::_Statistics::hyperperiod_idle_time[cpu] = Thread::_Statistics::idle_time[cpu];
-            
+            bool award_result = false;
             if(Criterion::learning && cpu) {
                 Thread::_Statistics::overhead[cpu][Thread::_Statistics::hyperperiod_count[cpu]] = TSC::time_stamp();
                 if (Traits<Build>::MODEL == Traits<Build>::Raspberry_Pi3) {
                     ASM("       vpush    {s0-s15}               \n"
                         "       vpush    {s16-s31}              \n");
                 }
-                Criterion::award(true);
+                award_result = Criterion::award(true);
                 if (Traits<Build>::MODEL == Traits<Build>::Raspberry_Pi3) {
                     ASM("       vpop    {s0-s15}                \n"
                         "       vpop    {s16-s31}               \n");
@@ -515,6 +525,7 @@ void Thread::dispatch(Thread * prev, Thread * next, bool charge)
             }
             Thread::_Statistics::idle_time[cpu] = 0;
             Thread::_Statistics::hyperperiod_count[cpu]++;
+            Thread::_Statistics::prediction_ready[cpu] = award_result;
         } else if(Criterion::learning && !cpu) {
             Criterion::award(false); // Actuate on CPU0
         }
@@ -547,6 +558,21 @@ void Thread::dispatch(Thread * prev, Thread * next, bool charge)
         if(multitask && (next->_task != prev->_task))
             next->_task->activate();
 
+        // if((prev->priority() > Criterion::PERIODIC) && (prev->priority() < Criterion::APERIODIC)
+        //     && Criterion::learning) { // a real-time thread
+        //     if (prev->_statistics.migrate_to >= 0 && prev->_statistics.ready_migrate) {
+        //         // Account Thread execution time
+        //         _scheduler.remove(prev);
+        //         prev->_link = Queue::Element(prev, Criterion(prev->_link.rank()._deadline*1000, prev->_link.rank()._period, prev->_link.rank()._capacity, prev->_statistics.migrate_to));
+        //         prev->_statistics.migrate_to = -1;
+        //         prev->_statistics.ready_migrate = false;
+        //         _scheduler.insert(prev);
+        //     } else {
+        //         prev->_statistics.ready_migrate = false;
+        //     }
+        //     //CPU::Context::save(); // does not work, must be configured to save 
+        // }
+
         // The non-volatile pointer to volatile pointer to a non-volatile context is correct
         // and necessary because of context switches, but here, we are locked() and
         // passing the volatile to switch_constext forces it to push prev onto the stack,
@@ -571,11 +597,11 @@ void Thread::reset_statistics() {
         t->_statistics.hyperperiod_idle_time[i] = 0;
         t->_statistics.idle_time[i] = 0;
         t->_statistics.last_idle[i] = 0;
-        for (unsigned int j = 0; j < COUNTOF(Traits<Monitor>::PMU_EVENTS); ++j)
-        {
-            t->_statistics.cpu_pmu_accumulated[i][j] = 0;
-            t->_statistics.cpu_pmu_last[i][j] = 0;
-        }
+        //for (unsigned int j = 0; j < COUNTOF(Traits<Monitor>::PMU_EVENTS); ++j)
+        //{
+        //    t->_statistics.cpu_pmu_accumulated[i][j] = 0;
+        //    t->_statistics.cpu_pmu_last[i][j] = 0;
+        //}
     }
 }
 
