@@ -12,7 +12,7 @@
  * Included Files
  **************************************************************************/
 
-#include <string.h>
+#include <utility/string.h>
 #include <architecture/tsc.h>
 #include <process.h>
 

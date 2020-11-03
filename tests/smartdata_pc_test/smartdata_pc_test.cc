@@ -67,6 +67,8 @@ int sink()
         cout << "a=" << a << endl;
     }
     cout << "done!" << endl;
+
+    return 0;
 }
 
 int node()
@@ -101,4 +103,6 @@ int node()
 //        db<TSTP>(TRC) << "c=" << c << endl;
     }
     cout << "done!" << endl;
+
+    return 0;
 }
