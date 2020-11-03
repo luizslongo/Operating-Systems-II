@@ -13,7 +13,6 @@ extern "C" { void __exit(); }
 
 __BEGIN_SYS
 
-// Thread
 class Thread
 {
     friend class Init_First;            // context->load()

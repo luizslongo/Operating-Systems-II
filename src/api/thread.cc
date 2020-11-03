@@ -54,6 +54,8 @@ void Thread::constructor_epilogue(const Log_Addr & entry, unsigned int stack_siz
                     << "},context={b=" << _context
                     << "," << *_context << "}) => " << this << "@" << _link.rank().queue() << endl;
 
+    assert((_state != WAITING) && (_state != FINISHING)); // Invalid states
+
     if(multitask)
         _task->insert(this);
 
@@ -509,8 +511,10 @@ __END_SYS
 
 // Id forwarder to the spin lock
 __BEGIN_UTIL
-unsigned int This_Thread::id()
+
+volatile CPU::Reg This_Thread::id()
 {
-    return _not_booting ? reinterpret_cast<volatile unsigned int>(Thread::self()) : CPU::id() + 1;
+    return _not_booting ? CPU::Reg(Thread::self()) : CPU::Reg(CPU::id() + 1);
 }
+
 __END_UTIL

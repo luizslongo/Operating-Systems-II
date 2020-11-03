@@ -7,7 +7,6 @@ SUBDIRS	:= etc tools src app img
 all: FORCE
 ifndef APPLICATION
 		$(foreach app,$(APPLICATIONS),$(MAKE) APPLICATION=$(app) $(PRECLEAN) prebuild_$(app) all1 posbuild_$(app);)
-		$(MAKE) clean1
 else
 		$(MAKE) all1
 endif

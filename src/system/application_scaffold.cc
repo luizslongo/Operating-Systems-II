@@ -2,7 +2,6 @@
 
 #include <system.h>
 #include <network.h>
-#include <clerk.h>
 
 __BEGIN_SYS
 

@@ -1,4 +1,4 @@
-// EPOS Machine Mediator
+// EPOS Clerk Declarations
 
 #ifndef __clerk_h
 #define __clerk_h
