@@ -64,8 +64,8 @@ void Thread::constructor_epilogue(const Log_Addr & entry, unsigned int stack_siz
 
     if(preemptive && (_state == READY) && (_link.rank() != IDLE))
         reschedule(_link.rank().queue());
-    else
-        unlock();
+
+    unlock();
 }
 
 
@@ -122,23 +122,12 @@ Thread::~Thread()
 
 void Thread::priority(const Criterion & c)
 {
-
-    /*
-    * Problem description
-    * when changing the priority of a RUNNING Thread, the _scheduler.remove makes the thread be removed from the queue,
-    * but when calling reschedule(), the thread set as the running thread is the running(), which is the scheduler.chosen()
-    * this makes the dispatch to switch context with the wrong thread
-    * the scenarios to pay attention are:
-    * 1: Core 1 calls priority for a running thread "t0" on Core 2:
-    *   1.1: t0's new priority does not change the running Core
-    *   1.2: t0's new priority changes the running Core
-    * 2: Core 1 calls priority for its own running thread
-    */
     lock();
 
     db<Thread>(TRC) << "Thread::priority(this=" << this << ",prio=" << c << ")" << endl;
 
-//    unsigned int old_cpu = _link.rank().queue();
+    unsigned int old_cpu = _link.rank().queue();
+    unsigned int new_cpu = c.queue();
 
     if(_state != RUNNING) { // reorder the scheduling queue
         _scheduler.remove(this);
@@ -147,23 +136,14 @@ void Thread::priority(const Criterion & c)
     } else
         _link.rank(c);
 
-    unsigned int new_cpu = _link.rank().queue();
-
     if(preemptive) {
-//        if(old_cpu != CPU::id()) {
-//            reschedule(old_cpu);
-            if(smp) {
-                lock();
-                reschedule(new_cpu);
-            }
-//        } else if(new_cpu != CPU::id()) {
-//            reschedule(new_cpu);
-//            if(smp) {
-//                lock();
-//                reschedule(old_cpu);
-//            }
-//        } else
-//            reschedule();
+    	if(smp) {
+    	    if(old_cpu != CPU::id())
+    	        reschedule(old_cpu);
+    	    if(new_cpu != CPU::id())
+    	        reschedule(new_cpu);
+    	} else
+    	    reschedule();
     }
 
     unlock();
@@ -183,10 +163,18 @@ int Thread::join()
     assert(!_joining);
 
     if(_state != FINISHING) {
-        _joining = running();
-        _joining->suspend(true);
-    } else
-        unlock();
+        Thread * prev = running();
+
+        _joining = prev;
+        prev->_state = SUSPENDED;
+        _scheduler.suspend(prev); // implicitly choose() if suspending chosen()
+
+        Thread * next = _scheduler.chosen();
+
+        dispatch(prev, next);
+    }
+
+    unlock();
 
     return *reinterpret_cast<int *>(_stack);
 }
@@ -203,17 +191,16 @@ void Thread::pass()
 
     if(next)
         dispatch(prev, next, false);
-    else {
+    else
         db<Thread>(WRN) << "Thread::pass => thread (" << this << ") not ready!" << endl;
-        unlock();
-    }
+
+    unlock();
 }
 
 
-void Thread::suspend(bool locked)
+void Thread::suspend()
 {
-    if(!locked)
-        lock();
+    lock();
 
     db<Thread>(TRC) << "Thread::suspend(this=" << this << ")" << endl;
 
@@ -222,9 +209,11 @@ void Thread::suspend(bool locked)
     _state = SUSPENDED;
     _scheduler.suspend(this);
 
-    Thread * next = running();
+    Thread * next = _scheduler.chosen();
 
     dispatch(prev, next);
+
+    unlock();
 }
 
 
@@ -240,13 +229,10 @@ void Thread::resume()
 
         if(preemptive)
             reschedule(_link.rank().queue());
-        else
-            unlock();
-    } else {
+    } else
         db<Thread>(WRN) << "Resume called for unsuspended object!" << endl;
 
-        unlock();
-    }
+    unlock();
 }
 
 
@@ -261,6 +247,8 @@ void Thread::yield()
     Thread * next = _scheduler.choose_another();
 
     dispatch(prev, next);
+
+    unlock();
 }
 
 
@@ -283,7 +271,11 @@ void Thread::exit(int status)
         prev->_joining = 0;
     }
 
-    dispatch(prev, _scheduler.choose()); // at least idle will always be there
+    Thread * next = _scheduler.choose(); // at least idle will always be there
+
+    dispatch(prev, next);
+
+    unlock();
 }
 
 
@@ -291,8 +283,7 @@ void Thread::sleep(Queue * q)
 {
     db<Thread>(TRC) << "Thread::sleep(running=" << running() << ",q=" << q << ")" << endl;
 
-    // lock() must be called before entering this method
-    assert(locked());
+    assert(locked()); // locking handled by caller
 
     Thread * prev = running();
     _scheduler.suspend(prev);
@@ -300,7 +291,9 @@ void Thread::sleep(Queue * q)
     prev->_waiting = q;
     q->insert(&prev->_link);
 
-    dispatch(prev, _scheduler.chosen());
+    Thread * next = _scheduler.chosen();
+
+    dispatch(prev, next);
 }
 
 
@@ -308,8 +301,7 @@ void Thread::wakeup(Queue * q)
 {
     db<Thread>(TRC) << "Thread::wakeup(running=" << running() << ",q=" << q << ")" << endl;
 
-    // lock() must be called before entering this method
-    assert(locked());
+    assert(locked()); // locking handled by caller
 
     if(!q->empty()) {
         Thread * t = q->remove()->object();
@@ -319,10 +311,7 @@ void Thread::wakeup(Queue * q)
 
         if(preemptive)
             reschedule(t->_link.rank().queue());
-        else
-            unlock();
-    } else
-        unlock();
+    }
 }
 
 
@@ -330,8 +319,7 @@ void Thread::wakeup_all(Queue * q)
 {
     db<Thread>(TRC) << "Thread::wakeup_all(running=" << running() << ",q=" << q << ")" << endl;
 
-    // lock() must be called before entering this method
-    assert(locked());
+    assert(locked()); // locking handled by caller
 
     if(!q->empty()) {
         assert(Criterion::QUEUES <= sizeof(unsigned int) * 8);
@@ -348,10 +336,8 @@ void Thread::wakeup_all(Queue * q)
             for(unsigned int i = 0; i < Criterion::QUEUES; i++)
                 if(cpus & (1 << i))
                     reschedule(i);
-        } else
-            unlock();
-    } else
-        unlock();
+        }
+    }
 }
 
 
@@ -360,8 +346,7 @@ void Thread::reschedule()
     if(!Criterion::timed || Traits<Thread>::hysterically_debugged)
         db<Thread>(TRC) << "Thread::reschedule()" << endl;
 
-    // lock() must be called before entering this method
-    assert(locked());
+    assert(locked()); // locking handled by caller
 
     Thread * prev = running();
     Thread * next = _scheduler.choose();
@@ -372,12 +357,13 @@ void Thread::reschedule()
 
 void Thread::reschedule(unsigned int cpu)
 {
+    assert(locked()); // locking handled by caller
+
     if(!smp || (cpu == CPU::id()))
         reschedule();
     else {
         db<Thread>(TRC) << "Thread::reschedule(cpu=" << cpu << ")" << endl;
         IC::ipi(cpu, IC::INT_RESCHEDULER);
-        unlock();
     }
 }
 
@@ -385,16 +371,16 @@ void Thread::reschedule(unsigned int cpu)
 void Thread::rescheduler(IC::Interrupt_Id i)
 {
     lock();
-
     reschedule();
+    unlock();
 }
 
 
 void Thread::time_slicer(IC::Interrupt_Id i)
 {
     lock();
-
     reschedule();
+    unlock();
 }
 
 
@@ -463,11 +449,9 @@ void Thread::dispatch(Thread * prev, Thread * next, bool charge)
         // disrupting the context (it doesn't make a difference for Intel, which already saves
         // parameters on the stack anyway).
         CPU::switch_context(const_cast<Context **>(&prev->_context), next->_context);
-    } else
         if(smp)
-            _lock.release();
-
-    CPU::int_enable();
+            _lock.acquire();
+    }
 }
 
 
@@ -500,10 +484,10 @@ int Thread::idle()
             CPU::halt();
         }
     }
-
-    // Some machines need a little time to reboot
-    for(;;);
     
+    // Some machines will need a little time to actually reboot
+    for(;;);
+
     return 0;
 }
 
