@@ -54,7 +54,7 @@ int sink()
 {
     cout << "I'm the sink!" << endl;
 
-    Antigravity_Proxy a(Antigravity::Region((0, 0, 0), 100, Antigravity::now(), Antigravity::now() + ITERATIONS * 1000000), 1000000, 1000000);
+    Antigravity_Proxy a(Antigravity::Region(Antigravity::Space(0, 0, 0), 100, Antigravity::now(), Antigravity::now() + ITERATIONS * 1000000), 1000000, 1000000);
 //    Smart_Key_Proxy d(Smart_Key::Region((0, 0, 0), 100, Smart_Key::now(), Smart_Key::now()+10000000), 10000000);
 
     cout << "My coordinates are " << a.here() << endl;
@@ -67,6 +67,8 @@ int sink()
         cout << "a=" << a << endl;
     }
     cout << "done!" << endl;
+
+    return 0;
 }
 
 int node()
@@ -101,4 +103,6 @@ int node()
 //        db<TSTP>(TRC) << "c=" << c << endl;
     }
     cout << "done!" << endl;
+
+    return 0;
 }

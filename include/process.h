@@ -13,7 +13,6 @@ extern "C" { void __exit(); }
 
 __BEGIN_SYS
 
-// Thread
 class Thread
 {
     friend class Init_First;            // context->load()
@@ -153,7 +152,7 @@ public:
 
     int join();
     void pass();
-    void suspend() { suspend(false); }
+    void suspend();
     void resume();
 
     static Thread * volatile self() { return running(); }
@@ -166,8 +165,6 @@ protected:
 
     Criterion & criterion() { return const_cast<Criterion &>(_link.rank()); }
     Queue::Element * link() { return &_link; }
-
-    void suspend(bool locked);
 
     Criterion begin_isr(IC::Interrupt_Id i) {
         assert(_state == RUNNING);
