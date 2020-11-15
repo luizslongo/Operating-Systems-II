@@ -26,6 +26,10 @@ LUTILNAME	:= util
 # Makefile hacks
 APPLICATIONS	:= $(shell find $(APP) -maxdepth 1 -not -name makefile -and -not -name app -printf "%f\n")
 
+ifeq ($(words $(APPLICATIONS)),0)
+$(error EPOS is an application-oriented operating system, but there is no application in $(APP)!)
+endif
+
 ifeq ($(words $(APPLICATIONS)),1)
 ifndef APPLICATION
 APPLICATION	:= $(word 1, $(APPLICATIONS))
@@ -89,8 +93,9 @@ UUID                    = $(shell cat /proc/sys/kernel/random/uuid | sed 's/-//g
 # Compiler prefixes
 ia32_COMP_PREFIX	:= /usr/bin/x86_64-linux-gnu-
 armv7_COMP_PREFIX	:= /usr/bin/arm-none-eabi-
-armv8_COMP_PREFIX	:= /usr/local/arm/gcc-7.2.0/bin/arm-
-avr8_COMP_PREFIX	:= /usr/local/avr/gcc-4.4.4/bin/avr-
+armv8_COMP_PREFIX	:= /usr/bin/arm-none-eabi-
+rv32_COMP_PREFIX	:= /usr/local/rv32/bin/riscv32-unknown-linux-gnu-
+rv64_COMP_PREFIX	:= /usr/bin/riscv64-linux-gnu-
 COMP_PREFIX		= $($(ARCH)_COMP_PREFIX)
 
 # Machine specifics
@@ -169,6 +174,32 @@ cortex_DATA_NAME	:= .data
 cortex_IMG_SUFFIX	:= .img
 endif
 
+ifeq ($(MMOD),sifive_e)
+riscv_CC_FLAGS          := -Wl, -mno-relax
+riscv_AS_FLAGS          := 
+riscv_LD_FLAGS          := --no-relax
+riscv_EMULATOR			= qemu-system-riscv32 -machine virt -cpu rv32gcsu-v1.10.0 -smp $(CPUS) -m $(MEM_SIZE)k -serial mon:stdio -bios none -nographic -no-reboot -kernel 
+riscv_DEBUGGER          := $(COMP_PREFIX)gdb
+riscv_FLASHER           := 
+riscv_MAGIC             := --nmagic
+riscv_CODE_NAME := .init
+riscv_DATA_NAME :=
+riscv_IMG_SUFFIX        := .img
+endif
+
+ifeq ($(MMOD),sifive_u)
+riscv_CC_FLAGS          := -mcmodel=medany
+riscv_AS_FLAGS          := 
+riscv_LD_FLAGS          := 
+riscv_EMULATOR          = qemu-system-riscv64 -machine virt -smp $(CPUS) -m $(MEM_SIZE)k -serial mon:stdio -bios none -nographic -no-reboot -kernel 
+riscv_DEBUGGER          := $(COMP_PREFIX)gdb
+riscv_FLASHER           := 
+riscv_MAGIC             := --omagic
+riscv_CODE_NAME := .init
+riscv_DATA_NAME :=
+riscv_IMG_SUFFIX        := .img
+endif
+
 atmega_CC_FLAGS		:= -mmcu=atmega128 -Wno-inline
 atmega_AS_FLAGS		:= -mmcu=atmega128
 atmega_LD_FLAGS		:= -m avr5
@@ -180,8 +211,8 @@ atmega_CODE_NAME	:= .init
 atmega_DATA_NAME	:= .data
 atmega_IMG_SUFFIX	:= .hex
 
-MACH_CC_FLAGS           := $($(MACH)_CC_FLAGS) -O -nostdinc -Wno-builtin-declaration-mismatch -Wno-array-bounds
-MACH_CXX_FLAGS          := $($(MACH)_CC_FLAGS) -O -std=c++14 -nostdinc --no-exceptions --no-rtti --no-use-cxa-atexit --no-asynchronous-unwind-tables -fno-stack-protector -fdata-sections -ffunction-sections -Wall -Werror -Wno-builtin-declaration-mismatch -Wno-array-bounds -Wno-attribute-alias -Wno-placement-new -Wno-class-memaccess 
+MACH_CC_FLAGS           := $($(MACH)_CC_FLAGS) -O -nostdinc -fno-stack-protector -fno-pie -Wno-builtin-declaration-mismatch -Wno-array-bounds -Wno-address-of-packed-member
+MACH_CXX_FLAGS          := $($(MACH)_CC_FLAGS) -O -std=c++14 -nostdinc --no-exceptions --no-rtti --no-use-cxa-atexit --no-asynchronous-unwind-tables -fno-stack-protector -fno-pie -fdata-sections -ffunction-sections -Wall -Werror -Wno-builtin-declaration-mismatch -Wno-array-bounds -Wno-attribute-alias -Wno-placement-new -Wno-class-memaccess -Wno-address-of-packed-member
 MACH_AS_FLAGS           := $($(MACH)_AS_FLAGS)
 MACH_LD_FLAGS           := $($(MACH)_LD_FLAGS)
 MACH_CODE_NAME          := $($(MACH)_CODE_NAME)
@@ -281,7 +312,11 @@ TCPDUMP		:= tcpdump -tttttennvvvXXr
 
 TEE		:= tee
 
-TERM		:= xterm -e
+ifndef DISPLAY
+TERM        := sh -c
+else
+TERM        := xterm -e
+endif
 
 TOUCH		:= touch
 

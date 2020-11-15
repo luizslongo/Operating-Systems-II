@@ -11,7 +11,7 @@ __BEGIN_UTIL
 class This_Thread
 {
 public:
-    static unsigned int id();
+    static volatile CPU::Reg id();
     static void not_booting() { _not_booting = true; }
 
 private:
@@ -28,10 +28,9 @@ public:
         int me = This_Thread::id();
 
         while(CPU::cas(_owner, 0, me) != me);
+        _level++;
 
         db<Spin>(TRC) << "Spin::acquire[this=" << this << ",id=" << hex << me << "]() => {owner=" << _owner << dec << ",level=" << _level << "}" << endl;
-
-        _level++;
     }
 
     void release() {
@@ -63,8 +62,7 @@ public:
     }
 
     void release() {
-//        if(_locked)
-            _locked = 0;
+        _locked = 0;
 
         db<Spin>(TRC) << "Spin::release[SPIN=" << this << "]()}" << endl;
     }
