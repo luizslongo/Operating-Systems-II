@@ -328,8 +328,11 @@ public:
     	// For threads, we assume this won't happen (see Init_First).
     	// But if you are unsure about your new use of the scheduler,
     	// please, pay the price of the extra "if" bellow.
-//    	return const_cast<T * volatile>((Base::chosen()) ? Base::chosen()->object() : 0);
-    	return const_cast<T * volatile>(Base::chosen()->object());
+        // Hysterically debugging also causes chosen() to be called before insert()
+        if(Traits<Build>::hysterically_debugged || Traits<Thread>::trace_idle)
+            return const_cast<T * volatile>((Base::chosen()) ? Base::chosen()->object() : 0);
+        else
+            return const_cast<T * volatile>(Base::chosen()->object());
     }
 
     void insert(T * obj) {

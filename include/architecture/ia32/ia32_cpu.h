@@ -16,7 +16,7 @@ private:
     static const bool smp = Traits<System>::multicore;
 
 public:
-    // CPU Native Data Types
+    // Native Data Types
     using CPU_Common::Reg8;
     using CPU_Common::Reg16;
     using CPU_Common::Reg32;
@@ -25,7 +25,7 @@ public:
     using Log_Addr = CPU_Common::Log_Addr<Reg>;
     using Phy_Addr = CPU_Common::Phy_Addr<Reg>;
 
-    // CPU Flags
+    // Flags
     typedef Reg32 Flags;
     enum {
         FLAG_CF     = 1 <<  0, // Carry
@@ -51,7 +51,7 @@ public:
         FLAG_CLEAR      = ~(FLAG_TF | FLAG_IOPL | FLAG_NT | FLAG_RF | FLAG_VM | FLAG_AC)
     };
 
-    // CPU Exceptions
+    // Exceptions
     typedef Reg32 Exceptions;
     enum {
         EXC_BASE    = 0x00,
@@ -77,7 +77,7 @@ public:
         EXC_LAST    = 0x1f
     };
 
-    // CR0 Flags
+    // Flags
     enum {
         CR0_PE      = 1 <<  0, // Protected Mode Enable (0->real mode, 1->protected mode)
         CR0_MP      = 1 <<  1, // Monitor co-processor  (1->WAIT/FWAIT with TS flag)
@@ -265,7 +265,11 @@ public:
     class Context
     {
     public:
-        Context(const Log_Addr & usp, const Log_Addr & entry): _esp3(usp), _eip(entry), _cs(((Traits<Build>::MODE == Traits<Build>::KERNEL) && usp)? SEL_APP_CODE : SEL_SYS_CODE), _eflags(FLAG_DEFAULTS) {}
+        Context(const Log_Addr & usp, const Log_Addr & entry): _esp3(usp), _eip(entry), _cs(((Traits<Build>::MODE == Traits<Build>::KERNEL) && usp)? SEL_APP_CODE : SEL_SYS_CODE), _eflags(FLAG_DEFAULTS) {
+            if(Traits<Build>::hysterically_debugged || Traits<Thread>::trace_idle) {
+                _edi = 1; _esi = 2; _ebp = 3; _ebx = 4; _edx = 5; _ecx = 6; _eax = 7;
+            }
+        }
 
         void save() volatile;
         void load() const volatile;
