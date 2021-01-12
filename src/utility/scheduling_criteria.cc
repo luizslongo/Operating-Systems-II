@@ -303,7 +303,7 @@ namespace Scheduling_Criteria {
                             Machine::clock(freq + (100 * 1000 * 1000));
                             imbalanced = false;
                             imbalance_threshold = 0;
-                            db<Thread>(WRN) << "withdraw f= "<< freq << ",cap=" << cap << ",icpu1=" << Thread::_Statistics::hyperperiod_idle_time[1] << ",icpu2=" << Thread::_Statistics::hyperperiod_idle_time[2] << ",icpu3=" << Thread::_Statistics::hyperperiod_idle_time[3] << endl;
+                            db<Thread>(TRC) << "withdraw f= "<< freq << ",cap=" << cap << ",icpu1=" << Thread::_Statistics::hyperperiod_idle_time[1] << ",icpu2=" << Thread::_Statistics::hyperperiod_idle_time[2] << ",icpu3=" << Thread::_Statistics::hyperperiod_idle_time[3] << endl;
                             return true;
                         }
                     }
@@ -363,7 +363,7 @@ namespace Scheduling_Criteria {
                                         ((-Thread::_Statistics::last_activity_cpu[1].vector[j]*error[1] + -Thread::_Statistics::last_activity_cpu[2].vector[j]*error[2] + -Thread::_Statistics::last_activity_cpu[3].vector[j]*error[3])
                                         /(Traits<Build>::CPUS-1)));
                                 }
-                                db<Thread>(WRN) << "weights:" << weights[0] << "," << weights[1] << "," << weights[2]
+                                db<Thread>(TRC) << "weights:" << weights[0] << "," << weights[1] << "," << weights[2]
                                                 << "," << weights[3] << "," << weights[4] << "," << weights[5] << endl;
                             } 
                             // calc new vector
@@ -431,12 +431,12 @@ namespace Scheduling_Criteria {
                                 max = max > Thread::_Statistics::hyperperiod_idle_time[3] ? max : Thread::_Statistics::hyperperiod_idle_time[3];
 
                                 imbalance_threshold = max - min;
-                                db<Thread>(WRN) << "end - freq=" << freq << endl;
-                                db<Thread>(WRN) << "icpu1=" << Thread::_Statistics::hyperperiod_idle_time[1] << ",icpu2=" << Thread::_Statistics::hyperperiod_idle_time[2] << ",icpu3=" << Thread::_Statistics::hyperperiod_idle_time[3] << endl;
+                                db<Thread>(TRC) << "end - freq=" << freq << endl;
+                                db<Thread>(TRC) << "icpu1=" << Thread::_Statistics::hyperperiod_idle_time[1] << ",icpu2=" << Thread::_Statistics::hyperperiod_idle_time[2] << ",icpu3=" << Thread::_Statistics::hyperperiod_idle_time[3] << endl;
                                 return true;
                             }
 
-                            db<Thread>(WRN) << "cpu1=" << digest_cpu[1] << ",cpu2=" << digest_cpu[2] << ",cpu3=" << digest_cpu[3] << ",avg=" << digest_avg << ",variance=" << variance << ",freq=" << freq << endl;
+                            db<Thread>(TRC) << "cpu1=" << digest_cpu[1] << ",cpu2=" << digest_cpu[2] << ",cpu3=" << digest_cpu[3] << ",avg=" << digest_avg << ",variance=" << variance << ",freq=" << freq << endl;
 
                             unsigned int max_from = 0;
                             unsigned int max_index = 0;
@@ -506,8 +506,8 @@ namespace Scheduling_Criteria {
                                 }
                             }
 
-                            db<Thread>(WRN) << "from=" << max_from << ",thread=" << max_index << ",to=" << max_to << ",var=" << variance << endl;// ",variance=" << variance << endl;
-                            db<Thread>(WRN) << "icpu1=" << Thread::_Statistics::hyperperiod_idle_time[1] << ",icpu2=" << Thread::_Statistics::hyperperiod_idle_time[2] << ",icpu3=" << Thread::_Statistics::hyperperiod_idle_time[3] << endl;
+                            db<Thread>(TRC) << "from=" << max_from << ",thread=" << max_index << ",to=" << max_to << ",var=" << variance << endl;// ",variance=" << variance << endl;
+                            db<Thread>(TRC) << "icpu1=" << Thread::_Statistics::hyperperiod_idle_time[1] << ",icpu2=" << Thread::_Statistics::hyperperiod_idle_time[2] << ",icpu3=" << Thread::_Statistics::hyperperiod_idle_time[3] << endl;
 
                             if ((last_freq < freq && last_max_from > 0 && (max_from == 0 || last_max_swap_from == 0 || ((max_to != last_max_from && max_from != last_max_to) && last_max_swap_from > 0)))|| //) {// ||
                                 (last_freq == freq && (max_to == last_max_from && max_from == last_max_to && last_max_swap_from == 0 && max_from != 0))) { // update weigths TODO
@@ -555,7 +555,7 @@ namespace Scheduling_Criteria {
                                 last_max_to = 0;
                                 //last_usage = 0;
                                 //last_usage_swap = 0;
-                                db<Thread>(WRN) << "undo migration" << endl;
+                                db<Thread>(TRC) << "undo migration" << endl;
                                 //Machine::clock(last_freq); //go back to last clock
                                 Machine::clock(1200000000);
                                 //imbalanced = true;
@@ -589,7 +589,6 @@ namespace Scheduling_Criteria {
                                                 if (!((ta->priority() > PEDF::PERIODIC) && (ta->priority() < PEDF::APERIODIC)))
                                                     continue;
 
-                                                db<Thread>(TRC) << "MOTHERFUCKER=" << cc << "," << ct << "," << ca << "," << cta << endl;
                                                 activity_cpu[ca] -= ta->_statistics.activity;
                                                 // check if fits the swap
                                                 if (t->_statistics.migration_locked[ca] || ta->_statistics.migration_locked[cc] || !activity_cpu[ca].fits(t->_statistics.activity) ||
@@ -639,9 +638,9 @@ namespace Scheduling_Criteria {
                                         activity_cpu[cc] += t->_statistics.activity;
                                     }
                                 }
-                                db<Thread>(WRN) << "from=" << max_from << ",thread=" << max_index << ",to=" << max_to << ",var=" << variance << endl;// ",variance=" << variance << endl;
-                                db<Thread>(WRN) << "swfrom=" << max_swap_from << ",swthread=" << max_swap_index << ",swto=" << max_swap_to << endl;// ",variance=" << variance << endl;
-                                db<Thread>(WRN) << "icpu1=" << Thread::_Statistics::hyperperiod_idle_time[1] << ",icpu2=" << Thread::_Statistics::hyperperiod_idle_time[2] << ",icpu3=" << Thread::_Statistics::hyperperiod_idle_time[3] << endl;
+                                db<Thread>(TRC) << "from=" << max_from << ",thread=" << max_index << ",to=" << max_to << ",var=" << variance << endl;// ",variance=" << variance << endl;
+                                db<Thread>(TRC) << "swfrom=" << max_swap_from << ",swthread=" << max_swap_index << ",swto=" << max_swap_to << endl;// ",variance=" << variance << endl;
+                                db<Thread>(TRC) << "icpu1=" << Thread::_Statistics::hyperperiod_idle_time[1] << ",icpu2=" << Thread::_Statistics::hyperperiod_idle_time[2] << ",icpu3=" << Thread::_Statistics::hyperperiod_idle_time[3] << endl;
                             }
                             last_max_swap_from = max_swap_from;
                             if (last_freq == 0 || freq < last_freq)
@@ -652,8 +651,8 @@ namespace Scheduling_Criteria {
                             if(max_from == 0) {
                                 //last_usage = 0;
                                 //last_usage_swap = 0;
-                                db<Thread>(WRN) << "end - freq=" << freq << endl;
-                                db<Thread>(WRN) << "icpu1=" << Thread::_Statistics::hyperperiod_idle_time[1] << ",icpu2=" << Thread::_Statistics::hyperperiod_idle_time[2] << ",icpu3=" << Thread::_Statistics::hyperperiod_idle_time[3] << endl;
+                                db<Thread>(TRC) << "end - freq=" << freq << endl;
+                                db<Thread>(TRC) << "icpu1=" << Thread::_Statistics::hyperperiod_idle_time[1] << ",icpu2=" << Thread::_Statistics::hyperperiod_idle_time[2] << ",icpu3=" << Thread::_Statistics::hyperperiod_idle_time[3] << endl;
                                 min = Thread::_Statistics::hyperperiod_idle_time[1] < Thread::_Statistics::hyperperiod_idle_time[2] ? 
                                                             Thread::_Statistics::hyperperiod_idle_time[1] : Thread::_Statistics::hyperperiod_idle_time[2];
                                 min = min < Thread::_Statistics::hyperperiod_idle_time[3] ? min : Thread::_Statistics::hyperperiod_idle_time[3];
@@ -701,138 +700,6 @@ namespace Scheduling_Criteria {
                                 Machine::clock(1200000000);
                             }
                         }
-
-                            //imbalanced = true;
-                            /* TS2
-                            unsigned int x = 3; // from
-                            unsigned int y = 1; // thread // thread 4 - 1
-                            unsigned int z = 1; // to
-                            Thread::_Statistics::threads_cpu[x][y]->_statistics.migrate_to = z;
-                            Thread::_Statistics::threads_cpu[z][Thread::_Statistics::t_count_cpu[z]] = Thread::_Statistics::threads_cpu[x][y];
-                            Thread::_Statistics::t_count_cpu[z]++;
-                            for (unsigned int i = y+1; i < Thread::_Statistics::t_count_cpu[x]; ++i)
-                            {
-                                Thread::_Statistics::threads_cpu[x][i-1] = Thread::_Statistics::threads_cpu[x][i];
-                            }
-                            Thread::_Statistics::t_count_cpu[x]--;
-                            Thread::_Statistics::cooldown[x] = true;
-                            Thread::_Statistics::cooldown[z] = true;
-                            //*/
-                            
-                            /* TS4
-                            Thread::_Statistics::migration_hyperperiod[0] = Thread::_Statistics::hyperperiod_count[1];
-                            Thread::_Statistics::migration_hyperperiod[1] = Thread::_Statistics::hyperperiod_count[2];
-                            Thread::_Statistics::migration_hyperperiod[2] = Thread::_Statistics::hyperperiod_count[3];
-                            //db<Thread>(WRN) << "MIGRATION=" << Thread::_Statistics::hyperperiod_count[1] << "," << Thread::_Statistics::hyperperiod_count[2] << "," << Thread::_Statistics::hyperperiod_count[3] << endl;
-
-                            unsigned int x = 2; //from
-                            unsigned int y = 4; // thread
-                            unsigned int z = 1; // to
-                            //Thread::_Statistics::threads_cpu[x][y]->_statistics.migrate_to = z;
-                            //Thread::_Statistics::threads_cpu[z][Thread::_Statistics::t_count_cpu[z]] = Thread::_Statistics::threads_cpu[x][y];
-                            //Thread::_Statistics::t_count_cpu[z]++;
-                            //for (unsigned int i = y+1; i < Thread::_Statistics::t_count_cpu[x]; ++i)
-                            //{
-                            //    Thread::_Statistics::threads_cpu[x][i-1] = Thread::_Statistics::threads_cpu[x][i];
-                            //}
-                            //Thread::_Statistics::t_count_cpu[x]--;
-                            //Thread::_Statistics::cooldown[x] = true;
-                            //Thread::_Statistics::cooldown[z] = true;
-
-                            x = 3; // from
-                            y = 1; // thread
-                            z = 1; // to
-                            Thread::_Statistics::threads_cpu[x][y]->_statistics.migrate_to = z;
-                            Thread::_Statistics::threads_cpu[z][Thread::_Statistics::t_count_cpu[z]] = Thread::_Statistics::threads_cpu[x][y];
-                            Thread::_Statistics::t_count_cpu[z]++;
-                            for (unsigned int i = y+1; i < Thread::_Statistics::t_count_cpu[x]; ++i)
-                            {
-                                Thread::_Statistics::threads_cpu[x][i-1] = Thread::_Statistics::threads_cpu[x][i];
-                            }
-                            Thread::_Statistics::t_count_cpu[x]--;
-                            Thread::_Statistics::cooldown[x] = true;
-                            Thread::_Statistics::cooldown[z] = true;
-
-                            x = 2; // from
-                            y = 3; // thread
-                            z = 3; // to
-                            Thread::_Statistics::threads_cpu[x][y]->_statistics.migrate_to = z;
-                            Thread::_Statistics::threads_cpu[z][Thread::_Statistics::t_count_cpu[z]] = Thread::_Statistics::threads_cpu[x][y];
-                            Thread::_Statistics::t_count_cpu[z]++;
-                            for (unsigned int i = y+1; i < Thread::_Statistics::t_count_cpu[x]; ++i)
-                            {
-                                Thread::_Statistics::threads_cpu[x][i-1] = Thread::_Statistics::threads_cpu[x][i];
-                            }
-                            Thread::_Statistics::t_count_cpu[x]--;
-                            Thread::_Statistics::cooldown[x] = true;
-                            Thread::_Statistics::cooldown[z] = true;
-                            //*/
-
-                            /* TS3
-                            unsigned int x = 2; //from
-                            unsigned int y = 1; // thread
-                            unsigned int z = 1; // to
-                            Thread::_Statistics::threads_cpu[x][y]->_statistics.migrate_to = z;
-                            Thread::_Statistics::threads_cpu[z][Thread::_Statistics::t_count_cpu[z]] = Thread::_Statistics::threads_cpu[x][y];
-                            Thread::_Statistics::t_count_cpu[z]++;
-                            for (unsigned int i = y+1; i < Thread::_Statistics::t_count_cpu[x]; ++i)
-                            {
-                                Thread::_Statistics::threads_cpu[x][i-1] = Thread::_Statistics::threads_cpu[x][i];
-                            }
-                            Thread::_Statistics::t_count_cpu[x]--;
-                            Thread::_Statistics::cooldown[x] = true;
-                            Thread::_Statistics::cooldown[z] = true;
-
-                            x = 3; // from
-                            y = 3; // thread
-                            z = 1; // to
-                            Thread::_Statistics::threads_cpu[x][y]->_statistics.migrate_to = z;
-                            Thread::_Statistics::threads_cpu[z][Thread::_Statistics::t_count_cpu[z]] = Thread::_Statistics::threads_cpu[x][y];
-                            Thread::_Statistics::t_count_cpu[z]++;
-                            for (unsigned int i = y+1; i < Thread::_Statistics::t_count_cpu[x]; ++i)
-                            {
-                                Thread::_Statistics::threads_cpu[x][i-1] = Thread::_Statistics::threads_cpu[x][i];
-                            }
-                            Thread::_Statistics::t_count_cpu[x]--;
-                            Thread::_Statistics::cooldown[x] = true;
-                            Thread::_Statistics::cooldown[z] = true;
-
-                            x = 3; // from
-                            y = 3; // thread // thread 4 - 1
-                            z = 1; // to
-                            Thread::_Statistics::threads_cpu[x][y]->_statistics.migrate_to = z;
-                            Thread::_Statistics::threads_cpu[z][Thread::_Statistics::t_count_cpu[z]] = Thread::_Statistics::threads_cpu[x][y];
-                            Thread::_Statistics::t_count_cpu[z]++;
-                            for (unsigned int i = y+1; i < Thread::_Statistics::t_count_cpu[x]; ++i)
-                            {
-                                Thread::_Statistics::threads_cpu[x][i-1] = Thread::_Statistics::threads_cpu[x][i];
-                            }
-                            Thread::_Statistics::t_count_cpu[x]--;
-                            Thread::_Statistics::cooldown[x] = true;
-                            Thread::_Statistics::cooldown[z] = true;
-                            //*/
-                            //Machine::clock(1200000000);//freq - (100 * 1000 * 1000));
-                            //Monitor::ann[1] = FANN_EPOS::fann_create_from_config();
-                            //Monitor::ann[2] = FANN_EPOS::fann_create_from_config();
-                            //Monitor::ann[3] = FANN_EPOS::fann_create_from_config();
-                        //}
-                        // check for imbalance
-                        /*
-                        Thread::_Statistics::threads_cpu[x][y]->_statistics.migrate_to = z;
-                        
-                        for (int i = y+1; i < Thread::_Statistics::t_count_cpu[x]; ++i)
-                        {
-                            Thread::_Statistics::threads_cpu[x][i-1] = Thread::_Statistics::threads_cpu[x][i];
-                        }
-                        Thread::_Statistics::threads_cpu[z][Thread::_Statistics::t_count_cpu[z]] = next;
-                        Thread::_Statistics::t_count_cpu[z]++;
-                        Thread::_Statistics::t_count_cpu[cpu]--;
-                        Thread::_Statistics::cooldown[x] = true;
-                        Thread::_Statistics::cooldown[z] = true;
-                        if (!imbalanced && (greater_idle - smaller_idle > balance_threshold)) { // create imbalanced and balance_threshold
-                            
-                        }
-                        */
                     }
                 }
             }
