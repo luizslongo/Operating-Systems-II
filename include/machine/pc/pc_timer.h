@@ -231,7 +231,7 @@ public:
 
 
 // Tick timer used by the system
-class Timer: private Timer_Common
+class Timer: public Timer_Common
 {
     friend class Machine;
     friend class Init_System;
@@ -244,18 +244,8 @@ protected:
     static const unsigned int CHANNELS = 3;
     static const unsigned int FREQUENCY = Traits<Timer>::FREQUENCY;
 
-public:
-    enum {
-        SCHEDULER,
-        ALARM,
-        USER
-    };
-
-    using Timer_Common::Tick;
-    using Timer_Common::Handler;
-
 protected:
-    Timer(unsigned int channel, const Hertz & frequency, const Handler & handler, bool retrigger = true)
+    Timer(Channel channel, Hertz frequency, const Handler & handler, bool retrigger = true)
     : _channel(channel), _initial(FREQUENCY / frequency), _retrigger(retrigger), _handler(handler) {
         db<Timer>(TRC) << "Timer(f=" << frequency << ",h=" << reinterpret_cast<void*>(handler) << ",ch=" << channel << ") => {count=" << _initial << "}" << endl;
 
@@ -275,27 +265,19 @@ public:
         _channels[_channel] = 0;
     }
 
-    Hertz frequency() const { return (FREQUENCY / _initial); }
-    void frequency(const Hertz & f) { _initial = FREQUENCY / f; reset(); }
-
     Tick read() { return _current[CPU::id()]; }
 
-    int reset() {
-        db<Timer>(TRC) << "Timer::reset() => {f=" << frequency() << ",h=" << reinterpret_cast<void*>(_handler) << ",count=" << _current[CPU::id()] << "}" << endl;
+    static void reset() { db<Timer>(TRC) << "Timer::reset()" << endl; Engine::reset(0); }
+    static void enable() { db<Timer>(TRC) << "Timer::enable()" << endl; IC::enable(IC::INT_SYS_TIMER); }
+    static void disable() { db<Timer>(TRC) << "Timer::disable()" << endl; IC::disable(IC::INT_SYS_TIMER); }
 
-        int percentage = _current[CPU::id()] * 100 / _initial;
-        _current[CPU::id()] = _initial;
+    PPB accuracy();
+    Hertz frequency() const { return (FREQUENCY / _initial); }
+    void frequency(Hertz f) { _initial = FREQUENCY / f; reset(); }
 
-        return percentage;
-    }
-
-    static void enable() { IC::enable(IC::INT_SYS_TIMER); }
-    static void disable() { IC::disable(IC::INT_SYS_TIMER); }
+    void handler(const Handler & handler) { _handler = handler; }
 
  private:
-    static Hertz count2freq(const Count & c) { return c ? Engine::clock() / c : 0; }
-    static Count freq2count(const Hertz & f) { return f ? Engine::clock() / f : 0; }
-
     static void int_handler(Interrupt_Id i);
 
     static void init();
@@ -315,7 +297,16 @@ protected:
 class Scheduler_Timer: public Timer
 {
 public:
-    Scheduler_Timer(const Microsecond & quantum, const Handler & handler): Timer(SCHEDULER, 1000000 / quantum, handler) {}
+    Scheduler_Timer(Microsecond quantum, const Handler & handler): Timer(SCHEDULER, 1000000 / quantum, handler) {}
+
+    int restart() {
+        db<Timer>(TRC) << "Timer::restart() => {f=" << frequency() << ",h=" << reinterpret_cast<void *>(_handler) << ",count=" << _current[CPU::id()] << "}" << endl;
+
+        int percentage = _current[CPU::id()] * 100 / _initial;
+        _current[CPU::id()] = _initial;
+
+        return percentage;
+    }
 };
 
 // Timer used by Alarm
@@ -325,12 +316,15 @@ public:
     Alarm_Timer(const Handler & handler): Timer(ALARM, FREQUENCY, handler) {}
 };
 
+
 // Timer available for users
 class User_Timer: public Timer
 {
 public:
-    User_Timer(unsigned int channel, const Microsecond & time, const Handler & handler, bool retrigger = false)
-    : Timer(USER, 1000000 / time, handler, retrigger) {}
+    User_Timer(Channel channel, Microsecond time, const Handler & handler, bool retrigger = false)
+    : Timer(USER, 1000000 / time, handler, retrigger) {
+        assert(channel == USER); // Only one user timer on PC
+    }
 };
 
 __END_SYS

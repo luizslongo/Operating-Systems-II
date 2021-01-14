@@ -20,6 +20,7 @@ class System_Timer_Engine: public Timer_Common
 
 private:
     static const unsigned int UNIT = 0;
+    static const unsigned int FREQUENCY = Traits<Timer>::FREQUENCY;
 
     typedef IC_Common::Interrupt_Id Interrupt_Id;
 
@@ -29,19 +30,21 @@ public:
 public:
     Count read() { return timer()->read(); }
 
-    void enable() { timer()->enable(); }
-    void disable() { timer()->disable(); }
+    static void reset() { timer()->config(UNIT, _count); }
+    static void enable() { timer()->enable(); }
+    static void disable() { timer()->disable(); }
 
-    Hertz clock() { return timer()->clock(); }
+    static Hertz clock() { return timer()->clock(); }
 
 protected:
     static void eoi(Interrupt_Id id) { timer()->config(UNIT, _count); }
 
 private:
-    static void init(const Hertz & frequency) {
-        _count = timer()->clock() / frequency;
-        timer()->config(UNIT, _count);
-        timer()->enable();
+    static void init() {
+        disable();
+        _count = timer()->clock() / FREQUENCY;
+        reset();
+        enable();
     }
 
 private:

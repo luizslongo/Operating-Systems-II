@@ -388,7 +388,7 @@ void Thread::dispatch(Thread * prev, Thread * next, bool charge)
 {
     if(charge) {
         if(Criterion::timed)
-            _timer->reset();
+            _timer->restart();
     }
 
     if(monitored) {

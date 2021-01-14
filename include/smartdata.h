@@ -78,8 +78,8 @@ public:
             CD      = 7 <<  0
         };
 
-        // Mask to select field LEN of Digital data
-        enum {
+        // Mask to select field LEN of digital data
+        enum : unsigned long {
             LEN     = (1 << 16) - 1
         };
 
@@ -87,8 +87,8 @@ public:
         template<unsigned int _TYPE, unsigned int _SUBTYPE, unsigned int _LEN>
         struct Digital_Unit
         {
-            //            DIGITAL |            type              | length
-            enum { UNIT = DIGITAL | _TYPE << 24 | _SUBTYPE << 16 | _LEN << 0 };
+            //                            DIGITAL |            type              | length
+            enum : unsigned long { UNIT = DIGITAL | _TYPE << 24 | _SUBTYPE << 16 | _LEN << 0 };
 
         private:
             // Compile-time verifications
@@ -101,8 +101,8 @@ public:
         template<int _MOD, int _SR, int _RAD, int _M, int _KG, int _S, int _A, int _K, int _MOL, int _CD>
         struct SI_Unit
         {
-            //            SI  |  MOD  |        sr       |         rad      |        m       |        kg       |        s       |        A      |        K      |       mol       |     cd
-            enum { UNIT = SI  | _MOD  | (4 + _SR) << 24 | (4 + _RAD) << 21 | (4 + _M) << 18 | ( 4 +_KG) << 15 | (4 + _S) << 12 | (4 + _A) << 9 | (4 + _K) << 6 | (4 + _MOL) << 3 | (4 + _CD) };
+            //                            SI  |  MOD  |        sr       |         rad      |        m       |        kg       |        s       |        A      |        K      |       mol       |     cd
+            enum : unsigned long { UNIT = SI  | _MOD  | (4 + _SR) << 24 | (4 + _RAD) << 21 | (4 + _M) << 18 | ( 4 +_KG) << 15 | (4 + _S) << 12 | (4 + _A) << 9 | (4 + _K) << 6 | (4 + _MOL) << 3 | (4 + _CD) };
 
         private:
             // Compile-time verifications
@@ -119,7 +119,7 @@ public:
         };
 
         // Typical SI Quantities
-        enum Quantity {
+        enum Quantity : unsigned long {
             //                                mod,     sr,    rad,      m,     kg,      s,      A,      K,    mol,     cd            unit
             Acceleration            = SI_Unit<DIR,     +0,     +0,     +1,     +0,     -2,     +0,     +0,     +0,     +0>::UNIT, // m/s2
             Amount_of_Substance     = SI_Unit<DIR,     +0,     +0,     +0,     +0,     +0,     +0,     +0,     +1,     +0>::UNIT, // mol
@@ -150,8 +150,8 @@ public:
             Antigravity             = SI_Unit<LOG_DIV, +3,     +3,     +3,     +3,     +3,     +3,     +3,     +3,     +3>::UNIT, // for Dummy_Transducer :-)
         };
 
-        // Digital Units
-        enum Custom_Units {
+        // Digital data types
+        enum Digital_Data: unsigned long {
             //                                         type, subtype,   length
             // Switches
             Switch                  = Digital_Unit<       0,       0,        1>::UNIT,
@@ -212,14 +212,14 @@ public:
         template<unsigned long UNIT>
         struct Get
         {
-            typedef typename IF<((UNIT & SID) == SI)      && ((UNIT & NUM) == I32), long int,
-                    typename IF<((UNIT & SID) == SI)      && ((UNIT & NUM) == I64), long long int,
-                    typename IF<((UNIT & SID) == SI)      && ((UNIT & NUM) == F32), float,
-                    typename IF<((UNIT & SID) == SI)      && ((UNIT & NUM) == D64), double,
-                    typename IF<((UNIT & SID) == DIGITAL) && ((UNIT & LEN) == 1),   char,
-                    typename IF<((UNIT & SID) == DIGITAL) && ((UNIT & LEN) == 2),   short,
-                    typename IF<((UNIT & SID) == DIGITAL) && ((UNIT & LEN) == 4),   long,
-                    typename IF<((UNIT & SID) == DIGITAL) && ((UNIT & LEN) > 0),    char[UNIT & LEN],
+            typedef typename IF<((unsigned long)(UNIT & SID) == SI)      && ((unsigned long)(UNIT & NUM) == I32), long int,
+                    typename IF<((unsigned long)(UNIT & SID) == SI)      && ((unsigned long)(UNIT & NUM) == I64), long long int,
+                    typename IF<((unsigned long)(UNIT & SID) == SI)      && ((unsigned long)(UNIT & NUM) == F32), float,
+                    typename IF<((unsigned long)(UNIT & SID) == SI)      && ((unsigned long)(UNIT & NUM) == D64), double,
+                    typename IF<((unsigned long)(UNIT & SID) == DIGITAL) && ((unsigned long)(UNIT & LEN) == 1),   char,
+                    typename IF<((unsigned long)(UNIT & SID) == DIGITAL) && ((unsigned long)(UNIT & LEN) == 2),   short,
+                    typename IF<((unsigned long)(UNIT & SID) == DIGITAL) && ((unsigned long)(UNIT & LEN) == 4),   long,
+                    typename IF<((unsigned long)(UNIT & SID) == DIGITAL) && ((unsigned long)(UNIT & LEN) > 0),    char[UNIT & LEN],
                     void>::Result>::Result>::Result>::Result>::Result>::Result>::Result>::Result Type;
         };
 
@@ -227,7 +227,7 @@ public:
         struct GET;
 
         template<unsigned long U>
-        struct Wrap { enum { UNIT = U }; };
+        struct Wrap { enum : unsigned long { UNIT = U }; };
 
     public:
         Unit(): _unit(0) {}

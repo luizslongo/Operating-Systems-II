@@ -39,7 +39,7 @@ void Thread::init()
             task_ready = true;
         } else {
             // If EPOS is a library, then adjust the application entry point to __epos_app_entry,
-            // which will directly call main(). In this case, _init will have already been called,
+            // which will directly call main(). In this case, _init will already have been called,
             // before Init_Application to construct MAIN's global objects.
             new (SYSTEM) Thread(Thread::Configuration(Thread::RUNNING, Thread::MAIN), reinterpret_cast<int (*)()>(__epos_app_entry));
         }
@@ -64,11 +64,13 @@ void Thread::init()
     if(Criterion::timed && (CPU::id() == 0))
         _timer = new (SYSTEM) Scheduler_Timer(QUANTUM, time_slicer);
 
+    // No more interrupts until we reach init_first
+    CPU::int_disable();
+
     // Install an interrupt handler to receive forced reschedules
     if(smp) {
         if(CPU::id() == 0)
             IC::int_vector(IC::INT_RESCHEDULER, rescheduler);
-        CPU::int_disable();
         IC::enable(IC::INT_RESCHEDULER);
     }
 
