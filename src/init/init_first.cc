@@ -31,7 +31,11 @@ public:
         // and data structures established by SETUP and announced as "free memory" will indeed be
         // available to user threads.
         CPU::smp_barrier();
-        CPU::int_enable();  // Was disabled at Thread::init to prevent INT_RESCHEDULE before context->load()
+
+        // Interrupts have been disable at Thread::init() and will be reenabled by CPU::Context::load()
+        // but we first reset the timer to avoid getting a time interrupt during load()
+        Timer::reset();
+        CPU::int_enable();
         first->_context->load();
     }
 };

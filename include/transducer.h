@@ -11,13 +11,13 @@ template<unsigned long _UNIT>
 class Transducer: public SmartData, public Observed
 {
 public:
-    static const unsigned int UNIT = _UNIT;
+    static const unsigned long UNIT = _UNIT;
 
     enum : unsigned int { SENSOR = 1 << 0, ACTUATOR = 1 << 1 };
     typedef unsigned int Type;
     static const Type TYPE = SENSOR | ACTUATOR;
 
-    typedef typename Unit::Get<UNIT>::Type Value;
+    typedef typename Unit::Get<_UNIT>::Type Value;
 
     typedef _UTIL::Observer Observer;
     typedef _UTIL::Observed Observed;

@@ -73,10 +73,6 @@ public:
     void enable() {}
     void disable() {}
 
-    PPB accuracy();
-    Hertz frequency() const { return (FREQUENCY / _initial); }
-    void frequency(const Hertz & f) { _initial = FREQUENCY / f; reset(); }
-
     void handler(const Handler & handler) { _handler = handler; }
 
     static void config(const Hertz & frequency) {

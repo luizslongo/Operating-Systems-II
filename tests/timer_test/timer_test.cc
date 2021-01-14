@@ -21,7 +21,7 @@ int main()
 {
     cout << "Timer test" << endl;
 
-    User_Timer timer(0, 10000, handler);
+    User_Timer timer(User_Timer::USER1, 10000, handler);
 
     for(int i = 0; i < 10000; i++);
     cout << "count = " << timer.read() << "" << endl;
