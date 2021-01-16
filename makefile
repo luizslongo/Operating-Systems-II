@@ -61,11 +61,16 @@ test: FORCE
 		
 buildtest: FORCE
 		$(foreach tst,$(TESTS),$(LINK) $(TST)/$(tst) $(APP);)
-		$(foreach tst,$(UNCOMPILED_TESTS),$(MAKETEST) APPLICATION=$(tst) prebuild_$(tst) clean1 all1 posbuild_$(tst);)
+		$(foreach tst,$(UNCOMPILED_TESTS),$(MAKETEST) APPLICATION=$(tst) prebuild_$(tst) clean1 all1 posbuild_$(tst) || exit;)
 
 runtest: FORCE
 		$(foreach tst,$(TESTS),$(LINK) $(TST)/$(tst) $(APP);)
-		$(foreach tst,$(UNFINISHED_TESTS),$(MAKETEST) APPLICATION=$(tst) prerun_$(tst) run1 posbuild_$(tst);)
+		$(foreach tst,$(UNFINISHED_TESTS),$(MAKETEST) APPLICATION=$(tst) prerun_$(tst) run1 posbuild_$(tst) || exit;)
+
+gittest: buildtest runtest
+
+linktest: FORCE
+		$(foreach tst,$(TESTS),$(LINK) $(TST)/$(tst) $(APP);)
 
 cleantest: FORCE
 		$(foreach tst,$(TESTS),$(LINK) $(TST)/$(tst) $(APP);)
@@ -74,9 +79,9 @@ cleantest: FORCE
 
 .PHONY: prebuild_$(APPLICATION) posbuild_$(APPLICATION) prerun_$(APPLICATION)
 prebuild_$(APPLICATION):
-		@echo "Building $(APPLICATION) ..."
+		@echo -n "Building $(APPLICATION) ..."
 posbuild_$(APPLICATION):
-		@echo "done!"
+		@echo " done!"
 prerun_$(APPLICATION):
 #		@echo "Cooling down for 10s ..."
 #		sleep 10

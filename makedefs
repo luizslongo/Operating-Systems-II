@@ -292,8 +292,8 @@ LD		= $(COMP_PREFIX)ld
 LDFLAGS		= $(MACH_LD_FLAGS) -nostdlib -L$(LIB) -Bstatic
 
 MAKE		:= make --print-directory
-MAKECLEAN	:= make -i clean
-MAKETEST	:= make --no-print-directory --silent
+MAKECLEAN	:= make --ignore-errors clean
+MAKETEST	:= make --no-print-directory --silent --stop
 MAKEFLAGS	:= --no-builtin-rules
 
 MKBI		:= $(BIN)/eposmkbi $(EPOS)
