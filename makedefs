@@ -296,7 +296,7 @@ MAKECLEAN	:= make --ignore-errors clean
 MAKETEST	:= make --no-print-directory --silent --stop
 MAKEFLAGS	:= --no-builtin-rules
 
-MKBI		:= $(BIN)/eposmkbi $(EPOS)
+MKBI		= $(BIN)/eposmkbi $(if $(findstring s, $(MAKEFLAGS)), -s, ) $(EPOS)
 
 OBJCOPY		= $(COMP_PREFIX)objcopy
 OBJCOPYFLAGS	:= -R .note -R .comment

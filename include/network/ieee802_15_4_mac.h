@@ -11,8 +11,8 @@
 
 __BEGIN_SYS
 
-template<typename Radio>
-class IEEE802_15_4_MAC: public IEEE802_15_4, public Radio
+template<typename Engine>
+class IEEE802_15_4_MAC: public IEEE802_15_4, public Engine
 {
 private:
     static const unsigned int CSMA_CA_MIN_BACKOFF_EXPONENT = 3;
@@ -25,37 +25,27 @@ private:
     static const bool acknowledged = true;
 
 public:
-    using IEEE802_15_4::Address;
-    using IEEE802_15_4::Header;
-    using IEEE802_15_4::Frame;
-
-    static const unsigned int MTU = IEEE802_15_4::MTU - sizeof(Header);
-
-    static unsigned int period() { return 0; }
+    using Frame = Log_Frame;
+    using typename Engine::Timer;
 
 protected:
     IEEE802_15_4_MAC() {}
 
-    // Called after the Radio's constructor
+public:
+    // Called after the Engine's constructor
     void constructor_epilogue() {
-        Radio::power(Power_Mode::FULL);
-        Radio::listen();
+        Engine::power(Power_Mode::FULL);
+        Engine::listen();
     }
 
-    // Filter and assemble RX Buffer Metainformation
-    bool pre_notify(Buffer * buf) { return true; }
-
-    bool post_notify(Buffer * buf) { return false; }
-
-public:
-    // Assemble TX Buffer Metainformation and MAC Header
+    // Assemble TX Buffer Metadata and MAC Header
     void marshal(Buffer * buf, const Address & src, const Address & dst, const Type & type) {
         Frame * frame = new (buf->frame()) Frame(type, src, dst);
         frame->ack_request(acknowledged && dst != broadcast());
     }
 
     unsigned int unmarshal(Buffer * buf, Address * src, Address * dst, Type * type, void * data, unsigned int size) {
-        Frame * frame = buf->frame();
+        Buffer::Frame * frame = buf->frame();
         unsigned int data_size = buf->size() - sizeof(Header);
         if(size > data_size)
             size = data_size;
@@ -66,40 +56,48 @@ public:
         return size;
     }
 
-    bool drop(unsigned int id) { return false; }
+    void marshal(Buffer * buf) {
+        // Empty method, for compilation purpose only. Shall never be called if systems is correctly configured
+    }
+
+    unsigned int unmarshal(Buffer * buf, void * data, unsigned int size) {
+        // Empty method, for compilation purpose only. Shall never be called if systems is correctly configured
+        return 0;
+    }
+
+    bool drop(Buffer * buf) {
+        // Empty method, for compilation purpose only. Should never be called if systems is correctly configured
+        return false;
+    }
 
     int send(Buffer * buf) {
         bool do_ack = acknowledged && buf->frame()->ack_request();
 
-        Radio::power(Power_Mode::LIGHT);
-
-        Radio::copy_to_nic(buf->frame(), buf->size());
+        Engine::power(Power_Mode::LIGHT);
+        Engine::copy_to_nic(buf->frame(), buf->size());
         bool sent, ack_ok;
         ack_ok = sent = backoff_and_send();
-
         if(do_ack) {
             if(sent) {
-                Radio::power(Power_Mode::FULL);
-                ack_ok = Radio::wait_for_ack(ACK_TIMEOUT, buf->frame()->sequence_number());
+                Engine::power(Power_Mode::FULL);
+                ack_ok = Engine::wait_for_ack(ACK_TIMEOUT, buf->frame()->sequence_number());
             }
 
             for(unsigned int i = 0; !ack_ok && (i < CSMA_CA_RETRIES); i++) {
-                Radio::power(Power_Mode::LIGHT);
-                db<IEEE802_15_4_MAC>(TRC) << "IEEE802_15_4_MAC::retransmitting" << endl;
+                Engine::power(Power_Mode::LIGHT);
                 ack_ok = sent = backoff_and_send();
                 if(sent) {
-                    Radio::power(Power_Mode::FULL);
-                    ack_ok = Radio::wait_for_ack(ACK_TIMEOUT, buf->frame()->sequence_number());
+                    Engine::power(Power_Mode::FULL);
+                    ack_ok = Engine::wait_for_ack(ACK_TIMEOUT, buf->frame()->sequence_number());
                 }
             }
-
             if(!sent)
-                Radio::power(Power_Mode::FULL);
+                Engine::power(Power_Mode::FULL);
 
         } else {
             if(sent)
-                while(!Radio::tx_done());
-            Radio::power(Power_Mode::FULL);
+                while(!Engine::tx_done());
+            Engine::power(Power_Mode::FULL);
         }
 
         unsigned int size = buf->size();
@@ -109,7 +107,12 @@ public:
         return ack_ok ? size : 0;
     }
 
-private:
+    static unsigned int period() { return 0; }
+
+    // Filter and assemble RX Buffer Metadata
+    bool pre_notify(Buffer * buf) { return true; }
+    bool post_notify(Buffer * buf) { return false; }
+
     bool backoff_and_send() {
         unsigned int exp = CSMA_CA_MIN_BACKOFF_EXPONENT;
         unsigned int backoff = Math::pow(2, exp);
@@ -120,8 +123,8 @@ private:
             if(time < CSMA_CA_UNIT_BACKOFF_PERIOD)
                 time = CSMA_CA_UNIT_BACKOFF_PERIOD;
 
-            Radio::backoff(time);
-            if(Radio::cca(CSMA_CA_UNIT_BACKOFF_PERIOD) && Radio::transmit())
+            Engine::backoff(time);
+            if(Engine::cca(CSMA_CA_UNIT_BACKOFF_PERIOD) && Engine::transmit())
                 break; // Success
 
             if(exp < CSMA_CA_MAX_BACKOFF_EXPONENT) {

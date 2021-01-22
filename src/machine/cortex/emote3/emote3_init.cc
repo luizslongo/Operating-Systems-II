@@ -6,6 +6,9 @@
 
 #include <machine/cortex/engine/pl061.h>
 #include <machine/ic.h>
+#include <transducer.h>
+#include <synchronizer.h>
+#include <machine/gpio.h>
 
 __BEGIN_SYS
 

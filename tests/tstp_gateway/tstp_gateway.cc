@@ -33,7 +33,7 @@ int main()
 
     while(true) {
         Alarm::delay(INTEREST_PERIOD);
-        cout << "Acceleration in " << acceleration.space() << " at " << acceleration.time() << " was " << acceleration << endl;
+        cout << "Acceleration in " << acceleration.where() << " at " << acceleration.when() << " was " << acceleration << endl;
     }
 
     return 0;

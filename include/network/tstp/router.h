@@ -48,7 +48,7 @@ private:
         }
 
         // Do not forward messages that come from too far away, to avoid radio range asymmetry
-        Space::Distance d = here() - buf->frame()->data<Header>()->last_hop();
+        Space::Distance d = here() - buf->frame()->data<Header>()->last_hop().space;
         if(d > RANGE)
             return false;
 

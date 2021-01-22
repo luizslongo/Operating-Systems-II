@@ -1,14 +1,15 @@
-#include <utility/pcap.h>
-#include <network/tstp/tstp.h>
+#include <network.h>
 #include <time.h>
 #include <synchronizer.h>
+#include <utility/observer.h>
+#include <utility/convert.h>
+#include <utility/pcap.h>
 
-using namespace EPOS;
+__BEGIN_SYS
 
-class TSTP_PCAP_Sniffer: private NIC::Observer
+class TSTP_PCAP_Sniffer: private Data_Observer<TSTP::Buffer>
 {
     typedef IF<Traits<USB>::enabled, USB, UART>::Result Out;
-    typedef Traits<NIC>::NICS::Get<0>::Result::Timer Timer;
 
 public:
     class Packet
@@ -17,16 +18,17 @@ public:
         typedef Simple_List<Packet> List;
         typedef List::Element Element;
 
-        Packet(NIC::Buffer * buf):
-            _header(TSTP::absolute(Timer::count2us(buf->sfd_time_stamp)), buf->size()),
-            _link(this) {
-                if(buf->is_microframe) {
-                    TSTP::Microframe * mf = buf->frame()->data<TSTP::Microframe>();
-                    mf->all_listen(buf->downlink);
-                    mf->count(buf->microframe_count);
-                }
-                memcpy(_data, buf->frame()->data<const char>(), buf->size());
-            }
+        Packet(TSTP::Buffer * buf):
+//            _header(TSTP::absolute(Convert::count2us(buf->sfdts)), buf->size()),
+            _link(this)
+        {
+//            if(buf->is_microframe) {
+//                TSTP::Microframe * mf = buf->frame()->data<TSTP::Microframe>();
+//                mf->all_listen(buf->downlink);
+//                mf->count(buf->microframe_count);
+//            }
+            memcpy(_data, buf->frame()->data<const char>(), buf->size());
+        }
 
         Element * lext() { return &_link; }
         unsigned int size() { return sizeof(PCAP::Packet_Header) + _header.size(); }
@@ -43,17 +45,17 @@ private:
 
 public:
     TSTP_PCAP_Sniffer() {
-        Out out;
+        Out out(1);
         PCAP::Global_Header g(IEEE802_15_4::MTU, PCAP::IEEE802_15_4);
         for(unsigned int i = 0; i < sizeof(PCAP::Global_Header); i++)
             out.put(reinterpret_cast<const char*>(&g)[i]);
         attach(&_observer, PCAP::IEEE802_15_4);
-        _nic.attach(this, NIC::TSTP);
+        TSTP::attach(this);
     }
 
     Packet * updated() { return _observer.updated(); }
 
-    void update(NIC::Observed * obs, NIC::Protocol prot, NIC::Buffer * buf) { notify(PCAP::IEEE802_15_4, new Packet(buf)); }
+    void update(Data_Observed<TSTP::Buffer> * obs, TSTP::Buffer * buf) { notify(PCAP::IEEE802_15_4, new Packet(buf)); }
 
 private:
     static bool notify(int t, Packet * p) { return _observed.notify(t, p); }
@@ -61,19 +63,22 @@ private:
     static void detach(Observer * obs, int t) { _observed.detach(obs, t); }
 
 private:
-    NIC _nic;
-    static Observed _observed;
     Observer _observer;
+    static Observed _observed;
 };
 
 TSTP_PCAP_Sniffer::Observed TSTP_PCAP_Sniffer::_observed;
+
+__END_SYS
+
+using namespace EPOS;
 
 int main()
 {
     Machine::delay(5000000);
 
     TSTP_PCAP_Sniffer sniffer;
-    IF<Traits<USB>::enabled, USB, UART>::Result out;
+    IF<Traits<USB>::enabled, USB, UART>::Result out(0);
 
     while(true) {
         TSTP_PCAP_Sniffer::Packet * p = sniffer.updated();

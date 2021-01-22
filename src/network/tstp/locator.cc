@@ -9,7 +9,7 @@
 __BEGIN_SYS
 
 // Class attributes
-TSTP::Global_Space TSTP::Locator::_absolute_location;
+TSTP::Global_Space TSTP::Locator::_reference;
 TSTP::Locator::Engine TSTP::Locator::_engine;
 
 // Methods
@@ -32,7 +32,7 @@ void TSTP::Locator::update(Data_Observed<Buffer> * obs, Buffer * buf)
             buf->my_distance = here() - TSTP::sink();
     } else {
         Global_Space dst = Space(Router::destination(buf).center);
-        buf->sender_distance = buf->frame()->data<Header>()->last_hop() - dst;
+        buf->sender_distance = buf->frame()->data<Header>()->last_hop().space - dst;
         Header * h = buf->frame()->data<Header>();
         _engine.learn(h->last_hop(), h->location_confidence(), buf->rssi);
 
@@ -64,7 +64,9 @@ void TSTP::Locator::marshal(Buffer * buf)
     buf->downlink = dst != sink(); // This would fit better in the Router, but Timekeeper uses this info
     buf->frame()->data<Header>()->location_confidence(Locator::confidence());
     buf->frame()->data<Header>()->origin(here());
+    buf->frame()->data<Header>()->origin(now());
     buf->frame()->data<Header>()->last_hop(here());
+    buf->frame()->data<Header>()->last_hop(now());
 }
 
 __END_SYS

@@ -17,18 +17,60 @@ TSTP::Locator * TSTP::_locator;
 TSTP::Router * TSTP::_router;
 TSTP::Manager * TSTP::_manager;
 
-TSTP::Time TSTP::_epoch;
-
 NIC<TSTP::NIC_Family> * TSTP::_nic;
 Data_Observed<TSTP::Buffer> TSTP::_parts;
 Data_Observed<TSTP::Buffer, TSTP::Unit> TSTP::_clients;
 
 
-TSTP::~TSTP()
+
+Debug & operator<<(Debug & db, const TSTP::Packet & p)
 {
-    db<TSTP>(TRC) << "TSTP::~TSTP()" << endl;
-    _nic->detach(this, 0);
-}
+    switch(p.type()) {
+    case TSTP::INTEREST:
+        db << reinterpret_cast<const TSTP::Interest &>(p);
+        break;
+    case TSTP::RESPONSE:
+        db << reinterpret_cast<const TSTP::Response &>(p);
+        break;
+    case TSTP::COMMAND:
+        db << reinterpret_cast<const TSTP::Command &>(p);
+        break;
+    case TSTP::CONTROL:
+        switch(p.subtype()) {
+        case TSTP::DH_RESPONSE:
+            db << reinterpret_cast<const TSTP::Security::DH_Response &>(p);
+            break;
+        case TSTP::AUTH_REQUEST:
+            db << reinterpret_cast<const TSTP::Security::Auth_Request &>(p);
+            break;
+        case TSTP::DH_REQUEST:
+            db << reinterpret_cast<const TSTP::Security::DH_Request &>(p);
+            break;
+        case TSTP::AUTH_GRANTED:
+            db << reinterpret_cast<const TSTP::Security::Auth_Granted &>(p);
+            break;
+        case TSTP::REPORT:
+            db << reinterpret_cast<const TSTP::Security::Report &>(p);
+            break;
+        case TSTP::KEEP_ALIVE:
+            db << reinterpret_cast<const TSTP::Timekeeper::Keep_Alive &>(p);
+            break;
+        case TSTP::EPOCH:
+            db << reinterpret_cast<const TSTP::Timekeeper::Epoch &>(p);
+            break;
+//        case TSTP::MODEL:
+//            db << reinterpret_cast<const TSTP::Model &>(p);
+//            break;
+        default:
+            break;
+        }
+        break;
+    default:
+        break;
+    }
+    db << "}";
+    return db;
+};
 
 void TSTP::update(NIC_Family::Observed * obs, const Protocol & prot, Buffer * buf)
 {
@@ -160,8 +202,8 @@ void TSTP::update(NIC_Family::Observed * obs, const Protocol & prot, Buffer * bu
 //                Epoch * epoch = reinterpret_cast<Epoch *>(packet);
 //                if(here() != sink()) {
 //                    _global_coordinates = epoch->coordinates();
-//                    _epoch = epoch->epoch();
-//                    db<TSTP>(INF) << "TSTP::update: Epoch: adjusted epoch Space-Time to: " << _global_coordinates << ", " << _epoch << endl;
+//                    _reference = epoch->epoch();
+//                    db<TSTP>(INF) << "TSTP::update: Epoch: adjusted epoch Space-Time to: " << _global_coordinates << ", " << _reference << endl;
 //                }
 //            } break;
 //            default:
@@ -177,7 +219,10 @@ void TSTP::update(NIC_Family::Observed * obs, const Protocol & prot, Buffer * bu
 //        break;
 //    }
 
-void TSTP::marshal(Buffer * buf) {
+void TSTP::marshal(Buffer * buf)
+{
+    db<TSTP>(TRC) << "TSTP::marshal(buf=" << buf << ")" << endl;
+
     Manager::marshal(buf);
     Router::marshal(buf);
     Locator::marshal(buf);
@@ -185,7 +230,7 @@ void TSTP::marshal(Buffer * buf) {
     Security::marshal(buf);
 
     Packet * packet = buf->frame()->data<Packet>();
-    db<TSTP>(TRC) << "TSTP::marshal:packet=" << *packet << endl;
+    db<TSTP>(INF) << "TSTP::marshal:packet=" << *packet << endl;
 }
 
 __END_SYS

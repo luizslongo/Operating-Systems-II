@@ -56,14 +56,17 @@ void E100::int_handler(IC::Interrupt_Id interrupt)
 // Methods
 E100::~E100()
 {
-    db<E100>(TRC) << "~E100(unit=" << _unit << ")" << endl;
+    db<E100>(TRC) << "~E100(unit=" << _configuration.unit << ")" << endl;
 }
 
 E100::E100(unsigned int unit, const Log_Addr & io_mem, const IO_Irq & irq, DMA_Buffer * dma_buf)
 {
     db<E100>(TRC) << "E100(unit=" << unit << ",io=" << io_mem << ",irq=" << irq << ",dma=" << dma_buf << ")" << endl;
 
-    _unit = unit;
+    _configuration.unit = unit;
+    _configuration.timer_accuracy = TSC::accuracy();
+    _configuration.timer_frequency = TSC::frequency();
+
     _io_mem = io_mem;
     _irq = irq;
     _csr = static_cast<CSR_Desc *>(io_mem);
@@ -150,6 +153,42 @@ E100::E100(unsigned int unit, const Log_Addr & io_mem, const IO_Irq & irq, DMA_B
     reset();
 }
 
+bool E100::reconfigure(const Configuration * c = 0)
+{
+    db<E100>(TRC) << "E100::reconfigure(c=" << c << ")" << endl;
+
+    bool ret = false;
+
+    if(!c) {
+        db<E100>(TRC) << "E100::reconfigure: reseting!" << endl;
+        CPU::int_disable();
+        reset();
+        new (&_statistics) Statistics; // reset statistics
+        CPU::int_enable();
+    } else {
+        db<E100>(INF) << "E100::reconfigure: configuration = " << *c << ")" << endl;
+
+        if(c->selector & Configuration::ADDRESS) {
+            db<PCNet32>(WRN) << "E100::reconfigure: address changed only in the mediator!)" << endl;
+            _configuration.address = c->address;
+            ret = true;
+        }
+
+        if(c->selector & Configuration::TIMER) {
+            if(c->parameter) {
+                TSC::time_stamp(TSC::time_stamp() + c->parameter);
+                ret = true;
+            }
+            if(c->timer_frequency) {
+                db<PCNet32>(WRN) << "PCNet32::reconfigure: timer frequency cannot be changed!)" << endl;
+                ret = false;
+            }
+        }
+    }
+
+    return ret;
+}
+
 void E100::reset()
 {
     db<E100>(TRC) << "E100::reset (software reset and self-test)" << endl;
@@ -161,13 +200,13 @@ void E100::reset()
     self_test();
 
     // Get MAC address from EEPROM
-    _address[0] = eeprom_mac_address(0);
-    _address[1] = eeprom_mac_address(1);
-    _address[2] = eeprom_mac_address(2);
-    _address[3] = eeprom_mac_address(3);
-    _address[4] = eeprom_mac_address(4);
-    _address[5] = eeprom_mac_address(5);
-    db<E100>(INF) << "E100::reset():MAC=" << _address << endl;
+    _configuration.address[0] = eeprom_mac_address(0);
+    _configuration.address[1] = eeprom_mac_address(1);
+    _configuration.address[2] = eeprom_mac_address(2);
+    _configuration.address[3] = eeprom_mac_address(3);
+    _configuration.address[4] = eeprom_mac_address(4);
+    _configuration.address[5] = eeprom_mac_address(5);
+    db<E100>(INF) << "E100::reset():MAC=" << _configuration.address << endl;
 
     // load zero on NIC's internal CU
     while(exec_command(cuc_load_base, 0));
@@ -367,29 +406,6 @@ E100::Buffer * E100::alloc(const Address & dst, const Protocol & prot, unsigned 
     return pool.head()->object();
 }
 
-void E100::free(Buffer * buf)
-{
-    db<E100>(TRC) << "E100::free(buf=" << buf << ")" << endl;
-
-    for(Buffer::Element * el = buf->link(); el; el = el->next()) {
-        buf = el->object();
-        Rx_Desc * desc = reinterpret_cast<Rx_Desc *>(buf->back());
-
-        _statistics.rx_packets++;
-        _statistics.rx_bytes += buf->size();
-
-        // Release the buffer to the NIC
-        desc->size = Reg16(-sizeof(Frame)); // 2's comp.
-        desc->status = Rx_RFD_AVAILABLE; // Owned by NIC
-        desc->actual_count = 0x0; // Clears EOF, F, and Actual Count
-
-        // Release the buffer to the OS
-        buf->unlock();
-
-        db<E100>(INF) << "E100::free:desc=" << desc << " => " << *desc << endl;
-    }
-}
-
 /*! NOTE: this method is not thread-safe because _tx_buffer_prev is shared by
  * all threads that use this object. */
 int E100::send(Buffer * buf)
@@ -450,7 +466,31 @@ int E100::send(Buffer * buf)
     return size;
 }
 
-unsigned short E100::eeprom_read(unsigned short *addr_len, unsigned short addr) {
+void E100::free(Buffer * buf)
+{
+    db<E100>(TRC) << "E100::free(buf=" << buf << ")" << endl;
+
+    for(Buffer::Element * el = buf->link(); el; el = el->next()) {
+        buf = el->object();
+        Rx_Desc * desc = reinterpret_cast<Rx_Desc *>(buf->back());
+
+        _statistics.rx_packets++;
+        _statistics.rx_bytes += buf->size();
+
+        // Release the buffer to the NIC
+        desc->size = Reg16(-sizeof(Frame)); // 2's comp.
+        desc->status = Rx_RFD_AVAILABLE; // Owned by NIC
+        desc->actual_count = 0x0; // Clears EOF, F, and Actual Count
+
+        // Release the buffer to the OS
+        buf->unlock();
+
+        db<E100>(INF) << "E100::free:desc=" << desc << " => " << *desc << endl;
+    }
+}
+
+unsigned short E100::eeprom_read(unsigned short *addr_len, unsigned short addr)
+{
 
     unsigned long cmd_addr_data;
     cmd_addr_data = (EE_READ_CMD(*addr_len) | addr) << 16;

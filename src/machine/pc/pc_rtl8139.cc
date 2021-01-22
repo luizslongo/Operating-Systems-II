@@ -11,11 +11,9 @@
 
 __BEGIN_SYS
 
-// Class attributes
 RTL8139::Device RTL8139::_devices[UNITS];
 
 
-// Methods
 RTL8139::~RTL8139()
 {
     db<RTL8139>(TRC) << "~RTL8139()" << endl;
@@ -34,9 +32,9 @@ int RTL8139::send(const Address & dst, const Protocol & prot, const void * data,
 
     Buffer * buf = _tx_buffer[i];
 
-    db<RTL8139>(TRC) << "RTL8139::send(s=" << _address << ",d=" << dst << ",p=" << hex << prot << dec << ",d=" << data << ",s=" << size << ")" << endl;
+    db<RTL8139>(TRC) << "RTL8139::send(s=" << _configuration.address << ",d=" << dst << ",p=" << hex << prot << dec << ",d=" << data << ",s=" << size << ")" << endl;
 
-    new (buf->frame()) Frame(_address, dst, prot, data, size);
+    new (buf->frame()) Frame(_configuration.address, dst, prot, data, size);
     unsigned short status = sizeof(Frame) & 0xfff; // write 0 on OWN bit
 
     CPU::out32(_io_port + TRSTART  + i * TX_BUFS, (long unsigned int) _tx_base_phy[i]);
@@ -105,6 +103,8 @@ int RTL8139::receive(Address * src, Protocol * prot, void * data, unsigned int s
 
 RTL8139::Buffer * RTL8139::alloc(const Address & dst, const Protocol & prot, unsigned int once, unsigned int always, unsigned int payload)
 {
+    db<RTL8139>(TRC) << "RTL8139::alloc(on=" << once << ",al=" << always << ",pl=" << payload << ")" << endl;
+
     int max_data = MTU - always;
 
     if((payload + once) / max_data > TX_BUFS) {
@@ -126,7 +126,7 @@ RTL8139::Buffer * RTL8139::alloc(const Address & dst, const Protocol & prot, uns
         Buffer * buf = _tx_buffer[i];
 
         // Initialize the buffer and assemble the Ethernet Frame Header
-        buf->fill((size > max_data) ? MTU : size + always, _address, dst, prot);
+        buf->fill((size > max_data) ? MTU : size + always, _configuration.address, dst, prot);
 
         db<RTL8139>(INF) << "RTL8139::alloc:buf=" << buf << " => " << *buf << endl;
 
@@ -136,14 +136,13 @@ RTL8139::Buffer * RTL8139::alloc(const Address & dst, const Protocol & prot, uns
     return pool.head()->object();
 }
 
-
 int RTL8139::send(Buffer * buf)
 {
     unsigned int size = 0;
 
     for(Buffer::Element * el = buf->link(); el; el = el->next()) {
         buf = el->object();
-        char *desc = reinterpret_cast<char *>(*reinterpret_cast<int *>(buf->back()));
+        char * desc = reinterpret_cast<char *>(*reinterpret_cast<int *>(buf->back()));
         unsigned int i = 0;
         for (; i < TX_BUFS; i++)
             if (desc == _tx_base_phy[i]) break;
@@ -170,11 +169,46 @@ int RTL8139::send(Buffer * buf)
     return size;
 }
 
-
-void RTL8139::free(Buffer * buf) {
+void RTL8139::free(Buffer * buf)
+{
     delete buf;
 }
 
+bool RTL8139::reconfigure(const Configuration * c = 0)
+{
+    db<RTL8139>(TRC) << "RTL8139::reconfigure(c=" << c << ")" << endl;
+
+    bool ret = false;
+
+    if(!c) {
+        db<RTL8139>(TRC) << "RTL8139::reconfigure: reseting!" << endl;
+        CPU::int_disable();
+        reset();
+        new (&_statistics) Statistics; // reset statistics
+        CPU::int_enable();
+    } else {
+        db<RTL8139>(INF) << "RTL8139::reconfigure: configuration = " << *c << ")" << endl;
+
+        if(c->selector & Configuration::ADDRESS) {
+            db<RTL8139>(WRN) << "RTL8139::reconfigure: address changed only in the mediator!)" << endl;
+            _configuration.address = c->address;
+            ret = true;
+        }
+
+        if(c->selector & Configuration::TIMER) {
+            if(c->parameter) {
+                TSC::time_stamp(TSC::time_stamp() + c->parameter);
+                ret = true;
+            }
+            if(c->timer_frequency) {
+                db<PCNet32>(WRN) << "PCNet32::reconfigure: timer frequency cannot be changed!)" << endl;
+                ret = false;
+            }
+        }
+    }
+
+    return ret;
+}
 
 void RTL8139::reset()
 {
@@ -204,8 +238,8 @@ void RTL8139::reset()
     CPU::out8(_io_port  + CMD, TE| RE);
 
     // Set MAC address
-    for (int i = 0; i < 6; i++) _address[i] = CPU::in8(_io_port + MAC0_5 + i);
-    db<RTL8139>(INF) << "RTL8139::reset: MAC=" << _address << endl;
+    for (int i = 0; i < 6; i++) _configuration.address[i] = CPU::in8(_io_port + MAC0_5 + i);
+    db<RTL8139>(INF) << "RTL8139::reset: MAC=" << _configuration.address << endl;
     db<RTL8139>(TRC) << "RBSTART is " << CPU::in32(_io_port + RBSTART) << endl;
 
 }

@@ -140,51 +140,87 @@ public:
     typedef unsigned short CRC16;
     typedef unsigned long CRC32;
 
-
-    // NIC Timer Interface (to be implemented by NIC aiming at supporting time-synchronous protocols)
-    class Timer
+    // Configuration parameters
+    struct Configuration
     {
-    public:
-        typedef unsigned long long Time_Stamp;
-        typedef long long Offset;
+        typedef unsigned int Selector;
+        enum : Selector {
+            ADDRESS     = 1 << 0,     // MAC address (all NICs, r/w)
+            CHANNEL     = 1 << 1,     // current channel (wireless only, , r/w)
+            POWER       = 1 << 2,     // current transmission power (wireless only, r/w)
+            PERIOD      = 1 << 3,     // MAC period (time-synchronous MACs only, r/w)
+            TIMER       = 1 << 4,     // timer parameters (time-synchronous MACs only, r/w)
+            TIME_STAMP  = 1UL << 31,  // time stamp the configuration (always updated, also when reading, r/o)
+            ALL         = 0xffffffff,
+        };
 
-    public:
-         Timer() {}
-
-         static Time_Stamp read();
-         static Time_Stamp sfd();
-         static void adjust(const Offset & o);
-
-         static Hertz frequency();
-         static PPB accuracy();
-
-         static Time_Stamp us2count(const Microsecond & us);
-         static Microsecond count2us(const Time_Stamp & ts);
+        Selector selector;
+        long long parameter; // a generic parameter used for reconfiguration operations
     };
 
     // NIC statistics
     struct Statistics
     {
+        typedef unsigned int Count;
+
         Statistics(): rx_packets(0), tx_packets(0), rx_bytes(0), tx_bytes(0) {}
 
-        unsigned int rx_packets;
-        unsigned int tx_packets;
-        unsigned int rx_bytes;
-        unsigned int tx_bytes;
+        Count rx_packets;
+        Count tx_packets;
+        Count rx_bytes;
+        Count tx_bytes;
     };
 
     // Buffer Metadata added to frames by higher-level protocols
-    struct Metadata
-    {
-        typedef Timer::Time_Stamp Time_Stamp;
-        typedef Timer::Offset Offset;
+    struct Null_Metadata {
+        // Traits
+        static const bool collect_sfdts = true;
+        static const bool collect_rssi = true;
 
+        // Types
+        typedef unsigned long long Time_Stamp;
+        typedef long long Offset;
+        static const Time_Stamp INFINITE = -1;
+
+        // Data (null; union just to compile inactive protocols)
+        union {
+            int rssi;
+            int period;
+            Time_Stamp sfdts;
+            unsigned int id;
+            unsigned long long offset;
+            bool destined_to_me;
+            bool downlink;
+            Time_Stamp deadline;
+            unsigned int my_distance;
+            unsigned int sender_distance;
+            bool is_new;
+            bool is_microframe;
+            bool relevant;
+            bool trusted;
+            bool freed;
+            unsigned int random_backoff_exponent;
+            unsigned int microframe_count;
+            int hint;
+            unsigned int times_txed;
+        };
+    };
+
+    struct TSTP_Metadata
+    {
+        // Traits
+        static const bool collect_sfdts = true;
+        static const bool collect_rssi = true;
+
+        // Types
+        typedef unsigned long long Time_Stamp;
+        typedef long long Offset;
         static const Time_Stamp INFINITE = -1;
 
     	// TODO: remove unnecessary long longs
         int rssi;                             // Received Signal Strength Indicator
         int period;                           // NIC's MAC current period (in us)
-        Time_Stamp sfd_time_stamp;            // Start-of-frame reception time stamp
+        Time_Stamp sfdts;                     // Time stamp of start of frame delimiter reception
     	unsigned int id;                      // Message identifier
     	unsigned long long offset;            // MAC contention offset
     	bool destined_to_me;                  // Whether this node is the final destination for this message
@@ -220,7 +256,9 @@ public:
     using typename Family::Configuration;
     using typename Family::Statistics;
     using typename Family::Observed;
-    using typename Family::Observer;
+    using Family::MTU;
+
+    typedef typename Family::Metadata::Time_Stamp Time_Stamp;
 
 protected:
     NIC(unsigned int unit = 0) {}
@@ -233,15 +271,16 @@ public:
 
     virtual Buffer * alloc(const Address & dst, const Protocol & prot, unsigned int once, unsigned int always, unsigned int payload) = 0;
     virtual int send(Buffer * buf) = 0;
-    virtual void free(Buffer * buf) = 0;
-    virtual bool drop(unsigned int id) { return false; };
+    virtual bool drop(Buffer * buf) { return false; } // after send, while still in the working queues, not supported by many NICs
+    virtual void free(Buffer * buf) = 0; // to be called by observers after handling notifications from the NIC
 
     virtual const Address & address() = 0;
     virtual void address(const Address &) = 0;
 
-    virtual void reset() = 0;
-    virtual bool reconfigure(const Configuration & c) { return false; }
-    virtual void configuration(Configuration * c) { Configuration null; *c = null; }
+    virtual bool reconfigure(const Configuration * c = 0) = 0; // pass null to reset
+    virtual const Configuration & configuration() = 0;
+
+    virtual Time_Stamp time_stamp() = 0;
 
     virtual const Statistics & statistics() = 0;
 };
