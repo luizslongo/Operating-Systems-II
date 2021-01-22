@@ -10,12 +10,12 @@ template<> struct Traits<Build>: public Traits_Tokens
 {
     // Basic configuration
     static const unsigned int MODE = LIBRARY;
-    static const unsigned int ARCHITECTURE = IA32;
-    static const unsigned int MACHINE = PC;
-    static const unsigned int MODEL = Legacy_PC;
+    static const unsigned int ARCHITECTURE = ARMv7;
+    static const unsigned int MACHINE = Cortex;
+    static const unsigned int MODEL = eMote3;
     static const unsigned int CPUS = 1;
     static const unsigned int NODES = 2; // (> 1 => NETWORKING)
-    static const unsigned int EXPECTED_SIMULATION_TIME = 60; // s (0 => not simulated)
+    static const unsigned int EXPECTED_SIMULATION_TIME = 0; // s (0 => not simulated)
 
     // Default flags
     static const bool enabled = true;
@@ -159,7 +159,7 @@ template<> struct Traits<SmartData>: public Traits<Build>
 
 template<> struct Traits<Network>: public Traits<Build>
 {
-    typedef LIST<> NETWORKS;
+    typedef LIST<TSTP> NETWORKS;
 
     static const unsigned int RETRIES = 3;
     static const unsigned int TIMEOUT = 10; // s
@@ -169,7 +169,7 @@ template<> struct Traits<Network>: public Traits<Build>
 
 template<> struct Traits<ELP>: public Traits<Network>
 {
-    typedef Ethernet NIC_Family;
+    typedef IEEE802_15_4 NIC_Family;
     static constexpr unsigned int NICS[] = {0}; // relative to NIC_Family (i.e. Traits<Ethernet>::DEVICES[NICS[i]]
     static const unsigned int UNITS = COUNTOF(NICS);
 
@@ -178,7 +178,7 @@ template<> struct Traits<ELP>: public Traits<Network>
 
 template<> struct Traits<TSTP>: public Traits<Network>
 {
-    typedef Ethernet NIC_Family;
+    typedef IEEE802_15_4 NIC_Family;
     static constexpr unsigned int NICS[] = {0}; // relative to NIC_Family (i.e. Traits<Ethernet>::DEVICES[NICS[i]]
     static const unsigned int UNITS = COUNTOF(NICS);
 

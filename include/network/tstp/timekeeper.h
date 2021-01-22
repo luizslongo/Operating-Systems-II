@@ -23,28 +23,25 @@ private:
     static const unsigned int NIC_TIMER_INTERRUPT_DELAY = 0; // us
 #endif
 
-    typedef NIC<NIC_Family>::Timer::Time_Stamp Time_Stamp;
-    typedef NIC<NIC_Family>::Timer::Offset Offset;
-
 public:
     // Epoch Control Message
     class Epoch: public Control
     {
     public:
-        Epoch(const Region & dst, const Time & ep = TSTP::_epoch, const Global_Space & coordinates = Locator::absolute(Global_Space(0, 0, 0)))
-        : Control(dst, 0, 0, 0, EPOCH), _epoch(ep), _coordinates(coordinates) { }
+        Epoch(const Region & r, const Time & t = Timekeeper::reference(), const Global_Space & c = Locator::reference())
+        : Control(r, 0, 0, EPOCH), _reference(t), _coordinates(c) { }
 
         Region destination() const { return Region(_origin, _radius, _t1); }
-        const Time epoch() const { return _epoch; }
+        const Time epoch() const { return _reference; }
         const Global_Space & coordinates() const { return _coordinates; }
 
         friend Debug & operator<<(Debug & db, const Epoch & e) {
-            db << reinterpret_cast<const Control &>(e) << ",d=" << e.destination() << ",e=" << e._epoch << ",c=" << e._coordinates;
+            db << reinterpret_cast<const Control &>(e) << ",d=" << e.destination() << ",e=" << e._reference << ",c=" << e._coordinates;
             return db;
         }
 
     private:
-        Time _epoch;
+        Time _reference;
         Global_Space _coordinates;
     } __attribute__((packed));
 
@@ -52,7 +49,7 @@ public:
     class Keep_Alive: public Control
     {
     public:
-        Keep_Alive(): Control(Spacetime(here(), now()), 0, 0, 0, KEEP_ALIVE) {}
+        Keep_Alive(): Control(Spacetime(here(), now()), 0, 0, KEEP_ALIVE) {}
 
         friend Debug & operator<<(Debug & db, const Keep_Alive & k) {
             db << reinterpret_cast<const Control &>(k);
@@ -64,25 +61,35 @@ public:
     Timekeeper();
     ~Timekeeper();
 
-    static Time_Stamp absolute(const Offset & offset); //{ return _location + coordinates; }
-    static Offset relative(const Time_Stamp & ts);// { return coordinates - _location; }
-
-    static Time now() { return NIC<NIC_Family>::Timer::count2us(time_stamp()); }
+    static Time now() { return ts2us(time_stamp()); }
     static bool synchronized() { return !sync_required(); }
+    static Time reference() { return _reference; }
+
+    static Time absolute(const Time & t) { return _reference + t; }
+    static Time relative(const Time & t) { return t - _reference; }
 
 private:
     void update(Data_Observed<Buffer> * obs, Buffer * buf);
 
+    static void reference(const Time & t) { _reference = t; }
+
     static void marshal(Buffer * buf);
 
-    static Time_Stamp time_stamp() { return NIC<NIC_Family>::Timer::read(); }
-    static Time_Stamp sync_period() { return (long long int)(MAX_DRIFT * 1000000) / (NIC<NIC_Family>::Timer::frequency() * NIC<NIC_Family>::Timer::accuracy() / 1000000000LL); } // us
+    static Time_Stamp time_stamp() { return _nic->time_stamp(); }
+
+    static Time_Stamp sync_period() {
+        long long tmp = LARGER<PPM>::Result(timer_accuracy()) * LARGER<Hertz>::Result(timer_frequency());
+        tmp /= 1000000000LL; // us
+        tmp = (static_cast<long long>(MAX_DRIFT) * 1000000) / tmp;
+        return static_cast<Time_Stamp>(tmp);
+    }
     static bool sync_required() { return (_next_sync == 0) || (time_stamp() >= (_next_sync - sync_period() / 2)); }
     static void keep_alive();
 
 private:
+    static Time _reference;
     static volatile Time_Stamp _next_sync;
-    static Function_Handler _life_keeper_handler;
+    static Function_Handler * _life_keeper_handler;
     static Alarm * _life_keeper;
 };
 

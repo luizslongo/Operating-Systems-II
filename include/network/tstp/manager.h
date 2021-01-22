@@ -23,7 +23,8 @@ private:
     class Model: public Control
     {
     protected:
-        typedef unsigned char Data[MTU - sizeof(Unit) - sizeof(int) - sizeof(Time) - sizeof(CRC)];
+        typedef unsigned char Data[MTU - sizeof(Header)];
+
     public:
         template<typename M>
         Model(const Region & dst, const M & model)
@@ -106,7 +107,7 @@ private:
         }
 
         // Do not forward messages that come from too far away, to avoid radio range asymmetry
-        Space::Distance d = here() - buf->frame()->data<Header>()->last_hop();
+        Space::Distance d = here() - buf->frame()->data<Header>()->last_hop().space;
         if(d > RANGE)
             return false;
 

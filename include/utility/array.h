@@ -67,7 +67,7 @@ private:
 
 private:
     T _data[N];
-};
+} __attribute__((packed));
 
 template<typename T>
 class Array<T, 0> {

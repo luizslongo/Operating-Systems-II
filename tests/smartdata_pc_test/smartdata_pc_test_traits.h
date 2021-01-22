@@ -19,7 +19,7 @@ template<> struct Traits<Build>: public Traits_Tokens
 
     // Default flags
     static const bool enabled = true;
-    static const bool monitored = true;
+    static const bool monitored = false;
     static const bool debugged = true;
     static const bool hysterically_debugged = false;
 
@@ -32,7 +32,8 @@ template<> struct Traits<Build>: public Traits_Tokens
 template<> struct Traits<Debug>: public Traits<Build>
 {
     static const bool error   = true;
-    static const bool warning = true;    static const bool info    = false;
+    static const bool warning = true;
+    static const bool info    = false;
     static const bool trace   = false;
 
 };
@@ -165,7 +166,7 @@ template<> struct Traits<SmartData>: public Traits<Build>
 
 template<> struct Traits<Network>: public Traits<Build>
 {
-    typedef LIST<TSTP, ELP> NETWORKS;
+    typedef LIST<TSTP> NETWORKS;
 
     static const unsigned int RETRIES = 3;
     static const unsigned int TIMEOUT = 10; // s
@@ -176,7 +177,7 @@ template<> struct Traits<Network>: public Traits<Build>
 template<> struct Traits<ELP>: public Traits<Network>
 {
     typedef Ethernet NIC_Family;
-    static constexpr unsigned int NICS[] = {1}; // relative to NIC_Family (i.e. Traits<Ethernet>::DEVICES[NICS[i]]
+    static constexpr unsigned int NICS[] = {0}; // relative to NIC_Family (i.e. Traits<Ethernet>::DEVICES[NICS[i]]
     static const unsigned int UNITS = COUNTOF(NICS);
 
     static const bool enabled = Traits<Network>::enabled && (NETWORKS::Count<ELP>::Result > 0);
@@ -197,7 +198,7 @@ template<> struct Traits<TSTP>: public Traits<Network>
 template<> struct Traits<IP>: public Traits<Network>
 {
     typedef Ethernet NIC_Family;
-    static constexpr unsigned int NICS[] = {1};  // relative to NIC_Family (i.e. Traits<Ethernet>::DEVICES[NICS[i]]
+    static constexpr unsigned int NICS[] = {0};  // relative to NIC_Family (i.e. Traits<Ethernet>::DEVICES[NICS[i]]
     static const unsigned int UNITS = COUNTOF(NICS);
 
     struct Default_Config {

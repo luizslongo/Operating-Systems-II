@@ -26,11 +26,11 @@ void TSTP::Router::update(Data_Observed<Buffer> * obs, Buffer * buf)
     } else {
         Header * header = buf->frame()->data<Header>();
         // Keep Alive messages are never forwarded
-        if((header->type() == CONTROL) && (buf->frame()->data<Control>()->subtype() == KEEP_ALIVE))
+        if((header->type() == CONTROL) && (header->subtype() == KEEP_ALIVE))
             buf->destined_to_me = false;
         else {
             Region dst = destination(buf);
-            buf->destined_to_me = ((header->origin() != TSTP::here()) && (dst.contains(TSTP::here(), dst.t0)));
+            buf->destined_to_me = ((header->origin().space != TSTP::here()) && (dst.contains(TSTP::here(), dst.t0)));
 
             if(forward(buf)) {
 
@@ -59,6 +59,7 @@ void TSTP::Router::update(Data_Observed<Buffer> * obs, Buffer * buf)
                 // Adjust Last Hop location
                 Header * header = send_buf->frame()->data<Header>();
                 header->last_hop(TSTP::here());
+                header->last_hop(TSTP::now());
                 send_buf->sender_distance = send_buf->my_distance;
 
                 header->location_confidence(_locator->confidence());
@@ -79,7 +80,7 @@ void TSTP::Router::marshal(Buffer * buf)
     db<TSTP>(TRC) << "TSTP::Router::marshal(buf=" << buf << ")" << endl;
     TSTP::Region dest = destination(buf);
     buf->downlink = dest.center != TSTP::sink();
-    buf->destined_to_me = (buf->frame()->data<Header>()->origin() != TSTP::here()) && (dest.contains(TSTP::here(), TSTP::now()));
+    buf->destined_to_me = (buf->frame()->data<Header>()->origin().space != TSTP::here()) && (dest.contains(TSTP::here(), TSTP::now()));
     buf->hint = buf->my_distance;
 
     offset(buf);
@@ -88,7 +89,9 @@ void TSTP::Router::marshal(Buffer * buf)
 
 TSTP::Region TSTP::Router::destination(Buffer * buf)
 {
-    switch(buf->frame()->data<Header>()->type()) {
+    Header * header = buf->frame()->data<Header>();
+
+    switch(header->type()) {
         case INTEREST:
             return buf->frame()->data<Interest>()->region();
         case RESPONSE:
@@ -96,7 +99,7 @@ TSTP::Region TSTP::Router::destination(Buffer * buf)
         case COMMAND:
             return buf->frame()->data<Command>()->region();
         case CONTROL:
-            switch(buf->frame()->data<Control>()->subtype()) {
+            switch(header->subtype()) {
                 default:
                 case DH_RESPONSE:
                 case AUTH_REQUEST: {
@@ -134,7 +137,7 @@ TSTP::Region TSTP::Router::destination(Buffer * buf)
             }
             break;
         default:
-            db<TSTP>(WRN) << "TSTP::Locator::destination(): invalid frame type " << buf->frame()->data<Header>()->type() << endl;
+            db<TSTP>(WRN) << "TSTP::Locator::destination(): invalid frame type " << header->type() << endl;
             return Region(here(), 0, now() - 2, now() - 1);
     }
 }

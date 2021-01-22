@@ -38,9 +38,13 @@ public:
     typedef Array<unsigned char, 16> Node_Id;
     typedef Array<unsigned char, 16> Auth;
     typedef Array<unsigned char, 16> OTP;
-
     typedef _DH::Public_Key Public_Key;
     typedef _DH::Shared_Key Master_Secret;
+
+    class Packed_Public_Key: public Public_Key {
+    public:
+        Packed_Public_Key(const Public_Key & pub): Public_Key(pub.x, pub.y, pub.z) {};
+    } __attribute__((packed));
 
     class Peer;
     typedef Simple_List<Peer> Peers;
@@ -132,7 +136,7 @@ public:
         const Region & destination() const { return _destination; }
         void destination(const Region & d) { _destination = d; }
 
-        const Public_Key & key() { return _public_key; }
+        Public_Key key() { return _public_key; }
         void key(const Public_Key & k) { _public_key = k; }
 
         friend Debug & operator<<(Debug & db, const DH_Request & m) {
@@ -142,8 +146,8 @@ public:
 
     private:
         Region _destination;
-        Public_Key _public_key;
-    };
+        Packed_Public_Key _public_key;
+    } __attribute__((packed));
 
     // Diffie-Hellman Response Security Bootstrap Control Message
     class DH_Response: public Control
@@ -161,8 +165,8 @@ public:
         }
 
     private:
-        Public_Key _public_key;
-    };
+        Packed_Public_Key _public_key;
+    } __attribute__((packed));
 
     // Authentication Request Security Bootstrap Control Message
     class Auth_Request: public Control
@@ -185,7 +189,7 @@ public:
     private:
         Auth _auth;
         OTP _otp;
-    };
+    } __attribute__((packed));
 
     // Authentication Granted Security Bootstrap Control Message
     class Auth_Granted: public Control
@@ -208,20 +212,20 @@ public:
     private:
         Region _destination;
         Auth _auth;
-     };
+     } __attribute__((packed));
 
     // Report Control Message
     class Report: public Control
     {
     public:
-        Report(const Unit & unit, const Error & error = 0, bool epoch_request = false)
-        : Control(REPORT, error) {}
+        Report()
+        : Control(REPORT) {}
 
         friend Debug & operator<<(Debug & db, const Report & r) {
 //            db << reinterpret_cast<const Control &>(r) << ",u=" << r._unit << ",e=" << r._error << ",r=" << r._epoch_request;
             return db;
         }
-    };
+    } __attribute__((packed));
 
 public:
     Security();

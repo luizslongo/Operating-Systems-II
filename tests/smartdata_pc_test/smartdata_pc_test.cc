@@ -11,8 +11,8 @@ OStream cout;
 
 void controller(const Antigravity & in1, const Antigravity & in2, Antigravity & out) {}
 
-int sink();
-int node();
+void sink();
+void node();
 
 int main()
 {
@@ -50,11 +50,11 @@ int main()
     return 0;
 }
 
-int sink()
+void sink()
 {
     cout << "I'm the sink!" << endl;
 
-    Antigravity_Proxy a(Antigravity::Region(Antigravity::Space(0, 0, 0), 100, Antigravity::now(), Antigravity::now() + ITERATIONS * 1000000), 1000000, 1000000);
+    Antigravity_Proxy a(Antigravity::Region(0, 0, 0, 100, Antigravity::now(), Antigravity::now() + ITERATIONS * 1000000), 1000000, 1000000);
 //    Smart_Key_Proxy d(Smart_Key::Region((0, 0, 0), 100, Smart_Key::now(), Smart_Key::now()+10000000), 10000000);
 
     cout << "My coordinates are " << a.here() << endl;
@@ -67,11 +67,9 @@ int sink()
         cout << "a=" << a << endl;
     }
     cout << "done!" << endl;
-
-    return 0;
 }
 
-int node()
+void node()
 {
     cout << "I'm a node!" << endl;
 
@@ -103,6 +101,4 @@ int node()
 //        db<TSTP>(TRC) << "c=" << c << endl;
     }
     cout << "done!" << endl;
-
-    return 0;
 }

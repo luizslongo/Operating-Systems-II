@@ -428,15 +428,16 @@ public:
     int receive(Address * src, Protocol * prot, void * data, unsigned int size);
 
     Buffer * alloc(const Address & dst, const Protocol & prot, unsigned int once, unsigned int always, unsigned int payload);
-    void free(Buffer * buf);
     int send(Buffer * buf);
+    void free(Buffer * buf);
 
-    const Address & address() { return _address; }
-    void address(const Address & address) { _address = address; }
+    const Address & address() { return _configuration.address; }
+    void address(const Address & address) { _configuration.address = address; _configuration.selector = Configuration::ADDRESS; reconfigure(&_configuration); }
+
+    bool reconfigure(const Configuration * c);
+    const Configuration & configuration() { _configuration.time_stamp = TSC::time_stamp(); return _configuration; }
 
     const Statistics & statistics() { return _statistics; }
-
-    void reset();
 
     void attach(Observer * o, const Protocol & p) {
         NIC<Ethernet>::attach(o, p);
@@ -451,7 +452,11 @@ public:
 
     static PCNet32 * get(unsigned int unit = 0) { return get_by_unit(unit); }
 
+    Time_Stamp time_stamp() { return static_cast<Time_Stamp>(TSC::time_stamp()); }
+
 private:
+    void receive();
+    void reset();
     void handle_int();
 
     static void int_handler(IC::Interrupt_Id interrupt);
@@ -472,9 +477,7 @@ private:
     static void init(unsigned int unit);
 
 private:
-    unsigned int _unit;
-
-    Address _address;
+    Configuration _configuration;
     Statistics _statistics;
 
     IO_Irq _irq;
@@ -496,14 +499,6 @@ private:
 
     static Device _devices[UNITS];
 };
-
-inline PCNet32::Timer::Time_Stamp PCNet32::Timer::Timer::read() { return TSC::time_stamp(); }
-inline void PCNet32::Timer::adjust(const PCNet32::Timer::Offset & o) { TSC::time_stamp(o); }
-inline Hertz PCNet32::Timer::frequency() { return TSC::frequency(); }
-inline PPB PCNet32::Timer::accuracy() { return TSC::accuracy(); }
-inline PCNet32::Timer::Time_Stamp PCNet32::Timer::us2count(const Microsecond & us) { return Convert::us2count<Time_Stamp, Microsecond>(TSC::frequency(), us); }
-inline Microsecond PCNet32::Timer::count2us(const PCNet32::Timer::Time_Stamp & ts) { return Convert::count2us<Hertz, Time_Stamp, Microsecond>(TSC::frequency(), ts); }
-//    static Time_Stamp sfd() { return 0; }
 
 __END_SYS
 

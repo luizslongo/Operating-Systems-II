@@ -28,13 +28,9 @@ public:
         PROTO_RARP   = 0x8035,
         PROTO_TSTP   = 0x8401,
         PROTO_ELP    = 0x8402,
-        PROTO_PTP    = 0x88F7
+        PROTO_PTP    = 0x88f7
     };
 
-    static const unsigned int MTU = 1500;
-    typedef unsigned char Data[MTU];
-
-    typedef NIC_Common::CRC32 CRC;
 
     // The Ethernet Header (RFC 894)
     class Header
@@ -59,6 +55,13 @@ public:
         Protocol _prot;
     } __attribute__((packed, may_alias));
 
+
+    // Data and Trailer
+    static const unsigned int MTU = 1500;
+    typedef unsigned char Data[MTU];
+
+    typedef NIC_Common::CRC32 CRC;
+    typedef CRC Trailer;
 
     // The Ethernet Frame (RFC 894)
     class Frame: public Header
@@ -85,6 +88,7 @@ public:
 
     typedef Frame PDU;
 
+    typedef IF<Traits<TSTP>::enabled, TSTP_Metadata, Null_Metadata>::Result Metadata;
 
     // Buffers used to hold frames across a zero-copy network stack
     typedef _UTIL::Buffer<NIC<Ethernet>, Frame, void, Metadata> Buffer;
@@ -96,17 +100,22 @@ public:
 
 
     // Configuration parameters
-    struct Configuration
+    struct Configuration: public NIC_Common::Configuration
     {
-        Configuration(): address(Address::NULL) {}
-
         friend Debug & operator<<(Debug & db, const Configuration & c) {
-            db << "{addr=" << c.address
+            db << "{unit=" << c.unit
+               << ",addr=" << c.address
+               << ",a=" << c.timer_accuracy
+               << ",f=" << c.timer_frequency
                << "}";
             return db;
         }
 
+        unsigned int unit;
         Address address;
+        PPM timer_accuracy;
+        Hertz timer_frequency;
+        Metadata::Time_Stamp time_stamp;
     };
 
 
@@ -129,11 +138,11 @@ public:
             return db;
         }
 
-        unsigned int rx_overruns;
-        unsigned int tx_overruns;
-        unsigned int frame_errors;
-        unsigned int carrier_errors;
-        unsigned int collisions;
+        Count rx_overruns;
+        Count tx_overruns;
+        Count frame_errors;
+        Count carrier_errors;
+        Count collisions;
     };
 
 protected:

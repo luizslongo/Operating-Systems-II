@@ -6,11 +6,12 @@
 #include <utility/convert.h>
 #include <network/ieee802_15_4.h>
 #include <network/ieee802_15_4_mac.h>
+#include <network/tstp/mac.h>
 #include __HEADER_MMOD(ieee802_15_4)
 
 __BEGIN_SYS
 
-//class IEEE802_15_4_Engine: private IF<Traits<IEEE802_15_4_NIC>::tstp_mac, TSTP::MAC<CC2538RF, Traits<System>::DUTY_CYCLE != 1000000>, IEEE802_15_4_MAC<CC2538RF>>::Result
+//class IEEE802_15_4_NIC: public NIC<IEEE802_15_4>, private IF<Traits<IEEE802_15_4_NIC>::tstp_mac, TSTP::MAC<IEEE802_15_4_Engine, Traits<System>::DUTY_CYCLE != 1000000>, IEEE802_15_4_MAC<IEEE802_15_4_Engine>>::Result
 class IEEE802_15_4_NIC: public NIC<IEEE802_15_4>, private IEEE802_15_4_MAC<IEEE802_15_4_Engine>
 {
     friend class Machine_Common;
@@ -19,10 +20,11 @@ private:
     using NIC<IEEE802_15_4>::Address;
     using NIC<IEEE802_15_4>::Protocol;
     using NIC<IEEE802_15_4>::Buffer;
+    using NIC<IEEE802_15_4>::Configuration;
     using NIC<IEEE802_15_4>::Statistics;
 
     typedef IEEE802_15_4_Engine Engine;
-    //    typedef typename IF<Traits<IEEE802_15_4_NIC>::tstp_mac, TSTP::MAC<CC2538RF, Traits<System>::DUTY_CYCLE != 1000000>, IEEE802_15_4_MAC<CC2538RF>>::Result MAC;
+//    typedef typename IF<Traits<IEEE802_15_4_NIC>::tstp_mac, TSTP::MAC<IEEE802_15_4_Engine, Traits<System>::DUTY_CYCLE != 1000000>, IEEE802_15_4_MAC<IEEE802_15_4_Engine>>::Result MAC;
     typedef IEEE802_15_4_MAC<IEEE802_15_4_Engine> MAC;
 
     static const unsigned int UNITS = Traits<IEEE802_15_4_NIC>::UNITS;
@@ -41,10 +43,6 @@ private:
         unsigned int error_interrupt;
     };
 
-public:
-
-    typedef IEEE802_15_4_Engine::Timer Timer;
-
 protected:
     IEEE802_15_4_NIC(unsigned int unit);
 
@@ -53,31 +51,20 @@ public:
 
     int send(const Address & dst, const Protocol & prot, const void * data, unsigned int size);
     int receive(Address * src, Protocol * prot, void * data, unsigned int size);
-    bool drop(unsigned int id) { return MAC::drop(id); }
 
     Buffer * alloc(const Address & dst, const Protocol & prot, unsigned int once, unsigned int always, unsigned int payload);
-    void free(Buffer * buf);
     int send(Buffer * buf);
+    bool drop(Buffer * buf) { return MAC::drop(buf); }
+    void free(Buffer * buf);
 
-    const Address & address() { return _address; }
-    void address(const Address & address) { _address = address; IEEE802_15_4_Engine::address(address); }
+    const Address & address() { return _configuration.address; }
+    void address(const Address & address) { _configuration.address = address; Engine::address(address); }
 
-    void reset();
-    bool reconfigure(const Configuration & c);
-    void configuration(Configuration * c);
+    bool reconfigure(const Configuration * c = 0);
+    const Configuration & configuration() { _configuration.time_stamp = Engine::time_stamp(); return _configuration; }
 
+    Timer::Time_Stamp time_stamp() { return  Engine::time_stamp(); }
     const Statistics & statistics() { return _statistics; }
-
-    void attach(Observer * o, const Protocol & p) {
-        NIC<IEEE802_15_4>::attach(o, p);
-        ; // enable receive interrupt
-    }
-
-    void detach(Observer * o, const Protocol & p) {
-        NIC<IEEE802_15_4>::detach(o, p);
-        if(!observers())
-            ; // disable receive interrupt
-    }
 
     static IEEE802_15_4_NIC * get(unsigned int unit = 0) { return get_by_unit(unit); }
 
@@ -102,10 +89,7 @@ private:
     static void init(unsigned int unit);
 
 private:
-    unsigned int _unit;
-
-    Address _address;
-    unsigned int _channel;
+    Configuration _configuration;
     Statistics _statistics;
 
     Buffer * _rx_bufs[RX_BUFS];

@@ -12,6 +12,10 @@ template<typename Owner, typename Data, typename Shadow = void, typename Metadat
 class Buffer: private Data, public Metadata
 {
 public:
+    typedef Data Frame;
+    typedef Data Packet;
+    typedef Data Message;
+
     typedef Simple_List<Buffer<Owner, Data, Shadow, Metadata> > List;
     typedef typename List::Element Element;
 

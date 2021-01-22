@@ -182,19 +182,22 @@ template<> struct Traits<Network>: public Traits<Build>
 
 template<> struct Traits<ELP>: public Traits<Network>
 {
-    typedef Ethernet NIC_Family;
-
-    static const bool enabled = NETWORKS::Count<ELP>::Result;
+    typedef IEEE802_15_4 NIC_Family;
+    static constexpr unsigned int NICS[] = {0}; // relative to NIC_Family (i.e. Traits<Ethernet>::DEVICES[NICS[i]]
+    static const unsigned int UNITS = COUNTOF(NICS);
+    static const bool enabled = Traits<Network>::enabled && NETWORKS::Count<ELP>::Result;
 };
 
 template<> struct Traits<TSTP>: public Traits<Network>
 {
     typedef IEEE802_15_4 NIC_Family;
-
-    static const bool enabled = NETWORKS::Count<TSTP>::Result;
-
+    static constexpr unsigned int NICS[] = {0}; // relative to NIC_Family (i.e. Traits<Ethernet>::DEVICES[NICS[i]]
+    static const bool enabled = Traits<Network>::enabled && NETWORKS::Count<TSTP>::Result;
     static const unsigned int KEY_SIZE = 16;
+    static const bool hysterically_debugged = false;
     static const unsigned int RADIO_RANGE = 8000; // Approximated radio range in centimeters
+    static const bool debugged = false;
+    static const bool sink = true;
 };
 
 template<> struct Traits<IP>: public Traits<Network>

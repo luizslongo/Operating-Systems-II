@@ -9,12 +9,12 @@
 
 __BEGIN_SYS
 
-// Class attributes
-volatile TSTP::Timekeeper::Time_Stamp TSTP::Timekeeper::_next_sync;
-Function_Handler TSTP::Timekeeper::_life_keeper_handler(&keep_alive);
+TSTP::Time TSTP::Timekeeper::_reference;
+volatile TSTP::Time_Stamp TSTP::Timekeeper::_next_sync;
+Function_Handler * TSTP::Timekeeper::_life_keeper_handler;
 Alarm * TSTP::Timekeeper::_life_keeper;
 
-// Methods
+
 TSTP::Timekeeper::~Timekeeper()
 {
     db<TSTP>(TRC) << "TSTP::~Timekeeper()" << endl;
@@ -24,16 +24,14 @@ TSTP::Timekeeper::~Timekeeper()
 
 void TSTP::Timekeeper::update(Data_Observed<Buffer> * obs, Buffer * buf)
 {
-    db<TSTP>(TRC) << "TSTP::Timekeeper::update(obs=" << obs << ",buf=" << buf << ")" << endl;
-
     Header * header = buf->frame()->data<Header>();
-
+    db<TSTP>(TRC) << "TSTP::Timekeeper::update(obs=" << obs << ",buf=" << buf << " = " << *header << ")" << endl;
     if(buf->is_microframe) {
         if(sync_required())
             buf->relevant = true;
     } else {
         buf->deadline = Router::destination(buf).t1;
-        bool peer_closer_to_sink = buf->downlink ? (here() - sink() > header->last_hop() - sink()) : (buf->my_distance > buf->sender_distance);
+        bool peer_closer_to_sink = buf->downlink ? (here() - sink() > header->last_hop().space - sink()) : (buf->my_distance > buf->sender_distance);
 
         if(header->time_request()) {
             db<TSTP>(TRC) << "TSTP::Timekeeper::update: time_request received" << endl;
@@ -41,20 +39,23 @@ void TSTP::Timekeeper::update(Data_Observed<Buffer> * obs, Buffer * buf)
             if(synchronized() && !peer_closer_to_sink) {
                 db<TSTP>(TRC) << "TSTP::Timekeeper::update: responding to time request" << endl;
                 keep_alive();
-            }
-        } else {
-            if(peer_closer_to_sink) {
-                Time_Stamp t0 = header->last_hop().t + NIC<NIC_Family>::Timer::us2count(NIC_TIMER_INTERRUPT_DELAY);
-                Time_Stamp t1 = buf->sfd_time_stamp;
+            } else {
+                if(peer_closer_to_sink) {
+                    Time_Stamp t0 =header->last_hop().time + NIC_TIMER_INTERRUPT_DELAY;
+                    Time_Stamp t1 = buf->sfdts;
 
-                Offset adj = t0 - t1;
-                NIC<NIC_Family>::Timer::adjust(adj);
+                    Configuration conf;
+                    conf.selector = Configuration::TIMER;
+                    conf.timer_frequency = 0; // unchanged
+                    conf.parameter = t0 - t1;
+                    _nic->reconfigure(&conf);
 
-                _next_sync = time_stamp() + sync_period();
-                _life_keeper->reset();
+                    _next_sync = time_stamp() + sync_period();
+                    _life_keeper->reset();
 
-                db<TSTP>(TRC) << "TSTP::Timekeeper::update: adjusted timer offset by " << adj << endl;
-                db<TSTP>(INF) << "TSTP::Timekeeper::update:now= " << now() << endl;
+                    db<TSTP>(TRC) << "TSTP::Timekeeper::update: adjusted timer offset by " << conf.parameter << endl;
+                    db<TSTP>(INF) << "TSTP::Timekeeper::update:now= " << now() << endl;
+                }
             }
         }
     }
@@ -66,10 +67,14 @@ void TSTP::Timekeeper::marshal(Buffer * buf)
 {
     db<TSTP>(TRC) << "TSTP::Timekeeper::marshal(buf=" << buf << ")" << endl;
 
-    buf->frame()->data<Header>()->origin(now());
-    buf->frame()->data<Header>()->time_request(sync_required());
-    if((buf->frame()->data<Header>()->type() == CONTROL) && (buf->frame()->data<Control>()->subtype() == KEEP_ALIVE))
-        buf->deadline = time_stamp() + sync_period();
+    Header * header = buf->frame()->data<Header>();
+
+    header->origin(now());
+    header->time_request(sync_required());
+    if((header->type() == CONTROL) && (header->subtype() == KEEP_ALIVE)) {
+    	header->time_request( true );
+    	buf->deadline = now() + sync_period();
+    }
     else
         buf->deadline = Router::destination(buf).t1; // deadline must be set after origin time for Security messages
 }

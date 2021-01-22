@@ -159,7 +159,7 @@ template<> struct Traits<SmartData>: public Traits<Build>
 
 template<> struct Traits<Network>: public Traits<Build>
 {
-    typedef LIST<IP> NETWORKS;
+    typedef LIST<TSTP,IP> NETWORKS;
 
     static const unsigned int RETRIES = 3;
     static const unsigned int TIMEOUT = 10; // s
@@ -170,7 +170,7 @@ template<> struct Traits<Network>: public Traits<Build>
 template<> struct Traits<ELP>: public Traits<Network>
 {
     typedef Ethernet NIC_Family;
-    static constexpr unsigned int NICS[] = {0}; // relative to NIC_Family (i.e. Traits<Ethernet>::DEVICES[NICS[i]]
+    static constexpr unsigned int NICS[] = {1}; // relative to NIC_Family (i.e. Traits<Ethernet>::DEVICES[NICS[i]]
     static const unsigned int UNITS = COUNTOF(NICS);
 
     static const bool enabled = Traits<Network>::enabled && (NETWORKS::Count<ELP>::Result > 0);
@@ -179,13 +179,13 @@ template<> struct Traits<ELP>: public Traits<Network>
 template<> struct Traits<TSTP>: public Traits<Network>
 {
     typedef Ethernet NIC_Family;
-    static constexpr unsigned int NICS[] = {0}; // relative to NIC_Family (i.e. Traits<Ethernet>::DEVICES[NICS[i]]
+    static constexpr unsigned int NICS[] = {1}; // relative to NIC_Family (i.e. Traits<Ethernet>::DEVICES[NICS[i]]
     static const unsigned int UNITS = COUNTOF(NICS);
 
     static const unsigned int KEY_SIZE = 16;
     static const unsigned int RADIO_RANGE = 8000; // approximated radio range in centimeters
 
-    static const bool enabled = Traits<Network>::enabled && (NETWORKS::Count<TSTP>::Result > 0);
+    static const bool enabled = (Traits<Network>::enabled && (NETWORKS::Count<TSTP>::Result > 0));
 };
 
 template<> struct Traits<IP>: public Traits<Network>
