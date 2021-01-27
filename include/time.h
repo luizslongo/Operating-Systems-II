@@ -35,8 +35,8 @@ class Alarm
     friend class Alarm_Chronometer;             // for elapsed()
     friend class Periodic_Thread;               // for ticks() and elapsed()
     friend class RT_Thread;                     // for ticks() and elapsed()
-    friend class Scheduling_Criteria::FCFS;     // for ticks() and elapsed()
-    friend class Scheduling_Criteria::EDF;      // for ticks() and elapsed()
+    friend class FCFS;     // for ticks() and elapsed()
+    friend class EDF;      // for ticks() and elapsed()
 
 private:
     typedef Timer_Common::Tick Tick;

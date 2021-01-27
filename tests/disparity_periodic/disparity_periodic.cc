@@ -46,6 +46,8 @@
 
 using namespace EPOS;
 
+constexpr PMU::Event ARMv7_A_PMU::_events[PMU::EVENTS];
+
 OStream cout;
 
 #define MAX_EXECS 1000

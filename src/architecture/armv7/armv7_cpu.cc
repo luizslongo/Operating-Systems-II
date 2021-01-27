@@ -1,7 +1,6 @@
 // EPOS ARMv7 CPU Mediator Implementation
 
 #include <architecture/armv7/armv7_cpu.h>
-#include <system.h>
 
 __BEGIN_SYS
 
@@ -44,23 +43,39 @@ void CPU::switch_context(Context ** o, Context * n)
     ASM("       sub     sp, #4                  \n"     // reserve room for PC
         "       push    {r12}                   \n"     // save r12 to use it as a temporary register
         "       adr     r12, .ret               \n");   // calculate return address
+
 if(thumb)
     ASM("       orr r12, #1                     \n");   // adjust thumb
+
     ASM("       str     r12, [sp,#4]            \n"     // save calculated PC
         "       pop     {r12}                   \n"     // restore r12 used as temporary
         "       push    {r0-r12, lr}            \n");   // push all registers (LR first, r0 last)
+
+if(Traits<FPU>::enabled && !Traits<FPU>::user_save)
+    ASM("       vpush   {s0-s15}                \n"     // save FPU registers
+        "       vpush   {s16-s31}               \n");
+
     mrs12();                                            // move flags to tmp register
-    ASM("       push    {r12}                   \n"     // save flags
-        "       str     sp, [r0]                \n");   // update Context * volatile * o
+    ASM("       push    {r12}                   \n");   // save flags
+    ASM("       str     sp, [r0]                \n");   // update Context * volatile * o
+
 
     // Set the stack pointer to "n" and pop the context
     ASM("       mov     sp, r1                  \n"     // get Context * volatile n into SP
-        "       isb                             \n"     // serialize the pipeline so SP gets updated before the pop
-        "       pop     {r12}                   \n");   // pop flags into the temporary register r12
+        "       isb                             \n");   // serialize the pipeline so SP gets updated before the pop
+
+    ASM("       pop     {r12}                   \n");   // pop flags into the temporary register r12
     msr12();                                            // restore flags
+
+if(Traits<FPU>::enabled && !Traits<FPU>::user_save)
+    ASM("       vpop   {s16-s31}                \n"     // restore FPU registers
+        "       vpop   {s0-s15}                 \n");
+
     ASM("       pop     {r0-r12, lr}            \n");   // pop all registers (r0 first, LR last)
-    if((Traits<Build>::MODEL == Traits<Build>::eMote3) || (Traits<Build>::MODEL == Traits<Build>::LM3S811))
-        int_enable();
+
+if((Traits<Build>::MODEL == Traits<Build>::eMote3) || (Traits<Build>::MODEL == Traits<Build>::LM3S811))
+    int_enable();
+
     ASM("       pop     {pc}                    \n"     // restore PC
         ".ret:  bx      lr                      \n");   // return
 }

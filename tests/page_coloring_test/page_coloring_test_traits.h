@@ -132,6 +132,8 @@ template<> struct Traits<Machine_Common>: public Traits<Build>
 
 template<> struct Traits<Machine>: public Traits<Machine_Common>
 {
+    static const bool cpus_use_local_timer  = false;
+
     static const unsigned int NOT_USED          = 0xffffffff;
     static const unsigned int CPUS              = Traits<Build>::CPUS;
 
@@ -354,7 +356,7 @@ template<> struct Traits<Thread>: public Traits<Build>
     static const bool simulate_capacity = false;
     static const bool trace_idle = hysterically_debugged;
 
-    typedef Scheduling_Criteria::PEDF Criterion;
+    typedef PEDF Criterion;
     static const unsigned int QUANTUM = 10000; // us
 };
 

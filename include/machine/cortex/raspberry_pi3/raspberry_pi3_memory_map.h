@@ -19,6 +19,7 @@ struct Memory_Map: public Cortex_Memory_Map
         TIMER1_BASE             = 0x3f00b400, // ARM Timer (frequency relative to processor frequency)
         MBOX_BASE               = 0x3f00b800,
         // ARM_MBOX0               = 0x3f00b880, // should we create this? the ioctrl (MBOX 0) is mapped over this address
+        PM_BASE                 = 0x3f100000, // Power Manager
         RAND_BASE               = 0x3f104000,
         GPIO_BASE               = 0x3f200000,
         UART_BASE               = 0x3f201000, // PrimeCell PL011 UART

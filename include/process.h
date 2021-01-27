@@ -4,10 +4,11 @@
 #define __process_h
 
 #include <architecture.h>
+#include <machine.h>
 #include <utility/queue.h>
 #include <utility/handler.h>
-#include <utility/scheduler.h>
 #include <memory.h>
+#include <scheduler.h>
 
 extern "C" { void __exit(); }
 
@@ -48,9 +49,6 @@ public:
         FINISHING
     };
 
-    // Thread Priority
-    typedef Scheduling_Criteria::Priority Priority;
-
     // Thread Scheduling Criterion
     typedef Traits<Thread>::Criterion Criterion;
     enum {
@@ -79,61 +77,6 @@ public:
         unsigned int stack_size;
     };
 
-    // Thread Statistics (mostly for Monitor)
-    struct _Statistics {
-        _Statistics(): execution_time(0), last_execution(0), jobs(0), average_execution_time(0), hyperperiod_count_thread(0), hyperperiod_jobs(0), hyperperiod_average_execution_time(0), alarm_times(0), times_p_count(0), missed_deadlines(0) {}
-
-        // Thread Execution Time
-        unsigned int execution_time;
-        unsigned int last_execution;
-        unsigned int jobs;
-        unsigned int average_execution_time;
-        unsigned int hyperperiod_count_thread;
-        unsigned int hyperperiod_jobs;
-        unsigned int hyperperiod_average_execution_time;
-
-        // Dealine Miss count
-        Alarm * alarm_times;
-        unsigned int times_p_count;
-        unsigned int missed_deadlines;
-
-        // On Migration
-        static unsigned int hyperperiod[Traits<Build>::CPUS];              // recalculate, on _old_hyperperiod + hyperperiod update
-        static TSC::Time_Stamp last_hyperperiod[Traits<Build>::CPUS];      // wait for old hyperperiod and update
-        static unsigned int hyperperiod_count[Traits<Build>::CPUS];        // reset on next hyperperiod
-
-        // CPU Execution Time
-        static TSC::Time_Stamp hyperperiod_idle_time[Traits<Build>::CPUS]; //
-        static TSC::Time_Stamp idle_time[Traits<Build>::CPUS];
-        static TSC::Time_Stamp last_idle[Traits<Build>::CPUS];
-    };
-
-    union _Dummy_Statistics {
-        // Thread Execution Time
-        unsigned int execution_time;
-        unsigned int last_execution;
-        unsigned int jobs;
-        unsigned int average_execution_time;
-        unsigned int hyperperiod_count_thread;
-        unsigned int hyperperiod_jobs;
-        unsigned int hyperperiod_average_execution_time;
-
-        // Dealine Miss count
-        Alarm * alarm_times;
-        unsigned int times_p_count;
-        unsigned int missed_deadlines;
-
-        // On Migration
-        static unsigned int hyperperiod[Traits<Build>::CPUS];              // recalculate, on _old_hyperperiod + hyperperiod update
-        static TSC::Time_Stamp last_hyperperiod[Traits<Build>::CPUS];      // wait for old hyperperiod and update
-        static unsigned int hyperperiod_count[Traits<Build>::CPUS];        // reset on next hyperperiod
-
-        // CPU Execution Time
-        static TSC::Time_Stamp hyperperiod_idle_time[Traits<Build>::CPUS]; //
-        static TSC::Time_Stamp idle_time[Traits<Build>::CPUS];
-        static TSC::Time_Stamp last_idle[Traits<Build>::CPUS];
-    };
-    typedef IF<monitored, _Statistics, _Dummy_Statistics>::Result Statistics;
 
 public:
     template<typename ... Tn>
@@ -143,7 +86,7 @@ public:
     ~Thread();
 
     const volatile State & state() const { return _state; }
-    const volatile Statistics & statistics() const { return _statistics; }
+    const volatile Criterion::Statistics & statistics() { return criterion().statistics(); }
 
     const volatile Criterion & priority() const { return _link.rank(); }
     void priority(const Criterion & p);
@@ -204,6 +147,19 @@ protected:
 
     static void dispatch(Thread * prev, Thread * next, bool charge = true);
 
+    static void for_all_threads(bool (* function)(Criterion &), const Thread * exclude = 0) {
+        bool ret = true;
+        for(Queue::Iterator i = _scheduler.begin(); ret && (i != _scheduler.end()); ++i)
+            if((i->object() != exclude) && (!Criterion::track_idle && (i->object()->priority() != IDLE)))
+                ret = function(i->object()->criterion());
+    }
+    static void for_all_threads_in_task(const Task * task, bool (* function)(Criterion &), const Thread * exclude = 0);
+    static void for_all_threads_in_cpu(unsigned int cpu, bool (* function)(Criterion &), const Thread * exclude = 0);
+
+    static bool collector(Criterion & c) { return c.collect(); }
+    static bool charger(Criterion & c) { return c.charge(); }
+    static bool awarder(Criterion & c) { return c.award(); }
+
     static int idle();
 
 private:
@@ -219,8 +175,6 @@ protected:
     Queue * _waiting;
     Thread * volatile _joining;
     Queue::Element _link;
-
-    Statistics _statistics;
 
     static volatile unsigned int _thread_count;
     static Scheduler_Timer * _timer;

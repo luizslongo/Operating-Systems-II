@@ -15,8 +15,15 @@ private:
     static const unsigned int UNITS = Traits<UART>::UNITS;
 
 public:
+    // The usage of GPIO_BASE is a peculiarity of the Raspberry Pi3B. The PL011 UART (UART_BASE) is not used in our port to EPOS,
+    // as it is mapped by default to the Bluetooth of Raspberry Pi3B and not to the GPIO pins. 
+    // Instead, we use the mini-UART. When intializing the mini-UART, first we need to configure the GPIO Function Select registers.
+    // Those register's base is pointed by GPIO_BASE. After they are set-up, the mini-UART base is used to finish its configuration,
+    // with the register's base at AUX_BASE (equal to GPIO_BASE + 0x15000). 
+    // In this sense, the BCM_UART pointer is set to the GPIO_BASE, and the mini-UART base (AUX_BASE) is handled by adding 0x15000
+    // to the offsets of each register at the engine implementation.
     UART_Engine(unsigned int unit, unsigned int baud_rate, unsigned int data_bits, unsigned int parity, unsigned int stop_bits)
-    : _unit(unit), _uart(new(reinterpret_cast<void *>(Memory_Map::/* FIXME: cannot instantiate an UART ona GPIO */ xxxx GPIO_BASE)) BCM_UART) {
+    : _unit(unit), _uart(new(reinterpret_cast<void *>(Memory_Map::GPIO_BASE)) BCM_UART) {
         assert(unit < UNITS);
         power(FULL);  // physically enable the UART in SysCtrl before configuring it
         config(baud_rate, data_bits, parity, stop_bits);

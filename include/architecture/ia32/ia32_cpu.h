@@ -344,18 +344,27 @@ public:
     static unsigned int id();
     static unsigned int cores() { return smp ? _cores : 1; }
 
-    static Hertz clock() { return _cpu_clock; }
+    static Hertz clock() { return _current_cpu_clock; }
     static void clock(const Hertz & frequency) {
         Reg64 clock = frequency;
         unsigned int dc;
-        if(clock <= _cpu_clock * 1875 / 10000)
-            dc = 0b10011;   // Minimum duty cycle of 12.5 %
-        else if(clock >= _cpu_clock * 9375 / 10000)
-            dc = 0b01001;   // Disable duty cycling and operate at full speed
-        else
-            dc = 0b10001 | ((clock * 10000 / _cpu_clock + 625) / 625); // Dividing by 625 instead of 1250 eliminates the shift left
+        if(clock <= (_cpu_clock * 1875 / 10000)) {
+            dc = 0b10011;   // minimum duty cycle of 12.5 %
+            _current_cpu_clock = _cpu_clock * 1875 / 10000;
+        } else if(clock >= (_cpu_clock * 9375 / 10000)) {
+            dc = 0b01001;   // disable duty cycling and operate at full speed
+            _current_cpu_clock = _cpu_clock;
+        } else {
+            dc = 0b10001 | ((clock * 10000 / _cpu_clock + 625) / 625); // dividing by 625 instead of 1250 eliminates the shift left
+            _current_cpu_clock = _cpu_clock * ((clock * 10000 / _cpu_clock + 625) / 625) * 625 / 10000;
+            // The ((clock * 10000 / _cpu_clock + 625) / 625) returns the factor, the step is 625/10000
+            // thus, max_clock * factor * step = final clock
+        }
         wrmsr(CLOCK_MODULATION, dc);
     }
+    static Hertz max_clock() { return _cpu_clock; }
+    static Hertz min_clock() { return _cpu_clock * 1250 / 10000;}
+
     static Hertz bus_clock() { return _bus_clock; }
 
     static void int_enable() { ASM("sti"); }
@@ -365,6 +374,8 @@ public:
 
     static void halt() { ASM("hlt"); }
 
+    static void fpu_save() {} // TODO
+    static void fpu_restore() {} // TODO
     static void switch_context(Context * volatile * o, Context * volatile n);
 
     static void syscall(void * message);
@@ -666,6 +677,7 @@ private:
 private:
     static volatile unsigned int _cores;
     static unsigned int _cpu_clock;
+    static unsigned int _current_cpu_clock;
     static unsigned int _bus_clock;
 };
 

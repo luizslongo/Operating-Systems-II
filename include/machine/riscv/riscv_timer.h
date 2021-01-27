@@ -59,34 +59,28 @@ public:
 
     Tick read() { return _current[CPU::id()]; }
 
-    int reset() {
-        db<Timer>(TRC) << "Timer::reset() => {f=" << frequency()
-                       << ",h=" << reinterpret_cast<void*>(_handler)
-                       << ",count=" << _current[CPU::id()] << "}" << endl;
+    static void reset() { config(FREQUENCY); }
 
-        int percentage = _current[CPU::id()] * 100 / _initial;
-        _current[CPU::id()] = _initial;
+    static void enable() {}
+    static void disable() {}
 
-        return percentage;
-    }
-
-    void enable() {}
-    void disable() {}
+    Hertz frequency() const { return (FREQUENCY / _initial); }
+    void frequency(Hertz f) { _initial = FREQUENCY / f; reset(); }
 
     void handler(const Handler & handler) { _handler = handler; }
+
+private:
+    static volatile CPU::Reg32 & reg(unsigned int o) { return reinterpret_cast<volatile CPU::Reg32 *>(Memory_Map::CLINT_BASE)[o / sizeof(CPU::Reg32)]; }
 
     static void config(const Hertz & frequency) {
         reg(MTIMECMP + MTIMECMP_CORE_OFFSET * CPU::id()) = reg(MTIME) + (CLOCK / frequency);
     }
 
-private:
-    static volatile CPU::Reg32 & reg(unsigned int o) { return reinterpret_cast<volatile CPU::Reg32 *>(Memory_Map::CLINT_BASE)[o / sizeof(CPU::Reg32)]; }
-
     static void int_handler(Interrupt_Id i);
 
     static void init();
 
-private:
+protected:
     unsigned int _channel;
     Tick _initial;
     bool _retrigger;
@@ -101,6 +95,15 @@ class Scheduler_Timer: public Timer
 {
 public:
     Scheduler_Timer(const Microsecond & quantum, const Handler & handler): Timer(SCHEDULER, 1000000 / quantum, handler) {}
+
+    int restart() {
+        db<Timer>(TRC) << "Timer::restart() => {f=" << frequency() << ",h=" << reinterpret_cast<void *>(_handler) << ",count=" << _current[CPU::id()] << "}" << endl;
+
+        int percentage = _current[CPU::id()] * 100 / _initial;
+        _current[CPU::id()] = _initial;
+
+        return percentage;
+    }
 };
 
 // Timer used by Alarm

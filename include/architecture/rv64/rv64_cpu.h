@@ -215,8 +215,11 @@ public:
         return old;
     }
 
-    // Power modes
     static void halt() { ASM("wfi"); }
+
+    using CPU_Common::clock;
+    using CPU_Common::min_clock;
+    using CPU_Common::max_clock;
 
     static Flags flags() {
         Reg32 value;
@@ -251,7 +254,8 @@ public:
 
     static unsigned int int_id() { return 0; }
 
-
+    static void fpu_save();
+    static void fpu_restore();
     static void switch_context(Context ** o, Context * n) __attribute__ ((naked));
 
     template<typename ... Tn>

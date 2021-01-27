@@ -26,6 +26,12 @@ template<> struct Traits<TSC>: public Traits<Build>
     static const bool enabled = true;
 };
 
+template<> struct Traits<FPU>: public Traits<Build>
+{
+    static const bool enabled = (Traits<Build>::MODEL == Traits<Build>::Raspberry_Pi3);;
+    static const bool user_save = true;
+};
+
 template<> struct Traits<PMU>: public Traits<Build>
 {
     static const bool enabled = true;

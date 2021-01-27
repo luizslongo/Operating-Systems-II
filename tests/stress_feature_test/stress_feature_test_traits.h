@@ -131,7 +131,7 @@ template<> struct Traits<Thread>: public Traits<Build>
     static const bool simulate_capacity = false;
     static const bool trace_idle = hysterically_debugged;
 
-    typedef Scheduling_Criteria::PEDF Criterion;
+    typedef PEDF Criterion;
     static const unsigned int QUANTUM = 10000; // us
 };
 

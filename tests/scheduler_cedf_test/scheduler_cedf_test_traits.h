@@ -133,7 +133,7 @@ template<> struct Traits<Thread>: public Traits<Build>
     static const bool simulate_capacity = true;
     static const bool trace_idle = hysterically_debugged;
 
-    typedef Scheduling_Criteria::CEDF Criterion;
+    typedef CEDF Criterion;
     static const unsigned int QUANTUM = 10000; // us
 };
 

@@ -21,6 +21,8 @@ void Thread::init()
     if(monitored)
         Monitor::init();
 
+    Criterion::init();
+
     static volatile bool task_ready = false;
 
     if(CPU::id() == 0) {
