@@ -12,7 +12,7 @@ template<> struct Traits<Build>: public Traits_Tokens
     static const unsigned int MODE = LIBRARY;
     static const unsigned int ARCHITECTURE = ARMv7;
     static const unsigned int MACHINE = Cortex;
-    static const unsigned int MODEL = Realview_PBX;
+    static const unsigned int MODEL = Raspberry_Pi3;
     static const unsigned int CPUS = 4;
     static const unsigned int NODES = 1; // (> 1 => NETWORKING)
     static const unsigned int EXPECTED_SIMULATION_TIME = 60; // s (0 => not simulated)
@@ -133,7 +133,7 @@ template<> struct Traits<Thread>: public Traits<Build>
     static const bool trace_idle = hysterically_debugged;
     static const bool simulate_capacity = false;
 
-    typedef Scheduling_Criteria::GEDF Criterion;
+    typedef GEDF Criterion;
     static const unsigned int QUANTUM = 10000; // us
 };
 

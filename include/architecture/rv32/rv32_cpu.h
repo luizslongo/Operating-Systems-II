@@ -235,7 +235,10 @@ public:
         return old;
     }
 
-    // Power modes
+    using CPU_Common::clock;
+    using CPU_Common::min_clock;
+    using CPU_Common::max_clock;
+
     static void halt() { ASM("wfi"); }
 
     static unsigned int id() {
@@ -290,6 +293,8 @@ public:
 
     static unsigned int int_id() { return 0; }
 
+    static void fpu_save();
+    static void fpu_restore();
     static void switch_context(Context ** o, Context * n) __attribute__ ((naked));
 
     template<typename ... Tn>

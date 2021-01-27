@@ -85,7 +85,7 @@ posbuild_$(APPLICATION):
 prerun_$(APPLICATION):
 #		@echo "Cooling down for 10s ..."
 #		sleep 10
-		@echo "Running $(APPLICATION) ..."
+		@echo "Running $(APPLICATION):"
 
 clean: FORCE
 ifndef APPLICATION

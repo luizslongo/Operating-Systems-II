@@ -35,6 +35,8 @@ public:
     virtual ~Monitor() {}
 
     virtual void capture() = 0;
+    virtual void start() = 0;
+    virtual void stop() = 0;
     virtual void reset() = 0;
     virtual void print(OStream & os) const = 0;
 
@@ -116,9 +118,6 @@ class Clerk_Monitor: public Monitor
 {
     friend class Monitor;
 
-private:
-//    static const unsigned int PERIOD = (FREQUENCY > 0) ? 1000000 / FREQUENCY : -1UL;
-
 public:
     typedef typename Clerk::Data Data;
 
@@ -160,9 +159,9 @@ public:
         }
     }
 
-    void reset() {
-        _clerk->reset();
-    }
+    void start() { _clerk->start(); }
+    void stop() { _clerk->stop(); }
+    void reset() { _clerk->reset(); }
 
     void print(OStream & os) const {
         if (_data_to_us) {
@@ -303,15 +302,13 @@ public:
         case Event::ELAPSED_TIME:
             return Alarm::elapsed();
         case Event::DEADLINE_MISSES:
-            return t->_statistics.missed_deadlines;
+            return t->statistics().missed_deadlines;
         case Event::RUNNING_THREAD:
             return reinterpret_cast<volatile unsigned int>(t);
         case Event::THREAD_EXECUTION_TIME:
-            if((t->priority() > Thread::Criterion::PERIODIC) && (t->priority() < Thread::Criterion::APERIODIC)) // real-time
-                return t->_statistics.jobs ? t->_statistics.average_execution_time / t->_statistics.jobs : t->_statistics.execution_time;
-            return t->_statistics.execution_time;
+            return t->statistics().thread_execution_time;
         case Event::CPU_EXECUTION_TIME:
-            return t->_statistics.idle_time[CPU::id()];
+            // return t->statistics()._cpu_time[CPU::id()];
         default:
             return 0;
         }
@@ -325,14 +322,13 @@ public:
         case Event::ELAPSED_TIME:
             break;
         case Event::DEADLINE_MISSES:
-            t->_statistics.missed_deadlines = 0;
+            t->criterion()._statistics.missed_deadlines = 0;
             break;
         case Event::RUNNING_THREAD:
             break;
         case Event::THREAD_EXECUTION_TIME:
             break;
         case Event::CPU_EXECUTION_TIME:
-            //Thread::_idle_time[CPU::id()] = 0;
             break;
         default:
             break;
@@ -344,8 +340,6 @@ private:
     Clerk_Monitor<Clerk> * _monitor;
 };
 
-
-#ifdef __PMU_H
 
 // PMU Clerk
 template<>
@@ -410,8 +404,6 @@ inline void Monitor::init_pmu_monitoring() {
 
 template<>
 inline void Monitor::init_pmu_monitoring<COUNTOF(Traits<Monitor>::PMU_EVENTS)>() {}
-
-#endif
 
 template<unsigned int CHANNEL>
 inline void Monitor::init_system_monitoring() {

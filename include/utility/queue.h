@@ -47,8 +47,9 @@ template<typename T, bool atomic>
 class Queue_Wrapper: private T
 {
 public:
-    typedef typename T::Object_Type Object_Type;
-    typedef typename T::Element Element;
+    using typename T::Object_Type;
+    using typename T::Element;
+    using typename T::Iterator;
 
 public:
     bool empty() { return T::empty(); }
@@ -78,8 +79,9 @@ template<typename T>
 class Queue_Wrapper<T, true>: private T
 {
 public:
-    typedef typename T::Object_Type Object_Type;
-    typedef typename T::Element Element;
+    using typename T::Object_Type;
+    using typename T::Element;
+    using typename T::Iterator;
 
 public:
     bool empty() {
