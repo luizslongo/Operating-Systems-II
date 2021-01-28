@@ -102,7 +102,7 @@ template<> struct Traits<GPIO>: public Traits<Machine_Common>
 
 template<> struct Traits<Serial_Display>: public Traits<Machine_Common>
 {
-    static const bool enabled = (Traits<Build>::EXPECTED_SIMULATION_TIME != 0);
+    static const bool enabled = true;
     static const int ENGINE = UART;
     static const int UNIT = 0;
     static const int COLUMNS = 80;
@@ -112,7 +112,7 @@ template<> struct Traits<Serial_Display>: public Traits<Machine_Common>
 
 template<> struct Traits<Serial_Keyboard>: public Traits<Machine_Common>
 {
-    static const bool enabled = (Traits<Build>::EXPECTED_SIMULATION_TIME != 0);
+    static const bool enabled = true;
 };
 
 template<> struct Traits<Scratchpad>: public Traits<Machine_Common>
