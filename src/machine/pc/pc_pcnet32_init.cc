@@ -12,8 +12,10 @@ PCNet32::PCNet32(unsigned int unit, IO_Port io_port, IO_Irq irq, DMA_Buffer * dm
     db<PCNet32>(TRC) << "PCNet32(unit=" << unit << ",io=" << io_port << ",irq=" << irq << ",dma=" << dma_buf << ")" << endl;
 
     _configuration.unit = unit;
-    _configuration.timer_accuracy = TSC::accuracy();
     _configuration.timer_frequency = TSC::frequency();
+    _configuration.timer_accuracy = TSC::accuracy() / 1000; // PPB -> PPM
+    if(!_configuration.timer_accuracy)
+    	_configuration.timer_accuracy = 1;
 
     _io_port = io_port;
     _irq = irq;

@@ -8,8 +8,6 @@
 
 using namespace EPOS;
 
-constexpr PMU::Event Intel_Sandy_Bridge_PMU::_events[PMU::EVENTS];
-
 const unsigned int TESTS = 5;
 const unsigned int THREADS = 17; // number of periodic threads
 const unsigned int ITERATIONS = 10;
@@ -86,6 +84,11 @@ int main()
     PMU::config(2, Traits_Tokens::CPU_CYCLES);
     PMU::config(3, Traits_Tokens::CACHE_HITS_SB);
     PMU::config(4, Traits_Tokens::BRANCHES);
+    return 1;
+    // Reading PMU while in QEMU is only available with KVM enabled, thus, if this feature is not available
+    // the execution will stop at the first PMU::read()
+    // The following test is functional when running this application in a real machine (or enabling the KVM feature) 
+
     for(unsigned int j = 0; j < 5; j++) {
         for(unsigned int i = 0; i < PMU::CHANNELS; i++)
             PMU::start(i);

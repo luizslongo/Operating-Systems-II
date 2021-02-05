@@ -80,6 +80,7 @@ void TSTP::update(NIC_Family::Observed * obs, const Protocol & prot, Buffer * bu
     db<TSTP>(INF) << "TSTP::update:packet=" << *packet << endl;
 
     _parts.notify(buf);
+
     if(buf->destined_to_me)
         _clients.notify(packet->header()->unit(), buf);
 }

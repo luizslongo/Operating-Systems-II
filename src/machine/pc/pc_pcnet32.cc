@@ -194,6 +194,8 @@ void PCNet32::free(Buffer * buf)
 
 void PCNet32::receive()
 {
+    TSC::Time_Stamp ts = (Buffer::Metadata::collect_sfdts) ? TSC::time_stamp() : 0;
+
     db<PCNet32>(TRC) << "PCNet32::receive()" << endl;
 
     for(unsigned int count = RX_BUFS, i = _rx_cur; count && !(_rx_ring[i].status & Rx_Desc::OWN); count--, ++i %= RX_BUFS, _rx_cur = i) {
@@ -214,6 +216,8 @@ void PCNet32::receive()
                 continue;
             }
 
+            if(Buffer::Metadata::collect_sfdts)
+                buf->sfdts = ts;
             if(!notify(frame->header()->prot(), buf)) // No one was waiting for this frame, so let it free for receive()
                 free(buf);
         }

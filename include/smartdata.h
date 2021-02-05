@@ -84,8 +84,9 @@ public:
 
         // Helper to create digital units
         template<unsigned int _TYPE, unsigned int _SUBTYPE, unsigned int _LEN>
-        struct Digital_Unit
+        class Digital_Unit
         {
+        public:
             //                            DIGITAL |            type              | length
             enum : unsigned long { UNIT = DIGITAL | _TYPE << 24 | _SUBTYPE << 16 | _LEN << 0 };
 
@@ -98,8 +99,9 @@ public:
 
         // Helper to create SI units
         template<int _MOD, int _SR, int _RAD, int _M, int _KG, int _S, int _A, int _K, int _MOL, int _CD>
-        struct SI_Unit
+        class SI_Unit
         {
+        public:
             //                            SI  |  MOD  |        sr       |         rad      |        m       |        kg       |        s       |        A      |        K      |       mol       |     cd
             enum : unsigned long { UNIT = SI  | _MOD  | (4 + _SR) << 24 | (4 + _RAD) << 21 | (4 + _M) << 18 | ( 4 +_KG) << 15 | (4 + _S) << 12 | (4 + _A) << 9 | (4 + _K) << 6 | (4 + _MOL) << 3 | (4 + _CD) };
 
@@ -336,8 +338,9 @@ public:
 
     // Spatial (Geographic) Global_Space
     template<Scale S>
-    struct _Space: public Point<typename Select_Scale<S>::Number, 3>, private Padding<Select_Scale<S>::PADDING>
+    class _Space: public Point<typename Select_Scale<S>::Number, 3>, private Padding<Select_Scale<S>::PADDING>
     {
+    public:
         using Number = typename Select_Scale<S>::Number;
         using Unsigned_Number = typename Select_Scale<S>::Unsigned_Number;
 
@@ -356,8 +359,49 @@ public:
     typedef _Space<CM_32> Global_Space;
 
     // Time (expressed in us)
-    typedef unsigned long long Time;
-    typedef long Time_Offset;
+    class Time
+    {
+    public:
+    	typedef long long int Type;
+
+    public:
+    	Time() {};
+    	Time(const Infinity &): _time(INFINITE) {};
+    	Time(const Type & time): _time(time) {};
+
+    	void operator=(const Type & time) { _time = time; }
+    	void operator=(const Type & time) volatile { _time = time; }
+
+    	operator Type() { return _time; }
+        operator Type() const { return _time; }
+        operator Type() volatile { return _time; }
+
+    private:
+        Type _time;
+    } __attribute__((packed));
+
+    class Short_Time
+    {
+    public:
+    	typedef long int Type;
+
+    public:
+    	Short_Time() {};
+    	Short_Time(const Infinity &): _time(INFINITE) {};
+    	Short_Time(const Type & time): _time(time) {};
+
+    	void operator=(const Type & time) { _time = time; }
+    	void operator=(const Type & time) volatile { _time = time; }
+
+    	operator Type() { return _time; }
+    	operator Type() const { return _time; }
+    	operator Type() volatile { return _time; }
+
+    private:
+    	Type _time;
+    } __attribute__((packed));
+    typedef Short_Time Time_Offset;
+
     struct Time_Interval
     {
         Time_Interval(const Time & begin, const Time & end): t0(begin), t1(end) {}
@@ -379,12 +423,11 @@ public:
         _Spacetime(const Number & x, const Number & y, const Number & z, const Time & _t): space(x, y, z), time(_t) {}
         _Spacetime(const Space & s, const Time & t): space(s), time(t) {}
 
-        _Spacetime & operator=(const Space & s) {space.x = s.x; space.y = s.y; space.z = s.z; return *this;}
-        _Spacetime & operator=(const Time & t) {time = t; return *this;}
+        _Spacetime & operator=(const Space & s) { space.x = s.x; space.y = s.y; space.z = s.z; return *this; }
+        _Spacetime & operator=(const Time & t) { time = t; return *this; }
 
-        _Spacetime & operator+(const Space & s) {space.x += s.x; space.y += s.y; space.z += s.z; return *this;}
-        _Spacetime & operator+(const Time & t) {time += t; return *this;}
-        _Spacetime & operator+(const Time_Offset & to) {time += to; return *this;}
+        _Spacetime & operator+(const Space & s) { space.x += s.x; space.y += s.y; space.z += s.z; return *this; }
+        _Spacetime & operator+(const Time & t) { time = time + t; return *this; }
 
         operator Space() const { return const_cast<const Space &>(space); }
         operator Time() const { return const_cast<const Time &>(time); }
@@ -401,8 +444,9 @@ public:
 
     // Spatial Region in a time interval
     template<Scale S>
-    struct _Region: public Sphere<typename Select_Scale<S>::Number, typename Select_Scale<S>::Unsigned_Number>, public Time_Interval // no need for padding: 3x8+8 | 3x16+16 | 3x32+32
+    class _Region: public Sphere<typename Select_Scale<S>::Number, typename Select_Scale<S>::Unsigned_Number>, public Time_Interval // no need for padding: 3x8+8 | 3x16+16 | 3x32+32
     {
+    public:
         using _Sphere = Sphere<typename Select_Scale<S>::Number, typename Select_Scale<S>::Unsigned_Number>;
         using typename _Sphere::Number;
         using typename _Sphere::Center;
@@ -422,10 +466,10 @@ public:
         bool operator!=(const _Region & r) const { return !(*this == r); }
 
         bool contains(const _Spacetime<S> & st) const {
-            return Time_Interval::contains(st) && _Sphere::contains(st);
+            return Time_Interval::contains(st.time) && _Sphere::contains(st.space);
         }
-        bool contains(const _Sphere & s, const Time & t) const {
-            return Time_Interval::contains(t) && _Sphere::contains(s.center);
+        bool contains(const Center & c, const Time & t) const {
+            return Time_Interval::contains(t) && _Sphere::contains(c);
         }
 
         friend Debug & operator<<(Debug & db, const _Region & r) {
@@ -481,7 +525,7 @@ public:
         // Responsive modes
         PRIVATE         = 0 << 0, // local access only
         ADVERTISED      = 1 << 0, // advertised to the network (can bind to interests)
-        COMMANDED       = 2 << 0, // commanded via the network (can bind to interests and be commanded)
+        COMMANDED       = 3 << 0, // commanded via the network (can bind to interests and be commanded)
         // Responsive operations
         ADVERTISE       = 0 << 2, // advertise a Responsive
         CONCEAL         = 1 << 2, // conceal a Responsive advertisement (e.g. node shutdown)
@@ -547,7 +591,7 @@ public:
         typedef unsigned char Misc;
 
     public:
-        _Header() {}
+        _Header(): _unit(0) {} // by definition, there cannot be a unit "0" so this indicate and invalid/unused header
         _Header(const Mode & m): _mode(m) {}
         _Header(const Unit & u, const Device_Id & d, const Type & t, const Mode & m, const Misc & mi = 0)
         : _config((S & 0x03) << 6 | 0 << 5 | (t & 0x03) << 3 | (V0 & 0x07)), _mode(m), _misc(mi), _unit(u), _device(d) {}
@@ -569,6 +613,9 @@ public:
 
         Mode subtype() const { return _mode & SUBTYPE_MASK; }
         void subtype(const Mode & m) { _mode = (m & SUBTYPE_MASK) | (_mode & ~SUBTYPE_MASK); }
+
+        Mode operation() const { return _mode & OPERATION_MASK; }
+        void operation(const Mode & m) { _mode = (m & OPERATION_MASK) | (_mode & ~OPERATION_MASK); }
 
         Misc misc() const { return _misc; }
         void misc(const Misc & m) { _misc = m; }
@@ -618,11 +665,11 @@ public:
                 if(h.mode() & REVOKE)
                     db << "DEL";
                 else
-                    db << "ANN:" << ((h.mode() & ALL) ? "ALL" : "SGL") << ",un=" << int(h.misc());
+                    db << "ANN:" << ((h.mode() & ALL) ? "ALL" : "SGL") << ",err=" << int(h.misc());
             break;
             case RESPONSE:
                 db << "RES:";
-                switch(h.mode() & OPERATION_MASK) {
+                switch(h.operation()) {
                 case ADVERTISE: db << "ADV:" << ((h.mode() & COMMANDED) ? "R/W" : "R/O"); break;
                 case CONCEAL:   db << "DEL"; break;
                 case RESPOND:   db << "RES:" << ((h.mode() & CUMULATIVE) ? "S:" : "I:") << ((h.mode() & PREDICTIVE) ? "P" : "A"); break;
@@ -634,7 +681,7 @@ public:
             break;
             case CONTROL:
                 db << "CTL:";
-                switch(h.mode() & SUBTYPE_MASK) {
+                switch(h.subtype()) {
                 case DH_REQUEST:   db << "DH:REQ"; break;
                 case DH_RESPONSE:  db << "DH:RSP"; break;
                 case AUTH_REQUEST: db << "AU:REQ"; break;
@@ -647,7 +694,7 @@ public:
                 }
             break;
             }
-            db << ",v=" << h.version() - V0 << ",tr=" << h.time_request() << ",sc=" << h.scale() << ",lc=" << h._location_confidence << ",o=" << h._origin << ",u=" << h._unit << ",d=" << h._device << ",lh=" << h._last_hop << "}";
+            db << ",ver=" << h.version() - V0 << ",tr=" << h.time_request() << ",sc=" << h.scale() << ",lc=" << h._location_confidence << ",o=" << h._origin << ",u=" << h._unit << ",d=" << h._device << ",lh=" << h._last_hop << "}";
             return db;
         }
 
@@ -667,13 +714,13 @@ public:
     class Interest: public Header
     {
     public:
-        Interest(const Region & region, const Unit & unit, const Device_Id & device, const Mode & mode, const Uncertainty & uncertainty, const Time_Offset & expiry, const Time_Offset & period)
+        Interest(const Region & region, const Unit & unit, const Device_Id & device, const Mode & mode, const Uncertainty & uncertainty, const Time & expiry, const Microsecond & period)
         : Header(unit, device, INTEREST, mode, uncertainty), _region(region), _expiry(expiry), _period(period) {}
 
         Uncertainty uncertainty() const { return static_cast<Uncertainty>(_misc); }
         const Region & region() const { return _region; }
-        Time_Offset expiry() const { return _expiry; }
-        Time_Offset period() const { return _period; }
+        Time expiry() const { return _expiry; }
+        Microsecond period() const { return Microsecond(_period); }
 
         template<typename T>
         const T & value() const { return *reinterpret_cast<const T *>(&_data); }
@@ -692,8 +739,8 @@ public:
 
     private:
         Region _region;
-        Time_Offset _expiry;
-        Time_Offset _period;
+        Time _expiry;
+        Short_Time _period;
         char _data[]; // must be manually allocated (adds 0 bytes to sizeof; can overlap)
     } __attribute__((packed));
 
@@ -702,11 +749,11 @@ public:
     {
     public:
         Response() {}
-        Response(const Spacetime & origin, const Unit & unit, const Device_Id & device, const Mode & mode, const Uncertainty & uncertainty, const Time_Offset & expiry)
+        Response(const Spacetime & origin, const Unit & unit, const Device_Id & device, const Mode & mode, const Uncertainty & uncertainty, const Time & expiry)
         : Header(origin, unit, device, RESPONSE, mode, uncertainty), _expiry(expiry) {}
 
         Uncertainty uncertainty() const { return static_cast<Uncertainty>(_misc); }
-        const Time_Offset & expiry() const { return const_cast<const Time_Offset &>(_expiry); }
+        const Time & expiry() const { return _expiry; }
 
         template<typename T>
         const T & value() const { return *reinterpret_cast<const T *>(&_data); }
@@ -716,12 +763,15 @@ public:
         unsigned int data_size() const { return _unit.value_size(); };
 
         friend Debug & operator<<(Debug & db, const Response & m) {
-            db << "{h=" << reinterpret_cast<const Header &>(m) << ",x=" << m._expiry << ",d=" << *reinterpret_cast<const int *>(&m._data[0]) << "}";
+        	if(m._unit)
+        		db << "{h=" << reinterpret_cast<const Header &>(m) << ",x=" << m._expiry << ",v=" << *reinterpret_cast<const int *>(&m._data[0]) << "}";
+        	else
+        		db << "{not set}";
             return db;
         }
 
     private:
-        Time_Offset _expiry;
+        Time _expiry;
         char _data[]; // must be manually allocated (adds 0 bytes to sizeof; can overlap)
     } __attribute__((packed));
 
@@ -729,12 +779,12 @@ public:
     class Command: public Header
     {
     public:
-        Command(const Region & region, const Unit & unit, const Device_Id & device, const Mode & mode, const Time_Offset & expiry, const Time_Offset & period)
+        Command(const Region & region, const Unit & unit, const Device_Id & device, const Mode & mode, const Time & expiry, const Microsecond & period)
         : Header(region, unit, device, COMMAND, mode), _radius(region.radius), _t1(region.t1), _expiry(expiry), _period(period) {}
 
         Region region() const { return Region(_origin, _radius, _t1); }
-        Time_Offset expiry() const { return _expiry; }
-        Time_Offset period() const { return _period; }
+        Time expiry() const { return _expiry; }
+        Microsecond period() const { return Microsecond(_period); }
 
         template<typename T>
         const T & value() const { return *reinterpret_cast<const T *>(&_data); }
@@ -751,8 +801,8 @@ public:
     private:
         Region::Radius _radius;
         Time _t1;
-        Time_Offset _expiry;
-        Time_Offset _period;
+        Time _expiry;
+        Short_Time _period;
         char _data[]; // must be manually allocated (adds 0 bytes to sizeof; can overlap)
     } __attribute__((packed));
 
@@ -894,8 +944,8 @@ private:
         const Region & region() const { return _region; }
         const Mode & mode() const { return _mode; }
         const Uncertainty & uncertainty() const { return _uncertainty; }
-        const Time_Offset & expiry() const { return _expiry; }
-        const Time_Offset & period() const { return _period; }
+        const Time & expiry() const { return _expiry; }
+        const Microsecond & period() const { return _period; }
 
         Element * link() { return &_link; }
 
@@ -903,14 +953,14 @@ private:
         Region _region;
         Mode _mode;
         Uncertainty _uncertainty;
-        Time_Offset _expiry;
-        Time_Offset _period;
+        Time _expiry;
+        Microsecond _period;
 
         Element _link;
     };
 
 public:
-    Responsive_SmartData(const Device_Id & dev, const Time_Offset & expiry, const Mode & mode = PRIVATE, const Microsecond & period = 0 )
+    Responsive_SmartData(const Device_Id & dev, const Time & expiry, const Mode & mode = PRIVATE, const Microsecond & period = 0 )
     : _mode(mode), _origin(Locator::here(), Timekeeper::now()), _device(dev), _value(0), _uncertainty(UNCERTAINTY), _expiry(expiry),
      _transducer(new (SYSTEM) Transducer(dev)), _predictor(predictive ? new (SYSTEM) Predictor(typename Predictor::Configuration(), false) : 0), _thread(0), _link(this) {
         db<SmartData>(TRC) << "SmartData[R](d=" << dev << ",x=" << expiry << ",m=" << ((mode & COMMANDED) ? "CMD" : ((mode & ADVERTISED) ? "ADV" : "PRI")) << ")=>" << this << endl;
@@ -928,7 +978,7 @@ public:
             process(ADVERTISE);
         }
         if((mode & ADVERTISED) != ADVERTISED && (period > 0)) {
-            _thread = new Periodic_Thread(period, &updater, _device, static_cast<Time_Offset>(expiry), this);
+            _thread = new Periodic_Thread(period, &updater, _device, expiry, this);
             db<SmartData>(INF) << "SmartData[R]::thread=" << _thread << endl;
         }
     }
@@ -949,13 +999,11 @@ public:
     Space where() const { return Locator::absolute(_origin); }
     Time when() const { return Timekeeper::absolute(_origin); }
 
-    Time_Offset expiry() const { return _expiry; }
-    bool expired() const { return Timekeeper::now() > (_origin + _expiry); }
+    Time expiry() const { return _expiry; }
+    bool expired() const { return Timekeeper::now() > (_origin.time + _expiry); }
 
     operator Value() {
-        db<SmartData>(TRC) << "SmartData[R]::operator Value(this=" << this << ")" << endl;
-
-        Value tmp = _value;
+        db<SmartData>(TRC) << "SmartData[R]::operator Value()[v=" << _value << "]" << endl;
 
         if(Transducer::TYPE & Transducer::SENSOR) {
             if(expired()) {
@@ -973,7 +1021,9 @@ public:
         if(_mode & CUMULATIVE)
             _value = 0;
 
-        return tmp;
+        db<SmartData>(INF) << "SmartData[R]::operator Value():v=" << _value << endl;
+
+        return _value;
     }
 
     SmartData & operator=(const Value & v) {
@@ -1020,7 +1070,7 @@ public:
         db << ((d._mode & PREDICTIVE) ? "P" : "A");
         if(d._thread)
             db << ",p=" << d._thread->period();
-        db << ",u=" << d.unit() << ",d=" << d._device << ",o=" << d._origin << ",v=" << d._value << ",un=" << int(d._uncertainty) << ",x=" << d._expiry << "}";
+        db << ",u=" << d.unit() << ",d=" << d._device << ",o=" << d._origin << ",v=" << d._value << ",err=" << int(d._uncertainty) << ",x=" << d._expiry << "}";
         return db;
     }
 
@@ -1028,7 +1078,7 @@ private:
     void process(const Mode & op) {
         db<SmartData>(TRC) << "SmartData[R]::process(op=" << ((op == ADVERTISE) ? "ADV" : (op == CONCEAL) ? "DEL" : (op == RESPOND) ? "RES" : "CTL") << ")" << endl;
 
-        if(_mode && PRIVATE != PRIVATE) {
+        if(_mode & ADVERTISED) {
             Buffer * buffer = Network::alloc(sizeof(Response) + sizeof(Value));
             Header * header = buffer->frame()->template data<Header>();
             Response * response = new (header) Response(_origin, UNIT, _device, (_mode | op), _uncertainty, _expiry);
@@ -1051,7 +1101,6 @@ private:
         case INTEREST: {
             Interest * interest = reinterpret_cast<Interest *>(header);
             db<SmartData>(INF) << "SmartData[R]::update:msg=" << *interest << endl;
-
             if(_mode & ADVERTISED) {
                 if(interest->mode() & REVOKE)
                     unbind(interest);
@@ -1062,7 +1111,6 @@ private:
                         _value = _transducer->sense();
                         _origin = Timekeeper::now();
                     }
-                    db<SmartData>(INF) << "SmartData[R]::value: now=" << Timekeeper::now() << ",time=" << _origin.time << ",t+e=" << _origin.time + _expiry << endl;
                     process(RESPOND);
                 }
             } else
@@ -1140,7 +1188,7 @@ private:
             bound = true;
         }
 
-        db<SmartData>(INF) << "SmartData[R]::bind: " << (bound ? "bound" : "not bound") << "!" << endl;
+        db<SmartData>(INF) << "SmartData[R]::bind:" << (bound ? "bound" : "not bound") << "!" << endl;
 
         return bound;
     }
@@ -1174,7 +1222,7 @@ private:
 
 
     // Time-triggered updater
-    static int updater(unsigned int device, Time_Offset expiry, Responsive_SmartData * sd) {
+    static int updater(unsigned int device, Time expiry, Responsive_SmartData * sd) {
         db<SmartData>(TRC) << "SmartData[R]::updater(d=" << device << ",x=" << expiry << ",sd=" << sd << ")" << endl;
         while(true) {
             sd->_value = sd->_transducer->sense();
@@ -1235,9 +1283,9 @@ private:
     };
 
 public:
-    Interested_SmartData(const Region & region, const Time_Offset & expiry, const Time_Offset & period = 0, const Mode & mode = SINGLE, const Uncertainty & uncertainty = ANY, const Device_Id & device = UNIQUE)
+    Interested_SmartData(const Region & region, const Time & expiry, const Microsecond & period = 0, const Mode & mode = SINGLE, const Uncertainty & uncertainty = ANY, const Device_Id & device = UNIQUE)
     : _mode(mode), _region(region), _device(device), _uncertainty(uncertainty), _expiry(expiry), _period(period), _value(0), _predictor((predictive && (mode & PREDICTIVE)) ? new (SYSTEM) Predictor : 0), _link(this) {
-        db<SmartData>(TRC) << "SmartData[I](r=" << region << ",d=" << device << ",x=" << expiry << ",m=" << ((mode & ALL) ? "ALL" : "SGL") << ",un=" << int(uncertainty) << ",p=" << period << ")=>" << this << endl;
+        db<SmartData>(TRC) << "SmartData[I](r=" << region << ",d=" << device << ",x=" << expiry << ",m=" << ((mode & ALL) ? "ALL" : "SGL") << ",err=" << int(uncertainty) << ",p=" << period << ")=>" << this << endl;
         _interests.insert(&_link);
         Network::attach(this, UNIT);
         process(ANNOUNCE);
@@ -1259,13 +1307,14 @@ public:
     const Mode & mode() const { return _response.mode(); }
     const Uncertainty & uncertainty() const { return _response.uncertainty(); }
 
-    Space where() const { return Locator::absolute(_response.origin()); }
-    Time when() const { return Timekeeper::absolute( _response.origin().time ); }
+    Space where() const { return Locator::absolute(_response.origin().space); }
+    Time when() const { return Timekeeper::absolute(_response.origin().time); }
 
-    Time_Offset expiry() const { return _response.expiry(); }
+    Time expiry() const { return _response.expiry(); }
     bool expired() const { return Timekeeper::now() > (_response.time() + _expiry); }
 
     operator Value & () {
+        db<SmartData>(TRC) << "SmartData[I]::operator Value()[v=" << _value << "]" << endl;
         if(expired()) {
             if(predictive)
                 _value = _predictor->predict(Timekeeper::now());
@@ -1319,10 +1368,10 @@ public:
         db << "{INT:" << ((d._period) ? "TT" : "ED");
         db << ':';
         db << ((d._mode & ALL) ? "ALL" : "SGL");
-        db << ",r=" << d._region << ",d=" << d._device << ",un=" << int(d._uncertainty) << ",x=" << d._expiry;
+        db << ",r=" << d._region << ",d=" << d._device << ",err=" << int(d._uncertainty) << ",x=" << d._expiry;
         if(d._period)
             db << ",p=" << d._period;
-        db << ",res={o=" << d._response.origin() << ",d=" << d._response.device() << ",v=" << d._value << ",un=" << int(d._response.uncertainty()) << ",x=" << d._response.expiry() << "}}";
+        db << ",res=" << d._response << "}}";
         return db;
     }
 
@@ -1350,15 +1399,15 @@ private:
         Header * header = buffer->frame()->template data<Header>();
         switch(header->type()) {
         case INTEREST: {
-            Interest * interest = reinterpret_cast<Interest *>(header);
+            Interest * interest = buffer->frame()->template data<Interest>();
             db<SmartData>(INF) << "SmartData[I]::update:msg=" << *interest << endl;
-            db<SmartData>(WRN) << "SmartData[I]::update: not advertised!" << endl;
+            db<SmartData>(WRN) << "SmartData[I]::update:not advertised!" << endl;
         } break;
         case RESPONSE: {
-            Response * response = reinterpret_cast<Response *>(header);
+            Response * response = buffer->frame()->template data<Response>();
             db<SmartData>(INF) << "SmartData[I]::update:msg=" << *response << endl;
             if((response->unit() == UNIT) && _region.contains(response->origin())) {
-                if((response->mode() & OPERATION_MASK) == ADVERTISE)
+                if((response->operation()) == ADVERTISE)
                     process(ANNOUNCE);
                 else {
                     _response = *response;
@@ -1372,12 +1421,12 @@ private:
                 db<SmartData>(INF) << "SmartData[I]::update: not interested!" << endl;
         } break;
         case COMMAND: {
-            Command * command = reinterpret_cast<Command *>(header);
+            Command * command = buffer->frame()->template data<Command>();
             db<SmartData>(INF) << "SmartData[I]::update:msg=" << *command << endl;
             db<SmartData>(WRN) << "SmartData[I]::update: not commanded!" << endl;
         } break;
         case CONTROL: {
-            Control * control = reinterpret_cast<Control *>(header);
+            Control * control = buffer->frame()->template data<Control>();
             db<SmartData>(INF) << "SmartData[I]::update:msg=" << *control << endl;
 
 //            switch(header->subtype()) {
@@ -1407,8 +1456,8 @@ private:
     Region _region;
     unsigned int _device;
     Uncertainty _uncertainty;
-    Time_Offset _expiry;
-    Time_Offset _period;
+    Time _expiry;
+    Microsecond _period;
     Predictor * _predictor;
     typename Simple_List<SmartData>::Element _link;
 

@@ -3,6 +3,7 @@
 #include <process.h>
 #include <clerk.h>
 
+#ifndef __mode_builtin__
 __BEGIN_SYS
 
 // EA PEDF Statistics
@@ -596,3 +597,5 @@ bool EA_PEDF::award(bool end)
 }
 
 __END_SYS
+
+#endif

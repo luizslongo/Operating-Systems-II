@@ -101,9 +101,9 @@ public:
     void address(const Address & address) { _configuration.address = address; _configuration.selector = Configuration::ADDRESS; reconfigure(&_configuration); }
 
     bool reconfigure(const Configuration * c);
-    const Configuration & configuration() { _configuration.time_stamp = TSC::time_stamp(); return _configuration; }
+    const Configuration & configuration() { return _configuration; }
 
-    const Statistics & statistics() { return _statistics; }
+    const Statistics & statistics() { _statistics.time_stamp = TSC::time_stamp(); return _statistics; }
 
     virtual void attach(Observer * o, const Protocol & p) {
         db<RTL8139>(TRC) << "RTL8139::attach(p=" << p  << ")" << endl;
@@ -116,8 +116,6 @@ public:
         if(!observers())
             CPU::out16(_io_port + IMR, CPU::in16(_io_port + IMR) & ~ROK); // disable receive int
     }
-
-    Time_Stamp time_stamp() { return static_cast<Time_Stamp>(TSC::time_stamp()); }
 
     static RTL8139 * get(unsigned int unit = 0) { return get_by_unit(unit); }
 

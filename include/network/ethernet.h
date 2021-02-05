@@ -31,7 +31,6 @@ public:
         PROTO_PTP    = 0x88f7
     };
 
-
     // The Ethernet Header (RFC 894)
     class Header
     {
@@ -54,7 +53,6 @@ public:
         Address _src;
         Protocol _prot;
     } __attribute__((packed, may_alias));
-
 
     // Data and Trailer
     static const unsigned int MTU = 1500;
@@ -88,16 +86,18 @@ public:
 
     typedef Frame PDU;
 
-    typedef IF<Traits<TSTP>::enabled, TSTP_Metadata, Null_Metadata>::Result Metadata;
+    typedef IF<Traits<TSTP>::enabled, TSTP_Metadata, Dummy_Metadata>::Result Metadata;
 
     // Buffers used to hold frames across a zero-copy network stack
     typedef _UTIL::Buffer<NIC<Ethernet>, Frame, void, Metadata> Buffer;
-
 
     // Observers of a protocol get a also a pointer to the received buffer
     typedef Data_Observer<Buffer, Protocol> Observer;
     typedef Data_Observed<Buffer, Protocol> Observed;
 
+    // Ethernet NICs usually don't export the timer for SFD time stamping, so the basic time type is set to TSC
+    // NICs that do feature time stamping must have any different type converted to TSC::Time_Stamp
+    typedef TSC::Time_Stamp Time_Stamp;
 
     // Configuration parameters
     struct Configuration: public NIC_Common::Configuration
@@ -115,9 +115,7 @@ public:
         Address address;
         PPM timer_accuracy;
         Hertz timer_frequency;
-        Metadata::Time_Stamp time_stamp;
     };
-
 
     // Meaningful statistics for Ethernet
     struct Statistics: public NIC_Common::Statistics
@@ -138,6 +136,7 @@ public:
             return db;
         }
 
+        Time_Stamp time_stamp;
         Count rx_overruns;
         Count tx_overruns;
         Count frame_errors;

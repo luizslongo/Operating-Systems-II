@@ -25,29 +25,23 @@ void TSTP::Locator::update(Data_Observed<Buffer> * obs, Buffer * buf)
     db<TSTP>(TRC) << "TSTP::Locator::update(obs=" << obs << ",buf=" << buf << ")" << endl;
 
     if(buf->is_microframe) {
-        buf->sender_distance = buf->hint; // This would fit better in the Router, but Timekeeper uses this info
+        buf->sender_distance = buf->hint; // this would fit better in the Router, but Timekeeper uses this info
         if(!_engine.synchronized())
             buf->relevant = true;
         else if(!buf->downlink)
-            buf->my_distance = here() - TSTP::sink();
+            buf->my_distance = here() - sink();
     } else {
-        Global_Space dst = Space(Router::destination(buf).center);
-        buf->sender_distance = buf->frame()->data<Header>()->last_hop().space - dst;
-        Header * h = buf->frame()->data<Header>();
-        _engine.learn(h->last_hop(), h->location_confidence(), buf->rssi);
+        Header * header = buf->frame()->data<Header>();
+        Space dst = Space(Router::destination(buf).center);
+        buf->sender_distance = header->last_hop().space - dst;
+        _engine.learn(header->last_hop(), header->location_confidence(), buf->rssi);
 
+        buf->downlink = (dst != sink()); // this would fit better in the Router, but Timekeeper uses this info
         buf->my_distance = here() - dst;
-        buf->downlink = dst != TSTP::sink(); // This would fit better in the Router, but Timekeeper uses this info
 
         // Respond to Keep Alive if sender is low on location confidence
-        if(_engine.synchronized()) {
-            Header * header = buf->frame()->data<Header>();
-            if(header->type() == CONTROL) {
-                Control * control = buf->frame()->data<Control>();
-                if((control->subtype() == KEEP_ALIVE) && !_engine.neigbor_synchronized(header->location_confidence()))
-                    Timekeeper::keep_alive();
-            }
-        }
+        if(_engine.synchronized() && (header->type() == CONTROL) && (header->subtype() == KEEP_ALIVE) && !_engine.neigbor_synchronized(header->location_confidence()))
+            Timekeeper::keep_alive();
     }
 }
 

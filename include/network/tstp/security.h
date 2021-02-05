@@ -26,18 +26,18 @@ class TSTP::Security: private SmartData, private Data_Observer<Buffer>
 private:
     static const bool use_encryption = false;
     static const unsigned int KEY_SIZE = Traits<TSTP>::KEY_SIZE;
-    static const unsigned int KEY_MANAGER_PERIOD = 10 * 1000 * 1000;
-    static const unsigned long long KEY_EXPIRY = 1 * 60 * 1000 * 1000;
-    static const unsigned long long POLY_TIME_WINDOW = KEY_EXPIRY / 2;
+    static const Time::Type KEY_MANAGER_PERIOD = 10 * 1000 * 1000;
+    static const Time::Type KEY_EXPIRY = 1 * 60 * 1000 * 1000;
+    static const Time::Type POLY_TIME_WINDOW = KEY_EXPIRY / 2;
 
     typedef _SYS::AES<KEY_SIZE> _AES;
     typedef Diffie_Hellman<_AES> _DH;
     typedef Poly1305<_AES> _Poly1305;
 
 public:
-    typedef Array<unsigned char, 16> Node_Id;
-    typedef Array<unsigned char, 16> Auth;
-    typedef Array<unsigned char, 16> OTP;
+    typedef Array<unsigned char, KEY_SIZE> Node_Id;
+    typedef Array<unsigned char, KEY_SIZE> Auth;
+    typedef Array<unsigned char, KEY_SIZE> OTP;
     typedef _DH::Public_Key Public_Key;
     typedef _DH::Shared_Key Master_Secret;
 
@@ -73,7 +73,7 @@ public:
         const Master_Secret & master_secret() const { return _master_secret; }
         void master_secret(const Master_Secret & ms) {
             _master_secret = ms;
-            _auth_time = TSTP::now();
+            _auth_time = now();
         }
 
         const Auth & auth() const { return _auth; }
@@ -98,9 +98,9 @@ public:
     class Pending_Key
     {
     public:
-        Pending_Key(const Public_Key & pk): _master_secret_calculated(false), _creation(TSTP::now()), _public_key(pk), _el(this) {}
+        Pending_Key(const Public_Key & pk): _master_secret_calculated(false), _creation(now()), _public_key(pk), _el(this) {}
 
-        bool expired() { return TSTP::now() - _creation > KEY_EXPIRY; }
+        bool expired() { return now() - _creation > KEY_EXPIRY; }
 
         const Master_Secret & master_secret() {
             if(_master_secret_calculated)
@@ -240,7 +240,7 @@ public:
     }
 
     static Time deadline(const Time & origin) {
-        return origin + Math::min(static_cast<Time>(KEY_MANAGER_PERIOD), KEY_EXPIRY) / 2;
+        return origin + Math::min(KEY_MANAGER_PERIOD, KEY_EXPIRY) / 2;
     }
 
 private:

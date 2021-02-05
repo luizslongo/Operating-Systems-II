@@ -12,6 +12,7 @@ OStream cout;
 
 int icmp_test()
 {
+    cout << "\n\n--------------------------------------------------------------------------------" << endl;
     cout << "ICMP Test" << endl;
 
     Port<ICMP> * com;
@@ -68,17 +69,18 @@ int icmp_test()
     delete com;
 
     Ethernet::Statistics stat = ip->nic()->statistics();
-    cout << "Statistics\n"
-         << "Tx Packets: " << stat.tx_packets << "\n"
-         << "Tx Bytes:   " << stat.tx_bytes << "\n"
-         << "Rx Packets: " << stat.rx_packets << "\n"
-         << "Rx Bytes:   " << stat.rx_bytes << endl;
+    cout << "Statistics:\n"
+         << "  Tx Packets: " << stat.tx_packets << "\n"
+         << "  Tx Bytes:   " << stat.tx_bytes << "\n"
+         << "  Rx Packets: " << stat.rx_packets << "\n"
+         << "  Rx Bytes:   " << stat.rx_bytes << endl;
 
     return stat.tx_bytes + stat.rx_bytes;
 }
 
 int udp_test()
 {
+    cout << "\n\n--------------------------------------------------------------------------------" << endl;
     cout << "UDP Test" << endl;
 
     char data[PDU];
@@ -153,17 +155,18 @@ int udp_test()
     delete com;
 
     Ethernet::Statistics stat = ip->nic()->statistics();
-    cout << "Statistics\n"
-         << "Tx Packets: " << stat.tx_packets << "\n"
-         << "Tx Bytes:   " << stat.tx_bytes << "\n"
-         << "Rx Packets: " << stat.rx_packets << "\n"
-         << "Rx Bytes:   " << stat.rx_bytes << endl;
+    cout << "Statistics:\n"
+         << "  Tx Packets: " << stat.tx_packets << "\n"
+         << "  Tx Bytes:   " << stat.tx_bytes << "\n"
+         << "  Rx Packets: " << stat.rx_packets << "\n"
+         << "  Rx Bytes:   " << stat.rx_bytes << endl;
 
     return stat.tx_bytes + stat.rx_bytes;
 }
 
 int tcp_test()
 {
+    cout << "\n\n--------------------------------------------------------------------------------" << endl;
     cout << "TCP Test" << endl;
 
     char data[PDU];
@@ -238,11 +241,11 @@ int tcp_test()
     delete com;
 
     Ethernet::Statistics stat = ip->nic()->statistics();
-    cout << "Statistics\n"
-         << "Tx Packets: " << stat.tx_packets << "\n"
-         << "Tx Bytes:   " << stat.tx_bytes << "\n"
-         << "Rx Packets: " << stat.rx_packets << "\n"
-         << "Rx Bytes:   " << stat.rx_bytes << endl;
+    cout << "Statistics:\n"
+         << "  Tx Packets: " << stat.tx_packets << "\n"
+         << "  Tx Bytes:   " << stat.tx_bytes << "\n"
+         << "  Rx Packets: " << stat.rx_packets << "\n"
+         << "  Rx Bytes:   " << stat.rx_bytes << endl;
 
     return stat.tx_bytes + stat.rx_bytes;
 }

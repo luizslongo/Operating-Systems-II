@@ -43,9 +43,9 @@ public:
     void address(const Address & address) { _configuration.address = address; _configuration.selector = Configuration::ADDRESS; reconfigure(&_configuration); }
 
     bool reconfigure(const Configuration * c);
-    const Configuration & configuration() { _configuration.time_stamp = TSC::time_stamp(); return _configuration; }
+    const Configuration & configuration() { return _configuration; }
 
-    const Statistics & statistics() { return _statistics; }
+    const Statistics & statistics() {  _statistics.time_stamp = TSC::time_stamp(); return _statistics; }
 
     void reset();
 

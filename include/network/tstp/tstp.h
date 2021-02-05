@@ -41,11 +41,9 @@ public:
     using typename NIC_Family::Metadata;
     using typename NIC_Family::Statistics;
     using typename NIC_Family::Configuration;
-    typedef Metadata::Time_Stamp Time_Stamp;
-    typedef Metadata::Offset Offset;
+
     typedef Data_Observer<Buffer, Unit> Observer;
     typedef Data_Observed<Buffer, Unit> Observed;
-
 
     // Header
     class Header: public SmartData::Header
@@ -67,7 +65,6 @@ public:
     private:
         Packet_Id _id;
     } __attribute__((packed));
-
 
     // Packet
     // Each TSTP message is encapsulated in a single package. TSTP does not need nor supports fragmentation.
@@ -181,9 +178,8 @@ inline TSTP::Space TSTP::relative(TSTP::Global_Space s) { return Locator::relati
 inline TSTP::Global_Space TSTP::absolute(const TSTP::Space & s) { return Locator::absolute(s); }
 
 inline TSTP::Time TSTP::now() { return Timekeeper::now(); }
-inline TSTP::Time TSTP::time_stamp() { return Timekeeper::time_stamp(); }
 inline TSTP::Time TSTP::relative(const TSTP::Time & t) { return TSTP::_timekeeper->relative(t); }
-inline TSTP::Time TSTP::absolute(const TSTP::Time & t) { return t ? TSTP::_timekeeper->relative(t) : 0; }
+inline TSTP::Time TSTP::absolute(const TSTP::Time & t) { return t ? TSTP::_timekeeper->relative(t) : t; }
 
 __END_SYS
 

@@ -829,7 +829,7 @@ int FuncTask1()
     unsigned long long elapsed;
  
     int iterations;
-    for(iterations = 0; iterations < 100000; iterations++) {
+    for(iterations = 0; iterations <= 100000; iterations++) {
     //while(1) {
    
         //printk("[mser] \n");
@@ -859,7 +859,8 @@ int FuncTask1()
         } else {
             printk("%u%u\n", elapsed[1], elapsed[0]);
         }*/
-        cout << "Elapsed = " << diff << ", Iteration = " << iterations << endl;
+        if(!(i % 1000))
+        	cout << "Elapsed = " << diff << ", Iteration = " << iterations << endl;
 
         //printk("Input size\t\t- (%dx%d)\n", rows, cols);
         //elapsed[0] = elapsed[1] + elapsed[0];

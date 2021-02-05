@@ -77,7 +77,7 @@ int FuncTask1()
     I2D* srcImage;
 
     int iterations;
-    for(iterations = 0; iterations < 10000; iterations++) {
+    for(iterations = 0; iterations < 10; iterations++) {
     //while(1){
 
         srcImage = (I2D*)img1;
@@ -131,7 +131,8 @@ int FuncTask1()
 
         cout << "Elapsed " << diff << endl;
     }
-    
+    cout << "END" << endl;
+
     return 0;
 }
 

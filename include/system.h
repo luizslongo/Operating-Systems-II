@@ -28,6 +28,7 @@ class System
 {
     friend class Init_System;
     friend class Init_Application;
+    friend class Monitor; // For heap size check
     friend void CPU::Context::load() const volatile;
     friend void * ::malloc(size_t);
     friend void ::free(void *);

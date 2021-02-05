@@ -85,7 +85,7 @@ int RTL8139::receive(Address * src, Protocol * prot, void * data, unsigned int s
     _rx_read += packet_len + TX_BUFS;
     _rx_read =  (_rx_read + 3) & ~3;
 
-    if (_rx_read > RX_NO_WRAP_SIZE) {
+    if(_rx_read > RX_NO_WRAP_SIZE) {
         _rx_read -= RX_NO_WRAP_SIZE;
         db<RTL8139>(TRC) << "\tWRAPPED " << _rx_read << endl;
     }
@@ -145,7 +145,7 @@ int RTL8139::send(Buffer * buf)
         char * desc = reinterpret_cast<char *>(*reinterpret_cast<int *>(buf->back()));
         unsigned int i = 0;
         for (; i < TX_BUFS; i++)
-            if (desc == _tx_base_phy[i]) break;
+            if(desc == _tx_base_phy[i]) break;
 
         db<RTL8139>(TRC) << "RTL8139::send(buf=" << buf << ",desc=" << desc << ",tx=" << _tx_base_phy[i] << ",i=" << i << ")" << endl;
 
@@ -246,6 +246,8 @@ void RTL8139::reset()
 
 void RTL8139::handle_int()
 {
+    TSC::Time_Stamp ts = (Buffer::Metadata::collect_sfdts) ? TSC::time_stamp() : 0;
+
     /* An interrupt usually means a single frame was transmitted or received,
      * but in certain cases it might handle several frames or none at all.
      */
@@ -254,14 +256,14 @@ void RTL8139::handle_int()
     CPU::out16(_io_port + ISR, status);
     db<RTL8139>(TRC) << "INTERRUPT STATUS " << status << endl;
 
-    if (status & TOK) {
+    if(status & TOK) {
         // Transmit completed successfully, release descriptor
         db<RTL8139>(TRC) << "TOK" << endl;
         //bool transmitted = false;
         for (unsigned char i = 0; i < TX_BUFS; i++) {
             // While descriptors have TOK status, release and advance tail
             unsigned int status_tx = CPU::in32(_io_port + TRSTATUS + _tx_cur_nic * TX_BUFS);
-            if (status_tx & STATUS_TOK) {
+            if(status_tx & STATUS_TOK) {
                 _tx_buffer[_tx_cur_nic]->unlock();
 
                 // Clear TOK status
@@ -274,13 +276,13 @@ void RTL8139::handle_int()
         }
     }
 
-    if (status & RX_OVERFLOW) {
+    if(status & RX_OVERFLOW) {
         db<RTL8139>(WRN) << "\tOVERFLOW in RX!" << endl;
         CPU::out16(_io_port + ISR, RX_OVERFLOW);
 
     }
 
-    if ((status & ROK) && CPU::in16(_io_port + IMR) & ROK) {
+    if((status & ROK) && CPU::in16(_io_port + IMR) & ROK) {
         // NIC received frame(s)
         db<RTL8139>(TRC) << "ROK" << endl;
 
@@ -305,15 +307,16 @@ void RTL8139::handle_int()
             memcpy(buf->frame(), frame, sizeof(Frame));
             db<RTL8139>(TRC) << "buff src " << buf->frame()->src() << endl;
 
+            buf->sfdts = ts;
             IC::disable(IC::irq2int(_irq));
-            if (!notify(buf->frame()->prot(), buf))
+            if(!notify(buf->frame()->prot(), buf))
                 free(buf);
 
             // update CAPR
             _rx_read += packet_len + 4;
             _rx_read =  (_rx_read + 3) & ~3;
 
-            if (_rx_read > RX_NO_WRAP_SIZE) {
+            if(_rx_read > RX_NO_WRAP_SIZE) {
                 _rx_read -= RX_NO_WRAP_SIZE;
                 db<RTL8139>(TRC) << "\tWRAPPED " << _rx_read << endl;
             }

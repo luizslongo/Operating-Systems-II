@@ -61,10 +61,9 @@ public:
     void address(const Address & address) { _configuration.address = address; Engine::address(address); }
 
     bool reconfigure(const Configuration * c = 0);
-    const Configuration & configuration() { _configuration.time_stamp = Engine::time_stamp(); return _configuration; }
+    const Configuration & configuration() { return _configuration; }
 
-    Timer::Time_Stamp time_stamp() { return  Engine::time_stamp(); }
-    const Statistics & statistics() { return _statistics; }
+    const Statistics & statistics() { _statistics.time_stamp = Engine::time_stamp(); return _statistics; }
 
     static IEEE802_15_4_NIC * get(unsigned int unit = 0) { return get_by_unit(unit); }
 

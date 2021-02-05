@@ -57,7 +57,7 @@ public:
 
 private:
     void copy_and_pad(const void * data, unsigned int size) {
-        if(SIZE <= size)
+        if(size > SIZE)
             memcpy(_data, data, SIZE);
         else {
             memset(_data, 0, SIZE);
