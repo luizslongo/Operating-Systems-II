@@ -572,9 +572,9 @@ public:
     void address(const Address & address) { _configuration.address = address; _configuration.selector = Configuration::ADDRESS; reconfigure(&_configuration); }
 
     bool reconfigure(const Configuration * c);
-    const Configuration & configuration() { _configuration.time_stamp = TSC::time_stamp(); return _configuration; }
+    const Configuration & configuration() { return _configuration; }
 
-    const Statistics & statistics() { return _statistics; }
+    const Statistics & statistics() { _statistics.time_stamp = TSC::time_stamp(); return _statistics; }
 
     void attach(Observer * o, const Protocol & p) {
         NIC<Ethernet>::attach(o, p);
@@ -586,8 +586,6 @@ public:
         if(!observers())
             ; // disable receive interrupt
     }
-
-    Time_Stamp time_stamp() { return static_cast<Time_Stamp>(TSC::time_stamp()); }
 
     static E100 * get(unsigned int unit = 0) { return get_by_unit(unit); }
 

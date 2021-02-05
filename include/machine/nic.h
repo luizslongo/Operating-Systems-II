@@ -4,6 +4,7 @@
 #define __nic_h
 
 #include <architecture/cpu.h>
+#include <architecture/tsc.h>
 #include <utility/string.h>
 
 __BEGIN_SYS
@@ -172,26 +173,22 @@ public:
     };
 
     // Buffer Metadata added to frames by higher-level protocols
-    struct Null_Metadata {
+    struct Dummy_Metadata
+    {
         // Traits
-        static const bool collect_sfdts = true;
-        static const bool collect_rssi = true;
-
-        // Types
-        typedef unsigned long long Time_Stamp;
-        typedef long long Offset;
-        static const Time_Stamp INFINITE = -1;
+        static const bool collect_sfdts = false;
+        static const bool collect_rssi = false;
 
         // Data (null; union just to compile inactive protocols)
         union {
             int rssi;
-            int period;
-            Time_Stamp sfdts;
+            TSC::Time_Stamp sfdts;
+            Microsecond period;
+            Microsecond deadline;
             unsigned int id;
             unsigned long long offset;
             bool destined_to_me;
             bool downlink;
-            Time_Stamp deadline;
             unsigned int my_distance;
             unsigned int sender_distance;
             bool is_new;
@@ -204,6 +201,13 @@ public:
             int hint;
             unsigned int times_txed;
         };
+
+        Dummy_Metadata() {};
+
+        friend OStream & operator<<(OStream & db, const Dummy_Metadata & m) {
+        	db << "{no metadata}";
+        	return db;
+        }
     };
 
     struct TSTP_Metadata
@@ -212,20 +216,14 @@ public:
         static const bool collect_sfdts = true;
         static const bool collect_rssi = true;
 
-        // Types
-        typedef unsigned long long Time_Stamp;
-        typedef long long Offset;
-        static const Time_Stamp INFINITE = -1;
-
-    	// TODO: remove unnecessary long longs
         int rssi;                             // Received Signal Strength Indicator
-        int period;                           // NIC's MAC current period (in us)
-        Time_Stamp sfdts;                     // Time stamp of start of frame delimiter reception
+        TSC::Time_Stamp sfdts;                // Time stamp of start of frame delimiter reception
+        Microsecond period;                   // NIC's MAC current period (in us)
+    	Microsecond deadline;                 // Time until when this message must arrive at the final destination
     	unsigned int id;                      // Message identifier
     	unsigned long long offset;            // MAC contention offset
     	bool destined_to_me;                  // Whether this node is the final destination for this message
     	bool downlink;                        // Message direction (downlink == from sink to sensor)
-    	Time_Stamp deadline;                  // Time until when this message must arrive at the final destination
     	unsigned int my_distance;             // This node's distance to the message's final destination
     	unsigned int sender_distance;         // Last hop's distance to the message's final destination
     	bool is_new;                          // Whether this message was just created by this node
@@ -237,6 +235,15 @@ public:
     	unsigned int microframe_count;        // Number of Microframes left until data
     	int hint;                             // Inserted in the Hint Microframe field
         unsigned int times_txed;              // Number of times the MAC transmited this buffer
+
+        friend OStream & operator<<(OStream & db, const TSTP_Metadata & m) {
+            db << "{rssi=" << m.rssi << ",period=" << m.period << ",sfdts=" << m.sfdts << ",id=" << m.id
+               << ",offset=" << m.offset << ",destined_to_me=" << m.destined_to_me << ",downlink=" << m.downlink << ",deadline=" << m.deadline
+               << ",my_distance=" << m.my_distance << ",sender_distance=" << m.sender_distance << ",is_new=" << m.is_new << ",is_microframe=" << m.is_microframe
+               << ",relevant=" << m.relevant << ",trusted=" << m.trusted << ",freed=" << m.freed << ",hint=" << m.hint
+               << "}";
+            return db;
+        }
     };
 
     private:
@@ -258,8 +265,6 @@ public:
     using typename Family::Observed;
     using Family::MTU;
 
-    typedef typename Family::Metadata::Time_Stamp Time_Stamp;
-
 protected:
     NIC(unsigned int unit = 0) {}
 
@@ -279,8 +284,6 @@ public:
 
     virtual bool reconfigure(const Configuration * c = 0) = 0; // pass null to reset
     virtual const Configuration & configuration() = 0;
-
-    virtual Time_Stamp time_stamp() = 0;
 
     virtual const Statistics & statistics() = 0;
 };

@@ -170,7 +170,7 @@ template<> struct Traits<IEEE802_15_4_NIC>: public Traits<IEEE802_15_4>
     static const bool reset_backdoor = false;
     static const unsigned int DEFAULT_CHANNEL = 13;
 
-    static const bool tstp_mac = false;
+    static const bool tstp_mac = true;
     static const bool promiscuous = false;
     static const bool enabled = (Traits<Build>::NODES > 1) && (UNITS > 0);
 };

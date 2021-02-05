@@ -28,7 +28,7 @@ public:
 
     static Count count() { return systick()->count(); }
 
-    static void reset() { systick()->config(systick()->clock() / FREQUENCY, true, true); }
+    static void reset() { disable(); systick()->config(systick()->clock() / FREQUENCY, true, true); enable();}
     static void enable() { systick()->enable(); }
     static void disable() { systick()->disable(); }
 
@@ -38,9 +38,7 @@ protected:
     static void eoi(Interrupt_Id id) { systick()->eoi(id); };
 
     static void init() {
-        disable();
         reset();
-        enable();
     }
 
 private:

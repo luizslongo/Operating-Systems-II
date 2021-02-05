@@ -275,17 +275,21 @@ public:
     // MAC selection
     typedef IF<Traits<IEEE802_15_4_NIC>::tstp_mac, Raw_Header, Log_Header>::Result Header;
     typedef IF<Traits<IEEE802_15_4_NIC>::tstp_mac, Raw_Frame, Log_Frame>::Result Frame;
-    typedef IF<Traits<TSTP>::enabled, TSTP_Metadata, Null_Metadata>::Result Metadata;
+    typedef IF<Traits<TSTP>::enabled, TSTP_Metadata, Dummy_Metadata>::Result Metadata;
     typedef _UTIL::Buffer<NIC<IEEE802_15_4>, Frame, void, Metadata> Buffer;
 
     typedef _UTIL::Buffer<NIC<IEEE802_15_4>, Raw_Frame, void, TSTP_Metadata> TSTP_Buffer;
-    typedef _UTIL::Buffer<NIC<IEEE802_15_4>, Log_Frame, void, Null_Metadata> ELP_Buffer;
+    typedef _UTIL::Buffer<NIC<IEEE802_15_4>, Log_Frame, void, Dummy_Metadata> ELP_Buffer;
 
     typedef Frame PDU;
     static const unsigned int MTU = Frame::MTU;
 
     typedef Data_Observer<Buffer, Protocol> Observer;
     typedef Data_Observed<Buffer, Protocol> Observed;
+
+    // IEEE 802.15.4 NICs usually support SFD time stamping and the mostly do that with 64 bits
+    // NICs that use different resolutions must have the time stamps adapted to 64 bits
+    typedef unsigned long long Time_Stamp;
 
     // Configuration parameters
     struct Configuration: public NIC_Common::Configuration
@@ -309,7 +313,6 @@ public:
         unsigned int power;
         Microsecond period;
         int offset;
-        Metadata::Time_Stamp time_stamp;
         PPM timer_accuracy;
         Hertz timer_frequency;
     };
@@ -334,6 +337,7 @@ public:
             return db;
         }
 
+        Time_Stamp time_stamp;
         Count tx_relayed;
         Count rx_overruns;
         Count tx_overruns;

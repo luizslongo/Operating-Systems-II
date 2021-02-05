@@ -24,6 +24,7 @@ class CC2538RF
 {
     // This is a hardware object.
     // Use with something like "new (Memory_Map::RF_BASE) CC2538RF"
+    
     friend IEEE802_15_4_Engine;
 
 protected:
@@ -405,7 +406,7 @@ public:
     public:
         typedef Reg64 Count;
         typedef Reg32 Interrupt_Mask;
-        typedef NIC_Common::TSTP_Metadata::Time_Stamp Time_Stamp;
+        typedef IEEE802_15_4::Time_Stamp Time_Stamp;
 
     public:
         void config(const Count & count, bool interrupt, bool periodic) {
@@ -849,8 +850,8 @@ public:
     public:
         typedef CC2538RF::Timer::Count Count;
         typedef CC2538RF::Timer::Interrupt_Mask Interrupt_Mask;
-        typedef IEEE802_15_4::Metadata::Time_Stamp Time_Stamp;
-        typedef IEEE802_15_4::Metadata::Offset Offset;
+        typedef IEEE802_15_4::Time_Stamp Time_Stamp;
+        typedef IEEE802_15_4::Time_Stamp Offset;
 
     public:
         Timer() {
@@ -864,7 +865,7 @@ public:
             _handler_activation_time = 0;
         }
 
-        Time_Stamp sfdts()      {
+        Time_Stamp sfdts() {
             CC2538RF::Timer * _timer = new (reinterpret_cast<void *>(Memory_Map::RF_BASE + CC2538RF::MACTIMER)) CC2538RF::Timer;
             return (static_cast<Time_Stamp>(_overflow_count) << 40) + static_cast<Time_Stamp>( _timer->sfdts()) + _offset;
         }

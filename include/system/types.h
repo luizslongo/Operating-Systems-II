@@ -87,13 +87,22 @@ class Second;
 class Milisecond;
 class Microsecond;
 
+// Infinite times (for alarms and periodic threads)
+enum Infinity : Time_Base { INFINITE = -1U };
+
 class Second
 {
 public:
-    Second() {}
-    Second(const Time_Base & time) { _time = time; }
+	typedef Time_Base Type;
 
+public:
+    Second() {};
+    Second(const Infinity &): _time(INFINITE) {};
+    Second(const Time_Base & time): _time(time) {}
+
+    operator Time_Base() { return _time; }
     operator Time_Base() const { return _time; }
+    operator Time_Base() volatile { return _time; }
 
 private:
     Time_Base _time;
@@ -102,11 +111,17 @@ private:
 class Milisecond
 {
 public:
-    Milisecond() {}
-    Milisecond(const Time_Base & time) { _time = time; }
-    Milisecond(const Second & time) { _time = reinterpret_cast<const Time_Base &>(time) * 1000; }
+	typedef Time_Base Type;
 
+public:
+    Milisecond() {};
+    Milisecond(const Infinity &): _time(INFINITE) {};
+    Milisecond(const Time_Base & time): _time(time) {}
+    Milisecond(const Second & time): _time(reinterpret_cast<const Time_Base &>(time) * 1000) {}
+
+    operator Time_Base() { return _time; }
     operator Time_Base() const { return _time; }
+    operator Time_Base() volatile { return _time; }
 
 private:
     Time_Base _time;
@@ -115,12 +130,18 @@ private:
 class Microsecond
 {
 public:
-    Microsecond() {};
-    Microsecond(const Time_Base & time) { _time = time; }
-    Microsecond(const Second & time) { _time = reinterpret_cast<const Time_Base &>(time) * 1000000; }
-    Microsecond(const Milisecond & time) { _time = reinterpret_cast<const Time_Base &>(time) * 1000; }
+	typedef Time_Base Type;
 
+public:
+    Microsecond() {};
+    Microsecond(const Infinity &): _time(INFINITE) {};
+    Microsecond(const Time_Base & time): _time(time) {}
+    Microsecond(const Second & time): _time(reinterpret_cast<const Time_Base &>(time) * 1000000) {}
+    Microsecond(const Milisecond & time): _time(reinterpret_cast<const Time_Base &>(time) * 1000) {}
+
+    operator Time_Base() { return _time; }
     operator Time_Base() const { return _time; }
+    operator Time_Base() volatile { return _time; }
 
 private:
     Time_Base _time;
@@ -129,10 +150,6 @@ private:
 typedef unsigned long Hertz;
 typedef unsigned long PPM; // parts per million
 typedef unsigned long long PPB; // parts per billion
-
-// Infinite times (for alarms and periodic threads)
-enum : unsigned int { INFINITE = -1U };
-
 
 // System Components IDs
 // The order in this enumeration defines many things in the system (e.g. init)

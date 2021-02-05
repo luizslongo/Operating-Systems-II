@@ -15,11 +15,9 @@ void Thread::init()
     typedef int (* Main)(int argc, char * argv[]);
 
     db<Init, Thread>(TRC) << "Thread::init()" << endl;
+    CPU::int_disable();
 
     CPU::smp_barrier();
-
-    if(monitored)
-        Monitor::init();
 
     Criterion::init();
 
@@ -75,6 +73,9 @@ void Thread::init()
             IC::int_vector(IC::INT_RESCHEDULER, rescheduler);
         IC::enable(IC::INT_RESCHEDULER);
     }
+
+   if(monitored)
+        Monitor::init();
 
     // Transition from CPU-based locking to thread-based locking
     CPU::smp_barrier();

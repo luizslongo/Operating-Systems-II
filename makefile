@@ -65,7 +65,7 @@ buildtest: FORCE
 
 runtest: FORCE
 		$(foreach tst,$(TESTS),$(LINK) $(TST)/$(tst) $(APP);)
-		$(foreach tst,$(UNFINISHED_TESTS),$(MAKETEST) APPLICATION=$(tst) prerun_$(tst) run1 posbuild_$(tst) || exit;)
+		$(foreach tst,$(UNFINISHED_TESTS),$(MAKETEST) APPLICATION=$(tst) prerun_$(tst) run1 || exit;)
 
 gittest: buildtest runtest
 

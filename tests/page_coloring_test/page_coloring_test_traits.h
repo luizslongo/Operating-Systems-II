@@ -15,11 +15,11 @@ template<> struct Traits<Build>: public Traits_Tokens
     static const unsigned int MODEL = Legacy_PC;
     static const unsigned int CPUS = 4;
     static const unsigned int NODES = 1; // (> 1 => NETWORKING)
-    static const unsigned int EXPECTED_SIMULATION_TIME = 60; // s (0 => not simulated)
+    static const unsigned int EXPECTED_SIMULATION_TIME = 10000; // s (0 => not simulated)
 
     // Default flags
     static const bool enabled = true;
-    static const bool monitored = true;
+    static const bool monitored = false;
     static const bool debugged = true;
     static const bool hysterically_debugged = false;
 
@@ -90,7 +90,6 @@ template<> struct Traits<Aspect>: public Traits<Build>
 // Mediators
 template<> struct Traits<CPU>: public Traits<Build>
 {
-    enum {LITTLE, BIG};
     static const unsigned int ENDIANESS         = LITTLE;
     static const unsigned int WORD_SIZE         = 32;
     static const unsigned int CLOCK             = 2000000000;
@@ -109,7 +108,8 @@ template<> struct Traits<MMU>: public Traits<Build>
 
 template<> struct Traits<FPU>: public Traits<Build>
 {
-    static const bool enabled = false;
+    static const bool enabled = true;
+    static const bool user_save = true;
 };
 
 template<> struct Traits<PMU>: public Traits<Build>
@@ -117,22 +117,15 @@ template<> struct Traits<PMU>: public Traits<Build>
     static const bool enabled = true;
     enum { V1, V2, V3, DUO, MICRO, ATOM, SANDY_BRIDGE };
     static const unsigned int VERSION = SANDY_BRIDGE;
-
-    enum {  EVENTS_V1 = 7,
-            EVENTS_SANDY_BRIDGE = 213
-    };
-    static const unsigned int EVENTS = EVENTS_SANDY_BRIDGE;
 };
+
 
 class Machine_Common;
-template<> struct Traits<Machine_Common>: public Traits<Build>
-{
-    static const bool debugged = Traits<Build>::debugged;
-};
+template<> struct Traits<Machine_Common>: public Traits<Build> {};
 
 template<> struct Traits<Machine>: public Traits<Machine_Common>
 {
-    static const bool cpus_use_local_timer  = false;
+    static const bool cpus_use_local_timer      = false;
 
     static const unsigned int NOT_USED          = 0xffffffff;
     static const unsigned int CPUS              = Traits<Build>::CPUS;
@@ -224,7 +217,7 @@ template<> struct Traits<UART>: public Traits<Machine_Common>
     static const unsigned int COM4 = 0x2e8; // to 0x2ef, no IRQ
 };
 
-template<> struct Traits<Serial_Display>: public Traits<Build>
+template<> struct Traits<Serial_Display>: public Traits<Machine_Common>
 {
     static const bool enabled = (Traits<Build>::EXPECTED_SIMULATION_TIME != 0);
     static const int ENGINE = UART;
@@ -234,7 +227,7 @@ template<> struct Traits<Serial_Display>: public Traits<Build>
     static const int TAB_SIZE = 8;
 };
 
-template<> struct Traits<Serial_Keyboard>: public Traits<Build>
+template<> struct Traits<Serial_Keyboard>: public Traits<Machine_Common>
 {
     static const bool enabled = (Traits<Build>::EXPECTED_SIMULATION_TIME != 0);
 };
@@ -261,54 +254,48 @@ template<> struct Traits<Scratchpad>: public Traits<Machine_Common>
 
 template<> struct Traits<Ethernet>: public Traits<Machine_Common>
 {
-    typedef LIST<PCNet32, E100> DEVICES;
+    typedef LIST<PCNet32, PCNet32> DEVICES;
     static const unsigned int UNITS = DEVICES::Length;
 
     static const bool enabled = (Traits<Build>::NODES > 1) && (UNITS > 0);
+
+    static const bool promiscuous = false;
 };
 
-template<> struct Traits<PCNet32>: public Traits<Machine_Common>
+template<> struct Traits<PCNet32>: public Traits<Ethernet>
 {
-    static const unsigned int UNITS = Traits<Ethernet>::DEVICES::Count<PCNet32>::Result;
+    static const unsigned int UNITS = DEVICES::Count<PCNet32>::Result;
+    static const bool enabled = Traits<Ethernet>::enabled && (UNITS > 0);
+
     static const unsigned int SEND_BUFFERS = 64; // per unit
     static const unsigned int RECEIVE_BUFFERS = 256; // per unit
-
-    static const bool enabled = (Traits<Build>::NODES > 1) && (UNITS > 0);
-
-    static const bool promiscuous = false;
 };
 
-template<> struct Traits<E100>: public Traits<Machine_Common>
+template<> struct Traits<E100>: public Traits<Ethernet>
 {
-    static const unsigned int UNITS = Traits<Ethernet>::DEVICES::Count<E100>::Result;
+    static const unsigned int UNITS = DEVICES::Count<E100>::Result;
+    static const bool enabled = Traits<Ethernet>::enabled && (UNITS > 0);
+
     static const unsigned int SEND_BUFFERS = 64; // per unit
     static const unsigned int RECEIVE_BUFFERS = 64; // per unit
-
-    static const bool enabled = (Traits<Build>::NODES > 1) && (UNITS > 0);
-
-    static const bool promiscuous = false;
-    static const bool qemu = true;
 };
 
-template<> struct Traits<C905>: public Traits<Machine_Common>
+template<> struct Traits<C905>: public Traits<Ethernet>
 {
-    static const unsigned int UNITS = Traits<Ethernet>::DEVICES::Count<C905>::Result;
+    static const unsigned int UNITS = DEVICES::Count<C905>::Result;
+    static const bool enabled = Traits<Ethernet>::enabled && (UNITS > 0);
+
     static const unsigned int SEND_BUFFERS = 64; // per unit
     static const unsigned int RECEIVE_BUFFERS = 64; // per unit
-
-    static const bool enabled = (Traits<Build>::NODES > 1) && (UNITS > 0);
-
-    static const bool promiscuous = false;
 };
 
-template<> struct Traits<RTL8139>: public Traits<Machine_Common>
+template<> struct Traits<RTL8139>: public Traits<Ethernet>
 {
-    static const unsigned int UNITS = Traits<Ethernet>::DEVICES::Count<RTL8139>::Result;
+    static const unsigned int UNITS = DEVICES::Count<RTL8139>::Result;
+    static const bool enabled = Traits<Ethernet>::enabled && (UNITS > 0);
+
     static const unsigned int SEND_BUFFERS = 4; // per unit
     static const unsigned int RECEIVE_BUFFERS = 8192; // no descriptor, just a memory block of 8192 bits
-
-    static const bool enabled = (Traits<Build>::NODES > 1) && (UNITS > 0);
-    static const bool promiscuous = false;
 };
 
 template<> struct Traits<FPGA>: public Traits<Machine_Common>

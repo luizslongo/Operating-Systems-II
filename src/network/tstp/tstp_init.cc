@@ -18,7 +18,8 @@ TSTP::TSTP(NIC<NIC_Family> * nic)
     _nic = nic;
     _nic->attach(this, PROTO_TSTP);
 
-    // The order parts are created defines the order they get notified when packets arrive!
+    // The order parts are created defines the order they get notified when packets arrive:
+    // mac->security(decrypt)->locator->timekeeper->router->manager->security(encrypt)->mac
     _security = new (SYSTEM) Security;
     _locator = new (SYSTEM) Locator;
     _timekeeper = new (SYSTEM) Timekeeper; // here() reports (0,0,0) if _locator wasn't created first!
@@ -32,12 +33,13 @@ TSTP::Security::Security()
 
     new (&_id) Node_Id(Machine::uuid(), sizeof(UUID));
 
-    db<TSTP>(INF) << "TSTP::Security: node id = " << _id << endl;
+    db<TSTP>(INF) << "TSTP::Security:uuid=" << _id << endl;
 
-    assert(_AES::KEY_SIZE == sizeof(Node_Id));
     _aes.encrypt(_id, _id, _auth);
 
     attach(this);
+
+    // initialization continues through update as relevant packets are received
 
     /*
     // TODO: what is this?
@@ -52,33 +54,6 @@ TSTP::Security::Security()
     */
 }
 
-TSTP::Timekeeper::Timekeeper()
-{
-    db<TSTP>(TRC) << "TSTP::Timekeeper()" << endl;
-    db<TSTP>(INF) << "TSTP::Timekeeper: timer accuracy = " << timer_accuracy() << " ppb" << endl;
-    db<TSTP>(INF) << "TSTP::Timekeeper: timer frequency = " << timer_frequency() << " Hz" << endl;
-    db<TSTP>(INF) << "TSTP::Timekeeper: maximum drift = " << MAX_DRIFT << " us" << endl;
-    db<TSTP>(INF) << "TSTP::Timekeeper: sync period = " << sync_period() << " us" << endl;
-
-    if(here() == sink())
-        _next_sync = -1ull; // Just so that the sink will always have synchronized() return true
-
-    attach(this);
-    _life_keeper_handler = new (SYSTEM) Function_Handler(&keep_alive);
-
-    if(here() != sink()) {
-        keep_alive();
-        Time_Stamp ts = sync_period();
-        _life_keeper = new (SYSTEM) Alarm(ts, _life_keeper_handler, INFINITE);
-        // Wait for time synchronization
-        while(sync_required()) {
-            Thread::self()->yield();
-            Alarm::delay( 100000 );
-            keep_alive();
-        }
-    }
-}
-
 TSTP::Locator::Locator()
 {
     db<TSTP>(TRC) << "TSTP::Locator()" << endl;
@@ -91,23 +66,43 @@ TSTP::Locator::Locator()
         _engine.here(Space(Space::UNKNOWN, Space::UNKNOWN, Space::UNKNOWN));
         _engine.confidence(0);
     }
-    // TODO: get if from compilation parameters
-    _engine.here(Space(0, 0, 0));
-    _engine.confidence(100);
+
     attach(this);
 
-    db<TSTP>(INF) << "TSTP::Locator::here=" << here() << endl;
-    if(here() == sink()) {
-        db<TSTP>(INF) << "TSTP::Locator I AM A SINK!" << endl;
-    } else {
-        db<TSTP>(INF) << "TSTP::Locator I AM A SENSOR NODE!" << endl;
-    }
+    db<TSTP>(INF) << "TSTP::Locator:here=" << here();
+    if(here() == sink())
+        db<TSTP>(INF) << "[sink]" << endl;
+    else
+        db<TSTP>(INF) << "[node]" << endl;
 
     // Wait for spatial localization
     while(confidence() < 80)
         Thread::self()->yield();
 
     // _absolute_location is initialized later through an Epoch message
+}
+
+TSTP::Timekeeper::Timekeeper()
+{
+    db<TSTP>(TRC) << "TSTP::Timekeeper()" << endl;
+    db<TSTP>(INF) << "TSTP::Timekeeper:timer accuracy = " << timer_accuracy() << " ppb" << endl;
+    db<TSTP>(INF) << "TSTP::Timekeeper:timer frequency = " << timer_frequency() << " Hz" << endl;
+    db<TSTP>(INF) << "TSTP::Timekeeper:maximum drift = " << MAX_DRIFT << " us" << endl;
+    db<TSTP>(INF) << "TSTP::Timekeeper:sync period = " << sync_period() << " us" << endl;
+
+    attach(this);
+
+    if(here() == sink())
+        _next_sync = INFINITE; // just so that the sink will always have synchronized() returning true
+    else {
+        _next_sync = 0;
+        keep_alive();
+        Microsecond period = static_cast<Microsecond>(sync_period());
+        _life_keeper_handler = new (SYSTEM) Function_Handler(&keep_alive);
+        _life_keeper = new (SYSTEM) Alarm(period, _life_keeper_handler, INFINITE);
+        while(!synchronized())
+            Thread::self()->yield();
+    }
 }
 
 TSTP::Router::Router()

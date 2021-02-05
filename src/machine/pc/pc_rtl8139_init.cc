@@ -16,8 +16,10 @@ RTL8139::RTL8139(unsigned int unit, IO_Port io_port, IO_Irq irq, DMA_Buffer * dm
     db<RTL8139>(TRC) << "RTL8139(unit=" << unit << ",io=" << io_port << ",irq=" << irq << ",dma=" << dma_buf << ")" << endl;
 
     _configuration.unit = unit;
-    _configuration.timer_accuracy = TSC::accuracy();
     _configuration.timer_frequency = TSC::frequency();
+    _configuration.timer_accuracy = TSC::accuracy() / 1000; // PPB -> PPM
+    if(!_configuration.timer_accuracy)
+    	_configuration.timer_accuracy = 1;
 
     _io_port = io_port;
     _irq = irq;

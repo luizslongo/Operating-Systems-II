@@ -344,19 +344,19 @@ public:
     static unsigned int id();
     static unsigned int cores() { return smp ? _cores : 1; }
 
-    static Hertz clock() { return _current_cpu_clock; }
+    static Hertz clock() { return _cpu_current_clock; }
     static void clock(const Hertz & frequency) {
         Reg64 clock = frequency;
         unsigned int dc;
         if(clock <= (_cpu_clock * 1875 / 10000)) {
             dc = 0b10011;   // minimum duty cycle of 12.5 %
-            _current_cpu_clock = _cpu_clock * 1875 / 10000;
+            _cpu_current_clock = _cpu_clock * 1875 / 10000;
         } else if(clock >= (_cpu_clock * 9375 / 10000)) {
             dc = 0b01001;   // disable duty cycling and operate at full speed
-            _current_cpu_clock = _cpu_clock;
+            _cpu_current_clock = _cpu_clock;
         } else {
             dc = 0b10001 | ((clock * 10000 / _cpu_clock + 625) / 625); // dividing by 625 instead of 1250 eliminates the shift left
-            _current_cpu_clock = _cpu_clock * ((clock * 10000 / _cpu_clock + 625) / 625) * 625 / 10000;
+            _cpu_current_clock = _cpu_clock * ((clock * 10000 / _cpu_clock + 625) / 625) * 625 / 10000;
             // The ((clock * 10000 / _cpu_clock + 625) / 625) returns the factor, the step is 625/10000
             // thus, max_clock * factor * step = final clock
         }
@@ -676,9 +676,9 @@ private:
 
 private:
     static volatile unsigned int _cores;
-    static unsigned int _cpu_clock;
-    static unsigned int _current_cpu_clock;
-    static unsigned int _bus_clock;
+    static Hertz _cpu_clock;
+    static Hertz _cpu_current_clock;
+    static Hertz _bus_clock;
 };
 
 inline CPU::Reg64 htole64(CPU::Reg64 v) { return CPU::htole64(v); }

@@ -19,7 +19,7 @@ template<> struct Traits<Build>: public Traits_Tokens
 
     // Default flags
     static const bool enabled = true;
-    static const bool monitored = true;
+    static const bool monitored = false;
     static const bool debugged = true;
     static const bool hysterically_debugged = false;
 
@@ -34,7 +34,7 @@ template<> struct Traits<Debug>: public Traits<Build>
     static const bool error   = true;
     static const bool warning = true;
     static const bool info    = false;
-    static const bool trace   = false;
+    static const bool trace   = true;
 };
 
 template<> struct Traits<Lists>: public Traits<Build>

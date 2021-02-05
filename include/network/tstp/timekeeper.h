@@ -61,8 +61,8 @@ public:
     Timekeeper();
     ~Timekeeper();
 
-    static Time now() { return ts2us(time_stamp()); }
-    static bool synchronized() { return !sync_required(); }
+    static Time now() { return ts2us(time_stamp()) + _skew; }
+    static bool synchronized() { return (_next_sync > now()); }
     static Time reference() { return _reference; }
 
     static Time absolute(const Time & t) { return _reference + t; }
@@ -75,20 +75,19 @@ private:
 
     static void marshal(Buffer * buf);
 
-    static Time_Stamp time_stamp() { return _nic->time_stamp(); }
+    static Time time_stamp() { return _nic->statistics().time_stamp; }
 
-    static Time_Stamp sync_period() {
-        long long tmp = LARGER<PPM>::Result(timer_accuracy()) * LARGER<Hertz>::Result(timer_frequency());
-        tmp /= 1000000000LL; // us
-        tmp = (static_cast<long long>(MAX_DRIFT) * 1000000) / tmp;
-        return static_cast<Time_Stamp>(tmp);
+    static Time sync_period() {
+        Time tmp = Time(timer_accuracy()) * Time(timer_frequency()) / Time(1000000); // missed microseconds per second
+        tmp = Time(MAX_DRIFT) / tmp * Time(1000000); // us until MAX_DRIFT
+        return tmp;
     }
-    static bool sync_required() { return (_next_sync == 0) || (time_stamp() >= (_next_sync - sync_period() / 2)); }
     static void keep_alive();
 
 private:
     static Time _reference;
-    static volatile Time_Stamp _next_sync;
+    static Time _skew;
+    static volatile Time _next_sync;
     static Function_Handler * _life_keeper_handler;
     static Alarm * _life_keeper;
 };

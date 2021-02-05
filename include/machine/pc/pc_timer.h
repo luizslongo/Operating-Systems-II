@@ -25,44 +25,44 @@ public:
 
     // I/O Ports
     enum {
-        CNT_0		= 0x40, // Time keeper
-        CNT_1		= 0x41, // Memory refresh
-        CNT_2		= 0x42, // Speaker
-        CTRL		= 0x43  // Control
+        CNT_0           = 0x40, // Time keeper
+        CNT_1           = 0x41, // Memory refresh
+        CNT_2           = 0x42, // Speaker
+        CTRL            = 0x43  // Control
     };
 
     // Control Register Format (8 bits)
     enum {
-        SELECT_MASK	= 0xc0, // Select Counter (2 bits)
-        SC0	    	= 0x00, // counter 0
-        SC1	    	= 0x40, // counter 1
-        SC2	    	= 0x80, // counter 2
-        RB	    	= 0xc0, // read-back
-        RW_MASK		= 0x30, // Read/Write (2 bits)
-        LATCH		= 0x00, // latch counter for reading
-        MSB	    	= 0x10, // read/write MSB only
-        LSB	    	= 0x20, // read/write LSB only
-        LMSB		= 0x30,	// read/write LSB then MSB
-        MODE_MASK	= 0x0e, // 3 bits
-        IOTC		= 0x00, // Interrupt on Terminal Count
-        HROS		= 0x02, // Hardware Retriggerable One-Shot
-        RG	    	= 0x04, // Rate generator
-        CSSW		= 0x06, // Continuous Symmetrical Square Wave
-        STS	    	= 0x08, // Software Triggered Strobe
-        HTS	    	= 0x0a, // Hardware Triggered Strobe
-        COUNT_MODE_MASK	= 0x01, // 1 bit
-        BINARY		= 0x00, // Binary count
-        BCD		    = 0x01, // BCD count
-        DEF_CTRL_C0	= SC0	| LMSB	| CSSW	| BINARY, // Counter 0 default
-        DEF_CTRL_C1	= SC1	| MSB	| RG	| BINARY, // Counter 1 default
-        DEF_CTRL_C2	= SC2	| LMSB	| IOTC	| BINARY  // Counter 2 default
+        SELECT_MASK     = 0xc0, // Select Counter (2 bits)
+        SC0             = 0x00, // counter 0
+        SC1             = 0x40, // counter 1
+        SC2             = 0x80, // counter 2
+        RB              = 0xc0, // read-back
+        RW_MASK         = 0x30, // Read/Write (2 bits)
+        LATCH           = 0x00, // latch counter for reading
+        MSB             = 0x10, // read/write MSB only
+        LSB             = 0x20, // read/write LSB only
+        LMSB            = 0x30, // read/write LSB then MSB
+        MODE_MASK       = 0x0e, // 3 bits
+        IOTC            = 0x00, // Interrupt on Terminal Count
+        HROS            = 0x02, // Hardware Retriggerable One-Shot
+        RG              = 0x04, // Rate generator
+        CSSW            = 0x06, // Continuous Symmetrical Square Wave
+        STS             = 0x08, // Software Triggered Strobe
+        HTS             = 0x0a, // Hardware Triggered Strobe
+        COUNT_MODE_MASK = 0x01, // 1 bit
+        BINARY          = 0x00, // Binary count
+        BCD                 = 0x01, // BCD count
+        DEF_CTRL_C0     = SC0   | LMSB  | CSSW  | BINARY, // Counter 0 default
+        DEF_CTRL_C1     = SC1   | MSB   | RG    | BINARY, // Counter 1 default
+        DEF_CTRL_C2     = SC2   | LMSB  | IOTC  | BINARY  // Counter 2 default
     };
 
     // Default Counters as set by the BIOS (16 bits)
     enum {
-        DEF_CNT_C0	= 0x0000, // CLOCK/65535 ->     18.2 Hz
-        DEF_CNT_C1	= 0x0012, // CLOCK/18    ->  66287.8 Hz
-        DEF_CNT_C2	= 0x0533, // CLOCK/1331  ->    896.5 Hz
+        DEF_CNT_C0      = 0x0000, // CLOCK/65535 ->     18.2 Hz
+        DEF_CNT_C1      = 0x0012, // CLOCK/18    ->  66287.8 Hz
+        DEF_CNT_C2      = 0x0533, // CLOCK/1331  ->    896.5 Hz
     };
 
 public:
@@ -161,7 +161,7 @@ private:
 public:
     // I/O Ports
     enum {
-        PORT_B		= 0x61
+        PORT_B          = 0x61
     };
 
     // Port B (status/control)
@@ -267,13 +267,22 @@ public:
 
     Tick read() { return _current[CPU::id()]; }
 
-    static void reset() { db<Timer>(TRC) << "Timer::reset()" << endl; Engine::reset(0); }
+    int restart() {
+        db<Timer>(TRC) << "Timer::restart() => {f=" << frequency() << ",h=" << reinterpret_cast<void *>(_handler) << ",count=" << _current[CPU::id()] << "}" << endl;
+
+        int percentage = _current[CPU::id()] * 100 / _initial;
+        _current[CPU::id()] = _initial;
+
+        return percentage;
+    }
+
+    static void reset() { db<Timer>(TRC) << "Timer::reset()" << endl; Engine::config(0, Engine::clock() / FREQUENCY); }
     static void enable() { db<Timer>(TRC) << "Timer::enable()" << endl; IC::enable(IC::INT_SYS_TIMER); }
     static void disable() { db<Timer>(TRC) << "Timer::disable()" << endl; IC::disable(IC::INT_SYS_TIMER); }
 
     PPB accuracy();
     Hertz frequency() const { return (FREQUENCY / _initial); }
-    void frequency(Hertz f) { _initial = FREQUENCY / f; reset(); }
+    void frequency(Hertz f) { _initial = FREQUENCY / f; restart(); }
 
     void handler(const Handler & handler) { _handler = handler; }
 
@@ -297,16 +306,7 @@ protected:
 class Scheduler_Timer: public Timer
 {
 public:
-    Scheduler_Timer(Microsecond quantum, const Handler & handler): Timer(SCHEDULER, 1000000 / quantum, handler) {}
-
-    int restart() {
-        db<Timer>(TRC) << "Timer::restart() => {f=" << frequency() << ",h=" << reinterpret_cast<void *>(_handler) << ",count=" << _current[CPU::id()] << "}" << endl;
-
-        int percentage = _current[CPU::id()] * 100 / _initial;
-        _current[CPU::id()] = _initial;
-
-        return percentage;
-    }
+    Scheduler_Timer(const Microsecond & quantum, const Handler & handler): Timer(SCHEDULER, 1000000 / quantum, handler) {}
 };
 
 // Timer used by Alarm

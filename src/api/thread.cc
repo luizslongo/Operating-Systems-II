@@ -12,13 +12,12 @@ __END_UTIL
 
 __BEGIN_SYS
 
-// Class attributes
 volatile unsigned int Thread::_thread_count;
 Scheduler_Timer * Thread::_timer;
 Scheduler<Thread> Thread::_scheduler;
 Spin Thread::_lock;
 
-// Methods
+
 void Thread::constructor_prologue(const Color & color, unsigned int stack_size)
 {
     lock();
@@ -46,7 +45,7 @@ void Thread::constructor_epilogue(const Log_Addr & entry, unsigned int stack_siz
 
     assert((_state != WAITING) && (_state != FINISHING)); // Invalid states
 
-    if(multitask || monitored)
+    if(multitask)
         _task->insert(this);
 
     if((_state != READY) && (_state != RUNNING))

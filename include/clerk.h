@@ -46,7 +46,8 @@ public:
         disable_captures();
         OStream os; // we are using OStream instead of db to avoid <CPU_ID> print in each line.
         db<Monitor>(TRC) << "Monitor::process_batch()" << endl;
-        os << "FINAL_TS<" << count2us(_monitors[0].begin()->object()->time_since_t0()) << ">" << endl;
+        if(_monitors[0].begin() != _monitors[0].end()) // monitored, but no Clerk_Monitor created
+            os << "FINAL_TS<" << count2us(_monitors[0].begin()->object()->time_since_t0()) << ">" << endl;
         os << "begin_data" << endl;
         unsigned int i;
         for(unsigned int n = 0; n < CPU::cores(); n++) {
@@ -131,12 +132,10 @@ public:
     Clerk_Monitor(Clerk * clerk, const Hertz & frequency, bool data_to_us = false): _clerk(clerk), _frequency(frequency), _period(us2count((frequency > 0) ? 1000000 / frequency : -1UL)), _last_capture(0), _average(0), _data_to_us(data_to_us), _link(this) {
         db<Monitor>(TRC) << "Clerk_Monitor(clerk=" << clerk << ") => " << this << ")" << endl;
         _snapshots = Traits<Build>::EXPECTED_SIMULATION_TIME * frequency;
-        // if((_snapshots * sizeof(Snapshot)) > Traits<Monitor>::MAX_BUFFER_SIZE)
-        //     _snapshots = Traits<Monitor>::MAX_BUFFER_SIZE * sizeof(Snapshot);
         _buffer = new (SYSTEM) Snapshot[_snapshots];
-
         _monitors[CPU::id()].insert(&_link);
     }
+ 
     ~Clerk_Monitor() {
         _monitors[CPU::id()].remove(&_link);
         delete _buffer;
@@ -392,12 +391,16 @@ inline void Monitor::init_pmu_monitoring() {
     if(Traits<Monitor>::PMU_EVENTS_FREQUENCIES[CHANNEL]) {
         if(CPU::id() == 0)
             db<Monitor>(TRC) << "Monitor::init: monitoring PMU event " << Traits<Monitor>::PMU_EVENTS[CHANNEL] << " at " << Traits<Monitor>::PMU_EVENTS_FREQUENCIES[CHANNEL] << " Hz" << endl;
-        new (SYSTEM) Clerk<PMU>(Traits<Monitor>::PMU_EVENTS[CHANNEL], Traits<Monitor>::PMU_EVENTS_FREQUENCIES[CHANNEL], true);
-        used_channels++;
+        if ((((sizeof(Clerk<PMU>::Data) + sizeof(TSC::Time_Stamp)) * Traits<Monitor>::PMU_EVENTS_FREQUENCIES[CHANNEL] * Traits<Build>::EXPECTED_SIMULATION_TIME) + sizeof(Clerk<PMU>)) > System::_heap->grouped_size()  - Traits<Application>::HEAP_SIZE) {
+            db<Monitor>(ERR) << "Not enough memory to allocate Clerk: Requested size=" << (((sizeof(Clerk<System>::Data) + sizeof(TSC::Time_Stamp)) * Traits<Monitor>::PMU_EVENTS_FREQUENCIES[CHANNEL] * Traits<Build>::EXPECTED_SIMULATION_TIME) + sizeof(Clerk<System>)) << ", Heap::grouped_size()=" << System::_heap->grouped_size() - Traits<Application>::HEAP_SIZE << endl;
+        } else {
+            new (SYSTEM) Clerk<PMU>(Traits<Monitor>::PMU_EVENTS[CHANNEL], Traits<Monitor>::PMU_EVENTS_FREQUENCIES[CHANNEL], true);
+            used_channels++;
+        }
     }
 
     if(used_channels > Clerk<PMU>::CHANNELS + Clerk<PMU>::FIXED)
-        db<Monitor>(WRN) << "Monitor::init: some events not monitored because all PMU channels are busy!" << endl;
+        db<Monitor>(TRC) << "Monitor::init: some events not monitored because all PMU channels are busy!" << endl;
 
     init_pmu_monitoring<CHANNEL + 1>();
 };
@@ -408,8 +411,13 @@ inline void Monitor::init_pmu_monitoring<COUNTOF(Traits<Monitor>::PMU_EVENTS)>()
 template<unsigned int CHANNEL>
 inline void Monitor::init_system_monitoring() {
     if((Traits<Monitor>::SYSTEM_EVENTS_FREQUENCIES[CHANNEL] > 0) && (CPU::id() == 0)) {
-            db<Monitor>(TRC) << "Monitor::init: monitoring system event " << Traits<Monitor>::SYSTEM_EVENTS[CHANNEL] << " at " << Traits<Monitor>::SYSTEM_EVENTS_FREQUENCIES[CHANNEL] << " Hz" << endl;
-        new (SYSTEM) Clerk<System>(Traits<Monitor>::SYSTEM_EVENTS[CHANNEL], Traits<Monitor>::SYSTEM_EVENTS_FREQUENCIES[CHANNEL], true);
+        db<Monitor>(TRC) << "Monitor::init: monitoring system event " << Traits<Monitor>::SYSTEM_EVENTS[CHANNEL] << " at " << Traits<Monitor>::SYSTEM_EVENTS_FREQUENCIES[CHANNEL] << " Hz" << endl;
+        if ((((sizeof(Clerk<System>::Data) + sizeof(TSC::Time_Stamp)) * Traits<Monitor>::SYSTEM_EVENTS_FREQUENCIES[CHANNEL] * Traits<Build>::EXPECTED_SIMULATION_TIME) + sizeof(Clerk<System>)) > System::_heap->grouped_size() - Traits<Application>::HEAP_SIZE) {
+            db<Monitor>(ERR) << "Not enough memory to allocate Clerk: Requested size=" << (((sizeof(Clerk<System>::Data) + sizeof(TSC::Time_Stamp)) * Traits<Monitor>::SYSTEM_EVENTS_FREQUENCIES[CHANNEL] * Traits<Build>::EXPECTED_SIMULATION_TIME) + sizeof(Clerk<System>)) << ", Heap::grouped_size()=" << System::_heap->grouped_size() - Traits<Application>::HEAP_SIZE << endl;
+        } else {
+            new (SYSTEM) Clerk<System>(Traits<Monitor>::SYSTEM_EVENTS[CHANNEL], Traits<Monitor>::SYSTEM_EVENTS_FREQUENCIES[CHANNEL], true);
+            db<Monitor>(TRC) << "Monitor::init: system event " << Traits<Monitor>::SYSTEM_EVENTS[CHANNEL] << " at " << Traits<Monitor>::SYSTEM_EVENTS_FREQUENCIES[CHANNEL] << " Hz created" << endl;
+        }
     }
     init_system_monitoring<CHANNEL + 1>();
 };

@@ -30,7 +30,13 @@ public:
 public:
     Count read() { return timer()->read(); }
 
-    static void reset() { timer()->config(UNIT, _count); }
+    static void reset() { 
+         disable();
+        _count = timer()->clock() / FREQUENCY;
+        timer()->config(UNIT, _count);
+        enable();
+    }
+
     static void enable() { timer()->enable(); }
     static void disable() { timer()->disable(); }
 
@@ -41,10 +47,7 @@ protected:
 
 private:
     static void init() {
-        disable();
-        _count = timer()->clock() / FREQUENCY;
-        reset();
-        enable();
+        reset();       
     }
 
 private:

@@ -8,13 +8,14 @@
 __BEGIN_UTIL
 
 // This Buffer was designed to move data across a zero-copy communication stack, but can be used for several other purposes
-template<typename Owner, typename Data, typename Shadow = void, typename Metadata = Dummy>
-class Buffer: private Data, public Metadata
+template<typename Owner, typename Data, typename Shadow = void, typename _Metadata = Dummy>
+class Buffer: private Data, public _Metadata
 {
 public:
-    typedef Data Frame;
-    typedef Data Packet;
-    typedef Data Message;
+    using Frame = Data;
+    using Packet = Data;
+    using Message = Data;
+    using Metadata = _Metadata;
 
     typedef Simple_List<Buffer<Owner, Data, Shadow, Metadata> > List;
     typedef typename List::Element Element;

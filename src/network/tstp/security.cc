@@ -316,7 +316,7 @@ bool TSTP::Security::unpack(const Peer * peer, unsigned char * msg, const unsign
     for(; i < sizeof(Master_Secret); i++)
         mi[i] = ms[i];
 
-    reception_time /= POLY_TIME_WINDOW;
+    reception_time = reception_time / POLY_TIME_WINDOW;
 
     OTP key;
     unsigned char nonce[16];
@@ -330,7 +330,7 @@ bool TSTP::Security::unpack(const Peer * peer, unsigned char * msg, const unsign
     if(poly.verify(mac, nonce, msg, sizeof(Master_Secret)))
         return true;
 
-    reception_time--;
+    reception_time = reception_time - 1;
     memset(nonce, 0, 16);
     memcpy(nonce, &reception_time, sizeof(Time) < 16u ? sizeof(Time) : 16u);
     poly.stamp(key, nonce, mi, MI_SIZE);
@@ -339,7 +339,7 @@ bool TSTP::Security::unpack(const Peer * peer, unsigned char * msg, const unsign
     if(poly.verify(mac, nonce, msg, sizeof(Master_Secret)))
         return true;
 
-    reception_time += 2;
+    reception_time = reception_time + 2;
     memset(nonce, 0, 16);
     memcpy(nonce, &reception_time, sizeof(Time) < 16u ? sizeof(Time) : 16u);
     poly.stamp(key, nonce, mi, MI_SIZE);
@@ -403,13 +403,13 @@ bool TSTP::Security::verify_auth_request(const Master_Secret & master_secret, co
     if(poly.verify(otp, nonce, mi, MI_SIZE))
         return true;
 
-    t--;
+    t = t - 1;
     memset(nonce, 0, 16);
     memcpy(nonce, &t, sizeof(Time) < 16u ? sizeof(Time) : 16u);
     if(poly.verify(otp, nonce, mi, MI_SIZE))
         return true;
 
-    t += 2;
+    t = t + 2;
     memset(nonce, 0, 16);
     memcpy(nonce, &t, sizeof(Time) < 16u ? sizeof(Time) : 16u);
     if(poly.verify(otp, nonce, mi, MI_SIZE))

@@ -29,7 +29,7 @@ public:
 public:
     Count read() { return pt()->read(); }
 
-    static void reset() { pt()->config(pt()->clock() / FREQUENCY); }
+    static void reset() { disable(); pt()->config(pt()->clock() / FREQUENCY); enable();}
     static void enable() { pt()->enable(); }
     static void disable() { pt()->disable(); }
 
@@ -40,9 +40,7 @@ protected:
 
 private:
     static void init() {
-        disable();
         reset();
-        enable();
     }
 
 private:

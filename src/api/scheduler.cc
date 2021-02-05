@@ -5,7 +5,6 @@
 
 __BEGIN_SYS
 
-// Class attributes
 volatile unsigned int Variable_Queue_Scheduler::_next_queue;
 
 // The following Scheduling Criteria depend on Alarm, which is not available at scheduler.h
