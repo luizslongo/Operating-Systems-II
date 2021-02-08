@@ -391,16 +391,16 @@ inline void Monitor::init_pmu_monitoring() {
     if(Traits<Monitor>::PMU_EVENTS_FREQUENCIES[CHANNEL]) {
         if(CPU::id() == 0)
             db<Monitor>(TRC) << "Monitor::init: monitoring PMU event " << Traits<Monitor>::PMU_EVENTS[CHANNEL] << " at " << Traits<Monitor>::PMU_EVENTS_FREQUENCIES[CHANNEL] << " Hz" << endl;
-        if ((((sizeof(Clerk<PMU>::Data) + sizeof(TSC::Time_Stamp)) * Traits<Monitor>::PMU_EVENTS_FREQUENCIES[CHANNEL] * Traits<Build>::EXPECTED_SIMULATION_TIME) + sizeof(Clerk<PMU>)) > System::_heap->grouped_size()  - Traits<Application>::HEAP_SIZE) {
-            db<Monitor>(ERR) << "Not enough memory to allocate Clerk: Requested size=" << (((sizeof(Clerk<System>::Data) + sizeof(TSC::Time_Stamp)) * Traits<Monitor>::PMU_EVENTS_FREQUENCIES[CHANNEL] * Traits<Build>::EXPECTED_SIMULATION_TIME) + sizeof(Clerk<System>)) << ", Heap::grouped_size()=" << System::_heap->grouped_size() - Traits<Application>::HEAP_SIZE << endl;
-        } else {
+        if((((sizeof(Clerk<PMU>::Data) + sizeof(TSC::Time_Stamp)) * Traits<Monitor>::PMU_EVENTS_FREQUENCIES[CHANNEL] * Traits<Build>::EXPECTED_SIMULATION_TIME) + sizeof(Clerk<PMU>)) > System::_heap->grouped_size()  - Traits<Application>::HEAP_SIZE)
+            db<Monitor>(ERR) << "Monitor::init: not enough memory to allocate Clerk (requested size=" << (((sizeof(Clerk<System>::Data) + sizeof(TSC::Time_Stamp)) * Traits<Monitor>::PMU_EVENTS_FREQUENCIES[CHANNEL] * Traits<Build>::EXPECTED_SIMULATION_TIME) + sizeof(Clerk<System>)) << ", Heap::grouped_size()=" << System::_heap->grouped_size() - Traits<Application>::HEAP_SIZE << ")" << endl;
+        else {
             new (SYSTEM) Clerk<PMU>(Traits<Monitor>::PMU_EVENTS[CHANNEL], Traits<Monitor>::PMU_EVENTS_FREQUENCIES[CHANNEL], true);
             used_channels++;
         }
     }
 
     if(used_channels > Clerk<PMU>::CHANNELS + Clerk<PMU>::FIXED)
-        db<Monitor>(TRC) << "Monitor::init: some events not monitored because all PMU channels are busy!" << endl;
+        db<Monitor>(WRN) << "Monitor::init: some events not monitored because all PMU channels are busy!" << endl;
 
     init_pmu_monitoring<CHANNEL + 1>();
 };
@@ -412,11 +412,11 @@ template<unsigned int CHANNEL>
 inline void Monitor::init_system_monitoring() {
     if((Traits<Monitor>::SYSTEM_EVENTS_FREQUENCIES[CHANNEL] > 0) && (CPU::id() == 0)) {
         db<Monitor>(TRC) << "Monitor::init: monitoring system event " << Traits<Monitor>::SYSTEM_EVENTS[CHANNEL] << " at " << Traits<Monitor>::SYSTEM_EVENTS_FREQUENCIES[CHANNEL] << " Hz" << endl;
-        if ((((sizeof(Clerk<System>::Data) + sizeof(TSC::Time_Stamp)) * Traits<Monitor>::SYSTEM_EVENTS_FREQUENCIES[CHANNEL] * Traits<Build>::EXPECTED_SIMULATION_TIME) + sizeof(Clerk<System>)) > System::_heap->grouped_size() - Traits<Application>::HEAP_SIZE) {
-            db<Monitor>(ERR) << "Not enough memory to allocate Clerk: Requested size=" << (((sizeof(Clerk<System>::Data) + sizeof(TSC::Time_Stamp)) * Traits<Monitor>::SYSTEM_EVENTS_FREQUENCIES[CHANNEL] * Traits<Build>::EXPECTED_SIMULATION_TIME) + sizeof(Clerk<System>)) << ", Heap::grouped_size()=" << System::_heap->grouped_size() - Traits<Application>::HEAP_SIZE << endl;
-        } else {
+        if((((sizeof(Clerk<System>::Data) + sizeof(TSC::Time_Stamp)) * Traits<Monitor>::SYSTEM_EVENTS_FREQUENCIES[CHANNEL] * Traits<Build>::EXPECTED_SIMULATION_TIME) + sizeof(Clerk<System>)) > System::_heap->grouped_size() - Traits<Application>::HEAP_SIZE)
+            db<Monitor>(ERR) << "Monitor::init: not enough memory to allocate Clerk (requested size=" << (((sizeof(Clerk<System>::Data) + sizeof(TSC::Time_Stamp)) * Traits<Monitor>::SYSTEM_EVENTS_FREQUENCIES[CHANNEL] * Traits<Build>::EXPECTED_SIMULATION_TIME) + sizeof(Clerk<System>)) << ", Heap::grouped_size()=" << System::_heap->grouped_size() - Traits<Application>::HEAP_SIZE << ")" << endl;
+        else {
             new (SYSTEM) Clerk<System>(Traits<Monitor>::SYSTEM_EVENTS[CHANNEL], Traits<Monitor>::SYSTEM_EVENTS_FREQUENCIES[CHANNEL], true);
-            db<Monitor>(TRC) << "Monitor::init: system event " << Traits<Monitor>::SYSTEM_EVENTS[CHANNEL] << " at " << Traits<Monitor>::SYSTEM_EVENTS_FREQUENCIES[CHANNEL] << " Hz created" << endl;
+            db<Monitor>(WRN) << "Monitor::init: system event " << Traits<Monitor>::SYSTEM_EVENTS[CHANNEL] << " at " << Traits<Monitor>::SYSTEM_EVENTS_FREQUENCIES[CHANNEL] << " Hz created" << endl;
         }
     }
     init_system_monitoring<CHANNEL + 1>();
