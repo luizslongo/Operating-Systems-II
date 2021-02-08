@@ -163,63 +163,7 @@ private:
     static Reg32 pmxevcntr() { Reg32 reg; ASM("mrc p15, 0, %0, c9, c13, 2\n\t" : "=r"(reg) : ); return reg; }
 
 private:
-    static constexpr Reg32 _events[EVENTS] = {
-        INSTRUCTIONS_ARCHITECTURALLY_EXECUTED,  // 0
-        IMMEDIATE_BRANCH,                       // 1
-        CYCLE,                                  // 2
-        BRANCHES_ARCHITECTURALLY_EXECUTED,      // 3
-        MISPREDICTED_BRANCH,                    // 4
-        L1D_ACCESS,                             // 5
-        L2D_ACCESS,                             // 6
-        L1D_REFILL,                             // 7
-        DATA_MEMORY_ACCESS,                     // 8 (LLC MISS)
-        L1I_REFILL,                             // 9
-        L1I_TLB_REFILL,                         // 10
-        PREDICTABLE_BRANCH_EXECUTED,            // 11
-        L1D_WRITEBACK,                          // 12
-        L2D_WRITEBACK,                          // 13
-        L2D_REFILL,                             // 14
-        UNALIGNED_LOAD_STORE,                   // 15
-        L1I_ACCESS,                             // 16
-        L1D_TLB_REFILL,                         // 17
-        EXCEPTION_TAKEN,                        // 18
-        BUS_ACCESS,                             // 19
-        LOCAL_MEMORY_ERROR,                     // 20
-        INSTRUCTION_SPECULATIVELY_EXECUTED,     // 21
-        BUS_CYCLE,                              // 22
-        CHAIN,                                  // 23
-        // ARM Cortex-A53 specific events (24-62 are Cortex-A9 events)
-        BUS_ACCESS_LD,                          // 63 --> 24
-        BUS_ACCESS_ST,                          // 64 --> 25
-        BR_INDIRECT_SPEC,                       // 65 --> 26
-        EXC_IRQ,                                // 66 --> 27
-        EXC_FIQ,                                // 67 --> 28
-        EXTERNAL_MEM_REQUEST,                   // 68 --> 29
-        EXTERNAL_MEM_REQUEST_NON_CACHEABLE,     // 69 --> 30
-        PREFETCH_LINEFILL,                      // 70 --> 31
-        ICACHE_THROTTLE,                        // 71 --> 32
-        ENTER_READ_ALLOC_MODE,                  // 72 --> 33
-        READ_ALLOC_MODE,                        // 73 --> 34
-        PRE_DECODE_ERROR,                       // 74 --> 35
-        DATA_WRITE_STALL_ST_BUFFER_FULL,        // 75 --> 36
-        SCU_SNOOPED_DATA_FROM_OTHER_CPU,        // 76 --> 37
-        CONDITIONAL_BRANCH_EXECUTED,            // 77 --> 38
-        IND_BR_MISP,                            // 78 --> 39
-        IND_BR_MISP_ADDRESS_MISCOMPARE,         // 79 --> 40
-        CONDITIONAL_BRANCH_MISP,                // 80 --> 41
-        L1_ICACHE_MEM_ERROR,                    // 81 --> 42
-        L1_DCACHE_MEM_ERROR,                    // 82 --> 43
-        TLB_MEM_ERROR,                          // 83 --> 44
-        EMPTY_DPU_IQ_NOT_GUILTY,                // 84 --> 45
-        EMPTY_DPU_IQ_ICACHE_MISS,               // 85 --> 46
-        EMPTY_DPU_IQ_IMICRO_TLB_MISS,           // 86 --> 47
-        EMPTY_DPU_IQ_PRE_DECODE_ERROR,          // 87 --> 48
-        INTERLOCK_CYCLE_NOT_GUILTY,             // 88 --> 49
-        INTERLOCK_CYCLE_LD_ST_WAIT_AGU_ADDRESS, // 89 --> 50
-        INTERLOCK_CYCLE_ADV_SIMD_FP_INST,       // 90 --> 51
-        INTERLOCK_CYCLE_WR_STAGE_STALL_BC_MISS, // 91 --> 52
-        INTERLOCK_CYCLE_WR_STAGE_STALL_BC_STR   // 92 --> 53
-    };
+    static const Reg32 _events[EVENTS];
 };
 
 
