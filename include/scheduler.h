@@ -27,26 +27,26 @@ public:
     // Priorities
     enum : int {
         ISR    = -1000,
-            MAIN   = 0,
-            HIGH   = 1,
-            NORMAL = (unsigned(1) << (sizeof(int) * 8 - 1)) - 3,
-            LOW    = (unsigned(1) << (sizeof(int) * 8 - 1)) - 2,
-            IDLE   = (unsigned(1) << (sizeof(int) * 8 - 1)) - 1
+        MAIN   = 0,
+        HIGH   = 1,
+        NORMAL = (unsigned(1) << (sizeof(int) * 8 - 1)) - 3,
+        LOW    = (unsigned(1) << (sizeof(int) * 8 - 1)) - 2,
+        IDLE   = (unsigned(1) << (sizeof(int) * 8 - 1)) - 1
     };
 
     // Constructor helpers
     enum : unsigned int {
         SAME        = 0,
-            NOW         = 0,
-            UNKNOWN     = 0,
-            ANY         = -1U
+        NOW         = 0,
+        UNKNOWN     = 0,
+        ANY         = -1U
     };
 
     // Policy types
     enum : int {
         PERIODIC    = HIGH,
-            APERIODIC   = NORMAL,
-            SPORADIC    = NORMAL
+        APERIODIC   = NORMAL,
+        SPORADIC    = NORMAL
     };
 
     // Policy traits
@@ -255,7 +255,7 @@ private:
 class Real_Time_Scheduler_Common: public Priority
 {
 protected:
-    Real_Time_Scheduler_Common(int p): Priority(p), _deadline(0), _period(0), _capacity(0) {} // Aperiodic
+    Real_Time_Scheduler_Common(int p): Priority(p), _deadline(0), _period(0), _capacity(0) {} // aperiodic
     Real_Time_Scheduler_Common(int i, const Microsecond & d, const Microsecond & p, const Microsecond & c)
     : Priority(i), _deadline(d), _period(p), _capacity(c) {}
 

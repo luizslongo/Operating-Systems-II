@@ -31,7 +31,7 @@ public:
 
     // Registers offsets from CLINT_BASE
     enum {                                // Description
-        MSIP                    = 0x0000, // Generate machine mode software interrupts
+        MSIP                    = 0x0000, // Generate machine mode software interrupts (IPIs); each HART is offseted by 4 bytes from MSIP
         MTIMECMP                = 0x4000, // Compare (32-bit, per hart register)
         MTIME                   = 0xbff8, // Counter (lower 32 bits, shared by all harts)
         MTIMEH                  = 0xbffc, // Counter (upper 32 bits, shared by all harts)
@@ -115,7 +115,7 @@ public:
         db<IC>(TRC) << "IC::ipi(cpu=" << cpu << ",int=" << i << ")" << endl;
         assert(i < INTS);
         i -= HARD_INT;
-        reg(MSIP + cpu * MSIP_CORE_OFFSET) = 1 << i;
+        reg(MSIP + cpu * MSIP_CORE_OFFSET) = 1;
     }
 
     static void ipi_eoi(Interrupt_Id i) {

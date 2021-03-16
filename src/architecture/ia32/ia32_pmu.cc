@@ -4,7 +4,6 @@
 
 __BEGIN_SYS
 
-
 void PMU::int_handler(Interrupt_Id i)
 {
 //
