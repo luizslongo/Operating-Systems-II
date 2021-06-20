@@ -5,6 +5,7 @@
 
 #include <machine/rtc.h>
 #include <machine/timer.h>
+#include <process.h>
 #include <utility/queue.h>
 #include <utility/handler.h>
 #include <utility/spin.h>
@@ -56,17 +57,19 @@ public:
     static void delay(const Microsecond & time);
 
 private:
-    static void init();
+    unsigned int times() const { return _times; }
 
     static volatile Tick & elapsed() { return _elapsed; }
 
     static Microsecond timer_period() { return 1000000 / frequency(); }
     static Tick ticks(const Microsecond & time) { return (time + timer_period() / 2) / timer_period(); }
 
-    static void lock() { _lock.acquire(); }
-    static void unlock() { _lock.release(); }
+    static void lock() { Thread::lock(&_lock); }
+    static void unlock() { Thread::unlock(&_lock); }
 
     static void handler(IC::Interrupt_Id i);
+
+    static void init();
 
 private:
     Microsecond _time;

@@ -1,4 +1,4 @@
-// EPOS RISC-V Program Starter
+// EPOS RISC-V 32 Program Starter
 
         .file "rv32_crt0.S"
 
@@ -11,7 +11,7 @@ _start:
         // Temporary stack(s) for INIT are created and configure by SETUP
 
         // Only hart (core) 0 cleans cache
-        csrr    t0, mhartid
+        mv      t0, tp
         bnez    t0, 2f
 
         // Set all bytes in the BSS section to zero.
@@ -31,7 +31,10 @@ _start:
         .globl  __epos_app_entry
         .type   __epos_app_entry, function
 __epos_app_entry:
-        call      main
-        lw        a0, 0(sp)         // save main's return value to be used by exit()
-        call      _fini
-        call      _exit
+        call    __pre_main	
+        call    main
+stop:   addi    sp, sp, -4
+        sw      a0, 0(sp)   // save main's return value to be used by exit()
+        call    _fini
+        lw      a0, 0(sp)
+        call    _exit

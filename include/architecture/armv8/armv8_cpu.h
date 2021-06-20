@@ -47,8 +47,12 @@ public:
     class Context
     {
     public:
-        Context(const Log_Addr & entry, const Log_Addr & exit): _flags(FLAG_DEFAULTS), _lr(exit | (thumb ? 1 : 0)), _pc(entry | (thumb ? 1 : 0)) {}
-//        _r0(0), _r1(1), _r2(2), _r3(3), _r4(4), _r5(5), _r6(6), _r7(7), _r8(8), _r9(9), _r10(10), _r11(11), _r12(12),
+        Context(){}
+        Context(Log_Addr  entry, Log_Addr exit, Log_Addr usp): _flags(FLAG_DEFAULTS), _lr(exit | (thumb ? 1 : 0)), _pc(entry | (thumb ? 1 : 0)) {
+            if(Traits<Build>::hysterically_debugged || Traits<Thread>::trace_idle) {
+                _r0 = 0; _r1 = 1; _r2 = 2; _r3 = 3; _r4 = 4; _r5 = 5; _r6 = 6; _r7 = 7; _r8 = 8; _r9 = 9; _r10 = 10; _r11 = 11; _r12 = 12;
+            }
+        }
 
         void save() volatile  __attribute__ ((naked));
         void load() const volatile;
@@ -107,6 +111,16 @@ public:
 public:
     CPU() {}
 
+    using Base::pc;
+    using Base::lr;
+    using Base::flags;
+    using Base::sp;
+    using Base::fr;
+    using Base::pdp;
+
+    using Base::id;
+    using Base::cores;
+
     static Hertz clock() { return _cpu_clock; }
     static void clock(const Hertz & frequency); // defined along with each machine's IOCtrl
     static Hertz max_clock();
@@ -114,27 +128,31 @@ public:
 
     static Hertz bus_clock() { return _bus_clock; }
 
-    using Base::id;
-    using Base::cores;
-    using Base::flags;
-    using Base::smp_barrier;
-
     using Base::int_enable;
     using Base::int_disable;
     using Base::int_enabled;
     using Base::int_disabled;
 
-    using Base::sp;
-    using Base::fr;
-    using Base::ip;
-    using Base::pdp;
+    using Base::halt;
 
     using Base::tsl;
     using Base::finc;
     using Base::fdec;
     using Base::cas;
 
-    using Base::halt;
+    using Base::smp_barrier;
+
+    using Base::msr12;
+    using Base::mrs12;
+    using Base::cpsr;
+    using Base::cpsrc;
+    using Base::spsr_cxsf;
+    using Base::elr_hyp;
+    using Base::r0;
+    using Base::r1;
+    using Base::ldmia;
+    using Base::stmia;
+    using Base::enable_fpu;
 
     static void fpu_save() {
         if(Traits<Build>::MODEL == Traits<Build>::Raspberry_Pi3)
@@ -151,18 +169,18 @@ public:
     static void switch_context(Context ** o, Context * n) __attribute__ ((naked));
 
     template<typename ... Tn>
-    static Context * init_stack(const Log_Addr & usp, Log_Addr sp, void (* exit)(), int (* entry)(Tn ...), Tn ... an) {
-        sp -= sizeof(Context);
-        Context * ctx = new(sp) Context(entry, exit);
+    static Context * init_stack(Log_Addr usp, Log_Addr ksp, void (* exit)(), int (* entry)(Tn ...), Tn ... an) {
+        ksp -= sizeof(Context);
+        Context * ctx = new(ksp) Context(entry, exit, usp);
         init_stack_helper(&ctx->_r0, an ...);
         return ctx;
     }
     template<typename ... Tn>
-    static Log_Addr init_user_stack(Log_Addr sp, void (* exit)(), Tn ... an) {
-        sp -= sizeof(Context);
-        Context * ctx = new(sp) Context(0, exit);
+    static Log_Addr init_user_stack(Log_Addr usp, void (* exit)(), Tn ... an) {
+        usp -= sizeof(Context);
+        Context * ctx = new(usp) Context(0, exit, 0);
         init_stack_helper(&ctx->_r0, an ...);
-        return sp;
+        return usp;
     }
 
     static int syscall(void * message);

@@ -107,31 +107,31 @@ int main()
     return 1;
     pollute_buffer = new int[POLLUTE_BUFFER_SIZE];
 
-    for(int i = 0; i < TASKS; i++)
+    for(unsigned int i = 0; i < TASKS; i++)
         array[i] = new int[ARRAY_SIZE];
 
-    for(int i = 0; i < ITERATIONS; i++) {
+    for(unsigned int i = 0; i < ITERATIONS; i++) {
         cout << "Starting round " << i << endl;
 
         for(unsigned int j = 0; j < 0xffffffff; j++)
             for(unsigned int k = 0; k < 0xffffffff; k++);
 
-        for(int t = 0; t < TASKS; t++)
+        for(unsigned int t = 0; t < TASKS; t++)
             wcet[t] = 0;
 
-        for(int t = 0; t < TASKS; t++)
+        for(unsigned int t = 0; t < TASKS; t++)
             thread[t] = new RT_Thread(set[t].f, set[t].d, set[t].p, set[t].c, set[t].a, ITERATIONS, set[t].cpu);
 
         chrono.start();
 
-        for(int t = 0; t < TASKS; t++)
+        for(unsigned int t = 0; t < TASKS; t++)
             thread[t]->join();
 
         chrono.stop();
 
         cout << "Round " << i << " finished in " << chrono.read() << " us!" << endl;
 
-        for(int t = 0; t < TASKS; t++)
+        for(unsigned int t = 0; t < TASKS; t++)
             delete thread[t];
     }
 
@@ -172,8 +172,8 @@ int pollute_job(unsigned int repetitions, int id)
 
     c.start();
 
-    for(int j = 0; j < repetitions; j++) {
-        for(int k = (rand->random() % (POLLUTE_BUFFER_SIZE - 1) ) % 1000; k < POLLUTE_BUFFER_SIZE; k += 64) {
+    for(unsigned int j = 0; j < repetitions; j++) {
+        for(unsigned int k = (rand->random() % (POLLUTE_BUFFER_SIZE - 1) ) % 1000; k < POLLUTE_BUFFER_SIZE; k += 64) {
             pollute_buffer[k] = j % 64;
             sum += pollute_buffer[k];
         }
@@ -196,8 +196,8 @@ int job(unsigned int repetitions, int id)
     int sum = 0;
     Chronometer c;
     Random * rand;
-    unsigned long long llc_misses = 0;
-    unsigned long long llc_hit = 0;
+//    unsigned long long llc_misses = 0;
+//    unsigned long long llc_hit = 0;
 
     sem.p();
     cout << "Starting thread = " << id << " CPU = " << CPU::id() << "\n";
@@ -214,8 +214,8 @@ int job(unsigned int repetitions, int id)
 
     c.start();
 
-    for(int j = 0; j < repetitions; j++) {
-        for(int k = 0; k < MEMORY_ACCESS; k++) {
+    for(unsigned int j = 0; j < repetitions; j++) {
+        for(unsigned int k = 0; k < MEMORY_ACCESS; k++) {
             int pos = rand->random() % (ARRAY_SIZE - 1);
             sum += array[id][pos];
             if((k % WRITE_RATIO) == 0)

@@ -19,17 +19,17 @@ const unsigned int MEMORY_ACCESS = 16384;
 const unsigned int WRITE_RATIO = 4;
 const unsigned int POLLUTE_BUFFER_SIZE = 16 * 1024;
 
-int pollute_cache(unsigned int repetitions, int id);
+int pollute_cache(unsigned int repetitions, unsigned int id);
 void run(int test);
 void collect_wcet(int test);
 void print_stats(void);
-int job(unsigned int, int); // function passed to each periodic thread
+int job(unsigned int, unsigned int); // function passed to each periodic thread
 
 typedef unsigned int us;
 
 // 17 threads, total utilization of 5.972483, 8 processors
 static struct Task_Set {
-    int (*f)(unsigned int, int);
+    int (*f)(unsigned int, unsigned int);
     us p;
     us d;
     us c;
@@ -83,14 +83,14 @@ int main()
 
     stats = new wcet_stats[THREADS];
 
-    for(int i = 0; i < THREADS; i++) {
+    for(unsigned int i = 0; i < THREADS; i++) {
         wcet[i] = new us[ITERATIONS];
         stats[i].mean = new us[TEST_REPETITIONS];
         stats[i].var = new us[TEST_REPETITIONS];
         stats[i].wcet = new us[TEST_REPETITIONS];
     }
 
-    for(int i = 0; i < TEST_REPETITIONS; i++) {
+    for(unsigned int i = 0; i < TEST_REPETITIONS; i++) {
         cout << "Starting test " << i << endl;
         run(i);
     }
@@ -100,7 +100,7 @@ int main()
 
     print_stats();
 
-    for(int i = 0; i < THREADS; i++)
+    for(unsigned int i = 0; i < THREADS; i++)
         delete wcet[i];
 }
 
@@ -108,11 +108,11 @@ void run(int test)
 {
     TSC_Chronometer chrono;
 
-    for(int i = 0; i <  THREADS; i++)
-        for(int j = 0; j < ITERATIONS; j++)
+    for(unsigned int i = 0; i <  THREADS; i++)
+        for(unsigned int j = 0; j < ITERATIONS; j++)
             wcet[i][j] = 0;
 
-    for(int i = 0; i < THREADS; i++) {
+    for(unsigned int i = 0; i < THREADS; i++) {
         cout << "T[" << i << "] p=" << set[i].p << " d=" << set[i].d << " c=" << set[i].c << " a=" << set[i].affinity << endl;
         if(i == lowest_priority_task)
             // p,d,c,act,t,cpu
@@ -125,14 +125,14 @@ void run(int test)
 
     chrono.start();
 
-    for(int i = 0; i <  THREADS; i++)
+    for(unsigned int i = 0; i <  THREADS; i++)
         threads[i]->join();
 
     chrono.stop();
 
     collect_wcet(test);
 
-    for(int i = 0; i <  THREADS; i++)
+    for(unsigned int i = 0; i <  THREADS; i++)
         delete threads[i];
 
     cout << "Page coloring test " << test << " done in " << chrono.read() / 1000000 << " seconds!\n";
@@ -140,7 +140,7 @@ void run(int test)
 
 void collect_wcet(int test)
 {
-    for(int i = 0; i < THREADS; i++) {
+    for(unsigned int i = 0; i < THREADS; i++) {
         us wc, m, var;
         wc = Math::largest(wcet[i], ITERATIONS);
         m = Math::mean(wcet[i], ITERATIONS);
@@ -155,7 +155,7 @@ void collect_wcet(int test)
 
 void print_stats(void)
 {
-    for(int i = 0; i < THREADS; i++) {
+    for(unsigned int i = 0; i < THREADS; i++) {
         us wc, m, var, wc_m, wc_var;
         if(TEST_REPETITIONS > 1) {
             wc = Math::largest(stats[i].wcet, TEST_REPETITIONS);
@@ -175,7 +175,7 @@ void print_stats(void)
     }
 }
 
-int pollute_cache(unsigned int repetitions, int id)
+int pollute_cache(unsigned int repetitions, unsigned int id)
 {
     int sum = 0;
     TSC_Chronometer c;
@@ -194,13 +194,13 @@ int pollute_cache(unsigned int repetitions, int id)
     else
         pollute_buffer = new int[POLLUTE_BUFFER_SIZE];
 
-    for(int i = 0; i <  ITERATIONS; i++) {
+    for(unsigned int i = 0; i <  ITERATIONS; i++) {
         Periodic_Thread::wait_next();
 
         c.start();
 
-        for(int j = 0; j < repetitions; j++) {
-            for(int k = (rand->random() % (POLLUTE_BUFFER_SIZE - 1) ) % 1000; k < POLLUTE_BUFFER_SIZE; k += 64) {
+        for(unsigned int j = 0; j < repetitions; j++) {
+            for(unsigned int k = (rand->random() % (POLLUTE_BUFFER_SIZE - 1) ) % 1000; k < POLLUTE_BUFFER_SIZE; k += 64) {
                 pollute_buffer[k] = j % 64;
                 sum += pollute_buffer[k];
             }
@@ -222,7 +222,7 @@ int pollute_cache(unsigned int repetitions, int id)
     return sum;
 }
 
-int job(unsigned int repetitions, int id)
+int job(unsigned int repetitions, unsigned int id)
 {
     int sum = 0;
     TSC_Chronometer c;
@@ -241,7 +241,7 @@ int job(unsigned int repetitions, int id)
     else
         array = new int[ARRAY_SIZE];
 
-    for(int i = 0; i <  ITERATIONS; i++) {
+    for(unsigned int i = 0; i <  ITERATIONS; i++) {
         Periodic_Thread::wait_next();
         c.reset();
 
@@ -250,8 +250,8 @@ int job(unsigned int repetitions, int id)
 
         c.start();
 
-        for(int j = 0; j < repetitions; j++) {
-            for(int k = 0; k < MEMORY_ACCESS; k++) {
+        for(unsigned int j = 0; j < repetitions; j++) {
+            for(unsigned int k = 0; k < MEMORY_ACCESS; k++) {
                 int pos = rand->random() % (ARRAY_SIZE - 1);
                 sum += array[pos];
                 if((k % WRITE_RATIO) == 0)

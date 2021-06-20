@@ -507,8 +507,8 @@ void padarray4(I2D* inMat, I2D* borderMat, int dir, I2D* paddedArray)
 
 inline int disparity()
 {
-    int rows = 32;
-    int cols = 32;
+//    int rows = 32;
+//    int cols = 32;
     I2D *imleft, *imright, *retDisparity;
 
     int WIN_SZ=8, SHIFT=64;
@@ -516,8 +516,8 @@ inline int disparity()
     imleft  = (I2D *) img1;
     imright = (I2D *) img2;
 
-    rows = imleft->height;
-    cols = imleft->width;
+//    rows = imleft->height;
+//    cols = imleft->width;
 
     (void)SHIFT;
     (void)WIN_SZ;

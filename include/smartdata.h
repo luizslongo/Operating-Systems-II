@@ -1284,7 +1284,7 @@ private:
 
 public:
     Interested_SmartData(const Region & region, const Time & expiry, const Microsecond & period = 0, const Mode & mode = SINGLE, const Uncertainty & uncertainty = ANY, const Device_Id & device = UNIQUE)
-    : _mode(mode), _region(region), _device(device), _uncertainty(uncertainty), _expiry(expiry), _period(period), _value(0), _predictor((predictive && (mode & PREDICTIVE)) ? new (SYSTEM) Predictor : 0), _link(this) {
+    : _mode(mode), _region(region), _device(device), _uncertainty(uncertainty), _expiry(expiry), _period(period), _predictor((predictive && (mode & PREDICTIVE)) ? new (SYSTEM) Predictor : 0), _value(0), _link(this) {
         db<SmartData>(TRC) << "SmartData[I](r=" << region << ",d=" << device << ",x=" << expiry << ",m=" << ((mode & ALL) ? "ALL" : "SGL") << ",err=" << int(uncertainty) << ",p=" << period << ")=>" << this << endl;
         _interests.insert(&_link);
         Network::attach(this, UNIT);
@@ -1459,10 +1459,8 @@ private:
     Time _expiry;
     Microsecond _period;
     Predictor * _predictor;
+    Value _value; // last response value
     typename Simple_List<SmartData>::Element _link;
-
-    // Last response attributes
-    Value _value;
     Response _response;
 
     static Interests _interests;

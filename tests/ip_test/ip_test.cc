@@ -99,7 +99,7 @@ int udp_test()
 
         com = new Link<UDP>(UDP::Address(ip->address(), 8000), UDP::Address(peer_ip, 8000));
 
-        for(int i = 0; i < ITERATIONS; i++) {
+        for(unsigned int i = 0; i < ITERATIONS; i++) {
             data[0] = '\n';
             data[1] = ' ';
             data[2] = '0' + i;
@@ -109,7 +109,7 @@ int udp_test()
             data[6] = '0' + i;
             data[7] = '0' + i;
 
-            for(int j = 8; j < sizeof(data) - 8; j += 8) {
+            for(unsigned int j = 8; j < sizeof(data) - 8; j += 8) {
                 data[j+0] = ' ';
                 data[j+1] = '0' + i + (j / 1000000 % 10);
                 data[j+2] = '0' + (j / 100000 % 10);
@@ -143,7 +143,7 @@ int udp_test()
 
         com = new Link<UDP>(UDP::Address(ip->address(), 8000), UDP::Address(peer_ip, 8000));
 
-        for(int i = 0; i < ITERATIONS; i++) {
+        for(unsigned int i = 0; i < ITERATIONS; i++) {
             int received = com->receive(&data, sizeof(data));
             if(received == sizeof(data))
                 cout << "  Data: " << data << endl;
@@ -185,7 +185,7 @@ int tcp_test()
 
         com = new Link<TCP>(TCP::Address(ip->address(), 8000), TCP::Address(peer_ip, 8000)); // connect
 
-        for(int i = 0; i < ITERATIONS; i++) {
+        for(unsigned int i = 0; i < ITERATIONS; i++) {
             data[0] = '\n';
             data[1] = ' ';
             data[2] = '0' + i;
@@ -195,7 +195,7 @@ int tcp_test()
             data[6] = '0' + i;
             data[7] = '0' + i;
 
-            for(int j = 8; j < sizeof(data) - 8; j += 8) {
+            for(unsigned int j = 8; j < sizeof(data) - 8; j += 8) {
                 data[j+0] = ' ';
                 data[j+1] = '0' + i + (j / 1000000 % 10);
                 data[j+2] = '0' + (j / 100000 % 10);
@@ -229,7 +229,7 @@ int tcp_test()
 
         com = new Link<TCP>(TCP::Address(ip->address(), 8000)); // listen
 
-        for(int i = 0; i < ITERATIONS; i++) {
+        for(unsigned int i = 0; i < ITERATIONS; i++) {
             int received = com->read(&data, sizeof(data));
             if(received == sizeof(data))
                 cout << "  Data: " << data << endl;

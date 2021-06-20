@@ -3,7 +3,6 @@
 #include <time.h>
 #include <process.h>
 
-
 using namespace EPOS;
 
 const int iterations = 10;

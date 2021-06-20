@@ -23,7 +23,7 @@ int main()
         	     << ":" << hdr.device_id
         	     << " (rev " << (int)hdr.revision_id
         	     << ")";
-        	for(int i = 0; i < PCI::Region::N; i++)
+        	for(unsigned int i = 0; i < PCI::Region::N; i++)
         	    if(hdr.region[i].size)
         		cout << " #" << i
         		     << "(" << (void *)hdr.region[i].phy_addr

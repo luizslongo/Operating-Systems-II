@@ -61,7 +61,7 @@ void sink()
 
     cout << "I'm interested on " << SmartData::Unit(a.unit()) << endl;
     cout << "I'll wait for data of this kind for " << ITERATIONS << " seconds..." << endl;
-    for(int i = 0; i < ITERATIONS + 5; i++) {
+    for(unsigned int i = 0; i < ITERATIONS + 5; i++) {
         cout << "a=" << a << endl;
         Delay(1000000);
     }
@@ -89,7 +89,7 @@ void node()
     cout << "OMG that's ANTI-GRAVITY!!!" << endl;
     cout << "I'll update data of this kind for " << ITERATIONS << " seconds..." << endl;
 
-    for(int i = 0; i < ITERATIONS; i++) {
+    for(unsigned int i = 0; i < ITERATIONS; i++) {
         a = i;
 //        b = i * 2;
 //        c = i * 3;

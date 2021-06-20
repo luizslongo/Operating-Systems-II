@@ -66,25 +66,21 @@ public:
     // Runtime Statistics (for policies that don't use any; that´s why its a union)
     union Statistics {
         // Thread Execution Time
-        TSC::Time_Stamp thread_execution_time;  // Sum of jobs execution time
-        TSC::Time_Stamp last_thread_dispatch;   // The times tamp of the last dispatch
-        // On context-switch: execution time += TSC::timestamp() - last_dispatch
-        // Migration Auxiliary
-        unsigned int destination_cpu;
-
-        // ANN
-        float input[COUNTOF(Traits<Monitor>::PMU_EVENTS)+COUNTOF(Traits<Monitor>::SYSTEM_EVENTS)-1];
-        float output;
+        TSC::Time_Stamp thread_execution_time;  // accumulated thread execution time
+        TSC::Time_Stamp last_thread_dispatch;   // time stamp of last dispatch
 
         // Deadline Miss count - Used By Clerk
-        Alarm * alarm_times;            // Reference to RT_Thread private alarm (for monitoring pourposes)
-        unsigned int finished_jobs;     // Number of finished jobs  <=> times alarm->p() has been called for this task
-        unsigned int missed_deadlines;  // Number of finished jobs (finished_jobs) - number of dispatched jobs (alarm_times->times)
+        Alarm * alarm_times;                    // pointer to RT_Thread private alarm (for monitoring purposes)
+        unsigned int finished_jobs;             // number of finished jobs given by the number of times alarm->p() was called for this thread
+        unsigned int missed_deadlines;          // number of missed deadlines given by the number of finished jobs (finished_jobs) minus the number of dispatched jobs (alarm_times->times)
 
         // CPU Execution Time (capture ts)
-        static TSC::Time_Stamp _cpu_time[Traits<Build>::CPUS];              // accumulated cpu time at each hyperperiod
-        static TSC::Time_Stamp _last_dispatch_time[Traits<Build>::CPUS];         // Time Stamp of last dispatch
-        static TSC::Time_Stamp _last_activation_time;                       // Global Time Stamp of the last heuristic activation
+        static TSC::Time_Stamp _cpu_time[Traits<Build>::CPUS];              // accumulated CPU time in the current hyperperiod for each CPU
+        static TSC::Time_Stamp _last_dispatch_time[Traits<Build>::CPUS];    // time Stamp of last dispatch in each CPU
+        static TSC::Time_Stamp _last_activation_time;                       // global time stamp of the last heuristic activation
+        
+        // Migration Auxiliary
+        unsigned int destination_cpu;
     };
 
 protected:

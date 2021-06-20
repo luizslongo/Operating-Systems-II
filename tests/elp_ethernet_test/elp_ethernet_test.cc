@@ -28,7 +28,7 @@ int elp_link_test(bool sender, NIC<ELP::NIC_Family> * nic, const NIC<ELP::NIC_Fa
 
         Link<ELP> com(self, peer);
         char data[ELP::MTU];
-        for(int i = 0; i < ITERATIONS; i++) {
+        for(unsigned int i = 0; i < ITERATIONS; i++) {
             memset(data, '0' + i, ELP::MTU - 1);
             data[ELP::MTU - 1] = '\0';
             int sent = com.send(data, sizeof(data));
@@ -50,7 +50,7 @@ int elp_link_test(bool sender, NIC<ELP::NIC_Family> * nic, const NIC<ELP::NIC_Fa
 
         Link<ELP> com(self, peer);
         char data[ELP::MTU];
-        for(int i = 0; i < ITERATIONS; i++) {
+        for(unsigned int i = 0; i < ITERATIONS; i++) {
             int received = com.receive(data, sizeof(data));
             if(received == sizeof(data))
                 cout << "  Data from " << peer << ": " << data << endl;
@@ -88,7 +88,7 @@ int elp_port_test(bool sender, NIC<ELP::NIC_Family> * nic, const NIC<ELP::NIC_Fa
 
         Port<ELP> com(self);
         char data[ELP::MTU];
-        for(int i = 0; i < ITERATIONS; i++) {
+        for(unsigned int i = 0; i < ITERATIONS; i++) {
             memset(data, '0' + i, ELP::MTU - 1);
             data[ELP::MTU - 1] = '\0';
             int sent = com.send(peer, data, sizeof(data));
@@ -111,7 +111,7 @@ int elp_port_test(bool sender, NIC<ELP::NIC_Family> * nic, const NIC<ELP::NIC_Fa
         Port<ELP> com(self);
         char data[ELP::MTU];
 
-        for(int i = 0; i < ITERATIONS; i++) {
+        for(unsigned int i = 0; i < ITERATIONS; i++) {
             int received = com.receive(&peer, data, sizeof(data));
             if(received == sizeof(data))
                 cout << "  Data from " << peer << ": " << data << endl;

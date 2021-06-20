@@ -119,19 +119,19 @@ int philosopher(int n, int l, int c)
 }
 
 void eat(unsigned long long n) {
-    static unsigned long long v;
+    static unsigned long long v __attribute__ ((used));
     v = busy_wait(n);
 }
 
 void think(unsigned long long n) {
-    static unsigned long long v;
+    static unsigned long long v __attribute__ ((used));
     v = busy_wait(n);
 }
 
 unsigned long long busy_wait(unsigned long long n)
 {
     volatile unsigned long long v;
-    for(long long int j = 0; j < 20 * n; j++)
+    for(unsigned long long j = 0; j < 20 * n; j++)
         v &= 2 ^ j;
     return v;
 }

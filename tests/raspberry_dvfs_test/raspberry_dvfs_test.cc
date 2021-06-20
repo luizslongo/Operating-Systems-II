@@ -45,7 +45,6 @@ void run_func() {
 Thread * threads[6];
 
 int freq_control() {
-    Hertz clock_base = 1200000000;
     int iters = (15*1000000)/1000000; // each 2 hyp
     int count_dvfs = 1;
     for (int i = 0; i < iters; ++i)
@@ -67,7 +66,6 @@ int main()
     cout << "    clock change to" << new_clock << "Hz" << endl;
     CPU::clock(new_clock);
     cout << "    clock now is = " << CPU::clock() << ",max=" << CPU::max_clock() << endl;
-    TSC::Time_Stamp tsc0 = get_time()+Convert::us2count<TSC::Time_Stamp, Time_Base>(TSC::frequency(),10000);
 
     threads[0] = new RT_Thread(&run_func, 500000, 500000, 100000, 10000, 30, 1);
     threads[1] = new RT_Thread(&run_func, 500000, 500000, 100000, 10000, 30, 1);
