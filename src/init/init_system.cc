@@ -11,7 +11,7 @@ __BEGIN_SYS
 class Init_System
 {
 private:
-    static const unsigned int HEAP_SIZE = Traits<System>::HEAP_SIZE;
+    static const unsigned int HEAP_SIZE = Traits<System>::multitask ? Traits<Machine>::HEAP_SIZE : Traits<System>::HEAP_SIZE;
 
 public:
     Init_System() {
@@ -27,9 +27,11 @@ public:
 
             db<Init>(INF) << "Initializing system's heap: " << endl;
             if(Traits<System>::multiheap) {
-                Segment * tmp = reinterpret_cast<Segment *>(&System::_preheap[0]);
-                System::_heap_segment = new (tmp) Segment(HEAP_SIZE, WHITE, Segment::Flags::SYS);
-                System::_heap = new (&System::_preheap[sizeof(Segment)]) Heap(Address_Space(MMU::current()).attach(System::_heap_segment, Memory_Map::SYS_HEAP), System::_heap_segment->size());
+                System::_heap_segment = new (&System::_preheap[0]) Segment(HEAP_SIZE, WHITE, Segment::Flags::SYS);
+                if(Traits<System>::multitask)
+                    System::_heap = new (&System::_preheap[sizeof(Segment)]) Heap(Address_Space(MMU::current()).attach(System::_heap_segment, Memory_Map::SYS_HEAP), System::_heap_segment->size());
+                else
+                    System::_heap = new (&System::_preheap[sizeof(Segment)]) Heap(Address_Space(MMU::current()).attach(System::_heap_segment), System::_heap_segment->size());
             } else
                 System::_heap = new (&System::_preheap[0]) Heap(MMU::alloc(MMU::pages(HEAP_SIZE)), HEAP_SIZE);
             db<Init>(INF) << "done!" << endl;
@@ -55,7 +57,7 @@ public:
         if(CPU::id() == 0) {
             // Randomize the Random Numbers Generator's seed
             if(Traits<Random>::enabled) {
-                db<Init>(INF) << "Randomizing the Random Numbers Generator's seed: " << endl;
+                db<Init>(INF) << "Randomizing the Random Numbers Generator's seed: ";
                 if(Traits<TSC>::enabled)
                     Random::seed(TSC::time_stamp());
                     
@@ -79,7 +81,7 @@ public:
             }
         }
 
-        // Initialization continues at init_first
+        // Initialization continues at init_end
     }
 };
 

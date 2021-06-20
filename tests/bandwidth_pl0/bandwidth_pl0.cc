@@ -109,13 +109,12 @@ int FuncTask1()
     uint64_t sum = 0;
     //unsigned finish = 5;
     //int prio = 0;        
-    int num_processors = Traits<Build>::CPUS;
     int acc_type = READ;
     //int acc_type = WRITE;
     //int opt;
     //cpu_set_t cmask;
-    int iterations = 100;
-    int i;
+    unsigned int iterations = 100;
+    unsigned int i;
 
     g_mem_ptr = new int[g_mem_size];
 

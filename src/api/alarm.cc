@@ -24,11 +24,11 @@ Alarm::Alarm(const Microsecond & time, Handler * handler, unsigned int times)
         _request.insert(&_link);
         unlock();
     } else {
+        assert(times == 1);
         unlock();
         (*handler)();
     }
 }
-
 
 Alarm::~Alarm()
 {

@@ -89,7 +89,7 @@ int run_func(unsigned int id, unsigned int func) {
     unsigned int my_jobs = jobs[id];
 
     unsigned int iterations;
-    unsigned int ret;
+    unsigned int ret = 0;
     unsigned int cpu;
 
     for(unsigned int job = 0; job < my_jobs; job++){
@@ -139,7 +139,7 @@ int run_func(unsigned int id, unsigned int func) {
 }
 
 void calc_iter_per_job() {
-    for (int i = 0; i < THREAD_NUM; i++)
+    for (unsigned int i = 0; i < THREAD_NUM; i++)
     {
         if (MEASURE_TIME) {
             jobs[i] = 20;
@@ -204,7 +204,7 @@ int main() // TODO: Add clock change in middle of execution (reschedule probably
     cout << "All TASKs created"<< endl;
     locked = false;
 
-    for (int i = 0; i < THREAD_NUM; ++i)
+    for (unsigned int i = 0; i < THREAD_NUM; ++i)
     {
         threads[i]->join();
     }
@@ -222,7 +222,7 @@ int main() // TODO: Add clock change in middle of execution (reschedule probably
     cout << "-----------------------------------------------------" << endl;
     cout << "...............Threads Timing Behavior..............." << endl;
     cout << "-----------------------------------------------------" << endl;
-    for (int i = 0; i < THREAD_NUM; ++i)
+    for (unsigned int i = 0; i < THREAD_NUM; ++i)
     {
         cout<<"t"<<i<<": "<<reinterpret_cast<unsigned int>(threads[i])<<endl;
         cout << "average execution time [" << i << "]: " << diff[i]/(jobs[i]*iter_per_job[i]) << endl;
@@ -240,7 +240,7 @@ int main() // TODO: Add clock change in middle of execution (reschedule probably
 
     cout << "Threads_end" << endl;
     cout << "ID:" << reinterpret_cast<volatile unsigned int>(Thread::self());
-    for (int i = 0; i < THREAD_NUM; ++i)
+    for (unsigned int i = 0; i < THREAD_NUM; ++i)
     {
         cout << "," << reinterpret_cast<volatile unsigned int>(threads[i]);
     }

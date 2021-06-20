@@ -174,15 +174,8 @@ public:
     }
 
 private:
-    void enter() {
-        CPU::int_disable();
-        _lock.acquire();
-    }
-
-    void leave() {
-        _lock.release();
-        CPU::int_enable();
-    }
+    void enter(); // TODO: if ever used, this must be in a .cc { Thread::lock(&_lock); }
+    void leave(); // TODO: if ever used, this must be in a .cc { Thread::unloc(&_lock); }
 
 private:
     Spin _lock;

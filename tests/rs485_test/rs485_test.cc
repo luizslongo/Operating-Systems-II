@@ -39,9 +39,9 @@ int main()
         buf[5] = 0x01;
         buf[6] = 0x60;
         buf[7] = 0x0A;
-        rs485.write(buf, 8); //Envio da mensagem RS485
+        rs485.write(buf, 8); // envio da mensagem RS485
         Delay(350000);
-        int res = rs485.read(buf, 16); //Leitura da mensagem RS485
+        rs485.read(buf, 16); // leitura da mensagem RS485
         k = buf[4];
         l = buf[5];
         conv.c[0] = 0x00;
@@ -65,7 +65,7 @@ int main()
         buf[7] = 0x0A;
         rs485.write(buf, 8);
         Delay(350000);
-        res = rs485.read(buf, 16);
+        rs485.read(buf, 16);
         k = buf[4];
         l = buf[5];
         conv.c[0] = 0x00;
@@ -89,7 +89,7 @@ int main()
         buf[7] = 0xCA;
         rs485.write(buf, 8);
         Delay(350000);
-        res = rs485.read(buf, 16);
+        rs485.read(buf, 16);
         k = buf[4];
         l = buf[5];
         conv.c[0] = 0x00;
@@ -113,7 +113,7 @@ int main()
         buf[7] = 0xC9;
         rs485.write(buf, 8);
         Delay(350000);
-        res = rs485.read(buf, 16);
+        rs485.read(buf, 16);
         k = buf[4];
         l = buf[5];
         conv.c[0] = 0x00;
@@ -137,7 +137,7 @@ int main()
         buf[7] = 0x0B;
         rs485.write(buf, 8);
         Delay(350000);
-        res = rs485.read(buf, 16);
+        rs485.read(buf, 16);
         k = buf[4];
         l = buf[5];
         conv.c[0] = 0x00;
@@ -161,7 +161,7 @@ int main()
         buf[7] = 0x08;
         rs485.write(buf, 8);
         Delay(350000);
-        res = rs485.read(buf, 16);
+        rs485.read(buf, 16);
         k = buf[4];
         l = buf[5];
         conv.c[0] = 0x00;

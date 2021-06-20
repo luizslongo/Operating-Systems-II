@@ -133,7 +133,7 @@ template<> struct Traits<Thread>: public Traits<Build>
     static const bool trace_idle = hysterically_debugged;
     static const bool simulate_capacity = false;
 
-    typedef CPU_Affinity Criterion;
+    typedef Fixed_CPU Criterion;
     static const unsigned int QUANTUM = 10000; // us
 };
 

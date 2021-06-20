@@ -62,11 +62,11 @@ extern signed char img2[];
 /* First task */
 int FuncTask1()
 {
-    int rows = 32;
-    int cols = 32;
-I2D *imleft, *imright, *retDisparity;
+//    int rows = 32;
+//    int cols = 32;
+    I2D *imleft, *imright; //, *retDisparity;
 
-    //char * im2, * im1;
+//    char * im2, * im1;
     int WIN_SZ=8, SHIFT=64;
 
     // Reading BMP image
@@ -78,9 +78,9 @@ I2D *imleft, *imright, *retDisparity;
 
     unsigned long long startCycles;
     unsigned long long endCycles;
-    unsigned long long elapsed;
+//    unsigned long long elapsed;
 
-    u32 sctlr;
+//    u32 sctlr;
 
 
     I2D* srcImage;
@@ -112,8 +112,8 @@ I2D *imleft, *imright, *retDisparity;
         imright = (I2D *) img2;
 
 
-        rows = imleft->height;
-        cols = imleft->width;
+//        rows = imleft->height;
+//        cols = imleft->width;
 
     #ifdef test
         WIN_SZ = 2;
@@ -133,7 +133,7 @@ I2D *imleft, *imright, *retDisparity;
 
         startCycles = TSC::time_stamp();
 
-        retDisparity = getDisparity(imleft, imright, WIN_SZ, SHIFT);
+        /* retDisparity = */ getDisparity(imleft, imright, WIN_SZ, SHIFT);
         endCycles = TSC::time_stamp();
 
         unsigned long long diff = endCycles - startCycles;

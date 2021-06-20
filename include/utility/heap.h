@@ -103,8 +103,8 @@ public:
 
 // Wrapper for atomic heap
 extern "C" {
-    void _heap_lock();
-    void _heap_unlock();
+    void _lock_heap();
+    void _unlock_heap();
 }
 
 template<typename T>
@@ -148,8 +148,8 @@ public:
     }
 
 private:
-    void enter() { _heap_lock(); }
-    void leave() { _heap_unlock(); }
+    void enter() { _lock_heap(); }
+    void leave() { _unlock_heap(); }
 };
 
 

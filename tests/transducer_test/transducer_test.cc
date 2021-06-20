@@ -30,7 +30,7 @@ int main()
         }
         cout << "  Acceleration     -> (X=" << ax.sense() << ", Y=" << ay.sense() << ",Z=" << az.sense() <<") g" << endl;
         cout << "  Angular Velocity -> (X=" << gx.sense() << ", Y=" << gy.sense() << ",Z=" << gz.sense() <<") g" << endl;
-//        Alarm::delay(PERIOD);
+        Alarm::delay(PERIOD);
     }
 
     return 0;

@@ -44,8 +44,6 @@ protected:
     typedef CPU::Reg16 Reg16;
     typedef CPU::Reg32 Reg32;
     typedef CPU::Reg64 Reg64;
-    typedef CPU::IO_Irq IO_Irq;
-    typedef MMU::DMA_Buffer DMA_Buffer;
 
     static const bool promiscuous = Traits<IEEE802_15_4_NIC>::promiscuous || Traits<TSTP>::enabled;
 

@@ -63,7 +63,7 @@ public:
         peer = from;
         cout << endl << "=====================" << endl;
         cout << "Received " << b->size() << " bytes of payload from " << from << " :" << endl;
-        for(int i=0; i<b->size()/sizeof(data_type); i++)
+        for(unsigned int i=0; i < b->size() / sizeof(data_type); i++)
             cout << d[i] << " ";
         cout << endl << "=====================" << endl;
         _nic->free(b);
@@ -93,7 +93,7 @@ int receive(NIC<IEEE802_15_4> * nic)
         led->set(led_value);
         cout << endl << "=====================" << endl;
         cout << "Received " << size << " bytes of payload from " << from << " :" << endl;
-        for(int i=0; i<size/sizeof(Receiver::data_type); i++)
+        for(unsigned int i = 0; i < size / sizeof(Receiver::data_type); i++)
             cout << data[i] << " ";
         cout << endl << "=====================" << endl;
         peer = from;
@@ -120,7 +120,7 @@ int main()
     if(use_receive)
         new Periodic_Thread(delay_time/2, receive, nic);
     else
-        Receiver * r = new Receiver(IEEE802_15_4::PROTO_PTP, nic);
+        new Receiver(IEEE802_15_4::PROTO_PTP, nic);
 
     Periodic_Thread * sender_thread = new Periodic_Thread(delay_time, sender, nic);
 

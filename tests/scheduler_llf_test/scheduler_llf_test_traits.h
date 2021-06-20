@@ -12,7 +12,7 @@ template<> struct Traits<Build>: public Traits_Tokens
     static const unsigned int MODE = LIBRARY;
     static const unsigned int ARCHITECTURE = ARMv7;
     static const unsigned int MACHINE = Cortex;
-    static const unsigned int MODEL = LM3S811;
+    static const unsigned int MODEL = Realview_PBX;
     static const unsigned int CPUS = 1;
     static const unsigned int NODES = 1; // (> 1 => NETWORKING)
     static const unsigned int EXPECTED_SIMULATION_TIME = 60; // s (0 => not simulated)

@@ -18,7 +18,7 @@ Scheduler<Thread> Thread::_scheduler;
 Spin Thread::_lock;
 
 
-void Thread::constructor_prologue(const Color & color, unsigned int stack_size)
+void Thread::constructor_prologue(Color color, unsigned int stack_size)
 {
     lock();
 
@@ -32,7 +32,7 @@ void Thread::constructor_prologue(const Color & color, unsigned int stack_size)
 }
 
 
-void Thread::constructor_epilogue(const Log_Addr & entry, unsigned int stack_size)
+void Thread::constructor_epilogue(Log_Addr entry, unsigned int stack_size)
 {
     db<Thread>(TRC) << "Thread(task=" << _task
                     << ",entry=" << entry
@@ -425,8 +425,12 @@ void Thread::dispatch(Thread * prev, Thread * next, bool charge)
         next->_state = RUNNING;
 
         db<Thread>(TRC) << "Thread::dispatch(prev=" << prev << ",next=" << next << ")" << endl;
-        db<Thread>(INF) << "prev={" << prev << ",ctx=" << *prev->_context << "}" << endl;
-        db<Thread>(INF) << "next={" << next << ",ctx=" << *next->_context << "}" << endl;
+        if(Traits<Thread>::debugged) {
+            CPU::Context tmp;
+            tmp.save();
+            db<Thread>(INF) << "Thread::dispatch:prev={" << prev << ",ctx=" << tmp << "}" << endl;
+        }
+        db<Thread>(INF) << "Thread::dispatch:next={" << next << ",ctx=" << *next->_context << "}" << endl;
 
         if(smp)
             _lock.release();

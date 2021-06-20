@@ -14,7 +14,7 @@ __BEGIN_SYS
 class Message
 {
 private:
-    static const unsigned int MAX_PARAMETERS_SIZE = 20;
+    static const unsigned int MAX_PARAMETERS_SIZE = 256;
 
 public:
     enum {
@@ -113,7 +113,7 @@ public:
         DESERIALIZE(_parms, index, an ...);
     }
     template<typename ... Tn>
-    void out(Tn && ... an) {
+    void out(const Tn & ... an) {
         // Force a compilation error in case out is called with too many arguments
         typename IF<(SIZEOF<Tn ...>::Result <= MAX_PARAMETERS_SIZE), int, void>::Result index = 0;
         SERIALIZE(_parms, index, an ...);
