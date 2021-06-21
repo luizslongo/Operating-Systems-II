@@ -126,10 +126,10 @@ template<> struct Traits<Thread>: public Traits<Build>
 {
     static const bool enabled = Traits<System>::multithread;
     static const bool smp = Traits<System>::multicore;
-    static const bool simulate_capacity = false;
     static const bool trace_idle = hysterically_debugged;
+    static const bool simulate_capacity = false;
 
-    typedef Scheduling_Criteria::GRR Criterion;
+    typedef GRR Criterion;
     static const unsigned int QUANTUM = 10000; // us
 };
 

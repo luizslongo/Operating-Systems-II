@@ -8,6 +8,102 @@
 
 __BEGIN_SYS
 
+E100::E100(unsigned int unit, const Log_Addr & io_mem, const IO_Irq & irq, DMA_Buffer * dma_buf)
+{
+    db<E100>(TRC) << "E100(unit=" << unit << ",io=" << io_mem << ",irq=" << irq << ",dma=" << dma_buf << ")" << endl;
+
+    _configuration.unit = unit;
+    _configuration.timer_frequency = TSC::frequency();
+    _configuration.timer_accuracy = TSC::accuracy() / 1000; // PPB -> PPM
+    if(!_configuration.timer_accuracy)
+    	_configuration.timer_accuracy = 1;
+
+    _io_mem = io_mem;
+    _irq = irq;
+    _csr = static_cast<CSR_Desc *>(io_mem);
+    _dma_buffer = dma_buf;
+
+    // Distribute the DMA_Buffer allocated by init()
+    Log_Addr log = dma_buf->log_address();
+    Phy_Addr phy = dma_buf->phy_address();
+
+    // Initialization Block
+    _configCB_phy = phy;
+    configCB = log;
+    log += align128(sizeof(ConfigureCB));
+    phy += align128(sizeof(ConfigureCB));
+
+    _macAddrCB_phy = phy;
+    macAddrCB = log;
+    log += align128(sizeof(macAddrCB));
+    phy += align128(sizeof(macAddrCB));
+
+    _dmadump_phy = phy;
+    dmadump = log;
+    log += align128(sizeof(struct mem));
+    phy += align128(sizeof(struct mem));
+
+    // Rx_Desc Ring
+    _rx_cur = 0;
+    _rx_last_el = RX_BUFS - 1;
+    _rx_ring = log;
+    _rx_ring_phy = phy;
+
+    db<E100> (TRC) << "E100(_rx_ring malloc of " << RX_BUFS << " units)" << endl;
+
+    // Rx (RFDs)
+    unsigned int i;
+    for(i = 0; i < RX_BUFS; i++) {
+        log += align128(sizeof(Rx_Desc));
+        phy += align128(sizeof(Rx_Desc));
+        _rx_ring[i].command = 0;
+        _rx_ring[i].size = sizeof(Frame);
+        _rx_ring[i].status = Rx_RFD_AVAILABLE;
+        _rx_ring[i].actual_count = 0;
+        _rx_ring[i].link = phy; //next RFD
+    }
+    _rx_ring[i-1].command = cb_el;
+    _rx_ring[i-1].link = _rx_ring_phy;
+
+    // Tx_Desc Ring
+    _tx_cur = 1;
+    _tx_prev = 0;
+    _tx_ring = log;
+    _tx_ring_phy = phy;
+
+    db<E100> (TRC) << "E100(_tx_ring malloc of " << TX_BUFS << " units)" << endl;
+    // TxCBs
+    for(i = 0; i < TX_BUFS; i++) {
+        log += align128(sizeof(Tx_Desc));
+        phy += align128(sizeof(Tx_Desc));
+
+        new (&_tx_ring[i]) Tx_Desc(phy);
+    }
+    _tx_ring[i-1].link = _tx_ring_phy;
+
+
+    // Rx Buffer
+    for(i = 0; i < RX_BUFS; i++) {
+        _rx_buffer[i] = new (log) Buffer(this, &_rx_ring[i]);
+
+        log += align128(sizeof(Buffer));
+        phy += align128(sizeof(Buffer));
+    }
+
+    // Tx Buffer
+    for(i = 0; i < TX_BUFS; i++) {
+        _tx_buffer[i] = new (log) Buffer(this, &_tx_ring[i]);
+
+        log += align128(sizeof(Buffer));
+        phy += align128(sizeof(Buffer));
+    }
+
+    _tx_buffer_prev = _tx_buffer[_tx_prev];
+
+    // reset
+    reset();
+}
+
 void E100::init(unsigned int unit)
 {
     db<Init, E100>(TRC) << "E100::init(unit=" << unit << ")" << endl;

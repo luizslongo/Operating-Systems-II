@@ -4,6 +4,7 @@
 #define __nic_h
 
 #include <architecture/cpu.h>
+#include <architecture/tsc.h>
 #include <utility/string.h>
 
 __BEGIN_SYS
@@ -140,56 +141,89 @@ public:
     typedef unsigned short CRC16;
     typedef unsigned long CRC32;
 
-
-    // NIC Timer Interface (to be implemented by NIC aiming at supporting time-synchronous protocols)
-    class Timer
+    // Configuration parameters
+    struct Configuration
     {
-    public:
-        typedef unsigned long long Time_Stamp;
-        typedef long long Offset;
+        typedef unsigned int Selector;
+        enum : Selector {
+            ADDRESS     = 1 << 0,     // MAC address (all NICs, r/w)
+            CHANNEL     = 1 << 1,     // current channel (wireless only, , r/w)
+            POWER       = 1 << 2,     // current transmission power (wireless only, r/w)
+            PERIOD      = 1 << 3,     // MAC period (time-synchronous MACs only, r/w)
+            TIMER       = 1 << 4,     // timer parameters (time-synchronous MACs only, r/w)
+            TIME_STAMP  = 1UL << 31,  // time stamp the configuration (always updated, also when reading, r/o)
+            ALL         = 0xffffffff,
+        };
 
-    public:
-         Timer() {}
-
-         static Time_Stamp read();
-         static Time_Stamp sfd();
-         static void adjust(const Offset & o);
-
-         static Hertz frequency();
-         static PPB accuracy();
-
-         static Time_Stamp us2count(const Microsecond & us);
-         static Microsecond count2us(const Time_Stamp & ts);
+        Selector selector;
+        long long parameter; // a generic parameter used for reconfiguration operations
     };
 
     // NIC statistics
     struct Statistics
     {
+        typedef unsigned int Count;
+
         Statistics(): rx_packets(0), tx_packets(0), rx_bytes(0), tx_bytes(0) {}
 
-        unsigned int rx_packets;
-        unsigned int tx_packets;
-        unsigned int rx_bytes;
-        unsigned int tx_bytes;
+        Count rx_packets;
+        Count tx_packets;
+        Count rx_bytes;
+        Count tx_bytes;
     };
 
     // Buffer Metadata added to frames by higher-level protocols
-    struct Metadata
+    struct Dummy_Metadata
     {
-        typedef Timer::Time_Stamp Time_Stamp;
-        typedef Timer::Offset Offset;
+        // Traits
+        static const bool collect_sfdts = false;
+        static const bool collect_rssi = false;
 
-        static const Time_Stamp INFINITE = -1;
+        // Data (null; union just to compile inactive protocols)
+        union {
+            int rssi;
+            TSC::Time_Stamp sfdts;
+            Microsecond period;
+            Microsecond deadline;
+            unsigned int id;
+            unsigned long long offset;
+            bool destined_to_me;
+            bool downlink;
+            unsigned int my_distance;
+            unsigned int sender_distance;
+            bool is_new;
+            bool is_microframe;
+            bool relevant;
+            bool trusted;
+            bool freed;
+            unsigned int random_backoff_exponent;
+            unsigned int microframe_count;
+            int hint;
+            unsigned int times_txed;
+        };
 
-    	// TODO: remove unnecessary long longs
+        Dummy_Metadata() {};
+
+        friend OStream & operator<<(OStream & db, const Dummy_Metadata & m) {
+        	db << "{no metadata}";
+        	return db;
+        }
+    };
+
+    struct TSTP_Metadata
+    {
+        // Traits
+        static const bool collect_sfdts = true;
+        static const bool collect_rssi = true;
+
         int rssi;                             // Received Signal Strength Indicator
-        int period;                           // NIC's MAC current period (in us)
-        Time_Stamp sfd_time_stamp;            // Start-of-frame reception time stamp
+        TSC::Time_Stamp sfdts;                // Time stamp of start of frame delimiter reception
+        Microsecond period;                   // NIC's MAC current period (in us)
+    	Microsecond deadline;                 // Time until when this message must arrive at the final destination
     	unsigned int id;                      // Message identifier
     	unsigned long long offset;            // MAC contention offset
     	bool destined_to_me;                  // Whether this node is the final destination for this message
     	bool downlink;                        // Message direction (downlink == from sink to sensor)
-    	Time_Stamp deadline;                  // Time until when this message must arrive at the final destination
     	unsigned int my_distance;             // This node's distance to the message's final destination
     	unsigned int sender_distance;         // Last hop's distance to the message's final destination
     	bool is_new;                          // Whether this message was just created by this node
@@ -201,6 +235,15 @@ public:
     	unsigned int microframe_count;        // Number of Microframes left until data
     	int hint;                             // Inserted in the Hint Microframe field
         unsigned int times_txed;              // Number of times the MAC transmited this buffer
+
+        friend OStream & operator<<(OStream & db, const TSTP_Metadata & m) {
+            db << "{rssi=" << m.rssi << ",period=" << m.period << ",sfdts=" << m.sfdts << ",id=" << m.id
+               << ",offset=" << m.offset << ",destined_to_me=" << m.destined_to_me << ",downlink=" << m.downlink << ",deadline=" << m.deadline
+               << ",my_distance=" << m.my_distance << ",sender_distance=" << m.sender_distance << ",is_new=" << m.is_new << ",is_microframe=" << m.is_microframe
+               << ",relevant=" << m.relevant << ",trusted=" << m.trusted << ",freed=" << m.freed << ",hint=" << m.hint
+               << "}";
+            return db;
+        }
     };
 
     private:
@@ -220,7 +263,7 @@ public:
     using typename Family::Configuration;
     using typename Family::Statistics;
     using typename Family::Observed;
-    using typename Family::Observer;
+    using Family::MTU;
 
 protected:
     NIC(unsigned int unit = 0) {}
@@ -233,15 +276,14 @@ public:
 
     virtual Buffer * alloc(const Address & dst, const Protocol & prot, unsigned int once, unsigned int always, unsigned int payload) = 0;
     virtual int send(Buffer * buf) = 0;
-    virtual void free(Buffer * buf) = 0;
-    virtual bool drop(unsigned int id) { return false; };
+    virtual bool drop(Buffer * buf) { return false; } // after send, while still in the working queues, not supported by many NICs
+    virtual void free(Buffer * buf) = 0; // to be called by observers after handling notifications from the NIC
 
     virtual const Address & address() = 0;
     virtual void address(const Address &) = 0;
 
-    virtual void reset() = 0;
-    virtual bool reconfigure(const Configuration & c) { return false; }
-    virtual void configuration(Configuration * c) { Configuration null; *c = null; }
+    virtual bool reconfigure(const Configuration * c = 0) = 0; // pass null to reset
+    virtual const Configuration & configuration() = 0;
 
     virtual const Statistics & statistics() = 0;
 };

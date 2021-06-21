@@ -26,21 +26,25 @@ class TSTP::Security: private SmartData, private Data_Observer<Buffer>
 private:
     static const bool use_encryption = false;
     static const unsigned int KEY_SIZE = Traits<TSTP>::KEY_SIZE;
-    static const unsigned int KEY_MANAGER_PERIOD = 10 * 1000 * 1000;
-    static const unsigned long long KEY_EXPIRY = 1 * 60 * 1000 * 1000;
-    static const unsigned long long POLY_TIME_WINDOW = KEY_EXPIRY / 2;
+    static const Time::Type KEY_MANAGER_PERIOD = 10 * 1000 * 1000;
+    static const Time::Type KEY_EXPIRY = 1 * 60 * 1000 * 1000;
+    static const Time::Type POLY_TIME_WINDOW = KEY_EXPIRY / 2;
 
     typedef _SYS::AES<KEY_SIZE> _AES;
     typedef Diffie_Hellman<_AES> _DH;
     typedef Poly1305<_AES> _Poly1305;
 
 public:
-    typedef Array<unsigned char, 16> Node_Id;
-    typedef Array<unsigned char, 16> Auth;
-    typedef Array<unsigned char, 16> OTP;
-
+    typedef Array<unsigned char, KEY_SIZE> Node_Id;
+    typedef Array<unsigned char, KEY_SIZE> Auth;
+    typedef Array<unsigned char, KEY_SIZE> OTP;
     typedef _DH::Public_Key Public_Key;
     typedef _DH::Shared_Key Master_Secret;
+
+    class Packed_Public_Key: public Public_Key {
+    public:
+        Packed_Public_Key(const Public_Key & pub): Public_Key(pub.x, pub.y, pub.z) {};
+    } __attribute__((packed));
 
     class Peer;
     typedef Simple_List<Peer> Peers;
@@ -69,7 +73,7 @@ public:
         const Master_Secret & master_secret() const { return _master_secret; }
         void master_secret(const Master_Secret & ms) {
             _master_secret = ms;
-            _auth_time = TSTP::now();
+            _auth_time = now();
         }
 
         const Auth & auth() const { return _auth; }
@@ -94,9 +98,9 @@ public:
     class Pending_Key
     {
     public:
-        Pending_Key(const Public_Key & pk): _master_secret_calculated(false), _creation(TSTP::now()), _public_key(pk), _el(this) {}
+        Pending_Key(const Public_Key & pk): _master_secret_calculated(false), _creation(now()), _public_key(pk), _el(this) {}
 
-        bool expired() { return TSTP::now() - _creation > KEY_EXPIRY; }
+        bool expired() { return now() - _creation > KEY_EXPIRY; }
 
         const Master_Secret & master_secret() {
             if(_master_secret_calculated)
@@ -132,7 +136,7 @@ public:
         const Region & destination() const { return _destination; }
         void destination(const Region & d) { _destination = d; }
 
-        const Public_Key & key() { return _public_key; }
+        Public_Key key() { return _public_key; }
         void key(const Public_Key & k) { _public_key = k; }
 
         friend Debug & operator<<(Debug & db, const DH_Request & m) {
@@ -142,8 +146,8 @@ public:
 
     private:
         Region _destination;
-        Public_Key _public_key;
-    };
+        Packed_Public_Key _public_key;
+    } __attribute__((packed));
 
     // Diffie-Hellman Response Security Bootstrap Control Message
     class DH_Response: public Control
@@ -161,8 +165,8 @@ public:
         }
 
     private:
-        Public_Key _public_key;
-    };
+        Packed_Public_Key _public_key;
+    } __attribute__((packed));
 
     // Authentication Request Security Bootstrap Control Message
     class Auth_Request: public Control
@@ -185,7 +189,7 @@ public:
     private:
         Auth _auth;
         OTP _otp;
-    };
+    } __attribute__((packed));
 
     // Authentication Granted Security Bootstrap Control Message
     class Auth_Granted: public Control
@@ -208,20 +212,20 @@ public:
     private:
         Region _destination;
         Auth _auth;
-     };
+     } __attribute__((packed));
 
     // Report Control Message
     class Report: public Control
     {
     public:
-        Report(const Unit & unit, const Error & error = 0, bool epoch_request = false)
-        : Control(REPORT, error) {}
+        Report()
+        : Control(REPORT) {}
 
         friend Debug & operator<<(Debug & db, const Report & r) {
 //            db << reinterpret_cast<const Control &>(r) << ",u=" << r._unit << ",e=" << r._error << ",r=" << r._epoch_request;
             return db;
         }
-    };
+    } __attribute__((packed));
 
 public:
     Security();
@@ -236,7 +240,7 @@ public:
     }
 
     static Time deadline(const Time & origin) {
-        return origin + Math::min(static_cast<Time>(KEY_MANAGER_PERIOD), KEY_EXPIRY) / 2;
+        return origin + Math::min(KEY_MANAGER_PERIOD, KEY_EXPIRY) / 2;
     }
 
 private:

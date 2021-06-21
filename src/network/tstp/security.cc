@@ -41,14 +41,13 @@ void TSTP::Security::update(Data_Observed<Buffer> * obs, Buffer * buf)
 {
     db<TSTP>(TRC) << "TSTP::Security::update(obs=" << obs << ",buf=" << buf << ")" << endl;
 
+    Header * header = buf->frame()->data<Header>();
+
     if(!buf->is_microframe && buf->destined_to_me) {
-
-        switch(buf->frame()->data<Header>()->type()) {
-
+        switch(header->type()) {
             case CONTROL: {
                 db<TSTP>(TRC) << "TSTP::Security::update(): Control message received" << endl;
-                switch(buf->frame()->data<Control>()->subtype()) {
-
+                switch(header->subtype()) {
                     case DH_REQUEST: {
                         if(TSTP::here() != TSTP::sink()) {
                             DH_Request * dh_req = buf->frame()->data<DH_Request>();
@@ -213,9 +212,9 @@ void TSTP::Security::update(Data_Observed<Buffer> * obs, Buffer * buf)
             case RESPONSE: {
                 db<TSTP>(INF) << "TSTP::Security::update(): Response message received from " << buf->frame()->data<Header>()->origin() << endl;
 //                Response * resp = buf->frame()->data<Response>();
-                Time reception_time = NIC<NIC_Family>::Timer::count2us(buf->sfd_time_stamp); // TODO: create a method in Timekeeper to handle these conversions
+                Time reception_time = ts2us(buf->sfdts);
                 for(Peers::Element * el = _trusted_peers.head(); el; el = el->next()) {
-                    if(el->object()->valid_deploy(buf->frame()->data<Header>()->origin(), TSTP::now())) {
+                    if(el->object()->valid_deploy(header->origin(), TSTP::now())) {
                         unsigned char * data = buf->frame()->data<unsigned char>();
                         if(unpack(el->object(), data, &data[sizeof(Master_Secret)], reception_time)) {
                             buf->trusted = true;
@@ -252,10 +251,10 @@ void TSTP::Security::marshal(Buffer * buf)
             return;
 
         // Pad data to the size of the key
-        unsigned int data_size = buf->size() - (sizeof(Response) - (MTU - sizeof(Unit) - sizeof(int) - sizeof(Time) - sizeof(CRC)));
+        unsigned int data_size = buf->size() - (sizeof(Response) - (MTU - sizeof(Unit) - sizeof(int) - sizeof(Time) - sizeof(Trailer)));
 //        Response * response = buf->frame()->data<Response>();
         unsigned char * data = buf->frame()->data<unsigned char>();
-        buf->size(sizeof(Response) - (MTU - sizeof(Unit) - sizeof(int) - sizeof(Time) - sizeof(CRC)) + sizeof(Master_Secret));
+        buf->size(sizeof(Response) - (MTU - sizeof(Unit) - sizeof(int) - sizeof(Time) - sizeof(Trailer)) + sizeof(Master_Secret));
         for(unsigned int i = data_size; i < sizeof(Master_Secret); i++)
             data[i] = 0;
 
@@ -317,7 +316,7 @@ bool TSTP::Security::unpack(const Peer * peer, unsigned char * msg, const unsign
     for(; i < sizeof(Master_Secret); i++)
         mi[i] = ms[i];
 
-    reception_time /= POLY_TIME_WINDOW;
+    reception_time = reception_time / POLY_TIME_WINDOW;
 
     OTP key;
     unsigned char nonce[16];
@@ -331,7 +330,7 @@ bool TSTP::Security::unpack(const Peer * peer, unsigned char * msg, const unsign
     if(poly.verify(mac, nonce, msg, sizeof(Master_Secret)))
         return true;
 
-    reception_time--;
+    reception_time = reception_time - 1;
     memset(nonce, 0, 16);
     memcpy(nonce, &reception_time, sizeof(Time) < 16u ? sizeof(Time) : 16u);
     poly.stamp(key, nonce, mi, MI_SIZE);
@@ -340,7 +339,7 @@ bool TSTP::Security::unpack(const Peer * peer, unsigned char * msg, const unsign
     if(poly.verify(mac, nonce, msg, sizeof(Master_Secret)))
         return true;
 
-    reception_time += 2;
+    reception_time = reception_time + 2;
     memset(nonce, 0, 16);
     memcpy(nonce, &reception_time, sizeof(Time) < 16u ? sizeof(Time) : 16u);
     poly.stamp(key, nonce, mi, MI_SIZE);
@@ -404,13 +403,13 @@ bool TSTP::Security::verify_auth_request(const Master_Secret & master_secret, co
     if(poly.verify(otp, nonce, mi, MI_SIZE))
         return true;
 
-    t--;
+    t = t - 1;
     memset(nonce, 0, 16);
     memcpy(nonce, &t, sizeof(Time) < 16u ? sizeof(Time) : 16u);
     if(poly.verify(otp, nonce, mi, MI_SIZE))
         return true;
 
-    t += 2;
+    t = t + 2;
     memset(nonce, 0, 16);
     memcpy(nonce, &t, sizeof(Time) < 16u ? sizeof(Time) : 16u);
     if(poly.verify(otp, nonce, mi, MI_SIZE))

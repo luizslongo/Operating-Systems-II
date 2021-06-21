@@ -5,11 +5,7 @@
 __BEGIN_SYS
 
 // Clerk
-#ifdef __PMU_H
-
 bool Clerk<PMU>::_in_use[Traits<Build>::CPUS][CHANNELS];
-
-#endif
 
 // System_Monitor
 Simple_List<Monitor> Monitor::_monitors[Traits<Build>::CPUS];

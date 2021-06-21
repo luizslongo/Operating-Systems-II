@@ -94,15 +94,16 @@ public:
     int receive(Address * src, Protocol * prot, void * data, unsigned int size);
 
     Buffer * alloc(const Address & dst, const Protocol & prot, unsigned int once, unsigned int always, unsigned int payload);
-    void free(Buffer * buf);
     int send(Buffer * buf);
+    void free(Buffer * buf);
 
-    const Address & address() { return _address; }
-    void address(const Address & address) { _address = address; }
+    const Address & address() { return _configuration.address; }
+    void address(const Address & address) { _configuration.address = address; _configuration.selector = Configuration::ADDRESS; reconfigure(&_configuration); }
 
-    const Statistics & statistics() { return _statistics; }
+    bool reconfigure(const Configuration * c);
+    const Configuration & configuration() { return _configuration; }
 
-    void reset();
+    const Statistics & statistics() { _statistics.time_stamp = TSC::time_stamp(); return _statistics; }
 
     virtual void attach(Observer * o, const Protocol & p) {
         db<RTL8139>(TRC) << "RTL8139::attach(p=" << p  << ")" << endl;
@@ -119,6 +120,7 @@ public:
     static RTL8139 * get(unsigned int unit = 0) { return get_by_unit(unit); }
 
 private:
+    void reset();
     void handle_int();
 
     static void int_handler(IC::Interrupt_Id interrupt);
@@ -142,9 +144,7 @@ protected:
     IO_Port _io_port;
 
 private:
-    unsigned int _unit;
-
-    Address _address;
+    Configuration _configuration;
     Statistics _statistics;
 
     IO_Irq _irq;

@@ -36,13 +36,16 @@ public:
     int receive(Address * src, Protocol * prot, void * data, unsigned int size);
 
     Buffer * alloc(const Address & dst, const Protocol & prot, unsigned int once, unsigned int always, unsigned int payload);
-    void free(Buffer * buf);
     int send(Buffer * buf);
+    void free(Buffer * buf);
 
-    const Address & address() { return _address; }
-    void address(const Address & address) { _address = address; }
+    const Address & address() { return _configuration.address; }
+    void address(const Address & address) { _configuration.address = address; _configuration.selector = Configuration::ADDRESS; reconfigure(&_configuration); }
 
-    const Statistics & statistics() { return _statistics; }
+    bool reconfigure(const Configuration * c);
+    const Configuration & configuration() { return _configuration; }
+
+    const Statistics & statistics() {  _statistics.time_stamp = TSC::time_stamp(); return _statistics; }
 
     void reset();
 
@@ -80,21 +83,11 @@ private:
     static void init(unsigned int unit);
 
 private:
-    unsigned int _unit;
-
-    Address _address;
+    Configuration _configuration;
     Statistics _statistics;
 
     static Device _devices[UNITS];
 };
-
-inline Ethernet_NIC::Timer::Time_Stamp Ethernet_NIC::Timer::Timer::read() { return TSC::time_stamp(); }
-inline void Ethernet_NIC::Timer::adjust(const Ethernet_NIC::Timer::Offset & o) { }
-inline Hertz Ethernet_NIC::Timer::frequency() { return TSC::frequency(); }
-inline PPB Ethernet_NIC::Timer::accuracy() { return TSC::accuracy(); }
-inline Ethernet_NIC::Timer::Time_Stamp Ethernet_NIC::Timer::us2count(const Microsecond & us) { return Convert::us2count<Time_Stamp, Microsecond>(TSC::frequency(), us); }
-inline Microsecond Ethernet_NIC::Timer::count2us(const Ethernet_NIC::Timer::Time_Stamp & ts) { return Convert::count2us<Hertz, Time_Stamp, Microsecond>(TSC::frequency(), ts); }
-//    static Time_Stamp sfd() { return 0; }
 
 __END_SYS
 

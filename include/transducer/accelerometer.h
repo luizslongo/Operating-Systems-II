@@ -20,7 +20,7 @@ class Accelerometer: public Transducer<SmartData::Unit::F32 | SmartData::Unit::A
 public:
     static const unsigned int DEVS = 3;
 
-    static const Error ERROR = UNKNOWN;
+    static const Uncertainty UNCERTAINTY = UNKNOWN;
     static const bool active = false;
 
 public:

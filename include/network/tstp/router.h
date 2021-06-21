@@ -32,41 +32,38 @@ public:
 private:
     void update(Data_Observed<Buffer> * obs, Buffer * buf);
 
+    // Evaluates if a message must be forwarded, case in which it returns true
     bool forward(Buffer * buf) {
-        // Not a forwarder
         if(!forwarder)
             return false;
 
         if(buf->my_distance >= buf->sender_distance) {
-            if(!buf->destined_to_me) { // Message comes from node closer to the destination
+            if(!buf->destined_to_me) { // don't forward messages coming from nodes closer to the destination
                 return false;
             } else {
-                if(buf->frame()->data<Header>()->type() == INTEREST) {
+                if(buf->frame()->data<Header>()->type() == INTEREST) { // don't forward interest messages in downlink mode
                     return false;
                 }
             }
         }
 
-        // Do not forward messages that come from too far away, to avoid radio range asymmetry
-        Space::Distance d = here() - buf->frame()->data<Header>()->last_hop();
-        if(d > RANGE)
+        Space::Distance d = here() - buf->frame()->data<Header>()->last_hop().space;
+        if(d > RANGE) // don't forward messages coming from too far away to avoid radio range asymmetry
             return false;
 
-        Time expiry = buf->deadline;
+        Microsecond expiry = buf->deadline;
 
-        if(expiry == Metadata::INFINITE) // Message will not expire
+        if(expiry == INFINITE) // messages that don't expire must always be forwarded
             return true;
-        else if (expiry <= now()) // Expired message
+        else if(expiry <= now()) // care for expired message
             return !drop_expired;
 
-        Time best_case_delivery_time = (buf->my_distance + RANGE - 1) / RANGE * buf->period;
-        Time relative_expiry = expiry - now();
-
-        // Message will expire soon
-        if(best_case_delivery_time > relative_expiry)
+        Microsecond best_case_delivery_time = (buf->my_distance + RANGE - 1) / RANGE * buf->period;
+        Microsecond relative_expiry = expiry - now();
+        if(best_case_delivery_time > relative_expiry) // don't forward messages that will expire before they can get to the destination
             return false;
 
-        buf->deadline -= best_case_delivery_time;
+        buf->deadline = buf->deadline - best_case_delivery_time; // make deadline local for local scheduling
 
         return true;
     }

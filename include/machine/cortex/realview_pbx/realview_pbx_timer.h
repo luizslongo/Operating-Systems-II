@@ -22,23 +22,25 @@ private:
     typedef IC_Common::Interrupt_Id Interrupt_Id;
 
 public:
+    static const unsigned int FREQUENCY = Traits<Timer>::FREQUENCY;
+
     typedef A9_Private_Timer::Count Count;
 
 public:
     Count read() { return pt()->read(); }
 
-    void enable() { pt()->enable(); }
-    void disable() { pt()->disable(); }
+    static void reset() { disable(); pt()->config(pt()->clock() / FREQUENCY); enable();}
+    static void enable() { pt()->enable(); }
+    static void disable() { pt()->disable(); }
 
-    Hertz clock() { return pt()->clock(); }
+    static Hertz clock() { return pt()->clock(); }
 
 protected:
     static void eoi(Interrupt_Id id) { pt()->eoi(id); };
 
 private:
-    static void init(const Hertz & frequency) {
-        pt()->config(pt()->clock() / frequency);
-        pt()->enable();
+    static void init() {
+        reset();
     }
 
 private:

@@ -12,14 +12,14 @@ template<> struct Traits<Build>: public Traits_Tokens
     static const unsigned int MODE = LIBRARY;
     static const unsigned int ARCHITECTURE = ARMv7;
     static const unsigned int MACHINE = Cortex;
-    static const unsigned int MODEL = LM3S811;
+    static const unsigned int MODEL = Realview_PBX;
     static const unsigned int CPUS = 1;
     static const unsigned int NODES = 1; // (> 1 => NETWORKING)
     static const unsigned int EXPECTED_SIMULATION_TIME = 60; // s (0 => not simulated)
 
     // Default flags
     static const bool enabled = true;
-    static const bool monitored = true;
+    static const bool monitored = false;
     static const bool debugged = true;
     static const bool hysterically_debugged = false;
 
@@ -133,7 +133,7 @@ template<> struct Traits<Thread>: public Traits<Build>
     static const bool simulate_capacity = false;
     static const bool trace_idle = hysterically_debugged;
 
-    typedef Scheduling_Criteria::RM Criterion;
+    typedef RM Criterion;
     static const unsigned int QUANTUM = 10000; // us
 };
 
@@ -159,7 +159,7 @@ template<> struct Traits<SmartData>: public Traits<Build>
 
 template<> struct Traits<Network>: public Traits<Build>
 {
-    typedef LIST<> NETWORKS;
+    typedef LIST<TSTP> NETWORKS;
 
     static const unsigned int RETRIES = 3;
     static const unsigned int TIMEOUT = 10; // s

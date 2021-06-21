@@ -22,10 +22,15 @@ private:
 
 public:
     typedef Traits<ELP>::NIC_Family NIC_Family;
-    static const bool connectionless = true;
-    static const unsigned int PROTOCOL = NIC_Family::PROTO_ELP;
-
+    typedef NIC_Family::Protocol Protocol;
+    typedef NIC_Family::Buffer Buffer;
     typedef unsigned short Port;
+
+    enum {
+        PROTOCOL = NIC_Family::PROTO_ELP
+    };
+
+    static const bool connectionless = true;
 
     class Address
     {
@@ -58,9 +63,6 @@ public:
         Port _port;
     };
 
-    typedef NIC_Family::Protocol Protocol;
-    typedef NIC_Family::Buffer Buffer;
-
     typedef Data_Observer<Buffer, Port> Observer;
     typedef Data_Observed<Buffer, Port> Observed;
 
@@ -82,14 +84,16 @@ public:
                 << "}";
             return os;
         }
-
+        unsigned short size() { return _size; }
+        void size(unsigned short s) { _size = s; }
+        
     private:
         Port _from;
         Port _to;
         unsigned short _size;
     } __attribute__((packed));
 
-    static const unsigned int MTU = NIC<NIC_Family>::MTU -sizeof(NIC_Family::Header) - sizeof(Header);
+    static const unsigned int MTU = NIC<NIC_Family>::MTU - sizeof(Header);
     typedef unsigned char Data[MTU];
 
     class Packet: public Header
@@ -134,41 +138,51 @@ public:
 
         ELP * elp = binding->a();
 
-        db<ELP>(INF) << "ELP::send:elp=" << elp << ", nic=" << elp->_nic << endl;
+        db<ELP>(TRC) << "ELP::send:elp=" << elp << ", nic=" << elp->_nic << endl;
 
-        Buffer * buf = elp->_nic->alloc(to.mac(), PROTOCOL, 0, sizeof(Header), sizeof(Data));
+        Buffer * buf = elp->_nic->alloc(to.mac(), PROTOCOL, 0, sizeof(Header), size);
+
         if(!buf)
             return 0;
 
         Packet * packet = buf->frame()->data<Packet>();
-        unsigned int s = (s >= sizeof(Packet)) ? sizeof(Packet) : size;
-        memcpy(packet, data, s);
+        // Fields of packet and header have to be filled out
+        packet->header()->from( from.port() );
+        packet->header()->to(to);
+        packet->size(size);
+
+        memcpy(packet->data<void *>(), data, size);
 
         buf->nic()->send(buf);
 
         return size;
     }
 
-    static int receive(Buffer * buf, void * data, unsigned int size) {
-        db<ELP>(TRC) << "ELP::receive(buf=" << buf << ",d=" << data << ",s=" << size << ")" << endl;
+    static int receive(Buffer * buf, void * data, unsigned int s) {
+        db<ELP>(TRC) << "ELP::receive(buf=" << buf << ",d=" << data << ",s=" << s << ")" << endl;
 
         Packet * packet = buf->frame()->data<Packet>();
-        unsigned int s = (size >= sizeof(Packet)) ? sizeof(Packet) : size;
-        memcpy(data, packet, s);
-        buf->nic()->free(buf);
 
+        unsigned int size = (s >= packet->size()) ? packet->size() : s;
+        memcpy(data, packet->data<void *>(), size);
+        if(buf->nic())
+            buf->nic()->free(buf);
         return size;
     }
 
-    static int receive(Buffer * buf, Address * from, void * data, unsigned int size) {
-        db<ELP>(TRC) << "ELP::receive(buf=" << buf << ",d=" << data << ",s=" << size << ")" << endl;
+    static int receive(Buffer * buf, Address * from, void * data, unsigned int s) {
+        db<ELP>(TRC) << "ELP::receive(buf=" << buf << ",from,d=" << data << ",s=" << s << ")" << endl;
+
+        assert(buf);
+        assert(buf->nic());
 
         Packet * packet = buf->frame()->data<Packet>();
-        unsigned int s = (size >= sizeof(Packet)) ? sizeof(Packet) : size;
-        *from = Address(buf->frame()->src(), packet->from());
-        memcpy(data, packet, s);
-        buf->nic()->free(buf);
 
+        unsigned int size = (s >= packet->size()) ? packet->size() : s;
+        *from = Address(buf->frame()->src(), packet->from());
+        memcpy(data, packet->data<void *>(), size);
+
+        buf->nic()->free(buf);
         return size;
     }
 

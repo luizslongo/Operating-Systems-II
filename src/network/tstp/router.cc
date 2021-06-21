@@ -20,28 +20,35 @@ TSTP::Router::~Router()
 void TSTP::Router::update(Data_Observed<Buffer> * obs, Buffer * buf)
 {
     db<TSTP>(TRC) << "TSTP::Router::update(obs=" << obs << ",buf=" << buf << ")" << endl;
+
     if(buf->is_microframe) {
         if(!buf->relevant)
             buf->relevant = forwarder && (buf->my_distance < buf->sender_distance);
     } else {
         Header * header = buf->frame()->data<Header>();
         // Keep Alive messages are never forwarded
-        if((header->type() == CONTROL) && (buf->frame()->data<Control>()->subtype() == KEEP_ALIVE))
+        if((header->type() == CONTROL) && (header->subtype() == KEEP_ALIVE))
             buf->destined_to_me = false;
         else {
             Region dst = destination(buf);
-            buf->destined_to_me = ((header->origin() != TSTP::here()) && (dst.contains(TSTP::here(), dst.t0)));
+            buf->destined_to_me = ((header->origin().space != here()) && (dst.contains(here(), dst.t0)));
+            if(buf->destined_to_me)
+                db<TSTP>(INF) << "TSTP::Router::update:packet is for me" << endl;
 
             if(forward(buf)) {
+                // Forward/acknowledge the packet
+                if(buf->destined_to_me)
+                	return;
+//                    db<TSTP>(INF) << "TSTP::Router::update:acknowledging packet" << endl;
+                else
+                    db<TSTP>(INF) << "TSTP::Router::update:forwarding packet" << endl;
 
-                // Forward or ACK the message
-
-                Buffer * send_buf = TSTP::alloc(buf->size());
+                Buffer * send_buf = alloc(buf->size());
 
                 // Copy frame contents
                 memcpy(send_buf->frame(), buf->frame(), buf->size());
 
-                // Copy Buffer Metainformation
+                // Copy buffer metadata
                 send_buf->size(buf->size());
                 send_buf->id = buf->id;
                 send_buf->destined_to_me = buf->destined_to_me;
@@ -57,16 +64,17 @@ void TSTP::Router::update(Data_Observed<Buffer> * obs, Buffer * buf)
                 offset(send_buf);
 
                 // Adjust Last Hop location
-                Header * header = send_buf->frame()->data<Header>();
-                header->last_hop(TSTP::here());
+                Header * send_header = send_buf->frame()->data<Header>();
+                send_header->last_hop(here());
+                send_header->last_hop(now());
                 send_buf->sender_distance = send_buf->my_distance;
 
                 header->location_confidence(_locator->confidence());
-                header->time_request(TSTP::Timekeeper::sync_required());
+                header->time_request(!Timekeeper::synchronized());
 
                 send_buf->hint = send_buf->my_distance;
 
-                TSTP::_nic->send(send_buf);
+                _nic->send(send_buf);
             }
         }
     }
@@ -78,8 +86,8 @@ void TSTP::Router::marshal(Buffer * buf)
 {
     db<TSTP>(TRC) << "TSTP::Router::marshal(buf=" << buf << ")" << endl;
     TSTP::Region dest = destination(buf);
-    buf->downlink = dest.center != TSTP::sink();
-    buf->destined_to_me = (buf->frame()->data<Header>()->origin() != TSTP::here()) && (dest.contains(TSTP::here(), TSTP::now()));
+    buf->downlink = (dest.center != sink());
+    buf->destined_to_me = (buf->frame()->data<Header>()->origin().space != here()) && (dest.contains(here(), now()));
     buf->hint = buf->my_distance;
 
     offset(buf);
@@ -88,40 +96,42 @@ void TSTP::Router::marshal(Buffer * buf)
 
 TSTP::Region TSTP::Router::destination(Buffer * buf)
 {
-    switch(buf->frame()->data<Header>()->type()) {
+    Header * header = buf->frame()->data<Header>();
+
+    switch(header->type()) {
         case INTEREST:
             return buf->frame()->data<Interest>()->region();
         case RESPONSE:
-            return Region(sink(), 0, buf->frame()->data<Response>()->origin(), buf->frame()->data<Response>()->expiry());
+            return Region(sink(), 0, header->origin().time, header->origin().time + buf->frame()->data<Response>()->expiry());
         case COMMAND:
             return buf->frame()->data<Command>()->region();
         case CONTROL:
-            switch(buf->frame()->data<Control>()->subtype()) {
+            switch(header->subtype()) {
                 default:
                 case DH_RESPONSE:
                 case AUTH_REQUEST: {
-                    Time origin = buf->frame()->data<Header>()->origin();
-                    Time deadline = Security::deadline(origin);
-                    return Region(sink(), 0, origin, deadline);
+                    Time t0 = header->origin().time;
+                    Time t1 = Security::deadline(t0);
+                    return Region(sink(), 0, t0, t1);
                 }
                 case DH_REQUEST: {
-                    Time origin = buf->frame()->data<Header>()->origin();
-                    Time deadline = Security::deadline(origin);
-                    return Region(buf->frame()->data<Security::DH_Request>()->destination().center, buf->frame()->data<Security::DH_Request>()->destination().radius, origin, deadline);
+                    Time t0 = header->origin().time;
+                    Time t1 = Security::deadline(t0);
+                    return Region(buf->frame()->data<Security::DH_Request>()->destination().center, buf->frame()->data<Security::DH_Request>()->destination().radius, t0, t1);
                 }
                 case AUTH_GRANTED: {
-                    Time origin = buf->frame()->data<Header>()->origin();
-                    Time deadline = Security::deadline(origin);
-                    return Region(buf->frame()->data<Security::Auth_Granted>()->destination().center, buf->frame()->data<Security::Auth_Granted>()->destination().radius, origin, deadline);
+                    Time t0 = header->origin().time;
+                    Time t1 = Security::deadline(t0);
+                    return Region(buf->frame()->data<Security::Auth_Granted>()->destination().center, buf->frame()->data<Security::Auth_Granted>()->destination().radius, t0, t1);
                 }
                 case REPORT: {
-                    return Region(sink(), 0, buf->frame()->data<Control>()->origin(), -1/*TODO*/);
+                    return Region(sink(), 0, header->origin().time, -1/*TODO*/);
                 }
                 case KEEP_ALIVE: {
                     while(true) {
                         Space fake(here().x + (Random::random() % (RANGE / 3)), here().y + (Random::random() % (RANGE / 3)), (here().z + Random::random() % (RANGE / 3)));
                         if(fake != here())
-                            return Region(fake, 0, 0, -1); // Should never be destined_to_me
+                            return Region(fake, 0, 0, -1); // should never be destined_to_me
                     }
                 }
                 break;
@@ -134,7 +144,7 @@ TSTP::Region TSTP::Router::destination(Buffer * buf)
             }
             break;
         default:
-            db<TSTP>(WRN) << "TSTP::Locator::destination(): invalid frame type " << buf->frame()->data<Header>()->type() << endl;
+            db<TSTP>(WRN) << "TSTP::Locator::destination(): invalid frame type " << header->type() << endl;
             return Region(here(), 0, now() - 2, now() - 1);
     }
 }

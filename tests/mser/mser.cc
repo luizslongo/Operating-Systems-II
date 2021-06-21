@@ -97,14 +97,14 @@ unsigned char sell_pt[8+1080];
 I2D* mser(I2D* I, int in_delta)
 {
    idx_t i, rindex=0;
-   int k;
+   unsigned int k;
    int nout = 1;
    
    //int OUT_REGIONS=0;
    //int OUT_ELL = 1;
    //int OUT_PARENTS = 2;
    //int OUT_AREA = 3;
-   int BUCKETS = 256;
+   unsigned int BUCKETS = 256;
    
    I2D* out;
 
@@ -127,12 +127,12 @@ I2D* mser(I2D* I, int in_delta)
     uiArray* strides_pt ;    /* strides to move in image array          */
     uiArray* visited_pt ;    /* flag                                    */
 
-    int nel ;              /* number of image elements (pixels)       */
-    int ner = 0 ;          /* number of extremal regions              */
-    int nmer = 0 ;         /* number of maximally stable              */
-    int ndims ;            /* number of dimensions                    */
-    iArray* dims ;           /* dimensions                              */
-    int njoins = 0 ;       /* number of join ops                      */
+    unsigned int nel ;          /* number of image elements (pixels)       */
+    unsigned int ner = 0 ;      /* number of extremal regions              */
+    unsigned int nmer = 0 ;     /* number of maximally stable              */
+    unsigned int ndims ;        /* number of dimensions                    */
+    iArray* dims ;              /* dimensions                              */
+    unsigned int njoins = 0 ;   /* number of join ops                      */
 
     I2D* I_pt ;    /* source image                            */
     pair_t*   pairs_pt ;   /* scratch buffer to sort pixels           */
@@ -145,8 +145,8 @@ I2D* mser(I2D* I, int in_delta)
     /* ellipses fitting */
     ulliArray* acc_pt ;        /* accumulator to integrate region moments */
     ulliArray* ell_pt ;        /* ellipses parameters                     */
-    int    gdl ;           /* number of parameters of an ellipse      */
-    uiArray* joins_pt ;      /* sequence of joins                       */
+    unsigned int    gdl ;      /* number of parameters of an ellipse      */
+    uiArray* joins_pt ;        /* sequence of joins                       */
    
     delta = 0;
     delta = in_delta;
@@ -592,7 +592,7 @@ I2D* mser(I2D* I, int in_delta)
                 goto remove_this_region ;
             }
 
-            if( big_cleanup   && regions_pt[i].area  >  nel/2 ) 
+            if( big_cleanup   && regions_pt[i].area  >  int(nel/2) )
             {
                 ++nbig ;
                 goto remove_this_region ;
@@ -666,8 +666,8 @@ I2D* mser(I2D* I, int in_delta)
     ell_pt = 0 ;
     if (nout >= 1) 
     {
-        int midx = 1 ;
-        int d, index, j ;
+        unsigned int midx = 1 ;
+        unsigned int d, index, j ;
     
         /* enumerate maxstable regions */
         for(i = 0 ; i < ner ; ++i) 
@@ -693,7 +693,7 @@ I2D* mser(I2D* I, int in_delta)
         for(d = 0 ; d < gdl ; ++d) 
         {
             /* initalize parameter */
-            int counter_i;
+            unsigned int counter_i;
             for(counter_i=0; counter_i<ndims; counter_i++)
                 sref(subs_pt,counter_i) = 0;
       
@@ -826,10 +826,9 @@ int FuncTask1()
 
     unsigned long long startCycles; 
     unsigned long long endCycles; 
-    unsigned long long elapsed;
  
     int iterations;
-    for(iterations = 0; iterations < 100000; iterations++) {
+    for(iterations = 0; iterations <= 10; iterations++) {
     //while(1) {
    
         //printk("[mser] \n");
@@ -852,9 +851,9 @@ int FuncTask1()
         /*
         if(elapsed[1] == 0) {
             printk("%u\n", elapsed[0]);
-            //*(volatile unsigned int *)ddr_addr = (unsigned int) elapsed[0];
-            //memcpy((void *) ddr_addr, &elapsed[0], sizeof(unsigned int));
-            //*shmem = elapsed[0];
+            // *(volatile unsigned int *)ddr_addr = (unsigned int) elapsed[0];
+            // memcpy((void *) ddr_addr, &elapsed[0], sizeof(unsigned int));
+            // *shmem = elapsed[0];
             //printk("after writing\n");
         } else {
             printk("%u%u\n", elapsed[1], elapsed[0]);

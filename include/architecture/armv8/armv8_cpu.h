@@ -3,8 +3,10 @@
 #ifndef __armv8_h
 #define __armv8_h
 
+#define __cpu_common_only__
 #include <architecture/cpu.h>
 #include <architecture/armv7/armv7_cpu.h>
+#undef __cpu_common_only__
 
 __BEGIN_SYS
 
@@ -12,6 +14,16 @@ class ARMv8_A: public ARMv7_A
 {
 protected:
     ARMv8_A() {};
+
+public:
+    static unsigned int cores() {
+        // Cortex A53 cannot execute "mrc p15, 4, r0, c15, c0, 0".
+        // The amount of cores booted is equal to the Traits value (defined at Raspberry_Pi3::pre_init::pre_init for instance, up to four)
+        return Traits<Build>::CPUS; 
+    }
+
+    // We need to redefine because we also redefined cores()
+    static void smp_barrier(unsigned long cores = cores()) { CPU_Common::smp_barrier<&finc>(cores, id()); }
 };
 
 class CPU: private ARMv8_A
@@ -27,15 +39,20 @@ public:
     using CPU_Common::Reg16;
     using CPU_Common::Reg32;
     using CPU_Common::Reg64;
-    using CPU_Common::Log_Addr;
-    using CPU_Common::Phy_Addr;
+    using Reg = CPU_Common::Reg32;
+    using Log_Addr = CPU_Common::Log_Addr<Reg>;
+    using Phy_Addr = CPU_Common::Phy_Addr<Reg>;
 
     // CPU Context
     class Context
     {
     public:
-        Context(const Log_Addr & entry, const Log_Addr & exit): _flags(FLAG_DEFAULTS), _lr(exit | (thumb ? 1 : 0)), _pc(entry | (thumb ? 1 : 0)) {}
-//        _r0(0), _r1(1), _r2(2), _r3(3), _r4(4), _r5(5), _r6(6), _r7(7), _r8(8), _r9(9), _r10(10), _r11(11), _r12(12),
+        Context(){}
+        Context(Log_Addr  entry, Log_Addr exit, Log_Addr usp): _flags(FLAG_DEFAULTS), _lr(exit | (thumb ? 1 : 0)), _pc(entry | (thumb ? 1 : 0)) {
+            if(Traits<Build>::hysterically_debugged || Traits<Thread>::trace_idle) {
+                _r0 = 0; _r1 = 1; _r2 = 2; _r3 = 3; _r4 = 4; _r5 = 5; _r6 = 6; _r7 = 7; _r8 = 8; _r9 = 9; _r10 = 10; _r11 = 11; _r12 = 12;
+            }
+        }
 
         void save() volatile  __attribute__ ((naked));
         void load() const volatile;
@@ -94,43 +111,76 @@ public:
 public:
     CPU() {}
 
-    static Hertz clock() { return _cpu_clock; }
-    static Hertz bus_clock() { return _bus_clock; }
-
+    using Base::pc;
+    using Base::lr;
     using Base::flags;
+    using Base::sp;
+    using Base::fr;
+    using Base::pdp;
+
+    using Base::id;
+    using Base::cores;
+
+    static Hertz clock() { return _cpu_clock; }
+    static void clock(const Hertz & frequency); // defined along with each machine's IOCtrl
+    static Hertz max_clock();
+    static Hertz min_clock();
+
+    static Hertz bus_clock() { return _bus_clock; }
 
     using Base::int_enable;
     using Base::int_disable;
     using Base::int_enabled;
     using Base::int_disabled;
 
-    using Base::sp;
-    using Base::fr;
-    using Base::ip;
-    using Base::pdp;
+    using Base::halt;
 
     using Base::tsl;
     using Base::finc;
     using Base::fdec;
     using Base::cas;
 
-    using Base::halt;
+    using Base::smp_barrier;
+
+    using Base::msr12;
+    using Base::mrs12;
+    using Base::cpsr;
+    using Base::cpsrc;
+    using Base::spsr_cxsf;
+    using Base::elr_hyp;
+    using Base::r0;
+    using Base::r1;
+    using Base::ldmia;
+    using Base::stmia;
+    using Base::enable_fpu;
+
+    static void fpu_save() {
+        if(Traits<Build>::MODEL == Traits<Build>::Raspberry_Pi3)
+            ASM("       vpush    {s0-s15}               \n"
+                "       vpush    {s16-s31}              \n");
+    }
+
+    static void fpu_restore() {
+        if(Traits<Build>::MODEL == Traits<Build>::Raspberry_Pi3)
+            ASM("       vpop    {s0-s15}                \n"
+                "       vpop    {s16-s31}               \n");
+    }
 
     static void switch_context(Context ** o, Context * n) __attribute__ ((naked));
 
     template<typename ... Tn>
-    static Context * init_stack(const Log_Addr & usp, Log_Addr sp, void (* exit)(), int (* entry)(Tn ...), Tn ... an) {
-        sp -= sizeof(Context);
-        Context * ctx = new(sp) Context(entry, exit);
+    static Context * init_stack(Log_Addr usp, Log_Addr ksp, void (* exit)(), int (* entry)(Tn ...), Tn ... an) {
+        ksp -= sizeof(Context);
+        Context * ctx = new(ksp) Context(entry, exit, usp);
         init_stack_helper(&ctx->_r0, an ...);
         return ctx;
     }
     template<typename ... Tn>
-    static Log_Addr init_user_stack(Log_Addr sp, void (* exit)(), Tn ... an) {
-        sp -= sizeof(Context);
-        Context * ctx = new(sp) Context(0, exit);
+    static Log_Addr init_user_stack(Log_Addr usp, void (* exit)(), Tn ... an) {
+        usp -= sizeof(Context);
+        Context * ctx = new(usp) Context(0, exit, 0);
         init_stack_helper(&ctx->_r0, an ...);
-        return sp;
+        return usp;
     }
 
     static int syscall(void * message);

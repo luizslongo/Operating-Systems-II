@@ -14,11 +14,11 @@ template<> struct Traits<Build>: public Traits_Tokens
     static const unsigned int MODEL = Legacy_PC;
     static const unsigned int CPUS = 8;
     static const unsigned int NODES = 1; // (> 1 => NETWORKING)
-    static const unsigned int EXPECTED_SIMULATION_TIME = 60; // s (0 => not simulated)
+    static const unsigned int EXPECTED_SIMULATION_TIME = 100; // s (0 => not simulated)
 
     // Default flags
     static const bool enabled = true;
-    static const bool monitored = true;
+    static const bool monitored = false;
     static const bool debugged = true;
     static const bool hysterically_debugged = false;
 
@@ -131,7 +131,7 @@ template<> struct Traits<Thread>: public Traits<Build>
     static const bool simulate_capacity = false;
     static const bool trace_idle = hysterically_debugged;
 
-    typedef Scheduling_Criteria::PEDF Criterion;
+    typedef PEDF Criterion;
     static const unsigned int QUANTUM = 10000; // us
 };
 
@@ -157,7 +157,7 @@ template<> struct Traits<SmartData>: public Traits<Build>
 
 template<> struct Traits<Network>: public Traits<Build>
 {
-    typedef LIST<> NETWORKS;
+    typedef LIST<TSTP> NETWORKS;
 
     static const unsigned int RETRIES = 3;
     static const unsigned int TIMEOUT = 10; // s
@@ -228,8 +228,12 @@ template<> struct Traits<Monitor>: public Traits<Build>
     static constexpr System_Event SYSTEM_EVENTS[]                 = {ELAPSED_TIME, DEADLINE_MISSES, CPU_EXECUTION_TIME, THREAD_EXECUTION_TIME, RUNNING_THREAD};
     static constexpr unsigned int SYSTEM_EVENTS_FREQUENCIES[]     = {           1,               1,                  1,                     1,              1}; // in Hz
 
+    // Reading PMU while in QEMU is only available with KVM enabled, thus, if this feature is not available
+    // the execution will stop at the first Monitor::run() with Monitor::_enable set to true due to PMU::read() execution (PMU::config works fine)
+    // (after the execution of Monitor::enable_captures(), which only this test is using)
+    // This code is functional when running this application in a real machine (or enabling the KVM feature) 
     static constexpr PMU_Event PMU_EVENTS[]                       = {COMMITED_INSTRUCTIONS, BRANCHES, CACHE_MISSES};
-    static constexpr unsigned int PMU_EVENTS_FREQUENCIES[]        = {                    1,        1,            1}; // in Hz
+    static constexpr unsigned int PMU_EVENTS_FREQUENCIES[]        = {                    0,        0,            0}; // in Hz
 
     static constexpr unsigned int TRANSDUCER_EVENTS[]             = {CPU_VOLTAGE, CPU_TEMPERATURE};
     static constexpr unsigned int TRANSDUCER_EVENTS_FREQUENCIES[] = {          1,           1}; // in Hz

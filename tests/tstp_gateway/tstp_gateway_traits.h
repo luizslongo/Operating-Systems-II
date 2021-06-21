@@ -14,11 +14,11 @@ template<> struct Traits<Build>: public Traits_Tokens
     static const unsigned int MODEL = eMote3;
     static const unsigned int CPUS = 1;
     static const unsigned int NODES = 2;     // (> 1 => NETWORKING)
-    static const unsigned int EXPECTED_SIMULATION_TIME = 60; // s (0 => not simulated)
+    static const unsigned int EXPECTED_SIMULATION_TIME = 0; // s (0 => not simulated)
 
     // Default flags
     static const bool enabled = true;
-    static const bool monitored = true;
+    static const bool monitored = false;
     static const bool debugged = true;
     static const bool hysterically_debugged = false;
 
@@ -146,7 +146,7 @@ template<> struct Traits<Thread>: public Traits<Build>
     static const bool simulate_capacity = false;
     static const bool trace_idle = hysterically_debugged;
 
-    typedef Scheduling_Criteria::RR Criterion;
+    typedef RR Criterion;
     static const unsigned int QUANTUM = 10000; // us
 };
 
@@ -182,19 +182,22 @@ template<> struct Traits<Network>: public Traits<Build>
 
 template<> struct Traits<ELP>: public Traits<Network>
 {
-    typedef Ethernet NIC_Family;
-
-    static const bool enabled = NETWORKS::Count<ELP>::Result;
+    typedef IEEE802_15_4 NIC_Family;
+    static constexpr unsigned int NICS[] = {0}; // relative to NIC_Family (i.e. Traits<Ethernet>::DEVICES[NICS[i]]
+    static const unsigned int UNITS = COUNTOF(NICS);
+    static const bool enabled = Traits<Network>::enabled && NETWORKS::Count<ELP>::Result;
 };
 
 template<> struct Traits<TSTP>: public Traits<Network>
 {
     typedef IEEE802_15_4 NIC_Family;
-
-    static const bool enabled = NETWORKS::Count<TSTP>::Result;
-
+    static constexpr unsigned int NICS[] = {0}; // relative to NIC_Family (i.e. Traits<Ethernet>::DEVICES[NICS[i]]
+    static const bool enabled = Traits<Network>::enabled && NETWORKS::Count<TSTP>::Result;
     static const unsigned int KEY_SIZE = 16;
+    static const bool hysterically_debugged = false;
     static const unsigned int RADIO_RANGE = 8000; // Approximated radio range in centimeters
+    static const bool debugged = false;
+    static const bool sink = true;
 };
 
 template<> struct Traits<IP>: public Traits<Network>

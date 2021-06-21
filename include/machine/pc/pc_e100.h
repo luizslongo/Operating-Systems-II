@@ -522,13 +522,13 @@ protected:
 };
 
 
-class E100: public NIC<Ethernet>, private IF<(Traits<E100>::EXPECTED_SIMULATION_TIME > 0), i82559ER, i82559c>::Result
+class E100: public NIC<Ethernet>, private IF<(Traits<Build>::EXPECTED_SIMULATION_TIME > 0), i82559ER, i82559c>::Result
 {
     friend class Machine_Common;
 
 private:
     // The E100 engine (i82559c seems to be broken in QEMU)
-    typedef IF<(Traits<E100>::EXPECTED_SIMULATION_TIME > 0), i82559ER, i82559c>::Result Engine;
+    typedef IF<(Traits<Build>::EXPECTED_SIMULATION_TIME > 0), i82559ER, i82559c>::Result Engine;
 
     // PCI ID
     static const unsigned int PCI_VENDOR_ID = Engine::PCI_VENDOR_ID;
@@ -565,15 +565,16 @@ public:
     int receive(Address * src, Protocol * prot, void * data, unsigned int size);
 
     Buffer * alloc(const Address & dst, const Protocol & prot, unsigned int once, unsigned int always, unsigned int payload);
-    void free(Buffer * buf);
     int send(Buffer * buf);
+    void free(Buffer * buf);
 
-    const Address & address() { return _address; }
-    void address(const Address & address) { _address = address; }
+    const Address & address() { return _configuration.address; }
+    void address(const Address & address) { _configuration.address = address; _configuration.selector = Configuration::ADDRESS; reconfigure(&_configuration); }
 
-    const Statistics & statistics() { return _statistics; }
+    bool reconfigure(const Configuration * c);
+    const Configuration & configuration() { return _configuration; }
 
-    void reset();
+    const Statistics & statistics() { _statistics.time_stamp = TSC::time_stamp(); return _statistics; }
 
     void attach(Observer * o, const Protocol & p) {
         NIC<Ethernet>::attach(o, p);
@@ -589,6 +590,7 @@ public:
     static E100 * get(unsigned int unit = 0) { return get_by_unit(unit); }
 
 private:
+    void reset();
     void handle_int();
 
     static void int_handler(IC::Interrupt_Id interrupt);
@@ -702,7 +704,8 @@ private:
     }
 
 private:
-    unsigned int _unit;
+    Configuration _configuration;
+    Statistics _statistics;
 
     Log_Addr _io_mem;
     IO_Irq _irq;

@@ -24,7 +24,7 @@ int sender(NIC<IEEE802_15_4> * nic)
     {
         cout << "Sending message: " << data << endl;
         cout << "to " << peer << endl;
-        int send_result = nic->send(peer, NIC<IEEE802_15_4>::PTP, data, 16);
+        int send_result = nic->send(peer, IEEE802_15_4::PROTO_PTP, data, 16);
         cout << "send result = " << send_result << endl;
 
         if(send_result <= 0)
@@ -63,7 +63,7 @@ public:
         peer = from;
         cout << endl << "=====================" << endl;
         cout << "Received " << b->size() << " bytes of payload from " << from << " :" << endl;
-        for(int i=0; i<b->size()/sizeof(data_type); i++)
+        for(unsigned int i=0; i < b->size() / sizeof(data_type); i++)
             cout << d[i] << " ";
         cout << endl << "=====================" << endl;
         _nic->free(b);
@@ -93,7 +93,7 @@ int receive(NIC<IEEE802_15_4> * nic)
         led->set(led_value);
         cout << endl << "=====================" << endl;
         cout << "Received " << size << " bytes of payload from " << from << " :" << endl;
-        for(int i=0; i<size/sizeof(Receiver::data_type); i++)
+        for(unsigned int i = 0; i < size / sizeof(Receiver::data_type); i++)
             cout << data[i] << " ";
         cout << endl << "=====================" << endl;
         peer = from;
@@ -108,7 +108,7 @@ int main()
     led_value = true;
     led->set(led_value);
 
-    NIC<IEEE802_15_4> * nic = new NIC<IEEE802_15_4>();
+    NIC<IEEE802_15_4> * nic = IEEE802_15_4_NIC::get();
     NIC<IEEE802_15_4>::Address me = nic->address();
     me[0] = 0xaa;
     me[1] = 1;
@@ -120,7 +120,7 @@ int main()
     if(use_receive)
         new Periodic_Thread(delay_time/2, receive, nic);
     else
-        Receiver * r = new Receiver(NIC<IEEE802_15_4>::PTP, nic);
+        new Receiver(IEEE802_15_4::PROTO_PTP, nic);
 
     Periodic_Thread * sender_thread = new Periodic_Thread(delay_time, sender, nic);
 

@@ -15,11 +15,11 @@ template<> struct Traits<Build>: public Traits_Tokens
     static const unsigned int MODEL = Legacy_PC;
     static const unsigned int CPUS = 4;
     static const unsigned int NODES = 1; // (> 1 => NETWORKING)
-    static const unsigned int EXPECTED_SIMULATION_TIME = 60; // s (0 => not simulated)
+    static const unsigned int EXPECTED_SIMULATION_TIME = 10000; // s (0 => not simulated)
 
     // Default flags
     static const bool enabled = true;
-    static const bool monitored = true;
+    static const bool monitored = false;
     static const bool debugged = true;
     static const bool hysterically_debugged = false;
 
@@ -90,7 +90,6 @@ template<> struct Traits<Aspect>: public Traits<Build>
 // Mediators
 template<> struct Traits<CPU>: public Traits<Build>
 {
-    enum {LITTLE, BIG};
     static const unsigned int ENDIANESS         = LITTLE;
     static const unsigned int WORD_SIZE         = 32;
     static const unsigned int CLOCK             = 2000000000;
@@ -109,7 +108,8 @@ template<> struct Traits<MMU>: public Traits<Build>
 
 template<> struct Traits<FPU>: public Traits<Build>
 {
-    static const bool enabled = false;
+    static const bool enabled = true;
+    static const bool user_save = true;
 };
 
 template<> struct Traits<PMU>: public Traits<Build>
@@ -117,53 +117,46 @@ template<> struct Traits<PMU>: public Traits<Build>
     static const bool enabled = true;
     enum { V1, V2, V3, DUO, MICRO, ATOM, SANDY_BRIDGE };
     static const unsigned int VERSION = SANDY_BRIDGE;
-
-    enum {  EVENTS_V1 = 7,
-            EVENTS_SANDY_BRIDGE = 213
-    };
-    static const unsigned int EVENTS = EVENTS_SANDY_BRIDGE;
 };
+
 
 class Machine_Common;
-template<> struct Traits<Machine_Common>: public Traits<Build>
-{
-    static const bool debugged = Traits<Build>::debugged;
-};
+template<> struct Traits<Machine_Common>: public Traits<Build> {};
 
 template<> struct Traits<Machine>: public Traits<Machine_Common>
 {
+    static const bool cpus_use_local_timer      = false;
+
     static const unsigned int NOT_USED          = 0xffffffff;
     static const unsigned int CPUS              = Traits<Build>::CPUS;
+
+    // Physical Memory
+    static const unsigned int MEM_BASE          = 0x00000000;
+    static const unsigned int MEM_TOP           = 0x10000000; 	// 256 MB (MAX for 32-bit is 0x70000000 / 1792 MB)
+    static const unsigned int MIO_BASE          = NOT_USED;	// defined by SETUP	
+    static const unsigned int MIO_TOP           = NOT_USED;	// defined by SETUP
 
     // Boot Image
     static const unsigned int BOOT_LENGTH_MIN   = 512;
     static const unsigned int BOOT_LENGTH_MAX   = 512;
-    static const unsigned int BOOT_IMAGE_ADDR   = 0x00008000;
-    static const unsigned int RAMDISK           = 0x0fa28000; // MEMDISK-dependent
+    static const unsigned int BOOT_STACK        = NOT_USED;     // defined by BOOT and by SETUP
+    static const unsigned int RAMDISK           = 0x0fa28000;   // MEMDISK-dependent
     static const unsigned int RAMDISK_SIZE      = 0x003c0000;
-
-    // Physical Memory
-    static const unsigned int MEM_BASE          = 0x00000000;
-    static const unsigned int MEM_TOP           = 0x10000000; // 256 MB (MAX for 32-bit is 0x70000000 / 1792 MB)
-    static const unsigned int BOOT_STACK        = NOT_USED;   // not used (defined by BOOT and by SETUP)
 
     // Logical Memory Map
     static const unsigned int BOOT              = 0x00007c00;
-    static const unsigned int SETUP             = 0x00100000; // 1 MB
-    static const unsigned int INIT              = 0x00200000; // 2 MB
+    static const unsigned int IMAGE             = 0x00008000;
+    static const unsigned int SETUP             = 0x00100000; 	// 1 MB
+    static const unsigned int INIT              = 0x00200000; 	// 2 MB
 
     static const unsigned int APP_LOW           = 0x00000000;
-    static const unsigned int APP_CODE          = 0x00000000;
-    static const unsigned int APP_DATA          = 0x00400000; // 4 MB
-    static const unsigned int APP_HIGH          = 0x0fffffff; // 256 MB
+    static const unsigned int APP_CODE          = APP_LOW;
+    static const unsigned int APP_DATA          = APP_LOW + 4 * 1024 * 1024;
+    static const unsigned int APP_HIGH          = 0x0fffffff; 	// 256 MB
 
-    static const unsigned int PHY_MEM           = 0x80000000; // 2 GB
-    static const unsigned int IO_BASE           = 0xf0000000; // 4 GB - 256 MB
-    static const unsigned int IO_TOP            = 0xff400000; // 4 GB - 12 MB
-
-    static const unsigned int SYS               = IO_TOP;     // 4 GB - 12 MB
-    static const unsigned int SYS_CODE          = 0xff700000;
-    static const unsigned int SYS_DATA          = 0xff740000;
+    static const unsigned int PHY_MEM           = 0x80000000; 	// 2 GB
+    static const unsigned int IO                = 0xf0000000; 	// 4 GB - 256 MB
+    static const unsigned int SYS               = 0xff400000;   // 4 GB - 12 MB
 
     // Default Sizes and Quantities
     static const unsigned int STACK_SIZE        = 16 * 1024;
@@ -222,7 +215,7 @@ template<> struct Traits<UART>: public Traits<Machine_Common>
     static const unsigned int COM4 = 0x2e8; // to 0x2ef, no IRQ
 };
 
-template<> struct Traits<Serial_Display>: public Traits<Build>
+template<> struct Traits<Serial_Display>: public Traits<Machine_Common>
 {
     static const bool enabled = (Traits<Build>::EXPECTED_SIMULATION_TIME != 0);
     static const int ENGINE = UART;
@@ -232,7 +225,7 @@ template<> struct Traits<Serial_Display>: public Traits<Build>
     static const int TAB_SIZE = 8;
 };
 
-template<> struct Traits<Serial_Keyboard>: public Traits<Build>
+template<> struct Traits<Serial_Keyboard>: public Traits<Machine_Common>
 {
     static const bool enabled = (Traits<Build>::EXPECTED_SIMULATION_TIME != 0);
 };
@@ -259,54 +252,48 @@ template<> struct Traits<Scratchpad>: public Traits<Machine_Common>
 
 template<> struct Traits<Ethernet>: public Traits<Machine_Common>
 {
-    typedef LIST<PCNet32, E100> DEVICES;
+    typedef LIST<PCNet32, PCNet32> DEVICES;
     static const unsigned int UNITS = DEVICES::Length;
 
     static const bool enabled = (Traits<Build>::NODES > 1) && (UNITS > 0);
+
+    static const bool promiscuous = false;
 };
 
-template<> struct Traits<PCNet32>: public Traits<Machine_Common>
+template<> struct Traits<PCNet32>: public Traits<Ethernet>
 {
-    static const unsigned int UNITS = Traits<Ethernet>::DEVICES::Count<PCNet32>::Result;
+    static const unsigned int UNITS = DEVICES::Count<PCNet32>::Result;
+    static const bool enabled = Traits<Ethernet>::enabled && (UNITS > 0);
+
     static const unsigned int SEND_BUFFERS = 64; // per unit
     static const unsigned int RECEIVE_BUFFERS = 256; // per unit
-
-    static const bool enabled = (Traits<Build>::NODES > 1) && (UNITS > 0);
-
-    static const bool promiscuous = false;
 };
 
-template<> struct Traits<E100>: public Traits<Machine_Common>
+template<> struct Traits<E100>: public Traits<Ethernet>
 {
-    static const unsigned int UNITS = Traits<Ethernet>::DEVICES::Count<E100>::Result;
+    static const unsigned int UNITS = DEVICES::Count<E100>::Result;
+    static const bool enabled = Traits<Ethernet>::enabled && (UNITS > 0);
+
     static const unsigned int SEND_BUFFERS = 64; // per unit
     static const unsigned int RECEIVE_BUFFERS = 64; // per unit
-
-    static const bool enabled = (Traits<Build>::NODES > 1) && (UNITS > 0);
-
-    static const bool promiscuous = false;
-    static const bool qemu = true;
 };
 
-template<> struct Traits<C905>: public Traits<Machine_Common>
+template<> struct Traits<C905>: public Traits<Ethernet>
 {
-    static const unsigned int UNITS = Traits<Ethernet>::DEVICES::Count<C905>::Result;
+    static const unsigned int UNITS = DEVICES::Count<C905>::Result;
+    static const bool enabled = Traits<Ethernet>::enabled && (UNITS > 0);
+
     static const unsigned int SEND_BUFFERS = 64; // per unit
     static const unsigned int RECEIVE_BUFFERS = 64; // per unit
-
-    static const bool enabled = (Traits<Build>::NODES > 1) && (UNITS > 0);
-
-    static const bool promiscuous = false;
 };
 
-template<> struct Traits<RTL8139>: public Traits<Machine_Common>
+template<> struct Traits<RTL8139>: public Traits<Ethernet>
 {
-    static const unsigned int UNITS = Traits<Ethernet>::DEVICES::Count<RTL8139>::Result;
+    static const unsigned int UNITS = DEVICES::Count<RTL8139>::Result;
+    static const bool enabled = Traits<Ethernet>::enabled && (UNITS > 0);
+
     static const unsigned int SEND_BUFFERS = 4; // per unit
     static const unsigned int RECEIVE_BUFFERS = 8192; // no descriptor, just a memory block of 8192 bits
-
-    static const bool enabled = (Traits<Build>::NODES > 1) && (UNITS > 0);
-    static const bool promiscuous = false;
 };
 
 template<> struct Traits<FPGA>: public Traits<Machine_Common>
@@ -354,7 +341,7 @@ template<> struct Traits<Thread>: public Traits<Build>
     static const bool simulate_capacity = false;
     static const bool trace_idle = hysterically_debugged;
 
-    typedef Scheduling_Criteria::PEDF Criterion;
+    typedef PEDF Criterion;
     static const unsigned int QUANTUM = 10000; // us
 };
 
@@ -380,7 +367,7 @@ template<> struct Traits<SmartData>: public Traits<Build>
 
 template<> struct Traits<Network>: public Traits<Build>
 {
-    typedef LIST<> NETWORKS;
+    typedef LIST<TSTP> NETWORKS;
 
     static const unsigned int RETRIES = 3;
     static const unsigned int TIMEOUT = 10; // s

@@ -4,7 +4,9 @@
 #define __armv8_pmu_h
 
 #include <architecture/cpu.h>
+#define __common_only__
 #include <architecture/pmu.h>
+#undef __common_only__
 
 __BEGIN_SYS
 
@@ -13,12 +15,12 @@ class ARMv8_A_PMU: public PMU_Common
 private:
     typedef CPU::Reg32 Reg32;
 
+protected:
+    static const unsigned int CHANNELS = 6;
+    static const unsigned int FIXED = 0;
     static const unsigned int EVENTS = 54;
 
 public:
-    static const unsigned int CHANNELS = 6;
-    static const unsigned int FIXED = 0;
-
     // Useful bits in the PMCR register
     enum {                      // Description                          Type    Value after reset
         PMCR_E = 1 << 0,        // Enable all counters                  r/w
@@ -101,7 +103,7 @@ public:
 public:
     ARMv8_A_PMU() {}
 
-    static void config(const Channel & channel, const Event & event, const Flags & flags = NONE) {
+    static void config(Channel channel, Event event, Flags flags = NONE) {
         assert((static_cast<unsigned int>(channel) < CHANNELS) && (static_cast<unsigned int>(event) < EVENTS));
         db<PMU>(TRC) << "PMU::config(c=" << channel << ",e=" << event << ",f=" << flags << ")" << endl;
         pmselr(channel);
@@ -109,29 +111,29 @@ public:
         start(channel);
     }
 
-    static Count read(const Channel & channel) {
+    static Count read(Channel channel) {
         db<PMU>(TRC) << "PMU::read(c=" << channel << ")" << endl;
         pmselr(channel);
         return pmxevcntr();
     }
 
-    static void write(const Channel & channel, const Count & count) {
+    static void write(Channel channel, Count count) {
         db<PMU>(TRC) << "PMU::write(ch=" << channel << ",ct=" << count << ")" << endl;
         pmselr(channel);
         pmxevcntr(count);
     }
 
-    static void start(const Channel & channel) {
+    static void start(Channel channel) {
         db<PMU>(TRC) << "PMU::start(c=" << channel << ")" << endl;
         pmcntenset(pmcntenset() | (1 << channel));
     }
 
-    static void stop(const Channel & channel) {
+    static void stop(Channel channel) {
         db<PMU>(TRC) << "PMU::stop(c=" << channel << ")" << endl;
         pmcntenclr(pmcntenclr() | (1 << channel));
     }
 
-    static void reset(const Channel & channel) {
+    static void reset(Channel channel) {
         db<PMU>(TRC) << "PMU::reset(c=" << channel << ")" << endl;
         write(channel, 0);
     }
@@ -161,72 +163,16 @@ private:
     static Reg32 pmxevcntr() { Reg32 reg; ASM("mrc p15, 0, %0, c9, c13, 2\n\t" : "=r"(reg) : ); return reg; }
 
 private:
-    static const Reg32 _events[EVENTS] = {
-                INSTRUCTIONS_ARCHITECTURALLY_EXECUTED,  // 0
-        IMMEDIATE_BRANCH,                       // 1
-        CYCLE,                                  // 2
-        BRANCHES_ARCHITECTURALLY_EXECUTED,      // 3
-        MISPREDICTED_BRANCH,                    // 4
-        L1D_ACCESS,                             // 5
-        L2D_ACCESS,                             // 6
-        L1D_REFILL,                             // 7
-        DATA_MEMORY_ACCESS,                     // 8 (LLC MISS)
-        L1I_REFILL,                             // 9
-        L1I_TLB_REFILL,                         // 10
-        PREDICTABLE_BRANCH_EXECUTED,            // 11
-        L1D_WRITEBACK,                          // 12
-        L2D_WRITEBACK,                          // 13
-        L2D_REFILL,                             // 14
-        UNALIGNED_LOAD_STORE,                   // 15
-        L1I_ACCESS,                             // 16
-        L1D_TLB_REFILL,                         // 17
-        EXCEPTION_TAKEN,                        // 18
-        BUS_ACCESS,                             // 19
-        LOCAL_MEMORY_ERROR,                     // 20
-        INSTRUCTION_SPECULATIVELY_EXECUTED,     // 21
-        BUS_CYCLE,                              // 22
-        CHAIN,                                  // 23
-        // ARM Cortex-A53 specific events (24-62 are Cortex-A9 events)
-        BUS_ACCESS_LD,                          // 63
-        BUS_ACCESS_ST,                          // 64
-        BR_INDIRECT_SPEC,                       // 65
-        EXC_IRQ,                                // 66
-        EXC_FIQ,                                // 67
-        EXTERNAL_MEM_REQUEST,                   // 68
-        EXTERNAL_MEM_REQUEST_NON_CACHEABLE,     // 69
-        PREFETCH_LINEFILL,                      // 70
-        ICACHE_THROTTLE,                        // 71
-        ENTER_READ_ALLOC_MODE,                  // 72
-        READ_ALLOC_MODE,                        // 73
-        PRE_DECODE_ERROR,                       // 74
-        DATA_WRITE_STALL_ST_BUFFER_FULL,        // 75
-        SCU_SNOOPED_DATA_FROM_OTHER_CPU,        // 76
-        CONDITIONAL_BRANCH_EXECUTED,            // 77
-        IND_BR_MISP,                            // 78
-        IND_BR_MISP_ADDRESS_MISCOMPARE,         // 79
-        CONDITIONAL_BRANCH_MISP,                // 80
-        L1_ICACHE_MEM_ERROR,                    // 81
-        L1_DCACHE_MEM_ERROR,                    // 82
-        TLB_MEM_ERROR,                          // 83
-        EMPTY_DPU_IQ_NOT_GUILTY,                // 84
-        EMPTY_DPU_IQ_ICACHE_MISS,               // 85
-        EMPTY_DPU_IQ_IMICRO_TLB_MISS,           // 86
-        EMPTY_DPU_IQ_PRE_DECODE_ERROR,          // 87
-        INTERLOCK_CYCLE_NOT_GUILTY,             // 88
-        INTERLOCK_CYCLE_LD_ST_WAIT_AGU_ADDRESS, // 89
-        INTERLOCK_CYCLE_ADV_SIMD_FP_INST,       // 90
-        INTERLOCK_CYCLE_WR_STAGE_STALL_BC_MISS, // 91
-        INTERLOCK_CYCLE_WR_STAGE_STALL_BC_STR   // 92
-    }
+    static const Reg32 _events[EVENTS];
 };
 
 
-class PMU: private IF<Traits<Build>::MACHINE == Traits<Build>::Cortex_A, ARMv8_A_PMU, ARMv8_A_PMU>::Result
+class PMU: private ARMv8_A_PMU
 {
     friend class CPU;
 
 private:
-    typedef IF<Traits<Build>::MACHINE == Traits<Build>::Cortex_A, ARMv8_A_PMU, ARMv8_A_PMU>::Result Engine;
+    typedef ARMv8_A_PMU Engine;
 
 public:
     using Engine::CHANNELS;

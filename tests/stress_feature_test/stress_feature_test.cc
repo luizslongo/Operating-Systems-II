@@ -14,7 +14,7 @@ OStream cout;
 typedef TSC::Time_Stamp Time_Stamp;
 
 // Configuration
-const unsigned int TEST_LENGTH            = 60; // in seconds
+const unsigned int TEST_LENGTH            = 1; // in seconds // emulating on QEMU takes too long
 const bool MEASURE_TIME = false;
 // To be measured
 const float MEMORY_IT_LENGHT              = 2.5;    // 0.4 in microseconds
@@ -30,17 +30,17 @@ const unsigned int MIDTERM_IT_LENGHT      = 70000;  // in microseconds
 *  T -> | 58      | 78      | 54      | 27.5    | 85      | 64      | 78.3    | 82.5
 */
 
-const unsigned int THREAD_NUM             = 24; //12;
+const unsigned int THREAD_NUM             = 8; //12;
 unsigned int TS_CONF[][5] = {
     //PERIOD,DEADLINE,WCET,CPU,TASK
-    {100000 ,100000 ,20000 ,1,0},
-    {200000 ,200000 ,30000 ,2,0},
-    {100000 ,100000 ,30000 ,3,0},
-    {200000 ,200000 ,10000 ,4,0},
-    {200000 ,200000 ,70000 ,5,0},
-    {100000 ,100000 ,10000 ,6,0},
-    {200000 ,200000 ,50000 ,7,0},
-    {100000 ,100000 ,40000 ,8,0},
+    // {100000 ,100000 ,20000 ,1,0},
+    // {200000 ,200000 ,30000 ,2,0},
+    // {100000 ,100000 ,30000 ,3,0},
+    // {200000 ,200000 ,10000 ,4,0},
+    // {200000 ,200000 ,70000 ,5,0},
+    // {100000 ,100000 ,10000 ,6,0},
+    // {200000 ,200000 ,50000 ,7,0},
+    // {100000 ,100000 ,40000 ,8,0},
     {100000 ,100000 ,20000 ,1,1},
     {200000 ,200000 ,70000 ,2,1},
     {100000 ,100000 ,10000 ,3,1},
@@ -89,7 +89,7 @@ int run_func(unsigned int id, unsigned int func) {
     unsigned int my_jobs = jobs[id];
 
     unsigned int iterations;
-    unsigned int ret;
+    unsigned int ret = 0;
     unsigned int cpu;
 
     for(unsigned int job = 0; job < my_jobs; job++){
@@ -139,7 +139,7 @@ int run_func(unsigned int id, unsigned int func) {
 }
 
 void calc_iter_per_job() {
-    for (int i = 0; i < THREAD_NUM; i++)
+    for (unsigned int i = 0; i < THREAD_NUM; i++)
     {
         if (MEASURE_TIME) {
             jobs[i] = 20;
@@ -204,7 +204,7 @@ int main() // TODO: Add clock change in middle of execution (reschedule probably
     cout << "All TASKs created"<< endl;
     locked = false;
 
-    for (int i = 0; i < THREAD_NUM; ++i)
+    for (unsigned int i = 0; i < THREAD_NUM; ++i)
     {
         threads[i]->join();
     }
@@ -222,7 +222,7 @@ int main() // TODO: Add clock change in middle of execution (reschedule probably
     cout << "-----------------------------------------------------" << endl;
     cout << "...............Threads Timing Behavior..............." << endl;
     cout << "-----------------------------------------------------" << endl;
-    for (int i = 0; i < THREAD_NUM; ++i)
+    for (unsigned int i = 0; i < THREAD_NUM; ++i)
     {
         cout<<"t"<<i<<": "<<reinterpret_cast<unsigned int>(threads[i])<<endl;
         cout << "average execution time [" << i << "]: " << diff[i]/(jobs[i]*iter_per_job[i]) << endl;
@@ -240,7 +240,7 @@ int main() // TODO: Add clock change in middle of execution (reschedule probably
 
     cout << "Threads_end" << endl;
     cout << "ID:" << reinterpret_cast<volatile unsigned int>(Thread::self());
-    for (int i = 0; i < THREAD_NUM; ++i)
+    for (unsigned int i = 0; i < THREAD_NUM; ++i)
     {
         cout << "," << reinterpret_cast<volatile unsigned int>(threads[i]);
     }

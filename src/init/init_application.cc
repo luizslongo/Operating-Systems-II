@@ -5,7 +5,7 @@
 #include <machine.h>
 #include <system.h>
 
-extern "C" { char _end; } // defined by GCC
+extern "C" char _end; // defined by GCC
 
 __BEGIN_SYS
 
@@ -31,7 +31,7 @@ public:
         // Initialize Application's heap
         db<Init>(INF) << "Initializing application's heap: " << endl;
         if(Traits<System>::multiheap) { // heap in data segment arranged by SETUP
-            char * heap = MMU::align_page(&_end);
+            char * heap = (MMU::align_page(&_end) >= CPU::Log_Addr(Memory_Map::APP_DATA)) ? MMU::align_page(&_end) : CPU::Log_Addr(Memory_Map::APP_DATA); // ld is eliminating the data segment in some compilations, particularly for RISC-V, and placing _end in the code segment
             if(Traits<Build>::MODE != Traits<Build>::KERNEL) // if not a kernel, then use the stack allocated by SETUP, otherwise make that part of the heap
                 heap += MMU::align_page(Traits<Application>::STACK_SIZE);
             Application::_heap = new (&Application::_preheap[0]) Heap(heap, HEAP_SIZE);
@@ -43,8 +43,7 @@ public:
     }
 };
 
-// Global object "init_application"  must be linked to the application (not
-// to the system) and there constructed at first.
+// Global object "init_application"  must be linked to the application (not to the system) and there constructed at first.
 Init_Application init_application;
 
 __END_SYS

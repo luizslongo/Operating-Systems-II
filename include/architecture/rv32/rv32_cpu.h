@@ -1,19 +1,21 @@
 // EPOS RISC-V 32 CPU Mediator Declarations
 
-#ifndef __riscv32_h
-#define __riscv32_h
+#ifndef __rv32_h
+#define __rv32_h
 
 #include <architecture/cpu.h>
+
+extern "C" { void _int_leave(); }
 
 __BEGIN_SYS
 
 class CPU: protected CPU_Common
 {
-    friend class Init_System;
-    friend class Machine;
+    friend class Init_System; // for CPU::init()
 
 private:
-    static const bool smp = Traits<System>::multicore;
+    static const bool multicore = Traits<System>::multicore;
+    static const bool multitask = Traits<System>::multitask;
 
 public:
     // CPU Native Data Types
@@ -25,42 +27,104 @@ public:
     using Log_Addr = CPU_Common::Log_Addr<Reg>;
     using Phy_Addr = CPU_Common::Phy_Addr<Reg>;
 
-    // Control and Status Register (mstatus)
+    // Status Register ([m|s]status)
+    typedef Reg32 Status;
     enum {
-        FLAG_MIE            = 1 << 3,      // Machine Interrupts Enabled
-        FLAG_SIE            = 1 << 1,      // Supervisor Interrupts Enabled
-        FLAG_SPIE           = 1 << 5,      // Supervisor Previous Interrupts Enabled
-        FLAG_MPIE           = 1 << 7,      // Machine Previous Interrupts Enabled
-        FLAG_MPP            = 3 << 11,     // Machine Previous Privilege 
-        FLAG_SPP            = 3 << 12,     // Supervisor Previous Privilege
-        FLAG_MPRV           = 1 << 17,     // Memory Priviledge
-        FLAG_TVM            = 1 << 20,     // Trap Virtual Memory //not allow MMU
-        MSTATUS_DEFAULTS    = (FLAG_MIE | FLAG_MPIE | FLAG_MPP)
+        UIE             = 1 <<  0,      // User Interrupts Enabled
+        SIE             = 1 <<  1,      // Supervisor Interrupts Enabled
+        MIE             = 1 <<  3,      // Machine Interrupts Enabled
+        UPIE            = 1 <<  4,      // User Previous Interrupts Enabled
+        SPIE            = 1 <<  5,      // Supervisor Previous Interrupts Enabled
+        MPIE            = 1 <<  7,      // Machine Previous Interrupts Enabled
+        SPP             = 1 <<  8,      // Supervisor Previous Privilege
+        SPP_U           = 0 <<  8,      // Supervisor Previous Privilege = user
+        SPP_S           = 1 <<  8,      // Supervisor Previous Privilege = supervisor
+        MPP             = 3 << 11,      // Machine Previous Privilege
+        MPP_U           = 0 << 11,      // Machine Previous Privilege = user
+        MPP_S           = 1 << 11,      // Machine Previous Privilege = supervisor
+        MPP_M           = 3 << 11,      // Machine Previous Privilege = machine
+        FS              = 3 << 13,      // FPU Status
+        FS_OFF          = 0 << 13,      // FPU off
+        FS_INIT         = 1 << 13,      // FPU on
+        FS_CLEAN        = 2 << 13,      // FPU registers clean
+        FS_DIRTY        = 3 << 13,      // FPU registers dirty (and must be saved on context switch)
+        XS              = 3 << 15,      // Extension Status
+        XS_OFF          = 0 << 15,      // Extension off
+        XS_INIT         = 1 << 15,      // Extension on
+        XS_CLEAN        = 2 << 15,      // Extension registers clean
+        XS_DIRTY        = 3 << 15,      // Extension registers dirty (and must be saved on context switch)
+        MPRV            = 1 << 17,      // Memory PRiVilege (when set, enables MMU also in machine mode)
+        SUM             = 1 << 18,      // Supervisor User Memory access allowed
+        MXR             = 1 << 19,      // Make eXecutable Readable
+        TVM             = 1 << 20,      // Trap Virtual Memory makes SATP inaccessible in supervisor mode
+        TW              = 1 << 21,      // Timeout Wait for WFI outside machine mode
+        TSR             = 1 << 22,      // Trap SRet in supervisor mode
+        SD              = 1 << 31,      // Status Dirty = (FS | XS)
     };
 
-    // Interrupt Enable Register (mie)
+    // Interrupt-Enable, Interrupt-Pending and Machine Cause Registers ([m|s]ie, [m|s]ip, and [m|s]cause when interrupt bit is set)
     enum {
-        FLAG_SSIE       = 1 << 1,   // Supervisor Software Interrupt Enable
-        FLAG_MSIE       = 1 << 3,   // Machine Software Interrupt Enable
-        FLAG_STIE       = 1 << 5,   // Supervisor Software Interrupt Enable
-        FLAG_MTIE       = 1 << 7,   // Machine Software Interrupt Enable
-        FLAG_SEIE       = 1 << 9,   // Supervisor External Interrupt Enable
-        FLAG_MEIE       = 1 << 11,  // Machine External Interrupt Enable
-        MIE_DEFAULTS    = (FLAG_MSIE | FLAG_MTIE | FLAG_MEIE)
+        SSI             = 1 << 1,       // Supervisor Software Interrupt
+        MSI             = 1 << 3,       // Machine Software Interrupt
+        STI             = 1 << 5,       // Supervisor Timer Interrupt
+        MTI             = 1 << 7,       // Machine Timer Interrupt
+        SEI             = 1 << 9,       // Supervisor External Interrupt
+        MEI             = 1 << 11       // Machine External Interrupt
+    };
+
+    // Exceptions ([m|s]cause with interrupt = 0)
+    static const unsigned int EXCEPTIONS = 16;
+    enum {
+        EXC_IALIGN       = 0,   // Instruction address misaligned
+        EXC_IFAULT       = 1,   // Instruction access fault
+        EXC_IILLEGAL     = 2,   // Illegal instruction
+        EXC_BREAK        = 3,   // Breakpoint
+        EXC_DRALIGN      = 4,   // Load address misaligned
+        EXC_DRFAULT      = 5,   // Load access fault
+        EXC_DWALIGN      = 6,   // Store/AMO address misaligned
+        EXC_DWFAULT      = 7,   // Store/AMO access fault
+        EXC_ENVU         = 8,   // Environment call from U-mode
+        EXC_RES1         = 9,   // Environment call from S-mode
+        EXC_ENVH        = 10,   // reserved
+        EXC_ENVM        = 11,   // Environment call from M-mode
+        EXC_IPF         = 12,   // Instruction page fault
+        EXC_DPF         = 13,   // Data page fault
+        EXC_RES2        = 14,   // reserved
+        EXC_AMOPF       = 15,   // Store/AMO page fault
     };
 
     // CPU Context
     class Context
     {
-    public:
-        Context(const Log_Addr & entry, const Log_Addr & exit): _x1(exit), _pc(entry) {}
+        friend class CPU;       // for Context::push() and Context::pop()
+        friend class IC;        // for Context::push() and Context::pop()
+        friend class Thread;    // for Context::push()
 
-        void save() volatile  __attribute__ ((naked));
-        void load() const volatile;
+    public:
+        Context() {}
+        // Contexts are loaded with [m|s]ret, which gets pc from [m|s]epc and updates some bits of [m|s]status, that's why _st is initialized with [M|S]PIE and [M|S]PP
+        // Kernel threads are created with usp = 0 and have SPP_S set
+        // Dummy contexts for the first execution of each thread (both kernel and user) are created with exit = 0 and SPIE cleared (no interrupts until the second context is popped)
+        Context(Log_Addr entry, Log_Addr exit, Log_Addr usp): _usp(usp), _pc(entry), _st(multitask ? ((exit ? SPIE : 0) | (usp ? SPP_U : SPP_S) | SUM) : ((exit ? MPIE : 0) | MPP_M)), _x1(exit) {
+            if(Traits<Build>::hysterically_debugged || Traits<Thread>::trace_idle) {
+                                                                        _x5 =  5;  _x6 =  6;  _x7 =  7;  _x8 =  8;  _x9 =  9;
+                _x10 = 10; _x11 = 11; _x12 = 12; _x13 = 13; _x14 = 14; _x15 = 15; _x16 = 16; _x17 = 17; _x18 = 18; _x19 = 19;
+                _x20 = 20; _x21 = 21; _x22 = 22; _x23 = 23; _x24 = 24; _x25 = 25; _x26 = 26; _x27 = 27; _x28 = 28; _x29 = 29;
+                _x30 = 30; _x31 = 31;
+            }
+        }
+
+        void save() volatile __attribute__ ((naked));
+        void load() const volatile __attribute__ ((naked));
 
         friend Debug & operator<<(Debug & db, const Context & c) {
             db << hex
-               << "{x5="   << c._x5
+               << "{sp="   << &c
+               << ",usp="  << c._usp
+               << ",pc="   << c._pc
+               << ",st="   << c._st
+               << ",lr="   << c._x1
+               << ",x5="   << c._x5
                << ",x6="   << c._x6
                << ",x7="   << c._x7
                << ",x8="   << c._x8
@@ -87,47 +151,50 @@ public:
                << ",x29="  << c._x29
                << ",x30="  << c._x30
                << ",x31="  << c._x31
-               << ",sp="  << &c
-               << ",lr="  << c._x1
-               << ",pc="  << c._pc
                << "}" << dec;
             return db;
         }
 
-    public:
-        Reg32  _x1; // ABI Link Register (return address)
-        Reg32 _x31; // t6
-        Reg32 _x30; // t5
-        Reg32 _x29; // t4
-        Reg32 _x28; // t3
-        Reg32 _x27; // s11
-        Reg32 _x26; // s10
-        Reg32 _x25; // s9
-        Reg32 _x24; // s8
-        Reg32 _x23; // s7
-        Reg32 _x22; // s6
-        Reg32 _x21; // s5
-        Reg32 _x20; // s4
-        Reg32 _x19; // s3
-        Reg32 _x18; // s2
-        Reg32 _x17; // a7
-        Reg32 _x16; // a6
-        Reg32 _x15; // a5
-        Reg32 _x14; // a4
-        Reg32 _x13; // a3
-        Reg32 _x12; // a2
-        Reg32 _x11; // a1
-        Reg32 _x10; // a0
-        Reg32  _x9; // s1
-        Reg32  _x8; // s0
-        Reg32  _x7; // t2
-        Reg32  _x6; // t1
-        Reg32  _x5; // t0
-     // Reg32  _x4; // ABI Thread Pointer, not used in EPOS
-     // Reg32  _x3; // ABI Global Pointer, managed by the linker
-     // Reg32  _x2; // ABI Stack Pointer, saved as this
-     // Reg32  _x0; // zero
-        Reg32 _pc;
+    private:
+        static void pop(bool interrupt = false);  // interrupt or context switch?
+        static void push(bool interrupt = false); // interrupt or context switch?
+
+    private:
+        Reg32 _usp;     // usp (used with multitasking)
+        Reg32 _pc;      // pc
+        Reg32 _st;      // [m|s]status
+    //  Reg32 _x0;      // zero
+        Reg32 _x1;      // ra, ABI Link Register
+    //  Reg32 _x2;      // sp, ABI Stack Pointer, saved as this
+    //  Reg32 _x3;      // gp, ABI Global Pointer, used in EPOS as a temporary
+    //  Reg32 _x4;      // tp, ABI Thread Pointer, used in EPOS as core id
+        Reg32 _x5;      // t0
+        Reg32 _x6;      // t1
+        Reg32 _x7;      // t2
+        Reg32 _x8;      // s0
+        Reg32 _x9;      // s1
+        Reg32 _x10;     // a0
+        Reg32 _x11;     // a1
+        Reg32 _x12;     // a2
+        Reg32 _x13;     // a3
+        Reg32 _x14;     // a4
+        Reg32 _x15;     // a5
+        Reg32 _x16;     // a6
+        Reg32 _x17;     // a7
+        Reg32 _x18;     // s2
+        Reg32 _x19;     // s3
+        Reg32 _x20;     // s4
+        Reg32 _x21;     // s5
+        Reg32 _x22;     // s6
+        Reg32 _x23;     // s7
+        Reg32 _x24;     // s8
+        Reg32 _x25;     // s9
+        Reg32 _x26;     // s10
+        Reg32 _x27;     // s11
+        Reg32 _x28;     // t3
+        Reg32 _x29;     // t4
+        Reg32 _x30;     // t5
+        Reg32 _x31;     // t6
     };
 
     // Interrupt Service Routines
@@ -139,37 +206,47 @@ public:
 public:
     CPU() {};
 
-public:
-    // Register access
-    static Reg32 sp() {
-        Reg32 value;
-        ASM("mv %0, sp" : "=r"(value) :);
-        return value;
-    }
-    static void sp(const Reg32 & sp) {
-        ASM("mv sp, %0" : : "r"(sp) :);
-    }
+    static Log_Addr pc() { Reg32 r; ASM("auipc %0, 0" : "=r"(r) :); return r; }
 
-    static Reg32 fr() {
-        Reg32 value;
-        ASM("mv %0, x10" : "=r"(value)); // x10 is a0
-        return value;
-    }
-    static void fr(const Reg32 & fr) {
-        ASM("mv x10, %0" : : "r"(fr) :); // x10 is a0
-    }
+    static Reg32 status()       { return multitask ? sstatus() : mstatus(); }
+    static void status(Status st) { multitask ? sstatus(st) : mstatus(st); }
 
-    static Log_Addr ip() {
-        Reg32 value;
-        ASM("mv %0, pc" : "=r"(value) :);
-        return value;
-    }
+    static Reg32 sp() { Reg32 r; ASM("mv %0, sp" :  "=r"(r) :); return r; }
+    static void sp(Reg32 r) {    ASM("mv sp, %0" : : "r"(r) :); }
 
-    static Reg32 pdp() { return 0; }
-    static void pdp(const Reg32 & pdp) {}
+    static Reg32 fp() { Reg32 r; ASM("mv %0, fp" :  "=r"(r) :); return r; }
+    static void fp(Reg32 r) {    ASM("mv fp, %0" : : "r"(r) :); }
 
+    static Reg32 lr() { Reg32 r; ASM("mv %0, ra" :  "=r"(r)); return r; }
+    static void lr(Reg32 r) {    ASM("mv ra, %0" : : "r"(r) :); }
 
-    // Atomic operations
+    static Reg32 fr() { Reg32 r; ASM("mv %0, a0" :  "=r"(r)); return r; }
+    static void fr(Reg32 r) {    ASM("mv a0, %0" : : "r"(r) :); }
+
+    static Reg32 pdp()   { return multitask ? (satp() << 12) : 0; }
+    static void pdp(Reg32 pdp) { if(multitask) satp((1 << 31) | (pdp >> 12)); }
+
+    static unsigned int id() { return multitask ? tp() : mhartid(); }
+
+    static unsigned int cores() { return Traits<Build>::CPUS; }
+
+    using CPU_Common::clock;
+    using CPU_Common::min_clock;
+    using CPU_Common::max_clock;
+
+    static void int_enable()  { multitask ? sint_enable()  : mint_enable(); }
+    static void int_disable() { multitask ? sint_disable() : mint_disable(); }
+    static bool int_enabled() { return multitask ? (sstatus() & SIE) : (mstatus() & MIE) ; }
+    static bool int_disabled() { return !int_enabled(); }
+
+    static void halt() { ASM("wfi"); }
+
+    static void fpu_save() {} // TODO: implement at first need
+    static void fpu_restore() {}
+    static void switch_context(Context ** o, Context * n) __attribute__ ((naked));
+
+    static void syscall(void * message);
+
     template<typename T>
     static T tsl(volatile T & lock) {
         register T old;
@@ -211,74 +288,7 @@ public:
         return old;
     }
 
-    // Power modes
-    static void halt() { ASM("wfi"); }
-
-    static unsigned int id() {
-        int id;
-        ASM("csrr %0, mhartid" : "=r"(id) : : "memory", "cc");
-        return id & 0x3;
-    }
-
-    static void mstatus(Reg value) {
-        ASM("csrw mstatus, %0" : : "r"(value) : "cc");
-    }
-
-    static Reg mstatus() {
-        Reg value;
-        ASM("csrr %0, mstatus" : "=r"(value) : : );
-        return value;
-    }
-
-    static void mie(Reg value) {
-        ASM("csrw mie, %0" : : "r"(value) : "cc");
-    }
-
-    static Reg mie() {
-        Reg value;
-        ASM("csrr %0, mie" : "=r"(value) : : );
-        return value;
-    }
-
-    static unsigned int cores() {
-        return Traits<Build>::CPUS;
-    }
-
     static void smp_barrier(unsigned long cores = cores()) { CPU_Common::smp_barrier<&finc>(cores, id()); }
-
-    static void int_enable() { mie(MIE_DEFAULTS); }
-    // static void int_enable() { mstatus(mstatus() | (FLAG_MIE)); }
-    static void int_disable() { mie(0); }
-    // static void int_disable() { mstatus(mstatus() & ~(FLAG_MIE)); }
-
-    static bool int_enabled() { return (mie() & MIE_DEFAULTS) ; }
-    // static bool int_enabled() { return (mstatus() & FLAG_MIE) ; }
-    static bool int_disabled() { return !int_enabled(); }
-
-    static void csrr31() { ASM("csrr x31, mstatus" : : : "x31"); }
-    static void csrw31() { ASM("csrw mstatus, x31" : : : "cc"); }
-
-    static unsigned int int_id() { return 0; }
-
-    static void switch_context(Context ** o, Context * n) __attribute__ ((naked));
-
-    template<typename ... Tn>
-    static Context * init_stack(const Log_Addr & usp, Log_Addr sp, void (* exit)(), int (* entry)(Tn ...), Tn ... an) {
-        sp -= sizeof(Context);
-        Context * ctx = new(sp) Context(entry, exit);
-        init_stack_helper(&ctx->_x10, an ...); // x10 is a0
-        return ctx;
-    }
-    template<typename ... Tn>
-    static Log_Addr init_user_stack(Log_Addr sp, void (* exit)(), Tn ... an) {
-        sp -= sizeof(Context);
-        Context * ctx = new(sp) Context(0, exit);
-        init_stack_helper(&ctx->_x10, an ...); // x10 is a0
-        return sp;
-    }
-
-    static int syscall(void * message);
-    static void syscalled();
 
     using CPU_Common::htole64;
     using CPU_Common::htole32;
@@ -299,6 +309,101 @@ public:
     using CPU_Common::ntohl;
     using CPU_Common::ntohs;
 
+    template<typename ... Tn>
+    static Context * init_stack(Log_Addr usp, Log_Addr ksp, void (* exit)(), int (* entry)(Tn ...), Tn ... an) {
+        ksp -= sizeof(Context);
+        Context * ctx = new(ksp) Context(entry, exit, usp); // init_stack is called with usp = 0 for kernel threads
+        init_stack_helper(&ctx->_x10, an ...); // x10 is a0
+        ksp -= sizeof(Context);
+        ctx = new(ksp) Context(&_int_leave, 0, 0); // this context will be popped by switch() to reach _int_leave(), which will activate the thread's context
+        ctx->_x10 = 0; // zero fr() for the pop(true) issued by _int_leave()
+        return ctx;
+    }
+
+    // In RISC-V, the main thread of each task gets parameters over registers, not the stack, and they are initialized by init_stack.
+    template<typename ... Tn>
+    static Log_Addr init_user_stack(Log_Addr usp, void (* exit)(), Tn ... an) { return usp; }
+
+public:
+    // RISC-V 32 specifics
+    static Reg tp() { Reg r;     ASM("mv %0, x4" : "=r"(r) :); return r; }
+    static void tp(Reg r) {      ASM("mv x4, %0" : : "r"(r) :); }
+    static Reg32 a0() { Reg32 r; ASM("mv %0, a0" :  "=r"(r)); return r; }
+    static void a0(Reg32 r) {    ASM("mv a0, %0" : : "r"(r) :); }
+    static Reg32 a1() { Reg32 r; ASM("mv %0, a1" :  "=r"(r)); return r; }
+    static void a1(Reg32 r) {    ASM("mv a1, %0" : : "r"(r) :); }
+
+    static void ecall() { ASM("ecall"); }
+    static void iret() { multitask ? sret() : mret(); }
+
+    // Machine mode
+    static void mint_enable()  { ASM("csrsi mstatus, %0" : : "i"(MIE) : "cc"); }
+    static void mint_disable() { ASM("csrci mstatus, %0" : : "i"(MIE) : "cc"); }
+
+    static Reg mhartid() { Reg r; ASM("csrr %0, mhartid" : "=r"(r) : : "memory", "cc"); return r & 0x3; }
+
+    static void mscratch(Reg r)   { ASM("csrw mscratch, %0" : : "r"(r) : "cc"); }
+    static Reg  mscratch() { Reg r; ASM("csrr %0, mscratch" :  "=r"(r) : : ); return r; }
+
+    static void mstatus(Reg r)   { ASM("csrw mstatus, %0" : : "r"(r) : "cc"); }
+    static Reg  mstatus() { Reg r; ASM("csrr %0, mstatus" :  "=r"(r) : : ); return r; }
+    static void mstatusc(Reg r)  { ASM("csrc mstatus, %0" : : "r"(r) : "cc"); }
+    static void mstatuss(Reg r)  { ASM("csrs mstatus, %0" : : "r"(r) : "cc"); }
+
+    static void mie(Reg r)   { ASM("csrw mie, %0" : : "r"(r) : "cc"); }
+    static void miec(Reg r)  { ASM("csrc mie, %0" : : "r"(r) : "cc"); }
+    static void mies(Reg r)  { ASM("csrs mie, %0" : : "r"(r) : "cc"); }
+    static Reg  mie() { Reg r; ASM("csrr %0, mie" :  "=r"(r) : : ); return r; }
+
+    static void mip(Reg r)   { ASM("csrw mip, %0" : : "r"(r) : "cc"); }
+    static void mipc(Reg r)  { ASM("csrc mip, %0" : : "r"(r) : "cc"); }
+    static void mips(Reg r)  { ASM("csrs mip, %0" : : "r"(r) : "cc"); }
+    static Reg  mip() { Reg r; ASM("csrr %0, mip" :  "=r"(r) : : ); return r; }
+
+    static Reg mcause() { Reg r; ASM("csrr %0, mcause" : "=r"(r) : : ); return r; }
+    static Reg mtval()  { Reg r; ASM("csrr %0, mtval" :  "=r"(r) : : ); return r; }
+
+    static void mepc(Reg r)   { ASM("csrw mepc, %0" : : "r"(r) : "cc"); }
+    static Reg  mepc() { Reg r; ASM("csrr %0, mepc" :  "=r"(r) : : ); return r; }
+
+    static void mret() { ASM("mret"); }
+
+    static void mideleg(Reg value) { ASM("csrw mideleg, %0" : : "r"(value) : "cc"); }
+    static void medeleg(Reg value) { ASM("csrw medeleg, %0" : : "r"(value) : "cc"); }
+
+    // Supervisor mode
+    static void sint_enable()  { ASM("csrsi sstatus, %0" : : "i"(SIE) : "cc"); }
+    static void sint_disable() { ASM("csrci sstatus, %0" : : "i"(SIE) : "cc"); }
+
+    static void sscratch(Reg r)   { ASM("csrw sscratch, %0" : : "r"(r) : "cc"); }
+    static Reg  sscratch() { Reg r; ASM("csrr %0, sscratch" :  "=r"(r) : : ); return r; }
+
+    static void sstatus(Reg r)   { ASM("csrw sstatus, %0" : : "r"(r) : "cc"); }
+    static Reg  sstatus() { Reg r; ASM("csrr %0, sstatus" :  "=r"(r) : : ); return r; }
+    static void sstatusc(Reg r)  { ASM("csrc sstatus, %0" : : "r"(r) : "cc"); }
+    static void sstatuss(Reg r)  { ASM("csrs sstatus, %0" : : "r"(r) : "cc"); }
+
+    static void sie(Reg r)   { ASM("csrw sie, %0" : : "r"(r) : "cc"); }
+    static void siec(Reg r)  { ASM("csrc sie, %0" : : "r"(r) : "cc"); }
+    static void sies(Reg r)  { ASM("csrs sie, %0" : : "r"(r) : "cc"); }
+    static Reg  sie() { Reg r; ASM("csrr %0, sie" :  "=r"(r) : : ); return r; }
+
+    static void sip(Reg r)   { ASM("csrw sip, %0" : : "r"(r) : "cc"); }
+    static void sipc(Reg r)  { ASM("csrc sip, %0" : : "r"(r) : "cc"); }
+    static void sips(Reg r)  { ASM("csrs sip, %0" : : "r"(r) : "cc"); }
+    static Reg  sip() { Reg r; ASM("csrr %0, sip" :  "=r"(r) : : ); return r; }
+
+    static Reg scause() { Reg r; ASM("csrr %0, scause" : "=r"(r) : : ); return r; }
+    static Reg stval()  { Reg r; ASM("csrr %0, stval" :  "=r"(r) : : ); return r; }
+
+    static void sepc(Reg r)   { ASM("csrw sepc, %0" : : "r"(r) : "cc"); }
+    static Reg  sepc() { Reg r; ASM("csrr %0, sepc" :  "=r"(r) : : ); return r; }
+
+    static void sret() { ASM("sret"); }
+
+    static void satp(Reg32 r) { ASM("csrw satp, %0" : : "r"(r) : "cc"); }
+    static Reg  satp() { Reg r; ASM("csrr %0, satp" :  "=r"(r) : : ); return r; }
+
 private:
     template<typename Head, typename ... Tail>
     static void init_stack_helper(Log_Addr sp, Head head, Tail ... tail) {
@@ -313,6 +418,136 @@ private:
     static unsigned int _cpu_clock;
     static unsigned int _bus_clock;
 };
+
+inline void CPU::Context::push(bool interrupt)
+{
+if(interrupt && multitask)
+    // swap(ksp, usp)
+    ASM("       csrr    x3, sstatus             \n"
+        "       andi    x3, x3, 1 << 8          \n"
+        "       bne     x3, zero, 1f            \n"
+        "       csrr    x3, sscratch            \n"
+        "       csrw    sscratch, sp            \n"
+        "       mv      sp, x3                  \n"
+        "1:                                     \n");
+
+    ASM("       addi    sp, sp, %0              \n" : : "i"(-sizeof(Context))); // adjust sp for the pushes below
+
+if(multitask)
+    ASM("       csrr    x3, sscratch            \n"     // sscratch = usp (sscratch holds ksp in user-land and usp in kernel; usp = 0 for kernel threads)
+        "       sw      x3,     0(sp)           \n");   // push usp
+
+if(interrupt)
+  if(multitask)
+    ASM("       csrr    x3, sepc                \n"
+        "       sw      x3,     4(sp)           \n");   // push sepc as pc on interrupts
+  else
+    ASM("       csrr    x3, mepc                \n"
+        "       sw      x3,     4(sp)           \n");   // push mecp as pc on interrupts
+else
+    ASM("       sw      x1,     4(sp)           \n");   // push lr as pc on context switches
+
+if(!interrupt && multitask)
+    ASM("       li      x3, 1 << 8              \n"
+        "       csrs    sstatus, x3             \n");   // set SPP_S inside the kernel; the push(true) on IC::entry() has already saved the correct value to eventually return to the application
+if(multitask)
+    ASM("       csrr    x3, sstatus             \n");
+else
+    ASM("       csrr    x3, mstatus             \n");
+
+    ASM("       sw      x3,     8(sp)           \n"     // push st
+        "       sw      x1,    12(sp)           \n"     // push ra
+        "       sw      x5,    16(sp)           \n"     // push x5-x31
+        "       sw      x6,    20(sp)           \n"
+        "       sw      x7,    24(sp)           \n"
+        "       sw      x8,    28(sp)           \n"
+        "       sw      x9,    32(sp)           \n"
+        "       sw      x10,   36(sp)           \n"
+        "       sw      x11,   40(sp)           \n"
+        "       sw      x12,   44(sp)           \n"
+        "       sw      x13,   48(sp)           \n"
+        "       sw      x14,   52(sp)           \n"
+        "       sw      x15,   56(sp)           \n"
+        "       sw      x16,   60(sp)           \n"
+        "       sw      x17,   64(sp)           \n"
+        "       sw      x18,   68(sp)           \n"
+        "       sw      x19,   72(sp)           \n"
+        "       sw      x20,   76(sp)           \n"
+        "       sw      x21,   80(sp)           \n"
+        "       sw      x22,   84(sp)           \n"
+        "       sw      x23,   88(sp)           \n"
+        "       sw      x24,   92(sp)           \n"
+        "       sw      x25,   96(sp)           \n"
+        "       sw      x26,  100(sp)           \n"
+        "       sw      x27,  104(sp)           \n"
+        "       sw      x28,  108(sp)           \n"
+        "       sw      x29,  112(sp)           \n"
+        "       sw      x30,  116(sp)           \n"
+        "       sw      x31,  120(sp)           \n");
+}
+
+inline void CPU::Context::pop(bool interrupt)
+{
+if(multitask)
+    ASM("       lw       x3, 0(sp)              \n"     // pop usp
+        "       csrw     sscratch, x3           \n");   // sscratch = usp (sscratch holds ksp in user-land and usp in kernel; usp = 0 for kernel threads)
+
+    ASM("       lw       x3, 4(sp)              \n");   // pop pc
+if(interrupt)
+    ASM("       add      x3, x3, a0             \n");   // a0 is set by exception handlers to adjust [m|s]sepc to point to the next instruction if needed
+if(multitask)
+    ASM("       csrw     sepc, x3               \n");   // sepc = pc
+else
+    ASM("       csrw     mepc, x3               \n");   // mepc = pc
+
+    ASM("       lw       x3,    8(sp)           \n"     // pop st to x3
+        "       lw       x1,   12(sp)           \n"     // pop ra
+        "       lw       x5,   16(sp)           \n"     // pop x5-x31
+        "       lw       x6,   20(sp)           \n"
+        "       lw       x7,   24(sp)           \n"
+        "       lw       x8,   28(sp)           \n"
+        "       lw       x9,   32(sp)           \n"
+        "       lw      x10,   36(sp)           \n"
+        "       lw      x11,   40(sp)           \n"
+        "       lw      x12,   44(sp)           \n"
+        "       lw      x13,   48(sp)           \n"
+        "       lw      x14,   52(sp)           \n"
+        "       lw      x15,   56(sp)           \n"
+        "       lw      x16,   60(sp)           \n"
+        "       lw      x17,   64(sp)           \n"
+        "       lw      x18,   68(sp)           \n"
+        "       lw      x19,   72(sp)           \n"
+        "       lw      x20,   76(sp)           \n"
+        "       lw      x21,   80(sp)           \n"
+        "       lw      x22,   84(sp)           \n"
+        "       lw      x23,   88(sp)           \n"
+        "       lw      x24,   92(sp)           \n"
+        "       lw      x25,   96(sp)           \n"
+        "       lw      x26,  100(sp)           \n"
+        "       lw      x27,  104(sp)           \n"
+        "       lw      x28,  108(sp)           \n"
+        "       lw      x29,  112(sp)           \n"
+        "       lw      x30,  116(sp)           \n"
+        "       lw      x31,  120(sp)           \n"
+        "       addi    sp, sp, %0              \n" : : "i"(sizeof(Context))); // complete the pops above by adjusting sp
+
+if(multitask)
+    ASM("       csrw    sstatus, x3             \n");   // sstatus = st
+else
+    ASM("       csrw    mstatus, x3             \n");   // mstatus = st
+if(!interrupt & !multitask)
+    ASM("       li      x3, 3 << 11             \n"
+        "       csrs    mstatus, x3             \n");   // mstatus.MPP is automatically cleared on mret, so we reset it to MPP_M here
+
+if(multitask && interrupt)
+    // swap(ksp, usp)
+    ASM("       andi    x3, x3, 1 << 8          \n"
+        "       bne     x3, zero, 1f            \n"
+        "       csrr    x3, sscratch            \n"
+        "       csrw    sscratch, sp            \n"
+        "       mv      sp, x3                  \n"
+        "1:                                     \n");
+}
 
 inline CPU::Reg64 htole64(CPU::Reg64 v) { return CPU::htole64(v); }
 inline CPU::Reg32 htole32(CPU::Reg32 v) { return CPU::htole32(v); }

@@ -1,6 +1,6 @@
 // EPOS RISC-V 32 Architecture Metainfo
-#ifndef __riscv32_traits_h
-#define __riscv32_traits_h
+#ifndef __rv32_traits_h
+#define __rv32_traits_h
 
 #include <system/config.h>
 
@@ -19,6 +19,12 @@ template<> struct Traits<MMU>: public Traits<Build>
 {
     static const bool colorful = false;
     static const unsigned int COLORS = 1;
+};
+
+template<> struct Traits<FPU>: public Traits<Build>
+{
+    static const bool enabled = false;
+    static const bool user_save = true;
 };
 
 template<> struct Traits<TSC>: public Traits<Build>

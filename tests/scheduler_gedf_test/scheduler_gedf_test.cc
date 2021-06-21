@@ -51,7 +51,7 @@ int main()
     cout << "Periodic Thread Component Test" << endl;
 
     cout << "\nThis test consists in creating" << TASKS << "periodic threads as follows:" << endl;
-    for(int i = 0; i < TASKS; i++) {
+    for(unsigned int i = 0; i < TASKS; i++) {
         cout << "  - After " << set[i].a << " ms, thread " << char ('A' + i) << " begins to print \"" << char ('a' + i)
              << "\" periodically each " << set[i].p << " ms." << endl;
         cout << "    Each " << char ('A' + i) << " job runs for " << set[i].c << " ms, printing additional \""
@@ -60,25 +60,25 @@ int main()
 
     cout << "Threads will now be created and I'll wait for them to finish..." << endl;
 
-    for(int i = 0; i < TASKS; i++)
+    for(unsigned int i = 0; i < TASKS; i++)
         thread[i] = new RT_Thread(set[i].f, set[i].d * 1000, set[i].p * 1000, set[i].c * 1000, set[i].a * 1000, TIMES);
 
     chrono.start();
     exec('M');
 
-    for(int i = 0; i < TASKS; i++)
-        int ret = thread[i]->join();
+    for(unsigned int i = 0; i < TASKS; i++)
+        thread[i]->join();
 
     chrono.stop();
     exec('M');
 
-    for(int i = 0; i < TASKS; i++)
+    for(unsigned int i = 0; i < TASKS; i++)
         delete thread[i];
 
     cout << "\n... done!" << endl;
 
     int max_p = 0;
-    for(int i = 0; i < TASKS; i++)
+    for(unsigned int i = 0; i < TASKS; i++)
         max_p = max(max_p, set[i].p);
 
     cout << "\nThe estimated time to run the test was " << max_p * TIMES
@@ -102,7 +102,7 @@ inline void exec(char c, unsigned int time) // in miliseconds
     do {
         if(last != elapsed) {
             cout << begl << elapsed << "\t" << c;
-            for(int i = 0; i < TASKS; i++)
+            for(unsigned int i = 0; i < TASKS; i++)
                 cout << "\tp(" << char('A' + i) << ")=" << thread[i]->priority();
             cout << endl;
             last = elapsed;

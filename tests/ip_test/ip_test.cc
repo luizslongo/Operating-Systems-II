@@ -12,6 +12,7 @@ OStream cout;
 
 int icmp_test()
 {
+    cout << "\n\n--------------------------------------------------------------------------------" << endl;
     cout << "ICMP Test" << endl;
 
     Port<ICMP> * com;
@@ -68,17 +69,18 @@ int icmp_test()
     delete com;
 
     Ethernet::Statistics stat = ip->nic()->statistics();
-    cout << "Statistics\n"
-         << "Tx Packets: " << stat.tx_packets << "\n"
-         << "Tx Bytes:   " << stat.tx_bytes << "\n"
-         << "Rx Packets: " << stat.rx_packets << "\n"
-         << "Rx Bytes:   " << stat.rx_bytes << endl;
+    cout << "Statistics:\n"
+         << "  Tx Packets: " << stat.tx_packets << "\n"
+         << "  Tx Bytes:   " << stat.tx_bytes << "\n"
+         << "  Rx Packets: " << stat.rx_packets << "\n"
+         << "  Rx Bytes:   " << stat.rx_bytes << endl;
 
     return stat.tx_bytes + stat.rx_bytes;
 }
 
 int udp_test()
 {
+    cout << "\n\n--------------------------------------------------------------------------------" << endl;
     cout << "UDP Test" << endl;
 
     char data[PDU];
@@ -97,7 +99,7 @@ int udp_test()
 
         com = new Link<UDP>(UDP::Address(ip->address(), 8000), UDP::Address(peer_ip, 8000));
 
-        for(int i = 0; i < ITERATIONS; i++) {
+        for(unsigned int i = 0; i < ITERATIONS; i++) {
             data[0] = '\n';
             data[1] = ' ';
             data[2] = '0' + i;
@@ -107,7 +109,7 @@ int udp_test()
             data[6] = '0' + i;
             data[7] = '0' + i;
 
-            for(int j = 8; j < sizeof(data) - 8; j += 8) {
+            for(unsigned int j = 8; j < sizeof(data) - 8; j += 8) {
                 data[j+0] = ' ';
                 data[j+1] = '0' + i + (j / 1000000 % 10);
                 data[j+2] = '0' + (j / 100000 % 10);
@@ -141,7 +143,7 @@ int udp_test()
 
         com = new Link<UDP>(UDP::Address(ip->address(), 8000), UDP::Address(peer_ip, 8000));
 
-        for(int i = 0; i < ITERATIONS; i++) {
+        for(unsigned int i = 0; i < ITERATIONS; i++) {
             int received = com->receive(&data, sizeof(data));
             if(received == sizeof(data))
                 cout << "  Data: " << data << endl;
@@ -153,17 +155,18 @@ int udp_test()
     delete com;
 
     Ethernet::Statistics stat = ip->nic()->statistics();
-    cout << "Statistics\n"
-         << "Tx Packets: " << stat.tx_packets << "\n"
-         << "Tx Bytes:   " << stat.tx_bytes << "\n"
-         << "Rx Packets: " << stat.rx_packets << "\n"
-         << "Rx Bytes:   " << stat.rx_bytes << endl;
+    cout << "Statistics:\n"
+         << "  Tx Packets: " << stat.tx_packets << "\n"
+         << "  Tx Bytes:   " << stat.tx_bytes << "\n"
+         << "  Rx Packets: " << stat.rx_packets << "\n"
+         << "  Rx Bytes:   " << stat.rx_bytes << endl;
 
     return stat.tx_bytes + stat.rx_bytes;
 }
 
 int tcp_test()
 {
+    cout << "\n\n--------------------------------------------------------------------------------" << endl;
     cout << "TCP Test" << endl;
 
     char data[PDU];
@@ -182,7 +185,7 @@ int tcp_test()
 
         com = new Link<TCP>(TCP::Address(ip->address(), 8000), TCP::Address(peer_ip, 8000)); // connect
 
-        for(int i = 0; i < ITERATIONS; i++) {
+        for(unsigned int i = 0; i < ITERATIONS; i++) {
             data[0] = '\n';
             data[1] = ' ';
             data[2] = '0' + i;
@@ -192,7 +195,7 @@ int tcp_test()
             data[6] = '0' + i;
             data[7] = '0' + i;
 
-            for(int j = 8; j < sizeof(data) - 8; j += 8) {
+            for(unsigned int j = 8; j < sizeof(data) - 8; j += 8) {
                 data[j+0] = ' ';
                 data[j+1] = '0' + i + (j / 1000000 % 10);
                 data[j+2] = '0' + (j / 100000 % 10);
@@ -226,7 +229,7 @@ int tcp_test()
 
         com = new Link<TCP>(TCP::Address(ip->address(), 8000)); // listen
 
-        for(int i = 0; i < ITERATIONS; i++) {
+        for(unsigned int i = 0; i < ITERATIONS; i++) {
             int received = com->read(&data, sizeof(data));
             if(received == sizeof(data))
                 cout << "  Data: " << data << endl;
@@ -238,11 +241,11 @@ int tcp_test()
     delete com;
 
     Ethernet::Statistics stat = ip->nic()->statistics();
-    cout << "Statistics\n"
-         << "Tx Packets: " << stat.tx_packets << "\n"
-         << "Tx Bytes:   " << stat.tx_bytes << "\n"
-         << "Rx Packets: " << stat.rx_packets << "\n"
-         << "Rx Bytes:   " << stat.rx_bytes << endl;
+    cout << "Statistics:\n"
+         << "  Tx Packets: " << stat.tx_packets << "\n"
+         << "  Tx Bytes:   " << stat.tx_bytes << "\n"
+         << "  Rx Packets: " << stat.rx_packets << "\n"
+         << "  Rx Bytes:   " << stat.rx_bytes << endl;
 
     return stat.tx_bytes + stat.rx_bytes;
 }

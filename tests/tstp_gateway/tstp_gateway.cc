@@ -1,6 +1,7 @@
 #include <machine.h>
 #include <time.h>
 #include <smartdata.h>
+#include <network/tstp/tstp.h>
 
 using namespace EPOS;
 
@@ -15,7 +16,7 @@ int main()
 
     cout << "My machine ID is:";
     for(unsigned int i = 0; i < 8; i++)
-        cout << " " << hex << Machine::id()[i];
+        cout << " " << hex << Machine::uuid()[i];
     cout << endl;
     cout << "You can set this value at src/component/tstp_init.cc to set initial coordinates for this mote." << endl;
 
@@ -23,16 +24,16 @@ int main()
     cout << "The time now is " << TSTP::now() << endl;
     cout << "I am" << (TSTP::here() == TSTP::sink() ? " " : " not ") << "the sink" << endl;
 
-    TSTP::Global_Space center_sensor(10,10,0);
-    TSTP::Region region_sensor(center_sensor, 0, TSTP::now(), -1);
+    SmartData::Space center_sensor(10,10,0);
+    SmartData::Region region_sensor(center_sensor, 0, TSTP::now(), -1);
 
     cout << "I will now ask for Acceleration data from any sensor located in " << region_sensor << endl;
 
-    Acceleration acceleration(region_sensor, INTEREST_EXPIRY, INTEREST_PERIOD);
+    Acceleration_Proxy acceleration(region_sensor, INTEREST_EXPIRY, INTEREST_PERIOD);
 
     while(true) {
         Alarm::delay(INTEREST_PERIOD);
-        cout << "Acceleration in " << acceleration.location() << " at " << acceleration.time() << " was " << acceleration << endl;
+        cout << "Acceleration in " << acceleration.where() << " at " << acceleration.when() << " was " << acceleration << endl;
     }
 
     return 0;

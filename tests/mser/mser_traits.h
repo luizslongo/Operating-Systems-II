@@ -19,7 +19,7 @@ template<> struct Traits<Build>: public Traits_Tokens
 
     // Default flags
     static const bool enabled = true;
-    static const bool monitored = true;
+    static const bool monitored = false;
     static const bool debugged = true;
     static const bool hysterically_debugged = false;
 
@@ -133,7 +133,7 @@ template<> struct Traits<Thread>: public Traits<Build>
     static const bool trace_idle = hysterically_debugged;
     static const bool simulate_capacity = false;
 
-    typedef Scheduling_Criteria::CPU_Affinity Criterion;
+    typedef CPU_Affinity Criterion;
     static const unsigned int QUANTUM = 10000; // us
 };
 
@@ -159,7 +159,7 @@ template<> struct Traits<SmartData>: public Traits<Build>
 
 template<> struct Traits<Network>: public Traits<Build>
 {
-    typedef LIST<> NETWORKS;
+    typedef LIST<TSTP> NETWORKS;
 
     static const unsigned int RETRIES = 3;
     static const unsigned int TIMEOUT = 10; // s

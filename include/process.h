@@ -4,18 +4,23 @@
 #define __process_h
 
 #include <architecture.h>
+#include <machine.h>
 #include <utility/queue.h>
 #include <utility/handler.h>
-#include <utility/scheduler.h>
 #include <memory.h>
+#include <scheduler.h>
 
-extern "C" { void __exit(); }
+extern "C" {
+    void __exit();
+    void _lock_heap();
+    void _unlock_heap();
+}
 
 __BEGIN_SYS
 
 class Thread
 {
-    friend class Init_First;            // context->load()
+    friend class Init_End;              // context->load()
     friend class Init_System;           // for init() on CPU != 0
     friend class Scheduler<Thread>;     // for link()
     friend class Synchronizer_Common;   // for lock() and sleep()
@@ -23,6 +28,8 @@ class Thread
     friend class System;                // for init()
     friend class IC;                    // for link() for priority ceiling
     friend class Clerk<System>;         // for _statistics
+    friend void ::_lock_heap();         // for lock()
+    friend void ::_unlock_heap();       // for unlock()
 
 protected:
     static const bool smp = Traits<Thread>::smp;
@@ -48,9 +55,6 @@ public:
         FINISHING
     };
 
-    // Thread Priority
-    typedef Scheduling_Criteria::Priority Priority;
-
     // Thread Scheduling Criterion
     typedef Traits<Thread>::Criterion Criterion;
     enum {
@@ -69,7 +73,7 @@ public:
     // t = 0 => Task::self()
     // ss = 0 => user-level stack on an auto expand segment
     struct Configuration {
-        Configuration(const State & s = READY, const Criterion & c = NORMAL, const Color & a = WHITE, Task * t = 0, unsigned int ss = STACK_SIZE)
+        Configuration(const State & s = READY, const Criterion & c = NORMAL, Color a = WHITE, Task * t = 0, unsigned int ss = STACK_SIZE)
         : state(s), criterion(c), color(a), task(t), stack_size(ss) {}
 
         State state;
@@ -79,61 +83,6 @@ public:
         unsigned int stack_size;
     };
 
-    // Thread Statistics (mostly for Monitor)
-    struct _Statistics {
-        _Statistics(): execution_time(0), last_execution(0), jobs(0), average_execution_time(0), hyperperiod_count_thread(0), hyperperiod_jobs(0), hyperperiod_average_execution_time(0), alarm_times(0), times_p_count(0), missed_deadlines(0) {}
-
-        // Thread Execution Time
-        unsigned int execution_time;
-        unsigned int last_execution;
-        unsigned int jobs;
-        unsigned int average_execution_time;
-        unsigned int hyperperiod_count_thread;
-        unsigned int hyperperiod_jobs;
-        unsigned int hyperperiod_average_execution_time;
-
-        // Dealine Miss count
-        Alarm * alarm_times;
-        unsigned int times_p_count;
-        unsigned int missed_deadlines;
-
-        // On Migration
-        static unsigned int hyperperiod[Traits<Build>::CPUS];              // recalculate, on _old_hyperperiod + hyperperiod update
-        static TSC::Time_Stamp last_hyperperiod[Traits<Build>::CPUS];      // wait for old hyperperiod and update
-        static unsigned int hyperperiod_count[Traits<Build>::CPUS];        // reset on next hyperperiod
-
-        // CPU Execution Time
-        static TSC::Time_Stamp hyperperiod_idle_time[Traits<Build>::CPUS]; //
-        static TSC::Time_Stamp idle_time[Traits<Build>::CPUS];
-        static TSC::Time_Stamp last_idle[Traits<Build>::CPUS];
-    };
-
-    union _Dummy_Statistics {
-        // Thread Execution Time
-        unsigned int execution_time;
-        unsigned int last_execution;
-        unsigned int jobs;
-        unsigned int average_execution_time;
-        unsigned int hyperperiod_count_thread;
-        unsigned int hyperperiod_jobs;
-        unsigned int hyperperiod_average_execution_time;
-
-        // Dealine Miss count
-        Alarm * alarm_times;
-        unsigned int times_p_count;
-        unsigned int missed_deadlines;
-
-        // On Migration
-        static unsigned int hyperperiod[Traits<Build>::CPUS];              // recalculate, on _old_hyperperiod + hyperperiod update
-        static TSC::Time_Stamp last_hyperperiod[Traits<Build>::CPUS];      // wait for old hyperperiod and update
-        static unsigned int hyperperiod_count[Traits<Build>::CPUS];        // reset on next hyperperiod
-
-        // CPU Execution Time
-        static TSC::Time_Stamp hyperperiod_idle_time[Traits<Build>::CPUS]; //
-        static TSC::Time_Stamp idle_time[Traits<Build>::CPUS];
-        static TSC::Time_Stamp last_idle[Traits<Build>::CPUS];
-    };
-    typedef IF<monitored, _Statistics, _Dummy_Statistics>::Result Statistics;
 
 public:
     template<typename ... Tn>
@@ -143,7 +92,7 @@ public:
     ~Thread();
 
     const volatile State & state() const { return _state; }
-    const volatile Statistics & statistics() const { return _statistics; }
+    const volatile Criterion::Statistics & statistics() { return criterion().statistics(); }
 
     const volatile Criterion & priority() const { return _link.rank(); }
     void priority(const Criterion & p);
@@ -160,8 +109,8 @@ public:
     static void exit(int status = 0);
 
 protected:
-    void constructor_prologue(const Color & color, unsigned int stack_size);
-    void constructor_epilogue(const Log_Addr & entry, unsigned int stack_size);
+    void constructor_prologue(Color color, unsigned int stack_size);
+    void constructor_epilogue(Log_Addr entry, unsigned int stack_size);
 
     Criterion & criterion() { return const_cast<Criterion &>(_link.rank()); }
     Queue::Element * link() { return &_link; }
@@ -179,15 +128,15 @@ protected:
 
     static Thread * volatile running() { return _scheduler.chosen(); }
 
-    static void lock() {
+    static void lock(Spin * lock = &_lock) {
         CPU::int_disable();
         if(smp)
-            _lock.acquire();
+            lock->acquire();
     }
 
-    static void unlock() {
+    static void unlock(Spin * lock = &_lock) {
         if(smp)
-            _lock.release();
+            lock->release();
         CPU::int_enable();
     }
 
@@ -203,6 +152,19 @@ protected:
     static void time_slicer(IC::Interrupt_Id interrupt);
 
     static void dispatch(Thread * prev, Thread * next, bool charge = true);
+
+    static void for_all_threads(bool (* function)(Criterion &), const Thread * exclude = 0) {
+        bool ret = true;
+        for(Queue::Iterator i = _scheduler.begin(); ret && (i != _scheduler.end()); ++i)
+            if((i->object() != exclude) && (!Criterion::track_idle && (i->object()->priority() != IDLE)))
+                ret = function(i->object()->criterion());
+    }
+    static void for_all_threads_in_task(const Task * task, bool (* function)(Criterion &), const Thread * exclude = 0);
+    static void for_all_threads_in_cpu(unsigned int cpu, bool (* function)(Criterion &), const Thread * exclude = 0);
+
+    static bool collector(Criterion & c) { return c.collect(); }
+    static bool charger(Criterion & c) { return c.charge(); }
+    static bool awarder(Criterion & c) { return c.award(); }
 
     static int idle();
 
@@ -220,8 +182,6 @@ protected:
     Thread * volatile _joining;
     Queue::Element _link;
 
-    Statistics _statistics;
-
     static volatile unsigned int _thread_count;
     static Scheduler_Timer * _timer;
     static Scheduler<Thread> _scheduler;
@@ -232,9 +192,7 @@ protected:
 // Task (only used in multitasking configurations)
 class Task
 {
-    friend class Init_First;
-    friend class System;
-    friend class Thread;
+    friend class Thread;        // for insert()
 
 private:
     static const bool multitask = Traits<System>::multitask;
@@ -245,7 +203,7 @@ private:
     typedef Thread::Queue Queue;
 
 protected:
-    // This constructor is only used by Init_First
+    // This constructor is only used by Thread::init()
     template<typename ... Tn>
     Task(Address_Space * as, Segment * cs, Segment * ds, int (* entry)(Tn ...), const Log_Addr & code, const Log_Addr & data, Tn ... an)
     : _as(as), _cs(cs), _ds(ds), _entry(entry), _code(code), _data(data) {
@@ -354,7 +312,7 @@ template<typename ... Tn>
 inline Thread::Thread(const Configuration & conf, int (* entry)(Tn ...), Tn ... an)
 : _task(conf.task ? conf.task : Task::self()), _state(conf.state), _waiting(0), _joining(0), _link(this, conf.criterion)
 {
-    if(multitask && !conf.stack_size) { // Auto-expand, user-level stack
+    if(multitask && !conf.stack_size) { // auto-expand, user-level stack
         constructor_prologue(conf.color, STACK_SIZE);
         _user_stack = new (SYSTEM) Segment(USER_STACK_SIZE);
 
@@ -368,7 +326,7 @@ inline Thread::Thread(const Configuration & conf, int (* entry)(Tn ...), Tn ... 
         else
             usp -= CPU::init_user_stack(usp, &__exit, an ...); // __exit will cause a Page Fault that must be properly handled
 
-        // Attach the thread's user-level stack from the current address space
+        // Detach the thread's user-level stack from the current address space
         Task::self()->address_space()->detach(_user_stack, ustack);
 
         // Attach the thread's user-level stack to its task's address space so it will be able to access it when it runs
@@ -379,7 +337,7 @@ inline Thread::Thread(const Configuration & conf, int (* entry)(Tn ...), Tn ... 
 
         // Initialize the thread's system-level stack
         _context = CPU::init_stack(usp, _stack + STACK_SIZE, &__exit, entry, an ...);
-    } else {
+    } else { // single-task scenarios and idle thread, which is a kernel thread, don't have a user-level stack
         constructor_prologue(conf.color, conf.stack_size);
         _user_stack = 0;
         _context = CPU::init_stack(0, _stack + conf.stack_size, &__exit, entry, an ...);

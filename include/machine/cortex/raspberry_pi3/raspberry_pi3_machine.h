@@ -6,6 +6,7 @@
 #include <machine/machine.h>
 #include <system/memory_map.h>
 #include <system.h>
+#include <machine/cortex/raspberry_pi3/raspberry_pi3_ioctrl.h>
 
 __BEGIN_SYS
 
@@ -16,7 +17,6 @@ class Raspberry_Pi3: public Machine_Common
 protected:
     typedef CPU::Reg32 Reg32;
     typedef CPU::Log_Addr Log_Addr;
-
 
 public:
     Raspberry_Pi3() {}

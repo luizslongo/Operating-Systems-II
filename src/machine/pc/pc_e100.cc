@@ -56,98 +56,43 @@ void E100::int_handler(IC::Interrupt_Id interrupt)
 // Methods
 E100::~E100()
 {
-    db<E100>(TRC) << "~E100(unit=" << _unit << ")" << endl;
+    db<E100>(TRC) << "~E100(unit=" << _configuration.unit << ")" << endl;
 }
 
-E100::E100(unsigned int unit, const Log_Addr & io_mem, const IO_Irq & irq, DMA_Buffer * dma_buf)
+bool E100::reconfigure(const Configuration * c = 0)
 {
-    db<E100>(TRC) << "E100(unit=" << unit << ",io=" << io_mem << ",irq=" << irq << ",dma=" << dma_buf << ")" << endl;
+    db<E100>(TRC) << "E100::reconfigure(c=" << c << ")" << endl;
 
-    _unit = unit;
-    _io_mem = io_mem;
-    _irq = irq;
-    _csr = static_cast<CSR_Desc *>(io_mem);
-    _dma_buffer = dma_buf;
+    bool ret = false;
 
-    // Distribute the DMA_Buffer allocated by init()
-    Log_Addr log = dma_buf->log_address();
-    Phy_Addr phy = dma_buf->phy_address();
+    if(!c) {
+        db<E100>(TRC) << "E100::reconfigure: reseting!" << endl;
+        CPU::int_disable();
+        reset();
+        new (&_statistics) Statistics; // reset statistics
+        CPU::int_enable();
+    } else {
+        db<E100>(INF) << "E100::reconfigure: configuration = " << *c << ")" << endl;
 
-    // Initialization Block
-    _configCB_phy = phy;
-    configCB = log;
-    log += align128(sizeof(ConfigureCB));
-    phy += align128(sizeof(ConfigureCB));
+        if(c->selector & Configuration::ADDRESS) {
+            db<PCNet32>(WRN) << "E100::reconfigure: address changed only in the mediator!)" << endl;
+            _configuration.address = c->address;
+            ret = true;
+        }
 
-    _macAddrCB_phy = phy;
-    macAddrCB = log;
-    log += align128(sizeof(macAddrCB));
-    phy += align128(sizeof(macAddrCB));
-
-    _dmadump_phy = phy;
-    dmadump = log;
-    log += align128(sizeof(struct mem));
-    phy += align128(sizeof(struct mem));
-
-    // Rx_Desc Ring
-    _rx_cur = 0;
-    _rx_last_el = RX_BUFS - 1;
-    _rx_ring = log;
-    _rx_ring_phy = phy;
-
-    db<E100> (TRC) << "E100(_rx_ring malloc of " << RX_BUFS << " units)" << endl;
-
-    // Rx (RFDs)
-    unsigned int i;
-    for(i = 0; i < RX_BUFS; i++) {
-        log += align128(sizeof(Rx_Desc));
-        phy += align128(sizeof(Rx_Desc));
-        _rx_ring[i].command = 0;
-        _rx_ring[i].size = sizeof(Frame);
-        _rx_ring[i].status = Rx_RFD_AVAILABLE;
-        _rx_ring[i].actual_count = 0;
-        _rx_ring[i].link = phy; //next RFD
-    }
-    _rx_ring[i-1].command = cb_el;
-    _rx_ring[i-1].link = _rx_ring_phy;
-
-    // Tx_Desc Ring
-    _tx_cur = 1;
-    _tx_prev = 0;
-    _tx_ring = log;
-    _tx_ring_phy = phy;
-
-    db<E100> (TRC) << "E100(_tx_ring malloc of " << TX_BUFS << " units)" << endl;
-    // TxCBs
-    for(i = 0; i < TX_BUFS; i++) {
-        log += align128(sizeof(Tx_Desc));
-        phy += align128(sizeof(Tx_Desc));
-
-        new (&_tx_ring[i]) Tx_Desc(phy);
-    }
-    _tx_ring[i-1].link = _tx_ring_phy;
-
-
-    // Rx Buffer
-    for(i = 0; i < RX_BUFS; i++) {
-        _rx_buffer[i] = new (log) Buffer(this, &_rx_ring[i]);
-
-        log += align128(sizeof(Buffer));
-        phy += align128(sizeof(Buffer));
+        if(c->selector & Configuration::TIMER) {
+            if(c->parameter) {
+                TSC::time_stamp(TSC::time_stamp() + c->parameter);
+                ret = true;
+            }
+            if(c->timer_frequency) {
+                db<PCNet32>(WRN) << "PCNet32::reconfigure: timer frequency cannot be changed!)" << endl;
+                ret = false;
+            }
+        }
     }
 
-    // Tx Buffer
-    for(i = 0; i < TX_BUFS; i++) {
-        _tx_buffer[i] = new (log) Buffer(this, &_tx_ring[i]);
-
-        log += align128(sizeof(Buffer));
-        phy += align128(sizeof(Buffer));
-    }
-
-    _tx_buffer_prev = _tx_buffer[_tx_prev];
-
-    // reset
-    reset();
+    return ret;
 }
 
 void E100::reset()
@@ -161,13 +106,13 @@ void E100::reset()
     self_test();
 
     // Get MAC address from EEPROM
-    _address[0] = eeprom_mac_address(0);
-    _address[1] = eeprom_mac_address(1);
-    _address[2] = eeprom_mac_address(2);
-    _address[3] = eeprom_mac_address(3);
-    _address[4] = eeprom_mac_address(4);
-    _address[5] = eeprom_mac_address(5);
-    db<E100>(INF) << "E100::reset():MAC=" << _address << endl;
+    _configuration.address[0] = eeprom_mac_address(0);
+    _configuration.address[1] = eeprom_mac_address(1);
+    _configuration.address[2] = eeprom_mac_address(2);
+    _configuration.address[3] = eeprom_mac_address(3);
+    _configuration.address[4] = eeprom_mac_address(4);
+    _configuration.address[5] = eeprom_mac_address(5);
+    db<E100>(INF) << "E100::reset():MAC=" << _configuration.address << endl;
 
     // load zero on NIC's internal CU
     while(exec_command(cuc_load_base, 0));
@@ -215,7 +160,7 @@ int E100::send(const Address & dst, const Protocol & prot, const void * data, un
 {
     // wait for a free TxCB
     while(!(_tx_ring[_tx_cur].status & cb_complete)) {
-        if (_tx_cuc_suspended) {
+        if(_tx_cuc_suspended) {
             //_int_lock.acquire();
             _tx_cuc_suspended = 0;
             while(exec_command(cuc_resume, 0));
@@ -261,20 +206,20 @@ int E100::send(const Address & dst, const Protocol & prot, const void * data, un
 
 bool E100::verifyPendingInterrupts(void)
 {
-    if (_rx_ruc_no_more_resources) {
+    if(_rx_ruc_no_more_resources) {
         unsigned short i;
 
         //_int_lock.acquire();
 
         _rx_ruc_no_more_resources--;
         for (i = (_rx_cur + 1) % RX_BUFS; i != _rx_cur; ++i %= RX_BUFS) {
-            if ((_rx_ring[i].status & cb_complete)) break;
+            if((_rx_ring[i].status & cb_complete)) break;
         }
 
-        if (i) --i;
+        if(i) --i;
         else i = RX_BUFS - 1;
 
-        if (i != _rx_last_el) {
+        if(i != _rx_last_el) {
             _rx_ring[i].command = cb_el;
             _rx_ring[_rx_last_el].command &= ~cb_el;
             _rx_last_el = i;
@@ -301,12 +246,12 @@ int E100::receive(Address * src, Protocol * prot, void * data, unsigned int size
     *src = frame->header()->src();
     *prot = ntohs(frame->header()->prot());
 
-    if (_rx_ring[_rx_cur].actual_count & (RFD_EOF_MASK | RFD_F_MASK))
+    if(_rx_ring[_rx_cur].actual_count & (RFD_EOF_MASK | RFD_F_MASK))
         size = _rx_ring[_rx_cur].actual_count & RFD_ACTUAL_COUNT_MASK;
     else
         size = 0;
 
-    if (! (_rx_ring[_rx_cur].status & RFD_OK_MASK))
+    if(! (_rx_ring[_rx_cur].status & RFD_OK_MASK))
         db<E100>(WRN) << "Error on frame reception" << endl;
 
     memcpy(data, frame->data<void>(), size);
@@ -367,29 +312,6 @@ E100::Buffer * E100::alloc(const Address & dst, const Protocol & prot, unsigned 
     return pool.head()->object();
 }
 
-void E100::free(Buffer * buf)
-{
-    db<E100>(TRC) << "E100::free(buf=" << buf << ")" << endl;
-
-    for(Buffer::Element * el = buf->link(); el; el = el->next()) {
-        buf = el->object();
-        Rx_Desc * desc = reinterpret_cast<Rx_Desc *>(buf->back());
-
-        _statistics.rx_packets++;
-        _statistics.rx_bytes += buf->size();
-
-        // Release the buffer to the NIC
-        desc->size = Reg16(-sizeof(Frame)); // 2's comp.
-        desc->status = Rx_RFD_AVAILABLE; // Owned by NIC
-        desc->actual_count = 0x0; // Clears EOF, F, and Actual Count
-
-        // Release the buffer to the OS
-        buf->unlock();
-
-        db<E100>(INF) << "E100::free:desc=" << desc << " => " << *desc << endl;
-    }
-}
-
 /*! NOTE: this method is not thread-safe because _tx_buffer_prev is shared by
  * all threads that use this object. */
 int E100::send(Buffer * buf)
@@ -431,7 +353,7 @@ int E100::send(Buffer * buf)
 
         // Wait for packet to be sent and unlock the respective buffer
         while(! (desc->status & cb_complete)) {
-            if (_tx_cuc_suspended) {
+            if(_tx_cuc_suspended) {
                 _tx_cuc_suspended = 0;
                 exec_command(cuc_resume, 0);
             }
@@ -450,7 +372,31 @@ int E100::send(Buffer * buf)
     return size;
 }
 
-unsigned short E100::eeprom_read(unsigned short *addr_len, unsigned short addr) {
+void E100::free(Buffer * buf)
+{
+    db<E100>(TRC) << "E100::free(buf=" << buf << ")" << endl;
+
+    for(Buffer::Element * el = buf->link(); el; el = el->next()) {
+        buf = el->object();
+        Rx_Desc * desc = reinterpret_cast<Rx_Desc *>(buf->back());
+
+        _statistics.rx_packets++;
+        _statistics.rx_bytes += buf->size();
+
+        // Release the buffer to the NIC
+        desc->size = Reg16(-sizeof(Frame)); // 2's comp.
+        desc->status = Rx_RFD_AVAILABLE; // Owned by NIC
+        desc->actual_count = 0x0; // Clears EOF, F, and Actual Count
+
+        // Release the buffer to the OS
+        buf->unlock();
+
+        db<E100>(INF) << "E100::free:desc=" << desc << " => " << *desc << endl;
+    }
+}
+
+unsigned short E100::eeprom_read(unsigned short *addr_len, unsigned short addr)
+{
 
     unsigned long cmd_addr_data;
     cmd_addr_data = (EE_READ_CMD(*addr_len) | addr) << 16;
@@ -472,7 +418,7 @@ unsigned short E100::eeprom_read(unsigned short *addr_len, unsigned short addr) 
         udelay(200);
 
         ctrl = _csr->eeprom_ctrl_lo;
-        if (!(ctrl & eedo) && i > 16) {
+        if(!(ctrl & eedo) && i > 16) {
             *addr_len -= (i - 16);
             i = 17;
         }
@@ -500,13 +446,15 @@ unsigned char E100::eeprom_mac_address(Reg16 addr) {
     addr = (unsigned short) (addr / 2);
     two_words = eeprom_read(&addr_len, addr);
 
-    if (which_word != 0) // second word (bits 8 to 15)
+    if(which_word != 0) // second word (bits 8 to 15)
         return (two_words >> 8);
     else // first word (bits 0 to 7)
         return (two_words & 0x00FF);
 }
 
 void E100::handle_int() {
+    TSC::Time_Stamp ts = (Buffer::Metadata::collect_sfdts) ? TSC::time_stamp() : 0;
+
     CPU::int_disable();
     // IC::disable(IC::irq2int(_irq));
 
@@ -516,7 +464,7 @@ void E100::handle_int() {
     Reg8 stat_ack = read8(&_csr->scb.stat_ack);
     Reg8 status = read8(&_csr->scb.status);
 
-    if ((stat_ack != NOT_OURS) && (stat_ack != NOT_PRESENT)) {
+    if((stat_ack != NOT_OURS) && (stat_ack != NOT_PRESENT)) {
         db<E100>(TRC) << "...if" << endl;
 
         // acknowledge interrupt(s) in one PCI write cycle
@@ -529,7 +477,7 @@ void E100::handle_int() {
             * SWI interrupt.
             */
 
-        if ((((status & RUS_MASK) >> RUS_SHIFT) == RUS_NO_RESOURCES) && (stat_ack & RNR)) {
+        if((((status & RUS_MASK) >> RUS_SHIFT) == RUS_NO_RESOURCES) && (stat_ack & RNR)) {
             _rx_ruc_no_more_resources++;
         }
 
@@ -546,13 +494,13 @@ void E100::handle_int() {
 
                 // For the upper layers, size will represent the size of frame->data<T>()
                 unsigned int size = 0;
-                if (_rx_ring[_rx_cur].actual_count & (RFD_EOF_MASK | RFD_F_MASK)) {
+                if(_rx_ring[_rx_cur].actual_count & (RFD_EOF_MASK | RFD_F_MASK)) {
                     size = _rx_ring[_rx_cur].actual_count & RFD_ACTUAL_COUNT_MASK;
                 }
-                else if (_rx_ring[_rx_cur].actual_count & RFD_F_MASK) {
+                else if(_rx_ring[_rx_cur].actual_count & RFD_F_MASK) {
                     db<E100>(WRN) << "HDS size" << endl;
                 }
-                else if (! (_rx_ring[_rx_cur].actual_count & RFD_F_MASK)) {
+                else if(! (_rx_ring[_rx_cur].actual_count & RFD_F_MASK)) {
                     db<E100>(WRN) << "Invalid RFD" << endl;
                     // Workaround if QEMU patch not applied
                     // http://patchwork.ozlabs.org/patch/662355/
@@ -562,7 +510,7 @@ void E100::handle_int() {
                 }
                 buf->size(size);
 
-                if (! (_rx_ring[_rx_cur].status & RFD_OK_MASK))
+                if(! (_rx_ring[_rx_cur].status & RFD_OK_MASK))
                     db<E100>(WRN) << "Error on frame reception" << endl;
 
                 db<E100>(INF) << "E100::int:receive desc_frame(s=" << desc_frame->src() << ",d=" << desc_frame->dst() << ",p=" << hex << desc_frame->prot() << dec << ",t=" << (char *) desc_frame->data<void>() << ",s=" << buf->size() << ")" << endl;
@@ -582,6 +530,8 @@ void E100::handle_int() {
 
                 _statistics.rx_packets++;
                 _statistics.rx_bytes += size;
+
+                buf->sfdts = ts;
 
                 db<E100>(TRC) << "Will notify!" << endl;
                 if(!notify(frame->header()->prot(), buf)) { // No one was waiting for this frame, so let it free for receive()

@@ -22,7 +22,7 @@ private:
 
 public:
     void exec() {
-        if(id().type() != UTILITY_ID)
+        if((id().type() != UTILITY_ID) || Traits<Framework>::hysterically_debugged)
             db<Framework>(TRC) << ":=>" << *reinterpret_cast<Message *>(this) << endl;
 
         if(id().type() < LAST_TYPE_ID) // in-kernel services
@@ -37,8 +37,10 @@ public:
                     result(UNDEFINED);
         }
 
-        if(id().type() != UTILITY_ID)
+        if((id().type() != UTILITY_ID) || Traits<Framework>::hysterically_debugged)
             db<Framework>(TRC) << "<=:" << *reinterpret_cast<Message *>(this) << endl;
+        if(result() == UNDEFINED)
+            db<Framework>(WRN) << "<-:" << *reinterpret_cast<Message *>(this) << endl;
     }
 
 private:
@@ -67,7 +69,21 @@ void Agent::handle_thread()
     Result res = 0;
 
     switch(method()) {
-    case CREATE1: {
+    case CREATE1:
+    case CREATE2:
+    case CREATE3:
+    case CREATE4: {
+        int p1, p2, p3;
+        in(p1); in(p2); in(p3);
+        int (*entry)(int, int, int);
+        in(entry);
+        id(Id(THREAD_ID, reinterpret_cast<Id::Unit_Id>(new Adapter<Thread>(Thread::Configuration(Thread::READY, Thread::NORMAL, WHITE, 0, 0), entry, p1, p2, p3))));
+    } break;
+    case CREATE5:
+    case CREATE6:
+    case CREATE7:
+    case CREATE8:
+    case CREATE9: {
         int (*entry)();
         in(entry);
         id(Id(THREAD_ID, reinterpret_cast<Id::Unit_Id>(new Adapter<Thread>(Thread::Configuration(Thread::READY, Thread::NORMAL, WHITE, 0, 0), entry))));
@@ -176,11 +192,6 @@ void Agent::handle_address_space()
     case CREATE:
         id(Id(ADDRESS_SPACE_ID, reinterpret_cast<Id::Unit_Id>(new Adapter<Address_Space>())));
         break;
-    case CREATE1:
-        MMU::Page_Directory * pd;
-        in(pd);
-        id(Id(ADDRESS_SPACE_ID, reinterpret_cast<Id::Unit_Id>(new Adapter<Address_Space>(pd))));
-        break;
     case DESTROY:
         delete as;
         break;
@@ -228,23 +239,18 @@ void Agent::handle_segment()
     Result res = 0;
 
     switch(method()) {
-    case CREATE1: {
+    case CREATE2: {
         unsigned int bytes;
-        in(bytes);
-        id(Id(SEGMENT_ID, reinterpret_cast<Id::Unit_Id>(new Adapter<Segment>(bytes))));
+        Segment::Flags flags;
+        in(bytes, flags);
+        id(Id(SEGMENT_ID, reinterpret_cast<Id::Unit_Id>(new Adapter<Segment>(bytes, WHITE, flags))));
     } break;
-    case CREATE2: { // *** indistinguishable ***
-        unsigned int bytes;
-    Segment::Flags flags;
-    in(bytes, flags);
-    id(Id(SEGMENT_ID, reinterpret_cast<Id::Unit_Id>(new Adapter<Segment>(bytes, WHITE, flags))));
-    } break;
-    case CREATE3: { // *** indistinguishable ***
+    case CREATE3: {
         Segment::Phy_Addr phy_addr;
-    unsigned int bytes;
-    Segment::Flags flags;
-    in(phy_addr, bytes, flags);
-    id(Id(SEGMENT_ID, reinterpret_cast<Id::Unit_Id>(new Adapter<Segment>(phy_addr, bytes, flags))));
+        unsigned int bytes;
+        Segment::Flags flags;
+        in(phy_addr, bytes, flags);
+        id(Id(SEGMENT_ID, reinterpret_cast<Id::Unit_Id>(new Adapter<Segment>(phy_addr, bytes, flags))));
     } break;
     case DESTROY:
         delete seg;
@@ -270,19 +276,87 @@ void Agent::handle_segment()
 
 void Agent::handle_mutex()
 {
-    result(UNDEFINED);
+    Adapter<Mutex> * mutex = reinterpret_cast<Adapter<Mutex> *>(id().unit());
+    Result res = 0;
+
+    switch(method()) {
+    case CREATE:
+        id(Id(MUTEX_ID, reinterpret_cast<Id::Unit_Id>(new Adapter<Mutex>())));
+        break;
+    case SYNCHRONIZER_LOCK:
+        mutex->lock();
+        break;
+    case SYNCHRONIZER_UNLOCK:
+        mutex->unlock();
+        break;
+    case DESTROY:
+        delete mutex;
+        break;
+    default:
+        res = UNDEFINED;
+    }
+
+    result(res);
 };
 
 
 void Agent::handle_semaphore()
 {
-    result(UNDEFINED);
+    Adapter<Semaphore> * semaphore = reinterpret_cast<Adapter<Semaphore> *>(id().unit());
+    Result res = 0;
+
+    switch (method()) {
+    case CREATE:
+        id(Id(SEMAPHORE_ID, reinterpret_cast<Id::Unit_Id>(new Adapter<Semaphore>())));
+        break;
+    case CREATE1:
+        int value;
+        in(value);
+        id(Id(SEMAPHORE_ID, reinterpret_cast<Id::Unit_Id>(new Adapter<Semaphore>(value))));
+        break;
+    case DESTROY:
+        delete semaphore;
+        break;
+    case SYNCHRONIZER_P:
+        semaphore->p();
+        break;
+    case SYNCHRONIZER_V:
+        semaphore->v();
+        break;
+    default:
+        res = UNDEFINED;
+    }
+
+    result(res);
 };
 
 
 void Agent::handle_condition()
 {
-    result(UNDEFINED);
+    Adapter<Condition> * condition = reinterpret_cast<Adapter<Condition> *>(id().unit());
+    Result res = 0;
+
+    switch (method()) {
+    case CREATE:
+        id(Id(CONDITION_ID, reinterpret_cast<Id::Unit_Id>(new Adapter<Condition>())));
+        break;
+    case DESTROY:
+        delete condition;
+        break;
+    case SYNCHRONIZER_WAIT:
+        condition->wait();
+        break;
+    case SYNCHRONIZER_SIGNAL:
+        condition->signal();
+        break;
+    case SYNCHRONIZER_BROADCAST:
+        condition->broadcast();
+        break;
+    default:
+        res = UNDEFINED;
+    }
+
+    result(res);
 };
 
 
@@ -298,6 +372,12 @@ void Agent::handle_alarm()
     Result res = 0;
 
     switch(method()) {
+    case CREATE1: // object Delay, which has Type<Delay>::ID set to ALARM_ID to save additional handling
+    case ALARM_DELAY: {
+        Microsecond time;
+        in(time);
+        Adapter<Alarm>::delay(time);
+    } break;
     case CREATE2: {
         Microsecond time;
         Handler * handler;
@@ -325,11 +405,6 @@ void Agent::handle_alarm()
     case ALARM_FREQUENCY:
         res = Adapter<Alarm>::alarm_frequency();
     break;
-    case ALARM_DELAY: {
-        Microsecond time;
-        in(time);
-        Adapter<Alarm>::delay(time);
-    } break;
     default:
         res = UNDEFINED;
     }

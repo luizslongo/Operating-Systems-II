@@ -35,6 +35,8 @@ public:
     virtual ~Monitor() {}
 
     virtual void capture() = 0;
+    virtual void start() = 0;
+    virtual void stop() = 0;
     virtual void reset() = 0;
     virtual void print(OStream & os) const = 0;
 
@@ -44,7 +46,8 @@ public:
         disable_captures();
         OStream os; // we are using OStream instead of db to avoid <CPU_ID> print in each line.
         db<Monitor>(TRC) << "Monitor::process_batch()" << endl;
-        os << "FINAL_TS<" << count2us(_monitors[0].begin()->object()->time_since_t0()) << ">" << endl;
+        if(_monitors[0].begin() != _monitors[0].end()) // monitored, but no Clerk_Monitor created
+            os << "FINAL_TS<" << count2us(_monitors[0].begin()->object()->time_since_t0()) << ">" << endl;
         os << "begin_data" << endl;
         unsigned int i;
         for(unsigned int n = 0; n < CPU::cores(); n++) {
@@ -116,9 +119,6 @@ class Clerk_Monitor: public Monitor
 {
     friend class Monitor;
 
-private:
-//    static const unsigned int PERIOD = (FREQUENCY > 0) ? 1000000 / FREQUENCY : -1UL;
-
 public:
     typedef typename Clerk::Data Data;
 
@@ -131,13 +131,11 @@ public:
 public:
     Clerk_Monitor(Clerk * clerk, const Hertz & frequency, bool data_to_us = false): _clerk(clerk), _frequency(frequency), _period(us2count((frequency > 0) ? 1000000 / frequency : -1UL)), _last_capture(0), _average(0), _data_to_us(data_to_us), _link(this) {
         db<Monitor>(TRC) << "Clerk_Monitor(clerk=" << clerk << ") => " << this << ")" << endl;
-        _snapshots = Traits<Build>::EXPECTED_SIMULATION_TIME * frequency;
-        // if((_snapshots * sizeof(Snapshot)) > Traits<Monitor>::MAX_BUFFER_SIZE)
-        //     _snapshots = Traits<Monitor>::MAX_BUFFER_SIZE * sizeof(Snapshot);
+        _snapshots = Traits<System>::LIFE_SPAN * frequency;
         _buffer = new (SYSTEM) Snapshot[_snapshots];
-
         _monitors[CPU::id()].insert(&_link);
     }
+ 
     ~Clerk_Monitor() {
         _monitors[CPU::id()].remove(&_link);
         delete _buffer;
@@ -160,9 +158,9 @@ public:
         }
     }
 
-    void reset() {
-        _clerk->reset();
-    }
+    void start() { _clerk->start(); }
+    void stop() { _clerk->stop(); }
+    void reset() { _clerk->reset(); }
 
     void print(OStream & os) const {
         if (_data_to_us) {
@@ -303,15 +301,13 @@ public:
         case Event::ELAPSED_TIME:
             return Alarm::elapsed();
         case Event::DEADLINE_MISSES:
-            return t->_statistics.missed_deadlines;
+            return t->statistics().missed_deadlines;
         case Event::RUNNING_THREAD:
             return reinterpret_cast<volatile unsigned int>(t);
         case Event::THREAD_EXECUTION_TIME:
-            if((t->priority() > Thread::Criterion::PERIODIC) && (t->priority() < Thread::Criterion::APERIODIC)) // real-time
-                return t->_statistics.jobs ? t->_statistics.average_execution_time / t->_statistics.jobs : t->_statistics.execution_time;
-            return t->_statistics.execution_time;
+            return t->statistics().thread_execution_time;
         case Event::CPU_EXECUTION_TIME:
-            return t->_statistics.idle_time[CPU::id()];
+        // TODO
         default:
             return 0;
         }
@@ -325,14 +321,13 @@ public:
         case Event::ELAPSED_TIME:
             break;
         case Event::DEADLINE_MISSES:
-            t->_statistics.missed_deadlines = 0;
+            t->criterion()._statistics.missed_deadlines = 0;
             break;
         case Event::RUNNING_THREAD:
             break;
         case Event::THREAD_EXECUTION_TIME:
             break;
         case Event::CPU_EXECUTION_TIME:
-            //Thread::_idle_time[CPU::id()] = 0;
             break;
         default:
             break;
@@ -344,8 +339,6 @@ private:
     Clerk_Monitor<Clerk> * _monitor;
 };
 
-
-#ifdef __PMU_H
 
 // PMU Clerk
 template<>
@@ -398,8 +391,12 @@ inline void Monitor::init_pmu_monitoring() {
     if(Traits<Monitor>::PMU_EVENTS_FREQUENCIES[CHANNEL]) {
         if(CPU::id() == 0)
             db<Monitor>(TRC) << "Monitor::init: monitoring PMU event " << Traits<Monitor>::PMU_EVENTS[CHANNEL] << " at " << Traits<Monitor>::PMU_EVENTS_FREQUENCIES[CHANNEL] << " Hz" << endl;
-        new (SYSTEM) Clerk<PMU>(Traits<Monitor>::PMU_EVENTS[CHANNEL], Traits<Monitor>::PMU_EVENTS_FREQUENCIES[CHANNEL], true);
-        used_channels++;
+        if((((sizeof(Clerk<PMU>::Data) + sizeof(TSC::Time_Stamp)) * Traits<Monitor>::PMU_EVENTS_FREQUENCIES[CHANNEL] * Traits<System>::LIFE_SPAN) + sizeof(Clerk<PMU>)) > System::_heap->grouped_size()  - Traits<Application>::HEAP_SIZE)
+            db<Monitor>(ERR) << "Monitor::init: not enough memory to allocate Clerk (requested size=" << (((sizeof(Clerk<System>::Data) + sizeof(TSC::Time_Stamp)) * Traits<Monitor>::PMU_EVENTS_FREQUENCIES[CHANNEL] * Traits<System>::LIFE_SPAN) + sizeof(Clerk<System>)) << ", Heap::grouped_size()=" << System::_heap->grouped_size() - Traits<Application>::HEAP_SIZE << ")" << endl;
+        else {
+            new (SYSTEM) Clerk<PMU>(Traits<Monitor>::PMU_EVENTS[CHANNEL], Traits<Monitor>::PMU_EVENTS_FREQUENCIES[CHANNEL], true);
+            used_channels++;
+        }
     }
 
     if(used_channels > Clerk<PMU>::CHANNELS + Clerk<PMU>::FIXED)
@@ -411,13 +408,16 @@ inline void Monitor::init_pmu_monitoring() {
 template<>
 inline void Monitor::init_pmu_monitoring<COUNTOF(Traits<Monitor>::PMU_EVENTS)>() {}
 
-#endif
-
 template<unsigned int CHANNEL>
 inline void Monitor::init_system_monitoring() {
     if((Traits<Monitor>::SYSTEM_EVENTS_FREQUENCIES[CHANNEL] > 0) && (CPU::id() == 0)) {
-            db<Monitor>(TRC) << "Monitor::init: monitoring system event " << Traits<Monitor>::SYSTEM_EVENTS[CHANNEL] << " at " << Traits<Monitor>::SYSTEM_EVENTS_FREQUENCIES[CHANNEL] << " Hz" << endl;
-        new (SYSTEM) Clerk<System>(Traits<Monitor>::SYSTEM_EVENTS[CHANNEL], Traits<Monitor>::SYSTEM_EVENTS_FREQUENCIES[CHANNEL], true);
+        db<Monitor>(TRC) << "Monitor::init: monitoring system event " << Traits<Monitor>::SYSTEM_EVENTS[CHANNEL] << " at " << Traits<Monitor>::SYSTEM_EVENTS_FREQUENCIES[CHANNEL] << " Hz" << endl;
+        if((((sizeof(Clerk<System>::Data) + sizeof(TSC::Time_Stamp)) * Traits<Monitor>::SYSTEM_EVENTS_FREQUENCIES[CHANNEL] * Traits<System>::LIFE_SPAN) + sizeof(Clerk<System>)) > System::_heap->grouped_size() - Traits<Application>::HEAP_SIZE)
+            db<Monitor>(ERR) << "Monitor::init: not enough memory to allocate Clerk (requested size=" << (((sizeof(Clerk<System>::Data) + sizeof(TSC::Time_Stamp)) * Traits<Monitor>::SYSTEM_EVENTS_FREQUENCIES[CHANNEL] * Traits<System>::LIFE_SPAN) + sizeof(Clerk<System>)) << ", Heap::grouped_size()=" << System::_heap->grouped_size() - Traits<Application>::HEAP_SIZE << ")" << endl;
+        else {
+            new (SYSTEM) Clerk<System>(Traits<Monitor>::SYSTEM_EVENTS[CHANNEL], Traits<Monitor>::SYSTEM_EVENTS_FREQUENCIES[CHANNEL], true);
+            db<Monitor>(WRN) << "Monitor::init: system event " << Traits<Monitor>::SYSTEM_EVENTS[CHANNEL] << " at " << Traits<Monitor>::SYSTEM_EVENTS_FREQUENCIES[CHANNEL] << " Hz created" << endl;
+        }
     }
     init_system_monitoring<CHANNEL + 1>();
 };

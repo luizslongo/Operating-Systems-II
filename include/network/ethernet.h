@@ -28,13 +28,8 @@ public:
         PROTO_RARP   = 0x8035,
         PROTO_TSTP   = 0x8401,
         PROTO_ELP    = 0x8402,
-        PROTO_PTP    = 0x88F7
+        PROTO_PTP    = 0x88f7
     };
-
-    static const unsigned int MTU = 1500;
-    typedef unsigned char Data[MTU];
-
-    typedef NIC_Common::CRC32 CRC;
 
     // The Ethernet Header (RFC 894)
     class Header
@@ -59,6 +54,12 @@ public:
         Protocol _prot;
     } __attribute__((packed, may_alias));
 
+    // Data and Trailer
+    static const unsigned int MTU = 1500;
+    typedef unsigned char Data[MTU];
+
+    typedef NIC_Common::CRC32 CRC;
+    typedef CRC Trailer;
 
     // The Ethernet Frame (RFC 894)
     class Frame: public Header
@@ -85,30 +86,36 @@ public:
 
     typedef Frame PDU;
 
+    typedef IF<Traits<TSTP>::enabled, TSTP_Metadata, Dummy_Metadata>::Result Metadata;
 
     // Buffers used to hold frames across a zero-copy network stack
     typedef _UTIL::Buffer<NIC<Ethernet>, Frame, void, Metadata> Buffer;
-
 
     // Observers of a protocol get a also a pointer to the received buffer
     typedef Data_Observer<Buffer, Protocol> Observer;
     typedef Data_Observed<Buffer, Protocol> Observed;
 
+    // Ethernet NICs usually don't export the timer for SFD time stamping, so the basic time type is set to TSC
+    // NICs that do feature time stamping must have any different type converted to TSC::Time_Stamp
+    typedef TSC::Time_Stamp Time_Stamp;
 
     // Configuration parameters
-    struct Configuration
+    struct Configuration: public NIC_Common::Configuration
     {
-        Configuration(): address(Address::NULL) {}
-
         friend Debug & operator<<(Debug & db, const Configuration & c) {
-            db << "{addr=" << c.address
+            db << "{unit=" << c.unit
+               << ",addr=" << c.address
+               << ",a=" << c.timer_accuracy
+               << ",f=" << c.timer_frequency
                << "}";
             return db;
         }
 
+        unsigned int unit;
         Address address;
+        PPM timer_accuracy;
+        Hertz timer_frequency;
     };
-
 
     // Meaningful statistics for Ethernet
     struct Statistics: public NIC_Common::Statistics
@@ -129,11 +136,12 @@ public:
             return db;
         }
 
-        unsigned int rx_overruns;
-        unsigned int tx_overruns;
-        unsigned int frame_errors;
-        unsigned int carrier_errors;
-        unsigned int collisions;
+        Time_Stamp time_stamp;
+        Count rx_overruns;
+        Count tx_overruns;
+        Count frame_errors;
+        Count carrier_errors;
+        Count collisions;
     };
 
 protected:
