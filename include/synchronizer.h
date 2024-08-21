@@ -46,7 +46,7 @@ public:
     void unlock();
 
 private:
-    volatile bool _locked;
+    alignas (int) volatile bool _locked;
 };
 
 

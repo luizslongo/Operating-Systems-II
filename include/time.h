@@ -32,7 +32,7 @@ class Alarm
 {
     friend class System;                        // for init()
     friend class Alarm_Chronometer;             // for elapsed()
-    friend class FCFS;                          // for ticks() and elapsed()
+    friend class FCFS;                          // for elapsed()
 
 private:
     typedef Timer_Common::Tick Tick;
