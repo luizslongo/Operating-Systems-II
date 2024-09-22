@@ -3,7 +3,8 @@
 hello
 producer_consumer
 philosophers_dinner
-scheduler_simulator
+app/scheduler_simulator/scheduler_simulator
+img/scheduler_simulator
 *.img
 *.log
 *.out
