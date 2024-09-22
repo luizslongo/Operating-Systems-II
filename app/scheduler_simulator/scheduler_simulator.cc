@@ -7,8 +7,8 @@
 //OStream cout;
 int main(int argc, char *argv[])
 {
-    double min_cpu_frequency = 0.25;
-    double max_cpu_frequency = 1;
+    float min_cpu_frequency = 0.25;
+    float max_cpu_frequency = 1;
     // struct ThreadArgs {
     //     int id;
     //     int type;

@@ -1,16 +1,17 @@
 #ifndef THREAD_H
 #define THREAD_H
 
+#include "system/config.h"
 #include<utility/queue.h>
 #include<utility/math.h>
 
+// Structure to store the arguments used to create a thread
 /**
-deadline
-tempo de criação
-tipo de tarefa --> CRITICAL, MEDIUM, BEST_EFFORT
-tempo de começo - start_time
-
- */
+  * deadline
+  * creation time
+  * task type --> CRITICAL, BEST_EFFORT
+  * task time --> time needed to execute 
+  */
 
 struct ThreadArgs {
     int id;
@@ -20,28 +21,35 @@ struct ThreadArgs {
     unsigned int task_time;
 };
 
+// This represents a thread in the system
 class Thread {
     public:
+        // Enumeration of the thread types: CRITICAL (absolutely can NOT lose its deadline) 
+        // and BEST_EFFORT (losing its deadline will not cause major issues)
         enum type : int {
             CRITICAL   = 0,
             BEST_EFFORT = 1
         };
+        // Thread constructor
         Thread(ThreadArgs& args) :_id{args.id}, 
                                   _type(args.type), 
                                   _execution_time(0), 
                                   _creation_time(args.creation_time),
                                   _deadline(args.deadline), 
+                                  // Element of the ordered queue, used by the scheduler
                                   _element(this, args.deadline | ( args.type != CRITICAL ?  1 << (sizeof(unsigned int) - 1) : 0 )),
                                   _task_time(args.task_time) {};
-
+        // Public methods to get informations and execute the thread
         int type();
         int id();
         EPOS::Ordered_Queue<Thread>::Element& element();
         unsigned int deadline();
         unsigned int creation_time();
         bool finished(); //task_time >= execution_time
-        double new_frequency(unsigned int current_time, double min_cpu_frequency, double max_cpu_frequency);
-        
+
+        // Calculates the new CPU frequency based on the current time, and the minimum and maximum allowed frequencies
+        float new_frequency(unsigned int current_time, float min_cpu_frequency, float max_cpu_frequency);
+        // Executes the thread for one unit of time and returns the new time
         unsigned int execute(unsigned int current_time);
     
     private:
@@ -53,37 +61,33 @@ class Thread {
         EPOS::Ordered_Queue<Thread>::Element _element;
         unsigned int _task_time;
         
-        int round(double x) const {
-            return x - (int) x < 0.5 ? (int) x : (int) x + 1;
-        }
-        
-        double abs(double x) const {
+        // The following methods exist to deal with EPOS limitations (exponentiation in which the exponent is a float)
+        // This absolute value calculation is used in the method below
+        float abs(float x) const {
             return x < 0 ? -x : x;
         }
 
-        // FROM: https://stackoverflow.com/a/29861395
-        double pow(int x, double y) const {
-            if (x < 0 and abs(round(y)-y) < 1e-8) {
-                return pow(-x, y) * ((int)round(y)%2==1 ? -1 : 1);
-            } else if (y < 0) {
-                return 1/pow(x, -y);
-            } else if(y > 1) {
-                return pow(x * x, y / 2);
-            } else {
-                double fraction = 1;
-                double result = 1;
+        // Calculates the power of 2 using the bisection method
+        float pow2(float x) const {
+            // Assuming we are only going to call this with y <= 1.0, so r = 2.1 is enough (it should never be higher than 2)
+            float l = 0, r = 2.1;
 
-                while(y > 1e-8) {
-                    if (y >= fraction) {
-                        y -= fraction;
-                        result *= x;
-                    }
+            // The loop iterates until a precision of 3 decimal places is reached
+            while (abs(r - l) >= 1e-5) { 
+                float mid = (l+r)/2;
 
-                    fraction /= 2;
-                    x = EPOS::Math::sqrt(x);
-                }
-                return result;
+                // Uses the function fast_log2 to find the adequate mean value
+                // TODO: This is wrong for some reason... It does not work inside EPOS, but works outside of it.
+                if (EPOS::S::U::Math::fast_log2(mid) > x)
+                    r = mid;
+                else
+                    l = mid;
             }
+
+            // Used for debugging
+            EPOS::OStream cout;
+            cout << "L: " << l << ", X: " << x << '\n';
+            return l;
         }
 };
 
