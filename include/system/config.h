@@ -12,7 +12,7 @@
 #define MACH pc
 #define MMOD legacy_pc
 #define NETW standalone
-#define APPL hello
+#define APPL scheduler_simulator
 #define __library__
 #define __ia32__
 #define __pc__

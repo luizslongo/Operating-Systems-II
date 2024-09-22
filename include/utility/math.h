@@ -272,6 +272,8 @@ inline T1 lcm(T1 a, T2 b)
     return temp ? a * (b / temp) : 0;
 }
 
+
+
 }
 
 __END_UTIL
