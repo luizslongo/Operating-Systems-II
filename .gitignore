@@ -3,6 +3,7 @@
 hello
 producer_consumer
 philosophers_dinner
+scheduler_simulator
 *.img
 *.log
 *.out
