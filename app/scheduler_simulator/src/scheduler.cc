@@ -13,3 +13,7 @@ void Scheduler::finish_current_thread() {
     auto *thread = _threads.remove();
     delete thread;
 }
+
+bool Scheduler::all_finished() {
+    return _threads.empty();
+}

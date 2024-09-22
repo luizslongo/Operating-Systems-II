@@ -7,8 +7,8 @@
 //OStream cout;
 int main(int argc, char *argv[])
 {
-    float min_cpu_frequency = 0.25;
-    float max_cpu_frequency = 1;
+    double min_cpu_frequency = 0.25;
+    double max_cpu_frequency = 1;
     // struct ThreadArgs {
     //     int id;
     //     int type;
@@ -17,8 +17,8 @@ int main(int argc, char *argv[])
     //     unsigned int task_time;
     // };
     ThreadArgs t1{0, 1, 15, 0, 8};
-    ThreadArgs t2{1, 0, 20, 3, 12};
-    ThreadArgs t3{2, 0, 27, 12, 10};
+    ThreadArgs t2{1, 0, 12, 3, 5};
+    ThreadArgs t3{2, 0, 14, 8, 4};
 
     //std::priority_queue<int> q;
 

@@ -13,6 +13,7 @@ class Scheduler{
         Thread* choose_next(unsigned int global_time);
         void create_thread(ThreadArgs& arg);
         void finish_current_thread();
+        bool all_finished();
 
     private:
         class CompareByDeadline {

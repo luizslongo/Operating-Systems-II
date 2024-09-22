@@ -10,11 +10,11 @@
 
 class Simulator {
     public:
-        void start(float min_frequency, float max_frequency, ThreadArgs uncreated_thread_args[], int num_threads, Scheduler& scheduler);
+        void start(double min_frequency, double max_frequency, ThreadArgs uncreated_thread_args[], int num_threads, Scheduler& scheduler);
     private:
-        float _min_frequency;
-        float _max_frequency;     
-        const Thread* _current_thread;
+        double _min_frequency;
+        double _max_frequency;     
+        Thread* _current_thread;
         unsigned int _current_time{0};
         Scheduler _scheduler;   
         EPOS::OStream cout;
