@@ -3,15 +3,18 @@
 #include <utility/ostream.h>
 #include <utility/string.h>
 
-void Simulator::start(float min_frequency, float max_frequency, ThreadArgs uncreated_thread_args[], int num_threads, Scheduler& scheduler) {
+void Simulator::start(double min_frequency, double max_frequency, ThreadArgs uncreated_thread_args[], int num_threads, Scheduler& scheduler) {
+    _min_frequency = min_frequency;
+    _max_frequency = max_frequency;
     _current_time = 0;
-    const Thread* next_thread;
+    Thread* next_thread;
     _current_thread = nullptr;
 
     int thread_idx = 0;
-    while (thread_idx < num_threads) {
+    //while (thread_idx < num_threads) {
+    for (int h = 0; h < 60; h++) {
         // New thread created
-        if (thread_idx < num_threads && _current_time <= uncreated_thread_args[thread_idx].creation_time) {
+        if (thread_idx < num_threads && _current_time >= uncreated_thread_args[thread_idx].creation_time) {
             log("Creating Thread");
             scheduler.create_thread(uncreated_thread_args[thread_idx++]);
         }
@@ -33,7 +36,8 @@ void Simulator::start(float min_frequency, float max_frequency, ThreadArgs uncre
         //
         // Right now, you can assume this thread is executed for 1 unit of time.
         log("Executing Thread for 1 unit of time...");
-        _current_time = _current_thread->execute(_current_time);
+        _current_thread->execute(_current_time);
+        _current_time++;
 
         if (_current_thread->finished()) {
             _scheduler.finish_current_thread();

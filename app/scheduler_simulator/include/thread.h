@@ -34,20 +34,20 @@ class Thread {
                                   _element(this, args.deadline | ( args.type != CRITICAL ?  1 << (sizeof(unsigned int) - 1) : 0 )),
                                   _task_time(args.task_time) {};
 
-        int type() const;
-        int id() const;
+        int type();
+        int id();
         EPOS::Ordered_Queue<Thread>::Element& element();
-        unsigned int deadline() const;
-        unsigned int creation_time() const;
-        bool finished() const; //task_time >= execution_time
-        unsigned int new_frequency(unsigned int current_time, float min_cpu_frequency, float max_cpu_frequency) const;
+        unsigned int deadline();
+        unsigned int creation_time();
+        bool finished(); //task_time >= execution_time
+        double new_frequency(unsigned int current_time, double min_cpu_frequency, double max_cpu_frequency);
         
-        unsigned int execute(unsigned int current_time) const;
+        unsigned int execute(unsigned int current_time);
     
     private:
         int _id;
         int _type;
-        unsigned int _execution_time{0};
+        unsigned int _execution_time;
         unsigned int _creation_time;
         unsigned int _deadline;
         EPOS::Ordered_Queue<Thread>::Element _element;
