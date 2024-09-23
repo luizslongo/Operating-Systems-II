@@ -35,8 +35,9 @@ class Thread {
                                   _type(args.type), 
                                   _execution_time(0), 
                                   _creation_time(args.creation_time),
-                                  _deadline(args.deadline), 
-                                  // Element of the ordered queue, used by the scheduler
+                                  _deadline(args.deadline),
+                                  _period_time(args.deadline-args.creation_time), 
+                                  //Element of the ordered queue, used by the scheduler
                                   _element(this, args.deadline | ( args.type != CRITICAL ?  1 << (sizeof(unsigned int) - 1) : 0 )),
                                   _task_time(args.task_time) {};
         // Public methods to get informations and execute the thread
@@ -45,12 +46,13 @@ class Thread {
         EPOS::Ordered_Queue<Thread>::Element& element();
         unsigned int deadline();
         unsigned int creation_time();
-        bool finished(); //task_time >= execution_time
+        bool finished(); //task_time <= execution_time
 
         // Calculates the new CPU frequency based on the current time, and the minimum and maximum allowed frequencies
         float new_frequency(unsigned int current_time, float min_cpu_frequency, float max_cpu_frequency);
         // Executes the thread for one unit of time and returns the new time
         unsigned int execute(unsigned int current_time);
+        void recalculate_times();
     
     private:
         int _id;
@@ -58,6 +60,7 @@ class Thread {
         unsigned int _execution_time;
         unsigned int _creation_time;
         unsigned int _deadline;
+        unsigned int _period_time;
         EPOS::Ordered_Queue<Thread>::Element _element;
         unsigned int _task_time;
         
@@ -65,6 +68,10 @@ class Thread {
         // This absolute value calculation is used in the method below
         float abs(float x) const {
             return x < 0 ? -x : x;
+        }
+
+        int round(float x) const {
+            return x - (int) x < 0.5 ? (int) x : (int) x + 1; 
         }
 
         // Calculates the power of 2 using the bisection method
@@ -85,8 +92,8 @@ class Thread {
             }
 
             // Used for debugging
-            EPOS::OStream cout;
-            cout << "L: " << l << ", X: " << x << '\n';
+            //EPOS::OStream cout;
+            //cout << "L: " << l << ", X: " << x << '\n';
             return l;
         }
 };
