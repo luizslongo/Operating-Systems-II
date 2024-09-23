@@ -55,6 +55,7 @@ float Thread::new_frequency(unsigned int current_time, float min_cpu_frequency, 
     float new_cpu_frequency = min_cpu_frequency + deadline_multiplier*static_cast<float>((max_cpu_frequency-min_cpu_frequency));
     cout << "new_cpu " << new_cpu_frequency << "\n";
 
+    // Convert the percentage frequency calculated for a level by 1 to 10
     new_cpu_frequency *= 10;
     cout << "new_cpu_level " << round(new_cpu_frequency) << "\n";
     return round(new_cpu_frequency);
@@ -66,6 +67,7 @@ unsigned int Thread::execute(unsigned int current_time) {
     return current_time++;
 }
 
+// Recalculates the times for the next period
 void Thread::recalculate_times() {
     if (finished()) {
         _deadline = _deadline + _period_time;
