@@ -32,9 +32,10 @@ void Simulator::start(float min_frequency, float max_frequency, ThreadArgs uncre
             scheduler.create_thread(uncreated_thread_args[thread_idx++]);
         }
 
-        // The scheduler chooses the next thread to execute, based on the current time
+        // The scheduler chooses the next thread to execute
         next_thread = scheduler.choose_next();
 
+        // If there is no thread to be executed, the simulator enters the idle mode
         if (next_thread == nullptr) {
             _current_thread = nullptr;
             log("No thread running, idling...");
@@ -46,18 +47,20 @@ void Simulator::start(float min_frequency, float max_frequency, ThreadArgs uncre
         
         cout << '(' << _current_thread->id() << ") " << _current_time << " --> " << "Setting new frequency to " << frequency << '\n';
         
+        // In case the next chosen thread is different than the current thread, simulates a context switch
         if (next_thread != _current_thread)
-            _current_thread = next_thread; // Simulating context switch.
+            _current_thread = next_thread;  // Simulating context switch.
         
-        // Here we assume the thread only executes for a fixed period of time.
-        // This is needed to make sure our algorithm works correctly.
-        // Inside EPOS, this will be done by setting the timed attribute to `true`.
+        // Here we assume the thread only executes for a fixed period of time
+        // This is needed to make sure our algorithm works correctly
+        // Inside EPOS, this will be done by setting the timed attribute to 'true'
         //
-        // Right now, you can assume this thread is executed for 1 unit of time.
+        // Right now, you can assume this thread will be executed for 1 unit of time.
         log("Executing Thread for 1 unit of time...");
         _current_thread->execute(_current_time);
         _current_time++;
 
+        // If the current thread has finished its execution, remove it from the scheduler
         if (_current_thread->finished()) {
             _scheduler.finish_current_thread();
             log("Thread finished execution.");
