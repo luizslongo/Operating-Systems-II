@@ -16,18 +16,19 @@ int main(int argc, char *argv[])
     //     unsigned int creation_time;
     //     unsigned int task_time;
     // };
-    ThreadArgs t1{0, 1, 15, 0, 8};
-    ThreadArgs t2{1, 0, 12, 3, 5};
+    ThreadArgs t1{0, 0, 15, 0, 8};
+    ThreadArgs t2{1, 1, 12, 3, 5};
     ThreadArgs t3{2, 0, 14, 8, 4};
+    ThreadArgs t4{2, 0, 18, 10, 4};
 
     //std::priority_queue<int> q;
 
     
-    ThreadArgs arr[3] = {t1, t2, t3};
+    ThreadArgs arr[4] = {t1, t2, t3, t4};
     
     Simulator sim;
     Scheduler sched;
-    sim.start(min_cpu_frequency, max_cpu_frequency, arr, 3, sched);
+    sim.start(min_cpu_frequency, max_cpu_frequency, arr, 4, sched);
 
     return 0;
 }

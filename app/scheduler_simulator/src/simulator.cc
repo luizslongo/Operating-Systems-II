@@ -13,8 +13,10 @@ void Simulator::start(float min_frequency, float max_frequency, ThreadArgs uncre
     int thread_idx = 0;
     
     // Main loop of the simulation, executes while there are still not finished threads, threads to be created or an executing thread
-    while (!_scheduler.all_finished() || thread_idx < num_threads || _current_thread != nullptr) {
-        cout << _scheduler.all_finished() << ' ' << (thread_idx < num_threads) << ' ' << (_current_thread != nullptr) << '\n';
+    for (int i = 0; i < 60; i++) {
+    
+    //while (!_scheduler.all_finished() || thread_idx < num_threads || _current_thread != nullptr) {
+
         // In case the CPU is idle and it is not yet the moment to create a new thread, simply increment the current time
         if (thread_idx < num_threads && _current_time < uncreated_thread_args[thread_idx].creation_time && _current_thread == nullptr) {
             _current_time++;
@@ -40,7 +42,7 @@ void Simulator::start(float min_frequency, float max_frequency, ThreadArgs uncre
         }
         
         // On EPOS, the new frequency will be calculated if the flag "charge" is true
-        float frequency = next_thread->new_frequency(_current_time, _min_frequency, _max_frequency);
+        int frequency = next_thread->new_frequency(_current_time, _min_frequency, _max_frequency);
         
         cout << '(' << _current_thread->id() << ") " << _current_time << " --> " << "Setting new frequency to " << frequency << '\n';
         

@@ -21,9 +21,11 @@ void Scheduler::finish_current_thread() {
     //Element * remove(Element * e) { return T::remove(e); }
     EPOS::OStream cout;
     cout << "Size Queue Before Finish " << _threads.size() << "\n";
-    auto *element = _threads.remove(_threads.head());
+     auto *element = _threads.remove();
+    _threads.head()->object()->recalculate_times();
+    _threads.insert(element);
     cout << "Size Queue After Finish " << _threads.size() << "\n";
-    delete element;
+    //delete element;
 }
 
 bool Scheduler::all_finished() {
