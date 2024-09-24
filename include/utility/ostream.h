@@ -145,6 +145,17 @@ public:
         long long b = (long long) f;
         (*this) << b << ".";
         long long m = (long long) ((f - b)  * 10000);
+        
+        int cnt = 0;
+        long long current = m;
+        while (current) {
+            cnt++;
+            current /= 10;
+        }
+        cnt = 3 - cnt;
+        for (; cnt >= 0; cnt--)
+            (*this) << '0';
+
         (*this) << m;
         return *this;
     }

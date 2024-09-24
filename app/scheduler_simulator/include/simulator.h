@@ -21,14 +21,12 @@ class Simulator {
         Thread* _current_thread;
         // Current time in the simulator, it is incremented in each simulation step
         unsigned int _current_time{0};
-        // Local instance of the scheduler, responsible fir chosing and managing the execution of threads
-        Scheduler _scheduler;
         // Object to register outputs and logs of the simulation   
         EPOS::OStream cout;
         
         // Internal function that registers the simulation logs, associating the thread ID and the current time to the message
         void log(const char* text) {
-            cout << '(' << (_current_thread != nullptr ? _current_thread->id() : -1) << ") " << _current_time << " --> " << text << '\n';
+            cout << "(Thread " << (_current_thread != nullptr ? _current_thread->id() : -1) << ") " << _current_time << " --> " << text << '\n';
         }
 };
 

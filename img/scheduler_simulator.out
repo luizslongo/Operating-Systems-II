@@ -1,0 +1,837 @@
+c[?7l[2J[0mSeaBIOS (version 1.16.3-2.fc40)
+
+
+iPXE (https://ipxe.org) 00:03.0 CA00 PCI2.10 PnP PMM+3EFCA420+3EF0A420 CA00
+Press Ctrl-B to configure iPXE (PCI 00:03.0)...                                                                               
+
+
+Booting from Hard Disk...
+Boot failed: could not read the boot disk
+
+Booting from Floppy...
+Loading EPOS ... done
+Ignoring ELF segment 1 at 0x80480d4!
+
+*** This is EPOS!
+
+Setting up this machine as follows: 
+  Mode:         library
+  Processor:    1 x IA32 at 2000 MHz (BUS clock = 2000 MHz)
+  Machine:      PC
+  Memory:       1048576 KB [0x00000000:0x40000000]
+  User memory:  1047472 KB [0x00000000:0x3feec000]
+  I/O space:    28612 KB [0xfd000000:0xfebf1000]
+  Node Id:      will get from the network!
+  Position:     will get from the network!
+  Setup:        22592 bytes
+  APP code:     32768 bytes	data: 4214784 bytes
+
+(Thread -1) 0 --> Creating Thread
+(Thread 0) 0 --> deadline 15
+(Thread 0) 0 --> current_time 0
+(Theread 0) 0 --> creation_time 0
+(Theread 0) 0 --> time_fraction 0.0000
+(Theread 0) 0 --> deadline_multiplier 0.0000
+(Theread 0) 0 --> execution_time 0
+(Theread 0) 0 --> min_cpu 0.2500
+(Theread 0) 0 --> max_cpu 1.00000
+new_cpu 0.2499
+new_cpu_level 2
+(Thread 0) 0 --> Setting new frequency to 2
+(Thread 0) 0 --> Executing Thread for 1 unit of time...
+TASK: 8, EXEC: 1, ID: 0
+====================================== 1 ======================================
+(Thread 0) 1 --> deadline 15
+(Thread 0) 1 --> current_time 1
+(Theread 0) 1 --> creation_time 0
+(Theread 0) 1 --> time_fraction 0.0666
+(Theread 0) 1 --> deadline_multiplier 0.0683
+(Theread 0) 1 --> execution_time 1
+(Theread 0) 1 --> min_cpu 0.2500
+(Theread 0) 1 --> max_cpu 1.00000
+new_cpu 0.3012
+new_cpu_level 3
+(Thread 0) 1 --> Setting new frequency to 3
+(Thread 0) 1 --> Executing Thread for 1 unit of time...
+TASK: 8, EXEC: 2, ID: 0
+====================================== 2 ======================================
+(Thread 0) 2 --> deadline 15
+(Thread 0) 2 --> current_time 2
+(Theread 0) 2 --> creation_time 0
+(Theread 0) 2 --> time_fraction 0.1333
+(Theread 0) 2 --> deadline_multiplier 0.1385
+(Theread 0) 2 --> execution_time 2
+(Theread 0) 2 --> min_cpu 0.2500
+(Theread 0) 2 --> max_cpu 1.00000
+new_cpu 0.3539
+new_cpu_level 4
+(Thread 0) 2 --> Setting new frequency to 4
+(Thread 0) 2 --> Executing Thread for 1 unit of time...
+TASK: 8, EXEC: 3, ID: 0
+====================================== 3 ======================================
+(Thread 0) 3 --> Creating Thread
+(Thread 1) 3 --> deadline 12
+(Thread 1) 3 --> current_time 3
+(Theread 1) 3 --> creation_time 3
+(Theread 1) 3 --> time_fraction 0.0000
+(Theread 1) 3 --> deadline_multiplier 0.0000
+(Theread 1) 3 --> execution_time 0
+(Theread 1) 3 --> min_cpu 0.2500
+(Theread 1) 3 --> max_cpu 1.00000
+new_cpu 0.2499
+new_cpu_level 2
+(Thread 1) 3 --> Setting new frequency to 2
+(Thread 1) 3 --> Executing Thread for 1 unit of time...
+TASK: 5, EXEC: 1, ID: 1
+====================================== 4 ======================================
+(Thread 1) 4 --> deadline 12
+(Thread 1) 4 --> current_time 4
+(Theread 1) 4 --> creation_time 3
+(Theread 1) 4 --> time_fraction 0.1111
+(Theread 1) 4 --> deadline_multiplier 0.1149
+(Theread 1) 4 --> execution_time 1
+(Theread 1) 4 --> min_cpu 0.2500
+(Theread 1) 4 --> max_cpu 1.00000
+new_cpu 0.3362
+new_cpu_level 3
+(Thread 1) 4 --> Setting new frequency to 3
+(Thread 1) 4 --> Executing Thread for 1 unit of time...
+TASK: 5, EXEC: 2, ID: 1
+====================================== 5 ======================================
+(Thread 1) 5 --> deadline 12
+(Thread 1) 5 --> current_time 5
+(Theread 1) 5 --> creation_time 3
+(Theread 1) 5 --> time_fraction 0.2222
+(Theread 1) 5 --> deadline_multiplier 0.2352
+(Theread 1) 5 --> execution_time 2
+(Theread 1) 5 --> min_cpu 0.2500
+(Theread 1) 5 --> max_cpu 1.00000
+new_cpu 0.4264
+new_cpu_level 4
+(Thread 1) 5 --> Setting new frequency to 4
+(Thread 1) 5 --> Executing Thread for 1 unit of time...
+TASK: 5, EXEC: 3, ID: 1
+====================================== 6 ======================================
+(Thread 1) 6 --> deadline 12
+(Thread 1) 6 --> current_time 6
+(Theread 1) 6 --> creation_time 3
+(Theread 1) 6 --> time_fraction 0.3333
+(Theread 1) 6 --> deadline_multiplier 0.3617
+(Theread 1) 6 --> execution_time 3
+(Theread 1) 6 --> min_cpu 0.2500
+(Theread 1) 6 --> max_cpu 1.00000
+new_cpu 0.5212
+new_cpu_level 5
+(Thread 1) 6 --> Setting new frequency to 5
+(Thread 1) 6 --> Executing Thread for 1 unit of time...
+TASK: 5, EXEC: 4, ID: 1
+====================================== 7 ======================================
+(Thread 1) 7 --> deadline 12
+(Thread 1) 7 --> current_time 7
+(Theread 1) 7 --> creation_time 3
+(Theread 1) 7 --> time_fraction 0.4444
+(Theread 1) 7 --> deadline_multiplier 0.4954
+(Theread 1) 7 --> execution_time 4
+(Theread 1) 7 --> min_cpu 0.2500
+(Theread 1) 7 --> max_cpu 1.00000
+new_cpu 0.6215
+new_cpu_level 6
+(Thread 1) 7 --> Setting new frequency to 6
+(Thread 1) 7 --> Executing Thread for 1 unit of time...
+TASK: 5, EXEC: 5, ID: 1
+TASK: 5, EXEC: 5, ID: 1
+Readding thread
+New Deadline: 21
+New Creation Time: 12
+(Thread 1) 7 --> Thread finished execution.
+====================================== 8 ======================================
+(Thread -1) 8 --> Creating Thread
+(Thread 2) 8 --> deadline 14
+(Thread 2) 8 --> current_time 8
+(Theread 2) 8 --> creation_time 8
+(Theread 2) 8 --> time_fraction 0.0000
+(Theread 2) 8 --> deadline_multiplier 0.0000
+(Theread 2) 8 --> execution_time 0
+(Theread 2) 8 --> min_cpu 0.2500
+(Theread 2) 8 --> max_cpu 1.00000
+new_cpu 0.2499
+new_cpu_level 2
+(Thread 2) 8 --> Setting new frequency to 2
+(Thread 2) 8 --> Executing Thread for 1 unit of time...
+TASK: 4, EXEC: 1, ID: 2
+====================================== 9 ======================================
+(Thread 2) 9 --> deadline 14
+(Thread 2) 9 --> current_time 9
+(Theread 2) 9 --> creation_time 8
+(Theread 2) 9 --> time_fraction 0.1666
+(Theread 2) 9 --> deadline_multiplier 0.1743
+(Theread 2) 9 --> execution_time 1
+(Theread 2) 9 --> min_cpu 0.2500
+(Theread 2) 9 --> max_cpu 1.00000
+new_cpu 0.3807
+new_cpu_level 4
+(Thread 2) 9 --> Setting new frequency to 4
+(Thread 2) 9 --> Executing Thread for 1 unit of time...
+TASK: 4, EXEC: 2, ID: 2
+====================================== 10 ======================================
+
+(Thread 2) 10 --> Creating Thread
+(Thread 2) 10 --> deadline 14
+(Thread 2) 10 --> current_time 10
+(Theread 2) 10 --> creation_time 8
+(Theread 2) 10 --> time_fraction 0.3333
+(Theread 2) 10 --> deadline_multiplier 0.3617
+(Theread 2) 10 --> execution_time 2
+(Theread 2) 10 --> min_cpu 0.2500
+(Theread 2) 10 --> max_cpu 1.00000
+new_cpu 0.5212
+new_cpu_level 5
+(Thread 2) 10 --> Setting new frequency to 5
+(Thread 2) 10 --> Executing Thread for 1 unit of time...
+TASK: 4, EXEC: 3, ID: 2
+====================================== 11 ======================================
+
+(Thread 2) 11 --> deadline 14
+(Thread 2) 11 --> current_time 11
+(Theread 2) 11 --> creation_time 8
+(Theread 2) 11 --> time_fraction 0.5000
+(Theread 2) 11 --> deadline_multiplier 0.5654
+(Theread 2) 11 --> execution_time 3
+(Theread 2) 11 --> min_cpu 0.2500
+(Theread 2) 11 --> max_cpu 1.00000
+new_cpu 0.6740
+new_cpu_level 7
+(Thread 2) 11 --> Setting new frequency to 7
+(Thread 2) 11 --> Executing Thread for 1 unit of time...
+TASK: 4, EXEC: 4, ID: 2
+TASK: 4, EXEC: 4, ID: 2
+Readding thread
+New Deadline: 20
+New Creation Time: 14
+(Thread 2) 11 --> Thread finished execution.
+====================================== 12 ======================================
+
+(Thread 1) 12 --> deadline 21
+(Thread 1) 12 --> current_time 12
+(Theread 1) 12 --> creation_time 12
+(Theread 1) 12 --> time_fraction 0.0000
+(Theread 1) 12 --> deadline_multiplier 0.0000
+(Theread 1) 12 --> execution_time 0
+(Theread 1) 12 --> min_cpu 0.2500
+(Theread 1) 12 --> max_cpu 1.00000
+new_cpu 0.2499
+new_cpu_level 2
+(Thread 1) 12 --> Setting new frequency to 2
+(Thread 1) 12 --> Executing Thread for 1 unit of time...
+TASK: 5, EXEC: 1, ID: 1
+====================================== 13 ======================================
+
+(Thread 1) 13 --> deadline 21
+(Thread 1) 13 --> current_time 13
+(Theread 1) 13 --> creation_time 12
+(Theread 1) 13 --> time_fraction 0.1111
+(Theread 1) 13 --> deadline_multiplier 0.1149
+(Theread 1) 13 --> execution_time 1
+(Theread 1) 13 --> min_cpu 0.2500
+(Theread 1) 13 --> max_cpu 1.00000
+new_cpu 0.3362
+new_cpu_level 3
+(Thread 1) 13 --> Setting new frequency to 3
+(Thread 1) 13 --> Executing Thread for 1 unit of time...
+TASK: 5, EXEC: 2, ID: 1
+====================================== 14 ======================================
+
+(Thread 1) 14 --> deadline 21
+(Thread 1) 14 --> current_time 14
+(Theread 1) 14 --> creation_time 12
+(Theread 1) 14 --> time_fraction 0.2222
+(Theread 1) 14 --> deadline_multiplier 0.2352
+(Theread 1) 14 --> execution_time 2
+(Theread 1) 14 --> min_cpu 0.2500
+(Theread 1) 14 --> max_cpu 1.00000
+new_cpu 0.4264
+new_cpu_level 4
+(Thread 1) 14 --> Setting new frequency to 4
+(Thread 1) 14 --> Executing Thread for 1 unit of time...
+TASK: 5, EXEC: 3, ID: 1
+====================================== 15 ======================================
+
+(Thread 1) 15 --> deadline 21
+(Thread 1) 15 --> current_time 15
+(Theread 1) 15 --> creation_time 12
+(Theread 1) 15 --> time_fraction 0.3333
+(Theread 1) 15 --> deadline_multiplier 0.3617
+(Theread 1) 15 --> execution_time 3
+(Theread 1) 15 --> min_cpu 0.2500
+(Theread 1) 15 --> max_cpu 1.00000
+new_cpu 0.5212
+new_cpu_level 5
+(Thread 1) 15 --> Setting new frequency to 5
+(Thread 1) 15 --> Executing Thread for 1 unit of time...
+TASK: 5, EXEC: 4, ID: 1
+====================================== 16 ======================================
+
+(Thread 1) 16 --> deadline 21
+(Thread 1) 16 --> current_time 16
+(Theread 1) 16 --> creation_time 12
+(Theread 1) 16 --> time_fraction 0.4444
+(Theread 1) 16 --> deadline_multiplier 0.4954
+(Theread 1) 16 --> execution_time 4
+(Theread 1) 16 --> min_cpu 0.2500
+(Theread 1) 16 --> max_cpu 1.00000
+new_cpu 0.6215
+new_cpu_level 6
+(Thread 1) 16 --> Setting new frequency to 6
+(Thread 1) 16 --> Executing Thread for 1 unit of time...
+TASK: 5, EXEC: 5, ID: 1
+TASK: 5, EXEC: 5, ID: 1
+Readding thread
+New Deadline: 30
+New Creation Time: 21
+(Thread 1) 16 --> Thread finished execution.
+====================================== 17 ======================================
+
+(Thread 2) 17 --> deadline 20
+(Thread 2) 17 --> current_time 17
+(Theread 2) 17 --> creation_time 14
+(Theread 2) 17 --> time_fraction 0.5000
+(Theread 2) 17 --> deadline_multiplier 0.5654
+(Theread 2) 17 --> execution_time 0
+(Theread 2) 17 --> min_cpu 0.2500
+(Theread 2) 17 --> max_cpu 1.00000
+new_cpu 0.6740
+new_cpu_level 7
+(Thread 2) 17 --> Setting new frequency to 7
+(Thread 2) 17 --> Executing Thread for 1 unit of time...
+TASK: 4, EXEC: 1, ID: 2
+====================================== 18 ======================================
+
+(Thread 2) 18 --> deadline 20
+(Thread 2) 18 --> current_time 18
+(Theread 2) 18 --> creation_time 14
+(Theread 2) 18 --> time_fraction 0.6666
+(Theread 2) 18 --> deadline_multiplier 0.7908
+(Theread 2) 18 --> execution_time 1
+(Theread 2) 18 --> min_cpu 0.2500
+(Theread 2) 18 --> max_cpu 1.00000
+new_cpu 0.8431
+new_cpu_level 8
+(Thread 2) 18 --> Setting new frequency to 8
+(Thread 2) 18 --> Executing Thread for 1 unit of time...
+TASK: 4, EXEC: 2, ID: 2
+====================================== 19 ======================================
+
+(Thread 2) 19 --> deadline 20
+(Thread 2) 19 --> current_time 19
+(Theread 2) 19 --> creation_time 14
+(Theread 2) 19 --> time_fraction 0.8333
+(Theread 2) 19 --> deadline_multiplier 1.00000
+(Theread 2) 19 --> execution_time 2
+(Theread 2) 19 --> min_cpu 0.2500
+(Theread 2) 19 --> max_cpu 1.00000
+new_cpu 1.00000
+new_cpu_level 10
+(Thread 2) 19 --> Setting new frequency to 10
+(Thread 2) 19 --> Executing Thread for 1 unit of time...
+TASK: 4, EXEC: 3, ID: 2
+====================================== 20 ======================================
+
+(Thread 2) 20 --> deadline 20
+(Thread 2) 20 --> current_time 20
+(Theread 2) 20 --> creation_time 14
+(Theread 2) 20 --> time_fraction 1.00000
+(Theread 2) 20 --> deadline_multiplier 1.00000
+(Theread 2) 20 --> execution_time 3
+(Theread 2) 20 --> min_cpu 0.2500
+(Theread 2) 20 --> max_cpu 1.00000
+new_cpu 1.00000
+new_cpu_level 10
+(Thread 2) 20 --> Setting new frequency to 10
+(Thread 2) 20 --> Executing Thread for 1 unit of time...
+TASK: 4, EXEC: 4, ID: 2
+TASK: 4, EXEC: 4, ID: 2
+Readding thread
+New Deadline: 26
+New Creation Time: 20
+(Thread 2) 20 --> Thread finished execution.
+====================================== 21 ======================================
+
+(Thread 1) 21 --> deadline 30
+(Thread 1) 21 --> current_time 21
+(Theread 1) 21 --> creation_time 21
+(Theread 1) 21 --> time_fraction 0.0000
+(Theread 1) 21 --> deadline_multiplier 0.0000
+(Theread 1) 21 --> execution_time 0
+(Theread 1) 21 --> min_cpu 0.2500
+(Theread 1) 21 --> max_cpu 1.00000
+new_cpu 0.2499
+new_cpu_level 2
+(Thread 1) 21 --> Setting new frequency to 2
+(Thread 1) 21 --> Executing Thread for 1 unit of time...
+TASK: 5, EXEC: 1, ID: 1
+====================================== 22 ======================================
+
+(Thread 1) 22 --> deadline 30
+(Thread 1) 22 --> current_time 22
+(Theread 1) 22 --> creation_time 21
+(Theread 1) 22 --> time_fraction 0.1111
+(Theread 1) 22 --> deadline_multiplier 0.1149
+(Theread 1) 22 --> execution_time 1
+(Theread 1) 22 --> min_cpu 0.2500
+(Theread 1) 22 --> max_cpu 1.00000
+new_cpu 0.3362
+new_cpu_level 3
+(Thread 1) 22 --> Setting new frequency to 3
+(Thread 1) 22 --> Executing Thread for 1 unit of time...
+TASK: 5, EXEC: 2, ID: 1
+====================================== 23 ======================================
+
+(Thread 1) 23 --> deadline 30
+(Thread 1) 23 --> current_time 23
+(Theread 1) 23 --> creation_time 21
+(Theread 1) 23 --> time_fraction 0.2222
+(Theread 1) 23 --> deadline_multiplier 0.2352
+(Theread 1) 23 --> execution_time 2
+(Theread 1) 23 --> min_cpu 0.2500
+(Theread 1) 23 --> max_cpu 1.00000
+new_cpu 0.4264
+new_cpu_level 4
+(Thread 1) 23 --> Setting new frequency to 4
+(Thread 1) 23 --> Executing Thread for 1 unit of time...
+TASK: 5, EXEC: 3, ID: 1
+====================================== 24 ======================================
+
+(Thread 1) 24 --> deadline 30
+(Thread 1) 24 --> current_time 24
+(Theread 1) 24 --> creation_time 21
+(Theread 1) 24 --> time_fraction 0.3333
+(Theread 1) 24 --> deadline_multiplier 0.3617
+(Theread 1) 24 --> execution_time 3
+(Theread 1) 24 --> min_cpu 0.2500
+(Theread 1) 24 --> max_cpu 1.00000
+new_cpu 0.5212
+new_cpu_level 5
+(Thread 1) 24 --> Setting new frequency to 5
+(Thread 1) 24 --> Executing Thread for 1 unit of time...
+TASK: 5, EXEC: 4, ID: 1
+====================================== 25 ======================================
+
+(Thread 1) 25 --> deadline 30
+(Thread 1) 25 --> current_time 25
+(Theread 1) 25 --> creation_time 21
+(Theread 1) 25 --> time_fraction 0.4444
+(Theread 1) 25 --> deadline_multiplier 0.4954
+(Theread 1) 25 --> execution_time 4
+(Theread 1) 25 --> min_cpu 0.2500
+(Theread 1) 25 --> max_cpu 1.00000
+new_cpu 0.6215
+new_cpu_level 6
+(Thread 1) 25 --> Setting new frequency to 6
+(Thread 1) 25 --> Executing Thread for 1 unit of time...
+TASK: 5, EXEC: 5, ID: 1
+TASK: 5, EXEC: 5, ID: 1
+Readding thread
+New Deadline: 39
+New Creation Time: 30
+(Thread 1) 25 --> Thread finished execution.
+====================================== 26 ======================================
+
+(Thread 2) 26 --> deadline 26
+(Thread 2) 26 --> current_time 26
+(Theread 2) 26 --> creation_time 20
+(Theread 2) 26 --> time_fraction 1.00000
+(Theread 2) 26 --> deadline_multiplier 1.00000
+(Theread 2) 26 --> execution_time 0
+(Theread 2) 26 --> min_cpu 0.2500
+(Theread 2) 26 --> max_cpu 1.00000
+new_cpu 1.00000
+new_cpu_level 10
+(Thread 2) 26 --> Setting new frequency to 10
+(Thread 2) 26 --> Executing Thread for 1 unit of time...
+TASK: 4, EXEC: 1, ID: 2
+====================================== 27 ======================================
+
+(Thread 2) 27 --> Setting new frequency to 1
+(Thread 2) 27 --> Executing Thread for 1 unit of time...
+TASK: 4, EXEC: 2, ID: 2
+====================================== 28 ======================================
+
+(Thread 2) 28 --> Setting new frequency to 1
+(Thread 2) 28 --> Executing Thread for 1 unit of time...
+TASK: 4, EXEC: 3, ID: 2
+====================================== 29 ======================================
+
+(Thread 2) 29 --> Setting new frequency to 1
+(Thread 2) 29 --> Executing Thread for 1 unit of time...
+TASK: 4, EXEC: 4, ID: 2
+TASK: 4, EXEC: 4, ID: 2
+Readding thread
+New Deadline: 32
+New Creation Time: 26
+(Thread 2) 29 --> Thread finished execution.
+====================================== 30 ======================================
+
+(Thread 1) 30 --> deadline 39
+(Thread 1) 30 --> current_time 30
+(Theread 1) 30 --> creation_time 30
+(Theread 1) 30 --> time_fraction 0.0000
+(Theread 1) 30 --> deadline_multiplier 0.0000
+(Theread 1) 30 --> execution_time 0
+(Theread 1) 30 --> min_cpu 0.2500
+(Theread 1) 30 --> max_cpu 1.00000
+new_cpu 0.2499
+new_cpu_level 2
+(Thread 1) 30 --> Setting new frequency to 2
+(Thread 1) 30 --> Executing Thread for 1 unit of time...
+TASK: 5, EXEC: 1, ID: 1
+====================================== 31 ======================================
+
+(Thread 1) 31 --> deadline 39
+(Thread 1) 31 --> current_time 31
+(Theread 1) 31 --> creation_time 30
+(Theread 1) 31 --> time_fraction 0.1111
+(Theread 1) 31 --> deadline_multiplier 0.1149
+(Theread 1) 31 --> execution_time 1
+(Theread 1) 31 --> min_cpu 0.2500
+(Theread 1) 31 --> max_cpu 1.00000
+new_cpu 0.3362
+new_cpu_level 3
+(Thread 1) 31 --> Setting new frequency to 3
+(Thread 1) 31 --> Executing Thread for 1 unit of time...
+TASK: 5, EXEC: 2, ID: 1
+====================================== 32 ======================================
+
+(Thread 1) 32 --> deadline 39
+(Thread 1) 32 --> current_time 32
+(Theread 1) 32 --> creation_time 30
+(Theread 1) 32 --> time_fraction 0.2222
+(Theread 1) 32 --> deadline_multiplier 0.2352
+(Theread 1) 32 --> execution_time 2
+(Theread 1) 32 --> min_cpu 0.2500
+(Theread 1) 32 --> max_cpu 1.00000
+new_cpu 0.4264
+new_cpu_level 4
+(Thread 1) 32 --> Setting new frequency to 4
+(Thread 1) 32 --> Executing Thread for 1 unit of time...
+TASK: 5, EXEC: 3, ID: 1
+====================================== 33 ======================================
+
+(Thread 1) 33 --> deadline 39
+(Thread 1) 33 --> current_time 33
+(Theread 1) 33 --> creation_time 30
+(Theread 1) 33 --> time_fraction 0.3333
+(Theread 1) 33 --> deadline_multiplier 0.3617
+(Theread 1) 33 --> execution_time 3
+(Theread 1) 33 --> min_cpu 0.2500
+(Theread 1) 33 --> max_cpu 1.00000
+new_cpu 0.5212
+new_cpu_level 5
+(Thread 1) 33 --> Setting new frequency to 5
+(Thread 1) 33 --> Executing Thread for 1 unit of time...
+TASK: 5, EXEC: 4, ID: 1
+====================================== 34 ======================================
+
+(Thread 1) 34 --> deadline 39
+(Thread 1) 34 --> current_time 34
+(Theread 1) 34 --> creation_time 30
+(Theread 1) 34 --> time_fraction 0.4444
+(Theread 1) 34 --> deadline_multiplier 0.4954
+(Theread 1) 34 --> execution_time 4
+(Theread 1) 34 --> min_cpu 0.2500
+(Theread 1) 34 --> max_cpu 1.00000
+new_cpu 0.6215
+new_cpu_level 6
+(Thread 1) 34 --> Setting new frequency to 6
+(Thread 1) 34 --> Executing Thread for 1 unit of time...
+TASK: 5, EXEC: 5, ID: 1
+TASK: 5, EXEC: 5, ID: 1
+Readding thread
+New Deadline: 48
+New Creation Time: 39
+(Thread 1) 34 --> Thread finished execution.
+====================================== 35 ======================================
+
+(Thread 2) 35 --> Setting new frequency to 1
+(Thread 2) 35 --> Executing Thread for 1 unit of time...
+TASK: 4, EXEC: 1, ID: 2
+====================================== 36 ======================================
+
+(Thread 2) 36 --> Setting new frequency to 1
+(Thread 2) 36 --> Executing Thread for 1 unit of time...
+TASK: 4, EXEC: 2, ID: 2
+====================================== 37 ======================================
+
+(Thread 2) 37 --> Setting new frequency to 1
+(Thread 2) 37 --> Executing Thread for 1 unit of time...
+TASK: 4, EXEC: 3, ID: 2
+====================================== 38 ======================================
+
+(Thread 2) 38 --> Setting new frequency to 1
+(Thread 2) 38 --> Executing Thread for 1 unit of time...
+TASK: 4, EXEC: 4, ID: 2
+TASK: 4, EXEC: 4, ID: 2
+Readding thread
+New Deadline: 38
+New Creation Time: 32
+(Thread 2) 38 --> Thread finished execution.
+====================================== 39 ======================================
+
+(Thread 1) 39 --> deadline 48
+(Thread 1) 39 --> current_time 39
+(Theread 1) 39 --> creation_time 39
+(Theread 1) 39 --> time_fraction 0.0000
+(Theread 1) 39 --> deadline_multiplier 0.0000
+(Theread 1) 39 --> execution_time 0
+(Theread 1) 39 --> min_cpu 0.2500
+(Theread 1) 39 --> max_cpu 1.00000
+new_cpu 0.2499
+new_cpu_level 2
+(Thread 1) 39 --> Setting new frequency to 2
+(Thread 1) 39 --> Executing Thread for 1 unit of time...
+TASK: 5, EXEC: 1, ID: 1
+====================================== 40 ======================================
+
+(Thread 1) 40 --> deadline 48
+(Thread 1) 40 --> current_time 40
+(Theread 1) 40 --> creation_time 39
+(Theread 1) 40 --> time_fraction 0.1111
+(Theread 1) 40 --> deadline_multiplier 0.1149
+(Theread 1) 40 --> execution_time 1
+(Theread 1) 40 --> min_cpu 0.2500
+(Theread 1) 40 --> max_cpu 1.00000
+new_cpu 0.3362
+new_cpu_level 3
+(Thread 1) 40 --> Setting new frequency to 3
+(Thread 1) 40 --> Executing Thread for 1 unit of time...
+TASK: 5, EXEC: 2, ID: 1
+====================================== 41 ======================================
+
+(Thread 1) 41 --> deadline 48
+(Thread 1) 41 --> current_time 41
+(Theread 1) 41 --> creation_time 39
+(Theread 1) 41 --> time_fraction 0.2222
+(Theread 1) 41 --> deadline_multiplier 0.2352
+(Theread 1) 41 --> execution_time 2
+(Theread 1) 41 --> min_cpu 0.2500
+(Theread 1) 41 --> max_cpu 1.00000
+new_cpu 0.4264
+new_cpu_level 4
+(Thread 1) 41 --> Setting new frequency to 4
+(Thread 1) 41 --> Executing Thread for 1 unit of time...
+TASK: 5, EXEC: 3, ID: 1
+====================================== 42 ======================================
+
+(Thread 1) 42 --> deadline 48
+(Thread 1) 42 --> current_time 42
+(Theread 1) 42 --> creation_time 39
+(Theread 1) 42 --> time_fraction 0.3333
+(Theread 1) 42 --> deadline_multiplier 0.3617
+(Theread 1) 42 --> execution_time 3
+(Theread 1) 42 --> min_cpu 0.2500
+(Theread 1) 42 --> max_cpu 1.00000
+new_cpu 0.5212
+new_cpu_level 5
+(Thread 1) 42 --> Setting new frequency to 5
+(Thread 1) 42 --> Executing Thread for 1 unit of time...
+TASK: 5, EXEC: 4, ID: 1
+====================================== 43 ======================================
+
+(Thread 1) 43 --> deadline 48
+(Thread 1) 43 --> current_time 43
+(Theread 1) 43 --> creation_time 39
+(Theread 1) 43 --> time_fraction 0.4444
+(Theread 1) 43 --> deadline_multiplier 0.4954
+(Theread 1) 43 --> execution_time 4
+(Theread 1) 43 --> min_cpu 0.2500
+(Theread 1) 43 --> max_cpu 1.00000
+new_cpu 0.6215
+new_cpu_level 6
+(Thread 1) 43 --> Setting new frequency to 6
+(Thread 1) 43 --> Executing Thread for 1 unit of time...
+TASK: 5, EXEC: 5, ID: 1
+TASK: 5, EXEC: 5, ID: 1
+Readding thread
+New Deadline: 57
+New Creation Time: 48
+(Thread 1) 43 --> Thread finished execution.
+====================================== 44 ======================================
+
+(Thread 2) 44 --> Setting new frequency to 1
+(Thread 2) 44 --> Executing Thread for 1 unit of time...
+TASK: 4, EXEC: 1, ID: 2
+====================================== 45 ======================================
+
+(Thread 2) 45 --> Setting new frequency to 1
+(Thread 2) 45 --> Executing Thread for 1 unit of time...
+TASK: 4, EXEC: 2, ID: 2
+====================================== 46 ======================================
+
+(Thread 2) 46 --> Setting new frequency to 1
+(Thread 2) 46 --> Executing Thread for 1 unit of time...
+TASK: 4, EXEC: 3, ID: 2
+====================================== 47 ======================================
+
+(Thread 2) 47 --> Setting new frequency to 1
+(Thread 2) 47 --> Executing Thread for 1 unit of time...
+TASK: 4, EXEC: 4, ID: 2
+TASK: 4, EXEC: 4, ID: 2
+Readding thread
+New Deadline: 44
+New Creation Time: 38
+(Thread 2) 47 --> Thread finished execution.
+====================================== 48 ======================================
+
+(Thread 1) 48 --> deadline 57
+(Thread 1) 48 --> current_time 48
+(Theread 1) 48 --> creation_time 48
+(Theread 1) 48 --> time_fraction 0.0000
+(Theread 1) 48 --> deadline_multiplier 0.0000
+(Theread 1) 48 --> execution_time 0
+(Theread 1) 48 --> min_cpu 0.2500
+(Theread 1) 48 --> max_cpu 1.00000
+new_cpu 0.2499
+new_cpu_level 2
+(Thread 1) 48 --> Setting new frequency to 2
+(Thread 1) 48 --> Executing Thread for 1 unit of time...
+TASK: 5, EXEC: 1, ID: 1
+====================================== 49 ======================================
+
+(Thread 1) 49 --> deadline 57
+(Thread 1) 49 --> current_time 49
+(Theread 1) 49 --> creation_time 48
+(Theread 1) 49 --> time_fraction 0.1111
+(Theread 1) 49 --> deadline_multiplier 0.1149
+(Theread 1) 49 --> execution_time 1
+(Theread 1) 49 --> min_cpu 0.2500
+(Theread 1) 49 --> max_cpu 1.00000
+new_cpu 0.3362
+new_cpu_level 3
+(Thread 1) 49 --> Setting new frequency to 3
+(Thread 1) 49 --> Executing Thread for 1 unit of time...
+TASK: 5, EXEC: 2, ID: 1
+====================================== 50 ======================================
+
+(Thread 1) 50 --> deadline 57
+(Thread 1) 50 --> current_time 50
+(Theread 1) 50 --> creation_time 48
+(Theread 1) 50 --> time_fraction 0.2222
+(Theread 1) 50 --> deadline_multiplier 0.2352
+(Theread 1) 50 --> execution_time 2
+(Theread 1) 50 --> min_cpu 0.2500
+(Theread 1) 50 --> max_cpu 1.00000
+new_cpu 0.4264
+new_cpu_level 4
+(Thread 1) 50 --> Setting new frequency to 4
+(Thread 1) 50 --> Executing Thread for 1 unit of time...
+TASK: 5, EXEC: 3, ID: 1
+====================================== 51 ======================================
+
+(Thread 1) 51 --> deadline 57
+(Thread 1) 51 --> current_time 51
+(Theread 1) 51 --> creation_time 48
+(Theread 1) 51 --> time_fraction 0.3333
+(Theread 1) 51 --> deadline_multiplier 0.3617
+(Theread 1) 51 --> execution_time 3
+(Theread 1) 51 --> min_cpu 0.2500
+(Theread 1) 51 --> max_cpu 1.00000
+new_cpu 0.5212
+new_cpu_level 5
+(Thread 1) 51 --> Setting new frequency to 5
+(Thread 1) 51 --> Executing Thread for 1 unit of time...
+TASK: 5, EXEC: 4, ID: 1
+====================================== 52 ======================================
+
+(Thread 1) 52 --> deadline 57
+(Thread 1) 52 --> current_time 52
+(Theread 1) 52 --> creation_time 48
+(Theread 1) 52 --> time_fraction 0.4444
+(Theread 1) 52 --> deadline_multiplier 0.4954
+(Theread 1) 52 --> execution_time 4
+(Theread 1) 52 --> min_cpu 0.2500
+(Theread 1) 52 --> max_cpu 1.00000
+new_cpu 0.6215
+new_cpu_level 6
+(Thread 1) 52 --> Setting new frequency to 6
+(Thread 1) 52 --> Executing Thread for 1 unit of time...
+TASK: 5, EXEC: 5, ID: 1
+TASK: 5, EXEC: 5, ID: 1
+Readding thread
+New Deadline: 66
+New Creation Time: 57
+(Thread 1) 52 --> Thread finished execution.
+====================================== 53 ======================================
+
+(Thread 2) 53 --> Setting new frequency to 1
+(Thread 2) 53 --> Executing Thread for 1 unit of time...
+TASK: 4, EXEC: 1, ID: 2
+====================================== 54 ======================================
+
+(Thread 2) 54 --> Setting new frequency to 1
+(Thread 2) 54 --> Executing Thread for 1 unit of time...
+TASK: 4, EXEC: 2, ID: 2
+====================================== 55 ======================================
+
+(Thread 2) 55 --> Setting new frequency to 1
+(Thread 2) 55 --> Executing Thread for 1 unit of time...
+TASK: 4, EXEC: 3, ID: 2
+====================================== 56 ======================================
+
+(Thread 2) 56 --> Setting new frequency to 1
+(Thread 2) 56 --> Executing Thread for 1 unit of time...
+TASK: 4, EXEC: 4, ID: 2
+TASK: 4, EXEC: 4, ID: 2
+Readding thread
+New Deadline: 50
+New Creation Time: 44
+(Thread 2) 56 --> Thread finished execution.
+====================================== 57 ======================================
+
+(Thread 1) 57 --> deadline 66
+(Thread 1) 57 --> current_time 57
+(Theread 1) 57 --> creation_time 57
+(Theread 1) 57 --> time_fraction 0.0000
+(Theread 1) 57 --> deadline_multiplier 0.0000
+(Theread 1) 57 --> execution_time 0
+(Theread 1) 57 --> min_cpu 0.2500
+(Theread 1) 57 --> max_cpu 1.00000
+new_cpu 0.2499
+new_cpu_level 2
+(Thread 1) 57 --> Setting new frequency to 2
+(Thread 1) 57 --> Executing Thread for 1 unit of time...
+TASK: 5, EXEC: 1, ID: 1
+====================================== 58 ======================================
+
+(Thread 1) 58 --> deadline 66
+(Thread 1) 58 --> current_time 58
+(Theread 1) 58 --> creation_time 57
+(Theread 1) 58 --> time_fraction 0.1111
+(Theread 1) 58 --> deadline_multiplier 0.1149
+(Theread 1) 58 --> execution_time 1
+(Theread 1) 58 --> min_cpu 0.2500
+(Theread 1) 58 --> max_cpu 1.00000
+new_cpu 0.3362
+new_cpu_level 3
+(Thread 1) 58 --> Setting new frequency to 3
+(Thread 1) 58 --> Executing Thread for 1 unit of time...
+TASK: 5, EXEC: 2, ID: 1
+====================================== 59 ======================================
+
+(Thread 1) 59 --> deadline 66
+(Thread 1) 59 --> current_time 59
+(Theread 1) 59 --> creation_time 57
+(Theread 1) 59 --> time_fraction 0.2222
+(Theread 1) 59 --> deadline_multiplier 0.2352
+(Theread 1) 59 --> execution_time 2
+(Theread 1) 59 --> min_cpu 0.2500
+(Theread 1) 59 --> max_cpu 1.00000
+new_cpu 0.4264
+new_cpu_level 4
+(Thread 1) 59 --> Setting new frequency to 4
+(Thread 1) 59 --> Executing Thread for 1 unit of time...
+TASK: 5, EXEC: 3, ID: 1
+====================================== 60 ======================================
+
+
+
+*** The last thread under control of EPOS has finished.
+*** EPOS is shutting down!
