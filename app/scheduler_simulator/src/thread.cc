@@ -1,4 +1,5 @@
 #include "../include/thread.h"
+#include "system/traits.h"
 #include <utility/math.h>
 
 // Returns the thread type (CRITICAL or BEST_EFFORT)
@@ -42,22 +43,22 @@ float Thread::new_frequency(unsigned int current_time, float min_cpu_frequency, 
     }
     // For debugging purposes
     EPOS::OStream cout;
-    cout << "deadline " << _deadline << "\n";
-    cout << "current_time " << current_time << "\n";
-    cout << "creation_time " << _creation_time << "\n";
-    cout << "time_fraction " << time_fraction << "\n";
-    cout << "deadline_multiplier " << deadline_multiplier << "\n";
-    cout << "execution_time " << _execution_time << "\n";
-    cout << "min_cpu " << min_cpu_frequency << "\n";
-    cout << "max_cpu " << max_cpu_frequency << "\n";
+    cout << "(Thread " << _id << ") " << current_time << " --> " << "deadline " << _deadline << "\n";
+    cout << "(Thread " << _id << ") " << current_time << " --> " << "current_time " << current_time << "\n";
+    cout << "(Theread " << _id << ") " << current_time << " --> " << "creation_time " << _creation_time << "\n";
+    cout << "(Theread " << _id << ") " << current_time << " --> " << "time_fraction " << time_fraction << "\n";
+    cout << "(Theread " << _id << ") " << current_time << " --> " << "deadline_multiplier " << deadline_multiplier << "\n";
+    cout << "(Theread " << _id << ") " << current_time << " --> " << "execution_time " << _execution_time << "\n";
+    cout << "(Theread " << _id << ") " << current_time << " --> " << "min_cpu " << min_cpu_frequency << "\n";
+    cout << "(Theread " << _id << ") " << current_time << " --> " << "max_cpu " << max_cpu_frequency << "\n";
     
     // Calculats the new CPU frequency based on the multiplier in a way that it will never be above maximum and below minimum frequencies
     float new_cpu_frequency = min_cpu_frequency + deadline_multiplier*static_cast<float>((max_cpu_frequency-min_cpu_frequency));
-    cout << "new_cpu " << new_cpu_frequency << "\n";
+    cout << "(Theread " << _id << ") " << current_time << " --> " << "new_cpu " << new_cpu_frequency << "\n";
 
     // Convert the percentage frequency calculated for a level by 1 to 10
     new_cpu_frequency *= 10;
-    cout << "new_cpu_level " << round(new_cpu_frequency) << "\n";
+    cout << "(Theread " << _id << ") " << current_time << " --> " << "new_cpu_level " << round(new_cpu_frequency) << "\n";
     return round(new_cpu_frequency);
 }
 
@@ -70,14 +71,16 @@ unsigned int Thread::execute(unsigned int current_time) {
 // Recalculates the times for the next period
 void Thread::recalculate_times() {
     if (finished()) {
+        _creation_time = _deadline;
         _deadline = _deadline + _period_time;
         _execution_time = 0;
-        _creation_time = _deadline;
     }
 }
 
 // Verifies if the thread has already finished its execution (its execution time will be greater than the total task time)
 bool Thread::finished() {
+    EPOS::OStream cout;
+    cout << "(Theread " << _id << ") " << " --> " << "TASK: " << _task_time << ", EXEC: " << _execution_time << ", ID: " << _id << '\n';
     return _task_time <= _execution_time;
 }
 

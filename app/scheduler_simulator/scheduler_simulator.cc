@@ -19,10 +19,7 @@ int main(int argc, char *argv[])
     ThreadArgs t1{0, 0, 15, 0, 8};
     ThreadArgs t2{1, 1, 12, 3, 5};
     ThreadArgs t3{2, 0, 14, 8, 4};
-    ThreadArgs t4{2, 0, 18, 10, 4};
-
-    //std::priority_queue<int> q;
-
+    ThreadArgs t4{3, 0, 18, 10, 4};
     
     ThreadArgs arr[4] = {t1, t2, t3, t4};
     

@@ -11,11 +11,11 @@
 class Scheduler{
     public:
         // Chooses the next thread to be executed, based on the global time 
-        Thread* choose_next();
+        Thread* choose_next(unsigned int global_time);
         // Creates a new thread
         void create_thread(ThreadArgs& arg);
         // Finishes the currently executing thread
-        void finish_current_thread();
+        void finish_current_thread(Thread *current);
         // Verify if all of the threads have been finished
         bool all_finished();
 

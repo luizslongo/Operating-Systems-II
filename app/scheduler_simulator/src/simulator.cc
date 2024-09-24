@@ -33,23 +33,22 @@ void Simulator::start(float min_frequency, float max_frequency, ThreadArgs uncre
         }
 
         // The scheduler chooses the next thread to execute
-        next_thread = scheduler.choose_next();
+        next_thread = scheduler.choose_next(_current_time);
 
         // If there is no thread to be executed, the simulator enters the idle mode
         if (next_thread == nullptr) {
             _current_thread = nullptr;
             log("No thread running, idling...");
+            _current_time++;
             continue;
         }
-        
-        // On EPOS, the new frequency will be calculated if the flag "charge" is true
-        int frequency = next_thread->new_frequency(_current_time, _min_frequency, _max_frequency);
-        
-        cout << '(' << _current_thread->id() << ") " << _current_time << " --> " << "Setting new frequency to " << frequency << '\n';
-        
         // In case the next chosen thread is different than the current thread, simulates a context switch
         if (next_thread != _current_thread)
             _current_thread = next_thread;  // Simulating context switch.
+
+        // On EPOS, the new frequency will be calculated if the flag "charge" is true
+        int frequency = next_thread->new_frequency(_current_time, _min_frequency, _max_frequency);
+        cout << "(Thread " << (_current_thread ? _current_thread->id() : -1) << ") " << _current_time << " --> " << "Setting new frequency to " << frequency << '\n';
         
         // Here we assume the thread only executes for a fixed period of time
         // This is needed to make sure our algorithm works correctly
@@ -58,13 +57,16 @@ void Simulator::start(float min_frequency, float max_frequency, ThreadArgs uncre
         // Right now, you can assume this thread will be executed for 1 unit of time.
         log("Executing Thread for 1 unit of time...");
         _current_thread->execute(_current_time);
-        _current_time++;
 
         // If the current thread has finished its execution, remove it from the scheduler
         if (_current_thread->finished()) {
-            _scheduler.finish_current_thread();
+            scheduler.finish_current_thread(_current_thread);
             log("Thread finished execution.");
             _current_thread = nullptr;
         }
+        _current_time++;
+        
+        cout << "====================================== " << _current_time << " "
+             << "======================================\n";
     }
 }
