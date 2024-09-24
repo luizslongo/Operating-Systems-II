@@ -7,6 +7,7 @@ app/scheduler_simulator/scheduler_simulator
 img/scheduler_simulator
 *.img
 *.log
+*.out
 boot_legacy_pc
 boot_legacy_pc.s
 setup_legacy_pc
