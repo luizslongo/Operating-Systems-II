@@ -34,9 +34,14 @@ public:
         _period_time(args.deadline - args.creation_time),
         // Element of the ordered queue, used by the scheduler
         _element(this, args.deadline | (args.type != CRITICAL
-                                            ? 1 << (sizeof(unsigned int) - 1)
+                                            ? 1 << (sizeof(int)*8 - 2)
                                             : 0)),
-        _task_time(args.task_time) {};
+        _task_time(args.task_time) {
+    EPOS::OStream cout;
+    for (int i = sizeof(int)*8; i > 0; --i)
+      cout << ((_element.rank()&(1 << (i-1))) >> (i-1));
+    cout << '\n';
+  };
   // Public methods to get informations and execute the thread
   int type();
   int id();
@@ -50,13 +55,13 @@ public:
   float new_frequency(unsigned int current_time, float min_cpu_frequency,
                       float max_cpu_frequency);
   // Executes the thread for one unit of time and returns the new time
-  unsigned int execute(unsigned int current_time);
+  unsigned int execute(unsigned int current_time, int frequency);
   void recalculate_times();
 
 private:
   int _id;
   int _type;
-  unsigned int _execution_time;
+  float _execution_time;
   unsigned int _creation_time;
   unsigned int _deadline;
   unsigned int _period_time;
