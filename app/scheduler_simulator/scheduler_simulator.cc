@@ -15,10 +15,10 @@ int main(int argc, char *argv[]) {
   //     unsigned int creation_time;
   //     unsigned int task_time;
   // };
-  ThreadArgs t1{0, 0, 15, 0, 8};
-  ThreadArgs t2{1, 1, 12, 3, 5};
-  ThreadArgs t3{2, 0, 14, 8, 4};
-  ThreadArgs t4{3, 0, 18, 10, 4};
+  ThreadArgs t1{0, 0, 20, 0, 3};
+  ThreadArgs t2{1, 1, 10, 0, 2};
+  ThreadArgs t3{2, 0, 25, 0, 6};
+  ThreadArgs t4{3, 0, 30, 0, 5};
 
   ThreadArgs arr[4] = {t1, t2, t3, t4};
 

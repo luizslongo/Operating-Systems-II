@@ -13,6 +13,7 @@ void Simulator::start(float min_frequency, float max_frequency,
   _current_thread = nullptr;
 
   int thread_idx = 0;
+  int average_frequency = 0;
 
   // Main loop of the simulation, executes while there are still not finished
   // threads, threads to be created or an executing thread
@@ -60,6 +61,7 @@ void Simulator::start(float min_frequency, float max_frequency,
     // true
     int frequency = next_thread->new_frequency(_current_time, _min_frequency,
                                                _max_frequency);
+    average_frequency += frequency;
     cout << "(Thread " << (_current_thread ? _current_thread->id() : -1) << ") "
          << _current_time << " --> " << "Setting new frequency to " << frequency
          << '\n';
@@ -71,7 +73,7 @@ void Simulator::start(float min_frequency, float max_frequency,
     // Right now, you can assume this thread will be executed for 1 unit of
     // time.
     log("Executing Thread for 1 unit of time...");
-    _current_thread->execute(_current_time);
+    _current_thread->execute(_current_time, frequency);
 
     // If the current thread has finished its execution, remove it from the
     // scheduler
@@ -85,4 +87,6 @@ void Simulator::start(float min_frequency, float max_frequency,
     cout << "====================================== " << _current_time << " "
          << "======================================\n";
   }
+
+  cout << "AVERAGE FREQUENCY LEVEL: " << average_frequency/60.0 << '\n';
 }

@@ -19,10 +19,13 @@ EPOS::Ordered_Queue<Thread>::Element &Thread::element() { return _element; }
 // thread to meet its deadline
 float Thread::new_frequency(unsigned int current_time, float min_cpu_frequency,
                             float max_cpu_frequency) {
+  EPOS::OStream cout;
   // Protect against underflow in case the current time has already surpassed
   // the deadline.
-  if (current_time > _deadline)
-    return max_cpu_frequency;
+  if (current_time > _deadline) {
+    cout << "(Thread " << _id << ") " << current_time << " --> " << "missed deadline. Max frequency chosen!\n";
+    return max_cpu_frequency*10;
+  }
 
   // Calculates the fraction of time that has passed between the thread creation
   // and its deadline (the total amount of time the thread has to execute)
@@ -43,22 +46,21 @@ float Thread::new_frequency(unsigned int current_time, float min_cpu_frequency,
     deadline_multiplier = 1.35 * (pow2(time_fraction) - 1.0);
   }
   // For debugging purposes
-  EPOS::OStream cout;
   cout << "(Thread " << _id << ") " << current_time << " --> " << "deadline "
        << _deadline << "\n";
   cout << "(Thread " << _id << ") " << current_time << " --> "
        << "current_time " << current_time << "\n";
-  cout << "(Theread " << _id << ") " << current_time << " --> "
+  cout << "(Thread " << _id << ") " << current_time << " --> "
        << "creation_time " << _creation_time << "\n";
-  cout << "(Theread " << _id << ") " << current_time << " --> "
+  cout << "(Thread " << _id << ") " << current_time << " --> "
        << "time_fraction " << time_fraction << "\n";
-  cout << "(Theread " << _id << ") " << current_time << " --> "
+  cout << "(Thread " << _id << ") " << current_time << " --> "
        << "deadline_multiplier " << deadline_multiplier << "\n";
-  cout << "(Theread " << _id << ") " << current_time << " --> "
+  cout << "(Thread " << _id << ") " << current_time << " --> "
        << "execution_time " << _execution_time << "\n";
-  cout << "(Theread " << _id << ") " << current_time << " --> " << "min_cpu "
+  cout << "(Thread " << _id << ") " << current_time << " --> " << "min_cpu "
        << min_cpu_frequency << "\n";
-  cout << "(Theread " << _id << ") " << current_time << " --> " << "max_cpu "
+  cout << "(Thread " << _id << ") " << current_time << " --> " << "max_cpu "
        << max_cpu_frequency << "\n";
 
   // Calculats the new CPU frequency based on the multiplier in a way that it
@@ -67,20 +69,23 @@ float Thread::new_frequency(unsigned int current_time, float min_cpu_frequency,
       min_cpu_frequency +
       deadline_multiplier *
           static_cast<float>((max_cpu_frequency - min_cpu_frequency));
-  cout << "(Theread " << _id << ") " << current_time << " --> " << "new_cpu "
+  cout << "(Thread " << _id << ") " << current_time << " --> " << "new_cpu "
        << new_cpu_frequency << "\n";
 
   // Convert the percentage frequency calculated for a level by 1 to 10
   new_cpu_frequency *= 10;
-  cout << "(Theread " << _id << ") " << current_time << " --> "
+  cout << "(Thread " << _id << ") " << current_time << " --> "
        << "new_cpu_level " << round(new_cpu_frequency) << "\n";
   return round(new_cpu_frequency);
 }
 
 // Function responsible for running the thread (simulate its execution for one
 // unit of time)
-unsigned int Thread::execute(unsigned int current_time) {
-  _execution_time++;
+unsigned int Thread::execute(unsigned int current_time, int frequency) {
+  float base_execution_time = 0.2;
+  for (int i = 1; i < frequency; ++i)
+    base_execution_time *= 1.2;
+  _execution_time += base_execution_time;
   return current_time++;
 }
 
@@ -90,6 +95,9 @@ void Thread::recalculate_times() {
     _creation_time = _deadline;
     _deadline = _deadline + _period_time;
     _execution_time = 0;
+    
+    int diff = (_deadline | (_type != CRITICAL ? (1 << (sizeof(int)*8 - 2)) : 0)) - _element.rank();
+    _element.demote(diff);
   }
 }
 
