@@ -23,8 +23,9 @@ float Thread::new_frequency(unsigned int current_time, float min_cpu_frequency,
   // Protect against underflow in case the current time has already surpassed
   // the deadline.
   if (current_time > _deadline) {
-    cout << "(Thread " << _id << ") " << current_time << " --> " << "missed deadline. Max frequency chosen!\n";
-    return max_cpu_frequency*10;
+    cout << "(Thread " << _id << ") " << current_time << " --> "
+         << "missed deadline. Max frequency chosen!\n";
+    return max_cpu_frequency * 10;
   }
 
   // Calculates the fraction of time that has passed between the thread creation
@@ -95,8 +96,10 @@ void Thread::recalculate_times() {
     _creation_time = _deadline;
     _deadline = _deadline + _period_time;
     _execution_time = 0;
-    
-    int diff = (_deadline | (_type != CRITICAL ? (1 << (sizeof(int)*8 - 2)) : 0)) - _element.rank();
+
+    int diff =
+        (_deadline | (_type != CRITICAL ? (1 << (sizeof(int) * 8 - 2)) : 0)) -
+        _element.rank();
     _element.demote(diff);
   }
 }
