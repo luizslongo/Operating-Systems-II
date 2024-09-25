@@ -33,13 +33,13 @@ public:
         _creation_time(args.creation_time), _deadline(args.deadline),
         _period_time(args.deadline - args.creation_time),
         // Element of the ordered queue, used by the scheduler
-        _element(this, args.deadline | (args.type != CRITICAL
-                                            ? 1 << (sizeof(int)*8 - 2)
-                                            : 0)),
+        _element(this,
+                 args.deadline |
+                     (args.type != CRITICAL ? 1 << (sizeof(int) * 8 - 2) : 0)),
         _task_time(args.task_time) {
     EPOS::OStream cout;
-    for (int i = sizeof(int)*8; i > 0; --i)
-      cout << ((_element.rank()&(1 << (i-1))) >> (i-1));
+    for (int i = sizeof(int) * 8; i > 0; --i)
+      cout << ((_element.rank() & (1 << (i - 1))) >> (i - 1));
     cout << '\n';
   };
   // Public methods to get informations and execute the thread

@@ -88,5 +88,5 @@ void Simulator::start(float min_frequency, float max_frequency,
          << "======================================\n";
   }
 
-  cout << "AVERAGE FREQUENCY LEVEL: " << average_frequency/60.0 << '\n';
+  cout << "AVERAGE FREQUENCY LEVEL: " << average_frequency / 60.0 << '\n';
 }
