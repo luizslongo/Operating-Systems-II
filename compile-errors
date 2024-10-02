@@ -1,0 +1,176 @@
+make run1
+make[1]: Entering directory '/var/home/erb/containers/ufsc/INE5424'
+(cd etc && make)
+make[2]: Entering directory '/var/home/erb/containers/ufsc/INE5424/etc'
+sed -e 's/^#define SMOD.*$/#define SMOD library/' -i /var/home/erb/containers/ufsc/INE5424/include/system/config.h
+sed -e 's/^#define ARCH.*$/#define ARCH ia32/' -i /var/home/erb/containers/ufsc/INE5424/include/system/config.h
+sed -e 's/^#define MACH.*$/#define MACH pc/' -i /var/home/erb/containers/ufsc/INE5424/include/system/config.h
+sed -e 's/^#define MMOD.*$/#define MMOD legacy_pc/' -i /var/home/erb/containers/ufsc/INE5424/include/system/config.h
+sed -e 's/^#define NETW.*$/#define NETW standalone/' -i /var/home/erb/containers/ufsc/INE5424/include/system/config.h
+sed -e 's/^#define APPL.*$/#define APPL hello/' -i /var/home/erb/containers/ufsc/INE5424/include/system/config.h
+sed -e 's/^#define __mode_.*__$/#define __library__/' -i /var/home/erb/containers/ufsc/INE5424/include/system/config.h
+sed -e 's/^#define __arch_.*__$/#define __ia32__/' -i /var/home/erb/containers/ufsc/INE5424/include/system/config.h
+sed -e 's/^#define __mach_.*__$/#define __pc__/' -i /var/home/erb/containers/ufsc/INE5424/include/system/config.h
+sed -e 's/^#define __mmod_.*__$/#define __legacy_pc__/' -i /var/home/erb/containers/ufsc/INE5424/include/system/config.h
+sed -e 's/^#define __netw_.*__$/#define __standalone__/' -i /var/home/erb/containers/ufsc/INE5424/include/system/config.h
+(cd /var/home/erb/containers/ufsc/INE5424/tools/eposcfg && make clean all)
+make[3]: Entering directory '/var/home/erb/containers/ufsc/INE5424/tools/eposcfg'
+rm -f *.o eposcfg
+g++ -c -ansi -fno-exceptions -std=c++14 -Wall -O -I/var/home/erb/containers/ufsc/INE5424/include eposcfg.cc
+gcc  -o eposcfg eposcfg.o
+install -m 775 eposcfg /var/home/erb/containers/ufsc/INE5424/bin
+make[3]: Leaving directory '/var/home/erb/containers/ufsc/INE5424/tools/eposcfg'
+make[2]: Leaving directory '/var/home/erb/containers/ufsc/INE5424/etc'
+(cd img && make run1)
+make[2]: Entering directory '/var/home/erb/containers/ufsc/INE5424/img'
+(cd /var/home/erb/containers/ufsc/INE5424/tools/eposcfg && make clean all)
+make[3]: Entering directory '/var/home/erb/containers/ufsc/INE5424/tools/eposcfg'
+rm -f *.o eposcfg
+g++ -c -ansi -fno-exceptions -std=c++14 -Wall -O -I/var/home/erb/containers/ufsc/INE5424/include eposcfg.cc
+gcc  -o eposcfg eposcfg.o
+install -m 775 eposcfg /var/home/erb/containers/ufsc/INE5424/bin
+make[3]: Leaving directory '/var/home/erb/containers/ufsc/INE5424/tools/eposcfg'
+(cd /var/home/erb/containers/ufsc/INE5424/etc && make all)
+make[3]: Entering directory '/var/home/erb/containers/ufsc/INE5424/etc'
+sed -e 's/^#define SMOD.*$/#define SMOD library/' -i /var/home/erb/containers/ufsc/INE5424/include/system/config.h
+sed -e 's/^#define ARCH.*$/#define ARCH ia32/' -i /var/home/erb/containers/ufsc/INE5424/include/system/config.h
+sed -e 's/^#define MACH.*$/#define MACH pc/' -i /var/home/erb/containers/ufsc/INE5424/include/system/config.h
+sed -e 's/^#define MMOD.*$/#define MMOD legacy_pc/' -i /var/home/erb/containers/ufsc/INE5424/include/system/config.h
+sed -e 's/^#define NETW.*$/#define NETW standalone/' -i /var/home/erb/containers/ufsc/INE5424/include/system/config.h
+sed -e 's/^#define APPL.*$/#define APPL hello/' -i /var/home/erb/containers/ufsc/INE5424/include/system/config.h
+sed -e 's/^#define __mode_.*__$/#define __library__/' -i /var/home/erb/containers/ufsc/INE5424/include/system/config.h
+sed -e 's/^#define __arch_.*__$/#define __ia32__/' -i /var/home/erb/containers/ufsc/INE5424/include/system/config.h
+sed -e 's/^#define __mach_.*__$/#define __pc__/' -i /var/home/erb/containers/ufsc/INE5424/include/system/config.h
+sed -e 's/^#define __mmod_.*__$/#define __legacy_pc__/' -i /var/home/erb/containers/ufsc/INE5424/include/system/config.h
+sed -e 's/^#define __netw_.*__$/#define __standalone__/' -i /var/home/erb/containers/ufsc/INE5424/include/system/config.h
+(cd /var/home/erb/containers/ufsc/INE5424/tools/eposcfg && make clean all)
+make[4]: Entering directory '/var/home/erb/containers/ufsc/INE5424/tools/eposcfg'
+rm -f *.o eposcfg
+g++ -c -ansi -fno-exceptions -std=c++14 -Wall -O -I/var/home/erb/containers/ufsc/INE5424/include eposcfg.cc
+gcc  -o eposcfg eposcfg.o
+install -m 775 eposcfg /var/home/erb/containers/ufsc/INE5424/bin
+make[4]: Leaving directory '/var/home/erb/containers/ufsc/INE5424/tools/eposcfg'
+make[3]: Leaving directory '/var/home/erb/containers/ufsc/INE5424/etc'
+timeout --foreground --kill-after=2s --signal=9 60s qemu-system-i386 -D hello.log -d int,mmu -no-acpi -smp 1 -m 1024 -nographic -no-reboot -drive format=raw,index=0,if=floppy,read-only=on,file=hello.img | tee hello.out
+qemu-system-i386: -no-acpi: warning: -no-acpi is deprecated, use '-machine acpi=off' instead
+c[?7l[2J[0mSeaBIOS (version 1.16.3-2.fc40)
+
+
+iPXE (https://ipxe.org) 00:03.0 CA00 PCI2.10 PnP PMM+3EFCA420+3EF0A420 CA00
+Press Ctrl-B to configure iPXE (PCI 00:03.0)...                                                                               
+
+
+Booting from Hard Disk...
+Boot failed: could not read the boot disk
+
+Booting from Floppy...
+Loading EPOS .... done
+Setup(bi=0x00108000,sp=0x00107f3c)
+Setup::detect_memory()
+Setup::detect_pci()
+PCI: device [0:2.0] reports implausible region (starting at zero). Ignoring!
+PCI: device [0:2.0] reports implausible region (starting at zero). Ignoring!
+PCI: device [0:2.0] reports implausible region (starting at zero). Ignoring!
+PCI: device [0:2.0] reports implausible region (starting at zero). Ignoring!
+PCI: device [0:3.0] reports implausible region (starting at zero). Ignoring!
+PCI: device [0:3.0] reports implausible region (starting at zero). Ignoring!
+PCI: device [0:3.0] reports implausible region (starting at zero). Ignoring!
+PCI: device [0:3.0] reports implausible region (starting at zero). Ignoring!
+Setup::calibrate_timers()
+Setup::build_lm()
+Ignoring ELF segment 1 at 0x80480d4!
+Setup::build_pmm() [top=0x40000000]
+Setup::say_hi()
+
+*** This is EPOS!
+
+Setting up this machine as follows: 
+  Mode:         library
+  Processor:    1 x IA32 at 2000 MHz (BUS clock = 2000 MHz)
+  Machine:      PC
+  Memory:       1048576 KB [0x00000000:0x40000000]
+  User memory:  1047472 KB [0x00000000:0x3feec000]
+  I/O space:    28612 KB [0xfd000000:0xfebf1000]
+  Node Id:      will get from the network!
+  Position:     will get from the network!
+  Setup:        27968 bytes
+  APP code:     40960 bytes	data: 4214784 bytes
+
+setup_idt(idt=0x3ffff000)
+setup_gdt(gdt=0x3fffe000)
+Setup::setup_sys_pt(pmm={idt=0x3ffff000,gdt=0x3fffe000,si=0x3fef0000,pt=0x3fffb0
+00,pd=0x3fffc000,sysc={b=0x3fef0000,s=0},sysd={b=0x3fef0000,s=0},syss={b=0x3feec
+000,s=4}})
+Setup::setup_app_pt(appc={b=0x3fee2000,s=10},appd={b=0x3fadd000,s=1029},appe={b=
+0x00000000,s=0}})
+Setup::setup_sys_pd(bm={memb=0x00000000,memt=0x40000000,miob=0xfd000000,miot=0xf
+ebf1000,si=0x3fef0000,spt=0x3fffb000,spd=0x3fffc000,mem=0x3fefb000,io=0x3fef4000
+,umemb=0x00000000,umemt=0x3feec000,sysc=0x3fef0000,sysd=0x3fef0000,syss=0x3feec0
+00,apct=0x3fef3000,apdt=0x3fef1000,fr1b=0x00000000,fr1t=0x000a0000,fr2b=0x001000
+00,fr2t=0x3fadd000})
+Setup::enable_paging()
+Setup::load_parts()
+Setup::load_app()
+Setup::call_next(pc=0x80000030,sp=0xffb03ff8) => APPLICATION
+Machine::pre_init()
+Init_System()
+CPU::init()
+MMU::init()
+MMU::free(frame=0x00000000,color=0,n=160)
+MMU::free(frame=0x00100000,color=0,n=260573)
+MMU::free(frame=0x00000000,color=0,n=0)
+PMU::init()
+MMU::alloc(frames=1,color=0) => 0x3fadc000
+MMU::alloc(frames=64,color=0) => 0x3fa9c000
+Segment(bytes=262144,flags=PRW      ) [Chunk::pt=0x3fadc000,sz=262144] => 0x8040
+0060
+Address_Space(pd=0x3fffc000) [Directory::pd=0x3fffc000] => 0xffb03fa8
+Address_Space::attach(this=0xffb03fa8,seg=0x80400060,addr=0xffc00000) => 0xffc00
+000
+~Address_Space(this=0xffb03fa8) [Directory::pd=0x3fffc000]
+Heap(addr=0xffc00000,bytes=262144) => 0x80400078
+Machine::init()
+IC::init()
+Timer::init()
+PCI::init(pmm.io_mem=0xfd000000)
+Scratchpad::init(a=0x000a0000,s=98304)
+MMU::alloc(frames=1,color=0) => 0x3fa9b000
+Segment(bytes=98304,phy_addr=0x000a0000,flags=     C   ) [Chunk::pt=0x3fa9b000,s
+z=98304] => 0xffc3ffe8
+Address_Space(pd=0x3fffc000) [Directory::pd=0x3fffc000] => 0xffb03f0c
+Address_Space::attach(this=0xffb03f0c,seg=0xffc3ffe8) => 0x80c00000
+Heap(addr=0x80c00000,bytes=98304) => 0xffc3ffd0
+~Address_Space(this=0xffb03f0c) [Directory::pd=0x3fffc000]
+Alarm::init()
+Thread::init()
+Task(entry=0x80000038) => 0xffc3ffa0
+Thread(entry=0x80000038,state=0,priority=-1,stack={b=0xffc3bf3c,s=16384},context
+={b=0xffc3ff0c,{flags=0x200,ax=0,bx=0,cx=0,dx=0,si=0,di=0,bp=0x00000000,sp=0xffb
+03db4,ip=0x80000038,cs=8,ccs=8,cds=10,ces=10,cfs=10,cgs=10,css=10,cr3=0x3fffc000
+}}) => 0xffc3ff44
+Task::enroll(t=0, o=0xffc3ff44)
+RT::handle(this=0xffc3ff78,e=CREATE) => {i=-1,p=0,d=0,c=0}
+Thread(entry=0x80004d78,state=1,priority=2147483647,stack={b=0xffc37ec0,s=16384}
+,context={b=0xffc3be90,{flags=0x200,ax=0,bx=0,cx=0,dx=0,si=0,di=0,bp=0x00000000,
+sp=0xffb03e64,ip=0x80004d78,cs=8,ccs=8,cds=10,ces=10,cfs=10,cgs=10,css=10,cr3=0x
+3fffc000}}) => 0xffc3bec8
+RT::handle(this=0xffc3befc,e=CREATE) => {i=2147483647,p=0,d=0,c=0}
+Init_Application()
+Heap(addr=0x80401000,bytes=4194304) => 0x80400040
+Init_End()
+Thread(entry=0x800000bf,state=2,priority=7,stack={b=0xffc33ea0,s=16384},context=
+{b=0xffc37e6f,{flags=0x200,ax=0,bx=0,cx=0,dx=0,si=0,di=0,bp=0x00000000,sp=0xffc3
+fdb0,ip=0x800000bf,cs=8,ccs=8,cds=10,ces=10,cfs=10,cgs=10,css=10,cr3=0x3fffc000}
+}) => 0x80800f64
+Task::enroll(t=0, o=0x80800f64)
+RT::handle(this=0x80800f98,e=CREATE) => {i=7,p=0,d=0,c=0}
+Semaphore(value=0) => 0x80800fb8
+Task::enroll(t=6, o=0x80800fb8)
+Alarm(t=0,tk=0,h=0x80800fd4,x=100) => 0x80800fe0
+Assertion fail: times == 1, function=EPOS::S::Alarm::Alarm(EPOS::S::U::Microseco
+nd, EPOS::S::U::Handler*, unsigned int), file=alarm.cc, line=25
+
+PANIC: unexpected error!
+Rebooting the machine!
+make[2]: Leaving directory '/var/home/erb/containers/ufsc/INE5424/img'
+make[1]: Leaving directory '/var/home/erb/containers/ufsc/INE5424'

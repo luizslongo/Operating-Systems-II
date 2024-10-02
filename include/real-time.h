@@ -61,8 +61,8 @@ protected:
 
 public:
     struct Configuration: public Thread::Configuration {
-        Configuration(Microsecond p, Microsecond d = SAME, Microsecond c = UNKNOWN, Microsecond a = NOW, const unsigned int n = INFINITE, State s = READY, unsigned int ss = STACK_SIZE)
-        : Thread::Configuration(s, Criterion(p, d, c), ss), activation(a), times(n) {}
+        Configuration(Microsecond p, Microsecond d = SAME, Microsecond c = UNKNOWN, Microsecond a = NOW, const unsigned int n = INFINITE, int task_type = 0, State s = READY, unsigned int ss = STACK_SIZE)
+        : Thread::Configuration(s, Criterion(p, d, c, task_type), ss), activation(a), times(n) {}
 
         Microsecond activation;
         unsigned int times;
@@ -114,8 +114,8 @@ protected:
 class RT_Thread: public Periodic_Thread
 {
 public:
-    RT_Thread(void (* function)(), Microsecond p, Microsecond d = SAME, Microsecond c = UNKNOWN, Microsecond a = NOW, int n = INFINITE, unsigned int ss = STACK_SIZE)
-    : Periodic_Thread(Configuration(p, d, c, a, n, SUSPENDED, ss), &entry, this, function, a, n) {
+    RT_Thread(void (* function)(), Microsecond p, Microsecond d = SAME, Microsecond c = UNKNOWN, Microsecond a = NOW, int n = INFINITE, int task_type = 0, unsigned int ss = STACK_SIZE)
+    : Periodic_Thread(Configuration(p, d, c, a, n, task_type, SUSPENDED, ss), &entry, this, function, a, n) {
         resume();
     }
 

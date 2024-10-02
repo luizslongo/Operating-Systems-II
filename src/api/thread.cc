@@ -1,5 +1,6 @@
 // EPOS Thread Implementation
 
+#include "system/config.h"
 #include <machine.h>
 #include <system.h>
 #include <process.h>
@@ -388,6 +389,9 @@ void Thread::time_slicer(IC::Interrupt_Id i)
 void Thread::dispatch(Thread * prev, Thread * next, bool charge)
 {
     // "next" is not in the scheduler's queue anymore. It's already "chosen"
+    
+    OStream cout;
+    cout << "PREV: " << prev << ", NEXT: " << next << '\n';
 
     if(charge && Criterion::timed)
         _timer->restart();

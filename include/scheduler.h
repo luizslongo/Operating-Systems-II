@@ -6,6 +6,7 @@
 #include <architecture/cpu.h>
 #include <architecture/pmu.h>
 #include <architecture/tsc.h>
+#include <machine/timer.h>
 #include <utility/scheduling.h>
 #include <utility/math.h>
 #include <utility/convert.h>
@@ -25,14 +26,21 @@ protected:
     typedef Timer_Common::Tick Tick;
 
 public:
-    // Priorities
+    // Aperiodics Threads Priorities
     enum : int {
         CEILING = -1000,
         MAIN    = -1,
-        HIGH    = 0,
+        HIGH    = (unsigned(1) << (sizeof(int) * 8 - 4)) - 1,
         NORMAL  = (unsigned(1) << (sizeof(int) * 8 - 3)) - 1,
         LOW     = (unsigned(1) << (sizeof(int) * 8 - 2)) - 1,
         IDLE    = (unsigned(1) << (sizeof(int) * 8 - 1)) - 1
+    };
+
+    // Periodics Threads Priorities
+    enum : int {
+        PHIGH    = 0,
+        PNORMAL  = (unsigned(1) << (sizeof(int) * 8 - 6)) - 1,
+        PLOW     = (unsigned(1) << (sizeof(int) * 8 - 5)) - 1
     };
 
     // Constructor helpers
@@ -45,9 +53,15 @@ public:
 
     // Policy types
     enum : int {
-        PERIODIC    = HIGH,
-        SPORADIC    = NORMAL,
+        PERIODIC    = PHIGH,
+        SPORADIC    = PNORMAL,
         APERIODIC   = LOW
+    };
+
+    // Task types
+    enum : int {
+        CRITICAL    = PHIGH,
+        BEST_EFFORT = PLOW + 1 // 000111111111111 -> 001000000000
     };
 
     // Policy events
@@ -189,6 +203,7 @@ public:
 
 protected:
     RT_Common(int i): Priority(i), _period(0), _deadline(0), _capacity(0) {} // aperiodic
+    
     RT_Common(int i, Microsecond p, Microsecond d, Microsecond c): Priority(i), _period(ticks(p)), _deadline(ticks(d ? d : p)), _capacity(ticks(c)) {}
 
 public:
@@ -223,7 +238,7 @@ public:
 
 public:
     RM(int p = APERIODIC): RT_Common(p) {}
-    RM(Microsecond p, Microsecond d = SAME, Microsecond c = UNKNOWN): RT_Common(int(ticks(p)), p, d, c) {}
+    RM(Microsecond p, Microsecond d, Microsecond c): RT_Common(int(ticks(p)), p, d, c) {}
 };
 
 // Deadline Monotonic
@@ -234,7 +249,7 @@ public:
 
 public:
     DM(int p = APERIODIC): RT_Common(p) {}
-    DM(Microsecond p, Microsecond d = SAME, Microsecond c = UNKNOWN): RT_Common(int(ticks(d ? d : p)), p, d, c) {}
+    DM(Microsecond p, Microsecond d, Microsecond c): RT_Common(int(ticks(d ? d : p)), p, d, c) {}
 };
 
 // Laxity Monotonic
@@ -256,7 +271,7 @@ public:
 
 public:
     EDF(int p = APERIODIC): RT_Common(p) {}
-    EDF(Microsecond p, Microsecond d = SAME, Microsecond c = UNKNOWN);
+    EDF(Microsecond p, Microsecond d, Microsecond c, int &a);
 
     void handle(Event event);
 };
@@ -270,10 +285,24 @@ public:
 
 public:
     LLF(int p = APERIODIC): RT_Common(p) {}
-    LLF(Microsecond p, Microsecond d = SAME, Microsecond c = UNKNOWN);
+    LLF(Microsecond p, Microsecond d, Microsecond c, int& a);
 
     void handle(Event event);
 };
+
+// Earliest Deadline First Modified
+class EDF_Modified: public RT_Common
+{
+public:
+    static const bool dynamic = true;
+public:
+    EDF_Modified(int p = APERIODIC): RT_Common(p) {}
+    EDF_Modified(Microsecond p, Microsecond d, Microsecond c, int task_type = CRITICAL);
+
+    void handle(Event event);
+};
+
+
 
 __END_SYS
 

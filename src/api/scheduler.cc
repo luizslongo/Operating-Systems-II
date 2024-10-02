@@ -1,5 +1,7 @@
 // EPOS CPU Scheduler Component Implementation
 
+#include "scheduler.h"
+#include "system/config.h"
 #include <process.h>
 #include <time.h>
 
@@ -81,7 +83,7 @@ template <typename ... Tn>
 FCFS::FCFS(int p, Tn & ... an): Priority((p == IDLE) ? IDLE : RT_Common::elapsed()) {}
 
 
-EDF::EDF(Microsecond p, Microsecond d, Microsecond c): RT_Common(int(elapsed() + ticks(d)), p, d, c) {}
+EDF::EDF(Microsecond p, Microsecond d, Microsecond c, int& a): RT_Common(int(elapsed() + ticks(d)), p, d, c) {}
 
 void EDF::handle(Event event) {
     RT_Common::handle(event);
@@ -91,8 +93,7 @@ void EDF::handle(Event event) {
         _priority = elapsed() + _deadline;
 }
 
-
-LLF::LLF(Microsecond p, Microsecond d, Microsecond c): RT_Common(int(elapsed() + ticks((d ? d : p) - c)), p, d, c) {}
+LLF::LLF(Microsecond p, Microsecond d, Microsecond c, int &a): RT_Common(int(elapsed() + ticks((d ? d : p) - c)), p, d, c) {}
 
 void LLF::handle(Event event) {
     if(periodic() && ((event & UPDATE) | (event & JOB_RELEASE) | (event & JOB_FINISH))) {
@@ -102,6 +103,37 @@ void LLF::handle(Event event) {
 
     // Update the priority of the thread at job releases, before _alarm->v(), so it enters the queue in the right order (called from Periodic_Thread::Xxx_Handler)
 //    if((_priority >= PERIODIC) && (_priority < APERIODIC) && ((event & JOB_FINISH) || (event & UPDATE_ALL)))
+}
+
+
+/*
+  Se Thread APeriodica:
+    Primeiro bit: 0
+    Restante dos bits: 1
+
+  Se Thread Periodica:
+    Primeiro bit: 0
+    Segundo bit: 1
+    Terceiro bit: p != CRITICAL
+    Restante dos bits: deadline
+
+
+APERIODIC   011000000000000
+PERIODIC    000000000000000
+BEST_EFFORT 001000000000000
+*/
+EDF_Modified::EDF_Modified(Microsecond p, Microsecond d, Microsecond c, int task_type): RT_Common(int(elapsed() + ticks(d)) | task_type, p, d, c) {}
+
+void EDF_Modified::handle(Event event) {
+    RT_Common::handle(event);
+
+    // Update the priority of the thread at job releases, before _alarm->v(), so it enters the queue in the right order (called from Periodic_Thread::Xxx_Handler)
+    
+    int task_type = BEST_EFFORT & _priority;
+    
+    if(periodic() && (event & JOB_RELEASE)) {
+        _priority = int(elapsed() + _deadline) | task_type;
+    }
 }
 
 // Since the definition of FCFS above is only known to this unit, forcing its instantiation here so it gets emitted in scheduler.o for subsequent linking with other units is necessary.
