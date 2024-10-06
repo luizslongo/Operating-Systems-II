@@ -395,8 +395,17 @@ void Thread::dispatch(Thread * prev, Thread * next, bool charge)
 
     if(charge && Criterion::timed)
         _timer->restart();
+    
+    // Since our algorithm depends on execution time to update the frequency, we cannot run it at each preemption.
+    // Instead, it's necessary to recalculate the frequency whenever dispatch is called, be it because of preemption or because of the quantum.
+    //
+    // The function used for deciding the new frequency is quite fast, so this shouldn't be a problem.
+    if (charge && prev == next) 
+        next->criterion().handle(Criterion::CHARGE);   
+
 
     if(prev != next) {
+        //cout << "BBBBBBBBBBBBBBB";
         if(Criterion::dynamic) {
             prev->criterion().handle(Criterion::CHARGE | Criterion::LEAVE);
             for_all_threads(Criterion::UPDATE);

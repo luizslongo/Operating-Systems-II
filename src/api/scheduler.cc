@@ -2,6 +2,7 @@
 
 #include "scheduler.h"
 #include "system/config.h"
+#include "system/traits.h"
 #include <process.h>
 #include <time.h>
 
@@ -106,23 +107,73 @@ void LLF::handle(Event event) {
 }
 
 
-/*
-  Se Thread APeriodica:
-    Primeiro bit: 0
-    Restante dos bits: 1
+EDF_Modified::EDF_Modified(Microsecond p, Microsecond d, Microsecond c, int task_type): RT_Common(int(elapsed() + ticks(d)) | task_type, p, d, c), _min_frequency(CPU::min_clock()), _max_frequency(CPU::max_clock()), _last_deadline(elapsed()), _step(_max_frequency ) {}
 
-  Se Thread Periodica:
-    Primeiro bit: 0
-    Segundo bit: 1
-    Terceiro bit: p != CRITICAL
-    Restante dos bits: deadline
+void EDF_Modified::_handle_charge(Event event) {
+    if (!periodic()) {
+        if (CPU::clock() == _min_frequency)
+            CPU::clock(_min_frequency);
+        return;
+    }
+    
+    unsigned int absolute_deadline = _priority;
+    unsigned int start_time = _last_deadline;
+    unsigned int current_time = elapsed();
+    
+    if (current_time > absolute_deadline) {
+        CPU::clock(_max_frequency);
+        return;
+    }
+    
+    unsigned int slack = (absolute_deadline - current_time)*10;
+    unsigned int relative_deadline = absolute_deadline - start_time;
+    
+    unsigned int time_fraction = slack / relative_deadline;
 
+    /*
+    Intel has 8 frequency levels.
+    
+    They probably are based on multiples of 12.5, so:
+    Level 1 = 12.5% of frequency range
+    Level 2 = 25.0% of frequency range
+    ...
+    and so on.
 
-APERIODIC   011000000000000
-PERIODIC    000000000000000
-BEST_EFFORT 001000000000000
-*/
-EDF_Modified::EDF_Modified(Microsecond p, Microsecond d, Microsecond c, int task_type): RT_Common(int(elapsed() + ticks(d)) | task_type, p, d, c) {}
+    For values of time_fraction:
+        < 10% --> level 1
+        < 20% --> level 2
+        < 30% --> level 2
+        < 40% --> level 3
+        < 50% --> level 5
+        < 60% --> level 6
+        < 70% --> level 7
+        < 80% -> level 7
+        >= 80% -> level 8
+    */
+    int level;
+    switch (time_fraction) {
+        case 0: // < 10%
+            level = 1;
+        case 1: // < 20%
+        case 2: // < 30%
+            level = 2;
+        case 3: // < 40%
+            level = 3;
+        case 4: // < 50%
+            level = 5;
+        case 5: // < 60%
+            level = 6;
+        case 6: // < %70
+            level = 7;
+        case 7: // < 80%
+            level = 7;
+        default: // >= %80
+            level = 8;
+            
+    }
+
+    
+}
 
 void EDF_Modified::handle(Event event) {
     RT_Common::handle(event);
@@ -132,8 +183,12 @@ void EDF_Modified::handle(Event event) {
     int task_type = BEST_EFFORT & _priority;
     
     if(periodic() && (event & JOB_RELEASE)) {
-        _priority = int(elapsed() + _deadline) | task_type;
+        _last_deadline = _priority;
+        _priority = _priority + ticks(_deadline);
     }
+    else if (event & CHARGE)
+        _handle_charge(event);
+
 }
 
 // Since the definition of FCFS above is only known to this unit, forcing its instantiation here so it gets emitted in scheduler.o for subsequent linking with other units is necessary.

@@ -11,14 +11,19 @@ OStream cout;
 const unsigned int iterations = 100;
 const Milisecond period_a = 100;
 const Milisecond period_b = 80;
-const Milisecond period_c = 60;
-const Milisecond wcet_a = 50;
-const Milisecond wcet_b = 20;
-const Milisecond wcet_c = 10;
+const Milisecond period_c = 200;
+const Milisecond wcet_a = 500;
+const Milisecond wcet_b = 200;
+const Milisecond wcet_c = 900;
 
 
 int my_func(char id) {
-    for (int i = 0; i < 1e8; ++i);
+    long long b = 0;
+    for (int i = 0; i < 1e17; ++i) {
+       b += i - i/3;
+    }
+    OStream cout;
+    cout << b << '\n';
     
     return 0;
 }
@@ -41,7 +46,7 @@ int main()
     Periodic_Thread* a = new Periodic_Thread(RTConf(period_a * 1000, period_a * 1000, wcet_a * 1000, 0, iterations, EDF_Modified::CRITICAL)   , &my_func, 'A');
     Periodic_Thread* b = new Periodic_Thread(RTConf(period_b * 1000, period_b * 1000, wcet_b * 1000, 0, iterations, EDF_Modified::BEST_EFFORT), &my_func, 'B');
     cout << "CREATED B\n" << endl;
-    Periodic_Thread* c = new Periodic_Thread(RTConf(period_c * 1000, period_c * 1000, wcet_a * 1000, 0, iterations, EDF_Modified::CRITICAL)   , &my_func, 'C');
+    Periodic_Thread* c = new Periodic_Thread(RTConf(period_c * 1000, 60 * 1000, wcet_a * 1000, 0, iterations, EDF_Modified::CRITICAL)   , &my_func, 'C');
     Thread* d = new Thread(&my_func, 'D');
     
     cout << "A: " << a << ", B: " << b << ", C: " << c << ", D: " << d << '\n';

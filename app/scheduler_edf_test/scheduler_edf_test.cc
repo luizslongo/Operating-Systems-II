@@ -90,7 +90,7 @@ int main()
     thread_b = new Periodic_Thread(RTConf(period_b * 1000, 0, wcet_b * 1000, 0, iterations), &func_b);
     thread_c = new Periodic_Thread(RTConf(period_c * 1000, 0, wcet_c * 1000, 0, iterations), &func_c);
 
-    exec('M');
+    //exec('M');
 
     chrono.reset();
     chrono.start();

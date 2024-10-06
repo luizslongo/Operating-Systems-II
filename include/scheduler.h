@@ -3,6 +3,7 @@
 #ifndef __scheduler_h
 #define __scheduler_h
 
+#include "system/traits.h"
 #include <architecture/cpu.h>
 #include <architecture/pmu.h>
 #include <architecture/tsc.h>
@@ -27,21 +28,37 @@ protected:
 
 public:
     // Aperiodics Threads Priorities
+    /*
+       // NOTE: Also, make sure MSB is 0.
+        APERIODIC_BIT --> 010000000000000
+        PERIODIC_BIT  --> 000000000000000
+
+        IDLE          --> 011100000000000
+        LOW           --> 011000000000000
+        NORMAL        --> 010100000000000
+        HIGH          --> 010000000000000
+        PLOW          --> 001100000000000
+        PNORMAL       --> 001000000000000
+        PHIGH         --> 000000000000000
+        MAIN          --> 11111111111110
+    
+    */
     enum : int {
         CEILING = -1000,
         MAIN    = -1,
-        HIGH    = (unsigned(1) << (sizeof(int) * 8 - 4)) - 1,
-        NORMAL  = (unsigned(1) << (sizeof(int) * 8 - 3)) - 1,
-        LOW     = (unsigned(1) << (sizeof(int) * 8 - 2)) - 1,
-        IDLE    = (unsigned(1) << (sizeof(int) * 8 - 1)) - 1
+        HIGH    = (unsigned(0b100) << (sizeof(int) * 8 - 4)),
+        NORMAL  = (unsigned(0b101) << (sizeof(int) * 8 - 4)),
+        LOW     = (unsigned(0b110) << (sizeof(int) * 8 - 4)),
+        IDLE    = (unsigned(0b111) << (sizeof(int) * 8 - 4)),
     };
 
     // Periodics Threads Priorities
     enum : int {
         PHIGH    = 0,
-        PNORMAL  = (unsigned(1) << (sizeof(int) * 8 - 6)) - 1,
-        PLOW     = (unsigned(1) << (sizeof(int) * 8 - 5)) - 1
+        PNORMAL  = (unsigned(0b010) << (sizeof(int) * 8 - 4)),
+        PLOW     = (unsigned(0b011) << (sizeof(int) * 8 - 4))
     };
+
 
     // Constructor helpers
     enum : unsigned int {
@@ -54,14 +71,14 @@ public:
     // Policy types
     enum : int {
         PERIODIC    = PHIGH,
-        SPORADIC    = PNORMAL,
+        SPORADIC    = PLOW,
         APERIODIC   = LOW
     };
 
     // Task types
     enum : int {
         CRITICAL    = PHIGH,
-        BEST_EFFORT = PLOW + 1 // 000111111111111 -> 001000000000
+        BEST_EFFORT = PLOW // 000111111111111 -> 001000000000
     };
 
     // Policy events
@@ -296,10 +313,17 @@ class EDF_Modified: public RT_Common
 public:
     static const bool dynamic = true;
 public:
-    EDF_Modified(int p = APERIODIC): RT_Common(p) {}
+    EDF_Modified(int p = APERIODIC): RT_Common(p), _min_frequency(CPU::min_clock()), _max_frequency(CPU::max_clock()), _last_deadline(-1), _step(-1) {}
     EDF_Modified(Microsecond p, Microsecond d, Microsecond c, int task_type = CRITICAL);
 
     void handle(Event event);
+private:
+    void _handle_charge(Event event);
+    
+    Hertz _min_frequency;
+    Hertz _max_frequency;
+    int _last_deadline;
+    Hertz _step;
 };
 
 

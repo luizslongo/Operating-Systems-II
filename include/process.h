@@ -49,7 +49,10 @@ public:
         NORMAL  = Criterion::NORMAL,
         LOW     = Criterion::LOW,
         MAIN    = Criterion::MAIN,
-        IDLE    = Criterion::IDLE
+        IDLE    = Criterion::IDLE,
+        PHIGH   = Criterion::PHIGH,
+        PNORMAL   = Criterion::PNORMAL,
+        PLOW   = Criterion::PLOW,
     };
 
     // Thread Queue
