@@ -110,9 +110,12 @@ void LLF::handle(Event event) {
 EDF_Modified::EDF_Modified(Microsecond p, Microsecond d, Microsecond c, int task_type): RT_Common(int(elapsed() + ticks(d)) | task_type, p, d, c), _min_frequency(CPU::min_clock()), _max_frequency(CPU::max_clock()), _last_deadline(elapsed()), _step(_max_frequency ) {}
 
 void EDF_Modified::_handle_charge(Event event) {
+    EPOS::OStream cout;
     if (!periodic()) {
-        if (CPU::clock() == _min_frequency)
+        if (CPU::clock() != _min_frequency) {
+            cout << "Aperiodic Task!!! Putting CPU on MIN FREQUENCY\n";
             CPU::clock(_min_frequency);
+        }
         return;
     }
     
@@ -121,6 +124,8 @@ void EDF_Modified::_handle_charge(Event event) {
     unsigned int current_time = elapsed();
     
     if (current_time > absolute_deadline) {
+        cout << "Deadline Miss!!! Putting CPU on MAX FREQUENCY\n";
+        cout << "CURRENT: " << current_time << ", START: " << start_time << ", AB DL: " << absolute_deadline << "\n";
         CPU::clock(_max_frequency);
         return;
     }
@@ -128,7 +133,7 @@ void EDF_Modified::_handle_charge(Event event) {
     unsigned int slack = (absolute_deadline - current_time)*10;
     unsigned int relative_deadline = absolute_deadline - start_time;
     
-    unsigned int time_fraction = slack / relative_deadline;
+    unsigned int time_fraction = 10 - slack / relative_deadline;
 
     /*
     Intel has 8 frequency levels.
@@ -154,37 +159,51 @@ void EDF_Modified::_handle_charge(Event event) {
     switch (time_fraction) {
         case 0: // < 10%
             level = 1;
+            break;
         case 1: // < 20%
+            level = 2;
+            break;
         case 2: // < 30%
             level = 2;
+            break;
         case 3: // < 40%
             level = 3;
+            break;
         case 4: // < 50%
             level = 5;
+            break;
         case 5: // < 60%
             level = 6;
+            break;
         case 6: // < %70
             level = 7;
+            break;
         case 7: // < 80%
             level = 7;
+            break;
         default: // >= %80
             level = 8;
             
     }
+    Hertz delta = _max_frequency - _min_frequency;
+    _step = delta % 8 == 0 ? delta/8 : delta/8 + 1;
 
-    
+    Hertz frequency = _min_frequency + level*_step;
+    CPU::clock(frequency);
+    cout << "CURRENT: " << current_time << ", START: " << start_time << ", AB DL: " << absolute_deadline << "\n";
+    cout << "TF: " << time_fraction << ", SLACK: " << slack << ", REAL DL: " << relative_deadline << "\n";
+    cout << "LEVEL: " << level << ", step: " << _step << ", CLOCK: " << frequency << "\n";
 }
 
 void EDF_Modified::handle(Event event) {
     RT_Common::handle(event);
 
     // Update the priority of the thread at job releases, before _alarm->v(), so it enters the queue in the right order (called from Periodic_Thread::Xxx_Handler)
-    
     int task_type = BEST_EFFORT & _priority;
-    
+
     if(periodic() && (event & JOB_RELEASE)) {
-        _last_deadline = _priority;
-        _priority = _priority + ticks(_deadline);
+        _last_deadline = int(elapsed());
+        _priority = int(elapsed() + _deadline) | task_type;
     }
     else if (event & CHARGE)
         _handle_charge(event);

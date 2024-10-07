@@ -3,7 +3,6 @@
 #ifndef __scheduler_h
 #define __scheduler_h
 
-#include "system/traits.h"
 #include <architecture/cpu.h>
 #include <architecture/pmu.h>
 #include <architecture/tsc.h>
@@ -313,7 +312,7 @@ class EDF_Modified: public RT_Common
 public:
     static const bool dynamic = true;
 public:
-    EDF_Modified(int p = APERIODIC): RT_Common(p), _min_frequency(CPU::min_clock()), _max_frequency(CPU::max_clock()), _last_deadline(-1), _step(-1) {}
+    EDF_Modified(int p = APERIODIC): RT_Common(p), _min_frequency(CPU::min_clock()), _max_frequency(CPU::max_clock()), _last_deadline(0), _step(-1) {}
     EDF_Modified(Microsecond p, Microsecond d, Microsecond c, int task_type = CRITICAL);
 
     void handle(Event event);
