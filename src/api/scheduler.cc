@@ -3,6 +3,7 @@
 #include "scheduler.h"
 #include "system/config.h"
 #include "system/traits.h"
+#include <utility/math.h>
 #include <process.h>
 #include <time.h>
 
@@ -43,13 +44,22 @@ void RT_Common::handle(Event event) {
 
         _statistics.thread_last_preemption = elapsed();
         _statistics.thread_execution_time += cpu_time;
+        _statistics.job_utilization += cpu_time;
 //        if(_statistics.job_released) {
-            _statistics.job_utilization += cpu_time;
 //        }
     }
     if(periodic() && (event & JOB_RELEASE)) {
         db<Thread>(TRC) << "RELEASE";
 
+        if (_statistics.jobs_released < 5)
+            _statistics.average_job_execution_time += _statistics.job_utilization/5;
+        else {
+            _statistics.average_job_execution_time = (_statistics.average_job_execution_time*4 + _statistics.job_utilization)/5;
+        }
+        
+        OStream cout;
+        cout << "JOB RELEASEEEE: " << _statistics.average_job_execution_time << '\n';
+        cout << "JOB UTILIZATION: " << _statistics.job_utilization << '\n';
         _statistics.job_released = true;
         _statistics.job_release = elapsed();
         _statistics.job_start = 0;
@@ -107,7 +117,56 @@ void LLF::handle(Event event) {
 }
 
 
-EDF_Modified::EDF_Modified(Microsecond p, Microsecond d, Microsecond c, int task_type): RT_Common(int(elapsed() + ticks(d)) | task_type, p, d, c), _min_frequency(CPU::min_clock()), _max_frequency(CPU::max_clock()), _last_deadline(elapsed()), _step(_max_frequency ) {}
+EDF_Modified::EDF_Modified(Microsecond p, Microsecond d, Microsecond c, int task_type): RT_Common(int(elapsed() + ticks(d)) | task_type, p, d, c), _min_frequency(CPU::max_clock()), _max_frequency(CPU::max_clock()), _last_deadline(elapsed()), _step(_max_frequency ) {
+    memset(&_statistics, 0, sizeof(_statistics));
+    // _statistics.thread_last_dispatch = _statistics.thread_last_preemption = _statistics.jobs_released = _statistics.job_utilization = _statistics.average_job_execution_time = 0;
+}
+
+void EDF_Modified::_calculate_min_frequency() {
+    if (_statistics.jobs_released < 5)
+        return;
+
+    unsigned int average_execution_fraction = (_statistics.average_job_execution_time * 10)/_deadline;
+    
+    OStream cout;
+    cout << "AVERAGE EF: " << average_execution_fraction << ", _DEADLINE: " << _deadline << '\n';
+
+    if (_statistics.jobs_released == 5) {
+        Hertz step = (CPU::max_clock() - CPU::min_clock())/10;
+        _min_frequency = CPU::min_clock() + step*average_execution_fraction;
+        return;
+    }
+    // fazemos dessa forma pra ter uma mudança mais previsível no min_cpu_frequency. 
+    // Pensei em fazer matematicamente, mas n achei nenhuma forma boa.
+    switch (average_execution_fraction) {
+        case 0:
+        case 1:
+            _min_frequency -= _min_frequency/4; //diminui 25%
+            break; //entre 0% e 20%
+        case 2:
+        case 3:
+            _min_frequency -= _min_frequency/8; //diminui 12.5%
+            break; //entre 20% e 40%
+        case 4:
+        case 5:
+        case 6:
+            break; //entre 40% e 70% 
+        case 7:
+        case 8:
+            _min_frequency += _min_frequency/8; //aumenta 12.5%
+            break; //entre 70% e 90%
+        default:
+            _min_frequency += _min_frequency/4; //aumenta 25%
+            //acima de 90%
+        
+    }
+
+    //Resolvendo problemas de contorno
+    if (_min_frequency < CPU::min_clock())
+        _min_frequency = CPU::min_clock();
+    else if (_min_frequency > CPU::max_clock())
+        _min_frequency = CPU::max_clock();
+}
 
 void EDF_Modified::_handle_charge(Event event) {
     EPOS::OStream cout;
@@ -124,8 +183,10 @@ void EDF_Modified::_handle_charge(Event event) {
     unsigned int current_time = elapsed();
     
     if (current_time > absolute_deadline) {
-        cout << "Deadline Miss!!! Putting CPU on MAX FREQUENCY\n";
+        cout << "\n========================================================\n";
+        cout << "Deadline Missed!!! Putting CPU on MAX FREQUENCY\n";
         cout << "CURRENT: " << current_time << ", START: " << start_time << ", AB DL: " << absolute_deadline << "\n";
+        cout << "\n========================================================\n";
         CPU::clock(_max_frequency);
         return;
     }
@@ -185,29 +246,39 @@ void EDF_Modified::_handle_charge(Event event) {
             level = 8;
             
     }
+    
     Hertz delta = _max_frequency - _min_frequency;
     _step = delta % 8 == 0 ? delta/8 : delta/8 + 1;
 
     Hertz frequency = _min_frequency + level*_step;
+    if (frequency > CPU::max_clock())
+        frequency = CPU::max_clock();
+
     CPU::clock(frequency);
+    cout << "\n========================================================\n";
     cout << "CURRENT: " << current_time << ", START: " << start_time << ", AB DL: " << absolute_deadline << "\n";
     cout << "TF: " << time_fraction << ", SLACK: " << slack << ", REAL DL: " << relative_deadline << "\n";
-    cout << "LEVEL: " << level << ", step: " << _step << ", CLOCK: " << frequency << "\n";
+    cout << "LEVEL: " << level << ", step: " << _step << ", CLOCK: " << frequency << ", MIN FREQ: " << _min_frequency << "\n";
+    cout << "\n========================================================\n";
+
 }
 
 void EDF_Modified::handle(Event event) {
-    RT_Common::handle(event);
-
-    // Update the priority of the thread at job releases, before _alarm->v(), so it enters the queue in the right order (called from Periodic_Thread::Xxx_Handler)
-    int task_type = BEST_EFFORT & _priority;
 
     if(periodic() && (event & JOB_RELEASE)) {
+        // Update the priority of the thread at job releases, before _alarm->v(), so it enters the queue in the right order (called from Periodic_Thread::Xxx_Handler)
+        int task_type = (BEST_EFFORT & _priority) == BEST_EFFORT ? BEST_EFFORT : CRITICAL;
         _last_deadline = int(elapsed());
         _priority = int(elapsed() + _deadline) | task_type;
+        _calculate_min_frequency();
+        OStream cout;
+        cout << "MIN FREQ: " << _min_frequency << '\n';
     }
-    else if (event & CHARGE)
+
+    if (((event & CHARGE) && !(event & LEAVE)) || (event & ENTER))
         _handle_charge(event);
 
+    RT_Common::handle(event);
 }
 
 // Since the definition of FCFS above is only known to this unit, forcing its instantiation here so it gets emitted in scheduler.o for subsequent linking with other units is necessary.

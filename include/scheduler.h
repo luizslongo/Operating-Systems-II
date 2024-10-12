@@ -26,7 +26,6 @@ protected:
     typedef Timer_Common::Tick Tick;
 
 public:
-    // Aperiodics Threads Priorities
     /*
        // NOTE: Also, make sure MSB is 0.
         APERIODIC_BIT --> 010000000000000
@@ -39,9 +38,10 @@ public:
         PLOW          --> 001100000000000
         PNORMAL       --> 001000000000000
         PHIGH         --> 000000000000000
-        MAIN          --> 11111111111110
+        MAIN          --> 111111111111100
     
     */
+    // Aperiodics Threads Priorities
     enum : int {
         CEILING = -1000,
         MAIN    = -1,
@@ -77,7 +77,7 @@ public:
     // Task types
     enum : int {
         CRITICAL    = PHIGH,
-        BEST_EFFORT = PLOW // 000111111111111 -> 001000000000
+        BEST_EFFORT = PLOW
     };
 
     // Policy events
@@ -120,8 +120,10 @@ public:
         Tick job_start;                         // tick in which the last job of a periodic thread started (different from "thread_last_dispatch" since jobs can be preempted)
         Tick job_finish;                        // tick in which the last job of a periodic thread finished (i.e. called _alarm->p() at wait_netxt(); different from "thread_last_preemption" since jobs can be preempted)
         Tick job_utilization;                   // accumulated execution time (in ticks)
+        unsigned int average_job_execution_time;// average execution time of the last 5 jobs.
         unsigned int jobs_released;             // number of jobs of a thread that were released so far (i.e. the number of times _alarm->v() was called by the Alarm::handler())
         unsigned int jobs_finished;             // number of jobs of a thread that finished execution so far (i.e. the number of times alarm->p() was called at wait_next())
+
     };
 
     struct Real_Statistics {  // for Traits<System>::monitored = true
@@ -138,6 +140,8 @@ public:
         Tick job_start;                         // tick in which the last job of a periodic thread started (different from "thread_last_dispatch" since jobs can be preempted)
         Tick job_finish;                        // tick in which the last job of a periodic thread finished (i.e. called _alarm->p() at wait_netxt(); different from "thread_last_preemption" since jobs can be preempted)
         Tick job_utilization;                   // accumulated execution time (in ticks)
+        unsigned int average_job_execution_time;// average execution time of the last 5 jobs.
+
         unsigned int jobs_released;             // number of jobs of a thread that were released so far (i.e. the number of times _alarm->v() was called by the Alarm::handler())
         unsigned int jobs_finished;             // number of jobs of a thread that finished execution so far (i.e. the number of times alarm->p() was called at wait_next())
     };
@@ -145,7 +149,7 @@ public:
     typedef IF<Traits<System>::monitored, Real_Statistics, Dummy_Statistics>::Result Statistics;
 
 protected:
-    Scheduling_Criterion_Common() {}
+    Scheduling_Criterion_Common() {}; 
 
 public:
     Microsecond period() { return 0;}
@@ -312,12 +316,13 @@ class EDF_Modified: public RT_Common
 public:
     static const bool dynamic = true;
 public:
-    EDF_Modified(int p = APERIODIC): RT_Common(p), _min_frequency(CPU::min_clock()), _max_frequency(CPU::max_clock()), _last_deadline(0), _step(-1) {}
+    EDF_Modified(int p = APERIODIC): RT_Common(p), _min_frequency(CPU::max_clock()), _max_frequency(CPU::max_clock()), _last_deadline(0), _step(-1) {}
     EDF_Modified(Microsecond p, Microsecond d, Microsecond c, int task_type = CRITICAL);
 
     void handle(Event event);
 private:
     void _handle_charge(Event event);
+    void _calculate_min_frequency();
     
     Hertz _min_frequency;
     Hertz _max_frequency;
