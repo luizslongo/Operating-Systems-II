@@ -58,7 +58,7 @@ void RT_Common::handle(Event event) {
         }
         
         OStream cout;
-        cout << "JOB RELEASEEEE: " << _statistics.average_job_execution_time << '\n';
+        cout << "JOB AVERAGE EXECUTION TIME (last 5 executions): " << _statistics.average_job_execution_time << '\n';
         cout << "JOB UTILIZATION: " << _statistics.job_utilization << '\n';
         _statistics.job_released = true;
         _statistics.job_release = elapsed();
@@ -259,6 +259,7 @@ void EDF_Modified::_handle_charge(Event event) {
     cout << "CURRENT: " << current_time << ", START: " << start_time << ", AB DL: " << absolute_deadline << "\n";
     cout << "TF: " << time_fraction << ", SLACK: " << slack << ", REAL DL: " << relative_deadline << "\n";
     cout << "LEVEL: " << level << ", step: " << _step << ", CLOCK: " << frequency << ", MIN FREQ: " << _min_frequency << "\n";
+    cout << "FREQ PERCENTAGE: " << ((frequency - CPU::min_clock())*100.0)/(CPU::max_clock() - CPU::min_clock()) << "%\n";
     cout << "\n========================================================\n";
 
 }
