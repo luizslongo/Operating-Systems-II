@@ -9,6 +9,8 @@
 #include <utility/scheduling.h>
 #include <utility/math.h>
 #include <utility/convert.h>
+#include <system/traits.h>
+#include <system.h>
 
 __BEGIN_SYS
 
@@ -113,7 +115,7 @@ public:
         unsigned int jobs_finished;             // number of jobs of a thread that finished execution so far (i.e. the number of times alarm->p() was called at wait_next())
     };
 
-    typedef IF<Traits<System>::monitored, Real_Statistics, Dummy_Statistics>::Result Statistics;
+    typedef IF<Traits<Thread>::monitored, Real_Statistics, Dummy_Statistics>::Result Statistics;
 
 protected:
     Scheduling_Criterion_Common() {}
