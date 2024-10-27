@@ -5,8 +5,10 @@
 #include <memory.h>
 #include <system.h>
 #include <process.h>
+#include <utility/ostream.h>
 
 __BEGIN_SYS
+extern OStream kout;
 
 class Init_System
 {
@@ -16,9 +18,9 @@ private:
 public:
     Init_System() {
         db<Init>(TRC) << "Init_System()" << endl;
-
+        
         CPU::smp_barrier();
-
+        
         // Only the bootstrap CPU runs INIT_SYSTEM fully
         if(CPU::id() == CPU::BSP) {
             db<Init>(INF) << "Init:si=" << *System::info() << endl;
@@ -58,6 +60,8 @@ public:
 
         db<Init>(INF) << "Initializing system abstractions: " << endl;
         System::init();
+        
+        kout << CPU::id() << '\n';
 
         if(CPU::id() == CPU::BSP) {
             // Randomize the Random Numbers Generator's seed

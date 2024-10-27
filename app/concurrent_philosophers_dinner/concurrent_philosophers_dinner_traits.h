@@ -13,13 +13,14 @@ template<> struct Traits<Build>: public Traits_Tokens
     static const unsigned int ARCHITECTURE = IA32;
     static const unsigned int MACHINE = PC;
     static const unsigned int MODEL = Legacy_PC;
-    static const unsigned int CPUS = ((MODEL == Legacy_PC) || (MODEL == Raspberry_Pi3) || (MODEL == Realview_PBX) || (MODEL == Zynq) || (MODEL == SiFive_U)) ? 2 : 1;
+    static const unsigned int CPUS = ((MODEL == Legacy_PC) || (MODEL == Raspberry_Pi3) || (MODEL == Realview_PBX) || (MODEL == Zynq) || (MODEL == SiFive_U)) ? 4 : 1;
     static const unsigned int NETWORKING = STANDALONE;
     static const unsigned int EXPECTED_SIMULATION_TIME = 60; // s (0 => not simulated)
 
     // Default flags
     static const bool enabled = true;
     static const bool debugged = true;
+    static const bool trace = false;
     static const bool monitored = true;
     static const bool hysterically_debugged = false;
 };
@@ -29,7 +30,7 @@ template<> struct Traits<Build>: public Traits_Tokens
 template<> struct Traits<Debug>: public Traits<Build>
 {
     static const bool error   = true;
-    static const bool warning = true;
+    static const bool warning = false;
     static const bool info    = false;
     static const bool trace   = false;
 };

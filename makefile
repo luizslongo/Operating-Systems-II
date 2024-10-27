@@ -50,7 +50,7 @@ TEE             = tee
 ifndef DISPLAY
 TERM            = sh -c
 else
-TERM            = konsole -e
+TERM            = alacritty -e
 endif
 TOUCH           = touch
 
