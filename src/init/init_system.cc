@@ -60,8 +60,6 @@ public:
 
         db<Init>(INF) << "Initializing system abstractions: " << endl;
         System::init();
-        
-        kout << CPU::id() << '\n';
 
         if(CPU::id() == CPU::BSP) {
             // Randomize the Random Numbers Generator's seed

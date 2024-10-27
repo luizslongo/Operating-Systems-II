@@ -29,7 +29,7 @@ template<> struct Traits<Build>: public Traits_Tokens
 // Utilities
 template<> struct Traits<Debug>: public Traits<Build>
 {
-    static const bool error   = true;
+    static const bool error   = false;
     static const bool warning = false;
     static const bool info    = false;
     static const bool trace   = false;

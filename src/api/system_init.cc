@@ -8,6 +8,9 @@ __BEGIN_SYS
 
 void System::init()
 {
+    
+    // BARRIER HERE. WHY? DUNNO.
+    CPU::smp_barrier();
     // These abstractions are initialized only once (by the bootstrap CPU)
     if(CPU::id() == CPU::BSP) {
         if(Traits<Alarm>::enabled)
