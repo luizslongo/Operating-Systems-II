@@ -10,6 +10,7 @@ void System::init()
 {
     
     // BARRIER HERE. WHY? DUNNO.
+    // Probably cause of Thread::init, ig.
     CPU::smp_barrier();
     // These abstractions are initialized only once (by the bootstrap CPU)
     if(CPU::id() == CPU::BSP) {
