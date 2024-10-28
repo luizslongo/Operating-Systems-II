@@ -352,6 +352,9 @@ public:
 
     static volatile unsigned int id();
     static unsigned int cores() { return multicore ? _cores : 1; }
+    static void cores(unsigned int cores) {
+        _cores = cores;
+    }
 
     static Hertz clock() { return _cpu_current_clock; }
     static void clock(Hertz frequency) {

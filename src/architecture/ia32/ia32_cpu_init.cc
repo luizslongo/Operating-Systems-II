@@ -9,6 +9,7 @@ __BEGIN_SYS
 void CPU::init()
 {
     db<Init, CPU>(TRC) << "CPU::init()" << endl;
+    smp_barrier_init(_cores);
 
     _cpu_clock = System::info()->tm.cpu_clock;
     _cpu_current_clock = System::info()->tm.cpu_clock;
@@ -25,6 +26,7 @@ void CPU::init()
     // Initialize the PMU	
     if(Traits<PMU>::enabled)
         PMU::init();
+
 }
 
 void CPU::smp_barrier_init(unsigned int cores) {

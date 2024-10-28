@@ -18,15 +18,17 @@ private:
 public:
     Init_System() {
         db<Init>(TRC) << "Init_System()" << endl;
-        
+        db<Init>(INF) << "Initializing the CPU: " << endl;
+
+        CPU::cores(Traits<System>::CPUS);
+        CPU::init();
         CPU::smp_barrier();
-        
+
         // Only the bootstrap CPU runs INIT_SYSTEM fully
         if(CPU::id() == CPU::BSP) {
             db<Init>(INF) << "Init:si=" << *System::info() << endl;
 
             db<Init>(INF) << "Initializing the architecture: " << endl;
-            CPU::init();
 
             db<Init>(INF) << "Initializing system's heap: " << endl;
             if(Traits<System>::multiheap) {
@@ -44,20 +46,15 @@ public:
 
             db<Init>(INF) << "Initializing the machine: " << endl;
             Machine::init();
-
-            CPU::smp_barrier(); // signalizes "machine ready" to other CPUs
-
+            //Timer::init(); --> timer is already initialized by Machine::init
+            CPU::smp_barrier();
+            CPU::smp_barrier();
         } else {
-
-
-            db<Init>(INF) << "Initializing the CPU: " << endl;
-            CPU::init();
-
             db<Init>(INF) << "Initializing the machine: " << endl;
+            CPU::smp_barrier();
             Timer::init();
-
+            CPU::smp_barrier();
         }
-
         db<Init>(INF) << "Initializing system abstractions: " << endl;
         System::init();
 
