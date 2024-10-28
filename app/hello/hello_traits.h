@@ -13,14 +13,15 @@ template<> struct Traits<Build>: public Traits_Tokens
     static const unsigned int ARCHITECTURE = IA32;
     static const unsigned int MACHINE = PC;
     static const unsigned int MODEL = Legacy_PC;
-    static const unsigned int CPUS = ((MODEL == Legacy_PC) || (MODEL == Raspberry_Pi3) || (MODEL == Realview_PBX) || (MODEL == Zynq) || (MODEL == SiFive_U)) ? 2 : 1;
+    static const unsigned int CPUS = 4; //((MODEL == Legacy_PC) || (MODEL == Raspberry_Pi3) || (MODEL == Realview_PBX) || (MODEL == Zynq) || (MODEL == SiFive_U)) ? 4 : 1;
     static const unsigned int NETWORKING = STANDALONE;
     static const unsigned int EXPECTED_SIMULATION_TIME = 60; // s (0 => not simulated)
 
     // Default flags
     static const bool enabled = true;
-    static const bool monitored = true;
     static const bool debugged = true;
+    static const bool trace = false;
+    static const bool monitored = true;
     static const bool hysterically_debugged = false;
 };
 
@@ -28,8 +29,8 @@ template<> struct Traits<Build>: public Traits_Tokens
 // Utilities
 template<> struct Traits<Debug>: public Traits<Build>
 {
-    static const bool error   = true;
-    static const bool warning = true;
+    static const bool error   = false;
+    static const bool warning = false;
     static const bool info    = false;
     static const bool trace   = false;
 };
@@ -118,10 +119,9 @@ template<> struct Traits<Thread>: public Traits<Build>
     static const bool smp = Traits<System>::multicore;
     static const bool trace_idle = hysterically_debugged;
     static const bool simulate_capacity = false;
-    static const int priority_inversion_protocol = NONE;
+    static const int priority_inversion_protocol = INHERITANCE;
 
-
-    typedef IF<(CPUS > 1), Fixed_CPU, Priority>::Result Criterion;
+    typedef IF<(CPUS > 1), GRR, EDF_Modified>::Result Criterion;
     static const unsigned int QUANTUM = 10000; // us
 };
 

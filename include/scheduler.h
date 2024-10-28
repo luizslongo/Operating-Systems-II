@@ -27,15 +27,38 @@ protected:
     typedef Timer_Common::Tick Tick;
 
 public:
-    // Priorities
+    /*
+       // NOTE: Also, make sure MSB is 0.
+        APERIODIC_BIT --> 010000000000000
+        PERIODIC_BIT  --> 000000000000000
+
+        IDLE          --> 011100000000000
+        LOW           --> 011000000000000
+        NORMAL        --> 010100000000000
+        HIGH          --> 010000000000000
+        PLOW          --> 001100000000000
+        PNORMAL       --> 001000000000000
+        PHIGH         --> 000000000000000
+        MAIN          --> 111111111111100
+    
+    */
+    // Aperiodics Threads Priorities
     enum : int {
         CEILING = -1000,
         MAIN    = -1,
-        HIGH    = 0,
-        NORMAL  = (unsigned(1) << (sizeof(int) * 8 - 3)) - 1,
-        LOW     = (unsigned(1) << (sizeof(int) * 8 - 2)) - 1,
-        IDLE    = (unsigned(1) << (sizeof(int) * 8 - 1)) - 1
+        HIGH    = (unsigned(0b100) << (sizeof(int) * 8 - 4)),
+        NORMAL  = (unsigned(0b101) << (sizeof(int) * 8 - 4)),
+        LOW     = (unsigned(0b110) << (sizeof(int) * 8 - 4)),
+        IDLE    = (unsigned(0b111) << (sizeof(int) * 8 - 4)),
     };
+
+    // Periodics Threads Priorities
+    enum : int {
+        PHIGH    = 0,
+        PNORMAL  = (unsigned(0b010) << (sizeof(int) * 8 - 4)),
+        PLOW     = (unsigned(0b011) << (sizeof(int) * 8 - 4))
+    };
+
 
     // Constructor helpers
     enum : unsigned int {
@@ -47,9 +70,15 @@ public:
 
     // Policy types
     enum : int {
-        PERIODIC    = HIGH,
-        SPORADIC    = NORMAL,
+        PERIODIC    = PHIGH,
+        SPORADIC    = PLOW,
         APERIODIC   = LOW
+    };
+
+    // Task types
+    enum : int {
+        CRITICAL    = PHIGH,
+        BEST_EFFORT = PNORMAL
     };
 
     // Policy events
@@ -93,8 +122,11 @@ public:
         Tick job_start;                         // tick in which the last job of a periodic thread started (different from "thread_last_dispatch" since jobs can be preempted)
         Tick job_finish;                        // tick in which the last job of a periodic thread finished (i.e. called _alarm->p() at wait_netxt(); different from "thread_last_preemption" since jobs can be preempted)
         Tick job_utilization;                   // accumulated execution time (in ticks)
+        unsigned int average_job_execution_time;// average execution time of the last 5 jobs.
+        unsigned int number_dispatches;         // number of dispatches that thread did
         unsigned int jobs_released;             // number of jobs of a thread that were released so far (i.e. the number of times _alarm->v() was called by the Alarm::handler())
         unsigned int jobs_finished;             // number of jobs of a thread that finished execution so far (i.e. the number of times alarm->p() was called at wait_next())
+
     };
 
     struct Real_Statistics {  // for Traits<System>::monitored = true
@@ -111,6 +143,8 @@ public:
         Tick job_start;                         // tick in which the last job of a periodic thread started (different from "thread_last_dispatch" since jobs can be preempted)
         Tick job_finish;                        // tick in which the last job of a periodic thread finished (i.e. called _alarm->p() at wait_netxt(); different from "thread_last_preemption" since jobs can be preempted)
         Tick job_utilization;                   // accumulated execution time (in ticks)
+        unsigned int average_job_execution_time;// average execution time of the last 5 jobs.
+        unsigned int number_dispatches;         // number of dispatches that thread did
         unsigned int jobs_released;             // number of jobs of a thread that were released so far (i.e. the number of times _alarm->v() was called by the Alarm::handler())
         unsigned int jobs_finished;             // number of jobs of a thread that finished execution so far (i.e. the number of times alarm->p() was called at wait_next())
     };
@@ -347,6 +381,26 @@ public:
     LLF(Microsecond p, Microsecond d = SAME, Microsecond c = UNKNOWN, unsigned int cpu = ANY);
 
     void handle(Event event);
+};
+
+// Earliest Deadline First Modified
+class EDF_Modified: public RT_Common
+{
+public:
+    static const bool dynamic = true;
+public:
+    EDF_Modified(int p = APERIODIC): RT_Common(p), _min_frequency(CPU::max_clock()), _max_frequency(CPU::max_clock()), _last_deadline(0), _step(-1) {}
+    EDF_Modified(Microsecond p, Microsecond d, Microsecond c, int task_type = CRITICAL);
+
+    void handle(Event event);
+private:
+    void _handle_charge(Event event);
+    void _calculate_min_frequency();
+    
+    Hertz _min_frequency;
+    Hertz _max_frequency;
+    int _last_deadline;
+    Hertz _step;
 };
 
 __END_SYS

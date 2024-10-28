@@ -14,7 +14,11 @@ public:
     List_Element_Rank(int r = 0): _rank(r) {}
 
     operator int() const { return _rank; }
-
+    
+    List_Element_Rank& operator+=(const List_Element_Rank& other) {
+        _rank += other._rank;
+        return *this;
+    }
 protected:
     int _rank;
 };
