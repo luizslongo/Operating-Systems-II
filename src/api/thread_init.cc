@@ -59,7 +59,8 @@ void Thread::init()
     CPU::smp_barrier();
 
     // Transition from CPU-based locking to thread-based locking
-    _not_booting = true;
+    if (CPU::id() == CPU::BSP)
+        _not_booting = true;
 }
 
 __END_SYS
