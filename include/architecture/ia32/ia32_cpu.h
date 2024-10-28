@@ -600,7 +600,9 @@ private:
     }
     static void init_stack_helper(Log_Addr sp) {}
 
+public:
     static void smp_barrier_init(unsigned int cores);
+private:
     static void init();
 
 private:

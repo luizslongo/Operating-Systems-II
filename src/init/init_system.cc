@@ -14,21 +14,22 @@ class Init_System
 {
 private:
     static const unsigned int HEAP_SIZE = Traits<System>::HEAP_SIZE;
-
 public:
     Init_System() {
         db<Init>(TRC) << "Init_System()" << endl;
         db<Init>(INF) << "Initializing the CPU: " << endl;
 
         CPU::cores(Traits<System>::CPUS);
-        CPU::init();
-        CPU::smp_barrier();
+        CPU::smp_barrier_init(Traits<System>::CPUS);
+
+
 
         // Only the bootstrap CPU runs INIT_SYSTEM fully
         if(CPU::id() == CPU::BSP) {
             db<Init>(INF) << "Init:si=" << *System::info() << endl;
 
             db<Init>(INF) << "Initializing the architecture: " << endl;
+            CPU::init();
 
             db<Init>(INF) << "Initializing system's heap: " << endl;
             if(Traits<System>::multiheap) {
@@ -48,13 +49,13 @@ public:
             Machine::init();
             //Timer::init(); --> timer is already initialized by Machine::init
             CPU::smp_barrier();
-            CPU::smp_barrier();
         } else {
             db<Init>(INF) << "Initializing the machine: " << endl;
             CPU::smp_barrier();
+            CPU::init();
             Timer::init();
-            CPU::smp_barrier();
         }
+        CPU::smp_barrier();
         db<Init>(INF) << "Initializing system abstractions: " << endl;
         System::init();
 
@@ -70,6 +71,7 @@ public:
             }
         }
 
+        CPU::smp_barrier();
         // Initialization continues at init_end
     }
 };

@@ -12,16 +12,20 @@ extern "C" { void __epos_app_entry(); }
 void Thread::init()
 {
     db<Init, Thread>(TRC) << "Thread::init()" << endl;
+    CPU::smp_barrier();
 
     // Install an interrupt handler to receive forced reschedules
     if(smp && (CPU::id() == CPU::BSP))
         IC::int_vector(IC::INT_RESCHEDULER, rescheduler);  // if an eoi handler is needed, then it was already installed at IC::init()
 
+    CPU::smp_barrier();
 
     if(smp)
         IC::enable(IC::INT_RESCHEDULER);
+    CPU::smp_barrier();
 
     Criterion::init();
+    CPU::smp_barrier();
 
     if(CPU::id() == CPU::BSP) {
         typedef int (Main)();
@@ -33,9 +37,11 @@ void Thread::init()
         new (SYSTEM) Thread(Thread::Configuration(Thread::RUNNING, Thread::MAIN), main);
     }
 
+    CPU::smp_barrier();
 
     // Idle thread creation does not cause rescheduling (see Thread::constructor_epilogue)
     new (SYSTEM) Thread(Thread::Configuration(Thread::READY, Thread::IDLE), &Thread::idle);
+    CPU::smp_barrier();
 
     // The installation of the scheduler timer handler does not need to be done after the
     // creation of threads, since the constructor won't call reschedule() which won't call
@@ -46,14 +52,14 @@ void Thread::init()
     if(Criterion::timed && (CPU::id() == CPU::BSP))
         _timer = new (SYSTEM) Scheduler_Timer(QUANTUM, time_slicer);
 
+    CPU::smp_barrier();
     // No more interrupts until we reach init_end
     CPU::int_disable();
 
     CPU::smp_barrier();
 
     // Transition from CPU-based locking to thread-based locking
-    if(CPU::id() == CPU::BSP)
-        _not_booting = true;
+    _not_booting = true;
 }
 
 __END_SYS

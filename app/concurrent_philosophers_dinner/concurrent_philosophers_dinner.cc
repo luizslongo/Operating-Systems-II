@@ -84,7 +84,7 @@ int philosopher(int n, int l, int c)
         cout << "thinking[" << CPU::id() << "]";
         table.v();
 
-        think(1000000);
+        think(10);
 
         table.p();
         Display::position(l, c);
@@ -99,7 +99,7 @@ int philosopher(int n, int l, int c)
         cout << " eating[" << CPU::id() << "] ";
         table.v();
 
-        eat(500000);
+        eat(50);
 
         table.p();
         Display::position(l, c);

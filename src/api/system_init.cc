@@ -28,9 +28,6 @@ void System::init()
             Alarm::init();
     }
     
-    // Barrier needed here to make sure Alarm is initialized before thread initialization.
-    CPU::smp_barrier();
-
     // These abstractions are initialized by all CPUs
     if(Traits<Thread>::enabled)
         Thread::init();
