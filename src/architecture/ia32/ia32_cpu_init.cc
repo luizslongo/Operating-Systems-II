@@ -14,7 +14,7 @@ void CPU::init()
     _cpu_current_clock = System::info()->tm.cpu_clock;
     _bus_clock = System::info()->tm.bus_clock;
 
-    // Initialize the MMU
+    //Initialize the MMU
     if(CPU::id() == CPU::BSP) {
         if(Traits<MMU>::enabled)
             MMU::init();

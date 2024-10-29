@@ -10,7 +10,10 @@ __BEGIN_SYS
 class Init_Begin
 {
 public:
-    Init_Begin() { Machine::pre_init(System::info()); }
+    Init_Begin() {
+    // if(Traits<System>::multitask && (CPU::id() == CPU::BSP))
+    //         Machine::clear_bss();
+     Machine::pre_init(System::info()); }
 };
 
 Init_Begin init_begin;

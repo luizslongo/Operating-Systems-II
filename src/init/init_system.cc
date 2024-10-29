@@ -20,9 +20,7 @@ public:
         db<Init>(INF) << "Initializing the CPU: " << endl;
 
         CPU::cores(Traits<System>::CPUS);
-        CPU::smp_barrier_init(Traits<System>::CPUS);
-
-
+        CPU::smp_barrier();
 
         // Only the bootstrap CPU runs INIT_SYSTEM fully
         if(CPU::id() == CPU::BSP) {
@@ -55,7 +53,6 @@ public:
             CPU::init();
             Timer::init();
         }
-        CPU::smp_barrier();
         db<Init>(INF) << "Initializing system abstractions: " << endl;
         System::init();
 
@@ -71,7 +68,6 @@ public:
             }
         }
 
-        CPU::smp_barrier();
         // Initialization continues at init_end
     }
 };
