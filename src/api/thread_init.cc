@@ -12,7 +12,6 @@ extern "C" { void __epos_app_entry(); }
 void Thread::init()
 {
     db<Init, Thread>(TRC) << "Thread::init()" << endl;
-    CPU::smp_barrier();
 
     // Install an interrupt handler to receive forced reschedules
     if(smp && (CPU::id() == CPU::BSP))
@@ -22,10 +21,8 @@ void Thread::init()
 
     if(smp)
         IC::enable(IC::INT_RESCHEDULER);
-    CPU::smp_barrier();
 
     Criterion::init();
-    CPU::smp_barrier();
 
     if(CPU::id() == CPU::BSP) {
         typedef int (Main)();
@@ -35,9 +32,10 @@ void Thread::init()
         Main * main = reinterpret_cast<Main *>(__epos_app_entry);
 
         new (SYSTEM) Thread(Thread::Configuration(Thread::RUNNING, Thread::MAIN), main);
-    }
+    } else
+        Machine::delay(1000000);
 
-    CPU::smp_barrier();
+
 
     // Idle thread creation does not cause rescheduling (see Thread::constructor_epilogue)
     new (SYSTEM) Thread(Thread::Configuration(Thread::READY, Thread::IDLE), &Thread::idle);
@@ -52,7 +50,6 @@ void Thread::init()
     if(Criterion::timed && (CPU::id() == CPU::BSP))
         _timer = new (SYSTEM) Scheduler_Timer(QUANTUM, time_slicer);
 
-    CPU::smp_barrier();
     // No more interrupts until we reach init_end
     CPU::int_disable();
 

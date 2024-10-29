@@ -1,0 +1,339 @@
+diff --git a/Dockerfile b/Dockerfile
+new file mode 100644
+index 0000000..a61880a
+--- /dev/null
++++ b/Dockerfile
+@@ -0,0 +1,15 @@
++FROM fedora:40
++
++RUN --mount=type=cache,target=/var/cache/dnf dnf install -y \
++        dev86 \
++        gcc-c++-x86_64-linux-gnu \
++        gcc-x86_64-linux-gnu \
++        binutils-x86_64-linux-gnu \
++        qemu-system-x86 \
++        make \
++        g++ \
++        gcc \
++        fish \
++        git
++
++WORKDIR /build
+diff --git a/app/concurrent_philosophers_dinner/concurrent_philosophers_dinner_traits.h b/app/concurrent_philosophers_dinner/concurrent_philosophers_dinner_traits.h
+index 68dbb09..4c19a6b 100644
+--- a/app/concurrent_philosophers_dinner/concurrent_philosophers_dinner_traits.h
++++ b/app/concurrent_philosophers_dinner/concurrent_philosophers_dinner_traits.h
+@@ -10,16 +10,18 @@ template<> struct Traits<Build>: public Traits_Tokens
+ {
+     // Basic configuration
+     static const unsigned int SMOD = LIBRARY;
+-    static const unsigned int ARCHITECTURE = RV64;
+-    static const unsigned int MACHINE = RISCV;
+-    static const unsigned int MODEL = SiFive_U;
+-    static const unsigned int CPUS = 1;
++    static const unsigned int ARCHITECTURE = IA32;
++    static const unsigned int MACHINE = PC;
++    static const unsigned int MODEL = Legacy_PC;
++    static const unsigned int CPUS = ((MODEL == Legacy_PC) || (MODEL == Raspberry_Pi3) || (MODEL == Realview_PBX) || (MODEL == Zynq) || (MODEL == SiFive_U)) ? 4 : 1;
+     static const unsigned int NETWORKING = STANDALONE;
+     static const unsigned int EXPECTED_SIMULATION_TIME = 60; // s (0 => not simulated)
+ 
+     // Default flags
+     static const bool enabled = true;
+     static const bool debugged = true;
++    static const bool trace = false;
++    static const bool monitored = true;
+     static const bool hysterically_debugged = false;
+ };
+ 
+@@ -27,8 +29,8 @@ template<> struct Traits<Build>: public Traits_Tokens
+ // Utilities
+ template<> struct Traits<Debug>: public Traits<Build>
+ {
+-    static const bool error   = true;
+-    static const bool warning = true;
++    static const bool error   = false;
++    static const bool warning = false;
+     static const bool info    = false;
+     static const bool trace   = false;
+ };
+@@ -117,6 +119,7 @@ template<> struct Traits<Thread>: public Traits<Build>
+     static const bool smp = Traits<System>::multicore;
+     static const bool trace_idle = hysterically_debugged;
+     static const bool simulate_capacity = false;
++    static const int priority_inversion_protocol = INHERITANCE;
+ 
+     typedef IF<(CPUS > 1), GRR, RR>::Result Criterion;
+     static const unsigned int QUANTUM = 10000; // us
+diff --git a/include/architecture/ia32/ia32_cpu.h b/include/architecture/ia32/ia32_cpu.h
+index 684c90c..0b12fb9 100644
+--- a/include/architecture/ia32/ia32_cpu.h
++++ b/include/architecture/ia32/ia32_cpu.h
+@@ -352,6 +352,9 @@ public:
+ 
+     static volatile unsigned int id();
+     static unsigned int cores() { return multicore ? _cores : 1; }
++    static void cores(unsigned int cores) {
++        _cores = cores;
++    }
+ 
+     static Hertz clock() { return _cpu_current_clock; }
+     static void clock(Hertz frequency) {
+@@ -597,7 +600,9 @@ private:
+     }
+     static void init_stack_helper(Log_Addr sp) {}
+ 
++public:
+     static void smp_barrier_init(unsigned int cores);
++private:
+     static void init();
+ 
+ private:
+diff --git a/include/scheduler.h b/include/scheduler.h
+index fea2c9d..855a2e8 100644
+--- a/include/scheduler.h
++++ b/include/scheduler.h
+@@ -9,6 +9,8 @@
+ #include <utility/scheduling.h>
+ #include <utility/math.h>
+ #include <utility/convert.h>
++#include <system/traits.h>
++#include <system.h>
+ 
+ __BEGIN_SYS
+ 
+@@ -113,7 +115,7 @@ public:
+         unsigned int jobs_finished;             // number of jobs of a thread that finished execution so far (i.e. the number of times alarm->p() was called at wait_next())
+     };
+ 
+-    typedef IF<Traits<System>::monitored, Real_Statistics, Dummy_Statistics>::Result Statistics;
++    typedef IF<Traits<Thread>::monitored, Real_Statistics, Dummy_Statistics>::Result Statistics;
+ 
+ protected:
+     Scheduling_Criterion_Common() {}
+diff --git a/run-docker.sh b/run-docker.sh
+new file mode 100755
+index 0000000..e713421
+--- /dev/null
++++ b/run-docker.sh
+@@ -0,0 +1,19 @@
++#!/usr/bin/env bash
++
++if [ -z "$(docker images -q ine5424:latest 2> /dev/null)" ]; then
++        cmd="docker build -t ine5424 ."
++        echo "running $cmd"
++        eval "$cmd"
++fi
++
++args=
++
++if [ "$#" -gt 0 ]; then
++        args="$@"
++else
++        args="/bin/fish"
++fi
++
++cmd="docker run -ti --rm --name ine5424  --mount=type=bind,src=$(pwd),target=/build ine5424 $args"
++echo "running $cmd"
++eval "$cmd"
+diff --git a/src/api/system_init.cc b/src/api/system_init.cc
+index 9903a38..71b620d 100644
+--- a/src/api/system_init.cc
++++ b/src/api/system_init.cc
+@@ -6,6 +6,20 @@
+ 
+ __BEGIN_SYS
+ 
++
++/*
++`c` --> continue
++`q` --> quit
++`break` --> lugar de parada. Ex: break System::init() (use e abuse de tab-completion)
++`info threads` --> printa onde cada thread (cpu) está executando
++`backtrace` --> printa call stack das funções
++`thread x` --> Muda a execução atual.
++`ìnfo registers all` --> printa informações sobre todos os registradores 
++`info variables` -> list "All global and static variable names" (huge list).
++`info locals` -> list "Local variables of current stack frame" (names and values), including static variables in that function.
++`info args` -> list "Arguments of the current stack frame" (names and values).
++*/
++
+ void System::init()
+ {
+     // These abstractions are initialized only once (by the bootstrap CPU)
+@@ -13,7 +27,7 @@ void System::init()
+         if(Traits<Alarm>::enabled)
+             Alarm::init();
+     }
+-
++    
+     // These abstractions are initialized by all CPUs
+     if(Traits<Thread>::enabled)
+         Thread::init();
+diff --git a/src/api/thread_init.cc b/src/api/thread_init.cc
+index a88ebe4..03339b6 100644
+--- a/src/api/thread_init.cc
++++ b/src/api/thread_init.cc
+@@ -12,16 +12,20 @@ extern "C" { void __epos_app_entry(); }
+ void Thread::init()
+ {
+     db<Init, Thread>(TRC) << "Thread::init()" << endl;
++    CPU::smp_barrier();
+ 
+     // Install an interrupt handler to receive forced reschedules
+     if(smp && (CPU::id() == CPU::BSP))
+         IC::int_vector(IC::INT_RESCHEDULER, rescheduler);  // if an eoi handler is needed, then it was already installed at IC::init()
+ 
++    CPU::smp_barrier();
+ 
+     if(smp)
+         IC::enable(IC::INT_RESCHEDULER);
++    CPU::smp_barrier();
+ 
+     Criterion::init();
++    CPU::smp_barrier();
+ 
+     if(CPU::id() == CPU::BSP) {
+         typedef int (Main)();
+@@ -33,9 +37,11 @@ void Thread::init()
+         new (SYSTEM) Thread(Thread::Configuration(Thread::RUNNING, Thread::MAIN), main);
+     }
+ 
++    CPU::smp_barrier();
+ 
+     // Idle thread creation does not cause rescheduling (see Thread::constructor_epilogue)
+     new (SYSTEM) Thread(Thread::Configuration(Thread::READY, Thread::IDLE), &Thread::idle);
++    CPU::smp_barrier();
+ 
+     // The installation of the scheduler timer handler does not need to be done after the
+     // creation of threads, since the constructor won't call reschedule() which won't call
+@@ -46,14 +52,14 @@ void Thread::init()
+     if(Criterion::timed && (CPU::id() == CPU::BSP))
+         _timer = new (SYSTEM) Scheduler_Timer(QUANTUM, time_slicer);
+ 
++    CPU::smp_barrier();
+     // No more interrupts until we reach init_end
+     CPU::int_disable();
+ 
+     CPU::smp_barrier();
+ 
+     // Transition from CPU-based locking to thread-based locking
+-    if(CPU::id() == CPU::BSP)
+-        _not_booting = true;
++    _not_booting = true;
+ }
+ 
+ __END_SYS
+diff --git a/src/architecture/ia32/ia32_cpu_init.cc b/src/architecture/ia32/ia32_cpu_init.cc
+index 9df4f8f..318f25d 100644
+--- a/src/architecture/ia32/ia32_cpu_init.cc
++++ b/src/architecture/ia32/ia32_cpu_init.cc
+@@ -25,6 +25,7 @@ void CPU::init()
+     // Initialize the PMU	
+     if(Traits<PMU>::enabled)
+         PMU::init();
++
+ }
+ 
+ void CPU::smp_barrier_init(unsigned int cores) {
+diff --git a/src/init/init_end.cc b/src/init/init_end.cc
+index cb40b94..6606117 100644
+--- a/src/init/init_end.cc
++++ b/src/init/init_end.cc
+@@ -15,7 +15,6 @@ class Init_End
+ public:
+     Init_End() {
+         db<Init>(TRC) << "Init_End()" << endl;
+-
+         if(!Traits<System>::multithread) {
+             CPU::int_enable();
+             return;
+@@ -26,19 +25,23 @@ public:
+         // Thread::self() and Task::self() can be safely called after the construction of MAIN
+         // even if no reschedule() was called (running is set by the Scheduler at each insert())
+         // It will return MAIN for CPU0 and IDLE for the others
++        CPU::smp_barrier();
+         Thread * first = Thread::self();
+ 
+         db<Init, Thread>(INF) << "Dispatching the first thread: " << first << endl;
+ 
++
+         // This barrier is particularly important, since afterwards the temporary stacks
+         // and data structures established by SETUP and announced as "free memory" will indeed be
+         // available to user threads.
++        CPU::smp_barrier();
+ 
+         // Interrupts have been disabled at Thread::init() and will be reenabled by CPU::Context::load()
+         // but we first reset the timer to avoid getting a time interrupt during load()
+         if(Traits<Timer>::enabled)
+             Timer::reset();
+ 
++        CPU::smp_barrier();
+         first->_context->load();
+     }
+ };
+diff --git a/src/init/init_system.cc b/src/init/init_system.cc
+index 00e6b5f..de80bfc 100644
+--- a/src/init/init_system.cc
++++ b/src/init/init_system.cc
+@@ -5,19 +5,24 @@
+ #include <memory.h>
+ #include <system.h>
+ #include <process.h>
++#include <utility/ostream.h>
+ 
+ __BEGIN_SYS
++extern OStream kout;
+ 
+ class Init_System
+ {
+ private:
+     static const unsigned int HEAP_SIZE = Traits<System>::HEAP_SIZE;
+-
+ public:
+     Init_System() {
+         db<Init>(TRC) << "Init_System()" << endl;
++        db<Init>(INF) << "Initializing the CPU: " << endl;
++
++        CPU::cores(Traits<System>::CPUS);
++        CPU::smp_barrier_init(Traits<System>::CPUS);
++
+ 
+-        CPU::smp_barrier();
+ 
+         // Only the bootstrap CPU runs INIT_SYSTEM fully
+         if(CPU::id() == CPU::BSP) {
+@@ -42,20 +47,15 @@ public:
+ 
+             db<Init>(INF) << "Initializing the machine: " << endl;
+             Machine::init();
+-
+-            CPU::smp_barrier(); // signalizes "machine ready" to other CPUs
+-
++            //Timer::init(); --> timer is already initialized by Machine::init
++            CPU::smp_barrier();
+         } else {
+-
+-
+-            db<Init>(INF) << "Initializing the CPU: " << endl;
+-            CPU::init();
+-
+             db<Init>(INF) << "Initializing the machine: " << endl;
++            CPU::smp_barrier();
++            CPU::init();
+             Timer::init();
+-
+         }
+-
++        CPU::smp_barrier();
+         db<Init>(INF) << "Initializing system abstractions: " << endl;
+         System::init();
+ 
+@@ -71,6 +71,7 @@ public:
+             }
+         }
+ 
++        CPU::smp_barrier();
+         // Initialization continues at init_end
+     }
+ };

@@ -7,6 +7,10 @@ __BEGIN_SYS
 void Machine::pre_init(System_Info * si)
 {
 
+    if (multicore) {
+        CPU::smp_barrier_init(si->bm.n_cpus);
+        CPU::smp_barrier();
+    }
     if(CPU::id() == CPU::BSP)
         Display::init();
 

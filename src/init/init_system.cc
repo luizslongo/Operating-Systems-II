@@ -19,9 +19,7 @@ public:
         db<Init>(TRC) << "Init_System()" << endl;
         db<Init>(INF) << "Initializing the CPU: " << endl;
 
-        CPU::cores(Traits<System>::CPUS);
-        CPU::smp_barrier_init(Traits<System>::CPUS);
-
+        CPU::smp_barrier();
 
 
         // Only the bootstrap CPU runs INIT_SYSTEM fully
@@ -55,7 +53,6 @@ public:
             CPU::init();
             Timer::init();
         }
-        CPU::smp_barrier();
         db<Init>(INF) << "Initializing system abstractions: " << endl;
         System::init();
 
@@ -70,8 +67,6 @@ public:
                     db<Init>(INF) << "Due to lack of entropy, Random is a pseudo random numbers generator!" << endl;
             }
         }
-
-        CPU::smp_barrier();
         // Initialization continues at init_end
     }
 };

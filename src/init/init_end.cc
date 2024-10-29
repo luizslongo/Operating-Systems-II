@@ -15,6 +15,7 @@ class Init_End
 public:
     Init_End() {
         db<Init>(TRC) << "Init_End()" << endl;
+        CPU::smp_barrier();
         if(!Traits<System>::multithread) {
             CPU::int_enable();
             return;
@@ -25,7 +26,6 @@ public:
         // Thread::self() and Task::self() can be safely called after the construction of MAIN
         // even if no reschedule() was called (running is set by the Scheduler at each insert())
         // It will return MAIN for CPU0 and IDLE for the others
-        CPU::smp_barrier();
         Thread * first = Thread::self();
 
         db<Init, Thread>(INF) << "Dispatching the first thread: " << first << endl;
@@ -41,7 +41,6 @@ public:
         if(Traits<Timer>::enabled)
             Timer::reset();
 
-        CPU::smp_barrier();
         first->_context->load();
     }
 };
