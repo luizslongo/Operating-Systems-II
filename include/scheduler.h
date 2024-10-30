@@ -427,6 +427,10 @@ class Scheduling_Queue<T, GRR>:
 public Multihead_Scheduling_List<T> {};
 
 template<typename T>
+class Scheduling_Queue<T, GEDF_Modified>:
+public Multihead_Scheduling_List<T> {};
+
+template<typename T>
 class Scheduling_Queue<T, Fixed_CPU>:
 public Scheduling_Multilist<T> {};
 
