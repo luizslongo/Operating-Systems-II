@@ -51,9 +51,10 @@ void Thread::init()
     // No more interrupts until we reach init_end
     CPU::int_disable();
 
-    // Transition from CPU-based locking to thread-based locking
     CPU::smp_barrier();
-    _not_booting = true;
+    // Transition from CPU-based locking to thread-based locking
+    if (CPU::id() == CPU::BSP)
+        _not_booting = true;
 }
 
 __END_SYS

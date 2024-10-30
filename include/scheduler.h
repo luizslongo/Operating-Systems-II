@@ -369,7 +369,6 @@ public:
     void handle(Event event);
 };
 
-
 // Least Laxity First
 class LLF: public RT_Common
 {
@@ -401,6 +400,21 @@ private:
     Hertz _max_frequency;
     int _last_deadline;
     Hertz _step;
+};
+
+// Global EDF_Modified
+class GEDF_Modified: public EDF_Modified
+{
+public:
+    static const unsigned int HEADS = Traits<Machine>::CPUS;
+
+public:
+    template <typename ... Tn>
+    GEDF_Modified(int p = APERIODIC, Tn & ... an): EDF_Modified(p) {}
+    template <typename ... Tn>
+    GEDF_Modified(Microsecond p, Microsecond d, Microsecond c, int task_type = CRITICAL, Tn & ... an): EDF_Modified(p,d,c,task_type) {}
+    
+    static unsigned int current_head() { return CPU::id(); }
 };
 
 __END_SYS

@@ -21,8 +21,8 @@ template<> struct Traits<Build>: public Traits_Tokens
     static const bool enabled = true;
     static const bool debugged = true;
     static const bool trace = false;
-    static const bool monitored = true;
-    static const bool hysterically_debugged = false;
+    static const bool monitored = false;
+    static const bool hysterically_debugged = true;
 };
 
 
@@ -121,7 +121,7 @@ template<> struct Traits<Thread>: public Traits<Build>
     static const bool simulate_capacity = false;
     static const int priority_inversion_protocol = INHERITANCE;
 
-    typedef IF<(CPUS > 1), GRR, RR>::Result Criterion;
+    typedef IF<(CPUS > 1), GEDF_Modified, EDF_Modified>::Result Criterion;
     static const unsigned int QUANTUM = 10000; // us
 };
 
