@@ -11,9 +11,9 @@ class Init_Begin
 {
 public:
     Init_Begin() {
-    // if(Traits<System>::multitask && (CPU::id() == CPU::BSP))
-    //         Machine::clear_bss();
-     Machine::pre_init(System::info()); }
+     CPU::cores(Traits<System>::CPUS); 
+     Machine::pre_init(System::info());
+    }
 };
 
 Init_Begin init_begin;

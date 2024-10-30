@@ -19,7 +19,6 @@ public:
         db<Init>(TRC) << "Init_System()" << endl;
         db<Init>(INF) << "Initializing the CPU: " << endl;
 
-        CPU::cores(Traits<System>::CPUS);
         CPU::smp_barrier();
 
         // Only the bootstrap CPU runs INIT_SYSTEM fully
