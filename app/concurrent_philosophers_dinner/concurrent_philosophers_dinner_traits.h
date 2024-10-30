@@ -122,11 +122,7 @@ template<> struct Traits<Thread>: public Traits<Build>
     static const bool simulate_capacity = false;
     static const int priority_inversion_protocol = INHERITANCE;
 
-<<<<<<< HEAD
     typedef IF<(CPUS > 1), EDF_Modified, EDF_Modified>::Result Criterion;
-=======
-    typedef IF<(CPUS > 1), GEDF_Modified, EDF_Modified>::Result Criterion;
->>>>>>> 185d6c4 (Adding GEDF_Modified)
     static const unsigned int QUANTUM = 10000; // us
 };
 
