@@ -219,10 +219,10 @@ public:
 class Variable_Queue_Scheduler
 {
 public:
-    Variable_Queue_Scheduler(unsigned int queue): _queue(0) {};
+    Variable_Queue_Scheduler(unsigned int queue): _queue(queue) {};
 
-    unsigned int queue() const  { return 0; }
-    void queue(unsigned int q) { _queue = 0; }
+    const volatile unsigned int & queue() const  { return _queue; }
+    void queue(unsigned int q) { _queue = q; }
 
 protected:
     volatile unsigned int _queue;
@@ -258,7 +258,7 @@ public:
     : Priority(p), Variable_Queue_Scheduler(((_priority == IDLE) || (_priority == MAIN)) ? CPU::id() : (cpu != ANY) ? cpu : ++_next_queue %= CPU::cores()) {}
 
     using Variable_Queue_Scheduler::queue;
-    static unsigned int current_queue() { return CPU::id(); }
+    static unsigned int current_queue() { return 0; }
 };
 
 // CPU Affinity
@@ -425,13 +425,13 @@ public:
 
 public:
     template <typename ... Tn>
-    PEDF_Modified(int p = APERIODIC, Tn & ... an): 
+    PEDF_Modified(int p = APERIODIC, unsigned int cpu = ANY, Tn & ... an): 
         EDF_Modified(p),
-        Variable_Queue_Scheduler(choose_queue()) {}
+        Variable_Queue_Scheduler(((_priority == IDLE) || (_priority == MAIN)) ? CPU::id() : (cpu != ANY) ? cpu : ++_next_queue %= CPU::cores()) {}
     template <typename ... Tn>
-    PEDF_Modified(Microsecond p, Microsecond d, Microsecond c, int task_type = CRITICAL, Tn & ... an): 
+    PEDF_Modified(Microsecond p, Microsecond d, Microsecond c, int task_type = CRITICAL, unsigned int cpu = ANY, Tn & ... an): 
         EDF_Modified(p,d,c,task_type),
-        Variable_Queue_Scheduler(choose_queue()) {}
+        Variable_Queue_Scheduler(((_priority == IDLE) || (_priority == MAIN)) ? CPU::id() : (cpu != ANY) ? cpu : ++_next_queue %= CPU::cores()) {}
 
     unsigned int choose_queue() {
     //    for (unsigned int i = 0; i < QUEUES; i++) {
@@ -439,7 +439,7 @@ public:
     //        //_scheduler.get_queue(i);
     //    }
         
-        return 0;
+        return _next_queue = (_next_queue + 1) % 4;
     }
     
     static unsigned int current_queue() { return CPU::id(); }

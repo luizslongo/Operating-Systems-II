@@ -11,7 +11,7 @@ class Init_Begin
 {
 public:
     Init_Begin() {
-     CPU::cores(Traits<System>::CPUS); 
+    //  CPU::cores(Traits<System>::CPUS); 
      Machine::pre_init(System::info());
     }
 };
