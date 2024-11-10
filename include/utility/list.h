@@ -1314,6 +1314,10 @@ public:
     }
 
     void insert(Element * e) {
+        //if (e->rank().queue() != R::current_queue()) {
+        //    OStream osw;
+        //    osw << "insert() broke --> " << e->rank().queue() << ", " << R::current_queue() << '\n';
+        //}
         _list[e->rank().queue()].insert(e);
     }
 

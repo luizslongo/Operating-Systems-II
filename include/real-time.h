@@ -3,6 +3,8 @@
 #ifndef __real_time_h
 #define __real_time_h
 
+#include "system/config.h"
+#include "utility/wrapped_ostream.h"
 #include <utility/handler.h>
 #include <utility/math.h>
 #include <utility/convert.h>

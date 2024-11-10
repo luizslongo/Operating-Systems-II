@@ -1,5 +1,6 @@
 // EPOS PC IC Mediator Implementation
 
+#include "system/config.h"
 #include <architecture.h>
 #include <machine/ic.h>
 #include <machine/timer.h>

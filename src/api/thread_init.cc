@@ -33,11 +33,16 @@ void Thread::init()
 
         new (SYSTEM) Thread(Thread::Configuration(Thread::RUNNING, Thread::MAIN), main);
 
-    } else
-        Machine::delay(1000000);
+    }
+
+    if (CPU::id() != CPU::BSP)
+        CPU::smp_barrier(); 
     
     // Idle thread creation does not cause rescheduling (see Thread::constructor_epilogue)
     new (SYSTEM) Thread(Thread::Configuration(Thread::READY, Thread::IDLE), &Thread::idle);
+
+    if (CPU::id() == CPU::BSP)
+        CPU::smp_barrier(); 
 
     CPU::smp_barrier();
 
@@ -54,8 +59,9 @@ void Thread::init()
     CPU::int_disable();
 
     // Transition from CPU-based locking to thread-based locking
+    if (CPU::id() == CPU::BSP)
+        _not_booting = true;
     CPU::smp_barrier();
-    _not_booting = true;
 }
 
 __END_SYS

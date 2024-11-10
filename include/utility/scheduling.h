@@ -3,8 +3,8 @@
 #ifndef __scheduling_h
 #define __scheduling_h
 
-#include "system/traits.h"
 #include <utility/list.h>
+#include <utility/wrapped_ostream.h>
 
 __BEGIN_UTIL
 
@@ -45,14 +45,8 @@ public:
     	// please, pay the price of the extra "if" bellow.
         // Hysterically debugging also causes chosen() to be called before insert()
         OStream os;
-        if(Traits<Build>::hysterically_debugged || Traits<Thread>::trace_idle) {
-            auto *ptr = const_cast<T * volatile>((Base::chosen()) ? Base::chosen()->object() : 0);
-            if (!ptr)
-                os << "Mayday Mayday, null pointer here :(\n";
-            return ptr;
-        }
-        else
-            return const_cast<T * volatile>(Base::chosen()->object());
+        auto *ptr = const_cast<T * volatile>((Base::chosen()) ? Base::chosen()->object() : 0);
+        return ptr;
     }
 
     void insert(T * obj) {
