@@ -56,9 +56,9 @@ void RT_Common::handle(Event event) {
             _statistics.average_job_execution_time = (_statistics.average_job_execution_time*4 + _statistics.job_utilization)/5;
         }
         
-        OStream cout;
-        cout << "JOB AVERAGE EXECUTION TIME (last 5 executions): " << _statistics.average_job_execution_time << '\n';
-        cout << "JOB UTILIZATION: " << _statistics.job_utilization << '\n';
+        //OStream cout;
+        //cout << "JOB AVERAGE EXECUTION TIME (last 5 executions): " << _statistics.average_job_execution_time << '\n';
+        //cout << "JOB UTILIZATION: " << _statistics.job_utilization << '\n';
         _statistics.job_released = true;
         _statistics.job_release = elapsed();
         _statistics.job_start = 0;
@@ -100,8 +100,8 @@ void EDF_Modified::_calculate_min_frequency() {
 
     unsigned int average_execution_fraction = (_statistics.average_job_execution_time * 10)/_deadline;
     
-    OStream cout;
-    cout << "AVERAGE EF: " << average_execution_fraction << ", _DEADLINE: " << _deadline << '\n';
+    //OStream cout;
+    //cout << "AVERAGE EF: " << average_execution_fraction << ", _DEADLINE: " << _deadline << '\n';
 
     if (_statistics.jobs_released == 5) {
         Hertz step = (CPU::max_clock() - CPU::min_clock())/10;
@@ -141,10 +141,12 @@ void EDF_Modified::_calculate_min_frequency() {
 }
 
 void EDF_Modified::_handle_charge(Event event) {
-    EPOS::OStream cout;
+    CPU::clock(CPU::min_clock());
+    return;
+    //EPOS::OStream cout;
     if (!periodic()) {
         if (CPU::clock() != _max_frequency) {
-            cout << "Aperiodic Task!!! Putting CPU on MAX FREQUENCY\n";
+            //cout << "Aperiodic Task!!! Putting CPU on MAX FREQUENCY\n";
             CPU::clock(_max_frequency);
         }
         return;
@@ -153,14 +155,14 @@ void EDF_Modified::_handle_charge(Event event) {
     unsigned int task_type = ((BEST_EFFORT & _priority) == BEST_EFFORT ? BEST_EFFORT : CRITICAL);
 
     if (_statistics.number_dispatches % (task_type == BEST_EFFORT ? 10 : 3) != 0) {
-        cout << "\n========================================================\n";
-        cout << "NUMBER OF DISPATCHES NOT ENOUGH TO RECALCULATE FREQUENCY\n";
-        cout << "TASK TYPE: " << (task_type == BEST_EFFORT ? "BEST_EFFORT" : "CRITICAL") << "\n";
-        cout << "NUMBER DISPATCHES = " << _statistics.number_dispatches << "\n";
-        cout << "CPU MAX FREQ: " << CPU::max_clock() << "\n";
-        cout << "CPU MIN FREQ: " << CPU::min_clock() << "\n";
-        cout << "CPU FREQ: " << CPU::clock() << "\n";
-        cout << "\n========================================================\n";
+        //cout << "\n========================================================\n";
+        //cout << "NUMBER OF DISPATCHES NOT ENOUGH TO RECALCULATE FREQUENCY\n";
+        //cout << "TASK TYPE: " << (task_type == BEST_EFFORT ? "BEST_EFFORT" : "CRITICAL") << "\n";
+        //cout << "NUMBER DISPATCHES = " << _statistics.number_dispatches << "\n";
+        //cout << "CPU MAX FREQ: " << CPU::max_clock() << "\n";
+        //cout << "CPU MIN FREQ: " << CPU::min_clock() << "\n";
+        //cout << "CPU FREQ: " << CPU::clock() << "\n";
+        //cout << "\n========================================================\n";
         return;
     }
     
@@ -169,10 +171,10 @@ void EDF_Modified::_handle_charge(Event event) {
     unsigned int current_time = elapsed();
     
     if (current_time > absolute_deadline) {
-        cout << "\n========================================================\n";
-        cout << "Deadline Missed!!! Putting CPU on MAX FREQUENCY\n";
-        cout << "CURRENT: " << current_time << ", START: " << start_time << ", AB DL: " << absolute_deadline << "\n";
-        cout << "\n========================================================\n";
+        //cout << "\n========================================================\n";
+        //cout << "Deadline Missed!!! Putting CPU on MAX FREQUENCY\n";
+        //cout << "CURRENT: " << current_time << ", START: " << start_time << ", AB DL: " << absolute_deadline << "\n";
+        //cout << "\n========================================================\n";
         CPU::clock(_max_frequency);
         return;
     }
@@ -241,30 +243,30 @@ void EDF_Modified::_handle_charge(Event event) {
         frequency = CPU::max_clock();
 
     CPU::clock(frequency);
-    cout << "\n========================================================\n";
-    cout << "CURRENT: " << current_time << ", START: " << start_time << ", AB DL: " << absolute_deadline << "\n";
-    cout << "TF: " << time_fraction << ", SLACK: " << slack << ", REAL DL: " << relative_deadline << "\n";
-    cout << "LEVEL: " << level << ", step: " << _step << ", CLOCK: " << frequency << ", MIN FREQ: " << _min_frequency << "\n";
-    cout << "MAX FREQ: " << CPU::max_clock() << "\n";
-    cout << "NEW FREQ: " << CPU::clock() << "\n";
-    cout << "FREQ PERCENTAGE: " << ((frequency - CPU::min_clock())*100.0)/(CPU::max_clock() - CPU::min_clock()) << "%\n";
-    cout << "\n========================================================\n";
+    //cout << "\n========================================================\n";
+    //cout << "CURRENT: " << current_time << ", START: " << start_time << ", AB DL: " << absolute_deadline << "\n";
+    //cout << "TF: " << time_fraction << ", SLACK: " << slack << ", REAL DL: " << relative_deadline << "\n";
+    //cout << "LEVEL: " << level << ", step: " << _step << ", CLOCK: " << frequency << ", MIN FREQ: " << _min_frequency << "\n";
+    //cout << "MAX FREQ: " << CPU::max_clock() << "\n";
+    //cout << "NEW FREQ: " << CPU::clock() << "\n";
+    //cout << "FREQ PERCENTAGE: " << ((frequency - CPU::min_clock())*100.0)/(CPU::max_clock() - CPU::min_clock()) << "%\n";
+    //cout << "\n========================================================\n";
 }
 
 void EDF_Modified::handle(Event event) {
     RT_Common::handle(event);
-    OStream cout;
+    //OStream cout;
     if(periodic() && (event & JOB_RELEASE)) {
         // Update the priority of the thread at job releases, before _alarm->v(), so it enters the queue in the right order (called from Periodic_Thread::Xxx_Handler)
         int task_type = (BEST_EFFORT & _priority) == BEST_EFFORT ? BEST_EFFORT : CRITICAL;
         _last_deadline = int(elapsed());
         _priority = int(elapsed() + _deadline) | task_type;
         _calculate_min_frequency();
-        cout << "MIN FREQ: " << _min_frequency << '\n';
+        //cout << "MIN FREQ: " << _min_frequency << '\n';
     }
 
     if (!periodic() && (event & FINISH)) {
-        cout << "THREAD APERIODIC FINISHED: CPU WILL BE HALTED TO PRESERVE ENERGY" << '\n';
+        //cout << "THREAD APERIODIC FINISHED: CPU WILL BE HALTED TO PRESERVE ENERGY" << '\n';
     }
 
     if (((event & CHARGE) && !(event & LEAVE)) || (event & ENTER))

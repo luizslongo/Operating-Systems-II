@@ -162,11 +162,11 @@ public:
     bool periodic() { return false; }
 
     volatile Statistics & statistics() { return _statistics; }
-    unsigned int queue() const { return 0; }
+    //unsigned int queue() const { return 0; }
 
 protected:
     void handle(Event event) {}
-    void queue(unsigned int q) {}
+    //void queue(unsigned int q) {}
     void update() {}
 
     static void init() {}
@@ -218,11 +218,11 @@ public:
 // Multicore Algorithms
 class Variable_Queue_Scheduler
 {
-protected:
-    Variable_Queue_Scheduler(unsigned int queue): _queue(queue) {};
+public:
+    Variable_Queue_Scheduler(unsigned int queue): _queue(0) {};
 
-    const volatile unsigned int & queue() const volatile { return _queue; }
-    void queue(unsigned int q) { _queue = q; }
+    unsigned int queue() const  { return 0; }
+    void queue(unsigned int q) { _queue = 0; }
 
 protected:
     volatile unsigned int _queue;
@@ -417,6 +417,34 @@ public:
     static unsigned int current_head() { return CPU::id(); }
 };
 
+// Partitioned EDF_Modified
+class PEDF_Modified: public EDF_Modified, public Variable_Queue_Scheduler
+{
+public:
+    static const unsigned int QUEUES = Traits<Machine>::CPUS;
+
+public:
+    template <typename ... Tn>
+    PEDF_Modified(int p = APERIODIC, Tn & ... an): 
+        EDF_Modified(p),
+        Variable_Queue_Scheduler(choose_queue()) {}
+    template <typename ... Tn>
+    PEDF_Modified(Microsecond p, Microsecond d, Microsecond c, int task_type = CRITICAL, Tn & ... an): 
+        EDF_Modified(p,d,c,task_type),
+        Variable_Queue_Scheduler(choose_queue()) {}
+
+    unsigned int choose_queue() {
+    //    for (unsigned int i = 0; i < QUEUES; i++) {
+    //        
+    //        //_scheduler.get_queue(i);
+    //    }
+        
+        return 0;
+    }
+    
+    static unsigned int current_queue() { return CPU::id(); }
+};
+
 __END_SYS
 
 __BEGIN_UTIL
@@ -432,6 +460,10 @@ public Multihead_Scheduling_List<T> {};
 
 template<typename T>
 class Scheduling_Queue<T, Fixed_CPU>:
+public Scheduling_Multilist<T> {};
+
+template<typename T>
+class Scheduling_Queue<T, PEDF_Modified>:
 public Scheduling_Multilist<T> {};
 
 template<typename T>

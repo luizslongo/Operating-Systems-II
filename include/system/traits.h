@@ -114,6 +114,7 @@ class EDF;
 class LLF;
 class EDF_Modified;
 class GEDF_Modified;
+class PEDF_Modified;
 class GRR;
 class Fixed_CPU;
 class CPU_Affinity;

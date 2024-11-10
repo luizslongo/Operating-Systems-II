@@ -1062,7 +1062,7 @@ public:
 
 public:
     Scheduling_List(): _chosen(0) {}
-
+    
     using Base::empty;
     using Base::size;
     using Base::head;
@@ -1070,6 +1070,7 @@ public:
     using Base::begin;
     using Base::end;
 
+    Element * volatile & get_queue(int id) { return _chosen; }
     Element * volatile & chosen() { return _chosen; }
 
     void insert(Element * e) {
@@ -1185,6 +1186,9 @@ public:
 
     Element * volatile & chosen() { return _chosen[R::current_head()]; }
     Element * volatile & chosen(unsigned int head) { return _chosen[head]; }
+    Element * volatile & get_queue(int id) {
+        return _chosen[id];
+    }
 
     void insert(Element * e) {
         db<Lists>(TRC) << "Scheduling_List::insert(e=" << e

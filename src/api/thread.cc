@@ -1,8 +1,11 @@
 // EPOS Thread Implementation
 
+#include "system/config.h"
 #include <machine.h>
 #include <system.h>
 #include <process.h>
+#include <utility/ostream.h>
+#include <utility/wrapped_ostream.h>
 
 __BEGIN_SYS
 
@@ -367,8 +370,11 @@ void Thread::time_slicer(IC::Interrupt_Id i)
 
 void Thread::dispatch(Thread * prev, Thread * next, bool charge)
 {
+    OStream_Wrapped osw;
+    osw << "AAAAAAAAAAAAAAABBBBBBBBBBBBBBBBBBBBBBBCCCCCCCCCCCCCCCCDDDDDDDDDDDDD\n=============\n";
     // "next" is not in the scheduler's queue anymore. It's already "chosen"
-
+    //kout << _scheduler.get_queue(CPU::id()) << ' ' << CPU::id() << '\n';
+    
     if(charge && Criterion::timed)
         _timer->restart();
 
