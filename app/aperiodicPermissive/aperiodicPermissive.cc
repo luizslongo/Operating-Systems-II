@@ -7,15 +7,6 @@ using namespace EPOS;
 
 OStream cout;
 
-const unsigned int iterations = 10;
-const Milisecond period_a = 100;
-const Milisecond period_b = 80;
-const Milisecond period_c = 167;
-const Milisecond wcet_a = 50;
-const Milisecond wcet_b = 20;
-const Milisecond wcet_c = 60;
-
-
 int my_func(char id, int limit) {
     do {
     long long b = 0;
@@ -54,12 +45,16 @@ int main()
     const Milisecond wcet_c = 10;
     */
     //                                              p              , d              , c            , a, n         , task_type
-    Periodic_Thread* a = new Periodic_Thread(RTConf(period_a * 1000, period_a * 1000, wcet_a * 1000, 0, iterations, EDF_Modified::CRITICAL)   , &my_func, 'A', (int)1e6);
-    Periodic_Thread* b = new Periodic_Thread(RTConf(period_b * 1000, period_b * 1000, wcet_b * 1000, 0, iterations, EDF_Modified::BEST_EFFORT), &my_func, 'B', (int)1e7);
-    Periodic_Thread* c = new Periodic_Thread(RTConf(period_c * 1000, period_c * 1000, wcet_a * 1000, 0, iterations, EDF_Modified::CRITICAL)   , &my_func, 'C', (int)2.5e7);
+    Thread* a = new Thread(&my_func_aperiodic, 'A');
+    Thread* b = new Thread(&my_func_aperiodic, 'B');
+    Thread* c = new Thread(&my_func_aperiodic, 'C');
     Thread* d = new Thread(&my_func_aperiodic, 'D');
+    Thread* e = new Thread(&my_func_aperiodic, 'E');
+    Thread* f = new Thread(&my_func_aperiodic, 'F');
+    Thread* g = new Thread(&my_func_aperiodic, 'G');
+    Thread* h = new Thread(&my_func_aperiodic, 'H');
     
-    cout << "A: " << a << " B: " << b << " C: " << c << " D: " << d << endl;
+    cout << "A: " << a << " B: " << b << " C: " << c << " D: " << d << "E: "  << e << "F: " << f << "G: " << g << "H: " << h << endl;
 
     // cout << "B: " << b << " D: " << d << endl;
 
