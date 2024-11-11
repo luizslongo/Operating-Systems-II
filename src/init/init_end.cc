@@ -1,5 +1,6 @@
 // EPOS Initializer End
 
+#include "system/config.h"
 #include <architecture.h>
 #include <system.h>
 #include <process.h>
@@ -14,8 +15,6 @@ class Init_End
 {
 public:
     Init_End() {
-        db<Init>(TRC) << "Init_End()" << endl;
-
         CPU::smp_barrier();
 
         if(!Traits<System>::multithread) {
@@ -25,12 +24,8 @@ public:
 
         db<Init>(INF) << "INIT ends here!" << endl;
 
-        // Thread::self() and Task::self() can be safely called after the construction of MAIN
-        // even if no reschedule() was called (running is set by the Scheduler at each insert())
-        // It will return MAIN for CPU0 and IDLE for the others
         Thread * first = Thread::self();
 
-        db<Init, Thread>(INF) << "Dispatching the first thread: " << first << endl;
 
         // This barrier is particularly important, since afterwards the temporary stacks
         // and data structures established by SETUP and announced as "free memory" will indeed be

@@ -1,8 +1,11 @@
 // EPOS Thread Implementation
 
+#include "system/config.h"
 #include <machine.h>
 #include <system.h>
 #include <process.h>
+#include <utility/ostream.h>
+#include <utility/wrapped_ostream.h>
 
 __BEGIN_SYS
 
@@ -90,6 +93,7 @@ Thread::~Thread()
         break;
     }
 
+    threads_per_cpu[CPU::id()]--;
     _task->dismiss(this);
 
     if(_joining)
@@ -253,8 +257,8 @@ void Thread::exit(int status)
     }
 
     Thread * next = _scheduler.choose(); // at least idle will always be there
-
-    dispatch(prev, next);
+    if (next) // have to check it here to make sure no null pointers are read during idle exit().
+        dispatch(prev, next);
 
     unlock();
 }
@@ -367,12 +371,14 @@ void Thread::time_slicer(IC::Interrupt_Id i)
 
 void Thread::dispatch(Thread * prev, Thread * next, bool charge)
 {
+    // OStream_Wrapped osw;
+    // osw << "AAAAAAAAAAAAAAABBBBBBBBBBBBBBBBBBBBBBBCCCCCCCCCCCCCCCCDDDDDDDDDDDDD\n=============\n";
     // "next" is not in the scheduler's queue anymore. It's already "chosen"
-
+    //kout << _scheduler.get_queue(CPU::id()) << ' ' << CPU::id() << '\n';
+    
     if(charge && Criterion::timed)
         _timer->restart();
 
-      
     // Since our algorithm depends on execution time to update the frequency, we cannot run it at each preemption.
     // Instead, it's necessary to recalculate the frequency whenever dispatch is called, be it because of preemption or because of the quantum.
     //
@@ -424,7 +430,7 @@ int Thread::idle()
 
         CPU::int_enable();
         CPU::halt();
-
+        
         if(_scheduler.schedulables() > 0) // a thread might have been woken up by another CPU
             yield();
     }
@@ -436,7 +442,6 @@ int Thread::idle()
         kout << "*** EPOS is shutting down!" << endl;
         Machine::reboot();
     }
-
     return 0;
 }
 

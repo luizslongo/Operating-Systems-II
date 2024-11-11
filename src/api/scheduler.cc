@@ -1,10 +1,12 @@
 // EPOS CPU Scheduler Component Implementation
 
+#include "utility/wrapped_ostream.h"
 #include <process.h>
 #include <time.h>
 
 __BEGIN_SYS
 
+OStream_Wrapped cout;
 volatile unsigned int Variable_Queue_Scheduler::_next_queue;
 
 inline RT_Common::Tick RT_Common::elapsed() { return Alarm::elapsed(); }
@@ -65,7 +67,7 @@ void RT_Common::handle(Event event)
             _statistics.average_job_execution_time = (_statistics.average_job_execution_time * 4 + _statistics.job_utilization) / 5;
         }
 
-        OStream cout;
+        
         if (Traits<EDF_Modified>::ENABLE_STATISTICS)
         {
             cout << "JOB AVERAGE EXECUTION TIME (last 5 executions): " << _statistics.average_job_execution_time << '\n';
@@ -118,7 +120,7 @@ void EDF_Modified::_calculate_min_frequency()
 
     unsigned int average_execution_fraction = (_statistics.average_job_execution_time * 10) / _deadline;
 
-    OStream cout;
+    
     if (Traits<EDF_Modified>::ENABLE_STATISTICS)
     {
         cout << "AVERAGE EF: " << average_execution_fraction << ", _DEADLINE: " << _deadline << '\n';
@@ -164,7 +166,7 @@ void EDF_Modified::_calculate_min_frequency()
 
 void EDF_Modified::_handle_charge(Event event)
 {
-    EPOS::OStream cout;
+    EPOS::
     if (!periodic())
     {
         if (CPU::clock() != _max_frequency)
@@ -293,7 +295,6 @@ void EDF_Modified::_handle_charge(Event event)
 void EDF_Modified::handle(Event event)
 {
     RT_Common::handle(event);
-    OStream cout;
     if (periodic() && (event & JOB_RELEASE))
     {
         // Update the priority of the thread at job releases, before _alarm->v(), so it enters the queue in the right order (called from Periodic_Thread::Xxx_Handler)

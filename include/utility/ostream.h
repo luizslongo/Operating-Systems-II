@@ -153,9 +153,10 @@ public:
         return operator<<(static_cast<float>(d));
     }
 
-private:
+protected:
     void print(const char * s) { _print(s); }
 
+private:
     int itoa(int v, char * s);
     int utoa(unsigned int v, char * s, unsigned int i = 0);
     int ltoa(long v, char * s);

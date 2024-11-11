@@ -4,6 +4,7 @@
 #define __scheduling_h
 
 #include <utility/list.h>
+#include <utility/wrapped_ostream.h>
 
 __BEGIN_UTIL
 
@@ -43,10 +44,9 @@ public:
     	// But if you are unsure about your new use of the scheduler,
     	// please, pay the price of the extra "if" bellow.
         // Hysterically debugging also causes chosen() to be called before insert()
-        if(Traits<Build>::hysterically_debugged || Traits<Thread>::trace_idle)
-            return const_cast<T * volatile>((Base::chosen()) ? Base::chosen()->object() : 0);
-        else
-            return const_cast<T * volatile>(Base::chosen()->object());
+        OStream os;
+        auto *ptr = const_cast<T * volatile>((Base::chosen()) ? Base::chosen()->object() : 0);
+        return ptr;
     }
 
     void insert(T * obj) {

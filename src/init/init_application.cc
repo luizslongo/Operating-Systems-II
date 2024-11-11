@@ -31,7 +31,22 @@ public:
         if(Traits<System>::multiheap) { // heap in data segment arranged by SETUP
             db<Init>(INF) << endl;
             char * heap = (MMU::align_page(&_end) >= CPU::Log_Addr(Memory_Map::APP_DATA)) ? MMU::align_page(&_end) : CPU::Log_Addr(Memory_Map::APP_DATA); // ld is eliminating the data segment in some compilations, particularly for RISC-V, and placing _end in the code segment
+            if(Traits<Build>::SMOD != Traits<Build>::KERNEL)
+                heap += MMU::align_page(Traits<Application>::STACK_SIZE);
             Application::_heap = new (&Application::_preheap[0]) Application_Heap(heap, HEAP_SIZE);
+            // foi.
+            // finalmente. Agora fazer o scheduler
+            // Sim. N aguento mais esse EPOS. Qual critério vamos usar? Pra separar as tarefas?
+            // Menos threads? 
+            // Pode ser. Vamo no mais simples mesmo pra terminar logo.
+            // só temos que descobrir como saber o número de threads pelo PEDF
+            // 
+            // O scheduler provavelmente tem um método pra isso. Maaasss, o mais simples vai ser manter um contador pra cada CPU indicando as threads que tão nela.
+            // tipo o t
+            // Vai ser algo bem semelhante aquilo que mencionei pro luiz no discord.
+            
+            // Ai incrementamos o contador quando uma thread é criada, no construtor provavelmente. E decrementamos no destrutor ou no método exit() da thread.
+            // Como esses dois acontecem atomicamente, ta safe.
         } else {
             db<Init>(INF) << "adding all free memory to the unified system's heap!" << endl;
             for(unsigned int frames = MMU::allocable(); frames; frames = MMU::allocable())

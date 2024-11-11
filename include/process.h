@@ -3,6 +3,7 @@
 #ifndef __process_h
 #define __process_h
 
+#include "system/config.h"
 #include <architecture.h>
 #include <machine.h>
 #include <utility/queue.h>
@@ -106,7 +107,10 @@ protected:
 
     Queue::Element * link() { return &_link; }
 
-    static Thread * volatile running() { return _not_booting ? _scheduler.chosen() : reinterpret_cast<Thread * volatile>(CPU::id() + 1); }
+    static Thread * volatile running() { 
+        auto *ptr =  _not_booting ? _scheduler.chosen() : reinterpret_cast<Thread * volatile>(CPU::id() + 1); 
+        return ptr;
+    }
 
     static void lock() {
         CPU::int_disable();

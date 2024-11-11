@@ -32,11 +32,18 @@ void Thread::init()
         Main * main = reinterpret_cast<Main *>(__epos_app_entry);
 
         new (SYSTEM) Thread(Thread::Configuration(Thread::RUNNING, Thread::MAIN), main);
-    } else
-        Machine::delay(1000000);
 
+    }
+
+    if (CPU::id() != CPU::BSP)
+        CPU::smp_barrier(); 
+    
     // Idle thread creation does not cause rescheduling (see Thread::constructor_epilogue)
     new (SYSTEM) Thread(Thread::Configuration(Thread::READY, Thread::IDLE), &Thread::idle);
+
+    if (CPU::id() == CPU::BSP)
+        CPU::smp_barrier(); 
+
     CPU::smp_barrier();
 
     // The installation of the scheduler timer handler does not need to be done after the
@@ -51,10 +58,10 @@ void Thread::init()
     // No more interrupts until we reach init_end
     CPU::int_disable();
 
-    CPU::smp_barrier();
     // Transition from CPU-based locking to thread-based locking
     if (CPU::id() == CPU::BSP)
         _not_booting = true;
+    CPU::smp_barrier();
 }
 
 __END_SYS

@@ -3,6 +3,7 @@
 #ifndef __scheduler_h
 #define __scheduler_h
 
+#include "utility/wrapped_ostream.h"
 #include <architecture/cpu.h>
 #include <architecture/pmu.h>
 #include <architecture/tsc.h>
@@ -162,11 +163,12 @@ public:
     bool periodic() { return false; }
 
     volatile Statistics & statistics() { return _statistics; }
-    unsigned int queue() const { return 0; }
+    
+    // unsigned int queue() const { return 0; }
 
 protected:
     void handle(Event event) {}
-    void queue(unsigned int q) {}
+    // void queue(unsigned int q) {}
     void update() {}
 
     static void init() {}
@@ -218,14 +220,14 @@ public:
 // Multicore Algorithms
 class Variable_Queue_Scheduler
 {
-protected:
+public:
     Variable_Queue_Scheduler(unsigned int queue): _queue(queue) {};
 
-    const volatile unsigned int & queue() const volatile { return _queue; }
-    void queue(unsigned int q) { _queue = q; }
+    unsigned int queue() const  { return _queue; }
+    //void queue(unsigned int q) { _queue = q; }
 
 protected:
-    volatile unsigned int _queue;
+    unsigned int _queue;
     static volatile unsigned int _next_queue;
 };
 
@@ -417,6 +419,41 @@ public:
     static unsigned int current_head() { return CPU::id(); }
 };
 
+static volatile unsigned int threads_per_cpu[Traits<Machine>::CPUS];
+// Partitioned EDF_Modified
+class PEDF_Modified: public EDF_Modified, public Variable_Queue_Scheduler
+{
+public:
+    static const unsigned int QUEUES = Traits<Machine>::CPUS;
+
+public:
+    template <typename ... Tn>
+    PEDF_Modified(int p = APERIODIC, unsigned int cpu = ANY, Tn & ... an): 
+        EDF_Modified(p),
+        Variable_Queue_Scheduler(((_priority == IDLE) || (_priority == MAIN)) ? CPU::id() : (cpu != ANY) ? cpu : choose_queue()) {}
+    template <typename ... Tn>
+    PEDF_Modified(Microsecond p, Microsecond d, Microsecond c, int task_type = CRITICAL, unsigned int cpu = ANY, Tn & ... an): 
+        EDF_Modified(p,d,c,task_type),
+        Variable_Queue_Scheduler(((_priority == IDLE) || (_priority == MAIN)) ? CPU::id() : (cpu != ANY) ? cpu : choose_queue()) {}
+
+    unsigned int choose_queue() {
+        OStream_Wrapped osw;
+        unsigned int selected_queue = 0;
+
+        osw << "THREADS_PER_CPU: " << 0 << " -> " << threads_per_cpu[0] << '\n';
+        for (unsigned int i = 1; i < Traits<Machine>::CPUS; i++) {
+            if (threads_per_cpu[i] < threads_per_cpu[selected_queue])
+                selected_queue = i;
+            osw << "THREADS_PER_CPU: " << i << " -> " << threads_per_cpu[i] << '\n';
+        }
+        osw << "CHOSEN: " << selected_queue << '\n';
+        threads_per_cpu[selected_queue]++;
+        return selected_queue;
+    }
+    
+    static unsigned int current_queue() { return CPU::id(); }
+};
+
 __END_SYS
 
 __BEGIN_UTIL
@@ -432,6 +469,10 @@ public Multihead_Scheduling_List<T> {};
 
 template<typename T>
 class Scheduling_Queue<T, Fixed_CPU>:
+public Scheduling_Multilist<T> {};
+
+template<typename T>
+class Scheduling_Queue<T, PEDF_Modified>:
 public Scheduling_Multilist<T> {};
 
 template<typename T>
