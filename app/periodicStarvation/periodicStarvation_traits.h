@@ -19,12 +19,16 @@ template<> struct Traits<Build>: public Traits_Tokens
 
     // Default flags
     static const bool enabled = true;
-    static const bool debugged = true;
+    static const bool debugged = false;
     static const bool trace = false;
-    static const bool monitored = false;
+    static const bool monitored = true;
     static const bool hysterically_debugged = false;
 };
 
+template<> struct Traits<EDF_Modified> : public Traits<Build> {
+    static const bool ENABLE_STATISTICS = false;
+    static const bool ENABLE_DEADLINE_PRINT = false;
+};
 
 // Utilities
 template<> struct Traits<Debug>: public Traits<Build>

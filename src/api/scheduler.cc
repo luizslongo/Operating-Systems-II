@@ -6,7 +6,7 @@
 
 __BEGIN_SYS
 
-OStream_Wrapped cout;
+OStream cout;
 volatile unsigned int Variable_Queue_Scheduler::_next_queue;
 
 inline RT_Common::Tick RT_Common::elapsed() { return Alarm::elapsed(); }
@@ -66,12 +66,20 @@ void RT_Common::handle(Event event)
         {
             _statistics.average_job_execution_time = (_statistics.average_job_execution_time * 4 + _statistics.job_utilization) / 5;
         }
+        
+        int task_type = ((BEST_EFFORT & _priority) == BEST_EFFORT ? BEST_EFFORT : CRITICAL);
+        int absolute_deadline = _priority - task_type;
+        
+        if (absolute_deadline < elapsed())
+            _statistics.deadlines_missed++;
 
         
         if (Traits<EDF_Modified>::ENABLE_STATISTICS)
         {
-            cout << "JOB AVERAGE EXECUTION TIME (last 5 executions): " << _statistics.average_job_execution_time << '\n';
-            cout << "JOB UTILIZATION: " << _statistics.job_utilization << '\n';
+            _ostream_lock.acquire();
+            cout << '<' << CPU::id() << "> " << "JOB AVERAGE EXECUTION TIME (last 5 executions): " << _statistics.average_job_execution_time << '\n';
+            cout << '<' << CPU::id() << "> " << "JOB UTILIZATION: " << _statistics.job_utilization << '\n';
+            _ostream_lock.release();
         }
         _statistics.job_released = true;
         _statistics.job_release = elapsed();
@@ -94,6 +102,7 @@ void RT_Common::handle(Event event)
     }
     if (periodic() && (event & CHARGE))
     {
+        _statistics.num_charges++;
         db<Thread>(TRC) << "|CHARGE";
     }
     if (periodic() && (event & AWARD))
@@ -123,7 +132,9 @@ void EDF_Modified::_calculate_min_frequency()
     
     if (Traits<EDF_Modified>::ENABLE_STATISTICS)
     {
-        cout << "AVERAGE EF: " << average_execution_fraction << ", _DEADLINE: " << _deadline << '\n';
+        _ostream_lock.acquire();
+        cout << '<' << CPU::id() << "> " << "AVERAGE EF: " << average_execution_fraction << ", _DEADLINE: " << _deadline << '\n';
+        _ostream_lock.release();
     }
 
     if (_statistics.jobs_released == 5)
@@ -166,17 +177,23 @@ void EDF_Modified::_calculate_min_frequency()
 
 void EDF_Modified::_handle_charge(Event event)
 {
-    EPOS::
     if (!periodic())
     {
         if (CPU::clock() != _max_frequency)
         {
             if (Traits<EDF_Modified>::ENABLE_STATISTICS)
             {
-                cout << "Aperiodic Task!!! Putting CPU on MAX FREQUENCY\n";
+                _ostream_lock.acquire();
+                cout << '<' << CPU::id() << "> " << "Aperiodic Task!!! Putting CPU on MAX FREQUENCY\n";
+                _ostream_lock.release();
             }
             CPU::clock(_max_frequency);
         }
+        // sem _statistics????????????????? --> na idle no caso.
+        // isso não possibilita ele não ter o CHARGE e ainda entrar no handle charge?
+        //          (((event & CHARGE) && !(event & LEAVE)) || (event & ENTER))
+        //   real. triste ;-;
+        // _statistics.average_frequency =  ((unsigned long long)_statistics.average_frequency * (_statistics.num_charges - 1) + _max_frequency)/_statistics.num_charges;
         return;
     }
 
@@ -188,14 +205,17 @@ void EDF_Modified::_handle_charge(Event event)
 
     if (current_time > absolute_deadline)
     {
-        if (Traits<EDF_Modified>::ENABLE_STATISTICS)
+        if (Traits<EDF_Modified>::ENABLE_DEADLINE_PRINT)
         {
-            cout << "\n========================================================\n";
-            cout << "Deadline Missed!!! Putting CPU on MAX FREQUENCY\n";
-            cout << "CURRENT: " << current_time << ", START: " << start_time << ", AB DL: " << absolute_deadline << "\n";
-            cout << "\n========================================================\n";
+            _ostream_lock.acquire();
+            cout << '<' << CPU::id() << "> " << "\n========================================================\n";
+            cout << '<' << CPU::id() << "> " << "Deadline Missed!!! Putting CPU on MAX FREQUENCY\n";
+            cout << '<' << CPU::id() << "> " << "CURRENT: " << current_time << ", START: " << start_time << ", AB DL: " << absolute_deadline << "\n";
+            cout << '<' << CPU::id() << "> " << "\n========================================================\n";
+            _ostream_lock.release();
         }
         CPU::clock(_max_frequency);
+        _statistics.average_frequency =  ((unsigned long long)_statistics.average_frequency * (_statistics.num_charges - 1) + _max_frequency)/_statistics.num_charges;
         return;
     }
 
@@ -203,14 +223,16 @@ void EDF_Modified::_handle_charge(Event event)
     {
         if (Traits<EDF_Modified>::ENABLE_STATISTICS)
         {
-            cout << "\n========================================================\n";
-            cout << "NUMBER OF DISPATCHES NOT ENOUGH TO RECALCULATE FREQUENCY\n";
-            cout << "TASK TYPE: " << (task_type == BEST_EFFORT ? "BEST_EFFORT" : "CRITICAL") << "\n";
-            cout << "NUMBER DISPATCHES = " << _statistics.number_dispatches << "\n";
-            cout << "CPU MAX FREQ: " << CPU::max_clock() << "\n";
-            cout << "CPU MIN FREQ: " << CPU::min_clock() << "\n";
-            cout << "CPU FREQ: " << CPU::clock() << "\n";
-            cout << "\n========================================================\n";
+            _ostream_lock.acquire();
+            cout << '<' << CPU::id() << "> " << "\n========================================================\n";
+            cout << '<' << CPU::id() << "> " << "NUMBER OF DISPATCHES NOT ENOUGH TO RECALCULATE FREQUENCY\n";
+            cout << '<' << CPU::id() << "> " << "TASK TYPE: " << (task_type == BEST_EFFORT ? "BEST_EFFORT" : "CRITICAL") << "\n";
+            cout << '<' << CPU::id() << "> " << "NUMBER DISPATCHES = " << _statistics.number_dispatches << "\n";
+            cout << '<' << CPU::id() << "> " << "CPU MAX FREQ: " << CPU::max_clock() << "\n";
+            cout << '<' << CPU::id() << "> " << "CPU MIN FREQ: " << CPU::min_clock() << "\n";
+            cout << '<' << CPU::id() << "> " << "CPU FREQ: " << CPU::clock() << "\n";
+            cout << '<' << CPU::id() << "> " << "\n========================================================\n";
+            _ostream_lock.release();
         }
         return;
     }
@@ -279,16 +301,19 @@ void EDF_Modified::_handle_charge(Event event)
         frequency = CPU::max_clock();
 
     CPU::clock(frequency);
+    _statistics.average_frequency =  ((unsigned long long)_statistics.average_frequency * (_statistics.num_charges - 1) + frequency)/_statistics.num_charges;
     if (Traits<EDF_Modified>::ENABLE_STATISTICS)
     {
-        cout << "\n========================================================\n";
-        cout << "CURRENT: " << current_time << ", START: " << start_time << ", AB DL: " << absolute_deadline << "\n";
-        cout << "TF: " << time_fraction << ", SLACK: " << slack << ", REAL DL: " << relative_deadline << "\n";
-        cout << "LEVEL: " << level << ", step: " << _step << ", CLOCK: " << frequency << ", MIN FREQ: " << _min_frequency << "\n";
-        cout << "MAX FREQ: " << CPU::max_clock() << "\n";
-        cout << "NEW FREQ: " << CPU::clock() << "\n";
-        cout << "FREQ PERCENTAGE: " << ((frequency - CPU::min_clock()) * 100.0) / (CPU::max_clock() - CPU::min_clock()) << "%\n";
-        cout << "\n========================================================\n";
+        _ostream_lock.acquire();
+        cout << '<' << CPU::id() << "> " << "\n========================================================\n";
+        cout << '<' << CPU::id() << "> " << "CURRENT: " << current_time << ", START: " << start_time << ", AB DL: " << absolute_deadline << "\n";
+        cout << '<' << CPU::id() << "> " << "TF: " << time_fraction << ", SLACK: " << slack << ", REAL DL: " << relative_deadline << "\n";
+        cout << '<' << CPU::id() << "> " << "LEVEL: " << level << ", step: " << _step << ", CLOCK: " << frequency << ", MIN FREQ: " << _min_frequency << "\n";
+        cout << '<' << CPU::id() << "> " << "MAX FREQ: " << CPU::max_clock() << "\n";
+        cout << '<' << CPU::id() << "> " << "NEW FREQ: " << CPU::clock() << "\n";
+        cout << '<' << CPU::id() << "> " << "FREQ PERCENTAGE: " << ((frequency - CPU::min_clock()) * 100.0) / (CPU::max_clock() - CPU::min_clock()) << "%\n";
+        cout << '<' << CPU::id() << "> " << "\n========================================================\n";
+        _ostream_lock.release();
     }
 }
 
@@ -304,7 +329,9 @@ void EDF_Modified::handle(Event event)
         _calculate_min_frequency();
         if (Traits<EDF_Modified>::ENABLE_STATISTICS)
         {
-            cout << "MIN FREQ: " << _min_frequency << '\n';
+            _ostream_lock.acquire();
+            cout << '<' << CPU::id() << "> " << "MIN FREQ: " << _min_frequency << '\n';
+            _ostream_lock.release();
         }
     }
 
@@ -312,11 +339,13 @@ void EDF_Modified::handle(Event event)
     {
         if (Traits<EDF_Modified>::ENABLE_STATISTICS)
         {
-            cout << "THREAD APERIODIC FINISHED: CPU WILL BE HALTED TO PRESERVE ENERGY" << '\n';
+            _ostream_lock.acquire();
+            cout << '<' << CPU::id() << "> " << "THREAD APERIODIC FINISHED: CPU WILL BE HALTED TO PRESERVE ENERGY" << '\n';
+            _ostream_lock.release();
         }
     }
 
-    if (((event & CHARGE) && !(event & LEAVE)) || (event & ENTER))
+    if (event & CHARGE)
         _handle_charge(event);
 }
 // The following Scheduling Criteria depend on Alarm, which is not available at scheduler.h
