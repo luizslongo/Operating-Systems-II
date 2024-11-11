@@ -25,6 +25,9 @@ template<> struct Traits<Build>: public Traits_Tokens
     static const bool hysterically_debugged = true;
 };
 
+template<> struct Traits<EDF_Modified> : public Traits<Build> {
+    static const bool ENABLE_STATISTICS = true;
+};
 
 // Utilities
 template<> struct Traits<Debug>: public Traits<Build>

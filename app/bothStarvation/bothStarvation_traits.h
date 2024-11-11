@@ -26,6 +26,9 @@ template<> struct Traits<Build>: public Traits_Tokens
 };
 
 
+template<> struct Traits<EDF_Modified> : public Traits<Build> {
+    static const bool ENABLE_STATISTICS = false;
+};
 // Utilities
 template<> struct Traits<Debug>: public Traits<Build>
 {
