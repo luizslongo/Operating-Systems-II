@@ -55,13 +55,13 @@ void Thread::init()
     if(Criterion::timed && (CPU::id() == CPU::BSP))
         _timer = new (SYSTEM) Scheduler_Timer(QUANTUM, time_slicer);
 
+    CPU::smp_barrier();
     // No more interrupts until we reach init_end
     CPU::int_disable();
 
     // Transition from CPU-based locking to thread-based locking
     if (CPU::id() == CPU::BSP)
         _not_booting = true;
-    CPU::smp_barrier();
 }
 
 __END_SYS

@@ -6,6 +6,7 @@ sem perder muitas deadlines, causar starvation ou
 
  */
 
+#include "architecture.h"
 #include <utility/ostream.h>
 #include <real-time.h>
 #include <architecture/cpu.h>
@@ -110,5 +111,8 @@ int main()
        << "%, H -> "
        << 100
        << "%\n";
+
+    cout << "ABSOLUTES: " << PMU::read(0) << ", " << PMU::read(2) << '\n';
+    cout << "DIFFS: " << PMU::read(1) << '\n';
     return 0;
 }

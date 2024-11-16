@@ -23,8 +23,18 @@ void CPU::init()
     }
 
     // Initialize the PMU	
-    if(Traits<PMU>::enabled)
+    if(Traits<PMU>::enabled) {
         PMU::init();
+        PMU::config(2, 2);
+        PMU::config(1, 1);
+        PMU::config(0, 0);
+        PMU::start(2);
+        PMU::start(1);
+        PMU::start(0);
+        PMU::reset(2);
+        PMU::reset(1);
+        PMU::reset(0);
+    }
 
 }
 

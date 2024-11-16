@@ -3,7 +3,7 @@ CompileFlags:
     [
       "-std=c++14",
       "-I/var/home/erb/containers/ufsc/INE5424/include",
-      "-I/var/home/erb/containers/ufsc/INE5424/concurrent_philosopher_dinner/hello/",
+      "-I/var/home/erb/containers/ufsc/INE5424/app/bothPermissive/bothPermissive.cc",
     ]
 Diagnostics:
   Suppress: dependent_non_type_arg_in_partial_spec
