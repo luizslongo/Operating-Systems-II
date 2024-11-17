@@ -1,18 +1,28 @@
 // EPOS Thread Initialization
 
+#include "machine/pc/pc_machine.h"
+#include "system/config.h"
+#include "utility/heap.h"
+#include "utility/spin.h"
 #include <machine/timer.h>
 #include <machine/ic.h>
 #include <system.h>
 #include <process.h>
 
+__BEGIN_UTIL
+extern Simple_Spin _thread_init_lock;
+__END_UTIL
+
 __BEGIN_SYS
 
 extern "C" { void __epos_app_entry(); }
+
 
 void Thread::init()
 {
     db<Init, Thread>(TRC) << "Thread::init()" << endl;
 
+    CPU::smp_barrier();
     // Install an interrupt handler to receive forced reschedules
     if(smp && (CPU::id() == CPU::BSP))
         IC::int_vector(IC::INT_RESCHEDULER, rescheduler);  // if an eoi handler is needed, then it was already installed at IC::init()
@@ -35,14 +45,15 @@ void Thread::init()
 
     }
 
-    if (CPU::id() != CPU::BSP)
-        CPU::smp_barrier(); 
+    CPU::smp_barrier(); 
     
     // Idle thread creation does not cause rescheduling (see Thread::constructor_epilogue)
+    
+    // There's a race condition when allocating multiple things at the same time on the kernel.
+    // Since here is really the only place this happens, it's easier and faster to just use a lock here.
+    _thread_init_lock.acquire();
     new (SYSTEM) Thread(Thread::Configuration(Thread::READY, Thread::IDLE), &Thread::idle);
-
-    if (CPU::id() == CPU::BSP)
-        CPU::smp_barrier(); 
+    _thread_init_lock.release();
 
     CPU::smp_barrier();
 

@@ -237,7 +237,7 @@ public:
   // void queue(unsigned int q) { _queue = q; }
 
 protected:
-  unsigned int _queue;
+  volatile unsigned int _queue;
   static volatile unsigned int _next_queue;
 };
 
@@ -452,18 +452,12 @@ public:
   template <typename... Tn>
   PEDF_Modified(int p = APERIODIC, unsigned int cpu = ANY, Tn &...an)
       : EDF_Modified(p),
-        Variable_Queue_Scheduler(((_priority == IDLE) || (_priority == MAIN))
-                                     ? CPU::id()
-                                 : (cpu != ANY) ? cpu
-                                                : choose_queue()) {}
+        Variable_Queue_Scheduler(CPU::id()) {}
   template <typename... Tn>
   PEDF_Modified(Microsecond p, Microsecond d, Microsecond c,
                 int task_type = CRITICAL, unsigned int cpu = ANY, Tn &...an)
       : EDF_Modified(p, d, c, task_type),
-        Variable_Queue_Scheduler(((_priority == IDLE) || (_priority == MAIN))
-                                     ? CPU::id()
-                                 : (cpu != ANY) ? cpu
-                                                : choose_queue()) {}
+        Variable_Queue_Scheduler(CPU::id()) {}
 
   unsigned int choose_queue() {
     OStream osw;

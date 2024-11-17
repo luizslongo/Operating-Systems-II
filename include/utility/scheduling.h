@@ -44,7 +44,6 @@ public:
     	// But if you are unsure about your new use of the scheduler,
     	// please, pay the price of the extra "if" bellow.
         // Hysterically debugging also causes chosen() to be called before insert()
-        OStream os;
         auto *ptr = const_cast<T * volatile>((Base::chosen()) ? Base::chosen()->object() : 0);
         return ptr;
     }

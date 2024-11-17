@@ -28,7 +28,7 @@ __END_SYS
 // Utility methods that differ from kernel and user space.
 // Heap
 __BEGIN_UTIL
-Simple_Spin _heap_lock, _ostream_lock;
+Simple_Spin _heap_lock, _ostream_lock, _thread_init_lock;
 __END_UTIL
 
 // Bindings

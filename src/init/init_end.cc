@@ -25,6 +25,11 @@ public:
         db<Init>(INF) << "INIT ends here!" << endl;
 
         Thread * first = Thread::self();
+        
+        if (!first) {
+            OStream os;
+            os << '<' << CPU::id() << "> IS NULL!!\n";
+        }
 
 
         // This barrier is particularly important, since afterwards the temporary stacks

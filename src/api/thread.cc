@@ -23,6 +23,8 @@ void Thread::constructor_prologue(unsigned int stack_size)
     lock();
 
     _thread_count++;
+    OStream_Wrapped os;
+    os << "<" << CPU::id() << "> CREATING THREAD -> " << _link.rank().queue() << " -> " << this << " -> " << &(_link.rank()) << " -> " << _SYS::System::heap() << "\n";
     _scheduler.insert(this);
 
     _stack = new (SYSTEM) char[stack_size];

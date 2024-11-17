@@ -52,6 +52,7 @@ public:
             CPU::init();
             Timer::init();
         }
+        CPU::smp_barrier();
         db<Init>(INF) << "Initializing system abstractions: " << endl;
         System::init();
 

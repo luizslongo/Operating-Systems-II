@@ -38,6 +38,9 @@ class System
 
 public:
     static System_Info * const info() { assert(_si); return _si; }
+    static Heap * const heap() {
+        return _heap;
+    }
 
 private:
     static void init();
