@@ -444,6 +444,18 @@ public:
 
 static volatile unsigned int threads_per_cpu[Traits<Machine>::CPUS];
 // Partitioned EDF_Modified
+
+/*
+PMU CHANNEL  || EVENT:
+============ || ===================
+0            || LLC_REFERENCES;
+1            || LLC_MISSES;
+2            || BRANCH_INSTRUCTIONS_RETIRED;
+3            || BRANCH_MISSES_RETIRED;
+4            || UNHALTED_CORE_CYCLES;
+*/
+
+
 class PEDF_Modified : public EDF_Modified, public Variable_Queue_Scheduler {
 public:
   static const unsigned int QUEUES = Traits<Machine>::CPUS;
@@ -462,20 +474,26 @@ public:
   unsigned int choose_queue() {
     OStream osw;
     unsigned int selected_queue = 0;
-
-    if (Traits<EDF_Modified>::ENABLE_STATISTICS) {
-      //_ostream_lock.acquire();
-      osw << "THREADS_PER_CPU: " << 0 << " -> " << threads_per_cpu[0] << '\n';
-      //_ostream_lock.release();
-    }
+    //unsigned int best        % = 100; 
+    //unsigned int calculated  % = 0;
+    //unsigned int branch_miss % = 0;
+    //unsigned int cache_miss  % = 0;
+    //unsigned int cpu_usage   % = 0;
+    //unsigned int slack       % = 0;
+    
     for (unsigned int i = 1; i < Traits<Machine>::CPUS; i++) {
+      /*branch_miss % = (PMU::read(3)*100)/PMU::read(2);
+        cache_miss  % = (PMU::read(1)*100)/PMU::read(0);
+        cpu_usage   % = (PMU::read(4)*100)/TSC::time_stamp();
+        slack       % = (XXXXXXXXXXXX*100)/XXXXXXXXXXXXX
+        calculated  % = (%Branch misses +  %Cache misses + %CPU usage + %Slack)/4;
+        
+        if calculated% < best% {
+          best% = calculated%;
+          select_queue = i;
+      }*/
       if (threads_per_cpu[i] < threads_per_cpu[selected_queue])
         selected_queue = i;
-      if (Traits<EDF_Modified>::ENABLE_STATISTICS) {
-        //_ostream_lock.acquire();
-        osw << "THREADS_PER_CPU: " << i << " -> " << threads_per_cpu[i] << '\n';
-        //_ostream_lock.release();
-      }
     }
     // osw << "CHOSEN: " << selected_queue << '\n';
     threads_per_cpu[selected_queue]++;

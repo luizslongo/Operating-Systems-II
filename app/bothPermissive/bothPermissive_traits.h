@@ -19,7 +19,7 @@ template<> struct Traits<Build>: public Traits_Tokens
 
     // Default flags
     static const bool enabled = true;
-    static const bool debugged = false;
+    static const bool debugged = true;
     static const bool trace = false;
     static const bool monitored = true;
     static const bool hysterically_debugged = false;
@@ -34,8 +34,8 @@ template<> struct Traits<EDF_Modified> : public Traits<Build> {
 // Utilities
 template<> struct Traits<Debug>: public Traits<Build>
 {
-    static const bool error   = false;
-    static const bool warning = false;
+    static const bool error   = true;
+    static const bool warning = true;
     static const bool info    = false;
     static const bool trace   = false;
 };

@@ -189,10 +189,6 @@ void EDF_Modified::_handle_charge(Event event)
             }
             CPU::clock(_max_frequency);
         }
-        // sem _statistics????????????????? --> na idle no caso.
-        // isso não possibilita ele não ter o CHARGE e ainda entrar no handle charge?
-        //          (((event & CHARGE) && !(event & LEAVE)) || (event & ENTER))
-        //   real. triste ;-;
         // _statistics.average_frequency =  ((unsigned long long)_statistics.average_frequency * (_statistics.num_charges - 1) + _max_frequency)/_statistics.num_charges;
         return;
     }

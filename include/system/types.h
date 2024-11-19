@@ -116,6 +116,10 @@ public:
     operator Time_Base() { return _time; }
     operator Time_Base() const { return _time; }
     operator Time_Base() volatile { return _time; }
+    
+    int time() {
+        return (int)_time;
+    }
 
 private:
     Time_Base _time;

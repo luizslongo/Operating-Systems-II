@@ -425,11 +425,22 @@ void Thread::dispatch(Thread * prev, Thread * next, bool charge)
 int Thread::idle()
 {
     db<Thread>(TRC) << "Thread::idle(cpu=" << CPU::id() << ",this=" << running() << ")" << endl;
+    
 
+
+    //Alarm a;
+    //OStream cout;
+    //cout <<
     while(_thread_count > CPU::cores()) { // someone else besides idles
         if(Traits<Thread>::trace_idle)
             db<Thread>(TRC) << "Thread::idle(cpu=" << CPU::id() << ",this=" << running() << ")" << endl;
-
+        //T1: 50 ticks em idle
+        //Cria thread 2 (0%)
+        //10 Ticks
+        //10/60 --> 16,7%
+        //
+        // time spent outside idle = total time - time spent inside idle.
+        // CPU usage --> time spent outside idle / total time --> (total time - time spent inside idle) / total time.
         CPU::int_enable();
         CPU::halt();
         
