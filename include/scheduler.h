@@ -442,11 +442,6 @@ public:
 };
 
 static volatile unsigned int threads_per_cpu[Traits<Machine>::CPUS];
-static volatile unsigned int branch_miss_per_cpu[Traits<Machine>::CPUS];
-static volatile unsigned int cache_miss_per_cpu[Traits<Machine>::CPUS];
-static volatile unsigned int cpu_usage_per_cpu[Traits<Machine>::CPUS];
-static volatile unsigned long long base_time[Traits<Machine>::CPUS];
-static volatile unsigned long long time_spent_in_idle[Traits<Machine>::CPUS];
 
 /*
 PMU CHANNEL  || EVENT:
@@ -462,6 +457,11 @@ PMU CHANNEL  || EVENT:
 class PEDF_Modified : public EDF_Modified, public Variable_Queue_Scheduler {
 public:
   static const unsigned int QUEUES = Traits<Machine>::CPUS;
+  static volatile unsigned int branch_miss_per_cpu[Traits<Machine>::CPUS];
+  static volatile unsigned int cache_miss_per_cpu[Traits<Machine>::CPUS];
+  static volatile unsigned int cpu_usage_per_cpu[Traits<Machine>::CPUS];
+  static volatile unsigned long long base_time[Traits<Machine>::CPUS];
+  static volatile unsigned long long time_spent_in_idle[Traits<Machine>::CPUS];
 public:
   template <typename... Tn>
   PEDF_Modified(int p = APERIODIC, unsigned int cpu = ANY, Tn &...an)
@@ -480,17 +480,15 @@ public:
   unsigned int choose_queue() {
     OStream osw;
     unsigned int selected_queue = 0;
-    unsigned int best         = 100; 
+    unsigned int best         = 10000; 
     unsigned int calculated   = 0;
  
     
     for (unsigned int i = 0; i < Traits<Machine>::CPUS; i++) {
       calculated   = (branch_miss_per_cpu[i] +  cache_miss_per_cpu[i] + cpu_usage_per_cpu[i])/3;
-      osw << "Branch Miss " << i << ": " << branch_miss_per_cpu[i] << "\n";
-      osw << "Cache Miss " << i << ": " << cache_miss_per_cpu[i] << "\n";
-      osw << "CPU Usage " << i << ": " << cpu_usage_per_cpu[i] << "\n";
-      osw << "Num Threads " << i << ": " << threads_per_cpu[i] << "\n";
-      osw << "Calculated " << i << ": " << calculated << "\n";
+      // osw << "Branch Miss " << i << ": " << branch_miss_per_cpu[i] << "\n";
+      // osw << "Cache Miss " << i << ": " << cache_miss_per_cpu[i] << "\n";
+      // osw << "CPU Usage " << i << ": " << cpu_usage_per_cpu[i] << "\n";
       if (calculated < best) {
         best = calculated;
         selected_queue = i;

@@ -54,7 +54,7 @@ int my_func(char id, int limit) {
     }
     exec_count[id - 'A']++;
     //_ostream_lock.acquire();
-    cout << "Thread " << id << " completed iteration. Total executions: " << exec_count[id - 'A'] << '\n';
+    // cout << "Thread " << id << " completed iteration. Total executions: " << exec_count[id - 'A'] << '\n';
     //_ostream_lock.release();
   } while (Periodic_Thread::wait_next());
 

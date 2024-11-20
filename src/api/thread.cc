@@ -415,20 +415,43 @@ void Thread::dispatch(Thread * prev, Thread * next, bool charge)
         // parameters on the stack anyway).
         CPU::switch_context(const_cast<Context **>(&prev->_context), next->_context);
 
+
+        PMU::reset(6);
+        PMU::reset(5);
+        PMU::reset(4);
+        PMU::reset(3);
+        PMU::reset(2);
+        PMU::reset(1);
+        PMU::reset(0);
+        PMU::config(6, 15); // BRANCH_MISSES_RETIRED
+        PMU::config(5, 11); // BRANCH_INSTRUCTIONS_RETIRED
+        PMU::config(4, 30); // LLC_MISSES
+        PMU::config(3, 29); // LLC_REFERENCES
+        PMU::config(2, 2);  // INSTRUCTIONS_RETIRED
+        PMU::config(1, 1);  // UNHALTED_CYCLES
+        PMU::config(0, 0);  // CPU_CYCLES
+        PMU::start(6);
+        PMU::start(5);
+        PMU::start(4);
+        PMU::start(3);
+        PMU::start(2);
+        PMU::start(1);
+        PMU::start(0);
+
         if(smp)
             _lock.acquire();
     }
 }
 
 
+
 int Thread::idle()
 {
     db<Thread>(TRC) << "Thread::idle(cpu=" << CPU::id() << ",this=" << running() << ")" << endl;
     
-
-
-    base_time[CPU::id()] = TSC::time_stamp();
-    time_spent_in_idle[CPU::id()] = 0;
+    PEDF_Modified::base_time[CPU::id()] = TSC::time_stamp();
+    PEDF_Modified::time_spent_in_idle[CPU::id()] = 0;
+    CPU::smp_barrier();
     while(_thread_count > CPU::cores()) { // someone else besides idles
         if(Traits<Thread>::trace_idle)
             db<Thread>(TRC) << "Thread::idle(cpu=" << CPU::id() << ",this=" << running() << ")" << endl;
@@ -439,7 +462,7 @@ int Thread::idle()
         CPU::int_enable();
         CPU::halt();
         unsigned long long end = TSC::time_stamp();
-        time_spent_in_idle[CPU::id()] += end - begin;
+        PEDF_Modified::time_spent_in_idle[CPU::id()] += end - begin;
         
         if(_scheduler.schedulables() > 0) // a thread might have been woken up by another CPU
             yield();

@@ -346,20 +346,26 @@ void EDF_Modified::handle(Event event)
         _handle_charge(event);
 }
 
+
+
+volatile unsigned int PEDF_Modified::branch_miss_per_cpu[Traits<Machine>::CPUS];
+volatile unsigned int PEDF_Modified::cache_miss_per_cpu[Traits<Machine>::CPUS];
+volatile unsigned int PEDF_Modified::cpu_usage_per_cpu[Traits<Machine>::CPUS];
+volatile unsigned long long PEDF_Modified::base_time[Traits<Machine>::CPUS];
+volatile unsigned long long PEDF_Modified::time_spent_in_idle[Traits<Machine>::CPUS];
+
 void PEDF_Modified::handle(Event event)
 {
+
     if (periodic() && (event & JOB_FINISH)) {
         branch_miss_per_cpu[CPU::id()] = (PMU::read(5) > 0) ? (PMU::read(6)*10000)/PMU::read(5) : 0;
         cache_miss_per_cpu[CPU::id()] = (PMU::read(3) > 0)? (PMU::read(4)*10000)/PMU::read(3) : 0;
-        cpu_usage_per_cpu[CPU::id()] = (PMU::read(1)*10000)/TSC::time_stamp();
-        OStream cout;
-        cout << '<' << CPU::id() << '>' << "Branch Misses: " << branch_miss_per_cpu[CPU::id()] << "%\n"; 
-        cout << '<' << CPU::id() << '>' << "Cache Misses: "<< cache_miss_per_cpu[CPU::id()] << "%\n"; 
-        cout << '<' << CPU::id() << '>' << "CPU Usage: " << cpu_usage_per_cpu[CPU::id()] << "%\n"; 
-        
         unsigned long long total = TSC::time_stamp() - base_time[CPU::id()];
-        cout << '<' << CPU::id() << '>' << "MAYBE CPU Usage: " << (100*(total - time_spent_in_idle[CPU::id()]))/total << "%\n"; 
-        cout << '<' << CPU::id() << '>' << "base_time=" << base_time[CPU::id()] << ",total=" << total << ",time_spent_in_idle=" << time_spent_in_idle[CPU::id()] << endl;
+        cpu_usage_per_cpu[CPU::id()] = (10000*(total - time_spent_in_idle[CPU::id()]))/total;
+        
+        // cout << '<' << CPU::id() << '>' << "Branch Misses: " << branch_miss_per_cpu[CPU::id()] << "%\n"; 
+        // cout << '<' << CPU::id() << '>' << "Cache Misses: "<< cache_miss_per_cpu[CPU::id()] << "%\n"; 
+        // cout << '<' << CPU::id() << '>' << "CPU Usage: " << cpu_usage_per_cpu[CPU::id()] << "%\n"; 
     }
 
     if (periodic() && (event & ENTER) && _statistics.number_dispatches % 5) {
