@@ -95,7 +95,6 @@ Thread::~Thread()
         break;
     }
 
-    threads_per_cpu[CPU::id()]--;
     _task->dismiss(this);
 
     if(_joining)

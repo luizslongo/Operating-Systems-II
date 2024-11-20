@@ -441,8 +441,6 @@ public:
   static unsigned int current_head() { return CPU::id(); }
 };
 
-static volatile unsigned int threads_per_cpu[Traits<Machine>::CPUS];
-
 /*
 PMU CHANNEL  || EVENT:
 ============ || ===================
@@ -483,7 +481,6 @@ public:
     unsigned int best         = 10000; 
     unsigned int calculated   = 0;
  
-    
     for (unsigned int i = 0; i < Traits<Machine>::CPUS; i++) {
       calculated   = (branch_miss_per_cpu[i] +  cache_miss_per_cpu[i] + cpu_usage_per_cpu[i])/3;
       // osw << "Branch Miss " << i << ": " << branch_miss_per_cpu[i] << "\n";
@@ -498,7 +495,6 @@ public:
       //   selected_queue = i;
     }
     osw << "CHOSEN: " << selected_queue << '\n';
-    threads_per_cpu[selected_queue]++;
     return selected_queue;
   }
   void handle(Event event);

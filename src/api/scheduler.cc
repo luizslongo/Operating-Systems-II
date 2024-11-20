@@ -369,7 +369,7 @@ void PEDF_Modified::handle(Event event)
     }
 
     if (periodic() && (event & ENTER) && _statistics.number_dispatches % 5) {
-        queue(choose_queue());
+        //queue(choose_queue());
     }
     EDF_Modified::handle(event);
 }
