@@ -35,9 +35,16 @@ void CPU::init()
     if(Traits<PMU>::enabled) {
         PMU::init();
         //PMU::config(4, 316); //UNHALTED_REFERENCE_CYCLES
-        // PMU::config(4, 60); //UNHALTED_CORE_CYCLES
+        //PMU::config(4, 60); //UNHALTED_CORE_CYCLES
         
         // EVENT deve ser menor que 233. --> ia32_pmu.h linha 635
+        PMU::reset(6);
+        PMU::reset(5);
+        PMU::reset(4);
+        PMU::reset(3);
+        PMU::reset(2);
+        PMU::reset(1);
+        PMU::reset(0);
         PMU::config(6, 15); // BRANCH_MISSES_RETIRED
         PMU::config(5, 11); // BRANCH_INSTRUCTIONS_RETIRED
         PMU::config(4, 30); // LLC_MISSES
@@ -52,13 +59,6 @@ void CPU::init()
         PMU::start(2);
         PMU::start(1);
         PMU::start(0);
-        PMU::reset(6);
-        PMU::reset(5);
-        PMU::reset(4);
-        PMU::reset(3);
-        PMU::reset(2);
-        PMU::reset(1);
-        PMU::reset(0);
     }
 
 }

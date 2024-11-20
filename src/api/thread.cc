@@ -377,7 +377,6 @@ void Thread::dispatch(Thread * prev, Thread * next, bool charge)
     // osw << "AAAAAAAAAAAAAAABBBBBBBBBBBBBBBBBBBBBBBCCCCCCCCCCCCCCCCDDDDDDDDDDDDD\n=============\n";
     // "next" is not in the scheduler's queue anymore. It's already "chosen"
     //kout << _scheduler.get_queue(CPU::id()) << ' ' << CPU::id() << '\n';
-    
     if(charge && Criterion::timed)
         _timer->restart();
 
@@ -428,21 +427,19 @@ int Thread::idle()
     
 
 
-    //Alarm a;
-    //OStream cout;
-    //cout <<
+    base_time[CPU::id()] = TSC::time_stamp();
+    time_spent_in_idle[CPU::id()] = 0;
     while(_thread_count > CPU::cores()) { // someone else besides idles
         if(Traits<Thread>::trace_idle)
             db<Thread>(TRC) << "Thread::idle(cpu=" << CPU::id() << ",this=" << running() << ")" << endl;
-        //T1: 50 ticks em idle
-        //Cria thread 2 (0%)
-        //10 Ticks
-        //10/60 --> 16,7%
-        //
+
         // time spent outside idle = total time - time spent inside idle.
         // CPU usage --> time spent outside idle / total time --> (total time - time spent inside idle) / total time.
+        unsigned long long begin = TSC::time_stamp();
         CPU::int_enable();
         CPU::halt();
+        unsigned long long end = TSC::time_stamp();
+        time_spent_in_idle[CPU::id()] += end - begin;
         
         if(_scheduler.schedulables() > 0) // a thread might have been woken up by another CPU
             yield();

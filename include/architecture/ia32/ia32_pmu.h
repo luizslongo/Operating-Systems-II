@@ -687,8 +687,10 @@ public:
         db<PMU>(TRC) << "PMU::reset(c=" << channel << ")" << endl;
         if(channel < FIXED)
             wrmsr(FIXED_CTR0 + channel, 0);
-        else
+        else {
             wrmsr(EVTSEL0 + channel - FIXED, 0);
+            wrmsr(PMC_BASE_ADDR + channel - FIXED, 0);
+        }
     }
 
     static bool overflow(Channel channel) {

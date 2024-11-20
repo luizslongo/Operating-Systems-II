@@ -94,7 +94,7 @@ void RT_Common::handle(Event event)
         _statistics.job_released = false;
         _statistics.job_finish = elapsed();
         _statistics.jobs_finished++;
-        //        _statistics.job_utilization += elapsed() - _statistics.thread_last_dispatch;
+       //        _statistics.job_utilization += elapsed() - _statistics.thread_last_dispatch;
     }
     if (event & COLLECT)
     {
@@ -316,6 +316,7 @@ void EDF_Modified::_handle_charge(Event event)
 void EDF_Modified::handle(Event event)
 {
     RT_Common::handle(event);
+
     if (periodic() && (event & JOB_RELEASE))
     {
         // Update the priority of the thread at job releases, before _alarm->v(), so it enters the queue in the right order (called from Periodic_Thread::Xxx_Handler)
@@ -343,6 +344,28 @@ void EDF_Modified::handle(Event event)
 
     if (event & CHARGE)
         _handle_charge(event);
+}
+
+void PEDF_Modified::handle(Event event)
+{
+    if (periodic() && (event & JOB_FINISH)) {
+        branch_miss_per_cpu[CPU::id()] = (PMU::read(5) > 0) ? (PMU::read(6)*10000)/PMU::read(5) : 0;
+        cache_miss_per_cpu[CPU::id()] = (PMU::read(3) > 0)? (PMU::read(4)*10000)/PMU::read(3) : 0;
+        cpu_usage_per_cpu[CPU::id()] = (PMU::read(1)*10000)/TSC::time_stamp();
+        OStream cout;
+        cout << '<' << CPU::id() << '>' << "Branch Misses: " << branch_miss_per_cpu[CPU::id()] << "%\n"; 
+        cout << '<' << CPU::id() << '>' << "Cache Misses: "<< cache_miss_per_cpu[CPU::id()] << "%\n"; 
+        cout << '<' << CPU::id() << '>' << "CPU Usage: " << cpu_usage_per_cpu[CPU::id()] << "%\n"; 
+        
+        unsigned long long total = TSC::time_stamp() - base_time[CPU::id()];
+        cout << '<' << CPU::id() << '>' << "MAYBE CPU Usage: " << (100*(total - time_spent_in_idle[CPU::id()]))/total << "%\n"; 
+        cout << '<' << CPU::id() << '>' << "base_time=" << base_time[CPU::id()] << ",total=" << total << ",time_spent_in_idle=" << time_spent_in_idle[CPU::id()] << endl;
+    }
+
+    if (periodic() && (event & ENTER) && _statistics.number_dispatches % 5) {
+        queue(choose_queue());
+    }
+    EDF_Modified::handle(event);
 }
 // The following Scheduling Criteria depend on Alarm, which is not available at scheduler.h
 template <typename... Tn>

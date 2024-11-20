@@ -27,15 +27,19 @@ const Milisecond wcet_e = 60;
 const Milisecond wcet_g = 40;
 
 
-int my_func(char id, int limit) {
-  // _ostream_lock.acquire();
-  cout << '<' << CPU::id() << "> BEGIN " << id << '\n';
+void print_PMU() {
   cout << '<' << CPU::id() << "> LLC_REFERENCES             : " << PMU::read(3)      << '\n';
   cout << '<' << CPU::id() << "> LLC_MISSES                 : " << PMU::read(4)      << '\n';
   cout << '<' << CPU::id() << "> BRANCH_INSTRUCTIONS_RETIRED: " << PMU::read(5)      << '\n';
   cout << '<' << CPU::id() << "> BRANCH_MISSES_RETIRED      : " << PMU::read(6)      << '\n';
   cout << '<' << CPU::id() << "> UNHALTED_REFERENCE_CYCLES  : " << PMU::read(0)      << '\n';
   cout << '<' << CPU::id() << "> TOTAL_CORE_CYCLES          : " << TSC::time_stamp() << '\n';
+}
+
+int my_func(char id, int limit) {
+  // _ostream_lock.acquire();
+  cout << '<' << CPU::id() << "> BEGIN " << id << '\n';
+  //print_PMU();
   // _ostream_lock.release();
   static int exec_count[8] = {0};  
   do {
@@ -44,9 +48,9 @@ int my_func(char id, int limit) {
       b += i - i / 3;
     }
     if (b % 2 == 0) {
-      cout << "AAA\n";
+      // cout << "AAA\n";
     } else {
-      cout << "BBB\n";
+      // cout << "BBB\n";
     }
     exec_count[id - 'A']++;
     //_ostream_lock.acquire();
@@ -56,12 +60,7 @@ int my_func(char id, int limit) {
 
   // _ostream_lock.acquire();
   cout << '<' << CPU::id() << "> END " << id << '\n';
-  cout << '<' << CPU::id() << "> LLC_REFERENCES             : " << PMU::read(3)      << '\n';
-  cout << '<' << CPU::id() << "> LLC_MISSES                 : " << PMU::read(4)      << '\n';
-  cout << '<' << CPU::id() << "> BRANCH_INSTRUCTIONS_RETIRED: " << PMU::read(5)      << '\n';
-  cout << '<' << CPU::id() << "> BRANCH_MISSES_RETIRED      : " << PMU::read(6)      << '\n';
-  cout << '<' << CPU::id() << "> UNHALTED_REFERENCE_CYCLES  : " << PMU::read(0)      << '\n';
-  cout << '<' << CPU::id() << "> TOTAL_CORE_CYCLES          : " << TSC::time_stamp() << '\n';
+  //print_PMU();
   // _ostream_lock.release();
   return 0;
 }
@@ -69,12 +68,7 @@ int my_func(char id, int limit) {
 int my_func_aperiodic(char id) {
   // _ostream_lock.acquire();
   cout << '<' << CPU::id() << "> BEGIN " << id << '\n';
-  cout << '<' << CPU::id() << "> LLC_REFERENCES             : " << PMU::read(3)      << '\n';
-  cout << '<' << CPU::id() << "> LLC_MISSES                 : " << PMU::read(4)      << '\n';
-  cout << '<' << CPU::id() << "> BRANCH_INSTRUCTIONS_RETIRED: " << PMU::read(5)      << '\n';
-  cout << '<' << CPU::id() << "> BRANCH_MISSES_RETIRED      : " << PMU::read(6)      << '\n';
-  cout << '<' << CPU::id() << "> UNHALTED_REFERENCE_CYCLES  : " << PMU::read(0)      << '\n';
-  cout << '<' << CPU::id() << "> TOTAL_CORE_CYCLES          : " << TSC::time_stamp() << '\n';
+  //print_PMU();
   // _ostream_lock.release();
   long long b = 0;
   for (int i = 0; i < 1e1; ++i) {
@@ -82,12 +76,7 @@ int my_func_aperiodic(char id) {
   }
   // _ostream_lock.acquire();
   cout << '<' << CPU::id() << "> END " << id << '\n';
-  cout << '<' << CPU::id() << "> LLC_REFERENCES             : " << PMU::read(3)      << '\n';
-  cout << '<' << CPU::id() << "> LLC_MISSES                 : " << PMU::read(4)      << '\n';
-  cout << '<' << CPU::id() << "> BRANCH_INSTRUCTIONS_RETIRED: " << PMU::read(5)      << '\n';
-  cout << '<' << CPU::id() << "> BRANCH_MISSES_RETIRED      : " << PMU::read(6)      << '\n';
-  cout << '<' << CPU::id() << "> UNHALTED_REFERENCE_CYCLES  : " << PMU::read(0)      << '\n';
-  cout << '<' << CPU::id() << "> TOTAL_CORE_CYCLES          : " << TSC::time_stamp() << '\n';
+  //print_PMU();
   // _ostream_lock.release();
 
   return 0;
@@ -109,16 +98,16 @@ int main()
    Periodic_Thread* g = new Periodic_Thread(RTConf(period_g * 1000, period_g * 1000, wcet_g * 1000, 0, iterations, EDF_Modified::BEST_EFFORT)   , &my_func, 'G', (int)1e6);    
    Thread* h = new Thread(&my_func_aperiodic, 'H');
    
-   cout << "A: " << a << " B: " << b << " C: " << c << " D: " << d << "E: "  << e << "F: " << f << "G: " << g << "H: " << h << endl;
+   //cout << "A: " << a << " B: " << b << " C: " << c << " D: " << d << "E: "  << e << "F: " << f << "G: " << g << "H: " << h << endl;
 
    a->join();
    b->join();
    c->join();
    d->join();
-   h->join();
    e->join();
-   g->join();
    f->join();
+   g->join();
+   h->join();
 
    cout << "DEADLINES MISSED: A -> "
       << a->criterion().statistics().deadlines_missed << ", C -> "
@@ -145,12 +134,7 @@ int main()
       << 100
       << "%\n";
   cout << '<' << CPU::id() << "> FINISHING MAIN               "                      << '\n';
-  cout << '<' << CPU::id() << "> LLC_REFERENCES             : " << PMU::read(3)      << '\n';
-  cout << '<' << CPU::id() << "> LLC_MISSES                 : " << PMU::read(4)      << '\n';
-  cout << '<' << CPU::id() << "> BRANCH_INSTRUCTIONS_RETIRED: " << PMU::read(5)      << '\n';
-  cout << '<' << CPU::id() << "> BRANCH_MISSES_RETIRED      : " << PMU::read(6)      << '\n';
-  cout << '<' << CPU::id() << "> UNHALTED_REFERENCE_CYCLES  : " << PMU::read(0)      << '\n';
-  cout << '<' << CPU::id() << "> TOTAL_CORE_CYCLES          : " << TSC::time_stamp() << '\n';
+  print_PMU();
   //  cout << "ABSOLUTES: " << PMU::read(0) << ", " << PMU::read(2) << '\n';
   //  cout << "DIFFS: " << PMU::read(1) << '\n';
    return 0;

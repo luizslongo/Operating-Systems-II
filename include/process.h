@@ -39,6 +39,7 @@ protected:
     typedef CPU::Context Context;
 
 public:
+    
     // Thread State
     enum State {
         RUNNING,

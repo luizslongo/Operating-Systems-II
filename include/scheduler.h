@@ -25,7 +25,6 @@ class Scheduling_Criterion_Common {
 
 protected:
   typedef Timer_Common::Tick Tick;
-
 public:
   /*
      // NOTE: Also, make sure MSB is 0.
@@ -234,7 +233,7 @@ public:
   Variable_Queue_Scheduler(unsigned int queue) : _queue(queue) {};
 
   unsigned int queue() const { return _queue; }
-  // void queue(unsigned int q) { _queue = q; }
+  void queue(unsigned int q) { _queue = q; }
 
 protected:
   volatile unsigned int _queue;
@@ -443,63 +442,68 @@ public:
 };
 
 static volatile unsigned int threads_per_cpu[Traits<Machine>::CPUS];
-// Partitioned EDF_Modified
+static volatile unsigned int branch_miss_per_cpu[Traits<Machine>::CPUS];
+static volatile unsigned int cache_miss_per_cpu[Traits<Machine>::CPUS];
+static volatile unsigned int cpu_usage_per_cpu[Traits<Machine>::CPUS];
+static volatile unsigned long long base_time[Traits<Machine>::CPUS];
+static volatile unsigned long long time_spent_in_idle[Traits<Machine>::CPUS];
 
 /*
 PMU CHANNEL  || EVENT:
 ============ || ===================
-0            || LLC_REFERENCES;
-1            || LLC_MISSES;
-2            || BRANCH_INSTRUCTIONS_RETIRED;
-3            || BRANCH_MISSES_RETIRED;
-4            || UNHALTED_CORE_CYCLES;
+1            || UNHALTED_CORE_CYCLES;
+3            || LLC_REFERENCES;
+4            || LLC_MISSES;
+5            || BRANCH_INSTRUCTIONS_RETIRED;
+6            || BRANCH_MISSES_RETIRED;
 */
 
-
+// Partitioned EDF_Modified
 class PEDF_Modified : public EDF_Modified, public Variable_Queue_Scheduler {
 public:
   static const unsigned int QUEUES = Traits<Machine>::CPUS;
-
 public:
   template <typename... Tn>
   PEDF_Modified(int p = APERIODIC, unsigned int cpu = ANY, Tn &...an)
       : EDF_Modified(p),
-        Variable_Queue_Scheduler(CPU::id()) {}
+        Variable_Queue_Scheduler(((_priority == IDLE) || (_priority == MAIN)) ? CPU::id()
+            : (cpu != ANY)                               ? cpu
+                           : choose_queue()) {}
   template <typename... Tn>
   PEDF_Modified(Microsecond p, Microsecond d, Microsecond c,
                 int task_type = CRITICAL, unsigned int cpu = ANY, Tn &...an)
       : EDF_Modified(p, d, c, task_type),
-        Variable_Queue_Scheduler(CPU::id()) {}
+        Variable_Queue_Scheduler(((_priority == IDLE) || (_priority == MAIN)) ? CPU::id()
+            : (cpu != ANY)                               ? cpu
+                           : choose_queue()) {}
 
   unsigned int choose_queue() {
     OStream osw;
     unsigned int selected_queue = 0;
-    //unsigned int best        % = 100; 
-    //unsigned int calculated  % = 0;
-    //unsigned int branch_miss % = 0;
-    //unsigned int cache_miss  % = 0;
-    //unsigned int cpu_usage   % = 0;
-    //unsigned int slack       % = 0;
+    unsigned int best         = 100; 
+    unsigned int calculated   = 0;
+ 
     
-    for (unsigned int i = 1; i < Traits<Machine>::CPUS; i++) {
-      /*branch_miss % = (PMU::read(3)*100)/PMU::read(2);
-        cache_miss  % = (PMU::read(1)*100)/PMU::read(0);
-        cpu_usage   % = (PMU::read(4)*100)/TSC::time_stamp();
-        slack       % = (XXXXXXXXXXXX*100)/XXXXXXXXXXXXX
-        calculated  % = (%Branch misses +  %Cache misses + %CPU usage + %Slack)/4;
-        
-        if calculated% < best% {
-          best% = calculated%;
-          select_queue = i;
-      }*/
-      if (threads_per_cpu[i] < threads_per_cpu[selected_queue])
+    for (unsigned int i = 0; i < Traits<Machine>::CPUS; i++) {
+      calculated   = (branch_miss_per_cpu[i] +  cache_miss_per_cpu[i] + cpu_usage_per_cpu[i])/3;
+      osw << "Branch Miss " << i << ": " << branch_miss_per_cpu[i] << "\n";
+      osw << "Cache Miss " << i << ": " << cache_miss_per_cpu[i] << "\n";
+      osw << "CPU Usage " << i << ": " << cpu_usage_per_cpu[i] << "\n";
+      osw << "Num Threads " << i << ": " << threads_per_cpu[i] << "\n";
+      osw << "Calculated " << i << ": " << calculated << "\n";
+      if (calculated < best) {
+        best = calculated;
         selected_queue = i;
+      }
+      
+      // if (threads_per_cpu[i] < threads_per_cpu[selected_queue])
+      //   selected_queue = i;
     }
-    // osw << "CHOSEN: " << selected_queue << '\n';
+    osw << "CHOSEN: " << selected_queue << '\n';
     threads_per_cpu[selected_queue]++;
     return selected_queue;
   }
-
+  void handle(Event event);
   static unsigned int current_queue() { return CPU::id(); }
 };
 
