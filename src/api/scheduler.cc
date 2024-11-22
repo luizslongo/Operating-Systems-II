@@ -368,8 +368,8 @@ void PEDF_Modified::handle(Event event)
         // cout << '<' << CPU::id() << '>' << "CPU Usage: " << cpu_usage_per_cpu[CPU::id()] << "%\n"; 
     }
 
-    if (periodic() && (event & ENTER) && _statistics.number_dispatches % 5) {
-        //queue(choose_queue());
+    if (periodic() && (event & LEAVE) && _statistics.number_dispatches % 5) {
+        queue(choose_queue());
     }
     EDF_Modified::handle(event);
 }
