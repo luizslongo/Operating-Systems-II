@@ -384,8 +384,12 @@ void PEDF_Modified::handle(Event event)
             total_slack_per_cpu[CPU::id()] += absolute_deadline - _statistics.job_release;
             total_slack += absolute_deadline - _statistics.job_release;
         }
-
-        utilization_per_cpu[CPU::id()] = 10000ull - (10000ull*total_slack_per_cpu[CPU::id()])/total_time_of_jobs_per_cpu[CPU::id()];
+        
+        if (total_time_of_jobs_per_cpu[CPU::id()] > 0) {
+            utilization_per_cpu[CPU::id()] = 10000ull - (10000ull*total_slack_per_cpu[CPU::id()])/total_time_of_jobs_per_cpu[CPU::id()];
+        } else {
+            utilization_per_cpu[CPU::id()] = 0;
+        }
 
         // cout << "Slack %: " << slack_per_cpu[CPU::id()] << "\n";
     }
@@ -428,7 +432,6 @@ void PEDF_Modified::handle(Event event)
             utilization_per_cpu[CPU::id()] = 10000ull - (10000ull*total_slack_per_cpu[CPU::id()])/total_time_of_jobs_per_cpu[CPU::id()];
         } else {
             utilization_per_cpu[CPU::id()] = 0;
-
         }
     }
 
