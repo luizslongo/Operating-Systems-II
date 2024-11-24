@@ -403,6 +403,7 @@ public:
 
 // Earliest Deadline First Modified
 class EDF_Modified : public RT_Common {
+  friend class PEDF_Modified;
 public:
   static const bool dynamic = true;
 
@@ -460,11 +461,13 @@ public:
   static volatile unsigned long long cpu_usage_per_cpu[Traits<Machine>::CPUS];
   static volatile unsigned long long base_time[Traits<Machine>::CPUS];
   static volatile unsigned long long time_spent_in_idle[Traits<Machine>::CPUS];
-  // static volatile unsigned long long execution_time_per_cpu[Traits<Machine>::CPUS];
-  // static volatile unsigned long long slack_per_cpu[Traits<Machine>::CPUS];
-// protected:  
-//   unsigned long long total_execution_time = 0;
-//   unsigned long long total_slack = 0;
+  static volatile unsigned long long total_time_of_jobs_per_cpu[Traits<Machine>::CPUS];
+  static volatile unsigned long long total_slack_per_cpu[Traits<Machine>::CPUS];
+  static volatile unsigned long long slack_per_cpu[Traits<Machine>::CPUS];
+
+protected: 
+  Tick total_time_of_jobs = 0;
+  Tick total_slack = 0;
 
 public:
   template <typename... Tn>
@@ -486,16 +489,13 @@ public:
     unsigned int selected_queue = 0;
     unsigned int best         = 10000; 
     unsigned int calculated   = 0;
-    // unsigned long long slack  = 0;
  
     for (unsigned int i = 0; i < Traits<Machine>::CPUS; i++) {
-      // slack = (10000*(execution_time_per_cpu[i] - slack_per_cpu[i]))/execution_time_per_cpu[i];
-      // calculated   = (branch_miss_per_cpu[i] +  cache_miss_per_cpu[i] + cpu_usage_per_cpu[i] + slack)/4;
-      calculated   = (branch_miss_per_cpu[i] +  cache_miss_per_cpu[i] + cpu_usage_per_cpu[i])/3;
+      calculated   = (branch_miss_per_cpu[i] +  cache_miss_per_cpu[i] + cpu_usage_per_cpu[i] + slack_per_cpu[i])/4;
       // osw << "Branch Miss " << i << ": " << branch_miss_per_cpu[i] << "\n";
       // osw << "Cache Miss " << i << ": " << cache_miss_per_cpu[i] << "\n";
       // osw << "CPU Usage " << i << ": " << cpu_usage_per_cpu[i] << "\n";
-      // osw << "Slack " << i << ": " << slack << "\n";
+      // osw << "Slack " << i << ": " << slack_per_cpu[i] << "\n";
 
       if (calculated < best) {
         best = calculated;
