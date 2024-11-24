@@ -43,10 +43,8 @@ void print_PMU() {
 
 static int exec_count[8];
 int my_func(char id, int limit) {
-  // _ostream_lock.acquire();
   cout << '<' << CPU::id() << "> BEGIN " << id << '\n';
   // print_PMU();
-  //  _ostream_lock.release();
   do {
     long long b = 0;
     for (int i = 0; i < limit; ++i) {
@@ -58,42 +56,29 @@ int my_func(char id, int limit) {
       // cout << "BBB\n";
     }
     exec_count[id - 'A']++;
-    //_ostream_lock.acquire();
     // cout << "Thread " << id << " completed iteration. Total executions: " <<
     // exec_count[id - 'A'] << '\n';
-    //_ostream_lock.release();
   } while (Periodic_Thread::wait_next());
 
-  // _ostream_lock.acquire();
   cout << '<' << CPU::id() << "> END " << id << '\n';
   // print_PMU();
-  //  _ostream_lock.release();
   return 0;
 }
 
 int my_func_aperiodic(char id) {
-  // _ostream_lock.acquire();
   cout << '<' << CPU::id() << "> BEGIN " << id << '\n';
   // print_PMU();
-  //  _ostream_lock.release();
   long long b = 0;
   for (int i = 0; i < 1e1; ++i) {
     b += i - i / 3;
   }
-  // _ostream_lock.acquire();
   cout << '<' << CPU::id() << "> END " << id << '\n';
   // print_PMU();
-  //  _ostream_lock.release();
 
   return 0;
 }
 
 int main() {
-  //   Clock c;
-  //   cout << "TIME: " << c.now().time() << "\n";
-
-  //   return 0;
-  // }
   Periodic_Thread *a = new Periodic_Thread(
       RTConf(period_a * 1000, period_a * 1000, wcet_a * 1000, 0, iterations,
              EDF_Modified::CRITICAL),
@@ -151,7 +136,5 @@ int main() {
   for (int i = 0; i < 8; ++i)
     cout << (char)('A' + i) << " => " << exec_count[i] << '\n';
   print_PMU();
-  //  cout << "ABSOLUTES: " << PMU::read(0) << ", " << PMU::read(2) << '\n';
-  //  cout << "DIFFS: " << PMU::read(1) << '\n';
   return 0;
 }

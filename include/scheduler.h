@@ -455,11 +455,17 @@ PMU CHANNEL  || EVENT:
 class PEDF_Modified : public EDF_Modified, public Variable_Queue_Scheduler {
 public:
   static const unsigned int QUEUES = Traits<Machine>::CPUS;
-  static volatile unsigned int branch_miss_per_cpu[Traits<Machine>::CPUS];
-  static volatile unsigned int cache_miss_per_cpu[Traits<Machine>::CPUS];
-  static volatile unsigned int cpu_usage_per_cpu[Traits<Machine>::CPUS];
+  static volatile unsigned long long branch_miss_per_cpu[Traits<Machine>::CPUS];
+  static volatile unsigned long long cache_miss_per_cpu[Traits<Machine>::CPUS];
+  static volatile unsigned long long cpu_usage_per_cpu[Traits<Machine>::CPUS];
   static volatile unsigned long long base_time[Traits<Machine>::CPUS];
   static volatile unsigned long long time_spent_in_idle[Traits<Machine>::CPUS];
+  // static volatile unsigned long long execution_time_per_cpu[Traits<Machine>::CPUS];
+  // static volatile unsigned long long slack_per_cpu[Traits<Machine>::CPUS];
+// protected:  
+//   unsigned long long total_execution_time = 0;
+//   unsigned long long total_slack = 0;
+
 public:
   template <typename... Tn>
   PEDF_Modified(int p = APERIODIC, unsigned int cpu = ANY, Tn &...an)
@@ -480,19 +486,22 @@ public:
     unsigned int selected_queue = 0;
     unsigned int best         = 10000; 
     unsigned int calculated   = 0;
+    // unsigned long long slack  = 0;
  
     for (unsigned int i = 0; i < Traits<Machine>::CPUS; i++) {
+      // slack = (10000*(execution_time_per_cpu[i] - slack_per_cpu[i]))/execution_time_per_cpu[i];
+      // calculated   = (branch_miss_per_cpu[i] +  cache_miss_per_cpu[i] + cpu_usage_per_cpu[i] + slack)/4;
       calculated   = (branch_miss_per_cpu[i] +  cache_miss_per_cpu[i] + cpu_usage_per_cpu[i])/3;
       // osw << "Branch Miss " << i << ": " << branch_miss_per_cpu[i] << "\n";
       // osw << "Cache Miss " << i << ": " << cache_miss_per_cpu[i] << "\n";
       // osw << "CPU Usage " << i << ": " << cpu_usage_per_cpu[i] << "\n";
+      // osw << "Slack " << i << ": " << slack << "\n";
+
       if (calculated < best) {
         best = calculated;
         selected_queue = i;
       }
       
-      // if (threads_per_cpu[i] < threads_per_cpu[selected_queue])
-      //   selected_queue = i;
     }
     osw << "CHOSEN: " << selected_queue << '\n';
     return selected_queue;

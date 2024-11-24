@@ -346,16 +346,17 @@ void EDF_Modified::handle(Event event)
         _handle_charge(event);
 }
 
-
-
-volatile unsigned int PEDF_Modified::branch_miss_per_cpu[Traits<Machine>::CPUS];
-volatile unsigned int PEDF_Modified::cache_miss_per_cpu[Traits<Machine>::CPUS];
-volatile unsigned int PEDF_Modified::cpu_usage_per_cpu[Traits<Machine>::CPUS];
+volatile unsigned long long PEDF_Modified::branch_miss_per_cpu[Traits<Machine>::CPUS];
+volatile unsigned long long PEDF_Modified::cache_miss_per_cpu[Traits<Machine>::CPUS];
+volatile unsigned long long PEDF_Modified::cpu_usage_per_cpu[Traits<Machine>::CPUS];
 volatile unsigned long long PEDF_Modified::base_time[Traits<Machine>::CPUS];
 volatile unsigned long long PEDF_Modified::time_spent_in_idle[Traits<Machine>::CPUS];
+// volatile unsigned long long PEDF_Modified::execution_time_per_cpu[Traits<Machine>::CPUS];
+// volatile unsigned long long PEDF_Modified::slack_per_cpu[Traits<Machine>::CPUS];
 
 void PEDF_Modified::handle(Event event)
 {
+    EDF_Modified::handle(event);
 
     if (periodic() && (event & JOB_FINISH)) {
         branch_miss_per_cpu[CPU::id()] = (PMU::read(5) > 0) ? (PMU::read(6)*10000)/PMU::read(5) : 0;
@@ -363,15 +364,31 @@ void PEDF_Modified::handle(Event event)
         unsigned long long total = TSC::time_stamp() - base_time[CPU::id()];
         cpu_usage_per_cpu[CPU::id()] = (10000*(total - time_spent_in_idle[CPU::id()]))/total;
         
-        // cout << '<' << CPU::id() << '>' << "Branch Misses: " << branch_miss_per_cpu[CPU::id()] << "%\n"; 
-        // cout << '<' << CPU::id() << '>' << "Cache Misses: "<< cache_miss_per_cpu[CPU::id()] << "%\n"; 
-        // cout << '<' << CPU::id() << '>' << "CPU Usage: " << cpu_usage_per_cpu[CPU::id()] << "%\n"; 
+        // execution_time_per_cpu[CPU::id()] += _statistics.job_utilization;
+        // total_execution_time += _statistics.job_utilization;
+
+        // slack_per_cpu[CPU::id()] += (_statistics.job_finish - _statistics.job_start) - _statistics.job_utilization;
+        // total_slack += (_statistics.job_finish - _statistics.job_start) - _statistics.job_utilization;
     }
 
     if (periodic() && (event & LEAVE) && _statistics.number_dispatches % 5) {
+        // unsigned int old_queue = queue();
         queue(choose_queue());
+
+        // if (old_queue != queue()) {
+        //     execution_time_per_cpu[CPU::id()] -= total_execution_time;
+        //     slack_per_cpu[CPU::id()] -= total_slack;
+        // }
+
+        // total_execution_time = 0;
+        // total_slack = 0;
     }
-    EDF_Modified::handle(event);
+
+    // if (periodic() && (event & FINISH)) {
+    //     execution_time_per_cpu[CPU::id()] -= total_execution_time;
+    //     slack_per_cpu[CPU::id()] -= total_slack;
+    // }
+
 }
 // The following Scheduling Criteria depend on Alarm, which is not available at scheduler.h
 template <typename... Tn>
