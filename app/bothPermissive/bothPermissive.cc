@@ -41,7 +41,7 @@ void print_PMU() {
        << "> TOTAL_CORE_CYCLES          : " << TSC::time_stamp() << '\n';
 }
 
-static int exec_count[8];
+static int exec_count[8][4];
 int my_func(char id, int limit) {
   cout << '<' << CPU::id() << "> BEGIN " << id << '\n';
   // print_PMU();
@@ -55,7 +55,7 @@ int my_func(char id, int limit) {
     } else {
       // cout << "BBB\n";
     }
-    exec_count[id - 'A']++;
+    exec_count[id - 'A'][CPU::id()]++;
     // cout << "Thread " << id << " completed iteration. Total executions: " <<
     // exec_count[id - 'A'] << '\n';
   } while (Periodic_Thread::wait_next());
@@ -74,6 +74,7 @@ int my_func_aperiodic(char id) {
   }
   cout << '<' << CPU::id() << "> END " << id << '\n';
   // print_PMU();
+  exec_count[id - 'A'][CPU::id()]++;
 
   return 0;
 }
@@ -134,7 +135,14 @@ int main() {
        << "%, H -> " << 100 << "%\n";
   cout << '<' << CPU::id() << "> FINISHING MAIN               " << '\n';
   for (int i = 0; i < 8; ++i)
-    cout << (char)('A' + i) << " => " << exec_count[i] << '\n';
+    for (int j = 0; j < 4; ++j)
+      cout << (char)('A' + i) << "(" << j <<  ") => " << exec_count[i][j] << '\n';
+  for (int j = 0; j < 4; ++j) {
+    int tot = 0;
+    for (int i = 0; i < 8; ++i)
+      tot += exec_count[i][j];
+    cout << "TOTAL (" << j << ") -> " << tot << '\n';
+  }
   print_PMU();
   return 0;
 }

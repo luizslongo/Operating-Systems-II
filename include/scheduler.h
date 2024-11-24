@@ -53,7 +53,7 @@ public:
 
   // Periodics Threads Priorities
   enum : int {
-    PHIGH = 0,
+    PHIGH = 1,
     PNORMAL = (unsigned(0b010) << (sizeof(int) * 8 - 4)),
     PLOW = (unsigned(0b011) << (sizeof(int) * 8 - 4))
   };
@@ -502,12 +502,12 @@ public:
      */
  
     for (unsigned int i = 0; i < Traits<Machine>::CPUS; i++) {
-      calculated   = (branch_miss_per_cpu[i] +  cache_miss_per_cpu[i] + cpu_usage_per_cpu[i] + utilization_per_cpu[i]*2ull)/5ull;
-      osw << "Branch Miss " << i << ": " << branch_miss_per_cpu[i] << "\n";
-      osw << "Cache Miss " << i << ": " << cache_miss_per_cpu[i] << "\n";
-      osw << "CPU Usage " << i << ": " << cpu_usage_per_cpu[i] << "\n";
-      osw << "Utilization " << i << ": " << utilization_per_cpu[i] << "\n";
-      osw << "Calculated " << i << ": " << calculated << "\n";
+      calculated   = (branch_miss_per_cpu[i] +  cache_miss_per_cpu[i] + cpu_usage_per_cpu[i])/5ull;
+      //osw << "Branch Miss " << i << ": " << branch_miss_per_cpu[i] << "\n";
+      //osw << "Cache Miss " << i << ": " << cache_miss_per_cpu[i] << "\n";
+      //osw << "CPU Usage " << i << ": " << cpu_usage_per_cpu[i] << "\n";
+      //osw << "Utilization " << i << ": " << utilization_per_cpu[i] << "\n";
+      //osw << "Calculated " << i << ": " << calculated << "\n";
 
       if (calculated < best) {
         best = calculated;
@@ -515,11 +515,14 @@ public:
       }
       
     }
-    osw << "CHOSEN: " << selected_queue << '\n';
-    osw << "========================\n";
+
+
+    //osw << "CHOSEN: " << selected_queue << '\n';
+    //osw << "========================\n";
     return selected_queue;
   }
   void handle(Event event);
+  volatile unsigned int should_change_queue();
   static unsigned int current_queue() { return CPU::id(); }
 };
 

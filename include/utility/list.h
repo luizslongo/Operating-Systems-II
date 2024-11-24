@@ -778,6 +778,10 @@ public:
             return 0;
         if(last())
             return remove_last();
+        if (_head && !_head->next() && _size > 1) {
+            OStream os;
+            os << "WTf2222???\n";
+        }
         Element * e = _head;
         _head = _head->next();
         _head->prev(0);

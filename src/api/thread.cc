@@ -108,12 +108,15 @@ Thread::~Thread()
 
 void Thread::priority(Criterion c)
 {
-    lock();
+    //lock();
 
     db<Thread>(TRC) << "Thread::priority(this=" << this << ",prio=" << c << ")" << endl;
 
     unsigned long old_cpu = _link.rank().queue();
     unsigned long new_cpu = c.queue();
+
+    OStream os;
+    os << '<' << CPU::id() << "> moving " << this << " to " << new_cpu << '\n';
 
     if(_state != RUNNING) { // reorder the scheduling queue
         _scheduler.suspend(this);
@@ -132,7 +135,7 @@ void Thread::priority(Criterion c)
     	    reschedule();
     }
 
-    unlock();
+    //unlock();
 }
 
 
@@ -372,10 +375,14 @@ void Thread::time_slicer(IC::Interrupt_Id i)
 
 void Thread::dispatch(Thread * prev, Thread * next, bool charge)
 {
-    // OStream_Wrapped osw;
-    // osw << "AAAAAAAAAAAAAAABBBBBBBBBBBBBBBBBBBBBBBCCCCCCCCCCCCCCCCDDDDDDDDDDDDD\n=============\n";
-    // "next" is not in the scheduler's queue anymore. It's already "chosen"
-    //kout << _scheduler.get_queue(CPU::id()) << ' ' << CPU::id() << '\n';
+    if (next == 0) {
+        OStream cout;
+        cout << "Found the villain o7! It's NEXT :D\n";
+    }
+    if (prev == 0) {
+        OStream cout;
+        cout << "Found the villain o7! It's PREV :D\n";
+    }
     if(charge && Criterion::timed)
         _timer->restart();
 
@@ -384,10 +391,20 @@ void Thread::dispatch(Thread * prev, Thread * next, bool charge)
     //
     // The function used for deciding the new frequency is quite fast, so this shouldn't be a problem.
     if (charge && prev == next) 
-        next->criterion().handle(Criterion::CHARGE);   
+        next->criterion().handle(Criterion::CHARGE);
 
     if(prev != next) {
         if(Criterion::dynamic) {
+            volatile  unsigned int cpu = 1e9;
+            if ((cpu = next->criterion().should_change_queue()) != (unsigned int)1e9) {
+                auto c = next->criterion();
+                c.queue(cpu);
+
+                next->priority(c);
+                next = _scheduler.choose_another();
+                if (next == prev)
+                    return;
+            }
             prev->criterion().handle(Criterion::CHARGE | Criterion::LEAVE);
             for_all_threads(Criterion::UPDATE);
             next->criterion().handle(Criterion::AWARD  | Criterion::ENTER);
@@ -415,27 +432,27 @@ void Thread::dispatch(Thread * prev, Thread * next, bool charge)
         CPU::switch_context(const_cast<Context **>(&prev->_context), next->_context);
 
 
-        PMU::reset(6);
-        PMU::reset(5);
-        PMU::reset(4);
-        PMU::reset(3);
-        PMU::reset(2);
-        PMU::reset(1);
-        PMU::reset(0);
-        PMU::config(6, 15); // BRANCH_MISSES_RETIRED
-        PMU::config(5, 11); // BRANCH_INSTRUCTIONS_RETIRED
-        PMU::config(4, 30); // LLC_MISSES
-        PMU::config(3, 29); // LLC_REFERENCES
-        PMU::config(2, 2);  // INSTRUCTIONS_RETIRED
-        PMU::config(1, 1);  // UNHALTED_CYCLES
-        PMU::config(0, 0);  // CPU_CYCLES
-        PMU::start(6);
-        PMU::start(5);
-        PMU::start(4);
-        PMU::start(3);
-        PMU::start(2);
-        PMU::start(1);
-        PMU::start(0);
+        //PMU::reset(6);
+        //PMU::reset(5);
+        //PMU::reset(4);
+        //PMU::reset(3);
+        //PMU::reset(2);
+        //PMU::reset(1);
+        //PMU::reset(0);
+        //PMU::config(6, 15); // BRANCH_MISSES_RETIRED
+        //PMU::config(5, 11); // BRANCH_INSTRUCTIONS_RETIRED
+        //PMU::config(4, 30); // LLC_MISSES
+        //PMU::config(3, 29); // LLC_REFERENCES
+        //PMU::config(2, 2);  // INSTRUCTIONS_RETIRED
+        //PMU::config(1, 1);  // UNHALTED_CYCLES
+        //PMU::config(0, 0);  // CPU_CYCLES
+        //PMU::start(6);
+        //PMU::start(5);
+        //PMU::start(4);
+        //PMU::start(3);
+        //PMU::start(2);
+        //PMU::start(1);
+        //PMU::start(0);
 
         if(smp)
             _lock.acquire();
@@ -451,6 +468,7 @@ int Thread::idle()
     PEDF_Modified::base_time[CPU::id()] = TSC::time_stamp();
     PEDF_Modified::time_spent_in_idle[CPU::id()] = 0;
     CPU::smp_barrier();
+    OStream os;
     while(_thread_count > CPU::cores()) { // someone else besides idles
         if(Traits<Thread>::trace_idle)
             db<Thread>(TRC) << "Thread::idle(cpu=" << CPU::id() << ",this=" << running() << ")" << endl;
@@ -462,6 +480,9 @@ int Thread::idle()
         CPU::halt();
         unsigned long long end = TSC::time_stamp();
         PEDF_Modified::time_spent_in_idle[CPU::id()] += end - begin;
+        unsigned long long total = TSC::time_stamp() - PEDF_Modified::base_time[CPU::id()];
+        PEDF_Modified::cpu_usage_per_cpu[CPU::id()] = (total > 0) ? ((PEDF_Modified::cpu_usage_per_cpu[CPU::id()]*9 + (10000ull*(total - PEDF_Modified::time_spent_in_idle[CPU::id()]))/total))/10 : 0;
+        
         
         if(_scheduler.schedulables() > 0) // a thread might have been woken up by another CPU
             yield();

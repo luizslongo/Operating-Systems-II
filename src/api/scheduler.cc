@@ -360,10 +360,17 @@ void PEDF_Modified::handle(Event event)
     EDF_Modified::handle(event);
 
     if (periodic() && (event & JOB_FINISH)) {
-        branch_miss_per_cpu[CPU::id()] = (PMU::read(5) > 0) ? (PMU::read(6)*10000ull)/PMU::read(5) : 0;
-        cache_miss_per_cpu[CPU::id()] = (PMU::read(3) > 0)? (PMU::read(4)*10000ull)/PMU::read(3) : 0;
+        int branch_miss = (PMU::read(5) > 0) ? (PMU::read(6)*10000ull)/PMU::read(5) : 0;
+        int cache_miss = (PMU::read(3) > 0)? (PMU::read(4)*10000ull)/PMU::read(3) : 0;
+
+        
+        //cout << "CM: " << cache_miss << ", CMC: " << cache_miss_per_cpu[CPU::id()] << '\n'; 
+
+        branch_miss_per_cpu[CPU::id()] = (branch_miss_per_cpu[CPU::id()] * 9 + branch_miss)/10;
+        cache_miss_per_cpu[CPU::id()] = (cache_miss_per_cpu[CPU::id()] * 9 + cache_miss)/10;
+        //cache_miss_per_cpu[CPU::id()] = (PMU::read(3) > 0)? (PMU::read(4)*10000ull)/PMU::read(3) : 0;
         unsigned long long total = TSC::time_stamp() - base_time[CPU::id()];
-        cpu_usage_per_cpu[CPU::id()] = (total > 0) ? (10000ull*(total - time_spent_in_idle[CPU::id()]))/total : 0;
+        cpu_usage_per_cpu[CPU::id()] = (total > 0) ? ((cpu_usage_per_cpu[CPU::id()]*9 + (10000ull*(total - time_spent_in_idle[CPU::id()]))))/10 : 0;
 
         Tick task_type = ((BEST_EFFORT & _priority) == BEST_EFFORT ? BEST_EFFORT : CRITICAL);
         Tick absolute_deadline = _priority - task_type;
@@ -390,30 +397,8 @@ void PEDF_Modified::handle(Event event)
         } else {
             utilization_per_cpu[CPU::id()] = 0;
         }
-
-        // cout << "Slack %: " << slack_per_cpu[CPU::id()] << "\n";
     }
 
-    if (periodic() && (event & LEAVE) && _statistics.number_dispatches % 5) {
-        unsigned int old_queue = queue();
-        queue(choose_queue());
-
-        /*
-        Removes the total_time and slack of the thread from the old cpu
-        to not impact the values of future choose_queue();
-        */
-        if (old_queue != queue()) {
-            total_time_of_jobs_per_cpu[CPU::id()] -= total_time_of_jobs;
-            total_slack_per_cpu[CPU::id()] -= total_slack;
-            if (total_time_of_jobs_per_cpu[CPU::id()] > 0) {
-                utilization_per_cpu[CPU::id()] = 10000ull - (10000ull * total_slack_per_cpu[CPU::id()])/total_time_of_jobs_per_cpu[CPU::id()];
-            } else {
-                utilization_per_cpu[CPU::id()] = 0;
-            }
-            total_time_of_jobs = 0;
-            total_slack = 0;
-        }
-    }
 
     /*
     Removes the total_time and slack of the thread
@@ -427,7 +412,7 @@ void PEDF_Modified::handle(Event event)
         // cout << "Total slack per cpu: " << total_slack_per_cpu[CPU::id()] << "\n";
         total_time_of_jobs_per_cpu[CPU::id()] -= total_time_of_jobs;
         total_slack_per_cpu[CPU::id()] -= total_slack;
-
+        
         if (total_time_of_jobs_per_cpu[CPU::id()] > 0) {
             utilization_per_cpu[CPU::id()] = 10000ull - (10000ull*total_slack_per_cpu[CPU::id()])/total_time_of_jobs_per_cpu[CPU::id()];
         } else {
@@ -435,6 +420,24 @@ void PEDF_Modified::handle(Event event)
         }
     }
 
+}
+volatile unsigned int PEDF_Modified::should_change_queue() {
+    if (periodic() && _statistics.number_dispatches % 5 == 0 && _statistics.number_dispatches > 0) {
+        volatile unsigned int q = choose_queue();
+        if (q != _queue) {
+            total_time_of_jobs_per_cpu[CPU::id()] -= total_time_of_jobs;
+            total_slack_per_cpu[CPU::id()] -= total_slack;
+            if (total_time_of_jobs_per_cpu[CPU::id()] > 0) {
+                utilization_per_cpu[CPU::id()] = 10000ull - (10000ull * total_slack_per_cpu[CPU::id()])/total_time_of_jobs_per_cpu[CPU::id()];
+            } else {
+                utilization_per_cpu[CPU::id()] = 0;
+            }
+            total_time_of_jobs = 0;
+            total_slack = 0;
+            return q;
+        }
+    }
+    return 1e9;
 }
 // The following Scheduling Criteria depend on Alarm, which is not available at scheduler.h
 template <typename... Tn>
