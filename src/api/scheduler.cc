@@ -367,9 +367,9 @@ void PEDF_Modified::handle(Event event)
 
         Tick task_type = ((BEST_EFFORT & _priority) == BEST_EFFORT ? BEST_EFFORT : CRITICAL);
         Tick absolute_deadline = _priority - task_type;
-        cout << "Job Release: " << _statistics.job_release << "\n";
-        cout << "Job Finish: " << _statistics.job_finish << "\n";
-        cout << "Deadline: " << absolute_deadline << "\n";
+        // cout << "Job Release: " << _statistics.job_release << "\n";
+        // cout << "Job Finish: " << _statistics.job_finish << "\n";
+        // cout << "Deadline: " << absolute_deadline << "\n";
         // cout << "Period: " << absolute_deadline - _statistics.job_release << "\n";
         // cout << "Slack: " << absolute_deadline - _statistics.job_finish << "\n";
         
@@ -399,13 +399,13 @@ void PEDF_Modified::handle(Event event)
         to not impact the values of future choose_queue();
         */
         if (old_queue != queue()) {
-            cout << "Total time of thread: " << total_slack << "\n";
-            cout << "Total slack of thread: " << total_time_of_jobs << "\n";
-            cout << "Total time per cpu: " << total_time_of_jobs_per_cpu[old_queue] << "\n";
-            cout << "Total slack per cpu: " << total_slack_per_cpu[old_queue] << "\n";
-            total_time_of_jobs_per_cpu[old_queue] -= total_time_of_jobs;
-            total_slack_per_cpu[old_queue] -= total_slack;
-            slack_per_cpu[old_queue] = (10000*total_slack_per_cpu[old_queue])/total_time_of_jobs_per_cpu[old_queue];
+            total_time_of_jobs_per_cpu[CPU::id()] -= total_time_of_jobs;
+            total_slack_per_cpu[CPU::id()] -= total_slack;
+            if (total_time_of_jobs_per_cpu[CPU::id()] > 0) {
+                slack_per_cpu[CPU::id()] = (10000*total_slack_per_cpu[CPU::id()])/total_time_of_jobs_per_cpu[CPU::id()];
+            } else {
+                slack_per_cpu[CPU::id()] = 10000;
+            }
             total_time_of_jobs = 0;
             total_slack = 0;
         }
@@ -417,9 +417,19 @@ void PEDF_Modified::handle(Event event)
     for remain threads;
     */
     if (periodic() && (event & FINISH)) {
+        // cout << "Total time of thread: " << total_time_of_jobs << "\n";
+        // cout << "Total slack of thread: " << total_slack << "\n";
+        // cout << "Total time per cpu: " << total_time_of_jobs_per_cpu[CPU::id()] << "\n";
+        // cout << "Total slack per cpu: " << total_slack_per_cpu[CPU::id()] << "\n";
         total_time_of_jobs_per_cpu[CPU::id()] -= total_time_of_jobs;
         total_slack_per_cpu[CPU::id()] -= total_slack;
-        slack_per_cpu[CPU::id()] = (10000*total_slack_per_cpu[CPU::id()])/total_time_of_jobs_per_cpu[CPU::id()];
+
+        if (total_time_of_jobs_per_cpu[CPU::id()] > 0) {
+            slack_per_cpu[CPU::id()] = (10000*total_slack_per_cpu[CPU::id()])/total_time_of_jobs_per_cpu[CPU::id()];
+        } else {
+            slack_per_cpu[CPU::id()] = 10000;
+
+        }
     }
 
 }

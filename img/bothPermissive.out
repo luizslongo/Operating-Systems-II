@@ -1,0 +1,996 @@
+c[?7l[2J[0mSeaBIOS (version 1.16.3-3.fc41)
+
+
+iPXE (https://ipxe.org) 00:03.0 CA00 PCI2.10 PnP PMM+3EFCA380+3EF0A380 CA00
+Press Ctrl-B to configure iPXE (PCI 00:03.0)...                                                                               
+
+
+Booting from Hard Disk...
+Boot failed: could not read the boot disk
+
+Booting from Floppy...
+Loading EPOS ..... done
+
+
+
+<0>: Ignoring ELF segment 1 at 0x80480d4! :<0>
+
+*** This is EPOS!
+
+Setting up this machine as follows: 
+  Mode:         library
+  Processor:    4 x IA32 at 2000 MHz (BUS clock = 2000 MHz)
+  Machine:      PC
+  Memory:       1048576 KB [0x00000000:0x40000000]
+  User memory:  1047412 KB [0x00000000:0x3fedd000]
+  I/O space:    28612 KB [0xfd000000:0xfebf1000]
+  Node Id:      will get from the network!
+  Position:     will get from the network!
+  Setup:        26304 bytes
+  APP code:     53248 bytes	data: 4214784 bytes
+
+Branch Miss 0: 0
+Cache Miss 0: 0
+CPU Usage 0: 0
+Utilization 0: 10000
+Calculated 0: 4000
+Best 0: 1000000000
+Branch Miss 1: 0
+Cache Miss 1: 0
+CPU Usage 1: 0
+Utilization 1: 10000
+Calculated 1: 4000
+Best 1: 4000
+Branch Miss 2: 0
+Cache Miss 2: 0
+CPU Usage 2: 0
+Utilization 2: 10000
+Calculated 2: 4000
+Best 2: 4000
+Branch Miss 3: 0
+Cache Miss 3: 0
+CPU Usage 3: 0
+Utilization 3: 10000
+Calculated 3: 4000
+Best 3: 4000
+CHOSEN: 0
+========================
+<0> CREATING THREAD -> 0 -> 0xffc4be04 -> 0xffc4bedc -> 0x804000f8
+Branch Miss 0: 0
+Cache Miss 0: 0
+CPU Usage 0: 0
+Utilization 0: 10000
+Calculated 0: 4000
+Best 0: 1000000000
+Branch Miss 1: 0
+Cache Miss 1: 0
+CPU Usage 1: 0
+Utilization 1: 10000
+Calculated 1: 4000
+Best 1: 4000
+Branch Miss 2: 0
+Cache Miss 2: 0
+CPU Usage 2: 0
+Utilization 2: 10000
+Calculated 2: 4000
+Best 2: 4000
+Branch Miss 3: 0
+Cache Miss 3: 0
+CPU Usage 3: 0
+Utilization 3: 10000
+Calculated 3: 4000
+Best 3: 4000
+CHOSEN: 0
+========================
+<0> CREATING THREAD -> 0 -> 0xffc47c40 -> 0xffc47d18 -> 0x804000f8
+Branch Miss 0: 0
+Cache Miss 0: 0
+CPU Usage 0: 0
+Utilization 0: 10000
+Calculated 0: 4000
+Best 0: 1000000000
+Branch Miss 1: 0
+Cache Miss 1: 0
+CPU Usage 1: 0
+Utilization 1: 10000
+Calculated 1: 4000
+Best 1: 4000
+Branch Miss 2: 0
+Cache Miss 2: 0
+CPU Usage 2: 0
+Utilization 2: 10000
+Calculated 2: 4000
+Best 2: 4000
+Branch Miss 3: 0
+Cache Miss 3: 0
+CPU Usage 3: 0
+Utilization 3: 10000
+Calculated 3: 4000
+Best 3: 4000
+CHOSEN: 0
+========================
+<3> CREATING THREAD -> 3 -> 0xffc43a94 -> 0xffc43b6c -> 0x804000f8
+Branch Miss 0: 0
+Cache Miss 0: 0
+CPU Usage 0: 0
+Utilization 0: 10000
+Calculated 0: 4000
+Best 0: 1000000000
+Branch Miss 1: 0
+Cache Miss 1: 0
+CPU Usage 1: 0
+Utilization 1: 10000
+Calculated 1: 4000
+Best 1: 4000
+Branch Miss 2: 0
+Cache Miss 2: 0
+CPU Usage 2: 0
+Utilization 2: 10000
+Calculated 2: 4000
+Best 2: 4000
+Branch Miss 3: 0
+Cache Miss 3: 0
+CPU Usage 3: 0
+Utilization 3: 10000
+Calculated 3: 4000
+Best 3: 4000
+CHOSEN: 0
+========================
+<2> CREATING THREAD -> 2 -> 0xffc3f8e8 -> 0xffc3f9c0 -> 0x804000f8
+Branch Miss 0: 0
+Cache Miss 0: 0
+CPU Usage 0: 0
+Utilization 0: 10000
+Calculated 0: 4000
+Best 0: 1000000000
+Branch Miss 1: 0
+Cache Miss 1: 0
+CPU Usage 1: 0
+Utilization 1: 10000
+Calculated 1: 4000
+Best 1: 4000
+Branch Miss 2: 0
+Cache Miss 2: 0
+CPU Usage 2: 0
+Utilization 2: 10000
+Calculated 2: 4000
+Best 2: 4000
+Branch Miss 3: 0
+Cache Miss 3: 0
+CPU Usage 3: 0
+Utilization 3: 10000
+Calculated 3: 4000
+Best 3: 4000
+CHOSEN: 0
+========================
+<1> CREATING THREAD -> 1 -> 0xffc3b73c -> 0xffc3b814 -> 0x804000f8
+Branch Miss 0: 0
+Cache Miss 0: 0
+CPU Usage 0: 0
+Utilization 0: 10000
+Calculated 0: 4000
+Best 0: 1000000000
+Branch Miss 1: 0
+Cache Miss 1: 0
+CPU Usage 1: 0
+Utilization 1: 10000
+Calculated 1: 4000
+Best 1: 4000
+Branch Miss 2: 0
+Cache Miss 2: 0
+CPU Usage 2: 0
+Utilization 2: 10000
+Calculated 2: 4000
+Best 2: 4000
+Branch Miss 3: 0
+Cache Miss 3: 0
+CPU Usage 3: 0
+Utilization 3: 10000
+Calculated 3: 4000
+Best 3: 4000
+CHOSEN: 0
+========================
+Branch Miss 0: 0
+Cache Miss 0: 0
+CPU Usage 0: 0
+Utilization 0: 10000
+Calculated 0: 4000
+Best 0: 1000000000
+Branch Miss 1: 0
+Cache Miss 1: 0
+CPU Usage 1: 0
+Utilization 1: 10000
+Calculated 1: 4000
+Best 1: 4000
+Branch Miss 2: 0
+Cache Miss 2: 0
+CPU Usage 2: 0
+Utilization 2: 10000
+Calculated 2: 4000
+Best 2: 4000
+Branch Miss 3: 0
+Cache Miss 3: 0
+CPU Usage 3: 0
+Utilization 3: 10000
+Calculated 3: 4000
+Best 3: 4000
+CHOSEN: 0
+========================
+<0> CREATING THREAD -> 0 -> 0x80804e28 -> 0x80804f00 -> 0x804000f8
+Branch Miss 0: 0
+Cache Miss 0: 0
+CPU Usage 0: 0
+Utilization 0: 10000
+Calculated 0: 4000
+Best 0: 1000000000
+Branch Miss 1: 0
+Cache Miss 1: 0
+CPU Usage 1: 0
+Utilization 1: 10000
+Calculated 1: 4000
+Best 1: 4000
+Branch Miss 2: 0
+Cache Miss 2: 0
+CPU Usage 2: 0
+Utilization 2: 10000
+Calculated 2: 4000
+Best 2: 4000
+Branch Miss 3: 0
+Cache Miss 3: 0
+CPU Usage 3: 0
+Utilization 3: 10000
+Calculated 3: 4000
+Best 3: 4000
+CHOSEN: 0
+========================
+Branch Miss 0: 0
+Cache Miss 0: 0
+CPU Usage 0: 0
+Utilization 0: 10000
+Calculated 0: 4000
+Best 0: 1000000000
+Branch Miss 1: 0
+Cache Miss 1: 0
+CPU Usage 1: 0
+Utilization 1: 10000
+Calculated 1: 4000
+Best 1: 4000
+Branch Miss 2: 0
+Cache Miss 2: 0
+CPU Usage 2: 0
+Utilization 2: 10000
+Calculated 2: 4000
+Best 2: 4000
+Branch Miss 3: 0
+Cache Miss 3: 0
+CPU Usage 3: 0
+Utilization 3: 10000
+Calculated 3: 4000
+Best 3: 4000
+CHOSEN: 0
+========================
+<0> CREATING THREAD -> 0 -> 0x80804c84 -> 0x80804d5c -> 0x804000f8
+Branch Miss 0: 0
+Cache Miss 0: 0
+CPU Usage 0: 0
+Utilization 0: 10000
+Calculated 0: 4000
+Best 0: 1000000000
+Branch Miss 1: 0
+Cache Miss 1: 0
+CPU Usage 1: 0
+Utilization 1: 10000
+Calculated 1: 4000
+Best 1: 4000
+Branch Miss 2: 0
+Cache Miss 2: 0
+CPU Usage 2: 0
+Utilization 2: 10000
+Calculated 2: 4000
+Best 2: 4000
+Branch Miss 3: 0
+Cache Miss 3: 0
+CPU Usage 3: 0
+Utilization 3: 10000
+Calculated 3: 4000
+Best 3: 4000
+CHOSEN: 0
+========================
+Branch Miss 0: 0
+Cache Miss 0: 0
+CPU Usage 0: 0
+Utilization 0: 10000
+Calculated 0: 4000
+Best 0: 1000000000
+Branch Miss 1: 0
+Cache Miss 1: 0
+CPU Usage 1: 0
+Utilization 1: 10000
+Calculated 1: 4000
+Best 1: 4000
+Branch Miss 2: 0
+Cache Miss 2: 0
+CPU Usage 2: 0
+Utilization 2: 10000
+Calculated 2: 4000
+Best 2: 4000
+Branch Miss 3: 0
+Cache Miss 3: 0
+CPU Usage 3: 0
+Utilization 3: 10000
+Calculated 3: 4000
+Best 3: 4000
+CHOSEN: 0
+========================
+<0> CREATING THREAD -> 0 -> 0x80804aa4 -> 0x80804b7c -> 0x804000f8
+Branch Miss 0: 0
+Cache Miss 0: 0
+CPU Usage 0: 0
+Utilization 0: 10000
+Calculated 0: 4000
+Best 0: 1000000000
+Branch Miss 1: 0
+Cache Miss 1: 0
+CPU Usage 1: 0
+Utilization 1: 10000
+Calculated 1: 4000
+Best 1: 4000
+Branch Miss 2: 0
+Cache Miss 2: 0
+CPU Usage 2: 0
+Utilization 2: 10000
+Calculated 2: 4000
+Best 2: 4000
+Branch Miss 3: 0
+Cache Miss 3: 0
+CPU Usage 3: 0
+Utilization 3: 10000
+Calculated 3: 4000
+Best 3: 4000
+CHOSEN: 0
+========================
+Branch Miss 0: 0
+Cache Miss 0: 0
+CPU Usage 0: 0
+Utilization 0: 10000
+Calculated 0: 4000
+Best 0: 1000000000
+Branch Miss 1: 0
+Cache Miss 1: 0
+CPU Usage 1: 0
+Utilization 1: 10000
+Calculated 1: 4000
+Best 1: 4000
+Branch Miss 2: 0
+Cache Miss 2: 0
+CPU Usage 2: 0
+Utilization 2: 10000
+Calculated 2: 4000
+Best 2: 4000
+Branch Miss 3: 0
+Cache Miss 3: 0
+CPU Usage 3: 0
+Utilization 3: 10000
+Calculated 3: 4000
+Best 3: 4000
+CHOSEN: 0
+========================
+<0> CREATING THREAD -> 0 -> 0x80804900 -> 0x808049d8 -> 0x804000f8
+Branch Miss 0: 0
+Cache Miss 0: 0
+CPU Usage 0: 0
+Utilization 0: 10000
+Calculated 0: 4000
+Best 0: 1000000000
+Branch Miss 1: 0
+Cache Miss 1: 0
+CPU Usage 1: 0
+Utilization 1: 10000
+Calculated 1: 4000
+Best 1: 4000
+Branch Miss 2: 0
+Cache Miss 2: 0
+CPU Usage 2: 0
+Utilization 2: 10000
+Calculated 2: 4000
+Best 2: 4000
+Branch Miss 3: 0
+Cache Miss 3: 0
+CPU Usage 3: 0
+Utilization 3: 10000
+Calculated 3: 4000
+Best 3: 4000
+CHOSEN: 0
+========================
+Branch Miss 0: 0
+Cache Miss 0: 0
+CPU Usage 0: 0
+Utilization 0: 10000
+Calculated 0: 4000
+Best 0: 1000000000
+Branch Miss 1: 0
+Cache Miss 1: 0
+CPU Usage 1: 0
+Utilization 1: 10000
+Calculated 1: 4000
+Best 1: 4000
+Branch Miss 2: 0
+Cache Miss 2: 0
+CPU Usage 2: 0
+Utilization 2: 10000
+Calculated 2: 4000
+Best 2: 4000
+Branch Miss 3: 0
+Cache Miss 3: 0
+CPU Usage 3: 0
+Utilization 3: 10000
+Calculated 3: 4000
+Best 3: 4000
+CHOSEN: 0
+========================
+<0> CREATING THREAD -> 0 -> 0x80804720 -> 0x808047f8 -> 0x804000f8
+Branch Miss 0: 0
+Cache Miss 0: 0
+CPU Usage 0: 0
+Utilization 0: 10000
+Calculated 0: 4000
+Best 0: 1000000000
+Branch Miss 1: 0
+Cache Miss 1: 0
+CPU Usage 1: 0
+Utilization 1: 10000
+Calculated 1: 4000
+Best 1: 4000
+Branch Miss 2: 0
+Cache Miss 2: 0
+CPU Usage 2: 0
+Utilization 2: 10000
+Calculated 2: 4000
+Best 2: 4000
+Branch Miss 3: 0
+Cache Miss 3: 0
+CPU Usage 3: 0
+Utilization 3: 10000
+Calculated 3: 4000
+Best 3: 4000
+CHOSEN: 0
+========================
+Branch Miss 0: 0
+Cache Miss 0: 0
+CPU Usage 0: 0
+Utilization 0: 10000
+Calculated 0: 4000
+Best 0: 1000000000
+Branch Miss 1: 0
+Cache Miss 1: 0
+CPU Usage 1: 0
+Utilization 1: 10000
+Calculated 1: 4000
+Best 1: 4000
+Branch Miss 2: 0
+Cache Miss 2: 0
+CPU Usage 2: 0
+Utilization 2: 10000
+Calculated 2: 4000
+Best 2: 4000
+Branch Miss 3: 0
+Cache Miss 3: 0
+CPU Usage 3: 0
+Utilization 3: 10000
+Calculated 3: 4000
+Best 3: 4000
+CHOSEN: 0
+========================
+<0> CREATING THREAD -> 0 -> 0x8080457c -> 0x80804654 -> 0x804000f8
+Branch Miss 0: 0
+Cache Miss 0: 0
+CPU Usage 0: 0
+Utilization 0: 10000
+Calculated 0: 4000
+Best 0: 1000000000
+Branch Miss 1: 0
+Cache Miss 1: 0
+CPU Usage 1: 0
+Utilization 1: 10000
+Calculated 1: 4000
+Best 1: 4000
+Branch Miss 2: 0
+Cache Miss 2: 0
+CPU Usage 2: 0
+Utilization 2: 10000
+Calculated 2: 4000
+Best 2: 4000
+Branch Miss 3: 0
+Cache Miss 3: 0
+CPU Usage 3: 0
+Utilization 3: 10000
+Calculated 3: 4000
+Best 3: 4000
+CHOSEN: 0
+========================
+Branch Miss 0: 0
+Cache Miss 0: 0
+CPU Usage 0: 0
+Utilization 0: 10000
+Calculated 0: 4000
+Best 0: 1000000000
+Branch Miss 1: 0
+Cache Miss 1: 0
+CPU Usage 1: 0
+Utilization 1: 10000
+Calculated 1: 4000
+Best 1: 4000
+Branch Miss 2: 0
+Cache Miss 2: 0
+CPU Usage 2: 0
+Utilization 2: 10000
+Calculated 2: 4000
+Best 2: 4000
+Branch Miss 3: 0
+Cache Miss 3: 0
+CPU Usage 3: 0
+Utilization 3: 10000
+Calculated 3: 4000
+Best 3: 4000
+CHOSEN: 0
+========================
+<0> CREATING THREAD -> 0 -> 0x8080439c -> 0x80804474 -> 0x804000f8
+Branch Miss 0: 0
+Cache Miss 0: 0
+CPU Usage 0: 0
+Utilization 0: 10000
+Calculated 0: 4000
+Best 0: 1000000000
+Branch Miss 1: 0
+Cache Miss 1: 0
+CPU Usage 1: 0
+Utilization 1: 10000
+Calculated 1: 4000
+Best 1: 4000
+Branch Miss 2: 0
+Cache Miss 2: 0
+CPU Usage 2: 0
+Utilization 2: 10000
+Calculated 2: 4000
+Best 2: 4000
+Branch Miss 3: 0
+Cache Miss 3: 0
+CPU Usage 3: 0
+Utilization 3: 10000
+Calculated 3: 4000
+Best 3: 4000
+CHOSEN: 0
+========================
+Branch Miss 0: 0
+Cache Miss 0: 0
+CPU Usage 0: 0
+Utilization 0: 10000
+Calculated 0: 4000
+Best 0: 1000000000
+Branch Miss 1: 0
+Cache Miss 1: 0
+CPU Usage 1: 0
+Utilization 1: 10000
+Calculated 1: 4000
+Best 1: 4000
+Branch Miss 2: 0
+Cache Miss 2: 0
+CPU Usage 2: 0
+Utilization 2: 10000
+Calculated 2: 4000
+Best 2: 4000
+Branch Miss 3: 0
+Cache Miss 3: 0
+CPU Usage 3: 0
+Utilization 3: 10000
+Calculated 3: 4000
+Best 3: 4000
+CHOSEN: 0
+========================
+<0> CREATING THREAD -> 0 -> 0x808041f8 -> 0x808042d0 -> 0x804000f8
+<0> BEGIN A
+Branch Miss 0: 1
+Cache Miss 0: 2158
+CPU Usage 0: 10000
+Utilization 0: 5312
+Calculated 0: 4556
+Best 0: 1000000000
+Branch Miss 1: 0
+Cache Miss 1: 0
+CPU Usage 1: 0
+Utilization 1: 10000
+Calculated 1: 4000
+Best 1: 4556
+Branch Miss 2: 0
+Cache Miss 2: 0
+CPU Usage 2: 0
+Utilization 2: 10000
+Calculated 2: 4000
+Best 2: 4000
+Branch Miss 3: 0
+Cache Miss 3: 0
+CPU Usage 3: 0
+Utilization 3: 10000
+Calculated 3: 4000
+Best 3: 4000
+CHOSEN: 1
+========================
+<0> BEGIN E
+Branch Miss 0: 1
+Cache Miss 0: 2151
+CPU Usage 0: 10000
+Utilization 0: 7641
+Calculated 0: 5486
+Best 0: 1000000000
+Branch Miss 1: 0
+Cache Miss 1: 0
+CPU Usage 1: 0
+Utilization 1: 10000
+Calculated 1: 4000
+Best 1: 5486
+Branch Miss 2: 0
+Cache Miss 2: 0
+CPU Usage 2: 0
+Utilization 2: 10000
+Calculated 2: 4000
+Best 2: 4000
+Branch Miss 3: 0
+Cache Miss 3: 0
+CPU Usage 3: 0
+Utilization 3: 10000
+Calculated 3: 4000
+Best 3: 4000
+CHOSEN: 1
+========================
+<0> BEGIN G
+Branch Miss 0: 0
+Cache Miss 0: 2113
+CPU Usage 0: 10000
+Utilization 0: 8286
+Calculated 0: 5737
+Best 0: 1000000000
+Branch Miss 1: 0
+Cache Miss 1: 0
+CPU Usage 1: 0
+Utilization 1: 10000
+Calculated 1: 4000
+Best 1: 5737
+Branch Miss 2: 0
+Cache Miss 2: 0
+CPU Usage 2: 0
+Utilization 2: 10000
+Calculated 2: 4000
+Best 2: 4000
+Branch Miss 3: 0
+Cache Miss 3: 0
+CPU Usage 3: 0
+Utilization 3: 10000
+Calculated 3: 4000
+Best 3: 4000
+CHOSEN: 1
+========================
+<0> BEGIN C
+Branch Miss 0: 0
+Cache Miss 0: 2089
+CPU Usage 0: 10000
+Utilization 0: 8470
+Calculated 0: 5805
+Best 0: 1000000000
+Branch Miss 1: 0
+Cache Miss 1: 0
+CPU Usage 1: 0
+Utilization 1: 10000
+Calculated 1: 4000
+Best 1: 5805
+Branch Miss 2: 0
+Cache Miss 2: 0
+CPU Usage 2: 0
+Utilization 2: 10000
+Calculated 2: 4000
+Best 2: 4000
+Branch Miss 3: 0
+Cache Miss 3: 0
+CPU Usage 3: 0
+Utilization 3: 10000
+Calculated 3: 4000
+Best 3: 4000
+CHOSEN: 1
+========================
+<0> BEGIN B
+<0> END B
+<0> BEGIN BFr
+a<nc0h > ENDMiss 0: 0
+Cache Miss 0: 2089
+CPU Usage 0: 10000
+Utilization 0: 0
+Calculated 0: 2417
+Best 0: 1000000000
+Branch Miss 1: 0
+Cache Miss 1: 33
+CPU Usage 1: 10000
+Utilization 1: 215
+Calculated 1: 2092
+Best 1: 2417
+Branch Miss 2: 0
+Cache Miss 2: 0
+CPU Usage 2: 0
+Utilization 2: 10000
+Calculated 2: 4000
+Best 2: 2092
+Branch Miss 3: 0
+Cache Miss 3: 0
+CPU Usage 3: 0
+Utilization 3: 10000
+Calculated 3: 4000
+Best 3: 2092
+CHOSEN: 1
+========================
+ F
+<0> BEGIN D
+<0> END D
+<0> BEGIN H
+<0> END H
+Branch Miss 0: 0
+Cache Miss 0: 2089
+CPU Usage 0: 10000
+Utilization 0: 0
+Calculated 0: 2417
+Best 0: 1000000000
+Branch Miss 1: 0
+Cache Miss 1: 3553
+CPU Usage 1: 10000
+Utilization 1: 345
+Calculated 1: 2848
+Best 1: 2417
+Branch Miss 2: 0
+Cache Miss 2: 0
+CPU Usage 2: 0
+Utilization 2: 10000
+Calculated 2: 4000
+Best 2: 2417
+Branch Miss 3: 0
+Cache Miss 3: 0
+CPU Usage 3: 0
+Utilization 3: 10000
+Calculated 3: 4000
+Best 3: 2417
+CHOSEN: 0
+========================
+Branch Miss 0: 0
+Cache Miss 0: 2089
+CPU Usage 0: 10000
+Utilization 0: 0
+Calculated 0: 2417
+Best 0: 1000000000
+Branch Miss 1: 0
+Cache Miss 1: 3553
+CPU Usage 1: 10000
+Utilization 1: 215
+Calculated 1: 2796
+Best 1: 2417
+Branch Miss 2: 0
+Cache Miss 2: 0
+CPU Usage 2: 0
+Utilization 2: 10000
+Calculated 2: 4000
+Best 2: 2417
+Branch Miss 3: 0
+Cache Miss 3: 0
+CPU Usage 3: 0
+Utilization 3: 10000
+Calculated 3: 4000
+Best 3: 2417
+CHOSEN: 0
+========================
+Branch Miss 0: 0
+Cache Miss 0: 2089
+CPU Usage 0: 10000
+Utilization 0: 0
+Calculated 0: 2417
+Best 0: 1000000000
+Branch Miss 1: 0
+Cache Miss 1: 4315
+CPU Usage 1: 9940
+Utilization 1: 320
+Calculated 1: 2979
+Best 1: 2417
+Branch Miss 2: 0
+Cache Miss 2: 0
+CPU Usage 2: 0
+Utilization 2: 10000
+Calculated 2: 4000
+Best 2: 2417
+Branch Miss 3: 0
+Cache Miss 3: 0
+CPU Usage 3: 0
+Utilization 3: 10000
+Calculated 3: 4000
+Best 3: 2417
+CHOSEN: 0
+========================
+Branch Miss 0: 0
+Cache Miss 0: 2089
+CPU Usage 0: 10000
+Utilization 0: 0
+Calculated 0: 2417
+Best 0: 1000000000
+Branch Miss 1: 0
+Cache Miss 1: 2952
+CPU Usage 1: 9942
+Utilization 1: 744
+Calculated 1: 2876
+Best 1: 2417
+Branch Miss 2: 0
+Cache Miss 2: 0
+CPU Usage 2: 0
+Utilization 2: 10000
+Calculated 2: 4000
+Best 2: 2417
+Branch Miss 3: 0
+Cache Miss 3: 0
+CPU Usage 3: 0
+Utilization 3: 10000
+Calculated 3: 4000
+Best 3: 2417
+CHOSEN: 0
+========================
+Branch Miss 0: 0
+Cache Miss 0: 3159
+CPU Usage 0: 275
+Utilization 0: 1858
+Calculated 0: 1430
+Best 0: 1000000000
+Branch Miss 1: 0
+Cache Miss 1: 2952
+CPU Usage 1: 9942
+Utilization 1: 744
+Calculated 1: 2876
+Best 1: 1430
+Branch Miss 2: 0
+Cache Miss 2: 0
+CPU Usage 2: 0
+Utilization 2: 10000
+Calculated 2: 4000
+Best 2: 1430
+Branch Miss 3: 0
+Cache Miss 3: 0
+CPU Usage 3: 0
+Utilization 3: 10000
+Calculated 3: 4000
+Best 3: 1430
+CHOSEN: 0
+========================
+Branch Miss 0: 0
+Cache Miss 0: 3159
+CPU Usage 0: 275
+Utilization 0: 1858
+Calculated 0: 1430
+Best 0: 1000000000
+Branch Miss 1: 0
+Cache Miss 1: 1654
+CPU Usage 1: 7739
+Utilization 1: 627
+Calculated 1: 2129
+Best 1: 1430
+Branch Miss 2: 0
+Cache Miss 2: 0
+CPU Usage 2: 0
+Utilization 2: 10000
+Calculated 2: 4000
+Best 2: 1430
+Branch Miss 3: 0
+Cache Miss 3: 0
+CPU Usage 3: 0
+Utilization 3: 10000
+Calculated 3: 4000
+Best 3: 1430
+CHOSEN: 0
+========================
+Branch Miss 0: 0
+Cache Miss 0: 3213
+CPU Usage 0: 1337
+Utilization 0: 1172
+Calculated 0: 1378
+Best 0: 1000000000
+Branch Miss 1: 0
+Cache Miss 1: 1654
+CPU Usage 1: 7739
+Utilization 1: 1148
+Calculated 1: 2337
+Best 1: 1378
+Branch Miss 2: 0
+Cache Miss 2: 0
+CPU Usage 2: 0
+Utilization 2: 10000
+Calculated 2: 4000
+Best 2: 1378
+Branch Miss 3: 0
+Cache Miss 3: 0
+CPU Usage 3: 0
+Utilization 3: 10000
+Calculated 3: 4000
+Best 3: 1378
+CHOSEN: 0
+========================
+Branch Miss 0: 0
+Cache Miss 0: 3074
+CPU Usage 0: 934
+Utilization 0: 747
+Calculated 0: 1100
+Best 0: 1000000000
+Branch Miss 1: 0
+Cache Miss 1: 1654
+CPU Usage 1: 7739
+Utilization 1: 1148
+Calculated 1: 2337
+Best 1: 1100
+Branch Miss 2: 0
+Cache Miss 2: 0
+CPU Usage 2: 0
+Utilization 2: 10000
+Calculated 2: 4000
+Best 2: 1100
+Branch Miss 3: 0
+Cache Miss 3: 0
+CPU Usage 3: 0
+Utilization 3: 10000
+Calculated 3: 4000
+Best 3: 1100
+CHOSEN: 0
+========================
+Branch Miss 0: 0
+Cache Miss 0: 4488
+CPU Usage 0: 877
+Utilization 0: 586
+Calculated 0: 1307
+Best 0: 1000000000
+Branch Miss 1: 0
+Cache Miss 1: 1654
+CPU Usage 1: 7739
+Utilization 1: 1148
+Calculated 1: 2337
+Best 1: 1307
+Branch Miss 2: 0
+Cache Miss 2: 0
+CPU Usage 2: 0
+Utilization 2: 10000
+Calculated 2: 4000
+Best 2: 1307
+Branch Miss 3: 0
+Cache Miss 3: 0
+CPU Usage 3: 0
+Utilization 3: 10000
+Calculated 3: 4000
+Best 3: 1307
+CHOSEN: 0
+========================
+Branch Miss 0: 0
+Cache Miss 0: 2647
+CPU Usage 0: 816
+Utilization 0: 550
+Calculated 0: 912
+Best 0: 1000000000
+Branch Miss 1: 0
+Cache Miss 1: 1654
+CPU Usage 1: 7739
+Utilization 1: 1148
+Calculated 1: 2337
+Best 1: 912
+Branch Miss 2: 0
+Cache Miss 2: 0
+CPU Usage 2: 0
+Utilization 2: 10000
+Calculated 2: 4000
+Best 2: 912
+Branch Miss 3: 0
+Cache Miss 3: 0
+CPU Usage 3: 0
+Utilization 3: 10000
+Calculated 3: 4000
+Best 3: 912
+CHOSEN: 0
+========================
+<0>: IC::exc_gpf(cs=0,ip=0x00000000,fl=0) :<0>
+
+PANIC: unexpected error!
+Rebooting the machine!

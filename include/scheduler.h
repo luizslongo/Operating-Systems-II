@@ -492,7 +492,7 @@ public:
     
     /**
       cpu_value = branch_miss[cpu] + cache_miss[cpu] + cpu_usage[cpu]
-      if (slack_cur_cpu < 0.3) {
+      if (slack_cur_cpu < 30000) {
         
         choose_better_cpu();
       }
@@ -503,12 +503,12 @@ public:
  
     for (unsigned int i = 0; i < Traits<Machine>::CPUS; i++) {
       calculated   = (branch_miss_per_cpu[i] +  cache_miss_per_cpu[i] + cpu_usage_per_cpu[i] + (10000ull - slack_per_cpu[i])*2ull)/5ull;
-      // osw << "Branch Miss " << i << ": " << branch_miss_per_cpu[i] << "\n";
-      // osw << "Cache Miss " << i << ": " << cache_miss_per_cpu[i] << "\n";
-      // osw << "CPU Usage " << i << ": " << cpu_usage_per_cpu[i] << "\n";
-      osw << "Slack " << i << ": " << slack_per_cpu[i] << "\n";
-      // osw << "Calculated " << i << ": " << calculated << "\n";
-      // osw << "Best " << i << ": " << best << "\n";
+      osw << "Branch Miss " << i << ": " << branch_miss_per_cpu[i] << "\n";
+      osw << "Cache Miss " << i << ": " << cache_miss_per_cpu[i] << "\n";
+      osw << "CPU Usage " << i << ": " << cpu_usage_per_cpu[i] << "\n";
+      osw << "Utilization " << i << ": " << 10000ull - slack_per_cpu[i] << "\n";
+      osw << "Calculated " << i << ": " << calculated << "\n";
+      osw << "Best " << i << ": " << best << "\n";
 
       if (calculated < best) {
         best = calculated;
