@@ -353,17 +353,17 @@ volatile unsigned long long PEDF_Modified::base_time[Traits<Machine>::CPUS];
 volatile unsigned long long PEDF_Modified::time_spent_in_idle[Traits<Machine>::CPUS];
 volatile unsigned long long PEDF_Modified::total_time_of_jobs_per_cpu[Traits<Machine>::CPUS];
 volatile unsigned long long PEDF_Modified::total_slack_per_cpu[Traits<Machine>::CPUS];
-volatile unsigned long long PEDF_Modified::slack_per_cpu[Traits<Machine>::CPUS];
+volatile unsigned long long PEDF_Modified::utilization_per_cpu[Traits<Machine>::CPUS];
 
 void PEDF_Modified::handle(Event event)
 {
     EDF_Modified::handle(event);
 
     if (periodic() && (event & JOB_FINISH)) {
-        branch_miss_per_cpu[CPU::id()] = (PMU::read(5) > 0) ? (PMU::read(6)*10000)/PMU::read(5) : 0;
-        cache_miss_per_cpu[CPU::id()] = (PMU::read(3) > 0)? (PMU::read(4)*10000)/PMU::read(3) : 0;
+        branch_miss_per_cpu[CPU::id()] = (PMU::read(5) > 0) ? (PMU::read(6)*10000ull)/PMU::read(5) : 0;
+        cache_miss_per_cpu[CPU::id()] = (PMU::read(3) > 0)? (PMU::read(4)*10000ull)/PMU::read(3) : 0;
         unsigned long long total = TSC::time_stamp() - base_time[CPU::id()];
-        cpu_usage_per_cpu[CPU::id()] = (10000*(total - time_spent_in_idle[CPU::id()]))/total;
+        cpu_usage_per_cpu[CPU::id()] = (total > 0) ? (10000ull*(total - time_spent_in_idle[CPU::id()]))/total : 0;
 
         Tick task_type = ((BEST_EFFORT & _priority) == BEST_EFFORT ? BEST_EFFORT : CRITICAL);
         Tick absolute_deadline = _priority - task_type;
@@ -385,7 +385,7 @@ void PEDF_Modified::handle(Event event)
             total_slack += absolute_deadline - _statistics.job_release;
         }
 
-        slack_per_cpu[CPU::id()] = (10000*total_slack_per_cpu[CPU::id()])/total_time_of_jobs_per_cpu[CPU::id()];
+        utilization_per_cpu[CPU::id()] = 10000ull - (10000ull*total_slack_per_cpu[CPU::id()])/total_time_of_jobs_per_cpu[CPU::id()];
 
         // cout << "Slack %: " << slack_per_cpu[CPU::id()] << "\n";
     }
@@ -402,9 +402,9 @@ void PEDF_Modified::handle(Event event)
             total_time_of_jobs_per_cpu[CPU::id()] -= total_time_of_jobs;
             total_slack_per_cpu[CPU::id()] -= total_slack;
             if (total_time_of_jobs_per_cpu[CPU::id()] > 0) {
-                slack_per_cpu[CPU::id()] = (10000*total_slack_per_cpu[CPU::id()])/total_time_of_jobs_per_cpu[CPU::id()];
+                utilization_per_cpu[CPU::id()] = 10000ull - (10000ull * total_slack_per_cpu[CPU::id()])/total_time_of_jobs_per_cpu[CPU::id()];
             } else {
-                slack_per_cpu[CPU::id()] = 10000;
+                utilization_per_cpu[CPU::id()] = 0;
             }
             total_time_of_jobs = 0;
             total_slack = 0;
@@ -425,9 +425,9 @@ void PEDF_Modified::handle(Event event)
         total_slack_per_cpu[CPU::id()] -= total_slack;
 
         if (total_time_of_jobs_per_cpu[CPU::id()] > 0) {
-            slack_per_cpu[CPU::id()] = (10000*total_slack_per_cpu[CPU::id()])/total_time_of_jobs_per_cpu[CPU::id()];
+            utilization_per_cpu[CPU::id()] = 10000ull - (10000ull*total_slack_per_cpu[CPU::id()])/total_time_of_jobs_per_cpu[CPU::id()];
         } else {
-            slack_per_cpu[CPU::id()] = 10000;
+            utilization_per_cpu[CPU::id()] = 0;
 
         }
     }

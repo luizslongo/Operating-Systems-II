@@ -463,7 +463,7 @@ public:
   static volatile unsigned long long time_spent_in_idle[Traits<Machine>::CPUS];
   static volatile unsigned long long total_time_of_jobs_per_cpu[Traits<Machine>::CPUS];
   static volatile unsigned long long total_slack_per_cpu[Traits<Machine>::CPUS];
-  static volatile unsigned long long slack_per_cpu[Traits<Machine>::CPUS];
+  static volatile unsigned long long utilization_per_cpu[Traits<Machine>::CPUS];
 
 protected: 
   Tick total_time_of_jobs = 0;
@@ -502,13 +502,12 @@ public:
      */
  
     for (unsigned int i = 0; i < Traits<Machine>::CPUS; i++) {
-      calculated   = (branch_miss_per_cpu[i] +  cache_miss_per_cpu[i] + cpu_usage_per_cpu[i] + (10000ull - slack_per_cpu[i])*2ull)/5ull;
+      calculated   = (branch_miss_per_cpu[i] +  cache_miss_per_cpu[i] + cpu_usage_per_cpu[i] + utilization_per_cpu[i]*2ull)/5ull;
       osw << "Branch Miss " << i << ": " << branch_miss_per_cpu[i] << "\n";
       osw << "Cache Miss " << i << ": " << cache_miss_per_cpu[i] << "\n";
       osw << "CPU Usage " << i << ": " << cpu_usage_per_cpu[i] << "\n";
-      osw << "Utilization " << i << ": " << 10000ull - slack_per_cpu[i] << "\n";
+      osw << "Utilization " << i << ": " << utilization_per_cpu[i] << "\n";
       osw << "Calculated " << i << ": " << calculated << "\n";
-      osw << "Best " << i << ": " << best << "\n";
 
       if (calculated < best) {
         best = calculated;
