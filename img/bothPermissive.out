@@ -1,0 +1,3424 @@
+c[?7l[2J[0mSeaBIOS (version 1.16.3-3.fc41)
+
+
+iPXE (https://ipxe.org) 00:03.0 CA00 PCI2.10 PnP PMM+3EFCA380+3EF0A380 CA00
+Press Ctrl-B to configure iPXE (PCI 00:03.0)...                                                                               
+
+
+Booting from Hard Disk...
+Boot failed: could not read the boot disk
+
+Booting from Floppy...
+Loading EPOS ..... done
+
+
+
+<0>: Ignoring ELF segment 1 at 0x80480d4! :<0>
+
+*** This is EPOS!
+
+Setting up this machine as follows: 
+  Mode:         library
+  Processor:    4 x IA32 at 2000 MHz (BUS clock = 2000 MHz)
+  Machine:      PC
+  Memory:       1048576 KB [0x00000000:0x40000000]
+  User memory:  1047412 KB [0x00000000:0x3fedd000]
+  I/O space:    28612 KB [0xfd000000:0xfebf1000]
+  Node Id:      will get from the network!
+  Position:     will get from the network!
+  Setup:        26304 bytes
+  APP code:     53248 bytes	data: 4214784 bytes
+
+Slack 0: 0
+Slack 1: 0
+Slack 2: 0
+Slack 3: 0
+CHOSEN: 0
+========================
+<0> CREATING THREAD -> 0 -> 0xffc4be04 -> 0xffc4bedc -> 0x804000f8
+Slack 0: 0
+Slack 1: 0
+Slack 2: 0
+Slack 3: 0
+CHOSEN: 0
+========================
+<0> CREATING THREAD -> 0 -> 0xffc47c40 -> 0xffc47d18 -> 0x804000f8
+Slack 0: 0
+Slack 1: 0
+Slack 2: 0
+Slack 3: 0
+CHOSEN: 0
+========================
+<2> CREATING THREAD -> 2 -> 0xffc43a94 -> 0xffc43b6c -> 0x804000f8
+Slack 0: 0
+Slack 1: 0
+Slack 2: 0
+Slack 3: 0
+CHOSEN: 0
+========================
+<3> CREATING THREAD -> 3 -> 0xffc3f8e8 -> 0xffc3f9c0 -> 0x804000f8
+Slack 0: 0
+Slack 1: 0
+Slack 2: 0
+Slack 3: 0
+CHOSEN: 0
+========================
+<1> CREATING THREAD -> 1 -> 0xffc3b73c -> 0xffc3b814 -> 0x804000f8
+Slack 0: 0
+Slack 1: 0
+Slack 2: 0
+Slack 3: 0
+CHOSEN: 0
+========================
+Slack 0: 0
+Slack 1: 0
+Slack 2: 0
+Slack 3: 0
+CHOSEN: 0
+========================
+<0> CREATING THREAD -> 0 -> 0x80804e28 -> 0x80804f00 -> 0x804000f8
+Slack 0: 0
+Slack 1: 0
+Slack 2: 0
+Slack 3: 0
+CHOSEN: 0
+========================
+Slack 0: 0
+Slack 1: 0
+Slack 2: 0
+Slack 3: 0
+CHOSEN: 0
+========================
+<0> CREATING THREAD -> 0 -> 0x80804c84 -> 0x80804d5c -> 0x804000f8
+Slack 0: 0
+Slack 1: 0
+Slack 2: 0
+Slack 3: 0
+CHOSEN: 0
+========================
+Slack 0: 0
+Slack 1: 0
+Slack 2: 0
+Slack 3: 0
+CHOSEN: 0
+========================
+<0> CREATING THREAD -> 0 -> 0x80804aa4 -> 0x80804b7c -> 0x804000f8
+Slack 0: 0
+Slack 1: 0
+Slack 2: 0
+Slack 3: 0
+CHOSEN: 0
+========================
+Slack 0: 0
+Slack 1: 0
+Slack 2: 0
+Slack 3: 0
+CHOSEN: 0
+========================
+<0> CREATING THREAD -> 0 -> 0x80804900 -> 0x808049d8 -> 0x804000f8
+Slack 0: 0
+Slack 1: 0
+Slack 2: 0
+Slack 3: 0
+CHOSEN: 0
+========================
+Slack 0: 0
+Slack 1: 0
+Slack 2: 0
+Slack 3: 0
+CHOSEN: 0
+========================
+<0> CREATING THREAD -> 0 -> 0x80804720 -> 0x808047f8 -> 0x804000f8
+Slack 0: 0
+Slack 1: 0
+Slack 2: 0
+Slack 3: 0
+CHOSEN: 0
+========================
+Slack 0: 0
+Slack 1: 0
+Slack 2: 0
+Slack 3: 0
+CHOSEN: 0
+========================
+<0> CREATING THREAD -> 0 -> 0x8080457c -> 0x80804654 -> 0x804000f8
+Slack 0: 0
+Slack 1: 0
+Slack 2: 0
+Slack 3: 0
+CHOSEN: 0
+========================
+Slack 0: 0
+Slack 1: 0
+Slack 2: 0
+Slack 3: 0
+CHOSEN: 0
+========================
+<0> CREATING THREAD -> 0 -> 0x8080439c -> 0x80804474 -> 0x804000f8
+Slack 0: 0
+Slack 1: 0
+Slack 2: 0
+Slack 3: 0
+CHOSEN: 0
+========================
+Slack 0: 0
+Slack 1: 0
+Slack 2: 0
+Slack 3: 0
+CHOSEN: 0
+========================
+<0> CREATING THREAD -> 0 -> 0x808041f8 -> 0x808042d0 -> 0x804000f8
+<0> BEGIN A
+Job Release: 8
+Job Finish: 59
+Deadline: 158
+Slack 0: 6600
+Slack 1: 0
+Slack 2: 0
+Slack 3: 0
+CHOSEN: 0
+========================
+<0> BEGIN E
+Job Release: 34
+Job Finish: 65
+Deadline: 301
+Slack 0: 8033
+Slack 1: 0
+Slack 2: 0
+Slack 3: 0
+CHOSEN: 0
+========================
+<0> BEGIN G
+Job Release: 46
+Job Finish: 71
+Deadline: 186
+Slack 0: 8078
+Slack 1: 0
+Slack 2: 0
+Slack 3: 0
+CHOSEN: 0
+========================
+<0> BEGIN C
+Job Release: 21
+Job Finish: 77
+Deadline: 204
+Slack 0: 7797
+Slack 1: 0
+Slack 2: 0
+Slack 3: 0
+CHOSEN: 0
+========================
+<0> BEGIN B
+<0> END B
+<0> BEGIN F
+<0> END F
+<0> BEGIN D
+<0> END D
+<0> BEGIN H
+<0> END H
+Job Release: 158
+Job Finish: 162
+Deadline: 308
+Slack 0: 8123
+Slack 1: 0
+Slack 2: 0
+Slack 3: 0
+CHOSEN: 0
+========================
+Job Release: 186
+Job Finish: 190
+Deadline: 326
+Slack 0: 8339
+Slack 1: 0
+Slack 2: 0
+Slack 3: 0
+CHOSEN: 0
+========================
+Job Release: 204
+Job Finish: 210
+Deadline: 387
+Slack 0: 8540
+Slack 1: 0
+Slack 2: 0
+Slack 3: 0
+CHOSEN: 0
+========================
+Job Release: 301
+Job Finish: 305
+Deadline: 568
+Slack 0: 8777
+Slack 1: 0
+Slack 2: 0
+Slack 3: 0
+CHOSEN: 0
+========================
+Job Release: 308
+Job Finish: 312
+Deadline: 458
+Slack 0: 8865
+Slack 1: 0
+Slack 2: 0
+Slack 3: 0
+CHOSEN: 0
+========================
+Job Release: 326
+Job Finish: 329
+Deadline: 466
+Slack 0: 8937
+Slack 1: 0
+Slack 2: 0
+Slack 3: 0
+CHOSEN: 0
+========================
+Job Release: 387
+Job Finish: 391
+Deadline: 570
+Slack 0: 9016
+Slack 1: 0
+Slack 2: 0
+Slack 3: 0
+CHOSEN: 0
+========================
+Job Release: 458
+Job Finish: 461
+Deadline: 608
+Slack 0: 9072
+Slack 1: 0
+Slack 2: 0
+Slack 3: 0
+CHOSEN: 0
+========================
+Job Release: 466
+Job Finish: 470
+Deadline: 606
+Slack 0: 9112
+Slack 1: 0
+Slack 2: 0
+Slack 3: 0
+CHOSEN: 0
+========================
+Job Release: 568
+Job Finish: 572
+Deadline: 835
+Slack 0: 9191
+Slack 1: 0
+Slack 2: 0
+Slack 3: 0
+CHOSEN: 0
+========================
+Job Release: 570
+Job Finish: 577
+Deadline: 753
+Slack 0: 9220
+Slack 1: 0
+Slack 2: 0
+Slack 3: 0
+CHOSEN: 0
+========================
+Job Release: 608
+Job Finish: 614
+Deadline: 758
+Job Release: 606
+Job Finish: 618
+Deadline: 746
+Slack 0: 9235
+Slack 1: 0
+Slack 2: 0
+Slack 3: 0
+CHOSEN: 0
+========================
+Job Release: 746
+Job Finish: 749
+Deadline: 886
+Slack 0: 9260
+Slack 1: 0
+Slack 2: 0
+Slack 3: 0
+CHOSEN: 0
+========================
+Job Release: 758
+Job Finish: 762
+Deadline: 908
+Slack 0: 9282
+Slack 1: 0
+Slack 2: 0
+Slack 3: 0
+CHOSEN: 0
+========================
+Job Release: 753
+Job Finish: 764
+Deadline: 936
+Slack 0: 9288
+Slack 1: 0
+Slack 2: 0
+Slack 3: 0
+CHOSEN: 0
+========================
+Job Release: 835
+Job Finish: 839
+Deadline: 1102
+Slack 0: 9328
+Slack 1: 0
+Slack 2: 0
+Slack 3: 0
+CHOSEN: 0
+========================
+Job Release: 886
+Job Finish: 890
+Deadline: 1026
+Slack 0: 9342
+Slack 1: 0
+Slack 2: 0
+Slack 3: 0
+CHOSEN: 0
+========================
+Job Release: 908
+Job Finish: 912
+Deadline: 1058
+Slack 0: 9357
+Slack 1: 0
+Slack 2: 0
+Slack 3: 0
+CHOSEN: 0
+========================
+Job Release: 936
+Job Finish: 940
+Deadline: 1119
+Slack 0: 9375
+Slack 1: 0
+Slack 2: 0
+Slack 3: 0
+CHOSEN: 0
+========================
+Job Release: 1026
+Job Finish: 1029
+Deadline: 1166
+Slack 0: 9388
+Slack 1: 0
+Slack 2: 0
+Slack 3: 0
+CHOSEN: 0
+========================
+Job Release: 1058
+Job Finish: 1061
+Deadline: 1208
+Slack 0: 9402
+Slack 1: 0
+Slack 2: 0
+Slack 3: 0
+CHOSEN: 0
+========================
+Job Release: 1102
+Job Finish: 1105
+Deadline: 1369
+Job Release: 1119
+Job Finish: 1122
+Deadline: 1302
+Slack 0: 9444
+Slack 1: 0
+Slack 2: 0
+Slack 3: 0
+CHOSEN: 0
+========================
+Job Release: 1166
+Job Finish: 1170
+Deadline: 1306
+Job Release: 1208
+Job Finish: 1212
+Deadline: 1358
+Slack 0: 9460
+Slack 1: 0
+Slack 2: 0
+Slack 3: 0
+CHOSEN: 0
+========================
+Slack 0: 9460
+Slack 1: 0
+Slack 2: 0
+Slack 3: 0
+CHOSEN: 0
+========================
+Job Release: 1306
+Job Finish: 1310
+Deadline: 1446
+Slack 0: 9467
+Slack 1: 0
+Slack 2: 0
+Slack 3: 0
+CHOSEN: 0
+========================
+Job Release: 1302
+Job Finish: 1313
+Deadline: 1485
+Job Release: 1358
+Job Finish: 1361
+Deadline: 1508
+Job Release: 1369
+Job Finish: 1373
+Deadline: 1636
+Slack 0: 9490
+Slack 1: 0
+Slack 2: 0
+Slack 3: 0
+CHOSEN: 0
+========================
+Job Release: 1446
+Job Finish: 1450
+Deadline: 1586
+Slack 0: 9495
+Slack 1: 0
+Slack 2: 0
+Slack 3: 0
+CHOSEN: 0
+========================
+Job Release: 1485
+Job Finish: 1488
+Deadline: 1668
+Slack 0: 9505
+Slack 1: 0
+Slack 2: 0
+Slack 3: 0
+CHOSEN: 0
+========================
+Job Release: 1508
+Job Finish: 1512
+Deadline: 1658
+Slack 0: 9510
+Slack 1: 0
+Slack 2: 0
+Slack 3: 0
+CHOSEN: 0
+========================
+Job Release: 1586
+Job Finish: 1589
+Deadline: 1726
+Slack 0: 9516
+Slack 1: 0
+Slack 2: 0
+Slack 3: 0
+CHOSEN: 0
+========================
+Job Release: 1636
+Job Finish: 1640
+Deadline: 1903
+Slack 0: 9529
+Slack 1: 0
+Slack 2: 0
+Slack 3: 0
+CHOSEN: 0
+========================
+Job Release: 1658
+Job Finish: 1661
+Deadline: 1808
+Slack 0: 9535
+Slack 1: 0
+Slack 2: 0
+Slack 3: 0
+CHOSEN: 0
+========================
+Job Release: 1668
+Job Finish: 1671
+Deadline: 1851
+Slack 0: 9543
+Slack 1: 0
+Slack 2: 0
+Slack 3: 0
+CHOSEN: 0
+========================
+Job Release: 1726
+Job Finish: 1729
+Deadline: 1866
+Slack 0: 9547
+Slack 1: 0
+Slack 2: 0
+Slack 3: 0
+CHOSEN: 0
+========================
+Job Release: 1808
+Job Finish: 1812
+Deadline: 1958
+Slack 0: 9551
+Slack 1: 0
+Slack 2: 0
+Slack 3: 0
+CHOSEN: 0
+========================
+Job Release: 1851
+Job Finish: 1854
+Deadline: 2034
+Slack 0: 9558
+Slack 1: 0
+Slack 2: 0
+Slack 3: 0
+CHOSEN: 0
+========================
+Job Release: 1866
+Job Finish: 1870
+Deadline: 2006
+Job Release: 1903
+Job Finish: 1906
+Deadline: 2170
+Slack 0: 9571
+Slack 1: 0
+Slack 2: 0
+Slack 3: 0
+CHOSEN: 0
+========================
+Job Release: 1958
+Job Finish: 1961
+Deadline: 2108
+Slack 0: 9576
+Slack 1: 0
+Slack 2: 0
+Slack 3: 0
+CHOSEN: 0
+========================
+Job Release: 2006
+Job Finish: 2010
+Deadline: 2146
+Slack 0: 9578
+Slack 1: 0
+Slack 2: 0
+Slack 3: 0
+CHOSEN: 0
+========================
+Job Release: 2034
+Job Finish: 2038
+Deadline: 2217
+Slack 0: 9582
+Slack 1: 0
+Slack 2: 0
+Slack 3: 0
+CHOSEN: 0
+========================
+Job Release: 2108
+Job Finish: 2111
+Deadline: 2258
+Job Release: 2146
+Job Finish: 2149
+Deadline: 2286
+Slack 0: 9589
+Slack 1: 0
+Slack 2: 0
+Slack 3: 0
+CHOSEN: 0
+========================
+Job Release: 2170
+Job Finish: 2178
+Deadline: 2437
+Slack 0: 9592
+Slack 1: 0
+Slack 2: 0
+Slack 3: 0
+CHOSEN: 0
+========================
+Job Release: 2217
+Job Finish: 2223
+Deadline: 2400
+Job Release: 2258
+Job Finish: 2261
+Deadline: 2408
+Slack 0: 9597
+Slack 1: 0
+Slack 2: 0
+Slack 3: 0
+CHOSEN: 0
+========================
+Job Release: 2286
+Job Finish: 2290
+Deadline: 2426
+Slack 0: 9599
+Slack 1: 0
+Slack 2: 0
+Slack 3: 0
+CHOSEN: 0
+========================
+Job Release: 2400
+Job Finish: 2403
+Deadline: 2583
+Slack 0: 9603
+Slack 1: 0
+Slack 2: 0
+Slack 3: 0
+CHOSEN: 0
+========================
+Job Release: 2408
+Job Finish: 2412
+Deadline: 2558
+Slack 0: 9605
+Slack 1: 0
+Slack 2: 0
+Slack 3: 0
+CHOSEN: 0
+========================
+Job Release: 2426
+Job Finish: 2430
+Deadline: 2566
+Slack 0: 9607
+Slack 1: 0
+Slack 2: 0
+Slack 3: 0
+CHOSEN: 0
+========================
+Job Release: 2437
+Job Finish: 2440
+Deadline: 2704
+Job Release: 2558
+Job Finish: 2561
+Deadline: 2708
+Slack 0: 9617
+Slack 1: 0
+Slack 2: 0
+Slack 3: 0
+CHOSEN: 0
+========================
+Job Release: 2566
+Job Finish: 2569
+Deadline: 2706
+Job Release: 2583
+Job Finish: 2587
+Deadline: 2766
+Slack 0: 9622
+Slack 1: 0
+Slack 2: 0
+Slack 3: 0
+CHOSEN: 0
+========================
+Slack 0: 9622
+Slack 1: 0
+Slack 2: 0
+Slack 3: 0
+CHOSEN: 0
+========================
+Job Release: 2708
+Job Finish: 2713
+Deadline: 2858
+Slack 0: 9622
+Slack 1: 0
+Slack 2: 0
+Slack 3: 0
+CHOSEN: 0
+========================
+Job Release: 2704
+Job Finish: 2707
+Deadline: 2971
+Slack 0: 9629
+Slack 1: 0
+Slack 2: 0
+Slack 3: 0
+CHOSEN: 0
+========================
+Job Release: 2706
+Job Finish: 2722
+Deadline: 2846
+Slack 0: 9619
+Slack 1: 0
+Slack 2: 0
+Slack 3: 0
+CHOSEN: 0
+========================
+Job Release: 2766
+Job Finish: 2772
+Deadline: 2949
+Slack 0: 9620
+Slack 1: 0
+Slack 2: 0
+Slack 3: 0
+CHOSEN: 0
+========================
+Job Release: 2846
+Job Finish: 2849
+Deadline: 2986
+Slack 0: 9622
+Slack 1: 0
+Slack 2: 0
+Slack 3: 0
+CHOSEN: 0
+========================
+Job Release: 2858
+Job Finish: 2862
+Deadline: 3008
+Job Release: 2949
+Job Finish: 2952
+Deadline: 3132
+Slack 0: 9627
+Slack 1: 0
+Slack 2: 0
+Slack 3: 0
+CHOSEN: 0
+========================
+Job Release: 2971
+Job Finish: 2975
+Deadline: 3238
+Slack 0: 9631
+Slack 1: 0
+Slack 2: 0
+Slack 3: 0
+CHOSEN: 0
+========================
+Job Release: 2986
+Job Finish: 2992
+Deadline: 3126
+Slack 0: 9631
+Slack 1: 0
+Slack 2: 0
+Slack 3: 0
+CHOSEN: 0
+========================
+Job Release: 3008
+Job Finish: 3014
+Deadline: 3158
+Slack 0: 9630
+Slack 1: 0
+Slack 2: 0
+Slack 3: 0
+CHOSEN: 0
+========================
+Job Release: 3126
+Job Finish: 3129
+Deadline: 3266
+Slack 0: 9632
+Slack 1: 0
+Slack 2: 0
+Slack 3: 0
+CHOSEN: 0
+========================
+Job Release: 3132
+Job Finish: 3136
+Deadline: 3315
+Job Release: 3158
+Job Finish: 3161
+Deadline: 3308
+Slack 0: 9636
+Slack 1: 0
+Slack 2: 0
+Slack 3: 0
+CHOSEN: 0
+========================
+Job Release: 3238
+Job Finish: 3241
+Deadline: 3505
+Slack 0: 9641
+Slack 1: 0
+Slack 2: 0
+Slack 3: 0
+CHOSEN: 0
+========================
+Job Release: 3266
+Job Finish: 3270
+Deadline: 3406
+Job Release: 3308
+Job Finish: 3312
+Deadline: 3458
+Slack 0: 9643
+Slack 1: 0
+Slack 2: 0
+Slack 3: 0
+CHOSEN: 0
+========================
+Job Release: 3315
+Job Finish: 3319
+Deadline: 3498
+Slack 0: 9645
+Slack 1: 0
+Slack 2: 0
+Slack 3: 0
+CHOSEN: 0
+========================
+Job Release: 3406
+Job Finish: 3409
+Deadline: 3546
+Slack 0: 9646
+Slack 1: 0
+Slack 2: 0
+Slack 3: 0
+CHOSEN: 0
+========================
+Job Release: 3458
+Job Finish: 3461
+Deadline: 3608
+Slack 0: 9648
+Slack 1: 0
+Slack 2: 0
+Slack 3: 0
+CHOSEN: 0
+========================
+Job Release: 3498
+Job Finish: 3502
+Deadline: 3681
+Slack 0: 9650
+Slack 1: 0
+Slack 2: 0
+Slack 3: 0
+CHOSEN: 0
+========================
+Job Release: 3505
+Job Finish: 3509
+Deadline: 3772
+Job Release: 3546
+Job Finish: 3553
+Deadline: 3686
+Slack 0: 9652
+Slack 1: 0
+Slack 2: 0
+Slack 3: 0
+CHOSEN: 0
+========================
+Job Release: 3608
+Job Finish: 3612
+Deadline: 3758
+Slack 0: 9653
+Slack 1: 0
+Slack 2: 0
+Slack 3: 0
+CHOSEN: 0
+========================
+Job Release: 3686
+Job Finish: 3691
+Deadline: 3826
+Slack 0: 9653
+Slack 1: 0
+Slack 2: 0
+Slack 3: 0
+CHOSEN: 0
+========================
+Job Release: 3681
+Job Finish: 3685
+Deadline: 3864
+Slack 0: 9654
+Slack 1: 0
+Slack 2: 0
+Slack 3: 0
+CHOSEN: 0
+========================
+Job Release: 3758
+Job Finish: 3761
+Deadline: 3908
+Slack 0: 9655
+Slack 1: 0
+Slack 2: 0
+Slack 3: 0
+CHOSEN: 0
+========================
+Job Release: 3772
+Job Finish: 3776
+Deadline: 4039
+Slack 0: 9659
+Slack 1: 0
+Slack 2: 0
+Slack 3: 0
+CHOSEN: 0
+========================
+Job Release: 3826
+Job Finish: 3830
+Deadline: 3966
+Slack 0: 9659
+Slack 1: 0
+Slack 2: 0
+Slack 3: 0
+CHOSEN: 0
+========================
+Job Release: 3864
+Job Finish: 3867
+Deadline: 4047
+Job Release: 3908
+Job Finish: 3912
+Deadline: 4058
+Slack 0: 9662
+Slack 1: 0
+Slack 2: 0
+Slack 3: 0
+CHOSEN: 0
+========================
+Job Release: 3966
+Job Finish: 3969
+Deadline: 4106
+Job Release: 4039
+Job Finish: 4042
+Deadline: 4306
+Slack 0: 9667
+Slack 1: 0
+Slack 2: 0
+Slack 3: 0
+CHOSEN: 0
+========================
+Job Release: 4047
+Job Finish: 4051
+Deadline: 4230
+Slack 0: 9668
+Slack 1: 0
+Slack 2: 0
+Slack 3: 0
+CHOSEN: 0
+========================
+Job Release: 4058
+Job Finish: 4061
+Deadline: 4208
+Slack 0: 9669
+Slack 1: 0
+Slack 2: 0
+Slack 3: 0
+CHOSEN: 0
+========================
+Job Release: 4106
+Job Finish: 4110
+Deadline: 4246
+Slack 0: 9670
+Slack 1: 0
+Slack 2: 0
+Slack 3: 0
+CHOSEN: 0
+========================
+Job Release: 4208
+Job Finish: 4212
+Deadline: 4358
+Slack 0: 9670
+Slack 1: 0
+Slack 2: 0
+Slack 3: 0
+CHOSEN: 0
+========================
+Job Release: 4230
+Job Finish: 4234
+Deadline: 4413
+Slack 0: 9671
+Slack 1: 0
+Slack 2: 0
+Slack 3: 0
+CHOSEN: 0
+========================
+Job Release: 4246
+Job Finish: 4249
+Deadline: 4386
+Slack 0: 9672
+Slack 1: 0
+Slack 2: 0
+Slack 3: 0
+CHOSEN: 0
+========================
+Job Release: 4306
+Job Finish: 4309
+Deadline: 4573
+Slack 0: 9675
+Slack 1: 0
+Slack 2: 0
+Slack 3: 0
+CHOSEN: 0
+========================
+Job Release: 4358
+Job Finish: 4361
+Deadline: 4508
+Job Release: 4386
+Job Finish: 4390
+Deadline: 4526
+Slack 0: 9677
+Slack 1: 0
+Slack 2: 0
+Slack 3: 0
+CHOSEN: 0
+========================
+Job Release: 4413
+Job Finish: 4417
+Deadline: 4596
+Slack 0: 9678
+Slack 1: 0
+Slack 2: 0
+Slack 3: 0
+CHOSEN: 0
+========================
+Job Release: 4508
+Job Finish: 4512
+Deadline: 4658
+Slack 0: 9678
+Slack 1: 0
+Slack 2: 0
+Slack 3: 0
+CHOSEN: 0
+========================
+Job Release: 4526
+Job Finish: 4529
+Deadline: 4666
+Slack 0: 9679
+Slack 1: 0
+Slack 2: 0
+Slack 3: 0
+CHOSEN: 0
+========================
+Job Release: 4573
+Job Finish: 4576
+Deadline: 4840
+Slack 0: 9682
+Slack 1: 0
+Slack 2: 0
+Slack 3: 0
+CHOSEN: 0
+========================
+Job Release: 4596
+Job Finish: 4600
+Deadline: 4779
+Slack 0: 9683
+Slack 1: 0
+Slack 2: 0
+Slack 3: 0
+CHOSEN: 0
+========================
+Job Release: 4658
+Job Finish: 4661
+Deadline: 4808
+Slack 0: 9684
+Slack 1: 0
+Slack 2: 0
+Slack 3: 0
+CHOSEN: 0
+========================
+Job Release: 4666
+Job Finish: 4669
+Deadline: 4806
+Job Release: 4779
+Job Finish: 4782
+Deadline: 4962
+Slack 0: 9686
+Slack 1: 0
+Slack 2: 0
+Slack 3: 0
+CHOSEN: 0
+========================
+Job Release: 4808
+Job Finish: 4812
+Deadline: 4958
+Slack 0: 9687
+Slack 1: 0
+Slack 2: 0
+Slack 3: 0
+CHOSEN: 0
+========================
+Job Release: 4806
+Job Finish: 4817
+Deadline: 4946
+Slack 0: 9683
+Slack 1: 0
+Slack 2: 0
+Slack 3: 0
+CHOSEN: 0
+========================
+Job Release: 4840
+Job Finish: 4843
+Deadline: 5107
+Job Release: 4946
+Job Finish: 4949
+Deadline: 5086
+Slack 0: 9687
+Slack 1: 0
+Slack 2: 0
+Slack 3: 0
+CHOSEN: 0
+========================
+Job Release: 4958
+Job Finish: 4961
+Deadline: 5108
+Slack 0: 9687
+Slack 1: 0
+Slack 2: 0
+Slack 3: 0
+CHOSEN: 0
+========================
+Job Release: 4962
+Job Finish: 4969
+Deadline: 5145
+Slack 0: 9687
+Slack 1: 0
+Slack 2: 0
+Slack 3: 0
+CHOSEN: 0
+========================
+Job Release: 5086
+Job Finish: 5089
+Deadline: 5226
+Slack 0: 9687
+Slack 1: 0
+Slack 2: 0
+Slack 3: 0
+CHOSEN: 0
+========================
+Slack 0: 9687
+Slack 1: 0
+Slack 2: 0
+Slack 3: 0
+CHOSEN: 0
+========================
+Job Release: 5108
+Job Finish: 5115
+Deadline: 5258
+Job Release: 5107
+Job Finish: 5121
+Deadline: 5374
+Slack 0: 9684
+Slack 1: 0
+Slack 2: 0
+Slack 3: 0
+CHOSEN: 0
+========================
+Job Release: 5145
+Job Finish: 5149
+Deadline: 5328
+Slack 0: 9684
+Slack 1: 0
+Slack 2: 0
+Slack 3: 0
+CHOSEN: 0
+========================
+Job Release: 5226
+Job Finish: 5230
+Deadline: 5366
+Job Release: 5258
+Job Finish: 5262
+Deadline: 5408
+Slack 0: 9685
+Slack 1: 0
+Slack 2: 0
+Slack 3: 0
+CHOSEN: 0
+========================
+Job Release: 5328
+Job Finish: 5332
+Deadline: 5511
+Slack 0: 9686
+Slack 1: 0
+Slack 2: 0
+Slack 3: 0
+CHOSEN: 0
+========================
+Job Release: 5366
+Job Finish: 5370
+Deadline: 5506
+Slack 0: 9686
+Slack 1: 0
+Slack 2: 0
+Slack 3: 0
+CHOSEN: 0
+========================
+Job Release: 5374
+Job Finish: 5378
+Deadline: 5641
+Slack 0: 9688
+Slack 1: 0
+Slack 2: 0
+Slack 3: 0
+CHOSEN: 0
+========================
+Job Release: 5408
+Job Finish: 5412
+Deadline: 5558
+Slack 0: 9688
+Slack 1: 0
+Slack 2: 0
+Slack 3: 0
+CHOSEN: 0
+========================
+Job Release: 5506
+Job Finish: 5510
+Deadline: 5646
+Slack 0: 9688
+Slack 1: 0
+Slack 2: 0
+Slack 3: 0
+CHOSEN: 0
+========================
+Job Release: 5511
+Job Finish: 5516
+Deadline: 5694
+Slack 0: 9689
+Slack 1: 0
+Slack 2: 0
+Slack 3: 0
+CHOSEN: 0
+========================
+Job Release: 5558
+Job Finish: 5563
+Deadline: 5708
+Slack 0: 9689
+Slack 1: 0
+Slack 2: 0
+Slack 3: 0
+CHOSEN: 0
+========================
+Job Release: 5641
+Job Finish: 5645
+Deadline: 5908
+Slack 0: 9690
+Slack 1: 0
+Slack 2: 0
+Slack 3: 0
+CHOSEN: 0
+========================
+Job Release: 5646
+Job Finish: 5651
+Deadline: 5786
+Slack 0: 9690
+Slack 1: 0
+Slack 2: 0
+Slack 3: 0
+CHOSEN: 0
+========================
+Job Release: 5694
+Job Finish: 5697
+Deadline: 5877
+Job Release: 5708
+Job Finish: 5711
+Deadline: 5858
+Slack 0: 9692
+Slack 1: 0
+Slack 2: 0
+Slack 3: 0
+CHOSEN: 0
+========================
+Job Release: 5786
+Job Finish: 5790
+Deadline: 5926
+Slack 0: 9692
+Slack 1: 0
+Slack 2: 0
+Slack 3: 0
+CHOSEN: 0
+========================
+Job Release: 5858
+Job Finish: 5861
+Deadline: 6008
+Job Release: 5877
+Job Finish: 5880
+Deadline: 6060
+Slack 0: 9694
+Slack 1: 0
+Slack 2: 0
+Slack 3: 0
+CHOSEN: 0
+========================
+Job Release: 5908
+Job Finish: 5912
+Deadline: 6175
+Job Release: 5926
+Job Finish: 5933
+Deadline: 6066
+Job Release: 6008
+Job Finish: 6013
+Deadline: 6158
+Slack 0: 9694
+Slack 1: 0
+Slack 2: 0
+Slack 3: 0
+CHOSEN: 0
+========================
+Job Release: 6060
+Job Finish:Slack 0: 9694
+Slack 1: 0
+Slack 2: 0
+Slack 3: 0
+CHOSEN: 0
+========================
+Job Release: 6066
+Job Finish: 6072
+Deadline: 6206
+Slack 0: 9694
+Slack 1: 0
+Slack 2: 0
+Slack 3: 0
+CHOSEN: 0
+========================
+ 6065
+Deadline: 6243
+Slack 0: 9694
+Slack 1: 0
+Slack 2: 0
+Slack 3: 0
+CHOSEN: 0
+========================
+Job Release: 6158
+Job Finish: 6163
+Deadline: 6308
+Slack 0: 9694
+Slack 1: 0
+Slack 2: 0
+Slack 3: 0
+CHOSEN: 0
+========================
+Job Release: 6175
+Job Finish: 6179
+Deadline: 6442
+Slack 0: 9695
+Slack 1: 0
+Slack 2: 0
+Slack 3: 0
+CHOSEN: 0
+========================
+Job Release: 6206
+Job Finish: 6210
+Deadline: 6346
+Slack 0: 9695
+Slack 1: 0
+Slack 2: 0
+Slack 3: 0
+CHOSEN: 0
+========================
+Job Release: 6243
+Job Finish: 6246
+Deadline: 6426
+Slack 0: 9697
+Slack 1: 0
+Slack 2: 0
+Slack 3: 0
+CHOSEN: 0
+========================
+Job Release: 6308
+Job Finish: 6311
+Deadline: 6458
+Slack 0: 9697
+Slack 1: 0
+Slack 2: 0
+Slack 3: 0
+CHOSEN: 0
+========================
+Job Release: 6346
+Job Finish: 6351
+Deadline: 6486
+Slack 0: 9697
+Slack 1: 0
+Slack 2: 0
+Slack 3: 0
+CHOSEN: 0
+========================
+Job Release: 6426
+Job Finish: 6429
+Deadline: 6609
+Job Release: 6442
+Job Finish: 6445
+Deadline: 6709
+Slack 0: 9700
+Slack 1: 0
+Slack 2: 0
+Slack 3: 0
+CHOSEN: 0
+========================
+Job Release: 6458
+Job Finish: 6462
+Deadline: 6608
+Slack 0: 9700
+Slack 1: 0
+Slack 2: 0
+Slack 3: 0
+CHOSEN: 0
+========================
+Job Release: 6486
+Job Finish: 6490
+Deadline: 6626
+Slack 0: 9700
+Slack 1: 0
+Slack 2: 0
+Slack 3: 0
+CHOSEN: 0
+========================
+Job Release: 6608
+Job Finish: 6612
+Deadline: 6758
+Job Release: 6609
+Job Finish: 6619
+Deadline: 6792
+Slack 0: 9698
+Slack 1: 0
+Slack 2: 0
+Slack 3: 0
+CHOSEN: 0
+========================
+Job Release: 6626
+Job Finish: 6630
+Deadline: 6766
+Job Release: 6709
+Job Finish: 6713
+Deadline: 6976
+Slack 0: 9700
+Slack 1: 0
+Slack 2: 0
+Slack 3: 0
+CHOSEN: 0
+========================
+Job Release: 6758
+Job Finish: 6762
+Deadline: 6908
+Slack 0: 9700
+Slack 1: 0
+Slack 2: 0
+Slack 3: 0
+CHOSEN: 0
+========================
+Job Release: 6766
+Job Finish: 6770
+Deadline: 6906
+Slack 0: 9700
+Slack 1: 0
+Slack 2: 0
+Slack 3: 0
+CHOSEN: 0
+========================
+Job Release: 6792
+Job Finish: 6795
+Deadline: 6975
+Slack 0: 9701
+Slack 1: 0
+Slack 2: 0
+Slack 3: 0
+CHOSEN: 0
+========================
+Slack 0: 9701
+Slack 1: 0
+Slack 2: 0
+Slack 3: 0
+CHOSEN: 0
+========================
+Job Release: 6908
+Job Finish: 6912
+Deadline: 7058
+Slack 0: 9701
+Slack 1: 0
+Slack 2: 0
+Slack 3: 0
+CHOSEN: 0
+========================
+Job Release: 6906
+Job Finish: 6917
+Deadline: 7046
+Slack 0: 9699
+Slack 1: 0
+Slack 2: 0
+Slack 3: 0
+CHOSEN: 0
+========================
+Slack 0: 9699
+Slack 1: 0
+Slack 2: 0
+Slack 3: 0
+CHOSEN: 0
+========================
+Job Release: 6976
+Job Finish: 6981
+Deadline: 7243
+Slack 0: 9700
+Slack 1: 0
+Slack 2: 0
+Slack 3: 0
+CHOSEN: 0
+========================
+Job Release: 6975
+Job Finish: 6987
+Deadline: 7158
+Slack 0: 9698
+Slack 1: 0
+Slack 2: 0
+Slack 3: 0
+CHOSEN: 0
+========================
+Job Release: 7046
+Job Finish: 7050
+Deadline: 7186
+Slack 0: 9698
+Slack 1: 0
+Slack 2: 0
+Slack 3: 0
+CHOSEN: 0
+========================
+Job Release: 7058
+Job Finish: 7061
+Deadline: 7208
+Slack 0: 9698
+Slack 1: 0
+Slack 2: 0
+Slack 3: 0
+CHOSEN: 0
+========================
+Job Release: 7158
+Job Finish: 7164
+Deadline: 7341
+Job Release: 7186
+Job Finish: 7190
+Deadline: 7326
+Job Release: 7208
+Job Finish: 7212
+Deadline: 7358
+Slack 0: 9698
+Slack 1: 0
+Slack 2: 0
+Slack 3: 0
+CHOSEN: 0
+========================
+Job Release: 7243
+Job Finish: 7246
+Deadline: 7510
+Job Release: 7326
+Job Finish: 7331
+Deadline: 7466
+Slack 0: 9700
+Slack 1: 0
+Slack 2: 0
+Slack 3: 0
+CHOSEN: 0
+========================
+Job Release: 7341
+Job Finish: 7344
+Deadline: 7524
+Slack 0: 9701
+Slack 1: 0
+Slack 2: 0
+Slack 3: 0
+CHOSEN: 0
+========================
+Job Release: 7358
+Job Finish: 7362
+Deadline: 7508
+Job Release: 7466
+Job Finish: 7474
+Deadline: 7606
+Slack 0: 9700
+Slack 1: 0
+Slack 2: 0
+Slack 3: 0
+CHOSEN: 0
+========================
+Job Release: 7508
+Job Finish: 7513
+Deadline: 7658
+Slack 0: 9699
+Slack 1: 0
+Slack 2: 0
+Slack 3: 0
+CHOSEN: 0
+========================
+Job Release: 7510
+Job Finish: 7518
+Deadline: 7777
+Slack 0: 9699
+Slack 1: 0
+Slack 2: 0
+Slack 3: 0
+CHOSEN: 0
+========================
+Job Release: 7524
+Job Finish: 7528
+Deadline: 7707
+Slack 0: 9700
+Slack 1: 0
+Slack 2: 0
+Slack 3: 0
+CHOSEN: 0
+========================
+Job Release: 7606
+Job Finish: 7609
+Deadline: 7746
+Slack 0: 9700
+Slack 1: 0
+Slack 2: 0
+Slack 3: 0
+CHOSEN: 0
+========================
+Job Release: 7658
+Job Finish: 7661
+Deadline: 7808
+Slack 0: 9701
+Slack 1: 0
+Slack 2: 0
+Slack 3: 0
+CHOSEN: 0
+========================
+Job Release: 7707
+Job Finish: 7710
+Deadline: 7890
+Slack 0: 9702
+Slack 1: 0
+Slack 2: 0
+Slack 3: 0
+CHOSEN: 0
+========================
+Job Release: 7746
+Job Finish: 7750
+Deadline: 7886
+Slack 0: 9702
+Slack 1: 0
+Slack 2: 0
+Slack 3: 0
+CHOSEN: 0
+========================
+Job Release: 7777
+Job Finish: 7781
+Deadline: 8044
+Slack 0: 9703
+Slack 1: 0
+Slack 2: 0
+Slack 3: 0
+CHOSEN: 0
+========================
+Job Release: 7808
+Job Finish: 7812
+Deadline: 7958
+Slack 0: 9703
+Slack 1: 0
+Slack 2: 0
+Slack 3: 0
+CHOSEN: 0
+========================
+Job Release: 7886
+Job Finish: 7908
+Deadline: 8026
+Job Release: 7890
+Job Finish: 7924
+Deadline: 8073
+Slack 0: 9688
+Slack 1: 0
+Slack 2: 0
+Slack 3: 0
+CHOSEN: 0
+========================
+Job Release: 7958
+Job Finish: 7962
+Deadline: 8108
+Slack 0: 9689
+Slack 1: 0
+Slack 2: 0
+Slack 3: 0
+CHOSEN: 0
+========================
+Job Release: 8026
+Job Finish: 8030
+Deadline: 8166
+Slack 0: 9689
+Slack 1: 0
+Slack 2: 0
+Slack 3: 0
+CHOSEN: 0
+========================
+Job Release: 8044
+Job Finish: 8048
+Deadline: 8311
+Slack 0: 9690
+Slack 1: 0
+Slack 2: 0
+Slack 3: 0
+CHOSEN: 0
+========================
+Job Release: 8073
+Job Finish: 8077
+Deadline: 8256
+Job Release: 8108
+Job Finish: 8112
+Deadline: 8258
+Job Release: 8166
+Job Finish: 8169
+Deadline: 8306
+Slack 0: 9691
+Slack 1: 0
+Slack 2: 0
+Slack 3: 0
+CHOSEN: 0
+========================
+Slack 0: 9691
+Slack 1: 0
+Slack 2: 0
+Slack 3: 0
+CHOSEN: 0
+========================
+Job Release: 8258
+Job Finish: 8281
+Deadline: 8408
+Slack 0: 9686
+Slack 1: 0
+Slack 2: 0
+Slack 3: 0
+CHOSEN: 0
+========================
+Job Slack 0: 9686
+Slack 1: 0
+Slack 2: 0
+Slack 3: 0
+CHOSEN: 0
+========================
+Job Release: 8311
+Job Finish: 8316
+Deadline: 8578
+Slack 0: 9687
+Slack 1: 0
+Slack 2: 0
+Slack 3: 0
+CHOSEN: 0
+========================
+Release: 8256
+Job Finish: 8309
+Deadline: 8439
+Slack 0: 9673
+Slack 1: 0
+Slack 2: 0
+Slack 3: 0
+CHOSEN: 0
+========================
+Job Release: 8306
+Job Finish: 8331
+Deadline: 8446
+Slack 0: 9667
+Slack 1: 0
+Slack 2: 0
+Slack 3: 0
+CHOSEN: 0
+========================
+Job Release: 8408
+Job Finish: 8411
+Deadline: 8558
+Slack 0: 9667
+Slack 1: 0
+Slack 2: 0
+Slack 3: 0
+CHOSEN: 0
+========================
+Job Release: 8439
+Job Finish: 8443
+Deadline: 8622
+Slack 0: 9668
+Slack 1: 0
+Slack 2: 0
+Slack 3: 0
+CHOSEN: 0
+========================
+Job Release: 8446
+Job Finish: 8449
+Deadline: 8586
+Slack 0: 9668
+Slack 1: 0
+Slack 2: 0
+Slack 3: 0
+CHOSEN: 0
+========================
+Job Release: 8558
+Job Finish: 8565
+Deadline: 8708
+Slack 0: 9668
+Slack 1: 0
+Slack 2: 0
+Slack 3: 0
+CHOSEN: 0
+========================
+Job Release: 8578
+Job Finish: 8583
+Deadline: 8845
+Job Release: 8586
+Job Finish: 8591
+Deadline: 8726
+Job Release: 8622
+Job Finish: 8625
+Deadline: 8805
+Job Release: 8708
+Job Finish: 8729
+Deadline: 8858
+Slack 0: 9665
+Slack 1: 0
+Slack 2: 0
+Slack 3: 0
+CHOSEN: 0
+========================
+Job Release: 8726
+Job Finish: 8779
+Deadline: 8866
+Slack 0: 9651
+Slack 1: 0
+Slack 2: 0
+Slack 3: 0
+CHOSEN: 0
+========================
+Job Release: 8805
+Job Finish: 8817
+Deadline: 8988
+Slack 0: 9650
+Slack 1: 0
+Slack 2: 0
+Slack 3: 0
+CHOSEN: 0
+========================
+Job Release: 8845
+Job Finish: 8854
+Deadline: 9112
+Slack 0: 9650
+Slack 1: 0
+Slack 2: 0
+Slack 3: 0
+CHOSEN: 0
+========================
+Job Release: 8858
+Job Finish: 8867
+Deadline: 9008
+Job Release: 8866
+Job Finish: 8879
+Deadline: 9006
+Slack 0: 9646
+Slack 1: 0
+Slack 2: 0
+Slack 3: 0
+CHOSEN: 0
+========================
+Job Release: 8988
+Job Finish: 8992
+Deadline: 9171
+Slack 0: 9647
+Slack 1: 0
+Slack 2: 0
+Slack 3: 0
+CHOSEN: 0
+========================
+Slack 0: 9647
+Slack 1: 0
+Slack 2: 0
+Slack 3: 0
+CHOSEN: 0
+========================
+Job Release: 9008
+Job Finish: 9016
+Deadline: 9158
+Slack 0: 9646
+Slack 1: 0
+Slack 2: 0
+Slack 3: 0
+CHOSEN: 0
+========================
+Job Release: 9006
+Job Finish: 9023
+Deadline: 9146
+Slack 0: 9643
+Slack 1: 0
+Slack 2: 0
+Slack 3: 0
+CHOSEN: 0
+========================
+Job Release: 9112
+Job Finish: 9115
+Deadline: 9379
+Slack 0: 9645
+Slack 1: 0
+Slack 2: 0
+Slack 3: 0
+CHOSEN: 0
+========================
+Job Release: 9146
+Job Finish: 9150
+Deadline: 9286
+Job Release: 9158
+Job Finish: 9162
+Deadline: 9308
+Slack 0: 9646
+Slack 1: 0
+Slack 2: 0
+Slack 3: 0
+CHOSEN: 0
+========================
+Job Release: 9171
+Job Finish: 9175
+Deadline: 9354
+Slack 0: 9646
+Slack 1: 0
+Slack 2: 0
+Slack 3: 0
+CHOSEN: 0
+========================
+Job Release: 9286
+Job Finish: 9290
+Deadline: 9426
+Slack 0: 9646
+Slack 1: 0
+Slack 2: 0
+Slack 3: 0
+CHOSEN: 0
+========================
+Job Release: 9308
+Job Finish: 9312
+Deadline: 9458
+Slack 0: 9647
+Slack 1: 0
+Slack 2: 0
+Slack 3: 0
+CHOSEN: 0
+========================
+Job Release: 9354
+Job Finish: 9357
+Deadline: 9537
+Slack 0: 9648
+Slack 1: 0
+Slack 2: 0
+Slack 3: 0
+CHOSEN: 0
+========================
+Job Release: 9379
+Job Finish: 9383
+Deadline: 9646
+Slack 0: 9649
+Slack 1: 0
+Slack 2: 0
+Slack 3: 0
+CHOSEN: 0
+========================
+Job Release: 9426
+Job Finish: 9429
+Deadline: 9566
+Slack 0: 9650
+Slack 1: 0
+Slack 2: 0
+Slack 3: 0
+CHOSEN: 0
+========================
+Job Release: 9458
+Job Finish: 9464
+Deadline: 9608
+Slack 0: 9649
+Slack 1: 0
+Slack 2: 0
+Slack 3: 0
+CHOSEN: 0
+========================
+Job Release: 9537
+Job Finish: 9540
+Deadline: 9720
+Job Release: 9566
+Job Finish: 9569
+Deadline: 9706
+Slack 0: 9651
+Slack 1: 0
+Slack 2: 0
+Slack 3: 0
+CHOSEN: 0
+========================
+Job Release: 9608
+Job Finish: 9611
+Deadline: 9758
+Job Release: 9646
+Job Finish: 9649
+Deadline: 9913
+Slack 0: 9653
+Slack 1: 0
+Slack 2: 0
+Slack 3: 0
+CHOSEN: 0
+========================
+Job Release: 9706
+Job Finish: 9709
+Deadline: 9846
+Slack 0: 9653
+Slack 1: 0
+Slack 2: 0
+Slack 3: 0
+CHOSEN: 0
+========================
+Job Release: 9720
+Job Finish: 9725
+Deadline: 9903
+Slack 0: 9654
+Slack 1: 0
+Slack 2: 0
+Slack 3: 0
+CHOSEN: 0
+========================
+Job Release: 9758
+Job Finish: 9761
+Deadline: 9908
+Slack 0: 9654
+Slack 1: 0
+Slack 2: 0
+Slack 3: 0
+CHOSEN: 0
+========================
+Job Release: 9846
+Job Finish: 9849
+Deadline: 9986
+Job Release: 9903
+Job Finish: 9906
+DeSlack 0: 9655
+Slack 1: 0
+Slack 2: 0
+Slack 3: 0
+CHOSEN: 0
+========================
+Job Release: 9908
+Job Finish: 9914
+Deadline: 10058
+Slack 0: 9655
+Slack 1: 0
+Slack 2: 0
+Slack 3: 0
+CHOSEN: 0
+========================
+Job Release: 9913
+Job Finish: 9920
+Deadline: 10180
+adline: 10086
+Slack 0: 9656
+Slack 1: 0
+Slack 2: 0
+Slack 3: 0
+CHOSEN: 0
+========================
+Job Release: 9986
+Job Finish: 9989
+Deadline: 10126
+Slack 0: 9656
+Slack 1: 0
+Slack 2: 0
+Slack 3: 0
+CHOSEN: 0
+========================
+Job Release: 10058
+Job Finish: 10061
+Deadline: 10208
+Slack 0: 9657
+Slack 1: 0
+Slack 2: 0
+Slack 3: 0
+CHOSEN: 0
+========================
+Job Release: 10086
+Job Finish: 10089
+Deadline: 10269
+Slack 0: 9658
+Slack 1: 0
+Slack 2: 0
+Slack 3: 0
+CHOSEN: 0
+========================
+Job Release: 10126
+Job Finish: 10130
+Deadline: 10266
+Slack 0: 9658
+Slack 1: 0
+Slack 2: 0
+Slack 3: 0
+CHOSEN: 0
+========================
+Job Release: 10180
+Job Finish: 10183
+Deadline: 10447
+Slack 0: 9659
+Slack 1: 0
+Slack 2: 0
+Slack 3: 0
+CHOSEN: 0
+========================
+Job Release: 10208
+Job Finish: 10212
+Deadline: 10358
+Slack 0: 9660
+Slack 1: 0
+Slack 2: 0
+Slack 3: 0
+CHOSEN: 0
+========================
+Job Release: 10266
+Job Finish: 10273
+Deadline: 10406
+Slack 0: 9659
+Slack 1: 0
+Slack 2: 0
+Slack 3: 0
+CHOSEN: 0
+========================
+Job Release: 10269
+Job Finish: 10279
+Deadline: 10452
+Job Release: 10358
+Job Finish: 10361
+Deadline: 10508
+Job Release: 10406
+Job Finish: 10410
+Deadline: 10546
+Slack 0: 9659
+Slack 1: 0
+Slack 2: 0
+Slack 3: 0
+CHOSEN: 0
+========================
+Job Release: 10447
+Job Finish: 10451
+Deadline: 10714
+Slack 0: 9660
+Slack 1: 0
+Slack 2: 0
+Slack 3: 0
+CHOSEN: 0
+========================
+Job Release: 10452
+Job Finish: 10457
+Deadline: 10635
+Slack 0: 9660
+Slack 1: 0
+Slack 2: 0
+Slack 3: 0
+CHOSEN: 0
+========================
+Job Release: 10508
+Job Finish: 10512
+Deadline: 10658
+Slack 0: 9661
+Slack 1: 0
+Slack 2: 0
+Slack 3: 0
+CHOSEN: 0
+========================
+Job Release: 10546
+Job Finish: 10550
+Deadline: 10686
+Job Release: 10635
+Job Finish: 10638
+Deadline: 10818
+Slack 0: 9662
+Slack 1: 0
+Slack 2: 0
+Slack 3: 0
+CHOSEN: 0
+========================
+Job Release: 10658
+Job Finish: 10661
+Deadline: 10808
+Slack 0: 9662
+Slack 1: 0
+Slack 2: 0
+Slack 3: 0
+CHOSEN: 0
+========================
+Job Release: 10686
+Job Finish: 10691
+Deadline: 10826
+Slack 0: 9662
+Slack 1: 0
+Slack 2: 0
+Slack 3: 0
+CHOSEN: 0
+========================
+Job Release: 10714
+Job Finish: 10719
+Deadline: 10981
+Slack 0: 9663
+Slack 1: 0
+Slack 2: 0
+Slack 3: 0
+CHOSEN: 0
+========================
+Job Release: 10808
+Job Finish: 10812
+Deadline: 10958
+Slack 0: 9663
+Slack 1: 0
+Slack 2: 0
+Slack 3: 0
+CHOSEN: 0
+========================
+Job Release: 10818
+Job Finish: 10822
+Deadline: 11001
+Slack 0: 9664
+Slack 1: 0
+Slack 2: 0
+Slack 3: 0
+CHOSEN: 0
+========================
+Job Release: 10826
+Job Finish: 10830
+Deadline: 10966
+Slack 0: 9664
+Slack 1: 0
+Slack 2: 0
+Slack 3: 0
+CHOSEN: 0
+========================
+Job Release: 10958
+Job Finish: 10962
+Deadline: 11108
+Slack 0: 9664
+Slack 1: 0
+Slack 2: 0
+Slack 3: 0
+CHOSEN: 0
+========================
+Job Release: 10966
+Job Finish: 10970
+Deadline: 11106
+Slack 0: 9664
+Slack 1: 0
+Slack 2: 0
+Slack 3: 0
+CHOSEN: 0
+========================
+Job Release: 10981
+Job Finish: 10984
+Deadline: 11248
+Slack 0: 9666
+Slack 1: 0
+Slack 2: 0
+Slack 3: 0
+CHOSEN: 0
+========================
+Job Release: 11001
+Job Finish: 11005
+Deadline: 11184
+Slack 0: 9666
+Slack 1: 0
+Slack 2: 0
+Slack 3: 0
+CHOSEN: 0
+========================
+Slack 0: 9666
+Slack 1: 0
+Slack 2: 0
+Slack 3: 0
+CHOSEN: 0
+========================
+Job Release: 11108
+Job Finish: 11112
+Deadline: 11258
+Job Release: 11106
+Job Finish: 11117
+Deadline: 11246
+Job Release: 11184
+Job Finish: 11187
+Deadline: 11367
+Slack 0: 9666
+Slack 1: 0
+Slack 2: 0
+Slack 3: 0
+CHOSEN: 0
+========================
+Job Release: 11248
+Job Finish: 11253
+Deadline: 11515
+Job Release:Slack 0: 9666
+Slack 1: 0
+Slack 2: 0
+Slack 3: 0
+CHOSEN: 0
+========================
+Job Release: 11258
+Job Finish: 11263
+Deadline: 11408
+Slack 0: 9666
+Slack 1: 0
+Slack 2: 0
+Slack 3: 0
+CHOSEN: 0
+========================
+ 11246
+Job Finish: 11257
+Deadline: 11386
+Slack 0: 9665
+Slack 1: 0
+Slack 2: 0
+Slack 3: 0
+CHOSEN: 0
+========================
+Job Release: 11367
+Job Finish: 11370
+Deadline: 11550
+Slack 0: 9666
+Slack 1: 0
+Slack 2: 0
+Slack 3: 0
+CHOSEN: 0
+========================
+Job Release: 11386
+Job Finish: 11389
+Deadline: 11526
+Slack 0: 9666
+Slack 1: 0
+Slack 2: 0
+Slack 3: 0
+CHOSEN: 0
+========================
+Job Release: 11408
+Job Finish: 11422
+Deadline: 11558
+Slack 0: 9664
+Slack 1: 0
+Slack 2: 0
+Slack 3: 0
+CHOSEN: 0
+========================
+Job Release: 11515
+Job Finish: 11518
+Deadline: 11782
+Slack 0: 9665
+Slack 1: 0
+Slack 2: 0
+Slack 3: 0
+CHOSEN: 0
+========================
+Job Release: 11526
+Job Finish: 11530
+Deadline: 11666
+Job Release: 11550
+Job Finish: 11555
+Deadline: 11733
+Slack 0: 9666
+Slack 1: 0
+Slack 2: 0
+Slack 3: 0
+CHOSEN: 0
+========================
+Job Release: 11558
+Job Finish: 11562
+Deadline: 11708
+Slack 0: 9666
+Slack 1: 0
+Slack 2: 0
+Slack 3: 0
+CHOSEN: 0
+========================
+Job Release: 11666
+Job Finish: 11669
+Deadline: 11806
+Slack 0: 9666
+Slack 1: 0
+Slack 2: 0
+Slack 3: 0
+CHOSEN: 0
+========================
+Job Release: 11708
+Job Finish: 11711
+Deadline: 11858
+Slack 0: 9667
+Slack 1: 0
+Slack 2: 0
+Slack 3: 0
+CHOSEN: 0
+========================
+Job Release: 11733
+Job Finish: 11736
+Deadline: 11916
+Slack 0: 9667
+Slack 1: 0
+Slack 2: 0
+Slack 3: 0
+CHOSEN: 0
+========================
+Job Release: 11782
+Job Finish: 11785
+Deadline: 12049
+Slack 0: 9669
+Slack 1: 0
+Slack 2: 0
+Slack 3: 0
+CHOSEN: 0
+========================
+Job Release: 11806
+Job Finish: 11810
+Deadline: 11946
+Slack 0: 9669
+Slack 1: 0
+Slack 2: 0
+Slack 3: 0
+CHOSEN: 0
+========================
+Job Release: 11858
+Job Finish: 11861
+Deadline: 12008
+Job Release: 11916
+Job Finish: 11919
+Deadline: 12099
+Slack 0: 9670
+Slack 1: 0
+Slack 2: 0
+Slack 3: 0
+CHOSEN: 0
+========================
+Job Release: 11946
+Job Finish: 11949
+Deadline: 12086
+Slack 0: 9670
+Slack 1: 0
+Slack 2: 0
+Slack 3: 0
+CHOSEN: 0
+========================
+Job Release: 12008
+Job Finish: 12011
+Deadline: 12158
+Slack 0: 9671
+Slack 1: 0
+Slack 2: 0
+Slack 3: 0
+CHOSEN: 0
+========================
+Job Release: 12049
+Job Finish: 12052
+Deadline: 12316
+Slack 0: 9672
+Slack 1: 0
+Slack 2: 0
+Slack 3: 0
+CHOSEN: 0
+========================
+Job Release: 12086
+Job Finish: 12090
+Deadline: 12226
+Slack 0: 9672
+Slack 1: 0
+Slack 2: 0
+Slack 3: 0
+CHOSEN: 0
+========================
+Job Release: 12099
+Job Finish: 12103
+Deadline: 12282
+Job Release: 12158
+Job Finish: 12162
+Deadline: 12308
+Slack 0: 9673
+Slack 1: 0
+Slack 2: 0
+Slack 3: 0
+CHOSEN: 0
+========================
+Job Release: 12226
+Job Finish: 12229
+Deadline: 12366
+Job Release: 12282
+Job Finish: 12285
+Deadline: 12465
+Slack 0: 9673
+Slack 1: 0
+Slack 2: 0
+Slack 3: 0
+CHOSEN: 0
+========================
+Job Release: 12308
+Job Finish: 12311
+Deadline: 12458
+Slack 0: 9674
+Slack 1: 0
+Slack 2: 0
+Slack 3: 0
+CHOSEN: 0
+========================
+Job Release: 12316
+Job Finish: 12321
+Deadline: 12583
+Slack 0: 9675
+Slack 1: 0
+Slack 2: 0
+Slack 3: 0
+CHOSEN: 0
+========================
+Job Release: 12366
+Job Finish: 12369
+Deadline: 12506
+Slack 0: 9675
+Slack 1: 0
+Slack 2: 0
+Slack 3: 0
+CHOSEN: 0
+========================
+Job Release: 12458
+Job Finish: 12462
+Deadline: 12608
+Slack 0: 9675
+Slack 1: 0
+Slack 2: 0
+Slack 3: 0
+CHOSEN: 0
+========================
+Job Release: 12465
+Job Finish: 12468
+Deadline: 12648
+Slack 0: 9676
+Slack 1: 0
+Slack 2: 0
+Slack 3: 0
+CHOSEN: 0
+========================
+Job Release: 12506
+Job Finish: 12509
+Deadline: 12646
+Slack 0: 9676
+Slack 1: 0
+Slack 2: 0
+Slack 3: 0
+CHOSEN: 0
+========================
+Job Release: 12583
+Job Finish: 12586
+Deadline: 12850
+Job Release: 12608
+Job Finish: 12611
+Deadline: 12758
+Job Release: 12646
+Job Finish: 12653
+Deadline: 12786
+Slack 0: 9677
+Slack 1: 0
+Slack 2: 0
+Slack 3: 0
+CHOSEN: 0
+========================
+Job Release: 12648
+Job Finish: 12662
+Deadline: 12831
+Slack 0: 9675
+Slack 1: 0
+Slack 2: 0
+Slack 3: 0
+CHOSEN: 0
+========================
+Job Release: 12758
+Job Finish: 12761
+Deadline: 12908
+Slack 0: 9676
+Slack 1: 0
+Slack 2: 0
+Slack 3: 0
+CHOSEN: 0
+========================
+Job Release: 12786
+Job Finish: 12789
+Deadline: 12926
+Slack 0: 9676
+Slack 1: 0
+Slack 2: 0
+Slack 3: 0
+CHOSEN: 0
+========================
+Job Release: 12831
+Job Finish: 12836
+Deadline: 13014
+Slack 0: 9676
+Slack 1: 0
+Slack 2: 0
+Slack 3: 0
+CHOSEN: 0
+========================
+Job Release: 12850
+Job Finish: 12853
+Deadline: 13117
+Slack 0: 9677
+Slack 1: 0
+Slack 2: 0
+Slack 3: 0
+CHOSEN: 0
+========================
+Job Release: 12908
+Job Finish: 12911
+Deadline: 13058
+Slack 0: 9678
+Slack 1: 0
+Slack 2: 0
+Slack 3: 0
+CHOSEN: 0
+========================
+Job Release: 12926
+Job Finish: 12929
+Deadline: 13066
+Job Release: 13014
+Job Finish: 13017
+Deadline: 13197
+Job Release: 13058
+Job Finish: 13062
+Deadline: 13208
+Slack 0: 9679
+Slack 1: 0
+Slack 2: 0
+Slack 3: 0
+CHOSEN: 0
+========================
+Job Release: 13066
+Job Finish: 13071
+Deadline: 13206
+Slack 0: 9679
+Slack 1: 0
+Slack 2: 0
+Slack 3: 0
+CHOSEN: 0
+========================
+Job Release: 13117
+Job Finish: 13121
+Deadline: 13384
+Slack 0: 9679
+Slack 1: 0
+Slack 2: 0
+Slack 3: 0
+CHOSEN: 0
+========================
+Job Release: 13197
+Job Finish: 13201
+Deadline: 13380
+Slack 0: 9680
+Slack 1: 0
+Slack 2: 0
+Slack 3: 0
+CHOSEN: 0
+========================
+Slack 0: 9680
+Slack 1: 0
+Slack 2: 0
+Slack 3: 0
+CHOSEN: 0
+========================
+Job Release: 13208
+Job Finish: 13213
+Deadline: 13358
+Slack 0: 9680
+Slack 1: 0
+Slack 2: 0
+Slack 3: 0
+CHOSEN: 0
+========================
+Job Release: 13206
+Job Finish: 13217
+Deadline: 13346
+Slack 0: 9678
+Slack 1: 0
+Slack 2: 0
+Slack 3: 0
+CHOSEN: 0
+========================
+Job Release: 13346
+Job Finish: 13350
+Deadline: 13486
+Slack 0: 9679
+Slack 1: 0
+Slack 2: 0
+Slack 3: 0
+CHOSEN: 0
+========================
+Job Release: 13358
+Job Finish: 13362
+Deadline: 13508
+Slack 0: 9679
+Slack 1: 0
+Slack 2: 0
+Slack 3: 0
+CHOSEN: 0
+========================
+Job Release: 13384
+Job Finish: 13388
+Deadline: 13651
+Slack 0: 9680
+Slack 1: 0
+Slack 2: 0
+Slack 3: 0
+CHOSEN: 0
+========================
+Job Release: 13380
+Job Finish: 13391
+Deadline: 13563
+Slack 0: 9679
+Slack 1: 0
+Slack 2: 0
+Slack 3: 0
+CHOSEN: 0
+========================
+Job Release: 13486
+Job Finish: 13493
+Deadline: 13626
+Job Release: 13508
+Job Finish: 13512
+Deadline: 13658
+Slack 0: 9678
+Slack 1: 0
+Slack 2: 0
+Slack 3: 0
+CHOSEN: 0
+========================
+Job Release: 13563
+Job Finish: 13567
+Deadline: 13746
+Slack 0: 9679
+Slack 1: 0
+Slack 2: 0
+Slack 3: 0
+CHOSEN: 0
+========================
+Job Release: 13626
+Job Finish: 13630
+Deadline: 13766
+Slack 0: 9679
+Slack 1: 0
+Slack 2: 0
+Slack 3: 0
+CHOSEN: 0
+========================
+Job Release: 13651
+Job Finish: 13656
+Deadline: 13918
+Slack 0: 9679
+Slack 1: 0
+Slack 2: 0
+Slack 3: 0
+CHOSEN: 0
+========================
+Job Release: 13658
+Job Finish: 13662
+Deadline: 13808
+Slack 0: 9680
+Slack 1: 0
+Slack 2: 0
+Slack 3: 0
+CHOSEN: 0
+========================
+Job Release: 13746
+Job Finish: 13749
+Deadline: 13929
+Job Release: 13766
+Job Finish: 13769
+Deadline: 13906
+Slack 0: 9680
+Slack 1: 0
+Slack 2: 0
+Slack 3: 0
+CHOSEN: 0
+========================
+Job Release: 13808
+Job Finish: 13812
+Deadline: 13958
+Slack 0: 9680
+Slack 1: 0
+Slack 2: 0
+Slack 3: 0
+CHOSEN: 0
+========================
+Job Release: 13906
+Job Finish: 13910
+Deadline: 14046
+Slack 0: 9681
+Slack 1: 0
+Slack 2: 0
+Slack 3: 0
+CHOSEN: 0
+========================
+Job Release: 13918
+Job Finish: 13921
+Deadline: 14185
+Job Release: 13929
+Job Finish: 13932
+Deadline: 14112
+Slack 0: 9682
+Slack 1: 0
+Slack 2: 0
+Slack 3: 0
+CHOSEN: 0
+========================
+Job Release: 13958
+Job Finish: 13963
+Deadline: 14108
+Slack 0: 9682
+Slack 1: 0
+Slack 2: 0
+Slack 3: 0
+CHOSEN: 0
+========================
+<0> END G
+Slack 0: 9715
+Slack 1: 0
+Slack 2: 0
+Slack 3: 0
+CHOSEN: 0
+========================
+Job Release: 14108
+Job Finish: 14113
+Deadline: 14258
+Job Release: 14112
+Job Finish: 14122
+Deadline: 14295
+Slack 0: 9713
+Slack 1: 0
+Slack 2: 0
+Slack 3: 0
+CHOSEN: 0
+========================
+Job Release: 14185
+Job Finish: 14198
+Deadline: 14452
+Slack 0: 9712
+Slack 1: 0
+Slack 2: 0
+Slack 3: 0
+CHOSEN: 0
+========================
+Job Release: 14258
+Job Finish: 14265
+Deadline: 14408
+Slack 0: 9712
+Slack 1: 0
+Slack 2: 0
+Slack 3: 0
+CHOSEN: 0
+========================
+Job Release: 14295
+Job Finish: 14301
+Deadline: 14478
+Slack 0: 9711
+Slack 1: 0
+Slack 2: 0
+Slack 3: 0
+CHOSEN: 0
+========================
+Job Release: 14408
+Job Finish: 14411
+Deadline: 14558
+Slack 0: 9712
+Slack 1: 0
+Slack 2: 0
+Slack 3: 0
+CHOSEN: 0
+========================
+Job Release: 14452
+Job Finish: 14456
+Deadline: 14719
+Slack 0: 9712
+Slack 1: 0
+Slack 2: 0
+Slack 3: 0
+CHOSEN: 0
+========================
+Job Release: 14478
+Job Finish: 14481
+Deadline: 14661
+Slack 0: 9713
+Slack 1: 0
+Slack 2: 0
+Slack 3: 0
+CHOSEN: 0
+========================
+Job Release: 14558
+Job Finish: 14561
+Deadline: 14708
+Slack 0: 9713
+Slack 1: 0
+Slack 2: 0
+Slack 3: 0
+CHOSEN: 0
+========================
+Job Release: 14661
+Job Finish: 14665
+Deadline: 14844
+Job Release: 14708
+Job Finish: 14711
+Deadline: 14858
+Slack 0: 9714
+Slack 1: 0
+Slack 2: 0
+Slack 3: 0
+CHOSEN: 0
+========================
+Job Release: 14719
+Job Finish: 14722
+Deadline: 14986
+Slack 0: 9715
+Slack 1: 0
+Slack 2: 0
+Slack 3: 0
+CHOSEN: 0
+========================
+Job Release: 14844
+Job Finish: 14847
+Deadline: 15027
+Slack 0: 9715
+Slack 1: 0
+Slack 2: 0
+Slack 3: 0
+CHOSEN: 0
+========================
+Job Release: 14858
+Job Finish: 14862
+Deadline: 15008
+Job Release: 14986
+Job Finish: 14990
+Deadline: 15253
+Slack 0: 9716
+Slack 1: 0
+Slack 2: 0
+Slack 3: 0
+CHOSEN: 0
+========================
+<0> END A
+Slack 0: 9738
+Slack 1: 0
+Slack 2: 0
+Slack 3: 0
+CHOSEN: 0
+========================
+Job Release: 15027
+Job Finish: 15031
+Deadline: 15210
+Slack 0: 9739
+Slack 1: 0
+Slack 2: 0
+Slack 3: 0
+CHOSEN: 0
+========================
+Job Release: 15210
+Job Finish: 15213
+Deadline: 15393
+Slack 0: 9739
+Slack 1: 0
+Slack 2: 0
+Slack 3: 0
+CHOSEN: 0
+========================
+Job Release: 15253
+Job Finish: 15256
+Deadline: 15520
+Job Release: 15393
+Job Finish: 15397
+Deadline: 15576
+Slack 0: 9741
+Slack 1: 0
+Slack 2: 0
+Slack 3: 0
+CHOSEN: 0
+========================
+Job Release: 15520
+Job Finish: 15523
+Deadline: 15787
+Slack 0: 9742
+Slack 1: 0
+Slack 2: 0
+Slack 3: 0
+CHOSEN: 0
+========================
+Job Release: 15576
+Job Finish: 15580
+Deadline: 15759
+Job Release: 15759
+Job Finish: 15763
+Deadline: 15942
+Slack 0: 9743
+Slack 1: 0
+Slack 2: 0
+Slack 3: 0
+CHOSEN: 0
+========================
+Job Release: 15787
+Job Finish: 15791
+Deadline: 16054
+Slack 0: 9743
+Slack 1: 0
+Slack 2: 0
+Slack 3: 0
+CHOSEN: 0
+========================
+Job Release: 15942
+Job Finish: 15945
+Deadline: 16125
+Slack 0: 9744
+Slack 1: 0
+Slack 2: 0
+Slack 3: 0
+CHOSEN: 0
+========================
+Job Release: 16054
+Job Finish: 16057
+Deadline: 16321
+Slack 0: 9745
+Slack 1: 0
+Slack 2: 0
+Slack 3: 0
+CHOSEN: 0
+========================
+Job Release: 16125
+Job Finish: 16129
+Deadline: 16308
+Slack 0: 9745
+Slack 1: 0
+Slack 2: 0
+Slack 3: 0
+CHOSEN: 0
+========================
+Job Release: 16308
+Job Finish: 16312
+Deadline: 16491
+Slack 0: 9746
+Slack 1: 0
+Slack 2: 0
+Slack 3: 0
+CHOSEN: 0
+========================
+Job Release: 16321
+Job Finish: 16325
+Deadline: 16588
+Slack 0: 9746
+Slack 1: 0
+Slack 2: 0
+Slack 3: 0
+CHOSEN: 0
+========================
+Job Release: 16491
+Job Finish: 16495
+Deadline: 16674
+Job Release: 16588
+Job Finish: 16595
+Deadline: 16855
+Job Release: 16674
+Job Finish: 16678
+Deadline: 16857
+Slack 0: 9747
+Slack 1: 0
+Slack 2: 0
+Slack 3: 0
+CHOSEN: 0
+========================
+Job Release: 16855
+Job Finish: 16859
+Deadline: 17122
+Slack 0: 9747
+Slack 1: 0
+Slack 2: 0
+Slack 3: 0
+CHOSEN: 0
+========================
+Job Release: 16857
+Job Finish: 16865
+Deadline: 17040
+Slack 0: 9746
+Slack 1: 0
+Slack 2: 0
+Slack 3: 0
+CHOSEN: 0
+========================
+Job Release: 17040
+Job Finish: 17044
+Deadline: 17223
+Slack 0: 9747
+Slack 1: 0
+Slack 2: 0
+Slack 3: 0
+CHOSEN: 0
+========================
+Job Release: 17122
+Job Finish: 17128
+Deadline: 17389
+Slack 0: 9747
+Slack 1: 0
+Slack 2: 0
+Slack 3: 0
+CHOSEN: 0
+========================
+Job Release: 17223
+Job Finish: 17226
+Deadline: 17406
+Slack 0: 9747
+Slack 1: 0
+Slack 2: 0
+Slack 3: 0
+CHOSEN: 0
+========================
+Job Release: 17389
+Job Finish: 17392
+Deadline: 17656
+Slack 0: 9748
+Slack 1: 0
+Slack 2: 0
+Slack 3: 0
+CHOSEN: 0
+========================
+Job Release: 17406
+Job Finish: 17410
+Deadline: 17589
+Job Release: 17589
+Job Finish: 17593
+Deadline: 17772
+Slack 0: 9749
+Slack 1: 0
+Slack 2: 0
+Slack 3: 0
+CHOSEN: 0
+========================
+Job Release: 17656
+Job Finish: 17660
+Deadline: 17923
+Slack 0: 9750
+Slack 1: 0
+Slack 2: 0
+Slack 3: 0
+CHOSEN: 0
+========================
+Job Release: 17772
+Job Finish: 17776
+Deadline: 17955
+Slack 0: 9750
+Slack 1: 0
+Slack 2: 0
+Slack 3: 0
+CHOSEN: 0
+========================
+Job Release: 17923
+Job Finish: 17927
+Deadline: 18190
+Job Release: 17955
+Job Finish: 17958
+Deadline: 18138
+Slack 0: 9751
+Slack 1: 0
+Slack 2: 0
+Slack 3: 0
+CHOSEN: 0
+========================
+Job Release: 18138
+Job Finish: 18142
+Deadline: 18321
+Slack 0: 9751
+Slack 1: 0
+Slack 2: 0
+Slack 3: 0
+CHOSEN: 0
+========================
+Job Release: 18190
+Job Finish: 18194
+Deadline: 18457
+Slack 0: 9752
+Slack 1: 0
+Slack 2: 0
+Slack 3: 0
+CHOSEN: 0
+========================
+<0> END C
+Job Release: 18457
+Job Finish: 18461
+Deadline: 18724
+Slack 0: 9824
+Slack 1: 0
+Slack 2: 0
+Slack 3: 0
+CHOSEN: 0
+========================
+Job Release: 18724
+Job Finish: 18727
+Deadline: 18991
+Slack 0: 9825
+Slack 1: 0
+Slack 2: 0
+Slack 3: 0
+CHOSEN: 0
+========================
+Job Release: 18991
+Job Finish: 18994
+Deadline: 19258
+Slack 0: 9826
+Slack 1: 0
+Slack 2: 0
+Slack 3: 0
+CHOSEN: 0
+========================
+Job Release: 19258
+Job Finish: 19261
+Deadline: 19525
+Job Release: 19525
+Job Finish: 19528
+Deadline: 19792
+Slack 0: 9827
+Slack 1: 0
+Slack 2: 0
+Slack 3: 0
+CHOSEN: 0
+========================
+Job Release: 19792
+Job Finish: 19795
+Deadline: 20059
+Slack 0: 9828
+Slack 1: 0
+Slack 2: 0
+Slack 3: 0
+CHOSEN: 0
+========================
+Job Release: 20059
+Job Finish: 20063
+Deadline: 20326
+Slack 0: 9828
+Slack 1: 0
+Slack 2: 0
+Slack 3: 0
+CHOSEN: 0
+========================
+Job Release: 20326
+Job Finish: 20329
+Deadline: 20593
+Slack 0: 9829
+Slack 1: 0
+Slack 2: 0
+Slack 3: 0
+CHOSEN: 0
+========================
+Job Release: 20593
+Job Finish: 20597
+Deadline: 20860
+Job Release: 20860
+Job Finish: 20865
+Deadline: 21127
+Slack 0: 9829
+Slack 1: 0
+Slack 2: 0
+Slack 3: 0
+CHOSEN: 0
+========================
+Job Release: 21127
+Job Finish: 21131
+Deadline: 21394
+Slack 0: 9830
+Slack 1: 0
+Slack 2: 0
+Slack 3: 0
+CHOSEN: 0
+========================
+Job Release: 21394
+Job Finish: 21398
+Deadline: 21661
+Slack 0: 9830
+Slack 1: 0
+Slack 2: 0
+Slack 3: 0
+CHOSEN: 0
+========================
+Job Release: 21661
+Job Finish: 21664
+Deadline: 21928
+Slack 0: 9831
+Slack 1: 0
+Slack 2: 0
+Slack 3: 0
+CHOSEN: 0
+========================
+Job Release: 21928
+Job Finish: 21946
+Deadline: 22195
+Job Release: 22195
+Job Finish: 22199
+Deadline: 22462
+Slack 0: 9825
+Slack 1: 0
+Slack 2: 0
+Slack 3: 0
+CHOSEN: 0
+========================
+Job Release: 22462
+Job Finish: 22481
+Deadline: 22729
+Slack 0: 9818
+Slack 1: 0
+Slack 2: 0
+Slack 3: 0
+CHOSEN: 0
+========================
+Job Release: 22729
+Job Finish: 22745
+Deadline: 22996
+Slack 0: 9814
+Slack 1: 0
+Slack 2: 0
+Slack 3: 0
+CHOSEN: 0
+========================
+Job Release: 22996
+Job Finish: 23019
+Deadline: 23263
+Slack 0: 9806
+Slack 1: 0
+Slack 2: 0
+Slack 3: 0
+CHOSEN: 0
+========================
+Job Release: 23263
+Job Finish: 23267
+Deadline: 23530
+Job Release: 23530
+Job Finish: 23534
+Deadline: 23797
+Slack 0: 9807
+Slack 1: 0
+Slack 2: 0
+Slack 3: 0
+CHOSEN: 0
+========================
+Job Release: 23797
+Job Finish: 23816
+Deadline: 24064
+Slack 0: 9801
+Slack 1: 0
+Slack 2: 0
+Slack 3: 0
+CHOSEN: 0
+========================
+Job Release: 24064
+Job Finish: 24080
+Deadline: 24331
+Slack 0: 9797
+Slack 1: 0
+Slack 2: 0
+Slack 3: 0
+CHOSEN: 0
+========================
+Job Release: 24331
+Job Finish: 24343
+Deadline: 24598
+Slack 0: 9794
+Slack 1: 0
+Slack 2: 0
+Slack 3: 0
+CHOSEN: 0
+========================
+Job Release: 24598
+Job Finish: 24616
+Deadline: 24865
+Job Release: 24865
+Job Finish: 24889
+Deadline: 25132
+Slack 0: 9782
+Slack 1: 0
+Slack 2: 0
+Slack 3: 0
+CHOSEN: 0
+========================
+Job Release: 25132
+Job Finish: 25153
+Deadline: 25399
+Slack 0: 9776
+Slack 1: 0
+Slack 2: 0
+Slack 3: 0
+CHOSEN: 0
+========================
+Job Release: 25399
+Job Finish: 25402
+Deadline: 25666
+Slack 0: 9777
+Slack 1: 0
+Slack 2: 0
+Slack 3: 0
+CHOSEN: 0
+========================
+Job Release: 25666
+Job Finish: 25687
+Deadline: 25933
+Slack 0: 9771
+Slack 1: 0
+Slack 2: 0
+Slack 3: 0
+CHOSEN: 0
+========================
+Job Release: 25933
+Job Finish: 25936
+Deadline: 26200
+Job Release: 26200
+Job Finish: 26203
+Deadline: 26467
+Slack 0: 9773
+Slack 1: 0
+Slack 2: 0
+Slack 3: 0
+CHOSEN: 0
+========================
+Job Release: 26467
+Job Finish: 26470
+Deadline: 26734
+Slack 0: 9774
+Slack 1: 0
+Slack 2: 0
+Slack 3: 0
+CHOSEN: 0
+========================
+<0> END E
+<0>: IC::int_not(i=0) :<0>
+
+PANIC: unexpected error!
+Rebooting the machine!

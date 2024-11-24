@@ -487,15 +487,28 @@ public:
   unsigned int choose_queue() {
     OStream osw;
     unsigned int selected_queue = 0;
-    unsigned int best         = 10000; 
+    unsigned int best         = 1e9; 
     unsigned int calculated   = 0;
+    
+    /**
+      cpu_value = branch_miss[cpu] + cache_miss[cpu] + cpu_usage[cpu]
+      if (slack_cur_cpu < 0.3) {
+        
+        choose_better_cpu();
+      }
+      else
+        choose_better_cpu_if_cpu_value_is_less()
+      
+     */
  
     for (unsigned int i = 0; i < Traits<Machine>::CPUS; i++) {
-      calculated   = (branch_miss_per_cpu[i] +  cache_miss_per_cpu[i] + cpu_usage_per_cpu[i] + slack_per_cpu[i])/4;
+      calculated   = (branch_miss_per_cpu[i] +  cache_miss_per_cpu[i] + cpu_usage_per_cpu[i] + (10000ull - slack_per_cpu[i])*2ull)/5ull;
       // osw << "Branch Miss " << i << ": " << branch_miss_per_cpu[i] << "\n";
       // osw << "Cache Miss " << i << ": " << cache_miss_per_cpu[i] << "\n";
       // osw << "CPU Usage " << i << ": " << cpu_usage_per_cpu[i] << "\n";
-      // osw << "Slack " << i << ": " << slack_per_cpu[i] << "\n";
+      osw << "Slack " << i << ": " << slack_per_cpu[i] << "\n";
+      // osw << "Calculated " << i << ": " << calculated << "\n";
+      // osw << "Best " << i << ": " << best << "\n";
 
       if (calculated < best) {
         best = calculated;
@@ -504,6 +517,7 @@ public:
       
     }
     osw << "CHOSEN: " << selected_queue << '\n';
+    osw << "========================\n";
     return selected_queue;
   }
   void handle(Event event);
