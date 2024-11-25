@@ -133,6 +133,7 @@ int main() {
        << (g->criterion().statistics().average_frequency * 100) /
               CPU::max_clock()
        << "%, H -> " << 100 << "%\n";
+       
   cout << '<' << CPU::id() << "> FINISHING MAIN               " << '\n';
   for (int i = 0; i < 8; ++i)
     for (int j = 0; j < 4; ++j)

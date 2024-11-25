@@ -352,7 +352,7 @@ volatile unsigned long long PEDF_Modified::cpu_usage_per_cpu[Traits<Machine>::CP
 volatile unsigned long long PEDF_Modified::base_time[Traits<Machine>::CPUS];
 volatile unsigned long long PEDF_Modified::time_spent_in_idle[Traits<Machine>::CPUS];
 volatile unsigned long long PEDF_Modified::total_time_of_jobs_per_cpu[Traits<Machine>::CPUS];
-volatile unsigned long long PEDF_Modified::total_slack_per_cpu[Traits<Machine>::CPUS];
+volatile unsigned long long PEDF_Modified::total_utilization_per_cpu[Traits<Machine>::CPUS];
 volatile unsigned long long PEDF_Modified::utilization_per_cpu[Traits<Machine>::CPUS];
 
 void PEDF_Modified::handle(Event event)
@@ -360,61 +360,54 @@ void PEDF_Modified::handle(Event event)
     EDF_Modified::handle(event);
 
     if (periodic() && (event & JOB_FINISH)) {
+        //Gets the new reads of PMU
         int branch_miss = (PMU::read(5) > 0) ? (PMU::read(6)*10000ull)/PMU::read(5) : 0;
         int cache_miss = (PMU::read(3) > 0)? (PMU::read(4)*10000ull)/PMU::read(3) : 0;
-
         
-        //cout << "CM: " << cache_miss << ", CMC: " << cache_miss_per_cpu[CPU::id()] << '\n'; 
-
+        //Calculates mean of the last 10
         branch_miss_per_cpu[CPU::id()] = (branch_miss_per_cpu[CPU::id()] * 9 + branch_miss)/10;
         cache_miss_per_cpu[CPU::id()] = (cache_miss_per_cpu[CPU::id()] * 9 + cache_miss)/10;
-        //cache_miss_per_cpu[CPU::id()] = (PMU::read(3) > 0)? (PMU::read(4)*10000ull)/PMU::read(3) : 0;
+
+        //Gets the new reads of TSC
         unsigned long long total = TSC::time_stamp() - base_time[CPU::id()];
+        //Calculates mean of the last 10
         cpu_usage_per_cpu[CPU::id()] = (total > 0) ? ((cpu_usage_per_cpu[CPU::id()]*9 + (10000ull*(total - time_spent_in_idle[CPU::id()]))))/10 : 0;
 
         Tick task_type = ((BEST_EFFORT & _priority) == BEST_EFFORT ? BEST_EFFORT : CRITICAL);
         Tick absolute_deadline = _priority - task_type;
-        // cout << "Job Release: " << _statistics.job_release << "\n";
-        // cout << "Job Finish: " << _statistics.job_finish << "\n";
-        // cout << "Deadline: " << absolute_deadline << "\n";
-        // cout << "Period: " << absolute_deadline - _statistics.job_release << "\n";
-        // cout << "Slack: " << absolute_deadline - _statistics.job_finish << "\n";
-        
+
         total_time_of_jobs_per_cpu[CPU::id()] += absolute_deadline - _statistics.job_release;
         total_time_of_jobs += absolute_deadline - _statistics.job_release;
 
 
         if (absolute_deadline >= _statistics.job_finish) {
-            total_slack_per_cpu[CPU::id()] += absolute_deadline - _statistics.job_finish;
-            total_slack += absolute_deadline - _statistics.job_finish;
+            total_utilization_per_cpu[CPU::id()] += _statistics.job_finish - _statistics.job_release;
+            total_utilization += _statistics.job_finish - _statistics.job_release;
         } else {
-            total_slack_per_cpu[CPU::id()] += absolute_deadline - _statistics.job_release;
-            total_slack += absolute_deadline - _statistics.job_release;
+            total_utilization_per_cpu[CPU::id()] += absolute_deadline - _statistics.job_release;
+            total_utilization += absolute_deadline - _statistics.job_release;
         }
-        
+
         if (total_time_of_jobs_per_cpu[CPU::id()] > 0) {
-            utilization_per_cpu[CPU::id()] = 10000ull - (10000ull*total_slack_per_cpu[CPU::id()])/total_time_of_jobs_per_cpu[CPU::id()];
+            utilization_per_cpu[CPU::id()] = (10000ull * total_utilization_per_cpu[CPU::id()]) /     
+                                                         total_time_of_jobs_per_cpu[CPU::id()];
         } else {
             utilization_per_cpu[CPU::id()] = 0;
         }
+
     }
 
-
     /*
-    Removes the total_time and slack of the thread
+    Removes the total_time and utilization_time of the thread
     to not impact the values to future choose_queue() 
     for remain threads;
     */
     if (periodic() && (event & FINISH)) {
-        // cout << "Total time of thread: " << total_time_of_jobs << "\n";
-        // cout << "Total slack of thread: " << total_slack << "\n";
-        // cout << "Total time per cpu: " << total_time_of_jobs_per_cpu[CPU::id()] << "\n";
-        // cout << "Total slack per cpu: " << total_slack_per_cpu[CPU::id()] << "\n";
         total_time_of_jobs_per_cpu[CPU::id()] -= total_time_of_jobs;
-        total_slack_per_cpu[CPU::id()] -= total_slack;
+        total_utilization_per_cpu[CPU::id()] -= total_utilization;
         
         if (total_time_of_jobs_per_cpu[CPU::id()] > 0) {
-            utilization_per_cpu[CPU::id()] = 10000ull - (10000ull*total_slack_per_cpu[CPU::id()])/total_time_of_jobs_per_cpu[CPU::id()];
+            utilization_per_cpu[CPU::id()] = (10000ull*total_utilization_per_cpu[CPU::id()])/total_time_of_jobs_per_cpu[CPU::id()];
         } else {
             utilization_per_cpu[CPU::id()] = 0;
         }
@@ -422,18 +415,23 @@ void PEDF_Modified::handle(Event event)
 
 }
 volatile unsigned int PEDF_Modified::should_change_queue() {
-    if (periodic() && _statistics.number_dispatches % 5 == 0 && _statistics.number_dispatches > 0) {
+    if (periodic() && _statistics.number_dispatches % 15 == 0 && _statistics.number_dispatches > 0) {
         volatile unsigned int q = choose_queue();
         if (q != _queue) {
+            /*
+            Removes the total_time and slack of the thread
+            to not impact the values to future choose_queue() 
+            for remain threads of old_cpu;
+            */
             total_time_of_jobs_per_cpu[CPU::id()] -= total_time_of_jobs;
-            total_slack_per_cpu[CPU::id()] -= total_slack;
+            total_utilization_per_cpu[CPU::id()] -= total_utilization;
             if (total_time_of_jobs_per_cpu[CPU::id()] > 0) {
-                utilization_per_cpu[CPU::id()] = 10000ull - (10000ull * total_slack_per_cpu[CPU::id()])/total_time_of_jobs_per_cpu[CPU::id()];
+                utilization_per_cpu[CPU::id()] = (10000ull * total_utilization_per_cpu[CPU::id()])/total_time_of_jobs_per_cpu[CPU::id()];
             } else {
                 utilization_per_cpu[CPU::id()] = 0;
             }
             total_time_of_jobs = 0;
-            total_slack = 0;
+            total_utilization = 0;
             return q;
         }
     }

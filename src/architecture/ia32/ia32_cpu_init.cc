@@ -26,12 +26,12 @@ void CPU::init()
     /*
     PMU CHANNEL  || EVENT:
     ============ || ===================
-    0            || LLC_REFERENCES              = 20270;
-    1            || LLC_MISSES                  = 16686;
-    2            || BRANCH_INSTRUCTIONS_RETIRED = 196;
-    3            || BRANCH_MISSES_RETIRED       = 197;
-    4            || UNHALTED_CORE_CYCLES        = 60;
+    3            || LLC_REFERENCES;
+    4            || LLC_MISSES;
+    5            || BRANCH_INSTRUCTIONS_RETIRED;
+    6            || BRANCH_MISSES_RETIRED;
     */
+
     if(Traits<PMU>::enabled) {
         PMU::init();
         //PMU::config(4, 316); //UNHALTED_REFERENCE_CYCLES

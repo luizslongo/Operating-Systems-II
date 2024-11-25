@@ -27,33 +27,55 @@ const Milisecond wcet_c = 20;
 const Milisecond wcet_e = 60;
 const Milisecond wcet_g = 40;
 
+void print_PMU() {
+  cout << '<' << CPU::id() << "> LLC_REFERENCES             : " << PMU::read(3)
+       << '\n';
+  cout << '<' << CPU::id() << "> LLC_MISSES                 : " << PMU::read(4)
+       << '\n';
+  cout << '<' << CPU::id() << "> BRANCH_INSTRUCTIONS_RETIRED: " << PMU::read(5)
+       << '\n';
+  cout << '<' << CPU::id() << "> BRANCH_MISSES_RETIRED      : " << PMU::read(6)
+       << '\n';
+  cout << '<' << CPU::id() << "> UNHALTED_REFERENCE_CYCLES  : " << PMU::read(0)
+       << '\n';
+  cout << '<' << CPU::id()
+       << "> TOTAL_CORE_CYCLES          : " << TSC::time_stamp() << '\n';
+}
+
+static int exec_count[8][4];
 int my_func(char id, int limit) {
-_ostream_lock.acquire();
-cout << '<' << CPU::id() << "> BEGIN " << id << '\n';
-_ostream_lock.release();
+  cout << '<' << CPU::id() << "> BEGIN " << id << '\n';
+  // print_PMU();
   do {
     long long b = 0;
     for (int i = 0; i < limit; ++i) {
       b += i - i / 3;
     }
-    
-    _ostream_lock.acquire();
-    cout << "Finished Iteration: " << id << '\n';
-    _ostream_lock.release();
+    if (b % 2 == 0) {
+      // cout << "AAA\n";
+    } else {
+      // cout << "BBB\n";
+    }
+    exec_count[id - 'A'][CPU::id()]++;
+    // cout << "Thread " << id << " completed iteration. Total executions: " <<
+    // exec_count[id - 'A'] << '\n';
   } while (Periodic_Thread::wait_next());
 
-    _ostream_lock.acquire();
-    cout << '<' << CPU::id() << "> END " << id << '\n';
-    _ostream_lock.release();
+  cout << '<' << CPU::id() << "> END " << id << '\n';
+  // print_PMU();
   return 0;
 }
+
 int my_func_aperiodic(char id) {
+  cout << '<' << CPU::id() << "> BEGIN " << id << '\n';
+  // print_PMU();
   long long b = 0;
   for (int i = 0; i < 1e1; ++i) {
     b += i - i / 3;
   }
-  OStream cout;
-  cout << b << '\n';
+  cout << '<' << CPU::id() << "> END " << id << '\n';
+  // print_PMU();
+  exec_count[id - 'A'][CPU::id()]++;
 
   return 0;
 }
@@ -107,5 +129,17 @@ int main() {
        << "%, H -> "
        << 100
        << '\n';
+
+  cout << '<' << CPU::id() << "> FINISHING MAIN               " << '\n';
+  for (int i = 0; i < 8; ++i)
+    for (int j = 0; j < 4; ++j)
+      cout << (char)('A' + i) << "(" << j <<  ") => " << exec_count[i][j] << '\n';
+  for (int j = 0; j < 4; ++j) {
+    int tot = 0;
+    for (int i = 0; i < 8; ++i)
+      tot += exec_count[i][j];
+    cout << "TOTAL (" << j << ") -> " << tot << '\n';
+  }
+  print_PMU();
   return 0;
 }
