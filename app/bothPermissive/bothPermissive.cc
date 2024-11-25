@@ -133,8 +133,9 @@ int main() {
        << (g->criterion().statistics().average_frequency * 100) /
               CPU::max_clock()
        << "%, H -> " << 100 << "%\n";
-       
+
   cout << '<' << CPU::id() << "> FINISHING MAIN               " << '\n';
+  cout << "Thread ID (CPU ID) => Number of iterations\n";
   for (int i = 0; i < 8; ++i)
     for (int j = 0; j < 4; ++j)
       cout << (char)('A' + i) << "(" << j <<  ") => " << exec_count[i][j] << '\n';
@@ -142,7 +143,7 @@ int main() {
     int tot = 0;
     for (int i = 0; i < 8; ++i)
       tot += exec_count[i][j];
-    cout << "TOTAL (" << j << ") -> " << tot << '\n';
+    cout << "TOTAL ITERATIONS PER CPU (" << j << ") -> " << tot << '\n';
   }
   print_PMU();
   return 0;

@@ -15,7 +15,7 @@ using namespace EPOS;
 
 OStream cout;
 
-const unsigned int iterations = 10;
+const unsigned int iterations = 100;
 const Milisecond period_a = 100;
 const Milisecond period_b = 200;
 const Milisecond period_c = 100;
@@ -123,6 +123,20 @@ int main()
        << (double) g->criterion().statistics().average_frequency / CPU::max_clock() * 100
        << "%, H -> "
        << (double) h->criterion().statistics().average_frequency / CPU::max_clock() * 100
+       << "%"
        << '\n';
-    return 0;
+
+  cout << '<' << CPU::id() << "> FINISHING MAIN               " << '\n';
+  cout << "Thread ID (CPU ID) => Number of iterations\n";
+  for (int i = 0; i < 8; ++i)
+    for (int j = 0; j < 4; ++j)
+      cout << (char)('A' + i) << "(" << j <<  ") => " << exec_count[i][j] << '\n';
+  for (int j = 0; j < 4; ++j) {
+    int tot = 0;
+    for (int i = 0; i < 8; ++i)
+      tot += exec_count[i][j];
+    cout << "TOTAL ITERATIONS PER CPU (" << j << ") -> " << tot << '\n';
+  }
+  print_PMU();
+  return 0;
 }

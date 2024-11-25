@@ -115,8 +115,8 @@ void Thread::priority(Criterion c)
     unsigned long old_cpu = _link.rank().queue();
     unsigned long new_cpu = c.queue();
 
-    // OStream os;
-    // os << '<' << CPU::id() << "> moving " << this << " to " << new_cpu << '\n';
+    OStream os;
+    os << '<' << CPU::id() << "> moving " << this << " to " << new_cpu << '\n';
 
     if(_state != RUNNING) { // reorder the scheduling queue
         _scheduler.suspend(this);
