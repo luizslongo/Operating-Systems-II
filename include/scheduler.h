@@ -463,6 +463,7 @@ public:
   static volatile unsigned long long total_time_of_jobs_per_cpu[Traits<Machine>::CPUS];
   static volatile unsigned long long total_utilization_per_cpu[Traits<Machine>::CPUS];
   static volatile unsigned long long utilization_per_cpu[Traits<Machine>::CPUS];
+  static volatile unsigned long long threads_per_cpu[Traits<Machine>::CPUS];
 
 protected: 
   Tick total_time_of_jobs = 0;
@@ -490,7 +491,7 @@ public:
     unsigned int calculated   = 0;
  
     for (unsigned int i = 0; i < Traits<Machine>::CPUS; i++) {
-      calculated   = (branch_miss_per_cpu[i] +  cache_miss_per_cpu[i] + cpu_usage_per_cpu[i] + utilization_per_cpu[i]*2)/5ull;
+      calculated   = (branch_miss_per_cpu[i] +  cache_miss_per_cpu[i] + cpu_usage_per_cpu[i] + utilization_per_cpu[i]*2 + threads_per_cpu[i])/6ull;
 
       if (calculated < best) {
         best = calculated;

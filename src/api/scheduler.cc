@@ -354,6 +354,7 @@ volatile unsigned long long PEDF_Modified::time_spent_in_idle[Traits<Machine>::C
 volatile unsigned long long PEDF_Modified::total_time_of_jobs_per_cpu[Traits<Machine>::CPUS];
 volatile unsigned long long PEDF_Modified::total_utilization_per_cpu[Traits<Machine>::CPUS];
 volatile unsigned long long PEDF_Modified::utilization_per_cpu[Traits<Machine>::CPUS];
+volatile unsigned long long PEDF_Modified::threads_per_cpu[Traits<Machine>::CPUS];
 
 void PEDF_Modified::handle(Event event)
 {
@@ -415,7 +416,7 @@ void PEDF_Modified::handle(Event event)
 
 }
 volatile unsigned int PEDF_Modified::should_change_queue() {
-    if (periodic() && _statistics.number_dispatches % 15 == 0 && _statistics.number_dispatches > 0) {
+    if (periodic() && _statistics.number_dispatches % 5 == 0 && _statistics.number_dispatches > 0) {
         volatile unsigned int q = choose_queue();
         if (q != _queue) {
             /*

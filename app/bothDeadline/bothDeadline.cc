@@ -18,9 +18,9 @@ OStream cout;
 
 const unsigned int iterations = 100;
 const Milisecond period_a = 150;
-const Milisecond period_c = 200;
-const Milisecond period_e = 250;
-const Milisecond period_g = 200;
+const Milisecond period_c = 100;
+const Milisecond period_e = 150;
+const Milisecond period_g = 100;
 const Milisecond wcet_a = 150;
 const Milisecond wcet_c = 150;
 const Milisecond wcet_e = 150;

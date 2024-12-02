@@ -110,13 +110,13 @@ protected:
 
     static Thread * volatile running() { 
         auto *ptr =  _not_booting ? _scheduler.chosen() : reinterpret_cast<Thread * volatile>(CPU::id() + 1); 
-        if (!ptr) {
-            OStream os;
-            os << "RETURNED NULL PTR\n";
-        } else if (ptr->priority() == 0) {
-            OStream os;
-            os << "PRIORITY IS 0\n";
-        }
+        //if (!ptr) {
+        //    OStream os;
+        //    os << "RETURNED NULL PTR\n";
+        //} else if (ptr->priority() == 0) {
+        //    OStream os;
+        //    os << "PRIORITY IS 0\n";
+        //}
 
         return ptr;
     }

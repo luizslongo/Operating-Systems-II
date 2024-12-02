@@ -24,6 +24,7 @@ void Thread::constructor_prologue(unsigned int stack_size)
 
     _thread_count++;
     OStream_Wrapped os;
+    Criterion::threads_per_cpu[criterion().current_queue()]++;
     os << "<" << CPU::id() << "> CREATING THREAD -> " << _link.rank().queue() << " -> " << this << " -> " << &(_link.rank()) << " -> " << _SYS::System::heap() << "\n";
     _scheduler.insert(this);
 
@@ -61,6 +62,7 @@ void Thread::constructor_epilogue(Log_Addr entry, unsigned int stack_size)
 Thread::~Thread()
 {
     lock();
+    Criterion::threads_per_cpu[criterion().current_queue()]--;
 
     db<Thread>(TRC) << "~Thread(this=" << this
                     << ",state=" << _state
@@ -114,6 +116,9 @@ void Thread::priority(Criterion c)
 
     unsigned long old_cpu = _link.rank().queue();
     unsigned long new_cpu = c.queue();
+
+    Criterion::threads_per_cpu[old_cpu]--;
+    Criterion::threads_per_cpu[new_cpu]++;
 
     OStream os;
     os << '<' << CPU::id() << "> moving " << this << " to " << new_cpu << '\n';
@@ -375,14 +380,14 @@ void Thread::time_slicer(IC::Interrupt_Id i)
 
 void Thread::dispatch(Thread * prev, Thread * next, bool charge)
 {
-    if (next == 0) {
-        OStream cout;
-        cout << "Found the villain o7! It's NEXT :D\n";
-    }
-    if (prev == 0) {
-        OStream cout;
-        cout << "Found the villain o7! It's PREV :D\n";
-    }
+    //if (next == 0) {
+    //    OStream cout;
+    //    cout << "Found the villain o7! It's NEXT :D\n";
+    //}
+    //if (prev == 0) {
+    //    OStream cout;
+    //    cout << "Found the villain o7! It's PREV :D\n";
+    //}
     if(charge && Criterion::timed)
         _timer->restart();
 
