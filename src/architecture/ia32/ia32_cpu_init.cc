@@ -26,8 +26,8 @@ void CPU::init()
     /*
     PMU CHANNEL  || EVENT:
     ============ || ===================
-    3            || LLC_REFERENCES;
-    4            || LLC_MISSES;
+    3            || L1 HITS;
+    4            || L1 MISSES;
     5            || BRANCH_INSTRUCTIONS_RETIRED;
     6            || BRANCH_MISSES_RETIRED;
     */
@@ -47,8 +47,8 @@ void CPU::init()
         PMU::reset(0);
         PMU::config(6, 15); // BRANCH_MISSES_RETIRED
         PMU::config(5, 11); // BRANCH_INSTRUCTIONS_RETIRED
-        PMU::config(4, 30); // LLC_MISSES
-        PMU::config(3, 29); // LLC_REFERENCES
+        PMU::config(4, 21); // L1 MISSES
+        PMU::config(3, 20); // L1 HITS
         PMU::config(2, 2);  // INSTRUCTIONS_RETIRED
         PMU::config(1, 1);  // UNHALTED_CYCLES
         PMU::config(0, 0);  // CPU_CYCLES

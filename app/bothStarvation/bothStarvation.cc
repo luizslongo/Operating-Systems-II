@@ -26,9 +26,9 @@ const Milisecond wcet_g = 60;
 const Milisecond wcet_h = 40;
 
 void print_PMU() {
-  cout << '<' << CPU::id() << "> LLC_REFERENCES             : " << PMU::read(3)
+  cout << '<' << CPU::id() << "> L1 HITS                    : " << PMU::read(3)
        << '\n';
-  cout << '<' << CPU::id() << "> LLC_MISSES                 : " << PMU::read(4)
+  cout << '<' << CPU::id() << "> L1 MISSES                  : " << PMU::read(4)
        << '\n';
   cout << '<' << CPU::id() << "> BRANCH_INSTRUCTIONS_RETIRED: " << PMU::read(5)
        << '\n';

@@ -16,7 +16,7 @@ using namespace EPOS;
 
 OStream cout;
 
-const unsigned int iterations = 100;
+const unsigned int iterations = 10;
 const Milisecond period_a = 150;
 const Milisecond period_c = 183;
 const Milisecond period_e = 267;
@@ -27,9 +27,9 @@ const Milisecond wcet_e = 60;
 const Milisecond wcet_g = 40;
 
 void print_PMU() {
-  cout << '<' << CPU::id() << "> LLC_REFERENCES             : " << PMU::read(3)
+  cout << '<' << CPU::id() << "> L1 HITS                    : " << PMU::read(3)
        << '\n';
-  cout << '<' << CPU::id() << "> LLC_MISSES                 : " << PMU::read(4)
+  cout << '<' << CPU::id() << "> L1 MISSES                  : " << PMU::read(4)
        << '\n';
   cout << '<' << CPU::id() << "> BRANCH_INSTRUCTIONS_RETIRED: " << PMU::read(5)
        << '\n';

@@ -445,8 +445,8 @@ public:
 /*
 PMU CHANNEL  || EVENT:
 ============ || ===================
-3            || LLC_REFERENCES;
-4            || LLC_MISSES;
+3            || L1 HITS;
+4            || L1 MISSES;
 5            || BRANCH_INSTRUCTIONS_RETIRED;
 6            || BRANCH_MISSES_RETIRED;
 */
