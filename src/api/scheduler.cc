@@ -446,6 +446,7 @@ void PEDF_Modified::reset_utilization() {
     }          
 }
 
+// NOTE: we modified PMU::reset to reset the PMC registers to zero for non-fixed channels.
 void PEDF_Modified::reset_pmu() {
     PMU::reset(6);
     PMU::reset(5);
