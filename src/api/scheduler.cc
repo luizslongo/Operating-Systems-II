@@ -404,14 +404,8 @@ void PEDF_Modified::handle(Event event)
     for remain threads;
     */
     if (periodic() && (event & FINISH)) {
-        total_time_of_jobs_per_cpu[CPU::id()] -= total_time_of_jobs;
-        total_utilization_per_cpu[CPU::id()] -= total_utilization;
-        
-        if (total_time_of_jobs_per_cpu[CPU::id()] > 0) {
-            utilization_per_cpu[CPU::id()] = (10000ull*total_utilization_per_cpu[CPU::id()])/total_time_of_jobs_per_cpu[CPU::id()];
-        } else {
-            utilization_per_cpu[CPU::id()] = 0;
-        }
+        reset_utilization();
+        reset_pmu();
     }
 
 }
@@ -424,20 +418,52 @@ volatile unsigned int PEDF_Modified::should_change_queue() {
             to not impact the values to future choose_queue() 
             for remain threads of old_cpu;
             */
-            total_time_of_jobs_per_cpu[CPU::id()] -= total_time_of_jobs;
-            total_utilization_per_cpu[CPU::id()] -= total_utilization;
-            if (total_time_of_jobs_per_cpu[CPU::id()] > 0) {
-                utilization_per_cpu[CPU::id()] = (10000ull * total_utilization_per_cpu[CPU::id()])/total_time_of_jobs_per_cpu[CPU::id()];
-            } else {
-                utilization_per_cpu[CPU::id()] = 0;
-            }
+            reset_utilization();                                                                                 
             total_time_of_jobs = 0;
             total_utilization = 0;
+            reset_pmu();
             return q;
         }
     }
     return 1e9;
 }
+
+void PEDF_Modified::reset_utilization() {
+    if (total_time_of_jobs_per_cpu[CPU::id()] > (long long unsigned int) total_time_of_jobs) {
+        total_time_of_jobs_per_cpu[CPU::id()] -= total_time_of_jobs;
+    } else {
+        total_time_of_jobs_per_cpu[CPU::id()] = 0;
+    }
+    if (total_utilization_per_cpu[CPU::id()] > (long long unsigned int) total_utilization) {
+        total_utilization_per_cpu[CPU::id()] -= total_utilization;
+    } else {
+        total_utilization_per_cpu[CPU::id()] = 0;
+    }
+    if (total_time_of_jobs_per_cpu[CPU::id()] > 0) {
+        utilization_per_cpu[CPU::id()] = (10000ull * total_utilization_per_cpu[CPU::id()])/total_time_of_jobs_per_cpu[CPU::id()];
+    } else {
+        utilization_per_cpu[CPU::id()] = 0;
+    }          
+}
+
+void PEDF_Modified::reset_pmu() {
+    PMU::reset(6);
+    PMU::reset(5);
+    PMU::reset(4);
+    PMU::reset(3);
+    PMU::config(6, 15); // BRANCH_MISSES_RETIRED
+    PMU::config(5, 11); // BRANCH_INSTRUCTIONS_RETIRED
+    PMU::config(4, 21); // L1 MISSES
+    PMU::config(3, 20); // L1 HITS
+    PMU::start(6);
+    PMU::start(5);
+    PMU::start(4);
+    PMU::start(3);
+
+    base_time[CPU::id()] = TSC::time_stamp();
+    time_spent_in_idle[CPU::id()] = 0;
+}
+
 // The following Scheduling Criteria depend on Alarm, which is not available at scheduler.h
 template <typename... Tn>
 FCFS::FCFS(int p, Tn &...an) : Priority((p == IDLE) ? IDLE : Alarm::elapsed()) {}

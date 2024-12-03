@@ -91,6 +91,7 @@ public:
   static const bool timed = false;
   static const bool dynamic = false;
   static const bool preemptive = true;
+  static const bool use_pmu = false;
   static const unsigned int QUEUES = 1;
 
   // Runtime Statistics (for policies that don't use any; that's why its a
@@ -465,6 +466,8 @@ public:
   static volatile unsigned long long utilization_per_cpu[Traits<Machine>::CPUS];
   static volatile unsigned long long threads_per_cpu[Traits<Machine>::CPUS];
 
+  static const bool use_pmu = true;
+
 protected: 
   Tick total_time_of_jobs = 0;
   Tick total_utilization = 0;
@@ -504,6 +507,8 @@ public:
   }
   void handle(Event event);
   volatile unsigned int should_change_queue();
+  void reset_pmu();
+  void reset_utilization();
   static unsigned int current_queue() { return CPU::id(); }
 };
 
